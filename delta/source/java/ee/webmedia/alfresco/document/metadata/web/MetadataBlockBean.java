@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.document.metadata.web;
 
+import static ee.webmedia.alfresco.addressbook.util.AddressbookUtil.getContactFullName;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
 import static ee.webmedia.alfresco.utils.TextUtil.joinStringAndStringWithComma;
 import static ee.webmedia.alfresco.utils.TextUtil.joinStringAndStringWithParentheses;
@@ -56,7 +57,7 @@ import com.ibm.icu.util.GregorianCalendar;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
-import ee.webmedia.alfresco.addressbook.web.dialog.AddressbookMainViewDialog;
+import ee.webmedia.alfresco.addressbook.util.AddressbookUtil;
 import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
@@ -68,6 +69,7 @@ import ee.webmedia.alfresco.common.propertysheet.suggester.SuggesterGenerator;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.ClearStateNotificationHandler.ClearStateListener;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil;
 import ee.webmedia.alfresco.document.model.Document;
@@ -324,9 +326,7 @@ public class MetadataBlockBean implements ClearStateListener {
     }
 
     private Map<QName, Serializable> getPersonProps(String userName) {
-        NodeRef person = getPersonService().getPerson(userName);
-        Map<QName, Serializable> personProps = getNodeService().getProperties(person);
-        return personProps;
+        return getUserService().getUserProperties(userName);
     }
 
     public void setWhom(String userName) {
@@ -389,19 +389,13 @@ public class MetadataBlockBean implements ClearStateListener {
 
     public void setSender(String nodeRefStr) {
         NodeRef nodeRef = new NodeRef(nodeRefStr);
-        String name = getOrgOrPersonName(nodeRef);
+        String name = getContactFullName(nodeRef);
         document.getProperties().put(DocumentSpecificModel.Props.SENDER_DETAILS_NAME.toString(), name);
-    }
-
-    private String getOrgOrPersonName(NodeRef nodeRef) {
-        Map<QName, Serializable> props = getNodeService().getProperties(nodeRef);
-        QName contactType = getNodeService().getType(nodeRef);
-        return AddressbookMainViewDialog.getContactFullName(props, contactType);
     }
 
     public void setApplicantInstitution(String nodeRefStr) {
         NodeRef nodeRef = new NodeRef(nodeRefStr);
-        document.getProperties().put(DocumentSpecificModel.Props.APPLICANT_INSTITUTION.toString(), getOrgOrPersonName(nodeRef));
+        document.getProperties().put(DocumentSpecificModel.Props.APPLICANT_INSTITUTION.toString(), getContactFullName(nodeRef));
     }
 
     public void setApplicantPerson(String searchResult) {
@@ -440,7 +434,7 @@ public class MetadataBlockBean implements ClearStateListener {
 
     public void setCoApplicantInstitution(String nodeRefStr) {
         NodeRef nodeRef = new NodeRef(nodeRefStr);
-        document.getProperties().put(DocumentSpecificModel.Props.CO_APPLICANT_INSTITUTION.toString(), getOrgOrPersonName(nodeRef));
+        document.getProperties().put(DocumentSpecificModel.Props.CO_APPLICANT_INSTITUTION.toString(), getContactFullName(nodeRef));
     }
 
     public void setCoApplicantPerson(String searchResult) {
@@ -541,7 +535,7 @@ public class MetadataBlockBean implements ClearStateListener {
             }
 
             if (document.hasAspect(DocumentCommonModel.Aspects.OWNER)) {
-                // TODO move this code to DocumentOwnerGenerator
+                // TODO move this code to UserContactRelatedGroupGenerator
 
                 String owner = encode((String) props.get(DocumentCommonModel.Props.OWNER_NAME));
                 List<String> ownerProps = new ArrayList<String>(4);
@@ -988,7 +982,8 @@ public class MetadataBlockBean implements ClearStateListener {
      * @return A collection of UISelectItem objects containing the selection items to show on form.
      */
     public List<SelectItem> findDocumentTemplates(FacesContext context, UIInput selectComponent) {
-        List<DocumentTemplate> docTemplates = getDocumentTemplateService().getDocumentTemplates(document.getType());
+        List<DocumentTemplate> docTemplates = getDocumentTemplateService().getDocumentTemplates(
+                (String) document.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID));
         List<SelectItem> selectItems = new ArrayList<SelectItem>(docTemplates.size() + 1);
 
         // Empty default selection
@@ -1379,10 +1374,8 @@ public class MetadataBlockBean implements ClearStateListener {
         if (filterIndex == 0) { // users
             return userListDialog.searchUsers(-1, contains);
         } else if (filterIndex == 1) { // contacts
-            final String personLabel = MessageUtil.getMessage("addressbook_private_person").toLowerCase();
-            final String organizationLabel = MessageUtil.getMessage("addressbook_org").toLowerCase();
             List<Node> nodes = getAddressbookService().search(contains);
-            return AddressbookMainViewDialog.transformNodesToSelectItems(nodes, personLabel, organizationLabel);
+            return AddressbookUtil.transformAddressbookNodesToSelectItems(nodes);
         } else {
             throw new RuntimeException("Unknown filter index value: " + filterIndex);
         }
@@ -1900,39 +1893,40 @@ public class MetadataBlockBean implements ClearStateListener {
         for (Node applicant : applicantNodes) {
             // Training application applicant has dailyAllowanceV2
             if (applicant.hasAspect(DocumentSpecificModel.Aspects.DAILY_ALLOWANCE_V2)) {
-                validateDailyAllowanceV2Internal(messages, dailyAllowanceSum, applicant.getProperties());
+                validateDailyAllowanceV2Internal(messages, dailyAllowanceSum, applicant.getProperties(), false);
                 continue;
             }
 
             // Abroad errand order applicant has child errands that have dailyAllowanceV2
             for (Node errandNode : applicant.getAllChildAssociations(errandAssoc)) {
-                validateDailyAllowanceV2Internal(messages, dailyAllowanceSum, errandNode.getProperties());
+                validateDailyAllowanceV2Internal(messages, dailyAllowanceSum, errandNode.getProperties(), true);
             }
         }
     }
 
     // Verify that daily allowance periods sum equals total errand duration
-    private void validateDailyAllowanceV2Internal(List<String> messages, final BigDecimal dailyAllowanceSum, final Map<String, Object> props) {
-        Date errandBegin = (Date) props.get(DocumentSpecificModel.Props.ERRAND_BEGIN_DATE.toString());
-        Date errandEnd = (Date) props.get(DocumentSpecificModel.Props.ERRAND_END_DATE.toString());
-        int errandDurationInDays = (int) ((errandEnd.getTime() - errandBegin.getTime()) / (1000 * 60 * 60 * 24) + 1);
+    private void validateDailyAllowanceV2Internal(List<String> messages, final BigDecimal dailyAllowanceSum, final Map<String, Object> props, boolean checkDays) {
         @SuppressWarnings("unchecked")
         List<Integer> allowanceDays = getIntegerList((List<Serializable>) props.get(DocumentSpecificModel.Props.DAILY_ALLOWANCE_DAYS));
-        if (allowanceDays == null || allowanceDays.isEmpty()) {
-            messages.add("document_errandOrderAbroad_applicant_errand_validation_mandatory_cateringExists");
-            return;
-        }
+        if (checkDays) {
+            Date errandBegin = (Date) props.get(DocumentSpecificModel.Props.ERRAND_BEGIN_DATE.toString());
+            Date errandEnd = (Date) props.get(DocumentSpecificModel.Props.ERRAND_END_DATE.toString());
+            int errandDurationInDays = (int) ((errandEnd.getTime() - errandBegin.getTime()) / (1000 * 60 * 60 * 24) + 1);
+            if (allowanceDays == null || allowanceDays.isEmpty()) {
+                messages.add("document_errandOrderAbroad_applicant_errand_validation_mandatory_cateringExists");
+                return;
+            }
 
-        int totalAllowanceDays = 0;
-        for (Integer days : allowanceDays) {
-            totalAllowanceDays += days;
-        }
+            int totalAllowanceDays = 0;
+            for (Integer days : allowanceDays) {
+                totalAllowanceDays += days;
+            }
 
-        if (errandDurationInDays != totalAllowanceDays) {
-            messages.add("document_errand_dailyAllowance_days_sum_match_totalDays");
-            return;
+            if (errandDurationInDays != totalAllowanceDays) {
+                messages.add("document_errand_dailyAllowance_days_sum_match_totalDays");
+                return;
+            }
         }
-
         // Calculate daily allowance sums and total daily allowance sum (don't trust JS)
         final int size = allowanceDays.size();
         List<Double> dailySums = new ArrayList<Double>(size);
@@ -1942,7 +1936,9 @@ public class MetadataBlockBean implements ClearStateListener {
 
         for (int i = 0; i < size; i++) {
             // Multiply days by parameter value and the multiply by rate percent
-            final BigDecimal dailySum = dailyAllowanceSum.multiply(BigDecimal.valueOf(allowanceDays.get(i))).multiply(BigDecimal.valueOf(rates.get(i) / 100.0))
+            Integer allowanceDaysNum = allowanceDays.get(i);
+            Integer rateNum = rates.get(i);
+            final BigDecimal dailySum = dailyAllowanceSum.multiply(BigDecimal.valueOf(allowanceDaysNum)).multiply(BigDecimal.valueOf(rateNum / 100.0))
                     .setScale(2, BigDecimal.ROUND_HALF_UP);
             totalDailySum = totalDailySum.add(dailySum);
             dailySums.add(dailySum.doubleValue());
@@ -1977,6 +1973,10 @@ public class MetadataBlockBean implements ClearStateListener {
                 intList.add((Integer) item);
             } else if (item instanceof String && StringUtils.isNotBlank((String) item)) {
                 intList.add(Integer.parseInt((String) item));
+            } else if (item == null) {
+                intList.add(Integer.valueOf(0));
+            } else {
+                throw new NumberFormatException("Cannot parse number form value: " + item.toString());
             }
         }
 
@@ -2279,17 +2279,6 @@ public class MetadataBlockBean implements ClearStateListener {
                     .getBean(DocumentService.BEAN_NAME);
         }
         return documentService;
-    }
-
-    public void setPersonService(PersonService personService) {
-        this.personService = personService;
-    }
-
-    protected PersonService getPersonService() {
-        if (personService == null) {
-            personService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getPersonService();
-        }
-        return personService;
     }
 
     public void setNodeService(NodeService nodeService) {

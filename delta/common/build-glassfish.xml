@@ -14,7 +14,7 @@
 
    <!-- TODO clean-glassfish target -->
 
-   <target name="installcert" depends="compile" description="Install a SSL certificate into application server KeyStore">
+   <target name="installcert" depends="compile" description="Retrieve HTTPS certificate from remote HTTPS connection and add it to application server Keystore (use if CAS connection is over HTTPS)">
       <java dir="${project.basedir}" fork="true" classname="ee.webmedia.alfresco.utils.InstallCert" classpathref="classpath.test.compile">
          <arg path="${file.glassfish.domain.config.cacerts}" />
       </java>
@@ -114,7 +114,8 @@
 
    <target name="p-deploy" description="Paralel startGF(if needed)+deploy">
       <parallel>
-         <antcall target="glassfish-start-done" /><!-- start glassfish if needed -->
+         <antcall target="glassfish-start-done" />
+         <!-- start glassfish if needed -->
          <antcall target="deploy" />
       </parallel>
    </target>

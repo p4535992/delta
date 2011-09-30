@@ -40,7 +40,7 @@
       <aspect name="docTempl:documentTemplate">
          <properties>
             <property name="docTempl:docTypeId">
-               <type>d:qname</type>
+               <type>d:text</type>
                <mandatory enforced="false">true</mandatory>
             </property>
          </properties>

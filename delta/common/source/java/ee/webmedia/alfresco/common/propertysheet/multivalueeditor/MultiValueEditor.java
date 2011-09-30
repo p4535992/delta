@@ -38,8 +38,7 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
  * Edit multiple multi-valued properties as a table. A {@code javax.faces.Input} component is generated for each cell. Supports deleting any row and appending
- * an empty row at the end (a {@code null} element is added to each {@link List}). When cells are first generated, it is ensured that each column's {@link List}
- * contains the same
+ * an empty row at the end (a {@code null} element is added to each {@link List}). When cells are first generated, it is ensured that each column's {@link List} contains the same
  * amount of elements as the list with greatest amount of elements. Again, {@code null} elements are appended, where necessary.
  * 
  * @author Alar Kvell
@@ -48,7 +47,7 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(MultiValueEditor.class);
 
     protected static final String PROPERTY_SHEET_VAR = "propertySheetVar";
-    protected static final String PREPROCESS_CALLBACK = "preprocessCallback";
+    public static final String PREPROCESS_CALLBACK = "preprocessCallback";
     protected static final String FILTERS = "filters";
     protected static final String FILTER_INDEX = "filterIndex";
 
@@ -155,8 +154,8 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
         String preprocessCallback = (String) getAttributes().get(PREPROCESS_CALLBACK);
         if (StringUtils.isNotBlank(preprocessCallback)) {
             MethodBinding preprocessBind = getFacesContext().getApplication().createMethodBinding(
-                    preprocessCallback, new Class[] { String[].class, Integer.class });
-            results = (String[]) preprocessBind.invoke(context, new Object[] { results, pickerFilterIndex });
+                    preprocessCallback, new Class[] { int.class, String[].class });
+            results = (String[]) preprocessBind.invoke(context, new Object[] { pickerFilterIndex, results });
         }
 
         List<String> propNames = getPropNames();
@@ -288,7 +287,7 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
                 setValueBinding(context, component, componentPropVO.getPropertyName(), rowIndex);
             }
             if (Utils.isComponentDisabledOrReadOnly(this)) {
-                ComponentUtil.setDisabledAttributeRecursively(component);
+                ComponentUtil.setReadonlyAttributeRecursively(component);
             }
             columnIndex++;
         }

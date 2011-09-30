@@ -36,6 +36,7 @@ public class DatePickerGenerator extends BaseComponentGenerator {
     private List<String> addBeginDateClassByPropName;
     /** predefined property names, that should be considered as endDates despite how they are named */
     private List<String> addEndDateClassByPropName;
+    public static final String DATE_FIELD_LABEL = "dateFieldLabel";
 
     @Override
     public UIComponent generate(FacesContext context, String id) {
@@ -139,29 +140,36 @@ public class DatePickerGenerator extends BaseComponentGenerator {
     }
 
     protected void setupValidDateConstraint(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem property, UIComponent component) {
-        if (isCreateOutputText()) {
+        if (isCreateOutputText(context)) {
             return;
         }
-        List<String> params = new ArrayList<String>(2);
+        addClientValidation(context, propertySheet, property, component, component.getClientId(context), "validateDate");
+    }
 
-        // add the value parameter
-        String value = "document.getElementById('" +
-                component.getClientId(context) + "')";
+    protected void addClientValidation(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem property, UIComponent component, String elementClientId,
+            String jsFuntctionName) {
+        String value = "document.getElementById('" + elementClientId + "')";
+        List<String> params = new ArrayList<String>(2);
         params.add(value);
 
         // add the validation failed messages
         String matchMsg = Application.getMessage(context, "validation_date_failed");
-        addStringConstraintParam(params,
-                MessageFormat.format(matchMsg, new Object[] { property.getResolvedDisplayLabel() }));
+        addStringConstraintParam(params, MessageFormat.format(matchMsg, getDateFieldTitle(property)));
 
         // add the validation case to the property sheet
-        propertySheet.addClientValidation(new ClientValidation("validateDate",
-                params, true));
+        propertySheet.addClientValidation(new ClientValidation(jsFuntctionName, params, true));
 
         // add event handler to kick off real time checks
         @SuppressWarnings("unchecked")
         Map<String, Object> attributes = component.getAttributes();
         attributes.put("onchange", "processButtonState();");
+    }
+
+    protected String getDateFieldTitle(PropertySheetItem property) {
+        if (property != null) {
+            return property.getResolvedDisplayLabel();
+        }
+        return getCustomAttributes().get(DATE_FIELD_LABEL);
     }
 
     @Override

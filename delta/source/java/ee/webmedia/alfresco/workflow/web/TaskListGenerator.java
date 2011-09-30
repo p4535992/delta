@@ -1,5 +1,11 @@
 package ee.webmedia.alfresco.workflow.web;
 
+import static ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorGenerator.ATTR_CLASSIFICATOR_NAME;
+import static ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorGenerator.ATTR_DESCRIPTION_AS_LABEL;
+import static ee.webmedia.alfresco.common.propertysheet.classificatorselector.MultiClassificatorSelectorGenerator.ATTR_CLASSIFICATOR_SPECIFIERS;
+import static ee.webmedia.alfresco.common.propertysheet.classificatorselector.MultiClassificatorSelectorGenerator.ATTR_CLASSIFICATOR_SPECIFIER_LABELS;
+import static ee.webmedia.alfresco.common.propertysheet.classificatorselector.MultiClassificatorSelectorGenerator.ATTR_FILTER_NUMERIC;
+import static ee.webmedia.alfresco.common.propertysheet.classificatorselector.MultiClassificatorSelectorGenerator.CLASSIFICATOR_NAME_SEPARATOR;
 import static ee.webmedia.alfresco.utils.ComponentUtil.addChildren;
 import static ee.webmedia.alfresco.utils.ComponentUtil.createUIParam;
 import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
@@ -25,15 +31,21 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.dialog.DialogManager;
 import org.alfresco.web.bean.generator.BaseComponentGenerator;
+import org.alfresco.web.bean.generator.TextAreaGenerator;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
-import org.alfresco.web.ui.repo.component.property.UIPropertySheet.ClientValidation;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.common.propertysheet.classificatorselector.LabelAndValueSelectorRenderer;
+import ee.webmedia.alfresco.common.propertysheet.classificatorselector.MultiClassificatorSelectorGenerator;
+import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ValueBindingsWrapper;
 import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter;
+import ee.webmedia.alfresco.common.propertysheet.datepicker.DateTimePicker;
+import ee.webmedia.alfresco.common.propertysheet.datepicker.DateTimePickerGenerator;
+import ee.webmedia.alfresco.common.propertysheet.datepicker.DateTimePickerRenderer;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.propertysheet.search.SearchRenderer;
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -59,6 +71,8 @@ public class TaskListGenerator extends BaseComponentGenerator {
 
     // private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(TaskListGenerator.class);
 
+    private static final String CALENDAR_DAYS = "calendarDays";
+    public static final String WORKING_DAYS = "workingDays";
     /** Workflow index - same meaning as {@link #WF_INDEX}, but used in different places */
     public static final String ATTR_WORKFLOW_INDEX = "workflow_index";
     /** Workflow index - same meaning as {@link #ATTR_WORKFLOW_INDEX}, but used in different places */
@@ -106,7 +120,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
 
         final HtmlPanelGrid taskGrid = (HtmlPanelGrid) application.createComponent(HtmlPanelGrid.COMPONENT_TYPE);
         taskGrid.setId("task-grid-" + listId);
-        taskGrid.setColumns(4);
+        taskGrid.setColumns(5);
         final String customStyleClass = StringUtils.trimToEmpty(getCustomAttributes().get("styleClass"));
         taskGrid.setStyleClass("recipient tasks" + " " + customStyleClass);
         final List<UIComponent> resultChildren = addChildren(result, taskGrid);
@@ -149,7 +163,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
                 taskGridChildren.add(ownerNameHeading);
 
                 if (workflow.isType(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW)) {
-                    taskGrid.setColumns(5);
+                    taskGrid.setColumns(6);
                     UIOutput sendStatusHeading = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
                     putAttribute(sendStatusHeading, "styleClass", "th");
                     sendStatusHeading.setValue(MessageUtil.getMessage("task_property_resolution_assignmentTask"));
@@ -161,13 +175,18 @@ public class TaskListGenerator extends BaseComponentGenerator {
                 dueDateHeading.setValue(MessageUtil.getMessage("task_property_due_date"));
                 taskGridChildren.add(dueDateHeading);
 
+                UIOutput dueDateDaysHeading = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
+                putAttribute(dueDateDaysHeading, "styleClass", "th");
+                dueDateDaysHeading.setValue(MessageUtil.getMessage("task_property_due_date_days"));
+                taskGridChildren.add(dueDateDaysHeading);
+
                 UIOutput wfStatusHeading = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
                 putAttribute(wfStatusHeading, "styleClass", "th");
                 wfStatusHeading.setValue(MessageUtil.getMessage("workflow_status"));
                 taskGridChildren.add(wfStatusHeading);
 
                 if (workflow.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW)) {
-                    taskGrid.setColumns(5);
+                    taskGrid.setColumns(6);
                     UIOutput sendStatusHeading = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
                     putAttribute(sendStatusHeading, "styleClass", "th");
                     sendStatusHeading.setValue(MessageUtil.getMessage("task_property_sendStatus_externalReviewTask"));
@@ -176,7 +195,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
                         if (visibleTasks.contains(counter)) {
                             Task task = tasks.get(counter);
                             if (SendStatus.SENT.toString().equals(task.getSendStatus())) {
-                                taskGrid.setColumns(6);
+                                taskGrid.setColumns(7);
                                 UIOutput sendDateHeading = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
                                 putAttribute(sendDateHeading, "styleClass", "th");
                                 sendDateHeading.setValue(MessageUtil.getMessage("task_property_sendDateTime_externalReviewTask"));
@@ -208,7 +227,8 @@ public class TaskListGenerator extends BaseComponentGenerator {
                     String taskStatus = task.getStatus();
 
                     HtmlInputText nameInput = (HtmlInputText) application.createComponent(HtmlInputText.COMPONENT_TYPE);
-                    nameInput.setId("task-name-" + listId + "-" + counter);
+                    String taskRowId = listId + "-" + counter;
+                    nameInput.setId("task-name-" + taskRowId);
                     nameInput.setReadonly(true);
                     putAttribute(nameInput, "styleClass", "ownerName medium");
                     String nameValueBinding = null;
@@ -249,37 +269,61 @@ public class TaskListGenerator extends BaseComponentGenerator {
 
                     if (dialogManager.getBean() instanceof CompoundWorkflowDialog) {
                         if (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
-                            UIOutput resolutionInput = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
-                            resolutionInput.setValue(task.getResolutionOfTask() == null ? "" : task.getResolutionOfTask());
-                            putAttribute(resolutionInput, "styleClass", "condence50");
+                            TextAreaGenerator textAreaGenerator = new TextAreaGenerator();
+                            UIComponent resolutionInput = textAreaGenerator.generate(context, "task-resolution-" + taskRowId);
+                            String reolutionValueBinding = createPropValueBinding(wfIndex, counter, WorkflowSpecificModel.Props.RESOLUTION);
+                            resolutionInput.setValueBinding("value", application.createValueBinding(reolutionValueBinding));
+                            putAttribute(resolutionInput, "styleClass", "expand19-200 width190");
+                            ComponentUtil.setReadonlyAttributeRecursively(resolutionInput);
                             taskGridChildren.add(resolutionInput);
                         }
 
-                        final HtmlInputText dueDateInput = (HtmlInputText) application.createComponent(HtmlInputText.COMPONENT_TYPE);
-                        taskGridChildren.add(dueDateInput);
-                        dueDateInput.setId("task-duedate-" + listId + "-" + counter);
+                        DateTimePickerGenerator dateTimePickerGenerator = new DateTimePickerGenerator();
+                        final DateTimePicker dueDateTimeInput = (DateTimePicker) dateTimePickerGenerator.generate(context, "task-duedate-" + taskRowId);
+                        taskGridChildren.add(dueDateTimeInput);
                         String dueDateValueBinding = createPropValueBinding(wfIndex, counter, WorkflowSpecificModel.Props.DUE_DATE);
-                        dueDateInput.setValueBinding("value", application.createValueBinding(dueDateValueBinding));
-                        ComponentUtil.createAndSetConverter(context, DatePickerConverter.CONVERTER_ID, dueDateInput);
+                        dueDateTimeInput.setValueBinding("value", application.createValueBinding(dueDateValueBinding));
                         @SuppressWarnings("unchecked")
-                        final Map<String, Object> dueDateAttributes = dueDateInput.getAttributes();
-                        if (fullAccess && Status.NEW.equals(taskStatus)
-                                && (!responsible || Boolean.TRUE.equals(task.getNode().getProperties().get(WorkflowSpecificModel.Props.ACTIVE)))) {
-                            dueDateAttributes.put("styleClass", "margin-left-4 date");
-                            dueDateAttributes.put("onchange", "processButtonState();");
-                            // add client side validation
-                            List<String> params = new ArrayList<String>(2);
-                            params.add("document.getElementById('" + dueDateInput.getClientId(context) + "')");
-                            String invalidMsg = MessageUtil.getMessage(context, "validation_date_failed", MessageUtil.getMessage("task_property_due_date"));
-                            addStringConstraintParam(params, invalidMsg);
-                            propertySheet.addClientValidation(new ClientValidation("validateDate", params, true));
+                        final Map<String, Object> dueDateTimeAttributes = dueDateTimeInput.getAttributes();
+                        if (isTaskRowEditable(responsible, fullAccess, task, taskStatus) && (task.getDueDate() != null || task.getDueDateDays() == null)) {
+                            dateTimePickerGenerator.getCustomAttributes().put(DateTimePickerGenerator.DATE_FIELD_LABEL, MessageUtil.getMessage("task_property_due_date"));
+                            dateTimePickerGenerator.setupValidDateConstraint(context, propertySheet, null, dueDateTimeInput);
                         } else {
-                            dueDateAttributes.put("styleClass", "margin-left-4 disabled-date");
-                            dueDateInput.setReadonly(true);
+                            dateTimePickerGenerator.setReadonly(dueDateTimeInput, true);
                         }
+                        dueDateTimeAttributes.put("styleClass", "margin-left-4");
+                        dueDateTimeAttributes.put(DateTimePickerRenderer.DATE_STYLE_CLASS_ATTR, "task-due-date-date");
+                        dueDateTimeAttributes.put(DateTimePickerRenderer.TIME_STYLE_CLASS_ATTR, "task-due-date-time");
+
+                        MultiClassificatorSelectorGenerator classificatorSelectorGenerator = new MultiClassificatorSelectorGenerator();
+                        UIComponent classificatorSelector = classificatorSelectorGenerator.generateSelectComponent(context, null, false);
+                        classificatorSelector.setId("task-dueDateDays-" + listId + "-" + counter);
+                        Map<String, String> selectorGeneratorAttributes = classificatorSelectorGenerator.getCustomAttributes();
+
+                        selectorGeneratorAttributes.put(ATTR_FILTER_NUMERIC, "true");
+                        selectorGeneratorAttributes.put(ATTR_DESCRIPTION_AS_LABEL, "true");
+                        selectorGeneratorAttributes.put(ATTR_CLASSIFICATOR_NAME, "dueDateWorkDays" + CLASSIFICATOR_NAME_SEPARATOR + "dueDateCalendarDays");
+                        selectorGeneratorAttributes.put(ATTR_CLASSIFICATOR_SPECIFIER_LABELS,
+                                MessageUtil.getMessage(WORKING_DAYS) + CLASSIFICATOR_NAME_SEPARATOR + MessageUtil.getMessage(CALENDAR_DAYS));
+                        selectorGeneratorAttributes.put(ATTR_CLASSIFICATOR_SPECIFIERS, "true" + CLASSIFICATOR_NAME_SEPARATOR + "false");
+                        ComponentUtil.createAndSetConverter(context, DueDateDaysConverter.CONVERTER_ID, classificatorSelector);
+                        List<ValueBinding> valueBindings = new ArrayList<ValueBinding>();
+                        valueBindings.add(application.createValueBinding(createPropValueBinding(wfIndex, counter, WorkflowSpecificModel.Props.DUE_DATE_DAYS)));
+                        valueBindings.add(application.createValueBinding(createPropValueBinding(wfIndex, counter, WorkflowSpecificModel.Props.IS_DUE_DATE_WORKING_DAYS)));
+                        classificatorSelector.setValueBinding("value", new ValueBindingsWrapper(valueBindings));
+                        classificatorSelectorGenerator.setupSelectComponent(context, null, null, null, classificatorSelector, false);
+                        classificatorSelector.setRendererType(LabelAndValueSelectorRenderer.LABEL_AND_VALUE_SELECTOR_RENDERER_TYPE);
+
+                        ComponentUtil.putAttribute(classificatorSelector, CustomAttributeNames.STYLE_CLASS, "width120 task-due-date-days");
+                        if (!isTaskRowEditable(responsible, fullAccess, task, taskStatus) || (task.getDueDate() != null && task.getDueDateDays() == null)) {
+                            ComponentUtil.putAttribute(classificatorSelector, "readonly", true);
+                        }
+                        ComponentUtil.putAttribute(classificatorSelector, "displayMandatoryMark", true);
+                        ComponentUtil.putAttribute(classificatorSelector, "styleClass", "task-due-date-days margin-left-4 width130");
+                        taskGridChildren.add(classificatorSelector);
 
                         HtmlInputText statusInput = (HtmlInputText) application.createComponent(HtmlInputText.COMPONENT_TYPE);
-                        statusInput.setId("task-status-" + listId + "-" + counter);
+                        statusInput.setId("task-status-" + taskRowId);
                         statusInput.setReadonly(true);
                         String statusValueBinding = createPropValueBinding(wfIndex, counter, WorkflowCommonModel.Props.STATUS);
                         statusInput.setValueBinding("value", application.createValueBinding(statusValueBinding));
@@ -288,7 +332,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
 
                         if (task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)) {
                             HtmlInputText sendStatusInput = (HtmlInputText) application.createComponent(HtmlInputText.COMPONENT_TYPE);
-                            sendStatusInput.setId("task-sendStatus-" + listId + "-" + counter);
+                            sendStatusInput.setId("task-sendStatus-" + taskRowId);
                             sendStatusInput.setReadonly(true);
                             String sendStatusValueBinding = createPropValueBinding(wfIndex, counter, WorkflowSpecificModel.Props.SEND_STATUS);
                             sendStatusInput.setValueBinding("value", application.createValueBinding(sendStatusValueBinding));
@@ -299,7 +343,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
                                 if (SendStatus.SENT.toString().equals(task.getSendStatus())) {
                                     final HtmlInputText sendDateInput = (HtmlInputText) application.createComponent(HtmlInputText.COMPONENT_TYPE);
                                     taskGridChildren.add(sendDateInput);
-                                    sendDateInput.setId("task-senddate-" + listId + "-" + counter);
+                                    sendDateInput.setId("task-senddate-" + taskRowId);
                                     String sendDateValueBinding = createPropValueBinding(wfIndex, counter, WorkflowSpecificModel.Props.DUE_DATE);
                                     sendDateInput.setValueBinding("value", application.createValueBinding(sendDateValueBinding));
                                     ComponentUtil.createAndSetConverter(context, DatePickerConverter.CONVERTER_ID, sendDateInput);
@@ -316,7 +360,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
                     }
 
                     final HtmlPanelGroup columnActions = (HtmlPanelGroup) application.createComponent(HtmlPanelGroup.COMPONENT_TYPE);
-                    columnActions.setId("column-actions-" + listId + "-" + counter);
+                    columnActions.setId("column-actions-" + taskRowId);
                     taskGridChildren.add(columnActions);
 
                     Action taskAction = task.getAction();
@@ -330,11 +374,10 @@ public class TaskListGenerator extends BaseComponentGenerator {
                         UIActionLink taskSearchLink = createOwnerSearchLink(context, application, listId, picker, counter);
                         actionChildren.add(taskSearchLink);
                     }
-                    if (fullAccess && Status.NEW.equals(taskStatus)
-                            && (!responsible || Boolean.TRUE.equals(task.getNode().getProperties().get(WorkflowSpecificModel.Props.ACTIVE)))) {
+                    if (isTaskRowEditable(responsible, fullAccess, task, taskStatus)) {
 
                         final UIActionLink taskDeleteLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
-                        taskDeleteLink.setId("task-remove-link-" + listId + "-" + counter);
+                        taskDeleteLink.setId("task-remove-link-" + taskRowId);
                         taskDeleteLink.setValue("");
                         taskDeleteLink.setTooltip(MessageUtil.getMessage("delete"));
                         taskDeleteLink.setActionListener(application.createMethodBinding("#{DialogManager.bean.removeWorkflowTask}",
@@ -349,7 +392,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
                                 && !WorkflowUtil.isInactiveResponsible(task)) {
 
                             final UIActionLink taskCancelLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
-                            taskCancelLink.setId("task-cancel-link-" + listId + "-" + counter);
+                            taskCancelLink.setId("task-cancel-link-" + taskRowId);
                             taskCancelLink.setValue("");
                             taskCancelLink.setTooltip(MessageUtil.getMessage("task_cancel"));
                             taskCancelLink.setActionListener(application.createMethodBinding("#{DialogManager.bean.cancelWorkflowTask}",
@@ -364,7 +407,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
                             QName taskType = task.getNode().getType();
                             if (taskType.equals(WorkflowSpecificModel.Types.ASSIGNMENT_TASK) || taskType.equals(WorkflowSpecificModel.Types.OPINION_TASK)) {
                                 UIActionLink taskFinishLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
-                                taskFinishLink.setId("task-finish-link-" + listId + "-" + counter);
+                                taskFinishLink.setId("task-finish-link-" + taskRowId);
                                 taskFinishLink.setValue("");
                                 taskFinishLink.setTooltip(MessageUtil.getMessage("task_finish"));
                                 taskFinishLink.setShowLink(false);
@@ -381,7 +424,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
                         }
                     } else {
                         HtmlOutputText actionTxt = (HtmlOutputText) application.createComponent(HtmlOutputText.COMPONENT_TYPE);
-                        actionTxt.setId("task-action-txt-" + listId + "-" + counter);
+                        actionTxt.setId("task-action-txt-" + taskRowId);
                         String actionMsg = MessageUtil.getMessage(taskAction == Action.UNFINISH ? "task_cancel_marked" : "task_finish_marked");
                         actionTxt.setValue(actionMsg);
                         actionChildren.add(actionTxt);
@@ -411,6 +454,11 @@ public class TaskListGenerator extends BaseComponentGenerator {
             }
         }
         return result;
+    }
+
+    private boolean isTaskRowEditable(boolean responsible, boolean fullAccess, Task task, String taskStatus) {
+        return fullAccess && Status.NEW.equals(taskStatus)
+                && (!responsible || Boolean.TRUE.equals(task.getNode().getProperties().get(WorkflowSpecificModel.Props.ACTIVE)));
     }
 
     private UIParameter createWfIndexPraram(int wfIndex, Application application) {

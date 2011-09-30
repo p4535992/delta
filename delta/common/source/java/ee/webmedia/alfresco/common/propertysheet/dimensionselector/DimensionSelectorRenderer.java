@@ -40,15 +40,15 @@ public class DimensionSelectorRenderer extends HtmlMenuRenderer {
 
     /* The following code is mostly copy-paste from HtmlRenderUtils, as it is final and cannot be extended */
 
-    public static void renderMenu(FacesContext facesContext, UISelectOne selectOne, boolean disabled) throws IOException {
+    private void renderMenu(FacesContext facesContext, UISelectOne selectOne, boolean disabled) throws IOException {
         internalRenderSelect(facesContext, selectOne, disabled, 1, false);
     }
 
-    public static void renderMenu(FacesContext facesContext, UISelectMany selectMany, boolean disabled) throws IOException {
+    private void renderMenu(FacesContext facesContext, UISelectMany selectMany, boolean disabled) throws IOException {
         internalRenderSelect(facesContext, selectMany, disabled, 5, true);
     }
 
-    private static void internalRenderSelect(FacesContext facesContext, UIComponent uiComponent, boolean disabled, int size, boolean selectMany)
+    private void internalRenderSelect(FacesContext facesContext, UIComponent uiComponent, boolean disabled, int size, boolean selectMany)
             throws IOException {
         ResponseWriter writer = facesContext.getResponseWriter();
 
@@ -86,8 +86,13 @@ public class DimensionSelectorRenderer extends HtmlMenuRenderer {
         writer.endElement("select");
     }
 
-    public static void renderSelectOptions(FacesContext context, UIComponent component, Converter converter, Set lookupSet, List selectItemList)
+    protected void renderSelectOptions(FacesContext context, UIComponent component, Converter converter, Set lookupSet, List selectItemList)
             throws IOException {
+        renderOptions(context, component, converter, lookupSet, selectItemList, false, false);
+    }
+
+    protected void renderOptions(FacesContext context, UIComponent component, Converter converter, Set lookupSet, List selectItemList, boolean renderValueAttribute,
+            boolean renderLabelAsText) throws IOException {
         ResponseWriter writer = context.getResponseWriter();
 
         for (Iterator it = selectItemList.iterator(); it.hasNext();) {
@@ -109,9 +114,9 @@ public class DimensionSelectorRenderer extends HtmlMenuRenderer {
                 writer.startElement("option", component);
                 // Use option text value as selectbox value, don't render value attribute
                 // Instead render title attribute to avoid setting it with javascript
-                // if (itemStrValue != null) {
-                // writer.writeAttribute("value", itemStrValue, null);
-                // }
+                if (renderValueAttribute) {
+                    writer.writeAttribute("value", itemStrValue == null ? "" : itemStrValue, null);
+                }
                 writer.writeAttribute("title", selectItem.getLabel(), null);
 
                 if (lookupSet.contains(itemStrValue)) {
@@ -142,10 +147,14 @@ public class DimensionSelectorRenderer extends HtmlMenuRenderer {
                     escape = RendererUtils.getBooleanAttribute(component, "escape", true);
                 }
 
+                String textValue = selectItem.getValue().toString();
+                if (renderLabelAsText) {
+                    textValue = selectItem.getLabel() != null ? selectItem.getLabel() : "";
+                }
                 if (escape) {
-                    writer.writeText(selectItem.getValue(), null);
+                    writer.writeText(textValue, null);
                 } else {
-                    writer.write((String) selectItem.getValue());
+                    writer.write(textValue);
                 }
 
                 writer.endElement("option");
@@ -153,7 +162,7 @@ public class DimensionSelectorRenderer extends HtmlMenuRenderer {
         }
     }
 
-    private static boolean isTrue(Object obj) {
+    private boolean isTrue(Object obj) {
         if (!(obj instanceof Boolean)) {
             return false;
         }

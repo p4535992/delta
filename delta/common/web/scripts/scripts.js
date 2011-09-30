@@ -268,7 +268,7 @@ function addAutocompleter(inputId, valuesArray){
       var jQInput = $jQ("#"+escapeId4JQ(inputId));
       var autoCompleter = jQInput.autocompleteArray(valuesArray, { minChars: -1, suggestAll: 1, delay: 50, onItemSelect: function(li) { processButtonState(); } });
       autoCompleter.parent(".suggest-wrapper").click(function(){
-         autoCompleter.trigger("suggest");
+         jQInput.focus();
       });
       autoCompleter.bind("autoComplete", function(e, data){
          var ac = $jQ(this);
@@ -506,6 +506,11 @@ function propSheetValidateSubmit() {
    propSheetFinishBtnPressed = false;
    propSheetNextBtnPressed = false;
    return result;
+}
+
+function triggerPropSheetValidation(){
+   propSheetNextBtnPressed = true;
+   return propSheetValidateSubmit();
 }
 
 function propSheetValidateSubmitCommon() {
@@ -1155,6 +1160,10 @@ function initWithScreenProtected() {
 
    toggleSubrow.init();
    toggleSubrowToggle.init();
+   
+   jQuery(".task-due-date-date").live('change', processTaskDueDateDate);
+   jQuery(".task-due-date-days").live('change', processTaskDueDateDays);
+   jQuery(".focus").first().focus();
 
    handleHtmlLoaded(null, selects);
 };
@@ -1315,8 +1324,41 @@ function isNumeric(numberStr){
    }
    return true;
 }
+function processTaskDueDateDate(){
+   var dueDateInput = $jQ(this);
+   var taskRow = dueDateInput.closest("tr");
+   var taskDueDateTime = taskRow.find(".task-due-date-time");
+   var taskDueDateDays = taskRow.find(".task-due-date-days");
+   if(dueDateInput.val() == ""){
+      taskDueDateTime.val("");
+      taskDueDateDays.attr("disabled", "");
+   } else {
+      if(taskDueDateTime.val() == ""){
+         taskDueDateTime.val("23:59");
+      }
+      taskDueDateDays.attr("disabled", "disabled");
+   }
+   
+}
 
+function processTaskDueDateDays(){
+   var dueDateDaysInput = $jQ(this);
+   var taskRow = dueDateDaysInput.closest("tr");
+   var taskDueDateTime = taskRow.find(".task-due-date-time");
+   var taskDueDateDate = taskRow.find(".task-due-date-date");
+   if(dueDateDaysInput.find(":selected").attr("value") == ""){
+      setReadonly(taskDueDateTime, "");
+      setReadonly(taskDueDateDate, "");
+   } else {
+      setReadonly(taskDueDateTime, "readonly");
+      setReadonly(taskDueDateDate, "readonly");
+   }
+   
+}
 
+function setReadonly(element, readonly){
+   element.attr("readonly", readonly);
+}
 
 function initSelectTooltips(selects) {
    selects.each(function(){
@@ -1438,6 +1480,9 @@ function handleHtmlLoaded(context, selects) {
    $jQ('a.webdav-readOnly', context).click(function () {
       webdavOpenReadOnly(this.href);
       return false;
+   });
+   $jQ('.triggerPropSheetValidation', context).each(function () {
+      prependOnclick($jQ(this), triggerPropSheetValidation);
    });
 
    ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1609,6 +1654,8 @@ function handleHtmlLoaded(context, selects) {
          }
       });
    }
+
+   $jQ(".readonly", context).attr('readonly', 'readonly');
 }
 
 //-----------------------------------------------------------------------------

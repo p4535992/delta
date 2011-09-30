@@ -3,15 +3,19 @@ package ee.webmedia.alfresco.document.model;
 import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 
 /**
  * @author Alar Kvell
  */
 public interface DocumentSpecificModel {
-    String URI = "http://alfresco.webmedia.ee/model/document/specific/1.0";
-    String PREFIX = "docspec:";
+    String DOCSPEC_URI = "http://alfresco.webmedia.ee/model/document/specific/1.0";
+    String DOCSPEC_PREFIX = "docspec:";
 
-    QName MODEL = QName.createQName(URI, "documentSpecificModel");
+    String URI = DocumentDynamicModel.URI;
+    String PREFIX = DocumentDynamicModel.PREFIX;
+
+    QName MODEL = QName.createQName(DOCSPEC_URI, "documentSpecificModel");
 
     interface Assocs {
         /** Välislähetuse taotleja ja lähetuse bloki vaheline seos (dokument->taotleja => dokument->taotleja->lähetus) */

@@ -1,5 +1,15 @@
 package ee.webmedia.alfresco.document.sendout.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getClassificatorService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentLogService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentTemplateService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getFileService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getMetadataBlockBean;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getSendOutService;
+
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -9,7 +19,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -20,54 +29,33 @@ import javax.faces.model.SelectItem;
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.model.FileInfo;
-import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.security.AuthorityService;
-import org.alfresco.service.cmr.security.AuthorityType;
-import org.alfresco.service.cmr.security.PersonService;
 import org.alfresco.service.namespace.QName;
-import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
-import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.ui.common.converter.ByteSizeConverter;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.validator.EmailValidator;
-import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.addressbook.service.AddressbookService;
-import ee.webmedia.alfresco.addressbook.web.dialog.AddressbookMainViewDialog;
+import ee.webmedia.alfresco.addressbook.util.AddressbookUtil;
 import ee.webmedia.alfresco.classificator.enums.SendMode;
 import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.classificator.model.Classificator;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
-import ee.webmedia.alfresco.classificator.service.ClassificatorService;
-import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.file.model.File;
-import ee.webmedia.alfresco.document.file.service.FileService;
-import ee.webmedia.alfresco.document.log.service.DocumentLogService;
-import ee.webmedia.alfresco.document.metadata.web.MetadataBlockBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
-import ee.webmedia.alfresco.document.sendout.service.SendOutService;
-import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.web.OutboxDocumentMenuItemProcessor;
 import ee.webmedia.alfresco.document.web.UnsentDocumentMenuItemProcessor;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
-import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
-import ee.webmedia.alfresco.parameters.service.ParametersService;
-import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.template.model.DocumentTemplate;
-import ee.webmedia.alfresco.template.service.DocumentTemplateService;
-import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
@@ -87,23 +75,6 @@ public class DocumentSendOutDialog extends BaseDialogBean {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentSendOutDialog.class);
 
     private static final String[] PROP_KEYS = { "recipientName", "recipientEmail", "recipientSendMode" };
-
-    private transient GeneralService generalService;
-    private transient DocumentService documentService;
-    private transient DocumentLogService documentLogService;
-    private transient ClassificatorService classificatorService;
-    private transient ParametersService parametersService;
-    private transient DocumentTemplateService documentTemplateService;
-    private transient SendOutService sendOutService;
-    private transient SignatureService signatureService;
-    private transient FileService fileService;
-    private transient AddressbookService addressbookService;
-    private transient OrganizationStructureService organizationStructureService;
-    private transient UserService userService;
-    private transient AuthorityService authorityService;
-    private transient PersonService personService;
-    private transient MetadataBlockBean metadataBlockBean;
-    private AddressbookMainViewDialog addressbookDialog;
 
     private SendOutModel model;
     private List<SelectItem> sendModes;
@@ -149,19 +120,6 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         return false;
     }
 
-    private static final int USERS_FILTER = 0;
-    private static final int USER_GROUPS_FILTER = 1;
-    private static final int CONTACTS_FILTER = 2;
-    private static final int CONTACT_GROUPS_FILTER = 3;
-
-    public SelectItem[] getRecipientSearchFilters() {
-        return new SelectItem[] {
-                new SelectItem(USERS_FILTER, MessageUtil.getMessage("task_owner_users")),
-                new SelectItem(USER_GROUPS_FILTER, MessageUtil.getMessage("task_owner_usergroups")),
-                new SelectItem(CONTACTS_FILTER, MessageUtil.getMessage("task_owner_contacts")),
-                new SelectItem(CONTACT_GROUPS_FILTER, MessageUtil.getMessage("task_owner_contactgroups")) };
-    }
-
     public String init() {
         FacesContext context = FacesContext.getCurrentInstance();
         Node docNode = BeanHelper.getDocumentDialogHelperBean().getNode();
@@ -169,7 +127,8 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
         }
 
-        if (!DocumentDynamicModel.Types.DOCUMENT_DYNAMIC.equals(docNode.getType()) && !getMetadataBlockBean().lockOrUnlockIfNeeded(getMetadataBlockBean().isLockingAllowed())) {
+        // TODO DLSeadist ????
+        if (!DocumentCommonModel.Types.DOCUMENT.equals(docNode.getType()) && !getMetadataBlockBean().lockOrUnlockIfNeeded(getMetadataBlockBean().isLockingAllowed())) {
             return null;
         }
 
@@ -380,37 +339,10 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         if (type.equals(ContentModel.TYPE_PERSON)) {
             result = getPersonData(nodeRef);
         } else {
-            result = addressbookDialog.getContactData(nodeRef);
+            result = AddressbookUtil.getContactData(nodeRef);
         }
         result.add(model.getDefaultSendMode());
         return result;
-    }
-
-    public String[] preprocessSearchResult(String[] results, Integer filterIndex) {
-        List<String> processedResult = new ArrayList<String>();
-        for (String result : results) {
-            if (filterIndex == USERS_FILTER) {
-                // Replace user name with reference to the person node
-                NodeRef nodeRef = getPersonService().getPerson(result);
-                processedResult.add(nodeRef.toString());
-            } else if (filterIndex == USER_GROUPS_FILTER) {
-                // Add all users contained in user group and replace user names with reference to the person node
-                Set<String> auths = getAuthorityService().getContainedAuthorities(AuthorityType.USER, result, true);
-                for (String auth : auths) {
-                    NodeRef nodeRef = getPersonService().getPerson(auth);
-                    processedResult.add(nodeRef.toString());
-                }
-            } else if (filterIndex == CONTACT_GROUPS_FILTER) {
-                // Add all users contain in user group
-                List<AssociationRef> assocs = getNodeService().getTargetAssocs(new NodeRef(result), RegexQNamePattern.MATCH_ALL);
-                for (AssociationRef assoc : assocs) {
-                    processedResult.add(assoc.getTargetRef().toString());
-                }
-            } else {
-                processedResult.add(result);
-            }
-        }
-        return processedResult.toArray(new String[processedResult.size()]);
     }
 
     private List<String> getPersonData(String nodeRef) {
@@ -568,147 +500,6 @@ public class DocumentSendOutDialog extends BaseDialogBean {
 
     public SendOutModel getModel() {
         return model;
-    }
-
-    public void setDocumentService(DocumentService documentService) {
-        this.documentService = documentService;
-    }
-
-    public DocumentService getDocumentService() {
-        if (documentService == null) {
-            documentService = (DocumentService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-                    .getBean(DocumentService.BEAN_NAME);
-        }
-        return documentService;
-    }
-
-    protected DocumentLogService getDocumentLogService() {
-        if (documentLogService == null) {
-            documentLogService = (DocumentLogService) FacesContextUtils.getRequiredWebApplicationContext( //
-                    FacesContext.getCurrentInstance()).getBean(DocumentLogService.BEAN_NAME);
-        }
-        return documentLogService;
-    }
-
-    public void setDocumentTemplateService(DocumentTemplateService documentTemplateService) {
-        this.documentTemplateService = documentTemplateService;
-    }
-
-    public DocumentTemplateService getDocumentTemplateService() {
-        if (documentTemplateService == null) {
-            documentTemplateService = (DocumentTemplateService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-                    .getBean(DocumentTemplateService.BEAN_NAME);
-        }
-        return documentTemplateService;
-    }
-
-    public void setGeneralService(GeneralService generalService) {
-        this.generalService = generalService;
-    }
-
-    public GeneralService getGeneralService() {
-        if (generalService == null) {
-            generalService = (GeneralService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-                    .getBean(GeneralService.BEAN_NAME);
-        }
-        return generalService;
-    }
-
-    public void setClassificatorService(ClassificatorService classificatorService) {
-        this.classificatorService = classificatorService;
-    }
-
-    public ClassificatorService getClassificatorService() {
-        if (classificatorService == null) {
-            classificatorService = (ClassificatorService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-                    .getBean(ClassificatorService.BEAN_NAME);
-        }
-        return classificatorService;
-    }
-
-    public void setParametersService(ParametersService parametersService) {
-        this.parametersService = parametersService;
-    }
-
-    public ParametersService getParametersService() {
-        if (parametersService == null) {
-            parametersService = (ParametersService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-                    .getBean(ParametersService.BEAN_NAME);
-        }
-        return parametersService;
-    }
-
-    public void setAddressbookDialog(AddressbookMainViewDialog addressbookDialog) {
-        this.addressbookDialog = addressbookDialog;
-    }
-
-    public SendOutService getSendOutService() {
-        if (sendOutService == null) {
-            sendOutService = (SendOutService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-                    .getBean(SendOutService.BEAN_NAME);
-        }
-        return sendOutService;
-    }
-
-    public SignatureService getSignatureService() {
-        if (signatureService == null) {
-            signatureService = (SignatureService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-                    .getBean(SignatureService.BEAN_NAME);
-        }
-        return signatureService;
-    }
-
-    protected FileService getFileService() {
-        if (fileService == null) {
-            fileService = (FileService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-                    .getBean(FileService.BEAN_NAME);
-        }
-        return fileService;
-    }
-
-    protected AddressbookService getAddressbookService() {
-        if (addressbookService == null) {
-            addressbookService = (AddressbookService) FacesContextUtils.getRequiredWebApplicationContext(
-                    FacesContext.getCurrentInstance()).getBean(AddressbookService.BEAN_NAME);
-        }
-        return addressbookService;
-    }
-
-    protected UserService getUserService() {
-        if (userService == null) {
-            userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(UserService.BEAN_NAME);
-        }
-        return userService;
-    }
-
-    protected OrganizationStructureService getOrganizationStructureService() {
-        if (organizationStructureService == null) {
-            organizationStructureService = (OrganizationStructureService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(OrganizationStructureService.BEAN_NAME);
-        }
-        return organizationStructureService;
-    }
-
-    protected AuthorityService getAuthorityService() {
-        if (authorityService == null) {
-            authorityService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getAuthorityService();
-        }
-        return authorityService;
-    }
-
-    protected PersonService getPersonService() {
-        if (personService == null) {
-            personService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getPersonService();
-        }
-        return personService;
-    }
-
-    protected MetadataBlockBean getMetadataBlockBean() {
-        if (metadataBlockBean == null) {
-            metadataBlockBean = BeanHelper.getMetadataBlockBean();
-        }
-        return metadataBlockBean;
     }
 
     // END: getters / setters

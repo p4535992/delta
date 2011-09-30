@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.utils;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.faces.component.UIComponent;
@@ -61,6 +62,25 @@ public class ActionUtil {
         UIActionLink link = (UIActionLink) event.getComponent();
         Map<String, String> params = link.getParameterMap();
         return params.containsKey(key);
+    }
+
+    public static Map<String, String> getParams(ActionEvent event) {
+        Map<String, String> params = null;
+        UIComponent c = event.getComponent();
+        if (c instanceof UIActionLink) {
+            UIActionLink link = (UIActionLink) c;
+            params = link.getParameterMap();
+        } else if (c.getChildCount() != 0) { // CommandButton or something else
+            params = new HashMap<String, String>();
+            for (Object child : c.getChildren()) {
+                if (child instanceof UIParameter) {
+                    UIParameter uiParameter = (UIParameter) child;
+                    String key = uiParameter.getName();
+                    params.put(key, uiParameter.getValue().toString());
+                }
+            }
+        }
+        return params;
     }
 
 }

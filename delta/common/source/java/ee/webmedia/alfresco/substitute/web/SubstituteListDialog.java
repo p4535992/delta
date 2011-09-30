@@ -1,5 +1,9 @@
 package ee.webmedia.alfresco.substitute.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getSubstituteService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -15,10 +19,9 @@ import javax.faces.event.ActionEvent;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.security.PersonService;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.util.GUID;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
-import org.alfresco.web.bean.repository.Repository;
 import org.apache.commons.collections.Transformer;
 import org.apache.commons.collections.comparators.NullComparator;
 import org.apache.commons.collections.comparators.TransformingComparator;
@@ -27,15 +30,13 @@ import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.util.Assert;
-import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.parameters.model.Parameters;
-import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.substitute.model.Substitute;
-import ee.webmedia.alfresco.substitute.service.SubstituteService;
-import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.UserUtil;
 
 /**
  * Dialog for substitutes list.
@@ -45,11 +46,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 public class SubstituteListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
     private static final Log log = LogFactory.getLog(SubstituteListDialog.class);
-
-    private transient SubstituteService substituteService;
-    private transient PersonService personService;
-    private transient ParametersService parametersService;
-    private transient UserService userService;
 
     private NodeRef userNodeRef;
     private Map<String, Substitute> originalSubstitutes = new HashMap<String, Substitute>();
@@ -82,7 +78,7 @@ public class SubstituteListDialog extends BaseDialogBean {
         emailAddresses = new HashMap<String, String>();
         for (Substitute substitute : substitutes) {
             originalSubstitutes.put(substitute.getNodeRef().toString(), new Substitute(substitute));
-            NodeRef personRef = getPersonService().getPerson(substitute.getSubstituteId());
+            NodeRef personRef = BeanHelper.getUserService().getPerson(substitute.getSubstituteId());
             addEmailAddress(substitute, personRef);
         }
         addedSubstitutes = new HashMap<String, Substitute>();
@@ -163,7 +159,7 @@ public class SubstituteListDialog extends BaseDialogBean {
                 MessageUtil.addErrorMessage(context, "substitute_end_before_now");
             }
 
-            if (isValid && 
+            if (isValid &&
                     !getSubstituteService().findSubstitutionDutiesInPeriod(userNodeRef, substitutionStartDate, substitutionEndDate).isEmpty()) {
                 isValid = false;
                 MessageUtil.addErrorMessage(context, "substitute_substitution_while_substituting");
@@ -251,12 +247,14 @@ public class SubstituteListDialog extends BaseDialogBean {
         Assert.hasText(userName, "User name not provided");
         Assert.notNull(substitute, "Substitute not provided");
 
-        NodeRef personNodeRef = getPersonService().getPerson(userName);
-        String firstName = (String) getNodeService().getProperty(personNodeRef, ContentModel.PROP_FIRSTNAME);
-        String lastName = (String) getNodeService().getProperty(personNodeRef, ContentModel.PROP_LASTNAME);
+        NodeRef personNodeRef = BeanHelper.getUserService().getPerson(userName);
+        if (personNodeRef == null) {
+            return;
+        }
 
+        Map<QName, Serializable> personProps = getNodeService().getProperties(personNodeRef);
         substitute.setSubstituteId(userName);
-        substitute.setSubstituteName(firstName + " " + lastName);
+        substitute.setSubstituteName(UserUtil.getPersonFullName1(personProps));
         addEmailAddress(substitute, personNodeRef);
     }
 
@@ -304,34 +302,4 @@ public class SubstituteListDialog extends BaseDialogBean {
         return emailAddresses;
     }
 
-    protected SubstituteService getSubstituteService() {
-        if (substituteService == null) {
-            substituteService = (SubstituteService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(SubstituteService.BEAN_NAME);
-        }
-        return substituteService;
-    }
-
-    protected PersonService getPersonService() {
-        if (personService == null) {
-            personService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getPersonService();
-        }
-        return personService;
-    }
-
-    protected ParametersService getParametersService() {
-        if (parametersService == null) {
-            parametersService = (ParametersService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(ParametersService.BEAN_NAME);
-        }
-        return parametersService;
-    }
-
-    protected UserService getUserService() {
-        if (userService == null) {
-            userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(UserService.BEAN_NAME);
-        }
-        return userService;
-    }
 }

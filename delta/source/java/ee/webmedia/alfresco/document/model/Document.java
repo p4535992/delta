@@ -21,7 +21,7 @@ import org.springframework.web.jsf.FacesContextUtils;
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.CssStylable;
-import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.type.model.DocumentType;
@@ -95,22 +95,17 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     }
 
     public String getDocumentTypeName() {
-        // TODO DLSeadist temporary
-        if (DocumentDynamicModel.Types.DOCUMENT_DYNAMIC.equals(getType())) {
-            String documentTypeId = (String) getProperties().get(DocumentDynamicModel.Props.DOCUMENT_TYPE_ID);
-            return BeanHelper.getDocumentAdminService().getDocumentTypeName(documentTypeId);
-        }
-        final DocumentType documentType = getDocumentType();
-        return documentType != null ? documentType.getName() : null;
+        String documentTypeId = objectTypeId();
+        return BeanHelper.getDocumentAdminService().getDocumentTypeName(documentTypeId);
     }
 
-    private String getDocTypeLocalName() {
-        return getType().getLocalName();
+    private String objectTypeId() {
+        return (String) getProperties().get(Props.OBJECT_TYPE_ID);
     }
 
     @Override
     public String getCssStyleClass() {
-        return getDocTypeLocalName();
+        return objectTypeId();
     }
 
     // Basic properties that are used in document-list-dialog.jsp

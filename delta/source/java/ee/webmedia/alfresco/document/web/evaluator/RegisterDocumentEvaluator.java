@@ -1,35 +1,21 @@
 package ee.webmedia.alfresco.document.web.evaluator;
 
-import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.CHANCELLORS_ORDER;
-import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.DECREE;
-import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.ERRAND_APPLICATION_DOMESTIC;
-import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD;
-import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.INTERNAL_APPLICATION;
-import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.LEAVING_LETTER;
-import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.MANAGEMENTS_ORDER;
-import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.MINISTERS_ORDER;
-import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.PERSONELLE_ORDER_SIM;
-import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.PERSONELLE_ORDER_SMIT;
-import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.TENDERING_APPLICATION;
-import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.TRAINING_APPLICATION;
-import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.VACATION_ORDER;
-import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.VACATION_ORDER_SMIT;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 
-import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 
 import javax.faces.context.FacesContext;
 
 import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.cmr.security.PermissionService;
-import org.alfresco.service.namespace.QName;
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.workflow.service.HasNoStoppedOrInprogressWorkflowsEvaluator;
@@ -41,11 +27,6 @@ import ee.webmedia.alfresco.workflow.service.HasNoStoppedOrInprogressWorkflowsEv
  */
 public class RegisterDocumentEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 2958297435415449179L;
-    /** Document types for which registration button must not be displayed */
-    private static List<QName> deniedDocTypes = Arrays.asList(MANAGEMENTS_ORDER, CHANCELLORS_ORDER, MINISTERS_ORDER, DECREE, TRAINING_APPLICATION,
-            TENDERING_APPLICATION
-            , LEAVING_LETTER, INTERNAL_APPLICATION, ERRAND_APPLICATION_DOMESTIC, ERRAND_ORDER_ABROAD, PERSONELLE_ORDER_SIM
-            , PERSONELLE_ORDER_SMIT, VACATION_ORDER, VACATION_ORDER_SMIT);
 
     @Override
     public boolean evaluate(Node docNode) {
@@ -53,7 +34,12 @@ public class RegisterDocumentEvaluator extends BaseActionEvaluator {
         if (!new ViewStateActionEvaluator().evaluate(docNode)) {
             return false;
         }
-        if (deniedDocTypes.contains(docNode.getType())) {
+        if (!isNotRegistered(docNode)) {
+            return false;
+        }
+        BeanHelper.getDocumentService().throwIfNotDynamicDoc(docNode);
+        String docTypeId = (String) docNode.getProperties().get(Props.OBJECT_TYPE_ID);
+        if (!getDocumentAdminService().getDocumentType(docTypeId).isRegistrationEnabled()) {
             return false;
         }
         if (!new HasNoStoppedOrInprogressWorkflowsEvaluator().evaluate(docNode)) {
@@ -64,10 +50,7 @@ public class RegisterDocumentEvaluator extends BaseActionEvaluator {
         if (!documentService.isSaved(docNode.getNodeRef())) {
             return false;
         }
-        if (!docNode.hasPermission(DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA)) {
-            return false;
-        }
-        return isNotRegistered(docNode);
+        return docNode.hasPermission(DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA);
     }
 
     public static boolean isNotRegistered(Node docNode) {

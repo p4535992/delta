@@ -1,28 +1,25 @@
 package ee.webmedia.alfresco.substitute;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentTemplateService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getEmailService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
+
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 
-import javax.faces.context.FacesContext;
-
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.cmr.security.PersonService;
-import org.alfresco.web.bean.repository.Repository;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.util.Assert;
-import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.email.service.EmailException;
-import ee.webmedia.alfresco.email.service.EmailService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
-import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.substitute.web.SubstituteListDialog;
-import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
@@ -35,11 +32,6 @@ public class NotificationEmailSender implements SubstituteListDialog.Notificatio
     private static final Log log = LogFactory.getLog(NotificationEmailSender.class);
 
     private static final String EMAIL_TEMPLATE_NAME = "Teavitus asendajale.html";
-    private transient DocumentTemplateService documentTemplateService;
-    private transient EmailService emailService;
-    private transient NodeService nodeService;
-    private transient PersonService personService;
-    private transient ParametersService parametersService;
 
     @Override
     public void sendNotification(Substitute substitute) {
@@ -59,7 +51,7 @@ public class NotificationEmailSender implements SubstituteListDialog.Notificatio
         nodeRefs.put(null, substitute.getNodeRef());
         String emailBody = getDocumentTemplateService().getProcessedEmailTemplate(nodeRefs, templateNodeRef);
 
-        NodeRef personRef = getPersonService().getPerson(substituteId);
+        NodeRef personRef = BeanHelper.getUserService().getPerson(substituteId);
         if (personRef == null) {
             if (log.isDebugEnabled()) {
                 log.debug("Person '" + substituteId + "' not found, no notification email is sent");
@@ -102,41 +94,4 @@ public class NotificationEmailSender implements SubstituteListDialog.Notificatio
         }
     }
 
-    protected DocumentTemplateService getDocumentTemplateService() {
-        if (documentTemplateService == null) {
-            documentTemplateService = (DocumentTemplateService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(DocumentTemplateService.BEAN_NAME);
-        }
-        return documentTemplateService;
-    }
-
-    protected EmailService getEmailService() {
-        if (emailService == null) {
-            emailService = (EmailService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(EmailService.BEAN_NAME);
-        }
-        return emailService;
-    }
-
-    protected NodeService getNodeService() {
-        if (nodeService == null) {
-            nodeService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getNodeService();
-        }
-        return nodeService;
-    }
-
-    protected PersonService getPersonService() {
-        if (personService == null) {
-            personService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getPersonService();
-        }
-        return personService;
-    }
-
-    protected ParametersService getParametersService() {
-        if (parametersService == null) {
-            parametersService = (ParametersService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(ParametersService.BEAN_NAME);
-        }
-        return parametersService;
-    }
 }

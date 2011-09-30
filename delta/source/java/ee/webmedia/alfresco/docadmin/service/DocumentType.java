@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.docadmin.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -7,6 +8,7 @@ import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.base.BaseServiceImpl;
+import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
@@ -46,8 +48,22 @@ public class DocumentType extends BaseObject {
         return getChildren(DocumentTypeVersion.class);
     }
 
-    public ChildrenList<AssociationToDocType> getAssociationsToDocTypes() {
-        return getChildren(AssociationToDocType.class);
+    public List<? extends AssociationModel> getAssociationModels(DocTypeAssocType associationTypeEnum) {
+        if (associationTypeEnum == null) {
+            List<AssociationModel> allAssocsToDocType = new ArrayList<AssociationModel>();
+            allAssocsToDocType.addAll(getFollowupAssociation());
+            allAssocsToDocType.addAll(getReplyAssociation());
+            return allAssocsToDocType;
+        }
+        return DocTypeAssocType.FOLLOWUP == associationTypeEnum ? getFollowupAssociation() : getReplyAssociation();
+    }
+
+    public ChildrenList<FollowupAssociation> getFollowupAssociation() {
+        return getChildren(FollowupAssociation.class);
+    }
+
+    public ChildrenList<ReplyAssociation> getReplyAssociation() {
+        return getChildren(ReplyAssociation.class);
     }
 
     // Properties
@@ -131,6 +147,38 @@ public class DocumentType extends BaseObject {
 
     public void setChangeByNewDocumentEnabled(boolean changeByNewDocumentEnabled) {
         setProp(DocumentAdminModel.Props.CHANGE_BY_NEW_DOCUMENT_ENABLED, changeByNewDocumentEnabled);
+    }
+
+    public boolean isRegistrationEnabled() {
+        return getPropBoolean(DocumentAdminModel.Props.REGISTRATION_ENABLED);
+    }
+
+    public void setRegistrationEnabled(boolean registrationEnabled) {
+        setProp(DocumentAdminModel.Props.REGISTRATION_ENABLED, registrationEnabled);
+    }
+
+    public boolean isFinishDocByRegistration() {
+        return getPropBoolean(DocumentAdminModel.Props.FINISH_DOC_BY_REGISTRATION);
+    }
+
+    public void setFinishDocByRegistration(boolean finishDocByRegistration) {
+        setProp(DocumentAdminModel.Props.FINISH_DOC_BY_REGISTRATION, finishDocByRegistration);
+    }
+
+    public boolean isSendUnregistratedDocEnabled() {
+        return getPropBoolean(DocumentAdminModel.Props.SEND_UNREGISTRATED_DOC_ENABLED);
+    }
+
+    public void setSendUnregistratedDocEnabled(boolean sendUnregistratedDocEnabled) {
+        setProp(DocumentAdminModel.Props.SEND_UNREGISTRATED_DOC_ENABLED, sendUnregistratedDocEnabled);
+    }
+
+    public boolean isEditFilesOfFinishedDocEnabled() {
+        return getPropBoolean(DocumentAdminModel.Props.EDIT_FILES_OF_FINISHED_DOC_ENABLED);
+    }
+
+    public void setEditFilesOfFinishedDocEnabled(boolean editFilesOfFinishedDocEnabled) {
+        setProp(DocumentAdminModel.Props.EDIT_FILES_OF_FINISHED_DOC_ENABLED, editFilesOfFinishedDocEnabled);
     }
 
     @Override

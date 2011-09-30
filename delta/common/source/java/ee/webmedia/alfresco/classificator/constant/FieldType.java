@@ -21,7 +21,7 @@ public enum FieldType {
     /** Valikuväli */
     COMBOBOX(Props.CLASSIFICATOR, Props.CLASSIFICATOR_DEFAULT_VALUE),
     /** Täisarv */
-    INT(Props.DEFAULT_VALUE),
+    LONG(Props.DEFAULT_VALUE),
     /** Komakohaga arv */
     DOUBLE(Props.DEFAULT_VALUE),
     /** Kuupäev */

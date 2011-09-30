@@ -4,8 +4,8 @@ import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
-import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 
 /**
  * @author Kaarel Jõgeva
@@ -21,7 +21,7 @@ public class ChangeByNewDocumentEvaluator extends BaseActionEvaluator {
 
     private boolean isChangeByNewDocumentEnabled(Node node) {
         DocumentType documentType = BeanHelper.getDocumentAdminService().getDocumentType(
-                (String) node.getProperties().get(DocumentDynamicModel.Props.DOCUMENT_TYPE_ID));
+                (String) node.getProperties().get(Props.OBJECT_TYPE_ID));
 
         return documentType != null && documentType.isChangeByNewDocumentEnabled();
     }

@@ -17,6 +17,7 @@ import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.namespace.NamespacePrefixResolver;
+import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.QNameNodeMap;
 import org.alfresco.web.bean.repository.TransientNode;
@@ -50,7 +51,7 @@ public class WmNode extends TransientNode {
      */
     public WmNode(NodeRef nodeRef, QName type, Set<QName> aspects, Map<QName, Serializable> props) {
         this(nodeRef, type, aspects);
-        if (props != null && props.size() != 0) {
+        if (props != null && !props.isEmpty()) {
             for (Entry<QName, Serializable> entry : props.entrySet()) {
                 properties.put(entry.getKey(), entry.getValue());
             }
@@ -69,7 +70,7 @@ public class WmNode extends TransientNode {
     public WmNode(NodeRef nodeRef, QName type, Map<String, Object> props, Set<QName> aspects) {
         this(nodeRef, type, aspects);
 
-        if (props != null && props.size() != 0) {
+        if (props != null && !props.isEmpty()) {
             for (Entry<String, Object> entry : props.entrySet()) {
                 properties.put(entry.getKey(), entry.getValue());
             }
@@ -181,20 +182,35 @@ public class WmNode extends TransientNode {
     }
 
     public static String toString(Collection<?> collection) {
-        if (collection == null) {
-            return null;
-        }
+        return toString(collection, false);
+    }
+
+    private static String toString(Collection<?> collection, boolean printClass) {
         StringBuilder s = new StringBuilder();
+        toString(s, collection, printClass);
+        return s.toString();
+    }
+
+    private static void toString(StringBuilder s, Collection<?> collection, boolean printClass) {
+        if (collection == null) {
+            s.append("null");
+            return;
+        }
         s.append("[").append(collection.size()).append("]");
-        if (collection.size() > 0) {
+        if (!collection.isEmpty()) {
+            NamespaceService namespaceService = BeanHelper.getNamespaceService();
             for (Object o : collection) {
                 s.append("\n    ");
-                if (o != null) {
-                    s.append(StringUtils.replace(o.toString(), "\n", "\n    "));
+                if (printClass) {
+                    toStringWithClass(s, o, namespaceService);
+                } else {
+                    if (o != null) {
+                        s.append(StringUtils.replace(o.toString(), "\n", "\n    "));
+                    }
                 }
             }
         }
-        return s.toString();
+        return;
     }
 
     public static String toString(Collection<QName> collection, NamespacePrefixResolver namespacePrefixResolver) {
@@ -205,7 +221,7 @@ public class WmNode extends TransientNode {
         Collections.sort(list);
         StringBuilder s = new StringBuilder();
         s.append("[").append(list.size()).append("]");
-        if (list.size() > 0) {
+        if (!list.isEmpty()) {
             for (QName o : list) {
                 s.append("\n    ");
                 s.append(o.toPrefixString(namespacePrefixResolver));
@@ -225,31 +241,45 @@ public class WmNode extends TransientNode {
         Map<QName, Serializable> map = new TreeMap<QName, Serializable>(collection);
         StringBuilder s = new StringBuilder();
         s.append("[").append(map.size()).append("]");
-        if (map.size() > 0) {
+        if (!map.isEmpty()) {
             for (Entry<QName, Serializable> entry : map.entrySet()) {
                 s.append("\n    ");
                 s.append(entry.getKey().toPrefixString(namespacePrefixResolver));
-                s.append("=[");
-                Serializable value = entry.getValue();
-                if (value == null) {
-                    s.append("null]");
-                } else {
-                    Class<? extends Serializable> valueClass = value.getClass();
-                    String className = valueClass.getName();
-                    if (valueClass.isPrimitive() || className.startsWith("java.lang.") || NodeRef.class.equals(valueClass) || QName.class.equals(valueClass)) {
-                        s.append(valueClass.getSimpleName());
-                    } else {
-                        s.append(className);
-                    }
-                    s.append("]");
-                    if (value instanceof QName) {
-                        value = ((QName) value).toPrefixString(namespacePrefixResolver);
-                    }
-                    s.append(value);
-                }
+                s.append("=");
+                toStringWithClass(s, entry.getValue(), namespacePrefixResolver);
             }
         }
         return s.toString();
+    }
+
+    public static String toStringWithClass(Object value) {
+        StringBuilder s = new StringBuilder();
+        toStringWithClass(s, value, BeanHelper.getNamespaceService());
+        return s.toString();
+    }
+
+    private static void toStringWithClass(StringBuilder s, Object value, NamespacePrefixResolver namespacePrefixResolver) {
+        s.append("[");
+        if (value == null) {
+            s.append("null]");
+        } else {
+            Class<? extends Object> valueClass = value.getClass();
+            String className = valueClass.getName();
+            if (valueClass.isPrimitive() || className.startsWith("java.lang.") || NodeRef.class.equals(valueClass) || QName.class.equals(valueClass)) {
+                s.append(valueClass.getSimpleName());
+            } else {
+                s.append(className);
+            }
+            s.append("]");
+            if (value instanceof QName) {
+                value = ((QName) value).toPrefixString(namespacePrefixResolver);
+            }
+            if (value instanceof Collection) {
+                toString(s, (Collection<?>) value, true);
+            } else {
+                s.append(StringUtils.replace(value.toString(), "\n", "\n    "));
+            }
+        }
     }
 
     public static String toString(Map<? extends Object, ? extends Collection<?>> map) {
@@ -258,7 +288,7 @@ public class WmNode extends TransientNode {
         }
         StringBuilder s = new StringBuilder();
         s.append("[").append(map.size()).append("]");
-        if (map.size() > 0) {
+        if (!map.isEmpty()) {
             for (Entry<? extends Object, ? extends Collection<?>> entry : map.entrySet()) {
                 s.append("\n    ");
                 s.append(entry.getKey());

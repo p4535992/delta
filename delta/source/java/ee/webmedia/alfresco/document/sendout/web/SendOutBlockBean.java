@@ -28,7 +28,7 @@ public class SendOutBlockBean implements DocumentDynamicBlock {
     private List<SendInfo> sendInfos;
 
     @Override
-    public void reset(DialogDataProvider provider) {
+    public void resetOrInit(DialogDataProvider provider) {
         if (provider == null) {
             reset();
         } else {

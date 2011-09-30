@@ -21,7 +21,11 @@
          <parameter name="enumClass"><value>ee.webmedia.alfresco.classificator.constant.FieldType</value></parameter>
       </constraint>
 
-      <constraint name="docadmin:documentTypeId" type="REGEX">
+      <constraint name="docadmin:mappingRestriction" type="ee.webmedia.alfresco.common.constraint.EnumConstraint">
+         <parameter name="enumClass"><value>ee.webmedia.alfresco.classificator.constant.MappingRestriction</value></parameter>
+      </constraint>
+
+      <constraint name="docadmin:onlyLettersConstraint" type="REGEX">
          <parameter name="expression"><value><![CDATA[^[a-zA-Z]+$]]></value></parameter>
          <parameter name="requiresMatch"><value>true</value></parameter>
       </constraint>
@@ -45,7 +49,7 @@
                   <mandatory>false</mandatory>
                   <many>true</many>
                </target>
-               <duplicate>false</duplicate>
+               <duplicate>false</duplicate><!-- docadmin:documentTypeId -->
             </child-association>
          </associations>
          <mandatory-aspects>
@@ -60,7 +64,7 @@
                <type>d:text</type>
                <mandatory enforced="true">true</mandatory>
                <constraints>
-                  <constraint ref="docadmin:documentTypeId" />
+                  <constraint ref="docadmin:onlyLettersConstraint" />
                </constraints>
             </property>
             <property name="docadmin:used">
@@ -131,18 +135,29 @@
                   <mandatory>true</mandatory>
                   <many>true</many>
                </target>
-               <duplicate>false</duplicate>
+               <duplicate>false</duplicate><!-- docadmin:versionNr -->
             </child-association>
-            <child-association name="docadmin:associationToDocType">
+            <child-association name="docadmin:followupAssociation">
                <source>
                   <mandatory>true</mandatory>
                   <many>false</many>
                </source>
                <target>
-                  <class>docadmin:associationToDocType</class>
+                  <class>docadmin:followupAssociation</class>
                   <many>true</many>
                </target>
-               <duplicate>false</duplicate>
+               <duplicate>false</duplicate><!-- docadmin:docType -->
+            </child-association>
+            <child-association name="docadmin:replyAssociation">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docadmin:replyAssociation</class>
+                  <many>true</many>
+               </target>
+               <duplicate>false</duplicate><!-- docadmin:docType -->
             </child-association>
          </associations>
          <mandatory-aspects>
@@ -184,7 +199,7 @@
          <properties>
             <property name="docadmin:fieldDefinitionIds">
                <!-- needed only for fieldGroup stored under fieldGroupDefinitions -->
-               <type>d:qname</type>
+               <type>d:text</type>
                <multiple>true</multiple>
             </property>
             <property name="docadmin:readonlyFieldsName">
@@ -224,9 +239,12 @@
       <type name="docadmin:field">
          <parent>sys:base</parent>
          <properties>
-            <property name="docadmin:fieldId"><!-- XXX: speci's viidatakse sellele, kui "id" väljale -->
-               <type>d:qname</type>
+            <property name="docadmin:fieldId">
+               <type>d:text</type>
                <mandatory enforced="true">true</mandatory>
+               <constraints>
+                  <constraint ref="docadmin:onlyLettersConstraint" />
+               </constraints>
             </property>
             <property name="docadmin:mandatory">
                <type>d:boolean</type>
@@ -256,6 +274,9 @@
             <property name="docadmin:defaultDateSysdate">
                <type>d:boolean</type>
             </property>
+            <property name="docadmin:defaultUserLoggedIn">
+               <type>d:boolean</type>
+            </property>
             <property name="docadmin:defaultSelected">
                <type>d:boolean</type>
             </property>
@@ -276,6 +297,15 @@
             <property name="docadmin:removableFromSystematicFieldGroup">
                <type>d:boolean</type>
                <default>true</default>
+            </property>
+            <property name="docadmin:originalFieldId">
+               <type>d:text</type>
+            </property>
+            <property name="docadmin:mappingRestriction">
+               <type>d:text</type>
+               <constraints>
+                  <constraint ref="docadmin:mappingRestriction" />
+               </constraints>
             </property>
             <!-- if you add new properties, update MetadataItemCompareUtil.getFieldComparator() -->
          </properties>
@@ -342,27 +372,47 @@
          </mandatory-aspects>
       </type>
 
-      <type name="docadmin:associationToDocType">
+      <type name="docadmin:associationModel">
          <parent>sys:base</parent>
          <properties>
-            <property name="docadmin:associationType">
-               <type>d:text</type>
-            </property>
             <property name="docadmin:docType">
                <type>d:text</type>
                <mandatory enforced="true">true</mandatory>
             </property>
          </properties>
+         <associations>
+            <child-association name="docadmin:fieldMapping">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docadmin:fieldMapping</class>
+                  <many>true</many>
+               </target>
+               <duplicate>false</duplicate><!-- fromField -->
+            </child-association>
+         </associations>
       </type>
 
-      <type name="docadmin:associatedFields">
+      <type name="docadmin:followupAssociation">
+         <parent>docadmin:associationModel</parent>
+      </type>
+
+      <type name="docadmin:replyAssociation">
+         <parent>docadmin:associationModel</parent>
+      </type>
+
+      <type name="docadmin:fieldMapping">
          <parent>sys:base</parent>
          <properties>
             <property name="docadmin:fromField">
-               <type>d:qname</type>
+               <type>d:text</type>
+               <mandatory enforced="true">true</mandatory>
             </property>
             <property name="docadmin:toField">
-               <type>d:qname</type>
+               <type>d:text</type>
+               <mandatory enforced="true">true</mandatory>
             </property>
          </properties>
       </type>
@@ -370,6 +420,22 @@
    </types>
 
    <aspects>
+
+      <aspect name="docadmin:object">
+         <properties>
+            <property name="docadmin:objectTypeId">
+               <type>d:text</type>
+               <mandatory enforced="true">true</mandatory>
+               <constraints>
+                  <constraint ref="docadmin:onlyLettersConstraint" />
+               </constraints>
+            </property>
+            <property name="docadmin:objectTypeVersionNr">
+               <type>d:int</type>
+               <mandatory enforced="true">true</mandatory>
+            </property>
+         </properties>
+      </aspect>
 
       <aspect name="docadmin:fieldGroupContainer">
          <associations>
@@ -383,9 +449,6 @@
                   <mandatory>false</mandatory>
                   <many>true</many>
                </target>
-<!-- FIXME DLSeadist kas võiks ka unikaalne path olla? näiteks name, kui see on unikaalne? 
-               <duplicate>false</duplicate>
--->
             </child-association>
          </associations>
       </aspect>
@@ -402,7 +465,7 @@
                   <mandatory>false</mandatory>
                   <many>true</many>
                </target>
-               <duplicate>false</duplicate><!-- path'is(assocName) on fieldId -->
+               <duplicate>false</duplicate><!-- fieldId -->
             </child-association>
          </associations>
       </aspect>
@@ -419,7 +482,7 @@
                   <mandatory>false</mandatory>
                   <many>true</many>
                </target>
-               <duplicate>false</duplicate><!-- path'is(assocName) on fieldId -->
+               <duplicate>false</duplicate><!-- fieldId -->
             </child-association>
          </associations>
       </aspect>
@@ -486,9 +549,6 @@
                <type>d:boolean</type>
                <mandatory enforced="true">true</mandatory>
                <default>true</default>
-            </property>
-            <property name="docadmin:defaultUserLoggedIn">
-               <type>d:boolean</type>
             </property>
             <property name="docadmin:mandatoryForVol">
                <type>d:boolean</type>

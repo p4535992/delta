@@ -156,14 +156,32 @@ public class SearchUtil {
 
     // Low-level generation
 
-    public static String generatePropertyExactQuery(QName documentPropName, String value, boolean escape) {
+    /**
+     * @param propName
+     * @param acceptablePropertyValues
+     * @param escape - should values be escaped?
+     * @return Lucene query string that accepts any given property value for given property
+     */
+    public static String generatePropertyExactQuery(QName propName, Collection<String> acceptablePropertyValues, boolean escape) {
+        List<String> queryParts = new ArrayList<String>();
+        for (String value : acceptablePropertyValues) {
+            queryParts.add(generatePropertyExactQuery(propName, value, escape));
+        }
+        return joinQueryPartsOr(queryParts);
+    }
+
+    public static String generatePropertyExactQuery(QName propName, String value, boolean escape) {
         if (StringUtils.isBlank(value)) {
             return null;
         }
         if (escape) {
             value = QueryParser.escape(stripCustom(value));
         }
-        return "@" + Repository.escapeQName(documentPropName) + ":\"" + value + "\"";
+        return "@" + Repository.escapeQName(propName) + ":\"" + value + "\"";
+    }
+
+    public static String generatePropertyExactNotQuery(QName documentPropName, String value, boolean escape) {
+        return "NOT " + generatePropertyExactQuery(documentPropName, value, escape);
     }
 
     private static String generatePropertyNotEmptyQuery(QName documentPropName) {
@@ -210,16 +228,16 @@ public class SearchUtil {
 
     // High-level generation
 
-    public static String generateTypeQuery(QName... documentTypes) {
-        return generateTypeQuery(Arrays.asList(documentTypes));
+    public static String generateTypeQuery(QName... nodeTypes) {
+        return generateTypeQuery(Arrays.asList(nodeTypes));
     }
 
-    public static String generateTypeQuery(Collection<QName> documentTypes) {
-        if (documentTypes == null || documentTypes.size() == 0) {
+    public static String generateTypeQuery(Collection<QName> nodeTypes) {
+        if (nodeTypes == null || nodeTypes.isEmpty()) {
             return null;
         }
-        List<String> queryParts = new ArrayList<String>(documentTypes.size());
-        for (QName documentType : documentTypes) {
+        List<String> queryParts = new ArrayList<String>(nodeTypes.size());
+        for (QName documentType : nodeTypes) {
             queryParts.add("TYPE:" + Repository.escapeQName(documentType));
         }
         return joinQueryPartsOr(queryParts, false);
@@ -230,7 +248,7 @@ public class SearchUtil {
     }
 
     public static String generateNotTypeQuery(List<QName> documentTypes) {
-        if (documentTypes == null || documentTypes.size() == 0) {
+        if (documentTypes == null || documentTypes.isEmpty()) {
             return null;
         }
         List<String> queryParts = new ArrayList<String>(documentTypes.size());

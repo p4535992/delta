@@ -58,12 +58,13 @@
 	</path>
 
 	<path id="classpath.test.junit">
-		<path refid="classpath" />
 		<path refid="classpath.test.base" />
-		<fileset dir="${common.dir.lib.server}" includes="**/*.jar" />
+		<path refid="classpath" />
 	</path>
 
 	<path id="classpath.test.compile">
+		<path refid="classpath.test.base" />
+
 		<!-- XXX: järgnevaid kolme fileset'i ei saa asendada viitega 
       <path refid="classpath" />, 
       kuna mingi sama nimega klass kahes jar'is(common.dir.lib.dev ja project.dir.exploded.lib kataloogides), ühte vaja ühel, teist teisel juhul 
@@ -72,8 +73,6 @@
 		<fileset dir="${project.dir.exploded.lib}" includes="**/*.jar" />
 		<fileset dir="${common.basedir}/lib-dev-${appserver}" includes="**/*.jar" />
 		<fileset dir="${project.dir.lib.dev}" includes="**/*.jar" />
-
-		<path refid="classpath.test.base" />
 	</path>
 
 
@@ -343,6 +342,9 @@
 		</javac>
 	</target>
 
+    <!-- TODO Problem: while testing, alfresco doesn't load alfresco-global.properties,
+         so AMR test fails because ${amr.org.id} has no value -->
+
 	<target name="test" depends="compile-test" description="Run test">
 		<delete dir="${project.dir.test.reports}" failonerror="false" />
 		<mkdir dir="${project.dir.test.reports}" />
@@ -391,6 +393,7 @@
 	</target>
 
 	<target name="singleClassTest" description="Run test" depends="compile-test">
+		<delete dir="${project.dir.test.reports}" failonerror="false" />
 		<mkdir dir="${project.dir.test.reports}" />
 		<property name="test.single.out" value="build/test/reports/TEST-${classToTest}" />
 		<junit printsummary="yes" fork="yes" haltonfailure="yes">

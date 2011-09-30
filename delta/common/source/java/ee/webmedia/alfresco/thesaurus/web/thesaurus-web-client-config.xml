@@ -6,6 +6,7 @@
             <label-id>thesaurus_export</label-id>
             <image>/images/icons/versioned_properties.gif</image>
             <action-listener>#{ThesaurusListDialog.export}</action-listener>
+            <target>no_wait_workaround</target>
          </action>
          
          <action id="thesaurus_import">
@@ -30,6 +31,19 @@
             <action-listener>#{ThesaurusDetailsDialog.addKeyword}</action-listener>
          </action>
 
+         <action id="thesaurus_delete">
+            <evaluator>ee.webmedia.alfresco.thesaurus.web.ThesaurusDeleteEvaluator</evaluator>
+            <label-id>thesaurus_delete_short</label-id>
+            <image>/images/icons/delete.gif</image>
+            <action-listener>#{DeleteDialog.setupDeleteDialog}</action-listener>
+            <params>
+               <param name="nodeRef">#{actionContext.nodeRef}</param>
+               <param name="confirmMessagePlaceholder">#{actionContext.name}</param>
+               <param name="dialogsToClose">2</param>
+            </params>
+            <action>dialog:deleteDialog</action>
+         </action>
+
          <action-group id="list_actions_thesaurus">
             <action idref="thesaurus_add_new" />
             <action idref="thesaurus_import" />
@@ -38,6 +52,7 @@
          
          <action-group id="details_actions_thesaurus">
             <action idref="thesaurus_add_keyword" />
+            <action idref="thesaurus_delete" />
          </action-group>
 
       </actions>
@@ -46,7 +61,7 @@
             icon="/images/icons/versioned_properties_large.gif" actions-config-id="list_actions_thesaurus" title-id="thesauri" show-ok-button="false" />
          
          <dialog name="thesaurusDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/thesaurus/web/thesaurus-details-dialog.jsp" managed-bean="ThesaurusDetailsDialog"
-            icon="/images/icons/versioned_properties_large.gif" actions-config-id="details_actions_thesaurus" title-id="thesaurus_details" show-ok-button="true" />
+            icon="/images/icons/versioned_properties_large.gif" show-ok-button="true" />
             
          <dialog name="thesaurusImportDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/thesaurus/web/thesaurus-import-dialog.jsp" managed-bean="ThesaurusImportDialog"
             icon="/images/icons/versioned_properties_large.gif" title-id="thesaurus_import" show-ok-button="true" />

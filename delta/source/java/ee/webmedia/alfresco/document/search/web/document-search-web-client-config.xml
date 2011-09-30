@@ -57,10 +57,10 @@
          <show-property name="docsearch:case" display-label-id="document_search_case" component-generator="GeneralSelectorGenerator" selectionItems="#{DocumentSearchDialog.getCases}" converter="ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter" />
          <show-property name="docsearch:docStatus" display-label-id="document_docStatus" component-generator="ClassificatorSelectorGenerator" classificatorName="documentStatus" />
          <show-property name="docsearch:senderName" display-label-id="document_sender"
-            pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{AddressbookDialog.getContactData}" dialogTitleId="contacts_search_title" showHeaders="false"
+            pickerCallback="#{AddressbookSearchBean.searchContacts}" setterCallback="#{AddressbookSearchBean.getContactData}" dialogTitleId="contacts_search_title" showHeaders="false"
             component-generator="MultiValueEditorGenerator" addLabelId="document_search_add_sender" propsGeneration="docsearch:senderName¤TextAreaGenerator¤styleClass=expand19-200" />
          <show-property name="docsearch:recipientName" display-label-id="document_allRecipients"
-            pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{AddressbookDialog.getContactData}" dialogTitleId="contacts_search_title" showHeaders="false"
+            pickerCallback="#{AddressbookSearchBean.searchContacts}" setterCallback="#{AddressbookSearchBean.getContactData}" dialogTitleId="contacts_search_title" showHeaders="false"
             component-generator="MultiValueEditorGenerator" addLabelId="document_add_recipient" propsGeneration="docsearch:recipientName¤TextAreaGenerator¤styleClass=expand19-200" />
          <show-property name="docsearch:docName" display-label-id="document_docName" component-generator="TextAreaGenerator" styleClass="expand19-200" />
          <show-property name="docsearch:senderRegNumber" display-label-id="document_senderRegNumber" component-generator="TextAreaGenerator" styleClass="expand19-200" />
@@ -93,7 +93,7 @@
          <show-property name="docsearch:procurementType" display-label-id="document_procurementType" component-generator="ClassificatorSelectorGenerator" classificatorName="procurementType" />
          <show-property name="docsearch:invoiceNumber" display-label-id="document_invoiceNumber" component-generator="TextAreaGenerator" styleClass="expand19-200" />
          <show-property name="docsearch:invoiceDateBegin" display-label-id="document_invoiceDate" component-generator="InlinePropertyGroupGenerator" props="docsearch:invoiceDateBegin||styleClass=date,docsearch:invoiceDateEnd||styleClass=date" textId="document_search_from_to" />
-         <show-property name="docsearch:sellerPartyName" display-label-id="document_sellerPartyName" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{DocumentSearchDialog.setSellerPartyName}" dialogTitleId="contacts_search_title" />
+         <show-property name="docsearch:sellerPartyName" display-label-id="document_sellerPartyName" component-generator="SearchGenerator" pickerCallback="#{AddressbookSearchBean.searchContacts}" setterCallback="#{DocumentSearchDialog.setSellerPartyName}" dialogTitleId="contacts_search_title" />
          <show-property name="docsearch:sellerPartyRegNumber" display-label-id="document_sellerPartyRegNumber" component-generator="TextAreaGenerator" styleClass="expand19-200" />
          <show-property name="docsearch:totalSumLowest" display-label-id="document_totalSum" optionsSeparator="¤" component-generator="InlinePropertyGroupGenerator" props="docsearch:totalSumLowest¤¤jsfConverter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter¤styleClass=medium,docsearch:totalSumHighest¤¤jsfConverter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter¤styleClass=medium" textId="document_search_from_to" />
          <show-property name="docsearch:fund" display-label-id="transaction_fund" component-generator="DimensionSelectorGenerator" dimensionName="invoiceFunds" styleClass="noOptionTitle" descriptionAsLabel="true" />

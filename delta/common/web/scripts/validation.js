@@ -229,7 +229,26 @@ function validateName(control, message, showMessage)
  * 
  * @return true if the date is valid
  */
-function validateDate(control, message, showMessage)
+function validateDate(control, message, showMessage){
+   // http://www.regexlib.com/REDetails.aspx?regexp_id=762
+   var pattern = 
+      /^(?=\d)(?:(?!(?:(?:0?[5-9]|1[0-4])(?:\.|-|\/)10(?:\.|-|\/)(?:1582))|(?:(?:0?[3-9]|1[0-3])(?:\.|-|\/)0?9(?:\.|-|\/)(?:1752)))(31(?!(?:\.|-|\/)(?:0?[2469]|11))|30(?!(?:\.|-|\/)0?2)|(?:29(?:(?!(?:\.|-|\/)0?2(?:\.|-|\/))|(?=\D0?2\D(?:(?!000[04]|(?:(?:1[^0-6]|[2468][^048]|[3579][^26])00))(?:(?:(?:\d\d)(?:[02468][048]|[13579][26])(?!\x20BC))|(?:00(?:42|3[0369]|2[147]|1[258]|09)\x20BC))))))|2[0-8]|1\d|0?[1-9])([-.\/])(1[012]|(?:0?[1-9]))\2((?=(?:00(?:4[0-5]|[0-3]?\d)\x20BC)|(?:\d{4}(?:$|(?=\x20\d)\x20)))\d{4}(?:\x20BC)?)(?:$|(?=\x20\d)\x20))?$/;
+   return validateStringByRegexp(control, message, showMessage, pattern);
+}
+
+/**
+ * Ensures the value of the 'control' is a valid time in form HH:MM.
+ * 
+ * @return true if the time is valid
+ */
+function validateTime(control, message, showMessage){
+   // http://www.regexlib.com/REDetails.aspx?regexp_id=59
+   var pattern = 
+      /^([0-1][0-9]|[2][0-3]):([0-5][0-9])$/;
+   return validateStringByRegexp(control, message, showMessage, pattern);
+}
+
+function validateStringByRegexp(control, message, showMessage, regExp)
 {
    var result = true;
    
@@ -241,10 +260,7 @@ function validateDate(control, message, showMessage)
    	   return true;
       }
       
-      // http://www.regexlib.com/REDetails.aspx?regexp_id=762
-      var pattern = 
-   /^(?=\d)(?:(?!(?:(?:0?[5-9]|1[0-4])(?:\.|-|\/)10(?:\.|-|\/)(?:1582))|(?:(?:0?[3-9]|1[0-3])(?:\.|-|\/)0?9(?:\.|-|\/)(?:1752)))(31(?!(?:\.|-|\/)(?:0?[2469]|11))|30(?!(?:\.|-|\/)0?2)|(?:29(?:(?!(?:\.|-|\/)0?2(?:\.|-|\/))|(?=\D0?2\D(?:(?!000[04]|(?:(?:1[^0-6]|[2468][^048]|[3579][^26])00))(?:(?:(?:\d\d)(?:[02468][048]|[13579][26])(?!\x20BC))|(?:00(?:42|3[0369]|2[147]|1[258]|09)\x20BC))))))|2[0-8]|1\d|0?[1-9])([-.\/])(1[012]|(?:0?[1-9]))\2((?=(?:00(?:4[0-5]|[0-3]?\d)\x20BC)|(?:\d{4}(?:$|(?=\x20\d)\x20)))\d{4}(?:\x20BC)?)(?:$|(?=\x20\d)\x20))?$/;
-      var matches = pattern.test(control.value);
+      var matches = regExp.test(control.value);
       
       if (!matches)
       {

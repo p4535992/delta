@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.namespace.QName;
 import org.apache.commons.collections.comparators.ComparatorChain;
 import org.apache.commons.collections.comparators.NullComparator;
 import org.apache.commons.collections.comparators.TransformingComparator;
@@ -38,7 +37,7 @@ public class MetadataItemCompareUtil {
     private static final Comparator<Field> FIELD_COMPARATOR = getFieldComparator();
     private static final Comparator<FieldDefinition> FIELD_DEFINITION_COMPARATOR = getFieldDefinitionComparator(); // FIXME DLSeadist
 
-    public static boolean clidrenListChanged(ChildrenList<MetadataItem> savedMetadata, ChildrenList<MetadataItem> unSavedMetadata) {
+    public static boolean isClidrenListChanged(ChildrenList<MetadataItem> savedMetadata, ChildrenList<MetadataItem> unSavedMetadata) {
         if (unSavedMetadata.size() != savedMetadata.size()) {
             return true; // at least one field/fieldGroup/separatorLine is added or removed
         }
@@ -51,7 +50,7 @@ public class MetadataItemCompareUtil {
         for (MetadataItem metadataItem : unSavedMetadata) {
             Assert.isTrue(metadataItem.isUnsaved());
             NodeRef clonedFromNodeRef = metadataItem.getCopyFromPreviousDocTypeVersion();
-            if (clonedFromNodeRef==null) {
+            if (clonedFromNodeRef == null) {
                 return true; // new metadataItem is added
             }
             unSavedNodeRefOriginals.put(clonedFromNodeRef, metadataItem);
@@ -159,12 +158,6 @@ public class MetadataItemCompareUtil {
         chain.addComparator(new TransformingComparator(new ComparableTransformer<FieldAndGroupBase>() {
             @Override
             public Comparable<?> tr(FieldAndGroupBase input) {
-                return input.isDefaultUserLoggedIn();
-            }
-        }, new NullComparator()));
-        chain.addComparator(new TransformingComparator(new ComparableTransformer<FieldAndGroupBase>() {
-            @Override
-            public Comparable<?> tr(FieldAndGroupBase input) {
                 return input.isMandatoryForVol();
             }
         }, new NullComparator()));
@@ -228,6 +221,12 @@ public class MetadataItemCompareUtil {
         chain.addComparator(new TransformingComparator(new ComparableTransformer<Field>() {
             @Override
             public Comparable<?> tr(Field input) {
+                return input.isDefaultUserLoggedIn();
+            }
+        }, new NullComparator()));
+        chain.addComparator(new TransformingComparator(new ComparableTransformer<Field>() {
+            @Override
+            public Comparable<?> tr(Field input) {
                 return input.isDefaultSelected();
             }
         }, new NullComparator()));
@@ -261,6 +260,18 @@ public class MetadataItemCompareUtil {
                 return input.isRemovableFromSystematicFieldGroup();
             }
         }, new NullComparator()));
+        chain.addComparator(new TransformingComparator(new ComparableTransformer<Field>() {
+            @Override
+            public Comparable<?> tr(Field input) {
+                return input.getMappingRestrictionEnum();
+            }
+        }, new NullComparator()));
+        chain.addComparator(new TransformingComparator(new ComparableTransformer<Field>() {
+            @Override
+            public Comparable<?> tr(Field input) {
+                return input.getOriginalFieldId();
+            }
+        }, new NullComparator()));
         return chain;
     }
 
@@ -269,7 +280,7 @@ public class MetadataItemCompareUtil {
         chain.addComparator(new TransformingComparator(new ComparableTransformer<FieldGroup>() {
             @Override
             public Comparable<?> tr(FieldGroup input) {
-                return new CollectionComparator<QName>(input.getFieldDefinitionIds());
+                return new CollectionComparator<String>(input.getFieldDefinitionIds());
             }
         }, new NullComparator()));
         chain.addComparator(new TransformingComparator(new ComparableTransformer<FieldGroup>() {

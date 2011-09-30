@@ -8,15 +8,15 @@
 <%@ page isELIgnored="false"%>
 
 <a:panel id="draft-new-panel" label="Loo uus dokument mustandite alla" styleClass="panel-100" progressive="true">
-   <h:commandButton id="testType1" value="Uus dokument tüüpi 'type1'" type="submit" actionListener="#{DocumentDynamicDialog.createDraft}" action="#{DocumentDynamicDialog.action}">
+   <h:commandButton id="testType1" value="Uus dokument tüüpi 'type1'" type="submit" actionListener="#{DocumentDynamicDialog.createDraft}" >
       <f:param id="testType1param" name="documentTypeId" value="type1"/>
    </h:commandButton>
          <h:outputText value=" " />
-   <h:commandButton id="testType2" value="Uus dokument tüüpi 'type2'" type="submit" actionListener="#{DocumentDynamicDialog.createDraft}" action="#{DocumentDynamicDialog.action}">
+   <h:commandButton id="testType2" value="Uus dokument tüüpi 'type2'" type="submit" actionListener="#{DocumentDynamicDialog.createDraft}" >
       <f:param id="testType2param" name="documentTypeId" value="type2"/>
    </h:commandButton>
          <h:outputText value=" " />
-   <h:commandButton id="testType3" value="Uus dokument tüüpi 'type3'" type="submit" actionListener="#{DocumentDynamicDialog.createDraft}" action="#{DocumentDynamicDialog.action}">
+   <h:commandButton id="testType3" value="Uus dokument tüüpi 'type3'" type="submit" actionListener="#{DocumentDynamicDialog.createDraft}" >
       <f:param id="testType3param" name="documentTypeId" value="type3"/>
    </h:commandButton>
 </a:panel>
@@ -29,11 +29,11 @@
          <f:facet name="header">
             <a:sortLink id="col1-sort" label="Tegevused" value="docName" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col1-text-1" value="Vaata" actionListener="#{DocumentDynamicDialog.openView}" action="#{DocumentDynamicDialog.action}">
+         <a:actionLink id="col1-text-1" value="Vaata" actionListener="#{DocumentDynamicDialog.openView}">
             <f:param name="nodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
          <h:outputText value=" " />
-         <a:actionLink id="col1-text-2" value="Muuda" actionListener="#{DocumentDynamicDialog.openEdit}" action="#{DocumentDynamicDialog.action}">
+         <a:actionLink id="col1-text-2" value="Muuda" actionListener="#{DocumentDynamicDialog.openEdit}">
             <f:param name="nodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
          <h:outputText value=" " />

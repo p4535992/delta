@@ -14,9 +14,11 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.activation.DataHandler;
 import javax.mail.internet.ContentType;
@@ -77,7 +79,7 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
      *    java.io.FileNotFoundException: C:\Programs\mso-input\2010-09-24-06-04-28-799.success (The process cannot access the file because it is being used by another process)
      *    tuli selle rea peale: new FileInputStream(successFile);
      */
-    
+
     /*
      * TXT:
      * Converted input file encoding iso-8859-15 (1629 bytes) -> UTF-8 (1655 bytes) - OK
@@ -97,7 +99,7 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
     // ==== NOTES ====
 
     // NB! for some HTML input files, Word uses "User name" value (from MS Office General Options) in PDF "Author" field
-    //     (it appear this is for such HTML files which do not use 
+    //     (it appear this is for such HTML files which do not use
     // Otherwise, PDF "Author" field is left empty for all TXT and most of HTML input files, which is our wanted behaviour
     // Resolution: added instructions to installation guide to set User Name of MS Office to DELTA
 
@@ -114,6 +116,7 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
     public static final String MACRO_CONVERT_TO_PDF = "ConvertToPdf";
     public static final String MACRO_REPLACE_FORMULAS = "ReplaceFormulas";
     public static final String MACRO_REPLACE_FORMULAS_AND_CONVERT_TO_PDF = "ReplaceFormulasAndConvertToPdf";
+    public static final String MACRO_MODIFIED_FORMULAS = "ModifiedFormulas";
 
     private static class MsoProgram {
         private String programName;
@@ -226,7 +229,50 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
         log.info(s.toString());
     }
 
+    @Override
+    public synchronized ModifiedFormulasOutput getModifiedFormulas(MsoDocumentInput msoDocumentInput) throws Exception {
+        reset();
+        Exception exception = null;
+        long startTime = System.currentTimeMillis();
+        try {
+            if (log.isDebugEnabled()) {
+                log.debug("Start request: " + filename);
+            }
+            cleanWorkFolder();
+            MsoProgram program = saveFile(msoDocumentInput);
+            programName = program.getProgramName();
+            macroName = MACRO_MODIFIED_FORMULAS;
+
+            startConvertAndWaitToComplete(program, null);
+
+            @SuppressWarnings("unchecked")
+            List<String> lines = FileUtils.readLines(buildOutput());
+            Set<Formula> formulas = new HashSet<Formula>(lines.size());
+            for (String line : lines) {
+                String[] split = line.split("=");
+                Formula f = new Formula();
+                f.setKey(split[0]);
+                f.setValue(split[1]);
+                formulas.add(f);
+            }
+
+            ModifiedFormulasOutput output = new ModifiedFormulasOutput();
+            output.setModifiedFormulas(formulas);
+            if (log.isDebugEnabled()) {
+                log.debug("End request: " + filename);
+            }
+            return output;
+
+        } catch (Exception e) {
+            exception = e;
+            throw new Exception("Error processing request " + filename + " : " + e.getMessage(), e);
+        } finally {
+            writeStatistics(exception, startTime);
+        }
+    }
+
     // Only one request can be processed simultaneously
+    @Override
     public synchronized MsoPdfOutput convertToPdf(MsoDocumentInput msoDocumentInput) throws Exception {
         reset();
         Exception exception = null;
@@ -258,6 +304,7 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
         }
     }
 
+    @Override
     public synchronized MsoDocumentOutput replaceFormulas(MsoDocumentAndFormulasInput input) throws Exception {
         reset();
         Exception exception = null;
@@ -295,6 +342,7 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
         }
     }
 
+    @Override
     public synchronized MsoDocumentAndPdfOutput replaceFormulasAndConvertToPdf(MsoDocumentAndFormulasInput input) throws Exception {
         reset();
         Exception exception = null;
@@ -586,7 +634,7 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
             }
         }
         conversionDuration = System.currentTimeMillis() - startTime;
-        
+
         if (errorFile.exists()) {
             FileInputStream in = new FileInputStream(errorFile);
             List<?> lines = IOUtils.readLines(in);

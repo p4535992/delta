@@ -25,7 +25,7 @@
       <property name="fileFolderService" ref="FileFolderService" />
       <property name="generalService" ref="GeneralService" />
       <property name="parametersService" ref="ParametersService" />
-      <property name="documentTypeService" ref="DocumentTypeService" />
+      <property name="documentAdminService" ref="DocumentAdminService" />
       <property name="documentTemplateService" ref="DocumentTemplateService" />
       <property name="fileService" ref="FileService" />
       <property name="dvkService" ref="DvkService" />

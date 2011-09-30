@@ -53,6 +53,7 @@ import ee.webmedia.alfresco.signature.model.SignatureDigest;
 import ee.webmedia.alfresco.signature.model.SignatureItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 import ee.webmedia.alfresco.utils.Timer;
+import ee.webmedia.alfresco.utils.UserUtil;
 
 public class SignatureServiceImpl implements SignatureService, InitializingBean {
 
@@ -382,7 +383,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
             String subjectFirstName = SignedDoc.getSubjectFirstName(cert);
             String subjectLastName = SignedDoc.getSubjectLastName(cert);
             String legalCode = SignedDoc.getSubjectPersonalCode(cert);
-            String name = subjectFirstName + " " + subjectLastName;
+            String name = UserUtil.getPersonFullName(subjectFirstName, subjectLastName);
 
             SignedProperties signedProperties = signature.getSignedProperties();
             int claimedRolesNumber = signedProperties.countClaimedRoles();

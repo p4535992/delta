@@ -32,7 +32,7 @@ public class LogBlockBean implements DocumentDynamicBlock {
     private QName parentNodeType;
 
     @Override
-    public void reset(DialogDataProvider provider) {
+    public void resetOrInit(DialogDataProvider provider) {
         if (provider == null) {
             reset();
         } else {

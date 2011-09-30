@@ -7,7 +7,7 @@ import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -29,6 +29,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.QNamePattern;
 import org.alfresco.util.Pair;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 
@@ -38,8 +39,8 @@ import ee.webmedia.alfresco.base.BaseService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.docadmin.web.MetadataItemCompareUtil;
-import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.menu.service.MenuService;
@@ -75,7 +76,9 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         baseService.addTypeMapping(DocumentAdminModel.Types.FIELD_GROUP, FieldGroup.class);
         baseService.addTypeMapping(DocumentAdminModel.Types.SEPARATION_LINE, SeparatorLine.class);
         baseService.addTypeMapping(DocumentAdminModel.Types.FIELD_DEFINITION, FieldDefinition.class);
-        baseService.addTypeMapping(DocumentAdminModel.Types.ASSOCIATION_TO_DOC_TYPE, AssociationToDocType.class);
+        baseService.addTypeMapping(DocumentAdminModel.Types.FOLLOWUP_ASSOCIATION, FollowupAssociation.class);
+        baseService.addTypeMapping(DocumentAdminModel.Types.REPLY_ASSOCIATION, ReplyAssociation.class);
+        baseService.addTypeMapping(DocumentAdminModel.Types.FIELD_MAPPING, FieldMapping.class);
     }
 
     @Override
@@ -100,11 +103,18 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
     @Override
     public DocumentType getDocumentType(NodeRef docTypeRef) {
+        // FIXME DLSeadist - Kui kõik süsteemsed dok.liigid on defineeritud, siis võib null kontrolli ja tagastamise eemdaldada
+        if (docTypeRef == null) {
+            return null;
+        }
         return baseService.getObject(docTypeRef, DocumentType.class);
     }
 
     @Override
     public String getDocumentTypeName(String documentTypeId) {
+        if (StringUtils.isBlank(documentTypeId)) {
+            return null;
+        }
         NodeRef documentTypeRef = getDocumentTypeRef(documentTypeId);
         if (documentTypeRef == null) {
             // Should not usually happen
@@ -166,9 +176,9 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         Map<String, Object> targetGroupProps = fieldGroup.getNode().getProperties();
         copyProps(fieldGroupDefinition.getNode().getProperties(), targetGroupProps);
         @SuppressWarnings("unchecked")
-        List<QName> fieldDefinitionIds = (List<QName>) targetGroupProps.remove(DocumentAdminModel.Props.FIELD_DEFINITIONS_IDS);
+        List<String> fieldDefinitionIds = (List<String>) targetGroupProps.remove(DocumentAdminModel.Props.FIELD_DEFINITIONS_IDS);
         int groupOrder = 1;
-        for (QName fieldDefinitionId : fieldDefinitionIds) {
+        for (String fieldDefinitionId : fieldDefinitionIds) {
             FieldDefinition sourceFieldDef = null;
             { // getFieldDefinition
                 for (FieldDefinition fieldDefinition : fieldDefinitions) {
@@ -254,7 +264,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         boolean wasUnsaved = docType.isUnsaved();
 
         // validating duplicated documentTypeId is done in baseService
-        updateOrRemoveLatestDocTypeVersion(docType);
+        updateChildren(docType);
         baseService.saveObject(docType);
 
         updatePublicAdr(docType, wasUnsaved);
@@ -271,15 +281,24 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
-    public AssociationToDocType saveOrUpdateAssocToDocType(AssociationToDocType associationToDocType) {
-        AssociationToDocType clone = associationToDocType.clone();
+    public AssociationModel saveOrUpdateAssocToDocType(AssociationModel associationModel) {
+        AssociationModel clone = associationModel.clone();
         baseService.saveObject(clone);
         return clone;
     }
 
+    private List<AssociationModel> getAssocsToDocType(List<NodeRef> assocRefs) {
+        return baseService.getObjects(assocRefs, AssociationModel.class);
+    }
+
+    @Override
+    public void deleteAssocToDocType(NodeRef assocRef) {
+        nodeService.deleteNode(assocRef);
+    }
+
     @Override
     public List<FieldDefinition> saveOrUpdateFieldDefinitions(List<FieldDefinition> fieldDefinitions) {
-        ArrayList<FieldDefinition> saved = new ArrayList<FieldDefinition>();
+        List<FieldDefinition> saved = new ArrayList<FieldDefinition>();
         for (FieldDefinition fieldDefinition : fieldDefinitions) {
             saved.add(saveOrUpdateField(fieldDefinition));
         }
@@ -298,7 +317,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
-    public List<FieldDefinition> getFieldDefinitions(List<QName> fieldDefinitionIds) {
+    public List<FieldDefinition> getFieldDefinitions(List<String> fieldDefinitionIds) {
         List<FieldDefinition> fieldDefinitions = getFieldDefinitions();
         for (Iterator<FieldDefinition> it = fieldDefinitions.iterator(); it.hasNext();) {
             FieldDefinition fieldDefinition = it.next();
@@ -309,9 +328,9 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         return fieldDefinitions;
     }
 
-    private Map<QName, FieldDefinition> getFieldDefinitionsByFieldIds() {
+    private Map<String, FieldDefinition> getFieldDefinitionsByFieldIds() {
         List<FieldDefinition> fieldDefinitions = getFieldDefinitions();
-        Map<QName, FieldDefinition> fieldDefs = new HashMap<QName, FieldDefinition>();
+        Map<String, FieldDefinition> fieldDefs = new HashMap<String, FieldDefinition>();
         for (FieldDefinition fieldDefinition : fieldDefinitions) {
             fieldDefs.put(fieldDefinition.getFieldId(), fieldDefinition);
         }
@@ -324,8 +343,18 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
-    public FieldDefinition getFieldDefinition(QName fieldId) {
-        return baseService.getChild(getFieldDefinitionsRoot(), fieldId, FieldDefinition.class);
+    public FieldGroup getFieldGroupDefinition(String fieldGroupName) {
+        for (FieldGroup fieldGroup : getFieldGroupDefinitions()) {
+            if (StringUtils.equals(fieldGroupName, fieldGroup.getName())) {
+                return fieldGroup;
+            }
+        }
+        throw new IllegalArgumentException("Didn't find fieldGroup wiht name '" + fieldGroupName + "'");
+    }
+
+    @Override
+    public FieldDefinition getFieldDefinition(String fieldId) {
+        return baseService.getChild(getFieldDefinitionsRoot(), new QNameLocalnameMatcher(fieldId), FieldDefinition.class);
     }
 
     @Override
@@ -333,6 +362,13 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         return null != generalService.getChildByAssocName(getFieldDefinitionsRoot(), new QNameLocalnameMatcher(fieldIdLocalname));
     }
 
+    /**
+     * {@link QNamePattern} that considers {@link QName#getLocalName()} when matching. <br>
+     * XXX: created for {@link DocumentAdminServiceImpl#isFieldDefinitionExisting(String)} and {@link DocumentAdminServiceImpl#getFieldDefinition(String)} because at the time there
+     * were several diferent namespaces for previous built-in fields and for user defined fields. It must change in future!
+     * 
+     * @author Ats Uiboupin
+     */
     private class QNameLocalnameMatcher implements QNamePattern {
         private final String localName;
 
@@ -386,11 +422,11 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         return documentSearchService.isMatch(
                 joinQueryPartsAnd(
                         joinQueryPartsAnd(
-                                generateTypeQuery(DocumentDynamicModel.Types.DOCUMENT_DYNAMIC)
+                                generateTypeQuery(DocumentCommonModel.Types.DOCUMENT)
                                 , generateAspectQuery(DocumentCommonModel.Aspects.SEARCHABLE)
                         )
-                        , generatePropertyExactQuery(DocumentDynamicModel.Props.DOCUMENT_TYPE_ID, documentTypeId, false))
-                );
+                        , generatePropertyExactQuery(Props.OBJECT_TYPE_ID, documentTypeId, false))
+        );
     }
 
     @Override
@@ -406,7 +442,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
         for (Entry<String, Pair<String, Pair<Set<String>, Set<QName>>>> systematicDocumentType : systematicDocumentTypes.entrySet()) {
             createSystematicDocumentType(systematicDocumentType.getKey(), systematicDocumentType.getValue().getFirst(), systematicDocumentType.getValue().getSecond().getFirst(),
-                    systematicDocumentType.getValue().getSecond().getSecond());
+                    Field.getLocalNames(systematicDocumentType.getValue().getSecond().getSecond()));
         }
 
         fieldGroupDefinitionsRoot = null;
@@ -425,7 +461,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         return result;
     }
 
-    private void createSystematicDocumentType(String documentTypeId, String documentTypeName, final Set<String> fieldGroupNames, final Set<QName> fieldDefinitionIds) {
+    private void createSystematicDocumentType(String documentTypeId, String documentTypeName, final Set<String> fieldGroupNames, final Collection<String> fieldDefinitionIds) {
         LOG.info("Creating systematic document type: " + documentTypeId);
         DocumentType docType = createNewUnSaved();
         docType.setDocumentTypeId(documentTypeId);
@@ -463,60 +499,6 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         return getDocumentTypeRef(documentTypeId) != null;
     }
 
-    /** FIXME DLSeadist test data */
-    private List<FieldDefinition> createFieldDefinitionsTestData() {
-        FieldDefinition fd1 = new FieldDefinition(getFieldDefinitionsRoot());
-        fd1.setName("testFieldDefName");
-        fd1.setFieldId(QName.createQName(DocumentDynamicModel.URI, "testFieldId"));
-        fd1.setSystematic(true);
-        fd1.setDocTypes(Arrays.asList("type1", "type2"));
-        fd1.setParameterOrderInDocSearch(1);
-        fd1.setParameterOrderInVolSearch(2);
-        fd1.setVolTypes(Arrays.asList("volType1", "volType2"));
-        fd1.setParameterInDocSearch(true);
-        fd1.setParameterInVolSearch(false);
-
-        FieldDefinition fd2 = new FieldDefinition(getFieldDefinitionsRoot());
-        fd2.setName("testFieldDefName2");
-        fd2.setFieldId(QName.createQName(DocumentDynamicModel.URI, "testFieldId2"));
-        fd2.setSystematic(false);
-        fd2.setDocTypes(Arrays.asList("type2"));
-        fd2.setParameterOrderInDocSearch(3);
-        fd2.setParameterOrderInVolSearch(4);
-        fd2.setVolTypes(Arrays.asList("volType2"));
-        fd2.setParameterInDocSearch(false);
-        fd2.setParameterInVolSearch(true);
-
-        FieldDefinition fd3 = new FieldDefinition(getFieldDefinitionsRoot());
-        fd3.setName("testFieldDefName3");
-        fd3.setFieldId(QName.createQName(DocumentDynamicModel.URI, "testFieldId3"));
-        fd3.setSystematic(true);
-        fd3.setDocTypes(Collections.<String> emptyList());
-        fd3.setParameterOrderInDocSearch(1);
-        fd3.setParameterOrderInVolSearch(2);
-        // fd3.setVolTypes(null);
-        fd3.setVolTypes(Collections.<String> emptyList());
-        fd3.setParameterInDocSearch(true);
-        fd3.setParameterInVolSearch(false);
-
-        FieldDefinition fd4 = new FieldDefinition(getFieldDefinitionsRoot());
-        fd4.setName("testFieldDefName4");
-        fd4.setFieldId(QName.createQName(DocumentDynamicModel.URI, "testFieldId4"));
-        fd4.setSystematic(false);
-        fd4.setDocTypes(null);
-        fd4.setParameterOrderInDocSearch(3);
-        fd4.setParameterOrderInVolSearch(4);
-        fd4.setVolTypes(Arrays.asList("volType2"));
-        fd4.setParameterInDocSearch(false);
-        fd4.setParameterInVolSearch(true);
-
-        List<FieldDefinition> fieldDefinitions = Arrays.asList(fd1, fd2, fd3, fd4);
-        for (FieldDefinition fDef : fieldDefinitions) {
-            saveOrUpdateField(fDef);
-        }
-        return fieldDefinitions;
-    }
-
     private void updatePublicAdr(DocumentType docType, boolean wasUnsaved) {
         Boolean oldPublicAdr = wasUnsaved ? false : (Boolean) nodeService.getProperty(docType.getNodeRef(), DocumentAdminModel.Props.PUBLIC_ADR);
         if (oldPublicAdr == null) {
@@ -538,7 +520,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         }
     }
 
-    private void updateOrRemoveLatestDocTypeVersion(DocumentType docType) {
+    private void updateChildren(DocumentType docType) {
         int versionNr = 1;
         boolean saved = docType.isSaved();
         if (saved) {
@@ -547,7 +529,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
             ChildrenList<MetadataItem> savedMetadata = documentTypeVersions.get(latestVersion - 2).getMetadata();
             DocumentTypeVersion latestDocumentTypeVersion = docType.getLatestDocumentTypeVersion();
             ChildrenList<MetadataItem> unSavedMetadata = latestDocumentTypeVersion.getMetadata();
-            if (!MetadataItemCompareUtil.clidrenListChanged(savedMetadata, unSavedMetadata)) {
+            if (!MetadataItemCompareUtil.isClidrenListChanged(savedMetadata, unSavedMetadata)) {
                 // metaData list is not changed, don't save new DocumentTypeVersion (currently as new latestDocumentTypeVersion)
                 documentTypeVersions.remove(latestDocumentTypeVersion);
                 docType.restoreProp(DocumentAdminModel.Props.LATEST_VERSION); // don't overwrite latest version number
@@ -563,14 +545,17 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         docVer.setCreatorName(userService.getUserFullName(userId));
         docVer.setVersionNr(versionNr);
         docVer.setCreatedDateTime(new Date(AlfrescoTransactionSupport.getTransactionStartTime()));
-        Map<QName, FieldDefinition> fieldDefinitions = getFieldDefinitionsByFieldIds();
+        Map<String, FieldDefinition> fieldDefinitions = getFieldDefinitionsByFieldIds();
         // save new fields to fieldDefinitions
         for (Field field : docVer.getFieldsDeeply()) {
             if (!field.isCopyFromPreviousDocTypeVersion()) {
                 // field is not newer version of the same field under previous version of DocumentTypeVersion
                 FieldDefinition fieldDef = fieldDefinitions.get(field.getFieldId());
                 if (fieldDef != null) {
-                    Assert.isTrue(field.getFieldTypeEnum().equals(fieldDef.getFieldTypeEnum()), "fieldDef and new field should have same fieldType");
+                    if (!field.getFieldTypeEnum().equals(fieldDef.getFieldTypeEnum())) {
+                        throw new UnableToPerformException("field_details_error_docField_sameIdFieldDef_differentType", field.getFieldNameWithIdAndType(),
+                                fieldDef.getFieldNameWithIdAndType());
+                    }
                     // field is added based on existing fieldDefinition
                     List<String> docTypesOfFieldDef = fieldDef.getDocTypes();
                     if (!docTypesOfFieldDef.contains(docType.getDocumentTypeId())) {
@@ -578,11 +563,61 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                         fieldDef = saveOrUpdateField(fieldDef);
                     }
                 } else {
+                    if (field.isCopyOfFieldDefinition()) {
+                        field.setSystematic(false); // field is created based on fieldDefinition, but id is changed
+                    }
                     // added new field (not based on fieldDefinition)
                     fieldDef = createFieldDefinition(field);
                     fieldDef.getDocTypes().add(docType.getDocumentTypeId());
                     fieldDef = saveOrUpdateField(fieldDef);
                 }
+            }
+        }
+        deleteFieldMappings(docType, docVer);
+    }
+
+    private void deleteFieldMappings(DocumentType docType, DocumentTypeVersion docVer) {
+        List<String> removedFieldIds = docVer.getRemovedFieldIdsDeeply();
+        if (removedFieldIds.isEmpty()) {
+            return; // don't need to delete any field mappings
+        }
+        String docTypeId = docType.getDocumentTypeId();
+        for (AssociationModel associationModel : docType.getAssociationModels(null)) { // for each removed field remove field mapping held in memory
+            ChildrenList<FieldMapping> fieldMappings = associationModel.getFieldMappings();
+            String otherDocType = associationModel.getDocType();
+            boolean assocToSameType = otherDocType.equals(docTypeId);
+            for (Iterator<FieldMapping> it = fieldMappings.iterator(); it.hasNext();) {
+                FieldMapping fieldMapping = it.next();
+                if (removedFieldIds.contains(fieldMapping.getFromField())
+                        || (assocToSameType && removedFieldIds.contains(fieldMapping.getToField()))) {
+                    it.remove(); // remove field mapping from removable field of this documentType to docType of associationModel.docType
+                }
+            }
+        }
+        // reverse associations to same type
+        String query = joinQueryPartsAnd(
+                generateTypeQuery(DocumentAdminModel.Types.FOLLOWUP_ASSOCIATION, DocumentAdminModel.Types.REPLY_ASSOCIATION)
+                , generatePropertyExactQuery(DocumentAdminModel.Props.DOC_TYPE, docTypeId, false)
+                );
+        List<NodeRef> associatedDocTypes = documentSearchService.searchNodes(query, false, "searchAssocsToDocType:" + docTypeId);
+
+        List<AssociationModel> assocsToDocTypes = getAssocsToDocType(associatedDocTypes);
+        NodeRef docTypeRef = docType.getNodeRef();
+        for (AssociationModel reverseAssocsToDocType : assocsToDocTypes) {
+            if (reverseAssocsToDocType.getParentNodeRef().equals(docTypeRef)) {
+                continue; // field mappings of the same documentType should have been already removed in memory and will be persisted when saving is completed
+            }
+            ChildrenList<FieldMapping> fieldMappings = reverseAssocsToDocType.getFieldMappings();
+            boolean foundFieldMappingToDelete = false;
+            for (Iterator<FieldMapping> it = fieldMappings.iterator(); it.hasNext();) {
+                FieldMapping fieldMapping = it.next();
+                if (removedFieldIds.contains(fieldMapping.getToField())) {
+                    it.remove();
+                    foundFieldMappingToDelete = true;
+                }
+            }
+            if (foundFieldMappingToDelete) {
+                saveOrUpdateAssocToDocType(reverseAssocsToDocType);
             }
         }
     }

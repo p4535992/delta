@@ -51,9 +51,10 @@ public class ClassificatorSelectorAndTextGenerator extends TextAreaGenerator {
 
     public static final String BINDING_MARKER_CLASS = "selectBoundWithText";
 
-    interface CustomAttributeNames {
+    public interface CustomAttributeNames {
         String RENDERER_TYPE = "rendererType";
         String LAYOUT = "layoutStyle";
+        String NOT_EDITABLE = "notEditable";
     }
 
     interface CustomAttributeConstants {
@@ -84,6 +85,14 @@ public class ClassificatorSelectorAndTextGenerator extends TextAreaGenerator {
         addMandatoryIfValidator(context, textTargetComponent);
 
         String styleClass = getStyleClass();
+        if (Boolean.parseBoolean(getCustomAttributes().get(CustomAttributeNames.NOT_EDITABLE))) {
+            if (StringUtils.isBlank(styleClass)) {
+                styleClass = "";
+            } else {
+                styleClass += " ";
+            }
+            styleClass += "readonly";
+        }
         if (StringUtils.isNotBlank(styleClass)) {
             @SuppressWarnings("unchecked")
             Map<String, Object> attributes = textTargetComponent.getAttributes();

@@ -34,11 +34,16 @@ public interface DocumentAdminModel {
         QName FIELD_DEFINITION = QName.createQName(URI, "fieldDefinition");
         QName FIELD_GROUP = QName.createQName(URI, "fieldGroup");
         QName SEPARATION_LINE = QName.createQName(URI, "separationLine");
-        QName ASSOCIATION_TO_DOC_TYPE = QName.createQName(URI, "associationToDocType");
-        QName ASSOCIATED_FIELDS = QName.createQName(URI, "associatedFields");
+        // QName ASSOCIATION_TO_DOC_TYPE = QName.createQName(URI, "associationModel");
+        QName FOLLOWUP_ASSOCIATION = QName.createQName(URI, "followupAssociation");
+        QName REPLY_ASSOCIATION = QName.createQName(URI, "replyAssociation");
+        QName FIELD_MAPPING = QName.createQName(URI, "fieldMapping");
     }
 
     interface Props {
+        QName OBJECT_TYPE_ID = QName.createQName(URI, "objectTypeId");
+        QName OBJECT_TYPE_VERSION_NR = QName.createQName(URI, "objectTypeVersionNr");
+
         QName DOCUMENT_TYPE_ID = QName.createQName(URI, "documentTypeId");
 
         // START: properties of type fieldBase
@@ -53,9 +58,12 @@ public interface DocumentAdminModel {
         QName DEFAULT_VALUE = QName.createQName(URI, "defaultValue");
         QName CLASSIFICATOR_DEFAULT_VALUE = QName.createQName(URI, "classificatorDefaultValue");
         QName DEFAULT_DATE_SYSDATE = QName.createQName(URI, "defaultDateSysdate");
+        QName DEFAULT_USER_LOGGED_IN = QName.createQName(URI, "defaultUserLoggedIn");
         QName DEFAULT_SELECTED = QName.createQName(URI, "defaultSelected");
         QName ONLY_IN_GROUP = QName.createQName(URI, "onlyInGroup");
         QName REMOVABLE_FROM_SYSTEMATIC_FIELD_GROUP = QName.createQName(URI, "removableFromSystematicFieldGroup");
+        QName MAPPING_RESTRICTION = QName.createQName(URI, "mappingRestriction");
+        QName ORIGINAL_FIELD_ID = QName.createQName(URI, "originalFieldId");
         // END: properties of type fieldBase
 
         // Start: properties of type fieldDefinition
@@ -102,10 +110,9 @@ public interface DocumentAdminModel {
         QName THESAURUS = QName.createQName(URI, "thesaurus");
         // END: properties of type fieldGroup
 
-        // START: properties of type associationToDocType
-        QName ASSOCIATION_TYPE = QName.createQName(URI, "associationType");
+        // START: properties of type associationModel
         QName DOC_TYPE = QName.createQName(URI, "docType");
-        // START: properties of type associationToDocType
+        // START: properties of type associationModel
         // START: properties of type associatedFields
         QName FROM_FIELD = QName.createQName(URI, "fromField");
         QName TO_FIELD = QName.createQName(URI, "toField");
@@ -124,7 +131,6 @@ public interface DocumentAdminModel {
         // START: properties of aspect fieldAndGroupCommon
         QName MANDATORY_FOR_DOC = QName.createQName(URI, "mandatoryForDoc");
         QName REMOVABLE_FROM_SYSTEMATIC_DOC_TYPE = QName.createQName(URI, "removableFromSystematicDocType");
-        QName DEFAULT_USER_LOGGED_IN = QName.createQName(URI, "defaultUserLoggedIn");
         QName MANDATORY_FOR_VOL = QName.createQName(URI, "mandatoryForVol");
         // END: properties of aspect mandatoryForVol
     }

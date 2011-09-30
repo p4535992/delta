@@ -31,7 +31,6 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.cmr.security.AuthorityService;
-import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
@@ -69,12 +68,12 @@ import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.ComparableTransformer;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageData;
 import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.Predicate;
-import ee.webmedia.alfresco.utils.ComparableTransformer;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
@@ -520,10 +519,9 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
     }
 
     private void addDynamicUserPrivilegesRows() {
-        boolean immediate = true;
         { // add rows for administrators group members
             String group = UserService.AUTH_ADMINISTRATORS_GROUP;
-            Set<String> authorities = getAuthorityService().getContainedAuthorities(AuthorityType.USER, group, immediate);
+            Set<String> authorities = BeanHelper.getUserService().getUserNamesInGroup(group);
             LOG.debug("authorities=" + authorities);
             String extraPrivilegeReason = MessageUtil.getMessage("manage_permissions_extraInfo_userIsAdmin");
             addRows(group, manageablePermissions, authorities, extraPrivilegeReason);
@@ -531,7 +529,7 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
 
         { // add rows for document managers group members
             String group = UserService.AUTH_DOCUMENT_MANAGERS_GROUP;
-            Set<String> authorities = getAuthorityService().getContainedAuthorities(AuthorityType.USER, group, immediate);
+            Set<String> authorities = BeanHelper.getUserService().getUserNamesInGroup(group);
             Set<String> seriesDocManagerAuths = filterSeriesAuthorities(authorities, manageableRef);
             String extraPrivilegeReason = MessageUtil.getMessage("manage_permissions_extraInfo_userIsDocManagerOfCurSeries");
             addRows(group, manageablePermissions, seriesDocManagerAuths, extraPrivilegeReason);
@@ -594,7 +592,7 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
         Pair<Set<String>, Set<String>> usersAndGroups = BeanHelper.getDocumentService().getSeriesAuthorities(seriesRef);
         Set<String> seriesAuths = usersAndGroups.getFirst();
         for (String group : usersAndGroups.getSecond()) {
-            Set<String> groupAuths = authorityService.getContainedAuthorities(AuthorityType.USER, group, true);
+            Set<String> groupAuths = BeanHelper.getUserService().getUserNamesInGroup(group);
             seriesAuths.addAll(groupAuths);
         }
         seriesAuths.retainAll(authorities);
@@ -720,7 +718,7 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
             throw new RuntimeException("Didn't find authority based on '" + authorityName + "'");
         }
         if (authority.isGroup()) {
-            Set<String> containedAuthorities = getAuthorityService().getContainedAuthorities(AuthorityType.USER, authorityName, true);
+            Set<String> containedAuthorities = BeanHelper.getUserService().getUserNamesInGroup(authorityName);
 
             for (String containedAuthority : containedAuthorities) {
                 addAuthorityUsers(userNames, containedAuthority, authorityName);

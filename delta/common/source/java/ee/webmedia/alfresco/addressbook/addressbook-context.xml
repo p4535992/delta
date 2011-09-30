@@ -21,15 +21,23 @@
       <property name="searchService" ref="SearchService" />
       <property name="namespaceService" ref="NamespaceService" />
       <property name="authorityService" ref="AuthorityService" />
+      <property name="permissionService" ref="PermissionService" />
+      <property name="generalService" ref="GeneralService" />
+      <property name="luceneConfig" ref="admLuceneIndexerAndSearcherFactory" />
       <property name="store" value="${spaces.store}" />
+      <property name="allContactTypes">
+         <set>
+            <value>ab:organization</value>
+            <value>ab:privPerson</value>
+            <value>ab:orgPerson</value>
+         </set>
+      </property>
       <property name="searchFields">
          <set>
             <value>ab:personFirstName</value>
             <value>ab:personLastName</value>
             <value>ab:orgName</value>
             <value>ab:orgAltName</value>
-<!-- The following value must remain in TK project, do i have to remember this every time? -->
-<!-- <value>ab:orgCode</value> -->
             <value>ab:orgAcronym</value>
          </set>
       </property>
@@ -93,6 +101,36 @@
          </list>
       </property>
    </bean>     
+   
+   <bean id="taskCapablePropertyRemoverOnPeople" class="ee.webmedia.alfresco.addressbook.bootstrap.TaskCapablePropertyRemoverOnPeople" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="taskCapablePropertyUpdater4"/>
+         </list>
+      </property>
+   </bean>     
+      
+   <bean id="skypeAspectAdderForOrgPeople" class="ee.webmedia.alfresco.addressbook.bootstrap.AddSkypeAspectToOrgPeople" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="taskCapablePropertyRemoverOnPeople"/>
+         </list>
+      </property>
+   </bean>     
+   
+   <bean id="encryptionPersonIdAdderForOrgs" class="ee.webmedia.alfresco.addressbook.bootstrap.EncryptionPersonIdAdderForOrgs" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="addressbookRootBootstrap"/>
+         </list>
+      </property>
+   </bean>     
 
    <bean id="addressbookPermissionsUpdateBootstrap" class="ee.webmedia.alfresco.addressbook.bootstrap.AddressbookPermissionsUpdateBootstrap" parent="module.baseComponent" >
       <property name="moduleId" value="common" />
@@ -106,7 +144,19 @@
 
    <!-- START: web beans: -->
 
+   <bean id="AddressbookListDialog" class="ee.webmedia.alfresco.addressbook.web.dialog.AddressbookListDialog" scope="session" />
+   <bean id="AddressbookOrgDetailsDialog" class="ee.webmedia.alfresco.addressbook.web.dialog.AddressbookOrgDetailsDialog" scope="session" />
+   <bean id="AddressbookPersonDetailsDialog" class="ee.webmedia.alfresco.addressbook.web.dialog.AddressbookPersonDetailsDialog" scope="session" />
+   <bean id="AddressbookAddEditDialog" class="ee.webmedia.alfresco.addressbook.web.dialog.AddressbookAddEditDialog" scope="session" />
    <bean id="ConfirmAddDuplicateDialog" class="ee.webmedia.alfresco.addressbook.web.dialog.ConfirmAddDuplicateDialog" scope="session" />
+   <bean id="ContactGroupContactsDialog" class="ee.webmedia.alfresco.addressbook.web.dialog.ContactGroupContactsDialog" scope="session" />
+   <bean id="ContactGroupCreateDialog" class="ee.webmedia.alfresco.addressbook.web.dialog.ContactGroupCreateDialog" scope="session" />
+   <bean id="ContactGroupListDialog" class="ee.webmedia.alfresco.addressbook.web.dialog.ContactGroupListDialog" scope="session" />
+   <bean id="ContactGroupDeleteDialog" class="ee.webmedia.alfresco.addressbook.web.dialog.ContactGroupDeleteDialog" scope="session" />
+   <bean id="ContactGroupAddDialog" class="ee.webmedia.alfresco.addressbook.web.dialog.ContactGroupAddDialog" scope="session" />
+   <bean id="AddressbookGroupsManagerBean" class="ee.webmedia.alfresco.addressbook.web.bean.AddressbookGroupsManagerBean" scope="session" />
+   
+   <bean id="AddressbookSearchBean" class="ee.webmedia.alfresco.addressbook.web.bean.AddressbookSearchBean" scope="request" />
 
    <!-- END: web beans: -->
 

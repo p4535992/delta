@@ -18,7 +18,10 @@ import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.alfresco.web.ui.common.renderer.BaseRenderer;
+import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditor;
+import ee.webmedia.alfresco.common.propertysheet.search.Search.SearchAddEvent;
 import ee.webmedia.alfresco.common.propertysheet.search.Search.SearchRemoveEvent;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
@@ -34,6 +37,7 @@ public class SearchRenderer extends BaseRenderer {
 
     protected static final String ACTION_SEPARATOR = ";";
     protected static final String REMOVE_ROW_ACTION = "removeRow";
+    protected static final String ADD_ROW_ACTION = "addRow";
     public static final String OPEN_DIALOG_ACTION = "openDialog";
     public static final String CLOSE_DIALOG_ACTION = "closeDialog";
 
@@ -66,6 +70,8 @@ public class SearchRenderer extends BaseRenderer {
         Map<String, Object> attributes = component.getAttributes();
         if (action.equals(REMOVE_ROW_ACTION)) {
             component.queueEvent(new SearchRemoveEvent(component, index));
+        } else if (action.equals(ADD_ROW_ACTION)) {
+            component.queueEvent(new SearchAddEvent(component));
         } else if (action.equals(OPEN_DIALOG_ACTION)) {
             attributes.put(Search.OPEN_DIALOG_KEY, index);
             Utils.setRequestValidationDisabled(context);
@@ -147,7 +153,11 @@ public class SearchRenderer extends BaseRenderer {
     }
 
     private void renderMultiValued(FacesContext context, ResponseWriter out, Search search, HtmlPanelGroup list, UIGenericPicker picker) throws IOException {
-        out.write("<table class=\"recipient inline\" cellpadding=\"0\" cellspacing=\"0\"><tbody>");
+        out.write("<table class=\"recipient");
+        if (!search.isEditable()) {
+            out.write(" inline");
+        }
+        out.write("\" cellpadding=\"0\" cellspacing=\"0\"><tbody>");
 
         @SuppressWarnings("unchecked")
         List<UIComponent> children = list.getChildren();
@@ -173,6 +183,7 @@ public class SearchRenderer extends BaseRenderer {
         out.write("</tbody></table>");
 
         renderPicker(context, out, search, picker);
+        renderAddLink(context, search, out);
     }
 
     private void renderSingleValued(FacesContext context, ResponseWriter out, Search search, HtmlPanelGroup list, UIGenericPicker picker) throws IOException {
@@ -189,7 +200,9 @@ public class SearchRenderer extends BaseRenderer {
             out.write("<td>");
             setInputStyleClass(child, search);
             Utils.encodeRecursive(context, child);
-            ComponentUtil.generateSuggestScript(context, child, (String) search.getAttributes().get(Search.PICKER_CALLBACK_KEY), out);
+            if (hasSearchSuggest(search)) {
+                ComponentUtil.generateSuggestScript(context, child, (String) search.getAttributes().get(Search.PICKER_CALLBACK_KEY), out);
+            }
             renderExtraInfo(search, out);
             out.write("</td>");
             UIOutput ch = (UIOutput) child;
@@ -203,6 +216,10 @@ public class SearchRenderer extends BaseRenderer {
         out.write("<td>");
         renderPicker(context, out, search, picker);
         out.write("</td></tr></tbody></table>");
+    }
+
+    private boolean hasSearchSuggest(Search search) {
+        return !Boolean.TRUE.equals(search.getAttributes().get(Search.SEARCH_SUGGEST_DISABLED));
     }
 
     @SuppressWarnings("unused")
@@ -237,6 +254,34 @@ public class SearchRenderer extends BaseRenderer {
      */
     private boolean isRemoveLinkRendered(Search search) {
         return search.isRemoveLinkRendered();
+    }
+
+    private void renderAddLink(FacesContext context, Search search, ResponseWriter out) throws IOException {
+        if (!search.isEditable()) {
+            return;
+        }
+
+        @SuppressWarnings("unchecked")
+        final Map<String, Object> attributes = search.getAttributes();
+        String addLabelId = (String) attributes.get(MultiValueEditor.ADD_LABEL_ID);
+        if (StringUtils.isBlank(addLabelId)) {
+            addLabelId = "add_contact";
+        }
+
+        if (!Utils.isComponentDisabledOrReadOnly(search)) { // don't render adding link when disabled
+            out.write("<a class=\"icon-link add-person\" onclick=\"");
+            // TODO: optimeerimise võimalus (vt ka AjaxSearchBean)
+            // siin seatakse ajaxParentLevel=1 ainult selle pärast, et ajax'iga uut rida lisades renderdataks ka valideerimise skriptid,
+            // mis praegu lisatakse propertySheet'ile, aga mitte komponendile endale.
+            // Kui valideerimine teha nii ümber, et komponentide valideerimine delegeerida propertySheet'ide poolt komponentidele
+            // ja komponendid renderdaksid ise(propertySheet'i asemel) oma valideerimise funktsioonid, siis võiks ajaxParentLevel'i muuta tagasi 0 peale.
+            // Kui ajaxParentLevel=0, siis poleks vaja kogu propertysheet'i koos kõigi tema alamkomponentidega (sh alam propertySheet'idega) vaja uuesti renderdada!
+            int ajaxParentLevel = 1;
+            out.write(ComponentUtil.generateAjaxFormSubmit(context, search, getActionId(context, search), ADD_ROW_ACTION, null, ajaxParentLevel));
+            out.write("\">");
+            out.write(Application.getMessage(context, addLabelId));
+            out.write("</a>");
+        }
     }
 
     private void renderPicker(FacesContext context, ResponseWriter out, Search search, UIGenericPicker picker) throws IOException {

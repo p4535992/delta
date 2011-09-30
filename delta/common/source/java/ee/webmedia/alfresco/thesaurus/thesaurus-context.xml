@@ -8,6 +8,11 @@
             <value>ee/webmedia/alfresco/thesaurus/model/thesaurusModel.xml</value>
          </list>
       </property>
+      <property name="labels">
+         <list>
+            <value>ee/webmedia/alfresco/thesaurus/model/thesaurus-model</value>
+         </list>
+      </property>
    </bean>
    
    <bean id="thesaurusBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">
@@ -44,6 +49,7 @@
    <bean id="thesaurusService" class="ee.webmedia.alfresco.thesaurus.service.ThesaurusServiceImpl">
       <property name="nodeService" ref="NodeService" />
       <property name="generalService" ref="GeneralService" />
+      <property name="documentSearchService" ref="DocumentSearchService" />
    </bean>
 
    <bean id="ThesaurusService" class="org.springframework.aop.framework.ProxyFactoryBean">

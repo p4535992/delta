@@ -7,11 +7,13 @@ import java.util.List;
 
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIInput;
+import javax.faces.component.UIOutput;
 import javax.faces.component.UISelectItem;
 import javax.faces.context.FacesContext;
 import javax.faces.el.ValueBinding;
 
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
+import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
@@ -20,6 +22,7 @@ import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.propertysheet.converter.EnumConverter;
 import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
+import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.HandlesViewMode;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
@@ -31,11 +34,36 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  * 
  * @author Ats Uiboupin
  */
-public class EnumSelectorGenerator extends GeneralSelectorGenerator {
+public class EnumSelectorGenerator extends GeneralSelectorGenerator implements HandlesViewMode {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(EnumSelectorGenerator.class);
 
     public static final String ATTR_ENUM_CLASS = "enumClass";
     public static final String ATTR_ENUM_PROP = "enumProp";
+
+    @Override
+    protected UIComponent createComponent(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item) {
+        if (propertySheet.inEditMode()) {
+            return super.createComponent(context, propertySheet, item);
+        }
+        return createOutputTextComponent(context, getDefaultId(item));
+    }
+
+    @Override
+    protected void setupProperty(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item, PropertyDefinition propertyDef, UIComponent component) {
+        super.setupProperty(context, propertySheet, item, propertyDef, component);
+        if (!propertySheet.inEditMode()) {
+            UIOutput outputText = (UIOutput) component;
+            ValueBinding vb = outputText.getValueBinding("value");
+            Object boundValue = vb != null ? vb.getValue(context) : null;
+            String enumClassName = getValueProviderName(propertySheet.getNode());
+            setConvertedValue(outputText, boundValue, enumClassName);
+        }
+    }
+
+    private void setConvertedValue(UIOutput uiOutput, Object boundValue, String enumClassName) {
+        Enum<?> enumValue = DefaultTypeConverter.INSTANCE.convert(EnumConverter.getEnumClass(enumClassName), boundValue);
+        uiOutput.setValue(MessageUtil.getMessage(enumValue));
+    }
 
     @Override
     public UIComponent generateSelectComponent(FacesContext context, String id, boolean multiValued) {
@@ -71,14 +99,18 @@ public class EnumSelectorGenerator extends GeneralSelectorGenerator {
         if (!multiValued) {
             ClassificatorSelectorGenerator.addDefault(context, selectOptions);
 
-            EnumConverter converter = new EnumConverter();
-            converter.setEnumClass(enumClassName);
-            String convertedValue = converter.getAsObject(context, component, (String) boundValue);
-            component.setValue(convertedValue); // needed to make default selectItem work(if property value is null, then convertedValue is "" that is legal value for SelectItem)
-            component.setConverter(converter);
+            setConverter(context, component, boundValue, enumClassName);
         }
 
         return selectOptions;
+    }
+
+    private void setConverter(FacesContext context, UIInput component, Object boundValue, String enumClassName) {
+        EnumConverter converter = new EnumConverter();
+        converter.setEnumClass(enumClassName);
+        UIInput uiInput = component;
+        uiInput.setValue(converter.getAsObject(context, component, (String) boundValue)); // needed to make default selectItem work(if property value is null, then
+        uiInput.setConverter(converter);
     }
 
     /**

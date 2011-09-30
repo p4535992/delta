@@ -11,7 +11,7 @@
    <a:booleanEvaluator value="#{FieldGroupDetailsDialog.showSystematicComment}">
       <f:verbatim><div class="message condence200"></f:verbatim><h:outputText value="#{FieldGroupDetailsDialog.fieldGroup.systematicComment}" /><f:verbatim></div></f:verbatim>
    </a:booleanEvaluator>
-   <r:propertySheetGrid id="fieldGroupDetailsPS" value="#{FieldGroupDetailsDialog.currentNode}" columns="1" mode="edit" externalConfig="true" labelStyleClass="propertiesLabel" />
+   <r:propertySheetGrid id="fieldGroupDetailsPS" value="#{FieldGroupDetailsDialog.currentNode}" columns="1" mode="#{DocTypeDetailsDialog.showingLatestVersion ? 'edit': 'view'}" externalConfig="true" labelStyleClass="propertiesLabel" />
 </a:panel>
 
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/fields-list-bean.jsp" />

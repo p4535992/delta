@@ -1,0 +1,204 @@
+package ee.webmedia.alfresco.common.web;
+
+import static ee.webmedia.alfresco.common.web.BeanHelper.getAddressbookService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserContactMappingService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import javax.faces.model.SelectItem;
+
+import org.alfresco.service.cmr.repository.NodeRef;
+
+import ee.webmedia.alfresco.addressbook.util.AddressbookUtil;
+import ee.webmedia.alfresco.app.AppConstants;
+import ee.webmedia.alfresco.user.model.Authority;
+import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.WebUtil;
+
+/**
+ * @author Alar Kvell
+ */
+public class UserContactGroupSearchBean implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    public static final String BEAN_NAME = "UserContactGroupSearchBean";
+
+    private SelectItem[] usersGroupsFilters;
+    private SelectItem[] contactsGroupsFilters;
+    private SelectItem[] usersContactsFilters;
+    private SelectItem[] usersGroupsContactsGroupsFilters;
+
+    public static final int USERS_FILTER = 0;
+    public static final int USER_GROUPS_FILTER = 1;
+    public static final int CONTACTS_FILTER = 2;
+    public static final int CONTACT_GROUPS_FILTER = 3;
+
+    /*
+     * filters methods
+     */
+
+    /**
+     * Property accessed by the Generic Picker component.
+     * 
+     * @return the array of filter options to show in the users/groups picker
+     */
+    public SelectItem[] getUsersGroupsFilters() {
+        if (usersGroupsFilters == null) {
+            usersGroupsFilters = new SelectItem[] {
+                    new SelectItem(USERS_FILTER, MessageUtil.getMessage("task_owner_users")),
+                    new SelectItem(USER_GROUPS_FILTER, MessageUtil.getMessage("task_owner_usergroups")),
+            };
+        }
+        return usersGroupsFilters;
+    }
+
+    /**
+     * Property accessed by the Generic Picker component.
+     * 
+     * @return the array of filter options to show in the users/groups picker
+     */
+    public SelectItem[] getContactsGroupsFilters() {
+        if (contactsGroupsFilters == null) {
+            contactsGroupsFilters = new SelectItem[] {
+                    new SelectItem(CONTACTS_FILTER, MessageUtil.getMessage("task_owner_contacts")),
+                    new SelectItem(CONTACT_GROUPS_FILTER, MessageUtil.getMessage("task_owner_contactgroups")),
+            };
+        }
+        return contactsGroupsFilters;
+    }
+
+    /**
+     * Property accessed by the Generic Picker component.
+     * 
+     * @return the array of filter options to show in the users/groups picker
+     */
+    public SelectItem[] getUsersContactsFilters() {
+        if (usersContactsFilters == null) {
+            usersContactsFilters = new SelectItem[] {
+                    new SelectItem(USERS_FILTER, MessageUtil.getMessage("task_owner_users")),
+                    new SelectItem(CONTACTS_FILTER, MessageUtil.getMessage("task_owner_contacts")),
+            };
+        }
+        return usersContactsFilters;
+    }
+
+    /**
+     * Property accessed by the Generic Picker component.
+     * 
+     * @return the array of filter options to show in the users/groups picker
+     */
+    public SelectItem[] getUsersGroupsContactsGroupsFilters() {
+        if (usersGroupsContactsGroupsFilters == null) {
+            usersGroupsContactsGroupsFilters = new SelectItem[] {
+                    new SelectItem(USERS_FILTER, MessageUtil.getMessage("task_owner_users")),
+                    new SelectItem(USER_GROUPS_FILTER, MessageUtil.getMessage("task_owner_usergroups")),
+                    new SelectItem(CONTACTS_FILTER, MessageUtil.getMessage("task_owner_contacts")),
+                    new SelectItem(CONTACT_GROUPS_FILTER, MessageUtil.getMessage("task_owner_contactgroups")),
+            };
+        }
+        return usersGroupsContactsGroupsFilters;
+    }
+
+    /*
+     * pickerCallback methods
+     */
+
+    public SelectItem[] searchAll(int filterIndex, String contains) {
+        return searchAll(filterIndex, contains, false);
+    }
+
+    public SelectItem[] searchAllWithAdminsAndDocManagers(int filterIndex, String contains) {
+        return searchAll(filterIndex, contains, true);
+    }
+
+    public SelectItem[] searchGroupsWithAdminsAndDocManagers(@SuppressWarnings("unused") int filterIndex, String contains) {
+        return searchGroups(contains, true);
+    }
+
+    /*
+     * Methods that can be used programmatically
+     */
+
+    // TODO merge CompoundWorkflowDefinitionDialog#executeOwnerSearch to here
+    public SelectItem[] searchAll(int filterIndex, String contains, boolean withAdminsAndDocManagers) {
+        if (filterIndex == USERS_FILTER) {
+            return BeanHelper.getUserListDialog().searchUsers(-1, contains);
+        } else if (filterIndex == USER_GROUPS_FILTER) {
+            return searchGroups(contains, withAdminsAndDocManagers);
+        } else if (filterIndex == CONTACTS_FILTER) {
+            return BeanHelper.getAddressbookSearchBean().searchContacts(-1, contains);
+        } else if (filterIndex == CONTACT_GROUPS_FILTER) {
+            return BeanHelper.getAddressbookSearchBean().searchContactGroups(-1, contains);
+        }
+        throw new RuntimeException("filterIndex out of range: " + filterIndex);
+    }
+
+    public SelectItem[] searchGroups(String contains, boolean withAdminsAndDocManagers) {
+        List<Authority> results = BeanHelper.getDocumentSearchService().searchAuthorityGroups(contains, true, withAdminsAndDocManagers);
+        SelectItem[] selectItems = new SelectItem[results.size()];
+        int i = 0;
+        for (Authority authority : results) {
+            selectItems[i++] = new SelectItem(authority.getAuthority(), authority.getName());
+        }
+        WebUtil.sort(selectItems);
+        return selectItems;
+    }
+
+    /*
+     * preprocessCallback methods
+     */
+    public String[] preprocessResultsToNodeRefs(int filterIndex, String[] results) {
+        List<String> processedResult = new ArrayList<String>();
+        for (String result : results) {
+            if (filterIndex == USERS_FILTER) {
+                // Replace user name with reference to the person node
+                NodeRef nodeRef = getUserService().getPerson(result);
+                if (nodeRef != null) {
+                    processedResult.add(nodeRef.toString());
+                }
+            } else if (filterIndex == USER_GROUPS_FILTER) {
+                // Add all users contained in user group and replace user names with reference to the person node
+                Set<String> auths = getUserService().getUserNamesInGroup(result);
+                for (String auth : auths) {
+                    NodeRef nodeRef = getUserService().getPerson(auth);
+                    if (nodeRef != null) {
+                        processedResult.add(nodeRef.toString());
+                    }
+                }
+            } else if (filterIndex == CONTACTS_FILTER) {
+                // Add contact
+                processedResult.add(result);
+            } else if (filterIndex == CONTACT_GROUPS_FILTER) {
+                // Add all contacts contained in contact group
+                List<NodeRef> contacts = getAddressbookService().getContactGroupContents(new NodeRef(result));
+                for (NodeRef contact : contacts) {
+                    processedResult.add(contact.toString());
+                }
+            } else {
+                throw new RuntimeException("filterIndex out of range: " + filterIndex);
+            }
+        }
+        return processedResult.toArray(new String[processedResult.size()]);
+    }
+
+    private String getContactFullName(NodeRef contact) {
+        return AddressbookUtil.getContactFullName(contact);
+    }
+
+    public String[] preprocessResultsToNames(int filterIndex, String[] results) {
+        results = preprocessResultsToNodeRefs(filterIndex, results);
+        List<String> processedResult = new ArrayList<String>();
+        for (String result : results) {
+            String name = getUserContactMappingService().getMappedNameValue(new NodeRef(result));
+            if (name != null) {
+                processedResult.add(name);
+            }
+        }
+        return processedResult.toArray(new String[processedResult.size()]);
+    }
+
+}

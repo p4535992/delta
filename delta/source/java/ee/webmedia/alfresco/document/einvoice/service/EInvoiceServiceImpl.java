@@ -61,6 +61,8 @@ import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
+import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.document.einvoice.account.generated.Arve;
 import ee.webmedia.alfresco.document.einvoice.account.generated.ArveInfo;
 import ee.webmedia.alfresco.document.einvoice.account.generated.Hankija;
@@ -103,7 +105,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
-import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
@@ -141,7 +142,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
     private NodeService nodeService;
     private GeneralService generalService;
     private ParametersService parametersService;
-    private DocumentTypeService documentTypeService;
+    private DocumentAdminService documentAdminService;
     private DocumentTemplateService documentTemplateService;
     private FileService fileService;
     private DvkService dvkService;
@@ -721,7 +722,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
                     addressbookService.createOrganization(contactProps);
                 }
             }
-            result.add(addressbookService.getAddressbookNodeRef());
+            result.add(addressbookService.getAddressbookRoot());
         }
         return result;
     }
@@ -842,7 +843,9 @@ public class EInvoiceServiceImpl implements EInvoiceService {
 
     @Override
     public boolean isEinvoiceEnabled() {
-        return documentTypeService.getDocumentType(DocumentSubtypeModel.Types.INVOICE).isUsed();
+        DocumentType documentType = documentAdminService.getDocumentType("invoice");
+        // FIXME DLSeadist - Kui kõik süsteemsed dok.liigid on defineeritud, siis võib null kontrolli ja tagastamise eemdaldada
+        return documentType != null && documentType.isUsed();
     }
 
     @Override
@@ -1469,8 +1472,8 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         this.parametersService = parametersService;
     }
 
-    public void setDocumentTypeService(DocumentTypeService documentTypeService) {
-        this.documentTypeService = documentTypeService;
+    public void setDocumentAdminService(DocumentAdminService documentAdminService) {
+        this.documentAdminService = documentAdminService;
     }
 
     public void setDocumentTemplateService(DocumentTemplateService documentTemplateService) {

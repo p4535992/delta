@@ -137,32 +137,7 @@ public class MultiValueEditorRenderer extends BaseRenderer {
         ResponseWriter out = context.getResponseWriter();
         out.write("</tbody></table>");
 
-        @SuppressWarnings("unchecked")
-        final Map<String, Object> attributes = component.getAttributes();
-        String addLabelId = (String) attributes.get(MultiValueEditor.ADD_LABEL_ID);
-        if (StringUtils.isBlank(addLabelId)) {
-            addLabelId = "add_contact";
-        }
-
-        if (!Utils.isComponentDisabledOrReadOnly(component)) { // don't render adding link when disabled
-            String styleClass = (String) attributes.get(STYLE_CLASS);
-            if (StringUtils.isBlank(styleClass)) {
-                styleClass = "add-person";
-            }
-            out.write("<a class=\"icon-link " + styleClass + "\" onclick=\"");
-            // TODO: optimeerimise võimalus (vt ka AjaxSearchBean)
-            // siin seatakse ajaxParentLevel=1 ainult selle pärast, et ajax'iga uut rida lisades renderdataks ka valideerimise skriptid,
-            // mis praegu lisatakse propertySheet'ile, aga mitte komponendile endale.
-            // Kui valideerimine teha nii ümber, et komponentide valideerimine delegeerida propertySheet'ide poolt komponentidele
-            // ja komponendid renderdaksid ise(propertySheet'i asemel) oma valideerimise funktsioonid, siis võiks ajaxParentLevel'i muuta tagasi 0 peale.
-            // Kui ajaxParentLevel=0, siis poleks vaja kogu propertysheet'i koos kõigi tema alamkomponentidega (sh alam propertySheet'idega) vaja uuesti renderdada!
-            int ajaxParentLevel = 1;
-            out.write(ComponentUtil.generateAjaxFormSubmit(context, component, component.getClientId(context)
-                    , Integer.toString(UIMultiValueEditor.ACTION_ADD), null, ajaxParentLevel));
-            out.write("\">");
-            out.write(Application.getMessage(context, addLabelId));
-            out.write("</a>");
-        }
+        renderAddLink(context, component, out);
 
         @SuppressWarnings("unchecked")
         List<UIComponent> children = component.getChildren();
@@ -254,6 +229,35 @@ public class MultiValueEditorRenderer extends BaseRenderer {
                         FacesHelper.makeLegalId(DocumentSpecificModel.PREFIX + DocumentSpecificModel.Props.PROCUREMENT_APPLICANT_NAME.getLocalName()))
                 || StringUtils.startsWith(id, FacesHelper.makeLegalId(DocumentSearchModel.PREFIX + DocumentSearchModel.Props.SENDER_NAME.getLocalName()))
                 || StringUtils.startsWith(id, FacesHelper.makeLegalId(DocumentSearchModel.PREFIX + DocumentSearchModel.Props.RECIPIENT_NAME.getLocalName()));
+    }
+
+    private void renderAddLink(FacesContext context, UIComponent component, ResponseWriter out) throws IOException {
+        @SuppressWarnings("unchecked")
+        final Map<String, Object> attributes = component.getAttributes();
+        String addLabelId = (String) attributes.get(MultiValueEditor.ADD_LABEL_ID);
+        if (StringUtils.isBlank(addLabelId)) {
+            addLabelId = "add_contact";
+        }
+
+        if (!Utils.isComponentDisabledOrReadOnly(component)) { // don't render adding link when disabled
+            String styleClass = (String) attributes.get(STYLE_CLASS);
+            if (StringUtils.isBlank(styleClass)) {
+                styleClass = "add-person";
+            }
+            out.write("<a class=\"icon-link " + styleClass + "\" onclick=\"");
+            // TODO: optimeerimise võimalus (vt ka AjaxSearchBean)
+            // siin seatakse ajaxParentLevel=1 ainult selle pärast, et ajax'iga uut rida lisades renderdataks ka valideerimise skriptid,
+            // mis praegu lisatakse propertySheet'ile, aga mitte komponendile endale.
+            // Kui valideerimine teha nii ümber, et komponentide valideerimine delegeerida propertySheet'ide poolt komponentidele
+            // ja komponendid renderdaksid ise(propertySheet'i asemel) oma valideerimise funktsioonid, siis võiks ajaxParentLevel'i muuta tagasi 0 peale.
+            // Kui ajaxParentLevel=0, siis poleks vaja kogu propertysheet'i koos kõigi tema alamkomponentidega (sh alam propertySheet'idega) vaja uuesti renderdada!
+            int ajaxParentLevel = 1;
+            out.write(ComponentUtil.generateAjaxFormSubmit(context, component, component.getClientId(context)
+                    , Integer.toString(UIMultiValueEditor.ACTION_ADD), null, ajaxParentLevel));
+            out.write("\">");
+            out.write(Application.getMessage(context, addLabelId));
+            out.write("</a>");
+        }
     }
 
     protected void renderPicker(FacesContext context, ResponseWriter out, UIComponent multiValueEditor, UIGenericPicker picker) throws IOException {

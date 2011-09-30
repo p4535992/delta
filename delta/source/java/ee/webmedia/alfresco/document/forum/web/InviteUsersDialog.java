@@ -12,7 +12,6 @@ import javax.faces.event.ActionEvent;
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.security.AuthorityType;
 import org.apache.cxf.common.util.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
@@ -92,7 +91,7 @@ public class InviteUsersDialog extends PermissionsAddDialog {
         for (Authority a : auth) {
             String authority = a.getAuthority();
             if (a.isGroup()) {
-                Set<String> containedAuthorities = BeanHelper.getAuthorityService().getContainedAuthorities(AuthorityType.USER, authority, true);
+                Set<String> containedAuthorities = BeanHelper.getUserService().getUserNamesInGroup(authority);
                 for (String user : containedAuthorities) {
                     addToEmails(user, toEmails, toNames);
                 }

@@ -3,6 +3,12 @@
 
    <import file="build-common.xml" />
 
+   <target name="installcert" depends="compile" description="Retrieve HTTPS certificate from remote HTTPS connection and add it to application server Keystore (use if CAS connection is over HTTPS)">
+      <java dir="${project.basedir}" fork="true" classname="ee.webmedia.alfresco.utils.InstallCert" classpathref="classpath.test.compile">
+         <arg path="${dir.tomcat}/truststore.jks" />
+      </java>
+   </target>
+
    <target name="setup-tomcat" depends="load-conf">
       <echo message="Copying configuration file to Tomcat classpath" />
       <copy todir="${dir.tomcat.classes}" preservelastmodified="true" overwrite="true">

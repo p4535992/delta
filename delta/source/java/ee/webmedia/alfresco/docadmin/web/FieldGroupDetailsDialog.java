@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.docadmin.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocTypeDetailsDialog;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.commitToMetadataContainer;
 import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.getDuplicateFieldIds;
 
@@ -76,6 +78,11 @@ public class FieldGroupDetailsDialog extends BaseDialogBean {
         return MessageUtil.getMessage("fieldOrFieldGroup_details_affirm_changes");
     }
 
+    @Override
+    public boolean isFinishButtonVisible(boolean dialogConfOKButtonVisible) {
+        return getDocTypeDetailsDialog().isShowingLatestVersion();
+    }
+
     private void resetFields() {
         fieldGroup = null;
         parentDocTypeVersion = null;
@@ -107,6 +114,17 @@ public class FieldGroupDetailsDialog extends BaseDialogBean {
         return StringUtils.isNotBlank(fieldGroup.getSystematicComment());
     }
 
+    public boolean isShowAddExistingField() {
+        if (!fieldGroup.isSystematic()) {
+            return true;
+        }
+        FieldGroup fieldGroupDefinition = getDocumentAdminService().getFieldGroupDefinition(fieldGroup.getName());
+        if (fieldGroupDefinition.getFieldDefinitionIds().size() > fieldGroup.getFields().size()) {
+            return true;
+        }
+        return false;
+    }
+
     /** used by jsp */
     public Node getCurrentNode() {
         return fieldGroup.getNode();
@@ -115,11 +133,6 @@ public class FieldGroupDetailsDialog extends BaseDialogBean {
     /** used by jsp, propertySheet */
     public FieldGroup getFieldGroup() {
         return fieldGroup;
-    }
-
-    /** used by propertySheet */
-    public boolean isDefaultUserLoggedInVisible() {
-        return fieldGroup.isSystematic() && DEFAULT_USER_LOGGED_IN_VISIBLE_NAMES.contains(fieldGroup.getName());
     }
 
     /** used by propertySheet */

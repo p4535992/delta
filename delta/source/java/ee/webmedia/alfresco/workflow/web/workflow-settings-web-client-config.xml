@@ -5,7 +5,7 @@
    <config evaluator="node-type" condition="wfc:compoundWorkflowDefinition">
       <property-sheet>
          <show-property name="wfc:name" />
-         <show-property name="wfc:documentTypes" component-generator="SearchGenerator" pickerCallback="#{DocumentTypeDialog.searchUsedDocTypes}"
+         <show-property name="wfc:documentTypes" component-generator="SearchGenerator" pickerCallback="#{DocTypeListDialog.searchUsedDocTypes}"
             allowDuplicates="false" converter="ee.webmedia.alfresco.document.type.web.DocumentTypeConverter" dialogTitleId="workflow_compound_type_popUpInfo" />
       </property-sheet>
    </config>

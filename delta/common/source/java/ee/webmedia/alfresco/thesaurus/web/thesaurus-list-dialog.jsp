@@ -36,16 +36,6 @@
          <a:actionLink id="col3-act1" value="#{msg.thesaurus_edit}" image="/images/icons/edit_properties.gif" showLink="false" action="dialog:thesaurusDetailsDialog" actionListener="#{ThesaurusDetailsDialog.setup}" tooltip="#{msg.thesaurus_edit}">
             <f:param name="nodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
-         
-         <!-- TODO DLSeadist - rendered only when not associated with document or fieldGroupDefinition! -->
-         <a:actionLink id="col3-act2" value="#{msg.remove}" tooltip="#{msg.remove}" 
-            actionListener="#{InformingDeleteNodeDialog.setupDelete}" action="dialog:informingDeleteNodeDialog" showLink="false" image="/images/icons/delete.gif">
-            <f:param name="nodeRef" value="#{r.nodeRef}" />
-            <f:param name="containerTitleMsgKey" value="thesaurus_delete" />
-            <f:param name="confirmMsgKey" value="thesaurus_delete_confirm" />
-            <f:param name="deletableObjectNameProp" value="the:name" />
-            <f:param name="successMsgKey" value="save_success" />
-         </a:actionLink>
       </a:column>
       
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />

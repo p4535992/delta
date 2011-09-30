@@ -10,13 +10,9 @@
 <f:verbatim>
 <script type="text/javascript">
 
-   window.onload = pageLoaded;
-   
-   function pageLoaded()
-   {
-      document.getElementById("dialog:dialog-body:search-text").focus();
+$jQ(document).ready(function(){
       updateButtonState();
-   }
+   })
    
    function updateButtonState()
    {
@@ -36,12 +32,12 @@
 
    
    <a:panel id="search-panel">
-      <h:inputText id="search-text" styleClass="admin-user-search-input" value="#{UsersBeanProperties.searchCriteria}" size="35" maxlength="1024" />
+      <h:inputText id="search-text" styleClass="admin-user-search-input focus" value="#{UsersBeanProperties.searchCriteria}" size="35" maxlength="1024" onkeyup="updateButtonState();" />
       <h:commandButton id="search-btn" value="#{msg.search}" action="#{DialogManager.bean.search}" disabled="true" style="margin-left: 5px;" />
       <h:commandButton value="#{msg.show_all}" action="#{DialogManager.bean.showAll}" style="margin-left: 5px;"/>
       <f:verbatim>
       <script type="text/javascript">
-      	addSearchSuggest("dialog:dialog-body:search-text", "dialog:dialog-body:search-text", "UserListDialog.searchUsers", "<%=request.getContextPath()%>/ajax/invoke/AjaxSearchBean.invokeActionListener?actionListener=UserDetailsDialog.setupUser",
+      	addSearchSuggest("dialog:dialog-body:search-text", "dialog:dialog-body:search-text", "UserListDialog.searchUsers", null, "0", "<%=request.getContextPath()%>/ajax/invoke/AjaxSearchBean.invokeActionListener?actionListener=UserDetailsDialog.setupUser",
       	   function() {
       	      $jQ("#showUser").click();
       	});

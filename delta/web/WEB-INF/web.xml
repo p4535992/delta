@@ -25,7 +25,6 @@
          ,/WEB-INF/classes/ee/webmedia/alfresco/common/common-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/common/propertysheet/common-propertysheet-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/signature/signature-faces-config.xml
-         ,/WEB-INF/classes/ee/webmedia/alfresco/addressbook/addressbook-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/menu/menu-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/classificator/classificator-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/orgstructure/organizationStructure-faces-config.xml

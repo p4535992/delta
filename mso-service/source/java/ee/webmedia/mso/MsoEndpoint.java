@@ -77,6 +77,22 @@ public class MsoEndpoint implements Mso {
         }
     }
 
+    @Override
+    @WebMethod
+    @WebResult(name = "modifiedFormulasOutput", targetNamespace = "")
+    @RequestWrapper(localName = "modifiedFormulas", targetNamespace = "", className = "ee.webmedia.mso.ModifiedFormulas")
+    @ResponseWrapper(localName = "modifiedFormulasResponse", targetNamespace = "", className = "ee.webmedia.mso.ModifiedFormulasResponse")
+    public ModifiedFormulasOutput getModifiedFormulas(@WebParam(name = "msoDocumentInput", targetNamespace = "") MsoDocumentInput msoDocumentInput) {
+        try {
+            return msoService.getModifiedFormulas(msoDocumentInput);
+        } catch (Exception e) {
+            if (e instanceof RuntimeException) {
+                throw (RuntimeException) e;
+            }
+            throw new RuntimeException(e);
+        }
+    }
+
     @WebMethod(exclude = true)
     public void setMsoService(MsoService msoService) {
         this.msoService = msoService;
@@ -93,7 +109,7 @@ public class MsoEndpoint implements Mso {
             File folder = new File(args[0]);
             log.info("Batch-converting all files to PDF in folder: " + folder.getAbsolutePath());
             File[] list = folder.listFiles();
-            MsoService bean = (MsoService) applicationContext.getBean(MsoService.class);
+            MsoService bean = applicationContext.getBean(MsoService.class);
             int pass = 1;
             while (true) {
                 log.info("Starting pass " + pass);

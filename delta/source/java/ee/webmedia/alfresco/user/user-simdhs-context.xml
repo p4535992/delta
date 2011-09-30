@@ -45,6 +45,11 @@
       <property name="executeOnceOnly" value="true" />
    </bean>
 
+   <bean id="supervisionGroupBootstrap" class="ee.webmedia.alfresco.user.bootstrap.SupervisionGroupBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+   </bean>
+
    <bean id="userHomesSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />

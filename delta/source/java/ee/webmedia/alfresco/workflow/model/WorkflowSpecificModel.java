@@ -52,6 +52,8 @@ public interface WorkflowSpecificModel {
 
     interface Props {
         QName DUE_DATE = QName.createQName(URI, "dueDate");
+        QName DUE_DATE_DAYS = QName.createQName(URI, "dueDateDays");
+        QName IS_DUE_DATE_WORKING_DAYS = QName.createQName(URI, "isDueDateDaysWorkingDays");
         QName DESCRIPTION = QName.createQName(URI, "description");
         QName RESOLUTION = QName.createQName(URI, "resolution");
         QName FILE = QName.createQName(URI, "file");

@@ -78,8 +78,14 @@
       <p>Export as .ACP file: 
       <h:commandButton id="export" styleClass="node-export" value="Export" type="submit"
          actionListener="#{AdminNodeBrowseBean.export}" />
+      <br />Delete node:
       <h:commandButton id="delete" styleClass="node-delete" value="Delete node" type="submit"
          actionListener="#{AdminNodeBrowseBean.delete}" rendered="#{ApplicationService.test}" />
+      <br />
+         <h:outputText value="Faili asukoht serveri kõvakettal, millest ACP fail importida: "/><br/>
+         <h:inputText id="fileNameInputText" value="#{AdminNodeBrowseBean.importFileName}" size="70" /><br/>
+         <h:commandButton id="importAcp" value="Impordi ACP fail" type="submit"
+            actionListener="#{AdminNodeBrowseBean.importACP}" />
       </p>
 
       <br/>

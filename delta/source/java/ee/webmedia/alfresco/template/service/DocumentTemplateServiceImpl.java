@@ -14,6 +14,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.servlet.ServletContext;
+import javax.xml.ws.soap.SOAPFaultException;
 
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
@@ -38,14 +39,13 @@ import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.service.OpenOfficeService;
 import ee.webmedia.alfresco.common.web.WmNode;
-import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
-import ee.webmedia.alfresco.document.type.model.DocumentTypeModel;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.mso.service.MsoService;
 import ee.webmedia.alfresco.series.model.SeriesModel;
@@ -108,16 +108,31 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
     @Override
     public DocumentTemplate getDocumentsTemplate(NodeRef document) {
-        QName documentTypeId = nodeService.getType(document);
+        String documentTypeId = (String) nodeService.getProperty(document, DocumentAdminModel.Props.OBJECT_TYPE_ID);
         // it's OK to pick first one
+        FileInfo word2003Template = null;
         for (FileInfo fi : fileFolderService.listFiles(getRoot())) {
-            if (nodeService.hasAspect(fi.getNodeRef(), DocumentTemplateModel.Aspects.TEMPLATE_DOCUMENT)) {
-                QName docQName = QName.createQName(nodeService.getProperty(fi.getNodeRef(), DocumentTemplateModel.Prop.DOCTYPE_ID).toString());
-                if (docQName.equals(documentTypeId)) {
-                    return setupDocumentTemplate(fi);
-                }
+            if (!nodeService.hasAspect(fi.getNodeRef(), DocumentTemplateModel.Aspects.TEMPLATE_DOCUMENT)) {
+                continue;
             }
+
+            if (!documentTypeId.equals(fi.getProperties().get(DocumentTemplateModel.Prop.DOCTYPE_ID))) {
+                continue;
+            }
+
+            // If current file is 2007/2010 template, return the first one fount
+            if (StringUtils.endsWithIgnoreCase(fi.getName(), ".dotx")) {
+                return setupDocumentTemplate(fi);
+            }
+
+            // Otherwise mark it as a candidate if only 2003 binary template is present
+            word2003Template = fi;
         }
+
+        if (word2003Template != null) {
+            return setupDocumentTemplate(word2003Template);
+        }
+
         return null;
     }
 
@@ -140,13 +155,6 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         log.debug("Creating a file from template for document: " + documentNodeRef);
         final Map<QName, Serializable> docProp = nodeService.getProperties(documentNodeRef);
 
-        String name = ((String) docProp.get(DocumentCommonModel.Props.DOC_NAME));
-        String displayName = fileService.getUniqueFileDisplayName(documentNodeRef, name + "." + mimetypeService.getExtension(MimetypeMap.MIMETYPE_WORD));
-        name = FilenameUtil.replaceAmpersand(ISOLatin1Util.removeAccents(FilenameUtil.buildFileName(name,
-                mimetypeService.getExtension(MimetypeMap.MIMETYPE_WORD))));
-        name = FilenameUtil.replaceNonAsciiCharacters(name);
-        name = FilenameUtil.limitFileNameLength(name);
-        name = generalService.getUniqueFileName(documentNodeRef, name);
         String templName = "";
         if (docProp.get(DocumentSpecificModel.Props.TEMPLATE_NAME) != null) {
             templName = (String) docProp.get(DocumentSpecificModel.Props.TEMPLATE_NAME);
@@ -160,8 +168,20 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         } else {
             nodeRef = getTemplateByName(templName).getNodeRef();
         }
-        String templateFileName = (String) nodeService.getProperty(nodeRef, ContentModel.PROP_NAME);
-        log.debug("Using template: " + templateFileName);
+        String templateFilename = (String) nodeService.getProperty(nodeRef, ContentModel.PROP_NAME);
+        log.debug("Using template: " + templateFilename);
+
+        String extension = mimetypeService.getExtension(MimetypeMap.MIMETYPE_WORD);
+        if (StringUtils.endsWithIgnoreCase(templateFilename, ".dotx")) {
+            extension += "x"; // Well, ain't this nice! :) (Filename must end with docx if 2003/2007 template is used)
+        }
+        String name = ((String) docProp.get(DocumentCommonModel.Props.DOC_NAME));
+        String displayName = fileService.getUniqueFileDisplayName(documentNodeRef, name + "." + extension);
+        name = FilenameUtil.replaceAmpersand(ISOLatin1Util.removeAccents(FilenameUtil.buildFileName(name,
+                extension)));
+        name = FilenameUtil.replaceNonAsciiCharacters(name);
+        name = FilenameUtil.limitFileNameLength(name);
+        name = generalService.getUniqueFileName(documentNodeRef, name);
 
         ee.webmedia.alfresco.document.file.model.File populatedTemplate = new ee.webmedia.alfresco.document.file.model.File(fileFolderService.create(
                 documentNodeRef, name, ContentModel.TYPE_CONTENT));
@@ -173,11 +193,16 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         log.debug("Created new node: " + populatedTemplate.getNodeRef() + "\nwith name: " + name + "; displayName: " + displayName);
         // Set document content's mimetype and encoding from template
 
-        replaceFormulas(documentNodeRef, nodeRef, populatedTemplate.getNodeRef(), templateFileName);
+        replaceFormulas(documentNodeRef, nodeRef, populatedTemplate.getNodeRef(), templateFilename);
         return displayName;
     }
 
     private void replaceFormulas(NodeRef document, NodeRef sourceFile, NodeRef destinationFile, String sourceFileName) {
+        if (!StringUtils.endsWithIgnoreCase(sourceFileName, ".doc") && !StringUtils.endsWithIgnoreCase(sourceFileName, ".docx")
+                && !StringUtils.endsWithIgnoreCase(sourceFileName, ".dot") && !StringUtils.endsWithIgnoreCase(sourceFileName, ".dotx")) {
+            throw new UnableToPerformException(MessageSeverity.ERROR, "template_replace_formulas_invalid_file_extension");
+        }
+
         Map<String, String> formulas = getFormulas(document);
         if (log.isDebugEnabled()) {
             log.debug("Produced formulas " + WmNode.toString(formulas.entrySet()));
@@ -187,6 +212,12 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             ContentWriter documentWriter = fileFolderService.getWriter(destinationFile);
             try {
                 msoService.replaceFormulas(formulas, documentReader, documentWriter);
+            } catch (SOAPFaultException se) {
+                String errorKey = "template_replace_formulas_failed";
+                if (se.getMessage().contains("Err001")) {
+                    errorKey += "_invalid_file_content";
+                }
+                throw new UnableToPerformException(MessageSeverity.ERROR, errorKey);
             } catch (Exception e) {
                 throw new UnableToPerformException(MessageSeverity.ERROR, "template_replace_formulas_failed", e);
             }
@@ -277,7 +308,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                             .append(")")
                             .append("<br>\n");
                     debugInfo.append("\n  * ").append(endDate.getTime()).append(" ").append(endDate.toString()).append(" -> ").append(formattedDate).append(" - ")
-                            .append(doc.getNodeRefAsString());
+                    .append(doc.getNodeRefAsString());
                 }
             }
             if (sb.length() > 0) {
@@ -588,14 +619,15 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         for (FileInfo fi : templateFiles) {
             DocumentTemplate dt = setupDocumentTemplate(fi);
             if (nodeService.hasAspect(fi.getNodeRef(), DocumentTemplateModel.Aspects.TEMPLATE_DOCUMENT)) {
-                NodeRef docType = generalService.getNodeRef(DocumentTypeModel.Repo.DOCUMENT_TYPES_SPACE + "/" + dt.getDocTypeId());
-                if (docType != null) {
-                    dt.setDocTypeName((String) nodeService.getProperty(docType, DocumentTypeModel.Props.NAME));
-                }
+                // TODO Kaarel
+                // NodeRef docType = generalService.getNodeRef(DocumentTypeModel.Repo.DOCUMENT_TYPES_SPACE + "/" + dt.getDocTypeId());
+                // if (docType != null) {
+                // dt.setDocTypeName((String) nodeService.getProperty(docType, DocumentTypeModel.Props.NAME));
+                // }
             } else if (nodeService.hasAspect(fi.getNodeRef(), DocumentTemplateModel.Aspects.TEMPLATE_EMAIL)) {
                 dt.setDocTypeName("");
             } else {
-                dt.setDocTypeName(dt.getDocTypeId().getLocalName());
+                dt.setDocTypeName(dt.getDocTypeId());
             }
             templates.add(dt);
         }
@@ -608,11 +640,11 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     }
 
     @Override
-    public List<DocumentTemplate> getDocumentTemplates(QName docType) {
-        Assert.notNull(docType, "Parameter docType is mandatory.");
+    public List<DocumentTemplate> getDocumentTemplates(String docTypeId) {
+        Assert.notNull(docTypeId, "Parameter docTypeId is mandatory.");
         List<DocumentTemplate> result = new ArrayList<DocumentTemplate>();
         for (DocumentTemplate template : getTemplates()) {
-            if (DocumentDynamicModel.Types.DOCUMENT_DYNAMIC.equals(docType) || docType.equals(template.getDocTypeId())) {
+            if (docTypeId.equals(template.getDocTypeId())) {
                 result.add(template);
             }
         }

@@ -26,6 +26,12 @@ import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.utils.RepoUtil;
 
 /**
+ * NB! All subclasses must declare at least one of the two following constructors, based on required usage:<br>
+ * 1) {@link #BaseObject(NodeRef, WmNode)} -- if the object is the tip of data model, parent object is null, has only parentRef<br>
+ * 2) {@link #BaseObject(BaseObject, WmNode)} -- if the object is not the tip of data model, parent object is non-null<br>
+ * And the following constructor:<br>
+ * 3) {@link #BaseObject(BaseObject, QName)} -- if the object is used as a child of some other object, and in-memory child creation is required<br>
+ * 
  * @author Alar Kvell
  */
 public abstract class BaseObject extends NodeBaseVO implements Cloneable {
@@ -36,7 +42,7 @@ public abstract class BaseObject extends NodeBaseVO implements Cloneable {
      * could be used to reconstruct object (using constructor {@link #BaseObject(NodeRef, WmNode)} <br>
      * when we only have node (for example in {@link ActionEvaluator#evaluate(org.alfresco.web.bean.repository.Node)} of the object
      */
-    private static QName PARENT_NODE_REF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "parentNodeRef"); // FIXME DLSeadist final
+    private static final QName PARENT_NODE_REF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "parentNodeRef");
 
     // Currently only node type, properties and children (child-assocs) are supported
     // Also, when creating a new object in memory, default properties and aspects are loaded from dictionaryService
@@ -51,21 +57,17 @@ public abstract class BaseObject extends NodeBaseVO implements Cloneable {
 
     // TODO constructors; and serialization
 
-    // NB! All subclasses must declare at least one of the two following constructors, based on required usage:
-    // 1) T(NodeRef, WmNode) -- if the object is the tip of data model, parent object is null, has only parentRef
-    // 2) T(BaseObject, WmNode) -- if the object is not the tip of data model, parent object is non-null
-    // And the following constructor:
-    // 3) T(BaseObject) -- if the object is used as a child of some other object, and in-memory child creation is required
-
+    /** Used by {@link BaseServiceImpl#getObject(NodeRef, Class)} through reflection (when loading ancestor object) */
     protected BaseObject(BaseObject parent, WmNode node) {
         this(parent, parent.getNodeRef(), node);
     }
 
+    /** Used by {@link BaseServiceImpl#getObject(NodeRef, Class)} through reflection (when loading this object) */
     protected BaseObject(NodeRef parentNodeRef, WmNode node) {
         this(null, parentNodeRef, node);
     }
 
-    protected BaseObject(BaseObject parent, NodeRef parentNodeRef, WmNode node) {
+    private BaseObject(BaseObject parent, NodeRef parentNodeRef, WmNode node) {
         Assert.notNull(node);
         Assert.isTrue(parent != null || WmNode.isSaved(parentNodeRef), "At least one of parent or parentNodeRef must be non-null");
         this.parent = parent;
@@ -85,11 +87,11 @@ public abstract class BaseObject extends NodeBaseVO implements Cloneable {
     }
 
     private void setParentNodeRef(NodeRef parentNodeRef) {
-        PARENT_NODE_REF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "parentNodeRef"); // FIXME DLSeadist final
         this.parentNodeRef = parentNodeRef;
         setProp(PARENT_NODE_REF, parentNodeRef);
     }
 
+    /** used only by subclass to construct new unsaved object */
     protected BaseObject(BaseObject parent, QName type) {
         this(parent, parent.getNodeRef(), type);
     }
@@ -99,7 +101,7 @@ public abstract class BaseObject extends NodeBaseVO implements Cloneable {
         this(null, parentNodeRef, type);
     }
 
-    protected BaseObject(BaseObject parent, NodeRef parentNodeRef, QName type) {
+    private BaseObject(BaseObject parent, NodeRef parentNodeRef, QName type) {
         this(parent, parentNodeRef, new WmNode(RepoUtil.createNewUnsavedNodeRef(), type, getDefaultAspects(type), getDefaultProperties(type)));
     }
 
@@ -313,6 +315,7 @@ public abstract class BaseObject extends NodeBaseVO implements Cloneable {
                     throw new IllegalStateException("when removing nodes by nodeRef, childs should have not-null nodeRef (for unsaved nodes childRef should be created using Repo");
                 } else if (nodeRef.equals(removableChildRef)) {
                     it.remove();
+                    getRemovedList().add(t);
                     return t;
                 }
             }

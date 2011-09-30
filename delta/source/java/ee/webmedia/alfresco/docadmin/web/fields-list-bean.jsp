@@ -13,8 +13,8 @@
 
 <h:panelGroup id="docTypeMetadata-panel-facets">
    <f:facet name="title">
-       <h:panelGroup><%-- just to group multiple elements into single child of facet --%>
-         <a:booleanEvaluator value="#{DialogManager.bean != FieldGroupDetailsDialog || !FieldGroupDetailsDialog.fieldGroup.systematic}">
+      <a:booleanEvaluator value="#{DocTypeDetailsDialog.showingLatestVersion}">
+         <a:booleanEvaluator value="#{DialogManager.bean != FieldGroupDetailsDialog || FieldGroupDetailsDialog.showAddExistingField}">
             <wm:search id="searchFieldDef" pickerCallback="#{DialogManager.bean.fieldsListBean.searchFieldDefinitions}" setterCallback="#{DialogManager.bean.fieldsListBean.addExistingField}"
                searchLinkLabel="docType_metadataList_add_existingField" dialogTitleId="docType_metadataList_add_existingField_pickerTitle" value="#{DialogManager.bean.fieldsListBean.dummy}" ajaxParentLevel="100" searchLinkTooltip="docType_metadataList_add_existingField_tooltip"
             />
@@ -38,14 +38,11 @@
                <f:param name="itemType" value="separator"/>
             </a:actionLink>
          </a:booleanEvaluator>
-      </h:panelGroup>
+      </a:booleanEvaluator>
    </f:facet>
 </h:panelGroup>
 
-<%-- FIXME DLSeadist test
-<a:panel id="docTypeMetadata-panel" label="#{msg.doc_type_details_panel_metadata}" styleClass="panel-100 with-pager" progressive="true" facetsId="dialog:dialog-body:docTypeMetadata-panel-facets" >
- --%>
-<a:panel id="docTypeMetadata-panel" label="#{msg.doc_type_details_panel_metadata} ver. #{DocTypeDetailsDialog.docType.latestVersion}" styleClass="panel-100 with-pager" progressive="true" facetsId="dialog:dialog-body:docTypeMetadata-panel-facets" >
+<a:panel id="docTypeMetadata-panel" label="#{DocTypeDetailsDialog.metaFieldsListLabel}" styleClass="panel-100 with-pager" progressive="true" facetsId="dialog:dialog-body:docTypeMetadata-panel-facets" >
    <a:richList id="documentTypeList" value="#{DialogManager.bean.fieldsListBean.metaFieldsList}" var="r" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}"
       rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" refreshOnBind="true">
 
@@ -94,7 +91,7 @@
 
       <a:column id="actionsCol" actions="true">
          <a:booleanEvaluator value="#{r.removableFromList}">
-            <a:actionLink id="actionsCol-del" value="" actionListener="#{DialogManager.bean.fieldsListBean.removeMetaField}"
+            <a:actionLink id="actionsCol-del" value="" actionListener="#{DialogManager.bean.fieldsListBean.removeMetaField}" rendered="#{DocTypeDetailsDialog.showingLatestVersion}"
              showLink="false" image="/images/icons/delete.gif" tooltip="#{msg.docType_metadataList_action_remove}" styleClass="remove_#{r.type}" >
                   <f:param name="nodeRef" value="#{r.nodeRef}"/>
             </a:actionLink>

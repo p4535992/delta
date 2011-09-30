@@ -108,6 +108,16 @@
    </converter>
    
    <converter>
+      <converter-id>ee.webmedia.alfresco.common.propertysheet.datepicker.TimePickerConverter</converter-id>
+      <converter-class>ee.webmedia.alfresco.common.propertysheet.datepicker.TimePickerConverter</converter-class>
+   </converter>
+   
+   <converter>
+      <converter-id>ee.webmedia.alfresco.workflow.web.DueDateDaysConverter</converter-id>
+      <converter-class>ee.webmedia.alfresco.workflow.web.DueDateDaysConverter</converter-class>
+   </converter>
+   
+   <converter>
       <converter-id>ee.webmedia.alfresco.common.web.ConvertIntWithMsg</converter-id>
       <converter-class>ee.webmedia.alfresco.common.web.ConvertIntWithMsg</converter-class>
    </converter>

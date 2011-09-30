@@ -39,6 +39,7 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 public class Search extends UIComponentBase implements AjaxUpdateable, NamingContainer {
 
     public static final String SETTER_CALLBACK = "setterCallback";
+    public static final String PREPROCESS_CALLBACK = "preprocessCallback";
 
     public static final String SETTER_CALLBACK_TAKES_NODE = "setterCallbackTakesNode";
 
@@ -64,6 +65,8 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
     public static final String ATTR_TOOLTIP_MB = "tooltip";
     /** should delete(clear value) link be rendered when component is singlevalued (by default not rendered) */
     public static final String ALLOW_CLEAR_SINGLE_VALUED = "allowClearSingleValued";
+    public static final String FILTER_INDEX = "filterIndex";
+    public static final String SEARCH_SUGGEST_DISABLED = "searchSuggestDisabled";
 
     @Override
     public String getFamily() {
@@ -114,6 +117,11 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
                 setValue(context, null);
                 invokeSetterCallbackIfNeeded(context, null); // so that if needed, related components could be updated
             }
+        } else if (event instanceof SearchAddEvent) {
+            if (isDisabled() || !isMultiValued() || !isEditable()) {
+                throw new RuntimeException("Disabled or single-valued or non-editable component should not fire SearchAddEvent: " + getId());
+            }
+            appendRow(context, null);
         } else {
             super.broadcast(event);
         }
@@ -138,6 +146,11 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         picker.setQueryCallback(b);
         picker.addActionListener(new PickerFinishActionListener());
 
+        Integer filterIndex = (Integer) getAttributes().get(FILTER_INDEX);
+        if (filterIndex != null) {
+            picker.setDefaultFilterIndex(filterIndex);
+        }
+
         // Disable AJAX if inside RichList
         if (isChildOfUIRichList()) {
             ComponentUtil.setAjaxDisabled(this);
@@ -149,10 +162,17 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
 
     protected void pickerFinish(UIGenericPicker picker) {
         String[] results = picker.getSelectedResults();
+        FacesContext context = FacesContext.getCurrentInstance();
+
+        String preprocessCallback = getPreprocesCallback();
+        if (StringUtils.isNotBlank(preprocessCallback)) {
+            MethodBinding b = context.getApplication().createMethodBinding(preprocessCallback, new Class[] { int.class, String[].class });
+            results = (String[]) b.invoke(context, new Object[] { picker.getFilterIndex(), results });
+        }
+
         if (results == null) {
             return;
         }
-        FacesContext context = FacesContext.getCurrentInstance();
 
         if (isMultiValued()) {
             for (String result : results) {
@@ -260,7 +280,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         }
         ComponentUtil.createAndSetConverter(context, (String) getAttributes().get(CONVERTER_KEY), component);
         if (isDisabled()) {
-            ComponentUtil.setDisabledAttributeRecursively(component);
+            ComponentUtil.setReadonlyAttributeRecursively(component);
         } else if (isEditable()) {
             @SuppressWarnings("unchecked")
             final Map<String, Object> attributes = component.getAttributes();
@@ -346,6 +366,10 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         return isAttributeTrue(Search.SETTER_CALLBACK_TAKES_NODE);
     }
 
+    protected String getPreprocesCallback() {
+        return (String) ComponentUtil.getAttribute(this, PREPROCESS_CALLBACK);
+    }
+
     private boolean isAllowDuplicates() {
         return isAttributeTrue(ALLOW_DUPLICATES_KEY);
     }
@@ -422,6 +446,15 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         public SearchRemoveEvent(UIComponent uiComponent, int index) {
             super(uiComponent);
             this.index = index;
+        }
+
+    }
+
+    public static class SearchAddEvent extends ActionEvent {
+        private static final long serialVersionUID = 1L;
+
+        public SearchAddEvent(UIComponent uiComponent) {
+            super(uiComponent);
         }
 
     }

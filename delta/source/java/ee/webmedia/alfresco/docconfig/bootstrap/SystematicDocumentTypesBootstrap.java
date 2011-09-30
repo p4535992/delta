@@ -89,6 +89,9 @@ public class SystematicDocumentTypesBootstrap extends AbstractModuleComponent {
 
         List<Properties> views = new ArrayList<Properties>();
         for (ModuleComponent component : getDependsOn()) {
+            if (!(component instanceof ImporterModuleComponent)) {
+                continue;
+            }
             List<Properties> bootstrapViews = ((ImporterModuleComponent) component).getBootstrapViews();
             for (Properties properties : bootstrapViews) {
                 String path = properties.getProperty("path");
@@ -97,8 +100,7 @@ public class SystematicDocumentTypesBootstrap extends AbstractModuleComponent {
                 } else if (DocumentAdminModel.Repo.FIELD_GROUP_DEFINITIONS_SPACE.equals(path)) {
                     path = DocumentAdminModel.Repo.FIELD_GROUP_DEFINITIONS_TMP_SPACE;
                 } else if (!DocumentAdminModel.Repo.FIELD_DEFINITIONS_TMP_SPACE.equals(path) && !DocumentAdminModel.Repo.FIELD_GROUP_DEFINITIONS_TMP_SPACE.equals(path)) {
-                    throw new RuntimeException("Field definitions or field group definitions must be imported under a supported path, but component id=" + component.getName()
-                            + " has path=" + path);
+                    continue;
                 }
                 properties.setProperty("path", path);
             }

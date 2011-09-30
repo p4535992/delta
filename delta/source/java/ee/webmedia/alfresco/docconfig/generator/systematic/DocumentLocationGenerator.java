@@ -70,13 +70,15 @@ import ee.webmedia.alfresco.volume.service.VolumeService;
 public class DocumentLocationGenerator extends BaseSystematicFieldGenerator implements FieldGroupGenerator {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentLocationGenerator.class);
 
+    // TODO DLSeadist: ensure that everything works according to originalFieldId<-->fieldId
+
     @Override
-    protected QName[] getFieldIds() {
-        return new QName[] {
-                FUNCTION,
-                SERIES,
-                VOLUME,
-                CASE };
+    protected String[] getOriginalFieldIds() {
+        return new String[] {
+                FUNCTION.getLocalName(),
+                SERIES.getLocalName(),
+                VOLUME.getLocalName(),
+                CASE.getLocalName() };
     }
 
     /*
@@ -102,7 +104,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
     @Override
     public void generateField(Field field, GeneratorResults generatorResults) {
         final ItemConfigVO item = generatorResults.getAndAddPreGeneratedItem();
-        if (FUNCTION.equals(field.getFieldId())) {
+        if (field.getOriginalFieldId().equals(FUNCTION.getLocalName())) {
             item.setComponentGenerator("GeneralSelectorGenerator");
             item.setConverter(NodeRefConverter.class.getName());
             item.setSelectionItems(getBindingName("getFunctions"));
@@ -111,7 +113,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
 
             generatorResults.generateAndAddViewModeText(FUNCTION_LABEL.toString(), field.getName());
             return;
-        } else if (SERIES.equals(field.getFieldId())) {
+        } else if (field.getOriginalFieldId().equals(SERIES.getLocalName())) {
             item.setComponentGenerator("GeneralSelectorGenerator");
             item.setConverter(NodeRefConverter.class.getName());
             item.setSelectionItems(getBindingName("getSeries"));
@@ -120,7 +122,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
 
             generatorResults.generateAndAddViewModeText(SERIES_LABEL.toString(), field.getName());
             return;
-        } else if (VOLUME.equals(field.getFieldId())) {
+        } else if (field.getOriginalFieldId().equals(VOLUME.getLocalName())) {
             item.setComponentGenerator("GeneralSelectorGenerator");
             item.setConverter(NodeRefConverter.class.getName());
             item.setSelectionItems(getBindingName("getVolumes"));
@@ -129,7 +131,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
 
             generatorResults.generateAndAddViewModeText(VOLUME_LABEL.toString(), field.getName());
             return;
-        } else if (CASE.equals(field.getFieldId())) {
+        } else if (field.getOriginalFieldId().equals(CASE.getLocalName())) {
             item.setName(CASE_LABEL_EDITABLE.toString());
             item.setForcedMandatory(true);
             item.setComponentGenerator("SuggesterGenerator");

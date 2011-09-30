@@ -16,7 +16,7 @@ public class AddressbookPermissionsUpdateBootstrap extends AbstractModuleCompone
 
     @Override
     protected void executeInternal() throws Throwable {
-        final NodeRef addressbookNodeRef = BeanHelper.getAddressbookService().getAddressbookNodeRef();
+        final NodeRef addressbookNodeRef = BeanHelper.getAddressbookService().getAddressbookRoot();
         PermissionService permissionService = BeanHelper.getPermissionService();
         permissionService.setPermission(addressbookNodeRef, UserService.AUTH_DOCUMENT_MANAGERS_GROUP, "AddressbookManage", true);
     }

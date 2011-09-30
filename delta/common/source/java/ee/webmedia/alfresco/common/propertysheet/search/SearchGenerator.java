@@ -14,6 +14,7 @@ import org.alfresco.web.bean.groups.AddUsersDialog;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 
+import ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditor;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
@@ -82,12 +83,16 @@ public class SearchGenerator extends BaseComponentGenerator {
         addValueFromCustomAttributes(Search.DIALOG_TITLE_ID_KEY, attributes);
         addValueFromCustomAttributes(Search.SETTER_CALLBACK, attributes);
         addValueFromCustomAttributes(Search.SETTER_CALLBACK_TAKES_NODE, attributes, Boolean.class);
+        addValueFromCustomAttributes(Search.PREPROCESS_CALLBACK, attributes);
         addValueFromCustomAttributes(Search.SHOW_FILTER_KEY, attributes, Boolean.class, false);
         addValueFromCustomAttributes(Search.FILTERS_KEY, attributes);
         addValueFromCustomAttributes(Search.AJAX_PARENT_LEVEL_KEY, attributes, Integer.class);
         addValueFromCustomAttributes(Search.ALLOW_DUPLICATES_KEY, attributes, Boolean.class, true);
         addValueFromCustomAttributes(Search.ATTR_TOOLTIP_MB, attributes);
         addValueFromCustomAttributes(Search.ALLOW_CLEAR_SINGLE_VALUED, attributes, Boolean.class, false);
+        addValueFromCustomAttributes(Search.FILTER_INDEX, attributes, Integer.class);
+        addValueFromCustomAttributes(MultiValueEditor.ADD_LABEL_ID, attributes);
+        addValueFromCustomAttributes(Search.SEARCH_SUGGEST_DISABLED, attributes, Boolean.class, false);
         return attributes;
     }
 

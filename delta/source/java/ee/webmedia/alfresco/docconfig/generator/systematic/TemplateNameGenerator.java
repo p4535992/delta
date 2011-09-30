@@ -7,11 +7,11 @@ import javax.faces.component.UIInput;
 import javax.faces.context.FacesContext;
 import javax.faces.model.SelectItem;
 
-import org.alfresco.service.namespace.QName;
 import org.apache.commons.io.FilenameUtils;
 
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.generator.BasePropertySheetStateHolder;
@@ -28,8 +28,8 @@ import ee.webmedia.alfresco.utils.WebUtil;
 public class TemplateNameGenerator extends BaseSystematicFieldGenerator implements FieldGroupGenerator {
 
     @Override
-    protected QName[] getFieldIds() {
-        return new QName[] { DocumentSpecificModel.Props.TEMPLATE_NAME };
+    protected String[] getOriginalFieldIds() {
+        return new String[] { DocumentSpecificModel.Props.TEMPLATE_NAME.getLocalName() };
     }
 
     @Override
@@ -60,7 +60,8 @@ public class TemplateNameGenerator extends BaseSystematicFieldGenerator implemen
          * @return A collection of UISelectItem objects containing the selection items to show on form.
          */
         public List<SelectItem> findDocumentTemplates(FacesContext context, UIInput selectComponent) {
-            List<DocumentTemplate> docTemplates = BeanHelper.getDocumentTemplateService().getDocumentTemplates(dialogDataProvider.getNode().getType());
+            List<DocumentTemplate> docTemplates = BeanHelper.getDocumentTemplateService().getDocumentTemplates(
+                    (String) dialogDataProvider.getNode().getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID));
             List<SelectItem> selectItems = new ArrayList<SelectItem>(docTemplates.size() + 1);
 
             // Empty default selection

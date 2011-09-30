@@ -308,7 +308,7 @@ public class PostipoissStructureImporter {
     }
 
     private NodeRef createContactGroupNode(String groupName) {
-        NodeRef abRoot = addressbookService.getAddressbookNodeRef();
+        NodeRef abRoot = addressbookService.getAddressbookRoot();
 
         QName randomqname = QName.createQName(AddressbookModel.URI, GUID.generate());
         NodeRef result = nodeService.createNode(abRoot, AddressbookModel.Assocs.CONTACT_GROUPS, randomqname, AddressbookModel.Types.CONTACT_GROUP)
@@ -342,7 +342,7 @@ public class PostipoissStructureImporter {
 
     private NodeRef createContactNode(String orgId, String orgName, String registryCode, String shortname, String englishOrgName, String email,
             String phone, String fax, String address, String town, String postalCode, String country) {
-        NodeRef abRoot = addressbookService.getAddressbookNodeRef();
+        NodeRef abRoot = addressbookService.getAddressbookRoot();
 
         QName randomqname = QName.createQName(AddressbookModel.URI, GUID.generate());
         NodeRef result = nodeService.createNode(abRoot, AddressbookModel.Assocs.ORGANIZATIONS, randomqname, AddressbookModel.Types.ORGANIZATION).getChildRef();

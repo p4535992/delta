@@ -115,10 +115,7 @@
    <f:verbatim>
 
 <script type="text/javascript">
-      window.onload = pageLoaded;
-
-      function pageLoaded()
-      {
+$jQ(document).ready(function(){
         var finishButton = document.getElementById("dialog:finish-button");
         if(finishButton != null) {
 	    	document.getElementById("dialog:finish-button").disabled = false;
@@ -133,7 +130,7 @@
 	           clear_dialog();
 	        }
         }
-      }
+      })
 </script>
 </f:verbatim>
 <% if (!fileUploaded) { %>

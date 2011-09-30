@@ -58,7 +58,7 @@
                 image="/images/icons/address-book-open-blue.png"
                 showLink="false"
                 value="#{msg.addressbook}"
-                action="dialog:addressbookManage"
+                action="dialog:addressbookList"
                 actionListener="#{MenuBean.clearViewStack}"
                 rendered="#{UserService.documentManager}">
                    <f:param name="primaryId" value="2" />

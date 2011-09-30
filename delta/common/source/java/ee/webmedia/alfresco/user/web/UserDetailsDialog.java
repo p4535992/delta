@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.user.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getAuthorityService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getOrganizationStructureService;
 import static ee.webmedia.alfresco.utils.UserUtil.getUserDisplayUnit;
 
 import java.util.ArrayList;
@@ -14,7 +16,6 @@ import javax.faces.event.ActionEvent;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
-import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
@@ -22,25 +23,19 @@ import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.users.UsersBeanProperties;
 import org.alfresco.web.bean.users.UsersDialog;
 import org.apache.commons.lang.StringUtils;
-import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.substitute.web.SubstituteListDialog;
-import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
-import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 
 public class UserDetailsDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
     public static final String BEAN_NAME = "UserDetailsDialog";
 
-    private transient UserService userService;
-    private transient OrganizationStructureService organizationStructureService;
-    private transient AuthorityService authorityService;
     private UsersBeanProperties properties;
     private List<Map<String, String>> groups;
     private String groupToAdd;
@@ -127,7 +122,7 @@ public class UserDetailsDialog extends BaseDialogBean {
      * UsersDialog.getCurrentUserNode().
      */
     public void setupCurrentUser(@SuppressWarnings("unused") ActionEvent event) {
-        Node node = new Node(properties.getPersonService().getPerson(AuthenticationUtil.getRunAsUser()));
+        Node node = new Node(BeanHelper.getUserService().getPerson(AuthenticationUtil.getRunAsUser()));
         // Eagerly load properties
         node.getProperties();
 
@@ -143,7 +138,7 @@ public class UserDetailsDialog extends BaseDialogBean {
 
     private void fillUserProps(List<Node> users) {
         user = getOrganizationStructureService().setUsersUnit(users).get(0);
-	setupGroups();
+        setupGroups();
         Map<String, Object> props = user.getProperties();
         if (props.get(ContentModel.PROP_RELATED_FUNDS_CENTER) == null) {
             props.put(ContentModel.PROP_RELATED_FUNDS_CENTER.toString(), new ArrayList<String>());
@@ -184,7 +179,7 @@ public class UserDetailsDialog extends BaseDialogBean {
     public void setupUser(ActionEvent event) {
         String userName = ActionUtil.getParam(event, "id");
         setupUser(userName);
-        BeanHelper.getAssignResponsibilityBean().updateLiabilityGivenToPerson(new Node(BeanHelper.getPersonService().getPerson(userName)));
+        BeanHelper.getAssignResponsibilityBean().updateLiabilityGivenToPerson(new Node(BeanHelper.getUserService().getPerson(userName)));
     }
 
     /**
@@ -194,7 +189,7 @@ public class UserDetailsDialog extends BaseDialogBean {
      */
     public void setupUser(String userName) {
         List<Node> users = new ArrayList<Node>(1);
-        users.add(new Node(properties.getPersonService().getPerson(userName)));
+        users.add(new Node(BeanHelper.getUserService().getPerson(userName)));
         fillUserProps(users);
         setupGroups();
     }
@@ -270,36 +265,5 @@ public class UserDetailsDialog extends BaseDialogBean {
     }
 
     // ///
-
-    protected UserService getUserService() {
-        if (userService == null) {
-            userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(UserService.BEAN_NAME);
-        }
-        return userService;
-    }
-
-    public void setUserService(UserService userService) {
-        this.userService = userService;
-    }
-
-    protected OrganizationStructureService getOrganizationStructureService() {
-        if (organizationStructureService == null) {
-            organizationStructureService = (OrganizationStructureService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(OrganizationStructureService.BEAN_NAME);
-        }
-        return organizationStructureService;
-    }
-
-    public void setOrganizationStructureService(OrganizationStructureService organizationStructureService) {
-        this.organizationStructureService = organizationStructureService;
-    }
-
-    protected AuthorityService getAuthorityService() {
-        if (authorityService == null) {
-            authorityService = BeanHelper.getAuthorityService();
-        }
-        return authorityService;
-    }
 
 }

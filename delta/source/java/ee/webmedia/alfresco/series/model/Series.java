@@ -5,7 +5,6 @@ import java.util.Date;
 import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.app.AppConstants;
@@ -26,7 +25,7 @@ public class Series implements Serializable, Comparable<Series> {
     private String description;
     private String status;
     private Integer retentionPeriod; // can be empty
-    private List<QName> docType;
+    private List<String> docType;
     private int containingDocsCount;
     private boolean newNumberForEveryDoc;
     private boolean individualizingNumbers;
@@ -115,11 +114,11 @@ public class Series implements Serializable, Comparable<Series> {
         this.retentionPeriod = retentionPeriod;
     }
 
-    public List<QName> getDocType() {
+    public List<String> getDocType() {
         return docType;
     }
 
-    public void setDocType(List<QName> docType) {
+    public void setDocType(List<String> docType) {
         node.getProperties().put(SeriesModel.Props.DOC_TYPE.toString(), docType);
         this.docType = docType;
     }

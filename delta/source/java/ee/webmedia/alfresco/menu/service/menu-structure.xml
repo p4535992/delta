@@ -100,9 +100,11 @@
          <dropdown title-id="menu_search" expanded="true">
             <submenu-id>queries-submenu</submenu-id>
             <subitems>
+<!--
                <item id="documentSearch" title-id="menu_documents">
                   <outcome>dialog:documentSearchDialog</outcome>
                </item>
+-->
                <item id="taskSearch" title-id="menu_tasks">
                   <outcome>dialog:taskSearchDialog</outcome>
                </item>
@@ -141,10 +143,10 @@
 
    <!-- KONTAKT -->
    <item title-id="menu_contact">
-      <outcome>dialog:addressbookManage</outcome>
+      <outcome>dialog:addressbookList</outcome>
       <subitems>
-         <item id="contactManagement" title-id="menu_contact_management">
-            <outcome>dialog:addressbookManage</outcome>
+         <item id="contactList" title-id="menu_contact_management">
+            <outcome>dialog:addressbookList</outcome>
          </item>
          <item id="contactGroupManagement" title-id="menu_contact_group_management">
             <outcome>dialog:addressbookManageContactGroups</outcome>
@@ -182,7 +184,7 @@
    </item>
 
    <!-- ADMINISTRATOR -->
-   <item title-id="menu_administrator" accountant="true" document-manager="true">
+   <item id="administrator" title-id="menu_administrator" accountant="true" document-manager="true" supervisor="true">
       <outcome>dialog:userListDialog</outcome>
       <subitems>
          <item id="userManagement" title-id="menu_user_management" document-manager="true">
@@ -216,10 +218,6 @@
          <item id="templates" title-id="menu_templates" admin="true">
             <outcome>dialog:documentTemplateListDialog</outcome>
          </item>
-         <!-- FIXME DLSeadist -->
-         <item id="documentTypeManagementOld" title-id="menu_document_types" admin="true">
-            <outcome>dialog:documentTypeDialog</outcome>
-         </item>
          <item id="documentTypeManagement" title-id="menu_document_types" admin="true">
             <outcome>dialog:docTypeListDialog</outcome>
          </item>
@@ -232,6 +230,7 @@
          <item id="importantNotifications" title-id="menu_important_notifications" admin="true">
             <outcome>dialog:notificationListDialog</outcome>
          </item>
+         <item id="applicationLog" title-id="menu_application_log" supervisor="true" />
          <item id="thesauri" title-id="menu_thesauri" admin="true">
             <outcome>dialog:thesaurusListDialog</outcome>
          </item>
@@ -244,156 +243,9 @@
       </subitems>
    </item>
 
+   <!-- ALUSTA UUT DOKUMENTI -->
    <dropdown id="documentDynamicTypes" title-id="menu_start_new_document" skinnable="true" temporary="true">
       <submenu-id>new-document-dynamic-submenu</submenu-id>
-   </dropdown>
-
-   <!-- ALUSTA UUT DOKUMENTI -->
-   <dropdown id="documentTypes" title-id="menu_start_new_document" skinnable="true" temporary="true">
-      <child-filter>createDocument</child-filter>
-      <submenu-id>new-document-submenu</submenu-id>
-      <subitems>
-         <dropdown title-id="menu_instrument">
-            <submenu-id>instrument-submenu</submenu-id>
-            <subitems>
-               <item>
-                  <outcome>docsub:instrumentOfDeliveryAndReceipt</outcome>
-               </item>
-               <item>
-                  <outcome>docsub:supervisionReport</outcome>
-               </item>
-            </subitems>
-         </dropdown>
-         <item>
-            <outcome>docsub:instrumentOfDeliveryAndReceiptMv</outcome>
-         </item>          
-         <item>
-            <outcome>docsub:report</outcome>
-         </item>
-         <item>
-            <outcome>docsub:reportMv</outcome>
-         </item>   
-         <item>
-            <outcome>docsub:invoice</outcome>
-         </item>
-         <item>
-            <outcome>docsub:managementsOrder</outcome>
-         </item>
-         <dropdown title-id="menu_letter">
-            <submenu-id>letter-submenu</submenu-id>
-            <subitems>
-               <item>
-                  <outcome>docsub:incomingLetter</outcome>
-               </item>
-               <item>
-                  <outcome>docsub:incomingLetterMv</outcome>
-               </item>               
-               <item>
-                  <outcome>docsub:outgoingLetter</outcome>
-               </item>
-               <item>
-                  <outcome>docsub:outgoingLetterMv</outcome>
-               </item>
-            </subitems>
-         </dropdown>
-         <item>
-            <outcome>docsub:orderMv</outcome>
-         </item>          
-         <dropdown title-id="menu_order">
-            <submenu-id>order-submenu</submenu-id>
-            <subitems>
-               <item>
-                  <outcome>docsub:chancellorsOrder</outcome>
-               </item>
-               <item>
-                  <outcome>docsub:ministersOrder</outcome>
-               </item>
-               <item>
-                  <outcome>docsub:personelleOrderSim</outcome>
-               </item>
-               <item>
-                  <outcome>docsub:personelleOrderSmit</outcome>
-               </item>
-               <item>
-                  <outcome>docsub:regulation</outcome>
-               </item>
-            </subitems>
-         </dropdown>
-         <item>
-            <outcome>docsub:contractSim</outcome>
-         </item>
-         <item>
-            <outcome>docsub:contractSmit</outcome>
-         </item>
-         <item>
-            <outcome>docsub:contractMv</outcome>
-         </item> 
-         <item>
-            <outcome>docsub:licence</outcome>
-         </item>
-         <dropdown title-id="menu_internal_application">
-            <submenu-id>internal-application-submenu</submenu-id>
-            <subitems>
-            <item>
-               <outcome>docsub:personalVehicleUsageCompensationMv</outcome>
-            </item>            
-            <item>
-               <outcome>docsub:trainingApplication</outcome>
-            </item>
-            <item>
-               <outcome>docsub:leavingLetter</outcome>
-            </item>
-            <item>
-               <outcome>docsub:internalApplication</outcome>
-            </item>
-            <item>
-               <outcome>docsub:internalApplicationMv</outcome>
-            </item>            
-            <item>
-               <outcome>docsub:vacationOrderSmit</outcome>
-            </item>
-            <item>
-               <outcome>docsub:vacationApplication</outcome>
-            </item>            
-            <item>
-               <outcome>docsub:vacationOrder</outcome>
-            </item>
-            <item>
-               <outcome>docsub:tenderingApplication</outcome>
-            </item>
-            <item>
-               <outcome>docsub:errandApplicationDomestic</outcome>
-            </item>
-            <item>
-               <outcome>docsub:errandOrderAbroad</outcome>
-            </item>
-            <item>
-               <outcome>docsub:errandOrderAbroadMv</outcome>
-            </item>
-            </subitems>
-         </dropdown>
-         <item>
-            <outcome>docsub:memo</outcome>
-         </item>
-         <item>
-            <outcome>docsub:otherDocumentMv</outcome>
-         </item>         
-         <item>
-            <outcome>docsub:decree</outcome>
-         </item>
-         <item>
-            <outcome>docsub:resolutionMv</outcome>
-         </item>
-         <item>
-            <outcome>docsub:projectApplication</outcome>
-         </item>
-         <item>
-            <outcome>docsub:minutes</outcome>
-         </item>
-         <item>
-            <outcome>docsub:minutesMv</outcome>
-         </item> 
-      </subitems>
    </dropdown>
 
 </menu>

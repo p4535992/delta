@@ -61,6 +61,8 @@ public class MenuItem implements Serializable {
     private boolean docManager;
     @XStreamAsAttribute
     private boolean accountant;
+    @XStreamAsAttribute
+    private boolean supervisor;
     private String outcome;
     @XStreamAlias("subitems")
     private List<MenuItem> subItems;
@@ -71,6 +73,8 @@ public class MenuItem implements Serializable {
     private String processor;
     @XStreamOmitField
     private List<String> styleClass;
+    @XStreamOmitField
+    private boolean renderingDisabled;
 
     @XStreamOmitField
     private static final String ACTION_CONTEXT = "actionContext";
@@ -106,7 +110,7 @@ public class MenuItem implements Serializable {
     public UIComponent createComponent(FacesContext context, String id, boolean active, UserService userService, WorkflowService workflowService, EInvoiceService einvoiceService,
             boolean plainLink) {
 
-        if (isRestricted() && !hasPermissions(userService)) {
+        if (isRenderingDisabled() || isRestricted() && !hasPermissions(userService)) {
             return null;
         }
 
@@ -266,12 +270,15 @@ public class MenuItem implements Serializable {
         if (isAccountant() && userService.isAccountant()) {
             return true;
         }
-        return false;
+        if (isSupervisor() && userService.isSupervisor()) {
+            return true;
+        }
 
+        return false;
     }
 
     public boolean isRestricted() {
-        return isAdmin() || isDocManager() || isAccountant();
+        return isAdmin() || isDocManager() || isAccountant() || isSupervisor();
     }
 
     public boolean isExternalReview() {
@@ -401,6 +408,22 @@ public class MenuItem implements Serializable {
 
     public boolean isAccountant() {
         return accountant;
+    }
+
+    public void setSupervisor(boolean supervisor) {
+        this.supervisor = supervisor;
+    }
+
+    public boolean isSupervisor() {
+        return supervisor;
+    }
+
+    public boolean isRenderingDisabled() {
+        return renderingDisabled;
+    }
+
+    public void setRenderingDisabled(boolean renderingDisabled) {
+        this.renderingDisabled = renderingDisabled;
     }
 
 }

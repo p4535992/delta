@@ -42,7 +42,7 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * 
  * @author Alar Kvell
  */
-public class InlinePropertyGroupGenerator extends BaseComponentGenerator implements GeneratorsWrapper {
+public class InlinePropertyGroupGenerator extends BaseComponentGenerator implements HandlesViewMode {
 
     private static final String ESCAPE_TEXT = "escapeText";
     private static final String PLACEHOLDER = "#";

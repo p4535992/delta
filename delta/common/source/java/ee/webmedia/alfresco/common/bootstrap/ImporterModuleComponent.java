@@ -16,7 +16,7 @@ public class ImporterModuleComponent extends org.alfresco.repo.module.ImporterMo
     }
 
     @Override
-    protected void executeInternal() throws Throwable {
+    public void executeInternal() throws Throwable {
         if (enabled) {
             super.executeInternal();
         }

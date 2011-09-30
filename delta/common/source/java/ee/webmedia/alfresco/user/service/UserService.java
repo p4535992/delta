@@ -20,6 +20,7 @@ public interface UserService {
     String DOCUMENT_MANAGERS_GROUP = "DOCUMENT_MANAGERS";
     String ADMINISTRATORS_GROUP = "ALFRESCO_ADMINISTRATORS";
     String ACCOUNTANTS_GROUP = "ACCOUNTANTS";
+    String SUPERVISION_GROUP = "SUPERVISION";
 
     String AUTH_DOCUMENT_MANAGERS_GROUP = AuthorityType.GROUP.getPrefixString() + DOCUMENT_MANAGERS_GROUP;
     String AUTH_ADMINISTRATORS_GROUP = AuthorityType.GROUP.getPrefixString() + ADMINISTRATORS_GROUP;
@@ -27,6 +28,7 @@ public interface UserService {
     String DOCUMENT_MANAGERS_DISPLAY_NAME = "document_managers_display_name";
     String ALFRESCO_ADMINISTRATORS_DISPLAY_NAME = "alfresco_administrators_display_name";
     String ACCOUNTANTS_DISPLAY_NAME = "accountants_display_name";
+    String SUPERVISION_DISPLAY_NAME = "supervision_display_name";
 
     /**
      * Fetches the node reference, where user preferences are kept
@@ -109,6 +111,8 @@ public interface UserService {
 
     String getUserFullNameWithUnitName(String userName);
 
+    String getUserFullNameAndId(String userName);
+
     /**
      * Returns a map with the user's properties.
      * 
@@ -146,6 +150,8 @@ public interface UserService {
 
     String getAccountantsGroup();
 
+    String getSupervisionGroup();
+
     /**
      * @return true if user is in admin or accountant group
      */
@@ -155,6 +161,16 @@ public interface UserService {
      * @return true if user is in accountant group
      */
     boolean isInAccountantGroup();
+
+    /**
+     * @return true if user is in admin or supervision group
+     */
+    boolean isSupervisor();
+
+    /**
+     * @return true if user is in accountant group
+     */
+    boolean isInSupervisionGroup();
 
     /**
      * Adds leaving aspect to leavingUserId.
@@ -167,6 +183,12 @@ public interface UserService {
 
     void updateUser(Node user);
 
+    /**
+     * @param userName
+     * @return person ref is person exists, otherwise {@code null}
+     */
     NodeRef getPerson(String userName);
+
+    Set<String> getUserNamesInGroup(String group);
 
 }

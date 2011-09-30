@@ -4643,6 +4643,14 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                             scratch,
                             localeDAO,
                             contentDataDAO);
+                    // Make sure that multi-valued properties are returned as a collection
+                    if (!(collapsedValue instanceof Collection) && scratch.size() == 1 && scratch.keySet().iterator().next().getListIndex() == 0)
+                    {
+                        // Can't use Collections.singletonList: ETHREEOH-1172
+                        ArrayList<Serializable> collection = new ArrayList<Serializable>(1);
+                        collection.add(collapsedValue);
+                        collapsedValue = collection;
+                    }
                 }
                 else
                 {
@@ -4765,7 +4773,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             }
         }
         // Make sure that multi-valued properties are returned as a collection
-        if (propertyDef != null && propertyDef.isMultiValued() && result != null && !(result instanceof Collection))
+        if (!(result instanceof Collection) && ((propertyDef != null && propertyDef.isMultiValued() && result != null) || currentListIndex == 0))
         {
             // Can't use Collections.singletonList: ETHREEOH-1172
             ArrayList<Serializable> collection = new ArrayList<Serializable>(1);

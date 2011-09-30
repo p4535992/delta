@@ -53,7 +53,7 @@
                <type>d:int</type>
             </property>
             <property name="ser:docType">
-               <type>d:qname</type>
+               <type>d:text</type>
                <mandatory>true</mandatory>
                <multiple>true</multiple>
             </property>

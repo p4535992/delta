@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.common.propertysheet.datepicker;
 
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -27,12 +28,16 @@ public class DatePickerConverter implements Converter {
         simpleDateFormat.setLenient(false);
     }
 
+    public DateFormat getDateFormat() {
+        return simpleDateFormat;
+    }
+
     @Override
     public Object getAsObject(FacesContext context, UIComponent component, String value) throws ConverterException {
         Date date;
         try {
             if (StringUtils.isNotEmpty(value)) {
-                date = simpleDateFormat.parse(value);
+                date = getDateFormat().parse(value);
             } else {
                 return null;
             }
@@ -48,7 +53,7 @@ public class DatePickerConverter implements Converter {
     @Override
     public String getAsString(FacesContext context, UIComponent component, Object value) {
         if (value != null && value instanceof Date) {
-            return simpleDateFormat.format((Date) value);
+            return getDateFormat().format((Date) value);
         }
 
         // If there is no default value, then field should be blank

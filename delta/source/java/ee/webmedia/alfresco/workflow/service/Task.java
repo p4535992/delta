@@ -235,6 +235,10 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
         return getProp(WorkflowSpecificModel.Props.DUE_DATE);
     }
 
+    public Integer getDueDateDays() {
+        return getProp(WorkflowSpecificModel.Props.DUE_DATE_DAYS);
+    }
+
     public String getDueDateStr() {
         return getDueDate() != null ? dateFormat.format(getDueDate()) : "";
     }
@@ -255,6 +259,10 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
      */
     public String getResolutionOfTask() {
         return getProp(WorkflowSpecificModel.Props.RESOLUTION);
+    }
+
+    public void setResolution(String resolution) {
+        setProp(WorkflowSpecificModel.Props.RESOLUTION, resolution);
     }
 
     public void setComment(String comment) {

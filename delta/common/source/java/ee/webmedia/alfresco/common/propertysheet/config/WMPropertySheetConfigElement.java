@@ -11,6 +11,7 @@ import org.alfresco.web.config.PropertySheetConfigElement;
 import org.alfresco.web.config.PropertySheetElementReader;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorAndTextGenerator;
 import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorGenerator;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
@@ -275,6 +276,22 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
 
         public void setPropsGeneration(String propsGeneration) {
             setCustomAttribute(CombinedPropReader.AttributeNames.PROPS_GENERATION, propsGeneration);
+        }
+
+        public void setFilterIndex(int filterIndex) {
+            setCustomAttribute(Search.FILTER_INDEX, Integer.toString(filterIndex));
+        }
+
+        public void setNotEditable(Boolean notEditable) {
+            setCustomAttribute(ClassificatorSelectorAndTextGenerator.CustomAttributeNames.NOT_EDITABLE, notEditable == null ? null : notEditable.toString());
+        }
+
+        public void setSearchSuggestDisabled(Boolean searchSuggestDisabled) {
+            setCustomAttribute(Search.SEARCH_SUGGEST_DISABLED, searchSuggestDisabled == null ? null : searchSuggestDisabled.toString());
+        }
+
+        public void setPreprocessCallback(String preprocessCallback) {
+            setCustomAttribute(MultiValueEditor.PREPROCESS_CALLBACK, preprocessCallback);
         }
 
     }

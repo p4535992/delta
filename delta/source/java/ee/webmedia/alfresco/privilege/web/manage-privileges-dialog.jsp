@@ -17,7 +17,7 @@
 
 <a:panel id="permissions-panel" label="#{msg.users_groups}">
    <a:booleanEvaluator value="#{ManagePrivilegesDialog.editable}">
-      <a:genericPicker id="picker" filters="#{UserGroupSearchBean.usersGroupsFilters}" queryCallback="#{UserGroupSearchBean.searchUsersGroups}"
+      <a:genericPicker id="picker" filters="#{UserContactGroupSearchBean.usersGroupsFilters}" queryCallback="#{UserContactGroupSearchBean.searchAll}"
          actionListener="#{ManagePrivilegesDialog.addAuthorities}" binding="#{ManagePrivilegesDialog.picker}"/>
    </a:booleanEvaluator>
    <a:richList id="permissions-list" binding="#{ManagePrivilegesDialog.permissionsRichList}" value="#{ManagePrivilegesDialog.userPrivilegesRows}" var="r" refreshOnBind="true"

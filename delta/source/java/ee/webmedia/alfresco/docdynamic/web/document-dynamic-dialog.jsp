@@ -39,7 +39,3 @@
 <%-- <a:booleanEvaluator id="searchBlockEvaluator" value="#{DocumentDialog.showSearchBlock}"> --%>
 <%--    <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/search/web/document-search-block.jsp" /> --%>
 <%-- </a:booleanEvaluator> --%>
-
-<a:booleanEvaluator value="#{!DocumentDynamicDialog.inEditMode}">
-   <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp" />
-</a:booleanEvaluator>

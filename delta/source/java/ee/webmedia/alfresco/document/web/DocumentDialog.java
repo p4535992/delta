@@ -60,7 +60,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.ClearStateNotificationHandler;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
 import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
-import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
 import ee.webmedia.alfresco.document.associations.web.AssocsBlockBean;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil;
@@ -138,7 +137,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     public String action() {
         if (openDynamicDocument) {
             openDynamicDocument = false;
-            return BeanHelper.getDocumentDynamicDialog().action();
+            return null;
         }
         try {
             validatePermissions();
@@ -228,7 +227,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     public void open(ActionEvent event) {
         final NodeRef docRef = new NodeRef(ActionUtil.getParam(event, PARAM_NODEREF));
         // TODO DLSeadist temporary
-        if (DocumentDynamicModel.Types.DOCUMENT_DYNAMIC.equals(getNodeService().getType(docRef))) {
+        if (DocumentCommonModel.Types.DOCUMENT.equals(getNodeService().getType(docRef))) {
             openDynamicDocument = true;
             BeanHelper.getDocumentDynamicDialog().openFromDocumentList(event);
             return;
@@ -649,6 +648,11 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         }
         reset();
         return outcome;
+    }
+
+    @Override
+    public boolean isFinishButtonVisible(boolean dialogConfOKButtonVisible) {
+        return getMeta().isInEditMode();
     }
 
     public void notifyModeChanged() {

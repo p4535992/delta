@@ -5,11 +5,14 @@ import javax.faces.context.FacesContext;
 import org.alfresco.service.ServiceRegistry;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.model.FileFolderService;
+import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.cmr.security.PersonService;
+import org.alfresco.service.cmr.view.ExporterService;
+import org.alfresco.service.cmr.view.ImporterService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.transaction.TransactionService;
@@ -17,6 +20,9 @@ import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.DialogManager;
 
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
+import ee.webmedia.alfresco.addressbook.web.bean.AddressbookGroupsManagerBean;
+import ee.webmedia.alfresco.addressbook.web.bean.AddressbookSearchBean;
+import ee.webmedia.alfresco.addressbook.web.dialog.AddressbookAddEditDialog;
 import ee.webmedia.alfresco.adr.service.AdrService;
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.base.BaseService;
@@ -27,16 +33,17 @@ import ee.webmedia.alfresco.classificator.web.ClassificatorDetailsDialog;
 import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
-import ee.webmedia.alfresco.docadmin.web.AssociationToDocTypeDetailsDialog;
+import ee.webmedia.alfresco.docadmin.web.AssociationModelDetailsDialog;
 import ee.webmedia.alfresco.docadmin.web.DocTypeDetailsDialog;
 import ee.webmedia.alfresco.docadmin.web.FieldDetailsDialog;
 import ee.webmedia.alfresco.docadmin.web.FieldGroupDetailsDialog;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
+import ee.webmedia.alfresco.docconfig.service.UserContactMappingService;
 import ee.webmedia.alfresco.docconfig.web.PropertySheetStateBean;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog;
-import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicTestDialog;
+import ee.webmedia.alfresco.document.assignresponsibility.service.AssignResponsibilityService;
 import ee.webmedia.alfresco.document.assignresponsibility.web.AssignResponsibilityBean;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.document.einvoice.web.DimensionDetailsDialog;
@@ -58,11 +65,13 @@ import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.document.web.DocumentDialog;
 import ee.webmedia.alfresco.document.web.VisitedDocumentsBean;
 import ee.webmedia.alfresco.dvk.service.DvkService;
+import ee.webmedia.alfresco.email.service.EmailService;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.functions.web.FunctionsDetailsDialog;
 import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
+import ee.webmedia.alfresco.mso.service.MsoService;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
@@ -144,8 +153,8 @@ public class BeanHelper {
         return getJsfBean(FieldGroupDetailsDialog.class, FieldGroupDetailsDialog.BEAN_NAME);
     }
 
-    public static AssociationToDocTypeDetailsDialog getAssociationToDocTypeDetailsDialog() {
-        return getJsfBean(AssociationToDocTypeDetailsDialog.class, AssociationToDocTypeDetailsDialog.BEAN_NAME);
+    public static AssociationModelDetailsDialog getAssociationModelDetailsDialog() {
+        return getJsfBean(AssociationModelDetailsDialog.class, AssociationModelDetailsDialog.BEAN_NAME);
 
     }
 
@@ -181,6 +190,14 @@ public class BeanHelper {
         return getJsfBean(MenuBean.class, MenuBean.BEAN_NAME);
     }
 
+    public static AddressbookSearchBean getAddressbookSearchBean() {
+        return getJsfBean(AddressbookSearchBean.class, AddressbookSearchBean.BEAN_NAME);
+    }
+
+    public static AddressbookGroupsManagerBean getAddressbookGroupsManagerBeanBean() {
+        return getJsfBean(AddressbookGroupsManagerBean.class, AddressbookGroupsManagerBean.BEAN_NAME);
+    }
+
     public static AssignResponsibilityBean getAssignResponsibilityBean() {
         return getJsfBean(AssignResponsibilityBean.class, AssignResponsibilityBean.BEAN_NAME);
     }
@@ -191,10 +208,6 @@ public class BeanHelper {
 
     public static PropertySheetStateBean getPropertySheetStateBean() {
         return getJsfBean(PropertySheetStateBean.class, PropertySheetStateBean.BEAN_NAME);
-    }
-
-    public static DocumentDynamicTestDialog getDocumentDynamicTestDialog() {
-        return getJsfBean(DocumentDynamicTestDialog.class, DocumentDynamicTestDialog.BEAN_NAME);
     }
 
     public static PermissionsListDialog getPermissionsListDialog() {
@@ -219,6 +232,14 @@ public class BeanHelper {
 
     public static SendOutBlockBean getSendOutBlockBean() {
         return getJsfBean(SendOutBlockBean.class, SendOutBlockBean.BEAN_NAME);
+    }
+
+    public static AddressbookAddEditDialog getAddressbookAddEditDialog() {
+        return getJsfBean(AddressbookAddEditDialog.class, AddressbookAddEditDialog.BEAN_NAME);
+    }
+
+    public static UserContactGroupSearchBean getUserContactGroupSearchBean() {
+        return getJsfBean(UserContactGroupSearchBean.class, UserContactGroupSearchBean.BEAN_NAME);
     }
 
     // END: JSF web beans
@@ -249,6 +270,18 @@ public class BeanHelper {
         return getAlfrescoService(SearchService.class, ServiceRegistry.SEARCH_SERVICE);
     }
 
+    public static MimetypeService getMimetypeService() {
+        return getAlfrescoService(MimetypeService.class, ServiceRegistry.MIMETYPE_SERVICE);
+    }
+
+    public static ExporterService getExporterService() {
+        return getAlfrescoService(ExporterService.class, ServiceRegistry.EXPORTER_SERVICE);
+    }
+
+    public static ImporterService getImporterService() {
+        return getAlfrescoService(ImporterService.class, ServiceRegistry.IMPORTER_SERVICE);
+    }
+
     public static TransactionService getTransactionService() {
         return getAlfrescoService(TransactionService.class, ServiceRegistry.TRANSACTION_SERVICE);
     }
@@ -272,6 +305,11 @@ public class BeanHelper {
     // END: alfresco services
 
     // START: delta services
+
+    public static MsoService getMsoService() {
+        return getSpringBean(MsoService.class, MsoService.BEAN_NAME);
+    }
+
     public static BaseService getBaseService() {
         return getService(BaseService.class, BaseService.BEAN_NAME);
     }
@@ -406,6 +444,18 @@ public class BeanHelper {
 
     public static OrganizationStructureService getOrganizationStructureService() {
         return getService(OrganizationStructureService.class, OrganizationStructureService.BEAN_NAME);
+    }
+
+    public static EmailService getEmailService() {
+        return getService(EmailService.class, EmailService.BEAN_NAME);
+    }
+
+    public static AssignResponsibilityService getAssignResponsibilityService() {
+        return getService(AssignResponsibilityService.class, AssignResponsibilityService.BEAN_NAME);
+    }
+
+    public static UserContactMappingService getUserContactMappingService() {
+        return getService(UserContactMappingService.class, UserContactMappingService.BEAN_NAME);
     }
 
     // END: delta services

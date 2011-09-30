@@ -24,24 +24,51 @@
  */
 package ee.webmedia.alfresco.webdav;
 
+import static ee.webmedia.alfresco.classificator.constant.FieldType.DATE;
+import static ee.webmedia.alfresco.classificator.constant.FieldType.DOUBLE;
+import static ee.webmedia.alfresco.classificator.constant.FieldType.LONG;
+import static ee.webmedia.alfresco.classificator.constant.FieldType.TEXT_FIELD;
+
 import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.nio.charset.Charset;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Enumeration;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.encoding.ContentCharsetFinder;
 import org.alfresco.repo.webdav.WebDAV;
 import org.alfresco.repo.webdav.WebDAVMethod;
 import org.alfresco.repo.webdav.WebDAVServerException;
+import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
+
+import ee.webmedia.alfresco.classificator.constant.FieldChangeableIf;
+import ee.webmedia.alfresco.classificator.constant.FieldType;
+import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docconfig.service.DocumentConfigServiceImpl.PropertyDefinitionImpl;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
+import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
+import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
+import ee.webmedia.alfresco.mso.ws.Formula;
+import ee.webmedia.alfresco.mso.ws.ModifiedFormulasOutput;
 
 /**
  * Implements the WebDAV PUT method
@@ -177,8 +204,65 @@ public class PutMethod extends WebDAVMethod {
         NodeRef document = getNodeService().getPrimaryParent(contentNodeInfo.getNodeRef()).getParentRef();
         ((WebDAVCustomHelper) getDAVHelper()).getDocumentService().updateSearchableFiles(document);
 
+        // Update Document meta data and generated files
+        updateDocumentAndGeneratedFiles(contentNodeInfo, document);
+
         // Set the response status, depending if the node existed or not
         m_response.setStatus(created ? HttpServletResponse.SC_CREATED : HttpServletResponse.SC_NO_CONTENT);
     }
 
+    private void updateDocumentAndGeneratedFiles(FileInfo contentNodeInfo, NodeRef document) throws Exception, ParseException {
+        ModifiedFormulasOutput modifiedFormulas = BeanHelper.getMsoService().getModifiedFormulas(
+                getContentService().getReader(contentNodeInfo.getNodeRef(), ContentModel.PROP_CONTENT));
+
+        if (modifiedFormulas != null) {
+            Collection<Formula> formulas = modifiedFormulas.getModifiedFormulas(); // Set is returned
+            DocumentDynamicService documentDynamicService = BeanHelper.getDocumentDynamicService();
+            DocumentDynamic doc = documentDynamicService.getDocument(document);
+            Map<QName, PropertyDefinition> propertyDefinitions = BeanHelper.getDocumentConfigService().getPropertyDefinitions(doc.getNode());
+
+            for (Formula formula : formulas) {
+                QName propQName = QName.createQName(DocumentDynamicModel.URI, formula.getKey());
+                PropertyDefinitionImpl propDef = (PropertyDefinitionImpl) propertyDefinitions.get(propQName);
+                if (propDef == null) {
+                    // continue; // FIXME - remove two assignment rounds below when all properties are with correct namespace
+                    propQName = QName.createQName(DocumentSpecificModel.URI, formula.getKey());
+                    propDef = (PropertyDefinitionImpl) propertyDefinitions.get(propQName);
+                    if (propDef == null) {
+                        propQName = QName.createQName(DocumentCommonModel.URI, formula.getKey());
+                        propDef = (PropertyDefinitionImpl) propertyDefinitions.get(propQName);
+                        if (propDef == null) {
+                            continue;
+                        }
+                    }
+                }
+
+                // If field is not changeable, then don't allow it.
+                if (FieldChangeableIf.ALWAYS_NOT_CHANGEABLE == propDef.getChangeableIf()
+                        || FieldChangeableIf.CHANGEABLE_IF_WORKING_DOC == propDef.getChangeableIf()
+                        && !DocumentStatus.WORKING.getValueName().equals(doc.getProp(DocumentCommonModel.Props.DOC_STATUS))) {
+                    continue;
+                }
+
+                Serializable value;
+                FieldType fieldType = propDef.getFieldType();
+                if (TEXT_FIELD == fieldType) {
+                    value = formula.getValue();
+                } else if (DATE == fieldType) {
+                    value = new SimpleDateFormat("dd.MM.yyyy").parse(formula.getValue());
+                } else if (LONG == fieldType) {
+                    value = Long.parseLong(formula.getValue());
+                } else if (DOUBLE == fieldType) {
+                    value = Double.parseDouble(formula.getValue());
+                } else {
+                    continue;
+                }
+
+                doc.setProp(propQName, value);
+            }
+
+            documentDynamicService.updateDocument(doc, Collections.<String> emptyList());
+            BeanHelper.getDocumentTemplateService().updateGeneratedFilesOnRegistration(document);
+        }
+    }
 }

@@ -28,7 +28,6 @@ import org.springframework.beans.factory.BeanFactoryAware;
 
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
@@ -80,7 +79,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
             Series s = i.next();
             // XXX DLSeadist: allow all dyn doctypes for testing
             if (!status.getValueName().equals(s.getStatus())
-                    || (docTypeId != null && !s.getDocType().contains(docTypeId) && !DocumentDynamicModel.Types.DOCUMENT_DYNAMIC.equals(docTypeId))) {
+                    || (docTypeId != null && !s.getDocType().contains(docTypeId) && !DocumentCommonModel.Types.DOCUMENT.equals(docTypeId))) {
                 i.remove();
             }
         }
@@ -133,10 +132,10 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
             series.setNode(generalService.fetchNode(seriesNodeRef));
             logService.addSeriesLog(seriesNodeRef, I18NUtil.getMessage("series_log_status_created"));
         } else { // update
-            final String previousAccessrestriction = (String) nodeService.getProperty(seriesRef, DocumentCommonModel.Props.ACCESS_RESTRICTION);
+            final String previousAccessrestriction = (String) nodeService.getProperty(seriesRef, SeriesModel.Props.ACCESS_RESTRICTION);
             generalService.setPropertiesIgnoringSystem(seriesRef, stringQNameProperties);
             logService.addSeriesLog(seriesRef, I18NUtil.getMessage("series_log_status_changed"));
-            final String newAccessrestriction = (String) stringQNameProperties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION.toString());
+            final String newAccessrestriction = (String) stringQNameProperties.get(SeriesModel.Props.ACCESS_RESTRICTION.toString());
             if (!StringUtils.equals(previousAccessrestriction, newAccessrestriction)) {
                 logService.addSeriesLog(seriesRef, I18NUtil.getMessage("series_log_status_accessRestrictionChanged"));
             }

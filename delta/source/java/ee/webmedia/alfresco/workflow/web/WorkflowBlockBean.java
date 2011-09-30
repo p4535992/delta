@@ -117,7 +117,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     private SignatureTask signatureTask;
 
     @Override
-    public void reset(DialogDataProvider provider) {
+    public void resetOrInit(DialogDataProvider provider) {
         if (provider == null) {
             reset();
         } else {
@@ -158,7 +158,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         return getWorkflowService().isOwner(getCompoundWorkflows());
     }
 
-    public List<ActionDefinition> findCompoundWorkflowDefinitions(String documentTypeQName, String documentStatus) {
+    public List<ActionDefinition> findCompoundWorkflowDefinitions(String documentTypeQName) {
         WorkflowService workflowService = getWorkflowService();
         boolean showCWorkflowDefsWith1Workflow = false;
         for (CompoundWorkflow cWorkflow : compoundWorkflows) {
@@ -168,6 +168,13 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         }
 
         QName documentType = QName.createQName(documentTypeQName);
+        String documentStatus = null;
+        try {
+            // TODO DLSeadist
+            documentStatus = (String) BeanHelper.getDocumentDialogHelperBean().getProps().get(DocumentCommonModel.Props.DOC_STATUS);
+        } catch (Exception e) {
+            // Do nothing
+        }
         List<CompoundWorkflowDefinition> workflowDefs = workflowService.getCompoundWorkflowDefinitions(documentType, documentStatus);
         List<ActionDefinition> actionDefinitions = new ArrayList<ActionDefinition>(workflowDefs.size());
         String userId = AuthenticationUtil.getRunAsUser();

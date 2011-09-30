@@ -54,7 +54,6 @@ import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet.ClientValidation;
 
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
-import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.GeneratorsWrapper;
 
 /**
  * Generates a text field component.
@@ -121,7 +120,7 @@ public class TextFieldGenerator extends BaseComponentGenerator
       UIComponent component = null;
       
       final String id = getDefaultId(item);
-      if ((propertySheet.inEditMode() || this instanceof GeneratorsWrapper) && !Boolean.parseBoolean(getCustomAttributes().get(OUTPUT_TEXT)))
+      if (useGenerator(context, propertySheet))
       {
          // if the field has the list of values constraint 
          // and it is editable a SelectOne component is 

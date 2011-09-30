@@ -180,6 +180,12 @@
             <property name="wfs:dueDate">
                <type>d:date</type>
             </property>
+            <property name="wfs:dueDateDays">
+               <type>d:int</type>
+            </property>
+            <property name="wfs:isDueDateDaysWorkingDays">
+               <type>d:boolean</type>
+            </property>
          </properties>
       </aspect>
 

@@ -4,13 +4,15 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.base.BaseService;
@@ -53,7 +55,7 @@ public class FieldGroup extends FieldAndGroupBase implements MetadataContainer {
     public Collection<Field> getFieldsById(Set<String> fieldIdLocalNames) {
         Set<Field> matchingFields = new HashSet<Field>();
         for (Field existingField : getFields()) {
-            if (fieldIdLocalNames.contains(existingField.getFieldId().getLocalName())) {
+            if (fieldIdLocalNames.contains(existingField.getFieldId())) {
                 matchingFields.add(existingField);
             }
         }
@@ -70,7 +72,7 @@ public class FieldGroup extends FieldAndGroupBase implements MetadataContainer {
     public String getAdditionalInfo() {
         List<String> fieldNames = new ArrayList<String>();
         List<? extends Field> fields;
-        List<QName> fieldDefinitionIds = getFieldDefinitionIds();
+        List<String> fieldDefinitionIds = getFieldDefinitionIds();
         if (!fieldDefinitionIds.isEmpty()) {
             // fieldGroup is under fieldGroupDefinitions where fields are referenced using multivalued property not child-assoc
             fields = getDocumentAdminService().getFieldDefinitions(fieldDefinitionIds);
@@ -140,7 +142,7 @@ public class FieldGroup extends FieldAndGroupBase implements MetadataContainer {
         setProp(DocumentAdminModel.Props.SHOW_IN_TWO_COLUMNS_CHANGEABLE, showInTwoColumnsChangeable);
     }
 
-    public List<QName> getFieldDefinitionIds() {
+    public List<String> getFieldDefinitionIds() {
         return getPropList(DocumentAdminModel.Props.FIELD_DEFINITIONS_IDS);
     }
 
@@ -151,26 +153,29 @@ public class FieldGroup extends FieldAndGroupBase implements MetadataContainer {
         return (FieldGroup) super.clone(); // just return casted type
     }
 
+    List<Field> getRemovedFields() {
+        Map<Class<? extends BaseObject>, List<? extends BaseObject>> removedChildren = super.getRemovedChildren();
+        @SuppressWarnings("unchecked")
+        List<Field> removedFields = (List<Field>) removedChildren.get(Field.class);
+        return removedFields != null ? removedFields : Collections.<Field> emptyList();
+    }
+
     // Utilities
 
-    // FIXME DLSeadist - pole vist enam vaja
-//@formatter:off
-//    /**
-//     * Find first {@link Field} that matches given {@code fieldId}. Traverses all child {@link Field}s.
-//     * 
-//     * @param fieldId fieldId to match by, cannot be {@code null}.
-//     * @return {@code null} if not found; otherwise the found field.
-//     */
-//    // FIXME DLSeadist - kas vaja namespace'ga?
-//    public Field getFieldById(QName fieldId) {
-//        Assert.notNull(fieldId, "fieldId cannot be null");
-//        for (Field field : getFields()) {
-//            if (field.getFieldId().equals(fieldId)) {
-//                return field;
-//            }
-//        }
-//        return null;
-//    }
-//@formatter:on
+    /**
+     * Find first {@link Field} that matches given {@code fieldId}. Traverses all child {@link Field}s.
+     * 
+     * @param fieldId fieldId to match by, cannot be {@code null}.
+     * @return {@code null} if not found; otherwise the found field.
+     */
+    public Field getFieldById(String fieldId) {
+        Assert.notNull(fieldId, "fieldId cannot be null");
+        for (Field field : getFields()) {
+            if (field.getFieldId().equals(fieldId)) {
+                return field;
+            }
+        }
+        return null;
+    }
 
 }

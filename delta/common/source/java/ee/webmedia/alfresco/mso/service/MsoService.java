@@ -5,12 +5,16 @@ import java.util.Map;
 import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.service.cmr.repository.ContentWriter;
 
+import ee.webmedia.alfresco.mso.ws.ModifiedFormulasOutput;
+
 /**
  * Interface to MSO (Microsoft Office) webservice.
  * 
  * @author Alar Kvell
  */
 public interface MsoService {
+
+    String BEAN_NAME = "msoService";
 
     /**
      * @return if this service is enabled in configuration
@@ -26,5 +30,7 @@ public interface MsoService {
     void replaceFormulas(Map<String, String> formulas, ContentReader documentReader, ContentWriter documentWriter) throws Exception;
 
     void replaceFormulasAndTransformToPdf(Map<String, String> formulas, ContentReader documentReader, ContentWriter documentWriter, ContentWriter pdfWriter) throws Exception;
+
+    ModifiedFormulasOutput getModifiedFormulas(ContentReader documentReader) throws Exception;
 
 }

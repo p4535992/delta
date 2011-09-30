@@ -102,7 +102,7 @@ public class WebDAVCustomHelper extends WebDAVHelper {
         if (docRef == null) {
             throw new AccessDeniedException("File is not under document. File=" + fileRef);
         }
-        Boolean additionalCheck = documentFileWriteDynamicAuthority.additional(userName, docRef, parentType);
+        Boolean additionalCheck = documentFileWriteDynamicAuthority.additional(userName, docRef);
         if (additionalCheck != null) {
             if (additionalCheck) {
                 return; // allow writing based on additional logic

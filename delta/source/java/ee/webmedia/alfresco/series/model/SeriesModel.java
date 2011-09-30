@@ -2,6 +2,8 @@ package ee.webmedia.alfresco.series.model;
 
 import org.alfresco.service.namespace.QName;
 
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+
 public interface SeriesModel {
     String URI = "http://alfresco.webmedia.ee/model/series/1.0";
 
@@ -36,5 +38,11 @@ public interface SeriesModel {
         QName VOL_TYPE = QName.createQName(URI, "volType");
         QName VOL_REGISTER = QName.createQName(URI, "volRegister");
         QName VOL_NUMBER_PATTERN = QName.createQName(URI, "volNumberPattern");
+
+        QName ACCESS_RESTRICTION = QName.createQName(DocumentCommonModel.DOCCOM_URI, "accessRestriction");
+        QName ACCESS_RESTRICTION_REASON = QName.createQName(DocumentCommonModel.DOCCOM_URI, "accessRestrictionReason");
+        QName ACCESS_RESTRICTION_BEGIN_DATE = QName.createQName(DocumentCommonModel.DOCCOM_URI, "accessRestrictionBeginDate");
+        QName ACCESS_RESTRICTION_END_DATE = QName.createQName(DocumentCommonModel.DOCCOM_URI, "accessRestrictionEndDate");
+        QName ACCESS_RESTRICTION_END_DESC = QName.createQName(DocumentCommonModel.DOCCOM_URI, "accessRestrictionEndDesc");
     }
 }

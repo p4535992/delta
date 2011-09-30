@@ -55,8 +55,8 @@
                image="/images/icons/add_attachment.gif"
                showLink="false"
                value="#{msg.addressbook}"
-               action="dialog:addressbookManage"
-               rendered="#{AddressbookDialog.userHasPermission}" />
+               action="dialog:addressbookList"
+               rendered="#{AddressbookSearchBean.userHasPermission}" />
          <f:verbatim>
          </span>
          </f:verbatim>

@@ -28,6 +28,12 @@ public interface DocumentAdminService {
 
     DocumentType getDocumentType(String id);
 
+    /**
+     * Returns documentType with given NodeRef.
+     * 
+     * @param docTypeRef nodeRef of the document type.
+     * @return null or found document type FIXME DLSeadist - Kui kõik süsteemsed dok.liigid on defineeritud, siis võib null kontrolli ja tagastamise eemdaldada
+     */
     DocumentType getDocumentType(NodeRef docTypeRef);
 
     String getDocumentTypeName(String documentTypeId);
@@ -54,9 +60,9 @@ public interface DocumentAdminService {
 
     List<FieldDefinition> getFieldDefinitions();
 
-    List<FieldDefinition> getFieldDefinitions(List<QName> fieldDefinitionIds);
+    List<FieldDefinition> getFieldDefinitions(List<String> fieldDefinitionIds);
 
-    FieldDefinition getFieldDefinition(QName fieldId);
+    FieldDefinition getFieldDefinition(String fieldId);
 
     boolean isFieldDefinitionExisting(String fieldIdLocalname);
 
@@ -76,12 +82,16 @@ public interface DocumentAdminService {
 
     List<FieldGroup> getFieldGroupDefinitions();
 
+    FieldGroup getFieldGroupDefinition(String fieldGroupName);
+
     void copyFieldProps(FieldDefinition fieldDefinition, Field field);
 
     /** @return true if at least one document is created based on this documentType */
     boolean isDocumentTypeUsed(String documentTypeId);
 
-    AssociationToDocType saveOrUpdateAssocToDocType(AssociationToDocType associationToDocType);
+    AssociationModel saveOrUpdateAssocToDocType(AssociationModel associationModel);
+
+    void deleteAssocToDocType(NodeRef assocRef);
 
     Set<String> getNonExistingDocumentTypes(Set<String> documentTypeIds);
 

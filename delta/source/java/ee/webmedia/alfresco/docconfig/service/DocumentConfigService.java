@@ -1,5 +1,8 @@
 package ee.webmedia.alfresco.docconfig.service;
 
+import java.util.Map;
+import java.util.Set;
+
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
@@ -16,10 +19,16 @@ public interface DocumentConfigService {
 
     void registerFieldGeneratorByType(FieldGenerator fieldGenerator, FieldType... fieldTypes);
 
-    void registerFieldGeneratorById(FieldGenerator fieldGenerator, QName... fieldIds);
+    void registerFieldGeneratorById(FieldGenerator fieldGenerator, String... originalFieldIds);
 
     DocumentConfig getConfig(Node documentDynamicNode);
 
     PropertyDefinition getPropertyDefinition(Node node, QName property);
+
+    Map<QName, PropertyDefinition> getPropertyDefinitions(Node documentDynamicNode);
+
+    void setDefaultPropertyValues(Node documentDynamicNode);
+
+    void registerMultiValuedOverrideInSystematicGroup(Set<String> originalFieldIds);
 
 }

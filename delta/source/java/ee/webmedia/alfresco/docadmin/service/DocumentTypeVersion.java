@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -30,7 +32,7 @@ public class DocumentTypeVersion extends BaseObject implements MetadataContainer
     }
 
     @Override
-    protected DocumentType getParent() {
+    public DocumentType getParent() {
         return (DocumentType) super.getParent();
     }
 
@@ -131,7 +133,7 @@ public class DocumentTypeVersion extends BaseObject implements MetadataContainer
     public Collection<Field> getFieldsById(Set<String> fieldIdLocalNames) {
         HashSet<Field> matchingFields = new HashSet<Field>();
         for (Field field : getFieldsDeeply()) {
-            if (fieldIdLocalNames.contains(field.getFieldId().getLocalName())) {
+            if (fieldIdLocalNames.contains(field.getFieldId())) {
                 matchingFields.add(field);
             }
         }
@@ -150,4 +152,54 @@ public class DocumentTypeVersion extends BaseObject implements MetadataContainer
         return fields;
     }
 
+    List<String> getRemovedFieldIdsDeeply() {
+        Map<Class<? extends BaseObject>, List<? extends BaseObject>> removedChildren = getRemovedChildren();
+        List<String> removedFieldIds = new ArrayList<String>();
+        @SuppressWarnings("unchecked")
+        List<MetadataItem> removedMetadataItems = (List<MetadataItem>) removedChildren.get(MetadataItem.class);
+        if (removedMetadataItems != null) {
+            for (MetadataItem metadataItem : removedMetadataItems) {
+                if (!metadataItem.isCopyFromPreviousDocTypeVersion()) {
+                    continue; // not interested in removed metadata items that haven't been saved jet
+                }
+                if (metadataItem instanceof Field) {
+                    Field removedField = (Field) metadataItem;
+                    removedFieldIds.add(removedField.getFieldId());
+                } else if (metadataItem instanceof FieldGroup) {
+                    FieldGroup fieldGroup = (FieldGroup) metadataItem;
+                    ChildrenList<Field> fields = fieldGroup.getFields();
+                    fields.addAll(fieldGroup.getRemovedFields()); // also inspect fields that have been removed before fieldGroup was removed
+                    for (Field field : fields) {
+                        if (field.isCopyFromPreviousDocTypeVersion()) {
+                            removedFieldIds.add(field.getFieldId()); // only interested in fields that were saved
+                        }
+                    }
+                }
+            }
+        }
+        // inspect removed fields of existing fieldGroup
+        for (MetadataItem metadataItem : getMetadata()) {
+            if (metadataItem instanceof FieldGroup) {
+                List<Field> removedFieldsOfGroup = ((FieldGroup) metadataItem).getRemovedFields();
+                removedFieldIds.addAll(getFieldIds(removedFieldsOfGroup));
+            }
+        }
+        // exclude fields that are removed and added back again with same fieldId
+        Set<String> allExistingFields = getFieldIds(getFieldsDeeply());
+        for (Iterator<String> it = removedFieldIds.iterator(); it.hasNext();) {
+            String fieldId = it.next();
+            if (allExistingFields.contains(fieldId)) {
+                it.remove();
+            }
+        }
+        return removedFieldIds;
+    }
+
+    private Set<String> getFieldIds(List<Field> fields) {
+        Set<String> fieldIds = new HashSet<String>(fields.size());
+        for (Field field : fields) {
+            fieldIds.add(field.getFieldId());
+        }
+        return fieldIds;
+    }
 }

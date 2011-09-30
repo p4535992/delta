@@ -6,7 +6,6 @@ import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -141,15 +140,6 @@ public class DelegationHistoryGenerator extends BaseComponentGenerator {
         WorkflowService wfService = (WorkflowService) FacesContextUtils.getRequiredWebApplicationContext(//
                 context).getBean(WorkflowService.BEAN_NAME);
         List<Task> tasks4History = wfService.getTasks4DelegationHistory(delegatableTask);
-        {// see on ainult CL_TASK 158082 workaround
-            for (Iterator<Task> it = tasks4History.iterator(); it.hasNext();) {
-                Task task = it.next();
-                if (task.getStartedDateTime() == null) {
-                    LOG.warn("task with status=" + task.getStatus() + " has no startedDateTime. TaskRef=" + task.getNodeRef());
-                    it.remove();
-                }
-            }
-        }
         Collections.sort(tasks4History, COMPARATOR);
         List<Node> delegationHistories = new ArrayList<Node>(tasks4History.size());
         for (Task task : tasks4History) {

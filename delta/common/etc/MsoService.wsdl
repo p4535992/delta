@@ -10,6 +10,10 @@
 
          <xs:element name="convertToPdfResponse" nillable="true" type="tns:convertToPdfResponse"></xs:element>
 
+         <xs:element name="modifiedFormulas" nillable="true" type="tns:modifiedFormulas"></xs:element>
+
+         <xs:element name="modifiedFormulasResponse" nillable="true" type="tns:modifiedFormulasResponse"></xs:element>
+
          <xs:element name="replaceFormulas" nillable="true" type="tns:replaceFormulas"></xs:element>
 
          <xs:element name="replaceFormulasAndConvertToPdf" nillable="true" type="tns:replaceFormulasAndConvertToPdf"></xs:element>
@@ -98,6 +102,24 @@
                <xs:element name="pdfFile" type="swaRef:swaRef"></xs:element>
             </xs:sequence>
          </xs:complexType>
+
+         <xs:complexType name="modifiedFormulas">
+            <xs:sequence>
+               <xs:element name="msoDocumentInput" type="tns:msoDocumentInput"></xs:element>
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="modifiedFormulasResponse">
+            <xs:sequence>
+               <xs:element name="modifiedFormulasOutput" type="tns:modifiedFormulasOutput"></xs:element>
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="modifiedFormulasOutput">
+            <xs:sequence>
+                     <xs:element name="modifiedFormulas" type="tns:formula" maxOccurs="unbounded"></xs:element>
+            </xs:sequence>
+         </xs:complexType>
       </xs:schema>
    </types>
    <message name="convertToPdf">
@@ -105,6 +127,12 @@
    </message>
    <message name="convertToPdfResponse">
       <part name="parameters" element="tns:convertToPdfResponse"></part>
+   </message>
+   <message name="modifiedFormulas">
+      <part name="parameters" element="tns:modifiedFormulas"></part>
+   </message>
+   <message name="modifiedFormulasResponse">
+      <part name="parameters" element="tns:modifiedFormulasResponse"></part>
    </message>
    <message name="replaceFormulas">
       <part name="parameters" element="tns:replaceFormulas"></part>
@@ -123,6 +151,10 @@
          <input message="tns:convertToPdf"></input>
          <output message="tns:convertToPdfResponse"></output>
       </operation>
+      <operation name="modifiedFormulas">
+         <input message="tns:modifiedFormulas"></input>
+         <output message="tns:modifiedFormulasResponse"></output>
+      </operation>
       <operation name="replaceFormulas">
          <input message="tns:replaceFormulas"></input>
          <output message="tns:replaceFormulasResponse"></output>
@@ -135,6 +167,15 @@
    <binding name="MsoPortBinding" type="tns:Mso">
       <soap:binding transport="http://schemas.xmlsoap.org/soap/http" style="document"></soap:binding>
       <operation name="convertToPdf">
+         <soap:operation soapAction=""></soap:operation>
+         <input>
+            <soap:body use="literal"></soap:body>
+         </input>
+         <output>
+            <soap:body use="literal"></soap:body>
+         </output>
+      </operation>
+      <operation name="modifiedFormulas">
          <soap:operation soapAction=""></soap:operation>
          <input>
             <soap:body use="literal"></soap:body>

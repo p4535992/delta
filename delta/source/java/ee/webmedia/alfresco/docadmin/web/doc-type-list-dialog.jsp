@@ -30,7 +30,7 @@
          <f:facet name="header">
             <a:sortLink id="docTypeNameCol-sort" label="#{msg.document_type_name}" value="name" mode="case-insensitive" />
          </f:facet>
-         <a:actionLink id="docTypeNameCol-input" value="#{type.name}" action="dialog:docTypeDetailsDialog" actionListener="#{DocTypeDetailsDialog.showDetails}">
+         <a:actionLink id="docTypeNameCol-input" value="#{type.name}" actionListener="#{DocTypeDetailsDialog.showDetails}">
             <f:param name="nodeRef" value="#{type.nodeRef}" />
          </a:actionLink>
       </a:column>

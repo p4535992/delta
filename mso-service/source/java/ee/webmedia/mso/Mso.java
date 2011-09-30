@@ -31,4 +31,11 @@ public interface Mso {
     MsoDocumentAndPdfOutput replaceFormulasAndConvertToPdf(
             @WebParam(name = "msoDocumentAndFormulasInput", targetNamespace = "http://webmedia.ee/mso") MsoDocumentAndFormulasInput msoDocumentAndFormulasInput);
 
+    @WebMethod
+    @WebResult(name = "modifiedFormulasOutput", targetNamespace = "http://webmedia.ee/mso")
+    @RequestWrapper(localName = "modifiedFormulas", targetNamespace = "http://webmedia.ee/mso", className = "ee.webmedia.mso.ModifiedFormulas")
+    @ResponseWrapper(localName = "modifiedFormulasResponse", targetNamespace = "http://webmedia.ee/mso", className = "ee.webmedia.mso.ModifiedFormulasResponse")
+    ModifiedFormulasOutput getModifiedFormulas(
+            @WebParam(name = "msoDocumentInput", targetNamespace = "http://webmedia.ee/mso") MsoDocumentInput msoDocumentInput);
+
 }

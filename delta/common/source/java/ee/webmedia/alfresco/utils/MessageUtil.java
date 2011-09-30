@@ -1,9 +1,12 @@
 package ee.webmedia.alfresco.utils;
 
+import static org.alfresco.web.app.Application.MESSAGE_BUNDLE;
+
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
@@ -11,6 +14,7 @@ import javax.faces.context.FacesContext;
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.Application;
+import org.alfresco.web.app.ResourceBundleWrapper;
 import org.alfresco.web.ui.common.Utils;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
@@ -34,7 +38,12 @@ public class MessageUtil {
      */
     public static String getMessage(FacesContext context, String messageId, Object... messageValuesForHolders) {
         Assert.notNull(messageId, "no messageId given for translation");
-        String message = Application.getMessage(context, messageId);
+        String message = messageId;
+        if (context != null) {
+            message = Application.getMessage(context, messageId);
+        } else {
+            message = ResourceBundleWrapper.getResourceBundle(MESSAGE_BUNDLE, Locale.getDefault()).getString(messageId);
+        }
         final Object[] translatedValuesForHolders = getTranslatedMessageValueHolders(context, messageValuesForHolders);
         if (isMessageTranslated(messageId, message)) {
             if (translatedValuesForHolders != null) {

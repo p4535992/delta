@@ -17,5 +17,11 @@
       <property name="customErrorMsgFormat" value="PANEL_AND_FIELD_NAME" />
    </bean>
 
+   <bean id="OnlyLettersValidator_FIELD_NAME_ONLY" class="ee.webmedia.alfresco.common.propertysheet.validator.OnlyLettersValidator">
+      <property name="customErrorMsgFormat" value="FIELD_NAME_ONLY" />
+   </bean>
+
+   <bean id="InformationTextGenerator" class="ee.webmedia.alfresco.common.propertysheet.generator.InformationTextGenerator" scope="request" />
+
    <!-- END: web beans: -->
 </beans>

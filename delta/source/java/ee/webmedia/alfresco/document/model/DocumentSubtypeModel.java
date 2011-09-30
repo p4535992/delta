@@ -7,6 +7,7 @@ public interface DocumentSubtypeModel {
     String PREFIX = "docsub:";
     QName MODEL_NAME = QName.createQName(URI, "documentSubtypeModel");
 
+    // TODO DLSeadist remove these and rewrite all places to use SystematicDocumentType enum
     public interface Types {
         QName INCOMING_LETTER = QName.createQName(URI, "incomingLetter");
         QName INCOMING_LETTER_MV = QName.createQName(URI, "incomingLetterMv");

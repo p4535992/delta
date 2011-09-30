@@ -42,6 +42,7 @@
       <property name="generalService" ref="GeneralService" />
       <property name="documentService" ref="DocumentService" />
       <property name="documentAdminService" ref="DocumentAdminService" />
+      <property name="documentConfigService" ref="DocumentConfigService" />
       <property name="sendOutService" ref="SendOutService" />
       <property name="documentLogService" ref="DocumentLogService" />
    </bean>
@@ -67,8 +68,6 @@
    </bean>
 
    <!-- START: web beans: -->
-
-   <bean id="DocumentDynamicTestDialog" class="ee.webmedia.alfresco.docdynamic.web.DocumentDynamicTestDialog" scope="session" />
 
    <bean id="DocumentDynamicDialog" class="ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog" scope="session" />
 

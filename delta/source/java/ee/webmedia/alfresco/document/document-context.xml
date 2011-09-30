@@ -15,7 +15,7 @@
    <import resource="classpath:ee/webmedia/alfresco/document/einvoice/einvoice-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/document/assignresponsibility/assignresponsibility-context.xml" />
 
-   <bean id="documentModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap,workflowModelBootstrap,privilegeModelBootstrap,transactionModelBootstrap">
+   <bean id="documentModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap,workflowModelBootstrap,privilegeModelBootstrap,transactionModelBootstrap,documentAdminModelBootstrap">
       <property name="models">
          <list>
             <value>ee/webmedia/alfresco/document/model/documentCommonModel.xml</value>
@@ -35,7 +35,7 @@
       <property name="configs">
          <list>
             <value>classpath:ee/webmedia/alfresco/document/web/document-web-client-config.xml</value>
-            <value>classpath:ee/webmedia/alfresco/document/web/document-properties-web-client-config.xml</value>
+<!--             <value>classpath:ee/webmedia/alfresco/document/web/document-properties-web-client-config.xml</value> -->
          </list>
       </property>
    </bean>
@@ -77,7 +77,6 @@
       <property name="userService" ref="UserService" />
       <property name="sendOutService" ref="SendOutService" />
       <property name="privilegeService" ref="PrivilegeService" />
-      <property name="authorityService" ref="AuthorityService" />
       <property name="permissionService" ref="PermissionService" />
       <property name="fromDvkXPath" value="${dvk.received.parent.folder.xpath}${dvk.received.folder.name}" />
       <property name="incomingEmailPath" value="${imap.config.home.rootPath}/imap-ext:incoming"/>
@@ -104,9 +103,6 @@
    </bean>
 
    <bean class="ee.webmedia.alfresco.document.propmodifiers.OwnerPropertiesModifierCallback" parent="propertiesModifierCallback">
-      <property name="personService" ref="PersonService" />
-      <property name="authenticationService" ref="AuthenticationService" />
-      <property name="nodeService" ref="NodeService" />
       <property name="organizationStructureService" ref="OrganizationStructureService" />
    </bean>
    

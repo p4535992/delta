@@ -21,9 +21,6 @@
       mode="#{DialogManager.bean.meta.mode}" externalConfig="true" labelStyleClass="propertiesLabel" />
 </a:panel>
 
-<a:booleanEvaluator value="#{!DialogManager.bean.meta.inEditMode}">
-   <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp" />
-</a:booleanEvaluator>
 <a:booleanEvaluator value="#{DialogManager.bean.meta.inEditMode}" id="docMeta-InEditMode">
    <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/metadata/web/metadata-block-lockRefresh.jsp" />
 </a:booleanEvaluator>

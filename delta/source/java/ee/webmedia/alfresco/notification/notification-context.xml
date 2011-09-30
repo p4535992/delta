@@ -43,7 +43,6 @@
       <property name="templateService" ref="DocumentTemplateService" />
       <property name="fileService" ref="FileService" />
       <property name="documentSearchService" ref="DocumentSearchService" />
-      <property name="authorityService" ref="AuthorityService" />
       <property name="substituteService" ref="SubstituteService" />
    </bean>
 

@@ -64,7 +64,7 @@ public class ClassificatorSelectorGenerator extends GeneralSelectorGenerator {
             return null;
         }
 
-        List<ClassificatorSelectorValueProvider> valueProviders = getSelectorValueProviders(valueProviderName);
+        List<ClassificatorSelectorValueProvider> valueProviders = getSelectorValueProviders(valueProviderName, component, context);
         List<UISelectItem> results = new ArrayList<UISelectItem>(valueProviders.size() + 1);
 
         ClassificatorSelectorValueProvider defaultOrExistingValue = null;
@@ -82,7 +82,8 @@ public class ClassificatorSelectorGenerator extends GeneralSelectorGenerator {
             }
             // Convert value so validation doesn't fail
             selectItem.setItemValue(RendererUtils.getConvertedUIOutputValue(context, component, classificator.getSelectorValueName())); // must not be null or empty
-            if (isSingleValued && ((existingValue != null && StringUtils.equals(existingValue, classificator.getSelectorValueName())) // prefer existing value..
+            if (isSingleValued
+                    && ((existingValue != null && StringUtils.equals(existingValue, classificator.getSelectorValueName())) // prefer existing value..
                     || (existingValue == null && classificator.isByDefault()))) { // .. to default value
                 component.setValue(selectItem.getItemValue()); // make the selection
                 defaultOrExistingValue = classificator;
@@ -96,7 +97,7 @@ public class ClassificatorSelectorGenerator extends GeneralSelectorGenerator {
         return results;
     }
 
-    protected List<ClassificatorSelectorValueProvider> getSelectorValueProviders(String classificatorName) {
+    protected List<ClassificatorSelectorValueProvider> getSelectorValueProviders(String classificatorName, UIComponent component, FacesContext context) {
         List<ClassificatorValue> classificatorValues //
         = getClassificatorService().getActiveClassificatorValues(getClassificatorService().getClassificatorByName(classificatorName));
         Collections.sort(classificatorValues);

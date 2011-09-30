@@ -9,60 +9,64 @@ import java.util.Set;
 
 import org.alfresco.service.namespace.QName;
 
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
 /**
  * @author Alar Kvell
  */
 public interface DocumentCommonModel {
-    String URI = "http://alfresco.webmedia.ee/model/document/common/1.0";
-    String PREFIX = "doccom:";
+    String DOCCOM_URI = "http://alfresco.webmedia.ee/model/document/common/1.0";
+    String DOCCOM_PREFIX = "doccom:";
 
-    QName MODEL = QName.createQName(URI, "documentCommonModel");
+    String URI = DocumentDynamicModel.URI;
+    String PREFIX = DocumentDynamicModel.PREFIX;
+
+    QName MODEL = QName.createQName(DOCCOM_URI, "documentCommonModel");
 
     interface Repo {
         String DRAFTS_PARENT = "/";
-        String DRAFTS_SPACE = DRAFTS_PARENT + PREFIX + "drafts";
+        String DRAFTS_SPACE = DRAFTS_PARENT + DOCCOM_PREFIX + "drafts";
     }
 
     interface Types {
-        QName DOCUMENT = QName.createQName(URI, "document");
-        QName DRAFTS = QName.createQName(URI, "drafts");
-        QName SEND_INFO = QName.createQName(URI, "sendInfo");
-        QName DOCUMENT_LOG = QName.createQName(URI, "documentLog");
-        QName METADATA_CONTAINER = QName.createQName(URI, "metadataContainer");
-        QName FAVORITE_DIRECTORY = QName.createQName(URI, "favoriteDirectory");
+        QName DOCUMENT = QName.createQName(DOCCOM_URI, "document");
+        QName DRAFTS = QName.createQName(DOCCOM_URI, "drafts");
+        QName SEND_INFO = QName.createQName(DOCCOM_URI, "sendInfo");
+        QName DOCUMENT_LOG = QName.createQName(DOCCOM_URI, "documentLog");
+        QName METADATA_CONTAINER = QName.createQName(DOCCOM_URI, "metadataContainer");
+        QName FAVORITE_DIRECTORY = QName.createQName(DOCCOM_URI, "favoriteDirectory");
     }
 
     interface Aspects {
-        QName SEARCHABLE = QName.createQName(URI, "searchable");
-        QName COMMON = QName.createQName(URI, "common");
-        QName SEND_DESC = QName.createQName(URI, "sendDesc");
-        QName OWNER = QName.createQName(URI, "owner");
-        QName ACCESS_RIGHTS = QName.createQName(URI, "accessRights");
-        QName SIGNER = QName.createQName(URI, "signer");
-        QName SIGNER_NAME = QName.createQName(URI, "signerName");
-        QName RECIPIENT = QName.createQName(URI, "recipient");
-        QName ADDITIONAL_RECIPIENT = QName.createQName(URI, "additionalRecipient");
-        QName FAVORITE_CONTAINER = QName.createQName(URI, "favoriteContainer");
-        QName FAVORITE_DIRECTORY_ASPECT = QName.createQName(URI, "favoriteDirectoryAspect");// new
+        QName SEARCHABLE = QName.createQName(DOCCOM_URI, "searchable");
+        QName COMMON = QName.createQName(DOCCOM_URI, "common");
+        QName SEND_DESC = QName.createQName(DOCCOM_URI, "sendDesc");
+        QName OWNER = QName.createQName(DOCCOM_URI, "owner");
+        QName ACCESS_RIGHTS = QName.createQName(DOCCOM_URI, "accessRights");
+        QName SIGNER = QName.createQName(DOCCOM_URI, "signer");
+        QName SIGNER_NAME = QName.createQName(DOCCOM_URI, "signerName");
+        QName RECIPIENT = QName.createQName(DOCCOM_URI, "recipient");
+        QName ADDITIONAL_RECIPIENT = QName.createQName(DOCCOM_URI, "additionalRecipient");
+        QName FAVORITE_CONTAINER = QName.createQName(DOCCOM_URI, "favoriteContainer");
+        QName FAVORITE_DIRECTORY_ASPECT = QName.createQName(DOCCOM_URI, "favoriteDirectoryAspect");// new
 
     }
 
     interface Assocs {
         /** documentContainer -> document */
-        QName DOCUMENT = QName.createQName(URI, "document");
+        QName DOCUMENT = QName.createQName(DOCCOM_URI, "document");
         /** document(replyDocRef) -> document(initialDocRef) */
-        QName DOCUMENT_REPLY = QName.createQName(URI, "reply");
+        QName DOCUMENT_REPLY = QName.createQName(DOCCOM_URI, "reply");
         /** document(followupDocRef) -> document(initialDocRef) */
-        QName DOCUMENT_FOLLOW_UP = QName.createQName(URI, "followUp");
+        QName DOCUMENT_FOLLOW_UP = QName.createQName(DOCCOM_URI, "followUp");
         /** document(activeDoc) -> document(selectedAssociatedDoc) */
-        QName DOCUMENT_2_DOCUMENT = QName.createQName(URI, "document2Document");
-        QName SEND_INFO = QName.createQName(URI, "sendInfo");
-        QName DOCUMENT_LOG = QName.createQName(URI, "documentLog");
-        QName FAVORITE = QName.createQName(URI, "favorite");
-        QName FAVORITE_DIRECTORY = QName.createQName(URI, "favoriteDirectory");
-        QName FAVORITE_DIRECTORY_ASPECT = QName.createQName(URI, "favoriteDirectoryAspect");
+        QName DOCUMENT_2_DOCUMENT = QName.createQName(DOCCOM_URI, "document2Document");
+        QName SEND_INFO = QName.createQName(DOCCOM_URI, "sendInfo");
+        QName DOCUMENT_LOG = QName.createQName(DOCCOM_URI, "documentLog");
+        QName FAVORITE = QName.createQName(DOCCOM_URI, "favorite");
+        QName FAVORITE_DIRECTORY = QName.createQName(DOCCOM_URI, "favoriteDirectory");
+        QName FAVORITE_DIRECTORY_ASPECT = QName.createQName(DOCCOM_URI, "favoriteDirectoryAspect");
     }
 
     interface Props {
@@ -70,20 +74,20 @@ public interface DocumentCommonModel {
         QName SERIES = QName.createQName(URI, "series");
         QName VOLUME = QName.createQName(URI, "volume");
         QName CASE = QName.createQName(URI, "case");
-        QName FILE_NAMES = QName.createQName(URI, "fileNames");
-        QName FILE_CONTENTS = QName.createQName(URI, "fileContents");
-        QName SEARCHABLE_SEND_MODE = QName.createQName(URI, "searchableSendMode");
-        QName SEARCHABLE_COST_MANAGER = QName.createQName(URI, "searchableCostManager");
-        QName SEARCHABLE_APPLICANT_NAME = QName.createQName(URI, "searchableApplicantName");
-        QName SEARCHABLE_ERRAND_BEGIN_DATE = QName.createQName(URI, "searchableErrandBeginDate");
-        QName SEARCHABLE_ERRAND_END_DATE = QName.createQName(URI, "searchableErrandEndDate");
-        QName SEARCHABLE_ERRAND_COUNTRY = QName.createQName(URI, "searchableErrandCountry");
-        QName SEARCHABLE_ERRAND_COUNTY = QName.createQName(URI, "searchableErrandCounty");
-        QName SEARCHABLE_ERRAND_CITY = QName.createQName(URI, "searchableErrandCity");
-        QName SEARCHABLE_PARTY_NAME = QName.createQName(URI, "searchablePartyName");
-        QName SEARCHABLE_FUND = QName.createQName(URI, "searchableFund");
-        QName SEARCHABLE_FUNDS_CENTER = QName.createQName(URI, "searchableFundsCenter");
-        QName SEARCHABLE_EA_COMMITMENT_ITEM = QName.createQName(URI, "searchableEaCommitmentItem");
+        QName FILE_NAMES = QName.createQName(DOCCOM_URI, "fileNames");
+        QName FILE_CONTENTS = QName.createQName(DOCCOM_URI, "fileContents");
+        QName SEARCHABLE_SEND_MODE = QName.createQName(DOCCOM_URI, "searchableSendMode");
+        QName SEARCHABLE_COST_MANAGER = QName.createQName(DOCCOM_URI, "searchableCostManager");
+        QName SEARCHABLE_APPLICANT_NAME = QName.createQName(DOCCOM_URI, "searchableApplicantName");
+        QName SEARCHABLE_ERRAND_BEGIN_DATE = QName.createQName(DOCCOM_URI, "searchableErrandBeginDate");
+        QName SEARCHABLE_ERRAND_END_DATE = QName.createQName(DOCCOM_URI, "searchableErrandEndDate");
+        QName SEARCHABLE_ERRAND_COUNTRY = QName.createQName(DOCCOM_URI, "searchableErrandCountry");
+        QName SEARCHABLE_ERRAND_COUNTY = QName.createQName(DOCCOM_URI, "searchableErrandCounty");
+        QName SEARCHABLE_ERRAND_CITY = QName.createQName(DOCCOM_URI, "searchableErrandCity");
+        QName SEARCHABLE_PARTY_NAME = QName.createQName(DOCCOM_URI, "searchablePartyName");
+        QName SEARCHABLE_FUND = QName.createQName(DOCCOM_URI, "searchableFund");
+        QName SEARCHABLE_FUNDS_CENTER = QName.createQName(DOCCOM_URI, "searchableFundsCenter");
+        QName SEARCHABLE_EA_COMMITMENT_ITEM = QName.createQName(DOCCOM_URI, "searchableEaCommitmentItem");
 
         QName DOC_NAME = QName.createQName(URI, "docName");
         QName DOC_STATUS = QName.createQName(URI, "docStatus");
@@ -121,25 +125,25 @@ public interface DocumentCommonModel {
 
         QName SEND_DESC_VALUE = QName.createQName(URI, "sendDescValue");
 
-        QName SEND_INFO_RECIPIENT = QName.createQName(URI, "recipient");
-        QName SEND_INFO_RECIPIENT_REG_NR = QName.createQName(URI, "recipientRegNr");
-        QName SEND_INFO_SEND_DATE_TIME = QName.createQName(URI, "sendDateTime");
-        QName SEND_INFO_SEND_MODE = QName.createQName(URI, "sendMode");
-        QName SEND_INFO_RESOLUTION = QName.createQName(URI, "resolution");
+        QName SEND_INFO_RECIPIENT = QName.createQName(DOCCOM_URI, "recipient");
+        QName SEND_INFO_RECIPIENT_REG_NR = QName.createQName(DOCCOM_URI, "recipientRegNr");
+        QName SEND_INFO_SEND_DATE_TIME = QName.createQName(DOCCOM_URI, "sendDateTime");
+        QName SEND_INFO_SEND_MODE = QName.createQName(DOCCOM_URI, "sendMode");
+        QName SEND_INFO_RESOLUTION = QName.createQName(DOCCOM_URI, "resolution");
         /**
          * all values for this property are defined in Enum {@link SendStatus}
          */
-        QName SEND_INFO_SEND_STATUS = QName.createQName(URI, "sendStatus");
-        QName SEND_INFO_DVK_ID = QName.createQName(URI, "dvkId");
+        QName SEND_INFO_SEND_STATUS = QName.createQName(DOCCOM_URI, "sendStatus");
+        QName SEND_INFO_DVK_ID = QName.createQName(DOCCOM_URI, "dvkId");
 
-        QName CREATED_DATETIME = QName.createQName(URI, "createdDateTime");
-        QName CREATOR_NAME = QName.createQName(URI, "creatorName");
-        QName EVENT_DESCRIPTION = QName.createQName(URI, "eventDescription");
+        QName CREATED_DATETIME = QName.createQName(DOCCOM_URI, "createdDateTime");
+        QName CREATOR_NAME = QName.createQName(DOCCOM_URI, "creatorName");
+        QName EVENT_DESCRIPTION = QName.createQName(DOCCOM_URI, "eventDescription");
 
         /** holds non-system properties of childnodes (childNodes, that are defined in DocumentSubTypeModel) for searching */
-        QName SEARCHABLE_SUB_NODE_PROPERTIES = QName.createQName(URI, "searchableSubNodeProperties");
+        QName SEARCHABLE_SUB_NODE_PROPERTIES = QName.createQName(DOCCOM_URI, "searchableSubNodeProperties");
         /** shows if the document contains at least one compoundWorkflow, that has startedDateTime set */
-        QName SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS = QName.createQName(URI, "searchableHasStartedCompoundWorkflows");
+        QName SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS = QName.createQName(DOCCOM_URI, "searchableHasStartedCompoundWorkflows");
 
         QName LEGAL_BASIS_NAME = QName.createQName(URI, "legalBasisName");
     }

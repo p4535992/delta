@@ -175,6 +175,10 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
                 log.trace(msg);
                 return null;
             }
+            msg.append(".\nNodeRefs with same xPath:");
+            for (ChildAssociationRef childAssociationRef : childAssocs) {
+                msg.append("\n").append(childAssociationRef.getChildRef());
+            }
             throw new RuntimeException(msg.toString());
         }
         parentRef = childAssocs.get(0).getChildRef();

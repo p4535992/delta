@@ -54,6 +54,7 @@ import ee.webmedia.alfresco.adr.ws.Toimik;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.Document;
@@ -318,8 +319,16 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
                 dokument.setSaatja(getNullIfEmpty(doc.getSender()));
                 dokument.setSaaja(getNullIfEmpty(joinStringAndStringWithParentheses(doc.getOwnerName(), doc.getOwnerOrgStructUnit())));
             }
-            dokument.setPealkiri(getNullIfEmpty(doc.getDocName()));
+            dokument.setPealkiri(getNullIfEmpty(getDocNameAdr(doc)));
         }
+    }
+
+    private static String getDocNameAdr(Document doc) {
+        String docName = (String) doc.getProperties().get(DocumentDynamicModel.Props.DOC_NAME_ADR);
+        if (StringUtils.isBlank(docName)) {
+            docName = doc.getDocName();
+        }
+        return docName;
     }
 
     private DokumentDetailidegaV2 buildDokumentDetailidegaV2(Document doc, boolean includeFileContent, Set<QName> documentTypes,
@@ -338,7 +347,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             dokument.setSaatja(getNullIfEmpty(doc.getSender()));
             dokument.setSaaja(getNullIfEmpty(joinStringAndStringWithParentheses(doc.getOwnerName(), doc.getOwnerOrgStructUnit())));
         }
-        dokument.setPealkiri(getNullIfEmpty(doc.getDocName()));
+        dokument.setPealkiri(getNullIfEmpty(getDocNameAdr(doc)));
 
         // =======================================================
         // Copied from setDokumentDetailidegaProperties

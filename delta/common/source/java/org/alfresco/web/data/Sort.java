@@ -79,7 +79,7 @@ public abstract class Sort
          // set the strength according to the sort mode
          if (mode.equals(IDataContainer.SORT_CASESENSITIVE))
          {
-             collator = AppConstants.IDENTICAL_COLLATOR;
+             throw new RuntimeException("Case-sensitive ordering probably shouldn't be used!");
          }
          else
          {

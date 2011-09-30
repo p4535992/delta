@@ -14,6 +14,8 @@ public interface DocumentTypeModel {
         String DOCUMENT_TYPES_SPACE = DOCUMENT_TYPES_PARENT + PREFIX + "documentTypes";
     }
 
+    // TODO DLSeadist remove this model and package and use docadmin instead
+
     public interface Props {
         QName SELECTED = QName.createQName(URI, "selected");
         // START: properties of type documentType

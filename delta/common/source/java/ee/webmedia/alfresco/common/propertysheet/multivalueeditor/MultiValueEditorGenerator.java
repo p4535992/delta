@@ -22,7 +22,7 @@ import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader;
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.ComponentPropVO;
-import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.GeneratorsWrapper;
+import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.HandlesViewMode;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
@@ -35,7 +35,7 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * 
  * @author Alar Kvell
  */
-public class MultiValueEditorGenerator extends BaseComponentGenerator implements GeneratorsWrapper {
+public class MultiValueEditorGenerator extends BaseComponentGenerator implements HandlesViewMode {
 
     @Override
     public UIComponent generate(FacesContext context, String id) {
@@ -70,9 +70,12 @@ public class MultiValueEditorGenerator extends BaseComponentGenerator implements
         addValueFromCustomAttributes(MultiValueEditor.SHOW_HEADERS, attributes);
         addValueFromCustomAttributes(Search.AJAX_PARENT_LEVEL_KEY, attributes, Integer.class);
         addValueFromCustomAttributes(MultiValueEditor.INITIAL_ROWS, attributes, Integer.class);
+        addValueFromCustomAttributes(MultiValueEditor.FILTERS, attributes);
+        addValueFromCustomAttributes(MultiValueEditor.FILTER_INDEX, attributes, Integer.class);
+        addValueFromCustomAttributes(MultiValueEditor.PREPROCESS_CALLBACK, attributes);
 
         if (!propertySheet.inEditMode() || item.isReadOnly()) {
-            ComponentUtil.setDisabledAttributeRecursively(component);
+            ComponentUtil.setReadonlyAttributeRecursively(component);
         }
     }
 

@@ -1,5 +1,9 @@
 package ee.webmedia.alfresco.docadmin.service;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
@@ -9,8 +13,10 @@ import ee.webmedia.alfresco.base.BaseService;
 import ee.webmedia.alfresco.base.BaseServiceImpl;
 import ee.webmedia.alfresco.classificator.constant.FieldChangeableIf;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
+import ee.webmedia.alfresco.classificator.constant.MappingRestriction;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.utils.MessageData;
 import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -52,7 +58,7 @@ public class Field extends FieldAndGroupBase {
 
     @Override
     protected QName getAssocName() {
-        return getFieldId();
+        return QName.createQName(DocumentDynamicModel.URI, getFieldId());
     }
 
     @Override
@@ -104,20 +110,28 @@ public class Field extends FieldAndGroupBase {
 
     /** used by fields-list-bean.jsp */
     public final String getNameAndFieldId() {
-        return new StringBuilder(getName()).append(" (").append(getFieldId().getLocalName()).append(")").toString();
+        return new StringBuilder(getName()).append(" (").append(getFieldId()).append(")").toString();
     }
 
     public String getFieldNameWithIdAndType() {
-        return MessageUtil.getMessage("field_nameIdAndType", getName(), getFieldId().getLocalName(), MessageUtil.getMessage(getFieldTypeEnum()));
+        return MessageUtil.getMessage("field_nameIdAndType", getName(), getFieldId(), MessageUtil.getMessage(getFieldTypeEnum()));
+    }
+
+    public final String getFieldId() {
+        return getProp(DocumentAdminModel.Props.FIELD_ID);
+    }
+
+    public final QName getQName() {
+        return getQName(getFieldId());
+    }
+
+    public static final QName getQName(String fieldId) {
+        return QName.createQName(DocumentDynamicModel.URI, fieldId);
     }
 
     // Properties
 
-    public final QName getFieldId() {
-        return getProp(DocumentAdminModel.Props.FIELD_ID);
-    }
-
-    public final void setFieldId(QName fieldId) {
+    public final void setFieldId(String fieldId) {
         setProp(DocumentAdminModel.Props.FIELD_ID, fieldId);
     }
 
@@ -175,6 +189,14 @@ public class Field extends FieldAndGroupBase {
 
     public final void setDefaultDateSysdate(boolean defaultDateSysdate) {
         setProp(DocumentAdminModel.Props.DEFAULT_DATE_SYSDATE, defaultDateSysdate);
+    }
+
+    public final boolean isDefaultUserLoggedIn() {
+        return getPropBoolean(DocumentAdminModel.Props.DEFAULT_USER_LOGGED_IN);
+    }
+
+    public final void setDefaultUserLoggedIn(boolean defaultUserLoggedIn) {
+        setProp(DocumentAdminModel.Props.DEFAULT_USER_LOGGED_IN, defaultUserLoggedIn);
     }
 
     public final boolean isDefaultSelected() {
@@ -237,12 +259,36 @@ public class Field extends FieldAndGroupBase {
         setProp(DocumentAdminModel.Props.REMOVABLE_FROM_SYSTEMATIC_FIELD_GROUP, removableFromSystematicFieldGroup);
     }
 
+    public final String getMappingRestriction() {
+        return getProp(DocumentAdminModel.Props.MAPPING_RESTRICTION);
+    }
+
+    public final void setMappingRestriction(String mappingRestriction) {
+        setProp(DocumentAdminModel.Props.MAPPING_RESTRICTION, mappingRestriction);
+    }
+
+    public final String getOriginalFieldId() {
+        return getProp(DocumentAdminModel.Props.ORIGINAL_FIELD_ID);
+    }
+
+    public final void setOriginalFieldId(String originalFieldId) {
+        setProp(DocumentAdminModel.Props.ORIGINAL_FIELD_ID, originalFieldId);
+    }
+
+    public MappingRestriction getMappingRestrictionEnum() {
+        return getEnumFromValue(MappingRestriction.class, getMappingRestriction());
+    }
+
+    public void setMappingRestrictionEnum(MappingRestriction mappingRestriction) {
+        setMappingRestriction(getValueFromEnum(mappingRestriction));
+    }
+
     @Override
     public boolean isRemovableFromList() {
         BaseObject parent = getParent();
         if (parent instanceof FieldGroup) {
             FieldGroup parentFieldGroup = (FieldGroup) parent;
-            if (!parentFieldGroup.isSystematic() || !isSystematic() || isRemovableFromSystematicFieldGroup()) {
+            if (!parentFieldGroup.isSystematic() || isRemovableFromSystematicFieldGroup()) {
                 return true;
             }
             return false;
@@ -261,6 +307,15 @@ public class Field extends FieldAndGroupBase {
 
     public boolean isCopyOfFieldDefinition() {
         return getProp(COPY_OF_FIELD_DEF_NODE_REF) != null;
+    }
+
+    // FIXME DLSeadist fieldId'd muutuvad varsti QName->String
+    public static List<String> getLocalNames(Collection<QName> qNameFieldDefinitionIds) {
+        List<String> fieldDefinitionIds = new ArrayList<String>(qNameFieldDefinitionIds.size());
+        for (QName qName : qNameFieldDefinitionIds) {
+            fieldDefinitionIds.add(qName.getLocalName());
+        }
+        return fieldDefinitionIds;
     }
 
 }

@@ -84,7 +84,7 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
-import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.GeneratorsWrapper;
+import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.HandlesViewMode;
 import ee.webmedia.alfresco.common.propertysheet.validator.ForcedMandatoryValidator;
 import ee.webmedia.alfresco.common.propertysheet.validator.MandatoryIfValidator;
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -162,7 +162,7 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
          // to have a parent to get the correct id
          item.getChildren().add(component);
 
-         if (!isCreateOutputText()) {
+         if (!isCreateOutputText(context)) {
              // setup the component for mandatory validation if necessary
              setupMandatoryPropertyIfNecessary(context, propertySheet, item, propertyDef, component);
 
@@ -267,15 +267,15 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
     }
 
     private void addCustomValidator(UIInput component) {
-        String validatorClassName = getCustomAttributes().get("validator");
-        if(!StringUtils.hasText(validatorClassName)) {
+        String validatorBeanName = getCustomAttributes().get("validator");
+        if(!StringUtils.hasText(validatorBeanName)) {
             return;
         }
         try {
-            Validator valdiator = BeanHelper.getSpringBean(Validator.class, validatorClassName);
+            Validator valdiator = BeanHelper.getSpringBean(Validator.class, validatorBeanName);
             component.addValidator(valdiator);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to create valdiator class from validator='"+validatorClassName+"'", e);
+            throw new RuntimeException("Failed to create valdiator class from validator='"+validatorBeanName+"'", e);
         }
         
     }
@@ -324,10 +324,10 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
             if (isNotBlank(expression)) {
                 boolean isReadonly = checkCustomPropertyExpression(context, propertySheet, expression, READONLY_IF, item.getName());
                 if (isReadonly) {
-                    ComponentUtil.setDisabledAttributeRecursively(component);
+                    ComponentUtil.setReadonlyAttributeRecursively(component);
                 }
             } else if (Boolean.valueOf(((CustomAttributes) item).getCustomAttributes().get("read-only"))) {
-                ComponentUtil.setDisabledAttributeRecursively(component);
+                ComponentUtil.setReadonlyAttributeRecursively(component);
             }
         }
     }
@@ -335,7 +335,7 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
     private void setDisabledBasedOnAttribute(UIComponent component, PropertySheetItem item, FacesContext context) {
         String isDisabledEpression = ((CustomAttributes) item).getCustomAttributes().get(DISABLED);
         if (isNotBlank(isDisabledEpression) && evaluateBoolean(isDisabledEpression, context, item)) {
-            ComponentUtil.setDisabledAttributeRecursively(component);
+            ComponentUtil.setReadonlyAttributeRecursively(component);
         }
     }
 
@@ -583,7 +583,7 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
     final String id = getDefaultId(item);
     if (item instanceof UIProperty)
       {
-         if ((propertySheet.inEditMode() || this instanceof GeneratorsWrapper) && !isCreateOutputText())
+         if (useGenerator(context, propertySheet))
          {
             // use the standard component in edit mode
             component = generate(context, id);
@@ -603,8 +603,13 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
       return component;
    }
 
-    protected boolean isCreateOutputText() {
-        return Boolean.parseBoolean(getCustomAttributes().get(OUTPUT_TEXT));
+    protected boolean useGenerator(FacesContext context, UIPropertySheet propertySheet) {
+        return (propertySheet.inEditMode() || this instanceof HandlesViewMode) && !isCreateOutputText(context);
+    }
+
+    protected boolean isCreateOutputText(FacesContext context) {
+        String outputTextAttr = getCustomAttributes().get(OUTPUT_TEXT);
+        return isNotBlank(outputTextAttr) ? evaluateBoolean(outputTextAttr, context) : false;
     }
    
    /**
@@ -693,7 +698,7 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
         // or if the property sheet is in view mode
         if (propertySheet.inEditMode() == false || item.isReadOnly() ||
                 (propertyDef != null && propertyDef.isProtected())) {
-            ComponentUtil.setDisabledAttributeRecursively(component);
+            ComponentUtil.setReadonlyAttributeRecursively(component);
         }
     }
 
@@ -723,7 +728,7 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
       if (propertySheet.inEditMode() == false || item.isReadOnly() || 
               (associationDef != null && associationDef.isProtected())) 
       {
-         ComponentUtil.setDisabledAttributeRecursively(component);
+         ComponentUtil.setReadonlyAttributeRecursively(component);
       }
    }
    

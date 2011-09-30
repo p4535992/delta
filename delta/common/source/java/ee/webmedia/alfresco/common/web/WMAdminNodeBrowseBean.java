@@ -17,11 +17,13 @@ import javax.faces.model.ListDataModel;
 import javax.faces.model.SelectItem;
 import javax.servlet.http.HttpServletResponse;
 
+import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.exporter.ACPExportPackageHandler;
+import org.alfresco.repo.importer.ACPImportPackageHandler;
+import org.alfresco.repo.importer.ImportTimerProgress;
 import org.alfresco.service.cmr.dictionary.AssociationDefinition;
 import org.alfresco.service.cmr.repository.AssociationRef;
-import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.view.ExportPackageHandler;
 import org.alfresco.service.cmr.view.ExporterCrawlerParameters;
@@ -31,7 +33,6 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.ISO9075;
 import org.alfresco.web.bean.admin.AdminNodeBrowseBean;
-import org.alfresco.web.bean.repository.Repository;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.application.jsp.JspStateManagerImpl;
@@ -44,6 +45,7 @@ public class WMAdminNodeBrowseBean extends AdminNodeBrowseBean {
 
     private static final long serialVersionUID = -3757857288967828948L;
     private String targetRef;
+    private String importFileName;
     private String assocTypeQName;
     private List<SelectItem> assocTypeQNames;
     transient private DataModel sourceAssocs;
@@ -128,8 +130,6 @@ public class WMAdminNodeBrowseBean extends AdminNodeBrowseBean {
         return sourceAssocs;
     }
 
-    private String primaryPathShort;
-
     public String getPrimaryPathShort() {
         final String primaryPath = super.getPrimaryPath();
         int startURI = primaryPath.indexOf("{");
@@ -139,12 +139,15 @@ public class WMAdminNodeBrowseBean extends AdminNodeBrowseBean {
             primaryPathShort = primaryPath.substring(0, startURI);
             while (nextStartURI != -1) {
                 final int endIndex = primaryPath.indexOf("}", nextStartURI);
+                int oldNextStartURI = nextStartURI;
                 nextStartURI = primaryPath.indexOf("{", endIndex);
+                final String shortPathPart;
                 if (nextStartURI != -1) {
-                    primaryPathShort += primaryPath.substring(endIndex + 1, nextStartURI);
+                    shortPathPart = primaryPath.substring(oldNextStartURI, nextStartURI);
                 } else {
-                    primaryPathShort += primaryPath.substring(endIndex + 1);
+                    shortPathPart = primaryPath.substring(oldNextStartURI);
                 }
+                primaryPathShort += QName.createQName(shortPathPart).toPrefixString(BeanHelper.getNamespaceService());
             }
         } else {
             primaryPathShort = primaryPath;
@@ -152,9 +155,22 @@ public class WMAdminNodeBrowseBean extends AdminNodeBrowseBean {
         return ISO9075.decode(primaryPathShort.toString());
     }
 
+    public void importACP(@SuppressWarnings("unused") ActionEvent event) {
+        LOG.info("Node import started: " + getNodeRef());
+        File dataFile = new File(getImportFileName());
+
+        // setup an ACP Package Handler to export to an ACP file format
+        ACPImportPackageHandler handler = new ACPImportPackageHandler(dataFile, CHARSET);
+        // now export (note: we're not interested in progress in the example)
+        Location location = new Location(getNodeRef());
+        location.setChildAssocType(ContentModel.ASSOC_CHILDREN);
+        BeanHelper.getImporterService().importView(handler, location, null, new ImportTimerProgress(LOG));
+    }
+
     public void export(@SuppressWarnings("unused") ActionEvent event) {
         LOG.info("Node export started: " + getNodeRef());
-        HttpServletResponse response = (HttpServletResponse) FacesContext.getCurrentInstance().getExternalContext().getResponse();
+        FacesContext context = FacesContext.getCurrentInstance();
+        HttpServletResponse response = (HttpServletResponse) context.getExternalContext().getResponse();
         response.setCharacterEncoding(CHARSET);
         OutputStream outputStream = null;
         try {
@@ -164,11 +180,10 @@ public class WMAdminNodeBrowseBean extends AdminNodeBrowseBean {
 
             outputStream = getExportOutStream(response);
             // setup an ACP Package Handler to export to an ACP file format
-            MimetypeService mimetypeService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getMimetypeService();
-            ExportPackageHandler handler = new ACPExportPackageHandler(outputStream, dataFile, contentDir, mimetypeService);
+            ExportPackageHandler handler = new ACPExportPackageHandler(outputStream, dataFile, contentDir, BeanHelper.getMimetypeService());
 
             // now export (note: we're not interested in progress in the example)
-            Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getExporterService().exportView(handler, getExportParameters(), null);
+            BeanHelper.getExporterService().exportView(handler, getExportParameters(), null);
 
             outputStream.flush();
         } catch (IOException e) {
@@ -177,7 +192,7 @@ public class WMAdminNodeBrowseBean extends AdminNodeBrowseBean {
             throw new RuntimeException(msg, e);
         } finally {
             IOUtils.closeQuietly(outputStream);
-            FacesContext.getCurrentInstance().responseComplete();
+            context.responseComplete();
 
             // Erko hack for incorrect view id in the next request
             JspStateManagerImpl.ignoreCurrentViewSequenceHack();
@@ -209,6 +224,14 @@ public class WMAdminNodeBrowseBean extends AdminNodeBrowseBean {
         LOG.info("Node delete started: " + getNodeRef());
         getNodeService().deleteNode(getNodeRef());
         setNodeRef(getPrimaryParent());
+    }
+
+    public void setImportFileName(String importFileName) {
+        this.importFileName = importFileName;
+    }
+
+    public String getImportFileName() {
+        return importFileName;
     }
 
 }

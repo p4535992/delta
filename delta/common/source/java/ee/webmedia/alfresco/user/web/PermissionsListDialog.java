@@ -40,6 +40,11 @@ public class PermissionsListDialog extends BaseDialogBean {
     }
 
     @Override
+    public boolean isFinishButtonVisible(boolean dialogConfOKButtonVisible) {
+        return false;
+    }
+
+    @Override
     public String cancel() {
         reset();
         return super.cancel();

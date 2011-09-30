@@ -2,19 +2,18 @@ package ee.webmedia.alfresco.document.type.web;
 
 import javax.faces.context.FacesContext;
 
-import org.alfresco.service.namespace.QName;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.propertysheet.search.MultiSelectConverterBase;
-import ee.webmedia.alfresco.document.type.model.DocumentType;
-import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
+import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
+import ee.webmedia.alfresco.docadmin.service.DocumentType;
 
 public class DocumentTypeConverter extends MultiSelectConverterBase {
-    private transient DocumentTypeService documentTypeService;
+    private transient DocumentAdminService documentAdminService;
 
     @Override
     public String convertSelectedValueToString(Object value) {
-        final DocumentType documentType = getDocumentTypeService().getDocumentType((QName) value);
+        final DocumentType documentType = getDocumentTypeService().getDocumentType((String) value);
         if (documentType == null) {
             return value.toString();
         }
@@ -22,16 +21,16 @@ public class DocumentTypeConverter extends MultiSelectConverterBase {
     }
 
     // START: getters / setters
-    public void setDocumentTypeService(DocumentTypeService documentTypeService) {
-        this.documentTypeService = documentTypeService;
+    public void setDocumentTypeService(DocumentAdminService documentAdminService) {
+        this.documentAdminService = documentAdminService;
     }
 
-    private DocumentTypeService getDocumentTypeService() {
-        if (documentTypeService == null) {
-            documentTypeService = (DocumentTypeService) FacesContextUtils.getRequiredWebApplicationContext( //
-                    FacesContext.getCurrentInstance()).getBean(DocumentTypeService.BEAN_NAME);
+    private DocumentAdminService getDocumentTypeService() {
+        if (documentAdminService == null) {
+            documentAdminService = (DocumentAdminService) FacesContextUtils.getRequiredWebApplicationContext( //
+                    FacesContext.getCurrentInstance()).getBean(DocumentAdminService.BEAN_NAME);
         }
-        return documentTypeService;
+        return documentAdminService;
     }
     // END: getters / setters
 }

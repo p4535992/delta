@@ -187,7 +187,7 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
       return outcome;
    }
 
-    private String handleException(Throwable e) {
+    public String handleException(Throwable e) {
         String outcome;
         // reset the flag so we can re-attempt the operation
         isFinished = false;
@@ -226,6 +226,11 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
    {
       return true;
    }
+
+   @Override
+    public boolean isFinishButtonVisible(boolean dialogConfOKButtonVisible) {
+        return dialogConfOKButtonVisible;
+    }
 
    public String getContainerTitle()
    {
@@ -404,9 +409,9 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
            return null;
        }
        if (dialogsToClose == 1) {
-           return "dialog:close";
+           return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
        } else if (dialogsToClose > 1) {
-           return "dialog:close[" + dialogsToClose + "]";
+           return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME+"[" + dialogsToClose + "]";
        } else {
            throw new IllegalArgumentException("Can't close " + dialogsToClose + " dialogs");
        }

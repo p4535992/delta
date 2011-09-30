@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.docadmin.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
+import static ee.webmedia.alfresco.docadmin.web.DocTypeManagePrivilegesEvaluator.isDocTypeSavedAndShowingLatestVersion;
 
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
@@ -29,7 +30,8 @@ public class DeleteDocumentTypeEvaluator extends BaseActionEvaluator {
     }
 
     private boolean evaluate(DocumentType documentType) {
-        return documentType.isSaved() && !documentType.isSystematic() && !getDocumentAdminService().isDocumentTypeUsed(documentType.getDocumentTypeId());
+        return isDocTypeSavedAndShowingLatestVersion(documentType) && !documentType.isSystematic()
+                && !getDocumentAdminService().isDocumentTypeUsed(documentType.getDocumentTypeId());
     }
 
 }

@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.addressbook.web.dialog;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getAddressbookService;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,6 +19,7 @@ import org.alfresco.web.ui.common.component.data.UIRichList;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
@@ -55,6 +58,7 @@ public class ContactGroupContactsDialog extends ContactGroupBaseDialog implement
                     (String) person.getProperties().get(AddressbookModel.Props.PERSON_LAST_NAME.toString())));
             elem.put("type", personLabel);
             elem.put("nodeRef", person.getNodeRefAsString());
+            elem.put("dialogType", person.getType().getLocalName());
             data.add(elem);
         }
 
@@ -63,9 +67,17 @@ public class ContactGroupContactsDialog extends ContactGroupBaseDialog implement
             elem.put("name", (String) organization.getProperties().get(AddressbookModel.Props.ORGANIZATION_NAME.toString()));
             elem.put("type", organizationLabel);
             elem.put("nodeRef", organization.getNodeRefAsString());
+            elem.put("dialogType", "org");
             data.add(elem);
         }
         return data;
+    }
+
+    public boolean getManageable() {
+        if (Boolean.TRUE.equals(getCurrentNode().getProperties().get(AddressbookModel.Props.MANAGEABLE_FOR_ADMIN))) {
+            return BeanHelper.getUserService().isDocumentManager();
+        }
+        return true;
     }
 
     /**

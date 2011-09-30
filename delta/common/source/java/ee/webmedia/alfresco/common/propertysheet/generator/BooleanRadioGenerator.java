@@ -55,7 +55,9 @@ public class BooleanRadioGenerator extends BaseComponentGenerator {
         String trueLabel = getLabel(ATTR_LABEL_TRUE, "yes");
         String falseLabel = getLabel(ATTR_LABEL_FALSE, "no");
         if (item.isReadOnly()) {
-            return createReadOnlyComponent(context, value, trueLabel, falseLabel);
+            UIComponent component = createReadOnlyComponent(context, value, trueLabel, falseLabel);
+            FacesHelper.setupComponentId(context, component, getDefaultId(item));
+            return component;
         }
         final HtmlSelectOneRadio selectComponent = new HtmlSelectOneRadio();
 

@@ -9,17 +9,12 @@ public abstract class AppConstants {
     public static final String CHARSET = "UTF-8";
     private static BeanFactory beanFactory;
     public static final Collator DEFAULT_COLLATOR;
-    public static final Collator IDENTICAL_COLLATOR;
 
     static {
         Collator tmp_collator = Collator.getInstance(getDefaultLocale());
         tmp_collator.setStrength(Collator.SECONDARY);
         tmp_collator.setDecomposition(Collator.CANONICAL_DECOMPOSITION);
         DEFAULT_COLLATOR = tmp_collator;
-        tmp_collator = Collator.getInstance(getDefaultLocale());
-        tmp_collator.setStrength(Collator.IDENTICAL);
-        tmp_collator.setDecomposition(Collator.CANONICAL_DECOMPOSITION);
-        IDENTICAL_COLLATOR = tmp_collator;
     }
 
     public static BeanFactory getBeanFactory() {

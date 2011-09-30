@@ -10,6 +10,7 @@ import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
@@ -138,6 +139,26 @@ public class WorkflowUtil {
 
         public StatusOrderChecker requireAtLeastOne(QName[] types, Status... statuses) {
             return requireOne(types, statuses).requireAny(types, statuses);
+        }
+
+        /**
+         * Consume objects with given types and statuses, return true if at least one of consumed workflows had required status
+         */
+        public StatusOrderChecker requireAtLeastOneWithinStatuses(QName[] types, Status requiredStatus, Status... statuses) {
+            addTypesAndStatusesInfo("requireAtLeastOneWithinStatuses", types, statuses);
+            if (!result) {
+                return this;
+            }
+            boolean hasRequiredStatus = false;
+            while (index < objects.size() && isStatusAndType(objects.get(index), types, statuses)) {
+                hasRequiredStatus |= isStatus(objects.get(index), requiredStatus);
+                index++;
+            }
+            result = hasRequiredStatus;
+            if (!result) {
+                addFailureInfo();
+            }
+            return this;
         }
 
         public boolean check() {
@@ -288,14 +309,16 @@ public class WorkflowUtil {
             }
             break;
         case IN_PROGRESS:
-            if (!isValidInProgressOrStopped(workflows, cWfStatus)) {
-                throw new WorkflowChangedException(getNotValidInProgressOrStoppedMsg(compoundWorkflow, cWfStatus));
+            Status[] inProgressAllowedStatuses = { Status.IN_PROGRESS, Status.FINISHED };
+            if (!isValidInProgressOrStopped(workflows, cWfStatus, inProgressAllowedStatuses)) {
+                throw new WorkflowChangedException(getNotValidInProgressOrStoppedMsg(compoundWorkflow, cWfStatus, inProgressAllowedStatuses));
             }
             break;
         case STOPPED:
-            if (!isValidInProgressOrStopped(workflows, cWfStatus)
+            Status[] stoppedAllowedStatuses = { Status.STOPPED, Status.FINISHED };
+            if (!isValidInProgressOrStopped(workflows, cWfStatus, stoppedAllowedStatuses)
                     && !isStatusOrder(workflows).requireAtLeastOne(Status.FINISHED).requireAny(Status.NEW, Status.FINISHED).check()) {
-                throw new WorkflowChangedException(getNotValidInProgressOrStoppedMsg(compoundWorkflow, cWfStatus)
+                throw new WorkflowChangedException(getNotValidInProgressOrStoppedMsg(compoundWorkflow, cWfStatus, stoppedAllowedStatuses)
                         + "\nOR as an alternative following order: 1..* FINISHED, 0..* NEW or FINISHED\n" + compoundWorkflow);
             }
             break;
@@ -313,18 +336,23 @@ public class WorkflowUtil {
         return cWfStatus;
     }
 
-    private static String getNotValidInProgressOrStoppedMsg(CompoundWorkflow compoundWorkflow, Status cWfStatus) {
+    private static String getNotValidInProgressOrStoppedMsg(CompoundWorkflow compoundWorkflow, Status cWfStatus, Status[] allowedStatuses) {
+        List<String> statusNames = new ArrayList<String>();
+        for (Status status : allowedStatuses) {
+            statusNames.add(status.name());
+        }
         return "If compoundWorkflow status is " + cWfStatus.name() + ", then workflows must have the following statuses, in order:" +
-                " 0..* FINISHED, (1 " + cWfStatus.name() + " OR 1..* parallely startable workflows " + cWfStatus.name() + "), 0..* NEW or FINISHED\n" + compoundWorkflow;
+                " 0..* FINISHED, (1 " + cWfStatus.name() + " OR (1..* parallely startable workflows " + TextUtil.joinNonBlankStrings(statusNames, " OR ")
+                + " with at least one " + cWfStatus.name() + ")), 0..* NEW or FINISHED\n" + compoundWorkflow;
     }
 
-    private static boolean isValidInProgressOrStopped(List<Workflow> workflows, Status cWfStatus) {
-        boolean isValidWithoutParallel = isStatusOrder(workflows).requireAny(Status.FINISHED).requireOne(cWfStatus).requireAny(Status.NEW, Status.FINISHED).check();
-        return isValidWithoutParallel || isValidParallel(workflows, cWfStatus);
+    private static boolean isValidInProgressOrStopped(List<Workflow> workflows, Status requiredStatus, Status... cWfStatuses) {
+        boolean isValidWithoutParallel = isStatusOrder(workflows).requireAny(Status.FINISHED).requireOne(requiredStatus).requireAny(Status.NEW, Status.FINISHED).check();
+        return isValidWithoutParallel || isValidParallel(workflows, requiredStatus, cWfStatuses);
     }
 
-    private static boolean isValidParallel(List<Workflow> workflows, Status cWfStatus) {
-        return isStatusOrder(workflows).requireAny(Status.FINISHED).requireAtLeastOne(WorkflowSpecificModel.CAN_START_PARALLEL, cWfStatus)
+    private static boolean isValidParallel(List<Workflow> workflows, Status requiredStatus, Status... cWfStatuses) {
+        return isStatusOrder(workflows).requireAny(Status.FINISHED).requireAtLeastOneWithinStatuses(WorkflowSpecificModel.CAN_START_PARALLEL, requiredStatus, cWfStatuses)
                 .requireAny(Status.NEW, Status.FINISHED).check();
     }
 

@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.addressbook.web.dialog;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getAddressbookService;
+
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 

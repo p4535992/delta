@@ -136,8 +136,6 @@ public interface AddressbookService {
      */
     NodeRef getOrgOfPerson(NodeRef ref);
 
-    Node getRoot();
-
     /**
      * Returns a list of nodes of a given type that nodeRef if associated with.
      * 
@@ -155,13 +153,18 @@ public interface AddressbookService {
      */
     List<Node> getContacts(NodeRef nodeRef);
 
-    NodeRef getAddressbookNodeRef();
+    /**
+     * Returns the NodeRef of the addressbook
+     * 
+     * @return
+     */
+    NodeRef getAddressbookRoot();
 
     List<Node> searchTaskCapableContacts(String searchCriteria, boolean orgOnly, String institutionToRemove);
 
     List<Node> getDvkCapableOrgs();
 
-    List<Node> searchContactGroups(String searchCriteria);
+    List<Node> searchContactGroups(String searchCriteria, boolean showAdminManageable, boolean excludeTaskCapable);
 
     /**
      * @param regNumber
@@ -183,5 +186,9 @@ public interface AddressbookService {
     List<Node> getContactsWithSapAccount();
 
     List<Node> getContactsGroups(NodeRef contactNodeRef);
+
+    boolean hasCreatePermission();
+
+    List<NodeRef> getContactGroupContents(NodeRef contactGroupRef);
 
 }

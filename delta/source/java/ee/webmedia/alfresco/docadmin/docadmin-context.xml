@@ -2,7 +2,7 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
-   <bean parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap">
+   <bean id="documentAdminModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap">
       <property name="models">
          <list>
             <value>ee/webmedia/alfresco/docadmin/model/documentAdminModel.xml</value>
@@ -33,11 +33,7 @@
          </list>
       </property>
       <property name="target" ref="documentAdminService" />
-      <property name="interceptorNames">
-         <list>
-            <idref bean="commonTransactionInterceptor" />
-         </list>
-      </property>
+      <property name="interceptorNames" ref="commonInterceptorsList" />
    </bean>
 
    <bean class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
@@ -92,14 +88,24 @@
 
    <bean id="DocTypeDetailsDialog" class="ee.webmedia.alfresco.docadmin.web.DocTypeDetailsDialog" scope="session">
       <property name="fieldsListBean" ref="DocTypeFieldsListBean" />
-      <property name="assocsListBean" ref="AssocsListBean" />
+      <property name="replyAssocsListBean" ref="ReplyAssocsListBean" />
+      <property name="followupAssocsListBean" ref="FollowupAssocsListBean" />
+      <property name="versionsListBean" ref="VersionsListBean" />
    </bean>
 
    <bean id="DocTypeFieldsListBean" class="ee.webmedia.alfresco.docadmin.web.FieldsListBean" scope="session" />
 
-   <bean id="AssocsListBean" class="ee.webmedia.alfresco.docadmin.web.DocTypeAssocsListBean" scope="session" />
+   <bean id="ReplyAssocsListBean" class="ee.webmedia.alfresco.docadmin.web.ReplyAssocsListBean" scope="session" />
 
-   <bean id="AssociationToDocTypeDetailsDialog" class="ee.webmedia.alfresco.docadmin.web.AssociationToDocTypeDetailsDialog" scope="session" />
+   <bean id="FollowupAssocsListBean" class="ee.webmedia.alfresco.docadmin.web.FollowupAssocsListBean" scope="session" />
+
+   <bean id="VersionsListBean" class="ee.webmedia.alfresco.docadmin.web.VersionsListBean" scope="session" />
+
+   <bean id="AssociationModelDetailsDialog" class="ee.webmedia.alfresco.docadmin.web.AssociationModelDetailsDialog" scope="session" >
+      <property name="fieldMappingsListBean" ref="FieldMappingsListBean"/>
+   </bean>
+
+   <bean id="FieldMappingsListBean" class="ee.webmedia.alfresco.docadmin.web.FieldMappingsListBean" scope="session" />
 
    <bean id="FieldDefinitionListDialog" class="ee.webmedia.alfresco.docadmin.web.FieldDefinitionListDialog" scope="session" />
 
@@ -116,6 +122,4 @@
       <property name="messageKey" value="fieldGroup_details_separator_infoText" />
    </bean>
    <!-- END: web beans: -->
-
-
 </beans>

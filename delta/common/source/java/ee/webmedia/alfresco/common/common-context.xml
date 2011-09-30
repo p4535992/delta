@@ -134,6 +134,19 @@
       </property>
    </bean>
 
+   <bean id="statInterceptor" class="ee.webmedia.alfresco.utils.StatInterceptor">
+      <property name="thresholdMillis" value="1000" /><!-- XXX after optimizing, this value should be much closer to default (50ms) -->
+   </bean>
+
+   <bean id="commonInterceptorsList" class="org.springframework.beans.factory.config.ListFactoryBean">
+      <property name="sourceList">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+            <idref bean="statInterceptor" />
+         </list>
+      </property>
+   </bean>
+
    <bean id="commonWebClientConfigBootstrap" class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init">
       <property name="configs">
          <list>
@@ -219,6 +232,8 @@
    <!-- START: web beans: -->
 
    <bean id="TestingForDeveloperBean" class="ee.webmedia.alfresco.common.web.TestingForDeveloperBean" scope="session" />
+
+   <bean id="UserContactGroupSearchBean" class="ee.webmedia.alfresco.common.web.UserContactGroupSearchBean" scope="session" />
 
    <!-- END: web beans: -->
 </beans>

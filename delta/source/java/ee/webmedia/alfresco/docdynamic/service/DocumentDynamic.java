@@ -1,8 +1,6 @@
 package ee.webmedia.alfresco.docdynamic.service;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentTemplateService;
-import static ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel.Props.DOCUMENT_TYPE_ID;
-import static ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel.Props.DOCUMENT_TYPE_VERSION_NR;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.CASE;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FUNCTION;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SERIES;
@@ -14,6 +12,7 @@ import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.model.NodeBaseVO;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
 import ee.webmedia.alfresco.document.service.DocumentService;
 
@@ -29,11 +28,11 @@ public class DocumentDynamic extends NodeBaseVO implements Cloneable {
     }
 
     public String getDocumentTypeId() {
-        return getProp(DOCUMENT_TYPE_ID);
+        return getProp(Props.OBJECT_TYPE_ID);
     }
 
     public Integer getDocumentTypeVersionNr() {
-        return getProp(DOCUMENT_TYPE_VERSION_NR);
+        return getProp(Props.OBJECT_TYPE_VERSION_NR);
     }
 
     public String getUrl() {

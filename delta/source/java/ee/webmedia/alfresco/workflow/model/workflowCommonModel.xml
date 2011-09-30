@@ -59,7 +59,7 @@
                <mandatory enforced="true">true</mandatory>
             </property>
             <property name="wfc:documentTypes">
-               <type>d:qname</type>
+               <type>d:text</type>
                <mandatory enforced="true">true</mandatory>
                <multiple>true</multiple>
             </property>

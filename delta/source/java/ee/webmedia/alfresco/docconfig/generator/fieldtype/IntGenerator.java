@@ -1,6 +1,6 @@
 package ee.webmedia.alfresco.docconfig.generator.fieldtype;
 
-import javax.faces.convert.IntegerConverter;
+import javax.faces.convert.LongConverter;
 
 import org.alfresco.web.ui.repo.RepoConstants;
 
@@ -17,7 +17,7 @@ public class IntGenerator extends BaseTypeFieldGenerator {
 
     @Override
     protected FieldType[] getFieldTypes() {
-        return new FieldType[] { FieldType.INT };
+        return new FieldType[] { FieldType.LONG };
     }
 
     @Override
@@ -25,7 +25,7 @@ public class IntGenerator extends BaseTypeFieldGenerator {
         final ItemConfigVO item = generatorResults.getAndAddPreGeneratedItem();
         item.setComponentGenerator(RepoConstants.GENERATOR_TEXT_FIELD);
         item.setStyleClass("medium");
-        item.setConverter(IntegerConverter.CONVERTER_ID);
+        item.setConverter(LongConverter.CONVERTER_ID);
     }
 
 }

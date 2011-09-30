@@ -54,7 +54,7 @@ public class DimensionSelectorGenerator extends ClassificatorSelectorGenerator {
 
     @SuppressWarnings("unchecked")
     @Override
-    protected List<ClassificatorSelectorValueProvider> getSelectorValueProviders(String dimensionName) {
+    protected List<ClassificatorSelectorValueProvider> getSelectorValueProviders(String dimensionName, UIComponent component, FacesContext context) {
         List<ClassificatorSelectorValueProvider> valueProviders = new ArrayList<ClassificatorSelectorValueProvider>();
         NodeRef dimensionRef = BeanHelper.getEInvoiceService().getDimension(Dimensions.get(dimensionName));
         if (dimensionRef != null) {

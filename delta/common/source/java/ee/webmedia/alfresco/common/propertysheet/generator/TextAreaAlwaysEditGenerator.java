@@ -10,15 +10,15 @@ import org.alfresco.web.bean.generator.TextAreaGenerator;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 
-import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.GeneratorsWrapper;
+import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.HandlesViewMode;
 
 /**
  * Generator for a text area which is editable even if the propertySheet is not in edit mode.
- * Implements GeneratorsWrapper
+ * Implements HandlesViewMode
  * 
  * @author Erko Hansar
  */
-public class TextAreaAlwaysEditGenerator extends TextAreaGenerator implements GeneratorsWrapper {
+public class TextAreaAlwaysEditGenerator extends TextAreaGenerator implements HandlesViewMode {
 
     @Override
     protected void setupProperty(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item, PropertyDefinition propertyDef,

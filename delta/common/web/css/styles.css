@@ -903,6 +903,10 @@ td table.tasks td{
 	vertical-align: middle;
 }
 
+.propertiesLabel + td table.tasks td {
+	vertical-align: top;
+}
+
 .propertiesLabel + td td,
 .propertiesLabel + td td span input {
 /*	line-height: 20px; used to be 20px, but ruined label and value alignment in subpropsheets*/
@@ -962,6 +966,11 @@ span.small input, input.small, textarea.small, select.small {
 .width120 {
 	width: 120px !important;
 	min-width: 120px !important; 
+}
+
+.width130 {
+	width: 130px !important;
+	min-width: 130px !important; 
 }
 
 .width140 {
@@ -1245,10 +1254,18 @@ input.disabled-date {
 	vertical-align: top;
 }
 
-input.disabled-date {
+input.disabled-date,
+input.disabled-time {
 	background: none;
 	padding-right: 9px;
 	padding-left: 9px;
+}
+
+input.time,
+input.disabled-time {
+	width:40px !important;
+	text-align: center;
+	vertical-align: top;
 }
 
 

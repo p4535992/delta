@@ -96,7 +96,6 @@ public class DocumentDynamicTypeMenuItemProcessor implements InitializingBean, M
                 MenuItem item = new MenuItem();
                 item.setTitle(type.getName());
                 item.setActionListener("#{DocumentDynamicDialog.createDraft}");
-                item.setOutcome("#{DocumentDynamicDialog.action}");
                 item.getParams().put("documentTypeId", type.getDocumentTypeId());
                 children.add(item);
             }

@@ -126,7 +126,11 @@ public class UserListDialog extends BaseDialogBean {
      * @return An array of SelectItem objects containing the results to display in the picker.
      */
     public SelectItem[] searchUsers(int filterIndex, String contains) {
-        return searchUsers(contains, false, false);
+        return searchUsers(contains, false, false, true);
+    }
+
+    public SelectItem[] searchUsersWithoutSubstitutionInfoShown(int filterIndex, String contains) {
+        return searchUsers(contains, false, false, false);
     }
 
     /**
@@ -134,14 +138,14 @@ public class UserListDialog extends BaseDialogBean {
      * @return SelectItems representing users. Current user is excluded.
      */
     public SelectItem[] searchOtherUsers(int filterIndex, String contains) {
-        return searchUsers(contains, true, false);
+        return searchUsers(contains, true, false, true);
     }
 
     public SelectItem[] searchUsersWithNameValue(int filterIndex, String contains) {
-        return searchUsers(contains, false, true);
+        return searchUsers(contains, false, true, true);
     }
 
-    private SelectItem[] searchUsers(String contains, boolean excludeCurrentUser, boolean useNameAsValue) {
+    private SelectItem[] searchUsers(String contains, boolean excludeCurrentUser, boolean useNameAsValue, boolean showSubstitutionInfo) {
         List<Node> nodes = getOrganizationStructureService().setUsersUnit(getUserService().searchUsers(contains, true));
         int nodesSize = nodes.size();
         List<SelectItem> results = new ArrayList<SelectItem>(nodesSize);
@@ -161,11 +165,8 @@ public class UserListDialog extends BaseDialogBean {
             if (excludeCurrentUser && StringUtils.equals(userName, currentUser) || node.hasAspect(UserModel.Aspects.LEAVING)) {
                 continue;
             }
-            String label = UserUtil.getPersonFullNameWithUnitName(node.getProperties());
+            String label = UserUtil.getPersonFullNameWithUnitName(node.getProperties(), showSubstitutionInfo);
             String value = userName;
-            if (useNameAsValue) {
-                value = UserUtil.getPersonFullName2(node.getProperties(), false);
-            }
             results.add(new SelectItem(value, label));
         }
 
@@ -214,3 +215,4 @@ public class UserListDialog extends BaseDialogBean {
     }
 
 }
+

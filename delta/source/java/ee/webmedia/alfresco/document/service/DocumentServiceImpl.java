@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.document.service;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ACCESS_RESTRICTION;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME;
@@ -77,8 +78,6 @@ import org.alfresco.service.cmr.repository.CopyService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
-import org.alfresco.service.cmr.security.AuthorityService;
-import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
@@ -112,6 +111,7 @@ import ee.webmedia.alfresco.classificator.enums.LeaveType;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
 import ee.webmedia.alfresco.document.bootstrap.DocumentPrivilegesUpdater;
 import ee.webmedia.alfresco.document.file.model.File;
@@ -191,14 +191,15 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
     private WorkflowService workflowService;
     private DocumentLogService documentLogService;
     private PrivilegeService privilegeService;
-    private AuthorityService authorityService;
     private PermissionService permissionService;
     protected SendOutService sendOutService;
     private UserService userService;
-    /** NB! not injected - use getter to obtain instance of AdrService */
+    // START: properties that would cause dependency cycle when trying to inject them
+    // private DocumentAdminService documentAdminService; // dependency cycle: DocumentAdminService -> DocumentSearchService -> DocumentService
     private AdrService _adrService;
     private CaseService _caseService;
     private DocumentSearchService _documentSearchService;
+    // END: properties that would cause dependency cycle when trying to inject them
     protected BeanFactory beanFactory;
 
     private String fromDvkXPath;
@@ -510,7 +511,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
                 docProps.put(DOC_STATUS.toString(), DocumentStatus.FINISHED.getValueName());
             }
         }
-        docProps.putAll(getSearchableOtherProps(docNode));
+        // docProps.putAll(getSearchableOtherProps(docNode));
         docProps.put(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE.toString(), sendOutService.buildSearchableSendMode(docNodeRef));
 
         boolean propsChanged = saveChildNodes(docNode);
@@ -1706,7 +1707,11 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(incomingNodeRef);
         List<Document> docs = new ArrayList<Document>(childAssocs.size());
         for (ChildAssociationRef assocRef : childAssocs) {
-            docs.add(0, getDocumentByNodeRef(assocRef.getChildRef())); // flips the list, so newest are first
+            NodeRef docRef = assocRef.getChildRef();
+            if (!DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(docRef))) { // XXX DLSeadist filter out old document types
+                continue;
+            }
+            docs.add(0, getDocumentByNodeRef(docRef)); // flips the list, so newest are first
         }
         return docs;
     }
@@ -2145,9 +2150,9 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
                 propertyChangesMonitorHelper.addIgnoredProps(props, REG_DATE_TIME);
             }
 
-            if (!documentTypeId.equals(DocumentSubtypeModel.Types.INCOMING_LETTER)
-                    && !documentTypeId.equals(DocumentSubtypeModel.Types.INCOMING_LETTER_MV)
-                    && !documentTypeId.equals(DocumentSubtypeModel.Types.INVOICE)) {
+            throwIfNotDynamicDoc(docNode);
+            String dynDocTypeId = (String) docNode.getProperties().get(Props.OBJECT_TYPE_ID);
+            if (getDocumentAdminService().getDocumentType(dynDocTypeId).isFinishDocByRegistration()) {
                 props.put(DOC_STATUS.toString(), DocumentStatus.FINISHED.getValueName());
                 propertyChangesMonitorHelper.addIgnoredProps(props, DOC_STATUS);
                 documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_registered"));
@@ -2272,7 +2277,11 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parentRef, RegexQNamePattern.MATCH_ALL, RegexQNamePattern.MATCH_ALL);
         List<Document> docsOfParent = new ArrayList<Document>(childAssocs.size());
         for (ChildAssociationRef childAssocRef : childAssocs) {
-            docsOfParent.add(getDocumentByNodeRef(childAssocRef.getChildRef()));
+            NodeRef docRef = childAssocRef.getChildRef();
+            if (!DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(docRef))) { // XXX DLSeadist filter out old document types
+                continue;
+            }
+            docsOfParent.add(getDocumentByNodeRef(docRef));
         }
         return docsOfParent;
     }
@@ -2627,7 +2636,11 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         List<AssociationRef> assocs = nodeService.getTargetAssocs(containerNodeRef, DocumentCommonModel.Assocs.FAVORITE);
         List<Document> favorites = new ArrayList<Document>(assocs.size());
         for (AssociationRef assoc : assocs) {
-            favorites.add(getDocumentByNodeRef(assoc.getTargetRef()));
+            NodeRef docRef = assoc.getTargetRef();
+            if (!DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(docRef))) { // XXX DLSeadist filter out old document types
+                continue;
+            }
+            favorites.add(getDocumentByNodeRef(docRef));
         }
         return favorites;
     }
@@ -2715,6 +2728,18 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
                 nodeService.removeChildAssociation(nodeService.getParentAssocs(favorite).get(0));
                 menuService.process(BeanHelper.getMenuBean().getMenu(), false, true);
             }
+        }
+    }
+
+    @Override
+    public void throwIfNotDynamicDoc(Node docNode) {
+        String dynDocTypeId = (String) docNode.getProperties().get(Props.OBJECT_TYPE_ID);
+        if (StringUtils.isBlank(dynDocTypeId)) {
+            throw new UnableToPerformException(
+                    "DLSeadist: dokument nodeRef'iga "
+                            + docNode.getNodeRef()
+                            + " pole loodud dünaamilise dokumendi liigi alusel.\n"
+                            + "Sooritatud tegevuse pole enam toetatud vanade(staatiliste) dokumendi liikide puhul ja vanad staatilised dokumendid pole veel konverteeritud dünaamilisteks. Eeldatakse, et tegemist on dünaamilise dokumendi liigiga.");
         }
     }
 
@@ -3075,7 +3100,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         Set<String> groups = usersAndGroups.getSecond();
         final QName addPrivListener = DocumentCommonModel.Types.DOCUMENT;
         for (String group : groups) {
-            Set<String> authorities = authorityService.getContainedAuthorities(AuthorityType.USER, group, true);
+            Set<String> authorities = userService.getUserNamesInGroup(group);
             for (String authority : authorities) {
                 privilegeService.addPrivilege(docRef, docProps, addPrivListener, authority, group, DocumentPrivilegesUpdater.SERIES_GROUPMEMBERS_PRIVILEGES);
             }
@@ -3180,10 +3205,6 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
 
     public void setPrivilegeService(PrivilegeService privilegeService) {
         this.privilegeService = privilegeService;
-    }
-
-    public void setAuthorityService(AuthorityService authorityService) {
-        this.authorityService = authorityService;
     }
 
     public void setPermissionService(PermissionService permissionService) {

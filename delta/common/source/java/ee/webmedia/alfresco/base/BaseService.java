@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.service.namespace.QNamePattern;
 
 import ee.webmedia.alfresco.utils.Predicate;
 
@@ -36,11 +37,11 @@ public interface BaseService {
     /**
      * @param <T>
      * @param parentRef
-     * @param assocName - used to identify parent-child association name to be used to find child
+     * @param assocNamePattern - used to identify parent-child association name to be used to find child
      * @param childrenClass - if node is found, then objec of this class is initiated based on node found
      * @return null if given parent has no child with given assocName, otherwise object of type T is returned
      */
-    <T extends BaseObject> T getChild(NodeRef parentRef, QName assocName, Class<T> childrenClass);
+    <T extends BaseObject> T getChild(NodeRef parentRef, QNamePattern assocNamePattern, Class<T> childrenClass);
 
     /**
      * @param <T>

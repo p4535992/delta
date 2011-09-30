@@ -23,7 +23,7 @@ import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
 import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.addressbook.web.dialog.AddressbookMainViewDialog;
+import ee.webmedia.alfresco.addressbook.util.AddressbookUtil;
 import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.common.service.GeneralService;
@@ -283,8 +283,7 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
 
     public void setSellerPartyName(String nodeRefStr) {
         NodeRef nodeRef = new NodeRef(nodeRefStr);
-        filter.getProperties().put(DocumentSearchModel.Props.SELLER_PARTY_NAME.toString(),
-                AddressbookMainViewDialog.getContactFullName(getNodeService().getProperties(nodeRef), getNodeService().getType(nodeRef)));
+        filter.getProperties().put(DocumentSearchModel.Props.SELLER_PARTY_NAME.toString(), AddressbookUtil.getContactFullName(nodeRef));
     }
 
     // START: getters / setters

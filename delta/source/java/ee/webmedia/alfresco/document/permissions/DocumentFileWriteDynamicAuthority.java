@@ -1,22 +1,21 @@
 package ee.webmedia.alfresco.document.permissions;
 
-import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.DECREE;
-import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.PERSONELLE_ORDER_SIM;
-import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.REGULATION;
-
-import java.util.Arrays;
-import java.util.List;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.EqualsHelper;
+import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.scanned.model.ScannedModel;
+import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.imap.model.ImapModel;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
@@ -27,10 +26,6 @@ public class DocumentFileWriteDynamicAuthority extends BaseDynamicAuthority {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentFileWriteDynamicAuthority.class);
     public static final String BEAN_NAME = "documentFileWriteDynamicAuthority";
 
-    /**
-     * List of document types that must be opened without ability to modify document with webdav if document status is FINISHED
-     */
-    public static final List<QName> DOWNLOAD_FILES_READ_ONLY_DOC_TYPES = Arrays.asList(PERSONELLE_ORDER_SIM, REGULATION, DECREE);
     public static final String DOCUMENT_FILE_WRITE_AUTHORITY = "ROLE_DOCUMENT_FILE_WRITE";
     protected WorkflowService workflowService;
 
@@ -61,7 +56,7 @@ public class DocumentFileWriteDynamicAuthority extends BaseDynamicAuthority {
             return false;
         }
 
-        Boolean additionalCheck = additional(userName, parent, parentType);
+        Boolean additionalCheck = additional(userName, parent);
         if (additionalCheck != null) {
             return additionalCheck;
         }
@@ -98,7 +93,7 @@ public class DocumentFileWriteDynamicAuthority extends BaseDynamicAuthority {
         return false; // not granting, but not jet refusing either
     }
 
-    public Boolean additional(final String userName, NodeRef parent, QName parentType) {
+    public Boolean additional(final String userName, NodeRef parent) {
         boolean hasInProgressWorkflow = false;
         for (ChildAssociationRef compoundWorkflowAssoc : nodeService.getChildAssocs(parent, WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW,
                 WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW)) {
@@ -146,10 +141,15 @@ public class DocumentFileWriteDynamicAuthority extends BaseDynamicAuthority {
             return false;
         }
 
-        if (DOWNLOAD_FILES_READ_ONLY_DOC_TYPES.contains(parentType)
-                && StringUtils.equals(DocumentStatus.FINISHED.getValueName(), (String) nodeService.getProperty(parent, DocumentCommonModel.Props.DOC_STATUS))) {
-            log.trace("Document is finished and type=" + parentType + ", refusing authority " + getAuthority());
-            return false;
+        if (!StringUtils.equals(DocumentStatus.WORKING.getValueName(), (String) nodeService.getProperty(parent, DocumentCommonModel.Props.DOC_STATUS))) {
+            DocumentService documentService = BeanHelper.getDocumentService();
+            Node docNode = documentService.getDocument(parent);
+            documentService.throwIfNotDynamicDoc(docNode);
+            String docTypeId = (String) docNode.getProperties().get(Props.OBJECT_TYPE_ID);
+            if (!getDocumentAdminService().getDocumentType(docTypeId).isEditFilesOfFinishedDocEnabled()) {
+                log.trace("Document status is not working, refusing authority " + getAuthority());
+                return false;
+            }
         }
         return null; // not granting, but not jet refusing either
     }

@@ -13,7 +13,7 @@ public class ComboboxAndTextGenerator extends BaseTypeFieldGenerator {
 
     @Override
     protected FieldType[] getFieldTypes() {
-        return new FieldType[] { FieldType.COMBOBOX_AND_TEXT };
+        return new FieldType[] { FieldType.COMBOBOX_AND_TEXT, FieldType.COMBOBOX_AND_TEXT_NOT_EDITABLE };
     }
 
     @Override
@@ -22,6 +22,9 @@ public class ComboboxAndTextGenerator extends BaseTypeFieldGenerator {
         item.setComponentGenerator("ClassificatorSelectorAndTextGenerator");
         item.setStyleClass("expand19-200");
         item.setClassificatorName(field.getClassificator());
+        if (field.getFieldTypeEnum() == FieldType.COMBOBOX_AND_TEXT_NOT_EDITABLE) {
+            item.setNotEditable(true);
+        }
     }
 
 }

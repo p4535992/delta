@@ -3,7 +3,7 @@ package ee.webmedia.alfresco.classificator.enums;
 public enum DocumentStatus {
     /** töös */
     WORKING("töös"),
-    /** peatatud */
+    /** @deprecated peatatud - seda staatust enam ei kasutata */
     STOPPED("peatatud"),
     /** lõpetatud */
     FINISHED("lõpetatud");

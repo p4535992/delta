@@ -21,7 +21,7 @@ import org.springframework.web.jsf.FacesContextUtils;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
-import ee.webmedia.alfresco.addressbook.web.dialog.AddressbookMainViewDialog;
+import ee.webmedia.alfresco.addressbook.util.AddressbookUtil;
 import ee.webmedia.alfresco.filter.web.AbstractSearchFilterBlockBean;
 import ee.webmedia.alfresco.user.web.UserListDialog;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -136,10 +136,8 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
         if (filterIndex == 0) { // users
             return userListDialog.searchUsers(-1, contains);
         } else if (filterIndex == 1) { // contacts
-            final String personLabel = MessageUtil.getMessage("addressbook_private_person").toLowerCase();
-            final String organizationLabel = MessageUtil.getMessage("addressbook_org").toLowerCase();
             List<Node> nodes = getAddressbookService().search(contains);
-            return AddressbookMainViewDialog.transformNodesToSelectItems(nodes, personLabel, organizationLabel);
+            return AddressbookUtil.transformAddressbookNodesToSelectItems(nodes);
         } else {
             throw new RuntimeException("Unknown filter index value: " + filterIndex);
         }

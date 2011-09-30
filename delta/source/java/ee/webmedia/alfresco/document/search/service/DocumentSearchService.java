@@ -240,6 +240,15 @@ public interface DocumentSearchService {
     List<NodeRef> simpleSearch(String searchInputString, NodeRef parentRef, QName type, QName... props);
 
     /**
+     * @param query - lucene query
+     * @param limited - should results be limited to DocumentSearchServiceImpl.RESULTS_LIMIT results?
+     * @param queryName - arbitary name used in logging statements
+     * @return
+     */
+    // TODO not document specific
+    List<NodeRef> searchNodes(String query, boolean limited, String queryName);
+
+    /**
      * @param query
      * @return true if at least one result could be found based on query (from default store)
      */

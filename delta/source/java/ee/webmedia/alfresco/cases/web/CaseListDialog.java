@@ -32,6 +32,11 @@ public class CaseListDialog extends BaseDialogBean {
     }
 
     @Override
+    public boolean isFinishButtonVisible(boolean dialogConfOKButtonVisible) {
+        return false;
+    }
+
+    @Override
     public String cancel() {
         resetFields();
         return super.cancel();

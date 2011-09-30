@@ -133,7 +133,13 @@
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="false" />
       <property name="enabled" value="${parallelTasksPropertiesUpdater.enabled}" />
-   </bean>   
+   </bean>
+   
+   <!-- Used to fix invalid tasks where starDateTime=null and status="lõpetatud" (CL task 158082) -->
+   <bean id="notStartedFinishedTaskUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.NotStartedFinishedTaskUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+   </bean>    
 
    <bean id="wmWorkflowService" class="ee.webmedia.alfresco.workflow.service.WorkflowServiceImpl">
       <property name="nodeService" ref="NodeService" />

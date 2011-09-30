@@ -94,7 +94,7 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
     }
 
     @Override
-    public void reset(DialogDataProvider provider) {
+    public void resetOrInit(DialogDataProvider provider) {
         if (provider == null) {
             reset();
         } else {

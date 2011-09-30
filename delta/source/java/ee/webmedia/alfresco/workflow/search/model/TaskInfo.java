@@ -9,6 +9,7 @@ import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.web.CssStylable;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.document.model.CreatedAndRegistered;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.type.web.DocumentTypeConverter;
@@ -66,7 +67,7 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
 
     public Object getDocType() {
         DocumentTypeConverter docTypeConverter = new DocumentTypeConverter();
-        return docTypeConverter.convertSelectedValueToString(document.getType());
+        return docTypeConverter.convertSelectedValueToString(document.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID));
     }
 
     public Object getRegNum() {

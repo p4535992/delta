@@ -479,6 +479,9 @@ public interface DocumentService {
 
     boolean isReplyOrFollowupDoc(final NodeRef docRef, List<AssociationRef> replyAssocs);
 
+    // FIXME DLSeadist - selle meetodi peaks eemaldama igalt poolt pärast DLSeadist valmimist kui staatilised dokumendid on konverditud dünaamilisteks
+    void throwIfNotDynamicDoc(Node docNode);
+
     void addPrivilegesBasedOnSeriesOnBackground(NodeRef docRef);
 
 }

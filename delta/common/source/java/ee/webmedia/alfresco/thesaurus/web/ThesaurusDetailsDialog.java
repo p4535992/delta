@@ -118,7 +118,7 @@ public class ThesaurusDetailsDialog extends BaseDialogBean {
         List<HierarchicalKeyword> keywords = thesaurus.getKeywords();
         for (HierarchicalKeyword keyword : keywords) {
             if (StringUtils.isBlank(keyword.getKeywordLevel1())) {
-                MessageUtil.addErrorMessage("thesaurus_keyword_level_1_mandatory");
+                MessageUtil.addErrorMessage("common_propertysheet_validator_mandatory", MessageUtil.getMessage("thesaurus_keyword_level_1"));
                 isFinished = false;
                 return null;
             }
@@ -157,6 +157,14 @@ public class ThesaurusDetailsDialog extends BaseDialogBean {
             return MessageUtil.getMessage("thesaurus_add");
         }
         return thesaurus.getName();
+    }
+
+    @Override
+    public String getActionsConfigId() {
+        if (!isNew) {
+            return "details_actions_thesaurus";
+        }
+        return null;
     }
 
     public String getLevel1Keywords() {
@@ -198,6 +206,9 @@ public class ThesaurusDetailsDialog extends BaseDialogBean {
     }
 
     public HtmlDataTable getKeywordTable() {
+        if (keywordTable == null) {
+            keywordTable = new HtmlDataTable();
+        }
         return keywordTable;
     }
 

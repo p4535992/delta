@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:cl="http://alfresco.webmedia.ee/model/classificator/1.0">
+
+   <cl:classificator view:childName="cl:dueDateWorkDays">
+      <cl:name>dueDateWorkDays</cl:name>
+      <cl:addRemoveValues>true</cl:addRemoveValues>
+   </cl:classificator>
+   
+   <cl:classificator view:childName="cl:dueDateCalendarDays">
+      <cl:name>dueDateCalendarDays</cl:name>
+      <cl:addRemoveValues>true</cl:addRemoveValues>
+   </cl:classificator>   
+
+</view:view>

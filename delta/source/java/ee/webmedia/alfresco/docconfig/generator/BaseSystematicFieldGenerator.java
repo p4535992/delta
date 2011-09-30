@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.docconfig.generator;
 
-import org.alfresco.service.namespace.QName;
 import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -13,15 +12,15 @@ import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
  */
 public abstract class BaseSystematicFieldGenerator implements FieldGenerator, SaveListener, BeanNameAware, InitializingBean {
 
-    private DocumentConfigService documentConfigService;
+    protected DocumentConfigService documentConfigService;
     private String beanName;
 
     @Override
     public void afterPropertiesSet() {
-        documentConfigService.registerFieldGeneratorById(this, getFieldIds());
+        documentConfigService.registerFieldGeneratorById(this, getOriginalFieldIds());
     }
 
-    protected abstract QName[] getFieldIds();
+    protected abstract String[] getOriginalFieldIds();
 
     protected String getStateHolderKey() {
         return getClass().getName();

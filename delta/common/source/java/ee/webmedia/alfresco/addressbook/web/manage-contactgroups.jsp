@@ -7,9 +7,9 @@
 <%@ page isELIgnored="false"%>
 
 
-<a:panel id="manage-contactgroup" label="#{msg.addressbook_manage_contactgroups}" styleClass="column panel-100" rendered="#{UserService.documentManager}">
+<a:panel id="manage-contactgroup" label="#{msg.addressbook_manage_contactgroups}" styleClass="column panel-100" rendered="#{AddressbookGroupsManagerBean.showGroupsManager}" >
    <a:richList id="usersGroupsList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      width="100%" value="#{AddressbookDialog.groups}" var="r" refreshOnBind="true">
+      width="100%" value="#{AddressbookGroupsManagerBean.groups}" var="r" refreshOnBind="true">
 
 
       <%-- Identifikaator --%>
@@ -33,7 +33,8 @@
             <h:outputText value="#{msg.addressbook_contactgroup_actions}" />
          </f:facet>
          <a:actionLink value="#{msg.remove}" image="/images/icons/remove_user.gif" showLink="false" styleClass="inlineAction"
-            actionListener="#{AddressbookDialog.removeContactFromGroup}" tooltip="#{msg.addressbook_contactgroup_remove_contact}">
+            actionListener="#{AddressbookGroupsManagerBean.removeContactFromGroup}" tooltip="#{msg.addressbook_contactgroup_remove_contact}"
+            rendered="#{UserService.documentManager or r['ab:manageableForAdmin'] == false}">
             <f:param name="nodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
       </a:column>
@@ -43,8 +44,8 @@
    </a:richList>
    
    <h:panelGroup style="position: absolute; left: -9000px;">
-      <wm:search id="addressbook_add_to_group" value="#{AddressbookDialog.groupToAdd}" dataMultiValued="false" dataMandatory="true"
-         pickerCallback="#{AddressbookDialog.searchContactGroups}" setterCallback="#{AddressbookDialog.addToContactGroup}"
+      <wm:search id="addressbook_add_to_group" value="#{AddressbookGroupsManagerBean.groupToAdd}" dataMultiValued="false" dataMandatory="true"
+         pickerCallback="#{AddressbookGroupsManagerBean.searchContactGroups}" setterCallback="#{AddressbookGroupsManagerBean.addToContactGroup}"
          dialogTitleId="contactgroups_search_title" editable="false" readonly="true" ajaxParentLevel="2" />
    </h:panelGroup>
 </a:panel>

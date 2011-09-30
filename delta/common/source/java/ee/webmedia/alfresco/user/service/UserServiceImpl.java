@@ -138,6 +138,20 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public boolean isSupervisor() {
+        if (isAdministrator()) {
+            return true;
+        }
+
+        return isInSupervisionGroup();
+    }
+
+    @Override
+    public boolean isInSupervisionGroup() {
+        return authorityService.getAuthorities().contains(getSupervisionGroup());
+    }
+
+    @Override
     public boolean isDocumentManager(String userName) {
         if (isAdministrator(userName)) {
             return true;
@@ -153,6 +167,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public String getAccountantsGroup() {
         return authorityService.getName(AuthorityType.GROUP, ACCOUNTANTS_GROUP);
+    }
+
+    @Override
+    public String getSupervisionGroup() {
+        return authorityService.getName(AuthorityType.GROUP, SUPERVISION_GROUP);
     }
 
     @Override
@@ -352,6 +371,15 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public String getUserFullNameAndId(String userName) {
+        Map<QName, Serializable> props = getUserProperties(userName);
+        if (props == null) {
+            return userName;
+        }
+        return UserUtil.getUserFullNameAndId(props);
+    }
+
+    @Override
     public void setOwnerPropsFromUser(Map<QName, Serializable> docProps, Map<QName, Serializable> userProps) {
         if (userProps == null) {
             return;
@@ -417,6 +445,11 @@ public class UserServiceImpl implements UserService {
         nodeService.addProperties(user.getNodeRef(), RepoUtil.toQNameProperties(user.getProperties()));
     }
 
+    @Override
+    public Set<String> getUserNamesInGroup(String group) {
+        return authorityService.getContainedAuthorities(AuthorityType.USER, group, true);
+    }
+
     private Authority getAuthority(String authority, boolean returnNull) {
         AuthorityType authorityType = AuthorityType.getAuthorityType(authority);
         return getAuthority(authority, authorityType, returnNull);
@@ -444,7 +477,7 @@ public class UserServiceImpl implements UserService {
         if (group == null) {
             return;
         }
-        Set<String> auths = authorityService.getContainedAuthorities(AuthorityType.USER, authorityService.getName(AuthorityType.GROUP, "SIGNERS"), true);
+        Set<String> auths = getUserNamesInGroup(authorityService.getName(AuthorityType.GROUP, "SIGNERS"));
         for (Iterator<Node> i = users.iterator(); i.hasNext();) {
             Node user = i.next();
             Object userName = user.getProperties().get(ContentModel.PROP_USERNAME);

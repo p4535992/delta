@@ -81,6 +81,12 @@
       <property name="nodeService" ref="NodeService" />
       <property name="menuService" ref="MenuService" />
    </bean>
+   
+   <bean class="ee.webmedia.alfresco.menu.service.AdministratorMenuItemProcessor">
+      <property name="userService" ref="UserService" />
+      <property name="menuService" ref="MenuService" />
+      <property name="documentAdminService" ref="DocumentAdminService" />
+   </bean>
 
    <!-- Changes shortcut to menuItemId (CL task 158558) -->
    <bean id="shortcutToMenuItemIdUpdater" class="ee.webmedia.alfresco.menu.bootstrap.ShortcutToMenuItemIdUpdater" parent="abstractNodeUpdater">

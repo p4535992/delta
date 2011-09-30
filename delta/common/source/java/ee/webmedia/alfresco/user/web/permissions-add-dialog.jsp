@@ -4,7 +4,7 @@
 <%@ taglib uri="/WEB-INF/repo.tld" prefix="r" %>
 
 <a:panel id="add-authority-search" styleClass="column panel-50" label="#{msg.select_users_groups}">
-   <a:genericPicker id="picker" filters="#{UserGroupSearchBean.usersGroupsFilters}" queryCallback="#{UserGroupSearchBean.searchUsersGroupsWithAdminsAndDocManagers}" actionListener="#{DialogManager.bean.addAuthorities}" />
+   <a:genericPicker id="picker" filters="#{UserContactGroupSearchBean.usersGroupsFilters}" queryCallback="#{UserContactGroupSearchBean.searchAllWithAdminsAndDocManagers}" actionListener="#{DialogManager.bean.addAuthorities}" />
 </a:panel>
 
 <a:panel id="add-authority-list" styleClass="column panel-50-f" label="#{msg.selected_users_groups}">

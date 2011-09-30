@@ -68,10 +68,10 @@
          "
          titles="document_name,document_email,document_send_mode" 
          pickerCallback="#{CompoundWorkflowDefinitionDialog.executeOwnerSearch}"
-         preprocessCallback="#{DocumentSendOutDialog.preprocessSearchResult}"
+         preprocessCallback="#{UserContactGroupSearchBean.preprocessResultsToNodeRefs}"
          setterCallback="#{DocumentSendOutDialog.fetchContactData}"
          dialogTitleId="contacts_search_title"
-         filters="#{DocumentSendOutDialog.recipientSearchFilters}"
+         filters="#{UserContactGroupSearchBean.usersGroupsContactsGroupsFilters}"
          filterIndex="2"
           />
 

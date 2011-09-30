@@ -20,6 +20,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.service.namespace.QNamePattern;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
@@ -47,7 +48,7 @@ public class BaseServiceImpl implements BaseService {
     public void addTypeMapping(QName type, Class<? extends BaseObject> clazz) {
         Assert.notNull(type, "type");
         Assert.notNull(clazz, "class");
-        Assert.isTrue(!typeMappings.containsKey(type));
+        Assert.isTrue(!typeMappings.containsKey(type), "type is already mapped");
         typeMappings.put(type, clazz);
     }
 
@@ -68,8 +69,8 @@ public class BaseServiceImpl implements BaseService {
     }
 
     @Override
-    public <T extends BaseObject> T getChild(NodeRef parentRef, QName assocName, Class<T> childrenClass) {
-        NodeRef childRef = generalService.getChildByAssocName(parentRef, assocName);
+    public <T extends BaseObject> T getChild(NodeRef parentRef, QNamePattern assocNamePattern, Class<T> childrenClass) {
+        NodeRef childRef = generalService.getChildByAssocName(parentRef, assocNamePattern);
         if (childRef == null) {
             return null;
         }
@@ -108,7 +109,6 @@ public class BaseServiceImpl implements BaseService {
     }
 
     private <T extends BaseObject> T getObject(NodeRef nodeRef, NodeRef parentRef, BaseObject parent) {
-
         Set<QName> aspects = RepoUtil.getAspectsIgnoringSystem(nodeService.getAspects(nodeRef));
         Map<QName, Serializable> properties = RepoUtil.getPropertiesIgnoringSystem(nodeService.getProperties(nodeRef), dictionaryService);
         WmNode node = new WmNode(nodeRef, nodeService.getType(nodeRef), aspects, properties);
@@ -142,8 +142,8 @@ public class BaseServiceImpl implements BaseService {
 
             boolean wasSaved = object.isSaved();
             if (!wasSaved) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Creating node (type '" + node.getType().toPrefixString(namespaceService) + "') with properties " + WmNode.toString(props, namespaceService));
+                if (log.isTraceEnabled()) {
+                    log.trace("Creating node (type '" + node.getType().toPrefixString(namespaceService) + "') with properties " + WmNode.toString(props, namespaceService));
                 }
                 if (!isDuplicateChildNamesAllowed(object, parent)) {
                     // make sure that when model forbids duplicates, then cm:name property is set that is used to check for duplicates
@@ -157,8 +157,8 @@ public class BaseServiceImpl implements BaseService {
                 // removing aspects is not implemented - not needed
             } else {
                 if (!props.isEmpty()) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Updating node (type '" + node.getType().toPrefixString(namespaceService) + "') with properties " + WmNode.toString(props, namespaceService));
+                    if (log.isTraceEnabled()) {
+                        log.trace("Updating node (type '" + node.getType().toPrefixString(namespaceService) + "') with properties " + WmNode.toString(props, namespaceService));
                     }
 
                     nodeService.addProperties(node.getNodeRef(), props); // do not replace non-changed properties

@@ -46,7 +46,7 @@
            value="#{UserDetailsDialog.groupToAdd}"
            dataMultiValued="false"
            dataMandatory="true"
-           pickerCallback="#{UserGroupSearchBean.searchGroupsWithAdminsAndDocManagers}"
+           pickerCallback="#{UserContactGroupSearchBean.searchGroupsWithAdminsAndDocManagers}"
            setterCallback="#{UserDetailsDialog.addToGroup}"
            dialogTitleId="usergroups_search_title"
            editable="false"

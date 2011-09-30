@@ -3,17 +3,18 @@
    xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
 
    <imports>
-      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
-      <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
-      <import uri="http://alfresco.webmedia.ee/model/document/common/1.0" prefix="doccom" />
-      <import uri="http://alfresco.webmedia.ee/model/document/specific/1.0" prefix="docspec" />
-      <import uri="http://alfresco.webmedia.ee/model/transaction/1.0" prefix="trn" />
+<!--       <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" /> -->
+<!--       <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" /> -->
+<!--       <import uri="http://alfresco.webmedia.ee/model/document/common/1.0" prefix="doccom" /> -->
+<!--       <import uri="http://alfresco.webmedia.ee/model/document/specific/1.0" prefix="docspec" /> -->
+<!--       <import uri="http://alfresco.webmedia.ee/model/transaction/1.0" prefix="trn" /> -->
    </imports>
 
    <namespaces>
       <namespace uri="http://alfresco.webmedia.ee/model/document/subtype/1.0" prefix="docsub" />
    </namespaces>
 
+<!--
    <types>
 
       <type name="docsub:incomingLetter">
@@ -66,7 +67,6 @@
          </mandatory-aspects>
       </type>      
 
-      <!-- Välislähetuse dokumenndi tüüp -->
       <type name="docsub:errandOrderAbroad">
          <parent>doccom:document</parent>
          <mandatory-aspects>
@@ -82,7 +82,6 @@
          </mandatory-aspects>
       </type>      
       
-      <!-- Siselähetuse dokumendi tüüp -->
       <type name="docsub:errandApplicationDomestic">
          <parent>doccom:document</parent>
          <mandatory-aspects>
@@ -90,7 +89,6 @@
          </mandatory-aspects>
       </type>
 
-      <!-- Koolitustaotluse dokumenndi tüüp -->
       <type name="docsub:trainingApplication">
          <parent>doccom:document</parent>
          <mandatory-aspects>
@@ -98,7 +96,6 @@
          </mandatory-aspects>
       </type>
 
-      <!-- Riigihanke läbiviimise taotluse dokumendi tüüp -->
       <type name="docsub:tenderingApplication">
          <parent>doccom:document</parent>
          <mandatory-aspects>
@@ -442,5 +439,5 @@
       </type>
 
    </types>
-
+-->
 </model>

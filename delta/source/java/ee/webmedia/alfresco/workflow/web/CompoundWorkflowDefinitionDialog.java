@@ -1,5 +1,15 @@
 package ee.webmedia.alfresco.workflow.web;
 
+import static ee.webmedia.alfresco.addressbook.util.AddressbookUtil.transformAddressbookNodesToSelectItems;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getAddressbookService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDvkService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getEInvoiceService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getOrganizationStructureService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserContactGroupSearchBean;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 import static ee.webmedia.alfresco.utils.ComponentUtil.addChildren;
 import static ee.webmedia.alfresco.utils.ComponentUtil.createUIParam;
 import static ee.webmedia.alfresco.workflow.web.TaskListCommentComponent.TASK_INDEX;
@@ -26,16 +36,11 @@ import javax.faces.event.ActionEvent;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.model.ContentModel;
-import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.security.AuthorityService;
-import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.namespace.QName;
-import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
-import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
 import org.alfresco.web.ui.common.component.UIMenu;
@@ -45,21 +50,13 @@ import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.shared_impl.renderkit.RendererUtils;
 import org.apache.myfaces.shared_impl.renderkit.html.HTML;
-import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
-import ee.webmedia.alfresco.addressbook.service.AddressbookService;
-import ee.webmedia.alfresco.addressbook.web.dialog.AddressbookMainViewDialog;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
-import ee.webmedia.alfresco.dvk.service.DvkService;
-import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
-import ee.webmedia.alfresco.user.service.UserService;
-import ee.webmedia.alfresco.user.web.UserGroupSearchBean;
 import ee.webmedia.alfresco.user.web.UserListDialog;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -73,7 +70,6 @@ import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflowDefinition;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
-import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
@@ -88,18 +84,10 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(CompoundWorkflowDefinitionDialog.class);
 
-    private transient WorkflowService workflowService;
-    private transient UserService userService;
-    private transient AddressbookService addressbookService;
-    private transient AuthorityService authorityService;
-    private transient OrganizationStructureService organizationStructureService;
-    private transient DvkService dvkService;
-
     private transient HtmlPanelGroup panelGroup;
     protected transient TreeMap<String, QName> sortedTypes;
 
     private UserListDialog userListDialog;
-    private UserGroupSearchBean userGroupSearchBean;
 
     private OwnerSearchBean ownerSearchBean;
     private List<SelectItem> parallelSelections;
@@ -200,12 +188,12 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         if (docRef == null) {
             return;
         }
-        List<Transaction> transactions = BeanHelper.getEInvoiceService().getInvoiceTransactions(docRef);
+        List<Transaction> transactions = getEInvoiceService().getInvoiceTransactions(docRef);
         Map<NodeRef, Node> taskOwners = new HashMap<NodeRef, Node>();
         for (Transaction transaction : transactions) {
             String fundsCenter = transaction.getFundsCenter();
             if (StringUtils.isNotBlank(fundsCenter)) {
-                List<NodeRef> users = BeanHelper.getDocumentSearchService().searchUsersByRelatedFundsCenter(fundsCenter);
+                List<NodeRef> users = getDocumentSearchService().searchUsersByRelatedFundsCenter(fundsCenter);
                 for (NodeRef userRef : users) {
                     taskOwners.put(userRef, new Node(userRef));
                 }
@@ -219,11 +207,11 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
 
     private boolean isCostManagerWorkflow(int wfIndex) {
         NodeRef docRef = compoundWorkflow.getParent();
-        if (docRef == null || !DocumentSubtypeModel.Types.INVOICE.equals(BeanHelper.getNodeService().getType(docRef))) {
+        if (docRef == null || !DocumentSubtypeModel.Types.INVOICE.equals(getNodeService().getType(docRef))) {
             return false;
         }
 
-        Long costManagerWfIndex = BeanHelper.getParametersService().getLongParameter(Parameters.REVIEW_WORKFLOW_COST_MANAGER_WORKFLOW_NUMBER);
+        Long costManagerWfIndex = getParametersService().getLongParameter(Parameters.REVIEW_WORKFLOW_COST_MANAGER_WORKFLOW_NUMBER);
         if (costManagerWfIndex == null) {
             return false;
         }
@@ -292,32 +280,29 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         updatePanelGroup();
     }
 
-    public SelectItem[] executeOwnerSearch(int filterIndex, String contains, boolean orgOnly, boolean taskCapableOnly, String institutionToRemove) {
+    // merge this into UserContactGroupSearchBean#searchAll
+    private SelectItem[] executeOwnerSearch(int filterIndex, String contains, boolean orgOnly, boolean taskCapableOnly, String institutionToRemove) {
         log.debug("executeOwnerSearch: " + filterIndex + ", " + contains);
         if (filterIndex == 0) { // users
-            return userListDialog.searchUsers(-1, contains);
+            return userListDialog.searchUsersWithoutSubstitutionInfoShown(-1, contains);
         } else if (filterIndex == 1) { // user groups
-            return userGroupSearchBean.searchGroups(-1, contains, false);
+            return getUserContactGroupSearchBean().searchGroups(contains, false);
         } else if (filterIndex == 2) { // contacts
-            final String personLabel = MessageUtil.getMessage("addressbook_private_person").toLowerCase();
-            final String organizationLabel = MessageUtil.getMessage("addressbook_org").toLowerCase();
             List<Node> nodes = null;
             if (taskCapableOnly) {
                 nodes = getAddressbookService().searchTaskCapableContacts(contains, orgOnly, institutionToRemove);
             } else {
                 nodes = getAddressbookService().search(contains);
             }
-            return AddressbookMainViewDialog.transformNodesToSelectItems(nodes, personLabel, organizationLabel);
+            return transformAddressbookNodesToSelectItems(nodes);
         } else if (filterIndex == 3) { // contact groups
-            final String personLabel = MessageUtil.getMessage("addressbook_private_person").toLowerCase();
-            final String organizationLabel = MessageUtil.getMessage("addressbook_org").toLowerCase();
             List<Node> nodes = null;
             if (taskCapableOnly) {
                 nodes = getAddressbookService().searchTaskCapableContactGroups(contains, orgOnly, institutionToRemove);
             } else {
-                nodes = getAddressbookService().searchContactGroups(contains);
+                nodes = getAddressbookService().searchContactGroups(contains, true, false);
             }
-            return AddressbookMainViewDialog.transformNodesToSelectItems(nodes, personLabel, organizationLabel);
+            return transformAddressbookNodesToSelectItems(nodes);
         } else {
             throw new RuntimeException("Unknown filter index value: " + filterIndex);
         }
@@ -410,7 +395,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             }
             // user groups
             else if (filterIndex == 1) {
-                Set<String> children = getAuthorityService().getContainedAuthorities(AuthorityType.USER, results[i], true);
+                Set<String> children = getUserService().getUserNamesInGroup(results[i]);
                 int j = 0;
                 for (String userName : children) {
                     if (j++ > 0) {
@@ -429,8 +414,8 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             }
             // contact groups
             else if (filterIndex == 3) {
-                List<AssociationRef> assocs = getNodeService().getTargetAssocs(new NodeRef(results[i]), RegexQNamePattern.MATCH_ALL);
-                taskIndex = addContactGroupTasks(taskIndex, block, assocs);
+                List<NodeRef> contacts = getAddressbookService().getContactGroupContents(new NodeRef(results[i]));
+                taskIndex = addContactGroupTasks(taskIndex, block, contacts);
             } else {
                 throw new RuntimeException("Unknown filter index value: " + filterIndex);
             }
@@ -439,12 +424,12 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         updatePanelGroup();
     }
 
-    public int addContactGroupTasks(int taskIndex, Workflow block, List<AssociationRef> assocs) {
+    public int addContactGroupTasks(int taskIndex, Workflow block, List<NodeRef> contacts) {
         int taskCounter = 0;
         boolean isExternalReviewTask = block.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW);
-        for (int j = 0; j < assocs.size(); j++) {
-            Map<QName, Serializable> contactProps = getNodeService().getProperties(assocs.get(j).getTargetRef());
-            if (getNodeService().hasAspect(assocs.get(j).getTargetRef(), AddressbookModel.Aspects.ORGANIZATION_PROPERTIES)
+        for (int j = 0; j < contacts.size(); j++) {
+            Map<QName, Serializable> contactProps = getNodeService().getProperties(contacts.get(j));
+            if (getNodeService().hasAspect(contacts.get(j), AddressbookModel.Aspects.ORGANIZATION_PROPERTIES)
                     && Boolean.TRUE.equals(contactProps.get(AddressbookModel.Props.TASK_CAPABLE))) {
                 if (taskCounter > 0) {
                     block.addTask(++taskIndex);
@@ -452,7 +437,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
                 if (isExternalReviewTask) {
                     setExternalReviewProps(block, taskIndex, contactProps);
                 } else {
-                    setContactPropsToTask(block, taskIndex, assocs.get(j).getTargetRef());
+                    setContactPropsToTask(block, taskIndex, contacts.get(j));
                 }
                 taskCounter++;
             }
@@ -519,10 +504,6 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         this.userListDialog = userListDialog;
     }
 
-    public void setUserGroupSearchBean(UserGroupSearchBean userGroupSearchBean) {
-        this.userGroupSearchBean = userGroupSearchBean;
-    }
-
     public void setOwnerSearchBean(OwnerSearchBean ownerSearchBean) {
         this.ownerSearchBean = ownerSearchBean;
     }
@@ -532,53 +513,6 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     }
 
     // /// PROTECTED & PRIVATE METHODS /////
-
-    protected WorkflowService getWorkflowService() {
-        if (workflowService == null) {
-            workflowService = (WorkflowService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(
-                    WorkflowService.BEAN_NAME);
-        }
-        return workflowService;
-    }
-
-    private UserService getUserService() {
-        if (userService == null) {
-            userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext( //
-                    FacesContext.getCurrentInstance()).getBean(UserService.BEAN_NAME);
-        }
-        return userService;
-    }
-
-    protected AddressbookService getAddressbookService() {
-        if (addressbookService == null) {
-            addressbookService = (AddressbookService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(
-                    AddressbookService.BEAN_NAME);
-        }
-        return addressbookService;
-    }
-
-    protected AuthorityService getAuthorityService() {
-        if (authorityService == null) {
-            authorityService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getAuthorityService();
-        }
-        return authorityService;
-    }
-
-    protected DvkService getDvkService() {
-        if (dvkService == null) {
-            dvkService = (DvkService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(
-                    DvkService.BEAN_NAME);
-        }
-        return dvkService;
-    }
-
-    protected OrganizationStructureService getOrganizationStructureService() {
-        if (organizationStructureService == null) {
-            organizationStructureService = (OrganizationStructureService) FacesContextUtils.getRequiredWebApplicationContext( //
-                    FacesContext.getCurrentInstance()).getBean(OrganizationStructureService.BEAN_NAME);
-        }
-        return organizationStructureService;
-    }
 
     protected void resetState() {
         compoundWorkflow = null;

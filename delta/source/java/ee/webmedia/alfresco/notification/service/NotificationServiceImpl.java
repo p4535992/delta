@@ -21,8 +21,6 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.cmr.security.AuthorityService;
-import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
@@ -74,7 +72,6 @@ public class NotificationServiceImpl implements NotificationService {
     private DocumentTemplateService templateService;
     private FileService fileService;
     private DocumentSearchService documentSearchService;
-    private AuthorityService authorityService;
     private SubstituteService substituteService;
     private int updateCount = 0;
 
@@ -168,7 +165,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     private void addAdminGroupRecipients(Notification notification) {
-        Set<String> adminAuthorities = authorityService.getContainedAuthorities(AuthorityType.USER, UserService.ADMINISTRATORS_GROUP, true);
+        Set<String> adminAuthorities = userService.getUserNamesInGroup(UserService.ADMINISTRATORS_GROUP);
         for (String userName : adminAuthorities) {
             String userFullName = userService.getUserFullName(userName);
             if (userFullName == null) {
@@ -889,20 +886,16 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     private Notification addDocumentManagersAsRecipients(Notification notification) {
-        Set<String> documentManagers =
-                authorityService.
-                        getContainedAuthorities(
-                                AuthorityType.USER,
-                                userService.getDocumentManagersGroup(), true);
+        Set<String> documentManagers = userService.getUserNamesInGroup(userService.getDocumentManagersGroup());
         // XXX: if no documentManagers set (could it happen in live environment?) then there will be exception when sending out notifications
-        for (String documentManager : documentManagers) {
-            String userName = authorityService.getShortName(documentManager);
+        for (String userName : documentManagers) {
             String userFullName = userService.getUserFullName(userName);
-            if (userFullName == null) {
+            String userEmail = userService.getUserEmail(userName);
+            if (userEmail == null) {
                 // User does not exist
                 continue;
             }
-            notification.addRecipient(userFullName, userService.getUserEmail(userName));
+            notification.addRecipient(userFullName, userEmail);
         }
         return notification;
     }
@@ -1002,10 +995,6 @@ public class NotificationServiceImpl implements NotificationService {
 
     public void setDocumentSearchService(DocumentSearchService documentSearchService) {
         this.documentSearchService = documentSearchService;
-    }
-
-    public void setAuthorityService(AuthorityService authorityService) {
-        this.authorityService = authorityService;
     }
 
     public void setSubstituteService(SubstituteService substituteService) {

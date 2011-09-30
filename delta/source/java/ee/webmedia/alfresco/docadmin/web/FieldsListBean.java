@@ -1,29 +1,28 @@
 package ee.webmedia.alfresco.docadmin.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDialogManager;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFieldDetailsDialog;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFieldGroupDetailsDialog;
+import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.getMetadataItemReorderHelper;
 import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.navigate;
+import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.reorderAndMarkBaseState;
 import static ee.webmedia.alfresco.utils.MessageUtil.getMessage;
 import static ee.webmedia.alfresco.utils.TextUtil.collectionToString;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import javax.faces.event.ActionEvent;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.namespace.QName;
-import org.apache.commons.collections.comparators.NullComparator;
-import org.apache.commons.collections.comparators.TransformingComparator;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.base.BaseObject.ChildrenList;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.docadmin.service.Field;
@@ -32,8 +31,8 @@ import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docadmin.service.MetadataContainer;
 import ee.webmedia.alfresco.docadmin.service.MetadataItem;
 import ee.webmedia.alfresco.docadmin.service.SeparatorLine;
+import ee.webmedia.alfresco.docdynamic.web.DialogBlockBean;
 import ee.webmedia.alfresco.utils.ActionUtil;
-import ee.webmedia.alfresco.utils.ComparableTransformer;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 
@@ -42,7 +41,7 @@ import ee.webmedia.alfresco.utils.WebUtil;
  * 
  * @author Ats Uiboupin
  */
-public class FieldsListBean implements Serializable {
+public class FieldsListBean implements DialogBlockBean<Void> {
     private static final long serialVersionUID = 1L;
     private MetadataContainer metadataContainer;
 
@@ -50,25 +49,25 @@ public class FieldsListBean implements Serializable {
         metadataContainer = parent;
     }
 
-    void resetFields() {
+    @Override
+    public void resetOrInit(Void nill) {
         metadataContainer = null;
     }
 
     public List<? extends MetadataItem> getMetaFieldsList() {
-        ChildrenList<? extends MetadataItem> metadata = metadataContainer.getMetadata();
+        return getMetaFieldsList(metadataContainer.getMetadata(), true);
+    }
+
+    private List<? extends MetadataItem> getMetaFieldsList(ChildrenList<? extends MetadataItem> metadata, boolean isInitialState) {
         if (metadata == null) {
             return Collections.emptyList();
         }
         List<MetadataItem> modifiableMetadataList = new ArrayList<MetadataItem>(metadata);
-        @SuppressWarnings("unchecked")
-        Comparator<MetadataItem> comparator2 = new TransformingComparator(new ComparableTransformer<MetadataItem>() {
-            @Override
-            public Comparable<?> tr(MetadataItem input) {
-                return input.getOrder();
-            }
-        }, new NullComparator());
-        Collections.sort(modifiableMetadataList, comparator2);
-        return modifiableMetadataList; // richList also needs modifiable list to sort elements by column
+        BaseObjectOrderModifier<MetadataItem> reorderHelper = getMetadataItemReorderHelper(DocumentAdminModel.Props.ORDER);
+        if (isInitialState) {
+            reorderHelper.markBaseState(modifiableMetadataList);
+        }
+        return reorderAndMarkBaseState(modifiableMetadataList, reorderHelper);
     }
 
     /** JSP */
@@ -111,27 +110,18 @@ public class FieldsListBean implements Serializable {
         @SuppressWarnings("unchecked")
         ChildrenList<MetadataItem> metadata = (ChildrenList<MetadataItem>) metadataContainer.getMetadata();
         if ("field".equals(itemType)) {
-            // XXX: tavaliselt listener, action(init dialog),
-            // aga siin action(dialog.init())+addNewFieldToDocType(docType)
             navigate("dialog:fieldDetailsDialog");
             getFieldDetailsDialog().addNewFieldToDocType(metadataContainer);
         } else if ("group".equals(itemType)) {
-            // XXX: tavaliselt listener, action(init dialog),
-            // aga siin action(dialog.init())+addNewFieldToDocType(docType)
             navigate("dialog:fieldGroupDetailsDialog");
             getFieldGroupDetailsDialog().addNewFieldGroup((DocumentTypeVersion) metadataContainer);
         } else if ("separator".equals(itemType)) {
-            SeparatorLine sep = metadata.add(SeparatorLine.class);
-            sep.setOrder(metadata.size());
+            metadata.add(SeparatorLine.class);
         } else {
             throw new RuntimeException("Unknown itemType='" + itemType + "'");
         }
-        reorder(metadata);
-    }
-
-    private void reorder(ChildrenList<MetadataItem> metadata) {
-        // TODO DLSeadist reorder metadata items if needed
-
+        getMetaFieldsList(metadata, false);
+        reorderAndMarkBaseState(metadata, getMetadataItemReorderHelper(DocumentAdminModel.Props.ORDER));
     }
 
     /**
@@ -145,6 +135,7 @@ public class FieldsListBean implements Serializable {
      * @return An array of SelectItem objects containing the results to display in the picker.
      */
     public SelectItem[] searchFieldDefinitions(int filterIndex, String contains) {
+        List<String> missingFieldsOfFieldGroup = getMissingFieldsOfSystematicFieldGroup();
         List<FieldDefinition> fieldDefinitions;
         if (StringUtils.isBlank(contains)) {
             fieldDefinitions = getDocumentAdminService().getFieldDefinitions();
@@ -155,6 +146,9 @@ public class FieldsListBean implements Serializable {
         for (FieldDefinition fieldDef : fieldDefinitions) {
             if (fieldDef.isOnlyInGroup()) {
                 continue;
+            }
+            if (missingFieldsOfFieldGroup != null && !missingFieldsOfFieldGroup.contains(fieldDef.getFieldId())) {
+                continue; // searching fields for fieldGroup and fieldGroup already contains this field or systematic fieldGroup doesn't contain this field
             }
             SelectItem selectItem = new SelectItem(fieldDef.getFieldId().toString(), fieldDef.getFieldNameWithIdAndType());
             List<String> docTypes = fieldDef.getDocTypes();
@@ -171,10 +165,25 @@ public class FieldsListBean implements Serializable {
         return results.toArray(new SelectItem[results.size()]);
     }
 
+    private List<String> getMissingFieldsOfSystematicFieldGroup() {
+        FieldGroupDetailsDialog fieldGroupDetailsDialog = getFieldGroupDetailsDialog();
+        List<String> missingFieldsOfSystematicFieldGroup = null;
+        if (getDialogManager().getBean() == fieldGroupDetailsDialog) {
+            FieldGroup fieldGroup = fieldGroupDetailsDialog.getFieldGroup();
+            if (fieldGroup.isSystematic()) {
+                FieldGroup fieldGroupDef = getDocumentAdminService().getFieldGroupDefinition(fieldGroup.getName());
+                missingFieldsOfSystematicFieldGroup = fieldGroupDef.getFieldDefinitionIds();
+                for (Field field : fieldGroup.getFields()) {
+                    missingFieldsOfSystematicFieldGroup.remove(field.getOriginalFieldId());
+                }
+            }
+        }
+        return missingFieldsOfSystematicFieldGroup;
+    }
+
     /** used from JSP when adding field based on existing fieldDefinition */
     public void addExistingField(String fieldDefId) {
-        QName fieldDefIdQName = QName.createQName(fieldDefId);
-        FieldDefinition fieldDefinition = getDocumentAdminService().getFieldDefinition(fieldDefIdQName);
+        FieldDefinition fieldDefinition = getDocumentAdminService().getFieldDefinition(fieldDefId);
         editField(fieldDefinition);
     }
 
@@ -197,6 +206,10 @@ public class FieldsListBean implements Serializable {
         }
         List<SelectItem> results = new ArrayList<SelectItem>(fieldGrDefinitions.size());
         for (FieldGroup fieldGrDef : fieldGrDefinitions) {
+            // TODO DLSeadist Maiga - kuidas välja filtreerida?
+            // if (fieldGrDef.isMandatoryForDoc()) {
+            // continue; // should already be added to docType
+            // }
             SelectItem selectItem = new SelectItem(fieldGrDef.getNodeRef().toString(), fieldGrDef.getName());
             selectItem.setDescription(getMessage("fieldDefinitions_list") + ": " + fieldGrDef.getAdditionalInfo());
             results.add(selectItem);

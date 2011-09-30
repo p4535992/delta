@@ -17,6 +17,7 @@ import org.springframework.web.jsf.FacesContextUtils;
 import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.document.model.Document;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.service.VolumeService;
@@ -73,7 +74,11 @@ public class DocumentListDialog extends BaseDocumentListDialog {
         List<ChildAssociationRef> childAssocs = getNodeService().getChildAssocs(parentRef, RegexQNamePattern.MATCH_ALL, RegexQNamePattern.MATCH_ALL);
         List<Document> docsOfParent = new ArrayList<Document>(childAssocs.size());
         for (ChildAssociationRef childAssocRef : childAssocs) {
-            docsOfParent.add(new Document(childAssocRef.getChildRef()));
+            NodeRef docRef = childAssocRef.getChildRef();
+            if (!DocumentCommonModel.Types.DOCUMENT.equals(getNodeService().getType(docRef))) { // XXX DLSeadist filter out old document types
+                continue;
+            }
+            docsOfParent.add(new Document(docRef));
         }
         return docsOfParent;
     }

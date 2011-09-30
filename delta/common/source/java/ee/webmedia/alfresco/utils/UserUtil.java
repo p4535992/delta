@@ -45,7 +45,7 @@ public class UserUtil {
         } else if (StringUtils.isBlank(lastName)) {
             return firstName;
         }
-        return firstName + " " + lastName;
+        return StringUtils.strip(firstName) + " " + StringUtils.strip(lastName);
     }
 
     public static String getPersonFullName(String userName, String firstName, String lastName, boolean showSubstituteInfo) {
@@ -62,25 +62,35 @@ public class UserUtil {
     public static String getPersonFullNameWithUnitName(Map<QName, Serializable> props, String unitName) {
         String fullName = UserUtil.getPersonFullName1(props);
         if (StringUtils.isNotBlank(unitName)) {
-            fullName += " (" + unitName + ")";
+            fullName += " (" + StringUtils.strip(unitName) + ")";
         }
         return fullName;
     }
 
-    public static String getPersonFullNameWithUnitName(Map<String, Object> props) {
+    public static String getPersonFullNameWithUnitName(Map<String, Object> props, boolean showSubstitutionInfo) {
         String fullName = getPersonFullName2(props, false);
         String unitName = (String) props.get(OrganizationStructureService.UNIT_NAME_PROP);
         if (StringUtils.isNotBlank(unitName)) {
-            fullName += " (" + unitName + ")";
+            fullName += " (" + StringUtils.strip(unitName) + ")";
         }
-        return joinStringAndStringWithSpace(fullName, getSubstitute((String) props.get(ContentModel.PROP_USERNAME)));
+        if (showSubstitutionInfo) {
+            return joinStringAndStringWithSpace(fullName, getSubstitute((String) props.get(ContentModel.PROP_USERNAME)));
+        }
+        return fullName;
     }
 
+    public static String getUserFullNameAndId(Map<QName, Serializable> props) {
+        String userName = (String) props.get(ContentModel.PROP_USERNAME);
+        return getPersonFullName1(props) + " (" + userName + ")";
+    }
+
+    // TODO refactor - util should not use service
     public static String getSubstitute(String username) {
         return getSubstitute(BeanHelper.getUserService().getPerson(username));
     }
 
-    public static String getSubstitute(NodeRef nodeRef) {
+    // TODO refactor - util should not use service
+    private static String getSubstitute(NodeRef nodeRef) {
         if (nodeRef == null) {
             return null;
         }

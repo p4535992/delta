@@ -140,6 +140,18 @@ public class ComponentUtil {
     }
 
     /**
+     * Add all attributes from given map to given component
+     */
+    @SuppressWarnings("unchecked")
+    public static Map<String, Object> addAttributes(UIComponent component, Map attributesToAdd) {
+        final Map<String, Object> attributes = component.getAttributes();
+        if (attributesToAdd != null) {
+            attributes.putAll(attributesToAdd);
+        }
+        return attributes;
+    }
+
+    /**
      * Convenience method that doesn't produce compiler warning
      * "Type safety: The expression of type Map needs unchecked conversion to conform to Map<String,Object>"
      * 
@@ -482,13 +494,13 @@ public class ComponentUtil {
     }
 
     /**
-     * @param component - this component and all its children will recursively be set disabled
+     * @param component - this component and all its children will recursively be set readonly
      */
-    public static void setDisabledAttributeRecursively(UIComponent component) {
-        setDisabledAttributeRecursively(component, Boolean.TRUE);
+    public static void setReadonlyAttributeRecursively(UIComponent component) {
+        setReadonlyAttributeRecursively(component, Boolean.TRUE);
     }
 
-    public static void setDisabledAttributeRecursively(UIComponent component, Boolean value) {
+    public static void setReadonlyAttributeRecursively(UIComponent component, Boolean value) {
         @SuppressWarnings("unchecked")
         Map<String, Object> attributes = component.getAttributes();
         attributes.put("readonly", value);
@@ -501,7 +513,7 @@ public class ComponentUtil {
             return;
         }
         for (UIComponent childComponent : children) {
-            setDisabledAttributeRecursively(childComponent, value);
+            setReadonlyAttributeRecursively(childComponent, value);
         }
     }
 
@@ -530,7 +542,7 @@ public class ComponentUtil {
         @SuppressWarnings("unchecked")
         List<UIComponent> children = component.getChildren();
         children.clear();
-        setDisabledAttributeRecursively(component, selectItems == null);
+        setReadonlyAttributeRecursively(component, selectItems == null);
         if (selectItems == null) {
             component.setValue(null);
         } else {
@@ -745,7 +757,7 @@ public class ComponentUtil {
      * @throws IOException
      */
     public static void generateSuggestScript(FacesContext context, UIComponent child, String pickerCallback, ResponseWriter out) throws IOException {
-        if (!(child instanceof UIInput) || StringUtils.isBlank(pickerCallback)) {
+        if (!(child instanceof UIInput) || StringUtils.isBlank(pickerCallback) || Utils.isComponentDisabledOrReadOnly(child)) {
             return;
         }
 

@@ -26,7 +26,7 @@
          <f:facet name="header">
             <a:sortLink id="idCol-sort" label="#{msg.fieldDefinitions_list_fieldId}" value="fieldId" mode="case-insensitive" />
          </f:facet>
-         <h:outputText value="#{fd.fieldId.localName}"/>
+         <h:outputText value="#{fd.fieldId}"/>
       </a:column>
 
       <a:column id="systematicCol">

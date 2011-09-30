@@ -21,8 +21,8 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicServiceImpl;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
@@ -79,17 +79,14 @@ public class ExternalAccessPhaseListener implements PhaseListener {
 
                 // open document dialog
                 String outcome;
-                if (DocumentDynamicModel.Types.DOCUMENT_DYNAMIC.equals(BeanHelper.getNodeService().getType(nodeRef))) {
+                if (DocumentCommonModel.Types.DOCUMENT.equals(BeanHelper.getNodeService().getType(nodeRef))) {
                     BeanHelper.getDocumentDynamicDialog().openFromUrl(nodeRef);
-                    outcome = BeanHelper.getDocumentDynamicDialog().action();
                 } else {
                     BeanHelper.getDocumentDialog().open(nodeRef);
                     outcome = AlfrescoNavigationHandler.DIALOG_PREFIX + "document";
+                    NavigationHandler navigationHandler = context.getApplication().getNavigationHandler();
+                    navigationHandler.handleNavigation(context, null, outcome);
                 }
-
-                NavigationHandler navigationHandler = context.getApplication().getNavigationHandler();
-                navigationHandler.handleNavigation(context, null, outcome);
-
             } catch (InvalidNodeRefException e) {
                 MessageUtil.addErrorMessage("document_restore_error_docDeleted");
             }

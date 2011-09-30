@@ -3,7 +3,6 @@ package ee.webmedia.alfresco.workflow.service;
 import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
@@ -31,11 +30,11 @@ public class CompoundWorkflowDefinition extends CompoundWorkflow {
         setProp(WorkflowCommonModel.Props.OWNER_ID, name);
     }
 
-    public List<QName> getDocumentTypes() {
+    public List<String> getDocumentTypes() {
         return getPropList(WorkflowCommonModel.Props.DOCUMENT_TYPES);
     }
 
-    public void setDocumentTypes(List<QName> documentTypes) {
+    public void setDocumentTypes(List<String> documentTypes) {
         setPropList(WorkflowCommonModel.Props.DOCUMENT_TYPES, documentTypes);
     }
 

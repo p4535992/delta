@@ -90,7 +90,14 @@ public interface IDialogBean extends Serializable
     * @return true if the button should be disabled
     */
    public boolean getFinishButtonDisabled();
-   
+
+   /**
+    * Determines whether the finish button on the dialog should be visible
+    * 
+    * @return true if the button should be visible
+    */
+   public boolean isFinishButtonVisible(boolean dialogConfOKButtonVisible);
+
    /**
     * Returns the title to be used for the dialog
     * <p>If this returns null the DialogManager will

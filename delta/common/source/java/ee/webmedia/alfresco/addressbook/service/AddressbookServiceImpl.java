@@ -1,26 +1,29 @@
 package ee.webmedia.alfresco.addressbook.service;
 
+import static ee.webmedia.alfresco.addressbook.model.AddressbookModel.URI;
+import static ee.webmedia.alfresco.addressbook.util.AddressbookUtil.getContactFullName;
+import static ee.webmedia.alfresco.utils.RepoUtil.toQNameProperties;
+import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyBooleanQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyNotNullQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateStringExactQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
+import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsOr;
+
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
-import java.util.StringTokenizer;
 
-import org.alfresco.model.ContentModel;
-import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
-import org.alfresco.service.cmr.search.ResultSet;
-import org.alfresco.service.cmr.search.SearchService;
+import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.cmr.security.PermissionService;
@@ -33,15 +36,18 @@ import org.alfresco.web.bean.repository.MapNode;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
 import org.apache.commons.lang.StringUtils;
-import org.apache.lucene.queryParser.QueryParser;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Assocs;
+import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Props;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
 import ee.webmedia.alfresco.addressbook.web.dialog.AddressbookAddEditDialog;
 import ee.webmedia.alfresco.addressbook.web.dialog.ContactGroupAddDialog.UserDetails;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.search.service.AbstractSearchServiceImpl;
 import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageDataWrapper;
+import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
@@ -49,17 +55,18 @@ import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 /**
  * @author Keit Tehvan 29.09.2009
  */
-public class AddressbookServiceImpl implements AddressbookService {
+public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements AddressbookService {
 
     private NodeService nodeService;
-    private DictionaryService dictionaryService;
-    private SearchService searchService;
     private NamespaceService namespaceService;
     private AuthorityService authorityService;
+    private PermissionService permissionService;
 
+    private Set<QName> allContactTypes; // doesn't need to be synchronized, because it is not modified during runtime
     private Set<QName> searchFields; // doesn't need to be synchronized, because it is not modified during runtime
     private Set<QName> contactGroupSearchFields; // doesn't need to be synchronized, because it is not modified during runtime
     private StoreRef store;
+    private NodeRef addressbookRoot;
 
     // ---------- interface methods
 
@@ -88,20 +95,20 @@ public class AddressbookServiceImpl implements AddressbookService {
         }
         NodeRef output = null;
         if (node.getType().equals(Types.ORGANIZATION)) {
-            output = createOrganization(convertProps(node.getProperties()));
+            output = createOrganization(toQNameProperties(node.getProperties()));
         } else if (node.getType().equals(Types.PRIV_PERSON)
                 || node.getType().equals(Types.ORGPERSON)) {
-            output = createPerson(parent, convertProps(node.getProperties()));
+            output = createPerson(parent, toQNameProperties(node.getProperties()));
         } else if (node.getType().equals(Types.CONTACT_GROUP)) {
             List<Node> contactGroups = listContactGroups();
             for (Node contactGroup : contactGroups) {
-                String contactGroupName = (String) contactGroup.getProperties().get(AddressbookModel.Props.GROUP_NAME);
-                String newContactGroupName = (String) node.getProperties().get(AddressbookModel.Props.GROUP_NAME);
+                String contactGroupName = (String) contactGroup.getProperties().get(Props.GROUP_NAME);
+                String newContactGroupName = (String) node.getProperties().get(Props.GROUP_NAME);
                 if (StringUtils.equalsIgnoreCase(contactGroupName, newContactGroupName)) {
                     throw new UnableToPerformException("addressbook_group_name_exists");
                 }
             }
-            output = createContactGroup(convertProps(node.getProperties()));
+            output = createContactGroup(toQNameProperties(node.getProperties()));
         }
         return output;
     }
@@ -112,12 +119,12 @@ public class AddressbookServiceImpl implements AddressbookService {
         final NodeRef contactRef = contactNode.getNodeRef();
         if (contactNode.getType().equals(Types.PRIV_PERSON)) {
             final String messageKey = "addressbook_save_person_error_nameExists";
-            String fullName = getFullName(contactNode);
-            String code = (String) contactNode.getProperties().get(AddressbookModel.Props.PERSON_ID);
+            String fullName = getContactFullName(RepoUtil.toQNameProperties(contactNode.getProperties()), contactNode.getType());
+            String code = (String) contactNode.getProperties().get(Props.PERSON_ID);
             final List<Node> persons = listPerson();
             for (Node person : persons) {
-                final String otherfullName = getFullName(person);
-                String otherCode = (String) person.getProperties().get(AddressbookModel.Props.PERSON_ID);
+                final String otherfullName = getContactFullName(person.getNodeRef());
+                String otherCode = (String) person.getProperties().get(Props.PERSON_ID);
                 if (isDuplicate(code, otherCode, contactRef, person)) {
                     duplicateMessages.add(new Pair<String, String>(AddressbookAddEditDialog.PERSON_CODE_EXISTS_ERROR, otherCode));
                 }
@@ -129,11 +136,11 @@ public class AddressbookServiceImpl implements AddressbookService {
         if (contactNode.getType().equals(Types.ORGANIZATION)) {
             final String duplicateMessageKey = "addressbook_save_organization_error_nameExists";
             final List<Node> orgs = listOrganization();
-            final String orgName = (String) contactNode.getProperties().get(AddressbookModel.Props.ORGANIZATION_NAME);
-            String code = (String) contactNode.getProperties().get(AddressbookModel.Props.ORGANIZATION_CODE);
+            final String orgName = (String) contactNode.getProperties().get(Props.ORGANIZATION_NAME);
+            String code = (String) contactNode.getProperties().get(Props.ORGANIZATION_CODE);
             for (Node org : orgs) {
-                final String otherOrgName = (String) org.getProperties().get(AddressbookModel.Props.ORGANIZATION_NAME);
-                String otherCode = (String) org.getProperties().get(AddressbookModel.Props.ORGANIZATION_CODE);
+                final String otherOrgName = (String) org.getProperties().get(Props.ORGANIZATION_NAME);
+                String otherCode = (String) org.getProperties().get(Props.ORGANIZATION_CODE);
                 if (isDuplicate(code, otherCode, contactRef, org)) {
                     duplicateMessages.add(new Pair<String, String>(AddressbookAddEditDialog.ORG_CODE_EXISTS_ERROR, otherCode));
                 }
@@ -155,17 +162,14 @@ public class AddressbookServiceImpl implements AddressbookService {
         return false;
     }
 
-    private String getFullName(Node node) {
-        final String pFirstName = (String) node.getProperties().get(AddressbookModel.Props.PERSON_FIRST_NAME);
-        final String pLastName = (String) node.getProperties().get(AddressbookModel.Props.PERSON_LAST_NAME);
-        String fullName = pFirstName + " " + pLastName;
-        return fullName;
-    }
-
     private void addToGroup(NodeRef groupNodeRef, NodeRef memberNodeRef) {
         QName type = nodeService.getType(memberNodeRef);
         if (Types.ORGANIZATION.equals(type)) {
             nodeService.createAssociation(groupNodeRef, memberNodeRef, Assocs.CONTACT_ORGANIZATION);
+            boolean groupTaskCapable = Boolean.TRUE.equals(nodeService.getProperty(groupNodeRef, AddressbookModel.Props.TASK_CAPABLE));
+            if (groupTaskCapable) {
+                nodeService.setProperty(memberNodeRef, AddressbookModel.Props.TASK_CAPABLE, groupTaskCapable);
+            }
         } else {
             nodeService.createAssociation(groupNodeRef, memberNodeRef, Assocs.CONTACT_PERSON_BASE);
         }
@@ -183,7 +187,15 @@ public class AddressbookServiceImpl implements AddressbookService {
             if (existingRefs.contains(wrapper.getNodeRef())) {
                 feedBack.addFeedbackItem(new MessageDataImpl(MessageSeverity.INFO, "addressbook_contactgroup_add_contactExisted", wrapper.getName()));
             } else {
-                addToGroup(groupNodeRef, new NodeRef(wrapper.getNodeRef()));
+                Boolean groupTaskCapable = Boolean.TRUE.equals(nodeService.getProperty(groupNodeRef, AddressbookModel.Props.TASK_CAPABLE));
+                NodeRef contactNodeRef = new NodeRef(wrapper.getNodeRef());
+                String contactEmail = (String) nodeService.getProperty(contactNodeRef, AddressbookModel.Props.EMAIL);
+                if (groupTaskCapable && StringUtils.isBlank(contactEmail)) {
+                    feedBack.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, "addressbook_contactgroup_task_capable_org_missing_email"));
+                } else {
+                    addToGroup(groupNodeRef, contactNodeRef);
+                    feedBack.addFeedbackItem(new MessageDataImpl(MessageSeverity.INFO, "addressbook_added_to_contactgroup"));
+                }
             }
         }
         return feedBack;
@@ -223,68 +235,46 @@ public class AddressbookServiceImpl implements AddressbookService {
     public List<Node> getContactsByRegNumber(String regNumber) {
         List<String> queryParts = new ArrayList<String>(2);
         List<String> queryPartsOrg = new ArrayList<String>(2);
-        queryPartsOrg.add(SearchUtil.generateTypeQuery(AddressbookModel.Types.ORGANIZATION));
-        queryPartsOrg.add(SearchUtil.generateStringExactQuery(regNumber, AddressbookModel.Props.ORGANIZATION_CODE));
-        queryParts.add(SearchUtil.joinQueryPartsAnd(queryPartsOrg));
+        queryPartsOrg.add(generateTypeQuery(Types.ORGANIZATION));
+        queryPartsOrg.add(generateStringExactQuery(regNumber, Props.ORGANIZATION_CODE));
+        queryParts.add(joinQueryPartsAnd(queryPartsOrg));
         queryParts.add(generatePersonByCodeQuery(regNumber));
-        String query = SearchUtil.joinQueryPartsOr(queryParts);
-        ResultSet searchResult = searchService.query(store, SearchService.LANGUAGE_LUCENE, query);
-        try {
-            List<NodeRef> nodeRefs = searchResult.getNodeRefs();
-            List<Node> contactNodes = new ArrayList<Node>(nodeRefs.size());
-            for (NodeRef nodeRef : nodeRefs) {
-                contactNodes.add(getNode(nodeRef));
-            }
-            return contactNodes;
-        } finally {
-            searchResult.close();
-        }
+        String query = joinQueryPartsOr(queryParts);
+        return toNodeList(searchNodes(query, false, "contactsByRegNumber", store));
     }
 
     @Override
     public List<Node> getContactsWithSapAccount() {
         List<String> queryParts = new ArrayList<String>(3);
-        queryParts.add(SearchUtil.generateTypeQuery(AddressbookModel.Types.ORGANIZATION));
-        queryParts.add(SearchUtil.generatePropertyNotNullQuery(AddressbookModel.Props.ORGANIZATION_CODE));
-        queryParts.add(SearchUtil.generatePropertyNotNullQuery(AddressbookModel.Props.SAP_ACCOUNT));
-        String query = SearchUtil.joinQueryPartsAnd(queryParts);
-        ResultSet searchResult = searchService.query(store, SearchService.LANGUAGE_LUCENE, query);
-        try {
-            List<NodeRef> nodeRefs = searchResult.getNodeRefs();
-            List<Node> contactNodes = new ArrayList<Node>(nodeRefs.size());
-            for (NodeRef nodeRef : nodeRefs) {
-                contactNodes.add(getNode(nodeRef));
-            }
-            return contactNodes;
-        } finally {
-            searchResult.close();
-        }
+        queryParts.add(generateTypeQuery(Types.ORGANIZATION));
+        queryParts.add(generatePropertyNotNullQuery(Props.ORGANIZATION_CODE));
+        queryParts.add(generatePropertyNotNullQuery(Props.SAP_ACCOUNT));
+        String query = joinQueryPartsAnd(queryParts);
+        return toNodeList(searchNodes(query, false, "contactsWithSapAccount", store));
     }
 
     @Override
     public List<Node> getPersonContactsByCode(String code) {
         String query = generatePersonByCodeQuery(code);
-        ResultSet searchResult = searchService.query(store, SearchService.LANGUAGE_LUCENE, query);
-        try {
-            List<NodeRef> nodeRefs = searchResult.getNodeRefs();
-            List<Node> contactNodes = new ArrayList<Node>(nodeRefs.size());
-            for (NodeRef nodeRef : nodeRefs) {
-                contactNodes.add(getNode(nodeRef));
-            }
-            return contactNodes;
-        } finally {
-            searchResult.close();
+        return toNodeList(searchNodes(query, false, "personContactsByCode", store));
+    }
+
+    private List<Node> toNodeList(List<NodeRef> nodeRefs) {
+        List<Node> contactNodes = new ArrayList<Node>(nodeRefs.size());
+        for (NodeRef nodeRef : nodeRefs) {
+            contactNodes.add(getNode(nodeRef));
         }
+        return contactNodes;
     }
 
     private String generatePersonByCodeQuery(String regNumber) {
         List<String> queryPartsPerson = new ArrayList<String>(2);
         List<String> queryPartsPersonType = new ArrayList<String>(2);
-        queryPartsPersonType.add(SearchUtil.generateTypeQuery(AddressbookModel.Types.PRIV_PERSON));
-        queryPartsPersonType.add(SearchUtil.generateTypeQuery(AddressbookModel.Types.ORGPERSON));
-        queryPartsPerson.add(SearchUtil.joinQueryPartsOr(queryPartsPersonType));
-        queryPartsPerson.add(SearchUtil.generateStringExactQuery(regNumber, AddressbookModel.Props.PERSON_ID));
-        return SearchUtil.joinQueryPartsAnd(queryPartsPerson);
+        queryPartsPersonType.add(generateTypeQuery(Types.PRIV_PERSON));
+        queryPartsPersonType.add(generateTypeQuery(Types.ORGPERSON));
+        queryPartsPerson.add(joinQueryPartsOr(queryPartsPersonType));
+        queryPartsPerson.add(generateStringExactQuery(regNumber, Props.PERSON_ID));
+        return joinQueryPartsAnd(queryPartsPerson);
     }
 
     @Override
@@ -299,158 +289,117 @@ public class AddressbookServiceImpl implements AddressbookService {
 
     @Override
     public void updateNode(Node node) {
-        if (node.getType().equals(Types.ORGANIZATION)) {
-            node.getProperties().put(ContentModel.PROP_NAME.toString(), node.getProperties().get(AddressbookModel.Props.ORGANIZATION_NAME));
-        } else if (node.getType().equals(Types.PRIV_PERSON) || node.getType().equals(Types.ORGPERSON)) {
-            node.getProperties().put(ContentModel.PROP_NAME.toString(), node.getProperties().get(AddressbookModel.Props.PERSON_FIRST_NAME));
-        }
-        nodeService.setProperties(node.getNodeRef(), convertProps(node.getProperties()));
+        nodeService.setProperties(node.getNodeRef(), toQNameProperties(node.getProperties()));
     }
 
     @Override
     public List<Node> search(String searchCriteria) {
-        return executeSearch(searchCriteria, searchFields, false, false, false, null);
+        return executeSearch(searchCriteria, searchFields, false, allContactTypes, null);
     }
 
     @Override
-    public List<Node> searchContactGroups(String searchCriteria) {
-        return executeSearch(searchCriteria, contactGroupSearchFields, false, false, false, null);
+    public List<Node> searchContactGroups(String searchCriteria, boolean showAdminManageable, boolean excludeTaskCapable) {
+        List<Node> result = null;
+        if (StringUtils.isBlank(searchCriteria)) {
+            result = listContactGroups();
+        } else {
+            result = executeSearch(searchCriteria, contactGroupSearchFields, false, Collections.<QName> emptySet(), null);
+        }
+        if (excludeTaskCapable) { // should be done during search
+            List<Node> notTaskCapable = new ArrayList<Node>(result.size());
+            for (Node node : result) {
+                if (!Boolean.TRUE.equals(node.getProperties().get(AddressbookModel.Props.TASK_CAPABLE))) {
+                    notTaskCapable.add(node);
+                }
+            }
+            result = notTaskCapable;
+        }
+        if (BeanHelper.getUserService().isDocumentManager() || showAdminManageable) {
+            return result;
+        }
+        List<Node> filtered = new ArrayList<Node>(result.size());
+        for (Node node : result) {
+            if (!Boolean.TRUE.equals(node.getProperties().get(AddressbookModel.Props.MANAGEABLE_FOR_ADMIN))) {
+                filtered.add(node);
+            }
+        }
+        return filtered;
     }
 
     @Override
     public List<Node> searchTaskCapableContacts(String searchCriteria, boolean orgOnly, String institutionToRemove) {
-        return executeSearch(searchCriteria, searchFields, true, orgOnly, false, institutionToRemove);
+        return executeSearch(
+                searchCriteria,
+                searchFields,
+                true,
+                orgOnly ? Collections.singleton(Types.ORGANIZATION) : allContactTypes, // actually only organizations have the taskCapable property...
+                institutionToRemove);
     }
 
     @Override
     public List<Node> searchPersonContacts(String searchCriteria) {
-        return executeSearch(searchCriteria, searchFields, false, false, true, null);
+        Set<QName> types = new HashSet<QName>();
+        types.add(Types.ORGPERSON);
+        types.add(Types.PRIV_PERSON);
+        return executeSearch(searchCriteria, searchFields, false, types, null);
     }
 
     @Override
     public List<Node> searchOrgContacts(String searchCriteria) {
-        return executeSearch(searchCriteria, searchFields, false, true, false, null);
+        return executeSearch(searchCriteria, searchFields, false, Collections.singleton(Types.ORGANIZATION), null);
     }
 
     @Override
     public List<Node> searchTaskCapableContactGroups(String searchCriteria, boolean orgOnly, String institutionToRemove) {
-        return executeSearch(searchCriteria, contactGroupSearchFields, true, orgOnly, false, institutionToRemove);
+        return executeSearch(
+                searchCriteria,
+                contactGroupSearchFields,
+                true,
+                orgOnly ? Collections.singleton(Types.ORGANIZATION) : Collections.<QName> emptySet(),
+                institutionToRemove);
     }
 
-    private List<Node> executeSearch(String searchCriteria, Set<QName> fields, boolean taskCapableOnly, boolean orgOnly, boolean personOnly, String institutionToRemove) {
-        List<NodeRef> nodeRefs = null;
-        final ResultSet searchResult;
-        if (StringUtils.isNotBlank(searchCriteria) || taskCapableOnly || (orgOnly && fields == searchFields)) {
-
-            StringBuilder query = new StringBuilder();
-            if (searchCriteria != null) {
-                for (StringTokenizer t = new StringTokenizer(searchCriteria.trim(), " "); t.hasMoreTokens(); /**/) {
-                    String term = QueryParser.escape(t.nextToken());
-                    for (QName field : fields) {
-                        String fieldPrefixed = field.toPrefixString(namespaceService);
-                        String fieldEscaped = StringUtils.replace(fieldPrefixed, "" + QName.NAMESPACE_PREFIX, "\\" + QName.NAMESPACE_PREFIX);
-                        query.append("@").append(fieldEscaped).append(":\"*").append(term).append("*\" ");
-                    }
-                }
-            }
-            if (taskCapableOnly) {
-                addTaskCapableCondition(query, fields);
-            }
-            String queryString = query.toString();
-            if (orgOnly && fields == searchFields) {
-                queryString = SearchUtil.joinQueryPartsAnd(Arrays.asList(queryString, SearchUtil.generateAspectQuery(AddressbookModel.Aspects.ORGANIZATION_PROPERTIES)));
-            }
-            if (personOnly && fields == searchFields) {
-                List<String> personQueryParts = new ArrayList<String>(2);
-                personQueryParts.add(SearchUtil.generateTypeQuery(AddressbookModel.Types.ORGPERSON));
-                personQueryParts.add(SearchUtil.generateTypeQuery(AddressbookModel.Types.PRIV_PERSON));
-                String personQuery = SearchUtil.joinQueryPartsOr(personQueryParts);
-                queryString = SearchUtil.joinQueryPartsAnd(Arrays.asList(queryString, personQuery));
-            }
-            searchResult = searchService.query(store, SearchService.LANGUAGE_LUCENE, queryString);
-        } else {
+    private List<Node> executeSearch(String searchCriteria, Set<QName> fields, boolean taskCapableOnly, Set<QName> types, String institutionToRemove) {
+        List<String> queryPartsAnd = new ArrayList<String>(4);
+        if (StringUtils.isNotBlank(searchCriteria)) {
+            queryPartsAnd.add(SearchUtil.generateStringWordsWildcardQuery(parseQuickSearchWords(searchCriteria, 1), true, true, fields.toArray(new QName[0])));
+        }
+        if (taskCapableOnly) {
             if (fields == contactGroupSearchFields) {
-                // get all contact groups under addressBook
-                final List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(getAddressbookNodeRef(), new HashSet<QName>(Arrays
-                        .asList(Types.CONTACT_GROUP)));
-                nodeRefs = new ArrayList<NodeRef>(childAssocs.size());
-                for (ChildAssociationRef childAssociationRef : childAssocs) {
-                    nodeRefs.add(childAssociationRef.getChildRef());
-                }
-                searchResult = null;
-            } else if (fields == searchFields) {
-                // search for persons(directly under addressBook) and organizations and persons under organizations
-                final String personsQuery = SearchUtil.generateQuery(searchCriteria, AddressbookModel.Types.PRIV_PERSON, Collections.<QName> emptySet());
-                final String orgQuery = SearchUtil.generateQuery(searchCriteria, AddressbookModel.Types.ORGANIZATION, Collections.<QName> emptySet());
-                final String orgPersonQuery = SearchUtil.generateQuery(searchCriteria, AddressbookModel.Types.ORGPERSON, Collections.<QName> emptySet());
-                searchResult = searchService.query(store, SearchService.LANGUAGE_LUCENE, SearchUtil.joinQueryPartsOr(Arrays.asList(personsQuery, orgQuery,
-                        orgPersonQuery)));
-            } else {
-                throw new IllegalArgumentException("searchCriteria can't be blank when searching from following addressbook fields:\n\t" + fields);
+                queryPartsAnd.add(generateTypeQuery(Types.CONTACT_GROUP));
             }
+            queryPartsAnd.add(generatePropertyBooleanQuery(Props.TASK_CAPABLE, true));
         }
-        if (searchResult != null) {
-            try {
-                nodeRefs = searchResult.getNodeRefs();
-            } finally {
-                searchResult.close();
-            }
+        if (fields == searchFields) {
+            queryPartsAnd.add(generateTypeQuery(types));
+        } else if (queryPartsAnd.isEmpty()) {
+            throw new IllegalArgumentException("searchCriteria can't be blank when searching from following addressbook fields:\n\t" + fields);
         }
-        @SuppressWarnings("null")
-        // nodeRefs shouldn't be null here as it is initialized based on searchResult when searching
-        // or directly set in when getting all contact groups under addressBook
-        List<Node> result = new ArrayList<Node>(nodeRefs.size());
-        boolean filterContactGroups = orgOnly && fields == contactGroupSearchFields;
-        filterAndAddResults(nodeRefs, result, filterContactGroups, orgOnly, institutionToRemove);
-        return result;
+
+        if (StringUtils.isNotBlank(institutionToRemove)) {
+            // we do not want to see this organization in the search results
+            queryPartsAnd.add(SearchUtil.generatePropertyExactNotQuery(Props.ORGANIZATION_CODE, institutionToRemove, true));
+        }
+
+        List<NodeRef> nodeRefs = searchNodes(joinQueryPartsAnd(queryPartsAnd), false, "addressbookSearch", store);
+        if (types.contains(Types.ORGANIZATION) && fields == contactGroupSearchFields) {
+            // here we only want the contact groups that contain organizations?
+            return filterContactGroupsThatContainOrganizations(nodeRefs);
+        }
+        return toNodeList(nodeRefs);
     }
 
-    public void addTaskCapableCondition(StringBuilder query, Set<QName> fields) {
-        if (query.length() > 0) {
-            query.insert(0, "(");
-            query.append(") AND ");
-        } else {
-            // add type condition if field condition is not specified
-            if (fields == searchFields) {
-                query.append("NOT ");
-            }
-            query.append(SearchUtil.generateTypeQuery(AddressbookModel.Types.CONTACT_GROUP)).append(" AND ");
-        }
-        String fieldPrefixed = AddressbookModel.Props.TASK_CAPABLE.toPrefixString(namespaceService);
-        String fieldEscaped = StringUtils.replace(fieldPrefixed, "" + QName.NAMESPACE_PREFIX, "\\" + QName.NAMESPACE_PREFIX);
-        query.append("@").append(fieldEscaped).append(":true");
-    }
-
-    private void filterAndAddResults(List<NodeRef> nodeRefs, List<Node> result, boolean filterContactGroups, boolean orgOnly, String institutionToRemove) {
-        if (filterContactGroups) {
-            for (NodeRef nodeRef : nodeRefs) {
-                for (Node contact : getContacts(nodeRef)) {
-                    if ((!orgOnly || contact.getType().equals(AddressbookModel.Types.ORGANIZATION))
-                                && !isInstitution(institutionToRemove, contact)) {
-                        result.add(getNode(nodeRef));
-                        break;
-                    }
-                }
-            }
-        } else {
-            for (NodeRef nodeRef : nodeRefs) {
-                Node contact = getNode(nodeRef);
-                if ((!orgOnly || contact.getType().equals(AddressbookModel.Types.ORGANIZATION))
-                        && !isInstitution(institutionToRemove, contact)) {
+    private List<Node> filterContactGroupsThatContainOrganizations(List<NodeRef> nodeRefs) {
+        List<Node> result = new ArrayList<Node>();
+        for (NodeRef nodeRef : nodeRefs) {
+            for (Node contact : getContacts(nodeRef)) {
+                if ((contact.getType().equals(Types.ORGANIZATION))) {
                     result.add(getNode(nodeRef));
+                    break;
                 }
             }
         }
-    }
-
-    private boolean isInstitution(String institutionToRemove, Node contact) {
-        if (institutionToRemove == null) {
-            return false;
-        }
-        if (!contact.getType().equals(AddressbookModel.Types.ORGANIZATION)) {
-            return false;
-        }
-        return institutionToRemove.equalsIgnoreCase((String) nodeService.getProperty(contact.getNodeRef(), AddressbookModel.Props.ORGANIZATION_CODE));
+        return result;
     }
 
     @Override
@@ -481,17 +430,12 @@ public class AddressbookServiceImpl implements AddressbookService {
     }
 
     @Override
-    public Node getRoot() {
-        return new Node(getRootNodeRef());
-    }
-
-    @Override
     public boolean isTaskCapableGroupMember(NodeRef contactRef) {
         List<AssociationRef> assocs = nodeService.getSourceAssocs(contactRef, RegexQNamePattern.MATCH_ALL);
         for (AssociationRef assocRef : assocs) {
             NodeRef sourceRef = assocRef.getSourceRef();
-            if (AddressbookModel.Types.CONTACT_GROUP.equals(nodeService.getType(sourceRef))) {
-                if (Boolean.TRUE.equals(nodeService.getProperty(sourceRef, AddressbookModel.Props.TASK_CAPABLE))) {
+            if (Types.CONTACT_GROUP.equals(nodeService.getType(sourceRef))) {
+                if (Boolean.TRUE.equals(nodeService.getProperty(sourceRef, Props.TASK_CAPABLE))) {
                     return true;
                 }
             }
@@ -501,25 +445,12 @@ public class AddressbookServiceImpl implements AddressbookService {
 
     // ---------- utility methods
 
-    private Map<QName, Serializable> convertProps(Map<String, Object> properties) {
-        Map<QName, Serializable> data = new HashMap<QName, Serializable>();
-        Set<Entry<String, Object>> set = properties.entrySet();
-        for (Entry<String, Object> setEntry1 : set) {
-            if (setEntry1.getValue() instanceof Serializable) {
-                data.put(QName.createQName(setEntry1.getKey()), (Serializable) setEntry1.getValue());
-            }
-        }
-        return data;
-    }
-
     @Override
     public NodeRef createOrganization(Map<QName, Serializable> data) {
-        data.put(ContentModel.PROP_NAME, data.get(AddressbookModel.Props.ORGANIZATION_NAME));
         return createNode(null, Assocs.ORGANIZATIONS, Types.ORGANIZATION, data);
     }
 
     private NodeRef createPerson(NodeRef organization, Map<QName, Serializable> data) {
-        data.put(ContentModel.PROP_NAME, data.get(AddressbookModel.Props.PERSON_FIRST_NAME));
         return createNode(organization,
                 organization == null ? Assocs.ABPEOPLE : Assocs.ORGPEOPLE,
                 organization == null ? Types.PRIV_PERSON : Types.ORGPERSON, data);
@@ -530,28 +461,26 @@ public class AddressbookServiceImpl implements AddressbookService {
     }
 
     private NodeRef createNode(NodeRef parent, QName assoc, QName type, Map<QName, Serializable> data) {
-        QName randomqname = QName.createQName(AddressbookModel.URI, GUID.generate());
-        ChildAssociationRef a = nodeService.createNode(parent == null ? getAddressbookNodeRef() : parent, assoc,
+        QName randomqname = QName.createQName(URI, GUID.generate());
+        ChildAssociationRef a = nodeService.createNode(parent == null ? getAddressbookRoot() : parent, assoc,
                 randomqname, type, data);
         return a.getChildRef();
     }
 
-    private NodeRef getRootNodeRef() {
-        return nodeService.getRootNode(store);
-    }
-
     @Override
-    public NodeRef getAddressbookNodeRef() {
-        return nodeService.getChildAssocs(getRootNodeRef(), RegexQNamePattern.MATCH_ALL, Assocs.ADDRESSBOOK)
-                .get(0).getChildRef();
+    public NodeRef getAddressbookRoot() {
+        if (addressbookRoot == null) {
+            String xPath = AddressbookModel.Repo.ADDRESSBOOK_SPACE;
+            addressbookRoot = generalService.getNodeRef(xPath);
+        }
+        return addressbookRoot;
     }
 
     @Override
     public List<Node> getDvkCapableOrgs() {
         List<Node> dvkCapableOrgs = new ArrayList<Node>();
         for (Node organization : listOrganization()) {
-            Object dvkObj = organization.getProperties().get(AddressbookModel.Props.DVK_CAPABLE);
-            if (dvkObj != null && (Boolean) dvkObj) {
+            if (Boolean.TRUE.equals(organization.getProperties().get(Props.DVK_CAPABLE))) {
                 dvkCapableOrgs.add(organization);
             }
         }
@@ -559,20 +488,16 @@ public class AddressbookServiceImpl implements AddressbookService {
     }
 
     private List<Node> listNodeChildren(QName type, NodeRef parent) {
-        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(parent);
-        List<Node> entryNodes = null;
-        entryNodes = new ArrayList<Node>(childRefs.size());
+        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(parent, Collections.singleton(type));
+        List<Node> entryNodes = new ArrayList<Node>(childRefs.size());
         for (ChildAssociationRef ref : childRefs) {
-            NodeRef nodeRef = ref.getChildRef();
-            if (nodeService.getType(nodeRef).equals(type)) {
-                entryNodes.add(getNode(nodeRef));
-            }
+            entryNodes.add(getNode(ref.getChildRef()));
         }
         return entryNodes;
     }
 
     private List<Node> listAddressbookChildren(QName type) {
-        return listNodeChildren(type, getAddressbookNodeRef());
+        return listNodeChildren(type, getAddressbookRoot());
     }
 
     @Override
@@ -593,18 +518,20 @@ public class AddressbookServiceImpl implements AddressbookService {
         return groups;
     }
 
+    @Override
+    public List<NodeRef> getContactGroupContents(NodeRef contactGroupRef) {
+        List<AssociationRef> assocs = nodeService.getTargetAssocs(contactGroupRef, RegexQNamePattern.MATCH_ALL);
+        List<NodeRef> contacts = new ArrayList<NodeRef>(assocs.size());
+        for (AssociationRef associationRef : assocs) {
+            contacts.add(associationRef.getTargetRef());
+        }
+        return contacts;
+    }
+
     // ---------- service getters and setters
 
     public void setNodeService(NodeService nodeService) {
         this.nodeService = nodeService;
-    }
-
-    public void setSearchService(SearchService searchService) {
-        this.searchService = searchService;
-    }
-
-    public void setDictionaryService(DictionaryService dictionaryService) {
-        this.dictionaryService = dictionaryService;
     }
 
     public void setNamespaceService(NamespaceService namespaceService) {
@@ -613,6 +540,10 @@ public class AddressbookServiceImpl implements AddressbookService {
 
     public void setAuthorityService(AuthorityService authorityService) {
         this.authorityService = authorityService;
+    }
+
+    public void setPermissionService(PermissionService permissionService) {
+        this.permissionService = permissionService;
     }
 
     public void setSearchFields(Set<String> fields) {
@@ -629,8 +560,20 @@ public class AddressbookServiceImpl implements AddressbookService {
         }
     }
 
+    public void setAllContactTypes(Set<String> fields) {
+        allContactTypes = new HashSet<QName>(fields.size());
+        for (String qname : fields) {
+            allContactTypes.add(QName.createQName(qname, namespaceService));
+        }
+    }
+
     public void setStore(String store) {
         this.store = new StoreRef(store);
+    }
+
+    @Override
+    public boolean hasCreatePermission() {
+        return permissionService.hasPermission(getAddressbookRoot(), PermissionService.CREATE_CHILDREN) == AccessStatus.ALLOWED;
     }
 
 }

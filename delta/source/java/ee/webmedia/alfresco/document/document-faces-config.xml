@@ -148,10 +148,6 @@
          <value>#{DocumentService}</value>
       </managed-property>
       <managed-property>
-         <property-name>personService</property-name>
-         <value>#{PersonService}</value>
-      </managed-property>
-      <managed-property>
          <property-name>nodeService</property-name>
          <value>#{NodeService}</value>
       </managed-property>
@@ -277,10 +273,6 @@
       <managed-bean-name>DocumentSendOutDialog</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.document.sendout.web.DocumentSendOutDialog</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
-      <managed-property>
-         <property-name>addressbookDialog</property-name>
-         <value>#{AddressbookDialog}</value>
-      </managed-property>
    </managed-bean>
 
    <managed-bean>

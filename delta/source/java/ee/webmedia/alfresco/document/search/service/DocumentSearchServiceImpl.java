@@ -41,11 +41,9 @@ import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
-import org.alfresco.service.cmr.search.LimitBy;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.ResultSetRow;
 import org.alfresco.service.cmr.search.SearchParameters;
-import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.namespace.NamespaceService;
@@ -56,17 +54,19 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Transformer;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
-import org.apache.lucene.search.BooleanQuery;
 import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.adr.model.AdrModel;
 import ee.webmedia.alfresco.cases.model.CaseModel;
+import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.classificator.enums.SendMode;
-import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
+import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
@@ -107,12 +107,8 @@ import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl implements DocumentSearchService {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentSearchServiceImpl.class);
 
-    private static final int RESULTS_LIMIT = 100;
-
     private DocumentService documentService;
-    private GeneralService generalService;
     private NodeService nodeService;
-    private SearchService searchService;
     private SeriesService seriesService;
     private VolumeService volumeService;
     private WorkflowService workflowService;
@@ -635,24 +631,6 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         return count;
     }
 
-    private int countResults(List<ResultSet> resultSets) {
-        int count = 0;
-        try {
-            for (ResultSet resultSet : resultSets) {
-                count += resultSet.length();
-            }
-        } finally {
-            try {
-                for (ResultSet resultSet : resultSets) {
-                    resultSet.close();
-                }
-            } catch (Exception e) {
-                // Do nothing
-            }
-        }
-        return count;
-    }
-
     @Override
     public List<TaskInfo> searchTasks(Node filter) {
         long startTime = System.currentTimeMillis();
@@ -989,8 +967,8 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     private String getInProcessDocumentsOwnerQuery(String ownerId) {
-        String incomingLetterTypesQuery = generateTypeQuery(DocumentSubtypeModel.Types.INCOMING_LETTER, DocumentSubtypeModel.Types.INCOMING_LETTER_MV);
-        String notIncomingLetterTypesQuery = generateTypeQuery(getNotIncomingLetterTypes());
+        String incomingLetterTypesQuery = generateStringExactQuery("incomingLetter", DocumentAdminModel.Props.OBJECT_TYPE_ID);
+        // String notIncomingLetterTypesQuery = generate // TODO DLSeadist
         List<String> queryParts = new ArrayList<String>();
         queryParts.add(generateStringExactQuery(ownerId, DocumentCommonModel.Props.OWNER_ID));
         String hasNoStartedCompoundWorkflowsQuery = joinQueryPartsOr(Arrays.asList(
@@ -1000,21 +978,23 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         queryParts.add(joinQueryPartsOr(
                 Arrays.asList(
                          joinQueryPartsAnd(Arrays.asList(incomingLetterTypesQuery, hasNoStartedCompoundWorkflowsQuery))
-                         ,
-                        joinQueryPartsAnd(Arrays.asList(notIncomingLetterTypesQuery,
-                                generateStringExactQuery(DocumentStatus.WORKING.getValueName(), DocumentCommonModel.Props.DOC_STATUS)))
+                        // ,
+                        // joinQueryPartsAnd(Arrays.asList(notIncomingLetterTypesQuery,
+                        // generateStringExactQuery(DocumentStatus.WORKING.getValueName(), DocumentCommonModel.Props.DOC_STATUS)))
                         )
                 ));
         return generateDocumentSearchQuery(queryParts);
     }
 
     private QName[] getNotIncomingLetterTypes() {
-        if (notIncomingLetterTypes == null) {
-            Collection<QName> docSubTypes = dictionaryService.getTypes(DocumentSubtypeModel.MODEL_NAME);
-            docSubTypes.removeAll(DocumentTypeHelper.incomingLetterTypes);
-            notIncomingLetterTypes = docSubTypes.toArray(new QName[docSubTypes.size()]);
-        }
-        return notIncomingLetterTypes;
+        // TODO DLSeadist
+        // if (notIncomingLetterTypes == null) {
+        // Collection<QName> docSubTypes = dictionaryService.getTypes(DocumentSubtypeModel.MODEL_NAME);
+        // docSubTypes.removeAll(DocumentTypeHelper.incomingLetterTypes);
+        // notIncomingLetterTypes = docSubTypes.toArray(new QName[docSubTypes.size()]);
+        // }
+        // return notIncomingLetterTypes;
+        return new QName[] { DocumentCommonModel.Types.DOCUMENT };
     }
 
     private String getDvkOutboxQuery() {
@@ -1280,6 +1260,16 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                 searchPropertiesDate.add(property);
             }
         }
+        // TODO DLSeadist -- this is probably slow, because it loads fieldDefinitions every time from repo
+        // TODO is this specced somewhere?
+        for (FieldDefinition fieldDefinition : BeanHelper.getDocumentAdminService().getFieldDefinitions()) {
+            FieldType type = fieldDefinition.getFieldTypeEnum();
+            if (type == FieldType.DATE) {
+                searchPropertiesDate.add(fieldDefinition.getQName());
+            } else if (type != FieldType.CHECKBOX) {
+                searchProperties.add(fieldDefinition.getQName());
+            }
+        }
     }
 
     private static boolean isStringProperty(QName dataType) {
@@ -1464,28 +1454,9 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         });
     }
 
-    private <E> List<E> limitResults(List<E> allResults, boolean limited) {
-        if (limited && allResults.size() > RESULTS_LIMIT) {
-            return allResults.subList(0, RESULTS_LIMIT);
-        }
-        return allResults;
-    }
-
-    private List<NodeRef> searchNodes(String query, boolean limited, String queryName) {
+    @Override
+    public List<NodeRef> searchNodes(String query, boolean limited, String queryName) {
         return searchNodes(query, limited, queryName, null);
-    }
-
-    private List<NodeRef> searchNodes(String query, boolean limited, String queryName, StoreRef storeRef) {
-        ResultSet resultSet = doSearch(query, limited, queryName, storeRef);
-        try {
-            return limitResults(resultSet.getNodeRefs(), limited);
-        } finally {
-            try {
-                resultSet.close();
-            } catch (Exception e) {
-                // Do nothing
-            }
-        }
     }
 
     private List<NodeRef> searchNodesFromAllStores(String query, boolean limited, String queryName) {
@@ -1585,92 +1556,14 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         return allStores;
     }
 
-    /**
-     * Sets up search parameters and queries
-     * 
-     * @param query
-     * @param limited if true, only 100 first results are returned
-     * @return query resultset
-     */
-    private ResultSet doSearch(String query, boolean limited, String queryName, StoreRef storeRef) {
-        SearchParameters sp = buildSearchParameters(query, limited);
-        sp.addStore(storeRef == null ? generalService.getStore() : storeRef);
-        return doSearchQuery(sp, queryName);
-    }
-
-    private List<ResultSet> doSearches(String query, boolean limited, String queryName, Collection<StoreRef> storeRefs) {
-        SearchParameters sp = buildSearchParameters(query, limited);
-        if (storeRefs == null || storeRefs.size() == 0) {
-            storeRefs = Arrays.asList(generalService.getStore());
-        }
-        final List<ResultSet> results = new ArrayList<ResultSet>(storeRefs.size());
-        for (StoreRef storeRef : storeRefs) {
-            sp.getStores().clear();
-            sp.addStore(storeRef);
-            results.add(doSearchQuery(sp, queryName));
-
-            // Optimization: don't search from other stores if limit is reached
-            if (limited && results.size() >= RESULTS_LIMIT) {
-                break;
-            }
-        }
-        return results;
-    }
-
-    private ResultSet doSearchQuery(SearchParameters sp, String queryName) {
-        long startTime = System.currentTimeMillis();
-        try {
-            ResultSet resultSet = searchService.query(sp);
-
-            if (log.isInfoEnabled()) {
-                long duration = System.currentTimeMillis() - startTime;
-                log.info("PERFORMANCE: query " + queryName + " - " + duration + " ms");
-            }
-            return resultSet;
-        } catch (BooleanQuery.TooManyClauses e) {
-            log.error("Search failed with TooManyClauses exception, query expanded over limit\n    queryName=" + queryName + "\n    store=" + sp.getStores()
-                    + "\n    limit=" + sp.getLimit() + "\n    limitBy=" + sp.getLimitBy().toString() + "\n    exceptionMessage=" + e.getMessage());
-            throw e;
-        }
-    }
-
-    private SearchParameters buildSearchParameters(String query, boolean limited) {
-        return buildSearchParameters(query, limited ? RESULTS_LIMIT : null);
-    }
-
-    private SearchParameters buildSearchParameters(String query, Integer limit) {
-        // build up the search parameters
-        SearchParameters sp = new SearchParameters();
-        sp.setLanguage(SearchService.LANGUAGE_LUCENE);
-        sp.setQuery(query);
-
-        // This limit does not work when ACLEntryAfterInvocationProvider has been disabled
-        // So we perform our own limiting in this service also
-        if (limit != null) {
-            sp.setLimit(limit);
-            sp.setLimitBy(LimitBy.FINAL_SIZE);
-        } else {
-            sp.setLimitBy(LimitBy.UNLIMITED);
-        }
-        return sp;
-    }
-
     // START: getters / setters
 
     public void setDocumentService(DocumentService documentService) {
         this.documentService = documentService;
     }
 
-    public void setGeneralService(GeneralService generalService) {
-        this.generalService = generalService;
-    }
-
     public void setNodeService(NodeService nodeService) {
         this.nodeService = nodeService;
-    }
-
-    public void setSearchService(SearchService searchService) {
-        this.searchService = searchService;
     }
 
     public void setSeriesService(SeriesService seriesService) {

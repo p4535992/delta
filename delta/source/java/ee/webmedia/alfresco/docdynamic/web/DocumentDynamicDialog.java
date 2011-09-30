@@ -1,38 +1,28 @@
 package ee.webmedia.alfresco.docdynamic.web;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getClearStateNotificationHandler;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPropertySheetStateBean;
 
-import java.io.Serializable;
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
-import javax.faces.model.SelectItem;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
-import org.alfresco.web.bean.dialog.BaseDialogBean;
-import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.config.PropertySheetConfigElement;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.ObjectUtils;
 
-import ee.webmedia.alfresco.addressbook.web.dialog.AddressbookMainViewDialog;
-import ee.webmedia.alfresco.common.listener.RefreshEventListener;
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.common.web.ClearStateNotificationHandler.ClearStateListener;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
 import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfig;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
+import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog.DocDialogSnapshot;
 import ee.webmedia.alfresco.document.file.web.FileBlockBean;
 import ee.webmedia.alfresco.document.log.web.LogBlockBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
@@ -44,24 +34,18 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 
 /**
- * To open this dialog you must:
- * <ol>
- * <li>Call exactly one of the methods in actionListener section, either manually or from {@code <a:actionLink actionListener="..."}</li>
- * <li>To determine the navigation outcome (if this dialog should be opened or you need to stay where you are) you must call {@link #action()} method, either manually or from
- * {@code <a:actionLink action="..."}</li>
- * </ol>
+ * To open this dialog you must call exactly one of the methods in actionListener section, either manually or from {@code <a:actionLink actionListener="..."}
  * <p>
  * For example, to open this dialog from JSP, you should use
- * <code>&lt;a:actionLink actionListener="#{DocumentDynamicDialog.open...}" action="#{DocumentDynamicDialog.action}"&gt;&lt;f:param name="nodeRef" value="..." /&gt;&lt;/a:actionLink&gt;</code>
+ * <code>&lt;a:actionLink actionListener="#{DocumentDynamicDialog.open...}" &gt;&lt;f:param name="nodeRef" value="..." /&gt;&lt;/a:actionLink&gt;</code>
  * </p>
  * <p>
- * For example, to open this dialog manually, (for example {@link ExternalAccessServlet} does this), you should first call {@code documentDynamicDialog.open...(nodeRef)} and then
- * {@code facesContext.getApplication().getNavigationHandler().handleNavigation(facesContext, null, documentDynamicDialog.action())}
+ * For example, to open this dialog manually, (for example {@link ExternalAccessServlet} does this), you should call {@code documentDynamicDialog.open...(nodeRef)}
  * </p>
  * 
  * @author Alar Kvell
  */
-public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateListener, DialogDataProvider, RefreshEventListener {
+public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<DocDialogSnapshot, DocumentDynamicBlock, DialogDataProvider> implements DialogDataProvider {
     private static final long serialVersionUID = 1L;
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentDynamicDialog.class);
 
@@ -113,19 +97,8 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
     }
 
     // =========================================================================
-    // 2 - ACTION method
-    // =========================================================================
 
-    private boolean allow;
-
-    public String action() {
-        return allow ? AlfrescoNavigationHandler.DIALOG_PREFIX + "documentDynamicDialog" : null;
-    }
-
-    // =========================================================================
-    // =========================================================================
-
-    private static class Snapshot implements Serializable {
+    static class DocDialogSnapshot implements BaseSnapshotCapableDialog.Snapshot {
         private static final long serialVersionUID = 1L;
 
         private DocumentDynamic document;
@@ -134,39 +107,25 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
         private DocumentConfig config;
 
         @Override
+        public String getOpenDialogNavigationOutcome() {
+            return AlfrescoNavigationHandler.DIALOG_PREFIX + "documentDynamicDialog";
+        }
+
+        @Override
         public String toString() {
-            return "Snapshot[document=" + (document == null ? null : document.getNodeRef()) + ", inEditMode=" + inEditMode + ", viewModeWasOpenedInThePast="
+            return "DocDialogSnapshot[document=" + (document == null ? null : document.getNodeRef()) + ", inEditMode=" + inEditMode + ", viewModeWasOpenedInThePast="
                     + viewModeWasOpenedInThePast + ", config=" + config + "]";
         }
-    }
-
-    private final Deque<Snapshot> snapshots = new ArrayDeque<Snapshot>();
-
-    private Snapshot getCurrentSnapshot() {
-        Snapshot snapshot = snapshots.peekLast();
-        return snapshot;
-    }
-
-    private void createSnapshot() {
-        snapshots.addLast(new Snapshot());
-    }
-
-    @Override
-    public void clearState() {
-        snapshots.clear();
     }
 
     // =========================================================================
 
     // All dialog entry point methods must call this method
     private void open(NodeRef docRef, boolean inEditMode) {
-        allow = false;
         if (!validateOpen(docRef, inEditMode)) {
             return;
         }
-
-        allow = true;
-        createSnapshot();
+        createSnapshot(new DocDialogSnapshot());
         openOrSwitchModeCommon(docRef, inEditMode);
     }
 
@@ -176,49 +135,25 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
     }
 
     private void openOrSwitchModeCommon(NodeRef docRef, boolean inEditMode) {
-        getCurrentSnapshot().document = getDocumentDynamicService().getDocument(docRef);
-        getCurrentSnapshot().inEditMode = inEditMode;
+        DocDialogSnapshot currentSnapshot = getCurrentSnapshot();
+        currentSnapshot.document = getDocumentDynamicService().getDocument(docRef);
+        currentSnapshot.inEditMode = inEditMode;
         if (!inEditMode) {
-            getCurrentSnapshot().viewModeWasOpenedInThePast = true;
+            currentSnapshot.viewModeWasOpenedInThePast = true;
         }
-        DocumentConfig config = BeanHelper.getDocumentConfigService().getConfig(getNode());
-        getCurrentSnapshot().config = config;
-        reset();
+        currentSnapshot.config = BeanHelper.getDocumentConfigService().getConfig(getNode());
+        resetOrInit(getDataProvider());
         LOG.info("document before rendering: " + getDocument());
-    }
-
-    private String close() {
-        snapshots.removeLast();
-        return super.cancel();
-    }
-
-    // =========================================================================
-
-    @Override
-    public void init(Map<String, String> params) {
-        LOG.info("init");
-        getClearStateNotificationHandler().addClearStateListener(this);
-        super.init(params);
-    }
-
-    @Override
-    public void restored() {
-        LOG.info("restored");
-        reset();
-        // Siin ei ole plaanis midagi teha; kui mingi teine dialoog suletakse ja seetõttu pöördutakse tagasi varemavatud dok.dialoogile, siis nimelt ei tee õiguste ega kustutamise
-        // kontrolli
-        // Õiguste kontroll on ainult dialoogile sisenemisel
-        // Ja eksisteerimise kontroll on igasuguste erinevate tegevuste juures, sest suvalisel hetkel võib niikuinii keegi teine dokumendi kustutada
     }
 
     // =========================================================================
     // Blocks
     // =========================================================================
 
-    private Map<Class<? extends DocumentDynamicBlock>, DocumentDynamicBlock> blocks;
-
-    private Map<Class<? extends DocumentDynamicBlock>, DocumentDynamicBlock> getBlocks() {
-        if (blocks == null) {
+    @Override
+    protected Map<Class<? extends DocumentDynamicBlock>, DocumentDynamicBlock> getBlocks() {
+        Map<Class<? extends DocumentDynamicBlock>, DocumentDynamicBlock> blocks = super.getBlocks();
+        if (blocks.isEmpty()) {
             blocks = new HashMap<Class<? extends DocumentDynamicBlock>, DocumentDynamicBlock>();
             blocks.put(FileBlockBean.class, BeanHelper.getFileBlockBean());
             blocks.put(LogBlockBean.class, BeanHelper.getLogBlockBean());
@@ -226,18 +161,6 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
             blocks.put(SendOutBlockBean.class, BeanHelper.getSendOutBlockBean());
         }
         return blocks;
-    }
-
-    @Override
-    public void refresh() {
-        if (getCurrentSnapshot() == null) {
-            return;
-        }
-        for (DocumentDynamicBlock block : getBlocks().values()) {
-            if (block instanceof RefreshEventListener) {
-                ((RefreshEventListener) block).refresh();
-            }
-        }
     }
 
     // =========================================================================
@@ -265,19 +188,14 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
         LOG.info("cancel");
 
         if (getCurrentSnapshot() == null) {
-            try {
-                throw new RuntimeException("!!!!!!!!!!!!!!!!!!!!!!!!! Cancel is called too many times !!!!!!!!!!!!!!!!!!!!!!!!!");
-            } catch (RuntimeException e) {
-                LOG.warn(e.getMessage(), e);
-            }
-            return super.cancel();
+            Throwable e = new Throwable("!!!!!!!!!!!!!!!!!!!!!!!!! Cancel is called too many times !!!!!!!!!!!!!!!!!!!!!!!!!");
+            LOG.warn(e.getMessage(), e);
+            return cancel(false);
         }
 
-        if (!isInEditMode() || (isInEditMode() && !getCurrentSnapshot().viewModeWasOpenedInThePast)) {
+        if (!isInEditMode() || !getCurrentSnapshot().viewModeWasOpenedInThePast) {
             getDocumentDynamicService().deleteDocumentIfDraft(getDocument().getNodeRef());
-
-            // Close dialog
-            return close();
+            return super.cancel(); // closeDialogSnapshot
         }
 
         // Switch from edit mode back to view mode
@@ -298,6 +216,11 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
         // Switch from edit mode back to view mode
         switchMode(false);
         return null;
+    }
+
+    @Override
+    public boolean isFinishButtonVisible(boolean dialogConfOKButtonVisible) {
+        return isInEditMode();
     }
 
     // =========================================================================
@@ -343,7 +266,7 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
 
     /** For JSP */
     public DocumentDynamic getDocument() {
-        Snapshot snapshot = getCurrentSnapshot();
+        DocDialogSnapshot snapshot = getCurrentSnapshot();
         if (snapshot == null) {
             return null;
         }
@@ -365,7 +288,7 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
     }
 
     private DocumentConfig getConfig() {
-        Snapshot snapshot = getCurrentSnapshot();
+        DocDialogSnapshot snapshot = getCurrentSnapshot();
         if (snapshot == null) {
             return null;
         }
@@ -403,7 +326,7 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
 
     @Override
     public boolean isInEditMode() {
-        Snapshot snapshot = getCurrentSnapshot();
+        DocDialogSnapshot snapshot = getCurrentSnapshot();
         if (snapshot == null) {
             return false;
         }
@@ -447,7 +370,8 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
         this.propertySheet = propertySheet;
     }
 
-    private void reset() {
+    @Override
+    protected void resetOrInit(DialogDataProvider provider) {
         // TODO call clear on all other blocks and components!!!
 
         LOG.info("clearPropertySheet propertySheet=" + ObjectUtils.toString(propertySheet));
@@ -458,12 +382,14 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
             propertySheet.setMode(getMode());
             propertySheet.setConfig(getPropertySheetConfigElement());
         }
-        DialogDataProvider provider = getCurrentSnapshot() == null ? null : this;
         getPropertySheetStateBean().reset(getStateHolders(), provider);
         getDocumentDialogHelperBean().reset(provider);
-        for (DocumentDynamicBlock block : getBlocks().values()) {
-            block.reset(provider);
-        }
+        super.resetOrInit(provider); // reset blocks
+    }
+
+    @Override
+    protected DialogDataProvider getDataProvider() {
+        return getCurrentSnapshot() == null ? null : this;
     }
 
     /** @param event */
@@ -549,18 +475,5 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
      * .
      * Kas me tahame setPropertySheet puhul alati clearida? oleks ohutu; samas võtab see natuke rohkem aega, sest mingite väljade ehitamisel vist käiakse ka baasis
      */
-
-    public SelectItem[] searchUsersOrContacts(int filterIndex, String contains) {
-        if (filterIndex == 0) { // users
-            return BeanHelper.getUserListDialog().searchUsersWithNameValue(-1, contains);
-        } else if (filterIndex == 1) { // contacts
-            final String personLabel = MessageUtil.getMessage("addressbook_private_person").toLowerCase();
-            final String organizationLabel = MessageUtil.getMessage("addressbook_org").toLowerCase();
-            List<Node> nodes = BeanHelper.getAddressbookService().search(contains);
-            return AddressbookMainViewDialog.transformNodesToSelectItems(nodes, personLabel, organizationLabel, true);
-        } else {
-            throw new RuntimeException("Unknown filter index value: " + filterIndex);
-        }
-    }
 
 }

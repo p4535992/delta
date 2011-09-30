@@ -140,7 +140,9 @@ public class Substitute implements Serializable {
 
     public boolean isActive() {
         Date currentDate = DateUtils.truncate(new Date(), Calendar.DATE);
-        return currentDate.after(substitutionStartDate) && currentDate.before(substitutionEndDate);
+        return (currentDate.after(substitutionStartDate) && currentDate.before(substitutionEndDate))
+                || DateUtils.isSameDay(currentDate, substitutionEndDate)
+                || DateUtils.isSameDay(currentDate, substitutionStartDate);
     }
 
     public void setValid(boolean valid) {

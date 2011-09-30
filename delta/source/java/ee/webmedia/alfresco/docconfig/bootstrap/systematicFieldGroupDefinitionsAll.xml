@@ -4,78 +4,19 @@
    <!-- TODO käsitsi muuta view:childName igal fieldGroup'il -->
    <!-- fieldGroup childName is not used anywhere, it is specified only for convenience -->
 
-   <docadmin:fieldGroup view:childName="docadmin:Kasutaja">
-      <view:properties>
-         <docadmin:name>Kasutaja</docadmin:name>
-         <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:readonlyFieldsName></docadmin:readonlyFieldsName>
-         <docadmin:readonlyFieldsRule></docadmin:readonlyFieldsRule>
-         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
-         <docadmin:fieldDefinitionIds>
-            <view:values>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}userName</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}userServiceRank</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}userJobTitle</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}userOrgStructUnit</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}userWorkAddress</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}userEmail</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}userPhone</view:value>
-            </view:values>
-         </docadmin:fieldDefinitionIds>
-      </view:properties>
-   </docadmin:fieldGroup>
-
-   <docadmin:fieldGroup view:childName="docadmin:Kontakt">
-      <view:properties>
-         <docadmin:name>Kontakt</docadmin:name>
-         <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:readonlyFieldsName></docadmin:readonlyFieldsName>
-         <docadmin:readonlyFieldsRule></docadmin:readonlyFieldsRule>
-         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
-         <docadmin:fieldDefinitionIds>
-            <view:values>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}contactName</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}contactAddress</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}contactEmail</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}contactPhone</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}contactFaxNumber</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}contactWebPage</view:value>
-            </view:values>
-         </docadmin:fieldDefinitionIds>
-      </view:properties>
-   </docadmin:fieldGroup>
-
-   <docadmin:fieldGroup view:childName="docadmin:Kasutajad tabelis">
-      <view:properties>
-         <docadmin:name>Kasutajad tabelis</docadmin:name>
-         <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:readonlyFieldsName></docadmin:readonlyFieldsName>
-         <docadmin:readonlyFieldsRule></docadmin:readonlyFieldsRule>
-         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
-         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
-         <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
-         <docadmin:fieldDefinitionIds>
-            <view:values>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}userNames</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}userJobTitle</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}userOrgStructUnit</view:value>
-            </view:values>
-         </docadmin:fieldDefinitionIds>
-      </view:properties>
-   </docadmin:fieldGroup>
-
    <docadmin:fieldGroup view:childName="docadmin:Ajavahemik">
       <view:properties>
          <docadmin:name>Ajavahemik</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:readonlyFieldsName>Ajavahemik</docadmin:readonlyFieldsName>
-         <docadmin:readonlyFieldsRule – beginDate }>{endDate}</docadmin:readonlyFieldsRule – {beginDate}>
+         <docadmin:readonlyFieldsRule>{beginDate} - {endDate}</docadmin:readonlyFieldsRule>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
          <docadmin:fieldDefinitionIds>
             <view:values>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}beginDate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}endDate</view:value>
+               <view:value>beginDate</view:value>
+               <view:value>endDate</view:value>
+               <view:value>calculatedDurationDays</view:value>
             </view:values>
          </docadmin:fieldDefinitionIds>
       </view:properties>
@@ -91,9 +32,9 @@
          <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
          <docadmin:fieldDefinitionIds>
             <view:values>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}sellerPartyName</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}sellerPartyRegNumber</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}sellerPartySapAccount</view:value>
+               <view:value>sellerPartyName</view:value>
+               <view:value>sellerPartyRegNumber</view:value>
+               <view:value>sellerPartySapAccount</view:value>
             </view:values>
          </docadmin:fieldDefinitionIds>
       </view:properties>
@@ -109,9 +50,9 @@
          <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
          <docadmin:fieldDefinitionIds>
             <view:values>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}sellerPartyContactName</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}sellerPartyContactPhoneNumber</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}sellerPartyContactEmailAddress</view:value>
+               <view:value>sellerPartyContactName</view:value>
+               <view:value>sellerPartyContactPhoneNumber</view:value>
+               <view:value>sellerPartyContactEmailAddress</view:value>
             </view:values>
          </docadmin:fieldDefinitionIds>
       </view:properties>
@@ -126,8 +67,8 @@
          <docadmin:showInTwoColumns>true</docadmin:showInTwoColumns>
          <docadmin:fieldDefinitionIds>
             <view:values>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}invoiceDate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}invoiceNumber</view:value>
+               <view:value>invoiceDate</view:value>
+               <view:value>invoiceNumber</view:value>
             </view:values>
          </docadmin:fieldDefinitionIds>
       </view:properties>
@@ -142,8 +83,8 @@
          <docadmin:showInTwoColumns>true</docadmin:showInTwoColumns>
          <docadmin:fieldDefinitionIds>
             <view:values>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}invoiceDueDate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}paymentTerm</view:value>
+               <view:value>invoiceDueDate</view:value>
+               <view:value>paymentTerm</view:value>
             </view:values>
          </docadmin:fieldDefinitionIds>
       </view:properties>
@@ -158,10 +99,10 @@
          <docadmin:showInTwoColumns>true</docadmin:showInTwoColumns>
          <docadmin:fieldDefinitionIds>
             <view:values>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}totalSum</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}currency</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}invoiceSum</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}vat</view:value>
+               <view:value>totalSum</view:value>
+               <view:value>currency</view:value>
+               <view:value>invoiceSum</view:value>
+               <view:value>vat</view:value>
             </view:values>
          </docadmin:fieldDefinitionIds>
       </view:properties>
@@ -176,8 +117,8 @@
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:fieldDefinitionIds>
             <view:values>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}entryDate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}entrySapNumber</view:value>
+               <view:value>entryDate</view:value>
+               <view:value>entrySapNumber</view:value>
             </view:values>
          </docadmin:fieldDefinitionIds>
       </view:properties>
@@ -187,18 +128,16 @@
       <view:properties>
          <docadmin:name>Lepingu pooled</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:readonlyFieldsName></docadmin:readonlyFieldsName>
          <docadmin:readonlyFieldsNameChangeable>false</docadmin:readonlyFieldsNameChangeable>
-         <docadmin:readonlyFieldsRule></docadmin:readonlyFieldsRule>
          <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
          <docadmin:showInTwoColumns>true</docadmin:showInTwoColumns>
          <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
          <docadmin:fieldDefinitionIds>
             <view:values>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}partyName</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}partySigner</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}partyEmail</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}partyContactPerson</view:value>
+               <view:value>partyName</view:value>
+               <view:value>partySigner</view:value>
+               <view:value>partyEmail</view:value>
+               <view:value>partyContactPerson</view:value>
             </view:values>
          </docadmin:fieldDefinitionIds>
       </view:properties>
@@ -209,17 +148,16 @@
          <docadmin:name>Puhkuse taotlemine</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:readonlyFieldsName>Palun vormistada mind</docadmin:readonlyFieldsName>
-         <docadmin:readonlyFieldsRule></docadmin:readonlyFieldsRule>
          <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
          <docadmin:fieldDefinitionIds>
             <view:values>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}leaveType</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}leaveBeginDate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}leaveEndDate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}leaveDays</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}leaveWorkYear</view:value>
+               <view:value>leaveType</view:value>
+               <view:value>leaveBeginDate</view:value>
+               <view:value>leaveEndDate</view:value>
+               <view:value>leaveDays</view:value>
+               <view:value>leaveWorkYear</view:value>
             </view:values>
          </docadmin:fieldDefinitionIds>
       </view:properties>
@@ -230,18 +168,17 @@
          <docadmin:name>Puhkuse muutmine</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:readonlyFieldsName>Muuta ajakava- või korraldusejärgne puhkus järgnevalt (lühendamine, pikendamine, üleviimine)</docadmin:readonlyFieldsName>
-         <docadmin:readonlyFieldsRule></docadmin:readonlyFieldsRule>
          <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
          <docadmin:fieldDefinitionIds>
             <view:values>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}leaveInitialBeginDate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}leaveInitialEndDate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}leaveNewBeginDate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}leaveNewEndDate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}leaveChangedDays</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}leaveNewWorkYear</view:value>
+               <view:value>leaveInitialBeginDate</view:value>
+               <view:value>leaveInitialEndDate</view:value>
+               <view:value>leaveNewBeginDate</view:value>
+               <view:value>leaveNewEndDate</view:value>
+               <view:value>leaveChangedDays</view:value>
+               <view:value>leaveNewWorkYear</view:value>
             </view:values>
          </docadmin:fieldDefinitionIds>
       </view:properties>
@@ -252,15 +189,14 @@
          <docadmin:name>Puhkuse tühistamine</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:readonlyFieldsName>Tühistada ajakava- või korraldusejärgne puhkus</docadmin:readonlyFieldsName>
-         <docadmin:readonlyFieldsRule></docadmin:readonlyFieldsRule>
          <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
          <docadmin:fieldDefinitionIds>
             <view:values>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}leaveCancelBeginDate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}leaveCancelEndDate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}leaveCancelledDay</view:value>
+               <view:value>leaveCancelBeginDate</view:value>
+               <view:value>leaveCancelEndDate</view:value>
+               <view:value>leaveCancelledDay</view:value>
             </view:values>
          </docadmin:fieldDefinitionIds>
       </view:properties>
@@ -271,16 +207,15 @@
          <docadmin:name>Asendaja määramine</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:readonlyFieldsName>Määrata asendajaks</docadmin:readonlyFieldsName>
-         <docadmin:readonlyFieldsRule></docadmin:readonlyFieldsRule>
          <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
          <docadmin:fieldDefinitionIds>
             <view:values>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}substituteName</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}substituteJobTitle</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}substitutionBeginDate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}substitutionEndDate</view:value>
+               <view:value>substituteName</view:value>
+               <view:value>substituteJobTitle</view:value>
+               <view:value>substitutionBeginDate</view:value>
+               <view:value>substitutionEndDate</view:value>
             </view:values>
          </docadmin:fieldDefinitionIds>
       </view:properties>
@@ -290,33 +225,39 @@
       <view:properties>
          <docadmin:name>Koolituse taotleja</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:readonlyFieldsName></docadmin:readonlyFieldsName>
          <docadmin:readonlyFieldsNameChangeable>false</docadmin:readonlyFieldsNameChangeable>
-         <docadmin:readonlyFieldsRule></docadmin:readonlyFieldsRule>
          <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
          <docadmin:fieldDefinitionIds>
             <view:values>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}applicantName</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}applicantJobTitle</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}applicantStructUnitName</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}errandBeginDate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}errandEndDate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}dailyAllowanceDays</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}dailyAllowanceRate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}dailyAllowanceSum</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}dailyAllowanceTotalSum</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}expenseType</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}expectedExpenseSum</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}expensesTotalSum</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}financingSource</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}advancePaymentSum</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}advancePaymentDesc</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}substituteName</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}substitutionBeginDate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}sustitutionEndDate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}errandComment</view:value>
+               <view:value>applicantName</view:value>
+               <view:value>applicantServiceRank</view:value>
+               <view:value>applicantJobTitle</view:value>
+               <view:value>applicantOrgStructUnit</view:value>
+               <view:value>applicantWorkAddress</view:value>
+               <view:value>applicantEmail</view:value>
+               <view:value>applicantPhone</view:value>
+               <view:value>errandBeginDate</view:value>
+               <view:value>errandEndDate</view:value>
+               <view:value>dailyAllowanceCateringCount</view:value>
+               <view:value>dailyAllowanceDays</view:value>
+               <view:value>dailyAllowanceRate</view:value>
+               <view:value>dailyAllowanceFinancingSource</view:value>
+               <view:value>dailyAllowanceSum</view:value>
+               <view:value>dailyAllowanceTotalSum</view:value>
+               <view:value>expenseType</view:value>
+               <view:value>expectedExpenseSum</view:value>
+               <view:value>expensesFinancingSource</view:value>
+               <view:value>expensesTotalSum</view:value>
+               <view:value>financingSource</view:value>
+               <view:value>advancePaymentSum</view:value>
+               <view:value>advancePaymentDesc</view:value>
+               <view:value>substituteName</view:value>
+               <view:value>substituteJobTitle</view:value>
+               <view:value>substitutionBeginDate</view:value>
+               <view:value>sustitutionEndDate</view:value>
+               <view:value>errandComment</view:value>
             </view:values>
          </docadmin:fieldDefinitionIds>
       </view:properties>
@@ -326,35 +267,44 @@
       <view:properties>
          <docadmin:name>Siselähetuse taotleja</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:readonlyFieldsName></docadmin:readonlyFieldsName>
          <docadmin:readonlyFieldsNameChangeable>false</docadmin:readonlyFieldsNameChangeable>
-         <docadmin:readonlyFieldsRule></docadmin:readonlyFieldsRule>
          <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
          <docadmin:fieldDefinitionIds>
             <view:values>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}applicantName</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}applicantJobTitle</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}applicantStructUnitName</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}costManager</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}costCenter</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}eventName</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}eventOrganizer</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}eventBeginDate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}eventEndDate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}errandBeginDate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}errandEndDate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}county</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}city</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}travelPurpose</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}expenseType</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}expectedExpenseSum</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}expensesTotalSum</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}financingSource</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}advancePaymentSum</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}advancePaymentDesc</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}errandComment</view:value>
+               <view:value>applicantName</view:value>
+               <view:value>applicantServiceRank</view:value>
+               <view:value>applicantJobTitle</view:value>
+               <view:value>applicantOrgStructUnit</view:value>
+               <view:value>applicantWorkAddress</view:value>
+               <view:value>applicantEmail</view:value>
+               <view:value>applicantPhone</view:value>
+               <view:value>applicantId</view:value>
+               <view:value>costManager</view:value>
+               <view:value>costCenter</view:value>
+               <view:value>eventName</view:value>
+               <view:value>eventOrganizer</view:value>
+               <view:value>eventBeginDate</view:value>
+               <view:value>eventEndDate</view:value>
+               <view:value>errandBeginDate</view:value>
+               <view:value>errandEndDate</view:value>
+               <view:value>county</view:value>
+               <view:value>city</view:value>
+               <view:value>travelPurpose</view:value>
+               <view:value>expenseType</view:value>
+               <view:value>expectedExpenseSum</view:value>
+               <view:value>expensesFinancingSource</view:value>
+               <view:value>expensesTotalSum</view:value>
+               <view:value>financingSource</view:value>
+               <view:value>advancePaymentSum</view:value>
+               <view:value>advancePaymentDesc</view:value>
+               <view:value>substituteName</view:value>
+               <view:value>substituteJobTitle</view:value>
+               <view:value>substitutionBeginDate</view:value>
+               <view:value>sustitutionEndDate</view:value>
+               <view:value>errandComment</view:value>
+               <view:value>reportDueDate</view:value>
             </view:values>
          </docadmin:fieldDefinitionIds>
       </view:properties>
@@ -364,42 +314,52 @@
       <view:properties>
          <docadmin:name>Välislähetuse taotleja</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:readonlyFieldsName></docadmin:readonlyFieldsName>
          <docadmin:readonlyFieldsNameChangeable>false</docadmin:readonlyFieldsNameChangeable>
-         <docadmin:readonlyFieldsRule></docadmin:readonlyFieldsRule>
          <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
          <docadmin:fieldDefinitionIds>
             <view:values>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}applicantName</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}applicantJobTitle</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}applicantStructUnitName</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}costManager</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}costCenter</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}travelPurpose</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}eventOrganizer</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}eventBeginDate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}eventEndDate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}errandBeginDate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}errandEndDate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}country</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}city</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}dailyAllowanceDays</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}dailyAllowanceRate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}dailyAllowanceSum</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}dailyAllowanceTotalSum</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}expenseType</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}expectedExpenseSum</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}expensesTotalSum</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}financingSource</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}advancePaymentSum</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}advancePaymentDesc</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}substituteName</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}substitutionBeginDate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}sustitutionEndDate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}reportDueDate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}errandComment</view:value>
+               <view:value>applicantName</view:value>
+               <view:value>applicantServiceRank</view:value>
+               <view:value>applicantJobTitle</view:value>
+               <view:value>applicantOrgStructUnit</view:value>
+               <view:value>applicantWorkAddress</view:value>
+               <view:value>applicantEmail</view:value>
+               <view:value>applicantPhone</view:value>
+               <view:value>applicantId</view:value>
+               <view:value>costManager</view:value>
+               <view:value>costCenter</view:value>
+               <view:value>purchasingManager</view:value>
+               <view:value>authorisedCostManager</view:value>
+               <view:value>travelPurpose</view:value>
+               <view:value>eventName</view:value>
+               <view:value>eventOrganizer</view:value>
+               <view:value>eventBeginDate</view:value>
+               <view:value>eventEndDate</view:value>
+               <view:value>errandBeginDate</view:value>
+               <view:value>errandEndDate</view:value>
+               <view:value>country</view:value>
+               <view:value>city</view:value>
+               <view:value>dailyAllowanceCateringCount</view:value>
+               <view:value>dailyAllowanceDays</view:value>
+               <view:value>dailyAllowanceRate</view:value>
+               <view:value>dailyAllowanceFinancingSource</view:value>
+               <view:value>dailyAllowanceSum</view:value>
+               <view:value>dailyAllowanceTotalSum</view:value>
+               <view:value>expenseType</view:value>
+               <view:value>expectedExpenseSum</view:value>
+               <view:value>expensesFinancingSource</view:value>
+               <view:value>expensesTotalSum</view:value>
+               <view:value>financingSource</view:value>
+               <view:value>advancePaymentSum</view:value>
+               <view:value>advancePaymentDesc</view:value>
+               <view:value>substituteName</view:value>
+               <view:value>substituteJobTitle</view:value>
+               <view:value>substitutionBeginDate</view:value>
+               <view:value>sustitutionEndDate</view:value>
+               <view:value>reportDueDate</view:value>
+               <view:value>errandComment</view:value>
             </view:values>
          </docadmin:fieldDefinitionIds>
       </view:properties>
@@ -409,21 +369,20 @@
       <view:properties>
          <docadmin:name>Esimene lepingu pool</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:readonlyFieldsName></docadmin:readonlyFieldsName>
          <docadmin:readonlyFieldsNameChangeable>false</docadmin:readonlyFieldsNameChangeable>
-         <docadmin:readonlyFieldsRule></docadmin:readonlyFieldsRule>
          <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
          <docadmin:fieldDefinitionIds>
             <view:values>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}firstPartyName</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}signerName</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}signerServiceRank</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}signerJobTitle</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}firstPartyContactPerson</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}firstPartyContactPersonEmail</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}firstPartyContactPersonPhone</view:value>
+               <view:value>firstPartyName</view:value>
+               <view:value>signerName</view:value>
+               <view:value>signerServiceRank</view:value>
+               <view:value>signerJobTitle</view:value>
+               <view:value>signerEmail</view:value>
+               <view:value>firstPartyContactPerson</view:value>
+               <view:value>firstPartyContactPersonEmail</view:value>
+               <view:value>firstPartyContactPersonPhone</view:value>
             </view:values>
          </docadmin:fieldDefinitionIds>
       </view:properties>
@@ -434,15 +393,13 @@
          <docadmin:name>Märksõnad hierarhilisest märksõnastikust</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:mandatoryForDoc>false</docadmin:mandatoryForDoc>
-         <docadmin:readonlyFieldsName></docadmin:readonlyFieldsName>
-         <docadmin:readonlyFieldsRule></docadmin:readonlyFieldsRule>
          <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:thesaurus>kui kaustas /thesauri leidub ainult üks thesaurus tüüpi objekt, siis on see vaikimisi valitud</docadmin:thesaurus>
          <docadmin:fieldDefinitionIds>
             <view:values>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}keywordLevel1</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}keywordLevel2</view:value>
+               <view:value>keywordLevel1</view:value>
+               <view:value>keywordLevel2</view:value>
             </view:values>
          </docadmin:fieldDefinitionIds>
       </view:properties>
@@ -452,17 +409,16 @@
       <view:properties>
          <docadmin:name>Lähetuse kulud</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:readonlyFieldsName></docadmin:readonlyFieldsName>
          <docadmin:readonlyFieldsNameChangeable>false</docadmin:readonlyFieldsNameChangeable>
-         <docadmin:readonlyFieldsRule></docadmin:readonlyFieldsRule>
          <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
          <docadmin:fieldDefinitionIds>
             <view:values>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}expenseTypeChoice</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}financingSourceChoice</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}payingReasonAndExtent</view:value>
+               <view:value>expenseTypeChoice</view:value>
+               <view:value>financingSourceChoice</view:value>
+               <view:value>payingReasonAndExtent</view:value>
+               <view:value>errandExpectedExpense</view:value>
             </view:values>
          </docadmin:fieldDefinitionIds>
       </view:properties>
@@ -472,17 +428,15 @@
       <view:properties>
          <docadmin:name>Lähetuse kulude aruanne</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:readonlyFieldsName></docadmin:readonlyFieldsName>
          <docadmin:readonlyFieldsNameChangeable>false</docadmin:readonlyFieldsNameChangeable>
-         <docadmin:readonlyFieldsRule></docadmin:readonlyFieldsRule>
          <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
          <docadmin:fieldDefinitionIds>
             <view:values>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}expenseTypeChoice</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}errandReportPaymentMethod</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}errandReportSum</view:value>
+               <view:value>expenseTypeChoice</view:value>
+               <view:value>errandReportPaymentMethod</view:value>
+               <view:value>errandReportSum</view:value>
             </view:values>
          </docadmin:fieldDefinitionIds>
       </view:properties>
@@ -492,22 +446,20 @@
       <view:properties>
          <docadmin:name>Lähetuse kulude aruande koond</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:readonlyFieldsName></docadmin:readonlyFieldsName>
          <docadmin:readonlyFieldsNameChangeable>false</docadmin:readonlyFieldsNameChangeable>
-         <docadmin:readonlyFieldsRule></docadmin:readonlyFieldsRule>
          <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
          <docadmin:fieldDefinitionIds>
             <view:values>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}expenseTypeChoice</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}errandSummaryProject</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}errandSummaryDepartment</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}financingSource</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}errandSummaryExpenseItem</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}errandSummaryAccount</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}errandSummaryDebit</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}errandSummaryCredit</view:value>
+               <view:value>expenseTypeChoice</view:value>
+               <view:value>errandSummaryProject</view:value>
+               <view:value>errandSummaryDepartment</view:value>
+               <view:value>financingSource</view:value>
+               <view:value>errandSummaryExpenseItem</view:value>
+               <view:value>errandSummaryAccount</view:value>
+               <view:value>errandSummaryDebit</view:value>
+               <view:value>errandSummaryCredit</view:value>
             </view:values>
          </docadmin:fieldDefinitionIds>
       </view:properties>
@@ -517,25 +469,23 @@
       <view:properties>
          <docadmin:name>Sõiduauto kasutamise hüvitis</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:readonlyFieldsName></docadmin:readonlyFieldsName>
          <docadmin:readonlyFieldsNameChangeable>false</docadmin:readonlyFieldsNameChangeable>
-         <docadmin:readonlyFieldsRule></docadmin:readonlyFieldsRule>
          <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
          <docadmin:fieldDefinitionIds>
             <view:values>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}driveRecordKeeping</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}driveCompensationRate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}driveBeginDate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}driveEndDate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}driveOdoBegin</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}driveOdoEnd</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}driveKm</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}driveCompensationCalculated</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}driveTotalKm</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}driveTotalCompensation</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}driveCompensation</view:value>
+               <view:value>driveRecordKeeping</view:value>
+               <view:value>driveCompensationRate</view:value>
+               <view:value>driveBeginDate</view:value>
+               <view:value>driveEndDate</view:value>
+               <view:value>driveOdoBegin</view:value>
+               <view:value>driveOdoEnd</view:value>
+               <view:value>driveKm</view:value>
+               <view:value>driveCompensationCalculated</view:value>
+               <view:value>driveTotalKm</view:value>
+               <view:value>driveTotalCompensation</view:value>
+               <view:value>driveCompensation</view:value>
             </view:values>
          </docadmin:fieldDefinitionIds>
       </view:properties>
@@ -545,17 +495,15 @@
       <view:properties>
          <docadmin:name>Sõiduauto kasutamise hüvitis (RIK)</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:readonlyFieldsName></docadmin:readonlyFieldsName>
          <docadmin:readonlyFieldsNameChangeable>false</docadmin:readonlyFieldsNameChangeable>
-         <docadmin:readonlyFieldsRule></docadmin:readonlyFieldsRule>
          <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
          <docadmin:fieldDefinitionIds>
             <view:values>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}driveTotalKm</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}driveCompensationRate</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}driveTotalCompensation</view:value>
+               <view:value>driveTotalKm</view:value>
+               <view:value>driveCompensationRate</view:value>
+               <view:value>driveTotalCompensation</view:value>
             </view:values>
          </docadmin:fieldDefinitionIds>
       </view:properties>

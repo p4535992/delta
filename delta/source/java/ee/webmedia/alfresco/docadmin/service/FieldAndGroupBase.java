@@ -88,14 +88,6 @@ public abstract class FieldAndGroupBase extends MetadataItem {
         return getPropBoolean(DocumentAdminModel.Props.REMOVABLE_FROM_SYSTEMATIC_DOC_TYPE);
     }
 
-    public final boolean isDefaultUserLoggedIn() {
-        return getPropBoolean(DocumentAdminModel.Props.DEFAULT_USER_LOGGED_IN);
-    }
-
-    public final void setDefaultUserLoggedIn(boolean defaultUserLoggedIn) {
-        setProp(DocumentAdminModel.Props.DEFAULT_USER_LOGGED_IN, defaultUserLoggedIn);
-    }
-
     public final boolean isMandatoryForVol() {
         return getPropBoolean(DocumentAdminModel.Props.MANDATORY_FOR_VOL);
     }
@@ -107,13 +99,15 @@ public abstract class FieldAndGroupBase extends MetadataItem {
     @Override
     public boolean isRemovableFromList() {
         // if subclass delegates method call here, then expecting that parent is DocumentTypeVersion
+        if (isMandatoryForDoc()) {
+            return false;
+        }
         DocumentTypeVersion docTypeVersion = (DocumentTypeVersion) getParent();
-        if (isRemovableFromSystematicDocType()) {
+        DocumentType docType = docTypeVersion.getParent();
+        if (!docType.isSystematic()) {
             return true;
         }
-        DocumentType docType = docTypeVersion.getParent();
-        // return !docType.isSystematic();
-        if (!docType.isSystematic()) {
+        if (isRemovableFromSystematicDocType()) {
             return true;
         }
         return false;

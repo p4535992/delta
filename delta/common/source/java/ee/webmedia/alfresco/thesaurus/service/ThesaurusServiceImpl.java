@@ -1,5 +1,10 @@
 package ee.webmedia.alfresco.thesaurus.service;
 
+import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyExactQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
+import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsOr;
+
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Serializable;
@@ -22,6 +27,8 @@ import org.apache.commons.lang.StringUtils;
 import com.thoughtworks.xstream.XStream;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
+import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.thesaurus.model.HierarchicalKeyword;
 import ee.webmedia.alfresco.thesaurus.model.Thesaurus;
 import ee.webmedia.alfresco.thesaurus.model.ThesaurusModel;
@@ -38,6 +45,22 @@ public class ThesaurusServiceImpl implements ThesaurusService {
 
     private GeneralService generalService;
     private NodeService nodeService;
+    private DocumentSearchService documentSearchService;
+
+    @Override
+    public boolean isThesaurusUsed(String thesaurusName) {
+        // TODO DLSeadist maybe need to cache the result - field using thesaurus will always remain using that thesaurus even if it is changed
+        // (new field is created under new DocumentTypeVersion)
+        boolean used = documentSearchService.isMatch(
+                joinQueryPartsAnd(
+                        joinQueryPartsOr(
+                                generateTypeQuery(DocumentAdminModel.Types.FIELD)
+                                , generateTypeQuery(DocumentAdminModel.Types.FIELD_DEFINITION)
+                        )
+                        , generatePropertyExactQuery(DocumentAdminModel.Props.THESAURUS, thesaurusName, false))
+        );
+        return used;
+    }
 
     @Override
     public Thesaurus saveThesaurus(Thesaurus thesaurus) {
@@ -185,7 +208,10 @@ public class ThesaurusServiceImpl implements ThesaurusService {
                 continue;
             }
 
-            nodeService.setProperty(repoThesaurus.getNodeRef(), ThesaurusModel.Prop.DESCRIPTION, thesaurus.getDescription());
+            if (!StringUtils.equals(repoThesaurus.getDescription(), thesaurus.getDescription())) {
+                changed = true;
+                nodeService.setProperty(repoThesaurus.getNodeRef(), ThesaurusModel.Prop.DESCRIPTION, thesaurus.getDescription());
+            }
 
             // Add new keywords
             @SuppressWarnings("unchecked")
@@ -207,6 +233,10 @@ public class ThesaurusServiceImpl implements ThesaurusService {
 
     public void setNodeService(NodeService nodeService) {
         this.nodeService = nodeService;
+    }
+
+    public void setDocumentSearchService(DocumentSearchService documentSearchService) {
+        this.documentSearchService = documentSearchService;
     }
 
     // END: getters / setters

@@ -34,6 +34,11 @@
       <component-type>ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditor</component-type>
       <component-class>ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditor</component-class>
    </component>
+   
+   <component>
+      <component-type>ee.webmedia.alfresco.common.propertysheet.datepicker.DateTimePicker</component-type>
+      <component-class>ee.webmedia.alfresco.common.propertysheet.datepicker.DateTimePicker</component-class>
+   </component>
 
    <component>
       <component-type>ee.webmedia.alfresco.common.propertysheet.search.Search</component-type>
@@ -288,6 +293,12 @@
       </renderer>
       
       <renderer>
+         <component-family>ee.webmedia.alfresco.common.propertysheet.datepicker.DateTimePicker</component-family>
+         <renderer-type>ee.webmedia.alfresco.common.propertysheet.datepicker.DateTimePickerRenderer</renderer-type>
+         <renderer-class>ee.webmedia.alfresco.common.propertysheet.datepicker.DateTimePickerRenderer</renderer-class>
+      </renderer>      
+      
+      <renderer>
          <component-family>ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditor</component-family>
          <renderer-type>ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditorRenderer</renderer-type>
          <renderer-class>ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditorRenderer</renderer-class>
@@ -327,7 +338,13 @@
           <component-family>javax.faces.SelectMany</component-family>
           <renderer-type>ee.webmedia.alfresco.common.propertysheet.dimensionselector.DimensionSelectorRenderer</renderer-type>
           <renderer-class>ee.webmedia.alfresco.common.propertysheet.dimensionselector.DimensionSelectorRenderer</renderer-class>
-      </renderer>      
+      </renderer>  
+      
+      <renderer>
+          <component-family>javax.faces.SelectOne</component-family>
+          <renderer-type>ee.webmedia.alfresco.common.propertysheet.classificatorselector.LabelAndValueSelectorRenderer</renderer-type>
+          <renderer-class>ee.webmedia.alfresco.common.propertysheet.classificatorselector.LabelAndValueSelectorRenderer</renderer-class>
+      </renderer>
      
    </render-kit>
 

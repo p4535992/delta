@@ -16,7 +16,7 @@
             <action-listener>#{DeleteDialog.setupDeleteDialog}</action-listener>
             <params>
                <param name="nodeRef">#{actionContext.nodeRef}</param>
-               <param name="confirmMessagePlaceholder">#{actionContext.name}</param>
+               <param name="confirmMessagePlaceholder0">#{actionContext.name}</param>
                <param name="deleteAfterConfirmHandler">ClassificatorDetailsDialog.deleteClassificator</param>
             </params>
             <action>dialog:deleteDialog</action>

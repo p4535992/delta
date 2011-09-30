@@ -6,7 +6,6 @@ import java.util.Collection;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
-import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -14,10 +13,7 @@ import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.transaction.TransactionService;
 
-import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
-import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentTypesBootstrap;
 import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImplFSStub;
@@ -70,32 +66,10 @@ public class TestingForDeveloperBean implements Serializable {
         deleteBootstrap(simdhsModule, "systematicFieldDefinitionsBootstrap1");
         deleteBootstrap(simdhsModule, "systematicFieldDefinitionsBootstrap2");
         deleteBootstrap(simdhsModule, "systematicFieldGroupDefinitions1FixBootstrap");
-        deleteBootstrap(simdhsModule, "systematicDocumentTypesBootstrap");
-        NodeRef fieldDefsNodeRef = getNodeRef("/{http://alfresco.webmedia.ee/model/document/admin/1.0}fieldDefinitions");
-        NodeRef fieldGroupDefsNodeRef = getNodeRef("/{http://alfresco.webmedia.ee/model/document/admin/1.0}fieldGroupDefinitions");
-        deleteChildren(fieldDefsNodeRef);
-        deleteChildren(fieldGroupDefsNodeRef);
-
-        NodeRef documentTypesNodeRef = getNodeRef("/{http://alfresco.webmedia.ee/model/document/admin/1.0}documentTypes");
-        for (ChildAssociationRef childAssociationRef : getNodeService().getChildAssocs(documentTypesNodeRef)) {
-            NodeRef childRef = childAssociationRef.getChildRef();
-            if (Boolean.TRUE.equals(nodeService.getProperty(childRef, DocumentAdminModel.Props.SYSTEMATIC))) {
-                getNodeService().deleteNode(childRef);
-                LOG.info("deleted node " + childRef);
-            }
-        }
-    }
-
-    public void importSystematicDocumentTypes(@SuppressWarnings("unused") ActionEvent event) {
-        final SystematicDocumentTypesBootstrap systematicDocumentTypesBootstrap = (SystematicDocumentTypesBootstrap) AppConstants.getBeanFactory().getBean(
-                "systematicDocumentTypesBootstrap");
-        BeanHelper.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
-            @Override
-            public Void execute() throws Throwable {
-                systematicDocumentTypesBootstrap.executeInternalImpl();
-                return null;
-            }
-        });
+        // deleteBootstrap(simdhsModule, "systematicDocumentTypesBootstrap");
+        deleteChildren(getNodeRef("/docadmin:fieldDefinitions"));
+        deleteChildren(getNodeRef("/docadmin:fieldGroupDefinitions"));
+        // deleteChildren(getNodeRef("/docadmin:documentTypes"));
     }
 
     private void deleteBootstrap(String moduleName, String bootstrapName) {
@@ -127,9 +101,7 @@ public class TestingForDeveloperBean implements Serializable {
     }
 
     private String getBootstrapXPath(String moduleName, String bootstrapName) {
-        return "/{http://www.alfresco.org/model/system/1.0}system-registry/{http://www.alfresco.org/system/modules/1.0}modules/" +
-                "{http://www.alfresco.org/system/modules/1.0}" + moduleName
-                + "/{http://www.alfresco.org/system/modules/1.0}components/{http://www.alfresco.org/system/modules/1.0}" + bootstrapName;
+        return "/sys:system-registry/module:modules/module:" + moduleName + "/module:components/module:" + bootstrapName;
     }
 
     protected RetryingTransactionHelper getTransactionHelper() {

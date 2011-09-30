@@ -26,7 +26,7 @@
     if (fileUploaded == true) {
         String name = dialog.getFileName();
         // FIXME check conditions!
-        if (!dialog.isEmailTemplate() && !dialog.isSystemTemplate() && !FilenameUtils.getExtension(name).equalsIgnoreCase("dot") ||
+        if (!dialog.isEmailTemplate() && !dialog.isSystemTemplate() && !FilenameUtils.getExtension(name).equalsIgnoreCase("dot") && !FilenameUtils.getExtension(name).equalsIgnoreCase("dotx") ||
              (dialog.isEmailTemplate() || dialog.isSystemTemplate()) && !FilenameUtils.getExtension(name).equalsIgnoreCase("htm") && !FilenameUtils.getExtension(name).equalsIgnoreCase("html")) {
             fileUploaded = false;
             wrongFormat = true;

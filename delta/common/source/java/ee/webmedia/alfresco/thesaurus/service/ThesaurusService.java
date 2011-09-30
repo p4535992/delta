@@ -83,4 +83,12 @@ public interface ThesaurusService {
      */
     boolean importThesauri(List<Thesaurus> importedThesauri);
 
+    /**
+     * Checks if thesaurus is bound to a fieldGroup
+     * 
+     * @param thesaurusName name of the thesaurus
+     * @return true, if thesaurus is used in the system
+     */
+    boolean isThesaurusUsed(String thesaurusName);
+
 }

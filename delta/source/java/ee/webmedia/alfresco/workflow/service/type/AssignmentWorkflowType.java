@@ -92,7 +92,7 @@ public class AssignmentWorkflowType extends BaseWorkflowType implements Workflow
                     documentService.setDocStatusFinished(docRef);
                 }
                 if (isIncomingLetter || DocumentTypeHelper.isOutgoingLetter(document.getType())) {
-                    workflowService.setWorkflowsAndTasksFinished(queue, cWorkflow, Status.UNFINISHED,
+                    workflowService.setWorkflowsAndTasksFinished(queue, cWorkflow,
                             "task_outcome_unfinished_by_finishing_responsible_task", null, false, getExcludedNodeRefsOnFinishWorkflows(cWorkflow));
                     workflowService.addOtherCompundWorkflows(cWorkflow);
                     List<CompoundWorkflow> compoundWorkflows = cWorkflow.getOtherCompoundWorkflows();
@@ -103,7 +103,7 @@ public class AssignmentWorkflowType extends BaseWorkflowType implements Workflow
                             i.remove();
                         } else {
                             List<NodeRef> excludedNodeRefs = getExcludedNodeRefsOnFinishWorkflows(compoundWorkflow);
-                            workflowService.setWorkflowsAndTasksFinished(queue, compoundWorkflow, Status.UNFINISHED,
+                            workflowService.setWorkflowsAndTasksFinished(queue, compoundWorkflow,
                                     "task_outcome_unfinished_by_finishing_responsible_task", null, false, excludedNodeRefs);
                         }
                     }

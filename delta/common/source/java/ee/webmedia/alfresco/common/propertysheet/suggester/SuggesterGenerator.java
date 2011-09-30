@@ -69,7 +69,7 @@ public class SuggesterGenerator extends TextAreaGenerator {
         } else {
             attributes.put(ComponentAttributeNames.SUGGESTER_VALUES, list);
         }
-        ComponentUtil.setDisabledAttributeRecursively(component, list == null);
+        ComponentUtil.setReadonlyAttributeRecursively(component, list == null);
     }
 
     public Pair<List<String>, String> getSuggesterValues(FacesContext context, UIInput component) {

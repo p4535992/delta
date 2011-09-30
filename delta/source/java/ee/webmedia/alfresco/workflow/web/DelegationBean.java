@@ -19,13 +19,9 @@ import javax.faces.event.ActionEvent;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.lock.NodeLockedException;
-import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.cmr.security.AuthorityService;
-import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.namespace.QName;
-import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
@@ -80,7 +76,6 @@ public class DelegationBean implements Serializable {
     private static final String TMP_GENERATE_OPINION_TASK_DELEGATION = "{temp}delegateAsOpinionTask";
 
     private transient NodeService nodeService;
-    private transient AuthorityService authorityService;
     private transient OrganizationStructureService organizationStructureService;
     private transient WorkflowService workflowService;
     private transient UserService userService;
@@ -97,17 +92,25 @@ public class DelegationBean implements Serializable {
         }
         DelegatableTaskType delegateTaskType = DelegatableTaskType.valueOf(ActionUtil.getParam(event, DelegationTaskListGenerator.ATTRIB_DELEGATE_TASK_TYPE));
         Workflow workflowForNewTask = getWorkflowByAction(event);
-        addDelegationTask(delegateTaskType, workflowForNewTask, taskIndex);
+        String defaultResolution = null;
+        if (ActionUtil.hasParam(event, ATTRIB_DELEGATABLE_TASK_INDEX)) {
+            int originalTaskIndex = ActionUtil.getParam(event, ATTRIB_DELEGATABLE_TASK_INDEX, Integer.class);
+            defaultResolution = delegatableTasks.get(originalTaskIndex).getResolutionOfTask();
+        }
+        addDelegationTask(delegateTaskType, workflowForNewTask, taskIndex, defaultResolution);
         updatePanelGroup();
     }
 
-    private void addDelegationTask(DelegatableTaskType delegateTaskType, Workflow workflow, Integer taskIndex) {
+    private void addDelegationTask(DelegatableTaskType delegateTaskType, Workflow workflow, Integer taskIndex, String defaultResolution) {
         Task task = taskIndex != null ? workflow.addTask(taskIndex) : workflow.addTask();
         markAsGeneratedByDelegation(task);
         task.setParallel(true);
         if (DelegatableTaskType.ASSIGNMENT_RESPONSIBLE.equals(delegateTaskType)) {
             task.setResponsible(true);
             task.setActive(true);
+        }
+        if (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
+            task.setResolution(defaultResolution);
         }
     }
 
@@ -148,11 +151,12 @@ public class DelegationBean implements Serializable {
         delegatableTaskIndex = delegatableTasks.size() - 1;
         AssignmentWorkflow workflow = (AssignmentWorkflow) assignmentTask.getParent();
         { // by default there should be one empty responsible assignment task and one empty non-responsible assignment task for delegating
+            String resolutionOfTask = assignmentTask.getResolutionOfTask();
             if (assignmentTask.isResponsible()) {
                 assignmentTask.getNode().getProperties().put(TMP_GENERATE_RESPONSIBLE_ASSIGNMENT_TASK_DELEGATION, Boolean.TRUE);
-                addDelegationTask(DelegatableTaskType.ASSIGNMENT_RESPONSIBLE, workflow, null);
+                addDelegationTask(DelegatableTaskType.ASSIGNMENT_RESPONSIBLE, workflow, null, resolutionOfTask);
             } else {
-                addDelegationTask(DelegatableTaskType.ASSIGNMENT_NOT_RESPONSIBLE, workflow, null);
+                addDelegationTask(DelegatableTaskType.ASSIGNMENT_NOT_RESPONSIBLE, workflow, null, resolutionOfTask);
             }
         }
         // create information and opinion workflows under the compoundWorkflow of the assignment task in case user adds corresponding task.
@@ -376,7 +380,7 @@ public class DelegationBean implements Serializable {
             }
             // user groups
             else if (filterIndex == 1) {
-                Set<String> children = getAuthorityService().getContainedAuthorities(AuthorityType.USER, result, true);
+                Set<String> children = BeanHelper.getUserService().getUserNamesInGroup(result);
                 int j = 0;
                 for (String userName : children) {
                     if (j++ > 0) {
@@ -391,8 +395,8 @@ public class DelegationBean implements Serializable {
             }
             // contact groups
             else if (filterIndex == 3) {
-                List<AssociationRef> assocs = getNodeService().getTargetAssocs(new NodeRef(result), RegexQNamePattern.MATCH_ALL);
-                taskIndex = addContactGroupTasks(taskIndex, workflow, assocs);
+                List<NodeRef> contacts = BeanHelper.getAddressbookService().getContactGroupContents(new NodeRef(result));
+                taskIndex = addContactGroupTasks(taskIndex, workflow, contacts);
             } else {
                 throw new RuntimeException("Unknown filter index value: " + filterIndex);
             }
@@ -435,16 +439,16 @@ public class DelegationBean implements Serializable {
         setPropsToTask(block, index, name, null, resultProps.get(AddressbookModel.Props.EMAIL), null, null);
     }
 
-    public int addContactGroupTasks(int taskIndex, Workflow block, List<AssociationRef> assocs) {
+    public int addContactGroupTasks(int taskIndex, Workflow block, List<NodeRef> contacts) {
         int taskCounter = 0;
-        for (int j = 0; j < assocs.size(); j++) {
-            Map<QName, Serializable> contactProps = getNodeService().getProperties(assocs.get(j).getTargetRef());
-            if (getNodeService().hasAspect(assocs.get(j).getTargetRef(), AddressbookModel.Aspects.ORGANIZATION_PROPERTIES)
+        for (int j = 0; j < contacts.size(); j++) {
+            Map<QName, Serializable> contactProps = getNodeService().getProperties(contacts.get(j));
+            if (getNodeService().hasAspect(contacts.get(j), AddressbookModel.Aspects.ORGANIZATION_PROPERTIES)
                     && Boolean.TRUE.equals(contactProps.get(AddressbookModel.Props.TASK_CAPABLE))) {
                 if (taskCounter > 0) {
                     block.addTask(++taskIndex);
                 }
-                setContactPropsToTask(block, taskIndex, assocs.get(j).getTargetRef());
+                setContactPropsToTask(block, taskIndex, contacts.get(j));
                 taskCounter++;
             }
         }
@@ -456,13 +460,6 @@ public class DelegationBean implements Serializable {
             nodeService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getNodeService();
         }
         return nodeService;
-    }
-
-    private AuthorityService getAuthorityService() {
-        if (authorityService == null) {
-            authorityService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getAuthorityService();
-        }
-        return authorityService;
     }
 
     private OrganizationStructureService getOrganizationStructureService() {

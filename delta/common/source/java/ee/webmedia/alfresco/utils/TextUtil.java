@@ -10,11 +10,15 @@ import org.apache.commons.lang.StringUtils;
 public class TextUtil {
 
     public static String joinNonBlankStringsWithComma(Collection<String> values) {
+        return joinNonBlankStrings(values, ", ");
+    }
+
+    public static String joinNonBlankStrings(Collection<String> values, String separator) {
         StringBuilder s = new StringBuilder();
         for (String value : values) {
             if (StringUtils.isNotBlank(value)) {
                 if (s.length() > 0) {
-                    s.append(", ");
+                    s.append(separator);
                 }
                 s.append(StringUtils.strip(value));
             }

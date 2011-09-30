@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.docadmin.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getClassificatorService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocTypeDetailsDialog;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 import static ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props.CLASSIFICATOR;
 import static ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props.CLASSIFICATOR_DEFAULT_VALUE;
@@ -48,9 +49,11 @@ import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docadmin.service.MetadataContainer;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.TextUtil;
 
 /**
  * Details dialog for creating/editing objects of type field or fieldDefinition
@@ -103,16 +106,26 @@ public class FieldDetailsDialog extends BaseDialogBean {
         return MessageUtil.getMessage("fieldOrFieldGroup_details_affirm_changes");
     }
 
+    @Override
+    public boolean isFinishButtonVisible(boolean dialogConfOKButtonVisible) {
+        return isProperySheetEditable();
+    }
+
     private boolean validate() {
         boolean valid = true;
+        String fieldIdLocalName = field.getFieldId();
+        if (DocumentDynamicModel.FORBIDDEN_FIELD_IDS.contains(fieldIdLocalName)) {
+            valid = false;
+            MessageUtil.addErrorMessage("field_details_error_fieldId_reserved", TextUtil.collectionToString(DocumentDynamicModel.FORBIDDEN_FIELD_IDS));
+        }
         String defaultValue = field.getDefaultValue();
         if (StringUtils.isNotBlank(defaultValue)) {
             FieldType fieldTypeEnum = field.getFieldTypeEnum();
             try {
                 if (FieldType.DOUBLE.equals(fieldTypeEnum)) {
                     field.setDefaultValue(Double.valueOf(DoubleCurrencyConverter_ET_EN.prepareDoubleString(defaultValue)).toString());
-                } else if (FieldType.INT.equals(fieldTypeEnum)) {
-                    field.setDefaultValue(Integer.valueOf(defaultValue).toString());
+                } else if (FieldType.LONG.equals(fieldTypeEnum)) {
+                    field.setDefaultValue(Long.valueOf(defaultValue).toString());
                 }
             } catch (NumberFormatException e) {
                 valid = false;
@@ -130,13 +143,11 @@ public class FieldDetailsDialog extends BaseDialogBean {
                 MessageUtil.addErrorMessage("field_details_error_parameterInVolSearch");
             }
         } else {
-            QName fieldId = field.getFieldId();
-            if (!field.isCopyFromPreviousDocTypeVersion() && !field.isCopyOfFieldDefinition() && getDocumentAdminService().isFieldDefinitionExisting(fieldId.getLocalName())) {
+            if (!field.isCopyFromPreviousDocTypeVersion() && !field.isCopyOfFieldDefinition() && getDocumentAdminService().isFieldDefinitionExisting(fieldIdLocalName)) {
                 MessageUtil.addErrorMessage("field_details_error_docField_sameIdFieldDef");
                 valid = false;
             } else {
                 // check that there is no field with same id added to ancestor DocumentTypeVersion
-                String fieldIdLocalName = fieldId.getLocalName();
                 Set<String> duplicateFieldIds = getDuplicateFieldIds(Arrays.asList(field), fieldParent);
                 if (!duplicateFieldIds.isEmpty()) {
                     if (duplicateFieldIds.size() > 1 || !duplicateFieldIds.contains(fieldIdLocalName)) { // shouldn't happen
@@ -197,6 +208,7 @@ public class FieldDetailsDialog extends BaseDialogBean {
         resetFields();
         field = fieldOrFieldDef;
         fieldParent = parentOfField;
+        propertySheet.setMode(isProperySheetEditable() ? "edit" : "view");
     }
 
     /** used by jsp */
@@ -240,14 +252,19 @@ public class FieldDetailsDialog extends BaseDialogBean {
     }
 
     /** used by property sheet */
-    public boolean isFieldTypeHasAdditionalFields() {
+    public boolean isShowAdditionalFieldsSeparator() {
         FieldType fieldType = field.getFieldTypeEnum();
-        return fieldType == null ? false : !fieldType.getFieldsUsed(field.isComboboxNotRelatedToClassificator()).isEmpty();
+        boolean fieldTypeHasAdditionalFields = fieldType == null ? false : !fieldType.getFieldsUsed(field.isComboboxNotRelatedToClassificator()).isEmpty();
+        return fieldTypeHasAdditionalFields && BeanHelper.getDocTypeDetailsDialog().isShowingLatestVersion();
     }
 
     /** used by property sheet */
     public boolean isProperyHidden(PropertySheetItem propSheetItem) {
         return !isShowPropery(getPropQName(propSheetItem));
+    }
+
+    public boolean isProperySheetEditable() {
+        return field instanceof FieldDefinition || getDocTypeDetailsDialog().isShowingLatestVersion();
     }
 
     /** used by property sheet */
@@ -333,6 +350,7 @@ public class FieldDetailsDialog extends BaseDialogBean {
         if (propertySheet != null) {
             propertySheet.getChildren().clear();
             propertySheet.getClientValidations().clear();
+            propertySheet.setMode(null);
         }
     }
 
@@ -360,7 +378,7 @@ public class FieldDetailsDialog extends BaseDialogBean {
                             || uiProperty.getId().endsWith("_defaultDateSysdate")
                             || uiProperty.getId().endsWith("_defaultUserLoggedIn")
                             || uiProperty.getId().endsWith("_defaultSelected")) {
-                        ComponentUtil.setDisabledAttributeRecursively(uiProperty, isProperyHidden(psItem));
+                        ComponentUtil.setReadonlyAttributeRecursively(uiProperty, isProperyHidden(psItem));
                         if (isClassificatorDefaultValueUiProp) {
                             HtmlSelectOneMenu clDefaultValues = (HtmlSelectOneMenu) uiProperty.getChildren().get(1);
                             List<SelectItem> clValueItems = getClassificatorSelectItems(FacesContext.getCurrentInstance(), clDefaultValues);

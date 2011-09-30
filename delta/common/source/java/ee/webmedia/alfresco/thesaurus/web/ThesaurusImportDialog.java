@@ -63,7 +63,9 @@ public class ThesaurusImportDialog extends AbstractImportDialog {
         xstream.processAnnotations(Thesaurus.class);
         xstream.processAnnotations(HierarchicalKeyword.class);
         try {
-            importedThesauri = (List<Thesaurus>) xstream.fromXML(new FileInputStream(upFile));
+            @SuppressWarnings("unchecked")
+            List<Thesaurus> tmp = (List<Thesaurus>) xstream.fromXML(new FileInputStream(upFile));
+            importedThesauri = tmp;
         } catch (StreamException e1) {
             // veateate näitamine ja sulgemine millegi pärast ei toimi
             final FacesContext context = FacesContext.getCurrentInstance();
@@ -110,7 +112,6 @@ public class ThesaurusImportDialog extends AbstractImportDialog {
 
     // START: getters / setters
 
-
     public void setThesaurusService(ThesaurusService thesaurusService) {
         this.thesaurusService = thesaurusService;
     }
@@ -118,7 +119,7 @@ public class ThesaurusImportDialog extends AbstractImportDialog {
     protected ThesaurusService getThesaurusService() {
         if (thesaurusService == null) {
             thesaurusService = (ThesaurusService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-            .getBean(ThesaurusService.BEAN_NAME);
+                    .getBean(ThesaurusService.BEAN_NAME);
         }
         return thesaurusService;
     }

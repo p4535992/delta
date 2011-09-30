@@ -4,13 +4,13 @@
 
          <action-group id="document_dynamic_actions">
 <!--             <action idref="document_copy" /> -->
-<!--             <action idref="word_file_from_document" /> -->
+            <action idref="word_file_from_document" />
             <action idref="document_registerDoc" />
 <!--             <action idref="document_createReply" /> -->
 <!--             <action idref="document_createFollowUp" /> -->
             <action idref="document_send_out" />
-            <action idref="create_forum_node_override" />
-            <action idref="discuss_node_override" />
+<!--             <action idref="create_forum_node_override" /> -->
+<!--             <action idref="discuss_node_override" /> -->
             <action idref="document_end" />
             <action idref="document_reopen" />
             <action idref="document_delete" />
@@ -19,14 +19,11 @@
             <action idref="document_manage_permissions" />
 <!--             <action idref="document_sendToSap" /> -->
 <!--             <action idref="document_sendToSapManually" /> -->
-            <action idref="document_changeByNewDocument" />
+<!--             <action idref="document_changeByNewDocument" /> -->
          </action-group>
 
       </actions>
       <dialogs>
-
-         <dialog name="documentDynamicTestDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/docdynamic/web/document-dynamic-test-dialog.jsp" managed-bean="DocumentDynamicTestDialog"
-            icon="/images/icons/versioned_properties_large.gif" title-id="docdyn_test" show-ok-button="false" />
 
          <dialog name="documentDynamicDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/docdynamic/web/document-dynamic-dialog.jsp" managed-bean="DocumentDynamicDialog"
             icon="/images/icons/details_large.gif" title-id="document" actions-config-id="document_dynamic_actions" />

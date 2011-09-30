@@ -19,6 +19,7 @@ import org.apache.cxf.transport.http.HTTPConduit;
 import org.springframework.beans.factory.InitializingBean;
 
 import ee.webmedia.alfresco.mso.ws.Formula;
+import ee.webmedia.alfresco.mso.ws.ModifiedFormulasOutput;
 import ee.webmedia.alfresco.mso.ws.Mso;
 import ee.webmedia.alfresco.mso.ws.MsoDocumentAndFormulasInput;
 import ee.webmedia.alfresco.mso.ws.MsoDocumentAndPdfOutput;
@@ -79,6 +80,29 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
         // Fortunately, DocumentTemplateService passes only DOC or DOT files to us, not every binary file
         // So without the check in DocumentTemplateService, every binary file would be passed to word, which would be unnecessary and very time consuming
         return MimetypeMap.MIMETYPE_WORD.equalsIgnoreCase(sourceMimetype) || MimetypeMap.MIMETYPE_BINARY.equalsIgnoreCase(sourceMimetype);
+    }
+
+    @Override
+    public ModifiedFormulasOutput getModifiedFormulas(ContentReader documentReader) throws Exception {
+        try {
+            if (documentReader == null) {
+                return null;
+            }
+
+            MsoDocumentInput input = new MsoDocumentInput();
+            DataSource dataSource = new ContentReaderDataSource(documentReader, null);
+            input.setDocumentFile(new DataHandler(dataSource));
+            log.info("Sending request to perform Mso.convertToPdf, documentReader=" + documentReader);
+            long startTime = System.currentTimeMillis();
+            ModifiedFormulasOutput output = mso.modifiedFormulas(input);
+            long duration = System.currentTimeMillis() - startTime;
+
+            log.info("Completed Mso.getModifiedFormulas in " + duration + " ms");
+            return output;
+        } catch (Exception e) {
+            log.error("Error in getModifiedFormulas", e);
+            throw e;
+        }
     }
 
     @Override

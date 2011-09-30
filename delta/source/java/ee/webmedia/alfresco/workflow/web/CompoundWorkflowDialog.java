@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.workflow.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 import static ee.webmedia.alfresco.parameters.model.Parameters.MAX_ATTACHED_FILE_SIZE;
 import static ee.webmedia.alfresco.workflow.web.TaskListCommentComponent.TASK_INDEX;
 import static ee.webmedia.alfresco.workflow.web.TaskListGenerator.WF_INDEX;
@@ -28,7 +29,6 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
-import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
@@ -38,6 +38,8 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
+import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
@@ -206,7 +208,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
     public void startWorkflow() {
         log.debug("startWorkflow");
         if (validate(FacesContext.getCurrentInstance(), true, false, true)) {
-            List<String> confirmationMessages = getConfirmationMessages();
+            List<String> confirmationMessages = getConfirmationMessages(true);
             if (confirmationMessages != null && !confirmationMessages.isEmpty()) {
                 updatePanelGroup(confirmationMessages, START_VALIDATED_WORKFLOW);
                 return;
@@ -235,34 +237,51 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         updatePanelGroup();
     }
 
-    private List<String> getConfirmationMessages() {
+    private List<String> getConfirmationMessages(boolean isStartWorkflow) {
         NodeService nodeService = BeanHelper.getNodeService();
         NodeRef docRef = compoundWorkflow.getParent();
-        if (!DocumentSubtypeModel.Types.INVOICE.equals(nodeService.getType(docRef))) {
-            return null;
-        }
-        Date invoiceDueDate = (Date) nodeService.getProperty(docRef, DocumentSpecificModel.Props.INVOICE_DUE_DATE);
-        if (invoiceDueDate == null) {
-            return null;
+        Date invoiceDueDate = null;
+        Date notInvoiceDueDate = null;
+        if (SystematicDocumentType.INVOICE.isSameType((String) nodeService.getProperty(docRef, DocumentAdminModel.Props.DOCUMENT_TYPE_ID))) {
+            invoiceDueDate = (Date) nodeService.getProperty(docRef, DocumentSpecificModel.Props.INVOICE_DUE_DATE);
+        } else {
+            notInvoiceDueDate = (Date) nodeService.getProperty(docRef, DocumentSpecificModel.Props.DUE_DATE);
         }
         List<String> messages = new ArrayList<String>();
+        boolean addedDueDateInPastMsg = false;
+        Date now = new Date(System.currentTimeMillis());
         for (Workflow workflow : compoundWorkflow.getWorkflows()) {
             for (Task task : workflow.getTasks()) {
                 Date taskDueDate = task.getDueDate();
-                if (taskDueDate != null && invoiceDueDate != null) {
-                    Date invoiceDueDateMinus3Days = DateUtils.addDays(invoiceDueDate, -3);
-                    if (!DateUtils.isSameDay(invoiceDueDateMinus3Days, taskDueDate) && taskDueDate.after(invoiceDueDateMinus3Days)) {
-                        FacesContext fc = FacesContext.getCurrentInstance();
-                        DateFormat dateFormat = Utils.getDateFormat(fc);
-                        String invoiceTaskDueDateConfirmationMsg = MessageUtil.getMessage("task_confirm_invoice_task_due_date",
-                                MessageUtil.getMessage(workflow.getType().getLocalName()),
-                                dateFormat.format(taskDueDate), dateFormat.format(invoiceDueDate));
-                        messages.add(invoiceTaskDueDateConfirmationMsg);
+                if (taskDueDate != null) {
+                    if (invoiceDueDate != null) {
+                        Date invoiceDueDateMinus3Days = DateUtils.addDays(invoiceDueDate, -3);
+                        if (!DateUtils.isSameDay(invoiceDueDateMinus3Days, taskDueDate) && taskDueDate.after(invoiceDueDateMinus3Days)) {
+                            getAndAddMessage(messages, workflow, taskDueDate, "task_confirm_invoice_task_due_date", invoiceDueDate);
+                        }
+                    }
+                    if (!addedDueDateInPastMsg && ((isStartWorkflow || task.isStatus(Status.NEW)) && taskDueDate.before(now))) {
+                        messages.add(MessageUtil.getMessage("task_confirm_due_date_in_past"));
+                        addedDueDateInPastMsg = true;
+                    }
+                    if (notInvoiceDueDate != null) {
+                        if (!DateUtils.isSameDay(notInvoiceDueDate, taskDueDate) && taskDueDate.after(notInvoiceDueDate)) {
+                            getAndAddMessage(messages, workflow, taskDueDate, "task_confirm_not_invoice_task_due_date", notInvoiceDueDate);
+                        }
                     }
                 }
             }
         }
         return messages;
+    }
+
+    private void getAndAddMessage(List<String> messages, Workflow workflow, Date taskDueDate, String msgKey, Date date) {
+        FacesContext fc = FacesContext.getCurrentInstance();
+        DateFormat dateFormat = Utils.getDateFormat(fc);
+        String invoiceTaskDueDateConfirmationMsg = MessageUtil.getMessage(msgKey,
+                MessageUtil.getMessage(workflow.getType().getLocalName()),
+                dateFormat.format(taskDueDate), dateFormat.format(date));
+        messages.add(invoiceTaskDueDateConfirmationMsg);
     }
 
     /**
@@ -290,7 +309,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         try {
             removeEmptyTasks();
             if (validate(FacesContext.getCurrentInstance(), true, false, true)) {
-                List<String> confirmationMessages = getConfirmationMessages();
+                List<String> confirmationMessages = getConfirmationMessages(false);
                 if (confirmationMessages != null && !confirmationMessages.isEmpty()) {
                     updatePanelGroup(confirmationMessages, CONTINUE_VALIDATED_WORKFLOW);
                     return;
@@ -500,13 +519,6 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         return documentLogService;
     }
 
-    public DocumentDialog getDocumentDialog() {
-        if (documentDialog == null) {
-            documentDialog = (DocumentDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), DocumentDialog.BEAN_NAME);
-        }
-        return documentDialog;
-    }
-
     @Override
     protected void updateFullAccess() {
         fullAccess = false;
@@ -625,16 +637,16 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
                 if (!foundOwner) {
                     foundOwner = StringUtils.isNotBlank(task.getOwnerName());
                 }
+                QName taskType = task.getNode().getType();
+                String taskOwnerMsg = getTaskOwnerMessage(block, taskType);
                 if (activeResponsible) {
                     // both fields must be empty or filled
-                    if (StringUtils.isBlank(task.getOwnerName()) != (task.getDueDate() == null)) {
+                    if (hasNoOwnerOrDueDate(task)) {
                         valid = false;
-                        String taskOwnerMsg = MessageUtil.getMessage(block.getNode().getType().getLocalName() + "_tasks");
                         MessageUtil.addErrorMessage(context, "task_name_and_due_required", taskOwnerMsg);
                         break;
                     }
                 } else {
-                    QName taskType = task.getNode().getType();
                     // only name is required for information tasks
                     if (taskType.equals(WorkflowSpecificModel.Types.INFORMATION_TASK)) {
                         if (StringUtils.isBlank(task.getOwnerName())) {
@@ -647,23 +659,23 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
                     }
                     // institutionName and dueDate are required for externalReviewTask
                     else if (taskType.equals(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)) {
-                        if (StringUtils.isBlank(task.getInstitutionName()) != (task.getDueDate() == null)) {
-                            String taskOwnerMsg = MessageUtil.getMessage(block.getNode().getType().getLocalName() + "_tasks");
+                        if (StringUtils.isBlank(task.getInstitutionName()) != (task.getDueDate() == null && task.getDueDateDays() == null)) {
                             MessageUtil.addErrorMessage(context, "task_name_and_due_required", taskOwnerMsg);
                             break;
                         }
                     }
                     // both fields must be filled
-                    else if (StringUtils.isBlank(task.getOwnerName()) != (task.getDueDate() == null)) {
-                        valid = false;
-                        String suffix = "";
-                        if (taskType.equals(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
-                            suffix = "_co";
+                    else {
+                        if (hasNoOwnerOrDueDate(task)) {
+                            valid = false;
+                            MessageUtil.addErrorMessage(context, "task_name_and_due_required", taskOwnerMsg);
+                            break;
                         }
-                        String taskOwnerMsg = MessageUtil.getMessage(block.getNode().getType().getLocalName() + "_tasks" + suffix);
-                        MessageUtil.addErrorMessage(context, "task_name_and_due_required", taskOwnerMsg);
-                        break;
                     }
+                }
+                if (task.getDueDate() != null && task.getDueDateDays() != null) {
+                    MessageUtil.addErrorMessage(context, "task_due_date_and_days_both_not_allowed", taskOwnerMsg);
+                    break;
                 }
                 regressionTest.checkDueDate(task);
             }
@@ -704,7 +716,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         }
 
         if (checkFinished && hasForbiddenFlowsForFinished) {
-            String docStatus = (String) getDocumentDialog().getNode().getProperties().get(DocumentCommonModel.Props.DOC_STATUS);
+            String docStatus = (String) BeanHelper.getDocumentDialogHelperBean().getProps().get(DocumentCommonModel.Props.DOC_STATUS);
             if (DocumentStatus.FINISHED.getValueName().equals(docStatus)) {
                 valid = false;
                 MessageUtil.addErrorMessage(context, "workflow_start_failed_docFinished");
@@ -714,8 +726,23 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         if (checkInvoice) {
             valid = valid && validateInvoice();
         }
-
+        if (!valid) {
+            updatePanelGroup();
+        }
         return valid;
+    }
+
+    private String getTaskOwnerMessage(Workflow block, QName taskType) {
+        String suffix = "";
+        if (taskType.equals(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
+            suffix = "_co";
+        }
+        String taskOwnerMsg = MessageUtil.getMessage(block.getNode().getType().getLocalName() + "_tasks" + suffix);
+        return taskOwnerMsg;
+    }
+
+    private boolean hasNoOwnerOrDueDate(Task task) {
+        return StringUtils.isBlank(task.getOwnerName()) != (task.getDueDate() == null && task.getDueDateDays() == null);
     }
 
     /**

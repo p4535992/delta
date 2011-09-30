@@ -32,7 +32,7 @@
          <f:facet name="header">
             <a:sortLink label="#{msg.addressbook_group_taskCapable}" value="ab:taskCapable" />
          </f:facet>
-         <h:selectBooleanCheckbox value="#{r['ab:taskCapable']}" disabled="#{DialogManager.bean.notAllowedEditTaskCapable == true}"/>
+         <h:selectBooleanCheckbox value="#{r['ab:taskCapable']}" disabled="#{UserService.documentManager == false}"/>
       </a:column>
 
       <!--  selection -->
@@ -40,7 +40,7 @@
          <f:facet name="header">
             <a:sortLink label="#{msg.addressbook_group_manageableForAdmin}" value="ab:manageableForAdmin" />
          </f:facet>
-         <h:selectBooleanCheckbox value="#{r['ab:manageableForAdmin']}" disabled="#{DialogManager.bean.notAllowedManageableForAdmin == true}"/>
+         <h:selectBooleanCheckbox value="#{r['ab:manageableForAdmin']}" disabled="#{UserService.documentManager == false}"/>
       </a:column>
 
       <%-- Actions column --%>
@@ -51,12 +51,12 @@
          <a:actionLink id="contact-group-add" value="#{msg.add}" image="/images/icons/add_group.gif" showLink="false"
             action="dialog:addressbookAddContactGroup" actionListener="#{ContactGroupAddDialog.setupAddGroup}"
             tooltip="#{msg.addressbook_contactgroup_add_title}"
-            rendered="#{DialogManager.bean.notAllowedManageableForAdmin == false or r['ab:manageableForAdmin'] == false}">
+            rendered="#{UserService.documentManager == true or r['ab:manageableForAdmin'] == false}">
             <f:param id="contactgroup-noderef-add-param" name="nodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
          <a:actionLink id="contact-group-delete" value="#{msg.delete}" image="/images/icons/delete_group.gif" showLink="false"
             action="dialog:addressbookDeleteContactGroup" actionListener="#{ContactGroupDeleteDialog.setupDeleteGroup}" tooltip="#{msg.delete_group}"
-            rendered="#{DialogManager.bean.notAllowedManageableForAdmin == false or r['ab:manageableForAdmin'] == false}">
+            rendered="#{UserService.documentManager == true}">
             <f:param id="contactgroup-noderef-delete-param" name="nodeRef" value="#{r.nodeRef}" />
             <f:param id="contactgroup-groupName-delete-param" name="groupName" value="#{r['ab:groupName']}" />
          </a:actionLink>
@@ -67,3 +67,6 @@
    </a:richList>
 
 </a:panel>
+<a:booleanEvaluator value="#{DialogManager.bean.hideFinishButton}">
+   <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp"  />
+</a:booleanEvaluator>

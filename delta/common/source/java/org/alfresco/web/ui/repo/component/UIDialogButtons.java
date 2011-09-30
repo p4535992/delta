@@ -112,7 +112,7 @@ public class UIDialogButtons extends SelfRenderingComponent
    protected void generateButtons(FacesContext context, boolean secondRendering)
    {
       // generate the OK button, if necessary
-      if (Application.getDialogManager().isOKButtonVisible())
+      if (Application.getDialogManager().getBean().isFinishButtonVisible(Application.getDialogManager().isOKButtonVisible()))
       {
          UICommand okButton = (UICommand)context.getApplication().
                createComponent(HtmlCommandButton.COMPONENT_TYPE);

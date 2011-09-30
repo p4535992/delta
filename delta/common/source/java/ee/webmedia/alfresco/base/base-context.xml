@@ -16,11 +16,7 @@
          </list>
       </property>
       <property name="target" ref="baseService" />
-      <property name="interceptorNames">
-         <list>
-            <idref bean="commonTransactionInterceptor" />
-         </list>
-      </property>
+      <property name="interceptorNames" ref="commonInterceptorsList" />
    </bean>
 
    <bean class="org.alfresco.web.app.ResourceBundleBootstrap">

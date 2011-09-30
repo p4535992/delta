@@ -1,6 +1,9 @@
 package ee.webmedia.alfresco.document.assignresponsibility.web;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getPersonService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getAssignResponsibilityService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 
 import java.io.Serializable;
 import java.text.DateFormat;
@@ -14,23 +17,16 @@ import javax.faces.event.ActionEvent;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
-import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.cmr.security.PersonService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
-import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.bean.repository.TransientNode;
 import org.apache.commons.lang.StringUtils;
-import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.assignresponsibility.model.AssignResponsibilityModel;
-import ee.webmedia.alfresco.document.assignresponsibility.service.AssignResponsibilityService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
-import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.user.model.UserModel;
-import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.user.web.UserDetailsDialog;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
@@ -43,12 +39,6 @@ public class AssignResponsibilityBean implements Serializable {
 
     public static final String BEAN_NAME = "AssignResponsibilityBean";
     private final String OWNER_ID = "{temp}ownerId";
-
-    private transient AssignResponsibilityService assignResponsibilityService;
-    private transient ParametersService parametersService;
-    private transient UserService userService;
-    private transient PersonService personService;
-    private transient NodeService nodeService;
 
     private Node node;
     private String fromOwnerId;
@@ -83,8 +73,8 @@ public class AssignResponsibilityBean implements Serializable {
         Map<QName, Serializable> props = new HashMap<QName, Serializable>(2);
         props.put(UserModel.Props.LEAVING_DATE_TIME, new Date());
         props.put(UserModel.Props.LIABILITY_GIVEN_TO_PERSON_ID, toOwnerId);
-        nodeService.addProperties(userService.getCurrentUser(), props);
-        MessageUtil.addInfoMessage("assign_responsibility_perform_success", UserUtil.getPersonFullName1(getPersonProps(toOwnerId)));
+        getNodeService().addProperties(getUserService().getCurrentUser(), props);
+        MessageUtil.addInfoMessage("assign_responsibility_perform_success", UserUtil.getPersonFullName1(BeanHelper.getUserService().getUserProperties(toOwnerId)));
     }
 
     public void revert(@SuppressWarnings("unused") ActionEvent event) {
@@ -161,42 +151,6 @@ public class AssignResponsibilityBean implements Serializable {
         } else {
             unsetOwner();
         }
-    }
-
-    private Map<QName, Serializable> getPersonProps(String userName) {
-        NodeRef person = getPersonService().getPerson(userName);
-        Map<QName, Serializable> personProps = getNodeService().getProperties(person);
-        return personProps;
-    }
-
-    private NodeService getNodeService() {
-        if (nodeService == null) {
-            nodeService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getNodeService();
-        }
-        return nodeService;
-    }
-
-    protected AssignResponsibilityService getAssignResponsibilityService() {
-        if (assignResponsibilityService == null) {
-            assignResponsibilityService = (AssignResponsibilityService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(AssignResponsibilityService.BEAN_NAME);
-        }
-        return assignResponsibilityService;
-    }
-
-    protected ParametersService getParametersService() {
-        if (parametersService == null) {
-            parametersService = (ParametersService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(
-                    ParametersService.BEAN_NAME);
-        }
-        return parametersService;
-    }
-
-    protected UserService getUserService() {
-        if (userService == null) {
-            userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(UserService.BEAN_NAME);
-        }
-        return userService;
     }
 
 }
