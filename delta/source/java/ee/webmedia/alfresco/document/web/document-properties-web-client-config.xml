@@ -151,7 +151,7 @@
          <show-property name="docspec:additionalInformationContent" styleClass="expand19-200 medium" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isClosedOrNotEditable}"/>
          <show-property name="docspec:purchaseOrderSapNumber" styleClass="width250" readOnlyIf="#{DocumentDialog.isClosedOrNotEditable}"/>
          <show-property name="{temp}entrySapDateAndNumber" show-in-edit-mode="false" display-label-id="document_invoiceEntrySapDateAndNumber" />
-         <show-property name="docspec:entryDate" show-in-view-mode="false" component-generator="DatePickerGenerator" readOnlyIf="#{DocumentDialog.isNotEditable}"/>
+         <show-property name="docspec:entryDate" show-in-view-mode="false" component-generator="DatePickerGenerator" readOnlyIf="#{DocumentDialog.isNotEditable}" styleClass="date entryDate"/>
          <show-property name="docspec:entrySapNumber" show-in-view-mode="false" read-only="true" />
       </property-sheet>      
    </config>

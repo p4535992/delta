@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.common.propertysheet.multivalueeditor;
 
 import static ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader.AttributeNames.PROP_GENERATOR_DESCRIPTORS;
+import static ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditor.NO_ADD_LINK_LABEL;
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames.STYLE_CLASS;
 
 import java.io.IOException;
@@ -132,6 +133,10 @@ public class MultiValueEditorRenderer extends BaseRenderer {
         return propsVOs;
     }
 
+    private String getAddLinkId(FacesContext context, UIComponent component) {
+        return component.getClientId(context) + "_multivalue-add-link";
+    }
+
     @Override
     public void encodeEnd(FacesContext context, UIComponent component) throws IOException {
         ResponseWriter out = context.getResponseWriter();
@@ -164,9 +169,9 @@ public class MultiValueEditorRenderer extends BaseRenderer {
         ResponseWriter out = context.getResponseWriter();
         boolean hasPicker = ((MultiValueEditor) multiValueEditor).getPickerCallback() != null;
         int rowIndex = 0;
-
         @SuppressWarnings("unchecked")
         List<UIComponent> children = multiValueEditor.getChildren();
+        int renderedRowCount = ComponentUtil.getRenderedChildrenCount(multiValueEditor, HtmlPanelGroup.class);
         for (UIComponent child : children) {
             if (!child.isRendered()) {
                 continue;
@@ -177,20 +182,30 @@ public class MultiValueEditorRenderer extends BaseRenderer {
 
                 @SuppressWarnings("unchecked")
                 List<UIComponent> columns = child.getChildren();
+                int renderedColumnCount = ComponentUtil.getRenderedChildrenCount(child, null);
+                int columnCount = 0;
                 for (UIComponent column : columns) {
                     if (!column.isRendered()) {
                         continue;
                     }
                     out.write("<td>");
+                    if ((rowIndex == renderedRowCount - 1) && (columnCount == renderedColumnCount - 1) && ((MultiValueEditor) multiValueEditor).isAutomaticallyAddRows()) {
+                        String addLinkId = getAddLinkId(context, multiValueEditor);
+                        // component has to implement actual link clicking
+                        ComponentUtil.putAttribute(column, MultiValueEditor.ATTR_CLICK_LINK_ID, addLinkId);
+                    } else {
+                        column.getAttributes().remove(MultiValueEditor.ATTR_CLICK_LINK_ID);
+                    }
                     Utils.encodeRecursive(context, column);
                     if (hasSearchSuggest(column)) {
                         ComponentUtil.generateSuggestScript(context, column, (String) multiValueEditor.getAttributes().get(Search.PICKER_CALLBACK_KEY), out);
                     }
                     out.write("</td>");
+                    columnCount++;
                 }
 
                 out.write("<td>");
-                if (!Utils.isComponentDisabledOrReadOnly(multiValueEditor)) { // don't render removing link
+                if (!ComponentUtil.isComponentDisabledOrReadOnly(multiValueEditor)) { // don't render removing link
 
                     out.write("<a class=\"icon-link margin-left-4 delete\" onclick=\"");
                     out.write(ComponentUtil //
@@ -235,16 +250,22 @@ public class MultiValueEditorRenderer extends BaseRenderer {
         @SuppressWarnings("unchecked")
         final Map<String, Object> attributes = component.getAttributes();
         String addLabelId = (String) attributes.get(MultiValueEditor.ADD_LABEL_ID);
+        boolean noAddLinkLabel = attributes.containsKey(NO_ADD_LINK_LABEL) && Boolean.valueOf((String) attributes.get(MultiValueEditor.NO_ADD_LINK_LABEL));
         if (StringUtils.isBlank(addLabelId)) {
             addLabelId = "add_contact";
         }
 
-        if (!Utils.isComponentDisabledOrReadOnly(component)) { // don't render adding link when disabled
+        if (!ComponentUtil.isComponentDisabledOrReadOnly(component)) { // don't render adding link when disabled
             String styleClass = (String) attributes.get(STYLE_CLASS);
             if (StringUtils.isBlank(styleClass)) {
                 styleClass = "add-person";
             }
-            out.write("<a class=\"icon-link " + styleClass + "\" onclick=\"");
+            String titleAttr = "";
+            String addLabel = Application.getMessage(context, addLabelId);
+            if (noAddLinkLabel) {
+                titleAttr = "title=\"" + addLabel + "\"";
+            }            
+            out.write("<a id=\"" + getAddLinkId(context, component) + "\" class=\"icon-link " + styleClass + "\" " + titleAttr + " onclick=\"");
             // TODO: optimeerimise võimalus (vt ka AjaxSearchBean)
             // siin seatakse ajaxParentLevel=1 ainult selle pärast, et ajax'iga uut rida lisades renderdataks ka valideerimise skriptid,
             // mis praegu lisatakse propertySheet'ile, aga mitte komponendile endale.
@@ -255,7 +276,9 @@ public class MultiValueEditorRenderer extends BaseRenderer {
             out.write(ComponentUtil.generateAjaxFormSubmit(context, component, component.getClientId(context)
                     , Integer.toString(UIMultiValueEditor.ACTION_ADD), null, ajaxParentLevel));
             out.write("\">");
-            out.write(Application.getMessage(context, addLabelId));
+            if (!noAddLinkLabel) {
+                out.write(Application.getMessage(context, addLabelId));
+            }            
             out.write("</a>");
         }
     }

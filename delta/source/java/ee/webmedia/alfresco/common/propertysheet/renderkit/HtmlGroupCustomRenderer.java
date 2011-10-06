@@ -47,6 +47,7 @@ public class HtmlGroupCustomRenderer extends HtmlGroupRenderer {
             HtmlRendererUtils.writeIdIfNecessary(writer, component, context);
 
             HtmlRendererUtils.renderHTMLAttributes(writer, component, HTML.COMMON_PASSTROUGH_ATTRIBUTES);
+            writer.writeAttribute("style", "white-space:nowrap;", null);
         } else {
             span = HtmlRendererUtils.renderHTMLAttributesWithOptionalStartElement(writer,
                                                                      component,

@@ -628,7 +628,14 @@
       <servlet-name>jax-ws</servlet-name>
 <!--      <servlet-class>com.sun.xml.ws.transport.http.servlet.WSSpringServlet</servlet-class>-->
       <servlet-class>com.sun.xml.ws.transport.http.servlet.WSServlet</servlet-class>
-      <load-on-startup>1</load-on-startup>
+      <load-on-startup>6</load-on-startup>
+   </servlet>
+
+   <servlet>
+      <!-- Because servlet name is 'spring-ws', it expects to load its application context from WEB-INF/spring-ws-servlet.xml -->
+      <servlet-name>spring-ws</servlet-name>
+      <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+      <load-on-startup>7</load-on-startup>
    </servlet>
 
    <!-- ========== Servlet mappings ========== -->
@@ -677,10 +684,15 @@
       <servlet-name>WebDAV</servlet-name>
       <url-pattern>/webdav/*</url-pattern>
    </servlet-mapping>
-   
+
    <servlet-mapping>
       <servlet-name>jax-ws</servlet-name>
       <url-pattern>/service/*</url-pattern>
+   </servlet-mapping>
+
+   <servlet-mapping>
+      <servlet-name>spring-ws</servlet-name>
+      <url-pattern>/service2/*</url-pattern>
    </servlet-mapping>
 
    <!-- ========== Other ========== -->

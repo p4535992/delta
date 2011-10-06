@@ -24,7 +24,6 @@ import javax.faces.event.FacesEvent;
 
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.ui.common.ComponentConstants;
-import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
 import org.alfresco.web.ui.repo.component.UIMultiValueEditor;
 import org.alfresco.web.ui.repo.component.UIMultiValueEditor.MultiValueEditorEvent;
@@ -50,11 +49,14 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
     public static final String PREPROCESS_CALLBACK = "preprocessCallback";
     protected static final String FILTERS = "filters";
     protected static final String FILTER_INDEX = "filterIndex";
+    public static final String ATTR_CLICK_LINK_ID = "clickLinkId";
 
     public static final String MULTI_VALUE_EDITOR_FAMILY = MultiValueEditor.class.getCanonicalName();
     public static final String ADD_LABEL_ID = "addLabelId";
     public static final String SHOW_HEADERS = "showHeaders";
     public static final String INITIAL_ROWS = "initialRows";
+    public static final String IS_AUTOMATICALLY_ADD_ROWS = "isAutomaticallyAddRows";
+    public static final String NO_ADD_LINK_LABEL = "noAddLinkLabel";
 
     @Override
     public String getFamily() {
@@ -286,7 +288,7 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
                 FacesHelper.setupComponentId(context, component, componentPropVO.getPropertyName() + "_" + rowIndex);
                 setValueBinding(context, component, componentPropVO.getPropertyName(), rowIndex);
             }
-            if (Utils.isComponentDisabledOrReadOnly(this)) {
+            if (ComponentUtil.isComponentDisabledOrReadOnly(this)) {
                 ComponentUtil.setReadonlyAttributeRecursively(component);
             }
             columnIndex++;
@@ -379,7 +381,11 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
     }
 
     private boolean isDisabled() {
-        return Utils.isComponentDisabledOrReadOnly(this);
+        return ComponentUtil.isComponentDisabledOrReadOnly(this);
+    }
+
+    public boolean isAutomaticallyAddRows() {
+        return Boolean.TRUE.equals(getAttributes().get(IS_AUTOMATICALLY_ADD_ROWS));
     }
 
 }

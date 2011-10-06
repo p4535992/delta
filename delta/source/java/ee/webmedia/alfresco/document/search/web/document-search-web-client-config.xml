@@ -96,9 +96,15 @@
          <show-property name="docsearch:sellerPartyName" display-label-id="document_sellerPartyName" component-generator="SearchGenerator" pickerCallback="#{AddressbookSearchBean.searchContacts}" setterCallback="#{DocumentSearchDialog.setSellerPartyName}" dialogTitleId="contacts_search_title" />
          <show-property name="docsearch:sellerPartyRegNumber" display-label-id="document_sellerPartyRegNumber" component-generator="TextAreaGenerator" styleClass="expand19-200" />
          <show-property name="docsearch:totalSumLowest" display-label-id="document_totalSum" optionsSeparator="¤" component-generator="InlinePropertyGroupGenerator" props="docsearch:totalSumLowest¤¤jsfConverter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter¤styleClass=medium,docsearch:totalSumHighest¤¤jsfConverter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter¤styleClass=medium" textId="document_search_from_to" />
-         <show-property name="docsearch:fund" display-label-id="transaction_fund" component-generator="DimensionSelectorGenerator" dimensionName="invoiceFunds" styleClass="noOptionTitle" descriptionAsLabel="true" />
-         <show-property name="docsearch:fundsCenter" display-label-id="transaction_fundsCenter" component-generator="DimensionSelectorGenerator" dimensionName="invoiceFundsCenters" styleClass="noOptionTitle" descriptionAsLabel="true" />
-         <show-property name="docsearch:eaCommitmentItem" display-label-id="transaction_eaCommitmentItem" component-generator="DimensionSelectorGenerator" dimensionName="invoiceCommitmentItem" filter="eaPrefixInclude" styleClass="noOptionTitle" descriptionAsLabel="true" />
+         <show-property name="docsearch:fund" display-label-id="transaction_fund" component-generator="MultiValueEditorGenerator"
+            showHeaders="false" styleClass="add-default" noAddLinkLabel="true" addLabelId="add_row" isAutomaticallyAddRows="true"
+            propsGeneration="docsearch:fund¤DimensionSelectorGenerator¤dimensionName=invoiceFunds¤styleClass=expand19-200 tooltip¤converter="/>
+         <show-property name="docsearch:fundsCenter" display-label-id="transaction_fundsCenter" component-generator="MultiValueEditorGenerator"
+            showHeaders="false" styleClass="add-default" noAddLinkLabel="true" addLabelId="add_row" isAutomaticallyAddRows="true"
+            propsGeneration="docsearch:fundsCenter¤DimensionSelectorGenerator¤dimensionName=invoiceFundsCenters¤styleClass=expand19-200 tooltip¤converter="/>
+         <show-property name="docsearch:eaCommitmentItem" display-label-id="transaction_eaCommitmentItem" component-generator="MultiValueEditorGenerator"
+            showHeaders="false" styleClass="add-default" noAddLinkLabel="true" addLabelId="add_row" filter="eaPrefixInclude" isAutomaticallyAddRows="true"
+            propsGeneration="docsearch:eaCommitmentItem¤DimensionSelectorGenerator¤dimensionName=invoiceCommitmentItem¤styleClass=expand19-200 tooltip¤converter="/>  
          <show-property name="docsearch:output" display-label-id="document_search_output" component-generator="GeneralSelectorGenerator" selectionItems="#{DocumentSearchDialog.getSearchOutput}" />
       </property-sheet>
    </config>

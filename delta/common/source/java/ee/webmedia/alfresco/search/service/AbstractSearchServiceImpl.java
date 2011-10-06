@@ -25,12 +25,18 @@ import org.alfresco.repo.search.impl.lucene.LuceneAnalyser;
 import org.alfresco.repo.search.impl.lucene.LuceneConfig;
 import org.alfresco.repo.search.impl.lucene.analysis.MLTokenDuplicator;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
+
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.LimitBy;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchParameters;
 import org.alfresco.service.cmr.search.SearchService;
+
+import org.alfresco.service.cmr.search.LimitBy;
+import org.alfresco.service.cmr.search.SearchParameters;
+import org.alfresco.service.cmr.search.SearchService;
+
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.apache.commons.lang.StringUtils;
@@ -81,6 +87,27 @@ public abstract class AbstractSearchServiceImpl {
             queryParts.add(generateStringWordsWildcardQuery(value, leftWildcard, rightWildcard, documentPropNames));
         }
         return SearchUtil.joinQueryPartsOr(queryParts);
+    }
+
+    protected SearchParameters buildSearchParameters(String query, Integer limit) {
+        // build up the search parameters
+        SearchParameters sp = new SearchParameters();
+        sp.setLanguage(SearchService.LANGUAGE_LUCENE);
+        sp.setQuery(query);
+
+        // This limit does not work when ACLEntryAfterInvocationProvider has been disabled
+        // So we perform our own limiting in this service also
+        if (limit != null) {
+            sp.setLimit(limit);
+            sp.setLimitBy(LimitBy.FINAL_SIZE);
+        } else {
+            sp.setLimitBy(LimitBy.UNLIMITED);
+        }
+        return sp;
+    }
+    
+    private SearchParameters buildSearchParameters(String query, boolean limited) {
+        return buildSearchParameters(query, limited ? RESULTS_LIMIT : null);
     }
 
     /**
@@ -205,7 +232,14 @@ public abstract class AbstractSearchServiceImpl {
     }
 
     protected List<ResultSet> doSearches(String query, boolean limited, String queryName, Collection<StoreRef> storeRefs) {
+        return doSearches(query, limited, -1, queryName, storeRefs);
+    }
+
+    protected List<ResultSet> doSearches(String query, boolean limited, int limit, String queryName, Collection<StoreRef> storeRefs) {
         SearchParameters sp = buildSearchParameters(query, limited);
+        if (limit > 0) {
+            sp.setLimit(limit);
+        }
         if (storeRefs == null || storeRefs.size() == 0) {
             storeRefs = Arrays.asList(generalService.getStore());
         }
@@ -238,27 +272,6 @@ public abstract class AbstractSearchServiceImpl {
                     + "\n    limit=" + sp.getLimit() + "\n    limitBy=" + sp.getLimitBy().toString() + "\n    exceptionMessage=" + e.getMessage());
             throw e;
         }
-    }
-
-    private SearchParameters buildSearchParameters(String query, boolean limited) {
-        return buildSearchParameters(query, limited ? RESULTS_LIMIT : null);
-    }
-
-    protected SearchParameters buildSearchParameters(String query, Integer limit) {
-        // build up the search parameters
-        SearchParameters sp = new SearchParameters();
-        sp.setLanguage(SearchService.LANGUAGE_LUCENE);
-        sp.setQuery(query);
-
-        // This limit does not work when ACLEntryAfterInvocationProvider has been disabled
-        // So we perform our own limiting in this service also
-        if (limit != null) {
-            sp.setLimit(limit);
-            sp.setLimitBy(LimitBy.FINAL_SIZE);
-        } else {
-            sp.setLimitBy(LimitBy.UNLIMITED);
-        }
-        return sp;
     }
 
     public void setGeneralService(GeneralService generalService) {

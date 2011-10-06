@@ -7,6 +7,7 @@ import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -30,6 +31,7 @@ import javax.faces.el.MethodBinding;
 import javax.faces.event.ActionEvent;
 import javax.faces.model.SelectItem;
 
+import org.alfresco.i18n.I18NUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
@@ -38,14 +40,15 @@ import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames;
 import org.alfresco.web.bean.generator.TextAreaGenerator;
 import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIPanel;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.UIProperty;
 import org.apache.commons.collections.Predicate;
+import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.shared_impl.renderkit.JSFAttr;
 
-import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorGenerator;
 import ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter_ET_EN;
 import ee.webmedia.alfresco.common.propertysheet.dimensionselector.DimensionSelectorGenerator;
 import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
@@ -61,6 +64,7 @@ import ee.webmedia.alfresco.document.einvoice.model.TransactionModel;
 import ee.webmedia.alfresco.document.einvoice.model.TransactionTemplate;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil;
+import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -69,6 +73,7 @@ import ee.webmedia.alfresco.utils.TextUtil;
 
 public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements Serializable {
 
+    private static final String EA_COMMITMENT_ITEM_HEADING_KEY = "transaction_eaCommitmentItem";
     private static final String ORIGINAL_TAX_OPTION_SEPARATOR = "¤";
     private static final String INLINE_STYLE_DISPLAY_NONE = "display: none;";
     private static final String TRANS_ROW_SUM_INPUT_CLASS = "trans-row-sum-input";
@@ -94,11 +99,37 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
 
     private static final String TRANSACTION_INDEX = "transIndex";
 
-    private static final List<String> mainHeadingKeys = new ArrayList<String>(Arrays.asList("", "transaction_fundsCenter", "transaction_costCenter", "transaction_fund",
-            "transaction_eaCommitmentItem", "transaction_commitmentItem", "transaction_orderNumber", "transaction_assetInventoryNumber", "transaction_sumWithoutVat", ""));
-    private static final List<String> secondaryHeadingKeys = new ArrayList<String>(Arrays.asList("transaction_postingKey", "transaction_account",
-            "transaction_invoiceTaxCode", "transaction_tradingPartnerCode", "transaction_functionalAreaCode", "transaction_cashFlowCode", "transaction_source",
-            "transaction_paymentMethod", "transaction_houseBank", "transaction_entryContent"));
+    private static final Map<Dimensions, String> headingKeyMapping;
+    static {
+        Map<Dimensions, String> dimensionToHeadingKeyMapping = new HashMap<Dimensions, String>();
+        dimensionToHeadingKeyMapping.put(Dimensions.INVOICE_ACCOUNTS, "transaction_account");
+        dimensionToHeadingKeyMapping.put(Dimensions.INVOICE_ASSET_INVENTORY_NUMBERS, "transaction_assetInventoryNumber");
+        dimensionToHeadingKeyMapping.put(Dimensions.INVOICE_CASH_FLOW_CODES, "transaction_cashFlowCode");
+        dimensionToHeadingKeyMapping.put(Dimensions.INVOICE_COMMITMENT_ITEM, "transaction_commitmentItem"); // must check here if eaCommitmentItem or commitmentItem is actually
+                                                                                                            // required
+        dimensionToHeadingKeyMapping.put(Dimensions.INVOICE_COST_CENTERS, "transaction_costCenter");
+        dimensionToHeadingKeyMapping.put(Dimensions.INVOICE_FUNCTIONAL_AREA_CODE, "transaction_functionalAreaCode");
+        dimensionToHeadingKeyMapping.put(Dimensions.INVOICE_FUNDS, "transaction_fund");
+        dimensionToHeadingKeyMapping.put(Dimensions.INVOICE_FUNDS_CENTERS, "transaction_fundsCenter");
+        dimensionToHeadingKeyMapping.put(Dimensions.INVOICE_HOUSE_BANK_CODES, "transaction_houseBank");
+        dimensionToHeadingKeyMapping.put(Dimensions.INVOICE_INTERNAL_ORDERS, "transaction_orderNumber");
+        dimensionToHeadingKeyMapping.put(Dimensions.INVOICE_PAYMENT_METHOD_CODES, "transaction_paymentMethod");
+        dimensionToHeadingKeyMapping.put(Dimensions.INVOICE_POSTING_KEY, "transaction_postingKey");
+        dimensionToHeadingKeyMapping.put(Dimensions.INVOICE_SOURCE_CODES, "transaction_source");
+        dimensionToHeadingKeyMapping.put(Dimensions.INVOICE_TRADING_PARTNER_CODES, "transaction_tradingPartnerCode");
+        dimensionToHeadingKeyMapping.put(Dimensions.TAX_CODE_ITEMS, "transaction_invoiceTaxCode");
+        headingKeyMapping = dimensionToHeadingKeyMapping;
+    }
+    private static final List<String> mainHeadingKeys = new ArrayList<String>(Arrays.asList("", headingKeyMapping.get(Dimensions.INVOICE_FUNDS_CENTERS),
+            headingKeyMapping.get(Dimensions.INVOICE_COST_CENTERS), headingKeyMapping.get(Dimensions.INVOICE_FUNDS),
+            EA_COMMITMENT_ITEM_HEADING_KEY, headingKeyMapping.get(Dimensions.INVOICE_COMMITMENT_ITEM), headingKeyMapping.get(Dimensions.INVOICE_INTERNAL_ORDERS),
+            headingKeyMapping.get(Dimensions.INVOICE_ASSET_INVENTORY_NUMBERS), "transaction_sumWithoutVat", ""));
+    private static final List<String> secondaryHeadingKeys = new ArrayList<String>(Arrays.asList(headingKeyMapping.get(Dimensions.INVOICE_POSTING_KEY),
+            headingKeyMapping.get(Dimensions.INVOICE_ACCOUNTS),
+            headingKeyMapping.get(Dimensions.TAX_CODE_ITEMS), headingKeyMapping.get(Dimensions.INVOICE_TRADING_PARTNER_CODES),
+            headingKeyMapping.get(Dimensions.INVOICE_FUNCTIONAL_AREA_CODE), headingKeyMapping.get(Dimensions.INVOICE_CASH_FLOW_CODES),
+            headingKeyMapping.get(Dimensions.INVOICE_SOURCE_CODES),
+            headingKeyMapping.get(Dimensions.INVOICE_PAYMENT_METHOD_CODES), headingKeyMapping.get(Dimensions.INVOICE_HOUSE_BANK_CODES), "transaction_entryContent"));
 
     /** transaction template node or (in subclassing TransactionBlockBean) document node) */
     private Node parentNode;
@@ -160,7 +191,7 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
         } else {
             transactions = new ArrayList<Transaction>();
         }
-        constructTransactionPanelGroup();
+        constructTransactionPanelGroup(false);
     }
 
     private boolean hasExistingParent() {
@@ -242,14 +273,70 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
     }
 
     private boolean validate() {
+        List<String> errorMsgs = new ArrayList<String>();
+        EInvoiceService einvoiceService = BeanHelper.getEInvoiceService();
+        Map<Dimensions, NodeRef> dimensionsToNodeRefs = einvoiceService.getDimensionToNodeRefMappings();
+        Date entryDate = getEntryDate();
         for (Transaction transaction : transactions) {
             String entryContent = transaction.getEntryContent();
             if (entryContent != null && entryContent.length() > 50) {
-                MessageUtil.addErrorMessage("transactions_entryContentTooLong");
-                return false;
+                errorMsgs.add(MessageUtil.getMessage("transactions_entryContentTooLong"));
             }
+            validateDimensionValue(errorMsgs, dimensionsToNodeRefs, entryDate, transaction.getAccount(), Dimensions.INVOICE_ACCOUNTS);
+            validateDimensionValue(errorMsgs, dimensionsToNodeRefs, entryDate, transaction.getAssetInventoryNumber(), Dimensions.INVOICE_ASSET_INVENTORY_NUMBERS);
+            validateDimensionValue(errorMsgs, dimensionsToNodeRefs, entryDate, transaction.getCashFlowCode(), Dimensions.INVOICE_CASH_FLOW_CODES);
+            validateDimensionValue(errorMsgs, dimensionsToNodeRefs, entryDate, transaction.getCommitmentItem(), Dimensions.INVOICE_COMMITMENT_ITEM,
+                    null, DimensionSelectorGenerator.predefinedFilters.get(DimensionSelectorGenerator.EA_PREFIX_EXCLUDE_FILTER_KEY));
+            validateDimensionValue(errorMsgs, dimensionsToNodeRefs, entryDate, transaction.getEaCommitmentItem(), Dimensions.INVOICE_COMMITMENT_ITEM,
+                    EA_COMMITMENT_ITEM_HEADING_KEY, DimensionSelectorGenerator.predefinedFilters.get(DimensionSelectorGenerator.EA_PREFIX_INCLUDE_FILTER_KEY));
+            validateDimensionValue(errorMsgs, dimensionsToNodeRefs, entryDate, transaction.getCostCenter(), Dimensions.INVOICE_COST_CENTERS);
+            validateDimensionValue(errorMsgs, dimensionsToNodeRefs, entryDate, transaction.getFunctionalAreaCode(), Dimensions.INVOICE_FUNCTIONAL_AREA_CODE);
+            validateDimensionValue(errorMsgs, dimensionsToNodeRefs, entryDate, transaction.getFund(), Dimensions.INVOICE_FUNDS);
+            validateDimensionValue(errorMsgs, dimensionsToNodeRefs, entryDate, transaction.getFundsCenter(), Dimensions.INVOICE_FUNDS_CENTERS);
+            validateDimensionValue(errorMsgs, dimensionsToNodeRefs, entryDate, transaction.getHouseBank(), Dimensions.INVOICE_HOUSE_BANK_CODES);
+            validateDimensionValue(errorMsgs, dimensionsToNodeRefs, entryDate, transaction.getOrderNumber(), Dimensions.INVOICE_INTERNAL_ORDERS);
+            validateDimensionValue(errorMsgs, dimensionsToNodeRefs, entryDate, transaction.getPaymentMethod(), Dimensions.INVOICE_PAYMENT_METHOD_CODES);
+            validateDimensionValue(errorMsgs, dimensionsToNodeRefs, entryDate, transaction.getPostingKey(), Dimensions.INVOICE_POSTING_KEY);
+            validateDimensionValue(errorMsgs, dimensionsToNodeRefs, entryDate, transaction.getSource(), Dimensions.INVOICE_SOURCE_CODES);
+            validateDimensionValue(errorMsgs, dimensionsToNodeRefs, entryDate, transaction.getTradingPartnerCode(), Dimensions.INVOICE_TRADING_PARTNER_CODES);
+            validateDimensionValue(errorMsgs, dimensionsToNodeRefs, entryDate, transaction.getInvoiceTaxCode(), Dimensions.TAX_CODE_ITEMS);
+        }
+        if (!errorMsgs.isEmpty()) {
+            for (String msg : errorMsgs) {
+                Utils.addErrorMessage(msg);
+            }
+            return false;
         }
         return true;
+    }
+
+    private void validateDimensionValue(List<String> errorMsgs, Map<Dimensions, NodeRef> dimensionsToNodeRefs, Date entryDate, final String currentValueName,
+            Dimensions currentDimension) {
+        validateDimensionValue(errorMsgs, dimensionsToNodeRefs, entryDate, currentValueName, currentDimension, null, null);
+    }
+
+    private void validateDimensionValue(List<String> errorMsgs, Map<Dimensions, NodeRef> dimensionsToNodeRefs, Date entryDate, final String currentValueName,
+            Dimensions currentDimension, String dimensionLabelKey, Predicate filter) {
+        if (StringUtils.isNotBlank(currentValueName)) {
+            List<DimensionValue> dimensionValues = BeanHelper.getEInvoiceService().getAllDimensionValuesFromCache(dimensionsToNodeRefs.get(currentDimension));
+            DimensionValue existingValue = EInvoiceUtil.findDimensionValueByValueName(currentValueName, dimensionValues);
+            if (filter != null && existingValue != null && !filter.evaluate(existingValue)) {
+                existingValue = null;
+            }
+            if (dimensionLabelKey == null) {
+                dimensionLabelKey = headingKeyMapping.get(currentDimension);
+            }
+            if (existingValue == null) {
+                errorMsgs
+                        .add(MessageUtil.getMessage("transactions_no_existing_dimension_value", MessageUtil.getMessage(dimensionLabelKey), currentValueName));
+            } else if (entryDate != null) {
+                if (!EInvoiceUtil.isDateInPeriod(entryDate, existingValue.getBeginDateTime(), existingValue.getEndDateTime())) {
+                    errorMsgs.add(MessageUtil.getMessage("transactions_dimension_value_not_in_period",
+                            I18NUtil.getMessage("docspec_documentSpecificModel.property.docspec_" + DocumentSpecificModel.Props.ENTRY_DATE.getLocalName() + ".title"),
+                            MessageUtil.getMessage(dimensionLabelKey)));
+                }
+            }
+        }
     }
 
     private Transaction getNewUnsavedTransaction() {
@@ -269,8 +356,8 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
         taskPanelControlNodeRef = null;
     }
 
-    protected void constructTransactionPanelGroup() {
-        constructTransactionPanelGroup(getTransactionPanelGroupInner());
+    protected void constructTransactionPanelGroup(boolean rowAdded) {
+        constructTransactionPanelGroup(getTransactionPanelGroupInner(), rowAdded);
     }
 
     protected boolean isInEditMode() {
@@ -282,7 +369,7 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
      */
     public void addTransaction(ActionEvent event) {
         transactions.add(getNewUnsavedTransaction());
-        updateTransactionPanelGroup();
+        updateTransactionPanelGroup(true);
         addInvoiceMessages();
     }
 
@@ -294,7 +381,7 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
         Transaction originalTransaction = transactions.get(transIndex);
         transactions.add(getNewUnsavedTransaction(RepoUtil.getPropertiesIgnoringSystem(RepoUtil.toQNameProperties(originalTransaction.getNode().getProperties(), true),
                 BeanHelper.getDictionaryService())));
-        updateTransactionPanelGroup();
+        updateTransactionPanelGroup(false);
         addInvoiceMessages();
     }
 
@@ -304,7 +391,7 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
     public void removeTransaction(ActionEvent event) {
         int transIndex = Integer.parseInt(ActionUtil.getParam(event, TRANSACTION_INDEX));
         removedTransactions.add(transactions.remove(transIndex));
-        updateTransactionPanelGroup();
+        updateTransactionPanelGroup(false);
         addInvoiceMessages();
     }
 
@@ -316,13 +403,13 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
         // do nothing, override in subclassing TransactionsBlockBean
     }
 
-    private void updateTransactionPanelGroup() {
+    private void updateTransactionPanelGroup(boolean rowAdded) {
         getTransactionPanelGroupInner().getChildren().clear();
-        constructTransactionPanelGroup();
+        constructTransactionPanelGroup(rowAdded);
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    protected HtmlPanelGrid constructTransactionPanelGroup(HtmlPanelGroup panelGroup) {
+    protected HtmlPanelGrid constructTransactionPanelGroup(HtmlPanelGroup panelGroup, boolean rowAdded) {
         FacesContext context = FacesContext.getCurrentInstance();
         Application application = context.getApplication();
         panelGroup.getChildren().clear();
@@ -409,19 +496,19 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
                 addOriginalTaxInfo(transaction, transRowCounter);
             }
             addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_FUNDS_CENTERS, TransactionModel.Props.FUNDS_CENTER, transRowCounter, "width160 ",
-                    transMandatoryProps);
+                    transMandatoryProps, rowAdded);
             addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_COST_CENTERS, TransactionModel.Props.COST_CENTER, transRowCounter, "width120 ",
-                    transMandatoryProps);
+                    transMandatoryProps, rowAdded);
             addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_FUNDS, TransactionModel.Props.FUND, transRowCounter, "width120 ",
-                    transMandatoryProps);
+                    transMandatoryProps, rowAdded);
             addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_COMMITMENT_ITEM, TransactionModel.Props.EA_COMMITMENT_ITEM, transRowCounter, "width120 ",
-                    DimensionSelectorGenerator.getEAInclusivePredicate(), transMandatoryProps);
+                    DimensionSelectorGenerator.EA_PREFIX_INCLUDE_FILTER_KEY, transMandatoryProps, rowAdded);
             addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_COMMITMENT_ITEM, TransactionModel.Props.COMMITMENT_ITEM, transRowCounter, "width190 ",
-                    DimensionSelectorGenerator.getEAExclusivePredicate(), transMandatoryProps);
+                    DimensionSelectorGenerator.EA_PREFIX_EXCLUDE_FILTER_KEY, transMandatoryProps, rowAdded);
             addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_INTERNAL_ORDERS, TransactionModel.Props.ORDER_NUMBER, transRowCounter, "width140 ",
-                    transMandatoryProps);
+                    transMandatoryProps, rowAdded);
             addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_ASSET_INVENTORY_NUMBERS, TransactionModel.Props.ASSET_INVENTORY_NUMBER, transRowCounter,
-                    "width120 ", transMandatoryProps);
+                    "width120 ", transMandatoryProps, rowAdded);
             addDoubleInput(context, transMainGridChildren, transRowCounter, TransactionModel.Props.SUM_WITHOUT_VAT, childrenStyleClassAttribute,
                     transMandatoryProps);
             // actions
@@ -447,23 +534,23 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
 
             // Second row inputs
             addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_POSTING_KEY, TransactionModel.Props.POSTING_KEY, transRowCounter, "width40 ",
-                    transMandatoryProps);
+                    transMandatoryProps, rowAdded);
             addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_ACCOUNTS, TransactionModel.Props.ACCOUNT, transRowCounter, "width120 ",
-                    transMandatoryProps);
+                    transMandatoryProps, rowAdded);
             addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.TAX_CODE_ITEMS, TransactionModel.Props.INVOICE_TAX_CODE,
-                    transRowCounter, "width40 " + TRANS_ROW_VAT_CODE_INPUT_CLASS, transMandatoryProps);
+                    transRowCounter, "width40 " + TRANS_ROW_VAT_CODE_INPUT_CLASS, transMandatoryProps, rowAdded);
             addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_TRADING_PARTNER_CODES, TransactionModel.Props.TRADING_PARTNER_CODE, transRowCounter,
-                    "width80 ", transMandatoryProps);
+                    "width80 ", transMandatoryProps, rowAdded);
             addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_FUNCTIONAL_AREA_CODE, TransactionModel.Props.FUNCTIONAL_ARE_CODE, transRowCounter,
-                    "width80 ", transMandatoryProps);
+                    "width80 ", transMandatoryProps, rowAdded);
             addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_CASH_FLOW_CODES, TransactionModel.Props.CASH_FLOW_CODE, transRowCounter, "width50 ",
-                    transMandatoryProps);
+                    transMandatoryProps, rowAdded);
             addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_SOURCE_CODES, TransactionModel.Props.SOURCE, transRowCounter, "width40 ",
-                    transMandatoryProps);
+                    transMandatoryProps, rowAdded);
             addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_PAYMENT_METHOD_CODES, TransactionModel.Props.PAYMENT_METHOD, transRowCounter,
-                    "width40 ", transMandatoryProps);
+                    "width40 ", transMandatoryProps, rowAdded);
             addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_HOUSE_BANK_CODES, TransactionModel.Props.HOUSE_BANK, transRowCounter, "width70 ",
-                    transMandatoryProps);
+                    transMandatoryProps, rowAdded);
             addTextareaInput(context, tranRowSecondaryGridChildren, transRowCounter, TransactionModel.Props.ENTRY_CONTENT, secondaryChildrenStyleClassAttribute,
                     transMandatoryProps);
 
@@ -556,7 +643,6 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
     @SuppressWarnings("unchecked")
     private void addTemplateSaveAs(FacesContext context, Application application, UIPanel transactionPanel, String listId) {
         UIPanel tranSaveAsTemplatePanel = (UIPanel) application.createComponent("org.alfresco.faces.Panel");
-        tranSaveAsTemplatePanel.setId(TRANS_COMPONENT_ID_PREFIX + "saveas-panel");
         tranSaveAsTemplatePanel.setRendererType(HtmlGroupCustomRenderer.HTML_GROUP_CUSTOM_RENDERER_TYPE);
         tranSaveAsTemplatePanel.getAttributes().put(HtmlGroupCustomRenderer.LAYOUT_ATTR, HtmlGroupCustomRenderer.LAYOUT_TYPE_BLOCK);
 
@@ -588,6 +674,7 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
         saveAsButton.setId(TRANS_COMPONENT_ID_PREFIX + "-template-saveas-button-" + listId);
         saveAsButton.setActionListener(application.createMethodBinding("#{" + getBeanName() + ".saveAsTemplate}", new Class[] { ActionEvent.class }));
         saveAsButton.setValue(MessageUtil.getMessage("transactions_saveas_template_button"));
+        saveAsButton.setOnclick("setPageScrollY();");
         tranSaveAsTemplateGrid.getChildren().add(saveAsButton);
 
         tranSaveAsTemplatePanel.getChildren().add(tranSaveAsTemplateGrid);
@@ -626,6 +713,7 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
         transTemplateSelectorHiddenLink.setId(TRANS_COMPONENT_ID_PREFIX + "trans-select-template-link-" + listId);
         transTemplateSelectorHiddenLink.setActionListener(application.createMethodBinding("#{" + getBeanName() + ".copyFromTemplate}", new Class[] { ActionEvent.class }));
         transTemplateSelectorHiddenLink.setStyle(INLINE_STYLE_DISPLAY_NONE);
+        transTemplateSelectorHiddenLink.setOnclick("setPageScrollY();");
 
         transTemplateSelectGroup.getChildren().add(transTemplateSelectorHiddenLink);
 
@@ -679,6 +767,7 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
     private HtmlPanelGroup createTransActions(Application application, String listId, int transRowCounter) {
         final HtmlPanelGroup columnActions = (HtmlPanelGroup) application.createComponent(HtmlPanelGroup.COMPONENT_TYPE);
         columnActions.setId(TRANS_COMPONENT_ID_PREFIX + "actions-" + listId + "-" + transRowCounter);
+        columnActions.setRendererType(HtmlGroupCustomRenderer.HTML_GROUP_CUSTOM_RENDERER_TYPE);
 
         if (isInEditMode()) {
             // delete transaction
@@ -740,33 +829,47 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
 
     @SuppressWarnings("rawtypes")
     private void addDimensionSelector(FacesContext context, List siblings, Dimensions dimensions, QName propName, int transactionIndex, String styleClass,
-            Set<String> mandatoryProps) {
-        addDimensionSelector(context, siblings, dimensions, propName, transactionIndex, styleClass, null, mandatoryProps);
+            Set<String> mandatoryProps, boolean rowAdded) {
+        addDimensionSelector(context, siblings, dimensions, propName, transactionIndex, styleClass, null, mandatoryProps, rowAdded);
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    private void addDimensionSelector(FacesContext context, List siblings, Dimensions dimensions, QName propName, int transactionIndex, String styleClass, Predicate filter,
-            Set<String> mandatoryProps) {
+    private void addDimensionSelector(FacesContext context, List siblings, Dimensions dimensions, QName propName, int transactionIndex, String styleClass,
+            String predefinedFilterName,
+            Set<String> mandatoryProps,
+            boolean rowAdded) {
         UIComponent dimensionSelector;
         if (isInEditMode()) {
             final HtmlPanelGroup dimensionSelectorPanel = (HtmlPanelGroup) context.getApplication().createComponent(HtmlPanelGroup.COMPONENT_TYPE);
             dimensionSelectorPanel.setId(TRANS_COMPONENT_ID_PREFIX + "trans-panel-" + propName.getLocalName() + "-" + transactionIndex);
+            dimensionSelectorPanel.setRendererType(HtmlGroupCustomRenderer.HTML_GROUP_CUSTOM_RENDERER_TYPE);
             DimensionSelectorGenerator dimensionGenerator;
-            if (filter != null) {
-                dimensionGenerator = new DimensionSelectorGenerator(filter);
+            if (predefinedFilterName != null) {
+                dimensionGenerator = new DimensionSelectorGenerator(DimensionSelectorGenerator.predefinedFilters.get(predefinedFilterName));
             } else {
                 dimensionGenerator = new DimensionSelectorGenerator();
             }
-            dimensionGenerator.getCustomAttributes().put(ClassificatorSelectorGenerator.ATTR_DESCRIPTION_AS_LABEL, "true");
             dimensionGenerator.setSelectedValue((String) transactions.get(transactionIndex).getNode().getProperties().get(propName));
-            dimensionSelector = dimensionGenerator.generateSelectComponent(context, null, false);
+            String dimensionName = dimensions.getDimensionName();
+            dimensionGenerator.getCustomAttributes().put(DimensionSelectorGenerator.ATTR_DIMENSION_NAME, dimensionName);
+            dimensionGenerator.getCustomAttributes().put(DimensionSelectorGenerator.ATTR_GENERATE_DIMENSION_VALUES, Boolean.valueOf(transactionIndex == 0).toString());
+            dimensionGenerator.setEntryDate(getEntryDate());
+
+            dimensionSelector = dimensionGenerator.generate(context, null);
+            Map componentAttributes = dimensionSelector.getAttributes();
             // The following line must execute before setupSelectComponent(), because the latter needs a value binding.
             setIdAndValueBinding(context, transactionIndex, propName, dimensionSelector);
-            dimensionGenerator.getCustomAttributes().put(DimensionSelectorGenerator.ATTR_DIMENSION_NAME, dimensions.getDimensionName());
-            dimensionGenerator.setupSelectComponent(context, null, null, null, dimensionSelector, false);
-            dimensionSelector.getAttributes().put(CustomAttributeNames.STYLE_CLASS, styleClass == null ? "width120 " + NO_OPTION_TITLE : styleClass + " " + NO_OPTION_TITLE);
 
-            dimensionSelector.getAttributes().put("displayMandatoryMark", true);
+            componentAttributes.put(CustomAttributeNames.STYLE_CLASS, styleClass == null ? "expand19-200 width120 tooltip " : styleClass + " expand19-200 tooltip ");
+            if (predefinedFilterName != null) {
+                componentAttributes.put(DimensionSelectorGenerator.ATTR_PREDEFINED_FILTER_NAME, predefinedFilterName);
+            }
+            componentAttributes.put("displayMandatoryMark", true);
+            if (transactionIndex == transactions.size() - 1 && rowAdded) {
+                componentAttributes.put(DimensionSelectorGenerator.ATTR_USE_DFAULT_VALUE, Boolean.TRUE);
+            } else {
+                componentAttributes.remove(DimensionSelectorGenerator.ATTR_USE_DFAULT_VALUE);
+            }
 
             dimensionSelectorPanel.getChildren().add(dimensionSelector);
 
@@ -782,17 +885,21 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
             DimensionValue dimensionValue = eInvoiceService.getDimensionValue(eInvoiceService.getDimension(dimensions), dimensionValueName);
             String tooltip = dimensionValue != null ? TextUtil.joinStringAndStringWithSeparator(dimensionValue.getValue(), dimensionValue.getValueComment(), "; ") : "";
             dimensionSelector.getAttributes().put("title", tooltip);
+            dimensionSelector.getAttributes().put("styleClass", "tooltip");
             siblings.add(dimensionSelector);
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private void addMandatorySpan(FacesContext context, QName propName, int transactionIndex, final HtmlPanelGroup dimensionSelectorPanel) {
+    protected Date getEntryDate() {
+        return null;
+    }
+
+    private void addMandatorySpan(FacesContext context, QName propName, int transactionIndex, final UIComponent parent) {
         UIOutput span = (UIOutput) context.getApplication().createComponent(UIOutput.COMPONENT_TYPE);
         span.setId("trans-panel-mandatory-" + propName.getLocalName() + "-" + transactionIndex);
         span.setValue(" *");
-        span.getAttributes().put("style", "color: red;");
-        dimensionSelectorPanel.getChildren().add(span);
+        ComponentUtil.putAttribute(span, "style", "color: red;");
+        ComponentUtil.addChildren(parent, span);
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -926,7 +1033,7 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
 
     public void setTransactionPanelGroup(HtmlPanelGroup transactionPanelGroup) {
         if (taskPanelControlNodeRef != null && !taskPanelControlNodeRef.equals(getParentNodeRef())) {
-            constructTransactionPanelGroup(transactionPanelGroup);
+            constructTransactionPanelGroup(transactionPanelGroup, false);
             taskPanelControlNodeRef = getParentNodeRef();
         }
         this.transactionPanelGroup = transactionPanelGroup;

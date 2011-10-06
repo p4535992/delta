@@ -592,10 +592,14 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
         final Map<String, Object> properties = node.getProperties();
         Object value = properties.get(qName.toString());
         if (value != null && StringUtils.equals(value.getClass().getCanonicalName(), ArrayList.class.getCanonicalName())) {
-            final Integer valueIndex = (Integer) requestMap.get(VALUE_INDEX_IN_MULTIVALUED_PROPERTY);
             @SuppressWarnings("unchecked")
             List<Object> array = (List<Object>) value;
-            value = array.get(valueIndex);
+            if (!array.isEmpty()) {
+                final Integer valueIndex = (Integer) requestMap.get(VALUE_INDEX_IN_MULTIVALUED_PROPERTY);
+                value = array.get(valueIndex);
+            } else {
+                value = null;
+            }
         }
         return DefaultTypeConverter.INSTANCE.convert(requiredClasss, value);
     }

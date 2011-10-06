@@ -21,7 +21,6 @@ import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.common.ComponentConstants;
-import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
@@ -375,7 +374,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
     }
 
     protected boolean isDisabled() {
-        return Utils.isComponentDisabledOrReadOnly(this);
+        return ComponentUtil.isComponentDisabledOrReadOnly(this);
     }
 
     protected boolean isMultiValued() {

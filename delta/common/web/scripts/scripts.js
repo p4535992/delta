@@ -282,6 +282,127 @@ function addAutocompleter(inputId, valuesArray){
    });
 }
 
+// Active dimension values cache for date dimensionSelectorDate.
+// Cache should be emptied when dimensionSelectorDate value changes
+var dimensionSelectorDefaultValues = {};
+var lastDimensionQueryDates = {};
+
+function addUIAutocompleter(input, valuesArray, dimensionName, dimensionQueryDate, filterName, linkId){
+   autocompleters.push(function() {  
+      var inputId = "#"+escapeId4JQ(input);
+      var jQInput = $jQ(inputId);
+      var dimensionKey = dimensionName;
+      var localFilterName = filterName;
+      if(filterName != null && filterName != undefined && filterName.length){
+         dimensionKey = dimensionKey + filterName;
+      }
+      if(valuesArray.length > 0){
+         dimensionSelectorDefaultValues[dimensionKey] = valuesArray;
+      }
+      lastDimensionQueryDate = null;
+      if(dimensionQueryDate){
+         lastDimensionQueryDate = new Date(getDateFromString(dimensionQueryDate));
+      }
+      lastDimensionQueryDates[dimensionKey] = lastDimensionQueryDate;
+      var autocomplete = jQInput.uiAutocomplete({
+         minLength: 0,
+         appendTo: "#wrapper", // this is needed to display custom tooltips above autocomplete list
+         source: function( request, response ) {
+            var term = request.term;
+            var entryDateInput = $jQ(".entryDate"); //doesn't matter if entryDate field is not present, in that case just don't use it for filtering
+            var entryDate = null;
+            if(entryDateInput.length > 0){
+               entryDate = entryDateInput.datepicker('getDate');
+            }
+            if(term.length < 3 && isSameDate(entryDate, lastDimensionQueryDates[dimensionKey])){
+               response(dimensionSelectorDefaultValues[dimensionKey]);
+            } else {
+               var uri = getContextPath() + "/ajax/invoke/AjaxSearchBean.searchDimensionValues";
+               request.dimensionName = dimensionName;
+               request.predefinedFilterName = filterName;
+               if(entryDate != null){
+                  request.entryDate = entryDate.getDate() + "." + entryDate.getMonth() + "." + entryDate.getFullYear();
+               }
+               $jQ.getJSON( uri, request, function( data, status, xhr ) {
+                  if(term.length < 3){
+                     //cache data for new date
+                     lastDimensionQueryDates[dimensionKey] = entryDate;
+                     dimensionSelectorDefaultValues[dimensionKey] = data;
+                  }
+                  response(data);
+               });
+            }
+         },         
+         focus: function( event, ui ) {
+            return false;
+         },
+         select: function( event, ui ) {
+            var input = $jQ(inputId);
+            input.val(ui.item.value);
+            //assume using customized tooltips; if needed could make tooltip attribute name configurable (title/tooltipText)
+            input.attr("tooltipText", ui.item.description);
+            var lnk = linkId;
+            if(input.val() != '' && linkId != ''){
+               $jQ("#" + escapeId4JQ(linkId)).click();
+            }
+            return false;
+         },
+         position: {
+            my: "right top",
+            at: "right bottom",
+            collision: "none"
+         }         
+      });
+      autocomplete.data("uiAutocomplete")._renderItem = function( ul, item ) {
+         var renderedItem = $jQ( "<li><a title=\"" + item.description + "\">" + item.value + "<br>" + item.label + "</a></li>" );
+         renderedItem.data("item.uiAutocomplete", item );
+         renderedItem.appendTo( ul );
+         return renderedItem;
+      };
+      autocomplete.focus(function(){
+         var input = $jQ(inputId);
+         if(input.uiAutocomplete("option", "executeOnFocus")){
+            input.uiAutocomplete("search");
+         } else {
+            input.uiAutocomplete("option", "executeOnFocus", true);
+         }
+      });
+      autocomplete.bind("paste", function(){
+         var input = $jQ(inputId);// pasted value not jet assigned
+         setTimeout(function() {
+            input.uiAutocomplete("search");
+         }, 100);
+      });
+   });
+}
+
+// FIXME: this is not working!
+function getDateFromString(dateString){
+   if(dateString){
+      var dateParts = dateString.split(".");
+      if(dateParts.length == 3){
+         if (dateParts[1].charAt(0) == "0"){
+            dateParts[1] = dateParts[1].substr(1);
+         }
+         if (dateParts[0].charAt(0) == "0"){
+            dateParts[0] = dateParts[0].substr(1);
+         }         
+         var date = new Date(parseInt(dateParts[2]), parseInt(dateParts[1]), parseInt(dateParts[0]));
+         return date;
+      }
+   }
+   return null;
+}
+
+function isSameDate(date1, date2){
+   if((date1 == null || date1 == undefined) && (date2 == null || date2 == undefined)){
+      return true;
+   }
+   if(date1 && date2){
+      return date1.getFullYear() == date2.getFullYear() && date1.getMonth() == date2.getMonth() && date1.getDate() == date2.getDate();
+   }
+}
+
 function addSearchSuggest(clientId, containerClientId, pickerCallback, submitUri) {
    addSearchSuggest(clientId, containerClientId, pickerCallback, submitUri, null);
 }
@@ -1082,11 +1203,7 @@ function initWithScreenProtected() {
    extendCondencePlugin();
    // extendCondencePlugin() MUST be called before tooltips are added on the following lines,
    // as condence plugin will make a copy of element for condenced text that would not get tooltips if created later
-   $jQ(".tooltip").tooltip({
-      track: true
-      ,escapeHtml: true
-      ,tooltipContainerElemName: "p"
-   });
+   // Adding tooltips is currently executed inside handleHtmlLoaded
 
    // Realy simple history stuff for back button
    window.dhtmlHistory.initialize();
@@ -1420,6 +1537,13 @@ function extendCondencePlugin() {
 // 1) once after full page load
 // *) each time an area is replaced inside the page
 function handleHtmlLoaded(context, selects) {
+   
+   $jQ(".tooltip", context).tooltip({
+      track: true
+      ,escapeHtml: true
+      ,tooltipContainerElemName: "p"
+   });   
+   
    //initialize all expanding textareas
    var expanders = jQuery("textarea[class*=expand]", context);
    expanders.TextAreaExpander();
@@ -1873,3 +1997,4 @@ function clearFormHiddenParams(currFormName, newTargetVal) {
    }
    f.target = newTargetVal ? newTargetVal : '';
 }
+

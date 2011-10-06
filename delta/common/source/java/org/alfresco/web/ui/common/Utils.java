@@ -80,6 +80,8 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.myfaces.shared_impl.renderkit.html.HtmlFormRendererBase;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.utils.ComponentUtil;
+
 /**
  * Class containing misc helper methods used by the JSF components.
  * 
@@ -746,32 +748,6 @@ public final class Utils extends StringUtils
          parent = parent.getParent();
       }
       return (IDataContainer)parent;
-   }
-   
-   /**
-    * Determines whether the given component is disabled or readonly
-    * 
-    * @param component The component to test
-    * @return true if the component is either disabled or set to readonly
-    */
-   public static boolean isComponentDisabledOrReadOnly(UIComponent component)
-   {
-      boolean disabled = false;
-      boolean readOnly = false;
-      
-      Object disabledAttr = component.getAttributes().get("disabled");
-      if (disabledAttr != null)
-      {
-         disabled = disabledAttr.equals(Boolean.TRUE);
-      }
-      
-      Object readOnlyAttr = component.getAttributes().get("readonly");
-      if (readOnlyAttr != null)
-      {
-         readOnly = readOnlyAttr.equals(Boolean.TRUE);
-      }
-
-      return disabled || readOnly;
    }
    
    /**

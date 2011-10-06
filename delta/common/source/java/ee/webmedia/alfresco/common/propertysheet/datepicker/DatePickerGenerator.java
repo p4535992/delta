@@ -15,7 +15,6 @@ import org.alfresco.web.app.Application;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.generator.BaseComponentGenerator;
 import org.alfresco.web.ui.common.ComponentConstants;
-import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet.ClientValidation;
@@ -50,7 +49,7 @@ public class DatePickerGenerator extends BaseComponentGenerator {
             UIComponent component) {
         super.setupProperty(context, propertySheet, item, propertyDef, component);
 
-        if (!Utils.isComponentDisabledOrReadOnly(component)) {
+        if (!ComponentUtil.isComponentDisabledOrReadOnly(component)) {
             @SuppressWarnings("unchecked")
             final Map<String, Object> attributes = component.getAttributes();
             String styleClass = getCustomAttributes().get(STYLE_CLASS);
@@ -133,7 +132,7 @@ public class DatePickerGenerator extends BaseComponentGenerator {
     protected void setupConverter(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem property, PropertyDefinition propertyDef,
             UIComponent component) {
         // Check for a valid date, when user can actually change it.
-        if (propertySheet.inEditMode() && !Utils.isComponentDisabledOrReadOnly(component)) {
+        if (propertySheet.inEditMode() && !ComponentUtil.isComponentDisabledOrReadOnly(component)) {
             setupValidDateConstraint(context, propertySheet, property, component);
         }
         ComponentUtil.createAndSetConverter(context, DatePickerConverter.CONVERTER_ID, component);

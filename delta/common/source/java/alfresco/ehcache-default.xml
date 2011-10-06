@@ -18,7 +18,7 @@
     <!-- Default 50 is 0.1 MB; 500 should be 1 MB -->
     <cache 
         name="org.hibernate.cache.StandardQueryCache" 
-        maxElementsInMemory="500" 
+        maxElementsInMemory="50" 
         eternal="true"
         overflowToDisk="false"
         />
@@ -30,25 +30,16 @@
         overflowToDisk="false"
         />
     <!-- approx 40MB memory required -->
-    <!-- Default 50000 is 70 MB; 100000 should be 140 MB -->
     <cache 
         name="org.alfresco.repo.domain.hibernate.NodeImpl" 
-        maxElementsInMemory="100000"
-        eternal="true"
-        overflowToDisk="false"
-        />
-    <!-- Default 5000 is 6.3 MB; 50000 should be 63 MB -->
-    <cache 
-        name="org.alfresco.repo.domain.hibernate.TransactionImpl" 
         maxElementsInMemory="50000"
         eternal="true"
         overflowToDisk="false"
         />
     <!-- approx 0.1 MB memory required -->
-    <!-- Default 500 is 0.6 MB; 5000 should be 6 MB -->
     <cache 
         name="org.alfresco.repo.domain.hibernate.QNameEntityImpl" 
-        maxElementsInMemory="5000"
+        maxElementsInMemory="500"
         eternal="true"
         overflowToDisk="false"
         />
@@ -56,15 +47,14 @@
     <!-- Default 40000 is 45 MB; 80000 should be 90 MB -->
     <cache 
         name="org.alfresco.repo.domain.hibernate.NodeImpl.aspects" 
-        maxElementsInMemory="80000"
+        maxElementsInMemory="40000"
         eternal="true"
         overflowToDisk="false"
         />
     <!-- approx 10MB memory required -->
-    <!-- Default 20000 is 35-350 MB; 40000 should be 70-700 MB -->
     <cache 
         name="org.alfresco.repo.domain.hibernate.NodeImpl.properties" 
-        maxElementsInMemory="40000"
+        maxElementsInMemory="20000"
         eternal="true"
         overflowToDisk="false"
         />
@@ -127,10 +117,9 @@
         overflowToDisk="false"
         />
     <!-- approx 1MB memory required -->    
-    <!-- Default 1000 is 1.4 MB; 10000 should be 14 MB -->
     <cache 
         name="org.alfresco.repo.domain.hibernate.DbAccessControlListImpl" 
-        maxElementsInMemory="10000"        
+        maxElementsInMemory="1000"        
         eternal="true"
         overflowToDisk="false"
         />
@@ -286,10 +275,9 @@
         timeToLiveSeconds="300"
         overflowToDisk="false"
         />
-    <!-- Default 1000 is 0.5 MB; 10000 should be 5 MB -->
     <cache 
         name="org.alfresco.cache.qnameEntityCache"
-        maxElementsInMemory="10000"
+        maxElementsInMemory="1000"
         eternal="true"
         overflowToDisk="false"
         />
@@ -311,17 +299,15 @@
         eternal="true"
         overflowToDisk="false"
         />
-    <!-- Default 10000 is 6.4 MB; 100000 should be 64 MB -->
     <cache 
         name="org.alfresco.cache.storeAndNodeIdCache"
-        maxElementsInMemory="100000"
+        maxElementsInMemory="10000"
         eternal="true"
         overflowToDisk="false"
         />
-    <!-- Default 10000 is 4 MB; 50000 should be 20 MB -->
     <cache 
         name="org.alfresco.cache.parentAssocsCache"
-        maxElementsInMemory="50000"
+        maxElementsInMemory="10000"
         eternal="true"
         overflowToDisk="false"
         />

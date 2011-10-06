@@ -108,7 +108,10 @@ public enum Parameters {
     DIMENSION_CODE_INVOICE_SOURCE_CODES("dimensionCodeInvoiceSourceCodes"),
     DIMENSION_CODE_INVOICE_POSTING_KEY("dimensionCodeInvoicePostingKey"),
     DIMENSION_CODE_INVOICE_PAYMENT_METHOD_CODES("dimensionCodeInvoicePaymentMethodCodes"),
-    DIMENSION_CODE_INVOICE_HOUSE_BANK_CODES("dimensionCodeInvoiceHouseBankCodes");
+    DIMENSION_CODE_INVOICE_HOUSE_BANK_CODES("dimensionCodeInvoiceHouseBankCodes"),
+
+    DIMENSION_DELETION_PERIOD("dimensionDeletionPeriod"),
+    DIMENSION_DELETION_TIME("dimensionDeletionTime");
 
     private String xPath;
     private String parameterName;

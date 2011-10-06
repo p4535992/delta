@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -11,6 +12,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.collections.Predicate;
 
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
 import ee.webmedia.alfresco.document.einvoice.generated.Invoice;
@@ -54,11 +56,6 @@ public interface EInvoiceService {
      * Read all dimension values from repo; service cache is not updated
      */
     List<DimensionValue> getAllDimensionValuesFromRepo(NodeRef dimensionRef);
-
-    /**
-     * Get active dimension values from service cache using getAllDimensionValuesFromCache
-     */
-    List<DimensionValue> getActiveDimensionValues(NodeRef dimension);
 
     Collection<NodeRef> importDimensionsList(InputStream input);
 
@@ -148,5 +145,15 @@ public interface EInvoiceService {
     void setDimensionValuesActiveOrInactive(Dimension dimension, boolean active);
 
     DimensionValue getDimensionValue(NodeRef dimensionRef, String transDimensionValue);
+
+    List<DimensionValue> searchDimensionValues(String searchString, NodeRef dimensionRef, Date entryDate, boolean activeOnly);
+
+    Map<Dimensions, NodeRef> getDimensionToNodeRefMappings();
+
+    Integer deleteUnusedDimensionValues();
+
+    DimensionValue getDimensionDefaultValue(NodeRef dimensionRef);
+
+    List<String> getDimensionDefaultValueList(Dimensions dimension, Predicate filter);
 
 }

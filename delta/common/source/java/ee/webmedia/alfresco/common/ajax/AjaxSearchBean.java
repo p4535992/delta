@@ -1,6 +1,12 @@
 package ee.webmedia.alfresco.common.ajax;
 
+import static ee.webmedia.alfresco.common.propertysheet.dimensionselector.DimensionSelectorGenerator.predefinedFilters;
+
 import java.io.IOException;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import javax.faces.component.UIComponent;
@@ -13,10 +19,17 @@ import javax.faces.model.SelectItem;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.web.app.servlet.ajax.InvokeCommand.ResponseMimetype;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.Predicate;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.common.propertysheet.dimensionselector.DimensionSelectorGenerator;
+import ee.webmedia.alfresco.common.propertysheet.dimensionselector.DimensionSelectorRenderer;
 import ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditor;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.einvoice.model.DimensionValue;
+import ee.webmedia.alfresco.document.einvoice.model.Dimensions;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
@@ -69,6 +82,33 @@ public class AjaxSearchBean extends AjaxBean {
         ResponseWriter responseWriter = context.getResponseWriter();
         responseWriter.write(UIGenericPicker.getResultSize(results) + "|");
         ComponentUtil.renderSelectItems(responseWriter, results);
+    }
+
+    @SuppressWarnings("unchecked")
+    @ResponseMimetype(MimetypeMap.MIMETYPE_HTML)
+    public void searchDimensionValues() throws IOException, ParseException {
+        FacesContext context = FacesContext.getCurrentInstance();
+
+        Map<String, String> params = context.getExternalContext().getRequestParameterMap();
+        String dimensionName = params.get(DimensionSelectorGenerator.ATTR_DIMENSION_NAME);
+        String searchString = params.get("term");
+        String predefinedFilterName = params.get(DimensionSelectorGenerator.ATTR_PREDEFINED_FILTER_NAME);
+        String entryDateString = params.get("entryDate");
+        Date entryDate = null;
+        if (StringUtils.isNotBlank(entryDateString)) {
+            entryDate = DimensionSelectorRenderer.dateFormat.parse(entryDateString);
+        }
+        List<DimensionValue> result = new ArrayList<DimensionValue>();
+        List<DimensionValue> dimensionValues = BeanHelper.getEInvoiceService()
+                .searchDimensionValues(searchString, BeanHelper.getEInvoiceService().getDimension(Dimensions.get(dimensionName)), entryDate,
+                        (searchString == null || searchString.length() < 3));
+        if (predefinedFilters.containsKey(predefinedFilterName)) {
+            Predicate filter = predefinedFilters.get(predefinedFilterName);
+            result.addAll(CollectionUtils.select(dimensionValues, filter));
+        } else {
+            result.addAll(dimensionValues);
+        }
+        context.getResponseWriter().write(DimensionSelectorRenderer.getValuesAsJsArrayString(result));
     }
 
     /**

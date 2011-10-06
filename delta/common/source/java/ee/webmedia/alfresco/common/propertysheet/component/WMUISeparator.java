@@ -39,7 +39,7 @@ public class WMUISeparator extends UISeparator {
         List<UIComponent> children = ComponentUtil.getChildren(this);
         if (!children.isEmpty()) {
             UIComponent child = children.get(0);
-            if (Boolean.TRUE.equals(child.getAttributes().get(DONT_RENDER_IF_DISABLED_ATTR)) && Utils.isComponentDisabledOrReadOnly(child)) {
+            if (Boolean.TRUE.equals(child.getAttributes().get(DONT_RENDER_IF_DISABLED_ATTR)) && ComponentUtil.isComponentDisabledOrReadOnly(child)) {
                 return false;
             }
         }

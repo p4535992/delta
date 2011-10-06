@@ -1114,7 +1114,7 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
          createAndSetConverter(context, property.getConverter(), component);
       }
       else if (propertySheet.inEditMode() == false && 
-               propertyDef != null && propertyDef.isMultiValued())
+               propertyDef != null && propertyDef.isMultiValued() && !ComponentUtil.isAlwaysEditComponent(component))
       {
          // if there isn't a custom converter and the property is
          // multi-valued add the multi value converter as a default

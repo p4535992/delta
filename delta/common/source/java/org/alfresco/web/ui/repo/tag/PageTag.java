@@ -83,7 +83,7 @@ public class PageTag extends TagSupport
                 "/scripts/jquery/jquery" + (log.isDebugEnabled() ? "" : "-min") + ".js",
                 "/scripts/jquery/jquery.scrollTo" + (log.isDebugEnabled() ? "" : "-min") + ".js",
                                 // jQuery UI
-                "/scripts/jquery/ui.core.js",
+                "/scripts/jquery/jquery.ui.core.js",
                 "/scripts/jquery/ui.datepicker.js",
                                 // jQuery Plugins
                 "/scripts/jquery/jquery.textarea-expander.js",
@@ -91,6 +91,9 @@ public class PageTag extends TagSupport
                 "/scripts/jquery/jquery.hoverIntent.js",
                 "/scripts/jquery/jquery.textmetrix.js",
                 "/scripts/jquery/jquery.autocomplete.js",
+                "/scripts/jquery/jquery.ui.widget.js",
+                "/scripts/jquery/jquery.ui.position.js",                
+                "/scripts/jquery/jquery.ui.autocomplete.js",                
                 "/scripts/jquery/jquery.jLog-min.js",
                 "/scripts/jquery/jquery.condense.js",
                 "/scripts/jquery/jquery.ajaxqueue.js",
@@ -135,6 +138,7 @@ public class PageTag extends TagSupport
       "/css/main.css",
       "/css/picker.css",
       "/scripts/jquery/jquery.autocomplete.css",
+      "/scripts/jquery/jquery.ui.autocomplete.css",
       "/css/styles.css"
    };
 
@@ -280,6 +284,11 @@ public class PageTag extends TagSupport
             }
             out.write("</title>\n");
             out.write("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n");
+            // Avoid arbitrary numbers on page appearing in Skype phone number format.
+            // If Skype number format is needed, use the following tag format:
+            // <!-- sphoneid telnr="+15551234456" fileas="John Smith" -->(555) 1234 456<!-- sphoneid -->
+            // (http://forum.skype.com/index.php?showtopic=78380)
+            out.write("<meta name=\"SKYPE_TOOLBAR\" content=\"SKYPE_TOOLBAR_PARSER_COMPATIBLE\" />\n");
          }
          
          // CSS style includes

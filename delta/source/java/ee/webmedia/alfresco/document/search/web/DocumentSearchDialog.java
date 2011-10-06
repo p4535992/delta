@@ -26,8 +26,11 @@ import org.springframework.web.jsf.FacesContextUtils;
 import ee.webmedia.alfresco.addressbook.util.AddressbookUtil;
 import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.service.CaseService;
+import ee.webmedia.alfresco.common.propertysheet.dimensionselector.DimensionSelectorGenerator;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.einvoice.model.Dimensions;
+import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchFilterService;
 import ee.webmedia.alfresco.document.service.DocumentService;
@@ -144,12 +147,20 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
 
         // UISelectMany components don't want null as initial value
         Map<QName, PropertyDefinition> propDefs = BeanHelper.getDictionaryService().getPropertyDefs(DocumentSearchModel.Types.FILTER);
+        Map<String, Object> properties = node.getProperties();
         for (Map.Entry<QName, PropertyDefinition> entry : propDefs.entrySet()) {
             PropertyDefinition propDef = entry.getValue();
             if (propDef.isMultiValued()) {
-                node.getProperties().put(entry.getKey().toString(), new ArrayList<Object>());
+                properties.put(entry.getKey().toString(), new ArrayList<Object>());
             }
         }
+        EInvoiceService einvoiceService = BeanHelper.getEInvoiceService();
+        properties.put(DocumentSearchModel.Props.FUND.toString(), einvoiceService.getDimensionDefaultValueList(Dimensions.INVOICE_FUNDS, null));
+        properties.put(DocumentSearchModel.Props.FUNDS_CENTER.toString(), einvoiceService.getDimensionDefaultValueList(Dimensions.INVOICE_FUNDS_CENTERS, null));
+        properties.put(
+                DocumentSearchModel.Props.EA_COMMITMENT_ITEM.toString(),
+                einvoiceService.getDimensionDefaultValueList(Dimensions.INVOICE_COMMITMENT_ITEM,
+                        DimensionSelectorGenerator.predefinedFilters.get(DimensionSelectorGenerator.EA_PREFIX_INCLUDE_FILTER_KEY)));
         return node;
     }
 

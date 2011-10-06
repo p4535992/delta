@@ -9,12 +9,12 @@ import javax.faces.context.FacesContext;
 
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.ui.common.ComponentConstants;
-import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.repo.component.property.UIProperty;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
+import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
  * Class that supports having custom attributes on property-sheet/show-property element, <br>
@@ -52,7 +52,7 @@ public class WMUIProperty extends UIProperty {
         // --------------------------------------------------------
         if (getChildCount() >= 2) {
             UIComponent child = getChildren().get(1);
-            if (Boolean.TRUE.equals(child.getAttributes().get(DONT_RENDER_IF_DISABLED_ATTR)) && Utils.isComponentDisabledOrReadOnly(child)) {
+            if (Boolean.TRUE.equals(child.getAttributes().get(DONT_RENDER_IF_DISABLED_ATTR)) && ComponentUtil.isComponentDisabledOrReadOnly(child)) {
                 return false;
             }
         }

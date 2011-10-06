@@ -28,6 +28,7 @@ public class DimensionSelectorAlwaysEditGenerator extends DimensionSelectorGener
 
     private void unsetReadOnly(UIComponent component) {
         ComponentUtil.putAttribute(component, "readonly", Boolean.FALSE);
+        ComponentUtil.putAttribute(component, ComponentUtil.IS_ALWAYS_EDIT, Boolean.TRUE);
         List<UIComponent> children = ComponentUtil.getChildren(component);
         if (children == null) {
             return;

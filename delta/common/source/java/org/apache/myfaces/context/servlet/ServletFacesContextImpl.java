@@ -292,7 +292,9 @@ public class ServletFacesContextImpl
                 _maximumSeverity = serSeverity;
             }
         }
-        notifyMessageAdded();
+        if (serSeverity.compareTo(FacesMessage.SEVERITY_INFO) > 0) {
+            notifyMessageAdded();
+        }
     }
 
     public static final String SCROLL_DISABLED = "SCROLL_DISABLED";

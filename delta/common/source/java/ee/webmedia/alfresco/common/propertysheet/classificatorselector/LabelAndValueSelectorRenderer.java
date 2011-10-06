@@ -19,10 +19,9 @@ public class LabelAndValueSelectorRenderer extends DimensionSelectorRenderer {
 
     public static final String LABEL_AND_VALUE_SELECTOR_RENDERER_TYPE = LabelAndValueSelectorRenderer.class.getCanonicalName();
 
-    @Override
     protected void renderSelectOptions(FacesContext context, UIComponent component, Converter converter, Set lookupSet, List selectItemList)
             throws IOException {
-        renderOptions(context, component, converter, lookupSet, selectItemList, true, true);
+//        renderOptions(context, component, converter, lookupSet, selectItemList, true, true);
     }
 
 }

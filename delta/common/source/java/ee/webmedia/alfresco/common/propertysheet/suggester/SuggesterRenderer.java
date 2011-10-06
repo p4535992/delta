@@ -57,7 +57,7 @@ public class SuggesterRenderer extends HtmlTextareaRenderer {
         out.endElement(HTML.SPAN_ELEM);
     }
 
-    private String getJavascriptFunctionCall(String inputClientId, List<String> suggesterValues) {
+    protected String getJavascriptFunctionCall(String inputClientId, List<String> suggesterValues) {
         String jsValuesArrayString = WebUtil.getValuesAsJsArrayString(suggesterValues);
         String functionCall = "addAutocompleter('" + inputClientId + "', " + jsValuesArrayString + ");";
         return functionCall;

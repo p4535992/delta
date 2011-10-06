@@ -1,5 +1,11 @@
 package ee.webmedia.alfresco.document.einvoice.service;
 
+import static ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil.DIMENSION_PROPERTIES;
+import static ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil.sortByDimensionValueName;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateStringExactQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -12,6 +18,7 @@ import java.io.Writer;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -45,9 +52,8 @@ import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.util.GUID;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
-import org.alfresco.web.data.IDataContainer;
-import org.alfresco.web.data.QuickSort;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.Predicate;
 import org.apache.commons.collections.Transformer;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
@@ -319,7 +325,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
     public void setDimensionValuesActiveOrInactive(Dimension dimension, boolean active) {
         List<DimensionValue> dimensionValues = getAllDimensionValuesFromRepo(dimension.getNode().getNodeRef());
         RetryingTransactionHelper retryingTransactionHelper = transactionService.getRetryingTransactionHelper();
-        Iterator<NodeRef> i = getNodeRefIterator(dimensionValues);
+        Iterator<DimensionValue> i = dimensionValues.iterator();
         SetActiveOrInactiveDimensionCallback setActiveOrInactiveDimensionCallback = new SetActiveOrInactiveDimensionCallback(i, active);
         try {
             while (i.hasNext()) {
@@ -372,14 +378,15 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         if (dimensionRef == null) {
             return new ArrayList<DimensionValue>();
         }
-        if (allDimensionValueCache.containsKey(dimensionRef)) {
-            return allDimensionValueCache.get(dimensionRef);
+        if (!allDimensionValueCache.containsKey(dimensionRef)) {
+            getAllDimensionValuesFromRepo(dimensionRef);
         }
-        return getAllDimensionValuesFromRepo(dimensionRef);
+        return allDimensionValueCache.get(dimensionRef);
     }
 
     @Override
     public List<DimensionValue> getAllDimensionValuesFromRepo(NodeRef dimensionRef) {
+        long startTime = System.currentTimeMillis();
         Assert.notNull(dimensionRef);
         List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(dimensionRef, DimensionModel.Associations.DIMENSION_VALUE,
                 RegexQNamePattern.MATCH_ALL);
@@ -391,33 +398,53 @@ public class EInvoiceServiceImpl implements EInvoiceService {
                             nodeService.getAspects(dimensionValueRef)));
             dimensionValues.add(new DimensionValue(dimensionValue));
         }
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Dimension values found: " + dimensionValues);
-        }
         allDimensionValueCache.put(dimensionRef, Collections.unmodifiableList(dimensionValues));
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Loading dimensionValues from repo for dimensionRef = " + dimensionRef.getId() + ", time = " + (System.currentTimeMillis() - startTime)
+                    + " ms, results size = " + dimensionValues.size());
+        }
         return dimensionValues;
     }
 
-    @Override
-    public List<DimensionValue> getActiveDimensionValues(NodeRef dimension) {
+    private List<DimensionValue> getActiveDimensionValues(NodeRef dimension) {
         if (activeDimensionValueCache.containsKey(dimension)) {
             return activeDimensionValueCache.get(dimension);
         }
         List<DimensionValue> allDimensionValues = getAllDimensionValuesFromCache(dimension);
         List<DimensionValue> activeDimensionValues = new ArrayList<DimensionValue>(allDimensionValues.size());
-        Date now = new Date();
         for (DimensionValue dimensionValue : allDimensionValues) {
-            Date beginDate = dimensionValue.getBeginDateTime();
-            Date endDate = dimensionValue.getEndDateTime();
-            if (dimensionValue.getActive() && (beginDate == null || DateUtils.isSameDay(beginDate, now) || beginDate.before(now))
-                    && (endDate == null || DateUtils.isSameDay(endDate, now) || endDate.after(now))) {
+            if (dimensionValue.getActive()) {
                 activeDimensionValues.add(dimensionValue);
             }
         }
-        QuickSort quickSort = new QuickSort(activeDimensionValues, "ValueName", true, IDataContainer.SORT_CASEINSENSITIVE);
-        quickSort.sort();
+        sortByDimensionValueName(activeDimensionValues);
         activeDimensionValueCache.put(dimension, Collections.unmodifiableList(activeDimensionValues));
         return activeDimensionValues;
+    }
+
+    @Override
+    public List<DimensionValue> searchDimensionValues(final String searchString, NodeRef dimensionRef, Date entryDate, boolean activeOnly) {
+        List<DimensionValue> dimensionValues;
+        if (activeOnly) {
+            dimensionValues = getActiveDimensionValues(dimensionRef);
+        } else {
+            dimensionValues = getAllDimensionValuesFromCache(dimensionRef);
+        }
+        long startTime = System.currentTimeMillis();
+        List<DimensionValue> result = new ArrayList<DimensionValue>();
+        for (DimensionValue dimensionValue : dimensionValues) {
+            if (StringUtils.isEmpty(searchString) || StringUtils.containsIgnoreCase(dimensionValue.getValueName(), searchString)
+                        || StringUtils.containsIgnoreCase(dimensionValue.getValue(), searchString)) {
+                if (EInvoiceUtil.isDateInPeriod(entryDate, dimensionValue.getBeginDateTime(), dimensionValue.getEndDateTime())) {
+                    result.add(dimensionValue);
+                }
+            }
+        }
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Searching dimensionValues from cache for dimensionRef = " + dimensionRef.getId() + ", time = " + (System.currentTimeMillis() - startTime)
+                    + " ms, search set size = " + dimensionValues.size() + ", results size = " + dimensionValues.size());
+        }
+        return result;
     }
 
     @Override
@@ -842,6 +869,44 @@ public class EInvoiceServiceImpl implements EInvoiceService {
     }
 
     @Override
+    public Integer deleteUnusedDimensionValues() {
+        Date nowMinus90Days = DateUtils.addDays(new Date(), -90);
+        List<Pair<Dimensions, DimensionValue>> expiredValues = new ArrayList<Pair<Dimensions, DimensionValue>>();
+        for (Dimensions dimension : Dimensions.values()) {
+            NodeRef dimensionRef = getDimension(dimension);
+            if (dimensionRef != null) {
+                for (DimensionValue dimensionValue : getAllDimensionValuesFromRepo(dimensionRef)) {
+                    Date endDate = dimensionValue.getEndDateTime();
+                    if (endDate != null && endDate.before(nowMinus90Days)) {
+                        expiredValues.add(new Pair<Dimensions, DimensionValue>(dimension, dimensionValue));
+                    }
+                }
+            }
+        }
+        int deletedNodeCount = 0;
+        for (Pair<Dimensions, DimensionValue> dimensionWithValue : expiredValues) {
+            Dimensions dimension = dimensionWithValue.getFirst();
+            DimensionValue dimensionValue = dimensionWithValue.getSecond();
+            List<QName> dimensionProperties = EInvoiceUtil.getDimensionProperties(dimension);
+            boolean isMatch = false;
+            if (!dimensionProperties.isEmpty()) {
+                isMatch = documentSearchService.isMatch(joinQueryPartsAnd(Arrays.asList(
+                        generateTypeQuery(TransactionModel.Types.TRANSACTION),
+                        generateStringExactQuery(dimensionValue.getValueName(), dimensionProperties.toArray(new QName[dimensionProperties.size()]))
+                        )), true, "searchTransactionsByDimensionValue");
+            }
+            if (!isMatch) {
+                nodeService.deleteNode(dimensionValue.getNode().getNodeRef());
+                deletedNodeCount++;
+            }
+        }
+        if (!expiredValues.isEmpty()) {
+            emptyDimensionValueChache();
+        }
+        return deletedNodeCount;
+    }
+
+    @Override
     public boolean isEinvoiceEnabled() {
         DocumentType documentType = documentAdminService.getDocumentType("invoice");
         // FIXME DLSeadist - Kui kõik süsteemsed dok.liigid on defineeritud, siis võib null kontrolli ja tagastamise eemdaldada
@@ -878,6 +943,10 @@ public class EInvoiceServiceImpl implements EInvoiceService {
                 }
             }
         }
+        Map<QName, List<String>> usedDimensionValues = new HashMap<QName, List<String>>();
+        for (Map.Entry<QName, Dimensions> entry : EInvoiceUtil.DIMENSION_PROPERTIES.entrySet()) {
+            usedDimensionValues.put(entry.getKey(), new ArrayList<String>());
+        }
         for (Transaction transaction : transactions) {
             NodeRef nodeRef = transaction.getNode().getNodeRef();
             Map<QName, Serializable> properties = RepoUtil.toQNameProperties(transaction.getNode().getProperties());
@@ -901,6 +970,37 @@ public class EInvoiceServiceImpl implements EInvoiceService {
                                     I18NUtil.getMessage("document_log_status_transaction_modified",
                                             I18NUtil.getMessage(TRANSACTION_DISPLAY_LABEL_PREFIX + propName.getLocalName()), originalValue));
                         }
+                    }
+                }
+            }
+            for (QName propName : DIMENSION_PROPERTIES.keySet()) {
+                usedDimensionValues.get(propName).add((String) transaction.getNode().getProperties().get(propName));
+            }
+        }
+        Set<NodeRef> changedDimensionRefs = new HashSet<NodeRef>();
+        for (Map.Entry<QName, List<String>> entry : usedDimensionValues.entrySet()) {
+            NodeRef dimensionRef = getDimension(DIMENSION_PROPERTIES.get(entry.getKey()));
+            // dimensionRef == null may occur if given dimension is not imported
+            if (dimensionRef != null) {
+                setDimensionValuesActive(dimensionRef, entry.getValue(), changedDimensionRefs);
+            }
+        }
+        for (NodeRef dimensionRef : changedDimensionRefs) {
+            activeDimensionValueCache.remove(dimensionRef);
+        }
+    }
+
+    private void setDimensionValuesActive(NodeRef dimensionRef, List<String> valueNames, Set<NodeRef> changedDimensionRefs) {
+        for (String valueName : valueNames) {
+            DimensionValue dimensionValue = getDimensionValue(dimensionRef, valueName);
+            if (dimensionValue != null) {
+                NodeRef dimensionValueRef = dimensionValue.getNode().getNodeRef();
+                if (!(Boolean) nodeService.getProperty(dimensionValueRef, DimensionModel.Props.ACTIVE)) {
+                    nodeService.setProperty(dimensionValueRef, DimensionModel.Props.ACTIVE, Boolean.TRUE);
+                    DimensionValue cachedValue = EInvoiceUtil.findDimensionValueByValueName(valueName, allDimensionValueCache.get(dimensionRef));
+                    if (cachedValue != null) {
+                        cachedValue.getNode().getProperties().put(DimensionModel.Props.ACTIVE.toString(), Boolean.TRUE);
+                        changedDimensionRefs.add(dimensionRef);
                     }
                 }
             }
@@ -1109,6 +1209,17 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         return null;
     }
 
+    @Override
+    public DimensionValue getDimensionDefaultValue(NodeRef dimensionRef) {
+        List<DimensionValue> dimensionValues = getAllDimensionValuesFromCache(dimensionRef);
+        for (DimensionValue dimensionValue : dimensionValues) {
+            if (dimensionValue.getDefaultValue()) {
+                return dimensionValue;
+            }
+        }
+        return null;
+    }
+
     private String getAccountType(String invoiceTypeValue) {
         InvoiceType invoiceType = InvoiceType.getInvoiceTypeByValueName(invoiceTypeValue);
         return invoiceType == null ? null : invoiceType.getTransactionXmlValue();
@@ -1156,7 +1267,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         // delete TRANSACTION_SIZE nodes during one transaction:
         // Alfresco has performance issue when large number of nodes is deleted in one transaction
         RetryingTransactionHelper retryingTransactionHelper = transactionService.getRetryingTransactionHelper();
-        Iterator<NodeRef> i = getNodeRefIterator(dimensionValues);
+        Iterator<DimensionValue> i = dimensionValues.iterator();
         DeleteDimensionCallback deleteDimensionCallback = new DeleteDimensionCallback(i, updatedDimensionValues);
         while (i.hasNext()) {
             retryingTransactionHelper.doInTransaction(deleteDimensionCallback, false, true);
@@ -1174,22 +1285,10 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         return dimensionRef;
     }
 
-    @SuppressWarnings("unchecked")
-    private Iterator<NodeRef> getNodeRefIterator(final List<DimensionValue> dimensionValues) {
-        return ((Collection<NodeRef>) CollectionUtils.collect(dimensionValues, new Transformer() {
+    private abstract class ProcessDimensionValueCallback implements RetryingTransactionHelper.RetryingTransactionCallback<Iterator<DimensionValue>> {
+        private final Iterator<DimensionValue> iterator;
 
-            @Override
-            public Object transform(Object arg0) {
-                return ((DimensionValue) arg0).getNode().getNodeRef();
-            }
-
-        })).iterator();
-    }
-
-    private abstract class ProcessNodeRefCallback implements RetryingTransactionHelper.RetryingTransactionCallback<Iterator<DimensionValue>> {
-        private final Iterator<NodeRef> iterator;
-
-        public ProcessNodeRefCallback(Iterator<NodeRef> iterator) {
+        public ProcessDimensionValueCallback(Iterator<DimensionValue> iterator) {
             this.iterator = iterator;
         }
 
@@ -1197,7 +1296,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         public Iterator<DimensionValue> execute() throws Throwable {
             int transactionCommitCounter = 0;
             for (; iterator.hasNext() && transactionCommitCounter < TRANSACTION_SIZE;) {
-                transactionCommitCounter += processNodeRef(iterator.next());
+                transactionCommitCounter += processDimensionValue(iterator.next());
             }
             return null;
         }
@@ -1205,39 +1304,40 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         /**
          * Process node ref and return number of nodes changed
          */
-        protected abstract int processNodeRef(NodeRef nodeRef);
+        protected abstract int processDimensionValue(DimensionValue dimensionValue);
 
     }
 
-    private class DeleteDimensionCallback extends ProcessNodeRefCallback {
+    private class DeleteDimensionCallback extends ProcessDimensionValueCallback {
         List<NodeRef> updatedDimensionValues;
 
-        public DeleteDimensionCallback(Iterator<NodeRef> iterator, List<NodeRef> updatedDimensionValues) {
+        public DeleteDimensionCallback(Iterator<DimensionValue> iterator, List<NodeRef> updatedDimensionValues) {
             super(iterator);
             this.updatedDimensionValues = updatedDimensionValues;
         }
 
         @Override
-        protected int processNodeRef(NodeRef nodeRef) {
-            if (!updatedDimensionValues.contains(nodeRef)) {
-                nodeService.deleteNode(nodeRef);
+        protected int processDimensionValue(DimensionValue dimensionValue) {
+            NodeRef dimensionValueRef = dimensionValue.getNode().getNodeRef();
+            if (!updatedDimensionValues.contains(dimensionValueRef) && dimensionValue.getBeginDateTime() == null && dimensionValue.getEndDateTime() == null) {
+                nodeService.deleteNode(dimensionValueRef);
                 return 1;
             }
             return 0;
         }
     }
 
-    private class SetActiveOrInactiveDimensionCallback extends ProcessNodeRefCallback {
+    private class SetActiveOrInactiveDimensionCallback extends ProcessDimensionValueCallback {
         boolean active;
 
-        public SetActiveOrInactiveDimensionCallback(Iterator<NodeRef> iterator, boolean active) {
+        public SetActiveOrInactiveDimensionCallback(Iterator<DimensionValue> iterator, boolean active) {
             super(iterator);
             this.active = active;
         }
 
         @Override
-        protected int processNodeRef(NodeRef nodeRef) {
-            nodeService.setProperty(nodeRef, DimensionModel.Props.ACTIVE, active);
+        protected int processDimensionValue(DimensionValue dimensionValue) {
+            nodeService.setProperty(dimensionValue.getNode().getNodeRef(), DimensionModel.Props.ACTIVE, active);
             return 1;
         }
     }
@@ -1263,7 +1363,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         if (newDimension) {
             props.put(DimensionModel.Props.VALUE_NAME, xmlDimensionValue.getValueName());
             props.put(DimensionModel.Props.VALUE_COMMENT, null);
-            props.put(DimensionModel.Props.ACTIVE, Boolean.TRUE);
+            props.put(DimensionModel.Props.ACTIVE, Boolean.FALSE);
             props.put(DimensionModel.Props.DEFAULT_VALUE, Boolean.FALSE);
         }
         return props;
@@ -1434,6 +1534,40 @@ public class EInvoiceServiceImpl implements EInvoiceService {
             return null;
         }
 
+    }
+
+    @Override
+    public List<String> getDimensionDefaultValueList(Dimensions dimension, Predicate filter) {
+        List<String> fundsList = new ArrayList<String>();
+        DimensionValue dimensionDefaultValue = getDimensionDefaultValue(getDimension(dimension));
+        if (dimensionDefaultValue != null && (filter == null || filter.evaluate(dimensionDefaultValue))) {
+            fundsList.add(dimensionDefaultValue.getValueName());
+        } else {
+            fundsList.add("");
+        }
+        return fundsList;
+    }
+
+    @Override
+    // dimensionRef values could be cached, if this code exposes performance issue
+    public Map<Dimensions, NodeRef> getDimensionToNodeRefMappings() {
+        Map<Dimensions, NodeRef> dimensionRefs = new HashMap<Dimensions, NodeRef>();
+        dimensionRefs.put(Dimensions.INVOICE_ACCOUNTS, getDimension(Dimensions.INVOICE_ACCOUNTS));
+        dimensionRefs.put(Dimensions.INVOICE_ASSET_INVENTORY_NUMBERS, getDimension(Dimensions.INVOICE_ASSET_INVENTORY_NUMBERS));
+        dimensionRefs.put(Dimensions.INVOICE_CASH_FLOW_CODES, getDimension(Dimensions.INVOICE_CASH_FLOW_CODES));
+        dimensionRefs.put(Dimensions.INVOICE_COMMITMENT_ITEM, getDimension(Dimensions.INVOICE_COMMITMENT_ITEM));
+        dimensionRefs.put(Dimensions.INVOICE_COST_CENTERS, getDimension(Dimensions.INVOICE_COST_CENTERS));
+        dimensionRefs.put(Dimensions.INVOICE_FUNCTIONAL_AREA_CODE, getDimension(Dimensions.INVOICE_FUNCTIONAL_AREA_CODE));
+        dimensionRefs.put(Dimensions.INVOICE_FUNDS, getDimension(Dimensions.INVOICE_FUNDS));
+        dimensionRefs.put(Dimensions.INVOICE_FUNDS_CENTERS, getDimension(Dimensions.INVOICE_FUNDS_CENTERS));
+        dimensionRefs.put(Dimensions.INVOICE_HOUSE_BANK_CODES, getDimension(Dimensions.INVOICE_HOUSE_BANK_CODES));
+        dimensionRefs.put(Dimensions.INVOICE_INTERNAL_ORDERS, getDimension(Dimensions.INVOICE_INTERNAL_ORDERS));
+        dimensionRefs.put(Dimensions.INVOICE_PAYMENT_METHOD_CODES, getDimension(Dimensions.INVOICE_PAYMENT_METHOD_CODES));
+        dimensionRefs.put(Dimensions.INVOICE_POSTING_KEY, getDimension(Dimensions.INVOICE_POSTING_KEY));
+        dimensionRefs.put(Dimensions.INVOICE_SOURCE_CODES, getDimension(Dimensions.INVOICE_SOURCE_CODES));
+        dimensionRefs.put(Dimensions.INVOICE_TRADING_PARTNER_CODES, getDimension(Dimensions.INVOICE_TRADING_PARTNER_CODES));
+        dimensionRefs.put(Dimensions.TAX_CODE_ITEMS, getDimension(Dimensions.TAX_CODE_ITEMS));
+        return dimensionRefs;
     }
 
     public void setAddressbookService(AddressbookService addressbookService) {

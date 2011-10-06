@@ -637,9 +637,9 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             if (transactionsBlockBean.saveTransactions()) {
                 metadataBlockBean.save(isDraft, newInvoiceDocuments);
                 notifyModeChanged();
+                transactionsBlockBean.restore(metadataBlockBean.getDocument());
             }
             logBlockBean.restore();
-            transactionsBlockBean.restore(metadataBlockBean.getDocument());
             searchBlockBean.reset();
             isDraft = false;
             isFinished = false;
@@ -668,6 +668,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     public String cancel() {
         if (metadataBlockBean.isInEditMode() && !isDraft) {
             metadataBlockBean.cancel();
+            transactionsBlockBean.restore();
             notifyModeChanged();
             return null;
         }

@@ -77,8 +77,12 @@
          <show-property name="cm:telephone" display-label-id="telephone" />
          <show-property name="cm:email" display-label-id="user_email" />
          <show-property name="cm:homeFolder" display-label-id="user_home_folder" component-generator="HomespaceLinkGenerator" />
-         <show-property name="cm:relatedFundsCenter" display-label-id="user_relatedFundsCenter" component-generator="DimensionSelectorAlwaysEditGenerator" dimensionName="invoiceFundsCenters" rendered="#{UserDetailsDialog.isRelatedFundsCenterEditable}" styleClass="noOptionTitle" descriptionAsLabel="true" converter="" />
-         <show-property name="{temp}relatedFundsCenter" display-label-id="user_relatedFundsCenter" component-generator="DimensionSelectorGenerator" dimensionName="invoiceFundsCenters" rendered="#{UserDetailsDialog.isRelatedFundsCenterNotEditable}" styleClass="noOptionTitle" descriptionAsLabel="true" converter="" />
+         <show-property name="{temp}relatedFundsCenter" display-label-id="user_relatedFundsCenter" rendered="#{UserDetailsDialog.isRelatedFundsCenterNotEditable}" component-generator="UnescapedOutputTextGenerator" />
+         <show-property name="cm:relatedFundsCenter" display-label-id="user_relatedFundsCenter" component-generator="MultiValueEditorGenerator"
+            showHeaders="false" rendered="#{UserDetailsDialog.isRelatedFundsCenterEditable}" styleClass="add-default" 
+            noAddLinkLabel="true" addLabelId="add_row" isAutomaticallyAddRows="true" isAlwaysEdit="true"
+            propsGeneration="cm:relatedFundsCenter¤DimensionSelectorAlwaysEditGenerator¤dimensionName=invoiceFundsCenters
+                     ¤styleClass=expand19-200 tooltip" />
       </property-sheet>
    </config>
 

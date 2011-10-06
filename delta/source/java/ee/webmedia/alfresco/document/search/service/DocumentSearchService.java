@@ -255,4 +255,6 @@ public interface DocumentSearchService {
     // TODO not document specific
     boolean isMatch(String query);
 
+    boolean isMatch(String query, boolean allStores, String queryName);
+
 }

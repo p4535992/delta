@@ -268,7 +268,7 @@ public class SearchRenderer extends BaseRenderer {
             addLabelId = "add_contact";
         }
 
-        if (!Utils.isComponentDisabledOrReadOnly(search)) { // don't render adding link when disabled
+        if (!ComponentUtil.isComponentDisabledOrReadOnly(search)) { // don't render adding link when disabled
             out.write("<a class=\"icon-link add-person\" onclick=\"");
             // TODO: optimeerimise võimalus (vt ka AjaxSearchBean)
             // siin seatakse ajaxParentLevel=1 ainult selle pärast, et ajax'iga uut rida lisades renderdataks ka valideerimise skriptid,

@@ -1,172 +1,158 @@
 package ee.webmedia.alfresco.common.propertysheet.dimensionselector;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Iterator;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import javax.faces.component.UIComponent;
-import javax.faces.component.UISelectMany;
-import javax.faces.component.UISelectOne;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
-import javax.faces.convert.Converter;
-import javax.faces.model.SelectItem;
-import javax.faces.model.SelectItemGroup;
 
-import org.apache.myfaces.renderkit.html.HtmlMenuRenderer;
-import org.apache.myfaces.shared_impl.component.EscapeCapable;
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.web.scripts.json.JSONWriter;
+import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.myfaces.renderkit.html.HtmlTextareaRenderer;
 import org.apache.myfaces.shared_impl.renderkit.RendererUtils;
 import org.apache.myfaces.shared_impl.renderkit.html.HTML;
 import org.apache.myfaces.shared_impl.renderkit.html.HtmlRendererUtils;
+import org.springframework.util.Assert;
 
-public class DimensionSelectorRenderer extends HtmlMenuRenderer {
+import ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditor;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.einvoice.model.DimensionValue;
+import ee.webmedia.alfresco.document.einvoice.model.Dimensions;
+import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
+import flexjson.JSONSerializer;
+
+public class DimensionSelectorRenderer extends HtmlTextareaRenderer {
 
     public static final String DIMENSION_SELECTOR_RENDERER_TYPE = DimensionSelectorRenderer.class.getCanonicalName();
+    public static DateFormat dateFormat = new SimpleDateFormat("dd.M.yyyy");
 
     @Override
     public void encodeEnd(FacesContext facesContext, UIComponent component) throws IOException {
+        super.encodeEnd(facesContext, component);
         RendererUtils.checkParamValidity(facesContext, component, null);
+        ResponseWriter out = facesContext.getResponseWriter();
+        out.startElement(HTML.SCRIPT_ELEM, component);
+        out.writeAttribute(HTML.SCRIPT_TYPE_ATTR, HTML.SCRIPT_TYPE_TEXT_JAVASCRIPT, null);
+        final String inputClientId = component.getClientId(facesContext);
+        Map attributes = component.getAttributes();
+        @SuppressWarnings("unchecked")
+        String javaScript = getJavascriptFunctionCall(inputClientId,
+                (List<DimensionValue>) attributes.get(DimensionSelectorGenerator.ATTR_DIMENSION_VALUES),
+                (String) attributes.get(DimensionSelectorGenerator.ATTR_DIMENSION_NAME),
+                (Date) attributes.get(DimensionSelectorGenerator.ATTR_ENTRY_DATE),
+                (String) attributes.get(DimensionSelectorGenerator.ATTR_PREDEFINED_FILTER_NAME),
+                (String) attributes.get(MultiValueEditor.ATTR_CLICK_LINK_ID));
+        out.write(javaScript);
+        out.endElement(HTML.SCRIPT_ELEM);
 
-        if (component instanceof UISelectMany) {
-            renderMenu(facesContext, (UISelectMany) component, isDisabled(facesContext, component));
-        } else if (component instanceof UISelectOne) {
-            renderMenu(facesContext, (UISelectOne) component, isDisabled(facesContext, component));
-        } else {
-            throw new IllegalArgumentException("Unsupported component class " + component.getClass().getName());
-        }
     }
 
-    /* The following code is mostly copy-paste from HtmlRenderUtils, as it is final and cannot be extended */
-
-    private void renderMenu(FacesContext facesContext, UISelectOne selectOne, boolean disabled) throws IOException {
-        internalRenderSelect(facesContext, selectOne, disabled, 1, false);
-    }
-
-    private void renderMenu(FacesContext facesContext, UISelectMany selectMany, boolean disabled) throws IOException {
-        internalRenderSelect(facesContext, selectMany, disabled, 5, true);
-    }
-
-    private void internalRenderSelect(FacesContext facesContext, UIComponent uiComponent, boolean disabled, int size, boolean selectMany)
-            throws IOException {
+    // copy-paste from HtmlTextareaRendererBase, added null value handling
+    // and title attribute rendering
+    @Override
+    protected void encodeTextArea(FacesContext facesContext, UIComponent uiComponent) throws IOException {
         ResponseWriter writer = facesContext.getResponseWriter();
+        writer.startElement("textarea", uiComponent);
 
-        writer.startElement("select", uiComponent);
+        String clientId = uiComponent.getClientId(facesContext);
+        writer.writeAttribute("name", clientId, null);
         HtmlRendererUtils.writeIdIfNecessary(writer, uiComponent, facesContext);
-        writer.writeAttribute("name", uiComponent.getClientId(facesContext), null);
-        List selectItemList;
-        Converter converter;
-        if (selectMany) {
-            writer.writeAttribute("multiple", "multiple", null);
-            selectItemList = RendererUtils.getSelectItemList((UISelectMany) uiComponent);
 
-            converter = HtmlRendererUtils.findUISelectManyConverterFailsafe(facesContext, uiComponent);
-        } else {
-            selectItemList = RendererUtils.getSelectItemList((UISelectOne) uiComponent);
-            converter = HtmlRendererUtils.findUIOutputConverterFailSafe(facesContext, uiComponent);
-        }
-
-        if (size == 0) {
-            writer.writeAttribute("size", Integer.toString(selectItemList.size()), null);
-        } else {
-            writer.writeAttribute("size", Integer.toString(size), null);
-        }
-        HtmlRendererUtils.renderHTMLAttributes(writer, uiComponent, HTML.SELECT_PASSTHROUGH_ATTRIBUTES_WITHOUT_DISABLED);
-
-        if (disabled) {
+        HtmlRendererUtils.renderHTMLAttributes(writer, uiComponent, HTML.TEXTAREA_PASSTHROUGH_ATTRIBUTES_WITHOUT_DISABLED);
+        if (isDisabled(facesContext, uiComponent)) {
             writer.writeAttribute("disabled", Boolean.TRUE, null);
         }
+        String strValue = RendererUtils.getStringValue(facesContext, uiComponent);
+        String dimensionName = (String) uiComponent.getAttributes().get(DimensionSelectorGenerator.ATTR_DIMENSION_NAME);
+        if (StringUtils.isEmpty(strValue) && Boolean.TRUE.equals(uiComponent.getAttributes().get(DimensionSelectorGenerator.ATTR_USE_DFAULT_VALUE))) {
+            strValue = getDefaultValue(dimensionName, uiComponent);
+        }
+        if (strValue == null) {
+            strValue = "";
+        }
+        String titleStr = getTooltip(dimensionName, strValue);
+        if (StringUtils.isNotBlank(titleStr)) {
+            writer.writeAttribute("title", titleStr, null);
+        }
 
-        Set lookupSet = HtmlRendererUtils.getSubmittedOrSelectedValuesAsSet(selectMany, uiComponent, facesContext, converter);
+        writer.writeText(strValue, "value");
 
-        renderSelectOptions(facesContext, uiComponent, converter, lookupSet, selectItemList);
-
-        writer.writeText("", null);
-        writer.endElement("select");
+        writer.endElement("textarea");
     }
 
-    protected void renderSelectOptions(FacesContext context, UIComponent component, Converter converter, Set lookupSet, List selectItemList)
-            throws IOException {
-        renderOptions(context, component, converter, lookupSet, selectItemList, false, false);
-    }
-
-    protected void renderOptions(FacesContext context, UIComponent component, Converter converter, Set lookupSet, List selectItemList, boolean renderValueAttribute,
-            boolean renderLabelAsText) throws IOException {
-        ResponseWriter writer = context.getResponseWriter();
-
-        for (Iterator it = selectItemList.iterator(); it.hasNext();) {
-            SelectItem selectItem = (SelectItem) it.next();
-
-            if (selectItem instanceof SelectItemGroup) {
-                writer.startElement("optgroup", component);
-                writer.writeAttribute("label", selectItem.getLabel(), null);
-
-                SelectItem[] selectItems = ((SelectItemGroup) selectItem).getSelectItems();
-
-                renderSelectOptions(context, component, converter, lookupSet, Arrays.asList(selectItems));
-
-                writer.endElement("optgroup");
-            } else {
-                String itemStrValue = RendererUtils.getConvertedStringValue(context, component, converter, selectItem);
-
-                writer.write(9);
-                writer.startElement("option", component);
-                // Use option text value as selectbox value, don't render value attribute
-                // Instead render title attribute to avoid setting it with javascript
-                if (renderValueAttribute) {
-                    writer.writeAttribute("value", itemStrValue == null ? "" : itemStrValue, null);
-                }
-                writer.writeAttribute("title", selectItem.getLabel(), null);
-
-                if (lookupSet.contains(itemStrValue)) {
-                    writer.writeAttribute("selected", "selected", null);
-                }
-
-                boolean disabled = selectItem.isDisabled();
-                if (disabled) {
-                    writer.writeAttribute("disabled", "disabled", null);
-                }
-
-                boolean componentDisabled = isTrue(component.getAttributes().get("disabled"));
-                String labelClass;
-
-                if ((componentDisabled) || (disabled)) {
-                    labelClass = (String) component.getAttributes().get("disabledClass");
-                } else {
-                    labelClass = (String) component.getAttributes().get("enabledClass");
-                }
-
-                if (labelClass != null) {
-                    writer.writeAttribute("class", labelClass, "labelClass");
-                }
-                boolean escape;
-                if (component instanceof EscapeCapable) {
-                    escape = ((EscapeCapable) component).isEscape();
-                } else {
-                    escape = RendererUtils.getBooleanAttribute(component, "escape", true);
-                }
-
-                String textValue = selectItem.getValue().toString();
-                if (renderLabelAsText) {
-                    textValue = selectItem.getLabel() != null ? selectItem.getLabel() : "";
-                }
-                if (escape) {
-                    writer.writeText(textValue, null);
-                } else {
-                    writer.write(textValue);
-                }
-
-                writer.endElement("option");
+    private String getDefaultValue(String dimensionName, UIComponent uiComponent) {
+        EInvoiceService eInvoiceService = BeanHelper.getEInvoiceService();
+        DimensionValue dimensionValue = eInvoiceService.getDimensionDefaultValue(eInvoiceService.getDimension(Dimensions.get(dimensionName)));
+        if (dimensionValue != null) {
+            String filterName = (String) uiComponent.getAttributes().get(DimensionSelectorGenerator.ATTR_PREDEFINED_FILTER_NAME);
+            if (StringUtils.isEmpty(filterName) || DimensionSelectorGenerator.predefinedFilters.get(filterName).evaluate(dimensionValue)) {
+                return dimensionValue.getValueName();
             }
         }
+        return null;
     }
 
-    private boolean isTrue(Object obj) {
-        if (!(obj instanceof Boolean)) {
-            return false;
+    private String getTooltip(String dimensionName, String selectedValue) {
+        NodeRef dimensionRef = BeanHelper.getEInvoiceService().getDimension(Dimensions.get(dimensionName));
+        DimensionValue dimensionValue = BeanHelper.getEInvoiceService().getDimensionValue(dimensionRef, selectedValue);
+        if (dimensionValue != null) {
+            return dimensionValue.getValue() + (StringUtils.isNotBlank(dimensionValue.getValueComment()) ? "; " + dimensionValue.getValueComment() : "");
         }
-        return ((Boolean) obj).booleanValue();
+        return null;
+    }
+
+    private String getJavascriptFunctionCall(String inputClientId, List<DimensionValue> suggesterValues, String dimensionName, Date entryDate, String predefinedFilterName,
+            String clickLinkId) {
+        Assert.notNull(dimensionName);
+        JSONSerializer jsonSerializer = new JSONSerializer();
+        List<String> jsFunctionArgs = new ArrayList<String>();
+        jsFunctionArgs.add(jsonSerializer.serialize(inputClientId));
+        jsFunctionArgs.add(getValuesAsJsArrayString(suggesterValues));
+        jsFunctionArgs.add(jsonSerializer.serialize(dimensionName));
+        jsFunctionArgs.add(jsonSerializer.serialize(entryDate != null ? dateFormat.format(entryDate) : ""));
+        jsFunctionArgs.add(jsonSerializer.serialize(predefinedFilterName != null ? predefinedFilterName : ""));
+        jsFunctionArgs.add(jsonSerializer.serialize(clickLinkId != null ? clickLinkId : ""));
+        String functionCall = "addUIAutocompleter(" + StringUtils.join(jsFunctionArgs, ",") + ");";
+        return functionCall;
+    }
+
+    public static String getValuesAsJsArrayString(List<DimensionValue> suggesterValues) {
+        List<Map<String, String>> suggesterDimensionsValues = new ArrayList<Map<String, String>>();
+        if (suggesterValues != null) {
+            for (DimensionValue value : suggesterValues) {
+                Map<String, String> suggesterDimensionValue = new HashMap<String, String>();
+                suggesterDimensionValue.put("value", value.getValueName());
+                String expiryPeriod = "";
+                if (value.getBeginDateTime() != null || value.getEndDateTime() != null) {
+                    expiryPeriod = " (kehtiv " + getDateOrDots(value.getBeginDateTime()) + " - " + getDateOrDots(value.getEndDateTime()) + ")";
+                }
+                suggesterDimensionValue.put("label", value.getValue() + expiryPeriod);
+                suggesterDimensionValue.put("description", value.getValue() + (StringUtils.isNotBlank(value.getValueComment()) ? value.getValueComment() : ""));
+                suggesterDimensionsValues.add(suggesterDimensionValue);
+            }
+
+        }
+        return (new JSONSerializer()).serialize(suggesterDimensionsValues);
+    }
+
+    public static String escapeString(String value, boolean getJsonFormatString) {
+        if (getJsonFormatString) {
+            return JSONWriter.encodeJSONString(value);
+        }
+        return StringEscapeUtils.escapeJavaScript(value);
+    }
+
+    private static String getDateOrDots(Date date) {
+        return date == null ? "..." : dateFormat.format(date);
     }
 
 }

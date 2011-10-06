@@ -86,6 +86,7 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
  */
 public class ComponentUtil {
     private static final String JSF_CONVERTER = "jsfConverter";
+    public static final String IS_ALWAYS_EDIT = "isAlwaysEdit";
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ComponentUtil.class);
     private static GeneralService generalService;
     public static final String DEFAULT_SELECT_VALUE = "";
@@ -501,9 +502,10 @@ public class ComponentUtil {
     }
 
     public static void setReadonlyAttributeRecursively(UIComponent component, Boolean value) {
-        @SuppressWarnings("unchecked")
-        Map<String, Object> attributes = component.getAttributes();
-        attributes.put("readonly", value);
+        if (isAlwaysEditComponent(component)) {
+            return;
+        }
+        putAttribute(component, "readonly", value);
         if (component instanceof UIOutput) {
             return;
         }
@@ -515,6 +517,30 @@ public class ComponentUtil {
         for (UIComponent childComponent : children) {
             setReadonlyAttributeRecursively(childComponent, value);
         }
+    }
+
+    /**
+     * Determines whether the given component is disabled or readonly
+     * 
+     * @param component The component to test
+     * @return true if the component is either disabled or set to readonly
+     */
+    public static boolean isComponentDisabledOrReadOnly(UIComponent component) {
+        boolean disabled = false;
+        boolean readOnly = false;
+
+        Map<String, Object> attributes = getAttributes(component);
+        Object disabledAttr = attributes.get("disabled");
+        if (disabledAttr != null) {
+            disabled = disabledAttr.equals(Boolean.TRUE);
+        }
+
+        Object readOnlyAttr = attributes.get("readonly");
+        if (readOnlyAttr != null) {
+            readOnly = readOnlyAttr.equals(Boolean.TRUE);
+        }
+
+        return (disabled || readOnly) && !ComponentUtil.isAlwaysEditComponent(component);
     }
 
     /**
@@ -757,7 +783,7 @@ public class ComponentUtil {
      * @throws IOException
      */
     public static void generateSuggestScript(FacesContext context, UIComponent child, String pickerCallback, ResponseWriter out) throws IOException {
-        if (!(child instanceof UIInput) || StringUtils.isBlank(pickerCallback) || Utils.isComponentDisabledOrReadOnly(child)) {
+        if (!(child instanceof UIInput) || StringUtils.isBlank(pickerCallback) || isComponentDisabledOrReadOnly(child)) {
             return;
         }
 
@@ -1182,4 +1208,24 @@ public class ComponentUtil {
         SelectItem selectItem = new SelectItem(DEFAULT_SELECT_VALUE, MessageUtil.getMessage(context, "select_default_label"));
         results.add(0, selectItem);
     }
+
+    public static boolean isAlwaysEditComponent(UIComponent component) {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> attributes = component.getAttributes();
+        return attributes.containsKey(IS_ALWAYS_EDIT) && Boolean.valueOf((Boolean) attributes.get(IS_ALWAYS_EDIT));
+    }
+
+    public static int getRenderedChildrenCount(UIComponent parent, Class clazz) {
+        if (parent == null || parent.getChildCount() == 0) {
+            return 0;
+        }
+        int count = 0;
+        for (Object child : parent.getChildren()) {
+            if (child instanceof UIComponent && ((UIComponent) child).isRendered()) {
+                count++;
+            }
+        }
+        return count;
+    }
+
 }

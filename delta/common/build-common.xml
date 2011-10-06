@@ -588,6 +588,18 @@
 	 	<param name="folder" value="ee/webmedia/alfresco/document/einvoice/account/generated" />
 	 	<param name="namespace" value="http://www.riik.ee/schemas/e-arve/OstuarveKonteering.xsd" />
 	 </antcall>    	
+ 	 <antcall target="generate-jaxb-conditionally" >
+ 	 	<param name="name" value="relvastus" />
+ 	 	<param name="xsd" value="relvastus.xsd" />
+ 	 	<param name="package" value="ee.webmedia.alfresco.relvastus.generated" />
+ 	 	<param name="folder" value="ee/webmedia/alfresco/relvastus/generated" />
+ 	 </antcall>    	
+  	 <antcall target="generate-jaxb-conditionally" >
+  	 	<param name="name" value="ikt" />
+  	 	<param name="xsd" value="ikt.xsd" />
+  	 	<param name="package" value="ee.webmedia.alfresco.ikt.generated" />
+  	 	<param name="folder" value="ee/webmedia/alfresco/ikt/generated" />
+  	 </antcall>    	
    </target>
 
 	<target name="generate-xmlbeans-conditionally">
@@ -663,7 +675,8 @@
 		<mkdir dir="${project.dir.build}/${name}" />
 		<!-- xjc fails if classpath is directing to main library location (classpath-generate) -->
 		<taskdef name="xjc" classname="com.sun.tools.xjc.XJCTask" classpathref="classpath-jaxb" />
-		<xjc destdir="${project.dir.build}/${name}" package="${package}" removeOldOutput="true" >
+		<xjc destdir="${project.dir.build}/${name}" package="${package}" removeOldOutput="true">
+		    <!-- TODO binding="${common.dir.etc}/jaxb-bindings.xjb" -->
 			<schema dir="${common.dir.etc}" includes="${xsd}" />
 		</xjc>
 		<!-- Add namespace to root elements (if namespace is given), as some versions of jdk (jaxb? xerces?) 

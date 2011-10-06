@@ -11,26 +11,43 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.faces.component.UIInput;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.security.PermissionService;
+
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.users.UsersBeanProperties;
 import org.alfresco.web.bean.users.UsersDialog;
+
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
+
+import ee.webmedia.alfresco.document.einvoice.model.DimensionValue;
+import ee.webmedia.alfresco.document.einvoice.model.Dimensions;
+import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
+import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
+
 import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.substitute.web.SubstituteListDialog;
 import ee.webmedia.alfresco.utils.ActionUtil;
+
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
+
+import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.TextUtil;
+
 
 public class UserDetailsDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
@@ -78,10 +95,37 @@ public class UserDetailsDialog extends BaseDialogBean {
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
-        substituteListDialog.save(context);
-        BeanHelper.getUserService().updateUser(user);
+        if (validate()) {
+            substituteListDialog.save(context);
+            BeanHelper.getUserService().updateUser(user);
+            setupUser((String) user.getProperties().get(ContentModel.PROP_USERNAME));
+        }
         isFinished = false;
         return null;
+    }
+
+    private boolean validate() {
+        List<String> erroneousValues = new ArrayList<String>();
+        @SuppressWarnings("unchecked")
+        List<String> relatedFundCenters = (List<String>) user.getProperties().get(ContentModel.PROP_RELATED_FUNDS_CENTER);
+        if (relatedFundCenters != null) {
+            EInvoiceService eInvoiceService = BeanHelper.getEInvoiceService();
+            NodeRef dimensionRef = eInvoiceService.getDimension(Dimensions.INVOICE_FUNDS_CENTERS);
+            for (String dimensionName : relatedFundCenters) {
+                if (StringUtils.isNotBlank(dimensionName)) {
+                    DimensionValue dimensionValue = eInvoiceService.getDimensionValue(dimensionRef, dimensionName);
+                    if (dimensionValue == null) {
+                        erroneousValues.add(dimensionName);
+                    }
+                }
+            }
+        }
+        if (!erroneousValues.isEmpty()) {
+            MessageUtil.addErrorMessage("user_relatedFundsCenter_no_existing_value", MessageUtil.getMessage("user_relatedFundsCenter"),
+                    TextUtil.joinNonBlankStringsWithComma(erroneousValues));
+            return false;
+        }
+        return true;
     }
 
     @Override
@@ -140,14 +184,36 @@ public class UserDetailsDialog extends BaseDialogBean {
         user = getOrganizationStructureService().setUsersUnit(users).get(0);
         setupGroups();
         Map<String, Object> props = user.getProperties();
-        if (props.get(ContentModel.PROP_RELATED_FUNDS_CENTER) == null) {
-            props.put(ContentModel.PROP_RELATED_FUNDS_CENTER.toString(), new ArrayList<String>());
+        EInvoiceService eInvoiceService = BeanHelper.getEInvoiceService();
+        NodeRef dimensionRef = eInvoiceService.getDimension(Dimensions.INVOICE_FUNDS_CENTERS);
+        @SuppressWarnings("unchecked")
+        List<String> relatedFundsCenters = (List<String>) user.getProperties().get(ContentModel.PROP_RELATED_FUNDS_CENTER);
+        if (relatedFundsCenters == null || relatedFundsCenters.isEmpty()) {
+            relatedFundsCenters = eInvoiceService.getDimensionDefaultValueList(Dimensions.INVOICE_FUNDS_CENTERS, null);
         }
         props.put("{temp}unit", getUserDisplayUnit(props));
         props.put("{temp}jobAddress", TextUtil.joinNonBlankStringsWithComma(Arrays.asList((String) props.get(ContentModel.PROP_STREET_HOUSE),
                 (String) props.get(ContentModel.PROP_VILLAGE), (String) props.get(ContentModel.PROP_MUNICIPALITY), (String) props.get(ContentModel.PROP_POSTAL_CODE),
                 (String) props.get(ContentModel.PROP_COUNTY))));
-        props.put("{temp}relatedFundsCenter", props.get(ContentModel.PROP_RELATED_FUNDS_CENTER));
+        props.put(ContentModel.PROP_RELATED_FUNDS_CENTER.toString(), relatedFundsCenters);
+        StringBuilder sb = new StringBuilder("");
+
+        int dimensionIndex = 0;
+        for (String dimensionName : relatedFundsCenters) {
+            if (StringUtils.isNotBlank(dimensionName)) {
+                if (dimensionIndex > 0) {
+                    sb.append(", ");
+                }
+                DimensionValue dimensionValue = eInvoiceService.getDimensionValue(dimensionRef, dimensionName);
+                sb.append("<span title=\"");
+                sb.append(org.alfresco.web.ui.common.StringUtils.encode(TextUtil.joinStringAndStringWithSeparator(dimensionValue.getValue(),
+                            dimensionValue.getValueComment(), ";")));
+                sb.append("\" class=\"tooltip\">");
+                sb.append(org.alfresco.web.ui.common.StringUtils.encode(dimensionValue.getValueName())).append("</span>");
+                dimensionIndex++;
+            }
+        }
+        user.getProperties().put("{temp}relatedFundsCenter", sb.toString());
     }
 
     public void removeFromGroup(ActionEvent event) {
@@ -218,6 +284,10 @@ public class UserDetailsDialog extends BaseDialogBean {
 
     public void setUser(Node user) {
         this.user = user;
+    }
+
+    public List<String> getDimensionSuggesterValues(FacesContext contect, UIInput input) {
+        return new ArrayList<String>();
     }
 
     // //

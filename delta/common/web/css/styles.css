@@ -1078,6 +1078,11 @@ textarea.inline {
 	line-height: 20px;
 }
 
+.add-default {
+	background: url("../images/icons/add.gif") no-repeat;
+	line-height: 20px;
+}
+
 .edit-person {
 	background: url("../images/icons/edituser.gif") no-repeat;
 	line-height: 20px;
@@ -1913,13 +1918,13 @@ DIV.modalpopup-footer P.action {
 /* =tooltip
 -------------------------------------------------- */
 #tooltip,
-#tooltip * {
+#tooltip *{
 	color: #000;
 	font-size: 12px;
 	font-family: Arial, Helvetica, sans-serif;
 }
 
-#tooltip {
+#tooltip{
 	position: absolute;
 	z-index: 3000;
 	max-width: 320px;
@@ -1930,11 +1935,11 @@ DIV.modalpopup-footer P.action {
 	opacity: 0.95;
 	outline: 1px solid #fff;
 }
-#tooltip H3 {
+#tooltip H3{
 	margin: 0;
 	border: none;
 }
-#tooltip DIV {
+#tooltip DIV{
 	display: none !important;
 }
 
@@ -2341,10 +2346,12 @@ textarea.borderless{
 
 TR.trans-recordSetRow2 TD {
 	padding: 5px;
+	vertical-align: top;
 }
 
 TR.trans-recordSetRowAlt2 TD {
 	padding: 5px;
+	vertical-align: top;
 	background: #f8f8f8;
 }
 
@@ -2380,11 +2387,13 @@ TR.trans-subrow TD {
 TR.trans-subrow TD TD {
 	padding: 2px 5px;
 	background: none;
+	vertical-align: top;
 }
 
 TR.trans-subrowAlt TD TD {
 	padding: 2px 5px;
 	background: none;
+	vertical-align: top;
 }
 
 TR.trans-subrow P {
@@ -2480,7 +2489,7 @@ INPUT.trans-min {
 DIV.trans-scroll {
 	min-width: 718px;
 	margin: 1em 0 .5em;
-	padding: 8px 0 0;
+	padding: 8px 0px 10px;
 	border: 1px solid #eee;
 	background: #fff;
 	overflow: auto;
@@ -2510,4 +2519,10 @@ DIV.trans-scroll TABLE {
    display:block;
    color: red;
    margin-bottom: 5px;
+}
+
+.ui-autocomplete { 
+	height: 200px; 
+	overflow-y: scroll; 
+	overflow-x: hidden;
 }

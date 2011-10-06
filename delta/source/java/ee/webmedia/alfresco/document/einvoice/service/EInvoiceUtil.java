@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -28,9 +29,14 @@ import javax.xml.validation.SchemaFactory;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
+import org.alfresco.web.data.IDataContainer;
+import org.alfresco.web.data.QuickSort;
 import org.apache.commons.collections.BidiMap;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.Predicate;
 import org.apache.commons.collections.bidimap.DualTreeBidiMap;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.DateUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.einvoice.account.generated.Ostuarve;
@@ -84,6 +90,8 @@ public class EInvoiceUtil {
     /** TODO: actually it would be better to use generic bidirectional map (from guava? refactored Commons-Collections?) here */
     public static final BidiMap /* <Parameters, Dimensions> */DIMENSION_PARAMETERS;
 
+    public static final Map<QName, Dimensions> DIMENSION_PROPERTIES;
+
     public static final String XXL_INVOICE_TYPE = "XXL";
 
     static {
@@ -101,6 +109,24 @@ public class EInvoiceUtil {
         DIMENSION_PARAMETERS.put(Parameters.DIMENSION_CODE_INVOICE_POSTING_KEY, Dimensions.INVOICE_POSTING_KEY);
         DIMENSION_PARAMETERS.put(Parameters.DIMENSION_CODE_INVOICE_PAYMENT_METHOD_CODES, Dimensions.INVOICE_PAYMENT_METHOD_CODES);
         DIMENSION_PARAMETERS.put(Parameters.DIMENSION_CODE_INVOICE_HOUSE_BANK_CODES, Dimensions.INVOICE_HOUSE_BANK_CODES);
+
+        DIMENSION_PROPERTIES = new HashMap<QName, Dimensions>();
+        DIMENSION_PROPERTIES.put(TransactionModel.Props.ACCOUNT, Dimensions.INVOICE_ACCOUNTS);
+        DIMENSION_PROPERTIES.put(TransactionModel.Props.ASSET_INVENTORY_NUMBER, Dimensions.INVOICE_ASSET_INVENTORY_NUMBERS);
+        DIMENSION_PROPERTIES.put(TransactionModel.Props.CASH_FLOW_CODE, Dimensions.INVOICE_CASH_FLOW_CODES);
+        DIMENSION_PROPERTIES.put(TransactionModel.Props.COMMITMENT_ITEM, Dimensions.INVOICE_COMMITMENT_ITEM);
+        DIMENSION_PROPERTIES.put(TransactionModel.Props.COST_CENTER, Dimensions.INVOICE_COST_CENTERS);
+        DIMENSION_PROPERTIES.put(TransactionModel.Props.EA_COMMITMENT_ITEM, Dimensions.INVOICE_COMMITMENT_ITEM);
+        DIMENSION_PROPERTIES.put(TransactionModel.Props.FUNCTIONAL_ARE_CODE, Dimensions.INVOICE_FUNCTIONAL_AREA_CODE);
+        DIMENSION_PROPERTIES.put(TransactionModel.Props.FUND, Dimensions.INVOICE_FUNDS);
+        DIMENSION_PROPERTIES.put(TransactionModel.Props.FUNDS_CENTER, Dimensions.INVOICE_FUNDS_CENTERS);
+        DIMENSION_PROPERTIES.put(TransactionModel.Props.HOUSE_BANK, Dimensions.INVOICE_HOUSE_BANK_CODES);
+        DIMENSION_PROPERTIES.put(TransactionModel.Props.ORDER_NUMBER, Dimensions.INVOICE_INTERNAL_ORDERS);
+        DIMENSION_PROPERTIES.put(TransactionModel.Props.PAYMENT_METHOD, Dimensions.INVOICE_PAYMENT_METHOD_CODES);
+        DIMENSION_PROPERTIES.put(TransactionModel.Props.POSTING_KEY, Dimensions.INVOICE_POSTING_KEY);
+        DIMENSION_PROPERTIES.put(TransactionModel.Props.SOURCE, Dimensions.INVOICE_SOURCE_CODES);
+        DIMENSION_PROPERTIES.put(TransactionModel.Props.TRADING_PARTNER_CODE, Dimensions.INVOICE_TRADING_PARTNER_CODES);
+        DIMENSION_PROPERTIES.put(TransactionModel.Props.INVOICE_TAX_CODE, Dimensions.TAX_CODE_ITEMS);
         // turn on jaxb debug
         // TODO: turn off when jaxb import has been tested in client environment (or make switchable by general log settings)
         System.setProperty("jaxb.debug", "true");
@@ -486,6 +512,44 @@ public class EInvoiceUtil {
         properties.put(DocumentCommonModel.Props.SEARCHABLE_FUNDS_CENTER.toString(), buildSearchableStringProp(TransactionModel.Props.FUNDS_CENTER, transactions));
         properties.put(DocumentCommonModel.Props.SEARCHABLE_EA_COMMITMENT_ITEM.toString(), buildSearchableStringProp(TransactionModel.Props.EA_COMMITMENT_ITEM, transactions));
         return properties;
+    }
+
+    public static boolean isDateInPeriod(Date entryDate, Date beginDate, Date endDate) {
+        return entryDate == null || ((beginDate == null || beginDate.before(entryDate) || DateUtils.isSameDay(entryDate, beginDate))
+                && (endDate == null || endDate.after(entryDate) || DateUtils.isSameDay(entryDate, endDate)));
+    }
+
+    public static List<QName> getDimensionProperties(Dimensions dimension) {
+        List<QName> properties = new ArrayList<QName>();
+        for (Map.Entry<QName, Dimensions> entry : DIMENSION_PROPERTIES.entrySet()) {
+            if (dimension.equals(entry.getValue())) {
+                properties.add(entry.getKey());
+            }
+        }
+        return properties;
+    }
+
+    public static DimensionValue findDimensionValueByValueName(final String currentValueName, List<DimensionValue> dimensionValues) {
+        if (dimensionValues == null) {
+            return null;
+        }
+        DimensionValue existingValue = (DimensionValue) CollectionUtils.find(dimensionValues, new Predicate() {
+
+            @Override
+            public boolean evaluate(Object arg0) {
+                DimensionValue dimensionValue = (DimensionValue) arg0;
+                if (StringUtils.equals(currentValueName, dimensionValue.getValueName())) {
+                    return true;
+                }
+                return false;
+            }
+        });
+        return existingValue;
+    }
+
+    public static void sortByDimensionValueName(List<DimensionValue> activeDimensionValues) {
+        QuickSort quickSort = new QuickSort(activeDimensionValues, "ValueName", true, IDataContainer.SORT_CASEINSENSITIVE);
+        quickSort.sort();
     }
 
 }

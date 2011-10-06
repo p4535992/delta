@@ -591,10 +591,26 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
 
     @Override
     public boolean isMatch(String query) {
+        return isMatch(query, false, "testQuery");
+    }
+
+    @Override
+    public boolean isMatch(String query, boolean allStores, String queryName) {
         SearchParameters sp = buildSearchParameters(query, 1);
-        sp.addStore(generalService.getStore());
-        ResultSet resultSet = doSearchQuery(sp, "testQuery");
-        return resultSet.length() > 0;
+        if (!allStores) {
+            sp.addStore(generalService.getStore());
+            ResultSet resultSet = doSearchQuery(sp, queryName);
+            return resultSet.length() > 0;
+        } else {
+            List<ResultSet> results = doSearches(query, true, 1, queryName, getAllStores());
+            for (ResultSet result : results) {
+                if (result.length() > 0) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
     }
 
     private List<NodeRef> searchAuthorityGroups(String groupName) {

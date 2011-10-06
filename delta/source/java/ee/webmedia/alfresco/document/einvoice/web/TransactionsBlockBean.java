@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.document.einvoice.web;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -58,7 +59,7 @@ public class TransactionsBlockBean extends TransactionsTemplateDetailsDialog imp
     }
 
     public void onModeChanged() {
-        constructTransactionPanelGroup();
+        constructTransactionPanelGroup(false);
     }
 
     @Override
@@ -88,8 +89,8 @@ public class TransactionsBlockBean extends TransactionsTemplateDetailsDialog imp
     }
 
     @Override
-    protected HtmlPanelGrid constructTransactionPanelGroup(HtmlPanelGroup panelGroup) {
-        final HtmlPanelGrid transRowsMainGrid = super.constructTransactionPanelGroup(panelGroup);
+    protected HtmlPanelGrid constructTransactionPanelGroup(HtmlPanelGroup panelGroup, boolean rowAdded) {
+        final HtmlPanelGrid transRowsMainGrid = super.constructTransactionPanelGroup(panelGroup, rowAdded);
         addFooterSums(transRowsMainGrid);
         return transRowsMainGrid;
     }
@@ -128,7 +129,7 @@ public class TransactionsBlockBean extends TransactionsTemplateDetailsDialog imp
             BeanHelper.getEInvoiceService().removeTransactions(template.getNode().getNodeRef());
         }
         BeanHelper.getEInvoiceService().copyTransactions(template, getTransactions());
-        constructTransactionPanelGroup();
+        constructTransactionPanelGroup(false);
     }
 
     /**
@@ -152,7 +153,7 @@ public class TransactionsBlockBean extends TransactionsTemplateDetailsDialog imp
                 transactions.add(getNewUnsavedTransaction(newProps));
             }
         }
-        constructTransactionPanelGroup();
+        constructTransactionPanelGroup(false);
     }
 
     @SuppressWarnings("unchecked")
@@ -218,6 +219,11 @@ public class TransactionsBlockBean extends TransactionsTemplateDetailsDialog imp
             MessageUtil.addErrorMessage(msgKey);
         }
         return result;
+    }
+
+    @Override
+    protected Date getEntryDate() {
+        return (Date) documentDialog.getMeta().getDocument().getProperties().get(DocumentSpecificModel.Props.ENTRY_DATE);
     }
 
 }

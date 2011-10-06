@@ -67,6 +67,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.utils.ComponentUtil;
+
 /**
  * Base class for all association editor components 
  * 
@@ -481,7 +483,7 @@ public abstract class BaseAssociationEditor extends UIInput
       if (this.disabled == null)
       {
          this.disabled = Boolean.FALSE; // needed because the following line calls this method too, and we don't want infinite recursion
-         this.disabled = Utils.isComponentDisabledOrReadOnly(this);
+         this.disabled = ComponentUtil.isComponentDisabledOrReadOnly(this);
       }
       
       return this.disabled;

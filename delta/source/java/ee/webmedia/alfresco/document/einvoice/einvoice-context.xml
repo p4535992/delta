@@ -260,6 +260,31 @@
       </property>
    </bean>
    
+   <bean id="einvoiceParametersBootstrap4" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/document/einvoice/bootstrap/einvoice-parameters4.xml</prop>
+               <prop key="encoding">UTF-8</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+   
+  <bean class="ee.webmedia.alfresco.common.bootstrap.ModuleComponentDependsOnSetter">
+      <property name="source" ref="parameterRescheduledJobsBootstrap" />
+      <property name="dependsOn" ref="einvoiceParametersBootstrap4" />
+   </bean>
+   
    <bean id="dimensionModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap">
       <property name="models">
          <list>
@@ -320,5 +345,21 @@
          </bean>
       </property>
    </bean>
+   
+   <bean id="einvoiceDeleteNotUsedDimensionValuesTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent" >
+      <property name="parameterName" value="dimensionDeletionPeriod" />
+      <property name="parameterFormat" value="D" />
+      <property name="timeParameterName" value="dimensionDeletionTime" />
+      <property name="jobDetail">
+         <bean id="einvoiceDeleteNotUsedDimensionValuesJobDetails" class="org.springframework.scheduling.quartz.JobDetailBean">
+            <property name="jobClass" value="ee.webmedia.alfresco.document.einvoice.job.EinvoiceDeleteNotUsedDimensionValuesJob" />
+            <property name="jobDataAsMap">
+               <map>
+                  <entry key="EInvoiceService" value-ref="EInvoiceService" />
+               </map>
+            </property>
+         </bean>
+      </property>
+   </bean>   
    
 </beans>
