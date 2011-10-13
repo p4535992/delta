@@ -17,6 +17,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -298,19 +299,19 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
-    public DocumentType saveOrUpdateDocumentType(DocumentType docTypeOriginal) {
+    public Pair<DocumentType, MessageData> saveOrUpdateDocumentType(DocumentType docTypeOriginal) {
         DocumentType docType = docTypeOriginal.clone();
         boolean wasUnsaved = docType.isUnsaved();
 
         // validating duplicated documentTypeId is done in baseService
-        updateChildren(docType);
+        MessageData message = updateChildren(docType);
         checkFieldMappings(docType);
         baseService.saveObject(docType);
 
         updatePublicAdr(docType, wasUnsaved);
         // TODO optimization: probably menu doesn't always need to be updated
         menuService.menuUpdated();
-        return docType;
+        return Pair.newInstance(docType, message);
     }
 
     @Override
@@ -482,13 +483,20 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         fieldDefinitionsRoot = fieldDefinitionsTmp;
 
         List<DocumentType> createdDocumentTypes = new ArrayList<DocumentType>();
+        Set<MessageData> messages = new LinkedHashSet<MessageData>();
         for (Entry<String, Pair<String, Pair<Set<String>, Set<QName>>>> systematicDocumentType : systematicDocumentTypes.entrySet()) {
-            DocumentType documentType = createSystematicDocumentType(systematicDocumentType.getKey(), systematicDocumentType.getValue().getFirst(), systematicDocumentType
-                    .getValue().getSecond().getFirst(),
-                    Field.getLocalNames(systematicDocumentType.getValue().getSecond().getSecond()));
+            Pair<DocumentType, MessageData> result = createSystematicDocumentType(systematicDocumentType.getKey(), systematicDocumentType.getValue().getFirst(),
+                    systematicDocumentType.getValue().getSecond().getFirst(), Field.getLocalNames(systematicDocumentType.getValue().getSecond().getSecond()));
+            DocumentType documentType = result.getFirst();
             createdDocumentTypes.add(documentType);
+            MessageData messageData = result.getSecond();
+            if (messageData != null) {
+                messages.add(messageData);
+            }
         }
-
+        for (MessageData messageData : messages) {
+            MessageUtil.addStatusMessage(messageData);
+        }
         fieldGroupDefinitionsRoot = null;
         fieldDefinitionsRoot = null;
 
@@ -528,7 +536,8 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         return result;
     }
 
-    private DocumentType createSystematicDocumentType(String documentTypeId, String documentTypeName, final Set<String> fieldGroupNames, final Collection<String> fieldDefinitionIds) {
+    private Pair<DocumentType, MessageData> createSystematicDocumentType(String documentTypeId, String documentTypeName
+            , final Set<String> fieldGroupNames, final Collection<String> fieldDefinitionIds) {
         LOG.info("Creating systematic document type: " + documentTypeId);
         DocumentType docType = createNewUnSaved();
         docType.setDocumentTypeId(documentTypeId);
@@ -558,7 +567,6 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                 metadataItem.setOrder(++order);
             }
         }
-
         return saveOrUpdateDocumentType(docType);
     }
 
@@ -587,7 +595,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         }
     }
 
-    private void updateChildren(DocumentType docType) {
+    private MessageData updateChildren(DocumentType docType) {
         int versionNr = 1;
         boolean saved = docType.isSaved();
         if (saved) {
@@ -612,7 +620,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                     // metaData list is not changed, don't save new DocumentTypeVersion (currently as new latestDocumentTypeVersion)
                     documentTypeVersions.remove(latestDocumentTypeVersion);
                     docType.setLatestVersion(versionNr); // don't overwrite latest version number
-                    return;
+                    return null;
                 }
                 versionNr++;
             } else {
@@ -629,12 +637,10 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         Map<String, FieldDefinition> fieldDefinitions = getFieldDefinitionsByFieldIds();
         // save new fields to fieldDefinitions
         String documentTypeId = docType.getDocumentTypeId();
-        MessageData fieldsAddedRemovedWarning = null;
+        boolean addFieldsAddedRemovedWarning = false;
         for (Field field : docVer.getFieldsDeeply()) {
             if (!field.isCopyFromPreviousDocTypeVersion()) {
-                if (fieldsAddedRemovedWarning == null) {
-                    fieldsAddedRemovedWarning = getFieldsChangedMD();
-                }
+                addFieldsAddedRemovedWarning = true;
                 // field is not newer version of the same field under previous version of DocumentTypeVersion
                 FieldDefinition fieldDef = fieldDefinitions.get(field.getFieldId());
                 if (fieldDef != null) {
@@ -664,20 +670,17 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
         List<String> removedFieldIds = deleteFieldMappings(docType, docVer);
         if (!removedFieldIds.isEmpty()) {
-            fieldsAddedRemovedWarning = getFieldsChangedMD();
+            addFieldsAddedRemovedWarning = true;
             for (String removedFieldId : removedFieldIds) {
                 FieldDefinition removedFieldFD = getFieldDefinition(removedFieldId);
                 removedFieldFD.getDocTypes().remove(documentTypeId);
                 saveOrUpdateField(removedFieldFD);
             }
         }
-        if (fieldsAddedRemovedWarning != null) {
-            MessageUtil.addStatusMessage(fieldsAddedRemovedWarning);
+        if (addFieldsAddedRemovedWarning) {
+            return new MessageDataImpl(MessageSeverity.INFO, "docType_metadataList_changedWarning");
         }
-    }
-
-    private MessageData getFieldsChangedMD() {
-        return new MessageDataImpl(MessageSeverity.INFO, "docType_metadataList_changedWarning");
+        return null;
     }
 
     private void checkFieldMappings(DocumentType docType) {
@@ -918,7 +921,14 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
             Map<String, DocumentType> importedDocTypesById = new HashMap<String, DocumentType>();
             Map<String, Pair<List<FollowupAssociation>, List<ReplyAssociation>>> imporableDocTypesById = new HashMap<String, Pair<List<FollowupAssociation>, List<ReplyAssociation>>>();
             // first add/merge metadataItems
-            for (DocumentType importableDocType : getAllDocumentTypes(null, importableDocTypesRootRef)) {
+            List<DocumentType> allDocumentTypes = getAllDocumentTypes(null, importableDocTypesRootRef);
+            int totalDocTypes = allDocumentTypes.size();
+            LOG.info("Starting to import metadata of " + totalDocTypes + " document types");
+            int i = 0;
+            Set<MessageData> messages = new LinkedHashSet<MessageData>();
+            for (DocumentType importableDocType : allDocumentTypes) {
+                i++;
+                LOG.info("Starting to import metadata of " + i + "/" + totalDocTypes + ". document type: " + importableDocType.getNameAndId());
                 String documentTypeId = importableDocType.getDocumentTypeId();
                 DocumentType existingDocType = existingDocTypesById.get(documentTypeId);
                 DocumentType importedDocType;
@@ -927,7 +937,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                     List<ReplyAssociation> replyAssocs = importableDocType.getReplyAssociations();
                     List<FollowupAssociation> followUpsToImport = new ArrayList<FollowupAssociation>(followupAssocs);
                     List<ReplyAssociation> repliesToImport = new ArrayList<ReplyAssociation>(replyAssocs);
-                    imporableDocTypesById.put(documentTypeId, new Pair<List<FollowupAssociation>, List<ReplyAssociation>>(followUpsToImport, repliesToImport));
+                    imporableDocTypesById.put(documentTypeId, Pair.newInstance(followUpsToImport, repliesToImport));
                     followupAssocs.clear();
                     repliesToImport.clear();
                 }
@@ -946,27 +956,41 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                     importableDocType.nextSaveToParent(getDocumentTypesRoot());
                     importedDocType = importableDocType;
                 }
-                importedDocType = saveOrUpdateDocumentType(importedDocType);
+                Pair<DocumentType, MessageData> result = saveOrUpdateDocumentType(importedDocType);
+                importedDocType = result.getFirst();
+                MessageData messageData = result.getSecond();
+                if (messageData != null) {
+                    messages.add(messageData);
+                }
                 importedDocTypesById.put(documentTypeId, importedDocType);
             }
-
+            for (MessageData messageData : messages) {
+                MessageUtil.addStatusMessage(messageData);
+            }
             Map<String, DocumentType> docTypesCache = new HashMap<String, DocumentType>(importedDocTypesById);
             Map<String /* docTypeId */, Set<String> /* docTypeFields */> docTypeFieldsCache = new HashMap<String, Set<String>>();
 
+            i = 0;
+            LOG.info("Starting to import associations of " + totalDocTypes + " document types");
             /** Add {@link AssociationModel}s or merge {@link FieldMapping}s under existing {@link AssociationModel}s <br> */
             MessageDataWrapper errorsMessageDataWrapper = null;
             for (Entry<String, Pair<List<FollowupAssociation>, List<ReplyAssociation>>> entry : imporableDocTypesById.entrySet()) {
+                String documentTypeId = entry.getKey();
+                i++;
+                LOG.info("Starting to import associations of " + i + "/" + totalDocTypes + ". document type: " + documentTypeId);
                 try {
-                    String documentTypeId = entry.getKey();
                     Pair<List<FollowupAssociation>, List<ReplyAssociation>> importableDocTypeAssocs = entry.getValue();
                     DocumentType importedDocType = importedDocTypesById.get(documentTypeId);
                     List<ReplyAssociation> replies = importableDocTypeAssocs.getSecond();
+                    LOG.info("Starting to import followup associations of " + i + "/" + totalDocTypes + ". document type: " + documentTypeId);
                     mergeAssocModels(DocTypeAssocType.FOLLOWUP, importableDocTypeAssocs.getFirst(), importedDocType, docTypesCache, docTypeFieldsCache);
+                    LOG.info("Starting to import reply associations of " + i + "/" + totalDocTypes + ". document type: " + documentTypeId);
                     mergeAssocModels(DocTypeAssocType.REPLY, replies, importedDocType, docTypesCache, docTypeFieldsCache);
                     importedDocType.setProp(PROP_DONT_SAVED_DOC_TYPE_VER, true);
                     saveOrUpdateDocumentType(importedDocType);
                 } catch (UnableToPerformMultiReasonException e) {
                     MessageDataWrapper messageDataWrapper = e.getMessageDataWrapper();
+                    MessageUtil.logMessage(messageDataWrapper, LOG);
                     if (errorsMessageDataWrapper == null) {
                         errorsMessageDataWrapper = messageDataWrapper;
                     } else {
@@ -1159,4 +1183,5 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
             groupRefs.add(saveableNodeRef);
         }
     }
+
 }

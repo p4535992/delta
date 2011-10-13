@@ -28,6 +28,7 @@ import static ee.webmedia.alfresco.classificator.constant.FieldType.DATE;
 import static ee.webmedia.alfresco.classificator.constant.FieldType.DOUBLE;
 import static ee.webmedia.alfresco.classificator.constant.FieldType.LONG;
 import static ee.webmedia.alfresco.classificator.constant.FieldType.TEXT_FIELD;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getMsoService;
 
 import java.io.BufferedInputStream;
 import java.io.InputStream;
@@ -210,7 +211,11 @@ public class PutMethod extends WebDAVMethod {
     }
 
     private void updateDocumentAndGeneratedFiles(FileInfo contentNodeInfo, NodeRef document) throws Exception, ParseException {
-        ModifiedFormulasOutput modifiedFormulas = BeanHelper.getMsoService().getModifiedFormulas(
+        if (!getMsoService().isAvailable()) {
+            log.debug("MsoService is not available, skipping updating document");
+            return;
+        }
+        ModifiedFormulasOutput modifiedFormulas = getMsoService().getModifiedFormulas(
                 getContentService().getReader(contentNodeInfo.getNodeRef(), ContentModel.PROP_CONTENT));
 
         if (modifiedFormulas != null) {

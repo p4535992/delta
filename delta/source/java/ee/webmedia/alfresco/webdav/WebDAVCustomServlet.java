@@ -55,7 +55,12 @@ public class WebDAVCustomServlet extends WebDAVServlet {
 
     @Override
     protected void sendErrorResponse(HttpServletResponse response, WebDAVServerException error) throws IOException {
-        logger.error("Failed to serve webdav request - sending error page", error);
+        // We are only interested in logging the stack trace of application errors, not every non-200-OK HTTP response
+        if (error.getCause() != null && (
+                error.getHttpStatusCode() == HttpServletResponse.SC_INTERNAL_SERVER_ERROR ||
+                error.getHttpStatusCode() == HttpServletResponse.SC_BAD_REQUEST)) {
+            logger.error("Failed to serve webdav request, returning status code: " + error.getHttpStatusCode(), error);
+        }
         response.setStatus(error.getHttpStatusCode());
         response.getWriter().append(getResponseText(error));
     }

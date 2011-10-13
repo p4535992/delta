@@ -21,6 +21,7 @@ import org.alfresco.web.app.ResourceBundleWrapper;
 import org.alfresco.web.ui.common.Utils;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -32,6 +33,7 @@ import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
  * @author Ats Uiboupin
  */
 public class MessageUtil {
+    private static final Log LOG = org.apache.commons.logging.LogFactory.getLog(MessageUtil.class);
 
     /**
      * @param context
@@ -202,11 +204,41 @@ public class MessageUtil {
      * @param messageValuesForHolders
      */
     private static void addStatusMessageInternal(FacesContext context, MessageData messageData) {
-        if (messageData.getSeverity() == MessageSeverity.ERROR) {
+        MessageSeverity severity = messageData.getSeverity();
+        if (context == null) {
+            context = FacesContext.getCurrentInstance(); // don't know if FacesContext was not given or FacesContext doesn't exist
+            if (context == null) {
+                logMessage(messageData, LOG); // FacesContext doesn't exist
+                return;
+            }
+        }
+        if (severity == MessageSeverity.ERROR) {
             addErrorMessage(messageData);
             return;
         }
         context.addMessage(null, getFacesMessage(messageData));
+    }
+
+    private static void logMessage(MessageData messageData, Log logger) {
+        String msg = getMessage(messageData);
+        MessageSeverity severity = messageData.getSeverity();
+        if (severity == MessageSeverity.FATAL) {
+            logger.fatal(msg);
+        } else if (severity == MessageSeverity.ERROR) {
+            logger.error(msg);
+        } else if (severity == MessageSeverity.WARN) {
+            logger.warn(msg);
+        } else if (severity == MessageSeverity.INFO) {
+            logger.info(msg);
+        } else {
+            throw new RuntimeException("Unknown MessageSeverity constant");
+        }
+    }
+
+    public static void logMessage(MessageDataWrapper messageDataWrapper, Log logger) {
+        for (MessageData messageData : messageDataWrapper) {
+            logMessage(messageData, logger);
+        }
     }
 
     public static FacesMessage getFacesMessage(MessageData msgData) {
@@ -332,4 +364,5 @@ public class MessageUtil {
         String type = objectTypeQName.toPrefixString(namespaceService).replace(":", "_");
         return model + ".type." + type + ".title";
     }
+
 }

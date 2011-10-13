@@ -6,6 +6,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.util.Pair;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
@@ -15,6 +16,7 @@ import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.docadmin.web.DocTypeDetailsDialog.DocTypeDialogSnapshot;
 import ee.webmedia.alfresco.docdynamic.web.BaseSnapshotCapableDialog;
 import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.MessageData;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
@@ -68,7 +70,7 @@ public class DocTypeDetailsDialog extends BaseSnapshotCapableDialog<DocTypeDialo
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) {
-        if (validate() && save(false)) {
+        if (validate() && save()) {
             MessageUtil.addInfoMessage("save_success");
         } else {
             isFinished = false;
@@ -76,12 +78,15 @@ public class DocTypeDetailsDialog extends BaseSnapshotCapableDialog<DocTypeDialo
         return null;
     }
 
-    boolean save(boolean reInit) {
+    boolean save() {
         try {
-            DocumentType saveOrUpdateDocumentType = getDocumentAdminService().saveOrUpdateDocumentType(getCurrentSnapshot().docType);
-            if (reInit) {
-                getCurrentSnapshot().addNewLatestDocumentTypeVersion = true;
-                updateDialogState(saveOrUpdateDocumentType, getCurrentSnapshot(), null);
+            Pair<DocumentType, MessageData> result = getDocumentAdminService().saveOrUpdateDocumentType(getCurrentSnapshot().docType);
+            DocumentType saveOrUpdateDocumentType = result.getFirst();
+            getCurrentSnapshot().addNewLatestDocumentTypeVersion = true;
+            updateDialogState(saveOrUpdateDocumentType, getCurrentSnapshot(), null);
+            MessageData messageData = result.getSecond();
+            if (messageData != null) {
+                MessageUtil.addStatusMessage(messageData);
             }
             return true;
         } catch (RuntimeException e) {

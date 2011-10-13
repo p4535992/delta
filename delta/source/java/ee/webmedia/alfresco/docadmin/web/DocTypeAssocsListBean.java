@@ -90,7 +90,7 @@ public abstract class DocTypeAssocsListBean<T extends AssociationModel> implemen
                     if (!docTypeDetailsDialog.validate()) {
                         return null;
                     }
-                    if (docTypeDetailsDialog.save(true)) {
+                    if (docTypeDetailsDialog.save()) {
                         // getAssocByNodeRef() must be called after saving, as documentType is replaced
                         T assocModel = assocNodeRef != null ? getAssocByNodeRef(assocNodeRef) : createNewAssoc();
                         // init & navigate

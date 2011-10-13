@@ -9,6 +9,8 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 
+import ee.webmedia.alfresco.utils.MessageData;
+
 /**
  * @author Ats Uiboupin
  */
@@ -51,9 +53,10 @@ public interface DocumentAdminService {
      * Update properties or save new document type.
      * 
      * @param documentType - document type to be saved or updated to the repository
-     * @return saved instance that was first created by cloning given object
+     * @return saved instance that was first created by cloning given object <br>
+     *         and message if needed
      */
-    DocumentType saveOrUpdateDocumentType(DocumentType docType);
+    Pair<DocumentType, MessageData> saveOrUpdateDocumentType(DocumentType docType);
 
     DocumentType createNewUnSaved();
 
