@@ -7,6 +7,7 @@ import java.util.List;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.base.BaseService;
@@ -30,11 +31,11 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 public class Field extends FieldAndGroupBase {
     private static final long serialVersionUID = 1L;
     /** this temp. property is added to Field that is created based on fieldDefinition */
-    private static final QName COPY_OF_FIELD_DEF_NODE_REF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "copyOfFieldDefNodeRef");
+    private static final QName COPY_OF_FIELD_DEF_NODE_REF = RepoUtil.createTransientProp("copyOfFieldDefNodeRef");
 
     /** used only by subclass */
     protected Field(BaseObject parent, QName type) {
-        super(parent, type);
+        super(checkParentType(parent), type);
     }
 
     /** used only by subclass */
@@ -48,7 +49,7 @@ public class Field extends FieldAndGroupBase {
 
     /** Used by {@link BaseService#getObjectObject(NodeRef, Class)} through reflection */
     public Field(BaseObject parent, WmNode node) {
-        super(parent, node);
+        super(checkParentType(parent), node);
     }
 
     /** Used by {@link BaseServiceImpl#getObject(NodeRef, Class)} through reflection */
@@ -66,6 +67,19 @@ public class Field extends FieldAndGroupBase {
         return super.getParent();
     }
 
+    protected void nextSaveToParent(FieldGroup newParentFieldGroup) {
+        nextSaveToParent(checkParentType(newParentFieldGroup), Field.class);
+    }
+
+    protected void nextSaveToParent(DocumentTypeVersion newParentFieldGroup) {
+        nextSaveToParent(checkParentType(newParentFieldGroup), MetadataItem.class);
+    }
+
+    private static BaseObject checkParentType(BaseObject parent) {
+        Assert.isTrue(parent instanceof MetadataContainer);
+        return parent;
+    }
+
     @Override
     /** used in JSP */
     public String getAdditionalInfo() {
@@ -77,7 +91,7 @@ public class Field extends FieldAndGroupBase {
                 , MessageUtil.getMessage(getFieldTypeEnum()) // type
                 , additionalInfoDefaultValue // defaultValue
                 , new MessageDataImpl("docType_metadataList_additInfo_field_systematic_" + isSystematic())
-                , new MessageDataImpl("docType_metadataList_additInfo_field_mandatory_" + isSystematic())
+                , new MessageDataImpl("docType_metadataList_additInfo_field_mandatory_" + isMandatory())
                 );
         return MessageUtil.getMessage(msgData);
     }

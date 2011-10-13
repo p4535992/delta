@@ -62,6 +62,7 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
+import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
@@ -170,7 +171,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         if (!getNodeService().exists(compoundWorkflow.getParent())) {
             final FacesContext context = FacesContext.getCurrentInstance();
             MessageUtil.addErrorMessage(context, "workflow_compound_add_block_error_docDeleted");
-            context.getApplication().getNavigationHandler().handleNavigation(context, null, getDefaultCancelOutcome());
+            WebUtil.navigateTo(getDefaultCancelOutcome(), context);
             return;
         }
         QName workflowType = QName.createQName(ActionUtil.getParam(event, "workflowType"));

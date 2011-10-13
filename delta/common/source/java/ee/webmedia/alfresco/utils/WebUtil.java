@@ -3,19 +3,17 @@ package ee.webmedia.alfresco.utils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-
 import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.faces.context.FacesContext;
 import javax.faces.model.SelectItem;
 
-
-import org.apache.commons.lang.StringEscapeUtils;
 import org.alfresco.web.data.IDataContainer;
 import org.alfresco.web.data.QuickSort;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.util.HtmlUtils;
 
@@ -112,4 +110,14 @@ public class WebUtil {
         return sb.append("]").toString();
     }
 
+    public static void navigateTo(String navigationOutcome) {
+        navigateTo(navigationOutcome, null);
+    }
+
+    public static void navigateTo(String navigationOutcome, FacesContext context) {
+        if (context == null) {
+            context = FacesContext.getCurrentInstance();
+        }
+        context.getApplication().getNavigationHandler().handleNavigation(context, null, navigationOutcome);
+    }
 }

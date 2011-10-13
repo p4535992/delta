@@ -86,7 +86,7 @@
      <f:param name="testP" value="11" />
 </a:actionLink>
 
-<f:verbatim><br/></f:verbatim>
+<%-- <f:verbatim><br/></f:verbatim> --%>
 
  <%-- FIXME DLSeadist ajutine link test keskkonna jaoks --%>
-<a:actionLink value="DeleteFieldAndFieldGroupsAndBootstrapInfo" actionListener="#{TestingForDeveloperBean.deleteFieldAndFieldGroupsAndBootstrapInfo}" />
+<%-- <a:actionLink value="DeleteFieldAndFieldGroupsAndBootstrapInfo" actionListener="#{TestingForDeveloperBean.deleteFieldAndFieldGroupsAndBootstrapInfo}" /> --%>

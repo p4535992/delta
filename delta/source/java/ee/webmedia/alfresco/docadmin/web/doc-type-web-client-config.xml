@@ -7,6 +7,18 @@
             <action-listener>#{DocTypeDetailsDialog.addNew}</action-listener>
          </action>
 
+         <action id="doc_type_list_export">
+            <label-id>doc_types_list_export</label-id>
+            <action-listener>#{DocTypeListDialog.exportDocTypes}</action-listener>
+            <target>no_wait_workaround</target>
+         </action>
+
+         <action id="doc_type_list_import">
+            <label-id>doc_types_list_import</label-id>
+            <image>/images/icons/add_item.gif</image>
+            <action>dialog:documentTypesImportDialog</action>
+         </action>
+
          <action id="doc_type_delete">
             <evaluator>ee.webmedia.alfresco.docadmin.web.DeleteDocumentTypeEvaluator</evaluator>
             <label-id>delete</label-id>
@@ -37,6 +49,8 @@
 
          <action-group id="doc_type_list_actions">
             <action idref="doc_type_add" />
+            <action idref="doc_type_list_export" />
+            <action idref="doc_type_list_import" />
          </action-group>
 
          <action-group id="doc_type_details_actions">
@@ -65,6 +79,9 @@
          <dialog name="associationModelDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/associationModel-details-dialog.jsp"
             managed-bean="AssociationModelDetailsDialog" icon="/images/icons/versioned_properties_large.gif" />
 
+         <dialog name="documentTypesImportDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/doc-type-import-dialog.jsp" 
+            managed-bean="DocumentTypesImportDialog" icon="/images/icons/add_content_large.gif" title-id="documentTypes_import" />
+
       </dialogs>
    </config>
 
@@ -91,7 +108,9 @@
             ,docadmin:readonlyFieldsRule¤TextAreaGenerator¤styleClass=expand19-200 medium¤readOnlyIf=#{!FieldGroupDetailsDialog.fieldGroup.readonlyFieldsRuleChangeable}
             "
          />
+         <!-- TODO DLSeadist comment in when using this is implemented 
          <show-property name="docadmin:showInTwoColumns" readOnlyIf="#{!FieldGroupDetailsDialog.fieldGroup.showInTwoColumnsChangeable}" />
+          -->
       </property-sheet>
    </config>
 
@@ -102,14 +121,18 @@
          <show-property name="docadmin:used" />
          <show-property name="docadmin:systematic" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" />
          <show-property name="docadmin:publicAdr" />
+         <!-- TODO DLSeadist comment in when using this is implemented 
          <show-property name="docadmin:showUnvalued" />
+          -->
          <show-property name="docadmin:changeByNewDocumentEnabled" />
          <show-property name="docadmin:documentTypeGroup" classificatorName="docTypeGroup" component-generator="ClassificatorSelectorGenerator" />
          <show-property name="docadmin:registrationEnabled" />
          <show-property name="docadmin:finishDocByRegistration" labelStyleClass="wrap" />
          <show-property name="docadmin:sendUnregistratedDocEnabled" labelStyleClass="wrap" />
+         <!-- TODO DLSeadist comment in when using this is implemented
          <show-property name="docadmin:addFollowUpToUnregistratedDocEnabled" labelStyleClass="wrap" />
          <show-property name="docadmin:addReplyToUnregistratedDocEnabled" labelStyleClass="wrap" />
+          -->
          <show-property name="docadmin:editFilesOfFinishedDocEnabled" labelStyleClass="wrap"/>
       </property-sheet>
    </config>

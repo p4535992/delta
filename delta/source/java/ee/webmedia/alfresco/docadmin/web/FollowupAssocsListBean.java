@@ -17,7 +17,7 @@ public class FollowupAssocsListBean extends DocTypeAssocsListBean<FollowupAssoci
 
     @Override
     protected FollowupAssociation getAssocByNodeRef(NodeRef assocNodeRef) {
-        return docTypeDetailsDialog.getDocType().getFollowupAssociation().getChildByNodeRef(assocNodeRef);
+        return docTypeDetailsDialog.getDocType().getFollowupAssociations().getChildByNodeRef(assocNodeRef);
     }
 
     @Override

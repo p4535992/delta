@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -57,6 +58,8 @@ import org.alfresco.web.ui.repo.component.property.UIProperty;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.alfresco.web.ui.repo.tag.LoadBundleTag;
 import org.apache.commons.collections.Closure;
+import org.apache.commons.collections.comparators.NullComparator;
+import org.apache.commons.collections.comparators.TransformingComparator;
 import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.shared_impl.renderkit.html.HtmlFormRendererBase;
 import org.apache.myfaces.shared_impl.taglib.UIComponentTagUtils;
@@ -90,6 +93,22 @@ public class ComponentUtil {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ComponentUtil.class);
     private static GeneralService generalService;
     public static final String DEFAULT_SELECT_VALUE = "";
+
+    private static final Comparator<UISelectItem> BY_LABEL_COMPARATOR;
+    static {
+        @SuppressWarnings("unchecked")
+        Comparator<UISelectItem> byLabelComparator = new TransformingComparator(new ComparableTransformer<UISelectItem>() {
+            @Override
+            public Comparable<?> tr(UISelectItem input) {
+                return input.getItemLabel();
+            }
+        }, new NullComparator());
+        BY_LABEL_COMPARATOR = byLabelComparator;
+    }
+
+    public static void sortByLabel(List<UISelectItem> selectOptions) {
+        Collections.sort(selectOptions, BY_LABEL_COMPARATOR);
+    }
 
     public static UIComponent makeCondenced(final UIComponent component, int condenceSize) {
         putAttribute(component, "styleClass", "condence" + condenceSize);

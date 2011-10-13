@@ -30,7 +30,6 @@ import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttri
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames.STYLE_CLASS;
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames.VALDIATION_DISABLED;
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames.VALIDATION_MARKER_DISABLED;
-
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomConstants.VALUE_INDEX_IN_MULTIVALUED_PROPERTY;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
 
@@ -54,6 +53,7 @@ import javax.faces.el.MethodBinding;
 import javax.faces.el.ValueBinding;
 import javax.faces.validator.Validator;
 
+import org.alfresco.repo.dictionary.constraint.AbstractConstraint;
 import org.alfresco.repo.dictionary.constraint.ListOfValuesConstraint;
 import org.alfresco.repo.dictionary.constraint.NumericRangeConstraint;
 import org.alfresco.repo.dictionary.constraint.RegexConstraint;
@@ -75,8 +75,8 @@ import org.alfresco.web.ui.repo.component.property.BaseAssociationEditor;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIProperty;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
-import org.alfresco.web.ui.repo.component.property.UISeparator;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet.ClientValidation;
+import org.alfresco.web.ui.repo.component.property.UISeparator;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.util.StringUtils;
@@ -934,7 +934,9 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
          for (ConstraintDefinition constraintDef : constraints)
          {
             Constraint constraint = constraintDef.getConstraint();
-               
+            if (constraint instanceof AbstractConstraint && ((AbstractConstraint) constraint).isClientSideValidationDisabled()) {
+                continue;
+            }
             if (constraint instanceof RegexConstraint)
             {
                setupRegexConstraint(context, propertySheet, property, component,

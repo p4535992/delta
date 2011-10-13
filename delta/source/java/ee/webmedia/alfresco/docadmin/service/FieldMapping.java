@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.docadmin.service;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.base.BaseServiceImpl;
@@ -18,11 +19,11 @@ public class FieldMapping extends BaseObject {
 
     /** Used by {@link BaseServiceImpl#getObject(NodeRef, Class)} through reflection */
     public FieldMapping(BaseObject parent, WmNode node) {
-        super(parent, node);
+        super(checkParentType(parent), node);
     }
 
-    public FieldMapping(BaseObject parent) {
-        super(parent, DocumentAdminModel.Types.FIELD_MAPPING);
+    public FieldMapping(AssociationModel parent) {
+        super(checkParentType(parent), DocumentAdminModel.Types.FIELD_MAPPING);
     }
 
     @Override
@@ -33,6 +34,11 @@ public class FieldMapping extends BaseObject {
     @Override
     protected QName getAssocName() {
         return QName.createQName(DocumentAdminModel.URI, getFromField());
+    }
+
+    private static BaseObject checkParentType(BaseObject parent) {
+        Assert.isTrue(parent instanceof AssociationModel);
+        return parent;
     }
 
     public void setFromField(String fromField) {
@@ -52,6 +58,10 @@ public class FieldMapping extends BaseObject {
      */
     public String getToField() {
         return getProp(DocumentAdminModel.Props.TO_FIELD);
+    }
+
+    public void nextSaveToParent(AssociationModel newParentFollowupAssocModel) {
+        nextSaveToParent(newParentFollowupAssocModel, FieldMapping.class);
     }
 
 }

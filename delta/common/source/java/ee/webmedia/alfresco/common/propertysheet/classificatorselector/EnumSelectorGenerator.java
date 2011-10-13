@@ -96,6 +96,8 @@ public class EnumSelectorGenerator extends GeneralSelectorGenerator implements H
             selectOptions.add(selectItem);
         }
 
+        ComponentUtil.sortByLabel(selectOptions);
+
         if (!multiValued) {
             ClassificatorSelectorGenerator.addDefault(context, selectOptions);
 

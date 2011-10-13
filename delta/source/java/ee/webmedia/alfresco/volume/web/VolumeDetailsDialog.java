@@ -1,5 +1,10 @@
 package ee.webmedia.alfresco.volume.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getArchivalsService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getCaseService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getVolumeService;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -12,19 +17,15 @@ import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
+import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.springframework.util.Assert;
-import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.archivals.service.ArchivalsService;
-import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
-import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.volume.exception.VolumeContainsCasesException;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.volume.model.Volume;
-import ee.webmedia.alfresco.volume.service.VolumeService;
 
 /**
  * Form backing bean for Volumes details
@@ -38,22 +39,13 @@ public class VolumeDetailsDialog extends BaseDialogBean {
     private static final String PARAM_SERIES_NODEREF = "seriesNodeRef";
     private static final String PARAM_VOLUME_NODEREF = "volumeNodeRef";
 
-    private transient VolumeService volumeService;
-    private transient ArchivalsService archivalsService;
-    private transient CaseService caseService;
-    private transient DocumentService documentService;
     private Volume currentEntry;
     private boolean newVolume;
+    private transient UIPropertySheet propertySheet;
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
-        try {
-            getVolumeService().saveOrUpdate(currentEntry);
-        } catch (VolumeContainsCasesException e) {
-            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "volume_contains_docs_or_cases");
-            super.isFinished = false;
-            return null;
-        }
+        getVolumeService().saveOrUpdate(currentEntry);
         resetFields();
         MessageUtil.addInfoMessage("save_success");
         return outcome;
@@ -86,22 +78,44 @@ public class VolumeDetailsDialog extends BaseDialogBean {
         return currentEntry;
     }
 
-    public String close() {
-        if (currentEntry.getNode() instanceof TransientNode) {
-            return null;
+    public void close(@SuppressWarnings("unused") ActionEvent event) {
+        Node currentVolumeNode = currentEntry.getNode();
+        if (currentVolumeNode instanceof TransientNode || currentVolumeNode == null) {
+            return;
         }
         if (!isClosed()) {
             try {
                 getVolumeService().closeVolume(currentEntry);
-            } catch (VolumeContainsCasesException e) {
-                MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "volume_contains_docs_or_cases");
-                super.isFinished = false;
-                return null;
+            } catch (UnableToPerformException e) {
+                MessageUtil.addErrorMessage(e.getMessage());
+                return;
             }
             MessageUtil.addInfoMessage("volume_close_success");
-            return getDefaultFinishOutcome();
+            clearPropSheet();
         }
-        return null;
+    }
+
+    public void open(@SuppressWarnings("unused") ActionEvent event) {
+        Node currentVolumeNode = currentEntry.getNode();
+        if (currentVolumeNode instanceof TransientNode || currentVolumeNode == null) {
+            return;
+        }
+        if (!isOpened()) {
+            try {
+                getVolumeService().openVolume(currentEntry);
+            } catch (UnableToPerformException e) {
+                MessageUtil.addErrorMessage(e.getMessage());
+                return;
+            }
+            MessageUtil.addInfoMessage("volume_open_success");
+            clearPropSheet();
+        }
+    }
+
+    private void clearPropSheet() {
+        if (propertySheet != null) {
+            propertySheet.getChildren().clear();
+        }
     }
 
     public void archive(@SuppressWarnings("unused") ActionEvent event) {
@@ -115,7 +129,11 @@ public class VolumeDetailsDialog extends BaseDialogBean {
     }
 
     public boolean isClosed() {
-        return volumeService.isClosed(getCurrentNode());
+        return getVolumeService().isClosed(getCurrentNode());
+    }
+
+    public boolean isOpened() {
+        return getVolumeService().isOpened(getCurrentNode());
     }
 
     public boolean isNew() {
@@ -139,44 +157,17 @@ public class VolumeDetailsDialog extends BaseDialogBean {
     private void resetFields() {
         currentEntry = null;
         newVolume = false;
+        propertySheet = null;
     }
 
     // START: getters / setters
-    protected VolumeService getVolumeService() {
-        if (volumeService == null) {
-            volumeService = (VolumeService) FacesContextUtils.getRequiredWebApplicationContext(
-                    FacesContext.getCurrentInstance()).getBean(VolumeService.BEAN_NAME);
-        }
-        return volumeService;
+
+    public void setPropertySheet(UIPropertySheet propertySheet) {
+        this.propertySheet = propertySheet;
     }
 
-    protected ArchivalsService getArchivalsService() {
-        if (archivalsService == null) {
-            archivalsService = (ArchivalsService) FacesContextUtils.getRequiredWebApplicationContext(
-                    FacesContext.getCurrentInstance()).getBean(ArchivalsService.BEAN_NAME);
-        }
-        return archivalsService;
+    public UIPropertySheet getPropertySheet() {
+        return propertySheet;
     }
-
-    protected CaseService getCaseService() {
-        if (caseService == null) {
-            caseService = (CaseService) FacesContextUtils.getRequiredWebApplicationContext(
-                    FacesContext.getCurrentInstance()).getBean(CaseService.BEAN_NAME);
-        }
-        return caseService;
-    }
-
-    protected DocumentService getDocumentService() {
-        if (documentService == null) {
-            documentService = (DocumentService) FacesContextUtils.getRequiredWebApplicationContext(
-                    FacesContext.getCurrentInstance()).getBean(DocumentService.BEAN_NAME);
-        }
-        return documentService;
-    }
-
-    public void setVolumeService(VolumeService volumeService) {
-        this.volumeService = volumeService;
-    }
-
     // END: getters / setters
 }

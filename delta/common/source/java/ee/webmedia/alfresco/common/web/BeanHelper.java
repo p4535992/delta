@@ -25,16 +25,19 @@ import ee.webmedia.alfresco.addressbook.web.bean.AddressbookSearchBean;
 import ee.webmedia.alfresco.addressbook.web.dialog.AddressbookAddEditDialog;
 import ee.webmedia.alfresco.adr.service.AdrService;
 import ee.webmedia.alfresco.app.AppConstants;
+import ee.webmedia.alfresco.archivals.service.ArchivalsService;
 import ee.webmedia.alfresco.base.BaseService;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.cases.web.CaseDetailsDialog;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.classificator.web.ClassificatorDetailsDialog;
+import ee.webmedia.alfresco.classificator.web.ClassificatorsImportDialog;
 import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.web.AssociationModelDetailsDialog;
 import ee.webmedia.alfresco.docadmin.web.DocTypeDetailsDialog;
+import ee.webmedia.alfresco.docadmin.web.DocumentTypesImportDialog;
 import ee.webmedia.alfresco.docadmin.web.FieldDetailsDialog;
 import ee.webmedia.alfresco.docadmin.web.FieldGroupDetailsDialog;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
@@ -74,8 +77,10 @@ import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.mso.service.MsoService;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
+import ee.webmedia.alfresco.parameters.web.ParametersImportDialog;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.privilege.web.ManagePrivilegesDialog;
+import ee.webmedia.alfresco.register.service.RegisterService;
 import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.series.web.SeriesDetailsDialog;
 import ee.webmedia.alfresco.substitute.service.SubstituteService;
@@ -137,6 +142,18 @@ public class BeanHelper {
         return getJsfBean(ClassificatorDetailsDialog.class, ClassificatorDetailsDialog.BEAN_NAME);
     }
 
+    public static ParametersImportDialog getParametersImportDialog() {
+        return getJsfBean(ParametersImportDialog.class, ParametersImportDialog.BEAN_NAME);
+    }
+
+    public static ClassificatorsImportDialog getClassificatorsImportDialog() {
+        return getJsfBean(ClassificatorsImportDialog.class, ClassificatorsImportDialog.BEAN_NAME);
+    }
+
+    public static DocumentTypesImportDialog getDocumentTypesImportDialog() {
+        return getJsfBean(DocumentTypesImportDialog.class, DocumentTypesImportDialog.BEAN_NAME);
+    }
+
     public static DocumentDialog getDocumentDialog() {
         return getJsfBean(DocumentDialog.class, DocumentDialog.BEAN_NAME);
     }
@@ -168,6 +185,10 @@ public class BeanHelper {
 
     public static UserListDialog getUserListDialog() {
         return getJsfBean(UserListDialog.class, UserListDialog.BEAN_NAME);
+    }
+
+    public static ConfirmDialog getConfirmDialog() {
+        return getJsfBean(ConfirmDialog.class, ConfirmDialog.BEAN_NAME);
     }
 
     public static ClearStateNotificationHandler getClearStateNotificationHandler() {
@@ -342,6 +363,10 @@ public class BeanHelper {
         return getService(ClassificatorService.class, ClassificatorService.BEAN_NAME);
     }
 
+    public static RegisterService getRegisterService() {
+        return getService(RegisterService.class, RegisterService.BEAN_NAME);
+    }
+
     public static ApplicationService getApplicationService() {
         return getService(ApplicationService.class, ApplicationService.BEAN_NAME);
     }
@@ -458,6 +483,10 @@ public class BeanHelper {
         return getService(UserContactMappingService.class, UserContactMappingService.BEAN_NAME);
     }
 
+    public static ArchivalsService getArchivalsService() {
+        return getService(ArchivalsService.class, ArchivalsService.BEAN_NAME);
+    }
+
     // END: delta services
 
     // START: other beans
@@ -489,4 +518,5 @@ public class BeanHelper {
     }
 
     // END: private methods
+
 }

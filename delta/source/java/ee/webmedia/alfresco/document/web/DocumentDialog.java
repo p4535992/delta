@@ -87,6 +87,7 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.PermissionDeniedException;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
+import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 
@@ -202,7 +203,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         } catch (InvalidNodeRefException e) {
             final FacesContext context = FacesContext.getCurrentInstance();
             MessageUtil.addErrorMessage(context, "document_createWordFile_error_docDeleted");
-            context.getApplication().getNavigationHandler().handleNavigation(context, null, getDefaultCancelOutcome());
+            WebUtil.navigateTo(getDefaultCancelOutcome(), context);
             return;
         } catch (NodeLockedException e) {
             handleLockedNode("document_createWordFile_error_docLocked");
@@ -263,7 +264,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
                 DocumentSpecificModel.Aspects.ERRAND_APPLICATION_DOMESTIC, DocumentSpecificModel.Aspects.TRAINING_APPLICATION))) {
             final FacesContext context = FacesContext.getCurrentInstance();
             MessageUtil.addInfoMessage(context, "document_copy_error_docVersionChanged");
-            context.getApplication().getNavigationHandler().handleNavigation(context, null, getDefaultCancelOutcome());
+            WebUtil.navigateTo(getDefaultCancelOutcome(), context);
             return;
         }
 
@@ -276,7 +277,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         } catch (InvalidNodeRefException e) {
             final FacesContext context = FacesContext.getCurrentInstance();
             MessageUtil.addErrorMessage(context, "document_copy_error_docDeleted");
-            context.getApplication().getNavigationHandler().handleNavigation(context, null, getDefaultCancelOutcome());
+            WebUtil.navigateTo(getDefaultCancelOutcome(), context);
         }
     }
 
@@ -332,7 +333,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         } catch (InvalidNodeRefException e) {
             final FacesContext context = FacesContext.getCurrentInstance();
             MessageUtil.addErrorMessage(context, "document_delete_error_docDeleted");
-            context.getApplication().getNavigationHandler().handleNavigation(context, null, getDefaultCancelOutcome());
+            WebUtil.navigateTo(getDefaultCancelOutcome(), context);
             return;
         }
         // go back
@@ -621,7 +622,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         } catch (UnableToPerformException e) {
             final FacesContext context = FacesContext.getCurrentInstance();
             // no need to add statusMessage, as it is already added
-            context.getApplication().getNavigationHandler().handleNavigation(context, null, getDefaultCancelOutcome());
+            WebUtil.navigateTo(getDefaultCancelOutcome(), context);
         }
 
         getDocumentDialogHelperBean().reset(this);
@@ -737,7 +738,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         } catch (InvalidNodeRefException e) {
             final FacesContext context = FacesContext.getCurrentInstance();
             MessageUtil.addErrorMessage(context, "document_registerDoc_error_docDeleted");
-            context.getApplication().getNavigationHandler().handleNavigation(context, null, getDefaultCancelOutcome());
+            WebUtil.navigateTo(getDefaultCancelOutcome(), context);
         }
     }
 

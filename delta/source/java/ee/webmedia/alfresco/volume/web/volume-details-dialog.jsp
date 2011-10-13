@@ -13,7 +13,7 @@
 <%@page import="org.apache.commons.lang.StringEscapeUtils"%>
 <%@page import="ee.webmedia.alfresco.volume.web.VolumeDetailsDialog"%>
 <a:panel id="metadata-panel" label="#{msg.document_metadata}" styleClass="panel-100" progressive="true">
-   <r:propertySheetGrid id="volume-metatada" value="#{VolumeDetailsDialog.currentNode}" columns="1" mode="edit" externalConfig="true" labelStyleClass="propertiesLabel"/>
+   <r:propertySheetGrid id="volume-metatada" value="#{VolumeDetailsDialog.currentNode}" binding="#{VolumeDetailsDialog.propertySheet}" columns="1" mode="edit" externalConfig="true" labelStyleClass="propertiesLabel"/>
 </a:panel>
 
 <f:verbatim>

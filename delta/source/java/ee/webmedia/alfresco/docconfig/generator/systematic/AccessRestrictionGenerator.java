@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.docconfig.generator.systematic;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getSeriesService;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.DOC_STATUS;
 
 import java.util.Date;
@@ -8,6 +9,7 @@ import java.util.Map;
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 
@@ -15,12 +17,10 @@ import ee.webmedia.alfresco.adr.service.AdrService;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.generator.BasePropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.generator.BaseSystematicFieldGenerator;
-import ee.webmedia.alfresco.docconfig.generator.FieldGroupGenerator;
 import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
@@ -31,38 +31,53 @@ import ee.webmedia.alfresco.series.model.SeriesModel;
 /**
  * @author Alar Kvell
  */
-public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator implements FieldGroupGenerator {
-    private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AccessRestrictionGenerator.class);
-
-    // TODO DLSeadist: ensure that everything works according to originalFieldId<-->fieldId
+public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
 
     @Override
     protected String[] getOriginalFieldIds() {
         return new String[] {
+                DocumentCommonModel.Props.ACCESS_RESTRICTION.getLocalName(),
                 DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON.getLocalName(),
                 DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE.getLocalName(),
-                DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE.getLocalName() };
+                DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE.getLocalName(),
+                DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC.getLocalName() };
     }
 
     @Override
     public void generateField(Field field, GeneratorResults generatorResults) {
+        // Actually these fields cannot be used outside systematic group, because they have onlyInGroup=true
+        // But let's leave this check in just in case
+        if (!(field.getParent() instanceof FieldGroup) || !((FieldGroup) field.getParent()).isSystematic()) {
+            generatorResults.getAndAddPreGeneratedItem();
+            return;
+        }
+
+        Map<String, Field> fieldsByOriginalId = ((FieldGroup) field.getParent()).getFieldsByOriginalId();
+        QName accessRestrictionProp = getProp(fieldsByOriginalId, DocumentCommonModel.Props.ACCESS_RESTRICTION);
+        QName accessRestrictionEndDescProp = getProp(fieldsByOriginalId, DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC);
+
         final ItemConfigVO item = generatorResults.getAndAddPreGeneratedItem();
-        if (field.getOriginalFieldId().equals(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON.getLocalName())) {
-            item.setMandatoryIf("accessRestriction");
+        if (field.getQName().equals(accessRestrictionProp)) {
+            String stateHolderKey = field.getFieldId();
+            generatorResults.addStateHolder(stateHolderKey, new AccessRestrictionState());
+            return;
+        } else if (field.getOriginalFieldId().equals(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON.getLocalName())) {
+            item.setMandatoryIf(accessRestrictionProp.getLocalName());
             return;
         } else if (field.getOriginalFieldId().equals(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE.getLocalName())) {
-            item.setMandatoryIf("accessRestriction");
+            item.setMandatoryIf(accessRestrictionProp.getLocalName());
             return;
         } else if (field.getOriginalFieldId().equals(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE.getLocalName())) {
-            item.setMandatoryIf("accessRestriction,accessRestrictionEndDesc=null");
+            item.setMandatoryIf(accessRestrictionProp.getLocalName() + "," + accessRestrictionEndDescProp.getLocalName() + "=null");
+            return;
+        } else if (field.getOriginalFieldId().equals(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC.getLocalName())) {
             return;
         }
         throw new RuntimeException("Unsupported field: " + field);
     }
 
-    @Override
-    public void generateFieldGroup(FieldGroup fieldGroup, GeneratorResults generatorResults) {
-        generatorResults.addStateHolder(getStateHolderKey(), new AccessRestrictionState());
+    private QName getProp(Map<String, Field> fieldsByOriginalId, QName propName) {
+        return fieldsByOriginalId.get(propName.getLocalName()).getQName();
     }
 
     // ===============================================================================================================================
@@ -83,7 +98,7 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator imp
             final String accessRestriction = (String) docProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION.toString());
             if (StringUtils.isBlank(accessRestriction)) {
                 // read serAccessRestriction-related values from series
-                final Series series = BeanHelper.getSeriesService().getSeriesByNodeRef(seriesRef);
+                final Series series = getSeriesService().getSeriesByNodeRef(seriesRef);
                 final Map<String, Object> seriesProps = series.getNode().getProperties();
                 final String serAccessRestriction = (String) seriesProps.get(SeriesModel.Props.ACCESS_RESTRICTION.toString());
                 final String serAccessRestrictionReason = (String) seriesProps.get(SeriesModel.Props.ACCESS_RESTRICTION_REASON.toString());

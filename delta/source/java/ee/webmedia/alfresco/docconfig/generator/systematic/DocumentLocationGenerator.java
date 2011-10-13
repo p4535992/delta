@@ -1,5 +1,10 @@
 package ee.webmedia.alfresco.docconfig.generator.systematic;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getCaseService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getFunctionsService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getSeriesService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getVolumeService;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.CASE;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FUNCTION;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_NUMBER;
@@ -30,19 +35,16 @@ import org.apache.commons.lang.StringUtils;
 import org.hibernate.StaleObjectStateException;
 
 import ee.webmedia.alfresco.cases.model.Case;
-import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter;
 import ee.webmedia.alfresco.common.propertysheet.suggester.SuggesterGenerator;
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.generator.BasePropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.generator.BaseSystematicFieldGenerator;
-import ee.webmedia.alfresco.docconfig.generator.FieldGroupGenerator;
 import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
 import ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGenerator.AccessRestrictionState;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
@@ -62,16 +64,13 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 import ee.webmedia.alfresco.volume.model.Volume;
-import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 
 /**
  * @author Alar Kvell
  */
-public class DocumentLocationGenerator extends BaseSystematicFieldGenerator implements FieldGroupGenerator {
+public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentLocationGenerator.class);
-
-    // TODO DLSeadist: ensure that everything works according to originalFieldId<-->fieldId
 
     @Override
     protected String[] getOriginalFieldIds() {
@@ -81,6 +80,8 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
                 VOLUME.getLocalName(),
                 CASE.getLocalName() };
     }
+
+    private static final QName CASE_LABEL_EDITABLE = RepoUtil.createTransientProp(CASE.getLocalName() + "LabelEditable");
 
     /*
      * In EDIT_MODE we use properties:
@@ -96,61 +97,82 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
      * {temp}caseLabel - String
      */
 
-    public static final QName FUNCTION_LABEL = RepoUtil.createTransientProp("functionLabel");
-    public static final QName SERIES_LABEL = RepoUtil.createTransientProp("seriesLabel");
-    public static final QName VOLUME_LABEL = RepoUtil.createTransientProp("volumeLabel");
-    public static final QName CASE_LABEL = RepoUtil.createTransientProp("caseLabel");
-    public static final QName CASE_LABEL_EDITABLE = RepoUtil.createTransientProp("caseLabelEditable");
-
     @Override
     public void generateField(Field field, GeneratorResults generatorResults) {
+        // Actually these fields cannot be used outside systematic group, because they have onlyInGroup=true
+        // But let's leave this check in just in case
+        if (!(field.getParent() instanceof FieldGroup) || !((FieldGroup) field.getParent()).isSystematic()) {
+            generatorResults.getAndAddPreGeneratedItem();
+            return;
+        }
+
+        Map<String, Field> fieldsByOriginalId = ((FieldGroup) field.getParent()).getFieldsByOriginalId();
+        QName functionProp = getProp(fieldsByOriginalId, FUNCTION);
+        QName seriesProp = getProp(fieldsByOriginalId, SERIES);
+        QName volumeProp = getProp(fieldsByOriginalId, VOLUME);
+        QName caseProp = getProp(fieldsByOriginalId, CASE);
+        QName functionLabelProp = getTransientProp(functionProp, "Label");
+        QName seriesLabelProp = getTransientProp(seriesProp, "Label");
+        QName volumeLabelProp = getTransientProp(volumeProp, "Label");
+        QName caseLabelProp = getTransientProp(caseProp, "Label");
+        QName caseLabelEditableProp = getTransientProp(caseProp, "LabelEditable");
+        String stateHolderKey = functionProp.getLocalName();
+
         final ItemConfigVO item = generatorResults.getAndAddPreGeneratedItem();
-        if (field.getOriginalFieldId().equals(FUNCTION.getLocalName())) {
+        if (field.getQName().equals(functionProp)) {
             item.setComponentGenerator("GeneralSelectorGenerator");
             item.setConverter(NodeRefConverter.class.getName());
-            item.setSelectionItems(getBindingName("getFunctions"));
-            item.setValueChangeListener(getBindingName("functionValueChanged"));
+            item.setSelectionItems(getBindingName("getFunctions", stateHolderKey));
+            item.setValueChangeListener(getBindingName("functionValueChanged", stateHolderKey));
             item.setShowInViewMode(false);
 
-            generatorResults.generateAndAddViewModeText(FUNCTION_LABEL.toString(), field.getName());
+            generatorResults.generateAndAddViewModeText(functionLabelProp.toString(), field.getName());
+
+            // Add stateholder
+            generatorResults.addStateHolder(stateHolderKey, new DocumentLocationState(functionProp, seriesProp, caseProp, volumeProp, functionLabelProp, seriesLabelProp,
+                    volumeLabelProp, caseLabelProp, caseLabelEditableProp));
+
             return;
-        } else if (field.getOriginalFieldId().equals(SERIES.getLocalName())) {
+        } else if (field.getQName().equals(seriesProp)) {
             item.setComponentGenerator("GeneralSelectorGenerator");
             item.setConverter(NodeRefConverter.class.getName());
-            item.setSelectionItems(getBindingName("getSeries"));
-            item.setValueChangeListener(getBindingName("seriesValueChanged"));
+            item.setSelectionItems(getBindingName("getSeries", stateHolderKey));
+            item.setValueChangeListener(getBindingName("seriesValueChanged", stateHolderKey));
             item.setShowInViewMode(false);
 
-            generatorResults.generateAndAddViewModeText(SERIES_LABEL.toString(), field.getName());
+            generatorResults.generateAndAddViewModeText(seriesLabelProp.toString(), field.getName());
             return;
-        } else if (field.getOriginalFieldId().equals(VOLUME.getLocalName())) {
+        } else if (field.getQName().equals(volumeProp)) {
             item.setComponentGenerator("GeneralSelectorGenerator");
             item.setConverter(NodeRefConverter.class.getName());
-            item.setSelectionItems(getBindingName("getVolumes"));
-            item.setValueChangeListener(getBindingName("volumeValueChanged"));
+            item.setSelectionItems(getBindingName("getVolumes", stateHolderKey));
+            item.setValueChangeListener(getBindingName("volumeValueChanged", stateHolderKey));
             item.setShowInViewMode(false);
 
-            generatorResults.generateAndAddViewModeText(VOLUME_LABEL.toString(), field.getName());
+            generatorResults.generateAndAddViewModeText(volumeLabelProp.toString(), field.getName());
             return;
-        } else if (field.getOriginalFieldId().equals(CASE.getLocalName())) {
-            item.setName(CASE_LABEL_EDITABLE.toString());
+        } else if (field.getQName().equals(caseProp)) {
+            item.setName(caseLabelEditableProp.toString());
             item.setForcedMandatory(true);
             item.setComponentGenerator("SuggesterGenerator");
-            item.setSuggesterValues(getBindingName("getCases"));
-            item.setValueChangeListener(getBindingName("volumeValueChanged"));
+            item.setSuggesterValues(getBindingName("getCases", stateHolderKey));
+            item.setValueChangeListener(getBindingName("volumeValueChanged", stateHolderKey));
             item.setStyleClass("long");
             item.setDontRenderIfDisabled(true);
             item.setShowInViewMode(false);
 
-            generatorResults.generateAndAddViewModeText(CASE_LABEL.toString(), field.getName());
+            generatorResults.generateAndAddViewModeText(caseLabelProp.toString(), field.getName());
             return;
         }
         throw new RuntimeException("Unsupported field: " + field);
     }
 
-    @Override
-    public void generateFieldGroup(FieldGroup fieldGroup, GeneratorResults generatorResults) {
-        generatorResults.addStateHolder(getStateHolderKey(), new DocumentLocationState());
+    private QName getProp(Map<String, Field> fieldsByOriginalId, QName propName) {
+        return fieldsByOriginalId.get(propName.getLocalName()).getQName();
+    }
+
+    private QName getTransientProp(QName propName, String suffix) {
+        return RepoUtil.createTransientProp(propName.getLocalName() + suffix);
     }
 
     // ===============================================================================================================================
@@ -158,42 +180,59 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
     public static class DocumentLocationState extends BasePropertySheetStateHolder {
         private static final long serialVersionUID = 1L;
 
+        private final QName functionProp;
+        private final QName seriesProp;
+        private final QName caseProp;
+        private final QName volumeProp;
+        private final QName functionLabelProp;
+        private final QName seriesLabelProp;
+        private final QName volumeLabelProp;
+        private final QName caseLabelProp;
+        private final QName caseLabelEditableProp;
+
         private List<SelectItem> functions;
         private List<SelectItem> series;
         private List<SelectItem> volumes;
         private List<String> cases;
 
+        public DocumentLocationState(QName functionProp, QName seriesProp, QName caseProp, QName volumeProp, QName functionLabelProp, QName seriesLabelProp, QName volumeLabelProp,
+                                     QName caseLabelProp, QName caseLabelEditableProp) {
+            this.functionProp = functionProp;
+            this.seriesProp = seriesProp;
+            this.caseProp = caseProp;
+            this.volumeProp = volumeProp;
+            this.functionLabelProp = functionLabelProp;
+            this.seriesLabelProp = seriesLabelProp;
+            this.volumeLabelProp = volumeLabelProp;
+            this.caseLabelProp = caseLabelProp;
+            this.caseLabelEditableProp = caseLabelEditableProp;
+        }
+
         @Override
         public void reset(boolean inEditMode) {
             final Node document = dialogDataProvider.getNode();
+            NodeRef functionRef = (NodeRef) document.getProperties().get(functionProp);
+            NodeRef seriesRef = (NodeRef) document.getProperties().get(seriesProp);
+            NodeRef volumeRef = (NodeRef) document.getProperties().get(volumeProp);
+            NodeRef caseRef = (NodeRef) document.getProperties().get(caseProp);
+
             if (inEditMode) {
-                NodeRef functionRef = (NodeRef) document.getProperties().get(FUNCTION);
-                NodeRef seriesRef = (NodeRef) document.getProperties().get(SERIES);
-                NodeRef volumeRef = (NodeRef) document.getProperties().get(VOLUME);
-                NodeRef caseRef = (NodeRef) document.getProperties().get(CASE);
                 String caseLabel = null;
                 if (caseRef != null) {
-                    caseLabel = BeanHelper.getCaseService().getCaseByNoderef(caseRef).getTitle();
+                    caseLabel = getCaseLabel(getCaseService().getCaseByNoderef(caseRef));
                 }
                 updateFnSerVol(functionRef, seriesRef, volumeRef, caseLabel, true);
             } else {
-                final DocumentParentNodesVO documentParentNodesVO = BeanHelper.getDocumentService().getAncestorNodesByDocument(document.getNodeRef());
-                Node functionNode = documentParentNodesVO.getFunctionNode();
-                Node seriesNode = documentParentNodesVO.getSeriesNode();
-                Node caseNode = documentParentNodesVO.getCaseNode();
-                Node volumeNode = documentParentNodesVO.getVolumeNode();
-                String functionLbl = functionNode != null ? functionNode.getProperties().get(FunctionsModel.Props.MARK).toString() //
-                        + " " + functionNode.getProperties().get(FunctionsModel.Props.TITLE).toString() : null;
-                String seriesLbl = seriesNode != null ? seriesNode.getProperties().get(SeriesModel.Props.SERIES_IDENTIFIER).toString() //
-                        + " " + seriesNode.getProperties().get(SeriesModel.Props.TITLE).toString() : null;
-                String volumeLbl = volumeNode != null ? volumeNode.getProperties().get(VolumeModel.Props.MARK).toString() //
-                        + " " + volumeNode.getProperties().get(VolumeModel.Props.TITLE).toString() : null;
-                String caseLbl = caseNode != null ? caseNode.getProperties().get(CaseModel.Props.TITLE).toString() : null;
-                document.getProperties().put(FUNCTION_LABEL.toString(), functionLbl);
-                document.getProperties().put(SERIES_LABEL.toString(), seriesLbl);
-                document.getProperties().put(VOLUME_LABEL.toString(), volumeLbl);
+                String functionLbl = functionRef == null ? null : getFunctionLabel(getFunctionsService().getFunctionByNodeRef(functionRef));
+                String seriesLbl = seriesRef == null ? null : getSeriesLabel(getSeriesService().getSeriesByNodeRef(seriesRef));
+                String volumeLbl = volumeRef == null ? null : getVolumeLabel(getVolumeService().getVolumeByNodeRef(volumeRef));
+                String caseLbl = caseRef == null ? null : getCaseLabel(getCaseService().getCaseByNoderef(caseRef));
+
+                document.getProperties().put(functionLabelProp.toString(), functionLbl);
+                document.getProperties().put(seriesLabelProp.toString(), seriesLbl);
+                document.getProperties().put(volumeLabelProp.toString(), volumeLbl);
                 if (caseLbl != null) {
-                    document.getProperties().put(CASE_LABEL.toString(), caseLbl);
+                    document.getProperties().put(caseLabelProp.toString(), caseLbl);
                 }
             }
         }
@@ -241,15 +280,15 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
 
         public void seriesValueChanged(ValueChangeEvent event) {
             Node document = dialogDataProvider.getNode();
-            NodeRef functionRef = (NodeRef) document.getProperties().get(FUNCTION);
+            NodeRef functionRef = (NodeRef) document.getProperties().get(functionProp);
             NodeRef seriesRef = (NodeRef) event.getNewValue();
             updateFnSerVol(functionRef, seriesRef, null, null, false);
         }
 
         public void volumeValueChanged(ValueChangeEvent event) {
             Node document = dialogDataProvider.getNode();
-            NodeRef functionRef = (NodeRef) document.getProperties().get(FUNCTION);
-            NodeRef seriesRef = (NodeRef) document.getProperties().get(SERIES);
+            NodeRef functionRef = (NodeRef) document.getProperties().get(functionProp);
+            NodeRef seriesRef = (NodeRef) document.getProperties().get(seriesProp);
             NodeRef volumeRef = (NodeRef) event.getNewValue();
             updateFnSerVol(functionRef, seriesRef, volumeRef, null, false);
         }
@@ -260,24 +299,24 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
 
             String documentTypeId = (String) document.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID);
             { // Function
-                List<Function> allFunctions = BeanHelper.getFunctionsService().getAllFunctions(DocListUnitStatus.OPEN);
+                List<Function> allFunctions = getFunctionsService().getAllFunctions(DocListUnitStatus.OPEN);
                 functions = new ArrayList<SelectItem>(allFunctions.size());
                 functions.add(new SelectItem("", ""));
                 boolean functionFound = false;
                 for (Function function : allFunctions) {
-                    List<Series> openSeries = BeanHelper.getSeriesService().getAllSeriesByFunction(function.getNodeRef(), DocListUnitStatus.OPEN, documentTypeId);
+                    List<Series> openSeries = getSeriesService().getAllSeriesByFunction(function.getNodeRef(), DocListUnitStatus.OPEN, documentTypeId);
                     if (openSeries.size() == 0) {
                         continue;
                     }
-                    functions.add(new SelectItem(function.getNode().getNodeRef(), function.getMark() + " " + function.getTitle()));
+                    functions.add(new SelectItem(function.getNode().getNodeRef(), getFunctionLabel(function)));
                     if (functionRef != null && functionRef.equals(function.getNode().getNodeRef())) {
                         functionFound = true;
                     }
                 }
                 if (!functionFound) {
-                    if (addIfMissing && functionRef != null && BeanHelper.getNodeService().exists(functionRef)) {
-                        Function function = BeanHelper.getFunctionsService().getFunctionByNodeRef(functionRef);
-                        functions.add(1, new SelectItem(function.getNode().getNodeRef(), function.getMark() + " " + function.getTitle()));
+                    if (addIfMissing && functionRef != null && getNodeService().exists(functionRef)) {
+                        Function function = getFunctionsService().getFunctionByNodeRef(functionRef);
+                        functions.add(1, new SelectItem(function.getNode().getNodeRef(), getFunctionLabel(function)));
                     } else {
                         functionRef = null;
                     }
@@ -295,20 +334,20 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
                 series = null;
                 seriesRef = null;
             } else {
-                List<Series> allSeries = BeanHelper.getSeriesService().getAllSeriesByFunction(functionRef, DocListUnitStatus.OPEN, documentTypeId);
+                List<Series> allSeries = getSeriesService().getAllSeriesByFunction(functionRef, DocListUnitStatus.OPEN, documentTypeId);
                 series = new ArrayList<SelectItem>(allSeries.size());
                 series.add(new SelectItem("", ""));
                 boolean serieFound = false;
                 for (Series serie : allSeries) {
-                    series.add(new SelectItem(serie.getNode().getNodeRef(), serie.getSeriesIdentifier() + " " + serie.getTitle()));
+                    series.add(new SelectItem(serie.getNode().getNodeRef(), getSeriesLabel(serie)));
                     if (seriesRef != null && seriesRef.equals(serie.getNode().getNodeRef())) {
                         serieFound = true;
                     }
                 }
                 if (!serieFound) {
-                    if (addIfMissing && seriesRef != null && BeanHelper.getNodeService().exists(seriesRef)) {
-                        Series serie = BeanHelper.getSeriesService().getSeriesByNodeRef(seriesRef);
-                        series.add(1, new SelectItem(serie.getNode().getNodeRef(), serie.getSeriesIdentifier() + " " + serie.getTitle()));
+                    if (addIfMissing && seriesRef != null && getNodeService().exists(seriesRef)) {
+                        Series serie = getSeriesService().getSeriesByNodeRef(seriesRef);
+                        series.add(1, new SelectItem(serie.getNode().getNodeRef(), getSeriesLabel(serie)));
                     } else {
                         seriesRef = null;
                     }
@@ -350,20 +389,20 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
                     ps.queueEvent(event);
                 }
 
-                List<Volume> allVolumes = BeanHelper.getVolumeService().getAllValidVolumesBySeries(seriesRef, DocListUnitStatus.OPEN);
+                List<Volume> allVolumes = getVolumeService().getAllValidVolumesBySeries(seriesRef, DocListUnitStatus.OPEN);
                 volumes = new ArrayList<SelectItem>(allVolumes.size());
                 volumes.add(new SelectItem("", ""));
                 boolean volumeFound = false;
                 for (Volume volume : allVolumes) {
-                    volumes.add(new SelectItem(volume.getNode().getNodeRef(), volume.getVolumeMark() + " " + volume.getTitle()));
+                    volumes.add(new SelectItem(volume.getNode().getNodeRef(), getVolumeLabel(volume)));
                     if (volumeRef != null && volumeRef.equals(volume.getNode().getNodeRef())) {
                         volumeFound = true;
                     }
                 }
                 if (!volumeFound) {
-                    if (addIfMissing && volumeRef != null && BeanHelper.getNodeService().exists(volumeRef)) {
-                        Volume volume = BeanHelper.getVolumeService().getVolumeByNodeRef(volumeRef);
-                        volumes.add(1, new SelectItem(volume.getNode().getNodeRef(), volume.getVolumeMark() + " " + volume.getTitle()));
+                    if (addIfMissing && volumeRef != null && getNodeService().exists(volumeRef)) {
+                        Volume volume = getVolumeService().getVolumeByNodeRef(volumeRef);
+                        volumes.add(1, new SelectItem(volume.getNode().getNodeRef(), getVolumeLabel(volume)));
                     } else {
                         volumeRef = null;
                     }
@@ -381,11 +420,11 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
                 cases = null;
                 caseLabel = null;
             } else {
-                if (BeanHelper.getVolumeService().getVolumeByNodeRef(volumeRef).isContainsCases()) {
-                    List<Case> allCases = BeanHelper.getCaseService().getAllCasesByVolume(volumeRef, DocListUnitStatus.OPEN);
+                if (getVolumeService().getVolumeByNodeRef(volumeRef).isContainsCases()) {
+                    List<Case> allCases = getCaseService().getAllCasesByVolume(volumeRef, DocListUnitStatus.OPEN);
                     cases = new ArrayList<String>(allCases.size());
                     for (Case tmpCase : allCases) {
-                        cases.add(StringUtils.trim(tmpCase.getTitle()));
+                        cases.add(getCaseLabel(tmpCase));
                     }
                     if (StringUtils.isBlank(caseLabel) && cases.size() == 1) {
                         caseLabel = StringUtils.trim(cases.get(0));
@@ -400,19 +439,19 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
                 @SuppressWarnings("unchecked")
                 List<UIComponent> children = ps.getChildren();
                 for (UIComponent component : children) {
-                    if (component.getId().endsWith("_function")) {
+                    if (component.getId().endsWith("_" + functionProp.getLocalName())) {
                         HtmlSelectOneMenu functionList = (HtmlSelectOneMenu) component.getChildren().get(1);
                         ComponentUtil.setSelectItems(FacesContext.getCurrentInstance(), functionList, functions);
                         functionList.setValue(functionRef);
-                    } else if (component.getId().endsWith("_series")) {
+                    } else if (component.getId().endsWith("_" + seriesProp.getLocalName())) {
                         HtmlSelectOneMenu seriesList = (HtmlSelectOneMenu) component.getChildren().get(1);
                         ComponentUtil.setSelectItems(FacesContext.getCurrentInstance(), seriesList, series);
                         seriesList.setValue(seriesRef);
-                    } else if (component.getId().endsWith("_volume")) {
+                    } else if (component.getId().endsWith("_" + volumeProp.getLocalName())) {
                         HtmlSelectOneMenu volumeList = (HtmlSelectOneMenu) component.getChildren().get(1);
                         ComponentUtil.setSelectItems(FacesContext.getCurrentInstance(), volumeList, volumes);
                         volumeList.setValue(volumeRef);
-                    } else if (component.getId().endsWith("_caseLabelEditable")) {
+                    } else if (component.getId().endsWith("_" + caseLabelEditableProp.getLocalName())) {
                         UIInput caseList = (UIInput) component.getChildren().get(1);
                         SuggesterGenerator.setValue(caseList, cases);
                         caseList.setValue(caseLabel);
@@ -423,19 +462,36 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
 
             // These only apply when called initially during creation of a new document
             // If called from eventlistener, then model values are updated after and thus overwritten
-            document.getProperties().put(FUNCTION.toString(), functionRef);
-            document.getProperties().put(SERIES.toString(), seriesRef);
-            document.getProperties().put(VOLUME.toString(), volumeRef);
-            document.getProperties().put(CASE_LABEL_EDITABLE.toString(), caseLabel);
+            document.getProperties().put(functionProp.toString(), functionRef);
+            document.getProperties().put(seriesProp.toString(), seriesRef);
+            document.getProperties().put(volumeProp.toString(), volumeRef);
+            document.getProperties().put(caseLabelEditableProp.toString(), caseLabel);
         }
 
         private void updateAccessRestrictionProperties(NodeRef seriesRef) {
-            AccessRestrictionState accessRestrictionState = dialogDataProvider.getStateHolder(AccessRestrictionGenerator.class.getName(), AccessRestrictionState.class);
+            String stateHolderKey = DocumentCommonModel.Props.ACCESS_RESTRICTION.getLocalName();
+            AccessRestrictionState accessRestrictionState = dialogDataProvider.getStateHolder(stateHolderKey, AccessRestrictionState.class);
             if (accessRestrictionState != null) {
                 accessRestrictionState.updateAccessRestrictionProperties(seriesRef);
             }
         }
 
+    }
+
+    private static String getFunctionLabel(Function function) {
+        return function.getMark() + " " + function.getTitle();
+    }
+
+    private static String getSeriesLabel(Series serie) {
+        return serie.getSeriesIdentifier() + " " + serie.getTitle();
+    }
+
+    private static String getVolumeLabel(Volume volume) {
+        return volume.getVolumeMark() + " " + volume.getTitle();
+    }
+
+    private static String getCaseLabel(Case tmpCase) {
+        return StringUtils.trim(tmpCase.getTitle());
     }
 
     // ===============================================================================================================================
@@ -480,7 +536,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
             List<Case> allCases = caseService.getAllCasesByVolume(volumeRef);
             NodeRef caseRef = null;
             for (Case tmpCase : allCases) {
-                if (StringUtils.equalsIgnoreCase(caseLabel, tmpCase.getTitle())) {
+                if (StringUtils.equalsIgnoreCase(caseLabel, getCaseLabel(tmpCase))) {
                     caseRef = tmpCase.getNode().getNodeRef();
                     docCase = tmpCase;
                     break;
@@ -639,7 +695,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
 
     private NodeRef getCaseNodeRef(final DocumentDynamic document, final NodeRef volumeNodeRef) {
         NodeRef caseNodeRef = document.getCase();
-        String caseLabel = document.getCaseLabelEditable();
+        String caseLabel = document.getProp(CASE_LABEL_EDITABLE);
         if (StringUtils.isBlank(caseLabel)) {
             caseNodeRef = null;
         }
@@ -650,7 +706,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
             // find case by casLabel
             List<Case> allCases = caseService.getAllCasesByVolume(volumeNodeRef);
             for (Case tmpCase : allCases) {
-                if (caseLabel.equalsIgnoreCase(tmpCase.getTitle())) {
+                if (caseLabel.equalsIgnoreCase(getCaseLabel(tmpCase))) {
                     caseNodeRef = tmpCase.getNode().getNodeRef();
                     break;
                 }

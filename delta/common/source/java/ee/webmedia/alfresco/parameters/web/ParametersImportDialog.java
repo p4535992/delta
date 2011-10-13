@@ -38,7 +38,7 @@ public class ParametersImportDialog extends AbstractImportDialog {
 
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ParametersImportDialog.class);
     private static final long serialVersionUID = 1L;
-    public String BEAN_NAME = "ParametersImportDialog";
+    public static final String BEAN_NAME = "ParametersImportDialog";
 
     private transient ParametersService parametersService;
     private Collection<Parameter<? extends Serializable>> changedParams;
@@ -47,7 +47,7 @@ public class ParametersImportDialog extends AbstractImportDialog {
     private boolean containsUnknownParameters;
 
     protected ParametersImportDialog() {
-        super(".csv", "parameter_import_csv_error_wrongExtension");
+        super("csv", "parameter_import_csv_error_wrongExtension");
     }
 
     /**
@@ -201,7 +201,7 @@ public class ParametersImportDialog extends AbstractImportDialog {
         paramsToImport = null;
         paramsOverview = null;
         containsUnknownParameters = false;
-        return "dialog:close";
+        return getDefaultFinishOutcome();
     }
 
     @Override

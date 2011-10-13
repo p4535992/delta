@@ -78,6 +78,26 @@
       </property>
    </bean>
 
+   <bean id="systematicFieldDefinitionsBootstrap2" class="ee.webmedia.alfresco.common.bootstrap.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="systematicFieldDefinitionsBootstrap1" />
+         </list>
+      </property>
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/docadmin:fieldDefinitions</prop>
+               <prop key="location">ee/webmedia/alfresco/docconfig/bootstrap/systematicFieldDefinitions2.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
    <bean id="systematicFieldGroupDefinitionsBootstrap1" class="ee.webmedia.alfresco.common.bootstrap.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
@@ -106,6 +126,7 @@
          <list>
             <ref bean="systematicClearBootstrap" />
             <ref bean="systematicFieldDefinitionsBootstrap1" />
+            <ref bean="systematicFieldDefinitionsBootstrap2" />
             <ref bean="systematicFieldGroupDefinitionsBootstrap1" />
          </list>
       </property>

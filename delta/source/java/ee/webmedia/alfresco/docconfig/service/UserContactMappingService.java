@@ -14,6 +14,8 @@ public interface UserContactMappingService {
 
     void registerOriginalFieldIdsMapping(Map<String, UserContactMappingCode> mapping);
 
+    void registerMappingDependency(String fieldIdAndOriginalFieldId, String hiddenFieldId);
+
     /**
      * @param propName
      * @return mapping; if custom mapping not found for property, then return NAME mapping.

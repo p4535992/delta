@@ -24,6 +24,7 @@ import org.alfresco.service.namespace.QNamePattern;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.Predicate;
@@ -35,7 +36,7 @@ import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
  * @author Alar Kvell
  */
 public class BaseServiceImpl implements BaseService {
-    private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(BaseServiceImpl.class);
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(BaseServiceImpl.class);
 
     private DictionaryService dictionaryService;
     private NamespaceService namespaceService;
@@ -48,7 +49,10 @@ public class BaseServiceImpl implements BaseService {
     public void addTypeMapping(QName type, Class<? extends BaseObject> clazz) {
         Assert.notNull(type, "type");
         Assert.notNull(clazz, "class");
-        Assert.isTrue(!typeMappings.containsKey(type), "type is already mapped");
+        if (!BeanHelper.getApplicationService().isTest()) {
+            // this check is disabled in development to allow JRebel do it's magic when reloading spring context
+            Assert.isTrue(!typeMappings.containsKey(type), "type is already mapped");
+        }
         typeMappings.put(type, clazz);
     }
 
@@ -142,8 +146,8 @@ public class BaseServiceImpl implements BaseService {
 
             boolean wasSaved = object.isSaved();
             if (!wasSaved) {
-                if (log.isTraceEnabled()) {
-                    log.trace("Creating node (type '" + node.getType().toPrefixString(namespaceService) + "') with properties " + WmNode.toString(props, namespaceService));
+                if (LOG.isTraceEnabled()) {
+                    LOG.trace("Creating node (type '" + node.getType().toPrefixString(namespaceService) + "') with properties " + WmNode.toString(props, namespaceService));
                 }
                 if (!isDuplicateChildNamesAllowed(object, parent)) {
                     // make sure that when model forbids duplicates, then cm:name property is set that is used to check for duplicates
@@ -157,8 +161,8 @@ public class BaseServiceImpl implements BaseService {
                 // removing aspects is not implemented - not needed
             } else {
                 if (!props.isEmpty()) {
-                    if (log.isTraceEnabled()) {
-                        log.trace("Updating node (type '" + node.getType().toPrefixString(namespaceService) + "') with properties " + WmNode.toString(props, namespaceService));
+                    if (LOG.isTraceEnabled()) {
+                        LOG.trace("Updating node (type '" + node.getType().toPrefixString(namespaceService) + "') with properties " + WmNode.toString(props, namespaceService));
                     }
 
                     nodeService.addProperties(node.getNodeRef(), props); // do not replace non-changed properties
@@ -177,8 +181,13 @@ public class BaseServiceImpl implements BaseService {
                 for (BaseObject removedChild : (List<? extends BaseObject>) removedChildListEntry.getValue()) {
                     WmNode removedNode = removedChild.getNode();
                     if (removedNode.isSaved()) {
-                        Assert.isTrue(wasSaved, "Node that was just created cannot contain removed child that was previously saved");
-                        nodeService.deleteNode(removedNode.getNodeRef());
+                        if (wasSaved) {
+                            nodeService.deleteNode(removedNode.getNodeRef());
+                        } else {
+                            if (LOG.isTraceEnabled()) {
+                                LOG.debug("not deleting node, that was previously saved under some other parent node: " + removedNode.getNodeRef());
+                            }
+                        }
                         changed = true;
                     }
                 }
@@ -207,7 +216,7 @@ public class BaseServiceImpl implements BaseService {
                 Integer assocIndex = entry.getKey();
                 for (BaseObject child : entry.getValue()) {
                     if (!wasSaved) {
-                        Assert.isTrue(!child.isSaved(), "Node that was just created cannot contain child that was previously saved");
+                        Assert.isTrue(child.isUnsaved(), "Node that was just created cannot contain child that was previously saved");
                         child.updateParentNodeRef();
                     }
                     boolean childChanged = saveObject(child);

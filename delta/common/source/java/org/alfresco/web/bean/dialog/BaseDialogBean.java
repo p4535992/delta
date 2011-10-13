@@ -168,10 +168,8 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
                 isFinished = false;
             }
          } catch (UnableToPerformException e) {
-             MessageUtil.addStatusMessage(e);
              outcome = handleException(e);
          } catch (UnableToPerformMultiReasonException e) {
-             MessageUtil.addStatusMessages(context, e.getMessageDataWrapper());
              outcome = handleException(e);
          }
          catch (Throwable e)
@@ -192,7 +190,12 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
         // reset the flag so we can re-attempt the operation
         isFinished = false;
         outcome = getErrorOutcome(e);
-        if (outcome == null && e instanceof ReportedException == false && !(e instanceof UnableToPerformException) && !(e instanceof UnableToPerformMultiReasonException))
+        if (e instanceof UnableToPerformException) {
+            MessageUtil.addStatusMessage((MessageData) e);
+        } else if (e instanceof UnableToPerformMultiReasonException) {
+            MessageUtil.addStatusMessages(FacesContext.getCurrentInstance(), ((UnableToPerformMultiReasonException) e).getMessageDataWrapper());
+        } else 
+        if (outcome == null && e instanceof ReportedException == false)
         {
             Utils.addErrorMessage(formatErrorMessage(e), e);
         }

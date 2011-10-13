@@ -55,18 +55,16 @@ import org.alfresco.service.cmr.model.FileNotFoundException;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 
 import ee.webmedia.alfresco.classificator.constant.FieldChangeableIf;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.docconfig.service.DocumentConfigServiceImpl.PropertyDefinitionImpl;
-import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
+import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.mso.ws.Formula;
 import ee.webmedia.alfresco.mso.ws.ModifiedFormulasOutput;
 
@@ -219,33 +217,27 @@ public class PutMethod extends WebDAVMethod {
             Collection<Formula> formulas = modifiedFormulas.getModifiedFormulas(); // Set is returned
             DocumentDynamicService documentDynamicService = BeanHelper.getDocumentDynamicService();
             DocumentDynamic doc = documentDynamicService.getDocument(document);
-            Map<QName, PropertyDefinition> propertyDefinitions = BeanHelper.getDocumentConfigService().getPropertyDefinitions(doc.getNode());
+            Map<String, Pair<PropertyDefinition, Field>> propertyDefinitions = BeanHelper.getDocumentConfigService().getPropertyDefinitions(doc.getNode());
 
             for (Formula formula : formulas) {
-                QName propQName = QName.createQName(DocumentDynamicModel.URI, formula.getKey());
-                PropertyDefinitionImpl propDef = (PropertyDefinitionImpl) propertyDefinitions.get(propQName);
-                if (propDef == null) {
-                    // continue; // FIXME - remove two assignment rounds below when all properties are with correct namespace
-                    propQName = QName.createQName(DocumentSpecificModel.URI, formula.getKey());
-                    propDef = (PropertyDefinitionImpl) propertyDefinitions.get(propQName);
-                    if (propDef == null) {
-                        propQName = QName.createQName(DocumentCommonModel.URI, formula.getKey());
-                        propDef = (PropertyDefinitionImpl) propertyDefinitions.get(propQName);
-                        if (propDef == null) {
-                            continue;
-                        }
-                    }
+                Pair<PropertyDefinition, Field> propDefAndField = propertyDefinitions.get(formula.getKey());
+                if (propDefAndField == null || propDefAndField.getSecond() == null) {
+                    continue;
                 }
 
+                PropertyDefinition propDef = propDefAndField.getFirst();
+                Field field = propDefAndField.getSecond();
+
                 // If field is not changeable, then don't allow it.
-                if (FieldChangeableIf.ALWAYS_NOT_CHANGEABLE == propDef.getChangeableIf()
-                        || FieldChangeableIf.CHANGEABLE_IF_WORKING_DOC == propDef.getChangeableIf()
+                if (FieldChangeableIf.ALWAYS_NOT_CHANGEABLE == field.getChangeableIfEnum()
+                        || FieldChangeableIf.CHANGEABLE_IF_WORKING_DOC == field.getChangeableIfEnum()
                         && !DocumentStatus.WORKING.getValueName().equals(doc.getProp(DocumentCommonModel.Props.DOC_STATUS))) {
                     continue;
                 }
 
+                // TODO to Kaarel: check propDef.getDataType() and propDef.isMultiValued() instead!
                 Serializable value;
-                FieldType fieldType = propDef.getFieldType();
+                FieldType fieldType = field.getFieldTypeEnum();
                 if (TEXT_FIELD == fieldType) {
                     value = formula.getValue();
                 } else if (DATE == fieldType) {
@@ -258,7 +250,7 @@ public class PutMethod extends WebDAVMethod {
                     continue;
                 }
 
-                doc.setProp(propQName, value);
+                doc.setProp(field.getQName(), value);
             }
 
             documentDynamicService.updateDocument(doc, Collections.<String> emptyList());

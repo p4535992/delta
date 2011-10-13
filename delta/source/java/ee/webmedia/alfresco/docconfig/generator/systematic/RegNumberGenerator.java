@@ -15,6 +15,13 @@ public class RegNumberGenerator extends BaseSystematicFieldGenerator {
     private VolumeService volumeService;
 
     @Override
+    public void afterPropertiesSet() {
+        documentConfigService.registerHiddenFieldDependency(DocumentCommonModel.Props.SHORT_REG_NUMBER.getLocalName(), DocumentCommonModel.Props.REG_NUMBER.getLocalName());
+
+        super.afterPropertiesSet();
+    }
+
+    @Override
     protected String[] getOriginalFieldIds() {
         return new String[] { DocumentCommonModel.Props.REG_NUMBER.getLocalName() };
     }

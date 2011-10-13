@@ -1,11 +1,15 @@
 package ee.webmedia.alfresco.docadmin.service;
 
-import static ee.webmedia.alfresco.utils.RepoUtil.copyProps;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateAspectQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyExactQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -18,41 +22,59 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.alfresco.model.ContentModel;
+import org.alfresco.repo.importer.ImportTimerProgress;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.dictionary.TypeDefinition;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.view.ImporterService;
+import org.alfresco.service.cmr.view.Location;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.QNamePattern;
 import org.alfresco.util.Pair;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 
+import de.schlichtherle.io.FileInputStream;
 import ee.webmedia.alfresco.adr.service.AdrService;
+import ee.webmedia.alfresco.app.AppConstants;
+import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.base.BaseObject.ChildrenList;
 import ee.webmedia.alfresco.base.BaseService;
+import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
-import ee.webmedia.alfresco.docadmin.web.MetadataItemCompareUtil;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.MessageData;
+import ee.webmedia.alfresco.utils.MessageDataImpl;
+import ee.webmedia.alfresco.utils.MessageDataWrapper;
+import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.Predicate;
+import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
+import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
+import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 
 /**
  * @author Ats Uiboupin
  */
 public class DocumentAdminServiceImpl implements DocumentAdminService, InitializingBean {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentAdminServiceImpl.class);
+
+    public static final QName PROP_DONT_SAVED_DOC_TYPE_VER = RepoUtil.createTransientProp("dontSaveDocTypeVer");
 
     private DictionaryService dictionaryService;
     private NamespaceService namespaceService;
@@ -62,11 +84,13 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     private MenuService menuService;
     private UserService userService;
     private DocumentSearchService documentSearchService;
+    private ImporterService importerService;
 
     private NodeRef documentTypesRoot;
     private NodeRef fieldDefinitionsRoot;
     private NodeRef fieldGroupDefinitionsRoot;
     private Set<String> fieldPropNames;
+    private final Set<String> forbiddenFieldIds = new HashSet<String>();
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -79,6 +103,18 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         baseService.addTypeMapping(DocumentAdminModel.Types.FOLLOWUP_ASSOCIATION, FollowupAssociation.class);
         baseService.addTypeMapping(DocumentAdminModel.Types.REPLY_ASSOCIATION, ReplyAssociation.class);
         baseService.addTypeMapping(DocumentAdminModel.Types.FIELD_MAPPING, FieldMapping.class);
+    }
+
+    @Override
+    public void registerForbiddenFieldId(String forbiddenFieldId) {
+        Assert.notNull(forbiddenFieldId);
+        Assert.isTrue(!forbiddenFieldIds.contains(forbiddenFieldId));
+        forbiddenFieldIds.add(forbiddenFieldId);
+    }
+
+    @Override
+    public Set<String> getForbiddenFieldIds() {
+        return Collections.unmodifiableSet(forbiddenFieldIds);
     }
 
     @Override
@@ -174,7 +210,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
     private void addSystematicFields(FieldGroup fieldGroupDefinition, FieldGroup fieldGroup, List<FieldDefinition> fieldDefinitions) {
         Map<String, Object> targetGroupProps = fieldGroup.getNode().getProperties();
-        copyProps(fieldGroupDefinition.getNode().getProperties(), targetGroupProps);
+        RepoUtil.copyProperties(fieldGroupDefinition.getNode().getProperties(), targetGroupProps);
         @SuppressWarnings("unchecked")
         List<String> fieldDefinitionIds = (List<String>) targetGroupProps.remove(DocumentAdminModel.Props.FIELD_DEFINITIONS_IDS);
         int groupOrder = 1;
@@ -213,7 +249,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     @Override
     public void copyFieldProps(FieldDefinition fieldDefinition, Field field) {
         Map<String, Object> targetFieldProps = field.getNode().getProperties();
-        copyProps(fieldDefinition.getNode().getProperties(), targetFieldProps);
+        RepoUtil.copyProperties(fieldDefinition.getNode().getProperties(), targetFieldProps);
         targetFieldProps.keySet().retainAll(getFieldPropNames()); // remove properties that only fieldDefinition should have
         field.setCopyOfFieldDefinition(fieldDefinition);
     }
@@ -221,13 +257,17 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     private FieldDefinition createFieldDefinition(Field field) {
         FieldDefinition fieldDef = createNewUnSavedFieldDefinition();
         Map<String, Object> targetFieldProps = fieldDef.getNode().getProperties();
-        copyProps(field.getNode().getProperties(), targetFieldProps);
+        RepoUtil.copyProperties(field.getNode().getProperties(), targetFieldProps);
         fieldDef.setOrder(null);
         return fieldDef;
     }
 
     private List<DocumentType> getAllDocumentTypes(final Boolean used) {
-        return baseService.getChildren(getDocumentTypesRoot(), DocumentType.class, new Predicate<DocumentType>() {
+        return getAllDocumentTypes(used, getDocumentTypesRoot());
+    }
+
+    private List<DocumentType> getAllDocumentTypes(final Boolean used, NodeRef docTypesRootRef) {
+        return baseService.getChildren(docTypesRootRef, DocumentType.class, new Predicate<DocumentType>() {
             @Override
             public boolean evaluate(DocumentType documentType) {
                 return used == null || documentType.isUsed() == used;
@@ -251,8 +291,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         if (documentType.isSystematic()) {
             throw new IllegalArgumentException("docType_list_action_delete_failed_systematic"); // shouldn't happen, because systematic can't be changed at runtime
         }
-        boolean docTypeInUse = false; // TODO DLSeadist: CLTASK 166371 determine if type is in use
-        if (docTypeInUse) {
+        if (isDocumentTypeUsed(documentType.getDocumentTypeId())) {
             throw new UnableToPerformException("docType_delete_failed_inUse");
         }
         nodeService.deleteNode(docTypeRef);
@@ -265,9 +304,11 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
         // validating duplicated documentTypeId is done in baseService
         updateChildren(docType);
+        checkFieldMappings(docType);
         baseService.saveObject(docType);
 
         updatePublicAdr(docType, wasUnsaved);
+        // TODO optimization: probably menu doesn't always need to be updated
         menuService.menuUpdated();
         return docType;
     }
@@ -312,7 +353,6 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
     @Override
     public List<FieldDefinition> getFieldDefinitions() {
-        // createFieldDefinitionsTestData(); // FIXME DLSeadist test data
         return baseService.getChildren(getFieldDefinitionsRoot(), FieldDefinition.class);
     }
 
@@ -328,7 +368,8 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         return fieldDefinitions;
     }
 
-    private Map<String, FieldDefinition> getFieldDefinitionsByFieldIds() {
+    @Override
+    public Map<String, FieldDefinition> getFieldDefinitionsByFieldIds() {
         List<FieldDefinition> fieldDefinitions = getFieldDefinitions();
         Map<String, FieldDefinition> fieldDefs = new HashMap<String, FieldDefinition>();
         for (FieldDefinition fieldDefinition : fieldDefinitions) {
@@ -426,7 +467,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                                 , generateAspectQuery(DocumentCommonModel.Aspects.SEARCHABLE)
                         )
                         , generatePropertyExactQuery(Props.OBJECT_TYPE_ID, documentTypeId, false))
-        );
+                );
     }
 
     @Override
@@ -440,13 +481,39 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         fieldGroupDefinitionsRoot = fieldGroupDefinitionsTmp;
         fieldDefinitionsRoot = fieldDefinitionsTmp;
 
+        List<DocumentType> createdDocumentTypes = new ArrayList<DocumentType>();
         for (Entry<String, Pair<String, Pair<Set<String>, Set<QName>>>> systematicDocumentType : systematicDocumentTypes.entrySet()) {
-            createSystematicDocumentType(systematicDocumentType.getKey(), systematicDocumentType.getValue().getFirst(), systematicDocumentType.getValue().getSecond().getFirst(),
+            DocumentType documentType = createSystematicDocumentType(systematicDocumentType.getKey(), systematicDocumentType.getValue().getFirst(), systematicDocumentType
+                    .getValue().getSecond().getFirst(),
                     Field.getLocalNames(systematicDocumentType.getValue().getSecond().getSecond()));
+            createdDocumentTypes.add(documentType);
         }
 
         fieldGroupDefinitionsRoot = null;
         fieldDefinitionsRoot = null;
+
+        // Update "docTypes" usage markings on real fieldDefinitions
+        // Code above did that on temporary fieldDefinitions, not on real fieldDefinitions
+
+        Map<String, FieldDefinition> fieldDefinitions = getFieldDefinitionsByFieldIds();
+        Map<String, FieldDefinition> fieldDefinitionsToUpdate = new HashMap<String, FieldDefinition>();
+        for (DocumentType docType : createdDocumentTypes) {
+            for (Field field : docType.getLatestDocumentTypeVersion().getFieldsDeeply()) {
+                FieldDefinition fieldDef = fieldDefinitions.get(field.getFieldId());
+                if (fieldDef != null) {
+                    Assert.isTrue(field.getFieldTypeEnum().equals(fieldDef.getFieldTypeEnum()));
+                    // field is added based on existing fieldDefinition
+                    List<String> docTypesOfFieldDef = fieldDef.getDocTypes();
+                    if (!docTypesOfFieldDef.contains(docType.getDocumentTypeId())) {
+                        docTypesOfFieldDef.add(docType.getDocumentTypeId());
+                        fieldDefinitionsToUpdate.put(fieldDef.getFieldId(), fieldDef);
+                    }
+                }
+            }
+        }
+        for (FieldDefinition fieldDef : fieldDefinitionsToUpdate.values()) {
+            saveOrUpdateField(fieldDef);
+        }
     }
 
     @Override
@@ -461,7 +528,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         return result;
     }
 
-    private void createSystematicDocumentType(String documentTypeId, String documentTypeName, final Set<String> fieldGroupNames, final Collection<String> fieldDefinitionIds) {
+    private DocumentType createSystematicDocumentType(String documentTypeId, String documentTypeName, final Set<String> fieldGroupNames, final Collection<String> fieldDefinitionIds) {
         LOG.info("Creating systematic document type: " + documentTypeId);
         DocumentType docType = createNewUnSaved();
         docType.setDocumentTypeId(documentTypeId);
@@ -492,7 +559,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
             }
         }
 
-        saveOrUpdateDocumentType(docType);
+        return saveOrUpdateDocumentType(docType);
     }
 
     private boolean isDocumentTypeExisting(String documentTypeId) {
@@ -524,62 +591,143 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         int versionNr = 1;
         boolean saved = docType.isSaved();
         if (saved) {
-            Integer latestVersion = docType.getLatestVersion();
-            ChildrenList<DocumentTypeVersion> documentTypeVersions = docType.getDocumentTypeVersions();
-            ChildrenList<MetadataItem> savedMetadata = documentTypeVersions.get(latestVersion - 2).getMetadata();
             DocumentTypeVersion latestDocumentTypeVersion = docType.getLatestDocumentTypeVersion();
             ChildrenList<MetadataItem> unSavedMetadata = latestDocumentTypeVersion.getMetadata();
-            if (!MetadataItemCompareUtil.isClidrenListChanged(savedMetadata, unSavedMetadata)) {
-                // metaData list is not changed, don't save new DocumentTypeVersion (currently as new latestDocumentTypeVersion)
-                documentTypeVersions.remove(latestDocumentTypeVersion);
-                docType.restoreProp(DocumentAdminModel.Props.LATEST_VERSION); // don't overwrite latest version number
-                return;
-            }
-            // someone might have saved meanwhile new version of the same docType
             DocumentType latestDocTypeInRepo = getDocumentType(docType.getNodeRef());
-            versionNr = latestDocTypeInRepo.getLatestVersion() + 1;
+            int docTypeVersions = latestDocTypeInRepo.getDocumentTypeVersions().size();
+            Boolean dontSaveDocTypeVer = docType.getProp(PROP_DONT_SAVED_DOC_TYPE_VER);
+            if (dontSaveDocTypeVer == null) {
+                versionNr = latestDocTypeInRepo.getLatestVersion(); // someone might have saved meanwhile new version of the same docType
+                Assert.isTrue(versionNr == docTypeVersions, "in repository DocumentType.latestVersion=" + versionNr + ", but actually it contains " + docTypeVersions + " versions");
+            } else {
+                Assert.isTrue(dontSaveDocTypeVer);
+                versionNr = docTypeVersions;
+            }
+            boolean latestDocTypeVerSaved = latestDocumentTypeVersion.isSaved();
+            if (!latestDocTypeVerSaved) {
+                Assert.isTrue(dontSaveDocTypeVer == null);
+                ChildrenList<DocumentTypeVersion> documentTypeVersions = docType.getDocumentTypeVersions();
+                ChildrenList<MetadataItem> savedMetadata = documentTypeVersions.get(documentTypeVersions.size() - 2).getMetadata();
+                if (!MetadataItemCompareUtil.isClidrenListChanged(savedMetadata, unSavedMetadata)) {
+                    // metaData list is not changed, don't save new DocumentTypeVersion (currently as new latestDocumentTypeVersion)
+                    documentTypeVersions.remove(latestDocumentTypeVersion);
+                    docType.setLatestVersion(versionNr); // don't overwrite latest version number
+                    return;
+                }
+                versionNr++;
+            } else {
+                Assert.isTrue(dontSaveDocTypeVer);
+            }
         }
         String userId = AuthenticationUtil.getFullyAuthenticatedUser();
         DocumentTypeVersion docVer = docType.getLatestDocumentTypeVersion();
         docVer.setCreatorId(userId);
         docVer.setCreatorName(userService.getUserFullName(userId));
         docVer.setVersionNr(versionNr);
+        docType.setLatestVersion(versionNr);
         docVer.setCreatedDateTime(new Date(AlfrescoTransactionSupport.getTransactionStartTime()));
         Map<String, FieldDefinition> fieldDefinitions = getFieldDefinitionsByFieldIds();
         // save new fields to fieldDefinitions
+        String documentTypeId = docType.getDocumentTypeId();
+        MessageData fieldsAddedRemovedWarning = null;
         for (Field field : docVer.getFieldsDeeply()) {
             if (!field.isCopyFromPreviousDocTypeVersion()) {
+                if (fieldsAddedRemovedWarning == null) {
+                    fieldsAddedRemovedWarning = getFieldsChangedMD();
+                }
                 // field is not newer version of the same field under previous version of DocumentTypeVersion
                 FieldDefinition fieldDef = fieldDefinitions.get(field.getFieldId());
                 if (fieldDef != null) {
                     if (!field.getFieldTypeEnum().equals(fieldDef.getFieldTypeEnum())) {
-                        throw new UnableToPerformException("field_details_error_docField_sameIdFieldDef_differentType", field.getFieldNameWithIdAndType(),
-                                fieldDef.getFieldNameWithIdAndType());
+                        throw new UnableToPerformException("field_details_error_docField_sameIdFieldDef_differentType"
+                                , fieldDef.getFieldNameWithIdAndType(), field.getFieldNameWithIdAndType());
                     }
                     // field is added based on existing fieldDefinition
                     List<String> docTypesOfFieldDef = fieldDef.getDocTypes();
-                    if (!docTypesOfFieldDef.contains(docType.getDocumentTypeId())) {
-                        docTypesOfFieldDef.add(docType.getDocumentTypeId());
+                    if (!docTypesOfFieldDef.contains(documentTypeId)) {
+                        docTypesOfFieldDef.add(documentTypeId);
                         fieldDef = saveOrUpdateField(fieldDef);
                     }
                 } else {
                     if (field.isCopyOfFieldDefinition()) {
                         field.setSystematic(false); // field is created based on fieldDefinition, but id is changed
+                        field.setMandatoryForDoc(false);
+                        field.setMandatoryForVol(false);
                     }
                     // added new field (not based on fieldDefinition)
                     fieldDef = createFieldDefinition(field);
-                    fieldDef.getDocTypes().add(docType.getDocumentTypeId());
+                    fieldDef.getDocTypes().add(documentTypeId);
                     fieldDef = saveOrUpdateField(fieldDef);
                 }
             }
         }
-        deleteFieldMappings(docType, docVer);
+
+        List<String> removedFieldIds = deleteFieldMappings(docType, docVer);
+        if (!removedFieldIds.isEmpty()) {
+            fieldsAddedRemovedWarning = getFieldsChangedMD();
+            for (String removedFieldId : removedFieldIds) {
+                FieldDefinition removedFieldFD = getFieldDefinition(removedFieldId);
+                removedFieldFD.getDocTypes().remove(documentTypeId);
+                saveOrUpdateField(removedFieldFD);
+            }
+        }
+        if (fieldsAddedRemovedWarning != null) {
+            MessageUtil.addStatusMessage(fieldsAddedRemovedWarning);
+        }
     }
 
-    private void deleteFieldMappings(DocumentType docType, DocumentTypeVersion docVer) {
+    private MessageData getFieldsChangedMD() {
+        return new MessageDataImpl(MessageSeverity.INFO, "docType_metadataList_changedWarning");
+    }
+
+    private void checkFieldMappings(DocumentType docType) {
+        MessageDataWrapper feedback = new MessageDataWrapper();
+        for (AssociationModel associationModel : docType.getAssociationModels(null)) {
+            Map<String, List<String>> usedFromFields = new HashMap<String, List<String>>();
+            Map<String, List<String>> usedToFields = new HashMap<String, List<String>>();
+            for (FieldMapping fieldMapping : associationModel.getFieldMappings()) {
+                addUsedField(fieldMapping.getFromField(), fieldMapping.getToField(), usedFromFields);
+                addUsedField(fieldMapping.getToField(), fieldMapping.getFromField(), usedToFields);
+            }
+            addErrorsIfNeeded(docType, associationModel, true, usedFromFields, feedback);
+            addErrorsIfNeeded(docType, associationModel, false, usedToFields, feedback);
+        }
+
+        if (feedback.hasErrors()) {
+            throw new UnableToPerformMultiReasonException(feedback);
+        }
+    }
+
+    private void addErrorsIfNeeded(DocumentType docType, AssociationModel associationModel, boolean isFromSide, Map<String, List<String>> usedFields, MessageDataWrapper feedback) {
+        for (Entry<String, List<String>> entry : usedFields.entrySet()) {
+            List<String> fieldsList = entry.getValue();
+            if (fieldsList.size() > 1) {
+                String fieldId = entry.getKey();
+                String assocType = StringUtils.uncapitalize(MessageUtil.getTypeName(associationModel.getNode().getType()));
+                if (!isFromSide) {
+                    feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, "docType_save_error_multipleMappingsSameToField"
+                            , docType.getDocumentTypeId(), assocType, associationModel.getDocType(), TextUtil.collectionToString(fieldsList), fieldId));
+                } else {
+                    feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, "docType_save_error_multipleMappingsSameFromField"
+                            , docType.getDocumentTypeId(), assocType, associationModel.getDocType(), fieldId, TextUtil.collectionToString(fieldsList)));
+                }
+            }
+        }
+    }
+
+    private void addUsedField(String field, String otherField, Map<String, List<String>> usedFields) {
+        List<String> fieldsList = usedFields.get(field);
+        if (fieldsList == null) {
+            fieldsList = new ArrayList<String>();
+            usedFields.put(field, fieldsList);
+        }
+        fieldsList.add(otherField);
+    }
+
+    private List<String> deleteFieldMappings(DocumentType docType, DocumentTypeVersion docVer) {
         List<String> removedFieldIds = docVer.getRemovedFieldIdsDeeply();
         if (removedFieldIds.isEmpty()) {
-            return; // don't need to delete any field mappings
+            return removedFieldIds; // don't need to delete any field mappings
         }
         String docTypeId = docType.getDocumentTypeId();
         for (AssociationModel associationModel : docType.getAssociationModels(null)) { // for each removed field remove field mapping held in memory
@@ -620,9 +768,11 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                 saveOrUpdateAssocToDocType(reverseAssocsToDocType);
             }
         }
+        return removedFieldIds;
     }
 
-    private NodeRef getDocumentTypesRoot() {
+    @Override
+    public NodeRef getDocumentTypesRoot() {
         if (documentTypesRoot == null) {
             String xPath = DocumentAdminModel.Repo.DOCUMENT_TYPES_SPACE;
             documentTypesRoot = generalService.getNodeRef(xPath);
@@ -678,9 +828,335 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         this.documentSearchService = documentSearchService;
     }
 
+    public void setImporterService(ImporterService importerService) {
+        this.importerService = importerService;
+    }
+
     /** To break Circular dependency */
     private AdrService getAdrService() {
         return BeanHelper.getAdrService();
     }
 
+    @Override
+    public void importDocumentTypes(File xmlFile) {
+        new ImportHelper().importDocumentTypes(xmlFile);
+    }
+
+    /**
+     * Importing {@link DocumentType}s: <br>
+     * 1) based on xmlFile containing {@link DocumentType}s, create temp root node for them. <br>
+     * 2) read into memory all {@link DocumentType}s under temp node <br>
+     * 3) create each {@link DocumentType} (or merge with existing {@link DocumentType}) <br>
+     * <br>
+     * Main idea to import single documentTypeVersion: <br>
+     * 1) create new {@link DocumentTypeVersion} (newLatestDocTypeVer) just like when editing {@link DocumentType} <br>
+     * 2) add {@link Field}s and {@link FieldGroup}s to newLatestDocTypeVer (merge with existing field/fieldGroup if it exists) <br>
+     * 3) remove {@link Field}s and {@link FieldGroup}s that existed in lastDocTypeVer, but don't exist under {@link DocumentTypeVersion} being imported <br>
+     * 4) save newLatestDocTypeVer so that {@link FieldMapping}s under existing {@link AssociationModel}s get updated
+     * (to delete {@link FieldMapping}s of fields that don't exist under {@link DocumentTypeVersion} being imported) <br>
+     * <br>
+     * After all {@link MetadataItem}s have been saved for each {@link DocumentTypeVersion} and former {@link AssociationModel}s of existing {@link DocumentType}s are updated: <br>
+     * for each {@link DocumentTypeVersion}: <br>
+     * 1) Add {@link AssociationModel}s or merge {@link FieldMapping}s under existing {@link AssociationModel}s <br>
+     * 2) save {@link DocumentTypeVersion}: <br>
+     * 
+     * @author Ats Uiboupin
+     */
+    private class ImportHelper {
+
+        void importDocumentTypes(File xmlFile) {
+            LOG.info("Starting to import docTypes");
+            QName assocQName = RepoUtil.createTransientProp("tmp");
+            NodeRef tmpFolderRef = generalService.getNodeRef("/" + assocQName);
+            QName assocType = ContentModel.ASSOC_CHILDREN;
+            boolean tmpFolderExisted = tmpFolderRef != null;
+            if (!tmpFolderExisted) {
+                NodeRef rootRef = generalService.getNodeRef("/");
+                tmpFolderRef = nodeService.createNode(rootRef, assocType, assocQName, ContentModel.TYPE_CONTAINER).getChildRef();
+            }
+            Reader fileReader = null;
+            NodeRef importableDocTypesRootRef = null;
+            try {
+                Location location = new Location(tmpFolderRef);
+                location.setChildAssocType(assocType);
+                final NodeRef[] tmpDocumentTypesRef = new NodeRef[1];
+                fileReader = new InputStreamReader(new FileInputStream(xmlFile), AppConstants.CHARSET);
+                importerService.importView(fileReader, location, null, new ImportTimerProgress() {
+                    @Override
+                    public void nodeCreated(NodeRef nodeRef, NodeRef parentRef, QName assocName, QName childName) {
+                        super.nodeCreated(nodeRef, parentRef, assocName, childName);
+                        if (tmpDocumentTypesRef[0] == null) { // first node imported is the root of imported nodes
+                            tmpDocumentTypesRef[0] = nodeRef;
+                        }
+                    }
+                });
+                importableDocTypesRootRef = tmpDocumentTypesRef[0];
+                importDocumentTypes(importableDocTypesRootRef);
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException("Failed to read data for importing parameters from uploaded file: '" + xmlFile.getAbsolutePath() + "'", e);
+            } catch (UnsupportedEncodingException e) {
+                throw new RuntimeException("Unsupported encoding of uploaded file: '" + xmlFile.getAbsolutePath() + "'", e);
+            } finally {
+                IOUtils.closeQuietly(fileReader);
+                if (!tmpFolderExisted) {
+                    nodeService.deleteNode(tmpFolderRef);
+                }
+                if (importableDocTypesRootRef != null && nodeService.exists(importableDocTypesRootRef)) {
+                    nodeService.deleteNode(importableDocTypesRootRef);
+                }
+                LOG.info("Finished importing docTypes");
+            }
+        }
+
+        private void importDocumentTypes(NodeRef importableDocTypesRootRef) {
+            List<DocumentType> existingDocTypes = getAllDocumentTypes(null);
+            Map<String, DocumentType> existingDocTypesById = new HashMap<String, DocumentType>(existingDocTypes.size());
+            for (DocumentType docType : existingDocTypes) {
+                existingDocTypesById.put(docType.getDocumentTypeId(), docType);
+            }
+
+            Map<String, DocumentType> importedDocTypesById = new HashMap<String, DocumentType>();
+            Map<String, Pair<List<FollowupAssociation>, List<ReplyAssociation>>> imporableDocTypesById = new HashMap<String, Pair<List<FollowupAssociation>, List<ReplyAssociation>>>();
+            // first add/merge metadataItems
+            for (DocumentType importableDocType : getAllDocumentTypes(null, importableDocTypesRootRef)) {
+                String documentTypeId = importableDocType.getDocumentTypeId();
+                DocumentType existingDocType = existingDocTypesById.get(documentTypeId);
+                DocumentType importedDocType;
+                { // in first phase of import don't save add associations so that assocs wouldn't be lost because of fields that might not be present on docType not jet
+                    List<FollowupAssociation> followupAssocs = importableDocType.getFollowupAssociations();
+                    List<ReplyAssociation> replyAssocs = importableDocType.getReplyAssociations();
+                    List<FollowupAssociation> followUpsToImport = new ArrayList<FollowupAssociation>(followupAssocs);
+                    List<ReplyAssociation> repliesToImport = new ArrayList<ReplyAssociation>(replyAssocs);
+                    imporableDocTypesById.put(documentTypeId, new Pair<List<FollowupAssociation>, List<ReplyAssociation>>(followUpsToImport, repliesToImport));
+                    followupAssocs.clear();
+                    repliesToImport.clear();
+                }
+                if (existingDocType != null) {
+                    setProps(importableDocType, existingDocType);
+                    final DocumentTypeVersion lastDocTypeVer = existingDocType.getLatestDocumentTypeVersion();
+                    DocumentTypeVersion newLatestDocTypeVer = existingDocType.addNewLatestDocumentTypeVersion();
+                    DocumentTypeVersion importableDocTypeVer = importableDocType.getLatestDocumentTypeVersion();
+
+                    int sizeBefore = newLatestDocTypeVer.getMetadata().size();
+                    mergeMetadaItems(importableDocTypeVer, lastDocTypeVer, newLatestDocTypeVer);
+                    int sizeAfter = newLatestDocTypeVer.getMetadata().size();
+                    LOG.debug("Adding " + (sizeAfter - sizeBefore) + " MetadataItems to existingDocType " + existingDocType.getNodeRef());
+                    importedDocType = existingDocType;
+                } else {
+                    importableDocType.nextSaveToParent(getDocumentTypesRoot());
+                    importedDocType = importableDocType;
+                }
+                importedDocType = saveOrUpdateDocumentType(importedDocType);
+                importedDocTypesById.put(documentTypeId, importedDocType);
+            }
+
+            Map<String, DocumentType> docTypesCache = new HashMap<String, DocumentType>(importedDocTypesById);
+            Map<String /* docTypeId */, Set<String> /* docTypeFields */> docTypeFieldsCache = new HashMap<String, Set<String>>();
+
+            /** Add {@link AssociationModel}s or merge {@link FieldMapping}s under existing {@link AssociationModel}s <br> */
+            MessageDataWrapper errorsMessageDataWrapper = null;
+            for (Entry<String, Pair<List<FollowupAssociation>, List<ReplyAssociation>>> entry : imporableDocTypesById.entrySet()) {
+                try {
+                    String documentTypeId = entry.getKey();
+                    Pair<List<FollowupAssociation>, List<ReplyAssociation>> importableDocTypeAssocs = entry.getValue();
+                    DocumentType importedDocType = importedDocTypesById.get(documentTypeId);
+                    List<ReplyAssociation> replies = importableDocTypeAssocs.getSecond();
+                    mergeAssocModels(DocTypeAssocType.FOLLOWUP, importableDocTypeAssocs.getFirst(), importedDocType, docTypesCache, docTypeFieldsCache);
+                    mergeAssocModels(DocTypeAssocType.REPLY, replies, importedDocType, docTypesCache, docTypeFieldsCache);
+                    importedDocType.setProp(PROP_DONT_SAVED_DOC_TYPE_VER, true);
+                    saveOrUpdateDocumentType(importedDocType);
+                } catch (UnableToPerformMultiReasonException e) {
+                    MessageDataWrapper messageDataWrapper = e.getMessageDataWrapper();
+                    if (errorsMessageDataWrapper == null) {
+                        errorsMessageDataWrapper = messageDataWrapper;
+                    } else {
+                        for (MessageData messageData : messageDataWrapper) {
+                            errorsMessageDataWrapper.addFeedbackItem(messageData);
+                        }
+                    }
+                }
+            }
+            if (errorsMessageDataWrapper != null) {
+                throw new UnableToPerformMultiReasonException(errorsMessageDataWrapper);
+            }
+        }
+
+        private void mergeAssocModels(DocTypeAssocType assocType, List<? extends AssociationModel> assocModels, DocumentType importedDocType
+                , Map<String, DocumentType> docTypesCache, Map<String /* docTypeId */, Set<String> /* docTypeFields */> docTypeFieldsCache) {
+            Map<String, AssociationModel> existingAssocsByDocType = new HashMap<String, AssociationModel>();
+            for (AssociationModel existingAssoc : importedDocType.getAssociationModels(assocType)) {
+                existingAssocsByDocType.put(existingAssoc.getDocType(), existingAssoc);
+            }
+            Set<String> fieldsById = getDocTypeFieldsFromCache(importedDocType.getDocumentTypeId(), docTypesCache, docTypeFieldsCache);
+            for (AssociationModel importableAssocM : assocModels) {
+                String targetDocType = importableAssocM.getDocType();
+                Set<String> relatedDocTypeFieldsById = getDocTypeFieldsFromCache(targetDocType, docTypesCache, docTypeFieldsCache);
+                AssociationModel existingAssocM = existingAssocsByDocType.get(targetDocType);
+                ChildrenList<FieldMapping> importableFieldMappings = importableAssocM.getFieldMappings();
+                if (existingAssocM == null) {
+                    importableAssocM.nextSaveToParent(importedDocType);
+                    for (Iterator<FieldMapping> it = importableFieldMappings.iterator(); it.hasNext();) {
+                        FieldMapping importableFieldMapping = it.next();
+                        String fromField = importableFieldMapping.getFromField();
+                        if (!fieldsById.contains(fromField) || !relatedDocTypeFieldsById.contains(importableFieldMapping.getToField())) {
+                            it.remove();
+                            continue; // don't try to add fieldMappings for fields that don't exist
+                        }
+                    }
+                } else {
+                    // merge FieldMappings of existing AssociationModel
+                    setProps(importableAssocM, existingAssocM);
+                    Map<String, FieldMapping> existingFieldMappingsByFromField = new HashMap<String, FieldMapping>();
+                    for (FieldMapping fieldMapping : existingAssocM.getFieldMappings()) {
+                        existingFieldMappingsByFromField.put(fieldMapping.getFromField(), fieldMapping);
+                    }
+                    for (FieldMapping importableFieldMapping : importableFieldMappings) {
+                        String fromField = importableFieldMapping.getFromField();
+                        if (!fieldsById.contains(fromField) || !relatedDocTypeFieldsById.contains(importableFieldMapping.getToField())) {
+                            continue; // don't try to add fieldMappings for fields that don't exist
+                        }
+                        FieldMapping existingFieldMapping = existingFieldMappingsByFromField.get(fromField);
+                        if (existingFieldMapping != null) {
+                            existingAssocM.getFieldMappings().remove(existingFieldMapping);
+                        }
+                        importableFieldMapping.nextSaveToParent(existingAssocM);
+                    }
+                }
+            }
+        }
+
+        private Set<String> getDocTypeFieldsFromCache(String docType, Map<String, DocumentType> docTypesCache, Map<String, Set<String>> docTypeFieldsCache) {
+            DocumentType documentType = docTypesCache.get(docType);
+            if (documentType == null) {
+                documentType = getDocumentType(docType);
+                docTypesCache.put(docType, documentType);
+            }
+            if (documentType == null) {
+                throw new RuntimeException("import file contains fieldMapping to documentType that doesn't exist - did someone manually corrupted import file?");
+            }
+            Set<String> relatedDocTypeFieldsById = docTypeFieldsCache.get(docType);
+            if (relatedDocTypeFieldsById == null) {
+                relatedDocTypeFieldsById = documentType.getLatestDocumentTypeVersion().getFieldsDeeplyById().keySet();
+                docTypeFieldsCache.put(docType, relatedDocTypeFieldsById);
+            }
+            return relatedDocTypeFieldsById;
+        }
+
+        /**
+         * @param importableDocTypeVer - documentType version being imported - saved to temp folder for importing
+         * @param lastDocTypeVer - last documentType version saved bellow {@link DocumentType}
+         * @param newLatestDocTypeVer - new unsaved documentType version to be saved bellow {@link DocumentType} that should receive metadataItems from importable documentType
+         */
+        private void mergeMetadaItems(DocumentTypeVersion importableDocTypeVer, DocumentTypeVersion lastDocTypeVer, DocumentTypeVersion newLatestDocTypeVer) {
+            final Map<String, Field> existingFieldsById = newLatestDocTypeVer.getFieldsDeeplyById();
+            final Map<String, FieldGroup> existingFieldGroupsByName = new HashMap<String, FieldGroup>();
+            for (MetadataItem metadataItem : newLatestDocTypeVer.getMetadata()) {
+                if (metadataItem instanceof FieldGroup) {
+                    FieldGroup fg = (FieldGroup) metadataItem;
+                    existingFieldGroupsByName.put(fg.getName(), fg);
+                }
+            }
+
+            Map<String, Set<NodeRef>> neededNodeRefsByGroup = new HashMap<String, Set<NodeRef>>();
+
+            for (MetadataItem metadataItem : importableDocTypeVer.getMetadata()) {
+                // merge all fields and fieldGroups from importableDocTypeVer to newLatestDocTypeVer
+                NodeRef saveableNodeRef;
+                if (metadataItem instanceof FieldGroup) {
+                    FieldGroup importableFGroup = (FieldGroup) metadataItem;
+                    String fieldGroupName = importableFGroup.getName();
+                    FieldGroup existingFGroup = existingFieldGroupsByName.get(fieldGroupName);
+                    if (existingFGroup != null) {
+                        // merge importableFGroup into existingFGroup
+                        setProps(importableFGroup, existingFGroup);
+                        // merge fields under importable fieldGroup to existingFGroup
+                        for (Field importableFieldInGroup : importableFGroup.getFields()) {
+                            NodeRef saveableFieldRef;
+                            Field existingField = existingFieldsById.get(importableFieldInGroup.getFieldId());
+                            if (existingField != null) {
+                                MetadataContainer existingFieldParent = (MetadataContainer) existingField.getParent();
+                                if (existingFieldParent instanceof FieldGroup && StringUtils.equals(fieldGroupName, ((FieldGroup) existingFieldParent).getName())) {
+                                    // field existed in the same fieldGroup
+                                    setProps(importableFieldInGroup, existingField);
+                                    saveableFieldRef = existingField.getNodeRef();
+                                } else {
+                                    // field existed in other fieldGroup or directly bellow DocTypeVersion (not reusing field that is not under same parent)
+                                    importableFieldInGroup.nextSaveToParent(existingFGroup);
+                                    saveableFieldRef = importableFieldInGroup.getNodeRef();
+                                }
+                            } else {
+                                // change parent so it would be saved to existingFGroup
+                                importableFieldInGroup.nextSaveToParent(existingFGroup);
+                                saveableFieldRef = importableFieldInGroup.getNodeRef();
+                            }
+                            addSaveableNodeRef(neededNodeRefsByGroup, fieldGroupName, saveableFieldRef);
+                        }
+                        saveableNodeRef = existingFGroup.getNodeRef();
+                    } else {
+                        // change parent so it would be saved to newLatestDocTypeVer
+                        importableFGroup.nextSaveToParent(newLatestDocTypeVer);
+                        saveableNodeRef = importableFGroup.getNodeRef();
+                    }
+                } else if (metadataItem instanceof Field) {
+                    Field importableField = (Field) metadataItem;
+                    Field existingField = existingFieldsById.get(importableField.getFieldId());
+                    if (existingField != null) {
+                        // merge importableField into existingField
+                        setProps(importableField, existingField);
+                        saveableNodeRef = existingField.getNodeRef();
+                    } else {
+                        // change parent so it would be saved to newLatestDocTypeVer
+                        importableField.nextSaveToParent(newLatestDocTypeVer);
+                        saveableNodeRef = importableField.getNodeRef();
+                    }
+                } else if (metadataItem instanceof SeparatorLine) {
+                    saveableNodeRef = metadataItem.getNodeRef();
+                } else {
+                    throw new RuntimeException("Unexpected object bellow importable docTypeVersion:\nobject=" + metadataItem);
+                }
+                addSaveableNodeRef(neededNodeRefsByGroup, null, saveableNodeRef);
+            }
+
+            // remove nodeRefs not present under DocTypeVersion being imported
+            for (Iterator<MetadataItem> it = newLatestDocTypeVer.getMetadata().iterator(); it.hasNext();) {
+                MetadataItem metadataItem = it.next();
+                if (metadataItem instanceof FieldGroup) {
+                    FieldGroup fieldGroup = (FieldGroup) metadataItem;
+                    Set<NodeRef> savedNodeRefsInFieldGroup = neededNodeRefsByGroup.get(fieldGroup.getName());
+                    if (savedNodeRefsInFieldGroup == null) {
+                        it.remove(); // this fieldGroup was not present under docTypeVersion that is being imported
+                    } else {
+                        for (Iterator<NodeRef> fieldsIt = savedNodeRefsInFieldGroup.iterator(); fieldsIt.hasNext();) {
+                            NodeRef nodeRef = fieldsIt.next();
+                            if (!savedNodeRefsInFieldGroup.contains(nodeRef)) {
+                                fieldsIt.remove(); // this field was not present under the same fieldGroup
+                            }
+                        }
+                    }
+                } else if (metadataItem instanceof Field || metadataItem instanceof SeparatorLine) {
+                    Set<NodeRef> savedNodeRefsInDocTypeVer = neededNodeRefsByGroup.get(null);
+                    if (savedNodeRefsInDocTypeVer == null || !savedNodeRefsInDocTypeVer.contains(metadataItem.getNodeRef())) {
+                        it.remove(); // this field/separator was not present under docTypeVersion that is being imported
+                    }
+                } else {
+                    throw new RuntimeException("Unexpected object bellow importable docTypeVersion:\nobject=" + metadataItem);
+                }
+            }
+        }
+
+        private <B extends BaseObject> void setProps(B from, B to) {
+            Map<String, Object> toNodeProps = to.getNode().getProperties();
+            toNodeProps.clear();
+            RepoUtil.copyProperties(from.getNode().getProperties(), toNodeProps);
+        }
+
+        private void addSaveableNodeRef(Map<String, Set<NodeRef>> neededNodeRefsByGroup, String groupName, NodeRef saveableNodeRef) {
+            Set<NodeRef> groupRefs = neededNodeRefsByGroup.get(groupName);
+            if (groupRefs == null) {
+                groupRefs = new HashSet<NodeRef>();
+                neededNodeRefsByGroup.put(groupName, groupRefs);
+            }
+            groupRefs.add(saveableNodeRef);
+        }
+    }
 }

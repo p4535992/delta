@@ -767,11 +767,11 @@
          <show-property name="docspec:trainingAdviser" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="trainingAdviser" styleClass="expand19-200" />
          <show-property name="docspec:financialDepartmentHeadOnAccounting" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="financialDepartmentHeadOnAccounting" styleClass="expand19-200" labelStyleClass="wrap" />
          <show-property name="docspec:adviserGeneralDepartmentOnArchives" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="adviserGeneralDepartmentOnArchives" styleClass="expand19-200" />
-         <show-property name="docspec:adviserGeneralDepartmentOnClassifiedRecords" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="adviserGeneralDepartmentOnClassifiedRecords" styleClass="expand19-200" />
-         <show-property name="docspec:deputyHeadOfTheGeneralDepartment" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="deputyHeadOfTheGeneralDepartment" styleClass="expand19-200" />
+         <show-property name="docspec:adviserGeneralDepartmentOnClassifiedRecords" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="adviserGeneralDepartmentOnClassifiedRecords" styleClass="expand19-200" labelStyleClass="wrap" />
+         <show-property name="docspec:deputyHeadOfTheGeneralDepartment" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="deputyHeadOfTheGeneralDepartment" styleClass="expand19-200" labelStyleClass="wrap" />
          <show-property name="docspec:documentaryProceduresRecipient" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="documentaryProceduresRecipient" styleClass="expand19-200" />
          <show-property name="docspec:adviserOnICT" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="adviserOnICT" styleClass="expand19-200" />
-         <show-property name="docspec:deputyHeadOfTheAdmDeptOnMaintenance" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="deputyHeadOfTheAdmDeptOnMaintenance" styleClass="expand19-200" />
+         <show-property name="docspec:deputyHeadOfTheAdmDeptOnMaintenance" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="deputyHeadOfTheAdmDeptOnMaintenance" styleClass="expand19-200" labelStyleClass="wrap" />
          <show-property name="docspec:officialsDirectManager" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="officialsDirectManager" styleClass="expand19-200" />
          <show-property name="docspec:officialOnPersonnelDepartment" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="officialOnPersonnelDepartment" styleClass="expand19-200" />
       </property-sheet>

@@ -31,6 +31,7 @@ import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.common.web.AbstractImportDialog;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.WebUtil;
 
 /**
  * Dialog for importing classificators
@@ -40,7 +41,7 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 public class ClassificatorsImportDialog extends AbstractImportDialog {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ClassificatorsImportDialog.class);
     private static final long serialVersionUID = 1L;
-    public String BEAN_NAME = "ClassificatorsImportDialog";
+    public static final String BEAN_NAME = "ClassificatorsImportDialog";
 
     private transient ClassificatorService classificatorService;
     private Collection<ClassificatorExportVO> changedClassificators;
@@ -50,7 +51,7 @@ public class ClassificatorsImportDialog extends AbstractImportDialog {
     private Map<String /* classifName */, ClassificatorExportVO> classifObjects;
 
     protected ClassificatorsImportDialog() {
-        super(".xml", "classificators_import_error_wrongExtension");
+        super("xml", "classificators_import_error_wrongExtension");
     }
 
     private Map<String /* classifName */, List<ClassificatorValue>> getClassificatorsToImport() {
@@ -74,7 +75,7 @@ public class ClassificatorsImportDialog extends AbstractImportDialog {
             // veateate näitamine ja sulgemine millegi pärast ei toimi
             final FacesContext context = FacesContext.getCurrentInstance();
             MessageUtil.addErrorMessage(context, "ccccc_error_wrongFileContent", getFileName());
-            context.getApplication().getNavigationHandler().handleNavigation(context, null, AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME);
+            WebUtil.navigateTo(AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME, context);
             reset();
             return null;
         } catch (FileNotFoundException e1) {
@@ -189,7 +190,7 @@ public class ClassificatorsImportDialog extends AbstractImportDialog {
         classificatorsToImport = null;
         classificatorsOverview = null;
         classificatorsToAdd = null;
-        return "dialog:close";
+        return getDefaultFinishOutcome();
     }
 
     @Override

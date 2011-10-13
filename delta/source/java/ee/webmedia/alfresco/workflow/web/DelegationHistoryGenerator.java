@@ -32,9 +32,9 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.utils.ComparableTransformer;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
-import ee.webmedia.alfresco.utils.ComparableTransformer;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.Task;
@@ -46,10 +46,9 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
  * @author Ats Uiboupin
  */
 public class DelegationHistoryGenerator extends BaseComponentGenerator {
-    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DelegationHistoryGenerator.class);
-    private static final QName TMP_MAIN_OWNER = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "mainOwner");
-    private static final QName TMP_CO_OWNER = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "coOwner");
-    private static final QName TMP_STYLE_CLASS = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "styleClass");
+    private static final QName TMP_MAIN_OWNER = RepoUtil.createTransientProp("mainOwner");
+    private static final QName TMP_CO_OWNER = RepoUtil.createTransientProp("coOwner");
+    private static final QName TMP_STYLE_CLASS = RepoUtil.createTransientProp("styleClass");
     public static final Comparator<Task> COMPARATOR;
     static {
         COMPARATOR = getTaskComparator();

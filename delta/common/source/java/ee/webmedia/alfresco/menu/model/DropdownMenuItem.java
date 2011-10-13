@@ -138,6 +138,9 @@ public class DropdownMenuItem extends MenuItem {
                 childrenWrapper.setExpanded(isExpanded());
                 children.add(childrenWrapper);
             }
+            if (StringUtils.isBlank(getOutcome()) && StringUtils.isBlank(getActionListener()) && (childrenWrapper == null || childrenWrapper.getChildCount() == 0)) {
+                return null;
+            }
         }
 
         return wrapper;

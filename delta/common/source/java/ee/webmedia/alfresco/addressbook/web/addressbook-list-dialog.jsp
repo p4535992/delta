@@ -37,12 +37,12 @@ function updateButtonState()
             <%-- Organizations List --%>
             <a:panel id="ab-addressbook-panel" styleClass="mainSubTitle" label="#{msg.addressbook}">
             <a:panel id="search-panel">
-            <h:inputText id="search-text" styleClass="admin-user-search-input focus" value="#{AddressbookListDialog.searchCriteria}" size="35" maxlength="1024" onkeyup="updateButtonState();" />
+            <h:inputText id="search-text" styleClass="admin-user-search-input" value="#{AddressbookListDialog.searchCriteria}" size="35" maxlength="1024" onkeyup="updateButtonState();" />
             <h:commandButton id="search-btn" value="#{msg.search}" action="#{AddressbookListDialog.search}" disabled="true" style="margin-left: 5px;"/>
             <h:commandButton id="show-all-button" value="#{msg.show_all}" action="#{AddressbookListDialog.showAll}" style="margin-left: 5px;"/>
             <f:verbatim>
             <script type="text/javascript">
-               addSearchSuggest("dialog:dialog-body:search-text", "dialog:dialog-body:search-text", "AddressbookSearchBean.searchContacts", null, "0", "<%=request.getContextPath()%>/ajax/invoke/AjaxSearchBean.invokeActionListener?actionListener=AddressbookSearchBean.setupViewEntry",
+               addSearchSuggest("dialog:dialog-body:search-text", "dialog:dialog-body:search-text", "AddressbookSearchBean.searchContacts", "<%=request.getContextPath()%>/ajax/invoke/AjaxSearchBean.invokeActionListener?actionListener=AddressbookSearchBean.setupViewEntry",
                      function() {
                         var type = this.slice(this.lastIndexOf("(") + 1, this.lastIndexOf(")")); // eraisik or organisatsioon
                         $jQ("#" + type).click();

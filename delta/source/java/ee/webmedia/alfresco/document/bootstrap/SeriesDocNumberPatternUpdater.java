@@ -28,7 +28,7 @@ import ee.webmedia.alfresco.series.model.SeriesModel;
 public class SeriesDocNumberPatternUpdater extends AbstractNodeUpdater {
 
     @Override
-    protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
+    protected List<ResultSet> getNodeLoadingResultSet() {
         String query = joinQueryPartsAnd(Arrays.asList(
                 generateTypeQuery(SeriesModel.Types.SERIES),
                 generatePropertyNullQuery(SeriesModel.Props.DOC_NUMBER_PATTERN)
@@ -41,7 +41,7 @@ public class SeriesDocNumberPatternUpdater extends AbstractNodeUpdater {
     }
 
     @Override
-    protected String[] updateNode(NodeRef nodeRef) throws Exception {
+    protected String[] updateNode(NodeRef nodeRef) {
         Map<QName, Serializable> origProps = nodeService.getProperties(nodeRef);
         Map<QName, Serializable> newProps = new HashMap<QName, Serializable>(3);
 

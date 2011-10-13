@@ -2031,4 +2031,12 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     // END: getters / setters
 
+    /**
+     * The type of action performs (after getting confirmation)
+     * 
+     * @author Vladimir Drozdik
+     */
+    public static enum DialogAction {
+        SAVING, STARTING, CONTINUING;
+    }
 }

@@ -72,9 +72,8 @@ public class DocTypeDetailsDialog extends BaseSnapshotCapableDialog<DocTypeDialo
             MessageUtil.addInfoMessage("save_success");
         } else {
             isFinished = false;
-            return null;
         }
-        return outcome;
+        return null;
     }
 
     boolean save(boolean reInit) {

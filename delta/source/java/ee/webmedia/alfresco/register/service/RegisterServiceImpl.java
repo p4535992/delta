@@ -11,22 +11,28 @@ import javax.sql.DataSource;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
+import org.alfresco.service.cmr.repository.datatype.TypeConversionException;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.register.model.Register;
 import ee.webmedia.alfresco.register.model.RegisterModel;
+import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
 
 public class RegisterServiceImpl implements RegisterService {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(RegisterServiceImpl.class);
 
     private static BeanPropertyMapper<Register> registerBeanPropertyMapper;
-    private static final int DEFAULT_COUNTER_INITIAL_VALUE = 1;
+    private static final int DEFAULT_COUNTER_INITIAL_VALUE = 0;
     static {
         registerBeanPropertyMapper = BeanPropertyMapper.newInstance(Register.class);
     }
@@ -36,6 +42,16 @@ public class RegisterServiceImpl implements RegisterService {
     private SimpleJdbcTemplate jdbcTemplate;
     private final String SEQ_REGISTER_PREFIX = "register_";
     private final String SEQ_REGISTER_SUFFIX = "_seq";
+    private boolean valueEditable;
+
+    @Override
+    public boolean isValueEditable() {
+        return valueEditable;
+    }
+
+    public void setValueEditable(boolean valueEditable) {
+        this.valueEditable = valueEditable;
+    }
 
     @Override
     public List<Register> getRegisters() {
@@ -127,6 +143,16 @@ public class RegisterServiceImpl implements RegisterService {
                     QName.createQName(RegisterModel.URI, regId.toString()), RegisterModel.Types.REGISTER, //
                     RepoUtil.toQNameProperties(prop));
         } else {
+            Integer counter;
+            String counterLabel = MessageUtil.getMessage("register_counter");
+            try {
+                counter = DefaultTypeConverter.INSTANCE.convert(Integer.class, prop.get(RegisterModel.Prop.COUNTER));
+            } catch (TypeConversionException e) {
+                throw new UnableToPerformException("validation_is_nonegative_int_number", counterLabel);
+            }
+            if (counter == null || counter < 0) {
+                throw new UnableToPerformException("validation_is_nonegative_int_number", counterLabel);
+            }
             nodeService.setProperties(register.getNodeRef(), RepoUtil.toQNameProperties(prop));
         }
     }
@@ -138,23 +164,38 @@ public class RegisterServiceImpl implements RegisterService {
 
     @Override
     public int increaseCount(int registerId) {
-        // NB! even if value 0 is not allowed as initial value of sequence,
-        // it is compensated so that first call to nextval() will not increment 1 by 1, but leave it to 1 unlike consequent calls)
         return jdbcTemplate.queryForInt("SELECT nextval(?)", getSequenceName(registerId));
+    }
+
+    @Override
+    public void updateRegisterSequence(int registerId, int regCounterValue) {
+        final String seqName = getSequenceName(registerId);
+        jdbcTemplate.update("ALTER SEQUENCE " + seqName + " MINVALUE 0");
+        if (regCounterValue == 1) {
+            if (jdbcTemplate.queryForInt("SELECT nextval(?)", getSequenceName(registerId)) == 1) {
+                setSequenceCurrentValue(seqName, DEFAULT_COUNTER_INITIAL_VALUE);
+            } else {
+                setSequenceCurrentValue(seqName, 1);
+            }
+        }
+    }
+
+    private void setSequenceCurrentValue(final String seqName, int seqValue) {
+        jdbcTemplate.queryForInt("SELECT setval(?, ?)", seqName, seqValue);
     }
 
     @Override
     public void resetCounter(Node register) {
         final Map<String, Object> props = register.getProperties();
         int registerId = (Integer) props.get(RegisterModel.Prop.ID);
-        // "false" argument of setval ensures that next call to nextval() will return 1, not 2
-        jdbcTemplate.queryForInt("SELECT setval(?, ?, false)", getSequenceName(registerId), DEFAULT_COUNTER_INITIAL_VALUE);
+        setSequenceCurrentValue(getSequenceName(registerId), DEFAULT_COUNTER_INITIAL_VALUE);
         props.put(RegisterModel.Prop.COUNTER.toString(), DEFAULT_COUNTER_INITIAL_VALUE);
     }
 
     private void createSequence(int registerId) {
         final String seqName = getSequenceName(registerId);
-        jdbcTemplate.update("CREATE SEQUENCE " + seqName + " START 1"); // parameetritega ei toimi
+        jdbcTemplate.update("CREATE SEQUENCE " + seqName + " MINVALUE 0");
+        setSequenceCurrentValue(getSequenceName(registerId), DEFAULT_COUNTER_INITIAL_VALUE);
         log.debug("created sequence: " + seqName);
     }
 
@@ -169,6 +210,15 @@ public class RegisterServiceImpl implements RegisterService {
 
     public void setNodeService(NodeService nodeService) {
         this.nodeService = nodeService;
+    }
+
+    /**
+     * // dependency cycle: DocumentService -> RegisterService -> documentSearchService -> DocumentService
+     * 
+     * @return
+     */
+    private DocumentSearchService getDocumentSearchService() {
+        return BeanHelper.getDocumentSearchService();
     }
 
     // END: getters / setters

@@ -113,7 +113,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
-import ee.webmedia.alfresco.document.bootstrap.DocumentPrivilegesUpdater;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
 import ee.webmedia.alfresco.document.file.service.FileService;
@@ -214,6 +213,8 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
     private static final FastDateFormat userDateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
     private static final String TEMP_LOGGING_DISABLED_REGISTERED_BY_USER = "{temp}logging_registeredByUser";
     private PropertyChangesMonitorHelper propertyChangesMonitorHelper = new PropertyChangesMonitorHelper();
+
+    private static final Set<String> SERIES_GROUPMEMBERS_PRIVILEGES = new HashSet<String>(Arrays.asList(Privileges.VIEW_DOCUMENT_META_DATA, Privileges.VIEW_DOCUMENT_FILES));
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -3102,7 +3103,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         for (String group : groups) {
             Set<String> authorities = userService.getUserNamesInGroup(group);
             for (String authority : authorities) {
-                privilegeService.addPrivilege(docRef, docProps, addPrivListener, authority, group, DocumentPrivilegesUpdater.SERIES_GROUPMEMBERS_PRIVILEGES);
+                privilegeService.addPrivilege(docRef, docProps, addPrivListener, authority, group, SERIES_GROUPMEMBERS_PRIVILEGES);
             }
         }
         return groups;

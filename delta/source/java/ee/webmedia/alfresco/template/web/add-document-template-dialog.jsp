@@ -12,6 +12,7 @@
 <%@ page import="ee.webmedia.alfresco.template.web.AddDocumentTemplateDialog"%>
 <%@ page import="javax.faces.application.FacesMessage"%>
 <%@ page import="org.apache.commons.io.FilenameUtils"%>
+<%@ page import="org.apache.commons.lang.StringUtils"%>
 
 <%
     boolean fileUploaded = false;
@@ -19,7 +20,7 @@
     FacesContext context = FacesContext.getCurrentInstance();
 
     AddDocumentTemplateDialog dialog = (AddDocumentTemplateDialog) FacesHelper.getManagedBean(context, "AddDocumentTemplateDialog");
-    if (dialog != null && dialog.getFileName() != null) {
+    if (dialog != null && StringUtils.isNotBlank(dialog.getFileName())) {
         fileUploaded = true;
     }
 
@@ -54,6 +55,7 @@
             }
             PanelGenerator.generatePanelEnd(out, request.getContextPath(), "yellowInner");
             out.write("<div style='padding:2px;'></div>");
+            dialog.removeUploadedFile();
         }
 
         if (fileUploaded) {

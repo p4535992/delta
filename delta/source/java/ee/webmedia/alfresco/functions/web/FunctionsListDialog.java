@@ -13,7 +13,6 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 import javax.servlet.http.HttpServletResponse;
 
-import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.exporter.ACPExportPackageHandler;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.MimetypeService;
@@ -30,6 +29,7 @@ import org.apache.myfaces.application.jsp.JspStateManagerImpl;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.WMAdminNodeBrowseBean;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
@@ -123,7 +123,7 @@ public class FunctionsListDialog extends BaseDialogBean {
             File dataFile = new File(packageName);
             File contentDir = new File(packageName);
 
-            outputStream = getExportOutStream(response);
+            outputStream = WMAdminNodeBrowseBean.getExportOutStream(response, "functions-list.acp");
             // setup an ACP Package Handler to export to an ACP file format
             MimetypeService mimetypeService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getMimetypeService();
             ExportPackageHandler handler = new ACPExportPackageHandler(outputStream, dataFile, contentDir, mimetypeService);
@@ -170,17 +170,6 @@ public class FunctionsListDialog extends BaseDialogBean {
         ExporterCrawlerParameters parameters = new ExporterCrawlerParameters();
         parameters.setExportFrom(getFunctionsService().getDocumentListLocation());
         return parameters;
-    }
-
-    private OutputStream getExportOutStream(HttpServletResponse response) throws IOException {
-        OutputStream outputStream;
-        response.setContentType(MimetypeMap.MIMETYPE_BINARY);
-        response.setHeader("Expires", "0");
-        response.setHeader("Cache-Control", "must-revalidate, post-check=0, pre-check=0");
-        response.setHeader("Pragma", "public");
-        response.setHeader("Content-disposition", "attachment;filename=functions-list.acp");
-        outputStream = response.getOutputStream();
-        return outputStream;
     }
 
     @Override

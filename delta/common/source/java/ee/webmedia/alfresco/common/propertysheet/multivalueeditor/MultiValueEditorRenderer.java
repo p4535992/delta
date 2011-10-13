@@ -197,7 +197,7 @@ public class MultiValueEditorRenderer extends BaseRenderer {
                         column.getAttributes().remove(MultiValueEditor.ATTR_CLICK_LINK_ID);
                     }
                     Utils.encodeRecursive(context, column);
-                    if (hasSearchSuggest(column)) {
+                    if (hasSearchSuggest(multiValueEditor, column)) {
                         ComponentUtil.generateSuggestScript(context, column, (String) multiValueEditor.getAttributes().get(Search.PICKER_CALLBACK_KEY), out);
                     }
                     out.write("</td>");
@@ -235,7 +235,10 @@ public class MultiValueEditorRenderer extends BaseRenderer {
         }
     }
 
-    private boolean hasSearchSuggest(UIComponent column) {
+    private boolean hasSearchSuggest(UIComponent multiValueEditor, UIComponent column) {
+        if (Boolean.TRUE.equals(multiValueEditor.getAttributes().get(Search.SEARCH_SUGGEST_DISABLED))) {
+            return false;
+        }
         String id = column.getId();
         return StringUtils.startsWith(id, FacesHelper.makeLegalId(DocumentCommonModel.PREFIX + DocumentCommonModel.Props.RECIPIENT_NAME.getLocalName()))
                 || StringUtils.startsWith(id,
@@ -260,11 +263,11 @@ public class MultiValueEditorRenderer extends BaseRenderer {
             if (StringUtils.isBlank(styleClass)) {
                 styleClass = "add-person";
             }
-            String titleAttr = "";
             String addLabel = Application.getMessage(context, addLabelId);
+            String titleAttr = "";
             if (noAddLinkLabel) {
                 titleAttr = "title=\"" + addLabel + "\"";
-            }            
+            }
             out.write("<a id=\"" + getAddLinkId(context, component) + "\" class=\"icon-link " + styleClass + "\" " + titleAttr + " onclick=\"");
             // TODO: optimeerimise võimalus (vt ka AjaxSearchBean)
             // siin seatakse ajaxParentLevel=1 ainult selle pärast, et ajax'iga uut rida lisades renderdataks ka valideerimise skriptid,
@@ -278,7 +281,7 @@ public class MultiValueEditorRenderer extends BaseRenderer {
             out.write("\">");
             if (!noAddLinkLabel) {
                 out.write(Application.getMessage(context, addLabelId));
-            }            
+            }
             out.write("</a>");
         }
     }

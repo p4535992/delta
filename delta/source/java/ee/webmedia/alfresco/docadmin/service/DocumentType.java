@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.base.BaseServiceImpl;
@@ -30,6 +31,20 @@ public class DocumentType extends BaseObject {
         return getAssocName(getDocumentTypeId());
     }
 
+    @Override
+    public NodeRef getParentNodeRef() {
+        return super.getParentNodeRef();
+    }
+
+    @Override
+    protected void nextSaveToParent(NodeRef parentRef) { // widens visibility for DocAdminService
+        super.nextSaveToParent(parentRef);
+        setLatestVersion(1);
+        List<DocumentTypeVersion> docTypeVers = getDocumentTypeVersions();
+        Assert.isTrue(docTypeVers.size() == 1, "there should be only one DocumentTypeVersion under DocumentType being imported");
+        getLatestDocumentTypeVersion().setVersionNr(1);
+    }
+
     protected static QName getAssocName(String documentTypeId) {
         return QName.createQName(DocumentAdminModel.URI, documentTypeId);
     }
@@ -51,18 +66,18 @@ public class DocumentType extends BaseObject {
     public List<? extends AssociationModel> getAssociationModels(DocTypeAssocType associationTypeEnum) {
         if (associationTypeEnum == null) {
             List<AssociationModel> allAssocsToDocType = new ArrayList<AssociationModel>();
-            allAssocsToDocType.addAll(getFollowupAssociation());
-            allAssocsToDocType.addAll(getReplyAssociation());
+            allAssocsToDocType.addAll(getFollowupAssociations());
+            allAssocsToDocType.addAll(getReplyAssociations());
             return allAssocsToDocType;
         }
-        return DocTypeAssocType.FOLLOWUP == associationTypeEnum ? getFollowupAssociation() : getReplyAssociation();
+        return DocTypeAssocType.FOLLOWUP == associationTypeEnum ? getFollowupAssociations() : getReplyAssociations();
     }
 
-    public ChildrenList<FollowupAssociation> getFollowupAssociation() {
+    public ChildrenList<FollowupAssociation> getFollowupAssociations() {
         return getChildren(FollowupAssociation.class);
     }
 
-    public ChildrenList<ReplyAssociation> getReplyAssociation() {
+    public ChildrenList<ReplyAssociation> getReplyAssociations() {
         return getChildren(ReplyAssociation.class);
     }
 
@@ -196,7 +211,9 @@ public class DocumentType extends BaseObject {
             return docTypeVer;
         }
         DocumentTypeVersion newLatestVer = cloneAndMarkChildren(documentTypeVersions, currentLatestVer);
-        setLatestVersion(currentLatestVer.getVersionNr() + 1);
+        Integer actual = currentLatestVer.getVersionNr() + 1;
+        Assert.isTrue(documentTypeVersions.size() == actual);
+        setLatestVersion(actual);
         return newLatestVer;
     }
 

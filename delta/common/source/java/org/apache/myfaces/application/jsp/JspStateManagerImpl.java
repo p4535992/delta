@@ -645,7 +645,7 @@ public class JspStateManagerImpl
 
     /**
      * Erko: useful for export screens, where some data is exported in a new request as attachment but the browsers view is not updated. 
-     * Without calling this hack, the next request by user would be cought in the check that view state id is not the latest available.
+     * Without calling this hack, the next request by user would be caught in the check that view state id is not the latest available.
      * 
      * Based on ViewSequenceUtils.nextViewSequence.
      */

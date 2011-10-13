@@ -1,20 +1,20 @@
 package ee.webmedia.alfresco.register.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getRegisterService;
+
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
-import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.register.service.RegisterService;
+import ee.webmedia.alfresco.register.model.RegisterModel;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 public class RegisterDetailsDialog extends BaseDialogBean {
 
     private static final long serialVersionUID = 1L;
-    private transient RegisterService registerService;
     private Node register;
 
     /**
@@ -69,19 +69,8 @@ public class RegisterDetailsDialog extends BaseDialogBean {
         this.register = register;
     }
 
-    // START: setters/getters
-
-    public void setRegisterService(RegisterService registerService) {
-        this.registerService = registerService;
+    public boolean isCounterReadOnly() {
+        int counter = ((Integer) register.getProperties().get(RegisterModel.Prop.COUNTER)).intValue();
+        return !(counter == 0 || getRegisterService().isValueEditable());
     }
-
-    public RegisterService getRegisterService() {
-        if (registerService == null) {
-            registerService = (RegisterService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(RegisterService.BEAN_NAME);
-        }
-        return registerService;
-    }
-    // END: setters/getters
-
 }

@@ -29,7 +29,7 @@
       <property-sheet>
          <show-property name="reg:id" read-only="true" display-label-id="id" />
          <show-property name="reg:name" display-label-id="register_name" />
-         <show-property name="reg:counter" read-only="true" display-label-id="register_counter" />
+         <show-property name="reg:counter" readOnlyIf="#{RegisterDetailsDialog.isCounterReadOnly}" display-label-id="register_counter" />
          <show-property name="reg:prefix" display-label-id="register_prefix" />
          <show-property name="reg:suffix" display-label-id="register_suffix" />
          <show-property name="reg:comment" display-label-id="register_comment" styleClass="expand19-200" />

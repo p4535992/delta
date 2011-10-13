@@ -92,7 +92,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     public void createDraft(ActionEvent event) {
         LOG.info("createDraft");
         String documentTypeId = ActionUtil.getParam(event, "documentTypeId");
-        NodeRef docRef = getDocumentDynamicService().createDraft(documentTypeId);
+        NodeRef docRef = getDocumentDynamicService().createNewDocumentInDrafts(documentTypeId);
         open(docRef, true);
     }
 

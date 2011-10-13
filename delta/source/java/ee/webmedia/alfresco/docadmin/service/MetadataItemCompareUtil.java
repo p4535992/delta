@@ -1,4 +1,4 @@
-package ee.webmedia.alfresco.docadmin.web;
+package ee.webmedia.alfresco.docadmin.service;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -14,12 +14,6 @@ import org.apache.commons.collections.comparators.TransformingComparator;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.base.BaseObject.ChildrenList;
-import ee.webmedia.alfresco.docadmin.service.Field;
-import ee.webmedia.alfresco.docadmin.service.FieldAndGroupBase;
-import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
-import ee.webmedia.alfresco.docadmin.service.FieldGroup;
-import ee.webmedia.alfresco.docadmin.service.MetadataItem;
-import ee.webmedia.alfresco.docadmin.service.SeparatorLine;
 import ee.webmedia.alfresco.utils.CollectionComparator;
 import ee.webmedia.alfresco.utils.ComparableTransformer;
 import ee.webmedia.alfresco.utils.RepoUtil;
@@ -35,7 +29,7 @@ public class MetadataItemCompareUtil {
     private static final Comparator<FieldGroup> FIELD_GROUP_COMPARATOR = getFieldGroupComparator();
     private static final Comparator<SeparatorLine> SEPARATOR_LINE_COMPARATOR_CHAIN = getSeparatorLineComparatorChain();
     private static final Comparator<Field> FIELD_COMPARATOR = getFieldComparator();
-    private static final Comparator<FieldDefinition> FIELD_DEFINITION_COMPARATOR = getFieldDefinitionComparator(); // FIXME DLSeadist
+    private static final Comparator<FieldDefinition> FIELD_DEFINITION_COMPARATOR = getFieldDefinitionComparator();
 
     public static boolean isClidrenListChanged(ChildrenList<MetadataItem> savedMetadata, ChildrenList<MetadataItem> unSavedMetadata) {
         if (unSavedMetadata.size() != savedMetadata.size()) {

@@ -591,7 +591,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
 
     @Override
     public boolean isMatch(String query) {
-        return isMatch(query, false, "testQuery");
+        return isMatch(query, false, "isMatch");
     }
 
     @Override

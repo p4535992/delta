@@ -24,10 +24,11 @@ import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.series.model.Series;
+import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
-import ee.webmedia.alfresco.volume.exception.VolumeContainsCasesException;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
@@ -170,10 +171,15 @@ public class VolumeServiceImpl implements VolumeService {
                             .toProperties(volume)));
                 }
             } else {
-                throw new VolumeContainsCasesException();
+                throw new UnableToPerformException("volume_contains_docs_or_cases");
             }
 
         }
+    }
+
+    private boolean isInClosedSeries(Volume volume) {
+        Serializable seriesStatus = nodeService.getProperty(volume.getSeriesNodeRef(), SeriesModel.Props.STATUS);
+        return DocListUnitStatus.CLOSED.getValueName().equals(seriesStatus);
     }
 
     private boolean checkContainsCasesValue(Volume volume) {
@@ -271,6 +277,26 @@ public class VolumeServiceImpl implements VolumeService {
     }
 
     @Override
+    public boolean isOpened(Node node) {
+        return RepoUtil.isExistingPropertyValueEqualTo(node, VolumeModel.Props.STATUS, DocListUnitStatus.OPEN.getValueName());
+    }
+
+    @Override
+    public void openVolume(Volume volume) {
+        final Node volumeNode = volume.getNode();
+        if (isOpened(volumeNode)) {
+            return;
+        }
+        if (isInClosedSeries(volume)) {
+            throw new UnableToPerformException("volume_open_error_inClosedSeries");
+        }
+        Map<String, Object> props = volumeNode.getProperties();
+        props.put(VolumeModel.Props.STATUS.toString(), DocListUnitStatus.OPEN.getValueName());
+        saveOrUpdate(volume);
+
+    }
+
+    @Override
     public void closeVolume(Volume volume) {
         final Node volumeNode = volume.getNode();
         if (isClosed(volumeNode)) {
@@ -295,10 +321,7 @@ public class VolumeServiceImpl implements VolumeService {
         }
         try {
             saveOrUpdate(volume);
-        } catch (VolumeContainsCasesException e) {
-            throw e;
-        } catch (RuntimeException e) {
-            log.error("CloseVolume failed\n    volume=" + volume + "\n    node=" + volumeNode + "\n    exception: " + e.getMessage(), e);
+        } catch (UnableToPerformException e) {
             throw e;
         }
     }

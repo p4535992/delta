@@ -4,6 +4,7 @@
       <actions>
 
          <action id="volume_add_new">
+            <evaluator>ee.webmedia.alfresco.volume.web.evaluator.CanAddVolumeEvaluator</evaluator>
             <permissions>
                <permission allow="true">CreateChildren</permission>
             </permissions>
@@ -23,12 +24,28 @@
               <action-listener>#{VolumeDetailsDialog.archive}</action-listener>
           </action>
          
+          <action id="volume_close">
+              <evaluator>ee.webmedia.alfresco.volume.web.evaluator.VolumeIsOpenedEvaluator</evaluator>
+              <label-id>close</label-id>
+              <image>/images/icons/versioned_properties.gif</image>
+              <action-listener>#{VolumeDetailsDialog.close}</action-listener>
+          </action>
+          
+          <action id="volume_open">
+              <evaluator>ee.webmedia.alfresco.volume.web.evaluator.VolumeIsClosedEvaluator</evaluator>
+              <label-id>volume_open</label-id>
+              <image>/images/icons/versioned_properties.gif</image>
+              <action-listener>#{VolumeDetailsDialog.open}</action-listener>
+          </action>
+          
          <action-group id="browse_actions_volume">
             <action idref="volume_add_new" />
          </action-group>
 
           <action-group id="volume_actions">
               <action idref="volume_archive"/>
+              <action idref="volume_close"/>
+              <action idref="volume_open"/>
           </action-group>
 
       </actions>
@@ -39,9 +56,6 @@
 
          <dialog name="volumeDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/volume/web/volume-details-dialog.jsp" managed-bean="VolumeDetailsDialog"
             icon="/images/icons/versioned_properties_large.gif" title-id="volume_details" show-ok-button="true" actions-config-id="volume_actions">
-            <buttons>
-               <button id="close-button" label-id="close" action="#{VolumeDetailsDialog.close}" disabled="#{VolumeDetailsDialog.closed}" />
-            </buttons>
          </dialog>
       </dialogs>
    </config>

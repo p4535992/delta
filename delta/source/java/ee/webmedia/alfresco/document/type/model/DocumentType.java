@@ -3,12 +3,10 @@ package ee.webmedia.alfresco.document.type.model;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.model.NodeBaseVO;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.utils.RepoUtil;
-import ee.webmedia.alfresco.app.AppConstants;
-import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
-import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
 
 /**
  * @author Alar Kvell
@@ -16,7 +14,7 @@ import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
  */
 public class DocumentType extends NodeBaseVO implements Comparable<DocumentType> {
     private static final long serialVersionUID = 1L;
-    private static final QName TMP_ID = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "id");
+    private static final QName TMP_ID = RepoUtil.createTransientProp("id");
 
     public DocumentType(QName id, WmNode node) {
         this.node = node;

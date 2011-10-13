@@ -28,6 +28,7 @@ import javax.faces.el.ValueBinding;
 
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.dialog.DialogManager;
 import org.alfresco.web.bean.generator.BaseComponentGenerator;
@@ -49,6 +50,7 @@ import ee.webmedia.alfresco.common.propertysheet.datepicker.DateTimePickerRender
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.propertysheet.search.SearchRenderer;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -220,7 +222,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
             }
 
             // create table rows for each task
-            boolean isFirstSignatureTask = true;
+            NodeService nodeService = BeanHelper.getNodeService();
             for (int counter = 0; counter < tasks.size(); counter++) {
                 if (visibleTasks.contains(counter)) {
                     Task task = tasks.get(counter);
@@ -234,16 +236,17 @@ public class TaskListGenerator extends BaseComponentGenerator {
                     String nameValueBinding = null;
                     if (task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)) {
                         nameValueBinding = createPropValueBinding(wfIndex, counter, WorkflowSpecificModel.Props.INSTITUTION_NAME);
-                    } else if (task.isType(WorkflowSpecificModel.Types.SIGNATURE_TASK) && isFirstSignatureTask) {
+                    } else if (task.isType(WorkflowSpecificModel.Types.SIGNATURE_TASK) && counter == 0 && task.getOwnerId() == null) {
                         NodeRef docRef = task.getParent().getParent().getParent();
                         if (docRef != null) {
-                            String ownerName = (String) BeanHelper.getNodeService().getProperty(docRef, DocumentCommonModel.Props.SIGNER_NAME);
-                            if (ownerName != null) {
-                                task.setOwnerName(ownerName);
+                            String signerName = (String) nodeService.getProperty(docRef, DocumentCommonModel.Props.SIGNER_NAME);
+                            String signerId = (String) nodeService.getProperty(docRef, DocumentDynamicModel.Props.SIGNER_ID);
+                            if (StringUtils.isNotBlank(signerId)) {
+                                task.setOwnerName(signerName);
+                                task.setOwnerId(signerId);
                             }
                         }
                         nameValueBinding = createPropValueBinding(wfIndex, counter, WorkflowCommonModel.Props.OWNER_NAME);
-                        isFirstSignatureTask = false;
                     } else {
                         nameValueBinding = createPropValueBinding(wfIndex, counter, WorkflowCommonModel.Props.OWNER_NAME);
                     }

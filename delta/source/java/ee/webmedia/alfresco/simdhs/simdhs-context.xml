@@ -84,7 +84,10 @@
    <!-- START: web beans: -->
 
    <bean id="InformingDeleteNodeDialog" class="ee.webmedia.alfresco.common.web.InformingDeleteNodeDialog" scope="session" />
+   
    <bean id="DeleteDialog" class="ee.webmedia.alfresco.common.web.DeleteDialog" scope="session" />
+   
+   <bean id="ConfirmDialog" class="ee.webmedia.alfresco.common.web.ConfirmDialog" scope="session" />
 
    <!-- END: web beans: -->
 </beans>

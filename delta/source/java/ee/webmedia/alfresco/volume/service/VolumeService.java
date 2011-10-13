@@ -66,4 +66,8 @@ public interface VolumeService {
     boolean isClosed(Node volumeNode);
 
     boolean isCaseVolumeEnabled();
+
+    void openVolume(Volume volume);
+
+    boolean isOpened(Node node);
 }

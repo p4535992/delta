@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.docconfig.generator.systematic;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserContactMappingService;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,12 +15,10 @@ import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.generator.BasePropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.generator.BaseSystematicFieldGenerator;
-import ee.webmedia.alfresco.docconfig.generator.FieldGroupGenerator;
 import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
 import ee.webmedia.alfresco.docconfig.service.UserContactMappingCode;
 import ee.webmedia.alfresco.docconfig.service.UserContactMappingService;
@@ -30,8 +30,7 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 /**
  * @author Alar Kvell
  */
-public class UserContactRelatedGroupGenerator extends BaseSystematicFieldGenerator implements FieldGroupGenerator {
-    private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(UserContactRelatedGroupGenerator.class);
+public class UserContactRelatedGroupGenerator extends BaseSystematicFieldGenerator {
 
     private NamespaceService namespaceService;
     private UserContactMappingService userContactMappingService;
@@ -54,6 +53,9 @@ public class UserContactRelatedGroupGenerator extends BaseSystematicFieldGenerat
         ownerMapping.put(DocumentCommonModel.Props.OWNER_EMAIL.getLocalName(), UserContactMappingCode.EMAIL);
         ownerMapping.put(DocumentCommonModel.Props.OWNER_PHONE.getLocalName(), UserContactMappingCode.PHONE);
         mappings.add(ownerMapping);
+        userContactMappingService.registerMappingDependency(DocumentCommonModel.Props.OWNER_ID.getLocalName(), DocumentCommonModel.Props.OWNER_NAME.getLocalName());
+        documentConfigService.registerHiddenFieldDependency(DocumentCommonModel.Props.OWNER_ID.getLocalName(), DocumentCommonModel.Props.OWNER_NAME.getLocalName());
+        documentConfigService.registerHiddenFieldDependency(DocumentCommonModel.Props.PREVIOUS_OWNER_ID.getLocalName(), DocumentCommonModel.Props.OWNER_NAME.getLocalName());
 
         Map<String, UserContactMappingCode> signerMapping = new HashMap<String, UserContactMappingCode>();
         signerMapping.put(DocumentDynamicModel.Props.SIGNER_ID.getLocalName(), UserContactMappingCode.CODE);
@@ -65,6 +67,8 @@ public class UserContactRelatedGroupGenerator extends BaseSystematicFieldGenerat
         signerMapping.put(DocumentDynamicModel.Props.SIGNER_EMAIL.getLocalName(), UserContactMappingCode.EMAIL);
         signerMapping.put(DocumentDynamicModel.Props.SIGNER_PHONE.getLocalName(), UserContactMappingCode.PHONE);
         mappings.add(signerMapping);
+        userContactMappingService.registerMappingDependency(DocumentDynamicModel.Props.SIGNER_ID.getLocalName(), DocumentCommonModel.Props.SIGNER_NAME.getLocalName());
+        documentConfigService.registerHiddenFieldDependency(DocumentDynamicModel.Props.SIGNER_ID.getLocalName(), DocumentCommonModel.Props.SIGNER_NAME.getLocalName());
 
         Map<String, UserContactMappingCode> senderMapping = new HashMap<String, UserContactMappingCode>();
         senderMapping.put(DocumentSpecificModel.Props.SENDER_DETAILS_NAME.getLocalName(), UserContactMappingCode.NAME);
@@ -101,7 +105,7 @@ public class UserContactRelatedGroupGenerator extends BaseSystematicFieldGenerat
             userContactMappingService.registerOriginalFieldIdsMapping(mapping);
             fields.addAll(mapping.keySet());
         }
-        //originalFieldIds = new String[] { "ownerName", "signerName", "senderName", "userName", "contactName" };
+        // originalFieldIds = new String[] { "ownerName", "signerName", "senderName", "userName", "contactName" };
         originalFieldIds = fields.toArray(new String[fields.size()]);
 
         super.afterPropertiesSet();
@@ -114,6 +118,7 @@ public class UserContactRelatedGroupGenerator extends BaseSystematicFieldGenerat
 
     @Override
     public void generateField(Field field, GeneratorResults generatorResults) {
+        // Can be used outside systematic field group - then additional functionality is not present
         if (!(field.getParent() instanceof FieldGroup) || !((FieldGroup) field.getParent()).isSystematic()) {
             generatorResults.getAndAddPreGeneratedItem();
             return;
@@ -162,21 +167,16 @@ public class UserContactRelatedGroupGenerator extends BaseSystematicFieldGenerat
 
         if (field.getFieldId().equals(DocumentCommonModel.Props.OWNER_NAME.getLocalName())) {
             item.setComponentGenerator("UserSearchGenerator");
-            item.setUsernameProp(DocumentCommonModel.Props.OWNER_ID.toPrefixString(BeanHelper.getNamespaceService()));
+            item.setUsernameProp(DocumentCommonModel.Props.OWNER_ID.toPrefixString(namespaceService));
             item.setEditable(false);
         } else if (field.getFieldId().equals(DocumentCommonModel.Props.SIGNER_NAME.getLocalName())) {
             item.setComponentGenerator("UserSearchGenerator");
-            item.setUsernameProp(DocumentDynamicModel.Props.SIGNER_ID.toPrefixString(BeanHelper.getNamespaceService()));
+            item.setUsernameProp(DocumentDynamicModel.Props.SIGNER_ID.toPrefixString(namespaceService));
             item.setEditable(false);
         }
         // TODO ^^^ SUBSTITUTE_ID
 
         // TODO in view mode, use code from MetadataBlockBean ("owner")
-    }
-
-    @Override
-    public void generateFieldGroup(FieldGroup fieldGroup, GeneratorResults generatorResults) {
-        // Do nothing
     }
 
     // ===============================================================================================================================
@@ -192,7 +192,7 @@ public class UserContactRelatedGroupGenerator extends BaseSystematicFieldGenerat
 
         public void setData(String result) {
             Map<String, Object> docProps = dialogDataProvider.getNode().getProperties();
-            BeanHelper.getUserContactMappingService().setMappedValues(docProps, mapping, new NodeRef(result), false);
+            getUserContactMappingService().setMappedValues(docProps, mapping, new NodeRef(result), false);
         }
 
     }

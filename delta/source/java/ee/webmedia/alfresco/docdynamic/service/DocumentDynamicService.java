@@ -17,7 +17,21 @@ public interface DocumentDynamicService {
 
     String BEAN_NAME = "DocumentDynamicService";
 
-    NodeRef createDraft(String documentTypeId);
+    /**
+     * Create a new document and set default property values according to fully authenticated user.
+     * 
+     * @param documentTypeId
+     * @param parent
+     * @return
+     */
+    NodeRef createNewDocument(String documentTypeId, NodeRef parent);
+
+    /**
+     * Create a new document in drafts and set default property values according to fully authenticated user.
+     * 
+     * @see #createNewDocument(String, NodeRef)
+     */
+    NodeRef createNewDocumentInDrafts(String documentTypeId);
 
     NodeRef copyDocument(DocumentDynamic document, Map<QName, Serializable> overriddenProperties, QName... ignoredProperty);
 

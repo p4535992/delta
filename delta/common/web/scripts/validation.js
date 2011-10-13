@@ -229,7 +229,6 @@ function validateName(control, message, showMessage)
  * 
  * @return true if the date is valid
  */
-
 function validateDate(control, message, showMessage){
    // http://www.regexlib.com/REDetails.aspx?regexp_id=762
    var pattern = getDatePattern();

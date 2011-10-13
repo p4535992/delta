@@ -67,6 +67,7 @@ import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
+import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowBlockItem;
@@ -305,7 +306,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         } catch (InvalidNodeRefException e) {
             final FacesContext context = FacesContext.getCurrentInstance();
             MessageUtil.addErrorMessage(context, "task_finish_error_docDeleted");
-            context.getApplication().getNavigationHandler().handleNavigation(context, null, AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME);
+            WebUtil.navigateTo(AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME, context);
             return;
         } catch (WorkflowChangedException e) {
             log.debug("Finishing task failed", e);

@@ -1,13 +1,6 @@
 package ee.webmedia.alfresco.docdynamic.model;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.Set;
-
 import org.alfresco.service.namespace.QName;
-
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 /**
  * @author Alar Kvell
@@ -52,15 +45,5 @@ public interface DocumentDynamicModel {
         QName PREVIOUS_OWNER_ID = QName.createQName(URI, "previousOwnerId");
         QName SHORT_REG_NUMBER = QName.createQName(URI, "shortRegNumber");
     }
-
-    // TODO XXX FIXME let documentAdminService return pseudo fields and documentConfigService return pseudo fieldDefinitions for these???
-    // in order for template rules to work correctly against these
-    Set<String> FORBIDDEN_FIELD_IDS = Collections.unmodifiableSet(new LinkedHashSet<String>(Arrays.asList(
-            DocumentCommonModel.Props.OWNER_ID.getLocalName() // FIXME DLSeadist ownerId üle tuua DocumentDynamicModel'isse
-            , Props.SIGNER_ID.getLocalName()
-            , Props.SUBSTITUTE_ID.getLocalName()
-            , Props.PREVIOUS_OWNER_ID.getLocalName()
-            , Props.SHORT_REG_NUMBER.getLocalName()
-            )));
 
 }

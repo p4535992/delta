@@ -25,18 +25,15 @@ import org.alfresco.repo.search.impl.lucene.LuceneAnalyser;
 import org.alfresco.repo.search.impl.lucene.LuceneConfig;
 import org.alfresco.repo.search.impl.lucene.analysis.MLTokenDuplicator;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
-
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.LimitBy;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchParameters;
 import org.alfresco.service.cmr.search.SearchService;
-
 import org.alfresco.service.cmr.search.LimitBy;
 import org.alfresco.service.cmr.search.SearchParameters;
 import org.alfresco.service.cmr.search.SearchService;
-
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.apache.commons.lang.StringUtils;
@@ -88,6 +85,10 @@ public abstract class AbstractSearchServiceImpl {
         }
         return SearchUtil.joinQueryPartsOr(queryParts);
     }
+    
+    private SearchParameters buildSearchParameters(String query, boolean limited) {
+        return buildSearchParameters(query, limited ? RESULTS_LIMIT : null);
+    }
 
     protected SearchParameters buildSearchParameters(String query, Integer limit) {
         // build up the search parameters
@@ -104,11 +105,7 @@ public abstract class AbstractSearchServiceImpl {
             sp.setLimitBy(LimitBy.UNLIMITED);
         }
         return sp;
-    }
-    
-    private SearchParameters buildSearchParameters(String query, boolean limited) {
-        return buildSearchParameters(query, limited ? RESULTS_LIMIT : null);
-    }
+    }    
 
     /**
      * Escape symbols and use only 10 first unique words which contain at least 3 characters

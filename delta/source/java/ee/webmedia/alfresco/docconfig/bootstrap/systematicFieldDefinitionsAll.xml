@@ -908,19 +908,6 @@
       </view:properties>
    </docadmin:fieldDefinition>
 
-   <docadmin:fieldDefinition view:childName="docdyn:publishToAdr">
-      <view:properties>
-         <docadmin:fieldId>publishToAdr</docadmin:fieldId>
-         <docadmin:originalFieldId>publishToAdr</docadmin:originalFieldId>
-         <docadmin:name>Avalikku registrisse</docadmin:name>
-         <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
-         <docadmin:changeableIf>ALWAYS_CHANGEABLE</docadmin:changeableIf>
-         <docadmin:classificator>publishToAdr</docadmin:classificator>
-         <docadmin:classificatorDefaultValue>Läheb ADR-i</docadmin:classificatorDefaultValue>
-      </view:properties>
-   </docadmin:fieldDefinition>
-
    <docadmin:fieldDefinition view:childName="docdyn:expenseTypeChoice">
       <view:properties>
          <docadmin:fieldId>expenseTypeChoice</docadmin:fieldId>
@@ -1238,6 +1225,7 @@
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:fieldType>LONG</docadmin:fieldType>
          <docadmin:changeableIf>ALWAYS_NOT_CHANGEABLE</docadmin:changeableIf>
+         <docadmin:changeableIfChangeable>false</docadmin:changeableIfChangeable>
       </view:properties>
    </docadmin:fieldDefinition>
 

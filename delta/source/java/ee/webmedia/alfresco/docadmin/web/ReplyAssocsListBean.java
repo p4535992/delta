@@ -17,7 +17,7 @@ public class ReplyAssocsListBean extends DocTypeAssocsListBean<ReplyAssociation>
 
     @Override
     protected ReplyAssociation getAssocByNodeRef(NodeRef assocNodeRef) {
-        return docTypeDetailsDialog.getDocType().getReplyAssociation().getChildByNodeRef(assocNodeRef);
+        return docTypeDetailsDialog.getDocType().getReplyAssociations().getChildByNodeRef(assocNodeRef);
     }
 
     @Override

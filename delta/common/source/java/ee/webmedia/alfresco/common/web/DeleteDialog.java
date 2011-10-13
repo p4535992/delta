@@ -10,9 +10,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.el.MethodBinding;
 import javax.faces.event.ActionEvent;
 
-import org.alfresco.service.cmr.dictionary.TypeDefinition;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.MapNode;
@@ -95,7 +93,7 @@ public class DeleteDialog extends BaseDialogBean {
     @Override
     public String getContainerTitle() {
         if (containerTitle == null) { // cache - this method is called several times within one request
-            typeNameTranslated = getTypeName(objectType);
+            typeNameTranslated = MessageUtil.getTypeName(objectType);
             containerTitle = MessageUtil.getMessage(DELETE_DIALOG_MSG_PREFIX + "containerTitle", uncapitalize(typeNameTranslated));
         }
         return containerTitle;
@@ -136,24 +134,6 @@ public class DeleteDialog extends BaseDialogBean {
             showConfirm = ActionUtil.getParam(event, "showConfirm", Boolean.class);
         }
     }
-
-    private String getTypeName(QName objectTypeQName) {
-        TypeDefinition typeDef = getDictionaryService().getType(objectTypeQName);
-        String translatedTypeName = typeDef.getTitle();
-        if (StringUtils.isBlank(translatedTypeName)) {
-            throw new IllegalStateException("there should be translation for type " + typeDef
-                    + " in model properties file with key '" + getTranslationKeyForType(objectTypeQName, typeDef) + "'");
-        }
-        return translatedTypeName;
-    }
-
-    private String getTranslationKeyForType(QName objectTypeQName, TypeDefinition typeDef) {
-        NamespaceService namespaceService = getNamespaceService();
-        String model = typeDef.getModel().getName().toPrefixString(namespaceService).replace(":", "_");
-        String type = objectTypeQName.toPrefixString(namespaceService).replace(":", "_");
-        return model + ".type." + type + ".title";
-    }
-
     public Boolean getShowObjectData() {
         return showObjectData;
     }

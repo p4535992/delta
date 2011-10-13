@@ -31,7 +31,7 @@ public class DocumentListImportDialog extends AbstractImportDialog {
     private transient FunctionsService functionsService;
 
     public DocumentListImportDialog() {
-        super(".acp", "docList_import_error_wrongExtension");
+        super("acp", "docList_import_error_wrongExtension");
     }
 
     @Override

@@ -220,18 +220,21 @@ function prependFunction(jQHtmlElem, prependFn, eventAttributeName) {
  * @param status - status of the function/series/volume/case
  */
 function processFnSerVolCaseCloseButton(status){
-   var closeBtn = $jQ("#"+escapeId4JQ("dialog:close-button"));
-   var finishBtn = $jQ("#"+escapeId4JQ("dialog:finish-button"));
-   var closeBtn2 = $jQ("#"+escapeId4JQ("dialog:close-button-2"));
-   var finishBtn2 = $jQ("#"+escapeId4JQ("dialog:finish-button-2"));
-   var finishDisabled = finishBtn.attr("disabled");
+   var closeBtns = getCloseButtons();
+   var finishDisabled = getFinishButtons().attr("disabled");
    if(status != "avatud"){
-      closeBtn.remove();
-      closeBtn2.remove();
+      closeBtns.remove();
    } else if(finishDisabled || status == "avatud"){
-      closeBtn.attr("disabled", finishDisabled);
-      closeBtn2.attr("disabled", finishDisabled);
+      closeBtns.attr("disabled", finishDisabled);
    }
+}
+
+function getFinishButtons() {
+   return $jQ(escapeId4JQ("#dialog:finish-button, #dialog:finish-button-2"));
+}
+
+function getCloseButtons() {
+   return $jQ(escapeId4JQ("#dialog:close-button, #dialog:close-button-2"));
 }
 
 function disableAndRemoveButton(buttonId) {
@@ -288,7 +291,7 @@ var dimensionSelectorDefaultValues = {};
 var lastDimensionQueryDates = {};
 
 function addUIAutocompleter(input, valuesArray, dimensionName, dimensionQueryDate, filterName, linkId){
-   autocompleters.push(function() {  
+   autocompleters.push(function() {
       var inputId = "#"+escapeId4JQ(input);
       var jQInput = $jQ(inputId);
       var dimensionKey = dimensionName;
@@ -332,7 +335,7 @@ function addUIAutocompleter(input, valuesArray, dimensionName, dimensionQueryDat
                   response(data);
                });
             }
-         },         
+         },
          focus: function( event, ui ) {
             return false;
          },
@@ -351,7 +354,7 @@ function addUIAutocompleter(input, valuesArray, dimensionName, dimensionQueryDat
             my: "right top",
             at: "right bottom",
             collision: "none"
-         }         
+         }
       });
       autocomplete.data("uiAutocomplete")._renderItem = function( ul, item ) {
          var renderedItem = $jQ( "<li><a title=\"" + item.description + "\">" + item.value + "<br>" + item.label + "</a></li>" );
@@ -386,7 +389,7 @@ function getDateFromString(dateString){
          }
          if (dateParts[0].charAt(0) == "0"){
             dateParts[0] = dateParts[0].substr(1);
-         }         
+         }
          var date = new Date(parseInt(dateParts[2]), parseInt(dateParts[1]), parseInt(dateParts[0]));
          return date;
       }
@@ -1283,7 +1286,7 @@ function initWithScreenProtected() {
 
    toggleSubrow.init();
    toggleSubrowToggle.init();
-   
+
    jQuery(".task-due-date-date").live('change', processTaskDueDateDate);
    jQuery(".task-due-date-days").live('change', processTaskDueDateDays);
    jQuery(".focus").first().focus();
@@ -1461,7 +1464,7 @@ function processTaskDueDateDate(){
       }
       taskDueDateDays.attr("disabled", "disabled");
    }
-   
+
 }
 
 function processTaskDueDateDays(){
@@ -1476,7 +1479,7 @@ function processTaskDueDateDays(){
       setReadonly(taskDueDateTime, "readonly");
       setReadonly(taskDueDateDate, "readonly");
    }
-   
+
 }
 
 function setReadonly(element, readonly){
@@ -1537,13 +1540,13 @@ function extendCondencePlugin() {
 // 1) once after full page load
 // *) each time an area is replaced inside the page
 function handleHtmlLoaded(context, selects) {
-   
+
    $jQ(".tooltip", context).tooltip({
       track: true
       ,escapeHtml: true
       ,tooltipContainerElemName: "p"
-   });   
-   
+   });
+
    //initialize all expanding textareas
    var expanders = jQuery("textarea[class*=expand]", context);
    expanders.TextAreaExpander();

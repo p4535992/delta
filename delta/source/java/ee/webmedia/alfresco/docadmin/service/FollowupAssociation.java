@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.docadmin.service;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
@@ -16,7 +17,7 @@ public class FollowupAssociation extends AssociationModel {
     private static final long serialVersionUID = 1L;
 
     public FollowupAssociation(BaseObject parentDocType, WmNode node) {
-        super(parentDocType, node);
+        super(checkParentType(parentDocType), node);
     }
 
     public FollowupAssociation(NodeRef parentDocTypeRef, WmNode node) {
@@ -32,4 +33,8 @@ public class FollowupAssociation extends AssociationModel {
         return DocTypeAssocType.FOLLOWUP;
     }
 
+    private static BaseObject checkParentType(BaseObject parent) {
+        Assert.isTrue(parent instanceof DocumentType);
+        return parent;
+    }
 }

@@ -39,7 +39,7 @@ public class SystematicDocumentTypesBootstrap extends AbstractModuleComponent {
     public void executeInternalImpl() {
         Map<String, Pair<String, Pair<Set<String>, Set<QName>>>> systematicDocumentTypes = new HashMap<String, Pair<String, Pair<Set<String>, Set<QName>>>>();
 
-        addSystematicDocumentType(systematicDocumentTypes, "incomingLetter", "Sissetulev kiri",
+        addSystematicDocumentType(systematicDocumentTypes, SystematicDocumentType.INCOMING_LETTER.getName(), "Sissetulev kiri",
                 new String[] {
                         SystematicFieldGroupNames.SENDER_NAME_AND_EMAIL,
                         SystematicFieldGroupNames.SENDER_REG_NUMBER_AND_DATE,
@@ -51,7 +51,7 @@ public class SystematicDocumentTypesBootstrap extends AbstractModuleComponent {
                         DocumentCommonModel.Props.KEYWORDS
         });
 
-        addSystematicDocumentType(systematicDocumentTypes, "outgoingLetter", "Väljaminev kiri",
+        addSystematicDocumentType(systematicDocumentTypes, SystematicDocumentType.OUTGOING_LETTER.getName(), "Väljaminev kiri",
                 new String[] {
                         SystematicFieldGroupNames.SENDER_REG_NUMBER_AND_DATE,
                         SystematicFieldGroupNames.SIGNER,
@@ -63,14 +63,32 @@ public class SystematicDocumentTypesBootstrap extends AbstractModuleComponent {
                         DocumentCommonModel.Props.SEND_DESC_VALUE
          });
 
+        // addSystematicDocumentType(systematicDocumentTypes, SystematicDocumentType.INVOICE.getName(), "Arve", ..., ...);
+
+        addSystematicDocumentType(systematicDocumentTypes, SystematicDocumentType.TRAINING_APPLICATION.getName(), "Koolitustaotlus", null, null);
+
+        addSystematicDocumentType(systematicDocumentTypes, SystematicDocumentType.CONTRACT.getName(), "Leping", null, null);
+
+        // addSystematicDocumentType(systematicDocumentTypes, SystematicDocumentType.VACATION_APPLICATION.getName(), "Puhkuse taotlus",
+        // new String[] { SystematicFieldGroupNames.SUBSTITUTE }, null);
+
+        addSystematicDocumentType(systematicDocumentTypes, SystematicDocumentType.ERRAND_ORDER_ABROAD.getName(), "Välislähetuse korraldus", null, null);
+
+        addSystematicDocumentType(systematicDocumentTypes, SystematicDocumentType.REPORT.getName(), "Aruanne", null, null);
+
         createSystematicDocumentTypes(systematicDocumentTypes);
     }
 
     private void addSystematicDocumentType(Map<String, Pair<String, Pair<Set<String>, Set<QName>>>> systematicDocumentTypes, String documentTypeId, String documentTypeName,
-            String[] fieldGroupDefinitionNames, QName[] fieldDefinitionIds) {
-        systematicDocumentTypes.put(documentTypeId,
-                new Pair<String, Pair<Set<String>, Set<QName>>>(documentTypeName, new Pair<Set<String>, Set<QName>>(new HashSet<String>(Arrays.asList(fieldGroupDefinitionNames)),
-                        new HashSet<QName>(Arrays.asList(fieldDefinitionIds)))));
+            String[] fieldGroupDefinitionNamesArray, QName[] fieldDefinitionIdsArray) {
+        Set<String> fieldGroupDefinitionNames = fieldGroupDefinitionNamesArray == null ? new HashSet<String>() :
+                new HashSet<String>(Arrays.asList(fieldGroupDefinitionNamesArray));
+        Set<QName> fieldDefinitionIds = fieldDefinitionIdsArray == null ? new HashSet<QName>() :
+                new HashSet<QName>(Arrays.asList(fieldDefinitionIdsArray));
+        systematicDocumentTypes.put(
+                documentTypeId,
+                new Pair<String, Pair<Set<String>, Set<QName>>>(documentTypeName,
+                        new Pair<Set<String>, Set<QName>>(fieldGroupDefinitionNames, fieldDefinitionIds)));
     }
 
     private void createSystematicDocumentTypes(Map<String, Pair<String, Pair<Set<String>, Set<QName>>>> systematicDocumentTypes) {

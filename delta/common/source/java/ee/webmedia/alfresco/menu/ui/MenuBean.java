@@ -53,6 +53,7 @@ import ee.webmedia.alfresco.menu.ui.component.UIMenuComponent;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 /**
@@ -102,8 +103,7 @@ public class MenuBean implements Serializable {
      * @param anchor ID of the HTML element in the form of "#my-panel"
      */
     public void scrollToAnchor(String anchor) {
-        FacesContext context = FacesContext.getCurrentInstance();
-        context.getApplication().getNavigationHandler().handleNavigation(context, null, anchor);
+        WebUtil.navigateTo(anchor);
     }
 
     public void resetBreadcrumb() {
@@ -437,12 +437,13 @@ public class MenuBean implements Serializable {
     }
 
     public Menu getMenu() {
-        if (getMenuService().getUpdateCount() != updateCount || menu == null) {
+        int newUpdateCount = getMenuService().getUpdateCount();
+        if (newUpdateCount != updateCount || menu == null) {
             log.debug("Fetching new menu structure from service.");
             reloadMenu(); // XXX - Somehow this makes it work... Although menu structure in service isn't modified.
             menu = getMenuService().getMenu();
             getMenuService().process(menu, false, true);
-            updateCount = getMenuService().getUpdateCount();
+            updateCount = newUpdateCount;
             if (lastLinkId != null && linkNodeRef != null) {
                 updateTree();
             }

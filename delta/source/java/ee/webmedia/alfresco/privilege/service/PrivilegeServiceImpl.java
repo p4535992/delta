@@ -144,8 +144,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
             for (String permission : vo.getPrivilegesToDelete()) {
                 permissionService.deletePermission(manageableRef, userName, permission);
             }
-            boolean deleted = vo.isDeleted();
-            if (deleted) {
+            if (vo.isDeleted()) {
                 it.remove();
             } else {
                 if (vo.hasManageablePrivileges()) {
@@ -154,7 +153,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
                     }
                     Set<String> groups = vo.getGroups();
                     for (String group : groups) {
-                        if (!ignoredGroups.contains(group) && !deleted) {
+                        if (!ignoredGroups.contains(group)) {
                             privUsers.add(userName);
                             privGroups.add(group);
                         }
@@ -164,7 +163,10 @@ public class PrivilegeServiceImpl implements PrivilegeService {
         }
         RepoUtil.validateSameSize(privUsers, privGroups, "users", "groups");
 
-        mergePrivilegeUsersGroupsLists(manageableRef, privUsers, privGroups);
+        Map<QName, Serializable> userGroupMappingProps = new HashMap<QName, Serializable>();
+        userGroupMappingProps.put(PrivilegeModel.Props.USER, privUsers);
+        userGroupMappingProps.put(PrivilegeModel.Props.GROUP, privGroups);
+        nodeService.addProperties(manageableRef, userGroupMappingProps);
     }
 
     @Override

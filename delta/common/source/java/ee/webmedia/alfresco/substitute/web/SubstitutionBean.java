@@ -28,6 +28,7 @@ import ee.webmedia.alfresco.substitute.model.SubstitutionInfo;
 import ee.webmedia.alfresco.substitute.service.SubstituteService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.WebUtil;
 
 /**
  * Bean for handling substitution selection.
@@ -73,7 +74,7 @@ public class SubstitutionBean implements Serializable {
         MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(fc, MenuBean.BEAN_NAME);
         menuBean.reset();
 
-        fc.getApplication().getNavigationHandler().handleNavigation(fc, null, "myalfresco");
+        WebUtil.navigateTo("myalfresco", fc);
         fc.responseComplete();
         try {
             // todo: find better solution

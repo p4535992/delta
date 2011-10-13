@@ -5,6 +5,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +63,14 @@ public class FieldGroup extends FieldAndGroupBase implements MetadataContainer {
         return matchingFields;
     }
 
+    public Map<String, Field> getFieldsByOriginalId() {
+        Map<String, Field> fieldsByOriginalId = new HashMap<String, Field>();
+        for (Field field : getFields()) {
+            fieldsByOriginalId.put(field.getOriginalFieldId(), field);
+        }
+        return fieldsByOriginalId;
+    }
+
     @Override
     public ChildrenList<Field> getMetadata() {
         return getFields();
@@ -83,6 +92,10 @@ public class FieldGroup extends FieldAndGroupBase implements MetadataContainer {
             fieldNames.add(field.getFieldNameWithIdAndType());
         }
         return StringUtils.join(fieldNames, ", ");
+    }
+
+    protected void nextSaveToParent(DocumentTypeVersion newParent) {
+        super.nextSaveToParent(newParent, MetadataItem.class);
     }
 
     // START: properties
@@ -176,6 +189,14 @@ public class FieldGroup extends FieldAndGroupBase implements MetadataContainer {
             }
         }
         return null;
+    }
+
+    public Set<String> getOriginalFieldIds() {
+        HashSet<String> originalFieldIds = new HashSet<String>();
+        for (Field field : getFields()) {
+            originalFieldIds.add(field.getOriginalFieldId());
+        }
+        return originalFieldIds;
     }
 
 }

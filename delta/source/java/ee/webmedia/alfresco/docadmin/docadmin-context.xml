@@ -24,6 +24,7 @@
       <property name="menuService" ref="MenuService" />
       <property name="userService" ref="UserService" />
       <property name="documentSearchService" ref="DocumentSearchService" />
+      <property name="importerService" ref="ImporterService" />
    </bean>
 
    <bean id="DocumentAdminService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -82,6 +83,19 @@
       </property>
    </bean>
 
+   <!-- Fix for task 179069 in already existing data -->
+   <bean id="fieldDefinitionDocTypesUpdater" class="ee.webmedia.alfresco.docadmin.bootstrap.FieldDefinitionDocTypesUpdater" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="docTypeSpacesBootstrap" />
+            <ref bean="fieldDefinitionsBootstrap" />
+         </list>
+      </property>
+      <property name="documentAdminService" ref="DocumentAdminService" />
+   </bean>
+
    <!-- START: web beans: -->
 
    <bean id="DocTypeListDialog" class="ee.webmedia.alfresco.docadmin.web.DocTypeListDialog" scope="session" />
@@ -116,6 +130,8 @@
    </bean>
 
    <bean id="FieldGroupFieldsListBean" class="ee.webmedia.alfresco.docadmin.web.FieldsListBean" scope="session" />
+
+   <bean id="DocumentTypesImportDialog" class="ee.webmedia.alfresco.docadmin.web.DocumentTypesImportDialog" scope="session" />
 
    <!-- Component generator -->
    <bean id="FieldGroupInfoGenerator" class="ee.webmedia.alfresco.common.propertysheet.generator.MessageSeparatorGenerator" scope="request">

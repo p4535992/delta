@@ -46,6 +46,10 @@ public abstract class AssociationModel extends BaseObject {
         return QName.createQName(DocumentAdminModel.URI, getDocType());
     }
 
+    public void nextSaveToParent(DocumentType documentType) {
+        nextSaveToParent(documentType, FollowupAssociation.class);
+    }
+
     public abstract DocTypeAssocType getAssociationType();
 
     public ChildrenList<FieldMapping> getFieldMappings() {

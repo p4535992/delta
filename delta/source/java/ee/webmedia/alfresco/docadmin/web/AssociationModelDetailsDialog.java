@@ -60,6 +60,7 @@ public class AssociationModelDetailsDialog extends BaseDialogBean {
             // replace docType in memory with fresh copy from repo
             // so that added assocs would be visible when navigating back
             BeanHelper.getDocTypeDetailsDialog().refreshDocType();
+            MessageUtil.addInfoMessage("save_success");
         } else {
             isFinished = false;
             return null;

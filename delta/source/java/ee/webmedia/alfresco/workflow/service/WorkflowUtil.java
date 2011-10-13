@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.utils.RepoUtil;
@@ -25,7 +26,7 @@ public class WorkflowUtil {
      * denotes that BaseWorkflowObject (task or information/opinion workflow) temporarily having this property is not saved,
      * but generated for delegating original assignment task to other people
      */
-    private static final QName TMP_ADDED_BY_DELEGATION = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "addedByDelegation");
+    private static final QName TMP_ADDED_BY_DELEGATION = RepoUtil.createTransientProp("addedByDelegation");
 
     // -------------
     // Checks that are required only on memory object
@@ -507,6 +508,47 @@ public class WorkflowUtil {
 
     public static void markAsGeneratedByDelegation(BaseWorkflowObject workflowObject) {
         workflowObject.getNode().getProperties().put(TMP_ADDED_BY_DELEGATION.toString(), Boolean.TRUE);
+    }
+
+    /**
+     * Controls if there are tasks with same type and ownerId, except tasks with status NEW or UNFINISHED
+     * 
+     * @param compoundWorkflow
+     * @return
+     */
+    public static Pair<String, QName> hasSameTask(CompoundWorkflow compoundWorkflow) {
+        Pair<String, QName> ownerIdTypePair = null;
+        List<Task> thisTasks = new ArrayList<Task>();
+        for (Workflow wf : compoundWorkflow.getWorkflows()) {
+            thisTasks.addAll(wf.getTasks());
+        }
+        if (thisTasks.isEmpty()) {
+            return null;
+        }
+        for (Task taskForCheck : thisTasks) {
+            for (CompoundWorkflow compWf : compoundWorkflow.getOtherCompoundWorkflows()) {
+                if (compWf.getStatus().equals(Status.NEW)) {
+                    continue;
+                }
+                for (Workflow workflow : compWf.getWorkflows()) {
+                    if (workflow.getStatus().equals(Status.NEW)) {
+                        continue;
+                    }
+                    for (Task task : workflow.getTasks()) {
+                        String ownerId = task.getOwnerId();
+                        QName type = task.getType();
+                        String status = task.getStatus();
+                        if (ownerId != null && ownerId.equals(taskForCheck.getOwnerId()) && type.equals(taskForCheck.getType())
+                                && !status.equals(Status.NEW) && !status.equals(Status.UNFINISHED)) {
+                            ownerIdTypePair = new Pair<String, QName>(ownerId, type);
+                            return ownerIdTypePair;
+                        }
+                    }
+                }
+            }
+        }
+
+        return ownerIdTypePair;
     }
 
     public static Task createTaskCopy(Task myTask) {

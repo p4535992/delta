@@ -28,6 +28,7 @@
       <constraint name="docadmin:onlyLettersConstraint" type="REGEX">
          <parameter name="expression"><value><![CDATA[^[a-zA-Z]+$]]></value></parameter>
          <parameter name="requiresMatch"><value>true</value></parameter>
+         <parameter name="clientSideValidationDisabled"><value>true</value></parameter><!-- webclient conf adds custom validators (unfortunately slightly different for each of those fields) -->
       </constraint>
 
       <!-- TODO similar constraint for fieldId, but -->

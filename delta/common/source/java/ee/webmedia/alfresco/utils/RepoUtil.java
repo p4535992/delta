@@ -44,12 +44,12 @@ import ee.webmedia.alfresco.document.service.DocumentPropertySets;
  */
 public class RepoUtil {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(RepoUtil.class);
-
-    public static final String TRANSIENT_PROPS_NAMESPACE = "temp";
+    /** Namespace used for properties that shouldn't be saved to repository */
+    private static final String TRANSIENT_PROPS_NAMESPACE = "temp";
     private static final StoreRef NOT_SAVED_STORE = new StoreRef("NOT_SAVED", "NOT_SAVED");
 
     public static boolean isSystemProperty(QName propName) {
-        return StringUtils.equals(TRANSIENT_PROPS_NAMESPACE, propName.getNamespaceURI())
+        return isTransientProp(propName)
                 || NamespaceService.SYSTEM_MODEL_1_0_URI.equals(propName.getNamespaceURI()) || ContentModel.PROP_NAME.equals(propName);
     }
 
@@ -58,8 +58,16 @@ public class RepoUtil {
                 || NamespaceService.SYSTEM_MODEL_1_0_URI.equals(aspectName.getNamespaceURI());
     }
 
+    /**
+     * @param localName
+     * @return property name that can be used to store property, that must not be saved to repository
+     */
     public static QName createTransientProp(String localName) {
         return QName.createQName(TRANSIENT_PROPS_NAMESPACE, localName);
+    }
+
+    public static boolean isTransientProp(QName propName) {
+        return StringUtils.equals(TRANSIENT_PROPS_NAMESPACE, propName.getNamespaceURI());
     }
 
     /**

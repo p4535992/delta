@@ -88,16 +88,4 @@
       <property name="documentAdminService" ref="DocumentAdminService" />
    </bean>
 
-   <!-- Changes shortcut to menuItemId (CL task 158558) -->
-   <bean id="shortcutToMenuItemIdUpdater" class="ee.webmedia.alfresco.menu.bootstrap.ShortcutToMenuItemIdUpdater" parent="abstractNodeUpdater">
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="documentTypeSpacesBootstrap2" />
-         </list>
-      </property>
-      <property name="menuService" ref="menuService" />
-   </bean> 
-
 </beans>

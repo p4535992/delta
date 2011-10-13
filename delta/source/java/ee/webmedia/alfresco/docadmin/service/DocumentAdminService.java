@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.docadmin.service;
 
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -14,6 +15,10 @@ import org.alfresco.util.Pair;
 public interface DocumentAdminService {
 
     String BEAN_NAME = "DocumentAdminService";
+
+    void registerForbiddenFieldId(String forbiddenFieldId);
+
+    Set<String> getForbiddenFieldIds();
 
     /**
      * @return all document type objects from repository
@@ -40,6 +45,8 @@ public interface DocumentAdminService {
 
     Map<String/* docTypeId */, String/* docTypeName */> getDocumentTypeNames(Boolean used);
 
+    NodeRef getDocumentTypesRoot();
+
     /**
      * Update properties or save new document type.
      * 
@@ -54,11 +61,15 @@ public interface DocumentAdminService {
 
     void deleteDocumentType(NodeRef docTypeRef);
 
+    void importDocumentTypes(File xmlFile);
+
     <F extends Field> F saveOrUpdateField(F originalFieldDef);
 
     List<FieldDefinition> saveOrUpdateFieldDefinitions(List<FieldDefinition> fieldDefinitions);
 
     List<FieldDefinition> getFieldDefinitions();
+
+    Map<String, FieldDefinition> getFieldDefinitionsByFieldIds();
 
     List<FieldDefinition> getFieldDefinitions(List<String> fieldDefinitionIds);
 

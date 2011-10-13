@@ -17,37 +17,26 @@ import javax.faces.event.ActionEvent;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
-import org.alfresco.service.cmr.security.PermissionService;
 
+import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.users.UsersBeanProperties;
 import org.alfresco.web.bean.users.UsersDialog;
-
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.StringUtils;
-import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
-
 import ee.webmedia.alfresco.document.einvoice.model.DimensionValue;
 import ee.webmedia.alfresco.document.einvoice.model.Dimensions;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
-import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
-
 import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.substitute.web.SubstituteListDialog;
 import ee.webmedia.alfresco.utils.ActionUtil;
-
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
-
-import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.utils.TextUtil;
-
 
 public class UserDetailsDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
@@ -196,6 +185,7 @@ public class UserDetailsDialog extends BaseDialogBean {
                 (String) props.get(ContentModel.PROP_VILLAGE), (String) props.get(ContentModel.PROP_MUNICIPALITY), (String) props.get(ContentModel.PROP_POSTAL_CODE),
                 (String) props.get(ContentModel.PROP_COUNTY))));
         props.put(ContentModel.PROP_RELATED_FUNDS_CENTER.toString(), relatedFundsCenters);
+
         StringBuilder sb = new StringBuilder("");
 
         int dimensionIndex = 0;

@@ -71,7 +71,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     private BeanFactory beanFactory;
 
     @Override
-    public NodeRef createDraft(String documentTypeId) {
+    public NodeRef createNewDocument(String documentTypeId, NodeRef parent) {
         QName type = DocumentCommonModel.Types.DOCUMENT;
         DocumentType documentType = documentAdminService.getDocumentType(documentTypeId);
 
@@ -80,6 +80,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         DocumentTypeVersion docVer = documentType.getLatestDocumentTypeVersion();
         props.put(Props.OBJECT_TYPE_VERSION_NR, docVer.getVersionNr());
 
+        // TODO temporary
         props.put(DocumentCommonModel.Props.DOC_STATUS, DocumentStatus.WORKING.getValueName()); // / FIXME should be handled by setDefaultPropertyValues
 
         // LinkedHashSet<QName> aspects = generalService.getDefaultAspects(type);
@@ -97,8 +98,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         // documentService.callbackAspectProperiesModifier(docAspect, props);
         // }
 
-        NodeRef drafts = documentService.getDrafts();
-        NodeRef docRef = nodeService.createNode(drafts, DocumentCommonModel.Assocs.DOCUMENT, DocumentCommonModel.Assocs.DOCUMENT, type,
+        NodeRef docRef = nodeService.createNode(parent, DocumentCommonModel.Assocs.DOCUMENT, DocumentCommonModel.Assocs.DOCUMENT, type,
                 props).getChildRef();
 
         // for (QName aspect : aspects) {
@@ -116,8 +116,14 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     }
 
     @Override
+    public NodeRef createNewDocumentInDrafts(String documentTypeId) {
+        NodeRef drafts = documentService.getDrafts();
+        return createNewDocument(documentTypeId, drafts);
+    }
+
+    @Override
     public NodeRef copyDocument(DocumentDynamic document, Map<QName, Serializable> overriddenProperties, QName... ignoredProperty) {
-        NodeRef draftRef = createDraft(document.getDocumentTypeId());
+        NodeRef draftRef = createNewDocumentInDrafts(document.getDocumentTypeId());
         Map<QName, Serializable> properties = RepoUtil.toQNameProperties(document.getNode().getProperties(), true);
         // Override properties if needed
         if (overriddenProperties != null) {

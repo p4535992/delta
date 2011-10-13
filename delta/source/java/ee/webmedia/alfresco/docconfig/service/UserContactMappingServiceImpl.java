@@ -22,24 +22,13 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
-import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 
 public class UserContactMappingServiceImpl implements UserContactMappingService {
 
     private final Map<String, Map<String, UserContactMappingCode>> mappings = new HashMap<String, Map<String, UserContactMappingCode>>();
-
-    private static final Map<String, String> mappingDependencies = new HashMap<String, String>();
-    static {
-        // TODO add by registering
-
-        // hidden fields can only be used in "RelatedGroup" generator, not in "Table" generator
-        mappingDependencies.put(DocumentCommonModel.Props.OWNER_NAME.getLocalName(), DocumentCommonModel.Props.OWNER_ID.getLocalName());
-        mappingDependencies.put(DocumentCommonModel.Props.SIGNER_NAME.getLocalName(), DocumentDynamicModel.Props.SIGNER_ID.getLocalName());
-        mappingDependencies.put(DocumentDynamicModel.Props.SUBSTITUTE_NAME.getLocalName(), DocumentDynamicModel.Props.SUBSTITUTE_ID.getLocalName());
-    }
+    private final Map<String, String> mappingDependencies = new HashMap<String, String>();
 
     private DictionaryService dictionaryService;
     private NamespaceService namespaceService;
@@ -54,6 +43,15 @@ public class UserContactMappingServiceImpl implements UserContactMappingService 
             Assert.isTrue(!mappings.containsKey(entry.getKey()));
             mappings.put(entry.getKey(), mapping);
         }
+    }
+
+    // TODO currently hidden fields can only be used in "RelatedGroup" generator, not in "Table" generator
+    @Override
+    public void registerMappingDependency(String hiddenFieldId, String fieldIdAndOriginalFieldId) {
+        Assert.notNull(hiddenFieldId);
+        Assert.notNull(fieldIdAndOriginalFieldId);
+        Assert.isTrue(!mappingDependencies.containsKey(hiddenFieldId));
+        mappingDependencies.put(hiddenFieldId, fieldIdAndOriginalFieldId);
     }
 
     @Override
@@ -77,11 +75,13 @@ public class UserContactMappingServiceImpl implements UserContactMappingService 
 
         if (group.isSystematic()) {
             for (Entry<String, String> entry : mappingDependencies.entrySet()) {
-                Field foundField = group.getFieldById(entry.getKey());
+                String fieldIdAndOriginalFieldId = entry.getValue();
+                Field foundField = group.getFieldById(fieldIdAndOriginalFieldId);
                 if (foundField != null && foundField.getFieldId().equals(foundField.getOriginalFieldId())) {
-                    UserContactMappingCode mappingCode = originalFieldIdsMapping.get(entry.getValue());
+                    String hiddenFieldId = entry.getKey();
+                    UserContactMappingCode mappingCode = originalFieldIdsMapping.get(hiddenFieldId);
                     Assert.notNull(mappingCode);
-                    fieldIdsMapping.put(Field.getQName(entry.getValue()), mappingCode);
+                    fieldIdsMapping.put(Field.getQName(hiddenFieldId), mappingCode);
                 }
             }
         }

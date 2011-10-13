@@ -66,10 +66,10 @@ public class TestingForDeveloperBean implements Serializable {
         deleteBootstrap(simdhsModule, "systematicFieldDefinitionsBootstrap1");
         deleteBootstrap(simdhsModule, "systematicFieldDefinitionsBootstrap2");
         deleteBootstrap(simdhsModule, "systematicFieldGroupDefinitions1FixBootstrap");
-        // deleteBootstrap(simdhsModule, "systematicDocumentTypesBootstrap");
+        deleteBootstrap(simdhsModule, "systematicDocumentTypesBootstrap");
         deleteChildren(getNodeRef("/docadmin:fieldDefinitions"));
         deleteChildren(getNodeRef("/docadmin:fieldGroupDefinitions"));
-        // deleteChildren(getNodeRef("/docadmin:documentTypes"));
+        deleteChildren(getNodeRef("/docadmin:documentTypes"));
     }
 
     private void deleteBootstrap(String moduleName, String bootstrapName) {

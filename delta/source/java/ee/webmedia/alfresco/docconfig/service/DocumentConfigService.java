@@ -5,9 +5,11 @@ import java.util.Set;
 
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.classificator.constant.FieldType;
+import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docconfig.generator.FieldGenerator;
 
 /**
@@ -25,10 +27,19 @@ public interface DocumentConfigService {
 
     PropertyDefinition getPropertyDefinition(Node node, QName property);
 
-    Map<QName, PropertyDefinition> getPropertyDefinitions(Node documentDynamicNode);
+    /**
+     * Get property definition and field pairs that are declared for a document.
+     * A pair always has non-null propertyDefinition; but field may be null, if it is a special hidden field.
+     * 
+     * @param documentDynamicNode
+     * @return
+     */
+    Map<String, Pair<PropertyDefinition, Field>> getPropertyDefinitions(Node documentDynamicNode);
 
     void setDefaultPropertyValues(Node documentDynamicNode);
 
     void registerMultiValuedOverrideInSystematicGroup(Set<String> originalFieldIds);
+
+    void registerHiddenFieldDependency(String hiddenFieldId, String fieldIdAndOriginalFieldId);
 
 }

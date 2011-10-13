@@ -6,10 +6,6 @@
       <managed-bean-name>RegisterDetailsDialog</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.register.web.RegisterDetailsDialog</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
-      <managed-property>
-         <property-name>registerService</property-name>
-         <value>#{RegisterService}</value>
-      </managed-property>
    </managed-bean>
 
    <managed-bean>

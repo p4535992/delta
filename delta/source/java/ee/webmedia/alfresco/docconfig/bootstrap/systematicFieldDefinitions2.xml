@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:docadmin="http://alfresco.webmedia.ee/model/document/admin/1.0" xmlns:docdyn="http://alfresco.webmedia.ee/model/document/dynamic/1.0">
+
+   <docadmin:fieldDefinition view:childName="docdyn:publishToAdr">
+      <view:properties>
+         <docadmin:fieldId>publishToAdr</docadmin:fieldId>
+         <docadmin:originalFieldId>publishToAdr</docadmin:originalFieldId>
+         <docadmin:name>Avalikku registrisse</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
+         <docadmin:changeableIf>ALWAYS_CHANGEABLE</docadmin:changeableIf>
+         <docadmin:classificator>publishToAdr</docadmin:classificator>
+         <docadmin:classificatorDefaultValue>Läheb ADR-i</docadmin:classificatorDefaultValue>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+</view:view>

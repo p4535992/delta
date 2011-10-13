@@ -55,7 +55,17 @@ public final class FileUploadBean implements Serializable
    private List<String> filePath;
    private List<String> contentType;
    private boolean multiple = false;
-   
+
+   private boolean problematicFile = false;
+
+   public void setProblematicFile(boolean problematicFile) {
+       this.problematicFile = problematicFile;
+   }
+
+   public boolean isProblematicFile() {
+       return problematicFile;
+   }
+
    /**
     * @return Returns the file
     */
@@ -74,6 +84,7 @@ public final class FileUploadBean implements Serializable
     */
    public void setFile(File file)
    {
+        setProblematicFile(false);
         if(this.file == null) 
             this.file = new ArrayList<File>();
         
@@ -89,6 +100,7 @@ public final class FileUploadBean implements Serializable
    }
 
    public void setFile(List<File> file) {
+       setProblematicFile(false);
        this.file = file;
    }
 

@@ -45,6 +45,7 @@
       <property name="generalService" ref="GeneralService" />
       <property name="nodeService" ref="NodeService" />
       <property name="dataSource" ref="dataSource" />
+      <property name="valueEditable" value="${conf.register-value.editable}" />
    </bean>
 
    <bean id="RegisterService" class="org.springframework.aop.framework.ProxyFactoryBean">

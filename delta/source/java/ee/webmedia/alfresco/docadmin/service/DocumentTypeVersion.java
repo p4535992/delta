@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.docadmin.service;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -34,6 +35,11 @@ public class DocumentTypeVersion extends BaseObject implements MetadataContainer
     @Override
     public DocumentType getParent() {
         return (DocumentType) super.getParent();
+    }
+
+    @Override
+    public void resetParent() {
+        super.resetParent();
     }
 
     @Override
@@ -150,6 +156,15 @@ public class DocumentTypeVersion extends BaseObject implements MetadataContainer
             }
         }
         return fields;
+    }
+
+    public Map<String, Field> getFieldsDeeplyById() {
+        List<Field> fieldsOfOtherDocType = getFieldsDeeply();
+        HashMap<String, Field> tmp = new HashMap<String, Field>(fieldsOfOtherDocType.size());
+        for (Field field : fieldsOfOtherDocType) {
+            tmp.put(field.getFieldId(), field);
+        }
+        return tmp;
     }
 
     List<String> getRemovedFieldIdsDeeply() {

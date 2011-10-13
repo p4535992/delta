@@ -24,8 +24,15 @@ public abstract class AbstractImportDialog extends BaseDialogBean {
     private final String acceptedFileExtension;
     private final String wrongExtensionMsg;
 
+    protected AbstractImportDialog(String acceptedFileExtension) {
+        this(acceptedFileExtension, null);
+    }
+
     protected AbstractImportDialog(String acceptedFileExtension, String wrongExtensionMsg) {
         this.acceptedFileExtension = acceptedFileExtension;
+        if (wrongExtensionMsg == null) {
+            wrongExtensionMsg = "import_error_wrongExtension";
+        }
         this.wrongExtensionMsg = wrongExtensionMsg;
     }
 
@@ -50,20 +57,26 @@ public abstract class AbstractImportDialog extends BaseDialogBean {
     public String reset() {
         fileName = null;
         clearUpload();
-        return "dialog:close";
+        return getDefaultFinishOutcome();
     }
 
-    protected void clearUpload() {
+    private void clearUpload() {
         if (file != null) {
             file.delete();
         }
         file = null;
         // remove the file upload bean from the session
         FacesContext ctx = FacesContext.getCurrentInstance();
-        ctx.getExternalContext().getSessionMap().remove(FileUploadBean.FILE_UPLOAD_BEAN_NAME);
+        FileUploadBean fileUploadBean = getFileUploadBean();
+        if (fileUploadBean != null) {
+            fileUploadBean.setProblematicFile(false);
+            ctx.getExternalContext().getSessionMap().remove(FileUploadBean.FILE_UPLOAD_BEAN_NAME);
+        }
     }
 
-    public abstract String getFileUploadSuccessMsg();
+    public String getFileUploadSuccessMsg() {
+        return MessageUtil.getMessage("file_upload_success", getFileUploadBean().getFileName());
+    }
 
     // START: getters / setters
 
@@ -74,12 +87,18 @@ public abstract class AbstractImportDialog extends BaseDialogBean {
         // try and retrieve the file and filename from the file upload bean
         // representing the file we previously uploaded.
         FileUploadBean fileBean = getFileUploadBean();
-        if (fileBean != null) {
+        if (fileBean != null && !fileBean.isProblematicFile()) {
             file = fileBean.getFile();
-            final String fileName = fileBean.getFileName();
-            if (isCorrectExtension(fileName)) {
-                this.fileName = fileName;
+            if (file == null) {
+                fileName = null;
+            } else {
+                final String uploadedFileName = fileBean.getFileName();
+                if (isCorrectExtension(uploadedFileName)) {
+                    fileName = uploadedFileName;
+                }
             }
+        } else {
+            fileName = null;
         }
         return fileName;
     }
@@ -92,7 +111,7 @@ public abstract class AbstractImportDialog extends BaseDialogBean {
             return;
         }
         if (!isCorrectExtension(fileName)) {
-            MessageUtil.addErrorMessage(wrongExtensionMsg, getFileName());
+            MessageUtil.addErrorMessage(wrongExtensionMsg, acceptedFileExtension, getFileName());
             clearUpload(); // Do this to avoid FileUploadBean multiple file mode
             this.fileName = null;
             return;
@@ -100,8 +119,8 @@ public abstract class AbstractImportDialog extends BaseDialogBean {
         this.fileName = fileName;
     }
 
-    protected boolean isCorrectExtension(String fileName) {
-        return StringUtils.endsWith(fileName, acceptedFileExtension);
+    protected boolean isCorrectExtension(String fName) {
+        return StringUtils.endsWith(fName, "." + acceptedFileExtension);
     }
 
     // END: getters / setters

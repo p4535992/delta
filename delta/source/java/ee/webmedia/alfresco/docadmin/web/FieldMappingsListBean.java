@@ -48,7 +48,7 @@ public class FieldMappingsListBean implements Serializable {
     private List<FieldMappingListItem> listItems;
     private Map<String/* fieldId */, Field> relatedDocTypeFieldsById;
 
-    public void init(AssociationModel assocModel) {
+    void init(AssociationModel assocModel) {
         reset();
         associationModel = assocModel;
     }
@@ -59,7 +59,7 @@ public class FieldMappingsListBean implements Serializable {
         relatedDocTypeFieldsById = null;
     }
 
-    public void save() {
+    void save() {
         ChildrenList<FieldMapping> fieldMappings = associationModel.getFieldMappings();
         for (FieldMappingListItem listItem : listItems) {
             String toField = listItem.getToField();
@@ -78,7 +78,7 @@ public class FieldMappingsListBean implements Serializable {
         }
     }
 
-    public boolean validate() {
+    boolean validate() {
         Set<String> usedFields = new HashSet<String>(listItems.size());
         Set<String> duplicateFields = new LinkedHashSet<String>(4);
         for (FieldMappingListItem listItem : listItems) {
@@ -110,11 +110,7 @@ public class FieldMappingsListBean implements Serializable {
             String relatedDocTypeId = associationModel.getDocType();
             if (StringUtils.isNotBlank(relatedDocTypeId)) {
                 DocumentType relatedDocType = BeanHelper.getDocumentAdminService().getDocumentType(relatedDocTypeId);
-                List<Field> fieldsOfOtherDocType = relatedDocType.getLatestDocumentTypeVersion().getFieldsDeeply();
-                relatedDocTypeFieldsById = new HashMap<String, Field>(fieldsOfOtherDocType.size());
-                for (Field field : fieldsOfOtherDocType) {
-                    relatedDocTypeFieldsById.put(field.getFieldId(), field);
-                }
+                relatedDocTypeFieldsById = relatedDocType.getLatestDocumentTypeVersion().getFieldsDeeplyById();
             }
             List<Field> allFields = associationModel.getParent().getLatestDocumentTypeVersion().getFieldsDeeply();
             List<FieldMapping> persistedFieldMappings = associationModel.getFieldMappings();

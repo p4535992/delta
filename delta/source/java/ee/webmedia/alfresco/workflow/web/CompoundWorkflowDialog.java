@@ -38,6 +38,7 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.Confirmable;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
@@ -56,6 +57,7 @@ import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
+import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.workflow.exception.WorkflowActiveResponsibleTaskException;
 import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.model.Status;
@@ -65,6 +67,8 @@ import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Task.Action;
 import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
+import ee.webmedia.alfresco.workflow.service.WorkflowServiceImpl;
+import ee.webmedia.alfresco.workflow.service.WorkflowServiceImpl.DialogAction;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 import ee.webmedia.alfresco.workflow.web.TaskListCommentComponent.CommentEvent;
@@ -75,7 +79,7 @@ import ee.webmedia.alfresco.workflow.web.evaluator.WorkflowNewEvaluator;
  * 
  * @author Erko Hansar
  */
-public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
+public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog implements Confirmable {
 
     private static final String CONTINUE_VALIDATED_WORKFLOW = "continueValidatedWorkflow";
     private static final String START_VALIDATED_WORKFLOW = "startValidatedWorkflow";
@@ -118,31 +122,51 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         boolean checkFinished = WorkflowUtil.isStatus(compoundWorkflow, Status.IN_PROGRESS);
         if (validate(context, checkFinished, false, false)) {
-            try {
-                removeEmptyTasks();
-                getWorkflowService().saveCompoundWorkflow(compoundWorkflow);
-                if (isUnsavedWorkFlow) {
-                    getDocumentLogService().addDocumentLog(compoundWorkflow.getParent(), MessageUtil.getMessage("document_log_status_workflow"));
-                    isUnsavedWorkFlow = false;
-                }
-                resetState();
-                MessageUtil.addInfoMessage("save_success");
+            if (!askConfirmIfHasSameTask(MessageUtil.getMessage("workflow_compound_save"), DialogAction.SAVING)) {
+                saveCompWorkflow();
                 return outcome;
-            } catch (NodeLockedException e) {
-                log.debug("Compound workflow action failed: document locked!", e);
-                String lockedBy = getUserService().getUserFullName((String) getNodeService().getProperty(e.getNodeRef(), ContentModel.PROP_LOCK_OWNER));
-                MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "workflow_compound_save_failed_docLocked", lockedBy);
-            } catch (WorkflowChangedException e) {
-                handleException(e, null);
-            } catch (WorkflowActiveResponsibleTaskException e) {
-                log.debug("Compound workflow action failed: more than one active responsible task!", e);
-                MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "workflow_compound_save_failed_responsible");
-            } catch (Exception e) {
-                throw e;
             }
         }
-        super.isFinished = false;
         return null;
+    }
+
+    private boolean askConfirmIfHasSameTask(String title, DialogAction requiredAction) {
+        Pair<String, QName> hasSameTask = WorkflowUtil.hasSameTask(compoundWorkflow);
+        if (hasSameTask != null) {
+            String typeName = MessageUtil.getTypeName(hasSameTask.getSecond());
+            String message = MessageUtil.getMessage("workflow_compound_confirm_same_task", hasSameTask.getFirst(),
+                    typeName);
+            BeanHelper.getConfirmDialog().setupConfirmDialog(this, message, title, requiredAction);
+            isFinished = false;
+            WebUtil.navigateTo("dialog:confirmDialog", null);
+            return true;
+        }
+        return false;
+    }
+
+    private boolean saveCompWorkflow() {
+        try {
+            removeEmptyTasks();
+            getWorkflowService().saveCompoundWorkflow(compoundWorkflow);
+            if (isUnsavedWorkFlow) {
+                getDocumentLogService().addDocumentLog(compoundWorkflow.getParent(), MessageUtil.getMessage("document_log_status_workflow"));
+                isUnsavedWorkFlow = false;
+            }
+            MessageUtil.addInfoMessage("save_success");
+            return true;
+        } catch (NodeLockedException e) {
+            log.debug("Compound workflow action failed: document locked!", e);
+            String lockedBy = getUserService().getUserFullName((String) getNodeService().getProperty(e.getNodeRef(), ContentModel.PROP_LOCK_OWNER));
+            MessageUtil.addErrorMessage("workflow_compound_save_failed_docLocked", lockedBy);
+        } catch (WorkflowChangedException e) {
+            handleException(e, null);
+        } catch (WorkflowActiveResponsibleTaskException e) {
+            log.debug("Compound workflow action failed: more than one active responsible task!", e);
+            MessageUtil.addErrorMessage("workflow_compound_save_failed_responsible");
+        } catch (RuntimeException e) {
+            throw e;
+        }
+        return false;
     }
 
     /**
@@ -155,7 +179,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         if (!getNodeService().exists(nodeRef)) {
             final FacesContext context = FacesContext.getCurrentInstance();
             MessageUtil.addErrorMessage(context, "workflow_compound_edit_error_docDeleted");
-            context.getApplication().getNavigationHandler().handleNavigation(context, null, getDefaultCancelOutcome());
+            WebUtil.navigateTo(getDefaultCancelOutcome(), context);
             return;
         }
         compoundWorkflow = getWorkflowService().getCompoundWorkflow(nodeRef);
@@ -213,7 +237,10 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
                 updatePanelGroup(confirmationMessages, START_VALIDATED_WORKFLOW);
                 return;
             }
-            startValidatedWorkflow(null);
+            if (!askConfirmIfHasSameTask(MessageUtil.getMessage("workflow_compound_starting"), DialogAction.STARTING)) {
+                startValidatedWorkflow(null);
+            }
+
         }
     }
 
@@ -314,7 +341,10 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
                     updatePanelGroup(confirmationMessages, CONTINUE_VALIDATED_WORKFLOW);
                     return;
                 }
-                continueValidatedWorkflow(true);
+                if (!askConfirmIfHasSameTask(MessageUtil.getMessage("workflow_compound_continuing"), DialogAction.CONTINUING)) {
+                    continueValidatedWorkflow(true);
+                }
+
             }
         } catch (Exception e) {
             handleException(e, "workflow_compound_continue_workflow_failed");
@@ -582,7 +612,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
             MessageUtil.addErrorMessage(context, messages);
         } else if (e instanceof InvalidNodeRefException) {
             MessageUtil.addErrorMessage(context, "workflow_task_save_failed_docDeleted");
-            context.getApplication().getNavigationHandler().handleNavigation(context, null, AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME);
+            WebUtil.navigateTo(AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME, context);
         } else if (e instanceof UnableToPerformException) {
             MessageUtil.addStatusMessage(context, (UnableToPerformException) e);
         } else {
@@ -869,4 +899,20 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         return missingOwnerMsgKey;
     }
 
+    @Override
+    public void afterConfirmationAction(Object action) {
+        switch ((WorkflowServiceImpl.DialogAction) action) {
+        case SAVING:
+            if (saveCompWorkflow()) {
+                resetState();
+                WebUtil.navigateTo(getDefaultFinishOutcome());
+            }
+            break;
+        case STARTING:
+            startValidatedWorkflow(null);
+            break;
+        case CONTINUING:
+            continueValidatedWorkflow(true);
+        }
+    }
 }

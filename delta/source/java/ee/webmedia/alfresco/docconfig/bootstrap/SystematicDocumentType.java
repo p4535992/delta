@@ -5,8 +5,22 @@ package ee.webmedia.alfresco.docconfig.bootstrap;
  */
 public enum SystematicDocumentType {
 
+    /** Sissetulev kiri */
+    INCOMING_LETTER("incomingLetter"),
+    /** Väljaminev kiri */
+    OUTGOING_LETTER("outgoingLetter"),
     /** Arve */
-    INVOICE("invoice");
+    INVOICE("invoice"),
+    /** Koolitustaotlus */
+    TRAINING_APPLICATION("trainingApplication"),
+    /** Leping */
+    CONTRACT("contract"),
+    /** Puhkuse taotlus */
+    VACATION_APPLICATION("vacationApplication"),
+    /** Välislähetuse korraldus */
+    ERRAND_ORDER_ABROAD("errandOrderAbroad"),
+    /** Aruanne */
+    REPORT("report");
 
     private String name;
 

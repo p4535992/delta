@@ -12,6 +12,9 @@ import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
 
 import org.alfresco.i18n.I18NUtil;
+import org.alfresco.service.cmr.dictionary.TypeDefinition;
+import org.alfresco.service.namespace.NamespaceService;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.app.ResourceBundleWrapper;
@@ -20,6 +23,7 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 
 /**
@@ -312,4 +316,20 @@ public class MessageUtil {
         return getMessage("constant_" + c.getClass().getCanonicalName() + "_" + c.name());
     }
 
+    public static String getTypeName(QName objectTypeQName) {
+        TypeDefinition typeDef = BeanHelper.getDictionaryService().getType(objectTypeQName);
+        String translatedTypeName = typeDef.getTitle();
+        if (StringUtils.isBlank(translatedTypeName)) {
+            throw new IllegalStateException("there should be translation for type " + typeDef
+                    + " in model properties file with key '" + getTranslationKeyForType(objectTypeQName, typeDef) + "'");
+        }
+        return translatedTypeName;
+    }
+
+    public static String getTranslationKeyForType(QName objectTypeQName, TypeDefinition typeDef) {
+        NamespaceService namespaceService = BeanHelper.getNamespaceService();
+        String model = typeDef.getModel().getName().toPrefixString(namespaceService).replace(":", "_");
+        String type = objectTypeQName.toPrefixString(namespaceService).replace(":", "_");
+        return model + ".type." + type + ".title";
+    }
 }

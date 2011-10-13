@@ -1,6 +1,6 @@
 package ee.webmedia.alfresco.thesaurus.model;
 
-import static ee.webmedia.alfresco.docadmin.web.MetadataItemCompareUtil.cast;
+import static ee.webmedia.alfresco.docadmin.service.MetadataItemCompareUtil.cast;
 
 import java.io.Serializable;
 import java.util.ArrayList;

@@ -23,6 +23,7 @@ import org.springframework.util.Assert;
 import ee.webmedia.alfresco.common.model.NodeBaseVO;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.utils.Closure;
 import ee.webmedia.alfresco.utils.RepoUtil;
 
 /**
@@ -36,13 +37,13 @@ import ee.webmedia.alfresco.utils.RepoUtil;
  */
 public abstract class BaseObject extends NodeBaseVO implements Cloneable {
     private static final long serialVersionUID = 1L;
-    private static final QName COPY_OF_NODE_REF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "copyOfNodeRef");
-    private static final QName CLONE_OF_NODE_REF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "cloneOfNodeRef");
+    private static final QName COPY_OF_NODE_REF = RepoUtil.createTransientProp("copyOfNodeRef");
+    private static final QName CLONE_OF_NODE_REF = RepoUtil.createTransientProp("cloneOfNodeRef");
     /**
      * could be used to reconstruct object (using constructor {@link #BaseObject(NodeRef, WmNode)} <br>
      * when we only have node (for example in {@link ActionEvaluator#evaluate(org.alfresco.web.bean.repository.Node)} of the object
      */
-    private static final QName PARENT_NODE_REF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "parentNodeRef");
+    private static final QName PARENT_NODE_REF = RepoUtil.createTransientProp("parentNodeRef");
 
     // Currently only node type, properties and children (child-assocs) are supported
     // Also, when creating a new object in memory, default properties and aspects are loaded from dictionaryService
@@ -70,7 +71,7 @@ public abstract class BaseObject extends NodeBaseVO implements Cloneable {
     private BaseObject(BaseObject parent, NodeRef parentNodeRef, WmNode node) {
         Assert.notNull(node);
         Assert.isTrue(parent != null || WmNode.isSaved(parentNodeRef), "At least one of parent or parentNodeRef must be non-null");
-        this.parent = parent;
+        setParent(parent);
         this.node = node;
         setParentNodeRef(parentNodeRef);
         if (parent != null) {
@@ -84,6 +85,10 @@ public abstract class BaseObject extends NodeBaseVO implements Cloneable {
         } else {
             originalProperties = getProperties(true);
         }
+    }
+
+    private <P extends BaseObject> void setParent(P parent) {
+        this.parent = parent;
     }
 
     private void setParentNodeRef(NodeRef parentNodeRef) {
@@ -111,6 +116,34 @@ public abstract class BaseObject extends NodeBaseVO implements Cloneable {
 
     private static Map<QName, Serializable> getDefaultProperties(QName type) {
         return RepoUtil.getPropertiesIgnoringSystem(BeanHelper.getGeneralService().getDefaultProperties(type), BeanHelper.getDictionaryService());
+    }
+
+    protected <T extends BaseObject> void nextSaveToParent(BaseObject newParent, Class<T> childrenListClass) {
+        Assert.notNull(newParent, "new parent shouldn't be null");
+        setParent(newParent);
+        nextSaveToParent(newParent.getNodeRef());
+        // add self to parent
+        ChildrenList<T> childrenList = newParent.getChildren(childrenListClass);
+        @SuppressWarnings("unchecked")
+        T self = (T) this;
+        childrenList.addExisting(self);
+    }
+
+    protected void nextSaveToParent(NodeRef newParentRef) {
+        Assert.isTrue(newParentRef != null && !newParentRef.equals(parentNodeRef));
+        setParentNodeRef(newParentRef);
+        visit(new Closure<BaseObject>() { // reset nodeRef so it would appear as unsaved
+            @Override
+            public void exec(BaseObject object) {
+                int expectedChangedPropsCount = object != BaseObject.this ? 0 : /* parentNodeRef is changed */1;
+                Assert.isTrue(object.getChangedProperties().size() == expectedChangedPropsCount,
+                        "if properties are added before calling Baseobject.nextSaveToParent() method, then code here must be updated");
+                object.getNode().updateNodeRef(null);
+                Map<QName, Serializable> props = new HashMap<QName, Serializable>(originalProperties);
+                object.clearOriginalProperties();
+                getNode().getProperties().putAll(RepoUtil.toStringProperties(props));
+            }
+        });
     }
 
     public BaseObject cloneAndResetBaseState() {
@@ -142,7 +175,7 @@ public abstract class BaseObject extends NodeBaseVO implements Cloneable {
 
         private static BaseObject clone(BaseObject originalChild, BaseObject copyParent) {
             BaseObject copyChild = originalChild.clone();
-            copyChild.parent = copyParent;
+            copyChild.setParent(copyParent);
             return copyChild;
         }
 
@@ -224,19 +257,23 @@ public abstract class BaseObject extends NodeBaseVO implements Cloneable {
         return parent;
     }
 
+    protected void resetParent() {
+        parent = null;
+    }
+
     protected NodeRef getParentNodeRef() {
         return parentNodeRef;
     }
 
     protected void updateParentNodeRef() {
-        Assert.isTrue(RepoUtil.isUnsaved(parentNodeRef) && parent != null && parent.isSaved());
+        Assert.notNull(parent);
         setParentNodeRef(parent.getNodeRef());
     }
 
     protected void destroy() {
         setParentNodeRef(null);
         node = null;
-        parent = null;
+        setParent(null);
         originalProperties = null;
         children.clear();
         removedChildren.clear();
@@ -468,7 +505,7 @@ public abstract class BaseObject extends NodeBaseVO implements Cloneable {
         originalProperties.putAll(changedProperties);
     }
 
-    protected void clearOriginalProperties() {
+    private void clearOriginalProperties() {
         originalProperties.clear();
     }
 
@@ -519,6 +556,15 @@ public abstract class BaseObject extends NodeBaseVO implements Cloneable {
      */
     protected void handleException(RuntimeException e) {
         throw e;
+    }
+
+    private void visit(Closure<BaseObject> closure) {
+        closure.execute(this);
+        for (Entry<Class<? extends BaseObject>, List<? extends BaseObject>> entry : getChildren().entrySet()) {
+            for (BaseObject child : entry.getValue()) {
+                child.visit(closure);
+            }
+        }
     }
 
 }

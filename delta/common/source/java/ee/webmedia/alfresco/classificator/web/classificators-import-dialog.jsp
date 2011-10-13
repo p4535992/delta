@@ -1,3 +1,4 @@
+<%@page import="ee.webmedia.alfresco.common.web.BeanHelper"%>
 <%@ taglib uri="http://java.sun.com/jsf/html" prefix="h"%>
 <%@ taglib uri="http://java.sun.com/jsf/core" prefix="f"%>
 <%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a"%>
@@ -10,34 +11,29 @@
 <%@ page import="org.alfresco.web.app.servlet.FacesHelper"%>
 <%@ page import="org.alfresco.web.ui.common.PanelGenerator"%>
 <%@ page import="ee.webmedia.alfresco.document.file.web.AddFileDialog"%>
+<%@ page import="ee.webmedia.alfresco.classificator.web.ClassificatorsImportDialog"%>
 
 <%
-    boolean fileUploaded = false;
-
-        ClassificatorsImportDialog dialog = (ClassificatorsImportDialog) FacesHelper
-                .getManagedBean(FacesContext.getCurrentInstance(), "ClassificatorsImportDialog");
-        if (dialog != null && dialog.getFileName() != null) {
-            fileUploaded = true;
-        }
+   boolean fileUploaded = false;
+   ClassificatorsImportDialog dialog = BeanHelper.getClassificatorsImportDialog();
+   if (dialog != null && dialog.getFileName() != null) {
+      fileUploaded = true;
+   }
 %>
 
+<f:verbatim>
    <script type="text/javascript" src="<%=request.getContextPath()%>/scripts/validation.js"> </script>
-<%@ page import="ee.webmedia.alfresco.classificator.web.ClassificatorsImportDialog"%><f:verbatim>
-
    <%
        if (fileUploaded) {
-               PanelGenerator.generatePanelStart(out, request
-                       .getContextPath(), "message", "#ffffcc");
+               PanelGenerator.generatePanelStart(out, request.getContextPath(), "message", "#ffffcc");
                out.write("<img alt='' align='absmiddle' src='");
                out.write(request.getContextPath());
                out.write("/images/icons/info_icon.gif' />&nbsp;&nbsp;");
                out.write(dialog.getFileUploadSuccessMsg());
-               PanelGenerator.generatePanelEnd(out, request
-                       .getContextPath(), "yellowInner");
+               PanelGenerator.generatePanelEnd(out, request.getContextPath(), "yellowInner");
                out.write("<div style='padding:2px;'></div>");
-           }
+       }
    %>
-
 </f:verbatim>
 <%
     if (!fileUploaded) {

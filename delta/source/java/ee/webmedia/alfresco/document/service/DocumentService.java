@@ -35,17 +35,17 @@ import ee.webmedia.alfresco.workflow.service.Task;
 public interface DocumentService {
 
     public abstract class TransientProps { // using abstract class instead of interface to be able to add/change constants without reDeploy
-        public static final String FUNCTION_LABEL = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "function_Lbl").toString();
-        public static final String SERIES_LABEL = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "series_Lbl").toString();
-        public static final String VOLUME_LABEL = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "volume_Lbl").toString();
-        public static final String CASE_LABEL = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "case_Lbl").toString();
-        public static final String CASE_LABEL_EDITABLE = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "case_Lbl_Editable").toString();
+        public static final String FUNCTION_LABEL = RepoUtil.createTransientProp("function_Lbl").toString();
+        public static final String SERIES_LABEL = RepoUtil.createTransientProp("series_Lbl").toString();
+        public static final String VOLUME_LABEL = RepoUtil.createTransientProp("volume_Lbl").toString();
+        public static final String CASE_LABEL = RepoUtil.createTransientProp("case_Lbl").toString();
+        public static final String CASE_LABEL_EDITABLE = RepoUtil.createTransientProp("case_Lbl_Editable").toString();
         //
-        public static final String FUNCTION_NODEREF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "function").toString();
-        public static final String SERIES_NODEREF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "series").toString();
-        public static final String VOLUME_NODEREF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "volume").toString();
-        public static final String CASE_NODEREF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "case").toString();
-        public static final QName TEMP_DOCUMENT_IS_DRAFT_QNAME = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "isDraft");
+        public static final String FUNCTION_NODEREF = RepoUtil.createTransientProp("function").toString();
+        public static final String SERIES_NODEREF = RepoUtil.createTransientProp("series").toString();
+        public static final String VOLUME_NODEREF = RepoUtil.createTransientProp("volume").toString();
+        public static final String CASE_NODEREF = RepoUtil.createTransientProp("case").toString();
+        public static final QName TEMP_DOCUMENT_IS_DRAFT_QNAME = RepoUtil.createTransientProp("isDraft");
         public static final String TEMP_DOCUMENT_IS_DRAFT = TEMP_DOCUMENT_IS_DRAFT_QNAME.toString();
         public static final String TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED = "{temp}logging_disabled_docMetadataChanged";
     }

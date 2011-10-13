@@ -24,7 +24,6 @@ import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.generator.BasePropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.generator.BaseSystematicFieldGenerator;
-import ee.webmedia.alfresco.docconfig.generator.FieldGroupGenerator;
 import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
 import ee.webmedia.alfresco.docconfig.service.UserContactMappingCode;
 import ee.webmedia.alfresco.docconfig.service.UserContactMappingService;
@@ -35,7 +34,7 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 /**
  * @author Alar Kvell
  */
-public class UserContactTableGenerator extends BaseSystematicFieldGenerator implements FieldGroupGenerator {
+public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
 
     private NamespaceService namespaceService;
     private UserContactMappingService userContactMappingService;
@@ -64,13 +63,18 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator impl
         additionalRecipientsMapping.put(DocumentDynamicModel.Props.ADDITIONAL_RECIPIENT_POSTAL_CITY.getLocalName(), UserContactMappingCode.POSTAL_CITY);
         mappings.add(additionalRecipientsMapping);
 
-/*
-        Map<String, UserContactMappingCode> usersMapping = new HashMap<String, UserContactMappingCode>();
-        usersMapping.put(DocumentDynamicModel.Props.USER_NAMES.getLocalName(), UserContactMappingCode.NAME);
-        usersMapping.put(DocumentDynamicModel.Props.USER_JOB_TITLE.getLocalName(), UserContactMappingCode.JOB_TITLE);
-        usersMapping.put(DocumentDynamicModel.Props.USER_ORG_STRUCT_UNIT.getLocalName(), UserContactMappingCode.ORG_STRUCT_UNIT);
-        mappings.add(usersMapping);
-*/
+        // TODO register only the significant field for multiValuedOverride, if other fields (e.g userJobTitle) are also used in other systematic groups
+
+        /*
+         * Map<String, UserContactMappingCode> usersMapping = new HashMap<String, UserContactMappingCode>();
+         * usersMapping.put(DocumentDynamicModel.Props.USER_NAMES.getLocalName(), UserContactMappingCode.NAME);
+         * usersMapping.put(DocumentDynamicModel.Props.USER_JOB_TITLE.getLocalName(), UserContactMappingCode.JOB_TITLE);
+         * usersMapping.put(DocumentDynamicModel.Props.USER_ORG_STRUCT_UNIT.getLocalName(), UserContactMappingCode.ORG_STRUCT_UNIT);
+         * mappings.add(usersMapping);
+         */
+
+        userContactMappingService.registerMappingDependency(DocumentDynamicModel.Props.SUBSTITUTE_ID.getLocalName(), DocumentDynamicModel.Props.SUBSTITUTE_NAME.getLocalName());
+        documentConfigService.registerHiddenFieldDependency(DocumentDynamicModel.Props.SUBSTITUTE_ID.getLocalName(), DocumentDynamicModel.Props.SUBSTITUTE_NAME.getLocalName());
 
         Set<String> fields = new HashSet<String>();
         for (Map<String, UserContactMappingCode> mapping : mappings) {
@@ -90,6 +94,7 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator impl
 
     @Override
     public void generateField(Field field, GeneratorResults generatorResults) {
+        // Can be used outside systematic field group - then additional functionality is not present
         if (!(field.getParent() instanceof FieldGroup) || !((FieldGroup) field.getParent()).isSystematic()) {
             generatorResults.getAndAddPreGeneratedItem();
             return;
@@ -143,6 +148,7 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator impl
         item.setComponentGenerator("MultiValueEditorGenerator");
         item.setStyleClass("");
         item.setPreprocessCallback("#{UserContactGroupSearchBean.preprocessResultsToNodeRefs}");
+        item.setDisplayLabel(group.getReadonlyFieldsName());
 
         // And we set our own attributes
         item.setShowInViewMode(false);
@@ -156,11 +162,6 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator impl
         viewModeItem.setComponentGenerator("UnescapedOutputTextGenerator");
 
         generatorResults.addStateHolder(stateHolderKey, new UserContactTableState(propNames, mappingCodes, viewModePropName));
-    }
-
-    @Override
-    public void generateFieldGroup(FieldGroup fieldGroup, GeneratorResults generatorResults) {
-        // Do nothing
     }
 
     // ===============================================================================================================================

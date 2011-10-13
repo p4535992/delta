@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.docconfig.generator.systematic;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentTemplateService;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,13 +12,10 @@ import javax.faces.model.SelectItem;
 import org.apache.commons.io.FilenameUtils;
 
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.service.Field;
-import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.generator.BasePropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.generator.BaseSystematicFieldGenerator;
-import ee.webmedia.alfresco.docconfig.generator.FieldGroupGenerator;
 import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.template.model.DocumentTemplate;
@@ -25,7 +24,7 @@ import ee.webmedia.alfresco.utils.WebUtil;
 /**
  * @author Alar Kvell
  */
-public class TemplateNameGenerator extends BaseSystematicFieldGenerator implements FieldGroupGenerator {
+public class TemplateNameGenerator extends BaseSystematicFieldGenerator {
 
     @Override
     protected String[] getOriginalFieldIds() {
@@ -36,13 +35,9 @@ public class TemplateNameGenerator extends BaseSystematicFieldGenerator implemen
     public void generateField(Field field, GeneratorResults generatorResults) {
         ItemConfigVO item = generatorResults.getAndAddPreGeneratedItem();
         item.setComponentGenerator("GeneralSelectorGenerator");
-        item.setSelectionItems(getBindingName("findDocumentTemplates"));
-        generatorResults.addStateHolder(getStateHolderKey(), new TemplateNameState());
-    }
-
-    @Override
-    public void generateFieldGroup(FieldGroup fieldGroup, GeneratorResults generatorResults) {
-        // Do nothing
+        String stateHolderKey = field.getFieldId();
+        item.setSelectionItems(getBindingName("findDocumentTemplates", stateHolderKey));
+        generatorResults.addStateHolder(stateHolderKey, new TemplateNameState());
     }
 
     // ===============================================================================================================================
@@ -60,7 +55,7 @@ public class TemplateNameGenerator extends BaseSystematicFieldGenerator implemen
          * @return A collection of UISelectItem objects containing the selection items to show on form.
          */
         public List<SelectItem> findDocumentTemplates(FacesContext context, UIInput selectComponent) {
-            List<DocumentTemplate> docTemplates = BeanHelper.getDocumentTemplateService().getDocumentTemplates(
+            List<DocumentTemplate> docTemplates = getDocumentTemplateService().getDocumentTemplates(
                     (String) dialogDataProvider.getNode().getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID));
             List<SelectItem> selectItems = new ArrayList<SelectItem>(docTemplates.size() + 1);
 

@@ -23,6 +23,7 @@ import ee.webmedia.alfresco.thesaurus.model.HierarchicalKeyword;
 import ee.webmedia.alfresco.thesaurus.model.Thesaurus;
 import ee.webmedia.alfresco.thesaurus.service.ThesaurusService;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.WebUtil;
 
 /**
  * @author Kaarel Jõgeva
@@ -30,7 +31,7 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 public class ThesaurusImportDialog extends AbstractImportDialog {
 
     protected ThesaurusImportDialog() {
-        super(".xml", "thesaurus_import_wrong_extension");
+        super("xml", "thesaurus_import_wrong_extension");
     }
 
     private static final long serialVersionUID = 1L;
@@ -70,7 +71,7 @@ public class ThesaurusImportDialog extends AbstractImportDialog {
             // veateate näitamine ja sulgemine millegi pärast ei toimi
             final FacesContext context = FacesContext.getCurrentInstance();
             MessageUtil.addErrorMessage(context, "ccccc_error_wrongFileContent", getFileName());
-            context.getApplication().getNavigationHandler().handleNavigation(context, null, AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME);
+            WebUtil.navigateTo(AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME, context);
             reset();
             return null;
         } catch (FileNotFoundException e1) {

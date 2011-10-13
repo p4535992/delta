@@ -49,7 +49,6 @@ import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docadmin.service.MetadataContainer;
-import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -114,9 +113,10 @@ public class FieldDetailsDialog extends BaseDialogBean {
     private boolean validate() {
         boolean valid = true;
         String fieldIdLocalName = field.getFieldId();
-        if (DocumentDynamicModel.FORBIDDEN_FIELD_IDS.contains(fieldIdLocalName)) {
+        Set<String> forbiddenFieldIds = getDocumentAdminService().getForbiddenFieldIds();
+        if (forbiddenFieldIds.contains(fieldIdLocalName)) {
             valid = false;
-            MessageUtil.addErrorMessage("field_details_error_fieldId_reserved", TextUtil.collectionToString(DocumentDynamicModel.FORBIDDEN_FIELD_IDS));
+            MessageUtil.addErrorMessage("field_details_error_fieldId_reserved", TextUtil.collectionToString(forbiddenFieldIds));
         }
         String defaultValue = field.getDefaultValue();
         if (StringUtils.isNotBlank(defaultValue)) {

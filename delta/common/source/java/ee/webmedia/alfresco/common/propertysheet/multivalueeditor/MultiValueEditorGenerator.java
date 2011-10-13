@@ -76,6 +76,7 @@ public class MultiValueEditorGenerator extends BaseComponentGenerator implements
         addValueFromCustomAttributes(MultiValueEditor.NO_ADD_LINK_LABEL, attributes);
         addValueFromCustomAttributes(MultiValueEditor.IS_AUTOMATICALLY_ADD_ROWS, attributes, Boolean.class);
         addValueFromCustomAttributes(ComponentUtil.IS_ALWAYS_EDIT, attributes, Boolean.class);
+        addValueFromCustomAttributes(Search.SEARCH_SUGGEST_DISABLED, attributes, Boolean.class, false);
 
         if (!propertySheet.inEditMode() || item.isReadOnly()) {
             ComponentUtil.setReadonlyAttributeRecursively(component);
