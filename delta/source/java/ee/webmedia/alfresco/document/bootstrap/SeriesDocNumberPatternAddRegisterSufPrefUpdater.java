@@ -48,6 +48,12 @@ public class SeriesDocNumberPatternAddRegisterSufPrefUpdater extends AbstractNod
     @Override
     protected String[] updateNode(NodeRef nodeRef) {
         Map<QName, Serializable> origProps = nodeService.getProperties(nodeRef);
+        if (origProps.get(SeriesModel.Props.REGISTER) == null) {
+            return new String[] { "series has no register property" };
+        }
+        if (origProps.get(SeriesModel.Props.DOC_NUMBER_PATTERN) == null) {
+            return new String[] { "series document number pattern is null" };
+        }
         Map<QName, Serializable> newProps = new HashMap<QName, Serializable>(3);
         StringBuilder sb = new StringBuilder();
 
