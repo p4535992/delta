@@ -40,6 +40,7 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
     private static final long serialVersionUID = 1L;
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentSearchResultsDialog.class);
+    public static final String BEAN_NAME = "DocumentSearchResultsDialog";
 
     private static final List<String> EP_EXPORT_SEND_MODES = Arrays.asList(SendMode.MAIL.getValueName(), SendMode.REGISTERED_MAIL.getValueName());
 

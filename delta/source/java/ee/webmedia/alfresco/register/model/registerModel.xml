@@ -42,16 +42,13 @@
                <type>d:text</type>
                <mandatory>true</mandatory>
             </property>
-            <property name="reg:prefix">
-               <type>d:text</type>
-            </property>
-            <property name="reg:suffix">
-               <type>d:text</type>
-            </property>
             <property name="reg:comment">
                <type>d:text</type>
             </property>
             <property name="reg:active">
+               <type>d:boolean</type>
+            </property>
+            <property name="reg:autoReset">
                <type>d:boolean</type>
             </property>
          </properties>

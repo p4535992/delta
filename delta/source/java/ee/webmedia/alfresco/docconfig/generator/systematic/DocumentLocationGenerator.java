@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.docconfig.generator.systematic;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getCaseService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFunctionsService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getPropertySheetStateBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getSeriesService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getVolumeService;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.CASE;
@@ -51,6 +52,7 @@ import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
+import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
@@ -101,16 +103,28 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
     public void generateField(Field field, GeneratorResults generatorResults) {
         // Actually these fields cannot be used outside systematic group, because they have onlyInGroup=true
         // But let's leave this check in just in case
-        if (!(field.getParent() instanceof FieldGroup) || !((FieldGroup) field.getParent()).isSystematic()) {
+        if ((field.getParent() == null && !field.getFieldId().equals(field.getOriginalFieldId()))
+                || (field.getParent() != null && (!(field.getParent() instanceof FieldGroup) || !((FieldGroup) field.getParent()).isSystematic()))) {
             generatorResults.getAndAddPreGeneratedItem();
             return;
         }
 
-        Map<String, Field> fieldsByOriginalId = ((FieldGroup) field.getParent()).getFieldsByOriginalId();
-        QName functionProp = getProp(fieldsByOriginalId, FUNCTION);
-        QName seriesProp = getProp(fieldsByOriginalId, SERIES);
-        QName volumeProp = getProp(fieldsByOriginalId, VOLUME);
-        QName caseProp = getProp(fieldsByOriginalId, CASE);
+        QName functionProp;
+        QName seriesProp;
+        QName volumeProp;
+        QName caseProp;
+        if (field.getParent() != null) {
+            Map<String, Field> fieldsByOriginalId = ((FieldGroup) field.getParent()).getFieldsByOriginalId();
+            functionProp = getProp(fieldsByOriginalId, FUNCTION);
+            seriesProp = getProp(fieldsByOriginalId, SERIES);
+            volumeProp = getProp(fieldsByOriginalId, VOLUME);
+            caseProp = getProp(fieldsByOriginalId, CASE);
+        } else {
+            functionProp = FUNCTION;
+            seriesProp = SERIES;
+            volumeProp = VOLUME;
+            caseProp = CASE;
+        }
         QName functionLabelProp = getTransientProp(functionProp, "Label");
         QName seriesLabelProp = getTransientProp(seriesProp, "Label");
         QName volumeLabelProp = getTransientProp(volumeProp, "Label");
@@ -126,12 +140,15 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             item.setValueChangeListener(getBindingName("functionValueChanged", stateHolderKey));
             item.setShowInViewMode(false);
 
-            generatorResults.generateAndAddViewModeText(functionLabelProp.toString(), field.getName());
+            ItemConfigVO functionLabelItem = generatorResults.generateAndAddViewModeText(functionLabelProp.toString(), field.getName());
+            functionLabelItem.setComponentGenerator("ActionLinkGenerator");
+            functionLabelItem.setAction("dialog:seriesListDialog");
+            functionLabelItem.setActionListener("#{SeriesListDialog.showAll}");
+            functionLabelItem.setActionListenerParams("functionNodeRef=" + getBindingName("function", stateHolderKey));
 
             // Add stateholder
             generatorResults.addStateHolder(stateHolderKey, new DocumentLocationState(functionProp, seriesProp, caseProp, volumeProp, functionLabelProp, seriesLabelProp,
                     volumeLabelProp, caseLabelProp, caseLabelEditableProp));
-
             return;
         } else if (field.getQName().equals(seriesProp)) {
             item.setComponentGenerator("GeneralSelectorGenerator");
@@ -140,7 +157,11 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             item.setValueChangeListener(getBindingName("seriesValueChanged", stateHolderKey));
             item.setShowInViewMode(false);
 
-            generatorResults.generateAndAddViewModeText(seriesLabelProp.toString(), field.getName());
+            ItemConfigVO seriesLabelItem = generatorResults.generateAndAddViewModeText(seriesLabelProp.toString(), field.getName());
+            seriesLabelItem.setComponentGenerator("ActionLinkGenerator");
+            seriesLabelItem.setAction("dialog:volumeListDialog");
+            seriesLabelItem.setActionListener("#{VolumeListDialog.showAll}");
+            seriesLabelItem.setActionListenerParams("seriesNodeRef=" + getBindingName("series", stateHolderKey));
             return;
         } else if (field.getQName().equals(volumeProp)) {
             item.setComponentGenerator("GeneralSelectorGenerator");
@@ -149,19 +170,28 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             item.setValueChangeListener(getBindingName("volumeValueChanged", stateHolderKey));
             item.setShowInViewMode(false);
 
-            generatorResults.generateAndAddViewModeText(volumeLabelProp.toString(), field.getName());
+            ItemConfigVO volumeLabelItem = generatorResults.generateAndAddViewModeText(volumeLabelProp.toString(), field.getName());
+            volumeLabelItem.setComponentGenerator("ActionLinkGenerator");
+            volumeLabelItem.setActionListener("#{VolumeListDialog.showVolumeContents}");
+            volumeLabelItem.setActionListenerParams("volumeNodeRef=" + getBindingName("volume", stateHolderKey));
             return;
         } else if (field.getQName().equals(caseProp)) {
             item.setName(caseLabelEditableProp.toString());
-            item.setForcedMandatory(true);
+            if (field.getParent() != null) {
+                item.setForcedMandatory(true);
+                item.setDontRenderIfDisabled(true);
+            }
             item.setComponentGenerator("SuggesterGenerator");
             item.setSuggesterValues(getBindingName("getCases", stateHolderKey));
             item.setValueChangeListener(getBindingName("volumeValueChanged", stateHolderKey));
             item.setStyleClass("long");
-            item.setDontRenderIfDisabled(true);
             item.setShowInViewMode(false);
 
-            generatorResults.generateAndAddViewModeText(caseLabelProp.toString(), field.getName());
+            ItemConfigVO caseLabelItem = generatorResults.generateAndAddViewModeText(caseLabelProp.toString(), field.getName());
+            caseLabelItem.setComponentGenerator("ActionLinkGenerator");
+            caseLabelItem.setAction("dialog:documentListDialog");
+            caseLabelItem.setActionListener("#{DocumentListDialog.setup}");
+            caseLabelItem.setActionListenerParams("caseNodeRef=" + getBindingName("case", stateHolderKey));
             return;
         }
         throw new RuntimeException("Unsupported field: " + field);
@@ -237,6 +267,22 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             }
         }
 
+        public NodeRef getFunction() {
+            return (NodeRef) dialogDataProvider.getNode().getProperties().get(functionProp);
+        }
+
+        public NodeRef getSeries() {
+            return (NodeRef) dialogDataProvider.getNode().getProperties().get(seriesProp);
+        }
+
+        public NodeRef getVolume() {
+            return (NodeRef) dialogDataProvider.getNode().getProperties().get(volumeProp);
+        }
+
+        public NodeRef getCase() {
+            return (NodeRef) dialogDataProvider.getNode().getProperties().get(caseProp);
+        }
+
         /**
          * @param context
          * @param selectComponent
@@ -296,15 +342,26 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
         private void updateFnSerVol(NodeRef functionRef, NodeRef seriesRef, NodeRef volumeRef, String caseLabel, boolean addIfMissing) {
             Node document = dialogDataProvider.getNode();
             UIPropertySheet ps = dialogDataProvider.getPropertySheet();
+            boolean isSearchFilter = DocumentSearchModel.Types.FILTER.equals(document.getType());
 
             String documentTypeId = (String) document.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID);
             { // Function
-                List<Function> allFunctions = getFunctionsService().getAllFunctions(DocListUnitStatus.OPEN);
+                List<Function> allFunctions;
+                if (isSearchFilter) {
+                    allFunctions = getFunctionsService().getAllFunctions();
+                } else {
+                    allFunctions = getFunctionsService().getAllFunctions(DocListUnitStatus.OPEN);
+                }
                 functions = new ArrayList<SelectItem>(allFunctions.size());
                 functions.add(new SelectItem("", ""));
                 boolean functionFound = false;
                 for (Function function : allFunctions) {
-                    List<Series> openSeries = getSeriesService().getAllSeriesByFunction(function.getNodeRef(), DocListUnitStatus.OPEN, documentTypeId);
+                    List<Series> openSeries;
+                    if (isSearchFilter) {
+                        openSeries = getSeriesService().getAllSeriesByFunction(function.getNodeRef());
+                    } else {
+                        openSeries = getSeriesService().getAllSeriesByFunction(function.getNodeRef(), DocListUnitStatus.OPEN, documentTypeId);
+                    }
                     if (openSeries.size() == 0) {
                         continue;
                     }
@@ -334,7 +391,12 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 series = null;
                 seriesRef = null;
             } else {
-                List<Series> allSeries = getSeriesService().getAllSeriesByFunction(functionRef, DocListUnitStatus.OPEN, documentTypeId);
+                List<Series> allSeries;
+                if (isSearchFilter) {
+                    allSeries = getSeriesService().getAllSeriesByFunction(functionRef);
+                } else {
+                    allSeries = getSeriesService().getAllSeriesByFunction(functionRef, DocListUnitStatus.OPEN, documentTypeId);
+                }
                 series = new ArrayList<SelectItem>(allSeries.size());
                 series.add(new SelectItem("", ""));
                 boolean serieFound = false;
@@ -389,7 +451,12 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                     ps.queueEvent(event);
                 }
 
-                List<Volume> allVolumes = getVolumeService().getAllValidVolumesBySeries(seriesRef, DocListUnitStatus.OPEN);
+                List<Volume> allVolumes;
+                if (isSearchFilter) {
+                    allVolumes = getVolumeService().getAllValidVolumesBySeries(seriesRef);
+                } else {
+                    allVolumes = getVolumeService().getAllValidVolumesBySeries(seriesRef, DocListUnitStatus.OPEN);
+                }
                 volumes = new ArrayList<SelectItem>(allVolumes.size());
                 volumes.add(new SelectItem("", ""));
                 boolean volumeFound = false;
@@ -421,7 +488,12 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 caseLabel = null;
             } else {
                 if (getVolumeService().getVolumeByNodeRef(volumeRef).isContainsCases()) {
-                    List<Case> allCases = getCaseService().getAllCasesByVolume(volumeRef, DocListUnitStatus.OPEN);
+                    List<Case> allCases;
+                    if (isSearchFilter) {
+                        allCases = getCaseService().getAllCasesByVolume(volumeRef);
+                    } else {
+                        allCases = getCaseService().getAllCasesByVolume(volumeRef, DocListUnitStatus.OPEN);
+                    }
                     cases = new ArrayList<String>(allCases.size());
                     for (Case tmpCase : allCases) {
                         cases.add(getCaseLabel(tmpCase));
@@ -455,7 +527,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                         UIInput caseList = (UIInput) component.getChildren().get(1);
                         SuggesterGenerator.setValue(caseList, cases);
                         caseList.setValue(caseLabel);
-                        component.setRendered(cases != null);
+                        component.setRendered(cases != null || isSearchFilter);
                     }
                 }
             }
@@ -469,8 +541,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
         }
 
         private void updateAccessRestrictionProperties(NodeRef seriesRef) {
-            String stateHolderKey = DocumentCommonModel.Props.ACCESS_RESTRICTION.getLocalName();
-            AccessRestrictionState accessRestrictionState = dialogDataProvider.getStateHolder(stateHolderKey, AccessRestrictionState.class);
+            AccessRestrictionState accessRestrictionState = getPropertySheetStateBean().getStateHolder(AccessRestrictionGenerator.class.getName(), AccessRestrictionState.class);
             if (accessRestrictionState != null) {
                 accessRestrictionState.updateAccessRestrictionProperties(seriesRef);
             }

@@ -218,8 +218,8 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
             // delegate to appropriate action logic
             switch (pickerEvent.Action) {
             case ACTION_ADD:
-                // We want to get "filterIndex" and "contains" values that were used while performing the search,
-                // not the ones that user may have modified later
+                // We could use filterIndex instance field, BUT when using AjaxSearchBean.searchPickerResults the filter and results are
+                // modified client-side, so that ACTION_SEARCH event never happens - that's why we have to get filterIndex from current event
                 filterIndex = pickerEvent.FilterIndex;
                 contains = pickerEvent.Contains;
                 // call super for actionlistener execution

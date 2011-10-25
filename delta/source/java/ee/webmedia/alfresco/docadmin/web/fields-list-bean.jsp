@@ -8,9 +8,6 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<%-- TODO DLSeadist järjestuse muutmine, salvestamine
- --%>
-
 <h:panelGroup id="docTypeMetadata-panel-facets">
    <f:facet name="title">
       <a:booleanEvaluator value="#{DocTypeDetailsDialog.showingLatestVersion}">

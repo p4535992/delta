@@ -4,7 +4,9 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDictionaryService;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -49,6 +51,7 @@ import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.docadmin.service.Field;
+import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docadmin.service.MetadataItem;
 import ee.webmedia.alfresco.docadmin.service.SeparatorLine;
@@ -59,6 +62,7 @@ import ee.webmedia.alfresco.docconfig.generator.SaveListener;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.utils.UserUtil;
 
 /**
@@ -119,6 +123,156 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
         return getConfig(documentTypeAndVersion.getFirst(), documentTypeAndVersion.getSecond());
     }
 
+    @Override
+    public DocumentConfig getSearchConfig() {
+        DocumentConfig config = getEmptyConfig(null);
+        /**
+         * <show-property name="docsearch:store" display-label-id="document_search_stores" component-generator="GeneralSelectorGenerator"
+         * selectionItems="#{DocumentSearchDialog.getStores}" converter="ee.webmedia.alfresco.common.propertysheet.converter.StoreRefConverter" />
+         */
+        {
+            // docsearch:store
+            ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.STORE.toString());
+            itemConfig.setDisplayLabelId("document_search_stores");
+            itemConfig.setComponentGenerator("GeneralSelectorGenerator");
+            itemConfig.setSelectionItems("#{DocumentDynamicSearchDialog.getStores}");
+            itemConfig.setConverter("ee.webmedia.alfresco.common.propertysheet.converter.StoreRefConverter");
+            itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
+            config.getPropertySheetConfigElement().addItem(itemConfig);
+        }
+
+        /**
+         * <show-property name="docsearch:input" display-label-id="document_search_input" component-generator="TextAreaGenerator" styleClass="expand19-200" />
+         */
+        {
+            // docsearch:input
+            ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.INPUT.toString());
+            itemConfig.setDisplayLabelId("document_search_input");
+            itemConfig.setComponentGenerator("TextAreaGenerator");
+            itemConfig.setStyleClass("expand19-200 focus");
+            itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
+            config.getPropertySheetConfigElement().addItem(itemConfig);
+        }
+
+        /**
+         * <show-property name="docsearch:documentType" display-label-id="document_docType" component-generator="GeneralSelectorGenerator"
+         * selectionItems="#{DocumentSearchBean.getDocumentTypes}" converter="ee.webmedia.alfresco.common.propertysheet.converter.QNameConverter" />
+         */
+        {
+            // docsearch:documentType
+            ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.DOCUMENT_TYPE.toString());
+            itemConfig.setDisplayLabelId("document_docType");
+            itemConfig.setComponentGenerator("GeneralSelectorGenerator");
+            itemConfig.setSelectionItems("#{DocumentSearchBean.getDocumentTypes}");
+            itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
+            config.getPropertySheetConfigElement().addItem(itemConfig);
+        }
+
+        /**
+         * <show-property name="docsearch:sendMode" display-label-id="document_send_mode" component-generator="ClassificatorSelectorGenerator" classificatorName="sendModeSearch" />
+         */
+        {
+            // docsearch:sendMode
+            ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.SEND_MODE.toString());
+            itemConfig.setDisplayLabelId("document_send_mode");
+            itemConfig.setComponentGenerator("ClassificatorSelectorGenerator");
+            itemConfig.setClassificatorName("sendModeSearch");
+            itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
+            config.getPropertySheetConfigElement().addItem(itemConfig);
+        }
+
+        List<FieldDefinition> fields = documentAdminService.getSearchableFieldDefinitions();
+        Collections.sort(fields, searchFieldComparator);
+        for (FieldDefinition fieldDefinition : fields) {
+            processFieldForSearchView(fieldDefinition);
+            processField(config, fieldDefinition);
+            if (fieldDefinition.getFieldId().equals("regNumber")) {
+                ItemConfigVO itemConfig = new ItemConfigVO(DocumentDynamicModel.Props.SHORT_REG_NUMBER.toString());
+                itemConfig.setDisplayLabelId("document_shortRegNumber");
+                itemConfig.setComponentGenerator("TextAreaGenerator");
+                itemConfig.setStyleClass("expand19-200");
+                // itemConfig.setIgnoreIfMissing(false);
+                itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
+                config.getPropertySheetConfigElement().addItem(itemConfig);
+            }
+        }
+
+        /**
+         * <show-property name="docsearch:fund" display-label-id="transaction_fund" component-generator="MultiValueEditorGenerator"
+         * showHeaders="false" styleClass="add-default" noAddLinkLabel="true" addLabelId="add_row" isAutomaticallyAddRows="true"
+         * propsGeneration="docsearch:fund¤DimensionSelectorGenerator¤dimensionName=invoiceFunds¤styleClass=expand19-200 tooltip¤converter="/>
+         */
+        {
+            // docsearch:fund
+            ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.FUND.toString());
+            itemConfig.setDisplayLabelId("transaction_fund");
+            itemConfig.setComponentGenerator("MultiValueEditorGenerator");
+            itemConfig.setShowHeaders(false);
+            itemConfig.setStyleClass("add-default");
+            itemConfig.setNoAddLinkLabel(true);
+            itemConfig.setAddLabelId("add_row");
+            itemConfig.setIsAutomaticallyAddRows(true);
+            itemConfig.setPropsGeneration("docsearch:fund¤DimensionSelectorGenerator¤dimensionName=invoiceFunds¤styleClass=expand19-200 tooltip¤converter=");
+            itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
+            config.getPropertySheetConfigElement().addItem(itemConfig);
+        }
+
+        /**
+         * <show-property name="docsearch:fundsCenter" display-label-id="transaction_fundsCenter" component-generator="MultiValueEditorGenerator"
+         * showHeaders="false" styleClass="add-default" noAddLinkLabel="true" addLabelId="add_row" isAutomaticallyAddRows="true"
+         * propsGeneration="docsearch:fundsCenter¤DimensionSelectorGenerator¤dimensionName=invoiceFundsCenters¤styleClass=expand19-200 tooltip¤converter="/>
+         */
+        {
+            // docsearch:fundsCenter
+            ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.FUNDS_CENTER.toString());
+            itemConfig.setDisplayLabelId("transaction_fundsCenter");
+            itemConfig.setComponentGenerator("MultiValueEditorGenerator");
+            itemConfig.setShowHeaders(false);
+            itemConfig.setStyleClass("add-default");
+            itemConfig.setNoAddLinkLabel(true);
+            itemConfig.setAddLabelId("add_row");
+            itemConfig.setIsAutomaticallyAddRows(true);
+            itemConfig.setPropsGeneration("docsearch:fundsCenter¤DimensionSelectorGenerator¤dimensionName=invoiceFundsCenters¤styleClass=expand19-200 tooltip¤converter=");
+            itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
+            config.getPropertySheetConfigElement().addItem(itemConfig);
+        }
+
+        /**
+         * <show-property name="docsearch:eaCommitmentItem" display-label-id="transaction_eaCommitmentItem" component-generator="MultiValueEditorGenerator"
+         * showHeaders="false" styleClass="add-default" noAddLinkLabel="true" addLabelId="add_row" filter="eaPrefixInclude" isAutomaticallyAddRows="true"
+         * propsGeneration="docsearch:eaCommitmentItem¤DimensionSelectorGenerator¤dimensionName=invoiceCommitmentItem¤styleClass=expand19-200 tooltip¤converter="/>
+         */
+        {
+            // docsearch:eaCommitmentItem
+            ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.EA_COMMITMENT_ITEM.toString());
+            itemConfig.setDisplayLabelId("transaction_eaCommitmentItem");
+            itemConfig.setComponentGenerator("MultiValueEditorGenerator");
+            itemConfig.setShowHeaders(false);
+            itemConfig.setStyleClass("add-default");
+            itemConfig.setNoAddLinkLabel(true);
+            itemConfig.setAddLabelId("add_row");
+            itemConfig.setFilter("eaPrefixInclude");
+            itemConfig.setIsAutomaticallyAddRows(true);
+            itemConfig.setPropsGeneration(
+                    "docsearch:eaCommitmentItem¤DimensionSelectorGenerator¤filter=eaPrefixInclude¤dimensionName=invoiceCommitmentItem¤styleClass=expand19-200 tooltip¤converter=");
+            itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
+            config.getPropertySheetConfigElement().addItem(itemConfig);
+        }
+        return config;
+    }
+
+    private static final Comparator<FieldDefinition> searchFieldComparator = new Comparator<FieldDefinition>() {
+        @Override
+        public int compare(FieldDefinition o1, FieldDefinition o2) {
+            Integer order1 = o1.getParameterOrderInDocSearch();
+            Integer order2 = o2.getParameterOrderInDocSearch();
+            if (order1 == null) {
+                return order2 == null ? 0 : -1;
+            }
+            return order2 == null ? 1 : order1.compareTo(order2);
+        }
+    };
+
     private Pair<DocumentType, DocumentTypeVersion> getDocumentTypeAndVersion(Node documentDynamicNode) {
         Pair<String, Integer> docTypeIdAndVersionNr = getDocTypeIdAndVersionNr(documentDynamicNode);
         return getDocumentTypeAndVersion(docTypeIdAndVersionNr);
@@ -154,10 +308,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
     }
 
     private DocumentConfig getConfig(DocumentType docType, DocumentTypeVersion docVersion) {
-        WMPropertySheetConfigElement propSheet = new WMPropertySheetConfigElement();
-        Map<String, PropertySheetStateHolder> stateHolders = new HashMap<String, PropertySheetStateHolder>();
-        List<String> saveListenerBeanNames = new ArrayList<String>();
-        DocumentConfig config = new DocumentConfig(propSheet, stateHolders, saveListenerBeanNames, docType.getName());
+        DocumentConfig config = getEmptyConfig(docType.getName());
 
         int separatorCount = 0;
         for (MetadataItem metadataItem : docVersion.getMetadata().getList()) {
@@ -180,6 +331,14 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
         DocumentConfig unmodifiableConfig = config.cloneAsUnmodifiable();
         LOG.info("Returning " + unmodifiableConfig);
         return unmodifiableConfig;
+    }
+
+    private DocumentConfig getEmptyConfig(String docTypeName) {
+        WMPropertySheetConfigElement propSheet = new WMPropertySheetConfigElement();
+        Map<String, PropertySheetStateHolder> stateHolders = new HashMap<String, PropertySheetStateHolder>();
+        List<String> saveListenerBeanNames = new ArrayList<String>();
+        DocumentConfig config = new DocumentConfig(propSheet, stateHolders, saveListenerBeanNames, docTypeName);
+        return config;
     }
 
     private static class GeneratorResultsImpl implements GeneratorResults {
@@ -211,6 +370,13 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
             Assert.isTrue(!propSheet.getItems().containsKey(viewModeTextItem.getName()), "PropertySheetItem with name already exists: " + viewModeTextItem.getName());
             propSheet.addItem(viewModeTextItem);
             return viewModeTextItem;
+        }
+
+        @Override
+        public void addItem(ItemConfigVO item) {
+            WMPropertySheetConfigElement propSheet = config.getPropertySheetConfigElement();
+            Assert.isTrue(!propSheet.getItems().containsKey(item.getName()), "PropertySheetItem with name already exists: " + item.getName());
+            propSheet.addItem(item);
         }
 
         @Override
@@ -384,9 +550,9 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
 
         } else if (field.isDefaultUserLoggedIn()) {
             if (DataTypeDefinition.TEXT.equals(dataType)) {
-                defaultValue = UserUtil.getPersonFullName1(BeanHelper.getUserService().getCurrentUserProperties());
+                defaultValue = UserUtil.getPersonFullName1(BeanHelper.getUserService().getCurrentUserProperties()); // FIXME this is never used here
                 Map<QName, UserContactMappingCode> mapping = userContactMappingService.getFieldIdsMapping(field);
-                NodeRef userRef = BeanHelper.getUserService().getCurrentUser();
+                NodeRef userRef = BeanHelper.getUserService().getCurrentUser(); // TODO FIXME do not use BeanHelper in a service!!
                 userContactMappingService.setMappedValues(documentDynamicNode.getProperties(), mapping, userRef, propDef.isMultiValued());
                 return;
             }
@@ -418,10 +584,22 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
 
     @Override
     public PropertyDefinition getPropertyDefinition(Node documentDynamicNode, QName property) {
-        if (!DocumentCommonModel.Types.DOCUMENT.equals(documentDynamicNode.getType()) || !DocumentDynamicModel.URI.equals(property.getNamespaceURI())) {
+        if (!DocumentDynamicModel.URI.equals(property.getNamespaceURI())) {
             return null;
         }
+        if (DocumentSearchModel.Types.FILTER.equals(documentDynamicNode.getType())) {
+            if (hiddenFieldDependencies.containsKey(property.getLocalName())) {
+                String originalFieldId = hiddenFieldDependencies.get(property.getLocalName());
+                PropertyDefinition originalPropDef = getPropDefForSearch(originalFieldId);
+                PropertyDefinitionImpl propDef = createPropertyDefinitionForHiddenField(property.getLocalName(), originalPropDef);
+                return propDef;
+            }
+            return getPropDefForSearch(property.getLocalName());
+        }
         Map<String, Pair<PropertyDefinition, Field>> propertyDefinitions = getPropertyDefinitions(documentDynamicNode);
+        if (propertyDefinitions == null) {
+            return null;
+        }
         Pair<PropertyDefinition, Field> propertyDefinition = propertyDefinitions.get(property.getLocalName());
         if (propertyDefinition == null) {
             LOG.warn("\n\n!!!!!!!!!!!!!!!!!!! fieldId=" + property + " not found, documentDynamicNode=" + documentDynamicNode + "\n");
@@ -430,8 +608,54 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
         return propertyDefinition.getFirst();
     }
 
+    private PropertyDefinition getPropDefForSearch(String fieldId) {
+        FieldDefinition field;
+        if (fieldId.contains("_")) {
+            field = documentAdminService.getFieldDefinition(fieldId.substring(0, fieldId.indexOf("_")));
+            field.setFieldId(fieldId);
+        } else {
+            field = documentAdminService.getFieldDefinition(fieldId);
+        }
+        if (field == null) {
+            return null;
+        }
+        processFieldForSearchView(field);
+        return new PropertyDefinitionImpl(field, isFieldForcedMultipleInSearch(field));
+    }
+
+    private static final List<String> comboboxFieldsNotMultiple = Arrays.asList("function", "series", "volume");
+
+    private Boolean isFieldForcedMultipleInSearch(FieldDefinition field) {
+        if (field.getFieldTypeEnum().equals(FieldType.COMBOBOX) && !comboboxFieldsNotMultiple.contains(field.getFieldId())) {
+            return true;
+        }
+        return null;
+    }
+
+    private void processFieldForSearchView(FieldDefinition field) {
+        if (field.getFieldTypeEnum().equals(FieldType.USER)) {
+            field.setFieldTypeEnum(FieldType.USERS);
+        }
+        if (field.getFieldTypeEnum().equals(FieldType.CONTACT)) {
+            field.setFieldTypeEnum(FieldType.CONTACTS);
+        }
+        if (field.getFieldTypeEnum().equals(FieldType.USER_CONTACT)) {
+            field.setFieldTypeEnum(FieldType.USERS_CONTACTS);
+        }
+        field.setDateForSearch(Boolean.TRUE);
+        field.setChangeableIfEnum(FieldChangeableIf.ALWAYS_CHANGEABLE);
+        field.setMandatory(false);
+    }
+
     @Override
     public Map<String, Pair<PropertyDefinition, Field>> getPropertyDefinitions(Node documentDynamicNode) {
+        // TODO Alar: restore this behaviour or leave current?
+        // while (DocumentCommonModel.Types.METADATA_CONTAINER.equals(documentDynamicNode.getType())) {
+        // documentDynamicNode = generalService.getPrimaryParent(documentDynamicNode.getNodeRef());
+        // }
+        if (!DocumentCommonModel.Types.DOCUMENT.equals(documentDynamicNode.getType()) && !DocumentCommonModel.Types.METADATA_CONTAINER.equals(documentDynamicNode.getType())) {
+            return null;
+        }
         Pair<String, Integer> cacheKey = getDocTypeIdAndVersionNr(documentDynamicNode);
         Map<String, Pair<PropertyDefinition, Field>> propertyDefinitions = propertyDefinitionCache.get(cacheKey);
         if (propertyDefinitions == null) {
@@ -507,7 +731,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
 
         @Override
         public ModelDefinition getModel() {
-            return getDictionaryService().getModel(DocumentDynamicModel.MODEL);
+            return getDictionaryService().getModel(DocumentDynamicModel.MODEL); // TODO FIXME WARNING!! uses BeanHelper
         }
 
         @Override
@@ -517,7 +741,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
 
         @Override
         public String getTitle() {
-            return title;
+            return null;
         }
 
         @Override
@@ -532,7 +756,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
 
         @Override
         public DataTypeDefinition getDataType() {
-            return getDictionaryService().getDataType(getDataTypeQName());
+            return getDictionaryService().getDataType(getDataTypeQName()); // TODO FIXME WARNING!! uses BeanHelper
         }
 
         private QName getDataTypeQName() {
@@ -644,10 +868,8 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
         boolean inGroup;
         if (parent instanceof FieldGroup) {
             inGroup = true;
-        } else if (parent instanceof DocumentTypeVersion) {
-            inGroup = false;
         } else {
-            throw new RuntimeException("Field parent must be FieldGroup or DocumentTypeVersion, but is " + parent);
+            return null;
         }
         if (inGroup && ((FieldGroup) parent).isSystematic()) {
             Set<String> originalFieldIds = ((FieldGroup) parent).getOriginalFieldIds();

@@ -40,9 +40,10 @@ public interface DocumentSearchService {
      * where multiple files under the same document matched the search criteria.
      * 
      * @param searchString
+     * @param containerNodeRef if not null, only documents with given parent container nodeRef are returned
      * @return list of matching documents (max 100 entries)
      */
-    List<Document> searchDocumentsQuick(String searchString);
+    List<Document> searchDocumentsQuick(String searchString, NodeRef containerNodeRef);
 
     List<Document> searchDocumentsAndOrCases(String searchValue, Date regDateTimeBegin, Date regDateTimeEnd, List<QName> documentTypes);
 

@@ -3,7 +3,6 @@ package ee.webmedia.alfresco.series.service;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -13,10 +12,8 @@ import java.util.Map;
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
-import org.alfresco.service.cmr.repository.CopyService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.web.bean.repository.Node;
@@ -28,6 +25,8 @@ import org.springframework.beans.factory.BeanFactoryAware;
 
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.docadmin.web.ListReorderHelper;
+import ee.webmedia.alfresco.docadmin.web.NodeOrderModifier;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.series.model.Series;
@@ -46,13 +45,11 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     private NodeService nodeService;
     private GeneralService generalService;
     private DocumentLogService logService;
-    private CopyService copyService;
     private BeanFactory beanFactory;
     /** NB! not injected - use getter to obtain instance of volumeService */
     private VolumeService _volumeService;
     /** NB! not injected - use getter to obtain instance of functionsService */
     private FunctionsService _functionsService;
-    private SearchService searchService;
 
     @Override
     public List<ChildAssociationRef> getAllSeriesAssocsByFunction(NodeRef functionRef) {
@@ -122,6 +119,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     private void saveOrUpdate(Series series, boolean performReorder) {
         Map<String, Object> stringQNameProperties = series.getNode().getProperties();
         final NodeRef seriesRef = series.getNode().getNodeRef();
+        Integer previousOrder = null;
         if (series.getNode() instanceof TransientNode) { // save
             NodeRef seriesNodeRef = nodeService.createNode(series.getFunctionNodeRef(),
                     SeriesModel.Associations.SERIES, SeriesModel.Associations.SERIES, SeriesModel.Types.SERIES,
@@ -129,6 +127,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
             series.setNode(generalService.fetchNode(seriesNodeRef));
             logService.addSeriesLog(seriesNodeRef, I18NUtil.getMessage("series_log_status_created"));
         } else { // update
+            previousOrder = (Integer) nodeService.getProperty(seriesRef, SeriesModel.Props.ORDER);
             final String previousAccessrestriction = (String) nodeService.getProperty(seriesRef, SeriesModel.Props.ACCESS_RESTRICTION);
             generalService.setPropertiesIgnoringSystem(seriesRef, stringQNameProperties);
             logService.addSeriesLog(seriesRef, I18NUtil.getMessage("series_log_status_changed"));
@@ -138,43 +137,34 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
             }
         }
         if (performReorder) {
-            reorderSeries(series);
+            reorderSeries(series, previousOrder);
         }
     }
 
-    private void reorderSeries(Series series) {
-        final int order = series.getOrder();
+    private void reorderSeries(Series series, Integer previousSeriesOrder) {
         final List<Series> allSeriesByFunction = getAllSeriesByFunction(series.getFunctionNodeRef());
-        Collections.sort(allSeriesByFunction, new Comparator<Series>() {
+        // get Nodes of the Series
+        List<Node> allSeriesNodesByFunction = new ArrayList<Node>(allSeriesByFunction.size());
+        for (Series ser : allSeriesByFunction) {
+            allSeriesNodesByFunction.add(ser.getNode());
+        }
 
-            @Override
-            public int compare(Series s1, Series s2) {
-                final int order1 = getSeriesOrder(s1);
-                final int order2 = getSeriesOrder(s2);
-                if (order1 == order2) {
-                    return 0;
-                }
-                return order1 < order2 ? -1 : 1;
-            }
-
-        });
-
-        for (Series otherSeries : allSeriesByFunction) {
-            if (series.getNode().getNodeRef().equals(otherSeries.getNode().getNodeRef())) {
-                continue;
-            }
-            final int order2 = (Integer) otherSeries.getNode().getProperties().get(SeriesModel.Props.ORDER.toString());
-            if (order2 == order) {
-                otherSeries.getNode().getProperties().put(SeriesModel.Props.ORDER.toString(), order2 + 1);
-                // reorderSeries is recursively called on all following series in the list by saveOrUpdate
-                saveOrUpdate(otherSeries);
-                break;
+        // set previous order for each element
+        NodeOrderModifier modifier = new NodeOrderModifier(SeriesModel.Props.ORDER);
+        modifier.markBaseState(allSeriesNodesByFunction);
+        for (Node node : allSeriesNodesByFunction) {
+            if (node.getNodeRef().equals(series.getNode().getNodeRef())) {
+                modifier.setPreviousOrder(node, previousSeriesOrder);
             }
         }
-    }
 
-    private Integer getSeriesOrder(Series series) {
-        return (Integer) series.getNode().getProperties().get(SeriesModel.Props.ORDER.toString());
+        // reorder
+        ListReorderHelper.reorder(allSeriesNodesByFunction, modifier);
+
+        // save new order
+        for (Series series2 : allSeriesByFunction) {
+            saveOrUpdate(series2, false);
+        }
     }
 
     @Override
@@ -291,10 +281,6 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
 
     public void setLogService(DocumentLogService logService) {
         this.logService = logService;
-    }
-
-    public void setSearchService(SearchService searchService) {
-        this.searchService = searchService;
     }
 
     @Override

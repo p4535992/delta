@@ -142,13 +142,18 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
         }
 
         ItemConfigVO item = generatorResults.getAndAddPreGeneratedItem();
-        // pickerCallback, showFilter, filters, addLabelId, dialogTitleId are set by UserContactGenerator
+        // pickerCallback, showFilter, filters, dialogTitleId are set by UserContactGenerator
 
         // And we overwrite some other attributes set by UserContactGenerator
         item.setComponentGenerator("MultiValueEditorGenerator");
         item.setStyleClass("");
         item.setPreprocessCallback("#{UserContactGroupSearchBean.preprocessResultsToNodeRefs}");
         item.setDisplayLabel(group.getReadonlyFieldsName());
+        if (field.getOriginalFieldId().equals(DocumentCommonModel.Props.RECIPIENT_NAME.getLocalName())) {
+            item.setAddLabelId("document_add_recipient");
+        } else if (field.getOriginalFieldId().equals(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME.getLocalName())) {
+            item.setAddLabelId("document_add_additional_recipient");
+        }
 
         // And we set our own attributes
         item.setShowInViewMode(false);

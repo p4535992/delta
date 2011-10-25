@@ -92,6 +92,10 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
     @Override
     public void updateGeneratedFilesOnRegistration(NodeRef docRef) {
+        if (!msoService.isAvailable()) {
+            // Temporary safeguard until OO document templates & formulas are properly implemented
+            return;
+        }
         List<FileInfo> files = fileFolderService.listFiles(docRef);
         log.debug("Found " + files.size() + " files under document " + docRef);
         for (FileInfo file : files) {
@@ -104,6 +108,11 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                 replaceFormulas(docRef, file.getNodeRef(), file.getNodeRef(), file.getName());
             }
         }
+    }
+
+    @Override
+    public void updateDocTemplate(Node docTemplNode) {
+        generalService.setPropertiesIgnoringSystem(docTemplNode.getNodeRef(), docTemplNode.getProperties());
     }
 
     @Override
@@ -151,6 +160,10 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
     @Override
     public String populateTemplate(NodeRef documentNodeRef) throws FileNotFoundException {
+        if (!msoService.isAvailable()) {
+            // Temporary safeguard until OO document templates & formulas are properly implemented
+            throw new UnableToPerformException("document_errorMsg_template_processsing_failed_mso_missing");
+        }
 
         log.debug("Creating a file from template for document: " + documentNodeRef);
         final Map<QName, Serializable> docProp = nodeService.getProperties(documentNodeRef);

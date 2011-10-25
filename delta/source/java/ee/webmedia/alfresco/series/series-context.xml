@@ -33,13 +33,17 @@
          </list>
       </property>
    </bean>
+   
+   <!-- Used to update series volume types values. CL task: 177957 -->
+   <bean id="SeriesVolumeTypesUpdater" class="ee.webmedia.alfresco.series.bootstrap.SeriesVolumeTypesUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+   </bean>
 
    <bean id="seriesService" class="ee.webmedia.alfresco.series.service.SeriesServiceImpl">
       <property name="dictionaryService" ref="DictionaryService" />
       <property name="nodeService" ref="NodeService" />
       <property name="generalService" ref="GeneralService" />
       <property name="logService" ref="DocumentLogService" />
-      <property name="searchService" ref="SearchService" />
       <!--  XXX: property:volumeService - retrieved from applicationContext to avoid circular dependency between VolumeService and SeriesService      -->
    </bean>
 
@@ -60,7 +64,11 @@
    <!-- Used to add document regNr pattern to old series (CL task 174930) -->
    <bean id="SeriesDocNumberPatternUpdater" class="ee.webmedia.alfresco.document.bootstrap.SeriesDocNumberPatternUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
+   </bean>
+   
+   <!-- Adds to docNumberPattern register prefix and suffix if they exist. -->
+   <bean id="SeriesDocNumberPatternAddRegisterSufPrefUpdater" class="ee.webmedia.alfresco.document.bootstrap.SeriesDocNumberPatternAddRegisterSufPrefUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
    </bean>
 
 </beans>

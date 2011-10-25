@@ -10,6 +10,8 @@ import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 
 /**
+ * Evaluates to true if given series has status "avatud" and volume types contains "ANNUAL_FILE" or "SUBJECT_FILE".
+ * 
  * @author Vladimir Drozdik
  */
 public class CanAddVolumeEvaluator extends BaseActionEvaluator {
@@ -27,6 +29,6 @@ public class CanAddVolumeEvaluator extends BaseActionEvaluator {
         @SuppressWarnings("unchecked")
         List<String> volTypes = (List<String>) node.getProperties().get(SeriesModel.Props.VOL_TYPE);
         return DocListUnitStatus.OPEN.getValueName().equals(status) &&
-                (volTypes.contains(VolumeType.YEAR_BASED.name()) || volTypes.contains(VolumeType.OBJECT.name()));
+                (volTypes.contains(VolumeType.ANNUAL_FILE.name()) || volTypes.contains(VolumeType.SUBJECT_FILE.name()));
     }
 }

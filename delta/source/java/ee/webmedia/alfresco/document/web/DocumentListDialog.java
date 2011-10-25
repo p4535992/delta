@@ -10,16 +10,21 @@ import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
+import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.cases.model.Case;
+import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
+import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 
 /**
@@ -33,6 +38,8 @@ import ee.webmedia.alfresco.volume.service.VolumeService;
 public class DocumentListDialog extends BaseDocumentListDialog {
     private static final long serialVersionUID = 1L;
 
+    public static final String BEAN_NAME = "DocumentListDialog";
+
     private static final String VOLUME_NODE_REF = "volumeNodeRef";
     private static final String CASE_NODE_REF = "caseNodeRef";
 
@@ -42,6 +49,25 @@ public class DocumentListDialog extends BaseDocumentListDialog {
     // one of the following should always be null(depending of whether it is directly under volume or under case, that is under volume)
     private Volume parentVolume;
     private Case parentCase;
+
+
+    @Override
+    public Object getActionsContext() {
+        return parentVolume == null ? parentCase.getNode() : parentVolume.getNode();
+    }
+
+    public void init(NodeRef parentRef) {
+        QName type = getNodeService().getType(parentRef);
+        if (VolumeModel.Types.VOLUME.equals(type)) {
+            parentVolume = getVolumeService().getVolumeByNodeRef(parentRef);
+        } else if (CaseModel.Types.CASE.equals(type)) {
+            parentCase = getCaseService().getCaseByNoderef(parentRef);
+        } else {
+            throw new RuntimeException("Unsupported type: " + type);
+        }
+        restored();
+        WebUtil.navigateTo(AlfrescoNavigationHandler.DIALOG_PREFIX + "documentListDialog");
+    }
 
     public void setup(ActionEvent event) {
         final Map<String, String> parameterMap = ((UIActionLink) event.getSource()).getParameterMap();

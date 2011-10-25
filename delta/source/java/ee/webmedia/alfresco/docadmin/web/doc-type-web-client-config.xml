@@ -87,7 +87,7 @@
 
    <config evaluator="aspect-name" condition="docadmin:name">
       <property-sheet>
-         <show-property name="docadmin:name" />
+         <show-property name="docadmin:name" styleClass="focus" />
       </property-sheet>
    </config>
 
@@ -108,9 +108,7 @@
             ,docadmin:readonlyFieldsRule¤TextAreaGenerator¤styleClass=expand19-200 medium¤readOnlyIf=#{!FieldGroupDetailsDialog.fieldGroup.readonlyFieldsRuleChangeable}
             "
          />
-         <!-- TODO DLSeadist comment in when using this is implemented 
-         <show-property name="docadmin:showInTwoColumns" readOnlyIf="#{!FieldGroupDetailsDialog.fieldGroup.showInTwoColumnsChangeable}" />
-          -->
+         <show-property name="docadmin:showInTwoColumns" show="#{FieldGroupDetailsDialog.showShowInTwoColumns}" readOnlyIf="#{!FieldGroupDetailsDialog.fieldGroup.showInTwoColumnsChangeable}" />
       </property-sheet>
    </config>
 
@@ -146,20 +144,20 @@
          <show-property name="docadmin:systematic" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" />
          <show-property name="docadmin:mandatoryForDoc" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" />
          <show-property name="docadmin:fieldType" component-generator="EnumSelectorGenerator" enumClass="ee.webmedia.alfresco.classificator.constant.FieldType" readOnlyIf="#{FieldDetailsDialog.fieldTypeReadOnly}" valueChangeListener="#{FieldDetailsDialog.fieldTypeChanged}" />
-         <show-property name="docadmin:mandatory" />
+         <show-property name="docadmin:mandatory" readOnlyIf="#{FieldDetailsDialog.mandatoryReadOnly}" />
          <show-property name="docadmin:changeableIf" component-generator="EnumSelectorGenerator" enumClass="ee.webmedia.alfresco.classificator.constant.FieldChangeableIf" forcedMandatory="#{!FieldDetailsDialog.fieldDefinition}" />
 
          <!-- START: properties conditionally shown based on value of fieldType -->
          <separator name="sep-conditionalProps-before" show="#{FieldDetailsDialog.showAdditionalFieldsSeparator}" />
          <show-property name="docadmin:classificator" component-generator="SearchGenerator" pickerCallback="#{ClassificatorListDialog.searchClassificators}" setterCallback="#{FieldDetailsDialog.setClassificator}"
             dialogTitleId="classificators_search_title" tooltip="#{FieldDetailsDialog.getClassificatorDescription}" ajaxParentLevel="100"
-            editable="false" allowClearSingleValued="true" dontRenderIfDisabled="true" disabled="#{FieldDetailsDialog.isProperyHidden}" forcedMandatory="#{!FieldDetailsDialog.fieldDefinition}" />
+            editable="false" allowClearSingleValued="true" dontRenderIfDisabled="true" disabled="#{FieldDetailsDialog.isPropertyHidden}" forcedMandatory="#{!FieldDetailsDialog.fieldDefinition}" />
          <show-property name="docadmin:classificatorDefaultValue" component-generator="GeneralSelectorGenerator" selectionItems="#{FieldDetailsDialog.getClassificatorSelectItems}"
-            dontRenderIfDisabled="true" disabled="#{FieldDetailsDialog.isProperyHidden}" readOnlyIf="#{FieldDetailsDialog.classificatorDefaultValueReadOnly}" />
-         <show-property name="docadmin:defaultValue" dontRenderIfDisabled="true" disabled="#{FieldDetailsDialog.isProperyHidden}" mandatoryIf="#{FieldDetailsDialog.defaultValueMandatory}" />
-         <show-property name="docadmin:defaultDateSysdate" dontRenderIfDisabled="true" disabled="#{FieldDetailsDialog.isProperyHidden}" />
-         <show-property name="docadmin:defaultUserLoggedIn" dontRenderIfDisabled="true" disabled="#{FieldDetailsDialog.isProperyHidden}" />
-         <show-property name="docadmin:defaultSelected" dontRenderIfDisabled="true" disabled="#{FieldDetailsDialog.isProperyHidden}" />
+            show="#{FieldDetailsDialog.isShowProperty}" readOnlyIf="#{FieldDetailsDialog.classificatorDefaultValueReadOnly}" />
+         <show-property name="docadmin:defaultValue" dontRenderIfDisabled="true" disabled="#{FieldDetailsDialog.isPropertyHidden}" mandatoryIf="#{FieldDetailsDialog.defaultValueMandatory}" />
+         <show-property name="docadmin:defaultDateSysdate" dontRenderIfDisabled="true" disabled="#{FieldDetailsDialog.isPropertyHidden}" />
+         <show-property name="docadmin:defaultUserLoggedIn" dontRenderIfDisabled="true" disabled="#{FieldDetailsDialog.isPropertyHidden}" />
+         <show-property name="docadmin:defaultSelected" dontRenderIfDisabled="true" disabled="#{FieldDetailsDialog.isPropertyHidden}" />
          <separator name="sep-conditionalProps-after" show="#{FieldDetailsDialog.showAdditionalFieldsSeparator}" />
          <!-- END: properties conditionally shown based on value of fieldType -->
 

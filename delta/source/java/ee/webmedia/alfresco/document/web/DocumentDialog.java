@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
-import javax.faces.application.NavigationHandler;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIInput;
 import javax.faces.component.UIPanel;
@@ -59,7 +58,6 @@ import ee.webmedia.alfresco.common.listener.RefreshEventListener;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.ClearStateNotificationHandler;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
-import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
 import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
 import ee.webmedia.alfresco.document.associations.web.AssocsBlockBean;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil;
@@ -284,33 +282,37 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     public void endDocument(@SuppressWarnings("unused") ActionEvent event) {
         Node node = getDocumentDialogHelperBean().getNode();
         Assert.notNull(node, "No current document");
+        final Map<String, Object> docProps = node.getProperties();
+        final String docStatusBefore = (String) docProps.get(DocumentCommonModel.Props.DOC_STATUS.toString());
         try {
             getDocumentService().endDocument(node.getNodeRef());
         } catch (NodeLockedException e) {
             handleLockedNode("document_end_error_docLocked");
             return;
         }
-        // change property status of Node as well(in addition to changing it in repository) to avoid fetching node again just to reload single property needed
-        // for file-block
-        node.getProperties().put(DocumentCommonModel.Props.DOC_STATUS.toString(), DocumentStatus.FINISHED.getValueName());
+        final String docStatusAfter = DocumentStatus.FINISHED.getValueName();
         // refresh metadata block
         getDocumentDialogHelperBean().switchMode(false);
-        MessageUtil.addInfoMessage("document_end_success");
+        if (!StringUtils.equals(docStatusBefore, docStatusAfter)) {
+            MessageUtil.addInfoMessage("document_end_success");
+        }
     }
 
     public void reopenDocument(@SuppressWarnings("unused") ActionEvent event) {
         Node node = getDocumentDialogHelperBean().getNode();
         Assert.notNull(node, "No current document");
         final Map<String, Object> docProps = node.getProperties();
-        final String docStatusBeforeReopen = (String) docProps.get(DocumentCommonModel.Props.DOC_STATUS.toString());
-        getDocumentService().reopenDocument(node.getNodeRef());
-        // change property status of Node as well(in addition to changing it in repository) to avoid fetching node again just to reload single property needed
-        // for file-block
-        final String docStatusAfterReopen = DocumentStatus.WORKING.getValueName();
-        docProps.put(DocumentCommonModel.Props.DOC_STATUS.toString(), docStatusAfterReopen);
+        final String docStatusBefore = (String) docProps.get(DocumentCommonModel.Props.DOC_STATUS.toString());
+        try {
+            getDocumentService().reopenDocument(node.getNodeRef());
+        } catch (NodeLockedException e) {
+            handleLockedNode("document_reopen_error_docLocked");
+            return;
+        }
+        final String docStatusAfter = DocumentStatus.WORKING.getValueName();
         // refresh metadata block
         getDocumentDialogHelperBean().switchMode(false);
-        if (!StringUtils.equals(docStatusBeforeReopen, docStatusAfterReopen)) {
+        if (!StringUtils.equals(docStatusBefore, docStatusAfter)) {
             MessageUtil.addInfoMessage("document_reopen_success");
         }
     }
@@ -337,9 +339,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             return;
         }
         // go back
-        FacesContext fc = FacesContext.getCurrentInstance();
-        NavigationHandler navigationHandler = fc.getApplication().getNavigationHandler();
-        navigationHandler.handleNavigation(fc, null, BeanHelper.getDialogManager().cancel());
+        WebUtil.navigateTo(BeanHelper.getDialogManager().cancel());
         MessageUtil.addInfoMessage("document_delete_success");
     }
 
@@ -936,11 +936,6 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
 
     @Override
     public UIPropertySheet getPropertySheet() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public <E extends PropertySheetStateHolder> E getStateHolder(String key, Class<E> clazz) {
         throw new UnsupportedOperationException();
     }
 

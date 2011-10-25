@@ -103,7 +103,7 @@ public class FilenameUtil {
      */
     public static String limitFileNameLength(String filename) {
         if (filename != null && filename.length() > FILE_MAX_LENGTH) {
-            String baseName = FilenameUtils.getBaseName(filename);
+            String baseName = FilenameUtils.removeExtension(filename);
             String extension = FilenameUtils.getExtension(filename);
             baseName = baseName.substring(0, FILE_MAX_LENGTH - extension.length() - FILE_MAX_LENGTH_SUFFIX.length());
             filename = baseName + FILE_MAX_LENGTH_SUFFIX + extension;
@@ -120,13 +120,13 @@ public class FilenameUtil {
     }
 
     private static String makeSafeFilename(String name, List<String> existingFileNames) {
-        String safeName = replaceNonAsciiCharacters(
-                            removeAccents(
-                            replaceAmpersand(
-                            trimDotsAndSpaces(
-                            stripForbiddenWindowsCharacters(
-                            limitFileNameLength(name)
-                            )))));
+        String safeName = limitFileNameLength(
+                replaceNonAsciiCharacters(
+                removeAccents(
+                replaceAmpersand(
+                trimDotsAndSpaces(
+                stripForbiddenWindowsCharacters(
+                        name))))));
 
         if (existingFileNames != null && !existingFileNames.isEmpty()) {
             safeName = generateUniqueFileDisplayName(safeName, existingFileNames);

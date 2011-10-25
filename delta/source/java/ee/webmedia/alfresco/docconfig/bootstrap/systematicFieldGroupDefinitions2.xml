@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:docadmin="http://alfresco.webmedia.ee/model/document/admin/1.0">
+
+   <docadmin:fieldGroup view:childName="docadmin:contractParties">
+      <view:properties>
+         <docadmin:name>Lepingu pooled</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:readonlyFieldsNameChangeable>false</docadmin:readonlyFieldsNameChangeable>
+         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
+         <docadmin:showInTwoColumns>true</docadmin:showInTwoColumns>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>partyName</view:value>
+               <view:value>partySigner</view:value>
+               <view:value>partyEmail</view:value>
+               <view:value>partyContactPerson</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:firstPartyContactPerson">
+      <view:properties>
+         <docadmin:name>Esimese lepingu poole kontaktisik</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:showInTwoColumns>true</docadmin:showInTwoColumns>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>firstPartyContactPersonName</view:value>
+               <view:value>firstPartyContactPersonServiceRank</view:value>
+               <view:value>firstPartyContactPersonJobTitle</view:value>
+               <view:value>firstPartyContactPersonOrgStructUnit</view:value>
+               <view:value>firstPartyContactPersonWorkAddress</view:value>
+               <view:value>firstPartyContactPersonEmail</view:value>
+               <view:value>firstPartyContactPersonPhone</view:value>
+               <view:value>firstPartyContactPersonId</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+</view:view>

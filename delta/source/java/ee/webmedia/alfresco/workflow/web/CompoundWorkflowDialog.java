@@ -49,7 +49,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
-import ee.webmedia.alfresco.document.web.DocumentDialog;
 import ee.webmedia.alfresco.notification.exception.EmailAttachmentSizeLimitException;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
@@ -92,7 +91,6 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     private transient DocumentService documentService;
     private transient DocumentLogService documentLogService;
     private transient ParametersService parametersService;
-    private DocumentDialog documentDialog;
 
     private static final List<QName> knownWorkflowTypes = Arrays.asList(//
             WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW

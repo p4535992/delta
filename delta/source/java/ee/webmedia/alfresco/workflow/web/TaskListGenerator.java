@@ -253,7 +253,8 @@ public class TaskListGenerator extends BaseComponentGenerator {
                     nameInput.setValueBinding("value", application.createValueBinding(nameValueBinding));
 
                     String ownerId = task.getOwnerId();
-                    if (ownerId != null) {
+                    boolean hideExtraInfo = new Boolean(getCustomAttributes().get("hideExtraInfo"));
+                    if (ownerId != null && !hideExtraInfo) {
                         String info = UserUtil.getSubstitute(ownerId);
                         if (StringUtils.isNotBlank(info)) {
                             final HtmlPanelGroup userPanelGroup = (HtmlPanelGroup) application.createComponent(HtmlPanelGroup.COMPONENT_TYPE);

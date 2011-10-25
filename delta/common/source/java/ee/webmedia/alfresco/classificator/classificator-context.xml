@@ -381,6 +381,17 @@
          </list>
       </property>
    </bean>
+   
+   <!-- Used to delete classificator "volumeType" node. CL task: 177957 -->
+   <bean id="VolumeTypeDeleteClassificatorsUpdater" class="ee.webmedia.alfresco.common.bootstrap.DeleteNodeByXPathBootstrap" parent="abstractDeleteNodeByXPathBootstrap">
+      <property name="moduleId" value="simdhs" />
+      <property name="nodeXPath" value="/cl:classificators/cl:volumeType" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="classificatorRootBootstrap" />
+         </list>
+      </property>
+   </bean>
 
    <bean id="classificatorService" class="ee.webmedia.alfresco.classificator.service.ClassificatorServiceImpl" depends-on="classificatorModelBootstrap">
       <property name="generalService" ref="GeneralService" />

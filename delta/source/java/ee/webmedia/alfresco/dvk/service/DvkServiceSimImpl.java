@@ -634,7 +634,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
                 dvkDocVolume.setTitle(senderName);
                 dvkDocVolume.setStatus(DocListUnitStatus.OPEN.getValueName());
                 dvkDocVolume.setVolumeMark(dvkWorkflowSeriesMark + "-" + senderName);
-                dvkDocVolume.setVolumeType(VolumeType.YEAR_BASED.getValueName());
+                dvkDocVolume.setVolumeTypeEnum(VolumeType.ANNUAL_FILE);
                 volumeService.saveOrUpdate(dvkDocVolume, false);
             }
 

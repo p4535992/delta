@@ -343,7 +343,7 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
         return evaluateBoolean(expression, context, null);
     }
 
-    private boolean evaluateBoolean(String expression, FacesContext context, PropertySheetItem item) {
+    public static boolean evaluateBoolean(String expression, FacesContext context, PropertySheetItem item) {
         if ("true".equals(expression)) {
             return true;
         }

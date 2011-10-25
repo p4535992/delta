@@ -5,6 +5,7 @@ import java.util.Collections;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Hits;
@@ -13,6 +14,7 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.CreatedOrRegistratedDateComparator;
 import ee.webmedia.alfresco.document.web.BaseDocumentListDialog;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
+import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
@@ -23,9 +25,14 @@ public class DocumentQuickSearchResultsDialog extends BaseDocumentListDialog {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentQuickSearchResultsDialog.class);
 
     private String searchValue;
+    private NodeRef containerNodeRef;
 
     /** @param event */
     public void setup(ActionEvent event) {
+        if (ActionUtil.hasParam(event, "containerNodeRef")) {
+            containerNodeRef = ActionUtil.getParam(event, "containerNodeRef", NodeRef.class);
+        }
+
         doInitialSearch();
         doPostSearch();
         BeanHelper.getVisitedDocumentsBean().clearVisitedDocuments();
@@ -39,7 +46,7 @@ public class DocumentQuickSearchResultsDialog extends BaseDocumentListDialog {
 
     protected void doInitialSearch() {
         try {
-            documents = getDocumentSearchService().searchDocumentsQuick(searchValue);
+            documents = getDocumentSearchService().searchDocumentsQuick(searchValue, containerNodeRef);
             Collections.sort(documents, CreatedOrRegistratedDateComparator.getComparator());
         } catch (BooleanQuery.TooManyClauses e) {
             log.error("Quick search of '" + searchValue + "' failed: " + e.getMessage()); // stack trace is logged in the service
@@ -62,6 +69,9 @@ public class DocumentQuickSearchResultsDialog extends BaseDocumentListDialog {
 
         MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuBean.BEAN_NAME);
         menuBean.collapseMenuItems(null);
+
+        // Reset the constraining node
+        containerNodeRef = null;
     }
 
     @Override

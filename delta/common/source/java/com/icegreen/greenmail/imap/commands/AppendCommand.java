@@ -147,7 +147,7 @@ public class AppendCommand extends AuthenticatedStateCommand {
                 MimeMessage message = GreenMailUtil.newMimeMessage(new ByteArrayInputStream(mail));
                 if (StringUtils.isNotBlank(messageCopyFolder)) {
                     try {
-                        String filename = "ImapMessage-" + dateFormat.format(new Date());
+                        String filename = "ImapMessage-AppendCommand-" + dateFormat.format(new Date());
                         File messageFile = new File(messageCopyFolder, filename);
                         FileOutputStream messageOutputStream = new FileOutputStream(messageFile);
                         try {
@@ -159,6 +159,8 @@ public class AppendCommand extends AuthenticatedStateCommand {
                     } catch (Exception e) {
                         log.error("Error copying message contents to file", e);
                     }
+                } else {
+                    log.info("Not writing message to file, imap.messageFolder is blank");
                 }
                 return message;
             } catch (Exception e) {

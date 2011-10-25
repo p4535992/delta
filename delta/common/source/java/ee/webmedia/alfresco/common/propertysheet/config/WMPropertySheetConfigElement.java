@@ -13,7 +13,11 @@ import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorAndTextGenerator;
 import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorGenerator;
+import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
+import ee.webmedia.alfresco.common.propertysheet.component.WMUIPropertySheet;
+import ee.webmedia.alfresco.common.propertysheet.dimensionselector.DimensionSelectorGenerator;
+import ee.webmedia.alfresco.common.propertysheet.generator.ActionLinkGenerator;
 import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
 import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader;
@@ -167,7 +171,7 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
             copy.setRendered(rendered);
             copy.setIgnoreIfMissing(ignoreIfMissing);
             copy.setConfigItemType(configItemType);
-            copy.setCustomAttributes(customAttributes);
+            copy.setCustomAttributes(new HashMap<String, String>(customAttributes));
             return copy;
         }
 
@@ -278,6 +282,14 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
             setCustomAttribute(CombinedPropReader.AttributeNames.PROPS_GENERATION, propsGeneration);
         }
 
+        public void setProps(String props) {
+            setCustomAttribute(CombinedPropReader.AttributeNames.PROPS, props);
+        }
+
+        public void setTextId(String textId) {
+            setCustomAttribute(CombinedPropReader.AttributeNames.TEXT_ID, textId);
+        }
+
         public void setFilterIndex(int filterIndex) {
             setCustomAttribute(Search.FILTER_INDEX, Integer.toString(filterIndex));
         }
@@ -292,6 +304,74 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
 
         public void setPreprocessCallback(String preprocessCallback) {
             setCustomAttribute(MultiValueEditor.PREPROCESS_CALLBACK, preprocessCallback);
+        }
+
+        public void setShow(String show) {
+            setCustomAttribute(WMUIPropertySheet.SHOW, show);
+        }
+
+        public void setAction(String action) {
+            setCustomAttribute(ActionLinkGenerator.ACTION_KEY, action);
+        }
+
+        public void setActionListener(String actionListener) {
+            setCustomAttribute(ActionLinkGenerator.ACTION_LISTENER_KEY, actionListener);
+        }
+
+        public void setActionListenerParams(String actionListenerParams) {
+            setCustomAttribute(ActionLinkGenerator.ACTION_LISTENER_PARAMS_KEY, actionListenerParams);
+        }
+
+        public void setShowHeaders(Boolean showHeaders) {
+            setCustomAttribute(MultiValueEditor.SHOW_HEADERS, showHeaders == null ? null : showHeaders.toString());
+        }
+
+        public void setNoAddLinkLabel(Boolean noAddLinkLabel) {
+            setCustomAttribute(MultiValueEditor.NO_ADD_LINK_LABEL, noAddLinkLabel == null ? null : noAddLinkLabel.toString());
+        }
+
+        public void setIsAutomaticallyAddRows(Boolean isAutomaticallyAddRows) {
+            setCustomAttribute(MultiValueEditor.IS_AUTOMATICALLY_ADD_ROWS, isAutomaticallyAddRows == null ? null : isAutomaticallyAddRows.toString());
+        }
+
+        public void setFilter(String filter) {
+            setCustomAttribute(DimensionSelectorGenerator.ATTR_FILTER, filter);
+        }
+
+        public void setDisplayInline() {
+            setCustomAttribute(WMUIPropertySheet.DISPLAY, WMUIPropertySheet.INLINE);
+        }
+
+        public void setSubPropertySheetId(String subPropertySheetId) {
+            setCustomAttribute(SubPropertySheetItem.ATTR_SUB_PROPERTY_SHEET_ID, subPropertySheetId);
+        }
+
+        public void setBelongsToSubPropertySheetId(String belongsToSubPropertySheetId) {
+            setCustomAttribute(SubPropertySheetItem.ATTR_BELONGS_TO_SUB_PROPERTY_SHEET_ID, belongsToSubPropertySheetId);
+        }
+
+        public void setAssocBrand(String assocBrand) {
+            setCustomAttribute(SubPropertySheetItem.ATTR_ASSOC_BRAND, assocBrand);
+        }
+
+        public void setAssocName(String assocName) {
+            setCustomAttribute(SubPropertySheetItem.ATTR_ASSOC_NAME, assocName);
+        }
+
+        public void setActionsGroupId(String actionsGroupId) {
+            setCustomAttribute(SubPropertySheetItem.ATTR_ACTIONS_GROUP_ID, actionsGroupId);
+        }
+
+        public void setTitleLabelId(String titleLabelId) {
+            setCustomAttribute(SubPropertySheetItem.ATTR_TITLE_LABEL_ID, titleLabelId);
+        }
+
+        public void setSetterCallbackTakesNode(Boolean setterCallbackTakesNode) {
+            setCustomAttribute(Search.SETTER_CALLBACK_TAKES_NODE, setterCallbackTakesNode == null ? null : setterCallbackTakesNode.toString());
+        }
+
+        public void setOptionsSeparator(String optionsSeparator) {
+            setCustomAttribute(CombinedPropReader.AttributeNames.OPTIONS_SEPARATOR, optionsSeparator);
         }
 
     }

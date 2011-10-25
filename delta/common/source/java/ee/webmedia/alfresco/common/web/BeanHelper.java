@@ -29,6 +29,7 @@ import ee.webmedia.alfresco.archivals.service.ArchivalsService;
 import ee.webmedia.alfresco.base.BaseService;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.cases.web.CaseDetailsDialog;
+import ee.webmedia.alfresco.cases.web.CaseListDialog;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.classificator.web.ClassificatorDetailsDialog;
 import ee.webmedia.alfresco.classificator.web.ClassificatorsImportDialog;
@@ -58,7 +59,10 @@ import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.log.web.LogBlockBean;
 import ee.webmedia.alfresco.document.metadata.web.MetadataBlockBean;
 import ee.webmedia.alfresco.document.permissions.DocumentFileWriteDynamicAuthority;
+import ee.webmedia.alfresco.document.search.service.DocumentSearchFilterService;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
+import ee.webmedia.alfresco.document.search.web.DocumentSearchBean;
+import ee.webmedia.alfresco.document.search.web.DocumentSearchResultsDialog;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.sendout.web.DocumentSendOutDialog;
 import ee.webmedia.alfresco.document.sendout.web.SendOutBlockBean;
@@ -66,6 +70,7 @@ import ee.webmedia.alfresco.document.service.DocLockService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.document.web.DocumentDialog;
+import ee.webmedia.alfresco.document.web.DocumentListDialog;
 import ee.webmedia.alfresco.document.web.VisitedDocumentsBean;
 import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.email.service.EmailService;
@@ -126,6 +131,10 @@ public class BeanHelper {
         return getJsfBean(FunctionsDetailsDialog.class, FunctionsDetailsDialog.BEAN_NAME);
     }
 
+    public static DocumentSearchResultsDialog getDocumentSearchResultsDialog() {
+        return getJsfBean(DocumentSearchResultsDialog.class, DocumentSearchResultsDialog.BEAN_NAME);
+    }
+
     public static SeriesDetailsDialog getSeriesDetailsDialog() {
         return getJsfBean(SeriesDetailsDialog.class, SeriesDetailsDialog.BEAN_NAME);
     }
@@ -136,6 +145,10 @@ public class BeanHelper {
 
     public static CaseDetailsDialog getCaseDetailsDialog() {
         return getJsfBean(CaseDetailsDialog.class, CaseDetailsDialog.BEAN_NAME);
+    }
+
+    public static CaseListDialog getCaseListDialog() {
+        return getJsfBean(CaseListDialog.class, CaseListDialog.BEAN_NAME);
     }
 
     public static ClassificatorDetailsDialog getClassificatorDetailsDialog() {
@@ -181,6 +194,10 @@ public class BeanHelper {
 
     public static VisitedDocumentsBean getVisitedDocumentsBean() {
         return getJsfBean(VisitedDocumentsBean.class, VisitedDocumentsBean.BEAN_NAME);
+    }
+
+    public static DocumentSearchBean getDocumentSearchBean() {
+        return getJsfBean(DocumentSearchBean.class, DocumentSearchBean.BEAN_NAME);
     }
 
     public static UserListDialog getUserListDialog() {
@@ -261,6 +278,10 @@ public class BeanHelper {
 
     public static UserContactGroupSearchBean getUserContactGroupSearchBean() {
         return getJsfBean(UserContactGroupSearchBean.class, UserContactGroupSearchBean.BEAN_NAME);
+    }
+
+    public static DocumentListDialog getDocumentListDialog() {
+        return getJsfBean(DocumentListDialog.class, DocumentListDialog.BEAN_NAME);
     }
 
     // END: JSF web beans
@@ -485,6 +506,10 @@ public class BeanHelper {
 
     public static ArchivalsService getArchivalsService() {
         return getService(ArchivalsService.class, ArchivalsService.BEAN_NAME);
+    }
+
+    public static DocumentSearchFilterService getDocumentSearchFilterService() {
+        return getService(DocumentSearchFilterService.class, DocumentSearchFilterService.BEAN_NAME);
     }
 
     // END: delta services

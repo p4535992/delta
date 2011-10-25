@@ -1,20 +1,14 @@
 package ee.webmedia.alfresco.docadmin.web;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.faces.context.FacesContext;
-
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
-import org.apache.commons.collections.comparators.NullComparator;
-import org.apache.commons.collections.comparators.TransformingComparator;
 
 import ee.webmedia.alfresco.base.BaseObject.ChildrenList;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
@@ -22,7 +16,6 @@ import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docadmin.service.MetadataContainer;
 import ee.webmedia.alfresco.docadmin.service.MetadataItem;
-import ee.webmedia.alfresco.utils.ComparableTransformer;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
@@ -52,7 +45,7 @@ public class DocAdminUtil {
             // field has been added to the DocumentType but not previously persisted
             metadata.replaceChild(metadataItem); // but since we cloned it, we need to replace
         }
-        MessageUtil.addWarningMessage("fieldOrFieldGroup_details_affirm_changes_warning"); // FIXME DLSeadist msg key
+        MessageUtil.addWarningMessage("fieldOrFieldGroup_details_affirm_changes_warning");
     }
 
     /**
@@ -86,29 +79,14 @@ public class DocAdminUtil {
         return duplicateFieldIds;
     }
 
-    public// FIXME DLSeadist Vladimir peaks navigate meetodi WebUtil'isse liigutama
-    static void navigate(String navigationOutcome) {
-        FacesContext context = FacesContext.getCurrentInstance();
-        context.getApplication().getNavigationHandler()
-                .handleNavigation(context, null, navigationOutcome);
-    }
-
-    static <T extends MetadataItem> List<T> reorderAndMarkBaseState(List<T> metadata, BaseObjectOrderModifier<T> reorderHelper) {
+    public static <T extends MetadataItem> List<T> reorderAndMarkBaseState(List<T> metadata, BaseObjectOrderModifier<T> reorderHelper) {
         List<T> reordered = ListReorderHelper.reorder(metadata, reorderHelper);
         reorderHelper.markBaseState(reordered);
-        // order property has been changed, now reorder list items based on that property
-        @SuppressWarnings("unchecked")
-        Comparator<T> byOrderComparator = new TransformingComparator(new ComparableTransformer<T>() {
-            @Override
-            public Comparable<?> tr(T input) {
-                return input.getOrder();
-            }
-        }, new NullComparator());
-        Collections.sort(reordered, byOrderComparator);
         return reordered;
     }
 
-    static <T extends MetadataItem> BaseObjectOrderModifier<T> getMetadataItemReorderHelper(QName orderProp) {
+    public static <T extends MetadataItem> BaseObjectOrderModifier<T> getMetadataItemReorderHelper(QName orderProp) {
         return new BaseObjectOrderModifier<T>(orderProp);
     }
+
 }

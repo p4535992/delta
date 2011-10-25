@@ -158,16 +158,17 @@ public class VolumeServiceImpl implements VolumeService {
 
     @Override
     public void saveOrUpdate(Volume volume, boolean fromNodeProps) {
-        if (volume.getNode() instanceof TransientNode) { // save
-            Map<QName, Serializable> qNameProperties = fromNodeProps ? RepoUtil.toQNameProperties(volume.getNode().getProperties())
+        Node volumeNode = volume.getNode();
+        if (volumeNode instanceof TransientNode) { // save
+            Map<QName, Serializable> qNameProperties = fromNodeProps ? RepoUtil.toQNameProperties(volumeNode.getProperties())
                     : volumeBeanPropertyMapper.toProperties(volume);
             volume.setNode(createVolumeNode(volume.getSeriesNodeRef(), qNameProperties));
         } else { // update
             if (checkContainsCasesValue(volume)) {
                 if (fromNodeProps) {
-                    generalService.setPropertiesIgnoringSystem(volume.getNode().getNodeRef(), volume.getNode().getProperties());
+                    generalService.setPropertiesIgnoringSystem(volumeNode.getNodeRef(), volumeNode.getProperties());
                 } else {
-                    generalService.setPropertiesIgnoringSystem(volume.getNode().getNodeRef(), RepoUtil.toStringProperties(volumeBeanPropertyMapper
+                    generalService.setPropertiesIgnoringSystem(volumeNode.getNodeRef(), RepoUtil.toStringProperties(volumeBeanPropertyMapper
                             .toProperties(volume)));
                 }
             } else {

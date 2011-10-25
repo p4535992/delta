@@ -56,12 +56,9 @@ import org.alfresco.web.ui.common.component.SelfRenderingComponent;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.repo.component.evaluator.ActionInstanceEvaluator;
 import org.alfresco.web.ui.repo.component.evaluator.PermissionEvaluator;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.myfaces.shared_impl.taglib.UIComponentTagUtils;
-
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 /**
  * @author kevinr
@@ -143,26 +140,23 @@ public class UIActions extends SelfRenderingComponent
       requestMap.put(ACTION_CONTEXT, actionContext);
       
       String groupId = getValue();
-      boolean isValueReference = UIComponentTagUtils.isValueReference(groupId);
       String contextId;
-      String contextStatus = null;
       if (actionContext instanceof Node)
       {
          contextId = ((Node)actionContext).getType().toString();
-         String contextKey = contextId;
-         if (isValueReference) { // FIXME XXX TODO Vladimir?
-             // Ugly solution to get document status for document workflow menu actions filtering
-             contextStatus = (String) ((Node) actionContext).getProperties().get(DocumentCommonModel.Props.DOC_STATUS);
-             if (StringUtils.isNotBlank(contextStatus)) {
-                 contextKey += "_" + contextStatus;
-             }
-         }
-         
-         if (groups.contains(contextKey))
+         if (groups.contains(contextId))
          {
-            if (logger.isDebugEnabled())
-               logger.debug("---already built component tree for actions contextKey: " + contextKey);
-            return;
+            if (groupId != null && UIComponentTagUtils.isValueReference(groupId))
+            {
+                // If actionGroup is built by calling a methodBinding, then rebuild it on every render
+                getChildren().clear();
+            }
+            else
+            {
+               if (logger.isDebugEnabled())
+                  logger.debug("---already built component tree for actions contextId: " + contextId);
+               return;
+            }
          }
       }
       else
@@ -179,8 +173,8 @@ public class UIActions extends SelfRenderingComponent
       if (groupId != null && groupId.length() != 0)
       {
          // this is executed when groupId (the "value" parameter) is in "#{method name}" form. 
-         if (isValueReference) {
-             buildActionGroup(context, groupId, contextId, contextStatus);
+         if (UIComponentTagUtils.isValueReference(groupId)) {
+             buildActionGroup(context, groupId, contextId);
          }
          else 
          {
@@ -559,7 +553,7 @@ public class UIActions extends SelfRenderingComponent
     */
    @SuppressWarnings("unchecked")
    private void buildActionGroup(
-           FacesContext context, String methodBindingName, String contextId, String contextStatus)
+           FacesContext context, String methodBindingName, String contextId)
         throws IOException
      {
         javax.faces.application.Application facesApp = context.getApplication();
@@ -579,21 +573,11 @@ public class UIActions extends SelfRenderingComponent
         wrapper.setId(createUniqueId());
         wrapper.getAttributes().put("contextId", contextId);
         this.getChildren().add(wrapper);
-
-        String contextKey = contextId + (StringUtils.isNotBlank(contextStatus) ? ("_" + contextStatus) : "");
-        this.groups.add(contextKey);
+        this.groups.add(contextId);
         
         // get the ActionDefinition object list
-        MethodBinding mb = null;
-        Object[] bindParams = null;
-        if (StringUtils.isNotBlank(contextStatus)) {
-            mb = facesApp.createMethodBinding(methodBindingName, new Class[] { String.class, String.class });
-            bindParams = new Object[] { contextId, contextStatus };
-        } else {
-            mb = facesApp.createMethodBinding(methodBindingName, new Class[] { String.class });
-            bindParams = new Object[] { contextId };
-        }
-        List<ActionDefinition> actionDefinitions = (List<ActionDefinition>) mb.invoke(context, bindParams);
+        MethodBinding mb = facesApp.createMethodBinding(methodBindingName, new Class[] { String.class });
+        List<ActionDefinition> actionDefinitions = (List<ActionDefinition>) mb.invoke(context, new Object[] { contextId });
         
         // process each ActionDefinition in the order they were defined
         for (ActionDefinition actionDef : actionDefinitions)

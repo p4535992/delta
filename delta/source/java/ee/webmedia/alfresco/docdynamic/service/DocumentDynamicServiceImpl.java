@@ -19,10 +19,13 @@ import java.util.Map;
 import java.util.Set;
 
 import org.alfresco.service.cmr.dictionary.DictionaryService;
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
+import org.alfresco.web.bean.repository.Node;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
@@ -35,7 +38,12 @@ import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
+import ee.webmedia.alfresco.docadmin.service.Field;
+import ee.webmedia.alfresco.docadmin.service.FieldGroup;
+import ee.webmedia.alfresco.docadmin.service.MetadataItem;
+import ee.webmedia.alfresco.docconfig.bootstrap.SystematicFieldGroupNames;
 import ee.webmedia.alfresco.docconfig.generator.SaveListener;
+import ee.webmedia.alfresco.docconfig.generator.systematic.UserContactRelatedGroupGenerator;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
@@ -111,6 +119,27 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         DocumentDynamic document = getDocument(docRef);
         documentConfigService.setDefaultPropertyValues(document.getNode());
         generalService.setPropertiesIgnoringSystem(docRef, document.getNode().getProperties());
+
+        for (MetadataItem metadataItem : docVer.getMetadata()) {
+            if (metadataItem instanceof FieldGroup) {
+                FieldGroup group = (FieldGroup) metadataItem;
+                if (group.getName().equals(SystematicFieldGroupNames.CONTRACT_PARTIES)) {
+                    Map<QName, Serializable> subNodeProps = new HashMap<QName, Serializable>();
+                    for (Field field : group.getFields()) {
+                        if (document.getNode().getProperties().containsKey(field.getQName().toString())) {
+                            subNodeProps.put(field.getQName(), (Serializable) document.getNode().getProperties().get(field.getQName().toString()));
+                        }
+                    }
+                    Pair<Field, Integer> primaryFieldAndIndex = UserContactRelatedGroupGenerator.getPrimaryFieldAndIndex(group);
+                    NodeRef subNodeRef = nodeService.createNode(
+                            docRef,
+                            DocumentCommonModel.Types.METADATA_CONTAINER,
+                            primaryFieldAndIndex.getFirst().getQName(),
+                            DocumentCommonModel.Types.METADATA_CONTAINER,
+                            subNodeProps).getChildRef();
+                }
+            }
+        }
 
         return docRef;
     }
@@ -191,7 +220,9 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         }
 
         LOG.info("updateDocument after validation and save listeners, before real saving: " + document);
-        generalService.saveAddedAssocs(document.getNode());
+
+        // generalService.saveAddedAssocs(document.getNode());
+
         { // update properties and log changes made in properties
             DocumentServiceImpl.PropertyChangesMonitorHelper propertyChangesMonitorHelper = new DocumentServiceImpl.PropertyChangesMonitorHelper();// FIXME:
             boolean propsChanged = propertyChangesMonitorHelper.setPropertiesIgnoringSystemAndReturnIfChanged(docRef, docProps //
@@ -199,6 +230,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
                     , REG_NUMBER, SHORT_REG_NUMBER, REG_DATE_TIME // registration changes
                     , ACCESS_RESTRICTION // access restriction changed
                     );
+            propsChanged |= saveChildNodes(documentOriginal.getNode() /* TODO ??? */, propertyChangesMonitorHelper);
             if (!EventsLoggingHelper.isLoggingDisabled(document.getNode(), DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED)) {
                 if (document.isDraft()) {
                     documentLogService.addDocumentLog(docRef, MessageUtil.getMessage("document_log_status_created"));
@@ -231,6 +263,48 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     public boolean isDraft(NodeRef docRef) {
         NodeRef parentRef = nodeService.getPrimaryParent(docRef).getParentRef();
         return DocumentCommonModel.Types.DRAFTS.equals(nodeService.getType(parentRef));
+    }
+
+    private boolean saveChildNodes(Node docNode, DocumentServiceImpl.PropertyChangesMonitorHelper propertyChangesMonitorHelper) {
+        boolean propsChanged = false;
+        propsChanged |= saveRemovedChildAssocsAndReturnCount(docNode) > 0;
+
+        QName partyAssoc = DocumentCommonModel.Types.METADATA_CONTAINER;
+        final List<Node> parties = docNode.getAllChildAssociations(partyAssoc);
+        if (parties != null && parties.size() >= 0) {
+            for (int i = 0; i < parties.size(); i++) {
+                Node partyNode = parties.get(i);
+                propsChanged |= saveRemovedChildAssocsAndReturnCount(partyNode) > 0;
+                Node newPartyNode = saveChildNode(docNode, partyNode, partyAssoc, parties, i);
+                if (newPartyNode == null) {
+                    propsChanged |= propertyChangesMonitorHelper.setPropertiesIgnoringSystemAndReturnIfChanged(partyNode.getNodeRef(), partyNode
+                                .getProperties());
+                } else {
+                    propsChanged = true;
+                }
+            }
+        }
+        return propsChanged;
+    }
+
+    private int saveRemovedChildAssocsAndReturnCount(Node applicantNode) {
+        return generalService.saveRemovedChildAssocs(applicantNode);
+    }
+
+    private Node saveChildNode(Node docNode, Node applicantNode, final QName assocTypeAndNameQName, final List<Node> applicants, int i) {
+        if (applicantNode instanceof WmNode) {
+            WmNode wmNode = (WmNode) applicantNode;
+            if (wmNode.isUnsaved()) {
+                final Map<QName, Serializable> props = RepoUtil.toQNameProperties(applicantNode.getProperties());
+                final ChildAssociationRef applicantNode2 = nodeService.createNode(docNode.getNodeRef(), assocTypeAndNameQName
+                        , assocTypeAndNameQName, applicantNode.getType(), props);
+                final Node newApplicantNode = generalService.fetchNode(applicantNode2.getChildRef());
+                applicants.remove(i);
+                applicants.add(i, newApplicantNode);
+                return newApplicantNode;
+            }
+        }
+        return null;
     }
 
     // START: setters

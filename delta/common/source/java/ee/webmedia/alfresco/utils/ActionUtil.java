@@ -59,9 +59,19 @@ public class ActionUtil {
     }
 
     public static boolean hasParam(ActionEvent event, String key) {
-        UIActionLink link = (UIActionLink) event.getComponent();
-        Map<String, String> params = link.getParameterMap();
-        return params.containsKey(key);
+        UIComponent component = event.getComponent();
+
+        if (component instanceof UIActionLink) {
+            return ((UIActionLink) component).getParameterMap().containsKey(key);
+        } else if (component.getChildCount() != 0) { // CommandButton or something else
+            for (Object child : component.getChildren()) {
+                if (child instanceof UIParameter && ((UIParameter) child).getName().equals(key)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     public static Map<String, String> getParams(ActionEvent event) {

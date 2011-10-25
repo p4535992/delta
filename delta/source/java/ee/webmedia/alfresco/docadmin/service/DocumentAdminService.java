@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.docadmin.service;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -68,7 +69,7 @@ public interface DocumentAdminService {
 
     <F extends Field> F saveOrUpdateField(F originalFieldDef);
 
-    List<FieldDefinition> saveOrUpdateFieldDefinitions(List<FieldDefinition> fieldDefinitions);
+    List<FieldDefinition> saveOrUpdateFieldDefinitions(Collection<FieldDefinition> fieldDefinitions);
 
     List<FieldDefinition> getFieldDefinitions();
 
@@ -121,5 +122,11 @@ public interface DocumentAdminService {
     void createSystematicDocumentTypes(
             Map<String /* documentTypeId */, Pair<String /* documentTypeName */, Pair<Set<String> /* fieldGroupNames */, Set<QName> /* fieldGroupNames */>>> systematicDocumentTypes,
             NodeRef fieldGroupDefinitionsTmp, NodeRef fieldDefinitionsTmp);
+
+    List<FieldDefinition> getSearchableFieldDefinitions();
+
+    void registerGroupShowShowInTwoColumns(Set<String> originalFieldIds);
+
+    boolean isGroupShowShowInTwoColumns(FieldGroup group);
 
 }

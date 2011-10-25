@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.common.propertysheet.search;
 import java.util.Map;
 
 import javax.faces.component.UIComponent;
+import javax.faces.component.UIOutput;
 import javax.faces.context.FacesContext;
 
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
@@ -28,5 +29,14 @@ public class UserSearchGenerator extends SearchGenerator {
         UIComponent component = super.generate(context, id);
         component.setRendererType(UserSearchRenderer.USER_SEARCH_RENDERER_TYPE);
         return component;
+    }
+
+    @Override
+    protected UIOutput createOutputTextComponent(FacesContext context, String id) {
+        UIOutput createOutputTextComponent = super.createOutputTextComponent(context, id);
+        createOutputTextComponent.setRendererType(UserSearchViewModeRenderer.RENDERER_TYPE);
+        String propName = getCustomAttributes().get(USERNAME_PROP_ATTR);
+        createOutputTextComponent.getAttributes().put(EXTRA_INFO_TRANSFORMER, new SubstituteInfoTransformer(propName));
+        return createOutputTextComponent;
     }
 }

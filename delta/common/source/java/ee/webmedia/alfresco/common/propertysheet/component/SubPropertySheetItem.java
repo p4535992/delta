@@ -55,6 +55,7 @@ import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.config.ActionsConfigElement;
 import org.alfresco.web.config.ActionsConfigElement.ActionDefinition;
 import org.alfresco.web.config.ActionsConfigElement.ActionGroup;
+import org.alfresco.web.config.PropertySheetConfigElement.ItemConfig;
 import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.UIActionLink;
@@ -66,6 +67,8 @@ import org.apache.myfaces.shared_impl.renderkit.JSFAttr;
 import org.apache.myfaces.shared_impl.renderkit.html.HTML;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement;
+import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.SessionContext;
 import ee.webmedia.alfresco.utils.ComponentUtil;
@@ -91,11 +94,13 @@ public class SubPropertySheetItem extends PropertySheetItem {
      * Determines which kind of associations to show on this subPropertySheets <br>
      * currently supported only "children"<br>
      */
-    private final static String ATTR_ASSOC_BRAND = "assocBrand";
-    private final static String ATTR_ASSOC_NAME = "assocName";
-    private final static String ATTR_ACTIONS_GROUP_ID = "actionsGroupId";
-    private final static String ATTR_TITLE_LABEL_ID = "titleLabelId";
-    private final static String BORDERLESS = "borderless";
+    public static final String ATTR_ASSOC_BRAND = "assocBrand";
+    public static final String ATTR_ASSOC_NAME = "assocName";
+    public static final String ATTR_ACTIONS_GROUP_ID = "actionsGroupId";
+    public static final String ATTR_TITLE_LABEL_ID = "titleLabelId";
+    public static final String ATTR_SUB_PROPERTY_SHEET_ID = "subPropertySheetId";
+    public static final String ATTR_BELONGS_TO_SUB_PROPERTY_SHEET_ID = "belongsToSubPropertySheetId";
+    public static final String ATTR_BORDERLESS = "borderless";
 
     private Map<String, String> customAttributes;
     private QName assocTypeQName;
@@ -178,7 +183,7 @@ public class SubPropertySheetItem extends PropertySheetItem {
         ResponseWriter writer = context.getResponseWriter();
         writer.startElement(HTML.TR_ELEM, this);
         String styleClass = "subPropertySheetTR";
-        if (Boolean.valueOf(getCustomAttributes().get(BORDERLESS))) {
+        if (Boolean.valueOf(getCustomAttributes().get(ATTR_BORDERLESS))) {
             styleClass += " borderless";
         }
         writer.writeAttribute(HTML.CLASS_ATTR, styleClass, null);
@@ -333,7 +338,7 @@ public class SubPropertySheetItem extends PropertySheetItem {
 
         @SuppressWarnings("unchecked")
         final List<UIComponent> namingContainerChildren = uiNamingContainer.getChildren();
-        boolean borderless = Boolean.valueOf(getCustomAttributes().get(BORDERLESS));
+        boolean borderless = Boolean.valueOf(getCustomAttributes().get(ATTR_BORDERLESS));
 
         UIPanel subPropSheetWrapper = new UIPanel();
         namingContainerChildren.add(subPropSheetWrapper);
@@ -367,6 +372,24 @@ public class SubPropertySheetItem extends PropertySheetItem {
         final WMUIPropertySheet childProperySheet = (WMUIPropertySheet) context.getApplication().createComponent("org.alfresco.faces.PropertySheet");
         FacesHelper.setupComponentId(context, childProperySheet, SUB_PROP_SHEET_ID_PREFIX + assocIndex);
         childProperySheet.setNode(subPropSheetNode);
+
+        String subPropertySheetId = getCustomAttributes().get(ATTR_SUB_PROPERTY_SHEET_ID);
+        if (StringUtils.isNotBlank(subPropertySheetId) && outerPropSheet.getConfig() != null) {
+            WMPropertySheetConfigElement subConfig = new WMPropertySheetConfigElement();
+            childProperySheet.setConfig(subConfig);
+            for (ItemConfig itemConfig : outerPropSheet.getConfig().getItems().values()) {
+                if (itemConfig instanceof ItemConfigVO) {
+                    ItemConfigVO itemConfigVO = (ItemConfigVO) itemConfig;
+                    String belongsToSubPropertySheetId = itemConfigVO.getCustomAttributes().get(ATTR_BELONGS_TO_SUB_PROPERTY_SHEET_ID);
+                    if (subPropertySheetId.equals(belongsToSubPropertySheetId)) {
+                        ItemConfigVO copyItem = itemConfigVO.copyAsReadOnly();
+                        copyItem.getCustomAttributes().remove(ATTR_BELONGS_TO_SUB_PROPERTY_SHEET_ID);
+                        subConfig.addItem(copyItem);
+                    }
+                }
+            }
+        }
+
         // copy defaults from parent propertySheet
         childProperySheet.setMode(outerPropSheet.getMode());
         childProperySheet.setParent(this);

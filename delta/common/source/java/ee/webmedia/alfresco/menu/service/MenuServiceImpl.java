@@ -22,7 +22,6 @@ import org.springframework.core.io.ResourceLoader;
 import com.thoughtworks.xstream.XStream;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.menu.model.BrowseMenuItem;
 import ee.webmedia.alfresco.menu.model.DropdownMenuItem;
 import ee.webmedia.alfresco.menu.model.Menu;
 import ee.webmedia.alfresco.menu.model.MenuItem;
@@ -115,7 +114,6 @@ public class MenuServiceImpl implements MenuService {
             xstream.processAnnotations(Menu.class);
             xstream.processAnnotations(MenuItem.class);
             xstream.processAnnotations(DropdownMenuItem.class);
-            xstream.processAnnotations(BrowseMenuItem.class);
             Menu loadedMenu = (Menu) xstream.fromXML(resource.getInputStream());
             process(loadedMenu, true);
             menu = loadedMenu; // this is performed here at the end, atomically

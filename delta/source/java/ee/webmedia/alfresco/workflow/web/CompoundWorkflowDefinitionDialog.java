@@ -8,6 +8,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getEInvoiceService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getOrganizationStructureService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserContactGroupSearchBean;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserListDialog;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 import static ee.webmedia.alfresco.utils.ComponentUtil.addChildren;
@@ -57,7 +58,6 @@ import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.parameters.model.Parameters;
-import ee.webmedia.alfresco.user.web.UserListDialog;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
@@ -87,8 +87,6 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
 
     private transient HtmlPanelGroup panelGroup;
     protected transient TreeMap<String, QName> sortedTypes;
-
-    private UserListDialog userListDialog;
 
     private OwnerSearchBean ownerSearchBean;
     private List<SelectItem> parallelSelections;
@@ -285,7 +283,10 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     private SelectItem[] executeOwnerSearch(int filterIndex, String contains, boolean orgOnly, boolean taskCapableOnly, String institutionToRemove) {
         log.debug("executeOwnerSearch: " + filterIndex + ", " + contains);
         if (filterIndex == 0) { // users
-            return userListDialog.searchUsersWithoutSubstitutionInfoShown(-1, contains);
+            if (this instanceof CompoundWorkflowDialog) {
+                return getUserListDialog().searchUsers(-1, contains);
+            }
+            return getUserListDialog().searchUsersWithoutSubstitutionInfoShown(-1, contains);
         } else if (filterIndex == 1) { // user groups
             return getUserContactGroupSearchBean().searchGroups(contains, false);
         } else if (filterIndex == 2) { // contacts
@@ -501,10 +502,6 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         return externalReviewSearchFilters;
     }
 
-    public void setUserListDialog(UserListDialog userListDialog) {
-        this.userListDialog = userListDialog;
-    }
-
     public void setOwnerSearchBean(OwnerSearchBean ownerSearchBean) {
         this.ownerSearchBean = ownerSearchBean;
     }
@@ -614,7 +611,8 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             }
 
             String blockStatus = block.getStatus();
-            if (fullAccess && Status.NEW.equals(blockStatus) && !block.isMandatory()) {
+            if (fullAccess && Status.NEW.equals(blockStatus) && !block.isMandatory()
+                    || !(this instanceof CompoundWorkflowDialog)) {
                 // block remove workflow actions
                 HtmlPanelGroup deleteActions = (HtmlPanelGroup) application.createComponent(HtmlPanelGroup.COMPONENT_TYPE);
                 deleteActions.setId("action-remove-" + wfCounter);

@@ -11,11 +11,13 @@ import javax.faces.el.MethodBinding;
 import javax.faces.el.ValueBinding;
 
 import org.alfresco.util.Pair;
+import org.alfresco.web.bean.generator.BaseComponentGenerator;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.config.PropertySheetConfigElement.ItemConfig;
 import org.alfresco.web.ui.repo.RepoConstants;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
+import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.shared_impl.renderkit.html.HTML;
 
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
@@ -59,9 +61,9 @@ public class WMUIPropertySheet extends UIPropertySheet {
     @Override
     protected void changePropSheetItem(ItemConfig item, PropertySheetItem propSheetItem) {
         // if both can have custom attributes, then set them from item to propSheetItem
-        if (item instanceof CustomAttributes && propSheetItem instanceof CustomAttributes) {
+        if (item instanceof CustomAttributes) {
             CustomAttributes wMPropertyConfig = (CustomAttributes) item;
-            CustomAttributes wmPropSheetItem = (CustomAttributes) propSheetItem;
+            CustomAttributes wmPropSheetItem = propSheetItem;
             wmPropSheetItem.setCustomAttributes(wMPropertyConfig.getCustomAttributes());
         }
     }
@@ -79,9 +81,14 @@ public class WMUIPropertySheet extends UIPropertySheet {
                                 new Class[] { UIPropertySheet.class });
                         showItem = (Boolean) mb.invoke(context, new Object[] { this });
                     } catch (EvaluationException e) {
-                        // ... if first method failed, try ValueBinding
-                        ValueBinding vb = context.getApplication().createValueBinding(show);
-                        showItem = (Boolean) vb.getValue(context);
+                        try { // ... if first method failed, try ValueBinding
+                            ValueBinding vb = context.getApplication().createValueBinding(show);
+                            showItem = (Boolean) vb.getValue(context);
+                        } catch (EvaluationException e2) {
+                            // ... if it also failed, maybe there is method that takes PropertySheetItem
+                            PropertySheetItem psItem = createPropertySheetItemAndId(item, context).getFirst();
+                            BaseComponentGenerator.evaluateBoolean(show, context, psItem);
+                        }
                     }
                     if (showItem != null && !showItem) {
                         continue;
@@ -100,6 +107,9 @@ public class WMUIPropertySheet extends UIPropertySheet {
         final Pair<PropertySheetItem, String> propSheetItemAndId;
         if (item instanceof ItemConfigVO) {
             ItemConfigVO confVO = (ItemConfigVO) item;
+            if (StringUtils.isNotBlank(confVO.getCustomAttributes().get(SubPropertySheetItem.ATTR_BELONGS_TO_SUB_PROPERTY_SHEET_ID))) {
+                return new Pair<PropertySheetItem, String>(null, null);
+            }
             PropertySheetItem propSheetItem;
             String id;
             if (confVO.getConfigItemType().equals(ConfigItemType.PROPERTY)) {

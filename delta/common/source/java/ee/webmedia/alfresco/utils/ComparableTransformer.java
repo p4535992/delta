@@ -7,7 +7,7 @@ package ee.webmedia.alfresco.utils;
  * 
  * @author Ats Uiboupin
  */
-public abstract class ComparableTransformer<T> extends Transformer<T> {
+public abstract class ComparableTransformer<T> extends Transformer<T, Comparable<?>> {
 
     @Override
     public abstract Comparable<?> tr(T input);

@@ -13,6 +13,7 @@ import org.apache.commons.lang.time.DateUtils;
 
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
+import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
 
@@ -123,8 +124,16 @@ public class Volume implements Serializable, Comparable<Volume> {
         return volumeType;
     }
 
+    public VolumeType getVolumeTypeEnum() {
+        return VolumeType.valueOf(volumeType);
+    }
+
     public void setVolumeType(String volumeType) {
         this.volumeType = volumeType;
+    }
+
+    public void setVolumeTypeEnum(VolumeType volumeType) {
+        this.volumeType = volumeType.name();
     }
 
     public Node getNode() {

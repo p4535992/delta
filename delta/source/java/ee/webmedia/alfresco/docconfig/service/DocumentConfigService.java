@@ -25,6 +25,8 @@ public interface DocumentConfigService {
 
     DocumentConfig getConfig(Node documentDynamicNode);
 
+    DocumentConfig getSearchConfig();
+
     PropertyDefinition getPropertyDefinition(Node node, QName property);
 
     /**

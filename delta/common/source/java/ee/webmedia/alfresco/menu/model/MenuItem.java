@@ -33,6 +33,7 @@ import com.thoughtworks.xstream.annotations.XStreamOmitField;
 
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.menu.ui.component.MenuItemWrapper;
+import ee.webmedia.alfresco.menu.ui.component.UIMenuComponent.ClearViewStackActionListener;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
@@ -130,6 +131,7 @@ public class MenuItem implements Serializable {
 
         link.setRendererType(UIActions.RENDERER_ACTIONLINK);
         FacesHelper.setupComponentId(context, link, id);
+        link.addActionListener(new ClearViewStackActionListener());
 
         if (getTitle() == null) {
             String message = I18NUtil.getMessage(getTitleId());

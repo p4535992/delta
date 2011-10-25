@@ -108,6 +108,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     private transient DvkService dvkService;
 
     private transient HtmlPanelGroup dataTableGroup;
+    private transient List<ActionDefinition> actionDefinitions;
 
     private NodeRef docRef;
     private Node document;
@@ -131,6 +132,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         this.document = document;
         docRef = document.getNodeRef();
         delegationBean.setWorkflowBlockBean(this);
+        actionDefinitions = null; // force to rebuild actionDefinitions
         restore();
     }
 
@@ -143,6 +145,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         signatureTask = null;
         dataTableGroup = null;
         delegationBean.reset();
+        actionDefinitions = Collections.emptyList();
     }
 
     public void restore() {
@@ -160,9 +163,13 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         return getWorkflowService().isOwner(getCompoundWorkflows());
     }
 
-    public List<ActionDefinition> findCompoundWorkflowDefinitions(String documentTypeId, String documentStatus) {
+    // This method (UIAction's "value" methodBinding) is called on every render, so caching results is useful
+    public List<ActionDefinition> findCompoundWorkflowDefinitions(@SuppressWarnings("unused") String nodeTypeId) {
         if (document == null) {
             return Collections.emptyList();
+        }
+        if (actionDefinitions != null) {
+            return actionDefinitions;
         }
 
         WorkflowService workflowService = getWorkflowService();
@@ -173,11 +180,11 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             }
         }
 
-        documentTypeId = (String) document.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID);
-        documentStatus = (String) document.getProperties().get(DocumentCommonModel.Props.DOC_STATUS);
+        String documentTypeId = (String) document.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID);
+        String documentStatus = (String) document.getProperties().get(DocumentCommonModel.Props.DOC_STATUS);
 
         List<CompoundWorkflowDefinition> workflowDefs = workflowService.getCompoundWorkflowDefinitions(documentTypeId, documentStatus);
-        List<ActionDefinition> actionDefinitions = new ArrayList<ActionDefinition>(workflowDefs.size());
+        actionDefinitions = new ArrayList<ActionDefinition>(workflowDefs.size());
         String userId = AuthenticationUtil.getRunAsUser();
         for (CompoundWorkflowDefinition compoundWorkflowDefinition : workflowDefs) {
             String cWFUserId = compoundWorkflowDefinition.getUserId();

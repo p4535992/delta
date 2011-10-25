@@ -22,10 +22,6 @@
          <value>#{NavigationBean}</value>
       </managed-property>
       <managed-property>
-         <property-name>userListDialog</property-name>
-         <value>#{UserListDialog}</value>
-      </managed-property>
-      <managed-property>
          <property-name>ownerSearchBean</property-name>
          <value>#{OwnerSearchBean}</value>
       </managed-property>
@@ -52,10 +48,6 @@
       <managed-property>
          <property-name>navigator</property-name>
          <value>#{NavigationBean}</value>
-      </managed-property>
-      <managed-property>
-         <property-name>userListDialog</property-name>
-         <value>#{UserListDialog}</value>
       </managed-property>
       <managed-property>
          <property-name>ownerSearchBean</property-name>

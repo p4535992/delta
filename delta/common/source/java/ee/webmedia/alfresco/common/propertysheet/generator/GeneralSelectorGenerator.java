@@ -155,6 +155,8 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
             } else if (component instanceof HtmlSelectManyListbox) {
                 // TODO: check if this class behaves correctly in IE8 with onChange and jQuery change event both active
                 ((HtmlSelectManyListbox) component).setOnchange(onchange);
+            } else {
+                ((UIInput) component).getAttributes().put("onchange", onchange);
             }
         }
     }
@@ -199,6 +201,7 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
 
     /**
      * Similar method for {@link SelectItem} objects is {@link ComponentUtil#addDefault(List, FacesContext)}
+     * 
      * @param context
      * @param results
      */

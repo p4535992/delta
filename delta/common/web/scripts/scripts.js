@@ -1096,6 +1096,18 @@ function initWithScreenProtected() {
       }
    };
 
+   $jQ(".genericpicker-filter").live('change', function (event) {
+      var filter = $jQ(this);
+      var tbody = filter.closest('tbody');
+      var select = tbody.find('.genericpicker-results');
+      var input = filter.next();
+      if (input.val().length < 3) {
+         select.empty();
+      } else {
+         input.next().click();
+      }
+   });
+
    $jQ(".errandReportDateBase").live('change', function (event) {
       // Get the date
       var elem = $jQ(this);

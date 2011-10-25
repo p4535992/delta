@@ -682,7 +682,7 @@ public class PostipoissStructureImporter {
         public String toString() {
             return "Toimik [rowId=" + rowId + ", functionId=" + functionId + ", seriesIndex=" + seriesIndex + ", seriesTitle="
                     + seriesTitle + ", volumeMarkNormed=" + volumeMarkNormed + ", volumeTitleNormed=" + volumeTitleNormed + ", validFrom=" + validFrom
-                    + ", volumeType=" + volumeType.getValueName() + ", validTo=" + validTo + ", bestBefore=" + bestBefore + ", seriesAccessRestriction="
+                    + ", volumeType=" + volumeType + ", validTo=" + validTo + ", bestBefore=" + bestBefore + ", seriesAccessRestriction="
                     + seriesAccessRestriction + ", seriesAccessRestrictionReason=" + seriesAccessRestrictionReason + "]";
         }
 
@@ -737,9 +737,9 @@ public class PostipoissStructureImporter {
 
     private static VolumeType toVolumeType(String s) {
         if (ATTR_MULTIPLE_YEARS.equals(s)) {
-            return VolumeType.OBJECT;
+            return VolumeType.SUBJECT_FILE;
         } else if (ATTR_SINGLE_YEAR.equals(s)) {
-            return VolumeType.YEAR_BASED;
+            return VolumeType.ANNUAL_FILE;
         } else {
             throw new RuntimeException("Invalid value in column index 8: '" + s + "' ");
         }
@@ -809,7 +809,7 @@ public class PostipoissStructureImporter {
         Volume volume = volumeService.createVolume(series);
         volume.setVolumeMark(t.volumeMarkNormed);
         volume.setTitle(t.volumeTitleNormed);
-        volume.setVolumeType(t.volumeType.getValueName());
+        volume.setVolumeTypeEnum(t.volumeType);
         // A specific logic for SIM
         // if (t.year() != 2010) {
         // volume.setContainsCases(false);

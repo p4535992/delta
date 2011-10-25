@@ -75,6 +75,14 @@
             <%-- Status and Actions --%>
             <a:panel id="titlebar">
             
+               <a:panel id="constrained-quicksearch" styleClass="search-box alt" rendered="#{DialogManager.currentDialog.name eq 'seriesListDialog' or DialogManager.currentDialog.name eq 'volumeListDialog' or DialogManager.currentDialog.name eq 'caseListDialog' or DialogManager.currentDialog.name eq 'documentListDialog'}">
+                  <h:graphicImage value="/images/parts/search_controls_left.png" width="3" height="21" styleClass="simple" />
+                  <h:inputText value="#{DocumentQuickSearchResultsDialog.searchValue}" maxlength="50" id="constrainedQuickSearch" styleClass="constrainedQuickSearch-input" />
+                  <h:commandButton id="constrainedQuickSearchBtn" value="#{msg.search}" type="submit" action="dialog:documentQuickSearchResultsDialog" actionListener="#{DocumentQuickSearchResultsDialog.setup}">
+                     <f:param name="containerNodeRef" value="#{DialogManager.bean.actionsContext.nodeRef}" />
+                  </h:commandButton>
+               </a:panel>
+
                <a:panel id="titlebar-dialog-buttons-panel" styleClass="titlebar-buttons" rendered="#{DialogManager.OKButtonVisible || (DialogManager.currentDialog.name eq 'manageGroups' && GroupsDialog.group ne null)}">
                   <r:dialogButtons id="titlebar-dialog-buttons" styleClass="wizardButton" />
                </a:panel>

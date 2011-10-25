@@ -42,7 +42,7 @@
             </property>
             <!-- Dokumendi liik -->
             <property name="docsearch:documentType">
-               <type>d:qname</type>
+               <type>d:text</type>
                <multiple>true</multiple>
             </property>
             <!-- Funktsioon - ühe valimine -->
@@ -57,7 +57,7 @@
             <property name="docsearch:volume">
                <type>d:noderef</type>
             </property>
-            <!-- Asi, sõltub toimiku valikust -->
+            <!-- Teema, sõltub toimiku valikust -->
             <property name="docsearch:case">
                <type>d:noderef</type>
             </property>

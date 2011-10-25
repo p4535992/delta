@@ -9,10 +9,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,6 +31,7 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.dictionary.TypeDefinition;
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.view.ImporterService;
@@ -38,6 +41,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.QNamePattern;
 import org.alfresco.util.Pair;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.comparators.TransformingComparator;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
@@ -49,15 +53,19 @@ import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.base.BaseObject.ChildrenList;
 import ee.webmedia.alfresco.base.BaseService;
+import ee.webmedia.alfresco.base.BaseServiceImpl;
 import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
+import ee.webmedia.alfresco.docadmin.web.BaseObjectOrderModifier;
+import ee.webmedia.alfresco.docadmin.web.DocAdminUtil;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.ComparableTransformer;
 import ee.webmedia.alfresco.utils.MessageData;
 import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageDataWrapper;
@@ -92,6 +100,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     private NodeRef fieldGroupDefinitionsRoot;
     private Set<String> fieldPropNames;
     private final Set<String> forbiddenFieldIds = new HashSet<String>();
+    private final Set<String> groupShowShowInTwoColumnsOriginalFieldIds = new HashSet<String>();
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -162,10 +171,15 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
     @Override
     public Map<String/* docTypeId */, String/* docTypeName */> getDocumentTypeNames(Boolean used) {
-        List<DocumentType> documentTypes = getAllDocumentTypes(used);
-        Map<String, String> docTypesByDocTypeId = new HashMap<String, String>(documentTypes.size());
-        for (DocumentType documentType : documentTypes) {
-            docTypesByDocTypeId.put(documentType.getDocumentTypeId(), documentType.getName());
+        Map<String, String> docTypesByDocTypeId = new HashMap<String, String>();
+        for (ChildAssociationRef childAssoc : nodeService.getChildAssocs(getDocumentTypesRoot())) {
+            Map<QName, Serializable> props = nodeService.getProperties(childAssoc.getChildRef());
+            Boolean documentTypeUsed = (Boolean) props.get(DocumentAdminModel.Props.USED);
+            if (documentTypeUsed == null || documentTypeUsed == used) {
+                String documentTypeId = (String) props.get(DocumentAdminModel.Props.DOCUMENT_TYPE_ID);
+                String documentTypeName = (String) props.get(DocumentAdminModel.Props.NAME);
+                docTypesByDocTypeId.put(documentTypeId, documentTypeName);
+            }
         }
         return docTypesByDocTypeId;
     }
@@ -174,12 +188,12 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     public void addSystematicMetadataItems(DocumentTypeVersion docVer) {
         addMetadataItems(docVer, new Predicate<FieldGroup>() {
             @Override
-            public boolean evaluate(FieldGroup sourceGroup) {
+            public boolean eval(FieldGroup sourceGroup) {
                 return sourceGroup.isMandatoryForDoc();
             }
         }, new Predicate<FieldDefinition>() {
             @Override
-            public boolean evaluate(FieldDefinition sourceFieldDef) {
+            public boolean eval(FieldDefinition sourceFieldDef) {
                 return sourceFieldDef.isMandatoryForDoc();
             }
         });
@@ -270,7 +284,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     private List<DocumentType> getAllDocumentTypes(final Boolean used, NodeRef docTypesRootRef) {
         return baseService.getChildren(docTypesRootRef, DocumentType.class, new Predicate<DocumentType>() {
             @Override
-            public boolean evaluate(DocumentType documentType) {
+            public boolean eval(DocumentType documentType) {
                 return used == null || documentType.isUsed() == used;
             }
         });
@@ -307,19 +321,42 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         MessageData message = updateChildren(docType);
         checkFieldMappings(docType);
         baseService.saveObject(docType);
-
         updatePublicAdr(docType, wasUnsaved);
-        // TODO optimization: probably menu doesn't always need to be updated
-        menuService.menuUpdated();
+        if (wasUnsaved || docTypeOriginal.isPropertyChanged(DocumentAdminModel.Props.USED, DocumentAdminModel.Props.NAME, DocumentAdminModel.Props.DOCUMENT_TYPE_GROUP)) {
+            menuService.menuUpdated();
+        }
         return Pair.newInstance(docType, message);
     }
 
     @Override
-    public <F extends Field> F saveOrUpdateField(F originalFieldDef) {
+    public <F extends Field> F saveOrUpdateField(F originalFieldOrFeildDef) {
+        F fieldOrFeildDef = saveOrUpdateFieldInternal(originalFieldOrFeildDef);
+        if (originalFieldOrFeildDef instanceof FieldDefinition) {
+            FieldDefinition fieldDef = (FieldDefinition) fieldOrFeildDef;
+            @SuppressWarnings("unchecked")
+            F tmp = (F) reorderFieldDefinitions(fieldDef);
+            return tmp;
+        }
+        return fieldOrFeildDef;
+    }
+
+    private <F extends Field> F saveOrUpdateFieldInternal(F originalFieldOrFeildDef) {
         @SuppressWarnings("unchecked")
-        F fieldDef = (F) originalFieldDef.clone();
-        baseService.saveObject(fieldDef);
-        return fieldDef;
+        F fieldOrFeildDef = (F) originalFieldOrFeildDef.clone();
+        baseService.saveObject(fieldOrFeildDef);
+        return fieldOrFeildDef;
+    }
+
+    private FieldDefinition reorderFieldDefinitions(FieldDefinition fieldDef) {
+        // must reorder fieldDefinitions list
+        List<FieldDefinition> fieldDefinitions = saveOrUpdateFieldDefinitions(getFieldDefinitions());
+        // return fresh copy of originalFieldOrFeildDef
+        for (FieldDefinition fd : fieldDefinitions) {
+            if (fd.getFieldId().equals(fieldDef.getFieldId())) {
+                return fd;
+            }
+        }
+        throw new IllegalStateException("This shouldn't happen - didn't find field that was just saved");
     }
 
     @Override
@@ -339,22 +376,97 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
-    public List<FieldDefinition> saveOrUpdateFieldDefinitions(List<FieldDefinition> fieldDefinitions) {
+    public List<FieldDefinition> saveOrUpdateFieldDefinitions(Collection<FieldDefinition> fieldDefinitions) {
+        FieldDefinitionReorderHelper.reorderDocSearchAndVolSearchProps(fieldDefinitions, true);
         List<FieldDefinition> saved = new ArrayList<FieldDefinition>();
+
         for (FieldDefinition fieldDefinition : fieldDefinitions) {
-            saved.add(saveOrUpdateField(fieldDefinition));
+            saved.add(saveOrUpdateFieldInternal(fieldDefinition));
         }
-        // TODO DLSeadist task 166391:
-        // 4.1.11.2. Kui mõnel andmevälja real on muudetud parameterOrderInDocSearch väärtust,
-        // siis teostatakse andmeväljade ümberjärjestamine veeru parameterOrderInDocSearch alusel (vt Üldised reeglid.docx punkt 3).
-        // 4.1.10.1.4.1.11.3. Kui mõnel andmevälja real on muudetud parameterOrderInVolSearch väärtust,
-        // siis teostatakse andmeväljade ümberjärjestamine veeru parameterOrderInVolSearch alusel (vt Üldised reeglid.docx punkt 3).
         return saved;
     }
 
     @Override
     public List<FieldDefinition> getFieldDefinitions() {
-        return baseService.getChildren(getFieldDefinitionsRoot(), FieldDefinition.class);
+        List<FieldDefinition> fd = baseService.getChildren(getFieldDefinitionsRoot(), FieldDefinition.class);
+        { // in case order is uninitialized (for example after initial import) order by name - this will determine the resulting order of elements that have no order
+            @SuppressWarnings("unchecked")
+            Comparator<FieldDefinition> byNameComparator = new TransformingComparator(new ComparableTransformer<FieldDefinition>() {
+                @Override
+                public Comparable<?> tr(FieldDefinition input) {
+                    return input.getName();
+                }
+            });
+            Collections.sort(fd, byNameComparator);
+        }
+        FieldDefinitionReorderHelper.reorderDocSearchAndVolSearchProps(fd, false);
+        return fd;
+    }
+
+    /**
+     * Helps to initialize order or reorder only some items - so that other items will not receive automatically order
+     * 
+     * @author Ats Uiboupin
+     */
+    private static class FieldDefinitionReorderHelper {
+
+        static void reorderDocSearchAndVolSearchProps(Collection<FieldDefinition> fd, boolean markBaseCalled) {
+            Predicate<FieldDefinition> isParameterInDocSearchPredicate = new Predicate<FieldDefinition>() {
+                @Override
+                public boolean eval(FieldDefinition o) {
+                    return o.isParameterInDocSearch();
+                }
+            };
+            Predicate<FieldDefinition> isParameterInVolSearchPredicate = new Predicate<FieldDefinition>() {
+                @Override
+                public boolean eval(FieldDefinition o) {
+                    return o.isParameterInVolSearch();
+                }
+            };
+            reorderAndMarkBaseState(fd, getByDocSearchOrderModifier(), markBaseCalled, isParameterInDocSearchPredicate);
+            reorderAndMarkBaseState(fd, getByVolSearchOrderModifier(), markBaseCalled, isParameterInVolSearchPredicate);
+        }
+
+        private static BaseObjectOrderModifier<FieldDefinition> getByVolSearchOrderModifier() {
+            return DocAdminUtil.getMetadataItemReorderHelper(DocumentAdminModel.Props.PARAMETER_ORDER_IN_VOL_SEARCH);
+        }
+
+        private static BaseObjectOrderModifier<FieldDefinition> getByDocSearchOrderModifier() {
+            return DocAdminUtil.getMetadataItemReorderHelper(DocumentAdminModel.Props.PARAMETER_ORDER_IN_DOC_SEARCH);
+        }
+
+        /**
+         * Helps to initialize order or reorder only items selected by includedItemsPredicate - so that other items will not receive automatically order
+         */
+        private static void reorderAndMarkBaseState(Collection<FieldDefinition> items, BaseObjectOrderModifier<FieldDefinition> modifier,
+                boolean markBaseCalled, Predicate<FieldDefinition> includedItemsPredicate) {
+            List<FieldDefinition> docSearchFieldsList = select(items, includedItemsPredicate, new ArrayList<FieldDefinition>());
+            if (!markBaseCalled) {
+                // markBaseState should be called at least once before reordering
+                modifier.markBaseState(docSearchFieldsList);
+            }
+            DocAdminUtil.reorderAndMarkBaseState(docSearchFieldsList, modifier);
+        }
+
+        /**
+         * Type safe version of {@link CollectionUtils#selectRejected(Collection, org.apache.commons.collections.Predicate, Collection)} <br>
+         * that returns given outputCollection filled by elements that match given predicate
+         */
+        private static <T, C extends Collection<T>> C select(Collection<T> inputCollection, Predicate<T> predicate, C outputCollection) {
+            CollectionUtils.select(inputCollection, predicate, outputCollection);
+            return outputCollection;
+        }
+    }
+
+    @Override
+    public List<FieldDefinition> getSearchableFieldDefinitions() {
+        List<FieldDefinition> searchable = new ArrayList<FieldDefinition>();
+        for (FieldDefinition fieldDefinition : baseService.getChildren(getFieldDefinitionsRoot(), FieldDefinition.class)) {
+            if (fieldDefinition.isParameterInDocSearch()) {
+                searchable.add(fieldDefinition);
+            }
+        }
+        return searchable;
     }
 
     @Override
@@ -519,9 +631,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                 }
             }
         }
-        for (FieldDefinition fieldDef : fieldDefinitionsToUpdate.values()) {
-            saveOrUpdateField(fieldDef);
-        }
+        saveOrUpdateFieldDefinitions(fieldDefinitionsToUpdate.values());
     }
 
     @Override
@@ -546,12 +656,12 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         DocumentTypeVersion ver = docType.addNewLatestDocumentTypeVersion();
         addMetadataItems(ver, new Predicate<FieldGroup>() {
             @Override
-            public boolean evaluate(FieldGroup sourceGroup) {
+            public boolean eval(FieldGroup sourceGroup) {
                 return fieldGroupNames.contains(sourceGroup.getName());
             }
         }, new Predicate<FieldDefinition>() {
             @Override
-            public boolean evaluate(FieldDefinition sourceFieldDef) {
+            public boolean eval(FieldDefinition sourceFieldDef) {
                 return fieldDefinitionIds.contains(sourceFieldDef.getFieldId());
             }
         });
@@ -601,7 +711,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         if (saved) {
             DocumentTypeVersion latestDocumentTypeVersion = docType.getLatestDocumentTypeVersion();
             ChildrenList<MetadataItem> unSavedMetadata = latestDocumentTypeVersion.getMetadata();
-            DocumentType latestDocTypeInRepo = getDocumentType(docType.getNodeRef());
+            DocumentType latestDocTypeInRepo = getDocumentType(docType.getNodeRef()); // TODO optimize to get only data that is needed (no older versions, etc...)
             int docTypeVersions = latestDocTypeInRepo.getDocumentTypeVersions().size();
             Boolean dontSaveDocTypeVer = docType.getProp(PROP_DONT_SAVED_DOC_TYPE_VER);
             if (dontSaveDocTypeVer == null) {
@@ -615,6 +725,13 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
             if (!latestDocTypeVerSaved) {
                 Assert.isTrue(dontSaveDocTypeVer == null);
                 ChildrenList<DocumentTypeVersion> documentTypeVersions = docType.getDocumentTypeVersions();
+                { // no need to inspect previous versions of DocType when saving
+                    for (DocumentTypeVersion documentTypeVersion : documentTypeVersions) {
+                        if (documentTypeVersion != latestDocumentTypeVersion) {
+                            documentTypeVersion.setProp(BaseServiceImpl.SKIP_SAVE, true);
+                        }
+                    }
+                }
                 ChildrenList<MetadataItem> savedMetadata = documentTypeVersions.get(documentTypeVersions.size() - 2).getMetadata();
                 if (!MetadataItemCompareUtil.isClidrenListChanged(savedMetadata, unSavedMetadata)) {
                     // metaData list is not changed, don't save new DocumentTypeVersion (currently as new latestDocumentTypeVersion)
@@ -638,7 +755,9 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         // save new fields to fieldDefinitions
         String documentTypeId = docType.getDocumentTypeId();
         boolean addFieldsAddedRemovedWarning = false;
-        for (Field field : docVer.getFieldsDeeply()) {
+        List<Field> docTypeVerFields = docVer.getFieldsDeeply();
+        Map<String, FieldDefinition> fieldsToSave = new HashMap<String, FieldDefinition>(docTypeVerFields.size());
+        for (Field field : docTypeVerFields) {
             if (!field.isCopyFromPreviousDocTypeVersion()) {
                 addFieldsAddedRemovedWarning = true;
                 // field is not newer version of the same field under previous version of DocumentTypeVersion
@@ -652,7 +771,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                     List<String> docTypesOfFieldDef = fieldDef.getDocTypes();
                     if (!docTypesOfFieldDef.contains(documentTypeId)) {
                         docTypesOfFieldDef.add(documentTypeId);
-                        fieldDef = saveOrUpdateField(fieldDef);
+                        fieldsToSave.put(fieldDef.getFieldId(), fieldDef);
                     }
                 } else {
                     if (field.isCopyOfFieldDefinition()) {
@@ -663,7 +782,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                     // added new field (not based on fieldDefinition)
                     fieldDef = createFieldDefinition(field);
                     fieldDef.getDocTypes().add(documentTypeId);
-                    fieldDef = saveOrUpdateField(fieldDef);
+                    fieldsToSave.put(fieldDef.getFieldId(), fieldDef);
                 }
             }
         }
@@ -672,11 +791,15 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         if (!removedFieldIds.isEmpty()) {
             addFieldsAddedRemovedWarning = true;
             for (String removedFieldId : removedFieldIds) {
-                FieldDefinition removedFieldFD = getFieldDefinition(removedFieldId);
+                FieldDefinition removedFieldFD = fieldsToSave.get(removedFieldId);
+                if (removedFieldFD == null) {
+                    removedFieldFD = getFieldDefinition(removedFieldId);
+                    fieldsToSave.put(removedFieldId, removedFieldFD);
+                }
                 removedFieldFD.getDocTypes().remove(documentTypeId);
-                saveOrUpdateField(removedFieldFD);
             }
         }
+        saveOrUpdateFieldDefinitions(fieldsToSave.values());
         if (addFieldsAddedRemovedWarning) {
             return new MessageDataImpl(MessageSeverity.INFO, "docType_metadataList_changedWarning");
         }
@@ -1182,6 +1305,21 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
             }
             groupRefs.add(saveableNodeRef);
         }
+    }
+
+    @Override
+    public void registerGroupShowShowInTwoColumns(Set<String> originalFieldIds) {
+        Assert.isTrue(!CollectionUtils.containsAny(groupShowShowInTwoColumnsOriginalFieldIds, originalFieldIds));
+        groupShowShowInTwoColumnsOriginalFieldIds.addAll(originalFieldIds);
+    }
+
+    @Override
+    public boolean isGroupShowShowInTwoColumns(FieldGroup group) {
+        if (!group.isSystematic()) {
+            return false;
+        }
+        Set<String> originalFieldIds = group.getOriginalFieldIds();
+        return CollectionUtils.containsAny(groupShowShowInTwoColumnsOriginalFieldIds, originalFieldIds);
     }
 
 }

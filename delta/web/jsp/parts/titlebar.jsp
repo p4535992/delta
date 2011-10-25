@@ -40,7 +40,7 @@
       <a:actionLink id="client-logo" value="#{ApplicationService.headerText}" href="/" tooltip="#{ApplicationService.headerText}" image="/images/logo/logo.png" showLink="false" />
       <a:actionLink id="project-name" value="#{ApplicationService.headerText}" href="/" tooltip="#{ApplicationService.headerText}" />
       
-      <a:panel id="search">
+      <a:panel id="search" styleClass="search-box">
          <f:verbatim>
          <span>
          </f:verbatim>

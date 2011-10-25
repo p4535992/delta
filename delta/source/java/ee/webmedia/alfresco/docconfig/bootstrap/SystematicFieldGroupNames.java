@@ -15,4 +15,5 @@ public class SystematicFieldGroupNames {
     public static final String COMPLIENCE = "Dokumendi täitmine";
     public static final String RECIPIENTS = "Adressaadid";
     public static final String ADDITIONAL_RECIPIENTS = "Lisaadressaadid";
+    public static final String CONTRACT_PARTIES = "Lepingu pooled";
 }

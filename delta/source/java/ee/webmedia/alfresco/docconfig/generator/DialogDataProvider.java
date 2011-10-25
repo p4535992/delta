@@ -14,7 +14,5 @@ public interface DialogDataProvider {
 
     boolean isInEditMode();
 
-    <E extends PropertySheetStateHolder> E getStateHolder(String key, Class<E> clazz);
-
     void switchMode(boolean inEditMode);
 }

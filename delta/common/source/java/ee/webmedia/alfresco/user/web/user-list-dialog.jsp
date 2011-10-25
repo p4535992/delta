@@ -49,7 +49,7 @@ $jQ(document).ready(function(){
    <%-- Spaces List --%>
    <a:richList id="usersList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" styleClass="recordSet" headerStyleClass="recordSetHeader"
       rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" value="#{DialogManager.bean.users}" var="u"
-      initialSortColumn="lastName" binding="#{DialogManager.bean.usersList}">
+      initialSortColumn="lastName" binding="#{DialogManager.bean.usersList}" rendered="#{not empty DialogManager.bean.users}">
       
       <%-- Primary column with given name --%>
       <a:column primary="true" style="padding:2px;text-align:left">

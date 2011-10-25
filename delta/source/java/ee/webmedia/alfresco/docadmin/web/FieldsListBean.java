@@ -5,10 +5,10 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFieldDetailsDialog;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFieldGroupDetailsDialog;
 import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.getMetadataItemReorderHelper;
-import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.navigate;
 import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.reorderAndMarkBaseState;
 import static ee.webmedia.alfresco.utils.MessageUtil.getMessage;
 import static ee.webmedia.alfresco.utils.TextUtil.collectionToString;
+import static ee.webmedia.alfresco.utils.WebUtil.navigateTo;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,6 +18,7 @@ import javax.faces.event.ActionEvent;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.util.Pair;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.base.BaseObject;
@@ -31,6 +32,7 @@ import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docadmin.service.MetadataContainer;
 import ee.webmedia.alfresco.docadmin.service.MetadataItem;
 import ee.webmedia.alfresco.docadmin.service.SeparatorLine;
+import ee.webmedia.alfresco.docconfig.bootstrap.SystematicFieldGroupNames;
 import ee.webmedia.alfresco.docdynamic.web.DialogBlockBean;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -89,7 +91,7 @@ public class FieldsListBean implements DialogBlockBean<Void> {
     }
 
     private void editField(Field field) {
-        navigate("dialog:fieldDetailsDialog");
+        navigateTo("dialog:fieldDetailsDialog");
         getFieldDetailsDialog().editField(field, metadataContainer);
     }
 
@@ -100,7 +102,7 @@ public class FieldsListBean implements DialogBlockBean<Void> {
     }
 
     private void editFieldGroup(FieldGroup fieldGroup) {
-        navigate("dialog:fieldGroupDetailsDialog");
+        navigateTo("dialog:fieldGroupDetailsDialog");
         getFieldGroupDetailsDialog().editFieldGroup(fieldGroup, (DocumentTypeVersion) metadataContainer);
     }
 
@@ -110,17 +112,22 @@ public class FieldsListBean implements DialogBlockBean<Void> {
         @SuppressWarnings("unchecked")
         ChildrenList<MetadataItem> metadata = (ChildrenList<MetadataItem>) metadataContainer.getMetadata();
         if ("field".equals(itemType)) {
-            navigate("dialog:fieldDetailsDialog");
+            navigateTo("dialog:fieldDetailsDialog");
             getFieldDetailsDialog().addNewFieldToDocType(metadataContainer);
         } else if ("group".equals(itemType)) {
-            navigate("dialog:fieldGroupDetailsDialog");
+            navigateTo("dialog:fieldGroupDetailsDialog");
             getFieldGroupDetailsDialog().addNewFieldGroup((DocumentTypeVersion) metadataContainer);
         } else if ("separator".equals(itemType)) {
             metadata.add(SeparatorLine.class);
         } else {
             throw new RuntimeException("Unknown itemType='" + itemType + "'");
         }
-        getMetaFieldsList(metadata, false);
+        reorderAndMarkBaseState(metadata, getMetadataItemReorderHelper(DocumentAdminModel.Props.ORDER));
+    }
+
+    void doReorder() {
+        @SuppressWarnings("unchecked")
+        ChildrenList<MetadataItem> metadata = (ChildrenList<MetadataItem>) metadataContainer.getMetadata();
         reorderAndMarkBaseState(metadata, getMetadataItemReorderHelper(DocumentAdminModel.Props.ORDER));
     }
 
@@ -135,7 +142,9 @@ public class FieldsListBean implements DialogBlockBean<Void> {
      * @return An array of SelectItem objects containing the results to display in the picker.
      */
     public SelectItem[] searchFieldDefinitions(int filterIndex, String contains) {
-        List<String> missingFieldsOfFieldGroup = getMissingFieldsOfSystematicFieldGroup();
+        Pair<List<String>, Boolean> res = getMissingFieldsOfSystematicFieldGroup();
+        List<String> missingFieldsOfFieldGroup = res.getFirst();
+        boolean isDocTypeDetailsViewOrNonSystematicFielsGroup = res.getSecond();
         List<FieldDefinition> fieldDefinitions;
         if (StringUtils.isBlank(contains)) {
             fieldDefinitions = getDocumentAdminService().getFieldDefinitions();
@@ -144,9 +153,10 @@ public class FieldsListBean implements DialogBlockBean<Void> {
         }
         List<SelectItem> results = new ArrayList<SelectItem>(fieldDefinitions.size());
         for (FieldDefinition fieldDef : fieldDefinitions) {
-            if (fieldDef.isOnlyInGroup()) {
+            if (isDocTypeDetailsViewOrNonSystematicFielsGroup && (fieldDef.isOnlyInGroup() || fieldDef.isMandatoryForDoc())) {
                 continue;
             }
+
             if (missingFieldsOfFieldGroup != null && !missingFieldsOfFieldGroup.contains(fieldDef.getFieldId())) {
                 continue; // searching fields for fieldGroup and fieldGroup already contains this field or systematic fieldGroup doesn't contain this field
             }
@@ -165,9 +175,10 @@ public class FieldsListBean implements DialogBlockBean<Void> {
         return results.toArray(new SelectItem[results.size()]);
     }
 
-    private List<String> getMissingFieldsOfSystematicFieldGroup() {
+    private Pair<List<String>, Boolean> getMissingFieldsOfSystematicFieldGroup() {
         FieldGroupDetailsDialog fieldGroupDetailsDialog = getFieldGroupDetailsDialog();
         List<String> missingFieldsOfSystematicFieldGroup = null;
+        boolean isDocTypeDetailsViewOrNonSystematicFielsGroup = false;
         if (getDialogManager().getBean() == fieldGroupDetailsDialog) {
             FieldGroup fieldGroup = fieldGroupDetailsDialog.getFieldGroup();
             if (fieldGroup.isSystematic()) {
@@ -176,9 +187,13 @@ public class FieldsListBean implements DialogBlockBean<Void> {
                 for (Field field : fieldGroup.getFields()) {
                     missingFieldsOfSystematicFieldGroup.remove(field.getOriginalFieldId());
                 }
+            } else {
+                isDocTypeDetailsViewOrNonSystematicFielsGroup = true;
             }
+        } else {
+            isDocTypeDetailsViewOrNonSystematicFielsGroup = true;
         }
-        return missingFieldsOfSystematicFieldGroup;
+        return Pair.newInstance(missingFieldsOfSystematicFieldGroup, isDocTypeDetailsViewOrNonSystematicFielsGroup);
     }
 
     /** used from JSP when adding field based on existing fieldDefinition */
@@ -205,11 +220,19 @@ public class FieldsListBean implements DialogBlockBean<Void> {
             fieldGrDefinitions = getDocumentAdminService().searchFieldGroupDefinitions(contains);
         }
         List<SelectItem> results = new ArrayList<SelectItem>(fieldGrDefinitions.size());
-        for (FieldGroup fieldGrDef : fieldGrDefinitions) {
-            // TODO DLSeadist Maiga - kuidas välja filtreerida?
-            // if (fieldGrDef.isMandatoryForDoc()) {
-            // continue; // should already be added to docType
-            // }
+        outer: for (FieldGroup fieldGrDef : fieldGrDefinitions) {
+            // XXX Alar: temporarily disallow more than one "Lepingu pooled" field definition to be added to document type
+            if (fieldGrDef.getName().equals(SystematicFieldGroupNames.CONTRACT_PARTIES)) {
+                for (MetadataItem item : metadataContainer.getMetadata()) {
+                    if ((item instanceof FieldGroup) && ((FieldGroup) item).getName().equals(fieldGrDef.getName())) {
+                        continue outer;
+                    }
+                }
+            }
+
+            if (fieldGrDef.isMandatoryForDoc()) {
+                continue; // mandatory fields should have been already added
+            }
             SelectItem selectItem = new SelectItem(fieldGrDef.getNodeRef().toString(), fieldGrDef.getName());
             selectItem.setDescription(getMessage("fieldDefinitions_list") + ": " + fieldGrDef.getAdditionalInfo());
             results.add(selectItem);

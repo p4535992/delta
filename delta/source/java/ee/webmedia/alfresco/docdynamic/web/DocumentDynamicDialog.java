@@ -2,35 +2,54 @@ package ee.webmedia.alfresco.docdynamic.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPropertySheetStateBean;
+import static ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGenerator.ACCESS_RESTRICTION_CHANGE_REASON_ERROR;
 
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
+import javax.faces.application.Application;
+import javax.faces.component.UIComponent;
+import javax.faces.component.UIPanel;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
+import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.config.PropertySheetConfigElement;
+import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.ObjectUtils;
+import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
 import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfig;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
+import ee.webmedia.alfresco.docdynamic.web.AccessRestrictionChangeReasonModalComponent.AccessRestrictionChangeReasonEvent;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog.DocDialogSnapshot;
 import ee.webmedia.alfresco.document.file.web.FileBlockBean;
 import ee.webmedia.alfresco.document.log.web.LogBlockBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.sendout.web.SendOutBlockBean;
+import ee.webmedia.alfresco.document.web.FavoritesModalComponent;
 import ee.webmedia.alfresco.simdhs.servlet.ExternalAccessServlet;
 import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.ComponentUtil;
+import ee.webmedia.alfresco.utils.MessageData;
+import ee.webmedia.alfresco.utils.MessageDataWrapper;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
+import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 
 /**
@@ -50,6 +69,10 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentDynamicDialog.class);
 
     public static final String BEAN_NAME = "DocumentDynamicDialog";
+    private String renderedModal;
+
+    // TODO lemmiku tegevus katki? kas foorumi tegevused töötavad?
+    // TODO kontrollida et kustutatud dokumendi ekraanile tagasipöördumine töötaks... või tahavad teised blokid laadida uuesti asju? ja siis oleks mõtekam dialoogi mitte kuvada?
 
     // Closing this dialog has the following logic:
     // ... view -> *back -> close
@@ -62,13 +85,11 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     // =========================================================================
 
     public void openFromUrl(NodeRef docRef) {
-        LOG.info("openFromUrl");
         open(docRef, false);
     }
 
     /** @param event */
     public void openFromDocumentList(ActionEvent event) {
-        LOG.info("openFromDocumentList");
         NodeRef docRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
         // TODO if (isFromDVK() || isFromImap() || isIncomingInvoice()) { inEditMode = true; } else { inEditMode = false; }
         open(docRef, false);
@@ -76,21 +97,18 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
 
     /** @param event */
     public void openView(ActionEvent event) {
-        LOG.info("openView");
         NodeRef docRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
         open(docRef, false);
     }
 
     /** @param event */
     public void openEdit(ActionEvent event) {
-        LOG.info("openView");
         NodeRef docRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
         open(docRef, true);
     }
 
     /** @param event */
     public void createDraft(ActionEvent event) {
-        LOG.info("createDraft");
         String documentTypeId = ActionUtil.getParam(event, "documentTypeId");
         NodeRef docRef = getDocumentDynamicService().createNewDocumentInDrafts(documentTypeId);
         open(docRef, true);
@@ -113,8 +131,12 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
 
         @Override
         public String toString() {
-            return "DocDialogSnapshot[document=" + (document == null ? null : document.getNodeRef()) + ", inEditMode=" + inEditMode + ", viewModeWasOpenedInThePast="
-                    + viewModeWasOpenedInThePast + ", config=" + config + "]";
+            return toString(false);
+        }
+
+        public String toString(boolean detailed) {
+            return "DocDialogSnapshot[document=" + (document == null ? null : (detailed ? document : document.getNodeRef())) + ", inEditMode=" + inEditMode
+                    + ", viewModeWasOpenedInThePast=" + viewModeWasOpenedInThePast + ", config=" + config + "]";
         }
     }
 
@@ -136,14 +158,36 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
 
     private void openOrSwitchModeCommon(NodeRef docRef, boolean inEditMode) {
         DocDialogSnapshot currentSnapshot = getCurrentSnapshot();
-        currentSnapshot.document = getDocumentDynamicService().getDocument(docRef);
-        currentSnapshot.inEditMode = inEditMode;
-        if (!inEditMode) {
-            currentSnapshot.viewModeWasOpenedInThePast = true;
+        try {
+            currentSnapshot.document = getDocumentDynamicService().getDocument(docRef);
+            List<Node> subNodeList = currentSnapshot.document.getNode().getAllChildAssociations(DocumentCommonModel.Types.METADATA_CONTAINER);
+            if (subNodeList != null) {
+                for (Node subNode : subNodeList) {
+                    setSubNodeProps(subNode);
+                }
+            }
+            currentSnapshot.inEditMode = inEditMode;
+            if (!inEditMode) {
+                currentSnapshot.viewModeWasOpenedInThePast = true;
+            }
+            currentSnapshot.config = BeanHelper.getDocumentConfigService().getConfig(getNode());
+            resetOrInit(getDataProvider());
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Document before rendering: " + getDocument());
+            }
+        } catch (UnableToPerformException e) {
+            throw e;
+        } catch (UnableToPerformMultiReasonException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Failed to switch mode to " + (inEditMode ? "edit" : "view") + "\n  docRef=" + docRef + "\n  snapshot="
+                    + (currentSnapshot == null ? null : currentSnapshot.toString(true)), e);
         }
-        currentSnapshot.config = BeanHelper.getDocumentConfigService().getConfig(getNode());
-        resetOrInit(getDataProvider());
-        LOG.info("document before rendering: " + getDocument());
+    }
+
+    private void setSubNodeProps(Node subNode) {
+        subNode.getProperties().put(DocumentAdminModel.Props.OBJECT_TYPE_ID.toString(), getDocument().getDocumentTypeId());
+        subNode.getProperties().put(DocumentAdminModel.Props.OBJECT_TYPE_VERSION_NR.toString(), getDocument().getDocumentTypeVersionNr());
     }
 
     // =========================================================================
@@ -169,13 +213,13 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
 
     /** @param event */
     public void switchToEditMode(ActionEvent event) {
-        LOG.info("switchToEditMode");
         if (isInEditMode()) {
             throw new RuntimeException("Document metadata block is already in edit mode");
         }
 
         // Permission check
-        if (!validateEditMetaDataPermission(getDocument().getNodeRef())) {
+        NodeRef docRef = getDocument().getNodeRef();
+        if (!validateExists(docRef) || !validateViewMetaDataPermission(docRef) || !validateEditMetaDataPermission(docRef)) {
             return;
         }
 
@@ -185,8 +229,6 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
 
     @Override
     public String cancel() {
-        LOG.info("cancel");
-
         if (getCurrentSnapshot() == null) {
             Throwable e = new Throwable("!!!!!!!!!!!!!!!!!!!!!!!!! Cancel is called too many times !!!!!!!!!!!!!!!!!!!!!!!!!");
             LOG.warn(e.getMessage(), e);
@@ -205,17 +247,58 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
-        LOG.info("finishImpl");
         if (!isInEditMode()) {
             throw new RuntimeException("Document metadata block is not in edit mode");
         }
 
-        // May throw UnableToPerformException or UnableToPerformMultiReasonException; these are handled in BaseDialogBean
-        getDocumentDynamicService().updateDocument(getDocument(), getConfig().getSaveListenerBeanNames());
+        try {
+            // May throw UnableToPerformException or UnableToPerformMultiReasonException
+            getDocumentDynamicService().updateDocument(getDocument(), getConfig().getSaveListenerBeanNames());
+        } catch (UnableToPerformMultiReasonException e) {
+            if (!handleAccessRestrictionChange(e)) {
+                return null;
+            }
+
+            // This is handled in BaseDialogBean
+            throw e;
+        }
 
         // Switch from edit mode back to view mode
         switchMode(false);
         return null;
+    }
+
+    private boolean handleAccessRestrictionChange(UnableToPerformMultiReasonException e) {
+        final MessageDataWrapper messageDataWrapper = e.getMessageDataWrapper();
+        if (messageDataWrapper.getFeedbackItemCount() == 1 && ACCESS_RESTRICTION_CHANGE_REASON_ERROR.equals(messageDataWrapper.iterator().next().getMessageKey())) {
+            isFinished = false;
+            renderedModal = AccessRestrictionChangeReasonModalComponent.ACCESS_RESTRICTION_CHANGE_REASON_MODAL_ID;
+            return false;
+        }
+
+        // Remove the error if there are other errors
+        for (Iterator<MessageData> iterator = messageDataWrapper.iterator(); iterator.hasNext();) {
+            final MessageData data = iterator.next();
+            if (ACCESS_RESTRICTION_CHANGE_REASON_ERROR.equals(data.getMessageKey())) {
+                iterator.remove();
+                return true;
+            }
+        }
+
+        return true;
+    }
+
+    public void setAccessRestrictionChangeReason(ActionEvent event) {
+        getDocument().setProp(DocumentCommonModel.Props.ACCESS_RESTRICTION_CHANGE_REASON, ((AccessRestrictionChangeReasonEvent) event).getReason());
+        finish();
+    }
+
+    public String getRenderedModal() {
+        return renderedModal;
+    }
+
+    public boolean isModalRendered() {
+        return StringUtils.isNotBlank(renderedModal);
     }
 
     @Override
@@ -311,17 +394,6 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         return config.getStateHolders();
     }
 
-    @Override
-    public <E extends PropertySheetStateHolder> E getStateHolder(String key, Class<E> clazz) {
-        Map<String, PropertySheetStateHolder> stateHolders = getStateHolders();
-        if (stateHolders == null) {
-            return null;
-        }
-        @SuppressWarnings("unchecked")
-        E stateHolder = (E) stateHolders.get(key);
-        return stateHolder;
-    }
-
     // Metadata block
 
     @Override
@@ -359,22 +431,26 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
 
     @Override
     public UIPropertySheet getPropertySheet() {
-        LOG.info("getPropertySheet propertySheet=" + ObjectUtils.toString(propertySheet));
-        // Additional checks are no longer needed, because ExternalAccessServlet beahviour with JSF is now correct
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("getPropertySheet propertySheet=" + ObjectUtils.toString(propertySheet));
+        }
+        // Additional checks are no longer needed, because ExternalAccessServlet behavior with JSF is now correct
         return propertySheet;
     }
 
     public void setPropertySheet(UIPropertySheet propertySheet) {
-        LOG.info("setPropertySheet propertySheet=" + ObjectUtils.toString(propertySheet));
-        // Additional checks are no longer needed, because ExternalAccessServlet beahviour with JSF is now correct
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("setPropertySheet propertySheet=" + ObjectUtils.toString(propertySheet));
+        }
+        // Additional checks are no longer needed, because ExternalAccessServlet behavior with JSF is now correct
         this.propertySheet = propertySheet;
     }
 
     @Override
     protected void resetOrInit(DialogDataProvider provider) {
-        // TODO call clear on all other blocks and components!!!
-
-        LOG.info("clearPropertySheet propertySheet=" + ObjectUtils.toString(propertySheet));
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("resetOrInit propertySheet=" + ObjectUtils.toString(propertySheet));
+        }
         if (propertySheet != null) {
             propertySheet.getChildren().clear();
             propertySheet.getClientValidations().clear();
@@ -384,7 +460,29 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         }
         getPropertySheetStateBean().reset(getStateHolders(), provider);
         getDocumentDialogHelperBean().reset(provider);
+        resetModals();
         super.resetOrInit(provider); // reset blocks
+    }
+
+    private void resetModals() {
+        renderedModal = null;
+
+        // Add favorite modal component
+        FavoritesModalComponent favoritesModal = new FavoritesModalComponent();
+        final FacesContext context = FacesContext.getCurrentInstance();
+        final Application application = context.getApplication();
+        favoritesModal.setActionListener(application.createMethodBinding("#{DocumentDialog.addFavorite}", UIActions.ACTION_CLASS_ARGS));
+        favoritesModal.setId("favorite-popup-" + context.getViewRoot().createUniqueId());
+
+        // Access restriction change reason
+        AccessRestrictionChangeReasonModalComponent reasonModal = new AccessRestrictionChangeReasonModalComponent();
+        reasonModal.setActionListener(application.createMethodBinding("#{DocumentDynamicDialog.setAccessRestrictionChangeReason}", UIActions.ACTION_CLASS_ARGS));
+        favoritesModal.setId("access-restriction-change-reason-popup-" + context.getViewRoot().createUniqueId());
+
+        List<UIComponent> children = ComponentUtil.getChildren(getModalContainer());
+        children.clear();
+        children.add(favoritesModal);
+        children.add(reasonModal);
     }
 
     @Override
@@ -392,88 +490,40 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         return getCurrentSnapshot() == null ? null : this;
     }
 
-    /** @param event */
-    public void doNothing(ActionEvent event) {
-        LOG.info("doNothing");
+    private transient UIPanel modalContainer;
+
+    public UIPanel getModalContainer() {
+        if (modalContainer == null) {
+            modalContainer = new UIPanel();
+        }
+        return modalContainer;
     }
 
-    // Põhisuunad
-    // * tuua juurde ülejäänud blokid ja tegevused
-    // * täiendada metaandmetevälju niikaugele, et väljatüüpide lisamine muutuks iseseisvaks
-    // ++ kõige olulisem on fn/sari/toimik/asi väljad, siis saaks dok.loetelu alla salvestada
-    // ?? dok.staatus, pealkiri väljad.... - common aspekti alt kuidas üksikuid süsteemseid välju kasutan?
-    // * metaandmete valideerimine
+    public void setModalContainer(UIPanel modalContainer) {
+        this.modalContainer = modalContainer;
+    }
 
-    // TODO javascript valideerimine propsheetil katki?
-    // TODO lemmiku tegevus katki? kas foorumi tegevused töötavad?
+    public void addSubNode(ActionEvent event) {
+        // TODO do we need to set default values when adding a new child node?
+        final Node docNode = getParentNode(event);
+        QName partyType = DocumentCommonModel.Types.METADATA_CONTAINER;
+        final WmNode subNode = getGeneralService().createNewUnSaved(partyType, null);
+        setSubNodeProps(subNode);
+        QName partyAssoc = DocumentCommonModel.Types.METADATA_CONTAINER;
+        docNode.addChildAssociations(partyAssoc, subNode);
+    }
 
-    // TODO kas on võimalik viia dictionaryservice'isse sisse docdyn propdef'ide tagastamine, nii et olulsied kohad neid kasutaks?
-    // TODO kontaktide jms asjad: reposse list, tagasi string bugi; default väärtus sisselogitud kasutaja
+    public void removeSubNode(ActionEvent event) {
+        final Node docNode = getParentNode(event);
+        final String assocIndexParam = ActionUtil.getParam(event, SubPropertySheetItem.PARAM_ASSOC_INDEX);
+        final int assocIndex = Integer.parseInt(assocIndexParam);
+        QName partyAssoc = DocumentCommonModel.Types.METADATA_CONTAINER;
+        docNode.removeChildAssociations(partyAssoc, assocIndex);
+    }
 
-    // TODO tuua põhiliste süsteemsete väljade ja gruppide täiendav funktsionaalsus üle !!!
-    // TODO teiste süsteemsete doccom/docspec väljade kasutusele võtmisel: vaadata et vajalikud aspektid documentDynamic node'ile külge saaks
-
-    // TODO kontrollida et kustutatud dokumendi ekraanile tagasipöördumine töötaks... või tahavad teised blokid laadida uuesti asju? ja siis oleks mõtekam dialoogi mitte kuvada?
-
-    // TODO veateadete näitamised
-    // TODO hiljem - dokumendi otsing
-    // TODO hiljem - metaandmete lukustamine, üldisem lahendus -- arvestada kaarli kommentaariga, et cancelit ei pruugita alati välja kutsuda
-    // TODO kõige hiljem - vanade dok.liikide ja andmete ülekandmine
-
-    // dokumendile logikirje lisamiseks teha mudelisse meetod ja siis see lisab alfrescotransactionsupport kontrolli et üldse oleks transaktsioon lahti ja et transaktsiooni lõpus
-    // oleks salvestamist tehtud
-
-    // TODO dokumendi originaalprop'id võiks saada mudeli objekti käest?
-
-    // TODO üle vaadata et kõik realiseeritud asjad ka spekis oleksid :)
-
-    // Uutele paigaldustele imporditakse sellised süsteemsed dok.liigid mis spekis kirjeldatud
-    // Olemasolevatele paigaldustele (SiM, SMIT, ViljMV) igaühele imporditakse neil kasutusel olevate dok.liikide ülekantud variandid dün'iks, mis on visuaalselt 100% identsed, aga
-    // väljad on juba ümberstruktureeritud (nt kõik xxDueDate viidud ühe dueDate peale)
-    // Vanade dokkide ülekandmise skripti käigus oleks mõistlik kirjutada uus dok.loetelu juba eraldi store'i!!!
-
-    /*
-     * Rakenduses lingi/nupu kaudu dialoogi avamine ESIMEST KORDA
-     * 1) actionListener (open)
-     * 2) init
-     * 3) getPropertySheet -> null
-     * 4) setPropertySheet -- JSF'i poolt nullist loodud ja puhas, OK
-     * .
-     * Rakenduses lingi/nupu kaudu dialoogi avamine järgmised korrad:
-     * 1) setPropertySheet -- vana seisuga propertysheet; peab clearima
-     * 2) actionListener (open)
-     * 3) init
-     * 4) getPropertySheet
-     * .
-     * Rakenduses URL'i kaudu dialoogi avamine ESIMEST KORDA - ENNE ÜMBERTEGEMIST
-     * 1) ExternalAccessServlet -> openFromUrl
-     * 2) init
-     * 3) getPropertySheet -> null
-     * 4) setPropertySheet -- JSF'i poolt nullist loodud ja puhas
-     * .
-     * Rakenduses URL'i kaudu dialoogi avamine ESIMEST KORDA - ENNE ÜMBERTEGEMIST
-     * 1) actionListener (openFromUrl)
-     * 2) init
-     * 3) getPropertySheet -> null
-     * 4) setPropertySheet -- JSF'i poolt nullist loodud ja puhas, OK
-     * .
-     * Rakenduses URL'i kaudu dialoogi avamine järgmised korrad -- ENNE ÜMBERTEGEMIST
-     * 1) ExternalAccessServlet -> openFromUrl
-     * 2) navigationHandler.handleNavigation --> init
-     * 3) getRequestDispatcher.forward -> execute phase RESTORE_VIEW -> setPropertySheet -- vana seisuga propertysheet; peab clearima
-     * 4) render
-     * viimasel juhul on setPropertySheet liiga hilja ja tuleb mingi propsheet millel vanad andmed ja meil ei õnnestu seda clearida
-     * .
-     * Rakenduses URL'i kaudu dialoogi avamine järgmised korrad -- PÄRAST ÜMBERTEGEMIST
-     * 1) setPropertySheet -- vana seisuga propertysheet; peab clearima
-     * 2) actionListener (openFromUrl)
-     * 3) init
-     * 4) getPropertySheet
-     * .
-     * Klikk mingil teisel nupul, nii et jäädakse samale dialoogile:
-     * 1) setPropertySheet -- vana seisuga propertysheet; kuna dialoogi seis jäi samaks, siis OK
-     * .
-     * Kas me tahame setPropertySheet puhul alati clearida? oleks ohutu; samas võtab see natuke rohkem aega, sest mingite väljade ehitamisel vist käiakse ka baasis
-     */
+    private Node getParentNode(ActionEvent event) {
+        final SubPropertySheetItem propSheet = ComponentUtil.getAncestorComponent(event.getComponent(), SubPropertySheetItem.class);
+        return propSheet.getParentPropSheetNode();
+    }
 
 }

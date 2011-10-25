@@ -7,6 +7,7 @@
             <image>/images/icons/template_add.gif</image>
             <action>dialog:addDocumentTemplate</action>
             <action-listener>#{AddDocumentTemplateDialog.start}</action-listener>
+
          </action>
          <action id="template_add_new_email">
             <permissions>
@@ -37,6 +38,9 @@
       <dialogs>
          <dialog name="documentTemplateListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/template/web/document-template-list-dialog.jsp"
             managed-bean="DocumentTemplateListDialog" icon="/images/icons/template_large.gif" title-id="templates" show-ok-button="false" actions-config-id="template_list_actions" />
+            
+         <dialog name="documentTemplateDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/template/web/document-template-details-dialog.jsp"
+            managed-bean="DocumentTemplateDetailsDialog" icon="/images/icons/template_large.gif" title-id="general_properties" />
 
          <dialog name="addDocumentTemplate" page="/WEB-INF/classes/ee/webmedia/alfresco/template/web/add-document-template-dialog.jsp" managed-bean="AddDocumentTemplateDialog"
             icon="/images/icons/template_large_add.gif" description-id="add_document_template_desc" />

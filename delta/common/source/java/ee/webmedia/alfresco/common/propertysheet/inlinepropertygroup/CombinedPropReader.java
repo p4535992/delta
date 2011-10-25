@@ -31,6 +31,8 @@ public class CombinedPropReader {
         String OPTIONS_SEPARATOR = "optionsSeparator";
         String PROPERTIES_SEPARATOR = "propertiesSeparator";
         String PROPS_GENERATION = "propsGeneration";
+        String PROPS = "props";
+        String TEXT_ID = "textId";
         String PROP_GENERATOR_DESCRIPTORS = "propGeneratorDescriptors";
     }
 

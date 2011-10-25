@@ -47,7 +47,6 @@ public class UserListDialog extends BaseDialogBean {
     public void init(Map<String, String> params) {
         super.init(params);
         reset();
-        showAll();
     }
 
     @Override

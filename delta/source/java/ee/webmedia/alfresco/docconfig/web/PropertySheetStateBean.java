@@ -35,4 +35,13 @@ public class PropertySheetStateBean implements Serializable {
         return stateHolders;
     }
 
+    public <E extends PropertySheetStateHolder> E getStateHolder(String key, Class<E> clazz) {
+        if (stateHolders == null) {
+            return null;
+        }
+        @SuppressWarnings("unchecked")
+        E stateHolder = (E) stateHolders.get(key);
+        return stateHolder;
+    }
+
 }

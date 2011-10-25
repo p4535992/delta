@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
 
-import javax.faces.application.NavigationHandler;
 import javax.faces.context.FacesContext;
 import javax.faces.event.PhaseEvent;
 import javax.faces.event.PhaseId;
@@ -25,6 +24,7 @@ import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicServiceImpl;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.WebUtil;
 
 /**
  * @author Alar Kvell
@@ -78,14 +78,11 @@ public class ExternalAccessPhaseListener implements PhaseListener {
                 MenuBean.clearViewStack(String.valueOf(MenuBean.DOCUMENT_REGISTER_ID), null);
 
                 // open document dialog
-                String outcome;
                 if (DocumentCommonModel.Types.DOCUMENT.equals(BeanHelper.getNodeService().getType(nodeRef))) {
                     BeanHelper.getDocumentDynamicDialog().openFromUrl(nodeRef);
                 } else {
                     BeanHelper.getDocumentDialog().open(nodeRef);
-                    outcome = AlfrescoNavigationHandler.DIALOG_PREFIX + "document";
-                    NavigationHandler navigationHandler = context.getApplication().getNavigationHandler();
-                    navigationHandler.handleNavigation(context, null, outcome);
+                    WebUtil.navigateTo(AlfrescoNavigationHandler.DIALOG_PREFIX + "document", context);
                 }
             } catch (InvalidNodeRefException e) {
                 MessageUtil.addErrorMessage("document_restore_error_docDeleted");

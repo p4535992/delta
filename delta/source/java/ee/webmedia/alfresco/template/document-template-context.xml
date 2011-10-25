@@ -50,6 +50,10 @@
       </property>
    </bean>
    
+   <bean id="DocumentTemplateEmailTypeIdUpdater" class="ee.webmedia.alfresco.template.bootstrap.DocumentTemplateEmailTypeIdUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+   </bean>
+   
    <!-- Import the OpenOfficeService from the third party subsystem -->
    <bean id="openOfficeService" class="org.alfresco.repo.management.subsystems.SubsystemProxyFactory">
       <property name="sourceApplicationContextFactory">
@@ -91,4 +95,7 @@
          </list>
       </property>
    </bean>
+   
+   <bean id="DocumentTemplateDetailsDialog" class="ee.webmedia.alfresco.template.web.DocumentTemplateDetailsDialog" scope="session"/>
+   
 </beans>

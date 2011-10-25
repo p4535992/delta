@@ -483,6 +483,16 @@ public abstract class BaseObject extends NodeBaseVO implements Cloneable {
         return changedProperties;
     }
 
+    public boolean isPropertyChanged(QName... props) {
+        Set<QName> changedProps = getChangedProperties().keySet();
+        for (QName qName : props) {
+            if (changedProps.contains(qName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void restoreProp(QName... propNamesToReset) {
         if (propNamesToReset != null) {
             for (QName qName : propNamesToReset) {

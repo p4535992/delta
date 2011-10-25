@@ -123,7 +123,7 @@ html, body {
 	/*z-index: 100;*/
 }
 
-#search {
+.search-box {
 	/*z-index: 95;*/
 }
 
@@ -191,7 +191,7 @@ html, body {
 			margin: 17px;
 		}
 		
-		#search {
+		.search-box {
 			position:absolute;
 			right:10px;
 			top:20px;
@@ -199,25 +199,37 @@ html, body {
 			padding-right: 260px;
 		}
 		
-			#search > a, 
-			#search > span {
+		.search-box.alt {
+		    position:relative;
+		    float: right;
+		    top: 0;
+		}
+		    
+		    .search-box input[type="submit"]:hover,
+		    .search-box input[type="submit"]:focus,
+		    .search-box input[type="submit"]:active {
+		       background-position: 0 0;
+		    }
+		
+			.search-box > a, 
+			.search-box > span {
 				margin-right:40px;
 			}
 			
-			#search > img {
+			.search-box > img {
 				position: absolute;
 				top: -2px;
 				right: 225px;
 				cursor: pointer;
 			}
 
-			#search > img.simple {
+			.search-box > img.simple {
 				border-width: 0px;
 				vertical-align: -1px;
 				cursor: auto;
 			}
       
-			#search input[type="text"] {
+			.search-box input[type="text"] {
 				position: absolute;
 				top: -3px;
 				padding-top: 2px; 
@@ -228,7 +240,7 @@ html, body {
 				border: none;
 			}
 			
-			#search input[type="submit"] {
+			.search-box input[type="submit"] {
 				position: absolute;
 				top: -2px;
 				right: 5px;
@@ -867,16 +879,15 @@ td.actions-column * {
 }
 
 .propertiesLabel + td .propertiesLabel {
-	width: 65px;
+	width: 122px;
 }
 
-.propertiesLabel,
-.propertiesLabel span {
-	white-space: nowrap;
+.subPropertySheetTR .propertiesLabel + td .propertiesLabel {
+	width: 113px;
 }
 
-.propertiesLabel span.wrap {
-	white-space: normal;
+.icon-space {
+	margin-right: 35px;
 }
 
 /* PAGE CONTROLS */

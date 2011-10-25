@@ -139,6 +139,10 @@ public class BaseServiceImpl implements BaseService {
         try {
             boolean changed = false;
             WmNode node = object.getNode();
+            Object skipSave = node.getProperties().remove(SKIP_SAVE);
+            if (skipSave != null) {
+                return false; // Object shouldn't be saved
+            }
             Map<QName, Serializable> props = getSaveProperties(object.getChangedProperties());
 
             NodeRef parent = object.getParentNodeRef();
@@ -221,7 +225,9 @@ public class BaseServiceImpl implements BaseService {
                     }
                     boolean childChanged = saveObject(child);
                     changed |= childChanged;
-                    if (assocIndex >= 0) {
+                    // If this node was not saved, then all children are newly created, then childAssociationIndexes are already in the correct order
+                    if (wasSaved && assocIndex >= 0) {
+                        // TODO could further optimize that if no previous children have changed childAssociationIndex, then this index should be correct
                         ChildAssociationRef childAssocRef = nodeService.getPrimaryParent(child.getNodeRef());
                         if (childAssocRef.getNthSibling() != assocIndex) {
                             nodeService.setChildAssociationIndex(childAssocRef, assocIndex);

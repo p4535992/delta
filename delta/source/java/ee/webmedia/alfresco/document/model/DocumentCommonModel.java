@@ -110,6 +110,7 @@ public interface DocumentCommonModel {
         QName ACCESS_RESTRICTION_BEGIN_DATE = QName.createQName(URI, "accessRestrictionBeginDate");
         QName ACCESS_RESTRICTION_END_DATE = QName.createQName(URI, "accessRestrictionEndDate");
         QName ACCESS_RESTRICTION_END_DESC = QName.createQName(URI, "accessRestrictionEndDesc");
+        QName ACCESS_RESTRICTION_CHANGE_REASON = QName.createQName(URI, "accessRestrictionChangeReason");
 
         QName REG_NUMBER = QName.createQName(URI, "regNumber");
         QName SHORT_REG_NUMBER = QName.createQName(URI, "shortRegNumber");

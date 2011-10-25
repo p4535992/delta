@@ -295,7 +295,7 @@ public class ClassificatorServiceImpl implements ClassificatorService {
         for (ClassificatorExportVO newClassificator : classificatorsToAdd) {
             NodeRef classificatorRef = nodeService.createNode(getClassificatorRoot(),
                     ClassificatorModel.Associations.CLASSIFICATOR,
-                    ClassificatorModel.Associations.CLASSIFICATOR,
+                    getAssocName(newClassificator.getName()),
                     ClassificatorModel.Types.CLASSIFICATOR,
                     classificatorBeanPropertyMapper.toProperties(newClassificator)).getChildRef();
 

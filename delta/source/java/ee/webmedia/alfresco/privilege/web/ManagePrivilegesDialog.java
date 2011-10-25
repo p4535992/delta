@@ -199,9 +199,8 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
         WorkflowService ws = BeanHelper.getWorkflowService();
         NodeRef docRef = manageableRef;
         Set<Task> tasks = ws.getTasks(docRef, new Predicate<Task>() {
-
             @Override
-            public boolean evaluate(Task task) {
+            public boolean eval(Task task) {
                 if (!task.isStatus(Status.IN_PROGRESS)) {
                     return false;
                 }

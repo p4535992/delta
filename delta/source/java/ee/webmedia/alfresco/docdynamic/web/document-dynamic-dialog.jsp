@@ -8,9 +8,18 @@
 <%@ page isELIgnored="false"%>
 
 <a:booleanEvaluator id="workflowBlockEvaluator" value="#{!DocumentDynamicDialog.inEditMode}">
-<%--    <h:panelGroup binding="#{DocumentDialog.modalContainer}" /> --%>
    <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/workflow-block.jsp" />
 </a:booleanEvaluator>
+<h:panelGroup rendered="#{DocumentDynamicDialog.modalRendered}">
+   <h:panelGroup id="dialog-modal-container" binding="#{DocumentDynamicDialog.modalContainer}" />
+   <f:verbatim>
+      <script type="text/javascript">
+         $jQ(document).ready(function () {
+            showModal("</f:verbatim><a:outputText value="#{DocumentDynamicDialog.renderedModal}" /><f:verbatim>");
+         });
+      </script>
+   </f:verbatim>
+</h:panelGroup>
 <%-- <a:booleanEvaluator id="foundSimilarEvaluator" value="#{DocumentDialog.showFoundSimilar}"> --%>
 <%--    <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/search/web/document-similar-block.jsp" /> --%>
 <%-- </a:booleanEvaluator> --%>

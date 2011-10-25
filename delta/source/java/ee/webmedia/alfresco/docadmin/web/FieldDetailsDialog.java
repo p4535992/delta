@@ -107,7 +107,7 @@ public class FieldDetailsDialog extends BaseDialogBean {
 
     @Override
     public boolean isFinishButtonVisible(boolean dialogConfOKButtonVisible) {
-        return isProperySheetEditable();
+        return isPropertySheetEditable();
     }
 
     private boolean validate() {
@@ -214,7 +214,7 @@ public class FieldDetailsDialog extends BaseDialogBean {
     }
 
     public String getPropertySheetMode() {
-        return isProperySheetEditable() ? UIPropertySheet.EDIT_MODE : UIPropertySheet.VIEW_MODE;
+        return isPropertySheetEditable() ? UIPropertySheet.EDIT_MODE : UIPropertySheet.VIEW_MODE;
     }
 
     /** used by jsp */
@@ -265,17 +265,26 @@ public class FieldDetailsDialog extends BaseDialogBean {
     }
 
     /** used by property sheet */
-    public boolean isProperyHidden(PropertySheetItem propSheetItem) {
-        return !isShowPropery(getPropQName(propSheetItem));
+    public boolean isPropertyHidden(PropertySheetItem propSheetItem) {
+        return !isShowProperty(getPropQName(propSheetItem));
     }
 
-    public boolean isProperySheetEditable() {
+    /** used by property sheet */
+    public boolean isShowProperty(PropertySheetItem propSheetItem) {
+        return isShowProperty(getPropQName(propSheetItem));
+    }
+
+    private boolean isPropertySheetEditable() {
         return field instanceof FieldDefinition || getDocTypeDetailsDialog().isShowingLatestVersion();
     }
 
     /** used by property sheet */
     public boolean isFieldIdReadOnly() {
-        return isSavedInPreviousDocTypeVersionOrFieldDefinitions(field);
+        return isSavedInPreviousDocTypeVersionOrFieldDefinitions(field) || field.isMandatoryForDoc();
+    }
+
+    public boolean isMandatoryReadOnly() {
+        return !field.isMandatoryChangeable();
     }
 
     /** used by property sheet */
@@ -357,6 +366,7 @@ public class FieldDetailsDialog extends BaseDialogBean {
             propertySheet.getChildren().clear();
             propertySheet.getClientValidations().clear();
             propertySheet.setMode(null);
+            propertySheet.setNode(null);
         }
     }
 
@@ -366,7 +376,7 @@ public class FieldDetailsDialog extends BaseDialogBean {
         return QName.createQName(propSheetItem.getName(), getNamespaceService());
     }
 
-    private boolean isShowPropery(QName propQName) {
+    private boolean isShowProperty(QName propQName) {
         FieldType fieldType = field.getFieldTypeEnum();
         return fieldType == null ? false : fieldType.getFieldsUsed(field.isComboboxNotRelatedToClassificator()).contains(propQName);
     }
@@ -384,7 +394,7 @@ public class FieldDetailsDialog extends BaseDialogBean {
                             || uiProperty.getId().endsWith("_defaultDateSysdate")
                             || uiProperty.getId().endsWith("_defaultUserLoggedIn")
                             || uiProperty.getId().endsWith("_defaultSelected")) {
-                        ComponentUtil.setReadonlyAttributeRecursively(uiProperty, isProperyHidden(psItem));
+                        ComponentUtil.setReadonlyAttributeRecursively(uiProperty, isPropertyHidden(psItem));
                         if (isClassificatorDefaultValueUiProp) {
                             HtmlSelectOneMenu clDefaultValues = (HtmlSelectOneMenu) uiProperty.getChildren().get(1);
                             List<SelectItem> clValueItems = getClassificatorSelectItems(FacesContext.getCurrentInstance(), clDefaultValues);

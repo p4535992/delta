@@ -35,6 +35,11 @@ public class OpenOfficeServiceImpl implements OpenOfficeService {
 
     @Override
     public void replace(ContentReader reader, ContentWriter writer, Map<String, String> formulas) throws Exception {
+        if (1 == 1) {
+            // Temporary safeguard until OO document templates & formulas are properly implemented
+            throw new RuntimeException(
+                    "Generating Word files or replacing formulas is not supported with OpenOffice; a more user-friendly exception should have been thrown by previous code");
+        }
         long startTime = System.currentTimeMillis();
 
         // create temporary file to replace from

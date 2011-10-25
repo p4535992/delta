@@ -74,9 +74,11 @@ public abstract class MetadataItem extends BaseObject {
     @Override
     protected int getAssocIndex() {
         Integer order = getOrder();
-        // TODO DLSeadist - test if index needs to start at 0, 1, 2, ... - if yes, then return order - 1
-        // TODO DLSeadist - test what happens when multiple Metadataitems have same order value
-        return order == null ? -1 : order;
+        if (order == null) {
+            return -1;
+        }
+        // childAssociationIndex starts at 0; other code ensures that order starts at 1
+        return order - 1;
     }
 
 }

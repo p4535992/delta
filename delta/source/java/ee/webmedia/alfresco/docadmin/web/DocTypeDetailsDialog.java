@@ -80,6 +80,7 @@ public class DocTypeDetailsDialog extends BaseSnapshotCapableDialog<DocTypeDialo
 
     boolean save() {
         try {
+            fieldsListBean.doReorder();
             Pair<DocumentType, MessageData> result = getDocumentAdminService().saveOrUpdateDocumentType(getCurrentSnapshot().docType);
             DocumentType saveOrUpdateDocumentType = result.getFirst();
             getCurrentSnapshot().addNewLatestDocumentTypeVersion = true;
@@ -97,7 +98,7 @@ public class DocTypeDetailsDialog extends BaseSnapshotCapableDialog<DocTypeDialo
 
     boolean validate() {
         boolean valid = true;
-        // XXX DLSeadist validation. (DocumentTypeId is already validated by converter)
+        // constraints known right now are validated by converters / validators before calling this method
         return valid;
     }
 

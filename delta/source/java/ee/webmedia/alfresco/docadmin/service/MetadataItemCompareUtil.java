@@ -31,7 +31,7 @@ public class MetadataItemCompareUtil {
     private static final Comparator<Field> FIELD_COMPARATOR = getFieldComparator();
     private static final Comparator<FieldDefinition> FIELD_DEFINITION_COMPARATOR = getFieldDefinitionComparator();
 
-    public static boolean isClidrenListChanged(ChildrenList<MetadataItem> savedMetadata, ChildrenList<MetadataItem> unSavedMetadata) {
+    public static <M extends MetadataItem> boolean isClidrenListChanged(ChildrenList<M> savedMetadata, ChildrenList<M> unSavedMetadata) {
         if (unSavedMetadata.size() != savedMetadata.size()) {
             return true; // at least one field/fieldGroup/separatorLine is added or removed
         }
@@ -62,6 +62,14 @@ public class MetadataItemCompareUtil {
             // XXX objectEqual must be called first, because it sets property as empty list when property is missing
             boolean objectsEqual = objectsEqual(savedMetadataItem, unSavedMetadataItem); // FIXME DLSeadist double check - may be removed when stable
             boolean propsEqual = RepoUtil.propsEqual(savedMetadataItem.getNode().getProperties(), unSavedMetadataItem.getNode().getProperties());
+            if (propsEqual && savedMetadataItem instanceof FieldGroup) {
+                // maybe fields under fieldGroup have changed
+                FieldGroup savedFieldGroup = (FieldGroup) savedMetadataItem;
+                FieldGroup unSavedFieldGroup = (FieldGroup) unSavedMetadataItem;
+                ChildrenList<Field> savedFields = savedFieldGroup.getMetadata();
+                ChildrenList<Field> unSavedFields = unSavedFieldGroup.getMetadata();
+                propsEqual = !isClidrenListChanged(savedFields, unSavedFields);
+            }
             if (propsEqual != objectsEqual) {
                 throw new RuntimeException("Unexpected: propsEqual=" + propsEqual + " objectsEqual=" + objectsEqual);
             }
@@ -319,6 +327,14 @@ public class MetadataItemCompareUtil {
                 return input.isShowInTwoColumnsChangeable();
             }
         }, new NullComparator()));
+
+        chain.addComparator(new TransformingComparator(new ComparableTransformer<FieldGroup>() {
+            @Override
+            public Comparable<?> tr(FieldGroup input) {
+                return new CollectionComparator<Field>(input.getFields(), FIELD_COMPARATOR);
+            }
+        }, new NullComparator()));
+
         return cast(chain, FieldGroup.class);
     }
 

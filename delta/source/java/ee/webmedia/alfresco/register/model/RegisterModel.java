@@ -19,10 +19,9 @@ public interface RegisterModel {
     interface Prop {
         QName ID = QName.createQName(URI, "id");
         QName NAME = QName.createQName(URI, "name");
-        QName PREFIX = QName.createQName(URI, "prefix");
-        QName SUFFIX = QName.createQName(URI, "suffix");
         QName COMMENT = QName.createQName(URI, "comment");
         QName ACTIVE = QName.createQName(URI, "active");
+        QName AUTO_RESET = QName.createQName(URI, "autoReset");
         /** NB! not mappable - value stored in sequence */
         QName COUNTER = QName.createQName(URI, "counter");
     }

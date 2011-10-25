@@ -33,8 +33,6 @@ public interface DocumentDynamicModel {
         QName SENDER_FAX = QName.createQName(URI, "senderFax");
 
         QName USER_NAMES = QName.createQName(URI, "userNames");
-        QName USER_JOB_TITLE = QName.createQName(URI, "userJobTitle");
-        QName USER_ORG_STRUCT_UNIT = QName.createQName(URI, "userOrgStructUnit");
 
         QName SUBSTITUTE_NAME = QName.createQName(URI, "substituteName");
 
@@ -44,6 +42,37 @@ public interface DocumentDynamicModel {
         QName SUBSTITUTE_ID = QName.createQName(URI, "substituteId");
         QName PREVIOUS_OWNER_ID = QName.createQName(URI, "previousOwnerId");
         QName SHORT_REG_NUMBER = QName.createQName(URI, "shortRegNumber");
+
+        QName USER_NAME = QName.createQName(URI, "userName");
+        QName USER_SERVICE_RANK = QName.createQName(URI, "userServiceRank");
+        QName USER_JOB_TITLE = QName.createQName(URI, "userJobTitle");
+        QName USER_ORG_STRUCT_UNIT = QName.createQName(URI, "userOrgStructUnit");
+        QName USER_WORK_ADDRESS = QName.createQName(URI, "userWorkAddress");
+        QName USER_EMAIL = QName.createQName(URI, "userEmail");
+        QName USER_PHONE = QName.createQName(URI, "userPhone");
+        QName USER_ID = QName.createQName(URI, "userId");
+
+        QName FIRST_PARTY_CONTACT_PERSON_NAME = QName.createQName(URI, "firstPartyContactPersonName");
+        QName FIRST_PARTY_CONTACT_PERSON_SERVICE_RANK = QName.createQName(URI, "firstPartyContactPersonServiceRank");
+        QName FIRST_PARTY_CONTACT_PERSON_JOB_TITLE = QName.createQName(URI, "firstPartyContactPersonJobTitle");
+        QName FIRST_PARTY_CONTACT_PERSON_ORG_STRUCT_UNIT = QName.createQName(URI, "firstPartyContactPersonOrgStructUnit");
+        QName FIRST_PARTY_CONTACT_PERSON_WORK_ADDRESS = QName.createQName(URI, "firstPartyContactPersonWorkAddress");
+        QName FIRST_PARTY_CONTACT_PERSON_EMAIL = QName.createQName(URI, "firstPartyContactPersonEmail");
+        QName FIRST_PARTY_CONTACT_PERSON_PHONE = QName.createQName(URI, "firstPartyContactPersonPhone");
+        QName FIRST_PARTY_CONTACT_PERSON_ID = QName.createQName(URI, "firstPartyContactPersonId");
+
+        QName CONTACT_NAME = QName.createQName(URI, "contactName");
+        QName CONTACT_ADDRESS = QName.createQName(URI, "contactAddress");
+        QName CONTACT_EMAIL = QName.createQName(URI, "contactEmail");
+        QName CONTACT_PHONE = QName.createQName(URI, "contactPhone");
+        QName CONTACT_FAX_NUMBER = QName.createQName(URI, "contactFaxNumber");
+        QName CONTACT_WEB_PAGE = QName.createQName(URI, "contactWebPage");
+        QName CONTACT_REG_NUMBER = QName.createQName(URI, "contactRegNumber");
+
+        QName BEGIN_DATE = QName.createQName(URI, "beginDate");
+        QName END_DATE = QName.createQName(URI, "endDate");
+        QName CALCULATED_DURATION_DAYS = QName.createQName(URI, "calculatedDurationDays");
+
     }
 
 }

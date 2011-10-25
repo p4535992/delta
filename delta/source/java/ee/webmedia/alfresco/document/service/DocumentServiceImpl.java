@@ -108,6 +108,7 @@ import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.classificator.enums.LeaveType;
+import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
@@ -2208,7 +2209,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
                 if (CaseModel.Associations.CASE_DOCUMENT.equals(assocRef.getTypeQName())) {
                     assocInf.setCaseNodeRef(sourceRef);
                     assocInf.setAssocType(AssocType.DEFAULT);
-                    assocInf.setType("Asi");
+                    assocInf.setType(MessageUtil.getMessage(VolumeType.CASE_FILE));
                     assocInf.setTitle((String) nodeService.getProperty(sourceRef, CaseModel.Props.TITLE));
                 } else {
                     log.debug("not searchable: " + assocRef);

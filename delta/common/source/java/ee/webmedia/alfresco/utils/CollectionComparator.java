@@ -7,15 +7,23 @@ import java.util.Comparator;
 import java.util.Iterator;
 
 /**
+ * Comparator that compares two collections based on comparing elements at the same index. <br>
+ * If <code>elementComparator</code> is given at construction time, then elementComparator is used, otherwise when element implements {@link Comparable}, then it will be used. <br>
  * Note - it is not jet thoroughly tested (at first created to double validate equality)
  * 
  * @author Ats Uiboupin
  */
 public class CollectionComparator<E> extends AbstractCollection<E> implements Comparator<Collection<E>>, Comparable<Collection<E>> {
-    Collection<E> wrappedCollection;
+    private Collection<E> wrappedCollection;
+    private Comparator<E> elementComparator;
 
     public CollectionComparator(Collection<E> c) {
+        this(c, null);
+    }
+
+    public CollectionComparator(Collection<E> c, Comparator<E> elementComparator) {
         this.wrappedCollection = Collections.unmodifiableCollection(c);
+        this.elementComparator = elementComparator;
     }
 
     @Override
@@ -33,7 +41,13 @@ public class CollectionComparator<E> extends AbstractCollection<E> implements Co
         Iterator<E> e2 = o.iterator();
         while (e1.hasNext() && e2.hasNext()) {
             E o1 = e1.next();
-            Object o2 = e2.next();
+            E o2 = e2.next();
+            if (elementComparator != null) {
+                int res = elementComparator.compare(o1, o2);
+                if (res != 0) {
+                    return res;
+                }
+            }
             {
                 if (o1 == null) {
                     if (o2 != null) {
@@ -42,12 +56,15 @@ public class CollectionComparator<E> extends AbstractCollection<E> implements Co
                 } else {
                     boolean isComparable1 = o1 instanceof Comparable;
                     boolean isComparable2 = o2 instanceof Comparable;
-                    if (isComparable1 && isComparable2) {
-                        @SuppressWarnings("unchecked")
-                        Comparable<E> comparable1 = (Comparable<E>) o1;
-                        @SuppressWarnings("unchecked")
-                        Comparable<E> comparable2 = (Comparable<E>) o2;
-                        return comparable1.compareTo((E) comparable2);
+                    if (isComparable1 == isComparable2) {
+                        if (isComparable1) {
+                            @SuppressWarnings("unchecked")
+                            Comparable<E> comparable1 = (Comparable<E>) o1;
+                            @SuppressWarnings("unchecked")
+                            Comparable<E> comparable2 = (Comparable<E>) o2;
+                            return comparable1.compareTo((E) comparable2);
+                        }
+                        // neither comparable - this probably should have been constructed with custom elementComparator
                     }
                     if (isComparable1) {
                         return -1;

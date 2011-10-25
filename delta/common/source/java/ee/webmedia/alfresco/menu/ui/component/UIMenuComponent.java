@@ -4,7 +4,9 @@ import java.util.Map;
 
 import javax.faces.component.UIComponentBase;
 import javax.faces.context.FacesContext;
+import javax.faces.event.AbortProcessingException;
 import javax.faces.event.ActionEvent;
+import javax.faces.event.ActionListener;
 import javax.faces.event.FacesEvent;
 
 import org.alfresco.web.app.servlet.FacesHelper;
@@ -26,6 +28,36 @@ public class UIMenuComponent extends UIComponentBase {
     public static final String PRIMARY_ATTRIBUTE_KEY = "primary";
     public static final String VALUE_SEPARATOR = "_";
     public static final String VIEW_STACK = "_alfViewStack";
+
+    public static class ClearViewStackActionListener implements ActionListener {
+
+        @Override
+        public void processAction(ActionEvent event) throws AbortProcessingException {
+            FacesContext context = FacesContext.getCurrentInstance();
+            UIActionLink link = (UIActionLink) event.getComponent();
+            String clientId = link.getClientId(context);
+            String activeId = clientId.replaceAll("^[^0-9]*", "");
+
+            // Links defined in menu-structure.xml have XPath
+            boolean forceReset = link.getAttributes().get(DropdownMenuItem.ATTRIBUTE_XPATH) != null;
+
+            // When creating new document, don't reset
+            boolean createNewDocument = false;
+            if (activeId.startsWith(MenuBean.CREATE_NEW_DOCUMENT + VALUE_SEPARATOR)) {
+                createNewDocument = true;
+            }
+
+            // Clear the view stack, otherwise it would grow too big as the cancel button is hidden in some views
+            // Later in the life-cycle the view where this action came from is added to the stack, so visible cancel buttons will function properly
+            // We mustn't clear the stack and therefore reset breadcrumb for browse MenuItems
+            if ((!(link.getActionListener() != null && link.getActionListener().getExpressionString() != null && link.getActionListener().getExpressionString()
+                    .equals(MenuBean.UPDATE_TREE_ACTTIONLISTENER)) && !createNewDocument) || forceReset) {
+                Utils.setRequestValidationDisabled(context); // Disable validation if user is navigating away
+                MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME);
+                MenuBean.clearViewStack(menuBean.getActiveItemId(), clientId);
+            }
+        }
+    }
 
     @Override
     public void queueEvent(FacesEvent event) {
@@ -51,23 +83,8 @@ public class UIMenuComponent extends UIComponentBase {
                 menuBean.processTaskItems(); // When user registers a doc, changes must reflect in admin session.
             }
 
-            // Links defined in menu-structure.xml have XPath
-            boolean forceReset = link.getAttributes().get(DropdownMenuItem.ATTRIBUTE_XPATH) != null;
-
             // When creating new document, don't reset
-            boolean createNewDocument = false;
             if (activeId.startsWith(MenuBean.CREATE_NEW_DOCUMENT + VALUE_SEPARATOR)) {
-                createNewDocument = true;
-            }
-
-            // Clear the view stack, otherwise it would grow too big as the cancel button is hidden in some views
-            // Later in the life-cycle the view where this action came from is added to the stack, so visible cancel buttons will function properly
-            // We mustn't clear the stack and therefore reset breadcrumb for browse MenuItems
-            if ((!(link.getActionListener() != null && link.getActionListener().getExpressionString() != null && link.getActionListener().getExpressionString()
-                    .equals(MenuBean.UPDATE_TREE_ACTTIONLISTENER)) && !createNewDocument) || forceReset) {
-                Utils.setRequestValidationDisabled(context); // Disable validation if user is navigating away
-                MenuBean.clearViewStack(menuBean.getActiveItemId(), clientId);
-            } else if (createNewDocument) {
                 Utils.setRequestValidationDisabled(context); // Disable validation if user is navigating away
             }
 

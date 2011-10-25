@@ -20,7 +20,9 @@ import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet.ClientValidation;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docconfig.generator.fieldtype.DateGenerator;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
@@ -66,6 +68,9 @@ public class DatePickerGenerator extends BaseComponentGenerator {
 
     private String getAdditionalStyleClass(PropertyDefinition propertyDef) {
         String propName = propertyDef.getName().getLocalName();
+        if (propName.endsWith(DateGenerator.END_PREFIX)) {
+            return "endDate";
+        }
         boolean isBegin = isBeginDate(propName);
         boolean isEnd = isEndDate(propName);
         if (!isBegin && !isEnd) {
@@ -161,7 +166,9 @@ public class DatePickerGenerator extends BaseComponentGenerator {
         // add event handler to kick off real time checks
         @SuppressWarnings("unchecked")
         Map<String, Object> attributes = component.getAttributes();
-        attributes.put("onchange", "processButtonState();");
+        String onchange = StringUtils.trimToEmpty((String) attributes.get("onchange"));
+        onchange += "processButtonState();";
+        attributes.put("onchange", onchange);
     }
 
     protected String getDateFieldTitle(PropertySheetItem property) {
@@ -175,6 +182,15 @@ public class DatePickerGenerator extends BaseComponentGenerator {
     protected void setupMandatoryValidation(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item, UIComponent component,
             boolean realTimeChecking, String idSuffix) {
         super.setupMandatoryValidation(context, propertySheet, item, component, true, idSuffix);
+    }
+
+    @Override
+    protected void setupMandatoryPropertyIfNecessary(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem property, PropertyDefinition propertyDef,
+            UIComponent component) {
+        super.setupMandatoryPropertyIfNecessary(context, propertySheet, property, propertyDef, component);
+
+        // Must do this after component has beed added to tree
+        GeneralSelectorGenerator.setupValueChangeListener(context, component, getCustomAttributes());
     }
 
     public void setAddBeginDateClassByPropName(List<String> addBeginDateClassByPropName) {

@@ -2,7 +2,7 @@ package ee.webmedia.alfresco.docadmin.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getAssociationModelDetailsDialog;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
-import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.navigate;
+import static ee.webmedia.alfresco.utils.WebUtil.navigateTo;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -95,7 +95,7 @@ public abstract class DocTypeAssocsListBean<T extends AssociationModel> implemen
                         T assocModel = assocNodeRef != null ? getAssocByNodeRef(assocNodeRef) : createNewAssoc();
                         // init & navigate
                         getAssociationModelDetailsDialog().init(assocModel);
-                        navigate("dialog:associationModelDetailsDialog");
+                        navigateTo("dialog:associationModelDetailsDialog");
                     }
                     return null;
                 }
@@ -107,7 +107,6 @@ public abstract class DocTypeAssocsListBean<T extends AssociationModel> implemen
     }
 
     public String deleteAssoc(ActionEvent event) {
-        // FIXME DLSeadist test
         NodeRef assocRef = ActionUtil.getParam(event, "nodeRef", NodeRef.class);
         getDocumentAdminService().deleteAssocToDocType(assocRef);
         // replace docType in memory with fresh copy from repo

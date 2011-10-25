@@ -30,6 +30,10 @@ public class MessageDataWrapper implements Iterable<MessageData> {
         feedbackItems.add(feedbackItem);
     }
 
+    public int getFeedbackItemCount() {
+        return feedbackItems == null ? 0 : feedbackItems.size();
+    }
+
     @Override
     public Iterator<MessageData> iterator() {
         return feedbackItems == null ? Collections.<MessageData> emptyList().iterator() : feedbackItems.iterator();

@@ -31,9 +31,6 @@ import org.alfresco.service.cmr.search.LimitBy;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchParameters;
 import org.alfresco.service.cmr.search.SearchService;
-import org.alfresco.service.cmr.search.LimitBy;
-import org.alfresco.service.cmr.search.SearchParameters;
-import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.apache.commons.lang.StringUtils;
@@ -85,7 +82,7 @@ public abstract class AbstractSearchServiceImpl {
         }
         return SearchUtil.joinQueryPartsOr(queryParts);
     }
-    
+
     private SearchParameters buildSearchParameters(String query, boolean limited) {
         return buildSearchParameters(query, limited ? RESULTS_LIMIT : null);
     }
@@ -105,7 +102,7 @@ public abstract class AbstractSearchServiceImpl {
             sp.setLimitBy(LimitBy.UNLIMITED);
         }
         return sp;
-    }    
+    }
 
     /**
      * Escape symbols and use only 10 first unique words which contain at least 3 characters
@@ -142,7 +139,7 @@ public abstract class AbstractSearchServiceImpl {
                         continue;
                     }
                     if (log.isDebugEnabled()) {
-                        log.debug("getDocumentsQuickSearch - found date match: " + searchWord + " -> " + formatLuceneDate(date));
+                        log.debug("getDocumentsQuickSearch - found date match: " + searchWord + " -> " + formatLuceneDate(date, false));
                     }
 
                     boolean exists = false;

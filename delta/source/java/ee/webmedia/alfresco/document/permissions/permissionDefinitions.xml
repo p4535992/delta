@@ -60,8 +60,8 @@
    Dokumendi esmakordne liigitamise (ja hilisema ümberliigitamise) jaoks eraldi õigusi ei ole antud,
    vastavat move käsku jooksutatakse koodis System kasutaja õigustes.
    Dokumendi enda peal pole rohkem õigusi vaja, hetkel on juba olemas DeleteNode.
-   Vaja on CreateChildren õigust siht-node'i (sarja või asja) all.
-   Hetkel saavad esmakordset liigitamist ja hilisemat ümberliigitamist sooritada suvalisse sarja/asja alla, selle piiramiseks tuleb teha vastavad kontrollid koodis.
+   Vaja on CreateChildren õigust siht-node'i (sarja või teema) all.
+   Hetkel saavad esmakordset liigitamist ja hilisemat ümberliigitamist sooritada suvalisse sarja/teema alla, selle piiramiseks tuleb teha vastavad kontrollid koodis.
 
 -->
       <permissionGroup name="DocumentWrite" expose="true" allowFullControl="false">
@@ -84,7 +84,7 @@
    * Kustutada dokumendi alam-node'i (nt. faile ja logikirjeid)
 
    TODO versioneeritud node'ide permissionid!
-   TODO muude hoidlas olevate asjade õigused!
+   TODO muude hoidlas olevate teemade õigused!
 -->
       <permissionGroup name="DocumentFileWrite" expose="true" allowFullControl="false">
            <includePermissionGroup type="sys:base" permissionGroup="WriteProperties"/>

@@ -254,7 +254,7 @@
       <view:properties>
          <docadmin:fieldId>case</docadmin:fieldId>
          <docadmin:originalFieldId>case</docadmin:originalFieldId>
-         <docadmin:name>Asi</docadmin:name>
+         <docadmin:name>Teema</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
          <docadmin:mandatory>true</docadmin:mandatory>
@@ -444,6 +444,7 @@
          <docadmin:name>Kasutaja ametinimetus</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
       </view:properties>
    </docadmin:fieldDefinition>
 

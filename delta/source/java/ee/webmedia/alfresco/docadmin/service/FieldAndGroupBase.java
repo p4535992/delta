@@ -46,7 +46,6 @@ public abstract class FieldAndGroupBase extends MetadataItem {
         setProp(DocumentAdminModel.Props.NAME, name);
     }
 
-    // TODO DLSeadist võiks eemaldada või protected'iks teha, kui näiteks service's on vaja
     protected final void setSystematic(boolean systematic) {
         setProp(DocumentAdminModel.Props.SYSTEMATIC, systematic);
     }
@@ -57,11 +56,6 @@ public abstract class FieldAndGroupBase extends MetadataItem {
 
     public final String getSystematicComment() {
         return getProp(DocumentAdminModel.Props.SYSTEMATIC_COMMENT);
-    }
-
-    // TODO DLSeadist võiks eemaldada või protected'iks teha, kui näiteks service's on vaja
-    private final void setSystematicComment(String systematicComment) {
-        setProp(DocumentAdminModel.Props.SYSTEMATIC_COMMENT, systematicComment);
     }
 
     public final String getComment() {

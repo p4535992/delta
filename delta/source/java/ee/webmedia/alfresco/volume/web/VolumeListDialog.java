@@ -1,5 +1,8 @@
 package ee.webmedia.alfresco.volume.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getCaseListDialog;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentListDialog;
+
 import java.util.List;
 
 import javax.faces.context.FacesContext;
@@ -9,6 +12,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.utils.ActionUtil;
@@ -60,6 +64,19 @@ public class VolumeListDialog extends BaseDialogBean {
     @Override
     public Object getActionsContext() {
         return parent.getNode();
+    }
+
+    public void showVolumeContents(ActionEvent event) {
+        NodeRef volumeRef = new NodeRef(ActionUtil.getParam(event, "volumeNodeRef"));
+        Volume volume = getVolumeService().getVolumeByNodeRef(volumeRef);
+        boolean isVolumeTypeCase = volume.getVolumeType().equals(VolumeType.CASE_FILE.name());
+        if (!volume.isContainsCases() && !isVolumeTypeCase) {
+            getDocumentListDialog().init(volumeRef);
+        } else if (volume.isContainsCases() && !isVolumeTypeCase) {
+            getCaseListDialog().init(volumeRef);
+        } else {
+            throw new RuntimeException("Not implemented");
+        }
     }
 
     // END: jsf actions/accessors

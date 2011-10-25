@@ -81,14 +81,10 @@ public void encodeBegin(FacesContext context, UIComponent component) throws IOEx
          // NOTE: Replacement for the mandatory marker 
          if(count == 3)
          {
-             out.write("<span class=\"no-wrap\"><span class=\"red\">*&nbsp;</span>");
+             out.write("<span class=\"red\">*&nbsp;</span>");
          }
          // encode the label
          Utils.encodeRecursive(context, label);
-         if(count == 3)
-         {
-             out.write("</span>");
-         }
          // encode the control
          out.write("</td><td>");
          Utils.encodeRecursive(context, control);

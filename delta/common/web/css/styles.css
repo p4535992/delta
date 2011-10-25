@@ -113,19 +113,18 @@ a.action {
 	color: #00467b;
 }
 
-#search input[type="text"] {
+.search-box input[type="text"] {
 	background: transparent url("../images/parts/search-input.png")
 		no-repeat center right;
 }
-
-#search input[type="submit"] {
+.search-box input[type="submit"] {
 	background: transparent url("../images/parts/search-submit.png")
 		no-repeat center right;
 	color: #fff;
 	font-weight: normal;
 }
 
-#search select {
+.search-box select {
 	color: #444;
 	font-size: 11px;
 	margin-right: 5px;
@@ -853,7 +852,7 @@ hr {
 }
 
 .propertiesLabel + td .propertiesLabel {
-	padding-left: 25px;
+	padding-left: 5px;
 }
 
 .secondary {

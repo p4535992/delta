@@ -1379,6 +1379,20 @@
    </tag>
 
    <tag>
+      <name>convertEnum</name>
+      <tag-class>ee.webmedia.alfresco.classificator.enums.EnumConverterTag</tag-class>
+      <body-content>JSP</body-content>
+      <description>
+         Allows to translate VolTypes in JSP.
+      </description>
+      
+      <attribute>
+         <name>enumClass</name>
+         <required>true</required>
+      </attribute>
+   </tag>
+   
+   <tag>
       <name>convertSize</name>
       <tag-class>org.alfresco.web.ui.common.tag.ByteSizeConverterTag</tag-class>
       <body-content>JSP</body-content>

@@ -61,10 +61,13 @@ public class TestingForDeveloperBean implements Serializable {
 
     public void deleteFieldAndFieldGroupsAndBootstrapInfo(@SuppressWarnings("unused") ActionEvent event) {
         String simdhsModule = "simdhs";
-        deleteBootstrap(simdhsModule, "systematicFieldGroupDefinitionsBootstrap1");
-        deleteBootstrap(simdhsModule, "systematicFieldGroupDefinitionsBootstrap2");
         deleteBootstrap(simdhsModule, "systematicFieldDefinitionsBootstrap1");
         deleteBootstrap(simdhsModule, "systematicFieldDefinitionsBootstrap2");
+        deleteBootstrap(simdhsModule, "systematicFieldDefinitionsBootstrap3");
+        deleteBootstrap(simdhsModule, "systematicFieldDefinitionsBootstrap4");
+        deleteBootstrap(simdhsModule, "systematicFieldGroupDefinitionsBootstrap1");
+        deleteBootstrap(simdhsModule, "systematicFieldGroupDefinitionsBootstrap2");
+        deleteBootstrap(simdhsModule, "systematicFieldGroupDefinitionsBootstrap3");
         deleteBootstrap(simdhsModule, "systematicFieldGroupDefinitions1FixBootstrap");
         deleteBootstrap(simdhsModule, "systematicDocumentTypesBootstrap");
         deleteChildren(getNodeRef("/docadmin:fieldDefinitions"));

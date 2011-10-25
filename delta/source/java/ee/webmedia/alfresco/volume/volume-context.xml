@@ -52,7 +52,6 @@
 
    <bean id="volumeParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
             <ref bean="parametersSpacesBootstrap" />
@@ -89,5 +88,9 @@
          </bean>
       </property>
    </bean>
-
+   
+ <!-- Used to update volume type value. CL task: 177957 -->
+   <bean id="VolumeTypeUpdater" class="ee.webmedia.alfresco.volume.bootstrap.VolumeTypeUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+   </bean>
 </beans>

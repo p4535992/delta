@@ -229,7 +229,7 @@
    <config evaluator="node-type" condition="wfs:signatureWorkflow,wfs:opinionWorkflow,wfs:reviewWorkflow,wfs:informationWorkflow,wfs:assignmentWorkflow,wfs:docRegistrationWorkflow">
    <!-- TODO: add orderAssignmentWorkflow, confirmationWorkflow into "condition" -->
       <property-sheet>
-         <show-property name="wfc:mandatory" component-generator="CheckboxGenerator"/>
+         <show-property name="wfc:mandatory" component-generator="CheckboxGenerator" show="#{DialogManager.currentDialog.name eq 'CompoundWorkflowDefinitionDialog'}"/>
       </property-sheet>
    </config>
    <!-- COMPOUND WORKFLOW CONFIG - END -->

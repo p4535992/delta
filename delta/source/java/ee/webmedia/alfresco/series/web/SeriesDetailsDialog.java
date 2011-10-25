@@ -90,7 +90,7 @@ public class SeriesDetailsDialog extends BaseDialogBean {
                 MessageUtil.addErrorMessage(context, "series_volNumberPattern_dn_not_allowed");
                 foundErrors = true;
             }
-            if (volType.contains(VolumeType.CASE.name())) {
+            if (volType.contains(VolumeType.CASE_FILE.name())) {
                 Integer volRegister = (Integer) getCurrentNode().getProperties().get(SeriesModel.Props.VOL_REGISTER);
                 if (volNrPatternParsed.isBlank()) {
                     MessageUtil.addErrorMessage(context, "series_volNrPattern_must_not_be_empty");

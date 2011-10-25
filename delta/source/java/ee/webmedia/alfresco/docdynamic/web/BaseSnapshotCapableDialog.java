@@ -10,7 +10,7 @@ import java.util.Map;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 
 import ee.webmedia.alfresco.common.web.ClearStateNotificationHandler.ClearStateListener;
-import ee.webmedia.alfresco.docadmin.web.DocAdminUtil;
+import ee.webmedia.alfresco.utils.WebUtil;
 
 /**
  * Base class for dialogs that must support multiple instances of the same dialog opened after each other and restored when closing dialog opened after that dialog.
@@ -44,7 +44,7 @@ public abstract class BaseSnapshotCapableDialog<S extends BaseSnapshotCapableDia
 
     protected S createSnapshot(S newSnapshot) {
         snapshots.push(newSnapshot);
-        DocAdminUtil.navigate(newSnapshot.getOpenDialogNavigationOutcome());
+        WebUtil.navigateTo(newSnapshot.getOpenDialogNavigationOutcome());
         return newSnapshot;
     }
 

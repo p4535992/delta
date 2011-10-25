@@ -5,12 +5,15 @@ import java.util.List;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 
@@ -21,9 +24,17 @@ import ee.webmedia.alfresco.volume.service.VolumeService;
  */
 public class CaseListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
+
+    public static final String BEAN_NAME = "CaseListDialog";
+
     private transient VolumeService volumeService;
     private transient CaseService caseService;
     private Volume parent;
+
+    public void init(NodeRef volumeRef) {
+        showAll(volumeRef);
+        WebUtil.navigateTo(AlfrescoNavigationHandler.DIALOG_PREFIX + "caseListDialog");
+    }
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
@@ -49,7 +60,12 @@ public class CaseListDialog extends BaseDialogBean {
 
     // START: jsf actions/accessors
     public void showAll(ActionEvent event) {
-        parent = getVolumeService().getVolumeByNodeRef((ActionUtil.getParam(event, "volumeNodeRef")));
+        NodeRef volumeRef = new NodeRef(ActionUtil.getParam(event, "volumeNodeRef"));
+        showAll(volumeRef);
+    }
+
+    private void showAll(NodeRef volumeRef) {
+        parent = getVolumeService().getVolumeByNodeRef(volumeRef);
     }
 
     public List<Case> getEntries() {

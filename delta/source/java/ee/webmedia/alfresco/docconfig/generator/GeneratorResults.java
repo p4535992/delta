@@ -11,6 +11,8 @@ public interface GeneratorResults {
 
     ItemConfigVO generateAndAddViewModeText(String name, String label);
 
+    void addItem(ItemConfigVO item);
+
     void addStateHolder(String key, PropertySheetStateHolder stateHolder);
 
 }

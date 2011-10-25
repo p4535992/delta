@@ -5,9 +5,6 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService
 import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.commitToMetadataContainer;
 import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.getDuplicateFieldIds;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 import javax.faces.context.FacesContext;
@@ -23,13 +20,15 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
-/** FIXME DLSeadist based on {@link DocTypeDetailsDialog} */
+/**
+ * Details dialog for editing {@link FieldGroup}
+ * 
+ * @author Ats Uiboupin
+ */
 public class FieldGroupDetailsDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
 
     public static final String BEAN_NAME = "FieldGroupDetailsDialog";
-    private static final Set<String> DEFAULT_USER_LOGGED_IN_VISIBLE_NAMES = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
-            SystematicFieldGroupNames.USER, SystematicFieldGroupNames.SIGNER, SystematicFieldGroupNames.DOCUMENT_OWNER)));
 
     private FieldsListBean fieldsListBean;
 
@@ -42,6 +41,7 @@ public class FieldGroupDetailsDialog extends BaseDialogBean {
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         if (validate()) {
+            fieldsListBean.doReorder();
             // Don't persist changes to repository - field should be changed when parent documentType is changed
             commitToMetadataContainer(fieldGroup, parentDocTypeVersion);
             resetFields();
@@ -123,6 +123,10 @@ public class FieldGroupDetailsDialog extends BaseDialogBean {
             return true;
         }
         return false;
+    }
+
+    public boolean isShowShowInTwoColumns() {
+        return getDocumentAdminService().isGroupShowShowInTwoColumns(fieldGroup);
     }
 
     /** used by jsp */

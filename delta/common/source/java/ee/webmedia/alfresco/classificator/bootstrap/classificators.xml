@@ -396,37 +396,7 @@
                   </cl:classificatorValue>
                </view:associations>
             </cl:classificator>
-
-            <cl:classificator view:childName="cl:volumeType">
-               <cl:name>volumeType</cl:name>
-               <cl:addRemoveValues>false</cl:addRemoveValues>
-               <view:associations>
-                  <cl:classificatorValue>
-
-                     <cl:classificatorValue view:childName="cl:classificatorValue">
-                        <view:properties>
-                           <cl:valueName>aastapõhine</cl:valueName>
-                           <cl:order>1</cl:order>
-                           <cl:byDefault>false</cl:byDefault>
-                           <cl:readOnly>true</cl:readOnly>
-                           <cl:active>true</cl:active>
-                        </view:properties>
-                     </cl:classificatorValue>
-
-                     <cl:classificatorValue view:childName="cl:classificatorValue">
-                        <view:properties>
-                           <cl:valueName>objektipõhine</cl:valueName>
-                           <cl:order>2</cl:order>
-                           <cl:byDefault>false</cl:byDefault>
-                           <cl:readOnly>true</cl:readOnly>
-                           <cl:active>true</cl:active>
-                        </view:properties>
-                     </cl:classificatorValue>
                      
-                  </cl:classificatorValue>
-               </view:associations>
-            </cl:classificator>
-            
             <cl:classificator view:childName="cl:accessRestrictionReason">
                <cl:name>accessRestrictionReason</cl:name>
                <cl:addRemoveValues>true</cl:addRemoveValues>

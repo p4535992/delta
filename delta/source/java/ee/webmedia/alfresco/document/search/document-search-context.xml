@@ -121,6 +121,7 @@
    <!-- START: web beans: -->
 
    <bean id="DocumentSearchBean" class="ee.webmedia.alfresco.document.search.web.DocumentSearchBean" scope="session" />
+   <bean id="DocumentDynamicSearchDialog" class="ee.webmedia.alfresco.document.search.web.DocumentDynamicSearchDialog" scope="session" />
 
    <!-- END: web beans: -->
 

@@ -69,7 +69,9 @@
          <f:facet name="header">
             <a:sortLink id="col7-sort" label="#{msg.volume_volumeType}" value="volumeType" styleClass="header" />
          </f:facet>
-         <h:outputText id="col7-text" value="#{r.volumeType}" />
+         <h:outputText id="col7-text" value="#{r.volumeTypeEnum}">
+            <a:convertEnum enumClass="ee.webmedia.alfresco.classificator.enums.VolumeType" />
+         </h:outputText>
       </a:column>
       
       <%-- dispositionDate --%>

@@ -59,6 +59,7 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
 
     @Override
     public void start(ActionEvent event) {
+        String defaultComment;
 
         // Set the templates root space as parent node
         navigator.setCurrentNodeId(getGeneralService().getNodeRef(DocumentTemplateModel.Repo.TEMPLATES_SPACE).getId());
@@ -67,13 +68,15 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
         docTemplateNode.getAspects().add(DocumentTemplateModel.Aspects.TEMPLATE);
         if (isSystemTemplate()) {
             docTemplateNode.getAspects().add(DocumentTemplateModel.Aspects.TEMPLATE_SYSTEM);
+            defaultComment = "template_system_template";
         } else if (isEmailTemplate()) {
             docTemplateNode.getAspects().add(DocumentTemplateModel.Aspects.TEMPLATE_EMAIL);
+            defaultComment = "template_email_template";
         } else {
             docTemplateNode.getAspects().add(DocumentTemplateModel.Aspects.TEMPLATE_DOCUMENT);
+            defaultComment = "template_doc_template";
         }
-        // Eagerly load the properties
-        docTemplateNode.getProperties();
+        docTemplateNode.getProperties().put(DocumentTemplateModel.Prop.COMMENT.toString(), MessageUtil.getMessage(defaultComment));
         setFirstLoad(true);
         super.start(event);
     }

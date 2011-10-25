@@ -258,7 +258,7 @@ public class FunctionsServiceImpl implements FunctionsService {
         for (Function function : getAllFunctions()) {
             for (Series series : seriesService.getAllSeriesByFunction(function.getNodeRef())) {
                 for (Volume volume : volumeService.getAllValidVolumesBySeries(series.getNode().getNodeRef())) {
-                    if (DocListUnitStatus.OPEN.equals(volume.getStatus()) && VolumeType.YEAR_BASED.equals(volume.getVolumeType())) {
+                    if (DocListUnitStatus.OPEN.equals(volume.getStatus()) && VolumeType.ANNUAL_FILE.equals(volume.getVolumeTypeEnum())) {
                         volumeService.copyVolume(volume);
                         counter++;
                         log.info("created copy of " + counter + " volume: [" + function.getMark() + "]" + function.getTitle()

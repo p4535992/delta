@@ -52,6 +52,7 @@ import org.springframework.util.FileCopyUtils;
 import com.icegreen.greenmail.imap.commands.AppendCommand;
 import com.icegreen.greenmail.store.FolderException;
 import com.icegreen.greenmail.store.MailFolder;
+import com.icegreen.greenmail.util.GreenMailUtil;
 
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.classificator.enums.StorageType;
@@ -100,6 +101,7 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
     @Override
     public void afterPropertiesSet() throws Exception {
         AppendCommand.setMessageCopyFolder(messageCopyFolder);
+        GreenMailUtil.setMessageCopyFolder(messageCopyFolder);
     }
 
     @Override
@@ -312,7 +314,7 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
         } catch (ParseException e) {
             log.warn("Error parsing contentType '" + contentTypeString + "'", e);
         }
-        if (overrideFilename == null) {
+        if (overrideFilename == null && part.getFileName() != null) {
             // Always ignore user-provided mime-type
             String oldMimetype = mimeType;
             mimeType = mimetypeService.guessMimetype(part.getFileName());

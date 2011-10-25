@@ -57,30 +57,6 @@
       </view:properties>
    </docadmin:fieldDefinition>
 
-   <docadmin:fieldDefinition view:childName="docdyn:beginDate">
-      <view:properties>
-         <docadmin:fieldId>beginDate</docadmin:fieldId>
-         <docadmin:originalFieldId>beginDate</docadmin:originalFieldId>
-         <docadmin:name>Alguskuupäev</docadmin:name>
-         <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:fieldType>DATE</docadmin:fieldType>
-         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
-         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
-      </view:properties>
-   </docadmin:fieldDefinition>
-
-   <docadmin:fieldDefinition view:childName="docdyn:endDate">
-      <view:properties>
-         <docadmin:fieldId>endDate</docadmin:fieldId>
-         <docadmin:originalFieldId>endDate</docadmin:originalFieldId>
-         <docadmin:name>Lõppkuupäev</docadmin:name>
-         <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:fieldType>DATE</docadmin:fieldType>
-         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
-         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
-      </view:properties>
-   </docadmin:fieldDefinition>
-
    <docadmin:fieldDefinition view:childName="docdyn:sellerPartyName">
       <view:properties>
          <docadmin:fieldId>sellerPartyName</docadmin:fieldId>
@@ -274,54 +250,6 @@
          <docadmin:changeableIf>ALWAYS_NOT_CHANGEABLE</docadmin:changeableIf>
          <docadmin:changeableIfChangeable>false</docadmin:changeableIfChangeable>
          <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
-      </view:properties>
-   </docadmin:fieldDefinition>
-
-   <docadmin:fieldDefinition view:childName="docdyn:partyName">
-      <view:properties>
-         <docadmin:fieldId>partyName</docadmin:fieldId>
-         <docadmin:originalFieldId>partyName</docadmin:originalFieldId>
-         <docadmin:name>Lepingu pool</docadmin:name>
-         <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:fieldType>CONTACT</docadmin:fieldType>
-         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
-         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
-      </view:properties>
-   </docadmin:fieldDefinition>
-
-   <docadmin:fieldDefinition view:childName="docdyn:partySigner">
-      <view:properties>
-         <docadmin:fieldId>partySigner</docadmin:fieldId>
-         <docadmin:originalFieldId>partySigner</docadmin:originalFieldId>
-         <docadmin:name>Lepingu poole allkirjastaja</docadmin:name>
-         <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
-         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
-         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
-      </view:properties>
-   </docadmin:fieldDefinition>
-
-   <docadmin:fieldDefinition view:childName="docdyn:partyEmail">
-      <view:properties>
-         <docadmin:fieldId>partyEmail</docadmin:fieldId>
-         <docadmin:originalFieldId>partyEmail</docadmin:originalFieldId>
-         <docadmin:name>Lepingu poole e-post</docadmin:name>
-         <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
-         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
-         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
-      </view:properties>
-   </docadmin:fieldDefinition>
-
-   <docadmin:fieldDefinition view:childName="docdyn:partyContactPerson">
-      <view:properties>
-         <docadmin:fieldId>partyContactPerson</docadmin:fieldId>
-         <docadmin:originalFieldId>partyContactPerson</docadmin:originalFieldId>
-         <docadmin:name>Lepingu poole kontaktisik</docadmin:name>
-         <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
-         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
-         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -686,17 +614,6 @@
       </view:properties>
    </docadmin:fieldDefinition>
 
-   <docadmin:fieldDefinition view:childName="docdyn:financingSource">
-      <view:properties>
-         <docadmin:fieldId>financingSource</docadmin:fieldId>
-         <docadmin:originalFieldId>financingSource</docadmin:originalFieldId>
-         <docadmin:name>Finantseerimisallikas</docadmin:name>
-         <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
-         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
-      </view:properties>
-   </docadmin:fieldDefinition>
-
    <docadmin:fieldDefinition view:childName="docdyn:advancePaymentSum">
       <view:properties>
          <docadmin:fieldId>advancePaymentSum</docadmin:fieldId>
@@ -853,31 +770,6 @@
          <docadmin:name>Aruande lisamise tähtaeg</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:fieldType>DATE</docadmin:fieldType>
-         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
-      </view:properties>
-   </docadmin:fieldDefinition>
-
-   <docadmin:fieldDefinition view:childName="docdyn:firstPartyName">
-      <view:properties>
-         <docadmin:fieldId>firstPartyName</docadmin:fieldId>
-         <docadmin:originalFieldId>firstPartyName</docadmin:originalFieldId>
-         <docadmin:name>Esimene lepingu pool</docadmin:name>
-         <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:mandatory>true</docadmin:mandatory>
-         <docadmin:fieldType>CONTACT</docadmin:fieldType>
-         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
-         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
-      </view:properties>
-   </docadmin:fieldDefinition>
-
-   <docadmin:fieldDefinition view:childName="docdyn:firstPartyContactPerson">
-      <view:properties>
-         <docadmin:fieldId>firstPartyContactPerson</docadmin:fieldId>
-         <docadmin:originalFieldId>firstPartyContactPerson</docadmin:originalFieldId>
-         <docadmin:name>Esimese lepingu poole kontaktisik</docadmin:name>
-         <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:fieldType>USER</docadmin:fieldType>
-         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
       </view:properties>
    </docadmin:fieldDefinition>
@@ -1173,39 +1065,6 @@
       </view:properties>
    </docadmin:fieldDefinition>
 
-   <docadmin:fieldDefinition view:childName="docdyn:contractSum">
-      <view:properties>
-         <docadmin:fieldId>contractSum</docadmin:fieldId>
-         <docadmin:originalFieldId>contractSum</docadmin:originalFieldId>
-         <docadmin:name>Lepingu lõppsumma</docadmin:name>
-         <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:fieldType>DOUBLE</docadmin:fieldType>
-         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
-      </view:properties>
-   </docadmin:fieldDefinition>
-
-   <docadmin:fieldDefinition view:childName="docdyn:endDateDesc">
-      <view:properties>
-         <docadmin:fieldId>endDateDesc</docadmin:fieldId>
-         <docadmin:originalFieldId>endDateDesc</docadmin:originalFieldId>
-         <docadmin:name>Lõppkuupäeva kirjeldus</docadmin:name>
-         <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
-         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
-      </view:properties>
-   </docadmin:fieldDefinition>
-
-   <docadmin:fieldDefinition view:childName="docdyn:endAnnotation">
-      <view:properties>
-         <docadmin:fieldId>endAnnotation</docadmin:fieldId>
-         <docadmin:originalFieldId>endAnnotation</docadmin:originalFieldId>
-         <docadmin:name>Lõppemise märge</docadmin:name>
-         <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
-         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
-      </view:properties>
-   </docadmin:fieldDefinition>
-
    <docadmin:fieldDefinition view:childName="docdyn:errandExpectedExpense">
       <view:properties>
          <docadmin:fieldId>errandExpectedExpense</docadmin:fieldId>
@@ -1214,18 +1073,6 @@
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:fieldType>DOUBLE</docadmin:fieldType>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
-      </view:properties>
-   </docadmin:fieldDefinition>
-
-   <docadmin:fieldDefinition view:childName="docdyn:calculatedDurationDays">
-      <view:properties>
-         <docadmin:fieldId>calculatedDurationDays</docadmin:fieldId>
-         <docadmin:originalFieldId>calculatedDurationDays</docadmin:originalFieldId>
-         <docadmin:name>Kestus päevades</docadmin:name>
-         <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:fieldType>LONG</docadmin:fieldType>
-         <docadmin:changeableIf>ALWAYS_NOT_CHANGEABLE</docadmin:changeableIf>
-         <docadmin:changeableIfChangeable>false</docadmin:changeableIfChangeable>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -1349,28 +1196,6 @@
          <docadmin:name>Eelarvekonto tunnus</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:fieldType>COMBOBOX_EDITABLE</docadmin:fieldType>
-         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
-      </view:properties>
-   </docadmin:fieldDefinition>
-
-   <docadmin:fieldDefinition view:childName="docdyn:firstPartyContactPersonEmail">
-      <view:properties>
-         <docadmin:fieldId>firstPartyContactPersonEmail</docadmin:fieldId>
-         <docadmin:originalFieldId>firstPartyContactPersonEmail</docadmin:originalFieldId>
-         <docadmin:name>Lepingu esimese pooke kontaktisiku e-post</docadmin:name>
-         <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
-         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
-      </view:properties>
-   </docadmin:fieldDefinition>
-
-   <docadmin:fieldDefinition view:childName="docdyn:firstPartyContactPersonPhone">
-      <view:properties>
-         <docadmin:fieldId>firstPartyContactPersonPhone</docadmin:fieldId>
-         <docadmin:originalFieldId>firstPartyContactPersonPhone</docadmin:originalFieldId>
-         <docadmin:name>Lepingu esimese pooke kontaktisiku telefon</docadmin:name>
-         <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
       </view:properties>
    </docadmin:fieldDefinition>

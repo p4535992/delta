@@ -2,6 +2,28 @@
    <config>
       <actions>
 
+         <action id="document_contractMvParty_add">
+            <label-id>document_contractMv_addParty</label-id>
+            <tooltip-id>document_contractMv_addParty_tooltip</tooltip-id>
+            <image>/images/icons/add_user.gif</image>
+            <action-listener>#{DocumentDynamicDialog.addSubNode}</action-listener>
+         </action>
+
+         <action id="document_contractParty_remove">
+            <label-id>document_contractMv_deleteParty</label-id>
+            <tooltip-id>document_contractMv_deleteParty_tooltip</tooltip-id>
+            <image>/images/icons/remove_user.gif</image>
+            <action-listener>#{DocumentDynamicDialog.removeSubNode}</action-listener>
+            <params>
+               <param name="subPropsheetsRequiredCount">1</param><!-- contract must have at least 2 parties(1 main party + 1 additional party) -->
+            </params>
+         </action>
+
+         <action-group id="document_contractMvParty">
+            <action idref="document_contractMvParty_add" />
+            <action idref="document_contractParty_remove" />
+         </action-group>         
+
          <action-group id="document_dynamic_actions">
 <!--             <action idref="document_copy" /> -->
             <action idref="word_file_from_document" />

@@ -2,6 +2,8 @@ package ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup;
 
 import static ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader.AttributeNames.OPTIONS_SEPARATOR;
 import static ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader.AttributeNames.PROPERTIES_SEPARATOR;
+import static ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader.AttributeNames.PROPS;
+import static ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader.AttributeNames.TEXT_ID;
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames.VALDIATION_DISABLED;
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames.VALIDATION_MARKER_DISABLED;
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomConstants.VALUE_INDEX_IN_MULTIVALUED_PROPERTY;
@@ -64,13 +66,13 @@ public class InlinePropertyGroupGenerator extends BaseComponentGenerator impleme
             PropertyDefinition propertyDef, UIComponent component) {
         // by now, this component has been added to parent's children list
 
-        String propertyDescriptions = getCustomAttributes().get("props");
+        String propertyDescriptions = getCustomAttributes().get(PROPS);
         boolean escapeText = Boolean.valueOf(getCustomAttributes().get(ESCAPE_TEXT));
         String optionsSeparator = getCustomAttributes().get(OPTIONS_SEPARATOR);
         String propertiesSeparator = getCustomAttributes().get(PROPERTIES_SEPARATOR);
         final List<ComponentPropVO> propVOs = CombinedPropReader.readProperties(propertyDescriptions, propertiesSeparator, optionsSeparator, propertySheet.getNode(), context);
 
-        String text = Application.getMessage(FacesContext.getCurrentInstance(), getCustomAttributes().get("textId"));
+        String text = Application.getMessage(FacesContext.getCurrentInstance(), getCustomAttributes().get(TEXT_ID));
         @SuppressWarnings("unchecked")
         List<UIComponent> children = component.getChildren();
         generate(context, propertySheet, children, propVOs, text, escapeText);
@@ -96,7 +98,14 @@ public class InlinePropertyGroupGenerator extends BaseComponentGenerator impleme
 
     protected void generateRow(FacesContext context, UIPropertySheet propertySheet, List<UIComponent> rowChildren,
             List<ComponentPropVO> propVOs, String text, boolean escapeText) {
-        final int nrOfParts = text.startsWith(PLACEHOLDER) ? propVOs.size() + 1 : propVOs.size();
+        final int nrOfParts;
+        if (text.startsWith(PLACEHOLDER) && text.endsWith(PLACEHOLDER)) {
+            nrOfParts = propVOs.size() - 1;
+        } else if (!text.startsWith(PLACEHOLDER) && !text.endsWith(PLACEHOLDER)) {
+            nrOfParts = propVOs.size() + 1;
+        } else {
+            nrOfParts = propVOs.size();
+        }
         List<String> textParts = new ArrayList<String>(Arrays.asList(text.split(PLACEHOLDER, nrOfParts)));
         String last = textParts.get(textParts.size() - 1);
         if (last.endsWith(PLACEHOLDER)) {

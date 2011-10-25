@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.document.search.service;
 
+import static ee.webmedia.alfresco.docconfig.generator.fieldtype.DateGenerator.getEndDateQName;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateAspectQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateDatePropertyRangeQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateDoublePropertyRangeQuery;
@@ -30,6 +31,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.faces.context.FacesContext;
@@ -66,7 +68,10 @@ import ee.webmedia.alfresco.classificator.enums.SendMode;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
+import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
+import ee.webmedia.alfresco.docconfig.generator.fieldtype.DateGenerator;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
@@ -779,8 +784,8 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     @Override
-    public List<Document> searchDocumentsQuick(String searchValue) {
-        return searchDocumentsAndOrCases(generateQuickSearchQuery(searchValue), searchValue, false);
+    public List<Document> searchDocumentsQuick(String searchValue, NodeRef containerNodeRef) {
+        return searchDocumentsAndOrCases(generateQuickSearchQuery(searchValue, containerNodeRef), searchValue, false);
     }
 
     @Override
@@ -1076,122 +1081,76 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         List<String> queryParts = new ArrayList<String>(50);
         Map<String, Object> props = filter.getProperties();
 
+        // START: special cases
+        // Dok liik
         @SuppressWarnings("unchecked")
-        List<QName> documentTypes = (List<QName>) props.get(DocumentSearchModel.Props.DOCUMENT_TYPE);
-        queryParts.add(generateTypeQuery(documentTypes));
-        queryParts.add(generateNodeRefQuery((NodeRef) props.get(DocumentSearchModel.Props.FUNCTION), DocumentCommonModel.Props.FUNCTION));
-        queryParts.add(generateNodeRefQuery((NodeRef) props.get(DocumentSearchModel.Props.SERIES), DocumentCommonModel.Props.SERIES));
-        queryParts.add(generateNodeRefQuery((NodeRef) props.get(DocumentSearchModel.Props.VOLUME), DocumentCommonModel.Props.VOLUME));
-        queryParts.add(generateNodeRefQuery((NodeRef) props.get(DocumentSearchModel.Props.CASE), DocumentCommonModel.Props.CASE));
-        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(DocumentSearchModel.Props.REG_DATE_TIME_BEGIN) //
-                , (Date) props.get(DocumentSearchModel.Props.REG_DATE_TIME_END), DocumentCommonModel.Props.REG_DATE_TIME));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.REG_NUMBER), DocumentCommonModel.Props.REG_NUMBER));
-        queryParts.add(generateStringExactQuery((String) props.get(DocumentSearchModel.Props.SHORT_REG_NUMBER), DocumentCommonModel.Props.SHORT_REG_NUMBER));
-        @SuppressWarnings("unchecked")
-        List<String> status = (List<String>) props.get(DocumentSearchModel.Props.DOC_STATUS);
-        queryParts.add(generateMultiStringExactQuery(status, DocumentCommonModel.Props.DOC_STATUS));
-        @SuppressWarnings("unchecked")
-        List<String> senderNames = (List<String>) props.get(DocumentSearchModel.Props.SENDER_NAME);
-        queryParts.add(generateMultiStringWordsWildcardQuery(senderNames, DocumentSpecificModel.Props.SENDER_DETAILS_NAME));
-        @SuppressWarnings("unchecked")
-        List<String> recipientNames = (List<String>) props.get(DocumentSearchModel.Props.RECIPIENT_NAME);
-        queryParts.add(generateMultiStringWordsWildcardQuery(recipientNames, DocumentCommonModel.Props.RECIPIENT_NAME,
-                DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME, DocumentCommonModel.Props.SEARCHABLE_PARTY_NAME,
-                DocumentSpecificModel.Props.SECOND_PARTY_NAME,
-                DocumentSpecificModel.Props.THIRD_PARTY_NAME));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.DOC_NAME), DocumentCommonModel.Props.DOC_NAME));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.SENDER_REG_NUMBER),
-                DocumentSpecificModel.Props.SENDER_REG_NUMBER));
-        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(DocumentSearchModel.Props.SENDER_REG_DATE_BEGIN), //
-                (Date) props.get(DocumentSearchModel.Props.SENDER_REG_DATE_END), DocumentSpecificModel.Props.SENDER_REG_DATE));
-        queryParts.add(generateDatePropertyRangeQuery(
-                (Date) props.get(DocumentSearchModel.Props.DUE_DATE_BEGIN),
-                (Date) props.get(DocumentSearchModel.Props.DUE_DATE_END), DocumentSpecificModel.Props.DUE_DATE,
-                DocumentSpecificModel.Props.MANAGEMENTS_ORDER_DUE_DATE,
-                DocumentSpecificModel.Props.CONTRACT_SIM_END_DATE,
-                DocumentSpecificModel.Props.CONTRACT_SMIT_END_DATE,
-                DocumentSpecificModel.Props.INVOICE_DUE_DATE));
-        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(DocumentSearchModel.Props.COMPLIENCE_DATE_BEGIN), //
-                (Date) props.get(DocumentSearchModel.Props.COMPLIENCE_DATE_END), DocumentSpecificModel.Props.COMPLIENCE_DATE));
-        @SuppressWarnings("unchecked")
-        List<String> accessRestriction = (List<String>) props.get(DocumentSearchModel.Props.ACCESS_RESTRICTION);
-        queryParts.add(generateMultiStringExactQuery(accessRestriction, DocumentCommonModel.Props.ACCESS_RESTRICTION));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.ACCESS_RESTRICTION_REASON),
-                DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON));
-        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(DocumentSearchModel.Props.ACCESS_RESTRICTION_BEGIN_DATE_BEGIN), //
-                (Date) props.get(DocumentSearchModel.Props.ACCESS_RESTRICTION_BEGIN_DATE_END), DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE));
-        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(DocumentSearchModel.Props.ACCESS_RESTRICTION_END_DATE_BEGIN), //
-                (Date) props.get(DocumentSearchModel.Props.ACCESS_RESTRICTION_END_DATE_END), DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.ACCESS_RESTRICTION_END_DESC),
-                DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.OWNER_NAME), DocumentCommonModel.Props.OWNER_NAME));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.OWNER_ORG_STRUCT_UNIT),
-                DocumentCommonModel.Props.OWNER_ORG_STRUCT_UNIT));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.OWNER_JOB_TITLE),
-                DocumentCommonModel.Props.OWNER_JOB_TITLE));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.SIGNER_NAME), DocumentCommonModel.Props.SIGNER_NAME));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.SIGNER_JOB_TITLE),
-                DocumentCommonModel.Props.SIGNER_JOB_TITLE));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.KEYWORDS), DocumentCommonModel.Props.KEYWORDS));
-        @SuppressWarnings("unchecked")
-        List<String> storageType = (List<String>) props.get(DocumentSearchModel.Props.STORAGE_TYPE);
-        queryParts.add(generateMultiStringExactQuery(storageType, DocumentCommonModel.Props.STORAGE_TYPE));
+        List<String> documentTypes = (List<String>) props.get(DocumentSearchModel.Props.DOCUMENT_TYPE);
+        queryParts.add(generateMultiStringExactQuery(documentTypes, DocumentAdminModel.Props.OBJECT_TYPE_ID));
+        // Saatmisviis
         @SuppressWarnings("unchecked")
         List<String> sendMode = (List<String>) props.get(DocumentSearchModel.Props.SEND_MODE);
         queryParts.add(generateMultiStringExactQuery(sendMode, DocumentCommonModel.Props.SEARCHABLE_SEND_MODE));
-        @SuppressWarnings("unchecked")
-        List<String> costManager = (List<String>) props.get(DocumentSearchModel.Props.COST_MANAGER);
-        queryParts.add(generateMultiStringExactQuery(costManager, DocumentCommonModel.Props.SEARCHABLE_COST_MANAGER));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.APPLICANT_NAME),
-                DocumentCommonModel.Props.SEARCHABLE_APPLICANT_NAME));
-        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(DocumentSearchModel.Props.ERRAND_BEGIN_DATE_BEGIN), //
-                (Date) props.get(DocumentSearchModel.Props.ERRAND_BEGIN_DATE_END), DocumentCommonModel.Props.SEARCHABLE_ERRAND_BEGIN_DATE));
-        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(DocumentSearchModel.Props.ERRAND_END_DATE_BEGIN), //
-                (Date) props.get(DocumentSearchModel.Props.ERRAND_END_DATE_END), DocumentCommonModel.Props.SEARCHABLE_ERRAND_END_DATE));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.ERRAND_COUNTRY),
-                DocumentCommonModel.Props.SEARCHABLE_ERRAND_COUNTRY));
-        @SuppressWarnings("unchecked")
-        List<String> errandCounty = (List<String>) props.get(DocumentSearchModel.Props.ERRAND_COUNTY);
-        queryParts.add(generateMultiStringExactQuery(errandCounty, DocumentCommonModel.Props.SEARCHABLE_ERRAND_COUNTY));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.ERRAND_CITY),
-                DocumentCommonModel.Props.SEARCHABLE_ERRAND_CITY));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.RESPONSIBLE_NAME),
-                DocumentSpecificModel.Props.RESPONSIBLE_NAME));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.CO_RESPONSIBLES),
-                DocumentSpecificModel.Props.CO_RESPONSIBLES));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.CONTACT_PERSON),
-                DocumentSpecificModel.Props.FIRST_PARTY_CONTACT_PERSON, DocumentSpecificModel.Props.SECOND_PARTY_CONTACT_PERSON,
-                DocumentSpecificModel.Props.THIRD_PARTY_CONTACT_PERSON));
-        @SuppressWarnings("unchecked")
-        List<String> procurementType = (List<String>) props.get(DocumentSearchModel.Props.PROCUREMENT_TYPE);
-        queryParts.add(generateMultiStringExactQuery(procurementType, DocumentSpecificModel.Props.PROCUREMENT_TYPE));
-
-        // invoice fields
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.INVOICE_NUMBER),
-                DocumentSpecificModel.Props.INVOICE_NUMBER));
-        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(DocumentSearchModel.Props.INVOICE_DATE_BEGIN) //
-                , (Date) props.get(DocumentSearchModel.Props.INVOICE_DATE_END), DocumentSpecificModel.Props.INVOICE_DATE));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.SELLER_PARTY_NAME),
-                DocumentSpecificModel.Props.SELLER_PARTY_NAME));
-        queryParts
-                .add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.SELLER_PARTY_REG_NUMBER),
-                        DocumentSpecificModel.Props.SELLER_PARTY_REG_NUMBER));
-        queryParts.add(generateDoublePropertyRangeQuery((Double) props.get(DocumentSearchModel.Props.TOTAL_SUM_LOWEST) //
-                , (Double) props.get(DocumentSearchModel.Props.TOTAL_SUM_HIGHEST), DocumentSpecificModel.Props.TOTAL_SUM));
-        // invoice transaction fields
+        // Dokumendi reg. number
+        queryParts.add(generateStringExactQuery((String) props.get(DocumentDynamicModel.Props.SHORT_REG_NUMBER), DocumentDynamicModel.Props.SHORT_REG_NUMBER));
+        // Projekt
         @SuppressWarnings("unchecked")
         List<String> fund = (List<String>) props.get(DocumentSearchModel.Props.FUND);
         queryParts.add(generateMultiStringExactQuery(fund, DocumentCommonModel.Props.SEARCHABLE_FUND));
+        // EA Yksus
         @SuppressWarnings("unchecked")
         List<String> fundsCenter = (List<String>) props.get(DocumentSearchModel.Props.FUNDS_CENTER);
         queryParts.add(generateMultiStringExactQuery(fundsCenter, DocumentCommonModel.Props.SEARCHABLE_FUNDS_CENTER));
+        // EA konto
         @SuppressWarnings("unchecked")
         List<String> eaCommitmentItem = (List<String>) props.get(DocumentSearchModel.Props.EA_COMMITMENT_ITEM);
         queryParts.add(generateMultiStringExactQuery(eaCommitmentItem, DocumentCommonModel.Props.SEARCHABLE_EA_COMMITMENT_ITEM));
 
+        // END: special cases
+
+        // dynamic generation
+        for (Entry<String, Object> entry : props.entrySet()) {
+            QName propQName = QName.createQName(entry.getKey());
+            if (propQName.getLocalName().endsWith(DateGenerator.END_PREFIX) || propQName.getLocalName().endsWith(DateGenerator.PICKER_PREFIX)) {
+                continue;
+            }
+            if (!propQName.equals(DocumentDynamicModel.Props.SHORT_REG_NUMBER) && propQName.getNamespaceURI().equals(DocumentDynamicModel.URI)) {
+                Object value = entry.getValue();
+                if (value instanceof String) {
+                    queryParts.add(generateStringWordsWildcardQuery((String) value, propQName));
+                } else if (value instanceof List) {
+                    DocumentAdminService ser = BeanHelper.getDocumentAdminService(); // including docAdminService in context.xml creates an exception because docAdminService
+                                                                                     // includes DocSearchService
+                    FieldDefinition def = ser.getFieldDefinition(propQName.getLocalName());
+                    @SuppressWarnings("unchecked")
+                    List<String> list = (List<String>) value;
+                    if (StringUtils.isBlank(def.getClassificator())) {
+                        queryParts.add(generateMultiStringExactQuery(list, propQName));
+                    } else {
+                        queryParts.add(generateMultiStringWordsWildcardQuery(list, propQName));
+                    }
+                } else if (value instanceof Date) {
+                    queryParts.add(generateDatePropertyRangeQuery((Date) value, (Date) props.get(getEndDateQName(propQName)), propQName));
+                } else if (value instanceof Double) {
+                    // TODO XXX dunno... yet
+                } else if (value instanceof Boolean) {
+                    queryParts.add(SearchUtil.generatePropertyBooleanQuery(propQName, (Boolean) value));
+                } else if (value instanceof NodeRef) {
+                    queryParts.add(generateNodeRefQuery((NodeRef) value, propQName));
+                }
+            }
+        }
+
+        // START old data
+
+        // TODO doublePropRange
+        queryParts.add(generateDoublePropertyRangeQuery((Double) props.get(DocumentSearchModel.Props.TOTAL_SUM_LOWEST)
+                , (Double) props.get(DocumentSearchModel.Props.TOTAL_SUM_HIGHEST), DocumentSpecificModel.Props.TOTAL_SUM));
+
+        // END old data
+
         log.info("Documents search filter: " + WmNode.toString(RepoUtil.getNotEmptyProperties(RepoUtil.toQNameProperties(props)), namespaceService));
 
-        // Quick search
+        // Quick search (Otsisõna)
         String quickSearchInput = (String) props.get(DocumentSearchModel.Props.INPUT);
         if (StringUtils.isNotBlank(quickSearchInput)) {
             Pair<List<String>, List<Date>> quickSearchWordsAndDates = parseQuickSearchWordsAndDates(quickSearchInput);
@@ -1208,11 +1167,21 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     private String generateQuickSearchQuery(String searchString) {
+        return generateQuickSearchQuery(searchString, null);
+    }
+
+    private String generateQuickSearchQuery(String searchString, NodeRef containerNodeRef) {
         long startTime = System.currentTimeMillis();
         Pair<List<String>, List<Date>> quickSearchWordsAndDates = parseQuickSearchWordsAndDates(searchString);
         log.info("Quick search - words: " + quickSearchWordsAndDates.getFirst().toString() + ", dates: " + quickSearchWordsAndDates.getSecond()
                 + ", from string '" + searchString + "'");
         String query = generateDocumentSearchQuery(generateQuickSearchDocumentQuery(quickSearchWordsAndDates.getFirst(), quickSearchWordsAndDates.getSecond()));
+        if (containerNodeRef != null) {
+            query = joinQueryPartsAnd(
+                    generateNodeRefQuery(containerNodeRef, DocumentCommonModel.Props.FUNCTION, DocumentCommonModel.Props.SERIES, DocumentCommonModel.Props.VOLUME,
+                            DocumentCommonModel.Props.CASE),
+                    query);
+        }
         if (log.isDebugEnabled()) {
             log.debug("Quick search query construction time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
         }
@@ -1301,7 +1270,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         if (isBlank(queryParts)) {
             return null;
         }
-        queryParts.add(0, generateTypeQuery(DocumentCommonModel.Types.DOCUMENT));
+        queryParts.add(0, generateTypeQuery(DocumentCommonModel.Types.DOCUMENT)); // XXX is this accurate for dynamic documents?
         queryParts.add(1, generateAspectQuery(DocumentCommonModel.Aspects.SEARCHABLE));
         return joinQueryPartsAnd(queryParts);
     }

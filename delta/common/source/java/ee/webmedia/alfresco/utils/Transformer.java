@@ -7,13 +7,13 @@ package ee.webmedia.alfresco.utils;
  * 
  * @author Ats Uiboupin
  */
-public abstract class Transformer<T> implements org.apache.commons.collections.Transformer {
+public abstract class Transformer<T, R> implements org.apache.commons.collections.Transformer {
 
     @Override
     @SuppressWarnings("unchecked")
-    public Object transform(Object input) {
+    public R transform(Object input) {
         return tr((T) input);
     }
 
-    public abstract Object tr(T input);
+    public abstract R tr(T input);
 }

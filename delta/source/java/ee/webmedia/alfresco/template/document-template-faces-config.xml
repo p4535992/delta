@@ -19,7 +19,7 @@
          <value>#{BrowseBean}</value>
       </managed-property>
    </managed-bean>
-
+   
    <managed-bean>
       <managed-bean-name>AddDocumentTemplateDialog</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.template.web.AddDocumentTemplateDialog</managed-bean-class>

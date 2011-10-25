@@ -23,5 +23,7 @@
 
    <bean id="InformationTextGenerator" class="ee.webmedia.alfresco.common.propertysheet.generator.InformationTextGenerator" scope="request" />
 
+   <bean id="ActionLinkGenerator" class="ee.webmedia.alfresco.common.propertysheet.generator.ActionLinkGenerator" scope="request" />
+
    <!-- END: web beans: -->
 </beans>

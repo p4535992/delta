@@ -605,7 +605,7 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
                     final Volume newVolume = volumeService.createVolume(seriesRef);
                     newVolume.setVolumeMark(volumeMark);
                     newVolume.setTitle(((ContractSmitDocument) doc).getVolumeTitle());
-                    newVolume.setVolumeType(VolumeType.YEAR_BASED.getValueName());
+                    newVolume.setVolumeTypeEnum(VolumeType.ANNUAL_FILE);
                     newVolume.setContainsCases(false);
                     volumeService.saveOrUpdate(newVolume, false);
                     volumesMap.put(newVolume.getVolumeMark(), newVolume);
@@ -774,7 +774,7 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
 
         /**
          * rule 2.1.12.a from spec SMIT andmete ülekandmine.docx:
-         * Asja nimeks määratakse kõige varasema Kuupäev väärtusega dokumendi nimi; kui leidub mitu sama Kuupäevaga dokumenti, võetakse pealkiri nimekirjas
+         * Teema nimeks määratakse kõige varasema Kuupäev väärtusega dokumendi nimi; kui leidub mitu sama Kuupäevaga dokumenti, võetakse pealkiri nimekirjas
          * eespool olevast dokumendist.
          */
         private Case changeCaseNameIfNeeded(CaseImportVO targetCaseCandidate, ImportDocument doc) {

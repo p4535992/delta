@@ -71,6 +71,10 @@ public class EnumConverter implements Converter, StateHolder {
         this.enumClass = enumClass;
     }
 
+    public String getEnumClass() {
+        return enumClass;
+    }
+
     public static Class<? extends Enum<?>> getEnumClass(String enumClassName) {
         Class<? extends Enum<?>> en = null;
         try {

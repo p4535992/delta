@@ -7,6 +7,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.QNamePattern;
 
 import ee.webmedia.alfresco.utils.Predicate;
+import ee.webmedia.alfresco.utils.RepoUtil;
 
 /**
  * @author Alar Kvell
@@ -14,6 +15,9 @@ import ee.webmedia.alfresco.utils.Predicate;
 public interface BaseService {
 
     String BEAN_NAME = "BaseService";
+
+    /** {@link BaseObject}s that have this property are not saved when calling {@link #saveObject(BaseObject)} method */
+    QName SKIP_SAVE = RepoUtil.createTransientProp("skipSave");
 
     void addTypeMapping(QName type, Class<? extends BaseObject> clazz);
 
@@ -58,7 +62,10 @@ public interface BaseService {
      * Save object hierarchy to repository. Saving is performed deeply - all children are also saved recursively. <br/>
      * <br/>
      * <b>NB!</b> Caller should use {@link BaseObject#clone()} before making any changes to value objects (and before calling {@link #saveObject}) - if transaction rollback occurs,
-     * then it is usually desired that value objects in web layer are left untouched.
+     * then it is usually desired that value objects in web layer are left untouched. <br>
+     * <br>
+     * object or its children that have {@link #SKIP_SAVE} property are not saved when calling this method - this property is removed before returning from object that was given as
+     * an argument!
      * 
      * @param object object hierarchy to save
      * @return if {@code true} then there were changes and these were saved and caller needs to reload its object hierarchy from repository. If {@code false} then there were no

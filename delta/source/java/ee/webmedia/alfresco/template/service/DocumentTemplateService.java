@@ -7,6 +7,7 @@ import javax.servlet.ServletContext;
 
 import org.alfresco.service.cmr.model.FileNotFoundException;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.template.model.DocumentTemplate;
@@ -98,5 +99,7 @@ public interface DocumentTemplateService {
     String getDocumentUrl(NodeRef document);
 
     ServletContext getServletContext();
+
+    void updateDocTemplate(Node docTemplNode);
 
 }
