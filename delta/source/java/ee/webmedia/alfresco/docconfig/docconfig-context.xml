@@ -218,6 +218,18 @@
       <property name="documentAdminService" ref="DocumentAdminService" />
    </bean>
 
+   <!-- Fix for task 180940 in already existing deployments -->
+   <bean id="systematicMissingBootstrap" class="ee.webmedia.alfresco.docconfig.bootstrap.SystematicMissingBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="systematicDocumentTypesBootstrap" />
+         </list>
+      </property>
+      <property name="generalService" ref="GeneralService" />
+   </bean>
+
    <bean id="documentLocationGenerator" class="ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator">
       <property name="documentConfigService" ref="DocumentConfigService" />
       <property name="documentService" ref="DocumentService" />
