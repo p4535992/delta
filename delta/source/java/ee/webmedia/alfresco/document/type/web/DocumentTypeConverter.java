@@ -2,22 +2,24 @@ package ee.webmedia.alfresco.document.type.web;
 
 import javax.faces.context.FacesContext;
 
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.propertysheet.search.MultiSelectConverterBase;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
-import ee.webmedia.alfresco.docadmin.service.DocumentType;
 
 public class DocumentTypeConverter extends MultiSelectConverterBase {
     private transient DocumentAdminService documentAdminService;
 
     @Override
     public String convertSelectedValueToString(Object value) {
-        final DocumentType documentType = getDocumentTypeService().getDocumentType((String) value);
-        if (documentType == null) {
+        String docTypeId = (String) value;
+        NodeRef docTypeRef = getDocumentTypeService().getDocumentTypeRef(docTypeId);
+        if (docTypeRef == null) {
             return value.toString();
         }
-        return documentType.getName();
+        return getDocumentTypeService().getDocumentTypeProperty(docTypeId, DocumentAdminModel.Props.NAME, String.class);
     }
 
     // START: getters / setters

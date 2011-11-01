@@ -2,11 +2,14 @@ package ee.webmedia.alfresco.workflow.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPermissionService;
+import static ee.webmedia.alfresco.utils.ComponentUtil.getAttributes;
+import static ee.webmedia.alfresco.utils.ComponentUtil.getChildren;
 import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -31,16 +34,24 @@ import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
+import org.alfresco.web.bean.generator.TextAreaGenerator;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.config.ActionsConfigElement.ActionDefinition;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.UIPanel;
+import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.DateUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIPropertySheet;
+import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter;
+import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerGenerator;
+import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent;
+import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent.ModalLayerSubmitEvent;
+import ee.webmedia.alfresco.common.propertysheet.renderer.HtmlButtonRenderer;
 import ee.webmedia.alfresco.common.propertysheet.renderkit.PropertySheetGridRenderer;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
@@ -80,11 +91,13 @@ import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
+import ee.webmedia.alfresco.workflow.service.type.DueDateExtensionWorkflowType;
 
 /**
  * @author Dmitri Melnikov
  */
 public class WorkflowBlockBean implements DocumentDynamicBlock {
+
     private static final long serialVersionUID = 1L;
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(WorkflowBlockBean.class);
     public static final String BEAN_NAME = "WorkflowBlockBean";
@@ -92,10 +105,14 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     private static final String WORKFLOW_METHOD_BINDING_NAME = "#{WorkflowBlockBean.findCompoundWorkflowDefinitions}";
     private static final String DROPDOWN_MENU_ITEM_ICON = "/images/icons/versioned_properties.gif";
     private static final String MSG_WORKFLOW_ACTION_GROUP = "workflow_compound_start_workflow";
+    private static final String TASK_DUE_DATE_EXTENSION_ID = "task-due-date-extension";
     private static final String ATTRIB_OUTCOME_INDEX = "outcomeIndex";
 
     /** task index attribute name */
     private static final String ATTRIB_INDEX = "index";
+    private static final String MODAL_KEY_REASON = "reason";
+    private static final String MODAL_KEY_DUE_DATE = "dueDate";
+    private static final String MODAL_KEY_PROPOSED_DUE_DATE = "proposedDueDate";
     private FileBlockBean fileBlockBean;
     private DelegationBean delegationBean;
     private TransactionsBlockBean transactionsBlockBean;
@@ -117,6 +134,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     private List<Task> myTasks;
     private List<Task> finishedReviewTasks;
     private List<Task> finishedOpinionTasks;
+    private List<Task> finishedOrderAssignmentTasks;
     private SignatureTask signatureTask;
 
     @Override
@@ -142,6 +160,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         myTasks = null;
         finishedReviewTasks = null;
         finishedOpinionTasks = null;
+        finishedOrderAssignmentTasks = null;
         signatureTask = null;
         dataTableGroup = null;
         delegationBean.reset();
@@ -153,6 +172,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         myTasks = getWorkflowService().getMyTasksInProgress(compoundWorkflows);
         finishedReviewTasks = WorkflowUtil.getFinishedTasks(compoundWorkflows, WorkflowSpecificModel.Types.REVIEW_TASK);
         finishedOpinionTasks = WorkflowUtil.getFinishedTasks(compoundWorkflows, WorkflowSpecificModel.Types.OPINION_TASK);
+        finishedOrderAssignmentTasks = WorkflowUtil.getFinishedTasks(compoundWorkflows, WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK);
         signatureTask = null;
         delegationBean.reset();
         // rebuild the whole task panel
@@ -291,6 +311,8 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 MessageUtil.addInfoMessage("task_finish_success_defaultMsg");
                 return;
             }
+        } else if (task.isType(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK) && outcomeIndex == DueDateExtensionWorkflowType.DUE_DATE_EXTENSION_OUTCOME_NOT_ACCEPTED) {
+            task.setConfirmedDueDate(null);
         }
 
         List<Pair<String, String>> validationMsgs = null;
@@ -305,7 +327,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             }
             return;
         }
-
         // finish the task
         try {
             getWorkflowService().finishInProgressTask(task, outcomeIndex);
@@ -320,6 +341,35 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "workflow_task_save_failed");
         }
 
+        getDocumentDialogHelperBean().switchMode(false);
+    }
+
+    public boolean showOrderAssignmentCategory() {
+        return BeanHelper.getWorkflowService().getOrderAssignmentCategoryEnabled();
+    }
+
+    public void sendTaskDueDateExtensionRequest(ActionEvent event) {
+        ModalLayerSubmitEvent commentEvent = (ModalLayerSubmitEvent) event;
+        String reason = (String) commentEvent.getSubmittedValue(MODAL_KEY_REASON);
+        Date newDate = (Date) commentEvent.getSubmittedValue(MODAL_KEY_PROPOSED_DUE_DATE);
+        Date dueDate = (Date) commentEvent.getSubmittedValue(MODAL_KEY_DUE_DATE);
+        Integer taskIndex = commentEvent.getActionIndex();
+        if (StringUtils.isBlank(reason) || newDate == null || dueDate == null || taskIndex == null || taskIndex < 0) {
+            return;
+        }
+        CompoundWorkflow compoundWorkflow = workflowService.getNewCompoundWorkflow(workflowService.getNewCompoundWorkflowDefinition().getNode(), docRef);
+        Workflow workflow = getWorkflowService().addNewWorkflow(compoundWorkflow, WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_WORKFLOW, compoundWorkflow.getWorkflows().size(),
+                true);
+        Task initiatingTask = myTasks.get(taskIndex);
+        Task task = workflow.addTask();
+        task.setOwnerName(initiatingTask.getCreatorName());
+        task.setOwnerId(initiatingTask.getCreatorId());
+        task.setOwnerEmail(initiatingTask.getOwnerEmail());
+        workflow.setProp(WorkflowSpecificModel.Props.RESOLUTION, reason);
+        task.setProposedDueDate(newDate);
+        task.setDueDate(dueDate);
+        getWorkflowService().createDueDateExtension(compoundWorkflow, initiatingTask.getNodeRef());
+        MessageUtil.addInfoMessage("task_sendDueDateExtensionRequest_success_defaultMsg");
         getDocumentDialogHelperBean().switchMode(false);
     }
 
@@ -348,6 +398,10 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         } else if (WorkflowSpecificModel.Types.OPINION_TASK.equals(taskType)) {
             if (StringUtils.isBlank(task.getComment()) && task.getProp(WorkflowSpecificModel.Props.FILE) == null) {
                 return Arrays.asList(new Pair<String, String>("task_validation_opinionTask_comment", null));
+            }
+        } else if (WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK.equals(taskType)) {
+            if (task.getConfirmedDueDate() == null && !outcomeIndex.equals(DueDateExtensionWorkflowType.DUE_DATE_EXTENSION_OUTCOME_NOT_ACCEPTED)) {
+                return Arrays.asList(new Pair<String, String>("task_validation_dueDateExtensionTask_confirmedDueDate", null));
             }
         }
         return null;
@@ -411,12 +465,23 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         return finishedOpinionTasks;
     }
 
+    public List<Task> getFinishedOrderAssignmentTasks() {
+        if (finishedOrderAssignmentTasks == null) {
+            restore();
+        }
+        return finishedOrderAssignmentTasks;
+    }
+
     public boolean getReviewNoteBlockRendered() {
         return getFinishedReviewTasks().size() != 0;
     }
 
     public boolean getOpinionNoteBlockRendered() {
         return getFinishedOpinionTasks().size() != 0;
+    }
+
+    public boolean getOrderAssignmentNoteBlockRendered() {
+        return getFinishedOrderAssignmentTasks().size() != 0;
     }
 
     public String getWorkflowMenuLabel() {
@@ -513,23 +578,33 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     /**
      * Manually generate a panel group with everything.
      */
-    @SuppressWarnings("unchecked")
+
     private void constructTaskPanelGroup(HtmlPanelGroup panelGroup) {
-        panelGroup.getChildren().clear();
-        Application app = FacesContext.getCurrentInstance().getApplication();
+        List<UIComponent> panelGroupChildren = ComponentUtil.getChildren(panelGroup);
+        panelGroupChildren.clear();
+        FacesContext context = FacesContext.getCurrentInstance();
+        Application app = context.getApplication();
 
         // add 2 hidden links and a modal applet so signing
-        panelGroup.getChildren().add(new SignatureAppletModalComponent());
-        panelGroup.getChildren().add(generateLinkWithParam(app, "processCert", "#{" + BEAN_NAME + ".processCert}", "cert"));
-        panelGroup.getChildren().add(generateLinkWithParam(app, "signDocument", "#{" + BEAN_NAME + ".signDocument}", "signature"));
-        panelGroup.getChildren().add(generateLinkWithParam(app, "cancelSign", "#{" + BEAN_NAME + ".cancelSign}", null));
+        panelGroupChildren.add(new SignatureAppletModalComponent());
+        panelGroupChildren.add(generateLinkWithParam(app, "processCert", "#{" + BEAN_NAME + ".processCert}", "cert"));
+        panelGroupChildren.add(generateLinkWithParam(app, "signDocument", "#{" + BEAN_NAME + ".signDocument}", "signature"));
+        panelGroupChildren.add(generateLinkWithParam(app, "cancelSign", "#{" + BEAN_NAME + ".cancelSign}", null));
+
+        ModalLayerComponent dueDateExtensionLayer = null;
+        for (Task task : getMyTasks()) {
+            if (task.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK, WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
+                dueDateExtensionLayer = addDueDateExtensionLayer(panelGroupChildren, context, app);
+                break;
+            }
+        }
 
         for (int index = 0; index < getMyTasks().size(); index++) {
             Task myTask = getMyTasks().get(index);
             Node node = myTask.getNode();
             QName taskType = node.getType();
             UIPropertySheet sheet = new WMUIPropertySheet();
-            if (WorkflowSpecificModel.Types.ASSIGNMENT_TASK.equals(taskType)) {
+            if (WorkflowSpecificModel.Types.ASSIGNMENT_TASK.equals(taskType) || WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK.equals(taskType)) {
                 // must use a copy of tasks workflow, as there might be at the same time 2 tasks of the same workflow for delegation
                 Task myTaskCopy = WorkflowUtil.createTaskCopy(myTask);
                 Pair<Integer, Task> delegatableTask = delegationBean.initDelegatableTask(myTaskCopy);
@@ -538,6 +613,8 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 myTask = delegatableTask.getSecond();// first copy of myTask - stored in delegationBean and used in propertySheet
                 getMyTasks().set(index, myTask);
                 node = myTask.getNode();
+            } else if (myTask.isType(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK) && myTask.getConfirmedDueDate() == null) {
+                myTask.setConfirmedDueDate(myTask.getProposedDueDate());
             }
 
             // the main block panel
@@ -545,27 +622,30 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             panel.setId("workflow-task-block-panel-" + node.getId());
             panel.setLabel(MessageUtil.getMessage("task_title_main") + MessageUtil.getMessage("task_title_" + taskType.getLocalName()));
             panel.setProgressive(true);
-            panel.getAttributes().put("styleClass", "panel-100 workflow-task-block");
+            getAttributes(panel).put("styleClass", "panel-100 workflow-task-block");
 
             // the properties
             sheet.setId("task-sheet-" + node.getId());
             sheet.setNode(node);
             // this ensures we can use more than 1 property sheet on the page
             sheet.setVar("taskNode" + index);
-            sheet.getAttributes().put("externalConfig", Boolean.TRUE);
-            sheet.getAttributes().put("labelStyleClass", "propertiesLabel");
-            sheet.getAttributes().put("columns", 1);
+            Map<String, Object> sheetAttributes = ComponentUtil.getAttributes(sheet);
+            sheetAttributes.put("externalConfig", Boolean.TRUE);
+            sheetAttributes.put("labelStyleClass", "propertiesLabel");
+            sheetAttributes.put("columns", 1);
             sheet.setRendererType(PropertySheetGridRenderer.class.getCanonicalName());
-            panel.getChildren().add(sheet);
+            getChildren(panel).add(sheet);
 
             HtmlPanelGroup panelGrid = new HtmlPanelGroup();
             panelGrid.setStyleClass("task-sheet-buttons");
             // panel grid with a column for every button
 
             // save button used only for some task types
-            if (WorkflowSpecificModel.Types.OPINION_TASK.equals(taskType) ||
-                    WorkflowSpecificModel.Types.REVIEW_TASK.equals(taskType) ||
-                    WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK.equals(taskType)) {
+            List<UIComponent> panelGridChildren = getChildren(panelGrid);
+            if (myTask.isType(WorkflowSpecificModel.Types.OPINION_TASK,
+                    WorkflowSpecificModel.Types.REVIEW_TASK,
+                    WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK,
+                    WorkflowSpecificModel.Types.CONFIRMATION_TASK)) {
 
                 // the save button
                 HtmlCommandButton saveButton = new HtmlCommandButton();
@@ -573,24 +653,23 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 saveButton.setActionListener(app.createMethodBinding("#{WorkflowBlockBean.saveTask}", new Class[] { ActionEvent.class }));
                 saveButton.setValue(MessageUtil.getMessage("task_save_" + taskType.getLocalName()));
                 saveButton.setStyleClass("taskOutcome");
-                saveButton.getAttributes().put(ATTRIB_INDEX, index);
+                getAttributes(saveButton).put(ATTRIB_INDEX, index);
 
-                panelGrid.getChildren().add(saveButton);
+                panelGridChildren.add(saveButton);
             }
 
             // the outcome buttons
             String label = "task_outcome_" + node.getType().getLocalName();
             for (int outcomeIndex = 0; outcomeIndex < myTask.getOutcomes(); outcomeIndex++) {
-
                 HtmlCommandButton outcomeButton = new HtmlCommandButton();
                 outcomeButton.setId("outcome-id-" + index + "-" + outcomeIndex);
+                Map<String, Object> outcomeBtnAttributes = ComponentUtil.putAttribute(outcomeButton, "styleClass", "taskOutcome");
                 outcomeButton.setActionListener(app.createMethodBinding("#{WorkflowBlockBean.finishTask}", new Class[] { ActionEvent.class }));
                 outcomeButton.setValue(MessageUtil.getMessage(label + outcomeIndex));
-                Map<String, Object> outcomeBtnAttributes = ComponentUtil.putAttribute(outcomeButton, "styleClass", "taskOutcome");
                 outcomeBtnAttributes.put(ATTRIB_INDEX, index);
                 outcomeBtnAttributes.put(ATTRIB_OUTCOME_INDEX, outcomeIndex);
 
-                panelGrid.getChildren().add(outcomeButton);
+                panelGridChildren.add(outcomeButton);
 
                 // the review and external review task has only 1 button and the outcomes come from TEMP_OUTCOME property
                 if (WorkflowSpecificModel.Types.REVIEW_TASK.equals(taskType)
@@ -600,9 +679,72 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                     break;
                 }
             }
-            panel.getChildren().add(panelGrid);
-            panelGroup.getChildren().add(panel);
+
+            if (myTask.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK, WorkflowSpecificModel.Types.ASSIGNMENT_TASK) && StringUtils.isNotBlank(myTask.getCreatorId())) {
+                // ask-due-date-extension button
+                HtmlCommandButton extensionButton = new HtmlCommandButton();
+                extensionButton.setId("ask-due-date-extension-" + node.getId());
+                extensionButton.setStyleClass("taskOutcome");
+                Map<String, Object> extensionBtnAttributes = getAttributes(extensionButton);
+                extensionBtnAttributes.put(ATTRIB_INDEX, index);
+                // postpone generating onClick js to rendering phase when we have parent form present
+                extensionBtnAttributes.put(HtmlButtonRenderer.ATTR_ONCLICK_DATA, new Pair<UIComponent, Integer>(dueDateExtensionLayer, index));
+                extensionButton.setRendererType(HtmlButtonRenderer.HTML_BUTTON_RENDERER_TYPE);
+
+                extensionButton.setActionListener(app.createMethodBinding("#{WorkflowBlockBean.saveTask}", new Class[] { ActionEvent.class }));
+                extensionButton.setValue(MessageUtil.getMessage("task_ask_due_date_extension"));
+                extensionButton.setStyleClass("taskOutcome");
+                extensionBtnAttributes.put(ATTRIB_INDEX, index);
+
+                panelGridChildren.add(extensionButton);
+            }
+
+            getChildren(panel).add(panelGrid);
+            panelGroupChildren.add(panel);
         }
+    }
+
+    private ModalLayerComponent addDueDateExtensionLayer(List<UIComponent> panelGroupChildren, FacesContext context, Application app) {
+
+        ModalLayerComponent dueDateExtensionLayer = (ModalLayerComponent) app.createComponent(ModalLayerComponent.class.getCanonicalName());
+        dueDateExtensionLayer.setId(TASK_DUE_DATE_EXTENSION_ID);
+        Map<String, Object> layerAttributes = ComponentUtil.getAttributes(dueDateExtensionLayer);
+        layerAttributes.put(ModalLayerComponent.ATTR_HEADER_KEY, "workflow_dueDateExtensionRequest");
+        layerAttributes.put(ModalLayerComponent.ATTR_SUBMIT_BUTTON_MSG_KEY, "workflow_dueDateExtensionRequest_submit");
+
+        List<UIComponent> layerChildren = ComponentUtil.getChildren(dueDateExtensionLayer);
+
+        addDateInput(context, layerChildren, "workflow_dueDateExtension_proposedDueDate", MODAL_KEY_PROPOSED_DUE_DATE);
+
+        TextAreaGenerator textAreaGenerator = new TextAreaGenerator();
+        UIComponent reasonInput = textAreaGenerator.generate(context, "task-due-date-extension-reason");
+        reasonInput.setId(MODAL_KEY_REASON);
+        Map<String, Object> reasonAttributes = ComponentUtil.getAttributes(reasonInput);
+        reasonAttributes.put(ModalLayerComponent.ATTR_LABEL_KEY, "workflow_dueDateExtension_Reason");
+        reasonAttributes.put(ModalLayerComponent.ATTR_MANDATORY, Boolean.TRUE);
+        reasonAttributes.put("styleClass", "expand19-200");
+        reasonAttributes.put("style", "height: 50px;");
+        layerChildren.add(reasonInput);
+
+        UIInput dueDateInput = addDateInput(context, layerChildren, "workflow_dueDateExtension_dueDate", MODAL_KEY_DUE_DATE);
+        dueDateInput.setValue(DateUtils.addDays(new Date(), 2));
+
+        dueDateExtensionLayer.setActionListener(app.createMethodBinding("#{WorkflowBlockBean.sendTaskDueDateExtensionRequest}", UIActions.ACTION_CLASS_ARGS));
+        panelGroupChildren.add(dueDateExtensionLayer);
+
+        return dueDateExtensionLayer;
+    }
+
+    public UIInput addDateInput(FacesContext context, List<UIComponent> layerChildren, String labelKey, String inputId) {
+        UIInput dateInput = (UIInput) (new DatePickerGenerator()).generate(context, inputId);
+        ComponentUtil.createAndSetConverter(context, DatePickerConverter.CONVERTER_ID, dateInput);
+        Map<String, Object> attributes = ComponentUtil.getAttributes(dateInput);
+        attributes.put(ModalLayerComponent.ATTR_LABEL_KEY, labelKey);
+        attributes.put(ModalLayerComponent.ATTR_MANDATORY, Boolean.TRUE);
+        attributes.put(ModalLayerComponent.ATTR_IS_DATE, Boolean.TRUE);
+        attributes.put("styleClass", "date");
+        layerChildren.add(dateInput);
+        return dateInput;
     }
 
     private HtmlCommandLink generateLinkWithParam(Application app, String linkId, String methodBinding, String paramName) {

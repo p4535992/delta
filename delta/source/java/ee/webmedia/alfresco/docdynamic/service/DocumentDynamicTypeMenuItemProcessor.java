@@ -44,7 +44,7 @@ public class DocumentDynamicTypeMenuItemProcessor implements InitializingBean, M
 
     @Override
     public void doWithMenuItem(MenuItem menuItem) {
-        List<DocumentType> documentTypes = documentAdminService.getDocumentTypes(true);
+        List<DocumentType> documentTypes = documentAdminService.getDocumentTypes(DocumentAdminService.DONT_INCLUDE_CHILDREN, true);
         if (documentTypes.isEmpty()) {
             return;
         }

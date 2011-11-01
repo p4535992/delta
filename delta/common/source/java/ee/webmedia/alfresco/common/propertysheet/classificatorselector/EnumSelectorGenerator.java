@@ -35,8 +35,10 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  * @author Ats Uiboupin
  */
 public class EnumSelectorGenerator extends GeneralSelectorGenerator implements HandlesViewMode {
+
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(EnumSelectorGenerator.class);
 
+    public static final String ATTR_DISABLE_SORTING = "disableSorting";
     public static final String ATTR_ENUM_CLASS = "enumClass";
     public static final String ATTR_ENUM_PROP = "enumProp";
 
@@ -96,7 +98,9 @@ public class EnumSelectorGenerator extends GeneralSelectorGenerator implements H
             selectOptions.add(selectItem);
         }
 
-        ComponentUtil.sortByLabel(selectOptions);
+        if (!Boolean.TRUE.equals(getCustomAttributes().get(ATTR_DISABLE_SORTING))) {
+            ComponentUtil.sortByLabel(selectOptions);
+        }
 
         if (!multiValued) {
             ClassificatorSelectorGenerator.addDefault(context, selectOptions);

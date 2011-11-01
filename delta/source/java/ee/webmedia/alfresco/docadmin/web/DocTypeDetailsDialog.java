@@ -11,6 +11,8 @@ import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.base.BaseObject;
+import ee.webmedia.alfresco.docadmin.service.DocumentAdminService.DocTypeLoadEffort;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.docadmin.web.DocTypeDetailsDialog.DocTypeDialogSnapshot;
@@ -35,6 +37,14 @@ public class DocTypeDetailsDialog extends BaseSnapshotCapableDialog<DocTypeDialo
     private FollowupAssocsListBean followupAssocsListBean;
     private ReplyAssocsListBean replyAssocsListBean;
     private VersionsListBean versionsListBean;
+    /** DocumentType without fetching children of older {@link DocumentTypeVersion} nodes */
+    private static final DocTypeLoadEffort DOC_TYPE_WITHOUT_OLDER_DT_VERSION_CHILDREN = new DocTypeLoadEffort() {
+        @Override
+        public boolean isReturnChildren(BaseObject parent) {
+            // everything except children of DocumentTypeVersion
+            return (parent instanceof DocumentTypeVersion) ? false : true;
+        }
+    }.setReturnLatestDocTypeVersionChildren(); // ... except children of latestDocTypeVersion
 
     // END: Block beans
 
@@ -139,12 +149,19 @@ public class DocTypeDetailsDialog extends BaseSnapshotCapableDialog<DocTypeDialo
     void refreshDocType() {
         DocTypeDialogSnapshot currentSnapshot = getCurrentSnapshot();
         currentSnapshot.addNewLatestDocumentTypeVersion = true;
-        DocumentType documentType = getDocumentAdminService().getDocumentType(currentSnapshot.docType.getNodeRef());
+        DocumentType documentType = getDocumentTypeWithoutOlderDTVersionChildren(currentSnapshot.docType.getNodeRef());
         updateDialogState(documentType, currentSnapshot, null);
     }
 
     private void init(NodeRef docTypeRef) {
-        init(getDocumentAdminService().getDocumentType(docTypeRef));
+        init(getDocumentTypeWithoutOlderDTVersionChildren(docTypeRef));
+    }
+
+    /**
+     * @return DocumentType without fetching children of older {@link DocumentTypeVersion} nodes
+     */
+    private DocumentType getDocumentTypeWithoutOlderDTVersionChildren(NodeRef docTypeRef) {
+        return getDocumentAdminService().getDocumentType(docTypeRef, DOC_TYPE_WITHOUT_OLDER_DT_VERSION_CHILDREN);
     }
 
     private void init(DocumentType documentType) {

@@ -382,7 +382,7 @@ public class SearchUtil {
         return joinQueryPartsOr(queryParts, false);
     }
 
-    public static String generateDoublePropertyRangeQuery(Double minValue, Double maxValue, QName... documentPropNames) {
+    public static String generateNumberPropertyRangeQuery(Number minValue, Number maxValue, QName... documentPropNames) {
         if (minValue == null && maxValue == null) {
             return null;
         }

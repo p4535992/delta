@@ -35,12 +35,13 @@
 <a:panel id="metadata-panel" facetsId="dialog:dialog-body:metadata-panel-facets" label="#{msg.document_metadata}"
    styleClass="panel-100 #{(DocumentDynamicDialog.inEditMode == false) ? 'edit-mode' : ''}" progressive="true">
    <r:propertySheetGrid id="doc-metatada" binding="#{DocumentDynamicDialog.propertySheet}" value="#{DocumentDynamicDialog.node}" columns="1" mode="#{DocumentDynamicDialog.mode}"
-      config="#{DocumentDynamicDialog.propertySheetConfigElement}" externalConfig="true" labelStyleClass="propertiesLabel" />
+      config="#{DocumentDynamicDialog.propertySheetConfigElement}" externalConfig="true" labelStyleClass="propertiesLabel wrap" />
 </a:panel>
 
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/file/web/file-block.jsp" />
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/review-note-block.jsp" />
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/opinion-note-block.jsp" />
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/order-assignment-note-block.jsp" />
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/workflow-summary-block.jsp" />
 <%-- <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/associations/web/assocs-block.jsp" /> --%>
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/sendout/web/send-out-block.jsp" />

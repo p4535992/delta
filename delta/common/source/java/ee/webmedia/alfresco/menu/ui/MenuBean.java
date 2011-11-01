@@ -74,7 +74,7 @@ public class MenuBean implements Serializable {
     public static final int MY_TASKS_AND_DOCUMENTS_ID = 0;
     public static final int DOCUMENT_REGISTER_ID = 1;
     public static final int MY_DOCUMENTS_ID = 2;
-    public static final int CREATE_NEW_DOCUMENT = 5;
+    public static final int CREATE_NEW_DOCUMENT = 6;
 
     private transient HtmlPanelGroup shortcutsPanelGroup;
     private transient HtmlPanelGroup breadcrumb;

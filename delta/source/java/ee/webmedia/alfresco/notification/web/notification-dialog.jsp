@@ -46,6 +46,21 @@
 
       <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}newWorkflowStarted']}" />
       <h:outputText value="#{msg.notification_newWorkflowStarted_label}" />
+      
+      <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}orderAssignmentTaskCompleted']}" />
+      <h:outputText value="#{msg.notification_orderAssignmentTaskCompleted_label}" />   
+      
+      <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}confirmationTaskCompleted']}" />
+      <h:outputText value="#{msg.notification_confirmationTaskCompleted_label}" />
+      
+      <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}confirmationTaskCompletedNotAccepted']}" />
+      <h:outputText value="#{msg.notification_confirmationTaskCompletedNotAccepted_label}" />    
+      
+      <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}taskDueDateExtensionTaskCompleted']}" />
+      <h:outputText value="#{msg.notification_taskDueDateExtensionTaskCompleted_label}" />
+      
+      <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}taskDueDateExtensionTaskCompletedNotAccepted']}" />
+      <h:outputText value="#{msg.notification_taskDueDateExtensionTaskCompletedNotAccepted_label}" /> 
 
    </h:panelGrid>
 

@@ -52,13 +52,13 @@ public class WorkflowBlockItem implements Serializable {
     }
 
     public String getWorkflowType() {
-        if (isResponsibleTask()) {
+        if (isCoResponsibleTask()) {
             return MessageUtil.getMessage("assignmentWorkflow_coOwner");
         }
         return MessageUtil.getMessage(task.getParent().getType().getLocalName());
     }
 
-    private boolean isResponsibleTask() {
+    private boolean isCoResponsibleTask() {
         return WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW.equals(task.getParent().getType()) && !task.isResponsible();
     }
 
@@ -152,11 +152,11 @@ public class WorkflowBlockItem implements Serializable {
                 return ((WorkflowBlockItem) input).getWorkflowIndex();
             }
         }, new NullComparator()));
-        // in case of assignment tasks, responsible tasks come first
+        // in case of assignment ant order assignment tasks, responsible tasks come first
         chain.addComparator(new TransformingComparator(new Transformer() {
             @Override
             public Object transform(Object input) {
-                return ((WorkflowBlockItem) input).isResponsibleTask() ? 1 : 0;
+                return ((WorkflowBlockItem) input).isCoResponsibleTask() ? 1 : 0;
             }
         }, new NullComparator()));
         chain.addComparator(new TransformingComparator(new Transformer() {

@@ -32,7 +32,7 @@ public class Field extends FieldAndGroupBase {
     private static final long serialVersionUID = 1L;
     /** this temp. property is added to Field that is created based on fieldDefinition */
     private static final QName COPY_OF_FIELD_DEF_NODE_REF = RepoUtil.createTransientProp("copyOfFieldDefNodeRef");
-    private static final QName DATE_FOR_SEARCH = RepoUtil.createTransientProp("dateForSearch");
+    private static final QName FOR_SEARCH = RepoUtil.createTransientProp("forSearch");
 
     /** used only by subclass */
     protected Field(BaseObject parent, QName type) {
@@ -324,12 +324,12 @@ public class Field extends FieldAndGroupBase {
         return getProp(COPY_OF_FIELD_DEF_NODE_REF) != null;
     }
 
-    public void setDateForSearch(Boolean bol) {
-        setProp(DATE_FOR_SEARCH, bol);
+    public void setForSearch(Boolean bol) {
+        setProp(FOR_SEARCH, bol);
     }
 
-    public boolean isDateForSearch() {
-        return getProp(DATE_FOR_SEARCH) != null;
+    public boolean isForSearch() {
+        return getProp(FOR_SEARCH) != null;
     }
 
     public static List<String> getLocalNames(Collection<QName> qNameFieldDefinitionIds) {

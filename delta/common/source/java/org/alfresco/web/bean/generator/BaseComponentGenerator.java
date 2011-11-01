@@ -136,14 +136,14 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
       
       if (item instanceof UIProperty)
       {
+
+          // get the property definition
+          PropertyDefinition propertyDef = getPropertyDefinition(context,
+                propertySheet.getNode(), item.getName());          
           
-          if (!isComponentRendered(component, item, context, propertySheet)) {
+          if (!isComponentRendered(component, item, context, propertySheet, propertyDef)) {
               return component;
           }
-          
-         // get the property definition
-         PropertyDefinition propertyDef = getPropertyDefinition(context,
-               propertySheet.getNode(), item.getName());
 
          saveExistingValue4ComponentGenerator(context, propertySheet.getNode(), item.getName());
          
@@ -372,11 +372,11 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
         }
     }
 
-    private boolean isComponentRendered(UIComponent component, PropertySheetItem item, FacesContext context, UIPropertySheet propertySheet) {
+    private boolean isComponentRendered(UIComponent component, PropertySheetItem item, FacesContext context, UIPropertySheet propertySheet, PropertyDefinition propertyDef) {
         if (item instanceof CustomAttributes) {
             String expression = ((CustomAttributes) item).getCustomAttributes().get(RENDERED);
             if (isNotBlank(expression)) {
-                return checkCustomPropertyExpression(context, propertySheet, expression, RENDERED, item.getName());
+                    return checkCustomPropertyExpression(context, propertySheet, expression, RENDERED, item.getName());
             }
         }
         return true;
@@ -671,6 +671,18 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
     protected void setupProperty(FacesContext context, UIPropertySheet propertySheet,
             PropertySheetItem item, PropertyDefinition propertyDef, UIComponent component) {
         // can contain index between square brackets or empty string, but not null - used with MultiValueEditor
+        final ValueBinding vb = createValueBinding(context, propertySheet, item, propertyDef);
+        component.setValueBinding("value", vb);
+
+        // disable the component if it is read only or protected
+        // or if the property sheet is in view mode
+        if (propertySheet.inEditMode() == false || item.isReadOnly() ||
+                (propertyDef != null && propertyDef.isProtected())) {
+            ComponentUtil.setReadonlyAttributeRecursively(component);
+        }
+    }
+
+    public ValueBinding createValueBinding(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item, PropertyDefinition propertyDef) {
         String valueIndexSuffix = "";
         final Integer valueIndex = getValueIndexInMultivaluedProperty(context);
         if (propertyDef != null && propertyDef.isMultiValued()) {
@@ -686,20 +698,13 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
             propKey = item.getName();
         }
         String binding = ComponentUtil.getValueBindingFromSubPropSheet(context, propertySheet, propKey, valueIndexSuffix);
-        
+
         if (binding == null) {
             // property is directly on propertySheet, not on nested propertySheet
             binding = "#{" + propertySheet.getVar() + ".properties[\"" + propKey + "\"]" + valueIndexSuffix + "}";
         }
         final ValueBinding vb = context.getApplication().createValueBinding(binding);
-        component.setValueBinding("value", vb);
-
-        // disable the component if it is read only or protected
-        // or if the property sheet is in view mode
-        if (propertySheet.inEditMode() == false || item.isReadOnly() ||
-                (propertyDef != null && propertyDef.isProtected())) {
-            ComponentUtil.setReadonlyAttributeRecursively(component);
-        }
+        return vb;
     }
 
    /**

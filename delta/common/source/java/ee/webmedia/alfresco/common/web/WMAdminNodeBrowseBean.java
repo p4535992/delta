@@ -4,10 +4,13 @@ import static ee.webmedia.alfresco.app.AppConstants.CHARSET;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getExporterService;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -44,6 +47,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.application.jsp.JspStateManagerImpl;
 
+import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 
 /**
@@ -182,11 +186,13 @@ public class WMAdminNodeBrowseBean extends AdminNodeBrowseBean {
             // now export (note: we're not interested in progress in the example)
             importerService.importView(handler, location, binding, progress);
         } else if (fileName.endsWith(".xml")) {
-            FileReader fileReader = null;
+            Reader fileReader = null;
             try {
-                fileReader = new FileReader(dataFile);
+                fileReader = new InputStreamReader(new FileInputStream(dataFile), AppConstants.CHARSET);
                 importerService.importView(fileReader, location, binding, progress);
             } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
+            } catch (UnsupportedEncodingException e) {
                 throw new RuntimeException(e);
             } finally {
                 IOUtils.closeQuietly(fileReader);

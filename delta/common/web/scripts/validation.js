@@ -16,6 +16,11 @@ function informUser(control, message, showMessage)
    }
 }
 
+function isEmptyInput(inputId){
+   var inputValue = document.getElementById(inputId).value;
+   return inputValue == null || inputValue.replace(/^\\s+|\\s+$/g, '').length == 0;
+}
+
 /**
  * Try to validate value set by picker. If value of picker is not set, then check if value has been set manually.
  * @return true if value has been set
@@ -238,6 +243,17 @@ function validateDate(control, message, showMessage){
 function validateDateString(dateStr){
    var pattern = getDatePattern();
    return pattern.test(dateStr);   
+}
+
+function validateDateInput(dateInputId){
+   if (dateInputId != null){
+      var control = document.getElementById(dateInputId);
+      if(control == null || control.value.length < 1){
+         return true;
+      }
+      return validateDateString(control.value);
+   }
+   return true;
 }
 
 function getDatePattern(){

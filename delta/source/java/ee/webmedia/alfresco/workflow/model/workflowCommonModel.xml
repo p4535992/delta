@@ -148,18 +148,30 @@
             <property name="wfc:ownerJobTitle">
                <type>d:text</type>
             </property>
+            <property name="wfc:creatorId">
+               <type>d:text</type>
+            </property>
+            <property name="wfc:creatorEmail">
+               <type>d:text</type>
+            </property>            
          </properties>
          <mandatory-aspects>
             <aspect>wfc:common</aspect>
             <aspect>wfc:owner</aspect>
          </mandatory-aspects>
       </type>
-
-      <type name="wfc:delegationHistory">
+      
+      <type name="wfc:dueDateHistory">
          <parent>sys:base</parent>
-         <mandatory-aspects>
-            <aspect>wfc:delegationHistoryAspect</aspect>
-         </mandatory-aspects>
+         <properties>
+            <property name="wfc:previousDueDate">
+               <type>d:date</type>
+               <mandatory enforced="true">true</mandatory>
+            </property>
+            <property name="wfc:changeReason">
+               <type>d:text</type>
+            </property>            
+         </properties>
       </type>
 
    </types>
@@ -221,29 +233,6 @@
                </target>
             </child-association>
          </associations>
-      </aspect>
-
-      <aspect name="wfc:delegationHistoryAspect">
-         <properties>
-            <property name="wfc:delegHistOwnerName">
-               <type>d:text</type>
-               <mandatory enforced="true">true</mandatory>
-            </property>
-            <property name="wfc:delegHistCreatorName">
-               <type>d:text</type>
-               <mandatory enforced="true">true</mandatory>
-            </property>
-            <property name="wfc:delegHistCoAssignmentTasks">
-               <type>d:text</type>
-            </property>
-            <property name="wfc:delegHistResolution">
-               <type>d:text</type>
-            </property>
-            <property name="wfc:delegHistDueDate">
-               <type>d:date</type>
-               <mandatory enforced="true">true</mandatory>
-            </property>
-         </properties>
       </aspect>
 
    </aspects>

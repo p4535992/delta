@@ -162,9 +162,8 @@ public class ComponentUtil {
     /**
      * Add all attributes from given map to given component
      */
-    @SuppressWarnings("unchecked")
-    public static Map<String, Object> addAttributes(UIComponent component, Map attributesToAdd) {
-        final Map<String, Object> attributes = component.getAttributes();
+    public static Map<String, Object> addAttributes(UIComponent component, Map<String, Object> attributesToAdd) {
+        final Map<String, Object> attributes = getAttributes(component);
         if (attributesToAdd != null) {
             attributes.putAll(attributesToAdd);
         }

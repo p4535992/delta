@@ -61,7 +61,12 @@ public class UploadFileInput extends UIInput implements NamingContainer {
             writer.write("\">");
             writer.write("</a>");
             // FIXME: Kaarel - see pole küll õige koht töövoo spetsiifiliste teadete jaoks(pealegi seda teadet common'i projektis pole)
-            writer.write(Application.getMessage(context, "opinion_file_uploaded"));
+            String successMsgKey = "opinion_file_uploaded";
+            String attrSuccessMessageKey = (String) getAttributes().get(UploadFileGenerator.ATTR_SUCCESS_MSG_KEY);
+            if (StringUtils.isNotBlank(attrSuccessMessageKey)) {
+                successMsgKey = attrSuccessMessageKey;
+            }
+            writer.write(Application.getMessage(context, successMsgKey));
         } else {
             // Javascript functions with unique names
             writer.write("<script type='text/javascript' src='");

@@ -5,6 +5,7 @@ import java.util.Map;
 
 import javax.faces.component.UIComponent;
 import javax.faces.component.html.HtmlOutputText;
+import javax.faces.component.html.HtmlPanelGrid;
 import javax.faces.context.FacesContext;
 
 import org.alfresco.web.app.servlet.FacesHelper;
@@ -24,10 +25,12 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  */
 public class WMUIProperty extends UIProperty {
 
+    public static final String AFTER_LABEL_BOOLEAN = "_AfterLabelBoolean";
     public static final String LABEL_STYLE_CLASS = "labelStyleClass";
     public static final String DISPLAY_LABEL_PARAMETER = "displayLabelParameter";
     public static final String REPO_NODE = "__repo_node";
     public static final String DONT_RENDER_IF_DISABLED_ATTR = "dontRenderIfDisabled";
+    public static final String RENDER_CHECKBOX_AFTER_LABEL = "renderCheckboxAfterLabel";
 
     @Override
     public boolean isRendered() {
@@ -64,7 +67,11 @@ public class WMUIProperty extends UIProperty {
         HtmlOutputText label = (HtmlOutputText) context.getApplication().createComponent("javax.faces.HtmlOutputText");
         label.setRendererType(ComponentConstants.JAVAX_FACES_TEXT);
         FacesHelper.setupComponentId(context, label, "label_" + getName());
-        getChildren().add(label);
+        if (isCheckboxRendered()) {
+            getChildren().add(createCheckboxAfterLabel(context, propSheet, label));
+        } else {
+            getChildren().add(label);
+        }
 
         // Check if config has overriden the label with parameter
         if (getCustomAttributes().containsKey(DISPLAY_LABEL_PARAMETER)) {
@@ -78,6 +85,22 @@ public class WMUIProperty extends UIProperty {
 
         label.getAttributes().put("value", displayLabel);
         label.setStyleClass(getCustomAttributes().get(LABEL_STYLE_CLASS));
+    }
+
+    private boolean isCheckboxRendered() {
+        return new Boolean(getCustomAttributes().get(RENDER_CHECKBOX_AFTER_LABEL));
+    }
+
+    private UIComponent createCheckboxAfterLabel(FacesContext context, UIPropertySheet propSheet, HtmlOutputText label) {
+        final HtmlPanelGrid container = (HtmlPanelGrid) context.getApplication().createComponent(HtmlPanelGrid.COMPONENT_TYPE);
+        container.setWidth("100%");
+        container.setColumns(2);
+        UIComponent component = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_SELECT_BOOLEAN);
+        component.setRendererType(ComponentConstants.JAVAX_FACES_CHECKBOX);
+        component.setValueBinding("value", ComponentUtil.createValueBinding(context, propSheet.getVar(), getName() + AFTER_LABEL_BOOLEAN));
+        ComponentUtil.addChildren(container, label, component);
+        container.setColumnClasses((String) propSheet.getAttributes().get("labelStyleClass"));
+        return container;
     }
 
     @SuppressWarnings("unchecked")

@@ -28,6 +28,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.application.jsp.JspStateManagerImpl;
 
 import ee.webmedia.alfresco.common.web.WMAdminNodeBrowseBean;
+import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 
@@ -47,7 +48,7 @@ public class DocTypeListDialog extends BaseDialogBean {
     }
 
     private void initDocumentTypes() {
-        documentTypes = getDocumentAdminService().getDocumentTypes();
+        documentTypes = getDocumentAdminService().getDocumentTypes(DocumentAdminService.DONT_INCLUDE_CHILDREN);
     }
 
     public void exportDocTypes(@SuppressWarnings("unused") ActionEvent event) {
@@ -61,7 +62,7 @@ public class DocTypeListDialog extends BaseDialogBean {
             NodeRef docTypesRootRef = null;
             List<NodeRef> excludedNodes = new ArrayList<NodeRef>();
             { // evaluate docTypesRootRef and exclude DocTypeVersions except latest docTypeVersion
-                for (DocumentType documentType : getDocumentAdminService().getDocumentTypes()) {
+                for (DocumentType documentType : getDocumentAdminService().getDocumentTypes(null)) {
                     NodeRef docTypeParentRef = documentType.getParentNodeRef();
                     if (docTypesRootRef == null) {
                         docTypesRootRef = docTypeParentRef;
@@ -148,7 +149,7 @@ public class DocTypeListDialog extends BaseDialogBean {
     }
 
     private SelectItem[] searchUsedDocTypes(String substring, boolean addEmptyItem) {
-        final List<DocumentType> usedDocTypes = getDocumentAdminService().getDocumentTypes(true);
+        final List<DocumentType> usedDocTypes = getDocumentAdminService().getDocumentTypes(DocumentAdminService.DONT_INCLUDE_CHILDREN, true);
         substring = StringUtils.trimToNull(substring);
         substring = (substring != null ? substring.toLowerCase() : null);
         int size = addEmptyItem ? usedDocTypes.size() + 1 : usedDocTypes.size();

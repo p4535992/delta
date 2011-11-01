@@ -2,7 +2,7 @@ package ee.webmedia.alfresco.workflow.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 import static ee.webmedia.alfresco.parameters.model.Parameters.MAX_ATTACHED_FILE_SIZE;
-import static ee.webmedia.alfresco.workflow.web.TaskListCommentComponent.TASK_INDEX;
+import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.TASK_INDEX;
 import static ee.webmedia.alfresco.workflow.web.TaskListGenerator.WF_INDEX;
 
 import java.io.Serializable;
@@ -37,6 +37,7 @@ import org.apache.commons.lang.time.DateUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
+import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent.ModalLayerSubmitEvent;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.Confirmable;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
@@ -62,6 +63,7 @@ import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
+import ee.webmedia.alfresco.workflow.service.OrderAssignmentWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Task.Action;
 import ee.webmedia.alfresco.workflow.service.Workflow;
@@ -70,7 +72,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowServiceImpl;
 import ee.webmedia.alfresco.workflow.service.WorkflowServiceImpl.DialogAction;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
-import ee.webmedia.alfresco.workflow.web.TaskListCommentComponent.CommentEvent;
 import ee.webmedia.alfresco.workflow.web.evaluator.WorkflowNewEvaluator;
 
 /**
@@ -98,7 +99,9 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             , WorkflowSpecificModel.Types.REVIEW_WORKFLOW
             , WorkflowSpecificModel.Types.INFORMATION_WORKFLOW
             , WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW
+            , WorkflowSpecificModel.Types.CONFIRMATION_WORKFLOW
             );
+    public static final String MODAL_KEY_ENTRY_COMMENT = "popup_comment";
 
     /**
      * @param propSheet
@@ -119,6 +122,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         boolean checkFinished = WorkflowUtil.isStatus(compoundWorkflow, Status.IN_PROGRESS);
+        removeEmptyTasks();
         if (validate(context, checkFinished, false, false)) {
             if (!askConfirmIfHasSameTask(MessageUtil.getMessage("workflow_compound_save"), DialogAction.SAVING)) {
                 saveCompWorkflow();
@@ -229,6 +233,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
 
     public void startWorkflow() {
         log.debug("startWorkflow");
+        removeEmptyTasks();
         if (validate(FacesContext.getCurrentInstance(), true, false, true)) {
             List<String> confirmationMessages = getConfirmationMessages(true);
             if (confirmationMessages != null && !confirmationMessages.isEmpty()) {
@@ -390,6 +395,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
      */
     public void copyWorkflow(@SuppressWarnings("unused") ActionEvent event) {
         log.debug("copyWorkflow");
+        removeEmptyTasks();
         if (validate(FacesContext.getCurrentInstance(), false, false, false)) {
             try {
                 removeEmptyTasks();
@@ -448,10 +454,10 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
      * Action listener for JSP.
      */
     public void finishWorkflowTask(ActionEvent event) {
-        CommentEvent commentEvent = (CommentEvent) event;
+        ModalLayerSubmitEvent commentEvent = (ModalLayerSubmitEvent) event;
         int index = (Integer) event.getComponent().getAttributes().get(TaskListGenerator.ATTR_WORKFLOW_INDEX);
-        int taskIndex = commentEvent.taskIndex;
-        String comment = commentEvent.comment;
+        int taskIndex = commentEvent.getActionIndex();
+        String comment = (String) commentEvent.getSubmittedValue(MODAL_KEY_ENTRY_COMMENT);
         log.debug("finishWorkflowTask: " + index + ", " + taskIndex + ", " + comment);
         if (StringUtils.isBlank(comment)) {
             return;
@@ -489,7 +495,8 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             Map<QName, WorkflowType> workflowTypes = workflowService.getWorkflowTypes();
             for (QName wfType : workflowTypes.keySet()) {
                 boolean addType = false;
-                if (wfType.equals(WorkflowSpecificModel.Types.OPINION_WORKFLOW) || wfType.equals(WorkflowSpecificModel.Types.INFORMATION_WORKFLOW)) {
+                if (wfType.equals(WorkflowSpecificModel.Types.OPINION_WORKFLOW) || wfType.equals(WorkflowSpecificModel.Types.INFORMATION_WORKFLOW)
+                        || wfType.equals(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW) || wfType.equals(WorkflowSpecificModel.Types.CONFIRMATION_WORKFLOW)) {
                     addType = true;
                 } else if ((wfType.equals(WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW)
                         || wfType.equals(WorkflowSpecificModel.Types.DOC_REGISTRATION_WORKFLOW)
@@ -621,18 +628,20 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
 
     private boolean validate(FacesContext context, boolean checkFinished, boolean allowInactiveResponsibleTask, boolean checkInvoice) {
         boolean valid = true;
-        boolean activeResponsibleAssignedInSomeWorkFlow = false;
+        boolean activeResponsibleAssignTaskInSomeWorkFlow = false;
+        // true if some orderAssignmentWorkflow in status NEW has no active responible task (but has some co-responsible tasks)
+        boolean checkOrderAssignmentResponsibleTask = false;
         boolean missingOwnerAssignment = false;
         Boolean missingInformationTasks = null;
         Set<String> missingOwnerMessageKeys = null;
         boolean hasForbiddenFlowsForFinished = false;
         DueDateRegressionHelper regressionTest = new DueDateRegressionHelper();
+        boolean isCategoryEnabled = BeanHelper.getWorkflowService().getOrderAssignmentCategoryEnabled();
         for (Workflow block : compoundWorkflow.getWorkflows()) {
             boolean foundOwner = false;
             QName blockType = block.getNode().getType();
-            // isActiveResponsible check needs to be done only for ASSIGNMENT_WORKFLOW
             boolean activeResponsibleAssigneeNeeded = blockType.equals(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW)
-                    && !activeResponsibleAssignedInSomeWorkFlow && !isActiveResponsibleAssignedForDocument(false);
+                    && !activeResponsibleAssignTaskInSomeWorkFlow && !isActiveResponsibleAssignedForDocument(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW, false);
             boolean activeResponsibleAssigneeAssigned = !activeResponsibleAssigneeNeeded;
 
             if (WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW.equals(blockType) ||
@@ -649,6 +658,12 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                 MessageUtil.addErrorMessage(context, "workflow_save_error_missingParallelOrNot");
             }
 
+            if (block.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW) && isCategoryEnabled && StringUtils.isBlank(((OrderAssignmentWorkflow) block).getCategory())) {
+                MessageUtil.addErrorMessage(context, "task_category_empty");
+                valid = false;
+            }
+
+            boolean hasOrderAssignmentActiveResponsible = !(block.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW) && block.isStatus(Status.NEW));
             for (Task task : block.getTasks()) {
                 final boolean activeResponsible = WorkflowUtil.isActiveResponsible(task);
                 boolean inactiveResponsible = false;
@@ -658,15 +673,14 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                 if (activeResponsibleAssigneeNeeded
                         && StringUtils.isNotBlank(task.getOwnerName())
                         && (activeResponsible || inactiveResponsible)) {
-                    activeResponsibleAssignedInSomeWorkFlow = true;
+                    activeResponsibleAssignTaskInSomeWorkFlow = true;
                     activeResponsibleAssigneeAssigned = true;
                     missingOwnerAssignment = false;
                 }
-                if (!foundOwner) {
-                    foundOwner = StringUtils.isNotBlank(task.getOwnerName());
-                }
+                hasOrderAssignmentActiveResponsible |= activeResponsible;
+                foundOwner |= StringUtils.isNotBlank(task.getOwnerName());
                 QName taskType = task.getNode().getType();
-                String taskOwnerMsg = getTaskOwnerMessage(block, taskType);
+                String taskOwnerMsg = getTaskOwnerMessage(block, taskType, task.isResponsible());
                 if (activeResponsible) {
                     // both fields must be empty or filled
                     if (hasNoOwnerOrDueDate(task)) {
@@ -707,6 +721,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                 }
                 regressionTest.checkDueDate(task);
             }
+            checkOrderAssignmentResponsibleTask |= !hasOrderAssignmentActiveResponsible;
             if (activeResponsibleAssigneeNeeded && !activeResponsibleAssigneeAssigned) {
                 missingOwnerAssignment = true;
                 if (!foundOwner) {
@@ -733,6 +748,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                 }
             }
         }
+
         valid &= regressionTest.valid;
         if (missingOwnerAssignment) {
             valid = false;
@@ -741,6 +757,11 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             for (String msgKey : missingOwnerMessageKeys) {
                 MessageUtil.addErrorMessage(context, msgKey);
             }
+        }
+
+        if (checkOrderAssignmentResponsibleTask) {
+            valid = false;
+            MessageUtil.addErrorMessage("workflow_save_error_missing_orderAssigmnentResponsibleTask");
         }
 
         if (checkFinished && hasForbiddenFlowsForFinished) {
@@ -760,13 +781,17 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         return valid;
     }
 
-    private String getTaskOwnerMessage(Workflow block, QName taskType) {
+    private String getTaskOwnerMessage(Workflow block, QName taskType, boolean isResponsible) {
         String suffix = "";
-        if (taskType.equals(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
+        if (isResponsibleAllowed(taskType) && !isResponsible) {
             suffix = "_co";
         }
         String taskOwnerMsg = MessageUtil.getMessage(block.getNode().getType().getLocalName() + "_tasks" + suffix);
         return taskOwnerMsg;
+    }
+
+    private boolean isResponsibleAllowed(QName taskType) {
+        return taskType.equals(WorkflowSpecificModel.Types.ASSIGNMENT_TASK) || taskType.equals(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK);
     }
 
     private boolean hasNoOwnerOrDueDate(Task task) {

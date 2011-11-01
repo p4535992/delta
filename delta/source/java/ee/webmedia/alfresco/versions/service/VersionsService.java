@@ -33,13 +33,14 @@ public interface VersionsService {
     void updateVersionModifiedAspect(NodeRef nodeRef);
 
     /**
-     * Updates the version if the node is unlocked.
+     * Updates the version if the node is unlocked and last version was not saved.. (.. today or ..by authenticated user)
      * Sets VersionsModel.Props.VersionLockable.LOCKED property of the VersionsModel.Aspects.VERSION_LOCKABLE aspect to true.
      * 
      * @param nodeRef
      * @param filename TODO
+     * @return true if new version was created
      */
-    void updateVersion(NodeRef nodeRef, String filename);
+    boolean updateVersionIfNeeded(NodeRef nodeRef, String filename);
 
     /**
      * Returns the value of the VersionsModel.Props.VersionLockable.LOCKED property if the node has VersionsModel.Aspects.VERSION_LOCKABLE aspect.

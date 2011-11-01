@@ -67,8 +67,8 @@ import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
-import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.document.einvoice.account.generated.Arve;
 import ee.webmedia.alfresco.document.einvoice.account.generated.ArveInfo;
 import ee.webmedia.alfresco.document.einvoice.account.generated.Hankija;
@@ -908,9 +908,9 @@ public class EInvoiceServiceImpl implements EInvoiceService {
 
     @Override
     public boolean isEinvoiceEnabled() {
-        DocumentType documentType = documentAdminService.getDocumentType("invoice");
-        // FIXME DLSeadist - Kui kõik süsteemsed dok.liigid on defineeritud, siis võib null kontrolli ja tagastamise eemdaldada
-        return documentType != null && documentType.isUsed();
+        // FIXME DLSeadist - Kui kõik süsteemsed dok.liigid on defineeritud, siis võib null kontrolli eemdaldada
+        NodeRef docTypeRef = documentAdminService.getDocumentTypeRef("invoice");
+        return docTypeRef != null && documentAdminService.getDocumentTypeProperty(docTypeRef, DocumentAdminModel.Props.USED, Boolean.class);
     }
 
     @Override

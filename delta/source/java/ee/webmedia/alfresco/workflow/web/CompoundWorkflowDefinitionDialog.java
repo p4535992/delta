@@ -13,7 +13,8 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 import static ee.webmedia.alfresco.utils.ComponentUtil.addChildren;
 import static ee.webmedia.alfresco.utils.ComponentUtil.createUIParam;
-import static ee.webmedia.alfresco.workflow.web.TaskListCommentComponent.TASK_INDEX;
+import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.TASK_INDEX;
+import static ee.webmedia.alfresco.workflow.web.TaskListGenerator.ATTR_RESPONSIBLE;
 import static ee.webmedia.alfresco.workflow.web.TaskListGenerator.WF_INDEX;
 
 import java.io.Serializable;
@@ -69,6 +70,7 @@ import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.AssignmentWorkflow;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflowDefinition;
+import ee.webmedia.alfresco.workflow.service.OrderAssignmentWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
@@ -251,10 +253,23 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             taskIndex = Integer.parseInt(ActionUtil.getParam(event, TASK_INDEX));
         }
         log.debug("addWorkflowTask: blockIndex=" + wfIndex + "; " + TASK_INDEX + "=" + taskIndex);
+        boolean responsible = false;
+        if (ActionUtil.hasParam(event, ATTR_RESPONSIBLE)) {
+            responsible = Boolean.parseBoolean(ActionUtil.getParam(event, ATTR_RESPONSIBLE));
+        }
+        Workflow workflow = compoundWorkflow.getWorkflows().get(wfIndex);
         if (taskIndex > -1) {
-            compoundWorkflow.getWorkflows().get(wfIndex).addTask(taskIndex);
+            if (!responsible) {
+                workflow.addTask(taskIndex);
+            } else {
+                ((OrderAssignmentWorkflow) workflow).addResponsibleTask(taskIndex);
+            }
         } else {
-            compoundWorkflow.getWorkflows().get(wfIndex).addTask();
+            if (!responsible) {
+                workflow.addTask();
+            } else {
+                ((OrderAssignmentWorkflow) workflow).addResponsibleTask();
+            }
         }
         updatePanelGroup();
     }
@@ -341,6 +356,13 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             return executeOwnerSearch(newIndex, contains, true, true, null);
         }
         return executeOwnerSearch(newIndex, contains, true, true, getDvkService().getInstitutionCode());
+    }
+
+    /**
+     * Action listener for JSP.
+     */
+    public SelectItem[] executeDueDateExtensionOwnerSearch(int filterIndex, String contains) {
+        return executeOwnerSearch(filterIndex, contains, false, false, null);
     }
 
     /**
@@ -525,7 +547,8 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             sortedTypes = new TreeMap<String, QName>();
             Map<QName, WorkflowType> workflowTypes = getWorkflowService().getWorkflowTypes();
             for (QName tmpType : workflowTypes.keySet()) {
-                if (!tmpType.equals(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW) || getWorkflowService().externalReviewWorkflowEnabled()) {
+                if (!tmpType.equals(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_WORKFLOW)
+                        && (!tmpType.equals(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW) || getWorkflowService().externalReviewWorkflowEnabled())) {
                     String tmpName = MessageUtil.getMessage(tmpType.getLocalName());
                     sortedTypes.put(tmpName, tmpType);
                 }
@@ -678,7 +701,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             messageInput.setStyle("display: none;");
             panelC.getChildren().add(messageInput);
 
-            // hidden link for submitting form when transTemplateSelector onchange event occurs
+            // hidden link for submitting form when OK is clicked in js confirmation alert
             HtmlCommandLink workflowConfirmationLink = new HtmlCommandLink();
             workflowConfirmationLink.setId("workflow-after-confirmation-link");
             workflowConfirmationLink.setStyleClass("workflow-after-confirmation-link");
@@ -720,11 +743,17 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     private boolean showAddActions(int index) {
         boolean result = false;
         if (index < compoundWorkflow.getWorkflows().size()) {
-            String nextBlockStatus = compoundWorkflow.getWorkflows().get(index).getStatus();
-            result = Status.NEW.equals(nextBlockStatus);
+            Workflow workflow = compoundWorkflow.getWorkflows().get(index);
+            String nextBlockStatus = workflow.getStatus();
+            result = Status.NEW.equals(nextBlockStatus) && !workflow.isType(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_WORKFLOW);
         } else {
             String compoundWorkflowStatus = compoundWorkflow.getStatus();
-            result = !Status.FINISHED.equals(compoundWorkflowStatus);
+            boolean isLastAllowedType = true;
+            if (!compoundWorkflow.getWorkflows().isEmpty()) {
+                Workflow lastWorkflow = compoundWorkflow.getWorkflows().get(index - 1);
+                isLastAllowedType = !lastWorkflow.isType(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_WORKFLOW);
+            }
+            result = !Status.FINISHED.equals(compoundWorkflowStatus) && isLastAllowedType;
         }
         return result;
     }
@@ -766,7 +795,11 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         Task task = block.getTasks().get(index);
         if (task.getNode().hasAspect(WorkflowSpecificModel.Aspects.RESPONSIBLE) && StringUtils.isNotBlank(task.getOwnerName())
                 && task.getNodeRef() != null && !(compoundWorkflow instanceof CompoundWorkflowDefinition) && !Status.NEW.equals(task.getStatus())) {
-            task = ((AssignmentWorkflow) block).addResponsibleTask();
+            if (block.isType(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW)) {
+                task = ((AssignmentWorkflow) block).addResponsibleTask();
+            } else {
+                task = ((OrderAssignmentWorkflow) block).addResponsibleTask();
+            }
         }
         setPropsToTask(task, name, id, email, orgName, jobTitle);
     }
@@ -819,13 +852,17 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
                     wfThatNeedTask.add(inf);
                 } else {
                     if (block.getTasks().size() == 0 && !blockType.equals(WorkflowSpecificModel.Types.DOC_REGISTRATION_WORKFLOW)) {
-                        block.addTask();
+                        if (block.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW)) {
+                            ((OrderAssignmentWorkflow) block).addResponsibleTask();
+                        } else {
+                            block.addTask();
+                        }
                     }
                 }
             }
         }
         if (wfThatNeedTask.size() > 0) {
-            boolean docHasRespTask = respTaskInSomeBlock || isActiveResponsibleAssignedForDocument(false);
+            boolean docHasRespTask = respTaskInSomeBlock || isActiveResponsibleAssignedForDocument(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW, false);
             for (TaskInfHolder infHolder : wfThatNeedTask) {
                 final AssignmentWorkflow assignmentWorkflow = infHolder.assignmentWorkflow;
                 if (!docHasRespTask) {
@@ -840,10 +877,10 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         }
     }
 
-    protected boolean isActiveResponsibleAssignedForDocument(boolean useCache) {
+    protected boolean isActiveResponsibleAssignedForDocument(QName workflowType, boolean useCache) {
         if (activeResponsibleAssignedInRepo == null || !useCache) {
             try {
-                activeResponsibleAssignedInRepo = 0 < getWorkflowService().getActiveResponsibleAssignmentTasks(compoundWorkflow.getParent());
+                activeResponsibleAssignedInRepo = 0 < getWorkflowService().getActiveResponsibleTasks(compoundWorkflow.getParent(), workflowType);
             } catch (InvalidNodeRefException e) {
                 final FacesContext context = FacesContext.getCurrentInstance();
                 MessageUtil.addErrorMessage(context, "workflow_compound_add_block_error_docDeleted");
@@ -856,5 +893,4 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     protected void removeEmptyTasks() {
         WorkflowUtil.removeEmptyTasks(compoundWorkflow);
     }
-
 }

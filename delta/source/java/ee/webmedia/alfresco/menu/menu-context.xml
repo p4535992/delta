@@ -85,7 +85,7 @@
    <bean class="ee.webmedia.alfresco.menu.service.AdministratorMenuItemProcessor">
       <property name="userService" ref="UserService" />
       <property name="menuService" ref="MenuService" />
-      <property name="documentAdminService" ref="DocumentAdminService" />
+      <property name="einvoiceService" ref="EInvoiceService" />       
    </bean>
 
 </beans>

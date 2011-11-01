@@ -6,6 +6,7 @@ import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -34,20 +35,22 @@ import org.alfresco.service.cmr.dictionary.TypeDefinition;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.cmr.view.ImporterService;
 import org.alfresco.service.cmr.view.Location;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.QNamePattern;
 import org.alfresco.util.Pair;
+import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.comparators.NullComparator;
 import org.apache.commons.collections.comparators.TransformingComparator;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 
-import de.schlichtherle.io.FileInputStream;
 import ee.webmedia.alfresco.adr.service.AdrService;
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.base.BaseObject;
@@ -55,6 +58,7 @@ import ee.webmedia.alfresco.base.BaseObject.ChildrenList;
 import ee.webmedia.alfresco.base.BaseService;
 import ee.webmedia.alfresco.base.BaseServiceImpl;
 import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
+import ee.webmedia.alfresco.common.model.NodeBaseVO;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
@@ -128,32 +132,53 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
-    public List<DocumentType> getDocumentTypes() {
-        return getAllDocumentTypes(null);
+    public List<DocumentType> getDocumentTypes(DocTypeLoadEffort effort) {
+        return getAllDocumentTypes(null, getDocumentTypesRoot(), effort);
     }
 
     @Override
-    public List<DocumentType> getDocumentTypes(boolean used) {
-        return getAllDocumentTypes(Boolean.valueOf(used));
+    public List<DocumentType> getDocumentTypes(DocTypeLoadEffort effort, boolean used) {
+        return getAllDocumentTypes(Boolean.valueOf(used), getDocumentTypesRoot(), effort);
     }
 
     @Override
-    public DocumentType getDocumentType(String id) {
+    public DocumentType getDocumentType(String id, DocTypeLoadEffort effort) {
         NodeRef documentTypeRef = getDocumentTypeRef(id);
-        return getDocumentType(documentTypeRef);
+        return getDocumentType(documentTypeRef, effort);
     }
 
-    private NodeRef getDocumentTypeRef(String id) {
+    @Override
+    public <T> T getDocumentTypeProperty(String docTypeId, QName property, Class<T> returnClass) {
+        NodeRef documentTypeRef = getDocumentTypeRef(docTypeId);
+        return getDocumentTypeProperty(documentTypeRef, property, returnClass);
+    }
+
+    @Override
+    public <T> T getDocumentTypeProperty(NodeRef documentTypeRef, QName property, Class<T> returnClass) {
+        Serializable value = nodeService.getProperty(documentTypeRef, property);
+        if (Boolean.class.equals(returnClass)) {
+            value = NodeBaseVO.convertNullToFalse((Boolean) value);
+        }
+        return DefaultTypeConverter.INSTANCE.convert(returnClass, value);
+    }
+
+    @Override
+    public NodeRef getDocumentTypeRef(String id) {
         return generalService.getNodeRef(DocumentType.getAssocName(id).toString(), getDocumentTypesRoot());
     }
 
     @Override
-    public DocumentType getDocumentType(NodeRef docTypeRef) {
+    public DocumentType getDocumentType(NodeRef docTypeRef, DocTypeLoadEffort effort) {
         // FIXME DLSeadist - Kui kõik süsteemsed dok.liigid on defineeritud, siis võib null kontrolli ja tagastamise eemdaldada
         if (docTypeRef == null) {
             return null;
         }
-        return baseService.getObject(docTypeRef, DocumentType.class);
+        DocumentType object = baseService.getObject(docTypeRef, DocumentType.class, effort);
+        if (effort != null && effort.isReturnLatestDocTypeVersionChildren()) {
+            DocumentTypeVersion latestDocTypeVersion = object.getLatestDocumentTypeVersion();
+            baseService.loadChildren(latestDocTypeVersion, null);
+        }
+        return object;
     }
 
     @Override
@@ -167,6 +192,12 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
             return null;
         }
         return (String) nodeService.getProperty(documentTypeRef, DocumentAdminModel.Props.NAME);
+    }
+
+    @Override
+    public String getDocumentTypeName(Node document) {
+        String documentTypeId = (String) document.getProperties().get(DocumentAdminModel.Props.DOCUMENT_TYPE_ID);
+        return getDocumentTypeName(documentTypeId);
     }
 
     @Override
@@ -277,17 +308,13 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         return fieldDef;
     }
 
-    private List<DocumentType> getAllDocumentTypes(final Boolean used) {
-        return getAllDocumentTypes(used, getDocumentTypesRoot());
-    }
-
-    private List<DocumentType> getAllDocumentTypes(final Boolean used, NodeRef docTypesRootRef) {
+    private List<DocumentType> getAllDocumentTypes(final Boolean used, NodeRef docTypesRootRef, DocTypeLoadEffort effort) {
         return baseService.getChildren(docTypesRootRef, DocumentType.class, new Predicate<DocumentType>() {
             @Override
             public boolean eval(DocumentType documentType) {
                 return used == null || documentType.isUsed() == used;
             }
-        });
+        }, effort);
     }
 
     @Override
@@ -302,7 +329,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
     @Override
     public void deleteDocumentType(NodeRef docTypeRef) {
-        DocumentType documentType = getDocumentType(docTypeRef);
+        DocumentType documentType = getDocumentType(docTypeRef, DONT_INCLUDE_CHILDREN);
         if (documentType.isSystematic()) {
             throw new IllegalArgumentException("docType_list_action_delete_failed_systematic"); // shouldn't happen, because systematic can't be changed at runtime
         }
@@ -466,8 +493,17 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                 searchable.add(fieldDefinition);
             }
         }
+        Collections.sort(searchable, SEARCH_FIELD_COMPARATOR);
         return searchable;
     }
+
+    @SuppressWarnings("unchecked")
+    public static final Comparator<FieldDefinition> SEARCH_FIELD_COMPARATOR = new TransformingComparator(new ComparableTransformer<FieldDefinition>() {
+        @Override
+        public Comparable<?> tr(FieldDefinition input) {
+            return input.getParameterOrderInDocSearch();
+        }
+    }, new NullComparator(true));
 
     @Override
     public List<FieldDefinition> getFieldDefinitions(List<String> fieldDefinitionIds) {
@@ -711,7 +747,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         if (saved) {
             DocumentTypeVersion latestDocumentTypeVersion = docType.getLatestDocumentTypeVersion();
             ChildrenList<MetadataItem> unSavedMetadata = latestDocumentTypeVersion.getMetadata();
-            DocumentType latestDocTypeInRepo = getDocumentType(docType.getNodeRef()); // TODO optimize to get only data that is needed (no older versions, etc...)
+            DocumentType latestDocTypeInRepo = getDocumentType(docType.getNodeRef(), DOC_TYPE_WITH_OUT_GRAND_CHILDREN);
             int docTypeVersions = latestDocTypeInRepo.getDocumentTypeVersions().size();
             Boolean dontSaveDocTypeVer = docType.getProp(PROP_DONT_SAVED_DOC_TYPE_VER);
             if (dontSaveDocTypeVer == null) {
@@ -1035,7 +1071,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         }
 
         private void importDocumentTypes(NodeRef importableDocTypesRootRef) {
-            List<DocumentType> existingDocTypes = getAllDocumentTypes(null);
+            List<DocumentType> existingDocTypes = getAllDocumentTypes(null, getDocumentTypesRoot(), null);
             Map<String, DocumentType> existingDocTypesById = new HashMap<String, DocumentType>(existingDocTypes.size());
             for (DocumentType docType : existingDocTypes) {
                 existingDocTypesById.put(docType.getDocumentTypeId(), docType);
@@ -1044,7 +1080,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
             Map<String, DocumentType> importedDocTypesById = new HashMap<String, DocumentType>();
             Map<String, Pair<List<FollowupAssociation>, List<ReplyAssociation>>> imporableDocTypesById = new HashMap<String, Pair<List<FollowupAssociation>, List<ReplyAssociation>>>();
             // first add/merge metadataItems
-            List<DocumentType> allDocumentTypes = getAllDocumentTypes(null, importableDocTypesRootRef);
+            List<DocumentType> allDocumentTypes = getAllDocumentTypes(null, importableDocTypesRootRef, null);
             int totalDocTypes = allDocumentTypes.size();
             LOG.info("Starting to import metadata of " + totalDocTypes + " document types");
             int i = 0;
@@ -1175,7 +1211,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         private Set<String> getDocTypeFieldsFromCache(String docType, Map<String, DocumentType> docTypesCache, Map<String, Set<String>> docTypeFieldsCache) {
             DocumentType documentType = docTypesCache.get(docType);
             if (documentType == null) {
-                documentType = getDocumentType(docType);
+                documentType = getDocumentType(docType, DOC_TYPE_WITH_OUT_GRAND_CHILDREN_EXEPT_LATEST_DOCTYPE_VER);
                 docTypesCache.put(docType, documentType);
             }
             if (documentType == null) {

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.InitializingBean;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.notification.service.NotificationService;
 import ee.webmedia.alfresco.workflow.model.Status;
+import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.BaseWorkflowObject;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
@@ -34,8 +35,7 @@ public class WorkflowStatusEventListener implements WorkflowEventListener, Initi
     public void handle(WorkflowEvent event, WorkflowEventQueue queue) {
         final BaseWorkflowObject object = event.getObject();
 
-        boolean sendNotifications = !Boolean.TRUE.equals(queue
-                .getParameter(WorkflowQueueParameter.TRIGGERED_BY_FINISHING_EXTERNAL_REVIEW_TASK_ON_CURRENT_SYSTEM));
+        boolean sendNotifications = getSendNotifications(event, queue);
 
         if (sendNotifications) {
             if (object instanceof CompoundWorkflow) {
@@ -54,6 +54,24 @@ public class WorkflowStatusEventListener implements WorkflowEventListener, Initi
             refreshMenuTaskCount(event);
         }
 
+    }
+
+    public boolean getSendNotifications(WorkflowEvent event, WorkflowEventQueue queue) {
+        boolean sendNotifications = !Boolean.TRUE.equals(queue
+                .getParameter(WorkflowQueueParameter.TRIGGERED_BY_FINISHING_EXTERNAL_REVIEW_TASK_ON_CURRENT_SYSTEM));
+        if (sendNotifications && event.getObject() instanceof Task) {
+            Task task = (Task) event.getObject();
+            if (task.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK) && task.isStatus(Status.FINISHED)) {
+                Task initiatingTask = queue.getParameter(WorkflowQueueParameter.ORDER_ASSIGNMENT_FINISH_TRIGGERING_TASK);
+                if (initiatingTask == null || initiatingTask.getNodeRef().equals(task.getNodeRef())
+                        || !initiatingTask.getParent().getNodeRef().equals(task.getParent().getNodeRef())
+                        || !Boolean.TRUE.equals(task.getProp(WorkflowSpecificModel.Props.SEND_ORDER_ASSIGNMENT_COMPLETED_EMAIL))) {
+                    sendNotifications = false;
+                }
+            }
+        }
+
+        return sendNotifications;
     }
 
     private void refreshMenuTaskCount(WorkflowEvent event) {

@@ -98,6 +98,9 @@ public class UserListDialog extends BaseDialogBean {
         if (usersList != null) {
             usersList.setValue(null);
         }
+        if (properties != null) {
+            properties.setSearchCriteria(null);
+        }
         users = getUserListVOs(getOrganizationStructureService().setUsersUnit(
                 Repository.getUsers(FacesContext.getCurrentInstance(), properties.getNodeService(), properties.getSearchService())));
 

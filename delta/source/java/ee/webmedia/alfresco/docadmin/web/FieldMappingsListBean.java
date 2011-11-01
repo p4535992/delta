@@ -26,6 +26,7 @@ import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.constant.MappingRestriction;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.AssociationModel;
+import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
@@ -109,7 +110,8 @@ public class FieldMappingsListBean implements Serializable {
         if (listItems == null) {
             String relatedDocTypeId = associationModel.getDocType();
             if (StringUtils.isNotBlank(relatedDocTypeId)) {
-                DocumentType relatedDocType = BeanHelper.getDocumentAdminService().getDocumentType(relatedDocTypeId);
+                DocumentType relatedDocType = BeanHelper.getDocumentAdminService().getDocumentType(relatedDocTypeId
+                        , DocumentAdminService.DOC_TYPE_WITH_OUT_GRAND_CHILDREN_EXEPT_LATEST_DOCTYPE_VER);
                 relatedDocTypeFieldsById = relatedDocType.getLatestDocumentTypeVersion().getFieldsDeeplyById();
             }
             List<Field> allFields = associationModel.getParent().getLatestDocumentTypeVersion().getFieldsDeeply();

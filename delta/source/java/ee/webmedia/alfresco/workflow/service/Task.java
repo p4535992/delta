@@ -37,6 +37,7 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
     }
 
     public static String PROP_RESOLUTION = "{temp}resolution";
+    public static final String PROP_WORKFLOW_CATEGORY = "{temp}category";
 
     private final Workflow parent;
     private final int outcomes;
@@ -68,6 +69,7 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
         this.outcomes = outcomes;
 
         node.addPropertyResolver(PROP_RESOLUTION, resolutionPropertyResolver);
+        node.addPropertyResolver(PROP_WORKFLOW_CATEGORY, categoryPropertyResolver);
     }
 
     protected Task copy(Workflow copyParent) {
@@ -180,6 +182,22 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
         setProp(WorkflowSpecificModel.Props.CREATOR_INSTITUTION_CODE, creatorInstitutionCode);
     }
 
+    public String getCreatorId() {
+        return getProp(WorkflowSpecificModel.Props.CREATOR_ID);
+    }
+
+    protected void setCreatorId(String creatorId) {
+        setProp(WorkflowSpecificModel.Props.CREATOR_ID, creatorId);
+    }
+
+    public String getCreatorEmail() {
+        return getProp(WorkflowSpecificModel.Props.CREATOR_EMAIL);
+    }
+
+    protected void setCreatorEmail(String email) {
+        setProp(WorkflowSpecificModel.Props.CREATOR_EMAIL, email);
+    }
+
     public String getOriginalDvkId() {
         return getProp(WorkflowSpecificModel.Props.ORIGINAL_DVK_ID);
     }
@@ -235,12 +253,32 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
         return getProp(WorkflowSpecificModel.Props.DUE_DATE);
     }
 
+    public void setDueDate(Date dueDate) {
+        setProp(WorkflowSpecificModel.Props.DUE_DATE, dueDate);
+    }
+
     public Integer getDueDateDays() {
         return getProp(WorkflowSpecificModel.Props.DUE_DATE_DAYS);
     }
 
     public String getDueDateStr() {
         return getDueDate() != null ? dateFormat.format(getDueDate()) : "";
+    }
+
+    public Date getProposedDueDate() {
+        return getProp(WorkflowSpecificModel.Props.PROPOSED_DUE_DATE);
+    }
+
+    public void setProposedDueDate(Date proposedDueDate) {
+        setProp(WorkflowSpecificModel.Props.PROPOSED_DUE_DATE, proposedDueDate);
+    }
+
+    public Date getConfirmedDueDate() {
+        return getProp(WorkflowSpecificModel.Props.CONFIRMED_DUE_DATE);
+    }
+
+    public void setConfirmedDueDate(Date confirmedDueDate) {
+        setProp(WorkflowSpecificModel.Props.CONFIRMED_DUE_DATE, confirmedDueDate);
     }
 
     /**
@@ -263,6 +301,14 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
 
     public void setResolution(String resolution) {
         setProp(WorkflowSpecificModel.Props.RESOLUTION, resolution);
+    }
+
+    /**
+     * @return parent workflow category property value, if parent is present, null otherwise
+     */
+    public String getCategory() {
+        // Cannot use getProp(QName) because we need to use categoryPropertyResolver
+        return (String) getNode().getProperties().get(PROP_WORKFLOW_CATEGORY);
     }
 
     public void setComment(String comment) {
@@ -321,6 +367,19 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
                 return null;
             }
             return getParent().getNode().getProperties().get(WorkflowSpecificModel.Props.RESOLUTION);
+        }
+
+    };
+
+    private final NodePropertyResolver categoryPropertyResolver = new NodePropertyResolver() {
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public Object get(Node node) {
+            if (getParent() == null) {
+                return null;
+            }
+            return getParent().getNode().getProperties().get(WorkflowSpecificModel.Props.CATEGORY);
         }
 
     };

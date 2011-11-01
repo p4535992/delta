@@ -45,20 +45,16 @@
                   <action-listener>#{MyTasksBean.setupSignatureTasks}</action-listener>
                   <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}signatureTask</processor>
                </item>
-               <!-- TODO CL 163225 
                <item id="orderAssignmentTasks" title-id="menu_for_order_assignment">
                   <outcome>dialog:taskListDialog</outcome>
                   <action-listener>#{MyTasksBean.setupOrderAssignmentTasks}</action-listener>
                   <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}orderAssignmentTask</processor>
                </item>
-                -->
-               <!-- TODO CL 163225 
                <item id="confirmationTasks" title-id="menu_for_confirmation">
                   <outcome>dialog:taskListDialog</outcome>
-                  <action-listener>#{MyTasksBean.setupOrderAssignmentTasks}</action-listener>
-                  <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}orderAssignmentTask</processor>
-               </item>
-               -->
+                  <action-listener>#{MyTasksBean.setupConfirmationTasks}</action-listener>
+                  <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}confirmationTask</processor>
+               </item> 
                <!-- TODO CL 163439
                <item id="discussions" title-id="menu_for_discussion" />
                -->

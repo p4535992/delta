@@ -21,6 +21,7 @@ import org.alfresco.web.ui.common.component.data.UIColumn;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.alfresco.web.ui.common.component.data.UISortLink;
 import org.alfresco.web.ui.common.converter.XMLDateConverter;
+import org.alfresco.web.ui.common.tag.data.ColumnTag;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.collections.comparators.ComparatorChain;
@@ -91,7 +92,7 @@ public class DelegationHistoryGenerator extends BaseComponentGenerator {
         richList.setId("delegHistoryList-" + listId);
         richList.setViewMode("details");
         richList.setValue(delegationHistories);
-        richList.setValueBinding("pageSize", context.getApplication().createValueBinding("#{BrowseBean.pageSizeContent}"));
+        richList.setValueBinding("pageSize", context.getApplication().createValueBinding("#{DelegationHistoryGenerator.pageSize}"));
         richList.setRendererType("org.alfresco.faces.RichListRenderer");
         putAttribute(richList, "var", "r");
         putAttribute(richList, "rowStyleClass", "recordSetRow");
@@ -108,13 +109,18 @@ public class DelegationHistoryGenerator extends BaseComponentGenerator {
         return richList;
     }
 
+    public int getPageSize() {
+        // no paging, show all values
+        return -1;
+    }
+
     private UIColumn createColumn(QName property, FacesContext context) {
         return createColumn(property, context, null);
     }
 
     private UIColumn createColumn(QName property, FacesContext context, String dateFormat) {
         Application application = context.getApplication();
-        UIColumn column = (UIColumn) application.createComponent("org.alfresco.faces.RichListColumn");
+        UIColumn column = (UIColumn) application.createComponent(ColumnTag.COMPONENT_TYPE);
 
         UISortLink sortLink = (UISortLink) application.createComponent("org.alfresco.faces.SortLink");
         sortLink.setLabel(MessageUtil.getMessage("delegHist" + StringUtils.capitalize(property.getLocalName())));

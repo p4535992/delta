@@ -36,6 +36,12 @@
       </property-sheet>
    </config>
    
+   <config evaluator="node-type" condition="wfs:orderAssignmentWorkflow">
+      <property-sheet>
+         <show-property name="wfs:category" component-generator="ClassificatorSelectorGenerator" classificatorName="orderAssignmentTaskCategory" rendered="#{WorkflowBlockBean.showOrderAssignmentCategory}" />
+      </property-sheet>
+   </config>   
+   
    <config evaluator="node-type" condition="wfs:signatureWorkflow">
       <property-sheet>
          <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="signatureWorkflow_tasks" hideExtraInfo="true" />
@@ -73,8 +79,20 @@
       </property-sheet>
    </config>
    
-   <config evaluator="node-type" condition="wfs:signatureWorkflow,wfs:opinionWorkflow,wfs:reviewWorkflow,wfs:informationWorkflow,wfs:assignmentWorkflow,wfs:docRegistrationWorkflow">
-   <!-- TODO: add orderAssignmentWorkflow, confirmationWorkflow into "condition" -->
+   <config evaluator="node-type" condition="wfs:orderAssignmentWorkflow">
+      <property-sheet>
+         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="orderAssignmentWorkflow_tasks" responsible="true" />
+         <show-property name="{temp}workflowTasksCo" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="orderAssignmentWorkflow_tasks_co" />
+      </property-sheet>
+   </config>   
+   
+   <config evaluator="node-type" condition="wfs:confirmationWorkflow">
+      <property-sheet>
+         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="confirmationWorkflow_tasks" />
+      </property-sheet>
+   </config>   
+   
+   <config evaluator="node-type" condition="wfs:signatureWorkflow,wfs:opinionWorkflow,wfs:reviewWorkflow,wfs:informationWorkflow,wfs:assignmentWorkflow,wfs:orderAssignmentWorkflow,wfs:confirmationWorkflow,wfs:docRegistrationWorkflow">
       <property-sheet>
          <show-property name="wfc:mandatory" component-generator="CheckboxGenerator"/>
       </property-sheet>

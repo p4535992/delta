@@ -1,36 +1,60 @@
 package ee.webmedia.alfresco.document.search.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getSendOutService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getVisitedDocumentsBean;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
+import javax.faces.application.Application;
+import javax.faces.component.UIComponent;
+import javax.faces.component.UIParameter;
+import javax.faces.component.html.HtmlGraphicImage;
+import javax.faces.component.html.HtmlOutputText;
 import javax.faces.context.FacesContext;
+import javax.faces.convert.Converter;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
+import org.alfresco.web.ui.common.component.UIActionLink;
+import org.alfresco.web.ui.common.component.data.UIColumn;
 import org.alfresco.web.ui.common.component.data.UIRichList;
+import org.alfresco.web.ui.common.component.data.UISortLink;
+import org.alfresco.web.ui.common.converter.MultiValueConverter;
+import org.alfresco.web.ui.common.tag.data.ColumnTag;
+import org.alfresco.web.ui.repo.component.UIActions;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Hits;
 import org.apache.myfaces.application.jsp.JspStateManagerImpl;
-import org.springframework.web.jsf.FacesContextUtils;
+import org.apache.myfaces.shared_impl.taglib.UIComponentTagUtils;
 
+import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.enums.SendMode;
-import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
+import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter;
 import ee.webmedia.alfresco.common.web.WmNode;
-import ee.webmedia.alfresco.document.model.CreatedOrRegistratedDateComparator;
+import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
 import ee.webmedia.alfresco.document.model.Document;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
-import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.web.BaseDocumentListDialog;
+import ee.webmedia.alfresco.privilege.web.DocPermissionEvaluator;
 import ee.webmedia.alfresco.simdhs.CSVExporter;
 import ee.webmedia.alfresco.simdhs.DataReader;
 import ee.webmedia.alfresco.simdhs.RichListDataReader;
+import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 
@@ -44,23 +68,22 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
 
     private static final List<String> EP_EXPORT_SEND_MODES = Arrays.asList(SendMode.MAIL.getValueName(), SendMode.REGISTERED_MAIL.getValueName());
 
-    private transient SendOutService sendOutService;
-
     private List<Document> originalDocuments;
     private Node searchFilter;
     private String dialogOutcome;
+    private UIRichList richList;
 
     public String setup(Node filter) {
         searchFilter = filter;
         doInitialSearch();
         doPostSearch();
-        BeanHelper.getVisitedDocumentsBean().clearVisitedDocuments();
+        getVisitedDocumentsBean().clearVisitedDocuments();
         return dialogOutcome;
     }
 
     @Override
     public void restored() {
-        BeanHelper.getVisitedDocumentsBean().resetVisitedDocuments(originalDocuments);
+        getVisitedDocumentsBean().resetVisitedDocuments(originalDocuments);
         doPostSearch();
     }
 
@@ -69,7 +92,7 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
             originalDocuments = getDocumentSearchService().searchDocuments(searchFilter);
         } catch (BooleanQuery.TooManyClauses e) {
             Map<QName, Serializable> filterProps = RepoUtil.getNotEmptyProperties(RepoUtil.toQNameProperties(searchFilter.getProperties()));
-            filterProps.remove(DocumentSearchModel.Props.OUTPUT);
+            // filterProps.remove(DocumentSearchModel.Props.OUTPUT);
             log.error("Document search failed: "
                     + e.getMessage()
                     + "\n  searchFilter="
@@ -79,7 +102,7 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_search_toomanyclauses");
         } catch (Hits.TooLongQueryException e) {
             Map<QName, Serializable> filterProps = RepoUtil.getNotEmptyProperties(RepoUtil.toQNameProperties(searchFilter.getProperties()));
-            filterProps.remove(DocumentSearchModel.Props.OUTPUT);
+            // filterProps.remove(DocumentSearchModel.Props.OUTPUT);
             log.error("Document search failed: "
                     + e.getMessage()
                     + "\n  searchFilter="
@@ -91,16 +114,8 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
     }
 
     protected void doPostSearch() {
-        String dialog;
-        if (DocumentSearchDialog.OUTPUT_EXTENDED.equals(searchFilter.getProperties().get(DocumentSearchModel.Props.OUTPUT))) {
-            dialog = "documentSearchExtendedResultsDialog";
-            documents = getDocumentService().processExtendedSearchResults(originalDocuments, searchFilter);
-        } else {
-            dialog = "documentSearchResultsDialog";
-            documents = new ArrayList<Document>(originalDocuments);
-        }
-        Collections.sort(documents, CreatedOrRegistratedDateComparator.getComparator());
-        dialogOutcome = dialog;
+        documents = new ArrayList<Document>(originalDocuments);
+        dialogOutcome = "documentSearchResultsDialog";
     }
 
     @Override
@@ -152,12 +167,183 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
         }
     }
 
-    protected SendOutService getSendOutService() {
-        if (sendOutService == null) {
-            sendOutService = (SendOutService) FacesContextUtils.getRequiredWebApplicationContext(
-                    FacesContext.getCurrentInstance()).getBean(SendOutService.BEAN_NAME);
+    // TODO we need the richList instance
+    /**
+     * @param richList - partially preconfigured RichList from jsp
+     */
+    public void setRichList(UIRichList richList) {
+        this.richList = richList;
+        if (!richList.getChildren().isEmpty()) {
+            return;
         }
-        return sendOutService;
+        FacesContext context = FacesContext.getCurrentInstance();
+        Map<String, Object> props = searchFilter.getProperties();
+        List<FieldDefinition> searchableFields = getDocumentAdminService().getSearchableFieldDefinitions();
+        QName dokLiikBoolean = getLabelBoolean(DocumentSearchModel.Props.DOCUMENT_TYPE);
+        QName sendModeBoolean = getLabelBoolean(DocumentSearchModel.Props.SEND_MODE);
+        if (Boolean.TRUE.equals(props.get(dokLiikBoolean.toString()))) {
+            UIComponent valueComponent = createTextValueComponent(context, "#{r.documentTypeName}", null, false);
+            createAndAddColumn(context, richList, MessageUtil.getMessage("document_docType"), "documentTypeName", false, valueComponent);
+        }
+        if (Boolean.TRUE.equals(props.get(sendModeBoolean.toString()))) {
+            UIComponent valueComponent = createTextValueComponent(context, "#{r.sendMode}", null, false);
+            createAndAddColumn(context, richList, MessageUtil.getMessage("document_send_mode"), "sendMode", false, valueComponent);
+        }
+        Set<String> keys = props.keySet();
+        final Map<String, String> titleLinkParams = new HashMap<String, String>(2);
+        titleLinkParams.put("nodeRef", "#{r.node.nodeRef}");
+        titleLinkParams.put("caseNodeRef", "#{r.node.nodeRef}");
+        for (FieldDefinition fieldDefinition : searchableFields) {
+            QName primaryQName = fieldDefinition.getQName();
+            QName tamperedQName = RepoUtil.createTransientProp(primaryQName.getLocalName() + "LabelEditable");
+            if (!(keys.contains(getLabelBoolean(primaryQName).toString()) || keys.contains(tamperedQName.toString()))) {
+                // the original field is not visible or the qname has been tampered with
+                log.error("field vanished: " + primaryQName);
+                continue;
+            }
+            if (!(Boolean.TRUE.equals(props.get(getLabelBoolean(primaryQName))) || Boolean.TRUE.equals(props.get(getLabelBoolean(tamperedQName))))) {
+                continue;
+            }
+            String fieldTitle = fieldDefinition.getName();
+            String valueBinding;
+            if (primaryQName.equals(DocumentCommonModel.Props.CASE)) {
+                valueBinding = "#{r.caseLabel}";
+            } else if (primaryQName.equals(DocumentCommonModel.Props.FUNCTION)) {
+                valueBinding = "#{r.functionLabel}";
+            } else if (primaryQName.equals(DocumentCommonModel.Props.SERIES)) {
+                valueBinding = "#{r.seriesLabel}";
+            } else if (primaryQName.equals(DocumentCommonModel.Props.VOLUME)) {
+                valueBinding = "#{r.volumeLabel}";
+            } else {
+                valueBinding = "#{r.properties['" + primaryQName.toPrefixString(getNamespaceService()) + "']}";
+            }
+            List<UIComponent> valueComponent = new ArrayList<UIComponent>();
+            if (primaryQName.equals(DocumentCommonModel.Props.DOC_NAME)) {
+                valueComponent.add(createActionLink(context, valueBinding, "#{DocumentDialog.action}", null, "#{DocumentDialog.open}", "#{r.cssStyleClass ne 'case'}",
+                        titleLinkParams));
+                valueComponent.add(createActionLink(context, valueBinding, null, "dialog:documentListDialog", "#{DocumentListDialog.setup}", "#{r.cssStyleClass == 'case'}",
+                        titleLinkParams));
+            } else if (primaryQName.equals(DocumentCommonModel.Props.VOLUME)) {
+                final Map<String, String> volumeLinkParams = new HashMap<String, String>(1);
+                volumeLinkParams.put("volumeNodeRef", "#{r.properties['" + primaryQName.toPrefixString(getNamespaceService()) + "']}");
+                valueComponent.add(createActionLink(context, valueBinding, null, null, "#{VolumeListDialog.showVolumeContents}", null, volumeLinkParams));
+            } else {
+                boolean multiValued = getDocumentConfigService().getPropertyDefinition(searchFilter, fieldDefinition.getQName()).isMultiValued();
+                valueComponent.add(createTextValueComponent(context, valueBinding, fieldDefinition, multiValued));
+            }
+            createAndAddColumn(context, richList, fieldTitle, primaryQName.getLocalName(), false, valueComponent.toArray(new UIComponent[valueComponent.size()]));
+        }
+        createAndAddColumn(context, richList, MessageUtil.getMessage("document_allFiles"), null, true, createFileColumnContent(context));
     }
 
+    private QName getLabelBoolean(QName propQname) {
+        return QName.createQName(propQname.toString() + WMUIProperty.AFTER_LABEL_BOOLEAN);
+    }
+
+    public UIRichList getRichList() {
+        return null;
+    }
+
+    // TODO refactor these into an util?
+    private static UIColumn createAndAddColumn(FacesContext context, UIRichList richList, String title, String sortLinkValue, boolean disableCsvExport,
+            UIComponent... valueComponent) {
+        Application application = context.getApplication();
+        UIColumn column = (UIColumn) application.createComponent(ColumnTag.COMPONENT_TYPE);
+        UIComponentTagUtils.setValueBinding(context, column, "styleClass", "#{r.cssStyleClass}");
+        if (sortLinkValue != null) {
+            UISortLink sortLink = (UISortLink) application.createComponent("org.alfresco.faces.SortLink");
+            UIComponentTagUtils.setStringProperty(context, sortLink, "styleClass", "header");
+            sortLink.setValue(sortLinkValue);
+            sortLink.setLabel(title);
+            ComponentUtil.addFacet(column, "header", sortLink);
+        } else {
+            HtmlOutputText headerText = (HtmlOutputText) application.createComponent(HtmlOutputText.COMPONENT_TYPE);
+            UIComponentTagUtils.setStringProperty(context, headerText, "styleClass", "header");
+            headerText.setValue(title);
+            ComponentUtil.addFacet(column, "header", headerText);
+        }
+        if (disableCsvExport) {
+            UIParameter param = (UIParameter) application.createComponent("javax.faces.Parameter");
+            param.setValue("false");
+            ComponentUtil.addFacet(column, "csvExport", param);
+        }
+        ComponentUtil.addChildren(column, valueComponent);
+        ComponentUtil.addChildren(richList, column);
+        return column;
+    }
+
+    private static UIComponent createTextValueComponent(FacesContext context, String valueBinding, FieldDefinition fieldDef, boolean multiValued) {
+        Application application = context.getApplication();
+        HtmlOutputText bodyText = (HtmlOutputText) application.createComponent(HtmlOutputText.COMPONENT_TYPE);
+        UIComponentTagUtils.setStringProperty(context, bodyText, "styleClass", "tooltip condence20-");
+        UIComponentTagUtils.setValueProperty(context, bodyText, valueBinding);
+        if (fieldDef != null && fieldDef.getFieldTypeEnum().equals(FieldType.DATE)) {
+            Converter converter = application.createConverter(DatePickerConverter.CONVERTER_ID);
+            bodyText.setConverter(converter);
+        }
+        if (multiValued) {
+            Converter converter = application.createConverter(MultiValueConverter.CONVERTER_ID);
+            bodyText.setConverter(converter);
+        }
+        return bodyText;
+    }
+
+    private static UIComponent createActionLink(FacesContext context, String valueBinding, String actionBinding, String action, String actionListenerBinding,
+            String renderedBinding, Map<String, String> params) {
+        Application application = context.getApplication();
+        UIActionLink link = (UIActionLink) application.createComponent(UIActions.COMPONENT_ACTIONLINK);
+        link.setRendererType(UIActions.RENDERER_ACTIONLINK);
+        if (actionBinding != null) {
+            link.setAction(application.createMethodBinding(actionBinding, null));
+        }
+        if (action != null) {
+            UIComponentTagUtils.setActionProperty(context, link, actionBinding);
+        }
+        link.setActionListener(application.createMethodBinding(actionListenerBinding, new Class[] { javax.faces.event.ActionEvent.class }));
+        if (renderedBinding != null) {
+            UIComponentTagUtils.setValueBinding(context, link, "rendered", renderedBinding);
+        }
+        UIComponentTagUtils.setStringProperty(context, link, "styleClass", "tooltip condence20-");
+        UIComponentTagUtils.setValueProperty(context, link, valueBinding);
+        for (Entry<String, String> entry : params.entrySet()) {
+            ComponentUtil.addChildren(link, ComponentUtil.createUIParam(entry.getKey(), entry.getValue(), application));
+        }
+        return link;
+    }
+
+    private static UIComponent[] createFileColumnContent(FacesContext context) {
+        List<UIComponent> list = new ArrayList<UIComponent>();
+        for (int i = 0; i < 5; i++) {
+            Application application = context.getApplication();
+            {
+                UIComponent eval1 = application.createComponent(DocPermissionEvaluator.class.getCanonicalName());
+                UIComponentTagUtils.setValueProperty(context, eval1, "#{r.files[" + i + "].node}");
+                UIComponentTagUtils.setStringProperty(context, eval1, "allow", "viewDocumentFiles");
+                UIActionLink link = (UIActionLink) application.createComponent(UIActions.COMPONENT_ACTIONLINK);
+                link.setRendererType(UIActions.RENDERER_ACTIONLINK);
+                UIComponentTagUtils.setValueProperty(context, link, "#{r.files[" + i + "].name}");
+                UIComponentTagUtils.setStringProperty(context, link, "href", "#{r.files[" + i + "].downloadUrl}");
+                UIComponentTagUtils.setStringProperty(context, link, "target", "_blank");
+                UIComponentTagUtils.setBooleanProperty(context, link, "showLink", "false");
+                UIComponentTagUtils.setStringProperty(context, link, "image", "/images/icons/#{r.files[" + i + "].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}");
+                UIComponentTagUtils.setStringProperty(context, link, "styleClass", "inlineAction webdav-readOnly");
+                ComponentUtil.addChildren(eval1, link);
+                list.add(eval1);
+            }
+
+            {
+                UIComponent eval1 = application.createComponent(DocPermissionEvaluator.class.getCanonicalName());
+                UIComponentTagUtils.setValueProperty(context, eval1, "#{r.files[" + i + "].node}");
+                UIComponentTagUtils.setStringProperty(context, eval1, "deny", "viewDocumentFiles");
+                HtmlGraphicImage image = (HtmlGraphicImage) application.createComponent(HtmlGraphicImage.COMPONENT_TYPE);
+                UIComponentTagUtils.setValueProperty(context, image, "/images/icons/#{r.files[" + i + "].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}");
+                UIComponentTagUtils.setStringProperty(context, image, "alt", "#{r.files[" + i + "].name}");
+                UIComponentTagUtils.setStringProperty(context, image, "title", "#{r.files[" + i + "].name}");
+                UIComponentTagUtils.setStringProperty(context, image, "rendered", "#{r.files[" + i + "] != null}");
+                ComponentUtil.addChildren(eval1, image);
+                list.add(eval1);
+            }
+        }
+        return list.toArray(new UIComponent[list.size()]);
+    }
 }

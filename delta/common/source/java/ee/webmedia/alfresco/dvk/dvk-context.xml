@@ -32,6 +32,11 @@
    <bean id="deleteDvkOrganizationRegNrParameterBootstrap" class="ee.webmedia.alfresco.common.bootstrap.DeleteNodeByXPathBootstrap" parent="abstractDeleteNodeByXPathBootstrap">
       <property name="moduleId" value="common" />
       <property name="nodeXPath" value="/param:parameters/param:dvkOrganizationRegNr" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>      
    </bean>
 
    <bean id="dvkParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">

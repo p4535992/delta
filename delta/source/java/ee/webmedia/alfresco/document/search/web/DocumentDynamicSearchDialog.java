@@ -8,6 +8,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getPropertySheetStateBe
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,7 @@ import org.alfresco.web.config.PropertySheetConfigElement;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
@@ -42,6 +44,7 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
     private static final long serialVersionUID = 1L;
 
     private static final Log LOG = LogFactory.getLog(DocumentDynamicSearchDialog.class);
+    private static final List<String> defaultCheckedFields = Arrays.asList("regNumber", "regDateTime", "senderName", "recipientName", "docName", "dueDate", "complienceDate");
 
     private List<SelectItem> stores;
     private DocumentConfig config;
@@ -121,9 +124,13 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
             }
 
             TransientNode transientNode = new TransientNode(DocumentSearchModel.Types.FILTER, null, data);
+            transientNode.getProperties().put(DocumentSearchModel.Props.DOCUMENT_TYPE.toString() + WMUIProperty.AFTER_LABEL_BOOLEAN, Boolean.TRUE);
             List<FieldDefinition> searchableFields = BeanHelper.getDocumentAdminService().getSearchableFieldDefinitions();
             for (FieldDefinition fieldDefinition : searchableFields) {
                 PropertyDefinition def = getDocumentConfigService().getPropertyDefinition(transientNode, fieldDefinition.getQName());
+                if (defaultCheckedFields.contains(def.getName().getLocalName())) {
+                    transientNode.getProperties().put(fieldDefinition.getQName().toString() + WMUIProperty.AFTER_LABEL_BOOLEAN, Boolean.TRUE);
+                }
                 if (def.isMultiValued()) {
                     transientNode.getProperties().put(fieldDefinition.getQName().toString(), new ArrayList<Object>());
                 }

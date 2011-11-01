@@ -67,11 +67,20 @@ public class MultiClassificatorSelectorGenerator extends ClassificatorSelectorGe
             public boolean evaluate(Object arg0) {
                 ClassificatorValue classificatorValue = (ClassificatorValue) arg0;
                 try {
-                    Integer.parseInt(classificatorValue.getValueName());
+                    Integer.parseInt(classificatorValue.getValueName().trim());
                     return true;
                 } catch (NumberFormatException e) {
                     return false;
                 }
+            }
+
+        });
+        CollectionUtils.transform(classificatorValues, new Transformer() {
+            @Override
+            public Object transform(Object arg0) {
+                ClassificatorValue classificatorValue = (ClassificatorValue) arg0;
+                classificatorValue.setValueName(classificatorValue.getValueName().trim());
+                return classificatorValue;
             }
 
         });

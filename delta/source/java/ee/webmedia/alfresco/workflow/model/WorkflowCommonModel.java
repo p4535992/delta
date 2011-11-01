@@ -20,6 +20,7 @@ public interface WorkflowCommonModel {
         QName COMPOUND_WORKFLOW = QName.createQName(URI, "compoundWorkflow");
         QName WORKFLOW = QName.createQName(URI, "workflow");
         QName TASK = QName.createQName(URI, "task");
+        QName DUE_DATE_HISTORY = QName.createQName(URI, "dueDateHistory");
     }
 
     interface Assocs {
@@ -60,6 +61,10 @@ public interface WorkflowCommonModel {
         QName COMPLETED_DATE_TIME = QName.createQName(URI, "completedDateTime");
         QName OWNER_ORGANIZATION_NAME = QName.createQName(URI, "ownerOrganizationName");
         QName OWNER_JOB_TITLE = QName.createQName(URI, "ownerJobTitle");
+
+        // Due date history
+        QName PREVIOUS_DUE_DATE = QName.createQName(URI, "previousDueDate");
+        QName CHANGE_REASON = QName.createQName(URI, "changeReason");
 
     }
 

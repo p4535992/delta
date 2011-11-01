@@ -6,8 +6,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.InitializingBean;
 
-import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
-import ee.webmedia.alfresco.docadmin.service.DocumentType;
+import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.service.MenuService.MenuItemProcessor;
 import ee.webmedia.alfresco.user.service.UserService;
@@ -19,7 +18,7 @@ public class AdministratorMenuItemProcessor implements MenuItemProcessor, Initia
 
     private MenuService menuService;
     private UserService userService;
-    private DocumentAdminService documentAdminService;
+    private EInvoiceService einvoiceService;
     private final List<String> invoiceRelated = Arrays.asList("dimensions", "transactionTemplates", "transactionDescParameters");
 
     @Override
@@ -27,9 +26,7 @@ public class AdministratorMenuItemProcessor implements MenuItemProcessor, Initia
         List<MenuItem> subItems = menuItem.getSubItems();
 
         // Remove invoice related menu items
-        DocumentType documentType = documentAdminService.getDocumentType("invoice");
-        // FIXME DLSeadist - Kui kõik süsteemsed dok.liigid on defineeritud, siis võib null kontrolli eemdaldada
-        if (documentType == null || !documentType.isUsed()) {
+        if (!einvoiceService.isEinvoiceEnabled()) {
             for (Iterator<MenuItem> iterator = subItems.iterator(); iterator.hasNext();) {
                 MenuItem item = iterator.next();
                 if (invoiceRelated.contains(item.getId())) {
@@ -93,8 +90,8 @@ public class AdministratorMenuItemProcessor implements MenuItemProcessor, Initia
         this.userService = userService;
     }
 
-    public void setDocumentAdminService(DocumentAdminService documentAdminService) {
-        this.documentAdminService = documentAdminService;
+    public void setEinvoiceService(EInvoiceService einvoiceService) {
+        this.einvoiceService = einvoiceService;
     }
 
 }

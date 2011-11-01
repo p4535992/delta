@@ -49,6 +49,11 @@
       <component-type>javax.faces.component.UICommand</component-type>
       <component-class>javax.faces.component.UICommand</component-class>
    </component>
+   
+   <component>
+      <component-type>ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent</component-type>
+      <component-class>ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent</component-class>
+   </component>    
 
    <converter>
       <converter-id>ee.webmedia.alfresco.common.propertysheet.converter.QNameConverter</converter-id>
@@ -349,7 +354,13 @@
           <component-family>javax.faces.SelectOne</component-family>
           <renderer-type>ee.webmedia.alfresco.common.propertysheet.classificatorselector.LabelAndValueSelectorRenderer</renderer-type>
           <renderer-class>ee.webmedia.alfresco.common.propertysheet.classificatorselector.LabelAndValueSelectorRenderer</renderer-class>
-      </renderer>      
+      </renderer>
+      
+      <renderer>
+          <component-family>javax.faces.Command</component-family>
+          <renderer-type>ee.webmedia.alfresco.common.propertysheet.renderer.HtmlButtonRenderer</renderer-type>
+          <renderer-class>ee.webmedia.alfresco.common.propertysheet.renderer.HtmlButtonRenderer</renderer-class>
+      </renderer>
      
    </render-kit>
 

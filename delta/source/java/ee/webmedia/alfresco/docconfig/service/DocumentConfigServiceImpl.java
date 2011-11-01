@@ -6,7 +6,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -164,6 +163,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
             itemConfig.setDisplayLabelId("document_docType");
             itemConfig.setComponentGenerator("GeneralSelectorGenerator");
             itemConfig.setSelectionItems("#{DocumentSearchBean.getDocumentTypes}");
+            itemConfig.setRenderCheckboxAfterLabel(true);
             itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
             config.getPropertySheetConfigElement().addItem(itemConfig);
         }
@@ -176,16 +176,16 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
             ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.SEND_MODE.toString());
             itemConfig.setDisplayLabelId("document_send_mode");
             itemConfig.setComponentGenerator("ClassificatorSelectorGenerator");
-            itemConfig.setClassificatorName("sendModeSearch");
+            itemConfig.setRenderCheckboxAfterLabel(true);
+            itemConfig.setClassificatorName("transmittalMode"); // sendModeSearch classificator is deprecated
             itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
             config.getPropertySheetConfigElement().addItem(itemConfig);
         }
 
         List<FieldDefinition> fields = documentAdminService.getSearchableFieldDefinitions();
-        Collections.sort(fields, searchFieldComparator);
         for (FieldDefinition fieldDefinition : fields) {
             processFieldForSearchView(fieldDefinition);
-            processField(config, fieldDefinition);
+            processField(config, fieldDefinition, true);
             if (fieldDefinition.getFieldId().equals("regNumber")) {
                 ItemConfigVO itemConfig = new ItemConfigVO(DocumentDynamicModel.Props.SHORT_REG_NUMBER.toString());
                 itemConfig.setDisplayLabelId("document_shortRegNumber");
@@ -261,18 +261,6 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
         return config;
     }
 
-    private static final Comparator<FieldDefinition> searchFieldComparator = new Comparator<FieldDefinition>() {
-        @Override
-        public int compare(FieldDefinition o1, FieldDefinition o2) {
-            Integer order1 = o1.getParameterOrderInDocSearch();
-            Integer order2 = o2.getParameterOrderInDocSearch();
-            if (order1 == null) {
-                return order2 == null ? 0 : -1;
-            }
-            return order2 == null ? 1 : order1.compareTo(order2);
-        }
-    };
-
     private Pair<DocumentType, DocumentTypeVersion> getDocumentTypeAndVersion(Node documentDynamicNode) {
         Pair<String, Integer> docTypeIdAndVersionNr = getDocTypeIdAndVersionNr(documentDynamicNode);
         return getDocumentTypeAndVersion(docTypeIdAndVersionNr);
@@ -282,14 +270,14 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
         String docTypeId = docTypeIdAndVersionNr.getFirst();
         Integer docTypeVersionNr = docTypeIdAndVersionNr.getSecond();
 
-        DocumentType docType = documentAdminService.getDocumentType(docTypeId);
+        DocumentType docType = documentAdminService.getDocumentType(docTypeId, DocumentAdminService.DOC_TYPE_WITH_OUT_GRAND_CHILDREN);
         if (docType == null) {
             throw new RuntimeException("documentType with documentTypeId=" + docTypeId + " not found");
         }
         DocumentTypeVersion docVersion = null;
-        List<? extends DocumentTypeVersion> versions = docType.getDocumentTypeVersions().getList();
-        for (DocumentTypeVersion version : versions) {
+        for (DocumentTypeVersion version : docType.getDocumentTypeVersions()) {
             if (docTypeVersionNr == version.getVersionNr()) {
+                BeanHelper.getBaseService().loadChildren(version, null);
                 docVersion = version;
                 break;
             }
@@ -311,10 +299,10 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
         DocumentConfig config = getEmptyConfig(docType.getName());
 
         int separatorCount = 0;
-        for (MetadataItem metadataItem : docVersion.getMetadata().getList()) {
+        for (MetadataItem metadataItem : docVersion.getMetadata()) {
             if (metadataItem instanceof Field) {
                 Field field = (Field) metadataItem;
-                processField(config, field);
+                processField(config, field, false);
 
             } else if (metadataItem instanceof SeparatorLine) {
                 processSeparatorLine(config, separatorCount++);
@@ -404,15 +392,16 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
     private void processFieldGroup(DocumentConfig config, FieldGroup fieldGroup) {
         ChildrenList<Field> fields = fieldGroup.getFields();
         for (Field field : fields) {
-            processField(config, field);
+            processField(config, field, false);
         }
     }
 
-    private boolean processField(DocumentConfig config, Field field) {
+    private boolean processField(DocumentConfig config, Field field, boolean renderCheckboxAfterLabel) {
         String name = field.getQName().toPrefixString(namespaceService);
         ItemConfigVO item = new ItemConfigVO(name);
         item.setConfigItemType(ConfigItemType.PROPERTY);
         item.setIgnoreIfMissing(false);
+        item.setRenderCheckboxAfterLabel(renderCheckboxAfterLabel);
         item.setDisplayLabel(field.getName());
 
         // Default values:
@@ -642,7 +631,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
         if (field.getFieldTypeEnum().equals(FieldType.USER_CONTACT)) {
             field.setFieldTypeEnum(FieldType.USERS_CONTACTS);
         }
-        field.setDateForSearch(Boolean.TRUE);
+        field.setForSearch(Boolean.TRUE);
         field.setChangeableIfEnum(FieldChangeableIf.ALWAYS_CHANGEABLE);
         field.setMandatory(false);
     }
@@ -741,7 +730,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
 
         @Override
         public String getTitle() {
-            return null;
+            return title;
         }
 
         @Override

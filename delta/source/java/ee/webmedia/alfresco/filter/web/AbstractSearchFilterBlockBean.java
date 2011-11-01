@@ -149,7 +149,6 @@ public abstract class AbstractSearchFilterBlockBean<T extends FilterService> ext
     public HtmlInputText getSearchTitleInput() {
         if (searchTitleInput == null) {
             searchTitleInput = new HtmlInputText();
-            // value="#{DocumentSearchDialog.filter.properties['{http://alfresco.webmedia.ee/model/document/search/1.0}name']}"
             String filterName = (String) filter.getProperties().get(getFilterNameProperty());
             searchTitleInput.setValue(filterName);
         }

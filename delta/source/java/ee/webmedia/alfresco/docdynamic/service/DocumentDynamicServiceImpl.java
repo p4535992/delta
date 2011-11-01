@@ -81,7 +81,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     @Override
     public NodeRef createNewDocument(String documentTypeId, NodeRef parent) {
         QName type = DocumentCommonModel.Types.DOCUMENT;
-        DocumentType documentType = documentAdminService.getDocumentType(documentTypeId);
+        DocumentType documentType = documentAdminService.getDocumentType(documentTypeId, DocumentAdminService.DOC_TYPE_WITH_OUT_GRAND_CHILDREN_EXEPT_LATEST_DOCTYPE_VER);
 
         Map<QName, Serializable> props = new HashMap<QName, Serializable>();
         props.put(Props.OBJECT_TYPE_ID, documentType.getDocumentTypeId());

@@ -112,6 +112,7 @@ import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
 import ee.webmedia.alfresco.document.file.model.File;
@@ -130,9 +131,7 @@ import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.sendout.web.DocumentSendOutDialog;
-import ee.webmedia.alfresco.document.type.model.DocumentType;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeHelper;
-import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.imap.model.ImapModel;
 import ee.webmedia.alfresco.menu.service.MenuService;
@@ -178,7 +177,6 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
     protected NodeService nodeService;
     private CopyService copyService;
     protected GeneralService generalService;
-    private DocumentTypeService documentTypeService;
     private DocumentTemplateService documentTemplateService;
     private RegisterService registerService;
     protected VolumeService volumeService;
@@ -2081,20 +2079,19 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
                     }
                 }
                 // Check if its a reply outgoing letter and update originating document info (if needed)
-                if (StringUtils.isNotBlank(regNumber) && (documentTypeId.equals(DocumentSubtypeModel.Types.OUTGOING_LETTER)
-                        || documentTypeId.equals(DocumentSubtypeModel.Types.OUTGOING_LETTER_MV))) {
+                if (StringUtils.isNotBlank(regNumber) && documentTypeId.equals(DocumentSubtypeModel.Types.OUTGOING_LETTER)) {
                     if (replyAssocs.size() > 0) {
                         final NodeRef originalDocRef = replyAssocs.get(0).getTargetRef();
                         if (nodeService.hasAspect(originalDocRef, DocumentSpecificModel.Aspects.COMPLIENCE)) {
                             Date complienceDate = (Date) nodeService.getProperty(originalDocRef, DocumentSpecificModel.Props.COMPLIENCE_DATE);
-                            if (complienceDate == null) {
+                            if (complienceDate == null && !workflowService.hasInProgressOtherUserOrderAssignmentTasks(originalDocRef)) {
                                 setPropertyAsSystemUser(DocumentSpecificModel.Props.COMPLIENCE_DATE, now, originalDocRef);
                                 setDocStatusFinished(originalDocRef);
                             }
                         }
                         DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
                         String comment = I18NUtil.getMessage("task_comment_finished_by_register_doc", regNumber, dateFormat.format(now));
-                        workflowService.finishCompoundWorkflowsOnRegisterDoc(originalDocRef, comment);
+                        workflowService.finishTasksOrCompoundWorkflowsOnRegisterDoc(originalDocRef, comment);
                     }
                 }
                 // Check if its a reply outgoing mv letter and update originating document info (if needed)
@@ -2154,7 +2151,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
 
             throwIfNotDynamicDoc(docNode);
             String dynDocTypeId = (String) docNode.getProperties().get(Props.OBJECT_TYPE_ID);
-            if (getDocumentAdminService().getDocumentType(dynDocTypeId).isFinishDocByRegistration()) {
+            if (getDocumentAdminService().getDocumentTypeProperty(dynDocTypeId, DocumentAdminModel.Props.FINISH_DOC_BY_REGISTRATION, Boolean.class)) {
                 props.put(DOC_STATUS.toString(), DocumentStatus.FINISHED.getValueName());
                 propertyChangesMonitorHelper.addIgnoredProps(props, DOC_STATUS);
                 documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_registered"));
@@ -2228,7 +2225,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
             if (!assocInf.isCase()) {// document association, not case
                 final Node otherDocNode = new Node(sourceRef);
                 assocInf.setTitle((String) nodeService.getProperty(sourceRef, DOC_NAME));
-                assocInf.setType(documentTypeService.getDocumentType(otherDocNode.getType()).getName());
+                assocInf.setType(getDocumentAdminService().getDocumentTypeName(otherDocNode));
                 assocInf.setRegNumber((String) nodeService.getProperty(sourceRef, REG_NUMBER));
                 assocInf.setRegDateTime((Date) nodeService.getProperty(sourceRef, REG_DATE_TIME));
             }
@@ -2248,7 +2245,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
             assocInf.setTitle((String) otherDocProps.get(DOC_NAME));
             assocInf.setRegNumber((String) otherDocProps.get(REG_NUMBER));
             assocInf.setRegDateTime((Date) otherDocProps.get(REG_DATE_TIME));
-            assocInf.setType(documentTypeService.getDocumentType(otherDocNode.getType()).getName());
+            assocInf.setType(getDocumentAdminService().getDocumentTypeName(otherDocNode));
             assocInf.setNodeRef(assocRef.getTargetRef());
         }
         assocInf.setSource(isSourceAssoc);
@@ -2611,10 +2608,10 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         sb.append(" ");
         sb.append(Utils.getDateFormat(FacesContext.getCurrentInstance()).format(existingRegDate));
 
-        DocumentType documentType = documentTypeService.getDocumentType(docNode.getType());
-        if (documentType != null) {
+        String documentType = getDocumentAdminService().getDocumentTypeName(docNode);
+        if (StringUtils.isNotBlank(documentType)) {
             sb.append(" ");
-            sb.append(documentType.getName());
+            sb.append(documentType);
         }
 
         return FilenameUtil.buildFileName(sb.toString(), "ddoc");
@@ -2840,16 +2837,6 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
     private static Map<QName/* searchable */, List<QName>/* filter */> searchableToFilter = new HashMap<QName, List<QName>>();
     private static Map<QName/* searchable */, List<QName>/* document */> searchableToDocument = new HashMap<QName, List<QName>>();
     static {
-        searchableToFilter.put(SEARCHABLE_COST_MANAGER, Arrays.asList(DocumentSearchModel.Props.COST_MANAGER));
-        searchableToFilter.put(SEARCHABLE_APPLICANT_NAME, Arrays.asList(DocumentSearchModel.Props.APPLICANT_NAME));
-        searchableToFilter.put(SEARCHABLE_ERRAND_BEGIN_DATE, Arrays.asList(DocumentSearchModel.Props.ERRAND_BEGIN_DATE_BEGIN,
-                DocumentSearchModel.Props.ERRAND_BEGIN_DATE_END));
-        searchableToFilter.put(SEARCHABLE_ERRAND_END_DATE, Arrays.asList(DocumentSearchModel.Props.ERRAND_END_DATE_BEGIN,
-                DocumentSearchModel.Props.ERRAND_END_DATE_END));
-        searchableToFilter.put(SEARCHABLE_ERRAND_COUNTRY, Arrays.asList(DocumentSearchModel.Props.ERRAND_COUNTRY));
-        searchableToFilter.put(SEARCHABLE_ERRAND_COUNTY, Arrays.asList(DocumentSearchModel.Props.ERRAND_COUNTY));
-        searchableToFilter.put(SEARCHABLE_ERRAND_CITY, Arrays.asList(DocumentSearchModel.Props.ERRAND_CITY));
-
         searchableToDocument.put(SEARCHABLE_COST_MANAGER, Arrays.asList(DocumentSpecificModel.Props.COST_MANAGER));
         searchableToDocument.put(SEARCHABLE_APPLICANT_NAME, Arrays.asList(DocumentSpecificModel.Props.APPLICANT_NAME,
                 DocumentSpecificModel.Props.PROCUREMENT_APPLICANT_NAME));
@@ -3195,10 +3182,6 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
 
     public void setSeriesService(SeriesService seriesService) {
         this.seriesService = seriesService;
-    }
-
-    public void setDocumentTypeService(DocumentTypeService documentTypeService) {
-        this.documentTypeService = documentTypeService;
     }
 
     public void setDocumentTemplateService(DocumentTemplateService documentTemplateService) {

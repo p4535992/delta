@@ -107,6 +107,10 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
         return addTask(tasks.size());
     }
 
+    public boolean hasTaskResolution() {
+        return newTaskTemplate.hasAspect(WorkflowSpecificModel.Aspects.RESOLUTION);
+    }
+
     public Task addTask(int index) {
         if (newTaskTemplate == null || newTaskClass == null) {
             throw new RuntimeException("Adding tasks is not allowed");

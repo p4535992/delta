@@ -48,7 +48,7 @@
       <%-- Is the register resets automatically--%>
       <a:column id="colAutoReset" style="text-align:right">
          <f:facet name="header">
-            <h:outputText id="colAutoReset-txt" value="#{msg.register_autoReset}" />
+            <h:outputText id="colAutoReset-txt" value="#{msg.register_autoReset_title}" />
          </f:facet>
          <h:outputText id="regAutoReset" value="#{r.autoReset}"><a:convertBoolean /></h:outputText>
       </a:column>

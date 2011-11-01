@@ -56,12 +56,15 @@ public class BaseServiceImpl implements BaseService {
         typeMappings.put(type, clazz);
     }
 
-    // TODO in the future, if there is need for it, implement limit loading of hierarchy in certain points
-
     @Override
     public <T extends BaseObject> T getObject(NodeRef nodeRef, Class<T> returnCompatibleClass) {
+        return getObject(nodeRef, returnCompatibleClass, null);
+    }
+
+    @Override
+    public <T extends BaseObject> T getObject(NodeRef nodeRef, Class<T> returnCompatibleClass, Effort effort) {
         NodeRef parentRef = nodeService.getPrimaryParent(nodeRef).getParentRef();
-        BaseObject object = getObject(nodeRef, parentRef, null);
+        BaseObject object = getObject(nodeRef, parentRef, null, effort);
 
         if (!returnCompatibleClass.isAssignableFrom(object.getClass())) {
             throw new IllegalArgumentException("Based on nodeRef type object class should be " + object.getClass()
@@ -88,23 +91,28 @@ public class BaseServiceImpl implements BaseService {
 
     @Override
     public <T extends BaseObject> List<T> getChildren(NodeRef parentRef, Class<T> childrenClass, Predicate<T> mustIncludePredicate) {
+        return getChildren(parentRef, childrenClass, mustIncludePredicate, null);
+    }
+
+    @Override
+    public <T extends BaseObject> List<T> getChildren(NodeRef parentRef, Class<T> childrenClass, Predicate<T> mustIncludePredicate, Effort effort) {
         List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parentRef);
         List<NodeRef> resultRefs = new ArrayList<NodeRef>(childAssocs.size());
         for (ChildAssociationRef childAssoc : childAssocs) {
             resultRefs.add(childAssoc.getChildRef());
         }
-        return getObjects(resultRefs, childrenClass, mustIncludePredicate);
+        return getObjects(resultRefs, childrenClass, mustIncludePredicate, effort);
     }
 
     @Override
     public <T extends BaseObject> List<T> getObjects(List<NodeRef> resultRefs, Class<T> resultClass) {
-        return getObjects(resultRefs, resultClass, null);
+        return getObjects(resultRefs, resultClass, null, null);
     }
 
-    private <T extends BaseObject> List<T> getObjects(List<NodeRef> resultRefs, Class<T> resultClass, Predicate<T> mustIncludePredicate) {
+    private <T extends BaseObject> List<T> getObjects(List<NodeRef> resultRefs, Class<T> resultClass, Predicate<T> mustIncludePredicate, Effort effort) {
         ArrayList<T> results = new ArrayList<T>(resultRefs.size());
         for (NodeRef nodeRef : resultRefs) {
-            T object = getObject(nodeRef, resultClass);
+            T object = getObject(nodeRef, resultClass, effort);
             if (mustIncludePredicate == null || mustIncludePredicate.evaluate(object)) {
                 results.add(object);
             }
@@ -112,7 +120,7 @@ public class BaseServiceImpl implements BaseService {
         return results;
     }
 
-    private <T extends BaseObject> T getObject(NodeRef nodeRef, NodeRef parentRef, BaseObject parent) {
+    private <T extends BaseObject> T getObject(NodeRef nodeRef, NodeRef parentRef, BaseObject parent, Effort effort) {
         Set<QName> aspects = RepoUtil.getAspectsIgnoringSystem(nodeService.getAspects(nodeRef));
         Map<QName, Serializable> properties = RepoUtil.getPropertiesIgnoringSystem(nodeService.getProperties(nodeRef), dictionaryService);
         WmNode node = new WmNode(nodeRef, nodeService.getType(nodeRef), aspects, properties);
@@ -127,11 +135,33 @@ public class BaseServiceImpl implements BaseService {
         } else {
             object = BaseObject.createNewWithParentObject(clazz, parent, node);
         }
-        for (ChildAssociationRef childAssociationRef : nodeService.getChildAssocs(nodeRef)) {
-            BaseObject child = getObject(childAssociationRef.getChildRef(), null, object);
-            object.addLoadedChild(child);
+        if (effort == null || effort.isReturnChildren(object)) {
+            loadChildrenInner(object, effort);
+        } else {
+            object.setProp(CHILDREN_NOT_LOADED, true);
         }
         return object;
+    }
+
+    @Override
+    public <T extends BaseObject> void loadChildren(T parent, Effort effort) {
+        Assert.isTrue(parent.getPropBoolean(CHILDREN_NOT_LOADED), "trying to load children of object that doesn't claim that its children have not been loaded!");
+        loadChildrenInner(parent, effort);
+        parent.getNode().getProperties().remove(CHILDREN_NOT_LOADED);
+    }
+
+    private <T extends BaseObject> void loadChildrenInner(T parent, Effort effort) {
+        parent.setProp(CHILDREN_LOADING_IN_PROGRESS, true);
+        for (ChildAssociationRef childAssociationRef : nodeService.getChildAssocs(parent.getNodeRef())) {
+            NodeRef childRef = childAssociationRef.getChildRef();
+            loadChild(parent, childRef, effort);
+        }
+        parent.getNode().getProperties().remove(CHILDREN_LOADING_IN_PROGRESS);
+    }
+
+    private <T extends BaseObject> void loadChild(T object, NodeRef childRef, Effort effort) {
+        BaseObject child = getObject(childRef, null, object, effort);
+        object.addLoadedChild(child);
     }
 
     @Override
@@ -160,7 +190,6 @@ public class BaseServiceImpl implements BaseService {
                 NodeRef nodeRef = nodeService.createNode(parent, object.getAssocType(), object.getAssocName(), node.getType(), props).getChildRef();
                 node.updateNodeRef(nodeRef);
                 changed = true;
-
                 // adding additional aspects not implemented - TODO if necessary
                 // removing aspects is not implemented - not needed
             } else {

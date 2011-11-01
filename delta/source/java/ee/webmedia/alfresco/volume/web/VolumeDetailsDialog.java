@@ -155,6 +155,7 @@ public class VolumeDetailsDialog extends BaseDialogBean {
         @SuppressWarnings("unchecked")
         List<String> seriesVolTypes = (List<String>) BeanHelper.getNodeService().getProperty(currentEntry.getSeriesNodeRef(), SeriesModel.Props.VOL_TYPE);
         List<SelectItem> selectItems = new ArrayList<SelectItem>(seriesVolTypes.size());
+        ComponentUtil.addDefault(selectItems, context);
         for (String volType : seriesVolTypes) {
             if (!volType.equals(VolumeType.CASE_FILE.name())) {
                 selectItems.add(new SelectItem(volType, MessageUtil.getMessage(VolumeType.valueOf(volType))));

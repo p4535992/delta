@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.notification.service;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
@@ -183,8 +184,8 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public void notifyWorkflowEvent(Workflow workflow, WorkflowEventType eventType) {
-        Notification notification = processNotification(workflow, new Notification(), eventType);
-        if (notification == null) { // no need for sending out emails
+        List<Notification> notifications = processNotification(workflow, eventType);
+        if (notifications == null) { // no need for sending out emails
             return;
         }
 
@@ -195,10 +196,12 @@ public class NotificationServiceImpl implements NotificationService {
         templateDataNodeRefs.put("workflow", workflow.getNodeRef());
         templateDataNodeRefs.put("compoundWorkflow", workflow.getParent().getNodeRef());
 
-        try {
-            sendNotification(notification, docRef, templateDataNodeRefs);
-        } catch (EmailException e) {
-            log.error("Workflow event notification e-mail sending failed, ignoring and continuing", e);
+        for (Notification notification : notifications) {
+            try {
+                sendNotification(notification, docRef, templateDataNodeRefs);
+            } catch (EmailException e) {
+                log.error("Workflow event notification e-mail sending failed, ignoring and continuing", e);
+            }
         }
     }
 
@@ -317,40 +320,51 @@ public class NotificationServiceImpl implements NotificationService {
         }
     }
 
-    private Notification processNotification(Workflow workflow, Notification notification, WorkflowEventType eventType) {
+    private List<Notification> processNotification(Workflow workflow, WorkflowEventType eventType) {
 
         if (workflow.isStatus(Status.FINISHED)) {
-            return processFinishedWorkflow(workflow, notification);
+            return processFinishedWorkflow(workflow);
         } else if (workflow.isStatus(Status.IN_PROGRESS) && eventType.equals(WorkflowEventType.WORKFLOW_STARTED_AUTOMATICALLY)) {
-            return processNewWorkflow(workflow, notification, true);
+            Notification newWorkflowNotification = processNewWorkflow(workflow, true);
+            if (newWorkflowNotification != null) {
+                return new ArrayList<Notification>(Arrays.asList(newWorkflowNotification));
+            }
         }
 
         return null;
     }
 
-    private Notification processNewWorkflow(Workflow workflow, Notification notification, boolean automaticallyStarted) {
+    private Notification processNewWorkflow(Workflow workflow, boolean automaticallyStarted) {
         final CompoundWorkflow compoundWorkflow = workflow.getParent();
-
+        Notification notification = null;
         if (automaticallyStarted) {
-            if (!isSubscribed(compoundWorkflow.getOwnerId(), NotificationModel.NotificationType.WORKFLOW_NEW_WORKFLOW_STARTED)) {
-                return null;
+            if (isSubscribed(compoundWorkflow.getOwnerId(), NotificationModel.NotificationType.WORKFLOW_NEW_WORKFLOW_STARTED)) {
+                notification = setupNotification(new Notification(), NotificationModel.NotificationType.WORKFLOW_NEW_WORKFLOW_STARTED);
+                notification.addRecipient(compoundWorkflow.getOwnerName(), userService.getUserEmail(compoundWorkflow.getOwnerId()));
             }
-            notification = setupNotification(notification, NotificationModel.NotificationType.WORKFLOW_NEW_WORKFLOW_STARTED);
-            notification.addRecipient(compoundWorkflow.getOwnerName(), userService.getUserEmail(compoundWorkflow.getOwnerId()));
         }
         return notification;
     }
 
-    private Notification processFinishedWorkflow(Workflow workflow, Notification notification) {
+    private List<Notification> processFinishedWorkflow(Workflow workflow) {
         final CompoundWorkflow compoundWorkflow = workflow.getParent();
 
-        if (!isSubscribed(compoundWorkflow.getOwnerId(), NotificationModel.NotificationType.WORKFLOW_WORKFLOW_COMPLETED)) {
-            return null;
+        List<Notification> notifications = new ArrayList<Notification>();
+        if (isSubscribed(compoundWorkflow.getOwnerId(), NotificationModel.NotificationType.WORKFLOW_WORKFLOW_COMPLETED)) {
+            Notification notification = setupNotification(new Notification(), NotificationModel.NotificationType.WORKFLOW_WORKFLOW_COMPLETED);
+            notification.addRecipient(compoundWorkflow.getOwnerName(), userService.getUserEmail(compoundWorkflow.getOwnerId()));
+            notifications.add(notification);
         }
-        notification = setupNotification(notification, NotificationModel.NotificationType.WORKFLOW_WORKFLOW_COMPLETED);
-        notification.addRecipient(compoundWorkflow.getOwnerName(), userService.getUserEmail(compoundWorkflow.getOwnerId()));
+        if (workflow.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW)) {
+            String ownerId = compoundWorkflow.getOwnerId();
+            if (isSubscribed(ownerId, NotificationModel.NotificationType.TASK_ORDER_ASSIGNMENT_WORKFLOW_COMPLETED)) {
+                Notification notification = setupNotification(new Notification(), NotificationModel.NotificationType.TASK_ORDER_ASSIGNMENT_WORKFLOW_COMPLETED);
+                notification.addRecipient(compoundWorkflow.getOwnerName(), userService.getUserEmail(ownerId));
+                notifications.add(notification);
+            }
+        }
+        return notifications;
 
-        return notification;
     }
 
     private Notification processNotification(Task task, Notification notification) {
@@ -374,6 +388,10 @@ public class NotificationServiceImpl implements NotificationService {
                 notification = processAssignmentTask(task, notification);
             }
 
+            else if (taskType.equals(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK)) {
+                notification = processOrderAssignmentTask(task, notification);
+            }
+
             else if (taskType.equals(WorkflowSpecificModel.Types.REVIEW_TASK)) {
                 notification = processReviewTask(task, notification);
             }
@@ -384,7 +402,12 @@ public class NotificationServiceImpl implements NotificationService {
 
             else if (taskType.equals(WorkflowSpecificModel.Types.INFORMATION_TASK)) {
                 notification = processInformationTask(task, notification);
+            } else if (taskType.equals(WorkflowSpecificModel.Types.CONFIRMATION_TASK)) {
+                notification = processConfirmationTask(task, notification);
+            } else if (taskType.equals(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK)) {
+                notification = processDueDateExtensionTask(task, notification);
             }
+
         }
 
         return notification;
@@ -605,6 +628,67 @@ public class NotificationServiceImpl implements NotificationService {
         return null;
     }
 
+    private Notification processOrderAssignmentWorkflow(Task task, Notification notification) {
+        CompoundWorkflow compoundWorkflow = task.getParent().getParent();
+        String ownerId = compoundWorkflow.getOwnerId();
+        if (!isSubscribed(ownerId, NotificationModel.NotificationType.TASK_ORDER_ASSIGNMENT_WORKFLOW_COMPLETED)) {
+            return null;
+        }
+        notification = setupNotification(notification, NotificationModel.NotificationType.TASK_ORDER_ASSIGNMENT_WORKFLOW_COMPLETED);
+        notification.addRecipient(compoundWorkflow.getOwnerName(), userService.getUserEmail(ownerId));
+        return notification;
+    }
+
+    private Notification processOrderAssignmentTask(Task task, Notification notification) {
+        if (!Boolean.TRUE.equals(task.getProp(WorkflowSpecificModel.Props.SEND_ORDER_ASSIGNMENT_COMPLETED_EMAIL))) {
+            return null;
+        }
+        notification = setupNotification(notification, NotificationModel.NotificationType.TASK_ORDER_ASSIGNMENT_TASK_COMPLETED);
+        notification.addRecipient(task.getCreatorName(), task.getCreatorEmail());
+        return notification;
+    }
+
+    private Notification processConfirmationTask(Task task, Notification notification) {
+        CompoundWorkflow compoundWorkflow = task.getParent().getParent();
+        String ownerId = compoundWorkflow.getOwnerId();
+        if (WorkflowSpecificModel.ConfirmationTaskOutcome.ACCEPTED.equals(task.getOutcomeIndex())) {
+            if (!isSubscribed(ownerId, NotificationModel.NotificationType.TASK_CONFIRMATION_TASK_COMPLETED)) {
+                return null;
+            }
+            notification = setupNotification(notification, NotificationModel.NotificationType.TASK_CONFIRMATION_TASK_COMPLETED);
+            notification.addRecipient(compoundWorkflow.getOwnerName(), userService.getUserEmail(ownerId));
+            return notification;
+        } else if (WorkflowSpecificModel.ConfirmationTaskOutcome.NOT_ACCEPTED.equals(task.getOutcomeIndex())) {
+            if (!isSubscribed(ownerId, NotificationModel.NotificationType.TASK_CONFIRMATION_TASK_COMPLETED_NOT_ACCEPTED)) {
+                return null;
+            }
+            notification = setupNotification(notification, NotificationModel.NotificationType.TASK_CONFIRMATION_TASK_COMPLETED_NOT_ACCEPTED);
+            notification.addRecipient(compoundWorkflow.getOwnerName(), userService.getUserEmail(ownerId));
+            return notification;
+        }
+        return null;
+    }
+
+    private Notification processDueDateExtensionTask(Task task, Notification notification) {
+        String creatorId = task.getCreatorId();
+        if (WorkflowSpecificModel.DueDateExtensionTaskOutcome.ACCEPTED.equals(task.getOutcomeIndex())) {
+            if (!isSubscribed(creatorId, NotificationModel.NotificationType.TASK_DUE_DATE_EXTENSION_TASK_COMPLETED)) {
+                return null;
+            }
+            notification = setupNotification(notification, NotificationModel.NotificationType.TASK_DUE_DATE_EXTENSION_TASK_COMPLETED);
+            notification.addRecipient(task.getCreatorName(), task.getCreatorEmail());
+            return notification;
+        } else if (WorkflowSpecificModel.ConfirmationTaskOutcome.NOT_ACCEPTED.equals(task.getOutcomeIndex())) {
+            if (!isSubscribed(creatorId, NotificationModel.NotificationType.TASK_DUE_DATE_EXTENSION_TASK_COMPLETED_NOT_ACCEPTED)) {
+                return null;
+            }
+            notification = setupNotification(notification, NotificationModel.NotificationType.TASK_DUE_DATE_EXTENSION_TASK_COMPLETED_NOT_ACCEPTED);
+            notification.addRecipient(task.getCreatorName(), task.getCreatorEmail());
+            return notification;
+        }
+        return null;
+    }
+
     private Notification processOpinionTask(Task task, Notification notification) {
         final CompoundWorkflow compoundWorkflow = task.getParent().getParent();
         if (StringUtils.isNotEmpty(task.getOwnerId())) {
@@ -677,6 +761,12 @@ public class NotificationServiceImpl implements NotificationService {
         notificationProps.add(NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED);
         notificationProps.add(NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_WITH_REMARKS);
         notificationProps.add(NotificationModel.NotificationType.TASK_SIGNATURE_TASK_COMPLETED);
+        notificationProps.add(NotificationModel.NotificationType.TASK_ORDER_ASSIGNMENT_WORKFLOW_COMPLETED);
+        notificationProps.add(NotificationModel.NotificationType.TASK_ORDER_ASSIGNMENT_TASK_COMPLETED);
+        notificationProps.add(NotificationModel.NotificationType.TASK_CONFIRMATION_TASK_COMPLETED);
+        notificationProps.add(NotificationModel.NotificationType.TASK_CONFIRMATION_TASK_COMPLETED_NOT_ACCEPTED);
+        notificationProps.add(NotificationModel.NotificationType.TASK_DUE_DATE_EXTENSION_TASK_COMPLETED);
+        notificationProps.add(NotificationModel.NotificationType.TASK_DUE_DATE_EXTENSION_TASK_COMPLETED_NOT_ACCEPTED);
         notificationProps.add(NotificationModel.NotificationType.WORKFLOW_NEW_WORKFLOW_STARTED);
         notificationProps.add(NotificationModel.NotificationType.WORKFLOW_WORKFLOW_COMPLETED);
 

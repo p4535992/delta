@@ -28,7 +28,6 @@ import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.propertysheet.search.SearchRenderer;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
-import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
@@ -244,9 +243,7 @@ public class MultiValueEditorRenderer extends BaseRenderer {
                 || StringUtils.startsWith(id,
                         FacesHelper.makeLegalId(DocumentCommonModel.PREFIX + DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME.getLocalName()))
                 || StringUtils.startsWith(id,
-                        FacesHelper.makeLegalId(DocumentSpecificModel.PREFIX + DocumentSpecificModel.Props.PROCUREMENT_APPLICANT_NAME.getLocalName()))
-                || StringUtils.startsWith(id, FacesHelper.makeLegalId(DocumentSearchModel.PREFIX + DocumentSearchModel.Props.SENDER_NAME.getLocalName()))
-                || StringUtils.startsWith(id, FacesHelper.makeLegalId(DocumentSearchModel.PREFIX + DocumentSearchModel.Props.RECIPIENT_NAME.getLocalName()));
+                        FacesHelper.makeLegalId(DocumentSpecificModel.PREFIX + DocumentSpecificModel.Props.PROCUREMENT_APPLICANT_NAME.getLocalName()));
     }
 
     private void renderAddLink(FacesContext context, UIComponent component, ResponseWriter out) throws IOException {

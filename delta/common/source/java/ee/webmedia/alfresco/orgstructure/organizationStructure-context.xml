@@ -108,6 +108,11 @@
    <bean id="deleteEmployeeRegOrganisationIdParameterBootstrap" class="ee.webmedia.alfresco.common.bootstrap.DeleteNodeByXPathBootstrap" parent="abstractDeleteNodeByXPathBootstrap">
       <property name="moduleId" value="common" />
       <property name="nodeXPath" value="/param:parameters/param:employeeRegOrganisationId" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>         
    </bean>
 
 </beans>

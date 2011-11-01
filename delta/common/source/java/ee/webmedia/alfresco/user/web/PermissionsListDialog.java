@@ -51,15 +51,13 @@ public class PermissionsListDialog extends BaseDialogBean {
     }
 
     private void reset() {
+        // Don't call these from restored() since this dialog uses nested dialogs for actual rights management!
         nodeRef = null;
         permission = null;
-        authorities = null;
         alternateConfigId = null;
         callbackMethodBinding = null;
         alternateDialogTitleId = null;
-        if (authoritiesRichList != null) {
-            authoritiesRichList.setValue(null);
-        }
+        restored();
     }
 
     public void setup(ActionEvent event) {
@@ -114,7 +112,10 @@ public class PermissionsListDialog extends BaseDialogBean {
 
     @Override
     public void restored() {
-        reset();
+        authorities = null;
+        if (authoritiesRichList != null) {
+            authoritiesRichList.setValue(null);
+        }
     }
 
     // START: getters / setters

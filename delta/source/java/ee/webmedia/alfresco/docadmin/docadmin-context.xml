@@ -95,6 +95,17 @@
       </property>
       <property name="documentAdminService" ref="DocumentAdminService" />
    </bean>
+   
+   <!-- Changes filedDefinition with ID "case" name from "Asi" to "Teema" -->
+   <bean id="FieldDefinitionCaseNameUpdater" class="ee.webmedia.alfresco.docadmin.bootstrap.FieldDefinitionCaseNameUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+       <property name="dependsOn">
+         <list>
+            <ref bean="docTypeSpacesBootstrap" />
+            <ref bean="fieldDefinitionsBootstrap" />
+         </list>
+      </property>
+   </bean>
 
    <!-- START: web beans: -->
 

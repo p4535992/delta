@@ -11,6 +11,7 @@ import javax.faces.component.html.HtmlSelectManyListbox;
 import javax.faces.context.FacesContext;
 import javax.faces.model.SelectItem;
 
+import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.utils.WebUtil;
 
@@ -43,7 +44,7 @@ public class DocumentSearchBean implements Serializable {
 
     public List<SelectItem> getDocumentTypes() {
         if (documentTypes == null) {
-            List<DocumentType> types = getDocumentAdminService().getDocumentTypes(true);
+            List<DocumentType> types = getDocumentAdminService().getDocumentTypes(DocumentAdminService.DONT_INCLUDE_CHILDREN, true);
             documentTypes = new ArrayList<SelectItem>(types.size());
             for (DocumentType documentType : types) {
                 documentTypes.add(new SelectItem(documentType.getDocumentTypeId(), documentType.getName()));

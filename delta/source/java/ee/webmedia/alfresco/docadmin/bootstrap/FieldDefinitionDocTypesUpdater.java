@@ -28,7 +28,7 @@ public class FieldDefinitionDocTypesUpdater extends AbstractModuleComponent {
         Map<String, FieldDefinition> fieldDefinitions = documentAdminService.getFieldDefinitionsByFieldIds();
         Map<String, FieldDefinition> fieldDefinitionsToUpdate = new HashMap<String, FieldDefinition>();
         LOG.info("Loading all document types");
-        for (DocumentType docType : documentAdminService.getDocumentTypes()) {
+        for (DocumentType docType : documentAdminService.getDocumentTypes(null)) {
             for (DocumentTypeVersion docVer : docType.getDocumentTypeVersions()) {
                 for (Field field : docVer.getFieldsDeeply()) {
                     FieldDefinition fieldDef = fieldDefinitions.get(field.getFieldId());

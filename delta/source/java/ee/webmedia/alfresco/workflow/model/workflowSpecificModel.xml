@@ -69,9 +69,41 @@
             <aspect>wfs:commonWorkflow</aspect>
          </mandatory-aspects>
       </type>
+      
+      <type name="wfs:orderAssignmentWorkflow"><!-- always parallel tasks -->
+         <parent>wfc:workflow</parent>
+         <properties>
+            <property name="wfs:category">
+               <type>d:text</type>
+               <mandatory enforced="true">true</mandatory>
+            </property>
+         </properties>         
+         <mandatory-aspects>
+            <aspect>wfs:commonWorkflow</aspect>
+         </mandatory-aspects>
+      </type>      
 
       <type name="wfs:docRegistrationWorkflow"><!-- does not have any tasks, so sequential/parallel does not matter -->
          <parent>wfc:workflow</parent>
+      </type>
+      
+      <type name="wfs:confirmationWorkflow"><!-- always sequential tasks -->
+         <parent>wfc:workflow</parent>
+         <overrides>
+            <property name="wfc:parallelTasks">
+               <default>false</default>
+            </property>
+         </overrides>         
+         <mandatory-aspects>
+            <aspect>wfs:commonWorkflow</aspect>
+         </mandatory-aspects>
+      </type>
+      
+      <type name="wfs:dueDateExtensionWorkflow"><!-- always parallel tasks -->
+         <parent>wfc:workflow</parent>
+         <mandatory-aspects>
+            <aspect>wfs:commonWorkflow</aspect>
+         </mandatory-aspects>
       </type>
 
       <!-- ========================== TASKS ========================== -->
@@ -118,6 +150,46 @@
          <mandatory-aspects>
             <aspect>wfs:commonTask</aspect>
             <aspect>wfs:resolution</aspect>
+            <aspect>wfs:taskDueDateExtensionContainer</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="wfs:orderAssignmentTask"><!-- some orderAssignmentTask-s have aspect wfs:responsible, see specification -->
+         <parent>wfc:task</parent>
+         <properties>
+            <property name="wfs:sendOrderAssignmentCompletedEmail">
+               <type>d:boolean</type>
+               <default>true</default>
+            </property>
+         </properties>         
+         <mandatory-aspects>
+            <aspect>wfs:commonTask</aspect>
+            <aspect>wfs:resolution</aspect>
+            <aspect>wfs:file</aspect>
+            <aspect>wfs:taskDueDateExtensionContainer</aspect>
+         </mandatory-aspects>
+      </type>
+      
+      <type name="wfs:confirmationTask">
+         <parent>wfc:task</parent>
+         <mandatory-aspects>
+            <aspect>wfs:commonTask</aspect>
+            <aspect>wfs:resolution</aspect>
+         </mandatory-aspects>
+      </type>  
+      
+      <type name="wfs:dueDateExtensionTask">
+         <parent>wfc:task</parent>
+         <properties>
+            <property name="wfs:proposedDueDate">
+               <type>d:date</type>
+            </property>
+            <property name="wfs:confirmedDueDate">
+               <type>d:date</type>
+            </property>            
+         </properties>         
+         <mandatory-aspects>
+            <aspect>wfs:commonTask</aspect>
          </mandatory-aspects>
       </type>
 
@@ -251,6 +323,33 @@
 
       <!-- gets added to all tasks which are saved under document compound workflow -->
       <aspect name="wfs:searchable"></aspect>
+      
+      <aspect name="wfs:taskDueDateExtensionContainer">      
+         <associations>
+            <association name="wfs:taskDueDateExtension">
+               <source>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </source>
+               <target>
+                  <class>wfs:dueDateExtensionTask</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </association>
+            <child-association name="wfs:taskDueDateExtensionHistory">
+               <source>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </source>
+               <target>
+                  <class>wfc:dueDateHistory</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>           
+         </associations>
+      </aspect>      
       
    </aspects>
 

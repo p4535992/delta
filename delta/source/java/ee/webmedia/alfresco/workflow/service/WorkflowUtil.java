@@ -1,9 +1,13 @@
 package ee.webmedia.alfresco.workflow.service;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import javax.faces.component.UIComponent;
+import javax.faces.context.FacesContext;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
@@ -27,6 +31,7 @@ public class WorkflowUtil {
      * but generated for delegating original assignment task to other people
      */
     private static final QName TMP_ADDED_BY_DELEGATION = RepoUtil.createTransientProp("addedByDelegation");
+    public static final String TASK_INDEX = "taskIndex";
 
     // -------------
     // Checks that are required only on memory object
@@ -490,8 +495,7 @@ public class WorkflowUtil {
                         && task.getDueDate() == null) {
                     emptyTaskIndexes.add(index);
                 }
-            } else if (StringUtils.isBlank(task.getOwnerName()) && task.getDueDate() == null && StringUtils.isBlank(task.getResolutionOfTask())
-                    && !(isGeneratedByDelegation(task) && WorkflowUtil.isActiveResponsible(task))) {
+            } else if (isEmptyTask(task)) {
                 emptyTaskIndexes.add(index);
             }
             index++;
@@ -500,6 +504,11 @@ public class WorkflowUtil {
         for (int taskIndex : emptyTaskIndexes) {
             workflow.removeTask(taskIndex);
         }
+    }
+
+    private static boolean isEmptyTask(Task task) {
+        return StringUtils.isBlank(task.getOwnerName()) && task.getDueDate() == null && task.getDueDateDays() == null && StringUtils.isBlank(task.getResolutionOfTask())
+                && !(isGeneratedByDelegation(task) && WorkflowUtil.isActiveResponsible(task) && !task.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK));
     }
 
     public static boolean isGeneratedByDelegation(BaseWorkflowObject workflowObject) {
@@ -566,4 +575,27 @@ public class WorkflowUtil {
         }
         throw new RuntimeException("This never happens");
     }
+
+    public static void setWorkflowResolution(List<Task> tasks, Serializable workflowResolution, Status... allowedStatuses) {
+        if (tasks == null) {
+            return;
+        }
+        for (Task task : tasks) {
+            if (task.isStatus(allowedStatuses)
+                        && StringUtils.isBlank((String) task.getProp(WorkflowSpecificModel.Props.RESOLUTION))
+                        && !WorkflowUtil.isGeneratedByDelegation(task)) {
+                task.setProp(WorkflowSpecificModel.Props.RESOLUTION, workflowResolution);
+            }
+        }
+
+    }
+
+    public static String getDialogId(FacesContext context, UIComponent component) {
+        return component.getClientId(context) + "_popup";
+    }
+
+    public static String getActionId(FacesContext context, UIComponent component) {
+        return component.getParent().getClientId(context) + "_action";
+    }
+
 }

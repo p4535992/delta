@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.docadmin.service;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -9,7 +10,10 @@ import java.util.Set;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
+import org.alfresco.web.bean.repository.Node;
 
+import ee.webmedia.alfresco.base.BaseObject;
+import ee.webmedia.alfresco.base.BaseService.Effort;
 import ee.webmedia.alfresco.utils.MessageData;
 
 /**
@@ -23,28 +27,40 @@ public interface DocumentAdminService {
 
     Set<String> getForbiddenFieldIds();
 
+    NodeRef getDocumentTypeRef(String id);
+
     /**
      * @return all document type objects from repository
      */
-    List<DocumentType> getDocumentTypes();
+    List<DocumentType> getDocumentTypes(DocTypeLoadEffort effort);
 
     /**
      * @param used
      * @return all document type objects from repository with used property equal to argument
      */
-    List<DocumentType> getDocumentTypes(boolean used);
+    List<DocumentType> getDocumentTypes(DocTypeLoadEffort effort, boolean used);
 
-    DocumentType getDocumentType(String id);
+    DocumentType getDocumentType(String id, DocTypeLoadEffort effort);
+
+    <T> T getDocumentTypeProperty(NodeRef docTypeRef, QName property, Class<T> returnClass);
+
+    /**
+     * if you have docTypeRef, use {@link #getDocumentTypeProperty(NodeRef, QName, Class)} instead
+     */
+    <T> T getDocumentTypeProperty(String docTypeId, QName property, Class<T> returnClass);
 
     /**
      * Returns documentType with given NodeRef.
      * 
      * @param docTypeRef nodeRef of the document type.
+     * @param effort - how much children to load
      * @return null or found document type FIXME DLSeadist - Kui kõik süsteemsed dok.liigid on defineeritud, siis võib null kontrolli ja tagastamise eemdaldada
      */
-    DocumentType getDocumentType(NodeRef docTypeRef);
+    DocumentType getDocumentType(NodeRef docTypeRef, DocTypeLoadEffort effort);
 
     String getDocumentTypeName(String documentTypeId);
+
+    String getDocumentTypeName(Node document);
 
     Map<String/* docTypeId */, String/* docTypeName */> getDocumentTypeNames(Boolean used);
 
@@ -128,5 +144,57 @@ public interface DocumentAdminService {
     void registerGroupShowShowInTwoColumns(Set<String> originalFieldIds);
 
     boolean isGroupShowShowInTwoColumns(FieldGroup group);
+
+    /** It can be used to load DocumentType and first level childNodes */
+    DocTypeLoadEffort DOC_TYPE_WITH_OUT_GRAND_CHILDREN = new DocTypeLoadEffort().setReturnChildrenByParent(DocumentType.class);
+
+    /** It can be used to load DocumentType and first level childNodes plus all children of latest {@link DocumentTypeVersion} */
+    DocTypeLoadEffort DOC_TYPE_WITH_OUT_GRAND_CHILDREN_EXEPT_LATEST_DOCTYPE_VER = new DocTypeLoadEffort().setReturnLatestDocTypeVersionChildren();
+
+    /** It can be used to load DocumentType without any child nodes */
+    DocTypeLoadEffort DONT_INCLUDE_CHILDREN = new DocTypeLoadEffort() {
+        @Override
+        public boolean isReturnChildren(BaseObject parent) {
+            return false;
+        }
+    };
+
+    public static class DocTypeLoadEffort implements Effort {
+        private Set<Class<? extends BaseObject>> isReturnChildrenByParent;
+        private boolean returnLatestDocTypeVersionChildren;
+
+        @Override
+        public boolean isReturnChildren(BaseObject parent) {
+            if (isReturnChildrenByParent != null) {
+                return isReturnChildrenByParent.contains(parent.getClass());
+            }
+            throw new RuntimeException("Unimplemented");
+        }
+
+        public DocTypeLoadEffort setReturnChildrenByParent(Class<? extends BaseObject>... classes) {
+            if (isReturnChildrenByParent == null) {
+                isReturnChildrenByParent = new HashSet<Class<? extends BaseObject>>(classes.length);
+            }
+            for (Class<? extends BaseObject> clazz : classes) {
+                isReturnChildrenByParent.add(clazz);
+            }
+            return this;
+        }
+
+        public DocTypeLoadEffort setReturnLatestDocTypeVersionChildren() {
+            returnLatestDocTypeVersionChildren = true;
+            // to return children of latest DocumentTypeVersion, we must load children of DocumentType where DocumentTypeVersion's are
+            if (isReturnChildrenByParent == null) {
+                isReturnChildrenByParent = new HashSet<Class<? extends BaseObject>>(3);
+            }
+            isReturnChildrenByParent.add(DocumentType.class);
+            return this;
+        }
+
+        public boolean isReturnLatestDocTypeVersionChildren() {
+            return returnLatestDocTypeVersionChildren;
+        }
+
+    }
 
 }

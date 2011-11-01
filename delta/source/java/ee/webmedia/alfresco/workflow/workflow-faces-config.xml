@@ -8,11 +8,6 @@
       http://wiki.alfresco.com/wiki/Packaging_And_Deploying_Extensions#JSF_configuration_files
    -->
 
-   <component>
-      <component-type>ee.webmedia.alfresco.workflow.web.TaskListCommentComponent</component-type>
-      <component-class>ee.webmedia.alfresco.workflow.web.TaskListCommentComponent</component-class>
-   </component>
-
    <managed-bean>
       <managed-bean-name>CompoundWorkflowDefinitionDialog</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.workflow.web.CompoundWorkflowDefinitionDialog</managed-bean-class>

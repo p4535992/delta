@@ -108,7 +108,8 @@ public class DurationGenerator extends BaseSystematicFieldGenerator {
     }
 
     private QName getProp(Map<String, Field> fieldsByOriginalId, QName propName) {
-        return fieldsByOriginalId.get(propName.getLocalName()).getQName();
+        Field field = fieldsByOriginalId.get(propName.getLocalName());
+        return field == null ? null : field.getQName();
     }
 
     // ===============================================================================================================================

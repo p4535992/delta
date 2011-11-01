@@ -18,6 +18,8 @@ public interface BaseService {
 
     /** {@link BaseObject}s that have this property are not saved when calling {@link #saveObject(BaseObject)} method */
     QName SKIP_SAVE = RepoUtil.createTransientProp("skipSave");
+    QName CHILDREN_NOT_LOADED = RepoUtil.createTransientProp("childrenNotLoaded");
+    QName CHILDREN_LOADING_IN_PROGRESS = RepoUtil.createTransientProp("childrenLoadingInProgress");
 
     void addTypeMapping(QName type, Class<? extends BaseObject> clazz);
 
@@ -31,6 +33,8 @@ public interface BaseService {
      * @return object hierarchy that was loaded
      */
     <T extends BaseObject> T getObject(NodeRef nodeRef, Class<T> returnCompatibleClass);
+
+    <T extends BaseObject> T getObject(NodeRef nodeRef, Class<T> returnCompatibleClass, Effort effort);
 
     /**
      * @return all children of <code>parentRef</code>
@@ -48,6 +52,11 @@ public interface BaseService {
     <T extends BaseObject> T getChild(NodeRef parentRef, QNamePattern assocNamePattern, Class<T> childrenClass);
 
     /**
+     * This method could be used when hierarchy of <code>parent</code> object is partially loaded and you want to load some more objects
+     */
+    <T extends BaseObject> void loadChildren(T parent, Effort effort);
+
+    /**
      * @param <T>
      * @param parentRef
      * @param childrenClass
@@ -55,6 +64,8 @@ public interface BaseService {
      * @return children of the <code>parentRef</code> (if mustIncludePredicate != null then only those that match predicate)
      */
     <T extends BaseObject> List<T> getChildren(NodeRef parentRef, Class<T> childrenClass, Predicate<T> mustIncludePredicate);
+
+    <T extends BaseObject> List<T> getChildren(NodeRef parentRef, Class<T> childrenClass, Predicate<T> mustIncludePredicate, Effort effort);
 
     <T extends BaseObject> List<T> getObjects(List<NodeRef> resultRefs, Class<T> resultClass);
 
@@ -72,5 +83,22 @@ public interface BaseService {
      *         changes to save.
      */
     boolean saveObject(BaseObject object);
+
+    /**
+     * Determines effort to be used to retrieve hierarchy of the object. <br>
+     * For example you could eliminate fetching children if parent type or property doesn't match certain condition
+     */
+    interface Effort {
+        boolean isReturnChildren(BaseObject parent);
+
+        Effort INCLUDE_ALL_CHILDREN = null;
+
+        Effort DONT_INCLUDE_CHILDREN = new Effort() {
+            @Override
+            public boolean isReturnChildren(BaseObject parent) {
+                return false;
+            }
+        };
+    }
 
 }

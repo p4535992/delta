@@ -18,6 +18,7 @@ import org.alfresco.web.bean.dialog.BaseDialogBean;
 import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.AssociationModel;
+import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
@@ -86,7 +87,7 @@ public class AssociationModelDetailsDialog extends BaseDialogBean {
 
     /** used by property sheet */
     public List<SelectItem> getDocTypes(FacesContext context, @SuppressWarnings("unused") UIInput selectComponent) {
-        List<DocumentType> docTypes = getDocumentAdminService().getDocumentTypes(true);
+        List<DocumentType> docTypes = getDocumentAdminService().getDocumentTypes(DocumentAdminService.DONT_INCLUDE_CHILDREN, true);
         List<SelectItem> results = new ArrayList<SelectItem>(docTypes.size() + 1);
         addDefault(results, context);
         Set<String> associatedDocTypes = new HashSet<String>();

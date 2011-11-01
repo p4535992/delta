@@ -218,6 +218,10 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
             setCustomAttribute(WMUIProperty.DONT_RENDER_IF_DISABLED_ATTR, dontRenderIfDisabled == null ? null : dontRenderIfDisabled.toString());
         }
 
+        public void setRenderCheckboxAfterLabel(Boolean b) {
+            setCustomAttribute(WMUIProperty.RENDER_CHECKBOX_AFTER_LABEL, b == null ? null : b.toString());
+        }
+
         public void setSelectionItems(String valueBinding) {
             setCustomAttribute(GeneralSelectorGenerator.ATTR_SELECTION_ITEMS, valueBinding);
         }

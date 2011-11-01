@@ -151,6 +151,7 @@
       <property name="dvkService" ref="DvkService" />
       <property name="parametersService" ref="ParametersService" />
       <property name="internalTesting" value="${project.test}" />
+      <property name="orderAssignmentCategoryEnabled" value="${conf.workflow.order-assignment-task-category.enabled}" />
    </bean>
 
    <bean id="WmWorkflowService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -213,6 +214,26 @@
       <property name="documentService" ref="DocumentService" />
       <property name="nodeService" ref="NodeService" />
    </bean>
+   
+   <bean parent="workflowType" >
+      <property name="workflowTypeString" value="wfs:orderAssignmentWorkflow" />
+      <property name="workflowClass" value="ee.webmedia.alfresco.workflow.service.OrderAssignmentWorkflow" />
+      <property name="taskTypeString" value="wfs:orderAssignmentTask" />
+      <property name="taskOutcomes" value="1" />
+   </bean>   
+   
+   <bean parent="workflowType">
+      <property name="workflowTypeString" value="wfs:confirmationWorkflow" />
+      <property name="workflowClass" value="ee.webmedia.alfresco.workflow.service.ConfirmationWorkflow" />
+      <property name="taskTypeString" value="wfs:confirmationTask" />
+      <property name="taskOutcomes" value="2" />
+   </bean>    
+   
+   <bean class="ee.webmedia.alfresco.workflow.service.type.DueDateExtensionWorkflowType" parent="workflowType">
+      <property name="workflowTypeString" value="wfs:dueDateExtensionWorkflow" />
+      <property name="taskTypeString" value="wfs:dueDateExtensionTask" />
+      <property name="taskOutcomes" value="2" />
+   </bean>     
 
    <bean class="ee.webmedia.alfresco.workflow.service.type.DocRegistrationWorkflowType" parent="workflowType">
       <property name="workflowTypeString" value="wfs:docRegistrationWorkflow" />

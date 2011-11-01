@@ -1,5 +1,8 @@
 package ee.webmedia.alfresco.workflow.web;
 
+import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.getActionId;
+import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.getDialogId;
+
 import java.io.IOException;
 import java.util.Map;
 
@@ -16,6 +19,7 @@ import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.propertysheet.search.SearchRenderer;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 
 /**
  * This custom renderer must be set to an HtmlPanelGroup that wraps a UIGenericPicker as the only child.
@@ -32,7 +36,7 @@ public class TaskListPickerRenderer extends BaseRenderer {
         UIGenericPicker picker = (UIGenericPicker) component.getChildren().get(0);
 
         Map<String, String> requestMap = context.getExternalContext().getRequestParameterMap();
-        String value = requestMap.get(TaskListGenerator.getActionId(context, picker));
+        String value = requestMap.get(WorkflowUtil.getActionId(context, picker));
         if (StringUtils.isBlank(value)) {
             return;
         }
@@ -58,14 +62,14 @@ public class TaskListPickerRenderer extends BaseRenderer {
         if (openDialog != null) {
             out.write("<div id=\"overlay\" style=\"display: block;\"></div>");
         }
-        out.write("<div id=\"" + TaskListGenerator.getDialogId(context, picker) + "\" class=\"modalpopup modalwrap\"");
+        out.write("<div id=\"" + WorkflowUtil.getDialogId(context, picker) + "\" class=\"modalpopup modalwrap\"");
         if (openDialog != null) {
             out.write(" style=\"display: block;\"");
         }
         out.write("><div class=\"modalpopup-header clear\"><h1>");
         out.write(MessageUtil.getMessage(SearchRenderer.SEARCH_MSG));
         out.write("</h1><p class=\"close\"><a href=\"#\" onclick=\"");
-        out.write(ComponentUtil.generateFieldSetter(context, picker, TaskListGenerator.getActionId(context, picker), SearchRenderer.CLOSE_DIALOG_ACTION));
+        out.write(ComponentUtil.generateFieldSetter(context, picker, getActionId(context, picker), SearchRenderer.CLOSE_DIALOG_ACTION));
         out.write("hideModal();");
         out.write(ComponentUtil.generateAjaxFormSubmit(context, picker, picker.getClientId(context), "1" /* ACTION_CLEAR */));
         out.write("\">");
@@ -85,9 +89,9 @@ public class TaskListPickerRenderer extends BaseRenderer {
         if (openDialog != null) {
             picker.getAttributes().remove(Search.OPEN_DIALOG_KEY); // Used when full submit is done, but AJAX deprecates it
             out.write("<script type=\"text/javascript\">$jQ(document).ready(function(){");
-            out.write(ComponentUtil.generateFieldSetter(context, picker, TaskListGenerator.getActionId(context, picker), SearchRenderer.OPEN_DIALOG_ACTION + ";" + openDialog));
+            out.write(ComponentUtil.generateFieldSetter(context, picker, WorkflowUtil.getActionId(context, picker), SearchRenderer.OPEN_DIALOG_ACTION + ";" + openDialog));
             out.write("showModal('");
-            out.write(TaskListGenerator.getDialogId(context, picker));
+            out.write(getDialogId(context, picker));
             out.write("');");
             out.write("});</script>");
         }

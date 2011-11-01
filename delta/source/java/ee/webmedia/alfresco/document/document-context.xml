@@ -62,7 +62,6 @@
       <property name="nodeService" ref="NodeService" />
       <property name="copyService" ref="CopyService" />
       <property name="generalService" ref="GeneralService" />
-      <property name="documentTypeService" ref="DocumentTypeService" />
       <property name="documentTemplateService" ref="DocumentTemplateService" />
       <property name="registerService" ref="RegisterService" />
       <property name="seriesService" ref="SeriesService" />

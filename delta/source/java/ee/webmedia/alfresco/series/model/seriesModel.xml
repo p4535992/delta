@@ -83,6 +83,7 @@
             </property>
             <property name="ser:volType">
                <type>d:text</type>
+               <mandatory>true</mandatory>
                <multiple>true</multiple>
             </property>
             <property name="ser:volRegister">

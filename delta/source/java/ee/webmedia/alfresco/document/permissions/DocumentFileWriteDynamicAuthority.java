@@ -12,6 +12,7 @@ import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.scanned.model.ScannedModel;
@@ -146,7 +147,7 @@ public class DocumentFileWriteDynamicAuthority extends BaseDynamicAuthority {
             Node docNode = documentService.getDocument(parent);
             documentService.throwIfNotDynamicDoc(docNode);
             String docTypeId = (String) docNode.getProperties().get(Props.OBJECT_TYPE_ID);
-            if (!getDocumentAdminService().getDocumentType(docTypeId).isEditFilesOfFinishedDocEnabled()) {
+            if (!getDocumentAdminService().getDocumentTypeProperty(docTypeId, DocumentAdminModel.Props.EDIT_FILES_OF_FINISHED_DOC_ENABLED, Boolean.class)) {
                 log.trace("Document status is not working, refusing authority " + getAuthority());
                 return false;
             }

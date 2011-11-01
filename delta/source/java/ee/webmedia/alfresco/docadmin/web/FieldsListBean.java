@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.docadmin.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getBaseService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDialogManager;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFieldDetailsDialog;
@@ -23,6 +24,7 @@ import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.base.BaseObject.ChildrenList;
+import ee.webmedia.alfresco.base.BaseService;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
@@ -57,6 +59,11 @@ public class FieldsListBean implements DialogBlockBean<Void> {
     }
 
     public List<? extends MetadataItem> getMetaFieldsList() {
+        BaseObject metaContainerObject = (BaseObject) metadataContainer;
+        if (metaContainerObject.getPropBoolean(BaseService.CHILDREN_NOT_LOADED)) {
+            // manually lazy loading children
+            getBaseService().loadChildren(metaContainerObject, null);
+        }
         return getMetaFieldsList(metadataContainer.getMetadata(), true);
     }
 

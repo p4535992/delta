@@ -15,6 +15,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
@@ -39,7 +40,7 @@ public class RegisterDocumentEvaluator extends BaseActionEvaluator {
         }
         BeanHelper.getDocumentService().throwIfNotDynamicDoc(docNode);
         String docTypeId = (String) docNode.getProperties().get(Props.OBJECT_TYPE_ID);
-        if (!getDocumentAdminService().getDocumentType(docTypeId).isRegistrationEnabled()) {
+        if (!getDocumentAdminService().getDocumentTypeProperty(docTypeId, DocumentAdminModel.Props.REGISTRATION_ENABLED, Boolean.class)) {
             return false;
         }
         if (!new HasNoStoppedOrInprogressWorkflowsEvaluator().evaluate(docNode)) {

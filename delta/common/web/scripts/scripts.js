@@ -1643,8 +1643,25 @@ function handleHtmlLoaded(context, selects) {
 
    applyAutocompleters();
 
+
    // datepicker
-   var dp_dates = jQuery("input.date", context).not("input[readonly]").datepicker({
+   var activeDatePickers = jQuery("input.date", context).not("input[readonly]");
+   activeDatePickers.focusout(function(){
+      var jqDate=$jQ(this);
+      var strDate = jqDate.val().trim();
+      var result;
+      var shortPattern = /^\d{4}$/;
+      var longPattern = /^\d{8}$/;
+      if(shortPattern.test(strDate)){
+         result = strDate.substring(0,2) + "." + strDate.substring(2,4) + "." + new Date().getFullYear();
+      } else if(longPattern.test(strDate)){
+         result = strDate.substring(0,2) + "." + strDate.substring(2,4) + "." + strDate.substring(4);
+      } else {
+         result = strDate;
+      }
+      jqDate.val(result);
+   });
+   var dp_dates = activeDatePickers.datepicker({
       dateFormat: 'dd.mm.yy',
       changeMonth: true,
       changeYear: true,
@@ -1669,40 +1686,18 @@ function handleHtmlLoaded(context, selects) {
          endDate.datepicker("option","minDate",date);
       }
    });
-   var dp_sysdates = jQuery("input.sysdate", context).not("input[readonly]").datepicker({
-      dateFormat: 'dd.mm.yy',
-      changeMonth: true,
-      changeYear: true,
-      nextText: '',
-      prevText: '',
-      defaultDate: +7,
-      yearRange: '-100:+100',
-      duration: '',
-      onSelect: function( selectedDate ) {
-         var dateElem = jQuery(this);
-         dateElem.trigger("change");
-         var date_all = jQuery.datepicker.parseDate(dateElem.data("datepicker").settings.dateFormat,selectedDate,dateElem.data("datepicker").settings);
-         dp_sysdates.datepicker("option","defaultDate",date_all);
-         if(dateElem.attr("class").indexOf("beginDate")<0){
-            return;
-         }
-         var row = dateElem.closest("tr");
-         if(row==null){
-            return;
-         }
-         var endDate = getEndDate(this, row);
-         if(endDate==null) return;
-         var endDatePicker = endDate.data("datepicker");
-         if(endDatePicker==null) return;
-         var date = jQuery.datepicker.parseDate(endDatePicker.settings.dateFormat,selectedDate,endDatePicker.settings);
-         if(date==null) return;
-         endDate.datepicker("option","minDate",date);
-      }
-   });
 
-
-
-
+   jQuery(".quickDateRangePicker", context).each(function (intIndex)
+         {
+            var selector = jQuery(this);
+            var selectorId = selector.attr("id");
+            var beginDate = jQuery("#" + escapeId4JQ(selectorId.replace("_DateRangePicker","")));
+            var endDate = jQuery("#" + escapeId4JQ(selectorId.replace("_DateRangePicker","_EndDate")));
+            setDateFromEnum(beginDate,endDate,selector.attr("value"));
+            beginDate.change(clearRangePicker);
+            endDate.change(clearRangePicker);
+            selector.change(setDateFromEnumOnChange);
+         });
 
    if(context != null) {
       $jQ("input", context).focus(function() {
@@ -2012,4 +2007,45 @@ function clearFormHiddenParams(currFormName, newTargetVal) {
    }
    f.target = newTargetVal ? newTargetVal : '';
 }
-
+function clearRangePicker(){
+   var date = jQuery(this);
+   var dateId = date.attr("id");
+   dateId = dateId.replace("_EndDate","");
+   var selector = jQuery("#" + escapeId4JQ(dateId + "_DateRangePicker"));
+   selector.val("");
+}
+function setDateFromEnumOnChange(){
+   var selector = jQuery(this);
+   var selectorId = selector.attr("id");
+   var beginDate = jQuery("#" + escapeId4JQ(selectorId.replace("_DateRangePicker","")));
+   var endDate = jQuery("#" + escapeId4JQ(selectorId.replace("_DateRangePicker","_EndDate")));
+   setDateFromEnum(beginDate,endDate,selector.attr("value"));
+}
+function setDateFromEnum(beginDate,endDate,selectedEnum){
+   if(selectedEnum=="") return;
+   var startDate = new Date();
+   var finishDate = new Date();
+   if(selectedEnum == "YESTERDAY"){
+      startDate.setDate(startDate.getDate()-1);
+      finishDate.setDate(finishDate.getDate()-1);
+   } else if(selectedEnum == "CURRENT_WEEK"){
+      startDate.setDate(startDate.getDate() - startDate.getDay() + 1);
+   } else if(selectedEnum == "PREV_WEEK"){
+      startDate.setDate(startDate.getDate() - startDate.getDay() + 1 -7);
+      finishDate.setDate(startDate.getDate() + 6);
+   } else if(selectedEnum == "FROM_PREV_WEEK"){
+      startDate.setDate(startDate.getDate() - startDate.getDay() + 1 -7);
+   } else if(selectedEnum == "CURRENT_MONTH"){
+      startDate = new Date(startDate.getFullYear(),startDate.getMonth(),1,0,0,0,0);
+   } else if(selectedEnum == "PREV_MONTH"){
+      startDate = new Date(startDate.getFullYear(),startDate.getMonth()-1,1,0,0,0,0);
+      finishDate= new Date(startDate.getFullYear(),startDate.getMonth() + 1,1,0,0,0,0);
+      finishDate.setDate(finishDate.getDate()-1);
+   } else if(selectedEnum == "FROM_PREV_MONTH"){
+      startDate = new Date(startDate.getFullYear(),startDate.getMonth()-1,1,0,0,0,0);
+   } else if(selectedEnum == "CURRENT_YEAR"){
+      startDate = new Date(startDate.getFullYear(),0,1,0,0,0,0);
+   }
+   beginDate.datepicker("setDate",startDate);
+   endDate.datepicker("setDate",finishDate);
+}

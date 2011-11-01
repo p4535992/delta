@@ -29,12 +29,13 @@ public class NodeBaseVO implements Serializable {
         return node != null ? node.getNodeRef() : null;
     }
 
-    protected boolean getPropBoolean(QName propName) {
+    public boolean getPropBoolean(QName propName) {
         Boolean prop = getProp(propName);
-        if (prop == null) {
-            return false;
-        }
-        return prop;
+        return convertNullToFalse(prop);
+    }
+
+    public static boolean convertNullToFalse(Boolean prop) {
+        return prop == null ? false : prop;
     }
 
     @SuppressWarnings("unchecked")

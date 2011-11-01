@@ -218,8 +218,8 @@ public class ClassificatorServiceImpl implements ClassificatorService {
             classificatorValueBeanPropertyMapper.toObject(nodeService.getProperties(childRef.getChildRef()), clv);
             classificatorValues.add(clv);
         }
-        if (log.isDebugEnabled()) {
-            log.debug("Classificator values found: " + classificatorValues);
+        if (log.isTraceEnabled()) {
+            log.trace("Classificator values found: " + classificatorValues);
         }
         return classificatorValues;
     }

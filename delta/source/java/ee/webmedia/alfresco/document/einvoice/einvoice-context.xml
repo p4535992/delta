@@ -86,6 +86,11 @@
    <bean id="sapFinancialDimentionsUpdateTimeParameterBootstrap" class="ee.webmedia.alfresco.common.bootstrap.DeleteNodeByXPathBootstrap" parent="abstractDeleteNodeByXPathBootstrap">
       <property name="moduleId" value="simdhs" />
       <property name="nodeXPath" value="/param:parameters/param:sapFinancialDimentionsUpdateTime" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>         
    </bean>
 
    <bean id="dimensionRootBootstrap1" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">

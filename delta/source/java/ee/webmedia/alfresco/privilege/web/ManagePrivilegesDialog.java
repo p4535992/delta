@@ -39,6 +39,7 @@ import org.alfresco.web.ui.common.component.UIGenericPicker;
 import org.alfresco.web.ui.common.component.UIPanel;
 import org.alfresco.web.ui.common.component.data.UIColumn;
 import org.alfresco.web.ui.common.component.data.UIRichList;
+import org.alfresco.web.ui.common.tag.data.ColumnTag;
 import org.apache.commons.collections.comparators.ComparatorChain;
 import org.apache.commons.collections.comparators.FixedOrderComparator;
 import org.apache.commons.collections.comparators.NullComparator;
@@ -734,7 +735,7 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
 
     private UIColumn createActionsColumn(FacesContext context) {
         Application application = context.getApplication();
-        UIColumn column = (UIColumn) application.createComponent("org.alfresco.faces.RichListColumn");
+        UIColumn column = (UIColumn) application.createComponent(ColumnTag.COMPONENT_TYPE);
 
         if (editable) {
             UIActionLink removePersonLink = createRemoveLink(application, true);
@@ -764,7 +765,7 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
 
     private UIColumn createPermissionColumn(String privilege, FacesContext context, boolean columnMaybeEditable) {
         Application application = context.getApplication();
-        UIColumn column = (UIColumn) application.createComponent("org.alfresco.faces.RichListColumn");
+        UIColumn column = (UIColumn) application.createComponent(ColumnTag.COMPONENT_TYPE);
 
         HtmlOutputText headerText = (HtmlOutputText) application.createComponent(HtmlOutputText.COMPONENT_TYPE);
         headerText.setValue(MessageUtil.getMessage("permission_" + privilege));

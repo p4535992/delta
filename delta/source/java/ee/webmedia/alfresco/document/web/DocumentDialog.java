@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.document.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
+import static ee.webmedia.alfresco.document.einvoice.web.TransactionsTemplateDetailsDialog.MODAL_KEY_ENTRY_SAP_NUMBER;
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.ERRAND_APPLICATION_DOMESTIC;
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD;
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD_MV;
@@ -55,13 +56,13 @@ import org.springframework.web.jsf.FacesContextUtils;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.listener.RefreshEventListener;
+import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent.ModalLayerSubmitEvent;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.ClearStateNotificationHandler;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
 import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
 import ee.webmedia.alfresco.document.associations.web.AssocsBlockBean;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil;
-import ee.webmedia.alfresco.document.einvoice.web.SendManuallyToSapModalComponent.SendToSapManuallyEvent;
 import ee.webmedia.alfresco.document.einvoice.web.TransactionsBlockBean;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.web.FileBlockBean;
@@ -485,8 +486,8 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             // transactionBlockBean is responsible for setting error messages
             return;
         }
-        SendToSapManuallyEvent sendToSapEvent = (SendToSapManuallyEvent) event;
-        String entrySapNumber = sendToSapEvent.entrySapNumber;
+        ModalLayerSubmitEvent sendToSapEvent = (ModalLayerSubmitEvent) event;
+        String entrySapNumber = (String) sendToSapEvent.getSubmittedValue(MODAL_KEY_ENTRY_SAP_NUMBER);
         if (StringUtils.isBlank(entrySapNumber)) {
             return;
         }

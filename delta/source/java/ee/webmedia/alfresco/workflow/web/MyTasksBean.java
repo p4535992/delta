@@ -32,22 +32,26 @@ public class MyTasksBean extends BaseDialogBean {
 
     public static final String BEAN_NAME = "MyTasksBean";
     public static final String LIST_ASSIGNMENT = "assignment";
+    public static final String LIST_ORDER_ASSIGNMENT = "orderAssignment";
     public static final String LIST_INFORMATION = "information";
     public static final String LIST_OPINION = "opinion";
     public static final String LIST_REVIEW = "review";
     public static final String LIST_SIGNATURE = "signature";
     public static final String LIST_EXTERNAL_REVIEW = "externalReview";
+    public static final String LIST_CONFIRMATION = "confirmation";
 
     private String dialogTitle;
     private String listTitle;
     private boolean lessColumns = true;
     private String specificList;
     private List<TaskAndDocument> assignmentTasks;
+    private List<TaskAndDocument> orderAssignmentTasks;
     private List<TaskAndDocument> informationTasks;
     private List<TaskAndDocument> opinionTasks;
     private List<TaskAndDocument> reviewTasks;
     private List<TaskAndDocument> signatureTasks;
     private List<TaskAndDocument> externalReviewTasks;
+    private List<TaskAndDocument> confirmationTasks;
     private long lastLoadMillis = 0;
 
     private transient ParametersService parametersService;
@@ -102,6 +106,15 @@ public class MyTasksBean extends BaseDialogBean {
         loadTasks();
     }
 
+    public void setupOrderAssignmentTasks(@SuppressWarnings("unused") ActionEvent event) {
+        reset();
+        dialogTitle = MessageUtil.getMessage("orderAssignmentWorkflow");
+        listTitle = MessageUtil.getMessage("task_list_order_assignment_title");
+        lessColumns = false;
+        specificList = LIST_ORDER_ASSIGNMENT;
+        loadTasks();
+    }
+
     public void setupInformationTasks(@SuppressWarnings("unused") ActionEvent event) {
         reset();
         dialogTitle = MessageUtil.getMessage("informationWorkflow");
@@ -147,12 +160,23 @@ public class MyTasksBean extends BaseDialogBean {
         loadTasks();
     }
 
+    public void setupConfirmationTasks(@SuppressWarnings("unused") ActionEvent event) {
+        reset();
+        dialogTitle = MessageUtil.getMessage("confirmationWorkflow");
+        listTitle = MessageUtil.getMessage("task_list_confirmation_title");
+        lessColumns = false;
+        specificList = LIST_CONFIRMATION;
+        loadTasks();
+    }
+
     // END: dialog setup
 
     public List<TaskAndDocument> getTasks() {
         List<TaskAndDocument> result = new ArrayList<TaskAndDocument>();
         if (LIST_ASSIGNMENT.equals(specificList)) {
             result = assignmentTasks;
+        } else if (LIST_ORDER_ASSIGNMENT.equals(specificList)) {
+            result = orderAssignmentTasks;
         } else if (LIST_INFORMATION.equals(specificList)) {
             result = informationTasks;
         } else if (LIST_OPINION.equals(specificList)) {
@@ -163,12 +187,22 @@ public class MyTasksBean extends BaseDialogBean {
             result = signatureTasks;
         } else if (LIST_EXTERNAL_REVIEW.equals(specificList)) {
             result = externalReviewTasks;
+        } else if (LIST_CONFIRMATION.equals(specificList)) {
+            result = confirmationTasks;
         }
         return result;
     }
 
     public List<TaskAndDocument> getAssignmentTasks() {
         return filterTasksByDate(assignmentTasks);
+    }
+
+    public List<TaskAndDocument> getOrderAssignmentTasks() {
+        return filterTasksByDate(orderAssignmentTasks);
+    }
+
+    public List<TaskAndDocument> getConfirmationTasks() {
+        return filterTasksByDate(confirmationTasks);
     }
 
     public List<TaskAndDocument> getInformationTasks() {
@@ -195,11 +229,20 @@ public class MyTasksBean extends BaseDialogBean {
         return getAssignmentTasks().size() > PAGE_SIZE;
     }
 
+    public boolean isOrderAssignmentPagerVisible() {
+        return getOrderAssignmentTasks().size() > PAGE_SIZE;
+    }
+
+    public boolean isConfirmationPagerVisible() {
+        return getConfirmationTasks().size() > PAGE_SIZE;
+    }
+
     public boolean isInformationPagerVisible() {
         return getInformationTasks().size() > PAGE_SIZE;
     }
 
     public boolean isSignaturePagerVisible() {
+
         return getSignatureTasks().size() > PAGE_SIZE;
     }
 
@@ -321,6 +364,13 @@ public class MyTasksBean extends BaseDialogBean {
             assignmentTasks = getDocumentService().getTasksWithDocuments(tmpTasks);
             log.debug("loadTasks - assignmentTasks: " + (startC - startB) + "ms + " + (System.currentTimeMillis() - startC) + "ms");
         }
+        if (specificList == null || LIST_ORDER_ASSIGNMENT.equals(specificList)) {
+            long startB = System.currentTimeMillis();
+            List<Task> tmpTasks = getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK);
+            long startC = System.currentTimeMillis();
+            orderAssignmentTasks = getDocumentService().getTasksWithDocuments(tmpTasks);
+            log.debug("loadTasks - orderAssignmentTasks: " + (startC - startB) + "ms + " + (System.currentTimeMillis() - startC) + "ms");
+        }
         if (specificList == null || LIST_INFORMATION.equals(specificList)) {
             long startB = System.currentTimeMillis();
             List<Task> tmpTasks = getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.INFORMATION_TASK);
@@ -355,6 +405,18 @@ public class MyTasksBean extends BaseDialogBean {
             long startC = System.currentTimeMillis();
             externalReviewTasks = getDocumentService().getTasksWithDocuments(tmpTasks);
             log.debug("loadTasks - externalReviewTasks: " + (startC - startB) + "ms + " + (System.currentTimeMillis() - startC) + "ms");
+        }
+        if (specificList == null || LIST_CONFIRMATION.equals(specificList)) {
+            long startB = System.currentTimeMillis();
+            List<Task> tmpTasks = getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.CONFIRMATION_TASK);
+            long startC = System.currentTimeMillis();
+            confirmationTasks = getDocumentService().getTasksWithDocuments(tmpTasks);
+            log.debug("loadTasks - confirmationTasks: " + (startC - startB) + "ms + " + (System.currentTimeMillis() - startC) + "ms");
+            startB = System.currentTimeMillis();
+            tmpTasks = getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK);
+            startC = System.currentTimeMillis();
+            confirmationTasks.addAll(getDocumentService().getTasksWithDocuments(tmpTasks));
+            log.debug("loadTasks - dueDateExtensionTasks: " + (startC - startB) + "ms + " + (System.currentTimeMillis() - startC) + "ms");
         }
         log.debug("loadTasks - END: " + (System.currentTimeMillis() - startA) + "ms");
     }

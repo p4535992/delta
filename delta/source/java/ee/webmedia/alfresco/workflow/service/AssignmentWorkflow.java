@@ -1,9 +1,6 @@
 package ee.webmedia.alfresco.workflow.service;
 
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isActiveResponsible;
-
-import org.apache.commons.lang.StringUtils;
-
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
@@ -28,13 +25,7 @@ public class AssignmentWorkflow extends Workflow {
     @Override
     protected void preSave() {
         super.preSave();
-        for (Task task : getTasks()) {
-            if (task.isStatus(Status.NEW, Status.IN_PROGRESS)
-                    && StringUtils.isBlank((String) task.getProp(WorkflowSpecificModel.Props.RESOLUTION))
-                    && !WorkflowUtil.isGeneratedByDelegation(task)) {
-                task.setProp(WorkflowSpecificModel.Props.RESOLUTION, getProp(WorkflowSpecificModel.Props.RESOLUTION));
-            }
-        }
+        WorkflowUtil.setWorkflowResolution(getTasks(), getProp(WorkflowSpecificModel.Props.RESOLUTION), Status.NEW, Status.IN_PROGRESS);
     }
 
     public Task addResponsibleTask() {

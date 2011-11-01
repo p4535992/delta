@@ -72,11 +72,19 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
     private void checkUserInput() {
         Map<String, Object> properties = getEntry().getProperties();
         // Remove Whitespace from orgCode
-        properties.put(AddressbookModel.Props.PERSON_ID.toString(), StringUtils.deleteWhitespace((String) properties.get(AddressbookModel.Props.PERSON_ID.toString())));
-        properties.put(AddressbookModel.Props.ORGANIZATION_CODE.toString(),
-                StringUtils.deleteWhitespace((String) properties.get(AddressbookModel.Props.ORGANIZATION_CODE.toString())));
+        String personId = (String) properties.get(AddressbookModel.Props.PERSON_ID.toString());
+        if (personId != null) {
+            properties.put(AddressbookModel.Props.PERSON_ID.toString(), StringUtils.deleteWhitespace(personId));
+        }
+        String orgCode = (String) properties.get(AddressbookModel.Props.ORGANIZATION_CODE.toString());
+        if (orgCode != null) {
+            properties.put(AddressbookModel.Props.ORGANIZATION_CODE.toString(), StringUtils.deleteWhitespace(orgCode));
+        }
         // ... and email
-        properties.put(AddressbookModel.Props.EMAIL.toString(), StringUtils.deleteWhitespace((String) properties.get(AddressbookModel.Props.EMAIL.toString())));
+        String email = (String) properties.get(AddressbookModel.Props.EMAIL.toString());
+        if (email != null) {
+            properties.put(AddressbookModel.Props.EMAIL.toString(), StringUtils.deleteWhitespace(email));
+        }
     }
 
     private boolean validate() {

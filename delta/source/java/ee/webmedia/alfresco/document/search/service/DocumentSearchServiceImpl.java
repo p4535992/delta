@@ -1,12 +1,11 @@
 package ee.webmedia.alfresco.document.search.service;
 
-import static ee.webmedia.alfresco.docconfig.generator.fieldtype.DateGenerator.getEndDateQName;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateAspectQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateDatePropertyRangeQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generateDoublePropertyRangeQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateMultiStringExactQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateNodeRefQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateNotTypeQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateNumberPropertyRangeQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyBooleanQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyDateQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyNotNullQuery;
@@ -71,6 +70,8 @@ import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
 import ee.webmedia.alfresco.docconfig.generator.fieldtype.DateGenerator;
+import ee.webmedia.alfresco.docconfig.generator.fieldtype.DoubleGenerator;
+import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
@@ -740,7 +741,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             return results;
         } catch (RuntimeException e) {
             Map<QName, Serializable> filterProps = RepoUtil.getNotEmptyProperties(RepoUtil.toQNameProperties(filter.getProperties()));
-            filterProps.remove(DocumentSearchModel.Props.OUTPUT);
+            // filterProps.remove(DocumentSearchModel.Props.OUTPUT);
             log.error("Document search failed: "
                     + e.getMessage()
                     + "\n  searchFilter=" + WmNode.toString(filterProps, namespaceService)
@@ -1110,7 +1111,9 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         // dynamic generation
         for (Entry<String, Object> entry : props.entrySet()) {
             QName propQName = QName.createQName(entry.getKey());
-            if (propQName.getLocalName().endsWith(DateGenerator.END_PREFIX) || propQName.getLocalName().endsWith(DateGenerator.PICKER_PREFIX)) {
+            if (DocumentLocationGenerator.CASE_LABEL_EDITABLE.equals(propQName)) {
+                propQName = DocumentCommonModel.Props.CASE;
+            } else if (propQName.getLocalName().contains("_")) {
                 continue;
             }
             if (!propQName.equals(DocumentDynamicModel.Props.SHORT_REG_NUMBER) && propQName.getNamespaceURI().equals(DocumentDynamicModel.URI)) {
@@ -1129,9 +1132,11 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                         queryParts.add(generateMultiStringWordsWildcardQuery(list, propQName));
                     }
                 } else if (value instanceof Date) {
-                    queryParts.add(generateDatePropertyRangeQuery((Date) value, (Date) props.get(getEndDateQName(propQName)), propQName));
-                } else if (value instanceof Double) {
-                    // TODO XXX dunno... yet
+                    Date endDate = (Date) props.get(DateGenerator.getEndDateQName(propQName));
+                    queryParts.add(generateDatePropertyRangeQuery((Date) value, endDate, propQName));
+                } else if (value instanceof Double || value instanceof Integer || value instanceof Long) {
+                    Number maxValue = (Number) props.get(DoubleGenerator.getEndNumberQName(propQName));
+                    generateNumberPropertyRangeQuery((Number) value, maxValue, propQName);
                 } else if (value instanceof Boolean) {
                     queryParts.add(SearchUtil.generatePropertyBooleanQuery(propQName, (Boolean) value));
                 } else if (value instanceof NodeRef) {
@@ -1139,14 +1144,6 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                 }
             }
         }
-
-        // START old data
-
-        // TODO doublePropRange
-        queryParts.add(generateDoublePropertyRangeQuery((Double) props.get(DocumentSearchModel.Props.TOTAL_SUM_LOWEST)
-                , (Double) props.get(DocumentSearchModel.Props.TOTAL_SUM_HIGHEST), DocumentSpecificModel.Props.TOTAL_SUM));
-
-        // END old data
 
         log.info("Documents search filter: " + WmNode.toString(RepoUtil.getNotEmptyProperties(RepoUtil.toQNameProperties(props)), namespaceService));
 

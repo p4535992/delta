@@ -19,14 +19,19 @@ import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.app.AppConstants;
+import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.CssStylable;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
+import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.type.model.DocumentType;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeHelper;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
+import ee.webmedia.alfresco.functions.model.Function;
+import ee.webmedia.alfresco.series.model.Series;
+import ee.webmedia.alfresco.volume.model.Volume;
 
 public class Document extends Node implements Comparable<Document>, CssStylable, CreatedAndRegistered {
     private static final long serialVersionUID = 1L;
@@ -144,6 +149,50 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
 
     public String getDocName() {
         return (String) getNode().getProperties().get(DocumentCommonModel.Props.DOC_NAME);
+    }
+
+    public String getVolumeLabel() {
+        NodeRef nodeRef = (NodeRef) getNode().getProperties().get(DocumentCommonModel.Props.VOLUME);
+        if (nodeRef != null) {
+            Volume volume = BeanHelper.getVolumeService().getVolumeByNodeRef(nodeRef);
+            if (volume != null) {
+                return DocumentLocationGenerator.getVolumeLabel(volume);
+            }
+        }
+        return null;
+    }
+
+    public String getFunctionLabel() {
+        NodeRef nodeRef = (NodeRef) getNode().getProperties().get(DocumentCommonModel.Props.FUNCTION);
+        if (nodeRef != null) {
+            Function function = BeanHelper.getFunctionsService().getFunctionByNodeRef(nodeRef);
+            if (function != null) {
+                return DocumentLocationGenerator.getFunctionLabel(function);
+            }
+        }
+        return null;
+    }
+
+    public String getSeriesLabel() {
+        NodeRef nodeRef = (NodeRef) getNode().getProperties().get(DocumentCommonModel.Props.SERIES);
+        if (nodeRef != null) {
+            Series series = BeanHelper.getSeriesService().getSeriesByNodeRef(nodeRef);
+            if (series != null) {
+                return DocumentLocationGenerator.getSeriesLabel(series);
+            }
+        }
+        return null;
+    }
+
+    public String getCaseLabel() {
+        NodeRef nodeRef = (NodeRef) getNode().getProperties().get(DocumentCommonModel.Props.CASE);
+        if (nodeRef != null) {
+            Case theCase = BeanHelper.getCaseService().getCaseByNoderef(nodeRef);
+            if (theCase != null) {
+                return DocumentLocationGenerator.getCaseLabel(theCase);
+            }
+        }
+        return null;
     }
 
     public Date getDueDate() {

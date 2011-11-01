@@ -11,7 +11,8 @@ public interface WorkflowSpecificModel {
 
     /** Workflows that can be started in parallel when they are consecutively in the compoundWorkflow (workflow status can be {@link Status#IN_PROGRESS}) */
     public QName[] CAN_START_PARALLEL = new QName[] { WorkflowSpecificModel.Types.OPINION_WORKFLOW
-            , WorkflowSpecificModel.Types.INFORMATION_WORKFLOW, WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW };
+            , WorkflowSpecificModel.Types.INFORMATION_WORKFLOW, WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW
+            , WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW };
 
     interface Types {
         /** Täitmiseks */
@@ -28,9 +29,17 @@ public interface WorkflowSpecificModel {
         QName EXTERNAL_REVIEW_WORKFLOW = QName.createQName(URI, "externalReviewWorkflow");
         /** Allkirjastamiseks */
         QName SIGNATURE_WORKFLOW = QName.createQName(URI, "signatureWorkflow");
+        /** Otsuse täitmiseks */
+        QName ORDER_ASSIGNMENT_WORKFLOW = QName.createQName(URI, "orderAssignmentWorkflow");
+        /** Kinnitamiseks */
+        QName CONFIRMATION_WORKFLOW = QName.createQName(URI, "confirmationWorkflow");
+        /** Tähtaja pikendamiseks */
+        QName DUE_DATE_EXTENSION_WORKFLOW = QName.createQName(URI, "dueDateExtensionWorkflow");
 
         /** Täitmiseks */
         QName ASSIGNMENT_TASK = QName.createQName(URI, "assignmentTask");
+        /** Otsuse täitmiseks */
+        QName ORDER_ASSIGNMENT_TASK = QName.createQName(URI, "orderAssignmentTask");
         /** Teadmiseks */
         QName INFORMATION_TASK = QName.createQName(URI, "informationTask");
         /** Arvamuse andmiseks */
@@ -40,6 +49,17 @@ public interface WorkflowSpecificModel {
         QName EXTERNAL_REVIEW_TASK = QName.createQName(URI, "externalReviewTask");
         /** Allkirjastamiseks */
         QName SIGNATURE_TASK = QName.createQName(URI, "signatureTask");
+        /** Kinnitamiseks */
+        QName CONFIRMATION_TASK = QName.createQName(URI, "confirmationTask");
+        /** Tähtaja pikendamiseks */
+        QName DUE_DATE_EXTENSION_TASK = QName.createQName(URI, "dueDateExtensionTask");
+    }
+
+    interface Assocs {
+        /** task -> dueDateExtensionTask task */
+        QName TASK_DUE_DATE_EXTENSION = QName.createQName(URI, "taskDueDateExtension");
+        /** task -> dueDateExtensionTaskHistory record */
+        QName TASK_DUE_DATE_EXTENSION_HISTORY = QName.createQName(URI, "taskDueDateExtensionHistory");
     }
 
     interface Aspects {
@@ -70,6 +90,12 @@ public interface WorkflowSpecificModel {
         QName ORIGINAL_DVK_ID = QName.createQName(URI, "originalDvkId");
         QName SEND_STATUS = QName.createQName(URI, "sendStatus");
         QName SEND_DATE_TIME = QName.createQName(URI, "sendDateTime");
+        QName CATEGORY = QName.createQName(URI, "category");
+        QName CREATOR_ID = QName.createQName(URI, "creatorId");
+        QName CREATOR_EMAIL = QName.createQName(URI, "creatorEmail");
+        QName PROPOSED_DUE_DATE = QName.createQName(URI, "proposedDueDate");
+        QName CONFIRMED_DUE_DATE = QName.createQName(URI, "confirmedDueDate");
+        QName SEND_ORDER_ASSIGNMENT_COMPLETED_EMAIL = QName.createQName(URI, "sendOrderAssignmentCompletedEmail");
     }
 
     enum SignatureTaskOutcome {
@@ -120,6 +146,40 @@ public interface WorkflowSpecificModel {
         public boolean equals(int index) {
             return this == of(index);
         }
+    }
+
+    enum ConfirmationTaskOutcome {
+        ACCEPTED,
+        NOT_ACCEPTED;
+
+        public static ConfirmationTaskOutcome of(int index) {
+            if (index < 0 || index >= values().length) {
+                return null;
+            }
+            return values()[index];
+        }
+
+        public boolean equals(int index) {
+            return this == of(index);
+        }
+
+    }
+
+    enum DueDateExtensionTaskOutcome {
+        ACCEPTED,
+        NOT_ACCEPTED;
+
+        public static DueDateExtensionTaskOutcome of(int index) {
+            if (index < 0 || index >= values().length) {
+                return null;
+            }
+            return values()[index];
+        }
+
+        public boolean equals(int index) {
+            return this == of(index);
+        }
+
     }
 
 }

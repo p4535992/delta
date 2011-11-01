@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -17,6 +18,7 @@ import org.alfresco.service.cmr.version.VersionService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.servlet.DownloadContentServlet;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.DateUtils;
 
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
@@ -62,7 +64,7 @@ public class VersionsServiceImpl implements VersionsService {
     }
 
     @Override
-    public void updateVersion(NodeRef nodeRef, String filename) {
+    public boolean updateVersionIfNeeded(NodeRef nodeRef, String filename) {
         if (nodeService.hasAspect(nodeRef, VersionsModel.Aspects.VERSION_LOCKABLE) == true) {
             // if not locked, then a new version can be made
             boolean isLocked = getVersionLockableAspect(nodeRef);
@@ -78,6 +80,18 @@ public class VersionsServiceImpl implements VersionsService {
                         logger.debug("Versionable aspect added to " + nodeRef);
                     }
                 }
+
+                org.alfresco.service.cmr.version.Version previousLatestVer = versionService.getCurrentVersion(nodeRef);
+                if (previousLatestVer != null) {
+                    Date frozenModifiedTime = previousLatestVer.getFrozenModifiedDate();
+                    String modifier = previousLatestVer.getFrozenModifier();
+                    // previousLatestVer.getVersionProperty(name)
+                    if (DateUtils.isSameDay(frozenModifiedTime, new Date()) && StringUtils.equals(AuthenticationUtil.getFullyAuthenticatedUser(), modifier)) {
+                        logger.info("not creating new version of file with nodeRef=" + nodeRef + " - latest version is modified by same user today");
+                        return false;
+                    }
+                }
+
                 // create a new version
                 versionService.createVersion(nodeRef, getVersionModifiedAspectProperties(nodeRef));
                 // check the flag as true to prevent creation of new versions until the node is unlocked in UnlockMethod
@@ -92,8 +106,11 @@ public class VersionsServiceImpl implements VersionsService {
                     documentLogService.addDocumentLog(parentRef //
                             , I18NUtil.getMessage("document_log_status_fileChanged", filename));
                 }
+                return true;
             }
         }
+        logger.warn("not creating new version of nodeRef=" + nodeRef + " - it doesn't have " + VersionsModel.Aspects.VERSION_LOCKABLE.getLocalName() + " aspect");
+        return false;
     }
 
     @Override

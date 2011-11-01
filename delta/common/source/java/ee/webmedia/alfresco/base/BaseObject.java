@@ -25,6 +25,7 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.utils.Closure;
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
 
 /**
  * NB! All subclasses must declare at least one of the two following constructors, based on required usage:<br>
@@ -404,6 +405,10 @@ public abstract class BaseObject extends NodeBaseVO implements Cloneable {
     }
 
     protected <T extends BaseObject> ChildrenList<T> getChildren(Class<T> clazz) {
+        if (getPropBoolean(BaseService.CHILDREN_NOT_LOADED) && !getPropBoolean(BaseService.CHILDREN_LOADING_IN_PROGRESS)) {
+            throw new UnableToPerformException("Developer forgot to load child objects of type " + clazz.getSimpleName() + " for this operation. Object "
+                    + getNode().getType().getLocalName() + "(" + getNodeRef() + ")");//
+        }
         return new ChildrenList<T>(clazz);
     }
 

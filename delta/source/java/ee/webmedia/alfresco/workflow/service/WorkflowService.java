@@ -17,6 +17,7 @@ import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListener;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListenerWithModifications;
+import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
 /**
@@ -100,7 +101,7 @@ public interface WorkflowService {
 
     CompoundWorkflow saveAndCopyCompoundWorkflow(CompoundWorkflow compoundWorkflow);
 
-    int getActiveResponsibleAssignmentTasks(NodeRef document);
+    int getActiveResponsibleTasks(NodeRef document, QName workflowType);
 
     /**
      * @param compoundWorkflow
@@ -168,7 +169,7 @@ public interface WorkflowService {
 
     boolean hasNoStoppedOrInprogressCompoundWorkflows(NodeRef parent);
 
-    void finishCompoundWorkflowsOnRegisterDoc(NodeRef docRef, String comment);
+    void finishTasksOrCompoundWorkflowsOnRegisterDoc(NodeRef docRef, String comment);
 
     boolean isSendableExternalWorkflowDoc(NodeRef docNodeRef);
 
@@ -188,6 +189,16 @@ public interface WorkflowService {
 
     boolean hasUnfinishedReviewTasks(NodeRef docNode);
 
-    boolean hasReviewTask(Node docNode);
+    boolean hasTaskOfType(NodeRef docRef, QName... workflowTypes);
+
+    boolean getOrderAssignmentCategoryEnabled();
+
+    boolean hasInProgressActiveResponsibleTasks(NodeRef document, QName workflowType);
+
+    boolean hasInProgressOtherUserOrderAssignmentTasks(NodeRef originalDocRef);
+
+    CompoundWorkflow getNewCompoundWorkflow(Node compoundWorkflowDefinition, NodeRef parent);
+
+    void createDueDateExtension(CompoundWorkflow compoundWorkflow, NodeRef nodeRef);
 
 }

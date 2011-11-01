@@ -156,10 +156,11 @@ public class PutMethod extends WebDAVMethod {
         }
 
         // Update the version if the node is unlocked
-        ((WebDAVCustomHelper) getDAVHelper()).getVersionsService().updateVersion(contentNodeInfo.getNodeRef(), contentNodeInfo.getName());
+        NodeRef fileRef = contentNodeInfo.getNodeRef();
+        boolean createdNewVersion = ((WebDAVCustomHelper) getDAVHelper()).getVersionsService().updateVersionIfNeeded(fileRef, contentNodeInfo.getName());
 
         // Access the content
-        ContentWriter writer = fileFolderService.getWriter(contentNodeInfo.getNodeRef());
+        ContentWriter writer = fileFolderService.getWriter(fileRef);
 
         // Get the input stream from the request data
         InputStream is = m_request.getInputStream();
@@ -167,7 +168,7 @@ public class PutMethod extends WebDAVMethod {
         // Do not allow to change mimeType or locale, use the same values as were set during file creation
         ContentData contentData = contentNodeInfo.getContentData();
         if (contentData == null) {
-            log.warn("ContentData for node is null: " + contentNodeInfo.getNodeRef());
+            log.warn("ContentData for node is null: " + fileRef);
 
             // set content properties
             String mimetype = getMimetypeService().guessMimetype(contentNodeInfo.getName());
@@ -193,14 +194,14 @@ public class PutMethod extends WebDAVMethod {
         writer.putContent(is);
 
         if (writer.getSize() <= 0) {
-            throw new RuntimeException("Saving zero-length content is not allowed");
+            throw new RuntimeException("Saving zero-length content is not allowed" + ", is=" + is);
         }
 
         // add the user and date information to the custom aspect properties
-        ((WebDAVCustomHelper) getDAVHelper()).getVersionsService().updateVersionModifiedAspect(contentNodeInfo.getNodeRef());
+        ((WebDAVCustomHelper) getDAVHelper()).getVersionsService().updateVersionModifiedAspect(fileRef);
 
         // Update document search info
-        NodeRef document = getNodeService().getPrimaryParent(contentNodeInfo.getNodeRef()).getParentRef();
+        NodeRef document = getNodeService().getPrimaryParent(fileRef).getParentRef();
         ((WebDAVCustomHelper) getDAVHelper()).getDocumentService().updateSearchableFiles(document);
 
         // Update Document meta data and generated files
@@ -208,6 +209,7 @@ public class PutMethod extends WebDAVMethod {
 
         // Set the response status, depending if the node existed or not
         m_response.setStatus(created ? HttpServletResponse.SC_CREATED : HttpServletResponse.SC_NO_CONTENT);
+        logger.debug("saved file " + fileRef + ", " + (createdNewVersion ? "created" : "didn't crerate") + " new version");
     }
 
     private void updateDocumentAndGeneratedFiles(FileInfo contentNodeInfo, NodeRef document) throws Exception, ParseException {

@@ -83,7 +83,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 CASE.getLocalName() };
     }
 
-    private static final QName CASE_LABEL_EDITABLE = RepoUtil.createTransientProp(CASE.getLocalName() + "LabelEditable");
+    public static final QName CASE_LABEL_EDITABLE = RepoUtil.createTransientProp(CASE.getLocalName() + "LabelEditable");
 
     /*
      * In EDIT_MODE we use properties:
@@ -549,19 +549,19 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
 
     }
 
-    private static String getFunctionLabel(Function function) {
+    public static String getFunctionLabel(Function function) {
         return function.getMark() + " " + function.getTitle();
     }
 
-    private static String getSeriesLabel(Series serie) {
+    public static String getSeriesLabel(Series serie) {
         return serie.getSeriesIdentifier() + " " + serie.getTitle();
     }
 
-    private static String getVolumeLabel(Volume volume) {
+    public static String getVolumeLabel(Volume volume) {
         return volume.getVolumeMark() + " " + volume.getTitle();
     }
 
-    private static String getCaseLabel(Case tmpCase) {
+    public static String getCaseLabel(Case tmpCase) {
         return StringUtils.trim(tmpCase.getTitle());
     }
 

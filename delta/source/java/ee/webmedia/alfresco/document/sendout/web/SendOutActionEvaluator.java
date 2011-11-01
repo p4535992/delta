@@ -8,6 +8,7 @@ import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.web.evaluator.DocumentSavedActionEvaluator;
@@ -36,7 +37,7 @@ public class SendOutActionEvaluator extends BaseActionEvaluator {
             if (result) {
                 BeanHelper.getDocumentService().throwIfNotDynamicDoc(node);
                 String docTypeId = (String) node.getProperties().get(Props.OBJECT_TYPE_ID);
-                if (!getDocumentAdminService().getDocumentType(docTypeId).isSendUnregistratedDocEnabled()) {
+                if (!getDocumentAdminService().getDocumentTypeProperty(docTypeId, DocumentAdminModel.Props.SEND_UNREGISTRATED_DOC_ENABLED, Boolean.class)) {
                     result = regNumber != null;
                 }
             }
