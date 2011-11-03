@@ -74,6 +74,22 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
             return workflowTypeQName;
         }
 
+        public static DelegatableTaskType getTypeByTask(Task task) {
+            if (task.isType(WorkflowSpecificModel.Types.INFORMATION_TASK)) {
+                return INFORMATION;
+            } else if (task.isType(WorkflowSpecificModel.Types.OPINION_TASK)) {
+                return OPINION;
+            } else if (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
+                if (task.isResponsible()) {
+                    return ASSIGNMENT_RESPONSIBLE;
+                } else {
+                    return ASSIGNMENT_NOT_RESPONSIBLE;
+                }
+            } else {
+                throw new RuntimeException("No DelegatableTaskType defined for task type " + task.getType());
+            }
+        }
+
         public QName getTaskTypeQName() {
             if (WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW.equals(workflowTypeQName)) {
                 return WorkflowSpecificModel.Types.ASSIGNMENT_TASK;

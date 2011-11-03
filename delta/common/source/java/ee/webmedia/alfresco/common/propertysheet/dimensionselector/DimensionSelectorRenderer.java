@@ -135,8 +135,9 @@ public class DimensionSelectorRenderer extends HtmlTextareaRenderer {
                 if (value.getBeginDateTime() != null || value.getEndDateTime() != null) {
                     expiryPeriod = " (kehtiv " + getDateOrDots(value.getBeginDateTime()) + " - " + getDateOrDots(value.getEndDateTime()) + ")";
                 }
-                suggesterDimensionValue.put("label", value.getValue() + expiryPeriod);
-                suggesterDimensionValue.put("description", value.getValue() + (StringUtils.isNotBlank(value.getValueComment()) ? value.getValueComment() : ""));
+                String valueCommentStr = StringUtils.isNotBlank(value.getValueComment()) ? ". " + value.getValueComment() : "";
+                suggesterDimensionValue.put("label", value.getValue() + valueCommentStr + expiryPeriod);
+                suggesterDimensionValue.put("description", value.getValue() + valueCommentStr);
                 suggesterDimensionsValues.add(suggesterDimensionValue);
             }
 

@@ -323,6 +323,10 @@ public class SearchUtil {
         return joinQueryPartsOr(queryParts, false);
     }
 
+    public static String generateAndNotQuery(String query1, String query2) {
+        return "(" + query1 + ") AND NOT (" + query2 + ")";
+    }
+
     public static String generateStringNullQuery(QName... documentPropNames) {
         List<String> queryParts = new ArrayList<String>(documentPropNames.length);
         for (QName documentPropName : documentPropNames) {

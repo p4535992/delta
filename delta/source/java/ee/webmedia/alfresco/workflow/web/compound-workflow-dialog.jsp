@@ -27,5 +27,9 @@
          propSheetFinishBtnPressed = true;
          return propSheetValidateSubmit();
       });
+      // override minimum screen width for compound workflow screen
+      var minWidth = 1220;
+      $jQ("#wrapper").css("min-width", minWidth + "px");
+      setMinScreenWidth(minWidth);
    </script>
 </f:verbatim>

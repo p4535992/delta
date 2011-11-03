@@ -455,33 +455,61 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     private Notification processSubstituteNewTask(Task task, Notification notification) {
-        if (StringUtils.isNotEmpty(task.getOwnerId())) {
-            List<Substitute> substitutes = substituteService.getSubstitutes(userService.getUser(task.getOwnerId()).getNodeRef());
-            if (substitutes.size() > 0) {
-                if (!(task.getDueDate() == null && WorkflowSpecificModel.Types.INFORMATION_TASK.equals(task.getNode().getType()))) {
-                    int daysForSubstitutionTasksCalc = parametersService.getLongParameter(Parameters.DAYS_FOR_SUBSTITUTION_TASKS_CALC).intValue();
-                    Calendar calendar = Calendar.getInstance();
-                    Date now = new Date();
-                    for (Substitute sub : substitutes) {
-                        calendar.setTime(sub.getSubstitutionEndDate());
-                        calendar.add(Calendar.DATE, daysForSubstitutionTasksCalc);
-                        if (task.getDueDate() == null) {
-                            log.error("Duedate is null for task: " + task);
-                        }
-                        Date substitutionStartDate = sub.getSubstitutionStartDate();
-                        Date substitutionEndDate = sub.getSubstitutionEndDate();
-                        if (isSubstituting(substitutionStartDate, substitutionEndDate, now) && substitutionStartDate.before(task.getDueDate())
-                                && calendar.getTime().after(task.getDueDate())) {
-                            notification.addRecipient(sub.getSubstituteName(), userService.getUserEmail(sub.getSubstituteId()));
-                        }
-                    }
-                    if (notification.getToNames() != null && notification.getToNames().size() > 0) {
-                        notification = setupNotification(notification, NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION, 2);
-                    } else {
-                        return null;
-                    }
+        if (StringUtils.isEmpty(task.getOwnerId())) {
+            return null;
+        }
+        if (task.getDueDate() == null) {
+            if (WorkflowSpecificModel.Types.INFORMATION_TASK.equals(task.getNode().getType())) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Not sending new task notification to substitutes, because informationTask has no dueDate");
                 }
+            } else {
+                log.error("Duedate is null for task: " + task);
             }
+            return null;
+        }
+        Node taskOwnerUser = userService.getUser(task.getOwnerId());
+        if (taskOwnerUser == null) {
+            if (log.isDebugEnabled()) {
+                log.debug("Not sending new task notification to substitutes, because task owner user does not exist");
+            }
+            return null;
+        }
+        List<Substitute> substitutes = substituteService.getSubstitutes(taskOwnerUser.getNodeRef());
+        if (log.isDebugEnabled()) {
+            log.debug("Found " + substitutes.size() + " substitutes for new task notification:\n  task=" + task + "\n  substitutes=" + substitutes);
+        }
+        if (substitutes.isEmpty()) {
+            return null;
+        }
+        int daysForSubstitutionTasksCalc = parametersService.getLongParameter(Parameters.DAYS_FOR_SUBSTITUTION_TASKS_CALC).intValue();
+        Calendar calendar = Calendar.getInstance();
+        Date now = new Date();
+        for (Substitute sub : substitutes) {
+            calendar.setTime(sub.getSubstitutionEndDate());
+            calendar.add(Calendar.DATE, daysForSubstitutionTasksCalc);
+            Date substitutionStartDate = sub.getSubstitutionStartDate();
+            Date substitutionEndDate = sub.getSubstitutionEndDate();
+            boolean result = false;
+            if (isSubstituting(substitutionStartDate, substitutionEndDate, now) && substitutionStartDate.before(task.getDueDate())
+                                && calendar.getTime().after(task.getDueDate())) {
+                notification.addRecipient(sub.getSubstituteName(), userService.getUserEmail(sub.getSubstituteId()));
+                result = true;
+            }
+            if (log.isDebugEnabled()) {
+                log.debug("Substitute=" + sub + ", daysForSubstitutionTasksCalc=" + daysForSubstitutionTasksCalc + ", calculated time = " + calendar.getTime() + ", result = "
+                        + (result ? "" : "NOT ") + "added substitute to notification recipients");
+            }
+        }
+        if (notification.getToNames() != null && notification.getToNames().size() > 0) {
+            notification = setupNotification(notification, NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION, 2);
+            if (log.isDebugEnabled()) {
+                log.debug("Successfully prepared new task notification to substitutes: " + notification);
+            }
+            return notification;
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("Not sending new task notification to substitutes, because no suitable substitutes found");
         }
         return null;
     }
@@ -839,6 +867,10 @@ public class NotificationServiceImpl implements NotificationService {
         Date dispositionDate = cal.getTime();
 
         List<Volume> volumesDispositionedAfterDate = documentSearchService.searchVolumesDispositionedAfterDate(dispositionDate);
+        if (log.isDebugEnabled()) {
+            log.debug("Starting to process volume disposition date notifications:\n  volumeDispositionDateNotificationDays=" + volumeDispositionDateNotificationDays
+                    + "\n  searching for volumes with disposition date between now and " + dispositionDate + "\n  found " + volumesDispositionedAfterDate + " volumes");
+        }
         if (volumesDispositionedAfterDate.size() == 0) {
             return 0;
         }
@@ -852,13 +884,16 @@ public class NotificationServiceImpl implements NotificationService {
         notification = addDocumentManagersAsRecipients(notification);
 
         if (notification.getToEmails() == null || notification.getToEmails().isEmpty()) {
+            if (log.isDebugEnabled()) {
+                log.debug("Volume disposition date notification email not sent, no document managers found");
+            }
             return 0; // no doc managers available
         }
 
         NodeRef systemTemplateByName = templateService.getSystemTemplateByName(notification.getTemplateName());
         if (systemTemplateByName == null) {
             if (log.isDebugEnabled()) {
-                log.debug("Volumes disposition date notification email template '" + notification.getTemplateName()
+                log.debug("Volume disposition date notification email template '" + notification.getTemplateName()
                         + "' not found, no notification email is sent");
             }
             return 0; // if the admins are lazy and we don't have a template, we don't have to send out notifications... :)
@@ -1149,8 +1184,12 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public void processTaskDueDateNotifications(ActionEvent event) {
-        processTaskDueDateNotifications();
-
+        AuthenticationUtil.runAs(new RunAsWork<Integer>() {
+            @Override
+            public Integer doWork() throws Exception {
+                return processTaskDueDateNotifications();
+            }
+        }, AuthenticationUtil.getSystemUserName());
     }
 
     @Override

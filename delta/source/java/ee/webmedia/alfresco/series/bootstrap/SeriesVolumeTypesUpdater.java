@@ -26,6 +26,10 @@ import ee.webmedia.alfresco.series.model.SeriesModel;
  * @author Vladimir Drozdik
  */
 public class SeriesVolumeTypesUpdater extends AbstractNodeUpdater {
+    @Override
+    protected String getBaseFileName() {
+        return super.getName();
+    }
 
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() {

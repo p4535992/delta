@@ -35,7 +35,7 @@
    </bean>
    
    <!-- Used to update series volume types values. CL task: 177957 -->
-   <bean id="SeriesVolumeTypesUpdater" class="ee.webmedia.alfresco.series.bootstrap.SeriesVolumeTypesUpdater" parent="abstractNodeUpdater" >
+   <bean id="seriesVolumeTypesUpdater2" class="ee.webmedia.alfresco.series.bootstrap.SeriesVolumeTypesUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
    </bean>
 

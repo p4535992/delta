@@ -1,6 +1,13 @@
 var delta = [];
 delta['translations'] = [];
 
+/** Vertical scrollbar appears when browser window is narrower than minScreenWidth */
+var minScreenWidth = 920;
+
+function setMinScreenWidth(minWidth){
+   minScreenWidth = minWidth;
+}
+
 function addTranslation(key, value) {
    delta.translations[key] = value;
 }
@@ -326,14 +333,20 @@ function addUIAutocompleter(input, valuesArray, dimensionName, dimensionQueryDat
                if(entryDate != null){
                   request.entryDate = entryDate.getDate() + "." + entryDate.getMonth() + "." + entryDate.getFullYear();
                }
-               $jQ.getJSON( uri, request, function( data, status, xhr ) {
-                  if(term.length < 3){
-                     //cache data for new date
-                     lastDimensionQueryDates[dimensionKey] = entryDate;
-                     dimensionSelectorDefaultValues[dimensionKey] = data;
+               $jQ.ajax({
+                  mode: 'queue',
+                  data: request,
+                  url: uri,
+                  dataType: 'json',
+                  success: function( data, status, xhr ) {
+                     if(term.length < 3){
+                        //cache data for new date
+                        lastDimensionQueryDates[dimensionKey] = entryDate;
+                        dimensionSelectorDefaultValues[dimensionKey] = data;
+                     }
+                     response(data);
                   }
-                  response(data);
-               });
+              });               
             }
          },
          focus: function( event, ui ) {
@@ -1193,7 +1206,7 @@ function initWithScreenProtected() {
    if(isIE(7)) {
       $jQ(window).resize(function() {
          var htmlWidth = $jQ("html").outerWidth(true);
-         var width =  htmlWidth < 920 ? 920 : htmlWidth;
+         var width =  htmlWidth < minScreenWidth ? minScreenWidth : htmlWidth;
          $jQ("#wrapper").css("min-width", width + "px");
       });
    }

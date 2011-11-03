@@ -387,11 +387,15 @@ public class DelegationBean implements Serializable {
             else if (filterIndex == 1) {
                 Set<String> children = BeanHelper.getUserService().getUserNamesInGroup(result);
                 int j = 0;
+                Task task = workflow.getTasks().get(taskIndex);
+                DelegatableTaskType delegateTaskType = DelegatableTaskType.getTypeByTask(task);
+                String resolution = task.getResolution();
                 for (String userName : children) {
-                    if (j++ > 0) {
-                        workflow.addTask(++taskIndex);
+                    if (j > 0) {
+                        addDelegationTask(delegateTaskType, workflow, ++taskIndex, resolution);
                     }
                     setPersonPropsToTask(workflow, taskIndex, userName);
+                    j++;
                 }
             }
             // contacts
@@ -446,12 +450,15 @@ public class DelegationBean implements Serializable {
 
     public int addContactGroupTasks(int taskIndex, Workflow block, List<NodeRef> contacts) {
         int taskCounter = 0;
+        Task task = block.getTasks().get(taskIndex);
+        DelegatableTaskType delegateTaskType = DelegatableTaskType.getTypeByTask(task);
+        String resolution = task.getResolution();
         for (int j = 0; j < contacts.size(); j++) {
             Map<QName, Serializable> contactProps = getNodeService().getProperties(contacts.get(j));
             if (getNodeService().hasAspect(contacts.get(j), AddressbookModel.Aspects.ORGANIZATION_PROPERTIES)
                     && Boolean.TRUE.equals(contactProps.get(AddressbookModel.Props.TASK_CAPABLE))) {
                 if (taskCounter > 0) {
-                    block.addTask(++taskIndex);
+                    addDelegationTask(delegateTaskType, block, ++taskIndex, resolution);
                 }
                 setContactPropsToTask(block, taskIndex, contacts.get(j));
                 taskCounter++;

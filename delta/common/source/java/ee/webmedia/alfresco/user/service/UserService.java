@@ -86,7 +86,7 @@ public interface UserService {
      * Fetches the users node
      * 
      * @param userName
-     * @return node representing the user
+     * @return node representing the user or {@code null} if user does not exist
      */
     Node getUser(String userName);
 

@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.document.search.service;
 
+import static ee.webmedia.alfresco.utils.SearchUtil.generateAndNotQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateAspectQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateDatePropertyRangeQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateMultiStringExactQuery;
@@ -990,7 +991,8 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
 
     private String getInProcessDocumentsOwnerQuery(String ownerId) {
         String incomingLetterTypesQuery = generateStringExactQuery("incomingLetter", DocumentAdminModel.Props.OBJECT_TYPE_ID);
-        // String notIncomingLetterTypesQuery = generate // TODO DLSeadist
+        String notIncomingLetterTypesQuery = generateAndNotQuery(generateStringExactQuery(DocumentStatus.WORKING.getValueName(),
+                DocumentCommonModel.Props.DOC_STATUS), generateStringExactQuery("incomingLetter", DocumentAdminModel.Props.OBJECT_TYPE_ID));
         List<String> queryParts = new ArrayList<String>();
         queryParts.add(generateStringExactQuery(ownerId, DocumentCommonModel.Props.OWNER_ID));
         String hasNoStartedCompoundWorkflowsQuery = joinQueryPartsOr(Arrays.asList(
@@ -1000,23 +1002,10 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         queryParts.add(joinQueryPartsOr(
                 Arrays.asList(
                          joinQueryPartsAnd(Arrays.asList(incomingLetterTypesQuery, hasNoStartedCompoundWorkflowsQuery))
-                        // ,
-                        // joinQueryPartsAnd(Arrays.asList(notIncomingLetterTypesQuery,
-                        // generateStringExactQuery(DocumentStatus.WORKING.getValueName(), DocumentCommonModel.Props.DOC_STATUS)))
+                         , notIncomingLetterTypesQuery
                         )
                 ));
         return generateDocumentSearchQuery(queryParts);
-    }
-
-    private QName[] getNotIncomingLetterTypes() {
-        // TODO DLSeadist
-        // if (notIncomingLetterTypes == null) {
-        // Collection<QName> docSubTypes = dictionaryService.getTypes(DocumentSubtypeModel.MODEL_NAME);
-        // docSubTypes.removeAll(DocumentTypeHelper.incomingLetterTypes);
-        // notIncomingLetterTypes = docSubTypes.toArray(new QName[docSubTypes.size()]);
-        // }
-        // return notIncomingLetterTypes;
-        return new QName[] { DocumentCommonModel.Types.DOCUMENT };
     }
 
     private String getDvkOutboxQuery() {

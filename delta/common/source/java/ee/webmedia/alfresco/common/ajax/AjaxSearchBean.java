@@ -38,6 +38,7 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * @author Kaarel Jõgeva
  */
 public class AjaxSearchBean extends AjaxBean {
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(AjaxSearchBean.class);
     private static final long serialVersionUID = 1L;
 
     private static final String DATA = "data";
@@ -97,6 +98,10 @@ public class AjaxSearchBean extends AjaxBean {
         Date entryDate = null;
         if (StringUtils.isNotBlank(entryDateString)) {
             entryDate = DimensionSelectorRenderer.dateFormat.parse(entryDateString);
+        }
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Searching values for dimension='" + dimensionName + "', term='" + searchString + "', filter='" + predefinedFilterName + ", entryDate='" + entryDateString
+                    + "'");
         }
         List<DimensionValue> result = new ArrayList<DimensionValue>();
         List<DimensionValue> dimensionValues = BeanHelper.getEInvoiceService()

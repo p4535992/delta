@@ -92,7 +92,6 @@ public class DelegationHistoryGenerator extends BaseComponentGenerator {
         richList.setId("delegHistoryList-" + listId);
         richList.setViewMode("details");
         richList.setValue(delegationHistories);
-        richList.setValueBinding("pageSize", context.getApplication().createValueBinding("#{DelegationHistoryGenerator.pageSize}"));
         richList.setRendererType("org.alfresco.faces.RichListRenderer");
         putAttribute(richList, "var", "r");
         putAttribute(richList, "rowStyleClass", "recordSetRow");
