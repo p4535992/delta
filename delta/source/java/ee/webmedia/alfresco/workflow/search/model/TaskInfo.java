@@ -67,7 +67,8 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
 
     public Object getDocType() {
         DocumentTypeConverter docTypeConverter = new DocumentTypeConverter();
-        return docTypeConverter.convertSelectedValueToString(document.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID));
+        String docTypeId = (String) document.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID);
+        return docTypeConverter.convertSelectedValueToString(docTypeId);
     }
 
     public Object getRegNum() {

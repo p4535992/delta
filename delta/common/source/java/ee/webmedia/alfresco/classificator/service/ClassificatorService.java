@@ -50,6 +50,8 @@ public interface ClassificatorService {
      */
     List<ClassificatorValue> getAllClassificatorValues(Classificator classificator);
 
+    List<ClassificatorValue> getAllClassificatorValues(String classificator);
+
     /**
      * Removes the selected classificator value from the classificator.
      * 

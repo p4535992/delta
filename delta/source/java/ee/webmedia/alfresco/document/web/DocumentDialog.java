@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.document.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAssociationsService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
 import static ee.webmedia.alfresco.document.einvoice.web.TransactionsTemplateDetailsDialog.MODAL_KEY_ENTRY_SAP_NUMBER;
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.ERRAND_APPLICATION_DOMESTIC;
@@ -881,7 +882,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             }
         }
         try {
-            getDocumentService().createAssoc(sourceRef, targetRef, assocType);
+            getDocumentAssociationsService().createAssoc(sourceRef, targetRef, assocType);
         } catch (NodeLockedException e) {
             NodeRef nodeRef = e.getNodeRef();
             String messageId = nodeRef.equals(sourceRef) ? "document_assocAdd_error_sourceLocked" : "document_assocAdd_error_targetLocked";
@@ -899,7 +900,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     }
 
     private void addTargetAssoc(NodeRef targetRef, QName targetType) {
-        final DocAssocInfo docAssocInfo = getDocumentService().getDocAssocInfo(addAssoc(searchBlockBean.getNode(), targetRef, targetType, true), true);
+        final DocAssocInfo docAssocInfo = getDocumentAssociationsService().getDocAssocInfo(addAssoc(searchBlockBean.getNode(), targetRef, targetType, true), true);
         searchBlockBean.setShow(false);
         assocsBlockBean.getDocAssocInfos().add(docAssocInfo);
         assocsBlockBean.init(node);

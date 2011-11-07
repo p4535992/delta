@@ -2024,6 +2024,16 @@ function clearRangePicker(){
    var date = jQuery(this);
    var dateId = date.attr("id");
    dateId = dateId.replace("_EndDate","");
+   var otherDate;
+   if(dateId==date.attr("id")){
+      otherDate = jQuery("#" + escapeId4JQ(dateId + "_EndDate"))
+   } else {
+      otherDate = jQuery("#" + escapeId4JQ(dateId))
+   }
+   date.datepicker("option","minDate",null);
+   date.datepicker("option","maxDate",null);
+   otherDate.datepicker("option","minDate",null);
+   otherDate.datepicker("option","maxDate",null);
    var selector = jQuery("#" + escapeId4JQ(dateId + "_DateRangePicker"));
    selector.val("");
 }
@@ -2059,6 +2069,9 @@ function setDateFromEnum(beginDate,endDate,selectedEnum){
    } else if(selectedEnum == "CURRENT_YEAR"){
       startDate = new Date(startDate.getFullYear(),0,1,0,0,0,0);
    }
+   beginDate.datepicker("option","defaultDate",startDate);
    beginDate.datepicker("setDate",startDate);
+   endDate.datepicker("option","minDate",startDate);
+   endDate.datepicker("option","defaultDate",finishDate);
    endDate.datepicker("setDate",finishDate);
 }

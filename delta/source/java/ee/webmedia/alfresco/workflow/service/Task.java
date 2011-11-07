@@ -190,6 +190,10 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
         setProp(WorkflowSpecificModel.Props.CREATOR_ID, creatorId);
     }
 
+    public void setDocumentType(String documentType) {
+        setProp(WorkflowCommonModel.Props.DOCUMENT_TYPE, documentType);
+    }
+
     public String getCreatorEmail() {
         return getProp(WorkflowSpecificModel.Props.CREATOR_EMAIL);
     }

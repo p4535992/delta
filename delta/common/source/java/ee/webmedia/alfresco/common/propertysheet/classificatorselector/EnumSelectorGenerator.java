@@ -98,7 +98,7 @@ public class EnumSelectorGenerator extends GeneralSelectorGenerator implements H
             selectOptions.add(selectItem);
         }
 
-        if (!Boolean.TRUE.equals(getCustomAttributes().get(ATTR_DISABLE_SORTING))) {
+        if (!new Boolean(getCustomAttributes().get(ATTR_DISABLE_SORTING))) {
             ComponentUtil.sortByLabel(selectOptions);
         }
 

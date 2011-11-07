@@ -273,6 +273,16 @@
          </list>
       </property>
    </bean> 
+   
+   <bean id="addDocTypeToTaskNodeUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.AddDocTypeToTaskNodeUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="ParallelTasksPropertiesUpdater" /> <!-- kas on vaja veel m6nda dependsOn-i? nagu chnageAllOldDocTypesToNewThatHaveTheDocTypeProp -->
+         </list>
+      </property>
+   </bean> 
 
    <!-- START: web beans: -->
       

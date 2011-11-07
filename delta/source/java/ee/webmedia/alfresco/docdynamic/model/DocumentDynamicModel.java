@@ -20,6 +20,8 @@ public interface DocumentDynamicModel {
         QName SIGNER_EMAIL = QName.createQName(URI, "signerEmail");
         QName SIGNER_PHONE = QName.createQName(URI, "signerPhone");
 
+        QName OWNER_NAME = QName.createQName(URI, "ownerName");
+        QName OWNER_ID = QName.createQName(URI, "ownerId");
         QName RECIPIENT_PERSON_NAME = QName.createQName(URI, "recipientPersonName");
         QName RECIPIENT_STREET_HOUSE = QName.createQName(URI, "recipientStreetHouse");
         QName RECIPIENT_POSTAL_CITY = QName.createQName(URI, "recipientPostalCity");
@@ -39,6 +41,7 @@ public interface DocumentDynamicModel {
         /** document name used for ADR */
         QName DOC_NAME_ADR = QName.createQName(URI, "docNameAdr");
         QName SIGNER_ID = QName.createQName(URI, "signerId");
+        QName SIGNER_NAME = QName.createQName(URI, "signerName");
         QName SUBSTITUTE_ID = QName.createQName(URI, "substituteId");
         QName PREVIOUS_OWNER_ID = QName.createQName(URI, "previousOwnerId");
         QName SHORT_REG_NUMBER = QName.createQName(URI, "shortRegNumber");

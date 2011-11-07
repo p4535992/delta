@@ -15,7 +15,6 @@ import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.springframework.beans.factory.InitializingBean;
 
-import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
 import ee.webmedia.alfresco.document.permissions.SeriesDocManagerDynamicAuthority;
@@ -45,6 +44,7 @@ public interface DocumentService {
         public static final String SERIES_NODEREF = RepoUtil.createTransientProp("series").toString();
         public static final String VOLUME_NODEREF = RepoUtil.createTransientProp("volume").toString();
         public static final String CASE_NODEREF = RepoUtil.createTransientProp("case").toString();
+        public static final QName TEMP_DOCUMENT_IS_DRAFT_OR_IMAP_OR_DVK_QNAME = RepoUtil.createTransientProp("isDraftOrImapOrDvk");
         public static final QName TEMP_DOCUMENT_IS_DRAFT_QNAME = RepoUtil.createTransientProp("isDraft");
         public static final String TEMP_DOCUMENT_IS_DRAFT = TEMP_DOCUMENT_IS_DRAFT_QNAME.toString();
         public static final String TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED = "{temp}logging_disabled_docMetadataChanged";
@@ -121,6 +121,7 @@ public interface DocumentService {
      * @param nodeRef
      * @return
      */
+    @Deprecated
     Node createFollowUp(QName docType, NodeRef nodeRef);
 
     /**
@@ -134,21 +135,6 @@ public interface DocumentService {
     List<Document> getAllDocumentFromDvk();
 
     int getAllDocumentFromDvkCount();
-
-    List<DocAssocInfo> getAssocInfos(Node document);
-
-    /**
-     * Deletes association between nodes
-     * 
-     * @param sourceNodeRef
-     * @param targetNodeRef
-     * @param assocQName if null, defaults to <code>DocumentCommonModel.Assocs.DOCUMENT_2_DOCUMENT</code>
-     */
-    void deleteAssoc(NodeRef sourceNodeRef, NodeRef targetNodeRef, QName assocQName);
-
-    void createAssoc(NodeRef sourceNodeRef, NodeRef targetNodeRef, QName assocQName);
-
-    DocAssocInfo getDocAssocInfo(AssociationRef assocRef, boolean isSourceAssoc);
 
     /**
      * Get list of incoming email.

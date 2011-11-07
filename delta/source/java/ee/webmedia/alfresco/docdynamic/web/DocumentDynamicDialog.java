@@ -26,17 +26,20 @@ import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
+import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
 import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfig;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.docdynamic.web.AccessRestrictionChangeReasonModalComponent.AccessRestrictionChangeReasonEvent;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog.DocDialogSnapshot;
+import ee.webmedia.alfresco.document.associations.web.AssocsBlockBean;
 import ee.webmedia.alfresco.document.file.web.FileBlockBean;
 import ee.webmedia.alfresco.document.log.web.LogBlockBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
@@ -91,8 +94,11 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     /** @param event */
     public void openFromDocumentList(ActionEvent event) {
         NodeRef docRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
-        // TODO if (isFromDVK() || isFromImap() || isIncomingInvoice()) { inEditMode = true; } else { inEditMode = false; }
-        open(docRef, false);
+        if (validateExists(docRef)) {
+            // TODO if isIncomingInvoice() then inEditMode = true;
+            boolean inEditMode = getDocumentDynamicService().isImapOrDvk(docRef);
+            open(docRef, inEditMode);
+        }
     }
 
     /** @param event */
@@ -110,8 +116,24 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     /** @param event */
     public void createDraft(ActionEvent event) {
         String documentTypeId = ActionUtil.getParam(event, "documentTypeId");
-        NodeRef docRef = getDocumentDynamicService().createNewDocumentInDrafts(documentTypeId);
-        open(docRef, true);
+        DocumentDynamic doc = getDocumentDynamicService().createNewDocumentInDrafts(documentTypeId);
+        open(doc.getNodeRef(), doc, true);
+    }
+
+    public void createAssoc(ActionEvent event) {
+        DocDialogSnapshot snapshot = getCurrentSnapshot();
+        if (snapshot == null) {
+            throw new RuntimeException("No current document");
+        }
+        NodeRef baseDocRef = snapshot.document.getNodeRef();
+        String lockOwner = BeanHelper.getDocLockService().getLockOwnerIfLocked(baseDocRef);
+        if (lockOwner != null) {
+            String lockOwnerName = BeanHelper.getUserService().getUserFullName(lockOwner);
+            throw new UnableToPerformException("docdyn_createAssoc_error_docLocked", lockOwnerName);
+        }
+        NodeRef assocModelRef = ActionUtil.getParam(event, AssocsBlockBean.PARAM_ASSOC_MODEL_REF, NodeRef.class);
+        DocumentDynamic newDocument = BeanHelper.getDocumentAssociationsService().createAssociatedDocFromModel(baseDocRef, assocModelRef);
+        open(newDocument.getNodeRef(), newDocument, true);
     }
 
     // =========================================================================
@@ -144,11 +166,19 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
 
     // All dialog entry point methods must call this method
     private void open(NodeRef docRef, boolean inEditMode) {
+        open(docRef, null, inEditMode);
+    }
+
+    private void open(NodeRef docRef, DocumentDynamic document, boolean inEditMode) {
         if (!validateOpen(docRef, inEditMode)) {
             return;
         }
         createSnapshot(new DocDialogSnapshot());
-        openOrSwitchModeCommon(docRef, inEditMode);
+        if (document != null) {
+            openOrSwitchModeCommon(document, inEditMode);
+        } else {
+            openOrSwitchModeCommon(docRef, inEditMode);
+        }
     }
 
     @Override
@@ -157,9 +187,14 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     }
 
     private void openOrSwitchModeCommon(NodeRef docRef, boolean inEditMode) {
+        openOrSwitchModeCommon(getDocumentDynamicService().getDocument(docRef), inEditMode);
+    }
+
+    private void openOrSwitchModeCommon(DocumentDynamic document, boolean inEditMode) {
+        NodeRef docRef = document.getNodeRef();
         DocDialogSnapshot currentSnapshot = getCurrentSnapshot();
         try {
-            currentSnapshot.document = getDocumentDynamicService().getDocument(docRef);
+            currentSnapshot.document = document;
             List<Node> subNodeList = currentSnapshot.document.getNode().getAllChildAssociations(DocumentCommonModel.Types.METADATA_CONTAINER);
             if (subNodeList != null) {
                 for (Node subNode : subNodeList) {
@@ -318,6 +353,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     }
 
     private static boolean validateExists(NodeRef docRef) {
+        Assert.notNull(docRef, "docRef is not given");
         if (!BeanHelper.getNodeService().exists(docRef)) {
             MessageUtil.addErrorMessage("document_restore_error_docDeleted");
             return false;
@@ -356,6 +392,14 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         return snapshot.document;
     }
 
+    public DocumentType getDocumentType() {
+        DocDialogSnapshot snapshot = getCurrentSnapshot();
+        if (snapshot == null) {
+            return null;
+        }
+        return snapshot.config.getDocType();
+    }
+
     @Override
     public WmNode getNode() {
         DocumentDynamic document = getDocument();
@@ -366,7 +410,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     }
 
     @Override
-    public Object getActionsContext() {
+    public WmNode getActionsContext() {
         return getNode();
     }
 

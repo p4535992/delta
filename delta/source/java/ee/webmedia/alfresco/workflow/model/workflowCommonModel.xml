@@ -139,6 +139,9 @@
             <property name="wfc:outcome">
                <type>d:text</type>
             </property>
+            <property name="wfc:documentType">
+               <type>d:text</type>
+            </property>
             <property name="wfc:completedDateTime">
                <type>d:datetime</type>
             </property>

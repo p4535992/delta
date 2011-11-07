@@ -7,6 +7,7 @@
    <import resource="classpath:ee/webmedia/alfresco/document/permissions/permissions-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/document/search/document-search-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/document/associations/associations-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/document/assocsdyn/docassocdyn-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/document/sendout/send-out-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/document/forum/forum-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/document/scanned/scanned-context.xml" />

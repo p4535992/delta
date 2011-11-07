@@ -105,6 +105,16 @@ public class BaseServiceImpl implements BaseService {
     }
 
     @Override
+    public <T extends BaseObject> List<T> getChildren(NodeRef parentRef, Class<T> childrenClass, QNamePattern typeQNamePattern, QNamePattern qnamePattern, Effort effort) {
+        List<ChildAssociationRef> docTypeFollowupAssocs = nodeService.getChildAssocs(parentRef, typeQNamePattern, qnamePattern);
+        List<T> assocModels = new ArrayList<T>(docTypeFollowupAssocs.size());
+        for (ChildAssociationRef childAssociationRef : docTypeFollowupAssocs) {
+            assocModels.add(getObject(childAssociationRef.getChildRef(), childrenClass, effort));
+        }
+        return assocModels;
+    }
+
+    @Override
     public <T extends BaseObject> List<T> getObjects(List<NodeRef> resultRefs, Class<T> resultClass) {
         return getObjects(resultRefs, resultClass, null, null);
     }

@@ -26,27 +26,34 @@
    <config evaluator="node-type" condition="tasksearch:filter" replace="true">
       <property-sheet>
          <show-property name="tasksearch:startedDateTimeBegin" display-label-id="task_search_startedDateTime" component-generator="InlinePropertyGroupGenerator"
-            props="tasksearch:startedDateTimeBegin||styleClass=date,tasksearch:startedDateTimeEnd||styleClass=date" textId="task_search_from_to" />
+            props="tasksearch:startedDateTimeBegin||styleClass=date,tasksearch:startedDateTimeBegin_EndDate||styleClass=date,tasksearch:startedDateTimeBegin_DateRangePicker|EnumSelectorGenerator|disableSorting=true|styleClass=quickDateRangePicker|enumClass=ee.webmedia.alfresco.classificator.enums.DatePeriods" 
+            textId="task_search_from_to_with_picker" />
          <show-property name="tasksearch:taskType" display-label-id="task_search_taskType" component-generator="GeneralSelectorGenerator"
             selectionItems="#{TaskSearchDialog.getTaskTypes}" converter="ee.webmedia.alfresco.common.propertysheet.converter.QNameConverter" />
          <show-property name="tasksearch:ownerName" display-label-id="task_search_owner" component-generator="SearchGenerator"
             pickerCallback="#{TaskSearchDialog.executeOwnerSearch}" setterCallback="#{TaskSearchDialog.processOwnerSearchResults}" dialogTitleId="task_search_owner_title"
-            filters="#{TaskSearchDialog.ownerSearchFilters}" showFilter="true" styleClass="task-search-with-filter" />
+            filters="#{TaskSearchDialog.ownerSearchFilters}" showFilter="true" styleClass="task-search-with-filter" editable="true" searchLinkLabel="add" />
          <show-property name="tasksearch:creatorName" display-label-id="task_search_creator" component-generator="SearchGenerator"
             pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{TaskSearchDialog.processCreatorSearchResults}" dialogTitleId="users_search_title" />
          <show-property name="tasksearch:organizationName" display-label-id="task_search_organization" component-generator="TextAreaGenerator" styleClass="expand19-200" />
          <show-property name="tasksearch:jobTitle" display-label-id="task_search_job_title" component-generator="TextAreaGenerator" styleClass="expand19-200" />
          <show-property name="tasksearch:dueDateTimeBegin" display-label-id="task_search_dueDateTime" component-generator="InlinePropertyGroupGenerator"
-            props="tasksearch:dueDateTimeBegin||styleClass=date,tasksearch:dueDateTimeEnd||styleClass=date" textId="task_search_from_to" />
+            props="tasksearch:dueDateTimeBegin||styleClass=date,tasksearch:dueDateTimeBegin_EndDate||styleClass=date,tasksearch:dueDateTimeBegin_DateRangePicker|EnumSelectorGenerator|disableSorting=true|styleClass=quickDateRangePicker|enumClass=ee.webmedia.alfresco.classificator.enums.DatePeriods" 
+            textId="task_search_from_to_with_picker" />
          <show-property name="tasksearch:onlyResponsible" display-label-id="task_search_only_responsible" />
          <show-property name="tasksearch:completedDateTimeBegin" display-label-id="task_search_completedDateTime" component-generator="InlinePropertyGroupGenerator"
-            props="tasksearch:completedDateTimeBegin||styleClass=date,tasksearch:completedDateTimeEnd||styleClass=date" textId="task_search_from_to" />
+            props="tasksearch:completedDateTimeBegin||styleClass=date,tasksearch:completedDateTimeBegin_EndDate||styleClass=date,tasksearch:completedDateTimeBegin_DateRangePicker|EnumSelectorGenerator|disableSorting=true|styleClass=quickDateRangePicker|enumClass=ee.webmedia.alfresco.classificator.enums.DatePeriods" 
+            textId="task_search_from_to_with_picker" />
+         <show-property name="tasksearch:outcome" display-label-id="task_search_outcome" classificatorName="taskOutcomeSearch" component-generator="ClassificatorSelectorGenerator" />
          <show-property name="tasksearch:comment" display-label-id="task_search_comment" component-generator="TextAreaGenerator" styleClass="expand19-200" />
          <show-property name="tasksearch:resolution" display-label-id="task_search_resolution" component-generator="TextAreaGenerator" styleClass="expand19-200" />
          <show-property name="tasksearch:status" display-label-id="task_search_status" component-generator="GeneralSelectorGenerator" selectionItems="#{TaskSearchDialog.getTaskStatuses}" />
          <show-property name="tasksearch:completedOverdue" display-label-id="task_search_completed_overdue" labelStyleClass="wrap" />
          <show-property name="tasksearch:stoppedDateTimeBegin" display-label-id="task_search_stoppedDateTime" component-generator="InlinePropertyGroupGenerator"
-            props="tasksearch:stoppedDateTimeBegin||styleClass=date,tasksearch:stoppedDateTimeEnd||styleClass=date" textId="task_search_from_to" />
+            props="tasksearch:stoppedDateTimeBegin||styleClass=date,tasksearch:stoppedDateTimeBegin_EndDate||styleClass=date,tasksearch:stoppedDateTimeBegin_DateRangePicker|EnumSelectorGenerator|disableSorting=true|styleClass=quickDateRangePicker|enumClass=ee.webmedia.alfresco.classificator.enums.DatePeriods" 
+            textId="task_search_from_to_with_picker" />
+         <show-property name="tasksearch:docType" display-label-id="document_docType" component-generator="GeneralSelectorGenerator"
+            selectionItems="#{DocumentSearchBean.getDocumentTypes}" />
       </property-sheet>
    </config>
 

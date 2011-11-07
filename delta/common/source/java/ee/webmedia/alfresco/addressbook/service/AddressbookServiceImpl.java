@@ -294,7 +294,7 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
 
     @Override
     public List<Node> search(String searchCriteria) {
-        return executeSearch(searchCriteria, searchFields, false, allContactTypes, null);
+        return executeSearch(searchCriteria, searchFields, false, false, allContactTypes, null);
     }
 
     @Override
@@ -303,7 +303,7 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
         if (StringUtils.isBlank(searchCriteria)) {
             result = listContactGroups();
         } else {
-            result = executeSearch(searchCriteria, contactGroupSearchFields, false, Collections.<QName> emptySet(), null);
+            result = executeSearch(searchCriteria, contactGroupSearchFields, false, false, Collections.<QName> emptySet(), null);
         }
         if (excludeTaskCapable) { // should be done during search
             List<Node> notTaskCapable = new ArrayList<Node>(result.size());
@@ -327,11 +327,12 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
     }
 
     @Override
-    public List<Node> searchTaskCapableContacts(String searchCriteria, boolean orgOnly, String institutionToRemove) {
+    public List<Node> searchTaskCapableContacts(String searchCriteria, boolean orgOnly, boolean dvkCapableOnly, String institutionToRemove) {
         return executeSearch(
                 searchCriteria,
                 searchFields,
                 true,
+                dvkCapableOnly,
                 orgOnly ? Collections.singleton(Types.ORGANIZATION) : allContactTypes, // actually only organizations have the taskCapable property...
                 institutionToRemove);
     }
@@ -341,25 +342,26 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
         Set<QName> types = new HashSet<QName>();
         types.add(Types.ORGPERSON);
         types.add(Types.PRIV_PERSON);
-        return executeSearch(searchCriteria, searchFields, false, types, null);
+        return executeSearch(searchCriteria, searchFields, false, false, types, null);
     }
 
     @Override
     public List<Node> searchOrgContacts(String searchCriteria) {
-        return executeSearch(searchCriteria, searchFields, false, Collections.singleton(Types.ORGANIZATION), null);
+        return executeSearch(searchCriteria, searchFields, false, false, Collections.singleton(Types.ORGANIZATION), null);
     }
 
     @Override
-    public List<Node> searchTaskCapableContactGroups(String searchCriteria, boolean orgOnly, String institutionToRemove) {
+    public List<Node> searchTaskCapableContactGroups(String searchCriteria, boolean orgOnly, boolean dvkCapableOnly, String institutionToRemove) {
         return executeSearch(
                 searchCriteria,
                 contactGroupSearchFields,
                 true,
+                dvkCapableOnly,
                 orgOnly ? Collections.singleton(Types.ORGANIZATION) : Collections.<QName> emptySet(),
                 institutionToRemove);
     }
 
-    private List<Node> executeSearch(String searchCriteria, Set<QName> fields, boolean taskCapableOnly, Set<QName> types, String institutionToRemove) {
+    private List<Node> executeSearch(String searchCriteria, Set<QName> fields, boolean taskCapableOnly, boolean dvkCapableOnly, Set<QName> types, String institutionToRemove) {
         List<String> queryPartsAnd = new ArrayList<String>(4);
         if (StringUtils.isNotBlank(searchCriteria)) {
             queryPartsAnd.add(SearchUtil.generateStringWordsWildcardQuery(parseQuickSearchWords(searchCriteria, 1), true, true, fields.toArray(new QName[0])));
@@ -369,6 +371,9 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
                 queryPartsAnd.add(generateTypeQuery(Types.CONTACT_GROUP));
             }
             queryPartsAnd.add(generatePropertyBooleanQuery(Props.TASK_CAPABLE, true));
+        }
+        if (dvkCapableOnly && fields != contactGroupSearchFields) {
+            queryPartsAnd.add(generatePropertyBooleanQuery(Props.DVK_CAPABLE, true));
         }
         if (fields == searchFields) {
             queryPartsAnd.add(generateTypeQuery(types));
@@ -384,16 +389,16 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
         List<NodeRef> nodeRefs = searchNodes(joinQueryPartsAnd(queryPartsAnd), false, "addressbookSearch", store);
         if (types.contains(Types.ORGANIZATION) && fields == contactGroupSearchFields) {
             // here we only want the contact groups that contain organizations?
-            return filterContactGroupsThatContainOrganizations(nodeRefs);
+            return filterContactGroupsThatContainOrganizations(nodeRefs, dvkCapableOnly);
         }
         return toNodeList(nodeRefs);
     }
 
-    private List<Node> filterContactGroupsThatContainOrganizations(List<NodeRef> nodeRefs) {
+    private List<Node> filterContactGroupsThatContainOrganizations(List<NodeRef> nodeRefs, boolean dvkCapableOnly) {
         List<Node> result = new ArrayList<Node>();
         for (NodeRef nodeRef : nodeRefs) {
             for (Node contact : getContacts(nodeRef)) {
-                if ((contact.getType().equals(Types.ORGANIZATION))) {
+                if ((contact.getType().equals(Types.ORGANIZATION)) && (!dvkCapableOnly || Boolean.TRUE.equals(contact.getProperties().get(Props.DVK_CAPABLE)))) {
                     result.add(getNode(nodeRef));
                     break;
                 }

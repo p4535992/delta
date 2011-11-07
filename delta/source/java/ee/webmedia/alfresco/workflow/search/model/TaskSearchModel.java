@@ -34,6 +34,7 @@ public interface TaskSearchModel {
         QName STARTED_DATE_TIME_BEGIN = QName.createQName(URI, "startedDateTimeBegin");
         QName STARTED_DATE_TIME_END = QName.createQName(URI, "startedDateTimeEnd");
         QName TASK_TYPE = QName.createQName(URI, "taskType");
+        QName DOC_TYPE = QName.createQName(URI, "docType");
         QName OWNER_NAME = QName.createQName(URI, "ownerName");
         QName CREATOR_NAME = QName.createQName(URI, "creatorName");
         QName ORGANIZATION_NAME = QName.createQName(URI, "organizationName");
@@ -44,6 +45,7 @@ public interface TaskSearchModel {
         QName COMPLETED_DATE_TIME_BEGIN = QName.createQName(URI, "completedDateTimeBegin");
         QName COMPLETED_DATE_TIME_END = QName.createQName(URI, "completedDateTimeEnd");
         QName COMMENT = QName.createQName(URI, "comment");
+        QName OUTCOME = QName.createQName(URI, "outcome");
         QName RESOLUTION = QName.createQName(URI, "resolution");
         QName STATUS = QName.createQName(URI, "status");
         QName COMPLETED_OVERDUE = QName.createQName(URI, "completedOverdue");

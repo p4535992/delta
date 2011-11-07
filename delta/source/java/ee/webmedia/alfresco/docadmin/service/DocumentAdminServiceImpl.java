@@ -168,6 +168,26 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
+    public Pair<DocumentType, DocumentTypeVersion> getDocumentTypeAndVersion(String docTypeId, Integer docTypeVersionNr) {
+        DocumentType docType = getDocumentType(docTypeId, DocumentAdminService.DOC_TYPE_WITH_OUT_GRAND_CHILDREN);
+        if (docType == null) {
+            throw new RuntimeException("documentType with documentTypeId=" + docTypeId + " not found");
+        }
+        DocumentTypeVersion docVersion = null;
+        for (DocumentTypeVersion version : docType.getDocumentTypeVersions()) {
+            if (docTypeVersionNr == version.getVersionNr()) {
+                baseService.loadChildren(version, null);
+                docVersion = version;
+                break;
+            }
+        }
+        if (docVersion == null) {
+            throw new RuntimeException("documentTypeVersion with versionNr=" + docTypeVersionNr + " not found under documentType=" + docType.toString());
+        }
+        return new Pair<DocumentType, DocumentTypeVersion>(docType, docVersion);
+    }
+
+    @Override
     public DocumentType getDocumentType(NodeRef docTypeRef, DocTypeLoadEffort effort) {
         // FIXME DLSeadist - Kui kõik süsteemsed dok.liigid on defineeritud, siis võib null kontrolli ja tagastamise eemdaldada
         if (docTypeRef == null) {
@@ -206,7 +226,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         for (ChildAssociationRef childAssoc : nodeService.getChildAssocs(getDocumentTypesRoot())) {
             Map<QName, Serializable> props = nodeService.getProperties(childAssoc.getChildRef());
             Boolean documentTypeUsed = (Boolean) props.get(DocumentAdminModel.Props.USED);
-            if (documentTypeUsed == null || documentTypeUsed == used) {
+            if (used == null || documentTypeUsed == used) {
                 String documentTypeId = (String) props.get(DocumentAdminModel.Props.DOCUMENT_TYPE_ID);
                 String documentTypeName = (String) props.get(DocumentAdminModel.Props.NAME);
                 docTypesByDocTypeId.put(documentTypeId, documentTypeName);
@@ -711,6 +731,9 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         for (MetadataItem metadataItem : ver.getMetadata()) {
             if (metadataItem.getOrder() == null || metadataItem.getOrder() < 1) {
                 metadataItem.setOrder(++order);
+            }
+            if (metadataItem instanceof FieldAndGroupBase) {
+                ((FieldAndGroupBase) metadataItem).setRemovableFromSystematicDocType(false);
             }
         }
         return saveOrUpdateDocumentType(docType);

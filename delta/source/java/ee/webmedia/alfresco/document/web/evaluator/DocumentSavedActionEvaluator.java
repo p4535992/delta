@@ -17,6 +17,6 @@ public class DocumentSavedActionEvaluator extends BaseActionEvaluator {
 
     @Override
     public boolean evaluate(Node node) {
-        return !BeanHelper.getDocumentDynamicService().isDraft(node.getNodeRef());
+        return !BeanHelper.getDocumentDynamicService().isDraftOrImapOrDvk(node.getNodeRef());
     }
 }

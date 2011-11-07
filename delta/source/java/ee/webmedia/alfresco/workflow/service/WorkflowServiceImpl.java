@@ -44,6 +44,7 @@ import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.dvk.service.DvkService;
@@ -655,8 +656,9 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
         { // validate that at least one new equivalent task is created (and it contains minimal information)
             boolean searchResponsibleTask = WorkflowUtil.isActiveResponsible(assignmentTaskOriginal);
-            boolean checkMandatoryTasks = assignmentTaskOriginal.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK);
+            boolean isAssignmentWorkflow = assignmentTaskOriginal.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK);
             Task newMandatoryTask = null;
+            boolean hasAtLeastOneDelegationTask = false;
             { // validate that tasks added during delegation have all mandatory fields filled and at least one task equivalent to delegatable task is also added
                 for (Workflow workflow : cWorkflowWorkflowsCopy) {
                     int taskIndex = 0;
@@ -665,10 +667,14 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                     }
                     for (Task task : workflow.getTasks()) {
                         if (isGeneratedByDelegation(task)) {
+                            hasAtLeastOneDelegationTask = true;
                             delegationTaskMandatoryFieldsFilled(task, feedback);
-                            task.getDueDate().setHours(23);
-                            task.getDueDate().setMinutes(59);
-                            if (checkMandatoryTasks && workflow.isType(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW) && newMandatoryTask == null) {
+                            Date dueDate = task.getDueDate();
+                            if (dueDate != null) {
+                                dueDate.setHours(23);
+                                dueDate.setMinutes(59);
+                            }
+                            if (isAssignmentWorkflow && workflow.isType(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW) && newMandatoryTask == null) {
                                 if (!searchResponsibleTask) {
                                     newMandatoryTask = task;
                                 } else if (WorkflowUtil.isActiveResponsible(task)) {
@@ -680,12 +686,16 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                     }
                 }
             }
-            if (checkMandatoryTasks && newMandatoryTask == null) {
-                if (searchResponsibleTask) {
-                    feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, "delegate_error_noNewResponsibleTask"));
-                } else {
-                    feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, "delegate_error_noNewTask"));
+            if (isAssignmentWorkflow) {
+                if (newMandatoryTask == null) {
+                    if (searchResponsibleTask) {
+                        feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, "delegate_error_noNewResponsibleTask"));
+                    } else {
+                        feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, "delegate_error_noNewTask"));
+                    }
                 }
+            } else if (!hasAtLeastOneDelegationTask) {
+                feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, "delegate_error_noDelegationTask"));
             }
         }
 
@@ -812,9 +822,9 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     @Override
     public boolean isRecievedExternalReviewTask(Task task) {
         return task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)
-                && (isInternalTesting() && !Boolean.TRUE.equals(nodeService.getProperty(task.getParent().getParent().getParent(),
+                && ((isInternalTesting() && !Boolean.TRUE.equals(nodeService.getProperty(task.getParent().getParent().getParent(),
                         DocumentSpecificModel.Props.NOT_EDITABLE)))
-                || (isInternalTesting() && !isResponsibleCurrenInstitution(task));
+                        || (!isInternalTesting() && !isResponsibleCurrenInstitution(task)));
     }
 
     private boolean isResponsibleCurrenInstitution(Task task) {
@@ -2029,6 +2039,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                 String username = userService.getCurrentUserName();
                 ((Task) object).setCreatorId(username);
                 ((Task) object).setCreatorEmail(userService.getUserEmail(username));
+                ((Task) object).setDocumentType(getDocumentTypeFromTaskParent(parent));
             }
             if (object.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)) {
                 object.setProp(WorkflowSpecificModel.Props.CREATOR_INSTITUTION_CODE, dvkService.getInstitutionCode());
@@ -2086,6 +2097,17 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         }
         object.setChangedProperties(props);
         return changed;
+    }
+
+    private String getDocumentTypeFromTaskParent(NodeRef parent) {
+        NodeRef doc = parent;
+        do {
+            if (nodeService.getType(doc).equals(DocumentCommonModel.Types.DOCUMENT)) {
+                return (String) nodeService.getProperty(doc, DocumentAdminModel.Props.OBJECT_TYPE_ID);
+            }
+            doc = nodeService.getPrimaryParent(doc).getParentRef();
+        } while (doc != null);
+        return null;
     }
 
     @Override

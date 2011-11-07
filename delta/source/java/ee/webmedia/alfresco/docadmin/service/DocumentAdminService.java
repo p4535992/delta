@@ -42,6 +42,8 @@ public interface DocumentAdminService {
 
     DocumentType getDocumentType(String id, DocTypeLoadEffort effort);
 
+    Pair<DocumentType, DocumentTypeVersion> getDocumentTypeAndVersion(String docTypeId, Integer docTypeVersionNr);
+
     <T> T getDocumentTypeProperty(NodeRef docTypeRef, QName property, Class<T> returnClass);
 
     /**
@@ -145,11 +147,21 @@ public interface DocumentAdminService {
 
     boolean isGroupShowShowInTwoColumns(FieldGroup group);
 
+    @SuppressWarnings("unchecked")
     /** It can be used to load DocumentType and first level childNodes */
     DocTypeLoadEffort DOC_TYPE_WITH_OUT_GRAND_CHILDREN = new DocTypeLoadEffort().setReturnChildrenByParent(DocumentType.class);
 
     /** It can be used to load DocumentType and first level childNodes plus all children of latest {@link DocumentTypeVersion} */
     DocTypeLoadEffort DOC_TYPE_WITH_OUT_GRAND_CHILDREN_EXEPT_LATEST_DOCTYPE_VER = new DocTypeLoadEffort().setReturnLatestDocTypeVersionChildren();
+
+    /** DocumentType without fetching children of older {@link DocumentTypeVersion} nodes */
+    DocTypeLoadEffort DOC_TYPE_WITHOUT_OLDER_DT_VERSION_CHILDREN = new DocTypeLoadEffort() {
+        @Override
+        public boolean isReturnChildren(BaseObject parent) {
+            // everything except children of DocumentTypeVersion
+            return (parent instanceof DocumentTypeVersion) ? false : true;
+        }
+    }.setReturnLatestDocTypeVersionChildren(); // ... except children of latestDocTypeVersion
 
     /** It can be used to load DocumentType without any child nodes */
     DocTypeLoadEffort DONT_INCLUDE_CHILDREN = new DocTypeLoadEffort() {

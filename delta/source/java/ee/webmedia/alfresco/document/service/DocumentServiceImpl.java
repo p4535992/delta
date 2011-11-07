@@ -5,7 +5,6 @@ import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ACCE
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.CASE;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.DOC_NAME;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.DOC_STATUS;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FILE_CONTENTS;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FILE_NAMES;
@@ -54,7 +53,6 @@ import javax.faces.context.FacesContext;
 
 import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.i18n.I18NUtil;
-import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.content.transform.ContentTransformer;
 import org.alfresco.repo.node.NodeServicePolicies;
@@ -105,16 +103,17 @@ import ee.webmedia.alfresco.adr.service.AdrService;
 import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.cases.service.CaseService;
+import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.classificator.enums.LeaveType;
-import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
+import ee.webmedia.alfresco.document.assocsdyn.service.DocumentAssociationsService;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
 import ee.webmedia.alfresco.document.file.service.FileService;
@@ -517,9 +516,10 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         boolean propsChanged = saveChildNodes(docNode);
         // add any associations added in the UI
         propsChanged |= generalService.saveAddedAssocs(docNode) > 0;
+        DocumentAssociationsService documentAssociationsService = getDocumentAssociationsService();
         for (Map<String, AssociationRef> typedAssoc : docNode.getAddedAssociations().values()) {
             for (AssociationRef assoc : typedAssoc.values()) {
-                updateModifiedDateTime(assoc.getSourceRef(), assoc.getTargetRef());
+                documentAssociationsService.updateModifiedDateTime(assoc.getSourceRef(), assoc.getTargetRef());
             }
         }
 
@@ -950,6 +950,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
     }
 
     @Override
+    @Deprecated
     public Node createFollowUp(QName followupType, NodeRef nodeRef) {
         Node followUpDoc = createDocument(followupType);
         Node baseDoc = getDocument(nodeRef);
@@ -975,7 +976,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         /** Copy Ancestors (function, series, volume, case) */
         setTransientProperties(followUpDoc, getAncestorNodesByDocument(baseDoc.getNodeRef()));
 
-        addFollowupAssoc(followUpDoc.getNodeRef(), baseDoc.getNodeRef());
+        getDocumentAssociationsService().createAssoc(followUpDoc.getNodeRef(), baseDoc.getNodeRef(), DocTypeAssocType.FOLLOWUP.getAssocBetweenDocs());
 
         if (log.isDebugEnabled()) {
             log.debug("Created followUp: " + followupType.getLocalName() + " from " + baseDoc.getType().getLocalName());
@@ -1317,15 +1318,6 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         }
     }
 
-    /** Add association from new to original doc */
-    protected void addFollowupAssoc(NodeRef followUpDocRef, NodeRef initialDocRef) {
-        createAssoc(followUpDocRef, initialDocRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP);
-    }
-
-    protected void addReplyAssoc(NodeRef replyDocRef, NodeRef initialDocRef) {
-        createAssoc(replyDocRef, initialDocRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY);
-    }
-
     @Override
     public Node createReply(QName docType, NodeRef nodeRef) {
         return createReplyDocumentFromExisting(docType, nodeRef);
@@ -1375,7 +1367,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         setTransientProperties(replyDoc, getAncestorNodesByDocument(doc.getNodeRef()));
 
         /** Add association from new to original doc */
-        addReplyAssoc(replyDoc.getNodeRef(), doc.getNodeRef());
+        getDocumentAssociationsService().createAssoc(replyDoc.getNodeRef(), doc.getNodeRef(), DocTypeAssocType.REPLY.getAssocBetweenDocs());
 
         if (log.isDebugEnabled()) {
             log.debug("Created reply: " + docType.getLocalName() + " from " + doc.getType().getLocalName());
@@ -1538,6 +1530,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         List<AssociationRef> assocs = nodeService.getTargetAssocs(nodeRef, RegexQNamePattern.MATCH_ALL);
         assocs.addAll(nodeService.getSourceAssocs(nodeRef, RegexQNamePattern.MATCH_ALL));
         boolean favDirRemoved = false;
+        DocumentAssociationsService documentAssociationsService = getDocumentAssociationsService();
         for (AssociationRef assoc : assocs) {
             NodeRef sourceRef = assoc.getSourceRef();
             if ((DocumentCommonModel.Assocs.FAVORITE.equals(assoc.getTypeQName())) &&
@@ -1548,7 +1541,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
                 }
             } else {
                 nodeService.removeAssociation(sourceRef, assoc.getTargetRef(), assoc.getTypeQName());
-                updateModifiedDateTime(sourceRef, assoc.getTargetRef());
+                documentAssociationsService.updateModifiedDateTime(sourceRef, assoc.getTargetRef());
             }
         }
         updateParentNodesContainingDocsCount(nodeRef, false);
@@ -1613,70 +1606,6 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
             }
         }
         return docs;
-    }
-
-    @Override
-    public List<DocAssocInfo> getAssocInfos(Node document) {
-        final ArrayList<DocAssocInfo> assocInfos = new ArrayList<DocAssocInfo>();
-        final List<AssociationRef> targetAssocs = nodeService.getTargetAssocs(document.getNodeRef(), RegexQNamePattern.MATCH_ALL);
-        for (AssociationRef targetAssocRef : targetAssocs) {
-            log.debug("targetAssocRef=" + targetAssocRef.getTypeQName());
-            addDocAssocInfo(targetAssocRef, false, assocInfos);
-        }
-        final List<AssociationRef> sourceAssocs = nodeService.getSourceAssocs(document.getNodeRef(), RegexQNamePattern.MATCH_ALL);
-        for (AssociationRef srcAssocRef : sourceAssocs) {
-            log.debug("srcAssocRef=" + srcAssocRef.getTypeQName());
-            addDocAssocInfo(srcAssocRef, true, assocInfos);
-        }
-        final Map<String, Map<String, AssociationRef>> addedAssocs = document.getAddedAssociations();
-        for (Map<String, AssociationRef> typedAssoc : addedAssocs.values()) {
-            for (AssociationRef addedAssoc : typedAssoc.values()) {
-                log.debug("addedAssoc=" + addedAssoc.getTypeQName());
-                addDocAssocInfo(addedAssoc, false, assocInfos);
-            }
-        }
-        return assocInfos;
-    }
-
-    /*
-     * NOTE: association with case is defined differently
-     */
-    @Override
-    public void deleteAssoc(final NodeRef sourceNodeRef, final NodeRef targetNodeRef, QName assocQName) {
-        if (assocQName == null) {
-            assocQName = DocumentCommonModel.Assocs.DOCUMENT_2_DOCUMENT;
-        }
-        log.debug("Deleting " + assocQName + " association from document " + sourceNodeRef + " that points to " + targetNodeRef);
-        if (assocQName.equals(CaseModel.Associations.CASE_DOCUMENT)) {
-            nodeService.removeAssociation(targetNodeRef, sourceNodeRef, assocQName);
-        } else {
-            nodeService.removeAssociation(sourceNodeRef, targetNodeRef, assocQName);
-        }
-        updateModifiedDateTime(sourceNodeRef, targetNodeRef);
-    }
-
-    @Override
-    public void createAssoc(final NodeRef sourceNodeRef, final NodeRef targetNodeRef, QName assocQName) {
-        nodeService.createAssociation(sourceNodeRef, targetNodeRef, assocQName);
-        updateModifiedDateTime(sourceNodeRef, targetNodeRef);
-    }
-
-    /*
-     * If associations between two documents are added/deleted, then update modified time of both documents.
-     * Because we need ADR to detect changes based on modified time.
-     */
-    private void updateModifiedDateTime(final NodeRef firstDocNodeRef, final NodeRef secondDocNodeRef) {
-        if (dictionaryService.isSubClass(nodeService.getType(firstDocNodeRef), DocumentCommonModel.Types.DOCUMENT)
-                && dictionaryService.isSubClass(nodeService.getType(secondDocNodeRef), DocumentCommonModel.Types.DOCUMENT)) {
-            AuthenticationUtil.runAs(new RunAsWork<Void>() {
-                @Override
-                public Void doWork() throws Exception {
-                    nodeService.setProperty(firstDocNodeRef, ContentModel.PROP_MODIFIED, null);
-                    nodeService.setProperty(secondDocNodeRef, ContentModel.PROP_MODIFIED, null);
-                    return null;
-                }
-            }, AuthenticationUtil.getSystemUserName());
-        }
     }
 
     @Override
@@ -2187,69 +2116,6 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
                 return null;
             }
         }, AuthenticationUtil.getSystemUserName());
-    }
-
-    public void addDocAssocInfo(AssociationRef assocRef, boolean isSourceAssoc, ArrayList<DocAssocInfo> assocInfos) {
-        DocAssocInfo assocInf = getDocAssocInfo(assocRef, isSourceAssoc);
-        if (assocInf != null) {
-            assocInfos.add(assocInf);
-        }
-    }
-
-    @Override
-    public DocAssocInfo getDocAssocInfo(AssociationRef assocRef, boolean isSourceAssoc) {
-        DocAssocInfo assocInf = new DocAssocInfo();
-        if (isSourceAssoc) {
-            final NodeRef sourceRef = assocRef.getSourceRef();
-            assocInf.setNodeRef(sourceRef);
-            if (!nodeService.hasAspect(sourceRef, DocumentCommonModel.Aspects.SEARCHABLE)) {
-                if (CaseModel.Associations.CASE_DOCUMENT.equals(assocRef.getTypeQName())) {
-                    assocInf.setCaseNodeRef(sourceRef);
-                    assocInf.setAssocType(AssocType.DEFAULT);
-                    assocInf.setType(MessageUtil.getMessage(VolumeType.CASE_FILE));
-                    assocInf.setTitle((String) nodeService.getProperty(sourceRef, CaseModel.Props.TITLE));
-                } else {
-                    log.debug("not searchable: " + assocRef);
-                    return null;
-                }
-            }
-            if (DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP.equals(assocRef.getTypeQName())) {
-                assocInf.setAssocType(AssocType.FOLLOWUP);
-            } else if (DocumentCommonModel.Assocs.DOCUMENT_REPLY.equals(assocRef.getTypeQName())) {
-                assocInf.setAssocType(AssocType.REPLY);
-            } else if (DocumentCommonModel.Assocs.DOCUMENT_2_DOCUMENT.equals(assocRef.getTypeQName())) {
-                assocInf.setAssocType(AssocType.DEFAULT);
-            } else if (assocInf.getAssocType() == null) {
-                throw new RuntimeException("Unexpected document type: " + assocRef.getTypeQName());
-            }
-            if (!assocInf.isCase()) {// document association, not case
-                final Node otherDocNode = new Node(sourceRef);
-                assocInf.setTitle((String) nodeService.getProperty(sourceRef, DOC_NAME));
-                assocInf.setType(getDocumentAdminService().getDocumentTypeName(otherDocNode));
-                assocInf.setRegNumber((String) nodeService.getProperty(sourceRef, REG_NUMBER));
-                assocInf.setRegDateTime((Date) nodeService.getProperty(sourceRef, REG_DATE_TIME));
-            }
-        } else {
-            final NodeRef targetRef = assocRef.getTargetRef();
-            if (!nodeService.hasAspect(targetRef, DocumentCommonModel.Aspects.SEARCHABLE)) {
-                return null;
-            }
-            if (DocumentCommonModel.Assocs.DOCUMENT_REPLY.equals(assocRef.getTypeQName())//
-                    || DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP.equals(assocRef.getTypeQName())) {
-                assocInf.setAssocType(AssocType.INITIAL);
-            } else if (DocumentCommonModel.Assocs.DOCUMENT_2_DOCUMENT.equals(assocRef.getTypeQName())) {
-                assocInf.setAssocType(AssocType.DEFAULT);
-            }
-            final Node otherDocNode = new Node(targetRef);
-            final Map<String, Object> otherDocProps = otherDocNode.getProperties();
-            assocInf.setTitle((String) otherDocProps.get(DOC_NAME));
-            assocInf.setRegNumber((String) otherDocProps.get(REG_NUMBER));
-            assocInf.setRegDateTime((Date) otherDocProps.get(REG_DATE_TIME));
-            assocInf.setType(getDocumentAdminService().getDocumentTypeName(otherDocNode));
-            assocInf.setNodeRef(assocRef.getTargetRef());
-        }
-        assocInf.setSource(isSourceAssoc);
-        return assocInf;
     }
 
     @Override
@@ -3099,9 +2965,10 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
 
     @Override
     public void onSavePrivileges(NodeRef docRef, Map<String, UserPrivileges> privilegesByUsername) {
+        DocumentAssociationsService docAssocService = getDocumentAssociationsService();
         for (UserPrivileges vo : privilegesByUsername.values()) {
             if (!vo.isDeleted() && vo.getPrivilegesToAdd().contains(DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA)) {
-                List<DocAssocInfo> assocInfos = getAssocInfos(new Node(docRef));
+                List<DocAssocInfo> assocInfos = docAssocService.getAssocInfos(new Node(docRef));
                 for (DocAssocInfo docAssocInfo : assocInfos) {
                     if (!docAssocInfo.isCase()) {
                         NodeRef relatedDocRef = docAssocInfo.getNodeRef();
@@ -3270,6 +3137,11 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
             _documentSearchService = (DocumentSearchService) beanFactory.getBean(DocumentSearchService.BEAN_NAME);
         }
         return _documentSearchService;
+    }
+
+    // dependency cicle documentService -> documentAssociationsService -> documentAdminService -> documentSearchService -> documentService
+    private DocumentAssociationsService getDocumentAssociationsService() {
+        return BeanHelper.getDocumentAssociationsService();
     }
 
     @Override

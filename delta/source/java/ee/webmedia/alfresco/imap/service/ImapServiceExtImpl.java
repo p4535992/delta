@@ -58,13 +58,14 @@ import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
+import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
-import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.imap.AppendBehaviour;
 import ee.webmedia.alfresco.imap.AttachmentsFolderAppendBehaviour;
 import ee.webmedia.alfresco.imap.ImmutableFolder;
@@ -90,7 +91,7 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
     private GeneralService generalService;
     private FileService fileService;
     private MimetypeService mimetypeService;
-    private DocumentTypeService documentTypeService;
+    private DocumentDynamicService documentDynamicService;
     private EInvoiceService einvoiceService;
 
     private String messageCopyFolder;
@@ -112,15 +113,13 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
     @Override
     public long saveEmail(NodeRef folderNodeRef, MimeMessage mimeMessage, boolean incomingEmail) throws FolderException { // todo: ex handling
         try {
-            String name = AlfrescoImapConst.MESSAGE_PREFIX + GUID.generate();
-            FileInfo docInfo = null;
-            QName docType;
+            String docTypeId;
             if (incomingEmail) {
-                docType = documentTypeService.getIncomingLetterType();
+                docTypeId = SystematicDocumentType.INCOMING_LETTER.getId();
             } else {
-                docType = documentTypeService.getOutgoingLetterType();
+                docTypeId = SystematicDocumentType.OUTGOING_LETTER.getId();
             }
-            docInfo = fileFolderService.create(folderNodeRef, name, docType);
+            NodeRef docRef = documentDynamicService.createNewDocument(docTypeId, folderNodeRef).getNodeRef();
 
             Map<QName, Serializable> properties = new HashMap<QName, Serializable>();
             String subject = mimeMessage.getSubject();
@@ -129,36 +128,32 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
             }
             properties.put(DocumentCommonModel.Props.DOC_NAME, subject);
             if (incomingEmail) {
-                if (mimeMessage.getFrom() != null) {
+                if (mimeMessage.getFrom() != null && mimeMessage.getFrom().length > 0) {
                     InternetAddress sender = (InternetAddress) mimeMessage.getFrom()[0];
                     properties.put(DocumentSpecificModel.Props.SENDER_DETAILS_NAME, sender.getPersonal());
                     properties.put(DocumentSpecificModel.Props.SENDER_DETAILS_EMAIL, sender.getAddress());
                 }
                 properties.put(DocumentSpecificModel.Props.TRANSMITTAL_MODE, TransmittalMode.EMAIL.getValueName());
             } else {
-                Address[] allRecipients = mimeMessage.getAllRecipients();
-
-                List<String> names = new ArrayList<String>(allRecipients.length);
-                List<String> emails = new ArrayList<String>(allRecipients.length);
-                if (allRecipients != null) {
+                if (mimeMessage.getAllRecipients() != null) {
+                    Address[] allRecipients = mimeMessage.getAllRecipients();
+                    List<String> names = new ArrayList<String>(allRecipients.length);
+                    List<String> emails = new ArrayList<String>(allRecipients.length);
                     for (Address recient : allRecipients) {
                         names.add(((InternetAddress) recient).getPersonal());
                         emails.add(((InternetAddress) recient).getAddress());
                     }
+                    properties.put(DocumentCommonModel.Props.RECIPIENT_NAME, (Serializable) names);
+                    properties.put(DocumentCommonModel.Props.RECIPIENT_EMAIL, (Serializable) emails);
                 }
-                properties.put(DocumentCommonModel.Props.RECIPIENT_NAME, (Serializable) names);
-                properties.put(DocumentCommonModel.Props.RECIPIENT_EMAIL, (Serializable) emails);
-
             }
-            properties.put(DocumentCommonModel.Props.DOC_STATUS, DocumentStatus.WORKING.getValueName());
             properties.put(DocumentCommonModel.Props.STORAGE_TYPE, StorageType.DIGITAL.getValueName());
-
-            final NodeRef docRef = docInfo.getNodeRef();
             nodeService.addProperties(docRef, properties);
-            saveAttachments(docRef, mimeMessage, true);
 
             documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_imported", I18NUtil.getMessage("document_log_creator_imap")) //
                     , I18NUtil.getMessage("document_log_creator_imap"));
+
+            saveAttachments(docRef, mimeMessage, true);
 
             return (Long) nodeService.getProperty(docRef, ContentModel.PROP_NODE_DBID);
         } catch (Exception e) { // todo: improve exception handling
@@ -263,7 +258,7 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
             for (int i = 0, n = multipart.getCount(); i < n; i++) {
                 Part part = multipart.getBodyPart(i);
                 if (invoiceRefToAttachment == null || !invoiceRefToAttachment.containsValue(i) || invoiceRefToAttachment.get(document).equals(i)) {
-                    if ("attachment".equalsIgnoreCase(part.getDisposition())) {
+                    if ("attachment".equalsIgnoreCase(part.getDisposition()) || StringUtils.isNotBlank(part.getFileName())) {
                         createAttachment(document, part, null);
                         attachments.add(part);
                     }
@@ -290,7 +285,7 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
         } else {
             filename = overrideFilename + "." + mimetypeService.getExtension(mimeType);
         }
-        if (filename == null) {
+        if (StringUtils.isBlank(filename)) {
             filename = I18NUtil.getMessage("imap.letter_attachment_filename") + "." + mimetypeService.getExtension(mimeType);
         }
         String encoding = getEncoding(part);
@@ -576,8 +571,8 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
         this.mimetypeService = mimetypeService;
     }
 
-    public void setDocumentTypeService(DocumentTypeService documentTypeService) {
-        this.documentTypeService = documentTypeService;
+    public void setDocumentDynamicService(DocumentDynamicService documentDynamicService) {
+        this.documentDynamicService = documentDynamicService;
     }
 
     public void setEinvoiceService(EInvoiceService einvoiceService) {

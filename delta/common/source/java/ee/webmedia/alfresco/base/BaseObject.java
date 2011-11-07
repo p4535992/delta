@@ -440,12 +440,18 @@ public abstract class BaseObject extends NodeBaseVO implements Cloneable {
 
     // For service method that needs to save this object; called only on first save
     // If need another assocType, then override
+    /**
+     * @return parent association type for this object, that is used when saving it
+     */
     protected QName getAssocType() {
         return getNode().getType();
     }
 
     // For service method that needs to save this object; called only on first save
     // If need another assocName, then override
+    /**
+     * @return parent association name for this object, that is used when saving it
+     */
     protected QName getAssocName() {
         return getNode().getType();
     }

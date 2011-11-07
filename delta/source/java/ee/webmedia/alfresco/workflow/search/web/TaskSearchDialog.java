@@ -125,6 +125,11 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
         // UISelectMany components don't want null as initial value
         node.getProperties().put(TaskSearchModel.Props.TASK_TYPE.toString(), new ArrayList<QName>());
         node.getProperties().put(TaskSearchModel.Props.STATUS.toString(), new ArrayList<String>());
+        node.getProperties().put(TaskSearchModel.Props.DOC_TYPE.toString(), new ArrayList<String>());
+        List<String> ownerNames = new ArrayList<String>();
+        ownerNames.add("");
+        node.getProperties().put(TaskSearchModel.Props.OWNER_NAME.toString(), ownerNames);
+        node.getProperties().put(TaskSearchModel.Props.OUTCOME.toString(), new ArrayList<String>());
         return node;
     }
 

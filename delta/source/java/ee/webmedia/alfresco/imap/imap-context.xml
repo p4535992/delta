@@ -75,7 +75,7 @@
       <property name="documentLogService" ref="DocumentLogService" />
       <property name="fileService" ref="FileService" />
       <property name="mimetypeService" ref="MimetypeService" />
-      <property name="documentTypeService" ref="DocumentTypeService" />
+      <property name="documentDynamicService" ref="DocumentDynamicService" />
       <property name="einvoiceService" ref="EInvoiceService" />
       <property name="messageCopyFolder" value="${imap.messageFolder}" />
    </bean>

@@ -44,6 +44,7 @@ public class AssociationModelDetailsDialog extends BaseDialogBean {
     @Override
     public String cancel() {
         resetFields();
+        BeanHelper.getDocTypeDetailsDialog().refreshDocType(); // docType object might be screwed up because of errors that might be shown
         return super.cancel();
     }
 

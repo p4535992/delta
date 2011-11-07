@@ -22,26 +22,27 @@ public enum SystematicDocumentType {
     /** Aruanne */
     REPORT("report");
 
-    private String name;
+    private String id;
 
     private SystematicDocumentType(String name) {
-        this.name = name;
+        id = name;
     }
 
-    public String getName() {
-        return name;
+    public String getId() {
+        return id;
     }
 
-    public boolean isSameType(String otherName) {
-        return name.equals(otherName);
+    public boolean isSameType(String otherId) {
+        return id.equals(otherId);
     }
 
-    public static SystematicDocumentType of(String name) {
-        for (SystematicDocumentType status : values()) {
-            if (status.equals(name)) {
-                return status;
+    public static SystematicDocumentType of(String id) {
+        for (SystematicDocumentType docType : values()) {
+            if (docType.isSameType(id)) {
+                return docType;
             }
         }
         return null;
     }
+
 }

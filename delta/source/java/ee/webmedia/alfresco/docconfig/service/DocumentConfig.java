@@ -7,6 +7,7 @@ import java.util.Map;
 
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
 
 /**
@@ -18,14 +19,14 @@ public class DocumentConfig implements Serializable {
     private final WMPropertySheetConfigElement propertySheetConfigElement;
     private final Map<String, PropertySheetStateHolder> stateHolders;
     private final List<String> saveListenerBeanNames;
-    private final String documentTypeName;
+    private final DocumentType docType;
 
-    public DocumentConfig(WMPropertySheetConfigElement propertySheetConfigElement, Map<String, PropertySheetStateHolder> stateHolders, List<String> saveListenerBeanNames,
-                          String documentTypeName) {
+    public DocumentConfig(WMPropertySheetConfigElement propertySheetConfigElement, Map<String, PropertySheetStateHolder> stateHolders
+                          , List<String> saveListenerBeanNames, DocumentType docType) {
         this.propertySheetConfigElement = propertySheetConfigElement;
         this.stateHolders = stateHolders;
         this.saveListenerBeanNames = saveListenerBeanNames;
-        this.documentTypeName = documentTypeName;
+        this.docType = docType;
     }
 
     public WMPropertySheetConfigElement getPropertySheetConfigElement() {
@@ -41,19 +42,23 @@ public class DocumentConfig implements Serializable {
     }
 
     public String getDocumentTypeName() {
-        return documentTypeName;
+        return docType != null ? docType.getName() : null;
+    }
+
+    public DocumentType getDocType() {
+        return docType;
     }
 
     protected DocumentConfig cloneAsUnmodifiable() {
-        return new DocumentConfig(getPropertySheetConfigElement(), Collections.unmodifiableMap(getStateHolders()), Collections.unmodifiableList(getSaveListenerBeanNames()),
-                getDocumentTypeName());
+        return new DocumentConfig(getPropertySheetConfigElement(), Collections.unmodifiableMap(getStateHolders())
+                , Collections.unmodifiableList(getSaveListenerBeanNames()), getDocType());
     }
 
     @Override
     public String toString() {
         return WmNode.toString(this) + "[\n  propertySheetConfigElement=" + WmNode.toString(propertySheetConfigElement) + "\n  stateHolders="
-                + WmNode.toString(stateHolders.entrySet()) + "\n  saveListenerBeanNames=" + WmNode.toString(saveListenerBeanNames) + "\n  documentTypeName=" + documentTypeName
-                + "\n]";
+                + WmNode.toString(stateHolders.entrySet()) + "\n  saveListenerBeanNames=" + WmNode.toString(saveListenerBeanNames)
+                + "\n  documentTypeName=" + getDocumentTypeName() + "\n]";
     }
 
 }

@@ -198,6 +198,19 @@
       </property>
    </bean>
 
+   <bean id="systematicDocumentTypesFixBootstrap" class="ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentTypesFixBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="systematicClearBootstrap" />
+            <ref bean="systematicFieldDefinitionsBootstrap4" />
+            <ref bean="systematicFieldGroupDefinitionsBootstrap3" />
+         </list>
+      </property>
+      <property name="documentAdminService" ref="DocumentAdminService" />
+   </bean>
+
    <bean id="systematicDocumentTypesBootstrap" class="ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentTypesBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="false" />
@@ -205,6 +218,7 @@
       <property name="dependsOn">
          <list>
             <ref bean="systematicClearBootstrap" />
+            <ref bean="systematicDocumentTypesFixBootstrap" />
             <ref bean="systematicFieldDefinitionsBootstrap1" />
             <ref bean="systematicFieldDefinitionsBootstrap2" />
             <ref bean="systematicFieldDefinitionsBootstrap3" />
@@ -228,6 +242,16 @@
          </list>
       </property>
       <property name="generalService" ref="GeneralService" />
+   </bean>
+
+   <bean id="senderEmailRemovableFromSystematicGroupFixBootstrap" class="ee.webmedia.alfresco.docconfig.bootstrap.SenderEmailRemovableFromSystematicGroupFixBootstrap" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="systematicDocumentTypesBootstrap" />
+         </list>
+      </property>
    </bean>
 
    <bean id="documentLocationGenerator" class="ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator">

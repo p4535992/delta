@@ -51,6 +51,7 @@ import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.service.DocumentServiceImpl;
 import ee.webmedia.alfresco.document.service.EventsLoggingHelper;
+import ee.webmedia.alfresco.imap.model.ImapModel;
 import ee.webmedia.alfresco.utils.MessageData;
 import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageDataWrapper;
@@ -79,7 +80,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     private BeanFactory beanFactory;
 
     @Override
-    public NodeRef createNewDocument(String documentTypeId, NodeRef parent) {
+    public DocumentDynamic createNewDocument(String documentTypeId, NodeRef parent) {
         QName type = DocumentCommonModel.Types.DOCUMENT;
         DocumentType documentType = documentAdminService.getDocumentType(documentTypeId, DocumentAdminService.DOC_TYPE_WITH_OUT_GRAND_CHILDREN_EXEPT_LATEST_DOCTYPE_VER);
 
@@ -117,7 +118,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         // }
 
         DocumentDynamic document = getDocument(docRef);
-        documentConfigService.setDefaultPropertyValues(document.getNode());
+        documentConfigService.setDefaultPropertyValues(document.getNode(), docVer);
         generalService.setPropertiesIgnoringSystem(docRef, document.getNode().getProperties());
 
         for (MetadataItem metadataItem : docVer.getMetadata()) {
@@ -141,18 +142,18 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             }
         }
 
-        return docRef;
+        return document;
     }
 
     @Override
-    public NodeRef createNewDocumentInDrafts(String documentTypeId) {
+    public DocumentDynamic createNewDocumentInDrafts(String documentTypeId) {
         NodeRef drafts = documentService.getDrafts();
         return createNewDocument(documentTypeId, drafts);
     }
 
     @Override
     public NodeRef copyDocument(DocumentDynamic document, Map<QName, Serializable> overriddenProperties, QName... ignoredProperty) {
-        NodeRef draftRef = createNewDocumentInDrafts(document.getDocumentTypeId());
+        NodeRef draftRef = createNewDocumentInDrafts(document.getDocumentTypeId()).getNodeRef();
         Map<QName, Serializable> properties = RepoUtil.toQNameProperties(document.getNode().getProperties(), true);
         // Override properties if needed
         if (overriddenProperties != null) {
@@ -196,6 +197,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         NodeRef docRef = document.getNodeRef();
 
         document.setDraft(isDraft(docRef));
+        document.setDraftOrImapOrDvk(isDraftOrImapOrDvk(docRef));
 
         ValidationHelperImpl validationHelper = new ValidationHelperImpl();
         for (String saveListenerBeanName : saveListenerBeanNames) {
@@ -240,7 +242,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             }
         }
 
-        if (document.isDraft()) {
+        if (document.isDraftOrImapOrDvk()) {
             documentService.addPrivilegesBasedOnSeriesOnBackground(docRef);
         }
     }
@@ -253,7 +255,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             return;
         }
         if (!isDraft(docRef)) {
-            LOG.warn("Document is not a draft, not deleting: " + docRef);
+            LOG.debug("Document is not a draft, not deleting: " + docRef);
             return;
         }
         nodeService.deleteNode(docRef);
@@ -261,8 +263,33 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
     @Override
     public boolean isDraft(NodeRef docRef) {
+        ChildAssociationRef parentAssoc = nodeService.getPrimaryParent(docRef);
+        QName parentType = nodeService.getType(parentAssoc.getParentRef());
+        ChildAssociationRef grandParentAssoc = nodeService.getPrimaryParent(parentAssoc.getParentRef());
+        return isDraft(grandParentAssoc, parentType);
+    }
+
+    private boolean isDraft(ChildAssociationRef grandParentAssoc, QName parentType) {
+        return DocumentCommonModel.Types.DRAFTS.equals(parentType) && DocumentCommonModel.Types.DRAFTS.equals(grandParentAssoc.getQName());
+    }
+
+    @Override
+    public boolean isDraftOrImapOrDvk(NodeRef docRef) {
         NodeRef parentRef = nodeService.getPrimaryParent(docRef).getParentRef();
-        return DocumentCommonModel.Types.DRAFTS.equals(nodeService.getType(parentRef));
+        QName parentType = nodeService.getType(parentRef);
+        return isDraftOrImapOrDvk(parentType);
+    }
+
+    private boolean isDraftOrImapOrDvk(QName parentType) {
+        return DocumentCommonModel.Types.DRAFTS.equals(parentType) || ImapModel.Types.IMAP_FOLDER.equals(parentType);
+    }
+
+    @Override
+    public boolean isImapOrDvk(NodeRef docRef) {
+        ChildAssociationRef parentAssoc = nodeService.getPrimaryParent(docRef);
+        QName parentType = nodeService.getType(parentAssoc.getParentRef());
+        ChildAssociationRef grandParentAssoc = nodeService.getPrimaryParent(parentAssoc.getParentRef());
+        return isDraftOrImapOrDvk(parentType) && !isDraft(grandParentAssoc, parentType);
     }
 
     private boolean saveChildNodes(Node docNode, DocumentServiceImpl.PropertyChangesMonitorHelper propertyChangesMonitorHelper) {

@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.document.type.web;
 import javax.faces.context.FacesContext;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.propertysheet.search.MultiSelectConverterBase;
@@ -15,6 +16,9 @@ public class DocumentTypeConverter extends MultiSelectConverterBase {
     @Override
     public String convertSelectedValueToString(Object value) {
         String docTypeId = (String) value;
+        if (StringUtils.isBlank(docTypeId)) {
+            return "";
+        }
         NodeRef docTypeRef = getDocumentTypeService().getDocumentTypeRef(docTypeId);
         if (docTypeRef == null) {
             return value.toString();

@@ -25,7 +25,6 @@
 </a:panel>
 
 <a:panel id="document-search-filters-panel" styleClass="panel-100" label="#{msg.document_search_saved_manage}">
-
    <h:panelGrid columns="2" cellpadding="3" cellspacing="3" border="0" columnClasses="propertiesLabel," width="100%">
       <h:outputText value="#{msg.document_search_name}" styleClass="no-wrap" />
       <h:inputText id="searchTitle" binding="#{DocumentDynamicSearchDialog.searchTitleInput}" size="35" />

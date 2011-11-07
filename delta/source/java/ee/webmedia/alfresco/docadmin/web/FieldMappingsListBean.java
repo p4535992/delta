@@ -180,6 +180,12 @@ public class FieldMappingsListBean implements Serializable {
         associatedFieldsByFieldId.add(fieldId);
     }
 
+    private static final Set<FieldType> TO_TEXT_FIELD_COMPATIBLE_TYPES = new HashSet<FieldType>(
+            Arrays.asList(FieldType.COMBOBOX, FieldType.COMBOBOX_EDITABLE, FieldType.USER, FieldType.CONTACT, FieldType.USERS
+                    , FieldType.CONTACTS, FieldType.USERS_CONTACTS, FieldType.COMBOBOX_AND_TEXT, FieldType.COMBOBOX_AND_TEXT_NOT_EDITABLE));
+    private static final Set<FieldType> FROM_USER_CONTACT_COMPATIBLE_TYPES = new HashSet<FieldType>(
+            Arrays.asList(FieldType.USERS, FieldType.USER_CONTACT, FieldType.USERS_CONTACTS));
+
     /**
      * ListItem that provides some extra information about the object, but uses internally node of the object that is saved to repository
      * 
@@ -232,19 +238,28 @@ public class FieldMappingsListBean implements Serializable {
             MappingRestriction mappingRestriction = field.getMappingRestrictionEnum();
             if (mappingRestriction == null) {
                 ComponentUtil.addDefault(relatedFieldSelectItems, FacesContext.getCurrentInstance());
+                SelectItem sameIdSelectItem = null;
                 for (Field relatedField : relatedDocTypeFieldsById.values()) {
                     if (relatedField.getMappingRestrictionEnum() == null && isFieldTypeCompatible(relatedField)) {
-                        relatedFieldSelectItems.add(new SelectItem(relatedField.getFieldId(), getFieldMappingLabel(relatedField)));
+                        SelectItem selectItem = new SelectItem(relatedField.getFieldId(), getFieldMappingLabel(relatedField));
+                        if (field.getFieldId().equals(relatedField.getFieldId())) {
+                            sameIdSelectItem = selectItem;
+                        } else {
+                            relatedFieldSelectItems.add(selectItem);
+                        }
                     }
                 }
                 WebUtil.sort(relatedFieldSelectItems);
+                if (sameIdSelectItem != null) {
+                    relatedFieldSelectItems.add(0, sameIdSelectItem);
+                }
             } else {
                 String value = "";
                 String label = MessageUtil.getMessage(mappingRestriction);
                 if (MappingRestriction.IDENTICAL_FIELD_MAPPING_ONLY.equals(mappingRestriction)) {
                     Field relatedField = relatedDocTypeFieldsById.get(field.getFieldId());
                     if (relatedField == null) {
-                        label = MessageUtil.getMessage("associationModel_details_panel_fieldMappings_mappingRestriction_missingSameIdField");
+                        label = MessageUtil.getMessage("select_default_label");
                     } else {
                         label = getFieldMappingLabel(relatedField);
                     }
@@ -268,12 +283,17 @@ public class FieldMappingsListBean implements Serializable {
 
         private boolean isFieldTypeCompatible(Field otherField) {
             FieldType otherFieldType = otherField.getFieldTypeEnum();
-            boolean fieldTypesCompatible = field.getFieldTypeEnum().equals(otherFieldType);
+            FieldType fieldTypeEnum = field.getFieldTypeEnum();
+            boolean fieldTypesCompatible = fieldTypeEnum.equals(otherFieldType);
             if (!fieldTypesCompatible) {
-                Set<FieldType> TEXT_FIELD_COMPATIBLE_TYPES = new HashSet<FieldType>(
-                        Arrays.asList(FieldType.COMBOBOX, FieldType.COMBOBOX_EDITABLE, FieldType.USER, FieldType.CONTACT, FieldType.USERS
-                                , FieldType.CONTACTS, FieldType.USERS_CONTACTS, FieldType.COMBOBOX_AND_TEXT, FieldType.COMBOBOX_AND_TEXT_NOT_EDITABLE));
-                if (otherFieldType.equals(FieldType.TEXT_FIELD) && TEXT_FIELD_COMPATIBLE_TYPES.contains(field.getFieldTypeEnum())) {
+                if (otherFieldType.equals(FieldType.TEXT_FIELD) && TO_TEXT_FIELD_COMPATIBLE_TYPES.contains(fieldTypeEnum)) {
+                    fieldTypesCompatible = true;
+                } else if ((FieldType.USER.equals(fieldTypeEnum) || FieldType.CONTACT.equals(fieldTypeEnum)) && FROM_USER_CONTACT_COMPATIBLE_TYPES.contains(otherFieldType)) {
+                    // allow mapping from (user or contact) to (users, contacts, users/contacts)
+                    fieldTypesCompatible = true;
+                } else if (FieldType.USERS.equals(fieldTypeEnum) && FieldType.USER.equals(otherFieldType)) {
+                    fieldTypesCompatible = true;
+                } else if (FieldType.CONTACTS.equals(fieldTypeEnum) && FieldType.CONTACT.equals(otherFieldType)) {
                     fieldTypesCompatible = true;
                 }
             }

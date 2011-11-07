@@ -15,217 +15,233 @@ import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 
 public class DocumentType extends BaseObject {
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    public DocumentType(NodeRef parentRef) {
-        super(parentRef, DocumentAdminModel.Types.DOCUMENT_TYPE);
+  public DocumentType(NodeRef parentRef) {
+    super(parentRef, DocumentAdminModel.Types.DOCUMENT_TYPE);
+  }
+
+  /** Used by {@link BaseServiceImpl#getObject(NodeRef, Class)} through reflection */
+  public DocumentType(NodeRef parentNodeRef, WmNode docTypeNode) {
+    super(parentNodeRef, docTypeNode);
+  }
+
+  @Override
+  protected QName getAssocName() {
+    return getAssocName(getDocumentTypeId());
+  }
+
+  @Override
+  public NodeRef getParentNodeRef() {
+    return super.getParentNodeRef();
+  }
+
+  @Override
+  protected void nextSaveToParent(NodeRef parentRef) { // widens visibility for DocAdminService
+    super.nextSaveToParent(parentRef);
+    setLatestVersion(1);
+    List<DocumentTypeVersion> docTypeVers = getDocumentTypeVersions();
+    Assert.isTrue(docTypeVers.size() == 1, "there should be only one DocumentTypeVersion under DocumentType being imported");
+    getLatestDocumentTypeVersion().setVersionNr(1);
+  }
+
+  protected static QName getAssocName(String documentTypeId) {
+    return QName.createQName(DocumentAdminModel.URI, documentTypeId);
+  }
+
+  // ChildrenList
+
+  public DocumentTypeVersion getLatestDocumentTypeVersion() {
+    List<? extends DocumentTypeVersion> versionList = getDocumentTypeVersions().getList();
+    if (versionList.isEmpty()) {
+      return null;
     }
+    return versionList.get(versionList.size() - 1);
+  }
 
-    /** Used by {@link BaseServiceImpl#getObject(NodeRef, Class)} through reflection */
-    public DocumentType(NodeRef parentNodeRef, WmNode docTypeNode) {
-        super(parentNodeRef, docTypeNode);
+  public ChildrenList<DocumentTypeVersion> getDocumentTypeVersions() {
+    return getChildren(DocumentTypeVersion.class);
+  }
+
+  public List<? extends AssociationModel> getAssociationModels(DocTypeAssocType associationTypeEnum) {
+    if (associationTypeEnum == null) {
+      List<AssociationModel> allAssocsToDocType = new ArrayList<AssociationModel>();
+      allAssocsToDocType.addAll(getFollowupAssociations());
+      allAssocsToDocType.addAll(getReplyAssociations());
+      return allAssocsToDocType;
     }
+    return DocTypeAssocType.FOLLOWUP == associationTypeEnum ? getFollowupAssociations() : getReplyAssociations();
+  }
 
-    @Override
-    protected QName getAssocName() {
-        return getAssocName(getDocumentTypeId());
+  public ChildrenList<FollowupAssociation> getFollowupAssociations() {
+    return getChildren(FollowupAssociation.class);
+  }
+
+  public ChildrenList<ReplyAssociation> getReplyAssociations() {
+    return getChildren(ReplyAssociation.class);
+  }
+
+  // Properties
+
+  public String getDocumentTypeId() {
+    return getProp(DocumentAdminModel.Props.DOCUMENT_TYPE_ID);
+  }
+
+  public void setDocumentTypeId(String documentTypeId) {
+    setProp(DocumentAdminModel.Props.DOCUMENT_TYPE_ID, documentTypeId);
+  }
+
+  public String getName() {
+    return getProp(DocumentAdminModel.Props.NAME);
+  }
+
+  public void setName(String name) {
+    setProp(DocumentAdminModel.Props.NAME, name);
+  }
+
+  public boolean isUsed() {
+    return getPropBoolean(DocumentAdminModel.Props.USED);
+  }
+
+  public void setUsed(boolean used) {
+    setProp(DocumentAdminModel.Props.USED, used);
+  }
+
+  public Integer getLatestVersion() {
+    return getProp(DocumentAdminModel.Props.LATEST_VERSION);
+  }
+
+  public void setLatestVersion(Integer latestVersion) {
+    setProp(DocumentAdminModel.Props.LATEST_VERSION, latestVersion);
+    getLatestDocumentTypeVersion().setVersionNr(latestVersion);
+  }
+
+  public boolean isPublicAdr() {
+    return getPropBoolean(DocumentAdminModel.Props.PUBLIC_ADR);
+  }
+
+  public void setPublicAdr(boolean publicAdr) {
+    setProp(DocumentAdminModel.Props.PUBLIC_ADR, publicAdr);
+  }
+
+  public String getComment() {
+    return getProp(DocumentAdminModel.Props.COMMENT);
+  }
+
+  public void setComment(String comment) {
+    setProp(DocumentAdminModel.Props.COMMENT, comment);
+  }
+
+  public String getSystematicComment() {
+    return getProp(DocumentAdminModel.Props.SYSTEMATIC_COMMENT);
+  }
+
+  public void setSystematicComment(String systematicComment) {
+    setProp(DocumentAdminModel.Props.SYSTEMATIC_COMMENT, systematicComment);
+  }
+
+  public void setSystematic(boolean systematic) {
+    setProp(DocumentAdminModel.Props.SYSTEMATIC, systematic);
+  }
+
+  public boolean isSystematic() {
+    return getPropBoolean(DocumentAdminModel.Props.SYSTEMATIC);
+  }
+
+  public String getDocumentTypeGroup() {
+    return getProp(DocumentAdminModel.Props.DOCUMENT_TYPE_GROUP);
+  }
+
+  public void setDocumentTypeGroup(String documentTypeGroup) {
+    setProp(DocumentAdminModel.Props.DOCUMENT_TYPE_GROUP, documentTypeGroup);
+  }
+
+  public boolean isChangeByNewDocumentEnabled() {
+    return getPropBoolean(DocumentAdminModel.Props.CHANGE_BY_NEW_DOCUMENT_ENABLED);
+  }
+
+  public void setChangeByNewDocumentEnabled(boolean changeByNewDocumentEnabled) {
+    setProp(DocumentAdminModel.Props.CHANGE_BY_NEW_DOCUMENT_ENABLED, changeByNewDocumentEnabled);
+  }
+
+  public boolean isRegistrationEnabled() {
+    return getPropBoolean(DocumentAdminModel.Props.REGISTRATION_ENABLED);
+  }
+
+  public void setRegistrationEnabled(boolean registrationEnabled) {
+    setProp(DocumentAdminModel.Props.REGISTRATION_ENABLED, registrationEnabled);
+  }
+
+  public boolean isFinishDocByRegistration() {
+    return getPropBoolean(DocumentAdminModel.Props.FINISH_DOC_BY_REGISTRATION);
+  }
+
+  public void setFinishDocByRegistration(boolean finishDocByRegistration) {
+    setProp(DocumentAdminModel.Props.FINISH_DOC_BY_REGISTRATION, finishDocByRegistration);
+  }
+
+  public boolean isSendUnregistratedDocEnabled() {
+    return getPropBoolean(DocumentAdminModel.Props.SEND_UNREGISTRATED_DOC_ENABLED);
+  }
+
+  public void setSendUnregistratedDocEnabled(boolean sendUnregistratedDocEnabled) {
+    setProp(DocumentAdminModel.Props.SEND_UNREGISTRATED_DOC_ENABLED, sendUnregistratedDocEnabled);
+  }
+
+  public boolean isEditFilesOfFinishedDocEnabled() {
+    return getPropBoolean(DocumentAdminModel.Props.EDIT_FILES_OF_FINISHED_DOC_ENABLED);
+  }
+
+  public void setEditFilesOfFinishedDocEnabled(boolean editFilesOfFinishedDocEnabled) {
+    setProp(DocumentAdminModel.Props.EDIT_FILES_OF_FINISHED_DOC_ENABLED, editFilesOfFinishedDocEnabled);
+  }
+
+  public boolean isAddReplyToUnregistratedDocEnabled() {
+    return getPropBoolean(DocumentAdminModel.Props.ADD_REPLY_TO_UNREGISTRATED_DOC_ENABLED);
+  }
+
+  public void setAddReplyToUnregistratedDocEnabled(boolean addReplyToUnregistratedDocEnabled) {
+    setProp(DocumentAdminModel.Props.ADD_REPLY_TO_UNREGISTRATED_DOC_ENABLED, addReplyToUnregistratedDocEnabled);
+  }
+
+  public boolean isAddFollowUpToUnregistratedDocEnabled() {
+    return getPropBoolean(DocumentAdminModel.Props.ADD_FOLLOW_UP_TO_UNREGISTRATED_DOC_ENABLED);
+  }
+
+  public void setAddFollowUpToUnregistratedDocEnabled(boolean addFollowUpToUnregistratedDocEnabled) {
+    setProp(DocumentAdminModel.Props.ADD_FOLLOW_UP_TO_UNREGISTRATED_DOC_ENABLED, addFollowUpToUnregistratedDocEnabled);
+  }
+
+  @Override
+  public DocumentType clone() {
+    return (DocumentType) super.clone(); // just return casted type
+  }
+
+  public DocumentTypeVersion addNewLatestDocumentTypeVersion() {
+    ChildrenList<DocumentTypeVersion> documentTypeVersions = getDocumentTypeVersions();
+    DocumentTypeVersion currentLatestVer = getLatestDocumentTypeVersion();
+    if (currentLatestVer == null) {
+      DocumentTypeVersion docTypeVer = documentTypeVersions.add();
+      setLatestVersion(1);
+      BeanHelper.getDocumentAdminService().addSystematicMetadataItems(docTypeVer);
+      return docTypeVer;
     }
+    DocumentTypeVersion newLatestVer = cloneAndMarkChildren(documentTypeVersions, currentLatestVer);
+    Integer actual = currentLatestVer.getVersionNr() + 1;
+    Assert.isTrue(documentTypeVersions.size() == actual);
+    setLatestVersion(actual);
+    return newLatestVer;
+  }
 
-    @Override
-    public NodeRef getParentNodeRef() {
-        return super.getParentNodeRef();
-    }
+  DocumentTypeVersion cloneAndMarkChildren(ChildrenList<DocumentTypeVersion> documentTypeVersions, DocumentTypeVersion currentLatestVer) {
+    DocumentTypeVersion newLatestVer = currentLatestVer.cloneAndResetBaseState();
+    documentTypeVersions.addExisting(newLatestVer);
+    return newLatestVer;
+  }
 
-    @Override
-    protected void nextSaveToParent(NodeRef parentRef) { // widens visibility for DocAdminService
-        super.nextSaveToParent(parentRef);
-        setLatestVersion(1);
-        List<DocumentTypeVersion> docTypeVers = getDocumentTypeVersions();
-        Assert.isTrue(docTypeVers.size() == 1, "there should be only one DocumentTypeVersion under DocumentType being imported");
-        getLatestDocumentTypeVersion().setVersionNr(1);
-    }
-
-    protected static QName getAssocName(String documentTypeId) {
-        return QName.createQName(DocumentAdminModel.URI, documentTypeId);
-    }
-
-    // ChildrenList
-
-    public DocumentTypeVersion getLatestDocumentTypeVersion() {
-        List<? extends DocumentTypeVersion> versionList = getDocumentTypeVersions().getList();
-        if (versionList.isEmpty()) {
-            return null;
-        }
-        return versionList.get(versionList.size() - 1);
-    }
-
-    public ChildrenList<DocumentTypeVersion> getDocumentTypeVersions() {
-        return getChildren(DocumentTypeVersion.class);
-    }
-
-    public List<? extends AssociationModel> getAssociationModels(DocTypeAssocType associationTypeEnum) {
-        if (associationTypeEnum == null) {
-            List<AssociationModel> allAssocsToDocType = new ArrayList<AssociationModel>();
-            allAssocsToDocType.addAll(getFollowupAssociations());
-            allAssocsToDocType.addAll(getReplyAssociations());
-            return allAssocsToDocType;
-        }
-        return DocTypeAssocType.FOLLOWUP == associationTypeEnum ? getFollowupAssociations() : getReplyAssociations();
-    }
-
-    public ChildrenList<FollowupAssociation> getFollowupAssociations() {
-        return getChildren(FollowupAssociation.class);
-    }
-
-    public ChildrenList<ReplyAssociation> getReplyAssociations() {
-        return getChildren(ReplyAssociation.class);
-    }
-
-    // Properties
-
-    public String getDocumentTypeId() {
-        return getProp(DocumentAdminModel.Props.DOCUMENT_TYPE_ID);
-    }
-
-    public void setDocumentTypeId(String documentTypeId) {
-        setProp(DocumentAdminModel.Props.DOCUMENT_TYPE_ID, documentTypeId);
-    }
-
-    public String getName() {
-        return getProp(DocumentAdminModel.Props.NAME);
-    }
-
-    public void setName(String name) {
-        setProp(DocumentAdminModel.Props.NAME, name);
-    }
-
-    public boolean isUsed() {
-        return getPropBoolean(DocumentAdminModel.Props.USED);
-    }
-
-    public void setUsed(boolean used) {
-        setProp(DocumentAdminModel.Props.USED, used);
-    }
-
-    public Integer getLatestVersion() {
-        return getProp(DocumentAdminModel.Props.LATEST_VERSION);
-    }
-
-    public void setLatestVersion(Integer latestVersion) {
-        setProp(DocumentAdminModel.Props.LATEST_VERSION, latestVersion);
-        getLatestDocumentTypeVersion().setVersionNr(latestVersion);
-    }
-
-    public boolean isPublicAdr() {
-        return getPropBoolean(DocumentAdminModel.Props.PUBLIC_ADR);
-    }
-
-    public void setPublicAdr(boolean publicAdr) {
-        setProp(DocumentAdminModel.Props.PUBLIC_ADR, publicAdr);
-    }
-
-    public String getComment() {
-        return getProp(DocumentAdminModel.Props.COMMENT);
-    }
-
-    public void setComment(String comment) {
-        setProp(DocumentAdminModel.Props.COMMENT, comment);
-    }
-
-    public String getSystematicComment() {
-        return getProp(DocumentAdminModel.Props.SYSTEMATIC_COMMENT);
-    }
-
-    public void setSystematicComment(String systematicComment) {
-        setProp(DocumentAdminModel.Props.SYSTEMATIC_COMMENT, systematicComment);
-    }
-
-    public void setSystematic(boolean systematic) {
-        setProp(DocumentAdminModel.Props.SYSTEMATIC, systematic);
-    }
-
-    public boolean isSystematic() {
-        return getPropBoolean(DocumentAdminModel.Props.SYSTEMATIC);
-    }
-
-    public String getDocumentTypeGroup() {
-        return getProp(DocumentAdminModel.Props.DOCUMENT_TYPE_GROUP);
-    }
-
-    public void setDocumentTypeGroup(String documentTypeGroup) {
-        setProp(DocumentAdminModel.Props.DOCUMENT_TYPE_GROUP, documentTypeGroup);
-    }
-
-    public boolean isChangeByNewDocumentEnabled() {
-        return getPropBoolean(DocumentAdminModel.Props.CHANGE_BY_NEW_DOCUMENT_ENABLED);
-    }
-
-    public void setChangeByNewDocumentEnabled(boolean changeByNewDocumentEnabled) {
-        setProp(DocumentAdminModel.Props.CHANGE_BY_NEW_DOCUMENT_ENABLED, changeByNewDocumentEnabled);
-    }
-
-    public boolean isRegistrationEnabled() {
-        return getPropBoolean(DocumentAdminModel.Props.REGISTRATION_ENABLED);
-    }
-
-    public void setRegistrationEnabled(boolean registrationEnabled) {
-        setProp(DocumentAdminModel.Props.REGISTRATION_ENABLED, registrationEnabled);
-    }
-
-    public boolean isFinishDocByRegistration() {
-        return getPropBoolean(DocumentAdminModel.Props.FINISH_DOC_BY_REGISTRATION);
-    }
-
-    public void setFinishDocByRegistration(boolean finishDocByRegistration) {
-        setProp(DocumentAdminModel.Props.FINISH_DOC_BY_REGISTRATION, finishDocByRegistration);
-    }
-
-    public boolean isSendUnregistratedDocEnabled() {
-        return getPropBoolean(DocumentAdminModel.Props.SEND_UNREGISTRATED_DOC_ENABLED);
-    }
-
-    public void setSendUnregistratedDocEnabled(boolean sendUnregistratedDocEnabled) {
-        setProp(DocumentAdminModel.Props.SEND_UNREGISTRATED_DOC_ENABLED, sendUnregistratedDocEnabled);
-    }
-
-    public boolean isEditFilesOfFinishedDocEnabled() {
-        return getPropBoolean(DocumentAdminModel.Props.EDIT_FILES_OF_FINISHED_DOC_ENABLED);
-    }
-
-    public void setEditFilesOfFinishedDocEnabled(boolean editFilesOfFinishedDocEnabled) {
-        setProp(DocumentAdminModel.Props.EDIT_FILES_OF_FINISHED_DOC_ENABLED, editFilesOfFinishedDocEnabled);
-    }
-
-    @Override
-    public DocumentType clone() {
-        return (DocumentType) super.clone(); // just return casted type
-    }
-
-    public DocumentTypeVersion addNewLatestDocumentTypeVersion() {
-        ChildrenList<DocumentTypeVersion> documentTypeVersions = getDocumentTypeVersions();
-        DocumentTypeVersion currentLatestVer = getLatestDocumentTypeVersion();
-        if (currentLatestVer == null) {
-            DocumentTypeVersion docTypeVer = documentTypeVersions.add();
-            setLatestVersion(1);
-            BeanHelper.getDocumentAdminService().addSystematicMetadataItems(docTypeVer);
-            return docTypeVer;
-        }
-        DocumentTypeVersion newLatestVer = cloneAndMarkChildren(documentTypeVersions, currentLatestVer);
-        Integer actual = currentLatestVer.getVersionNr() + 1;
-        Assert.isTrue(documentTypeVersions.size() == actual);
-        setLatestVersion(actual);
-        return newLatestVer;
-    }
-
-    DocumentTypeVersion cloneAndMarkChildren(ChildrenList<DocumentTypeVersion> documentTypeVersions, DocumentTypeVersion currentLatestVer) {
-        DocumentTypeVersion newLatestVer = currentLatestVer.cloneAndResetBaseState();
-        documentTypeVersions.addExisting(newLatestVer);
-        return newLatestVer;
-    }
-
-    /** used by DeleteDialog to confirm delete action */
-    public String getNameAndId() {
-        return new StringBuilder().append(getName()).append(" (").append(getDocumentTypeId()).append(")").toString();
-    }
+  /** used by DeleteDialog to confirm delete action */
+  public String getNameAndId() {
+    return new StringBuilder().append(getName()).append(" (").append(getDocumentTypeId()).append(")").toString();
+  }
 
 }

@@ -24,14 +24,14 @@ public interface DocumentDynamicService {
      * @param parent
      * @return
      */
-    NodeRef createNewDocument(String documentTypeId, NodeRef parent);
+    DocumentDynamic createNewDocument(String documentTypeId, NodeRef parent);
 
     /**
      * Create a new document in drafts and set default property values according to fully authenticated user.
      * 
      * @see #createNewDocument(String, NodeRef)
      */
-    NodeRef createNewDocumentInDrafts(String documentTypeId);
+    DocumentDynamic createNewDocumentInDrafts(String documentTypeId);
 
     NodeRef copyDocument(DocumentDynamic document, Map<QName, Serializable> overriddenProperties, QName... ignoredProperty);
 
@@ -48,5 +48,9 @@ public interface DocumentDynamicService {
     void updateDocument(DocumentDynamic document, List<String> saveListenerBeanNames);
 
     boolean isDraft(NodeRef docRef);
+
+    boolean isDraftOrImapOrDvk(NodeRef docRef);
+
+    boolean isImapOrDvk(NodeRef docRef);
 
 }

@@ -5,6 +5,7 @@
    <bean id="documentImportService" class="ee.webmedia.alfresco.importer.excel.service.DocumentImportServiceImpl" parent="documentService">
       <property name="attachmentFilesLocationBase" value="${importer.excel.attachmentFilesLocationBase}" />
       <property name="classificatorService" ref="ClassificatorService" />
+      <property name="documentAssociationsService" ref="DocumentAssociationsService" />
    </bean>
 
    <bean id="DocumentImportService" class="org.springframework.aop.framework.ProxyFactoryBean">

@@ -734,6 +734,9 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         @SuppressWarnings("unchecked")
         final List<StoreRef> storeRefs = (List<StoreRef>) filter.getProperties().get(DocumentSearchModel.Props.STORE);
         String query = generateDocumentSearchQuery(filter);
+        if (StringUtils.isBlank(query)) {
+            throw new UnableToPerformException(UnableToPerformException.MessageSeverity.INFO, "docSearch_error_noInput");
+        }
         try {
             List<Document> results = searchDocumentsImpl(query, true, /* queryName */"documentsByFilter", storeRefs);
             if (log.isDebugEnabled()) {
@@ -1294,8 +1297,10 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         queryParts.add(generateDatePropertyRangeQuery((Date) props.get(TaskSearchModel.Props.STARTED_DATE_TIME_BEGIN), //
                 (Date) props.get(TaskSearchModel.Props.STARTED_DATE_TIME_END), WorkflowCommonModel.Props.STARTED_DATE_TIME));
         queryParts.add(generateTypeQuery((List<QName>) props.get(TaskSearchModel.Props.TASK_TYPE)));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.OWNER_NAME), true, true, WorkflowCommonModel.Props.OWNER_NAME));
+        queryParts.add(generateMultiStringWordsWildcardQuery((List<String>) props.get(TaskSearchModel.Props.OWNER_NAME), true, true, WorkflowCommonModel.Props.OWNER_NAME));
+        queryParts.add(generateMultiStringWordsWildcardQuery((List<String>) props.get(TaskSearchModel.Props.OUTCOME), true, true, WorkflowCommonModel.Props.OUTCOME));
         queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.CREATOR_NAME), true, true, WorkflowCommonModel.Props.CREATOR_NAME));
+        queryParts.add(generateMultiStringExactQuery((List<String>) props.get(TaskSearchModel.Props.DOC_TYPE), WorkflowCommonModel.Props.DOCUMENT_TYPE));
         queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.ORGANIZATION_NAME), true, true,
                 WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME));
         queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.JOB_TITLE), true, true, WorkflowCommonModel.Props.OWNER_JOB_TITLE));
@@ -1306,8 +1311,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         }
         queryParts.add(generateDatePropertyRangeQuery((Date) props.get(TaskSearchModel.Props.COMPLETED_DATE_TIME_BEGIN), //
                 (Date) props.get(TaskSearchModel.Props.COMPLETED_DATE_TIME_END), WorkflowCommonModel.Props.COMPLETED_DATE_TIME));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.COMMENT), true, true, WorkflowCommonModel.Props.OUTCOME,
-                WorkflowSpecificModel.Props.COMMENT));
+        queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.COMMENT), true, true, WorkflowSpecificModel.Props.COMMENT));
         queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.RESOLUTION), true, true, WorkflowSpecificModel.Props.RESOLUTION,
                 WorkflowSpecificModel.Props.WORKFLOW_RESOLUTION));
         queryParts.add(generateMultiStringExactQuery((List<String>) props.get(TaskSearchModel.Props.STATUS), WorkflowCommonModel.Props.STATUS));

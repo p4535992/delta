@@ -50,6 +50,7 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.dvk.service.ExternalReviewException;
 import ee.webmedia.alfresco.notification.exception.EmailAttachmentSizeLimitException;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
@@ -620,6 +621,15 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             WebUtil.navigateTo(AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME, context);
         } else if (e instanceof UnableToPerformException) {
             MessageUtil.addStatusMessage(context, (UnableToPerformException) e);
+        } else if (e instanceof ExternalReviewException) {
+            ExternalReviewException externalReviewException = (ExternalReviewException) e;
+            if (externalReviewException.getExceptionType().equals(ExternalReviewException.ExceptionType.DVK_CAPABILITY_ERROR)) {
+                log.debug("Compound workflow action failed: external review task owner not dvk capable. ", e);
+                MessageUtil.addErrorMessage(context, "workflow_compound_save_failed_external_review_owner_not_task_capable");
+            } else {
+                log.debug("Compound workflow action failed: external review workflow error of type: " + externalReviewException.getExceptionType(), e);
+                MessageUtil.addErrorMessage(context, "workflow_compound_save_failed_external_review_error");
+            }
         } else {
             log.error("Compound workflow action failed!", e);
             MessageUtil.addErrorMessage(context, failMsg);

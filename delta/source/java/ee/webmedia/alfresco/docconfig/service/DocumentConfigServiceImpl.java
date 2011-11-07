@@ -32,6 +32,7 @@ import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.repo.RepoConstants;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
@@ -267,25 +268,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
     }
 
     private Pair<DocumentType, DocumentTypeVersion> getDocumentTypeAndVersion(Pair<String, Integer> docTypeIdAndVersionNr) {
-        String docTypeId = docTypeIdAndVersionNr.getFirst();
-        Integer docTypeVersionNr = docTypeIdAndVersionNr.getSecond();
-
-        DocumentType docType = documentAdminService.getDocumentType(docTypeId, DocumentAdminService.DOC_TYPE_WITH_OUT_GRAND_CHILDREN);
-        if (docType == null) {
-            throw new RuntimeException("documentType with documentTypeId=" + docTypeId + " not found");
-        }
-        DocumentTypeVersion docVersion = null;
-        for (DocumentTypeVersion version : docType.getDocumentTypeVersions()) {
-            if (docTypeVersionNr == version.getVersionNr()) {
-                BeanHelper.getBaseService().loadChildren(version, null);
-                docVersion = version;
-                break;
-            }
-        }
-        if (docVersion == null) {
-            throw new RuntimeException("documentTypeVersion with versionNr=" + docTypeVersionNr + " not found under documentType=" + docType.toString());
-        }
-        return new Pair<DocumentType, DocumentTypeVersion>(docType, docVersion);
+        return documentAdminService.getDocumentTypeAndVersion(docTypeIdAndVersionNr.getFirst(), docTypeIdAndVersionNr.getSecond());
     }
 
     private Pair<String, Integer> getDocTypeIdAndVersionNr(Node documentDynamicNode) {
@@ -296,7 +279,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
     }
 
     private DocumentConfig getConfig(DocumentType docType, DocumentTypeVersion docVersion) {
-        DocumentConfig config = getEmptyConfig(docType.getName());
+        DocumentConfig config = getEmptyConfig(docType);
 
         int separatorCount = 0;
         for (MetadataItem metadataItem : docVersion.getMetadata()) {
@@ -321,12 +304,11 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
         return unmodifiableConfig;
     }
 
-    private DocumentConfig getEmptyConfig(String docTypeName) {
+    private DocumentConfig getEmptyConfig(DocumentType docType) {
         WMPropertySheetConfigElement propSheet = new WMPropertySheetConfigElement();
         Map<String, PropertySheetStateHolder> stateHolders = new HashMap<String, PropertySheetStateHolder>();
         List<String> saveListenerBeanNames = new ArrayList<String>();
-        DocumentConfig config = new DocumentConfig(propSheet, stateHolders, saveListenerBeanNames, docTypeName);
-        return config;
+        return new DocumentConfig(propSheet, stateHolders, saveListenerBeanNames, docType);
     }
 
     private static class GeneratorResultsImpl implements GeneratorResults {
@@ -500,10 +482,23 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
     }
 
     @Override
-    public void setDefaultPropertyValues(Node documentDynamicNode) {
-        Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = getDocumentTypeAndVersion(documentDynamicNode);
-        DocumentTypeVersion docVer = documentTypeAndVersion.getSecond();
+    public void setDefaultPropertyValues(Node documentDynamicNode, DocumentTypeVersion docVer) {
+        if (docVer == null) {
+            Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = getDocumentTypeAndVersion(documentDynamicNode);
+            docVer = documentTypeAndVersion.getSecond();
+        } else {
+            Pair<String, Integer> docTypeIdAndVersionNr = getDocTypeIdAndVersionNr(documentDynamicNode);
+            Assert.isTrue(ObjectUtils.equals(docVer.getParent().getDocumentTypeId(), docTypeIdAndVersionNr.getFirst()));
+            Assert.isTrue(ObjectUtils.equals(docVer.getVersionNr(), docTypeIdAndVersionNr.getSecond()));
+        }
         for (Field field : docVer.getFieldsDeeply()) {
+            setDefaultPropertyValue(documentDynamicNode, field);
+        }
+    }
+
+    @Override
+    public void setDefaultPropertyValues(Node documentDynamicNode, List<Field> fields) {
+        for (Field field : fields) {
             setDefaultPropertyValue(documentDynamicNode, field);
         }
     }

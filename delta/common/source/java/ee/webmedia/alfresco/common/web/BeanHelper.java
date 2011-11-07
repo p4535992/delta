@@ -49,6 +49,7 @@ import ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog;
 import ee.webmedia.alfresco.document.assignresponsibility.service.AssignResponsibilityService;
 import ee.webmedia.alfresco.document.assignresponsibility.web.AssignResponsibilityBean;
+import ee.webmedia.alfresco.document.assocsdyn.service.DocumentAssociationsService;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.document.einvoice.web.DimensionDetailsDialog;
 import ee.webmedia.alfresco.document.einvoice.web.DimensionListDialog;
@@ -462,6 +463,10 @@ public class BeanHelper {
 
     public static DocumentAdminService getDocumentAdminService() {
         return getService(DocumentAdminService.class, DocumentAdminService.BEAN_NAME);
+    }
+
+    public static DocumentAssociationsService getDocumentAssociationsService() {
+        return getService(DocumentAssociationsService.class, DocumentAssociationsService.BEAN_NAME);
     }
 
     public static DocumentConfigService getDocumentConfigService() {

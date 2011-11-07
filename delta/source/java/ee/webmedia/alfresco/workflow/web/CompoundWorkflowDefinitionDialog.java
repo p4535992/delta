@@ -295,7 +295,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     }
 
     // merge this into UserContactGroupSearchBean#searchAll
-    private SelectItem[] executeOwnerSearch(int filterIndex, String contains, boolean orgOnly, boolean taskCapableOnly, String institutionToRemove) {
+    private SelectItem[] executeOwnerSearch(int filterIndex, String contains, boolean orgOnly, boolean taskCapableOnly, boolean dvkCapableOnly, String institutionToRemove) {
         log.debug("executeOwnerSearch: " + filterIndex + ", " + contains);
         if (filterIndex == 0) { // users
             if (this instanceof CompoundWorkflowDialog) {
@@ -307,7 +307,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         } else if (filterIndex == 2) { // contacts
             List<Node> nodes = null;
             if (taskCapableOnly) {
-                nodes = getAddressbookService().searchTaskCapableContacts(contains, orgOnly, institutionToRemove);
+                nodes = getAddressbookService().searchTaskCapableContacts(contains, orgOnly, dvkCapableOnly, institutionToRemove);
             } else {
                 nodes = getAddressbookService().search(contains);
             }
@@ -315,7 +315,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         } else if (filterIndex == 3) { // contact groups
             List<Node> nodes = null;
             if (taskCapableOnly) {
-                nodes = getAddressbookService().searchTaskCapableContactGroups(contains, orgOnly, institutionToRemove);
+                nodes = getAddressbookService().searchTaskCapableContactGroups(contains, orgOnly, taskCapableOnly, institutionToRemove);
             } else {
                 nodes = getAddressbookService().searchContactGroups(contains, true, false);
             }
@@ -329,14 +329,14 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
      * Action listener for JSP.
      */
     public SelectItem[] executeOwnerSearch(int filterIndex, String contains) {
-        return executeOwnerSearch(filterIndex, contains, false, false, null);
+        return executeOwnerSearch(filterIndex, contains, false, false, false, null);
     }
 
     /**
      * Action listener for JSP.
      */
     public SelectItem[] executeTaskOwnerSearch(int filterIndex, String contains) {
-        return executeOwnerSearch(filterIndex, contains, false, true, null);
+        return executeOwnerSearch(filterIndex, contains, false, true, false, null);
     }
 
     /**
@@ -344,7 +344,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
      */
     public SelectItem[] executeResponsibleOwnerSearch(int filterIndex, String contains) {
         int newIndex = (filterIndex == 1) ? 2 : filterIndex;
-        return executeOwnerSearch(newIndex, contains, false, true, null);
+        return executeOwnerSearch(newIndex, contains, false, true, false, null);
     }
 
     /**
@@ -353,16 +353,16 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     public SelectItem[] executeExternalReviewOwnerSearch(int filterIndex, String contains) {
         int newIndex = (filterIndex == 0) ? 2 : 3;
         if (getWorkflowService().isInternalTesting()) {
-            return executeOwnerSearch(newIndex, contains, true, true, null);
+            return executeOwnerSearch(newIndex, contains, true, true, true, null);
         }
-        return executeOwnerSearch(newIndex, contains, true, true, getDvkService().getInstitutionCode());
+        return executeOwnerSearch(newIndex, contains, true, true, true, getDvkService().getInstitutionCode());
     }
 
     /**
      * Action listener for JSP.
      */
     public SelectItem[] executeDueDateExtensionOwnerSearch(int filterIndex, String contains) {
-        return executeOwnerSearch(filterIndex, contains, false, false, null);
+        return executeOwnerSearch(filterIndex, contains, false, false, false, null);
     }
 
     /**
@@ -454,7 +454,8 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         for (int j = 0; j < contacts.size(); j++) {
             Map<QName, Serializable> contactProps = getNodeService().getProperties(contacts.get(j));
             if (getNodeService().hasAspect(contacts.get(j), AddressbookModel.Aspects.ORGANIZATION_PROPERTIES)
-                    && Boolean.TRUE.equals(contactProps.get(AddressbookModel.Props.TASK_CAPABLE))) {
+                    && Boolean.TRUE.equals(contactProps.get(AddressbookModel.Props.TASK_CAPABLE))
+                    && (!isExternalReviewTask || Boolean.TRUE.equals(contactProps.get(AddressbookModel.Props.DVK_CAPABLE)))) {
                 if (taskCounter > 0) {
                     block.addTask(++taskIndex);
                 }

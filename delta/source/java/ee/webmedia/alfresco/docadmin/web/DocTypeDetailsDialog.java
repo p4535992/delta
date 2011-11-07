@@ -11,8 +11,7 @@ import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 
-import ee.webmedia.alfresco.base.BaseObject;
-import ee.webmedia.alfresco.docadmin.service.DocumentAdminService.DocTypeLoadEffort;
+import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.docadmin.web.DocTypeDetailsDialog.DocTypeDialogSnapshot;
@@ -37,17 +36,6 @@ public class DocTypeDetailsDialog extends BaseSnapshotCapableDialog<DocTypeDialo
     private FollowupAssocsListBean followupAssocsListBean;
     private ReplyAssocsListBean replyAssocsListBean;
     private VersionsListBean versionsListBean;
-    /** DocumentType without fetching children of older {@link DocumentTypeVersion} nodes */
-    private static final DocTypeLoadEffort DOC_TYPE_WITHOUT_OLDER_DT_VERSION_CHILDREN = new DocTypeLoadEffort() {
-        @Override
-        public boolean isReturnChildren(BaseObject parent) {
-            // everything except children of DocumentTypeVersion
-            return (parent instanceof DocumentTypeVersion) ? false : true;
-        }
-    }.setReturnLatestDocTypeVersionChildren(); // ... except children of latestDocTypeVersion
-
-    // END: Block beans
-
     /**
      * Contains fields that contain state to be used when restoring dialog
      * 
@@ -161,7 +149,7 @@ public class DocTypeDetailsDialog extends BaseSnapshotCapableDialog<DocTypeDialo
      * @return DocumentType without fetching children of older {@link DocumentTypeVersion} nodes
      */
     private DocumentType getDocumentTypeWithoutOlderDTVersionChildren(NodeRef docTypeRef) {
-        return getDocumentAdminService().getDocumentType(docTypeRef, DOC_TYPE_WITHOUT_OLDER_DT_VERSION_CHILDREN);
+        return getDocumentAdminService().getDocumentType(docTypeRef, DocumentAdminService.DOC_TYPE_WITHOUT_OLDER_DT_VERSION_CHILDREN);
     }
 
     private void init(DocumentType documentType) {

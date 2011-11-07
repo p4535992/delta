@@ -32,6 +32,7 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.cases.model.Case;
+import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
@@ -39,6 +40,7 @@ import ee.webmedia.alfresco.classificator.model.Classificator;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.common.service.IClonable;
+import ee.webmedia.alfresco.document.assocsdyn.service.DocumentAssociationsService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
@@ -75,6 +77,7 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
 
     /** NB! not injected, use getter to access this service */
     private FunctionsService _functionsService;
+    private DocumentAssociationsService documentAssociationsService;
     private Classificator transmittalModeClassificator;
     private HashMap<String/* transmittalMode valueName in lowerCase */, ClassificatorValue> transmittalModes;
 
@@ -380,18 +383,18 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
                     final QName relatedDocType = relatedDoc.getType();
                     if (DocumentSubtypeModel.Types.INCOMING_LETTER.equals(initialDocType)) {
                         if (DocumentSubtypeModel.Types.INCOMING_LETTER.equals(relatedDocType)) {
-                            addFollowupAssoc(relatedDoc.getNodeRef(), initialDoc.getNodeRef());
+                            documentAssociationsService.createAssoc(relatedDoc.getNodeRef(), initialDoc.getNodeRef(), DocTypeAssocType.FOLLOWUP.getAssocBetweenDocs());
                             nrOfFollowUps++;
                         } else {
-                            addReplyAssoc(relatedDoc.getNodeRef(), initialDoc.getNodeRef());
+                            documentAssociationsService.createAssoc(relatedDoc.getNodeRef(), initialDoc.getNodeRef(), DocTypeAssocType.REPLY.getAssocBetweenDocs());
                             nrOfReplies++;
                         }
                     } else if (DocumentSubtypeModel.Types.OUTGOING_LETTER.equals(initialDocType)) {
                         if (DocumentSubtypeModel.Types.INCOMING_LETTER.equals(relatedDocType)) {
-                            addReplyAssoc(relatedDoc.getNodeRef(), initialDoc.getNodeRef());
+                            documentAssociationsService.createAssoc(relatedDoc.getNodeRef(), initialDoc.getNodeRef(), DocTypeAssocType.REPLY.getAssocBetweenDocs());
                             nrOfReplies++;
                         } else {
-                            addFollowupAssoc(relatedDoc.getNodeRef(), initialDoc.getNodeRef());
+                            documentAssociationsService.createAssoc(relatedDoc.getNodeRef(), initialDoc.getNodeRef(), DocTypeAssocType.FOLLOWUP.getAssocBetweenDocs());
                             nrOfFollowUps++;
                         }
                     } else {
@@ -920,6 +923,10 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
 
     public void setClassificatorService(ClassificatorService classificatorService) {
         this.classificatorService = classificatorService;
+    }
+
+    public void setDocumentAssociationsService(DocumentAssociationsService documentAssociationsService) {
+        this.documentAssociationsService = documentAssociationsService;
     }
 
 }

@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.docconfig.service;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -9,6 +10,7 @@ import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.classificator.constant.FieldType;
+import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docconfig.generator.FieldGenerator;
 
@@ -38,7 +40,13 @@ public interface DocumentConfigService {
      */
     Map<String, Pair<PropertyDefinition, Field>> getPropertyDefinitions(Node documentDynamicNode);
 
-    void setDefaultPropertyValues(Node documentDynamicNode);
+    /**
+     * @param documentDynamicNode
+     * @param docVer version that matches document node; if {@code null} then version is loaded automatically
+     */
+    void setDefaultPropertyValues(Node documentDynamicNode, DocumentTypeVersion docVer);
+
+    void setDefaultPropertyValues(Node documentDynamicNode, List<Field> fields);
 
     void registerMultiValuedOverrideInSystematicGroup(Set<String> originalFieldIds);
 

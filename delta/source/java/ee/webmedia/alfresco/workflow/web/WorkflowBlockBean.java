@@ -391,7 +391,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             if (outcomeIndex == 1 && StringUtils.isBlank(task.getComment())) {
                 return Arrays.asList(new Pair<String, String>("task_validation_externalReviewTask_comment", null));
             }
-        } else if (WorkflowSpecificModel.Types.ASSIGNMENT_TASK.equals(taskType)) {
+        } else if (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK, WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK)) {
             if (StringUtils.isBlank(task.getComment())) {
                 return Arrays.asList(new Pair<String, String>("task_validation_assignmentTask_comment", null));
             }

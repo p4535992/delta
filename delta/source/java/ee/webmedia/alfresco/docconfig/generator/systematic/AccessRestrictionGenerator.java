@@ -145,7 +145,7 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
     @Override
     public void validate(DocumentDynamic document, ValidationHelper validationHelper) {
         final NodeRef nodeRef = document.getNodeRef();
-        if (document.isDraft()) {
+        if (document.isDraftOrImapOrDvk()) {
             return;
         }
 
@@ -184,7 +184,7 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
         }
 
         // Log changes
-        if (!document.isDraft()) {
+        if (!document.isDraftOrImapOrDvk()) {
             final List<String> changedAccessRestrictionFieldIds = getChangedAccessRestrictionFieldIds(document, oldProps);
             if (changedAccessRestrictionFieldIds.isEmpty()) {
                 return;

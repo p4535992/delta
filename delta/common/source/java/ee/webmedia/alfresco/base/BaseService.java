@@ -67,6 +67,21 @@ public interface BaseService {
 
     <T extends BaseObject> List<T> getChildren(NodeRef parentRef, Class<T> childrenClass, Predicate<T> mustIncludePredicate, Effort effort);
 
+    /**
+     * Method that returns only children of parent node that are associated to parent by given association type and name patterns.
+     * It is more effective than {@link #getChildren(NodeRef, Class, Predicate, Effort)} <br>
+     * TODO implemented it in a nick of time - probably it would be more elegant if typeQNamePattern and qnamePattern would be somehow integrated into {@link Effort} interface
+     * that decides how much effort should be spent to fetch children
+     * 
+     * @param <T>
+     * @param parentRef
+     * @param childrenClass
+     * @param typeQNamePattern the pattern that the type qualified name of the association must match
+     * @param qnamePattern the pattern that the qnames of the assocs must match
+     * @return
+     */
+    <T extends BaseObject> List<T> getChildren(NodeRef parentRef, Class<T> childrenClass, QNamePattern typeQNamePattern, QNamePattern qnamePattern, Effort effort);
+
     <T extends BaseObject> List<T> getObjects(List<NodeRef> resultRefs, Class<T> resultClass);
 
     /**

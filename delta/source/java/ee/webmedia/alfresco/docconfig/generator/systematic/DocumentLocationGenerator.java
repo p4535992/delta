@@ -541,7 +541,8 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
         }
 
         private void updateAccessRestrictionProperties(NodeRef seriesRef) {
-            AccessRestrictionState accessRestrictionState = getPropertySheetStateBean().getStateHolder(AccessRestrictionGenerator.class.getName(), AccessRestrictionState.class);
+            String stateHolderKey = DocumentCommonModel.Props.ACCESS_RESTRICTION.getLocalName();
+            AccessRestrictionState accessRestrictionState = getPropertySheetStateBean().getStateHolder(stateHolderKey, AccessRestrictionState.class);
             if (accessRestrictionState != null) {
                 accessRestrictionState.updateAccessRestrictionProperties(seriesRef);
             }
@@ -616,7 +617,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             props.put(CASE.toString(), caseRef);
         }
 
-        boolean isClosedUnitCheckNeeded = isClosedUnitCheckNeeded(document.getNodeRef(), documentService.getAncestorNodesByDocument(document.getNodeRef()), volumeRef, docCase);
+        boolean isClosedUnitCheckNeeded = isClosedUnitCheckNeeded(document, documentService.getAncestorNodesByDocument(document.getNodeRef()), volumeRef, docCase);
 
         if (isClosedUnitCheckNeeded && DocListUnitStatus.CLOSED.equals(functionsService.getFunctionByNodeRef(functionRef).getStatus())) {
             messages.add("document_validationMsg_closed_function");
@@ -745,16 +746,14 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 throw new UnableToPerformException(MessageSeverity.ERROR, "document_errorMsg_register_movingNotEnabled_isReplyOrFollowUp", e);
             }
 
-            if (!document.isDraft()) {
+            if (!document.isDraftOrImapOrDvk()) {
                 documentLogService.addDocumentLog(docNodeRef, MessageUtil.getMessage("document_log_location_changed"));
             }
         }
     }
 
-    private boolean isClosedUnitCheckNeeded(NodeRef docRef, DocumentParentNodesVO parents, NodeRef volumeRef, Case docCase) {
-        final QName parentType = nodeService.getType(nodeService.getPrimaryParent(docRef).getParentRef());
-        final boolean isDraft = DocumentCommonModel.Types.DRAFTS.equals(parentType);
-        return isDraft
+    private boolean isClosedUnitCheckNeeded(DocumentDynamic document, DocumentParentNodesVO parents, NodeRef volumeRef, Case docCase) {
+        return document.isDraftOrImapOrDvk()
                 || !(volumeRef.equals(parents.getVolumeNode().getNodeRef())
                      && (parents.getCaseNode() == null ? docCase == null
                              : (docCase == null ? false

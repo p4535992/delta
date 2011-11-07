@@ -28,8 +28,6 @@
 <!--             <action idref="document_copy" /> -->
             <action idref="word_file_from_document" />
             <action idref="document_registerDoc" />
-<!--             <action idref="document_createReply" /> -->
-<!--             <action idref="document_createFollowUp" /> -->
             <action idref="document_send_out" />
 <!--             <action idref="create_forum_node_override" /> -->
 <!--             <action idref="discuss_node_override" /> -->

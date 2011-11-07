@@ -39,7 +39,7 @@ public class SystematicDocumentTypesBootstrap extends AbstractModuleComponent {
     public void executeInternalImpl() {
         Map<String, Pair<String, Pair<Set<String>, Set<QName>>>> systematicDocumentTypes = new HashMap<String, Pair<String, Pair<Set<String>, Set<QName>>>>();
 
-        addSystematicDocumentType(systematicDocumentTypes, SystematicDocumentType.INCOMING_LETTER.getName(), "Sissetulev kiri",
+        addSystematicDocumentType(systematicDocumentTypes, SystematicDocumentType.INCOMING_LETTER.getId(), "Sissetulev kiri",
                 new String[] {
                         SystematicFieldGroupNames.SENDER_NAME_AND_EMAIL,
                         SystematicFieldGroupNames.SENDER_REG_NUMBER_AND_DATE,
@@ -51,7 +51,7 @@ public class SystematicDocumentTypesBootstrap extends AbstractModuleComponent {
                         DocumentCommonModel.Props.KEYWORDS
         });
 
-        addSystematicDocumentType(systematicDocumentTypes, SystematicDocumentType.OUTGOING_LETTER.getName(), "Väljaminev kiri",
+        addSystematicDocumentType(systematicDocumentTypes, SystematicDocumentType.OUTGOING_LETTER.getId(), "Väljaminev kiri",
                 new String[] {
                         SystematicFieldGroupNames.SENDER_REG_NUMBER_AND_DATE,
                         SystematicFieldGroupNames.SIGNER,
@@ -63,18 +63,18 @@ public class SystematicDocumentTypesBootstrap extends AbstractModuleComponent {
                         DocumentCommonModel.Props.SEND_DESC_VALUE
          });
 
-        // addSystematicDocumentType(systematicDocumentTypes, SystematicDocumentType.INVOICE.getName(), "Arve", ..., ...);
+        // addSystematicDocumentType(systematicDocumentTypes, SystematicDocumentType.INVOICE.getId(), "Arve", ..., ...);
 
-        addSystematicDocumentType(systematicDocumentTypes, SystematicDocumentType.TRAINING_APPLICATION.getName(), "Koolitustaotlus", null, null);
+        addSystematicDocumentType(systematicDocumentTypes, SystematicDocumentType.TRAINING_APPLICATION.getId(), "Koolitustaotlus", null, null);
 
-        addSystematicDocumentType(systematicDocumentTypes, SystematicDocumentType.CONTRACT.getName(), "Leping", null, null);
+        addSystematicDocumentType(systematicDocumentTypes, SystematicDocumentType.CONTRACT.getId(), "Leping", null, null);
 
-        // addSystematicDocumentType(systematicDocumentTypes, SystematicDocumentType.VACATION_APPLICATION.getName(), "Puhkuse taotlus",
+        // addSystematicDocumentType(systematicDocumentTypes, SystematicDocumentType.VACATION_APPLICATION.getId(), "Puhkuse taotlus",
         // new String[] { SystematicFieldGroupNames.SUBSTITUTE }, null);
 
-        addSystematicDocumentType(systematicDocumentTypes, SystematicDocumentType.ERRAND_ORDER_ABROAD.getName(), "Välislähetuse korraldus", null, null);
+        addSystematicDocumentType(systematicDocumentTypes, SystematicDocumentType.ERRAND_ORDER_ABROAD.getId(), "Välislähetuse korraldus", null, null);
 
-        addSystematicDocumentType(systematicDocumentTypes, SystematicDocumentType.REPORT.getName(), "Aruanne", null, null);
+        addSystematicDocumentType(systematicDocumentTypes, SystematicDocumentType.REPORT.getId(), "Aruanne", null, null);
 
         createSystematicDocumentTypes(systematicDocumentTypes);
     }

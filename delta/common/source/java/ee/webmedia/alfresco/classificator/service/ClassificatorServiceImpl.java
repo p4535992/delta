@@ -177,11 +177,14 @@ public class ClassificatorServiceImpl implements ClassificatorService {
 
     @Override
     public Classificator getClassificatorByName(String name) {
+        return getClassificatorByNodeRef(getClassificatorRefByName(name));
+    }
+
+    private NodeRef getClassificatorRefByName(String name) {
         String xpath = getClassificatorPathByName(name);
-        NodeRef classifNodeRef1 = generalService.getNodeRef(xpath);
-        NodeRef classifNodeRef = classifNodeRef1;
+        NodeRef classifNodeRef = generalService.getNodeRef(xpath);
         Assert.notNull(classifNodeRef, "Unknown classificator '" + name + "'");
-        return getClassificatorByNodeRef(classifNodeRef);
+        return classifNodeRef;
     }
 
     private String getClassificatorPathByName(String classificatorName) {
@@ -195,6 +198,11 @@ public class ClassificatorServiceImpl implements ClassificatorService {
     @Override
     public List<ClassificatorValue> getAllClassificatorValues(Classificator classificator) {
         return getAllClassificatorValues(classificator.getNodeRef());
+    }
+
+    @Override
+    public List<ClassificatorValue> getAllClassificatorValues(String classificator) {
+        return getAllClassificatorValues(getClassificatorRefByName(classificator));
     }
 
     private List<ClassificatorValue> getClassificatorValuesByNodeRefs(List<NodeRef> clValueNodeRefs) {

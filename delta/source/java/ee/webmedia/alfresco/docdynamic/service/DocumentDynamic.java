@@ -86,6 +86,14 @@ public class DocumentDynamic extends NodeBaseVO implements Cloneable {
         setProp(CASE, caseRef);
     }
 
+    public boolean isDraftOrImapOrDvk() {
+        return getPropBoolean(DocumentService.TransientProps.TEMP_DOCUMENT_IS_DRAFT_OR_IMAP_OR_DVK_QNAME);
+    }
+
+    public void setDraftOrImapOrDvk(boolean draftOrImapOrDvk) {
+        setProp(DocumentService.TransientProps.TEMP_DOCUMENT_IS_DRAFT_OR_IMAP_OR_DVK_QNAME, draftOrImapOrDvk);
+    }
+
     public boolean isDraft() {
         return getPropBoolean(DocumentService.TransientProps.TEMP_DOCUMENT_IS_DRAFT_QNAME);
     }

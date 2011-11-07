@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.document.associations.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAssociationsService;
+
 import java.util.Map;
 
 import javax.faces.context.FacesContext;
@@ -52,13 +54,11 @@ public class DeleteAssocDialog extends DeleteContentDialog {
     protected String finishImpl(FacesContext context, String outcome) {
         try {
             if (caseNodeRef != null) {
-                getDocumentService().deleteAssoc(document, caseNodeRef, CaseModel.Associations.CASE_DOCUMENT);
+                getDocumentAssociationsService().deleteAssoc(document, caseNodeRef, CaseModel.Associations.CASE_DOCUMENT);
+            } else if (source) {
+                getDocumentAssociationsService().deleteAssoc(nodeRef, document, null);
             } else {
-                if (source) {
-                    getDocumentService().deleteAssoc(nodeRef, document, null);
-                } else {
-                    getDocumentService().deleteAssoc(document, nodeRef, null);
-                }
+                getDocumentAssociationsService().deleteAssoc(document, nodeRef, null);
             }
         } catch (Exception e) {
             log.error("Deleting association failed!", e);

@@ -30,7 +30,7 @@
             <property name="tasksearch:startedDateTimeBegin">
                <type>d:date</type>
             </property>
-            <property name="tasksearch:startedDateTimeEnd">
+            <property name="tasksearch:startedDateTimeBegin_EndDate">
                <type>d:date</type>
             </property>
             <property name="tasksearch:taskType">
@@ -39,9 +39,14 @@
             </property>
             <property name="tasksearch:ownerName">
                <type>d:text</type>
+               <multiple>true</multiple>
             </property>
             <property name="tasksearch:creatorName">
                <type>d:text</type>
+            </property>
+            <property name="tasksearch:outcome">
+               <type>d:text</type>
+               <multiple>true</multiple>
             </property>
             <property name="tasksearch:organizationName">
                <type>d:text</type>
@@ -52,7 +57,7 @@
             <property name="tasksearch:dueDateTimeBegin">
                <type>d:date</type>
             </property>
-            <property name="tasksearch:dueDateTimeEnd">
+            <property name="tasksearch:dueDateTimeBegin_EndDate">
                <type>d:date</type>
             </property>
             <property name="tasksearch:onlyResponsible">
@@ -62,7 +67,7 @@
             <property name="tasksearch:completedDateTimeBegin">
                <type>d:date</type>
             </property>
-            <property name="tasksearch:completedDateTimeEnd">
+            <property name="tasksearch:completedDateTimeBegin_EndDate">
                <type>d:date</type>
             </property>
             <property name="tasksearch:comment">
@@ -82,8 +87,12 @@
             <property name="tasksearch:stoppedDateTimeBegin">
                <type>d:date</type>
             </property>
-            <property name="tasksearch:stoppedDateTimeEnd">
+            <property name="tasksearch:stoppedDateTimeBegin_EndDate">
                <type>d:date</type>
+            </property>
+            <property name="tasksearch:docType">
+               <type>d:date</type>
+               <multiple>true</multiple>
             </property>
          </properties>
       </type>
