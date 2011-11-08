@@ -1294,7 +1294,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         Map<String, Object> props = filter.getProperties();
 
         // Use both left and right wildcard in task searches
-        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(TaskSearchModel.Props.STARTED_DATE_TIME_BEGIN), //
+        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(TaskSearchModel.Props.STARTED_DATE_TIME_BEGIN),
                 (Date) props.get(TaskSearchModel.Props.STARTED_DATE_TIME_END), WorkflowCommonModel.Props.STARTED_DATE_TIME));
         queryParts.add(generateTypeQuery((List<QName>) props.get(TaskSearchModel.Props.TASK_TYPE)));
         queryParts.add(generateMultiStringWordsWildcardQuery((List<String>) props.get(TaskSearchModel.Props.OWNER_NAME), true, true, WorkflowCommonModel.Props.OWNER_NAME));
@@ -1304,12 +1304,12 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.ORGANIZATION_NAME), true, true,
                 WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME));
         queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.JOB_TITLE), true, true, WorkflowCommonModel.Props.OWNER_JOB_TITLE));
-        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(TaskSearchModel.Props.DUE_DATE_TIME_BEGIN), //
+        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(TaskSearchModel.Props.DUE_DATE_TIME_BEGIN),
                 (Date) props.get(TaskSearchModel.Props.DUE_DATE_TIME_END), WorkflowSpecificModel.Props.DUE_DATE));
         if (Boolean.TRUE.equals(props.get(TaskSearchModel.Props.ONLY_RESPONSIBLE))) {
             queryParts.add(generateAspectQuery(WorkflowSpecificModel.Aspects.RESPONSIBLE));
         }
-        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(TaskSearchModel.Props.COMPLETED_DATE_TIME_BEGIN), //
+        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(TaskSearchModel.Props.COMPLETED_DATE_TIME_BEGIN),
                 (Date) props.get(TaskSearchModel.Props.COMPLETED_DATE_TIME_END), WorkflowCommonModel.Props.COMPLETED_DATE_TIME));
         queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.COMMENT), true, true, WorkflowSpecificModel.Props.COMMENT));
         queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.RESOLUTION), true, true, WorkflowSpecificModel.Props.RESOLUTION,
@@ -1318,7 +1318,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         if (Boolean.TRUE.equals(props.get(TaskSearchModel.Props.COMPLETED_OVERDUE))) {
             queryParts.add(generatePropertyBooleanQuery(WorkflowSpecificModel.Props.COMPLETED_OVERDUE, true));
         }
-        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(TaskSearchModel.Props.STOPPED_DATE_TIME_BEGIN), //
+        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(TaskSearchModel.Props.STOPPED_DATE_TIME_BEGIN),
                 (Date) props.get(TaskSearchModel.Props.STOPPED_DATE_TIME_END), WorkflowCommonModel.Props.STOPPED_DATE_TIME));
 
         log.info("Tasks search filter: " + WmNode.toString(RepoUtil.getNotEmptyProperties(RepoUtil.toQNameProperties(props)), namespaceService));

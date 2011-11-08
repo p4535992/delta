@@ -61,6 +61,7 @@ import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent.
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.ClearStateNotificationHandler;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
+import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
 import ee.webmedia.alfresco.document.associations.web.AssocsBlockBean;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil;
@@ -1170,6 +1171,11 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
 
     public void setModalContainer(UIPanel modalContainer) {
         this.modalContainer = modalContainer;
+    }
+
+    @Override
+    public DocumentDynamic getDocument() {
+        return null;
     }
 
     // END: getters / setters

@@ -178,6 +178,9 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
         }
         createAssoc(newDocNode.getNodeRef(), baseDocNode.getNodeRef(), replyOrF.getAssocBetweenDocs());
 
+        // On first rendering of document metadata block, initial access restriction properties would be set from series data -- disable this
+        newDoc.setDisableUpdateInitialAccessRestrictionProps(true);
+
         if (LOG.isDebugEnabled()) {
             LOG.debug("Created " + replyOrF + " " + newDocTypeId + ": from " + baseDoc.getDocumentTypeId());
         }
@@ -190,13 +193,13 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
             return new ArrayList<Object>(col); // some systematic fields don't have classificator - values are dynamically generated
         }
         List<ClassificatorValue> classificatorValues = BeanHelper.getClassificatorService().getAllClassificatorValues(classificator);
-        Set<String> classificatorValueDatas = new HashSet<String>(classificatorValues.size());
+        Set<String> classificatorValueNames = new HashSet<String>(classificatorValues.size());
         for (ClassificatorValue classificatorValue : classificatorValues) {
-            classificatorValueDatas.add(classificatorValue.getValueData());
+            classificatorValueNames.add(classificatorValue.getValueName());
         }
         ArrayList<Object> newProp = new ArrayList<Object>(col.size());
         for (Object existingPropPart : col) {
-            if (classificatorValueDatas.contains(existingPropPart) || classificatorValueDatas.contains(existingPropPart.toString())) {
+            if (classificatorValueNames.contains(existingPropPart) || classificatorValueNames.contains(existingPropPart.toString())) {
                 newProp.add(existingPropPart);
             }
         }

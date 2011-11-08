@@ -13,6 +13,8 @@ import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.VOLU
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +36,7 @@ import org.springframework.util.Assert;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
@@ -41,6 +44,7 @@ import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docadmin.service.MetadataItem;
+import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicFieldGroupNames;
 import ee.webmedia.alfresco.docconfig.generator.SaveListener;
 import ee.webmedia.alfresco.docconfig.generator.systematic.UserContactRelatedGroupGenerator;
@@ -117,7 +121,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         // }
         // }
 
-        DocumentDynamic document = getDocument(docRef);
+        DocumentDynamic document = getDocumentWithInMemoryChangesForEditing(docRef);
         documentConfigService.setDefaultPropertyValues(document.getNode(), docVer);
         generalService.setPropertiesIgnoringSystem(docRef, document.getNode().getProperties());
 
@@ -178,6 +182,24 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         DocumentDynamic doc = new DocumentDynamic(docNode);
         LOG.info("getDocument document=" + doc);
         return doc;
+    }
+
+    @Override
+    public DocumentDynamic getDocumentWithInMemoryChangesForEditing(NodeRef docRef) {
+        DocumentDynamic document = getDocument(docRef);
+        document.setDraft(isDraft(docRef));
+        document.setDraftOrImapOrDvk(isDraftOrImapOrDvk(docRef));
+        if (document.isImapOrDvk()) {
+            Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = documentConfigService.getDocumentTypeAndVersion(document.getNode());
+            Collection<Field> ownerNameFields = documentTypeAndVersion.getSecond().getFieldsById(Collections.singleton(DocumentCommonModel.Props.OWNER_NAME.getLocalName()));
+            if (ownerNameFields.size() == 1) {
+                Field ownerNameField = ownerNameFields.iterator().next();
+                if (ownerNameField.isSystematic() && ownerNameField.getFieldId().equals(ownerNameField.getOriginalFieldId()) && ownerNameField.getParent() instanceof FieldGroup) {
+                    documentConfigService.setDefaultPropertyValues(document.getNode(), ((FieldGroup) ownerNameField.getParent()).getFields(), true);
+                }
+            }
+        }
+        return document;
     }
 
     private static class ValidationHelperImpl implements SaveListener.ValidationHelper {
@@ -290,6 +312,18 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         QName parentType = nodeService.getType(parentAssoc.getParentRef());
         ChildAssociationRef grandParentAssoc = nodeService.getPrimaryParent(parentAssoc.getParentRef());
         return isDraftOrImapOrDvk(parentType) && !isDraft(grandParentAssoc, parentType);
+    }
+
+    @Override
+    public boolean isOutgoingLetter(NodeRef docRef) {
+        String docTypeId = (String) nodeService.getProperty(docRef, Props.OBJECT_TYPE_ID);
+        return SystematicDocumentType.OUTGOING_LETTER.getId().equals(docTypeId);
+    }
+
+    @Override
+    public String getDocumentTypeName(NodeRef documentRef) {
+        String docTypeIdOfDoc = (String) nodeService.getProperty(documentRef, Props.OBJECT_TYPE_ID);
+        return documentAdminService.getDocumentTypeProperty(docTypeIdOfDoc, DocumentAdminModel.Props.NAME, String.class);
     }
 
     private boolean saveChildNodes(Node docNode, DocumentServiceImpl.PropertyChangesMonitorHelper propertyChangesMonitorHelper) {

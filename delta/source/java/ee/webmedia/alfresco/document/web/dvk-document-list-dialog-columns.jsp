@@ -124,9 +124,10 @@
          <f:facet name="header">
             <h:outputText id="act-col-txt" value="" />
          </f:facet>
-         <a:actionLink id="act-col-act1" value="#{msg.imap_delete_letter}" actionListener="#{BrowseBean.setupContentAction}" action="dialog:deleteFile" showLink="false"
+         <a:actionLink id="act-col-act1" value="#{msg.delete}" actionListener="#{DeleteDialog.setupDeleteDialog}" action="dialog:deleteDialog" showLink="false"
             image="/images/icons/delete.gif">
-            <f:param name="id" value="#{r.node.nodeRef.id}" />
+            <f:param name="nodeRef" value="#{r.node.nodeRef}"/>
+            <f:param name="confirmMessagePlaceholder0" value="#{r.docName}"/>
          </a:actionLink>
       </a:column>
       

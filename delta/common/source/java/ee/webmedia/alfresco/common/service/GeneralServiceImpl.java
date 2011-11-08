@@ -370,17 +370,22 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
         for (String xPathPart : xPathParts) {
             QName qName = QName.resolveToQName(namespaceService, xPathPart);
             NodeRef parent = (ref == null ? nodeService.getRootNode(store) : ref.getChildRef());
-            List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parent, RegexQNamePattern.MATCH_ALL, qName);
-            if (childAssocs.size() != 1) {
-                String msg = "Expected 1, got " + childAssocs.size() + " childAssocs for xPathPart '"
-                        + xPathPart + "' when searching for node with xPath '" + nodeRefXPath + "'";
-                if (childAssocs.size() == 0) {
-                    log.trace(msg);
-                    return null;
+            try {
+                List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parent, RegexQNamePattern.MATCH_ALL, qName);
+                if (childAssocs.size() != 1) {
+                    String msg = "Expected 1, got " + childAssocs.size() + " childAssocs for xPathPart '"
+                            + xPathPart + "' when searching for node with xPath '" + nodeRefXPath + "'";
+                    if (childAssocs.size() == 0) {
+                        log.trace(msg);
+                        return null;
+                    }
+                    throw new RuntimeException(msg);
                 }
-                throw new RuntimeException(msg);
+                ref = childAssocs.get(0);
+            } catch (RuntimeException e) {
+                throw new RuntimeException("Failed to get children of node " + parent + " by xPathPart '" + xPathPart
+                        + "'(qName=" + qName + "), when searching for node with xPath '" + nodeRefXPath + "'" + ", qName=" + qName, e);
             }
-            ref = childAssocs.get(0);
         }
         return ref;
     }

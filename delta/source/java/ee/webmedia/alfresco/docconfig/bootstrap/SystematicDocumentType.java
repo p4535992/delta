@@ -1,6 +1,8 @@
 package ee.webmedia.alfresco.docconfig.bootstrap;
 
 /**
+ * Systematic Document Types that should exist in every environment
+ * 
  * @author Riina Tens
  */
 public enum SystematicDocumentType {

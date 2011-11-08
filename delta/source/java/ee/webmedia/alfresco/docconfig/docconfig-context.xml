@@ -7,8 +7,7 @@
       <property name="dictionaryService" ref="DictionaryService" />
       <property name="namespaceService" ref="NamespaceService" />
       <property name="userContactMappingService" ref="UserContactMappingService" />
-      <property name="nodeService" ref="NodeService" />
-      <property name="generalService" ref="GeneralService" />
+      <property name="userService" ref="UserService" />
    </bean>
 
    <bean id="DocumentConfigService" class="org.springframework.aop.framework.ProxyFactoryBean">

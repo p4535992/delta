@@ -49,10 +49,10 @@
       <%-- Remove column --%>
       <a:column id="col7">
          <r:permissionEvaluator value="#{r.node}" allow="DeleteNode">
-            <a:actionLink id="col7-act" value="#{r.name}" actionListener="#{BrowseBean.setupContentAction}" action="dialog:deleteFile" showLink="false"
+            <a:actionLink id="col7-act" value="#{r.name}" actionListener="#{DeleteDialog.setupDeleteDialog}" action="dialog:deleteDialog" showLink="false"
                image="/images/icons/delete.gif" tooltip="#{msg.file_remove}">
-               <f:param name="id" value="#{r.id}" />
-               <f:param name="ref" value="#{r.nodeRef}" />
+               <f:param name="nodeRef" value="#{r.nodeRef}"/>
+               <f:param name="confirmMessagePlaceholder0" value="#{r.name}"/>
             </a:actionLink>
          </r:permissionEvaluator>
       </a:column>

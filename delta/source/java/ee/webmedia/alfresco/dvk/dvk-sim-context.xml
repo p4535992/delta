@@ -10,8 +10,7 @@
       <property name="documentService" ref="DocumentService" />
       <property name="documentLogService" ref="DocumentLogService" />
       <property name="documentSearchService" ref="DocumentSearchService" />
-      <property name="documentTypeService" ref="DocumentTypeService" />
-      <property name="seriesService" ref="SeriesService" />
+      <property name="documentDynamicService" ref="DocumentDynamicService" />
       <property name="volumeService" ref="VolumeService" />
       <property name="importerService" ref="externalReviewWorkflowImporterComponent" />
       <property name="exporterService" ref="exporterComponent" />

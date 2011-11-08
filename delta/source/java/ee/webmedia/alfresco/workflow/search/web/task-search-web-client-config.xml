@@ -30,9 +30,10 @@
             textId="task_search_from_to_with_picker" />
          <show-property name="tasksearch:taskType" display-label-id="task_search_taskType" component-generator="GeneralSelectorGenerator"
             selectionItems="#{TaskSearchDialog.getTaskTypes}" converter="ee.webmedia.alfresco.common.propertysheet.converter.QNameConverter" />
-         <show-property name="tasksearch:ownerName" display-label-id="task_search_owner" component-generator="SearchGenerator"
+         <show-property name="tasksearch:ownerName" display-label-id="task_search_owner" component-generator="MultiValueEditorGenerator"
             pickerCallback="#{TaskSearchDialog.executeOwnerSearch}" setterCallback="#{TaskSearchDialog.processOwnerSearchResults}" dialogTitleId="task_search_owner_title"
-            filters="#{TaskSearchDialog.ownerSearchFilters}" showFilter="true" styleClass="task-search-with-filter" editable="true" searchLinkLabel="add" />
+            filters="#{TaskSearchDialog.ownerSearchFilters}" showFilter="true" showHeaders="false" styleClass="task-search-with-filter add-person" editable="true" addLabelId="add" 
+            propsGeneration="tasksearch:ownerName¤¤styleClass=expand19-200" />
          <show-property name="tasksearch:creatorName" display-label-id="task_search_creator" component-generator="SearchGenerator"
             pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{TaskSearchDialog.processCreatorSearchResults}" dialogTitleId="users_search_title" />
          <show-property name="tasksearch:organizationName" display-label-id="task_search_organization" component-generator="TextAreaGenerator" styleClass="expand19-200" />

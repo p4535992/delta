@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.docconfig.service;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDictionaryService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getNamespaceService;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -44,7 +45,6 @@ import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigEle
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO.ConfigItemType;
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
@@ -63,7 +63,7 @@ import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
-import ee.webmedia.alfresco.utils.UserUtil;
+import ee.webmedia.alfresco.user.service.UserService;
 
 /**
  * @author Alar Kvell
@@ -75,8 +75,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
     private DictionaryService dictionaryService;
     private NamespaceService namespaceService;
     private UserContactMappingService userContactMappingService;
-    private NodeService nodeService;
-    private GeneralService generalService;
+    private UserService userService;
 
     private final Map<FieldType, FieldGenerator> fieldGenerators = new HashMap<FieldType, FieldGenerator>();
     private final Map<String, FieldGenerator> originalFieldIdGenerators = new HashMap<String, FieldGenerator>();
@@ -262,7 +261,8 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
         return config;
     }
 
-    private Pair<DocumentType, DocumentTypeVersion> getDocumentTypeAndVersion(Node documentDynamicNode) {
+    @Override
+    public Pair<DocumentType, DocumentTypeVersion> getDocumentTypeAndVersion(Node documentDynamicNode) {
         Pair<String, Integer> docTypeIdAndVersionNr = getDocTypeIdAndVersionNr(documentDynamicNode);
         return getDocumentTypeAndVersion(docTypeIdAndVersionNr);
     }
@@ -492,20 +492,20 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
             Assert.isTrue(ObjectUtils.equals(docVer.getVersionNr(), docTypeIdAndVersionNr.getSecond()));
         }
         for (Field field : docVer.getFieldsDeeply()) {
-            setDefaultPropertyValue(documentDynamicNode, field);
+            setDefaultPropertyValue(documentDynamicNode, field, false);
         }
     }
 
     @Override
-    public void setDefaultPropertyValues(Node documentDynamicNode, List<Field> fields) {
+    public void setDefaultPropertyValues(Node documentDynamicNode, List<Field> fields, boolean forceOverwrite) {
         for (Field field : fields) {
-            setDefaultPropertyValue(documentDynamicNode, field);
+            setDefaultPropertyValue(documentDynamicNode, field, forceOverwrite);
         }
     }
 
-    private void setDefaultPropertyValue(Node documentDynamicNode, Field field) {
+    private void setDefaultPropertyValue(Node documentDynamicNode, Field field, boolean forceOverwrite) {
         Serializable value = (Serializable) documentDynamicNode.getProperties().get(field.getQName());
-        if (value != null) {
+        if (value != null && !forceOverwrite) {
             return;
         }
 
@@ -534,11 +534,12 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
 
         } else if (field.isDefaultUserLoggedIn()) {
             if (DataTypeDefinition.TEXT.equals(dataType)) {
-                defaultValue = UserUtil.getPersonFullName1(BeanHelper.getUserService().getCurrentUserProperties()); // FIXME this is never used here
-                Map<QName, UserContactMappingCode> mapping = userContactMappingService.getFieldIdsMapping(field);
-                NodeRef userRef = BeanHelper.getUserService().getCurrentUser(); // TODO FIXME do not use BeanHelper in a service!!
-                userContactMappingService.setMappedValues(documentDynamicNode.getProperties(), mapping, userRef, propDef.isMultiValued());
-                return;
+                NodeRef userRef = userService.getCurrentUser();
+                if (userRef != null) {
+                    Map<QName, UserContactMappingCode> mapping = userContactMappingService.getFieldIdsMapping(field);
+                    userContactMappingService.setMappedValues(documentDynamicNode.getProperties(), mapping, userRef, propDef.isMultiValued());
+                    return;
+                }
             }
 
         } else if (field.isDefaultSelected()) {
@@ -829,7 +830,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
         @Override
         public String toString() {
             return WmNode.toString(this) + "[" +
-                    "name=" + name.toPrefixString(BeanHelper.getNamespaceService()) +
+                    "name=" + name.toPrefixString(getNamespaceService()) +
                     " fieldType=" + fieldType +
                     " mandatory=" + mandatory +
                     " multiValuedOverride=" + multiValuedOverride +
@@ -882,12 +883,8 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
         this.userContactMappingService = userContactMappingService;
     }
 
-    public void setNodeService(NodeService nodeService) {
-        this.nodeService = nodeService;
-    }
-
-    public void setGeneralService(GeneralService generalService) {
-        this.generalService = generalService;
+    public void setUserService(UserService userService) {
+        this.userService = userService;
     }
     // END: setters
 

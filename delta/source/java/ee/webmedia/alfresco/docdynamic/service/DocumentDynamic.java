@@ -102,4 +102,16 @@ public class DocumentDynamic extends NodeBaseVO implements Cloneable {
         setProp(DocumentService.TransientProps.TEMP_DOCUMENT_IS_DRAFT_QNAME, draft);
     }
 
+    public boolean isImapOrDvk() {
+        return isDraftOrImapOrDvk() && !isDraft();
+    }
+
+    public boolean isDisableUpdateInitialAccessRestrictionProps() {
+        return getPropBoolean(DocumentService.TransientProps.TEMP_DOCUMENT_DISABLE_UPDATE_INITIAL_ACCESS_RESTRICTION_PROPS);
+    }
+
+    public void setDisableUpdateInitialAccessRestrictionProps(boolean disableUpdateInitialAccessRestrictionProps) {
+        setProp(DocumentService.TransientProps.TEMP_DOCUMENT_DISABLE_UPDATE_INITIAL_ACCESS_RESTRICTION_PROPS, disableUpdateInitialAccessRestrictionProps);
+    }
+
 }

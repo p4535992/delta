@@ -2044,6 +2044,13 @@ function setDateFromEnumOnChange(){
    var endDate = jQuery("#" + escapeId4JQ(selectorId.replace("_DateRangePicker","_EndDate")));
    setDateFromEnum(beginDate,endDate,selector.attr("value"));
 }
+function getEstonianWeekday(date){
+   var weekday = date.getDay()-1;
+   if(weekday<0) {
+      return 6;
+   }
+   return weekday;
+}
 function setDateFromEnum(beginDate,endDate,selectedEnum){
    if(selectedEnum=="") return;
    var startDate = new Date();
@@ -2052,12 +2059,12 @@ function setDateFromEnum(beginDate,endDate,selectedEnum){
       startDate.setDate(startDate.getDate()-1);
       finishDate.setDate(finishDate.getDate()-1);
    } else if(selectedEnum == "CURRENT_WEEK"){
-      startDate.setDate(startDate.getDate() - startDate.getDay() + 1);
+      startDate.setDate(startDate.getDate() - getEstonianWeekday(startDate));
    } else if(selectedEnum == "PREV_WEEK"){
-      startDate.setDate(startDate.getDate() - startDate.getDay() + 1 -7);
-      finishDate.setDate(startDate.getDate() + 6);
+      startDate.setDate(startDate.getDate() - getEstonianWeekday(startDate) -7);
+      finishDate= new Date(startDate.getFullYear(),startDate.getMonth(),startDate.getDate() + 6,0,0,0,0);
    } else if(selectedEnum == "FROM_PREV_WEEK"){
-      startDate.setDate(startDate.getDate() - startDate.getDay() + 1 -7);
+      startDate.setDate(startDate.getDate() - getEstonianWeekday(startDate) -7);
    } else if(selectedEnum == "CURRENT_MONTH"){
       startDate = new Date(startDate.getFullYear(),startDate.getMonth(),1,0,0,0,0);
    } else if(selectedEnum == "PREV_MONTH"){

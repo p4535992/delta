@@ -10,6 +10,7 @@ import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.classificator.constant.FieldType;
+import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docconfig.generator.FieldGenerator;
@@ -29,6 +30,8 @@ public interface DocumentConfigService {
 
     DocumentConfig getSearchConfig();
 
+    Pair<DocumentType, DocumentTypeVersion> getDocumentTypeAndVersion(Node documentDynamicNode);
+
     PropertyDefinition getPropertyDefinition(Node node, QName property);
 
     /**
@@ -46,7 +49,7 @@ public interface DocumentConfigService {
      */
     void setDefaultPropertyValues(Node documentDynamicNode, DocumentTypeVersion docVer);
 
-    void setDefaultPropertyValues(Node documentDynamicNode, List<Field> fields);
+    void setDefaultPropertyValues(Node documentDynamicNode, List<Field> fields, boolean forceOverwrite);
 
     void registerMultiValuedOverrideInSystematicGroup(Set<String> originalFieldIds);
 

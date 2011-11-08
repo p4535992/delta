@@ -26,11 +26,11 @@ import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.classificator.enums.SendMode;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.sendout.model.DocumentSendInfo;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
-import ee.webmedia.alfresco.document.type.service.DocumentTypeHelper;
-import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.dvk.model.DvkSendLetterDocuments;
 import ee.webmedia.alfresco.dvk.model.DvkSendLetterDocumentsImpl;
 import ee.webmedia.alfresco.dvk.service.DvkService;
@@ -63,7 +63,6 @@ public class SendOutServiceImpl implements SendOutService {
     private AddressbookService addressbookService;
     private DvkService dvkService;
     private ParametersService parametersService;
-    private DocumentTypeService documentTypeService;
     private FileFolderService fileFolderService;
     private WorkflowService workflowService;
 
@@ -98,7 +97,6 @@ public class SendOutServiceImpl implements SendOutService {
     public boolean sendOut(NodeRef document, List<String> names, List<String> emails, List<String> modes, String fromEmail, String subject, String content,
             List<String> fileNodeRefs, boolean zipIt) {
 
-        QName docType = nodeService.getType(document);
         Map<QName, Serializable> docProperties = nodeService.getProperties(document);
         List<Map<QName, Serializable>> sendInfoProps = new ArrayList<Map<QName, Serializable>>();
         Date now = new Date();
@@ -202,10 +200,11 @@ public class SendOutServiceImpl implements SendOutService {
             sd.setLetterCompilatorFirstname(ownerFirstname);
             sd.setLetterCompilatorSurname(ownerSurname);
             sd.setLetterCompilatorJobTitle((String) docProperties.get(DocumentCommonModel.Props.OWNER_JOB_TITLE));
-            if (DocumentTypeHelper.isOutgoingLetter(docType)) {
+            DocumentDynamicService documentDynamicService = getDocumentDynamicService();
+            if (documentDynamicService.isOutgoingLetter(document)) {
                 sd.setDocType("Kiri");
             } else {
-                sd.setDocType(documentTypeService.getDocumentType(docType).getName());
+                sd.setDocType(documentDynamicService.getDocumentTypeName(document));
             }
             sd.setRecipientsRegNrs(toRegNums);
 
@@ -346,8 +345,11 @@ public class SendOutServiceImpl implements SendOutService {
         this.parametersService = parametersService;
     }
 
-    public void setDocumentTypeService(DocumentTypeService documentTypeService) {
-        this.documentTypeService = documentTypeService;
+    /**
+     * Dependency cicle: dvkService -> documentService -> sendOutService -> documentDynamicService -> documentService
+     */
+    public DocumentDynamicService getDocumentDynamicService() {
+        return BeanHelper.getDocumentDynamicService();
     }
 
     public void setFileFolderService(FileFolderService fileFolderService) {

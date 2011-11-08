@@ -187,7 +187,10 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     }
 
     private void openOrSwitchModeCommon(NodeRef docRef, boolean inEditMode) {
-        openOrSwitchModeCommon(getDocumentDynamicService().getDocument(docRef), inEditMode);
+        DocumentDynamic document = inEditMode
+                ? getDocumentDynamicService().getDocumentWithInMemoryChangesForEditing(docRef)
+                : getDocumentDynamicService().getDocument(docRef);
+        openOrSwitchModeCommon(document, inEditMode);
     }
 
     private void openOrSwitchModeCommon(DocumentDynamic document, boolean inEditMode) {
@@ -195,12 +198,15 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         DocDialogSnapshot currentSnapshot = getCurrentSnapshot();
         try {
             currentSnapshot.document = document;
+
+            // TODO Alar: refactor subnode logic
             List<Node> subNodeList = currentSnapshot.document.getNode().getAllChildAssociations(DocumentCommonModel.Types.METADATA_CONTAINER);
             if (subNodeList != null) {
                 for (Node subNode : subNodeList) {
                     setSubNodeProps(subNode);
                 }
             }
+
             currentSnapshot.inEditMode = inEditMode;
             if (!inEditMode) {
                 currentSnapshot.viewModeWasOpenedInThePast = true;
@@ -383,7 +389,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     // Getters
     // =========================================================================
 
-    /** For JSP */
+    @Override
     public DocumentDynamic getDocument() {
         DocDialogSnapshot snapshot = getCurrentSnapshot();
         if (snapshot == null) {
@@ -546,6 +552,8 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     public void setModalContainer(UIPanel modalContainer) {
         this.modalContainer = modalContainer;
     }
+
+    // TODO Alar: refactor subnode logic
 
     public void addSubNode(ActionEvent event) {
         // TODO do we need to set default values when adding a new child node?

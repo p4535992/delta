@@ -43,10 +43,11 @@ import org.w3c.dom.NodeList;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
-import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
+import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
+import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.document.file.model.File;
@@ -57,7 +58,6 @@ import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.service.DocumentService;
-import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.dvk.model.DvkModel;
 import ee.webmedia.alfresco.dvk.model.DvkReceivedLetterDocument;
 import ee.webmedia.alfresco.dvk.model.DvkSendWorkflowDocuments;
@@ -67,7 +67,6 @@ import ee.webmedia.alfresco.notification.model.NotificationModel;
 import ee.webmedia.alfresco.notification.service.NotificationService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.series.model.Series;
-import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.service.VolumeService;
@@ -97,8 +96,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
     private DocumentService documentService;
     private DocumentLogService documentLogService;
     private DocumentSearchService documentSearchService;
-    private DocumentTypeService documentTypeService;
-    private SeriesService seriesService;
+    private DocumentDynamicService documentDynamicService;
     private VolumeService volumeService;
     private ExternalReviewWorkflowImporterService importerService;
     private ExporterService exporterService;
@@ -170,16 +168,17 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
 
     @Override
     protected NodeRef createDocumentNode(DvkReceivedLetterDocument rd, NodeRef dvkIncomingFolder, String nvlDocumentTitle) {
+        final NodeRef docRef = documentDynamicService.createNewDocument(
+                SystematicDocumentType.INCOMING_LETTER.getId(),
+                dvkIncomingFolder).getNodeRef();
+
         final Map<QName, Serializable> props = new HashMap<QName, Serializable>();
         fillPropsFromDvkReceivedDocument(rd, props);
         props.put(DocumentCommonModel.Props.DOC_NAME, nvlDocumentTitle);
-        props.put(DocumentCommonModel.Props.DOC_STATUS, DocumentStatus.WORKING.getValueName());
         props.put(DocumentCommonModel.Props.STORAGE_TYPE, StorageType.DIGITAL.getValueName());
-        props.put(DocumentSpecificModel.Props.TRANSMITTAL_MODE, TransmittalMode.DVK);
+        props.put(DocumentSpecificModel.Props.TRANSMITTAL_MODE, TransmittalMode.DVK.getValueName());
+        nodeService.addProperties(docRef, props);
 
-        QName documentType = documentTypeService.getIncomingLetterType();
-        final Node document = documentService.createDocument(documentType, dvkIncomingFolder, props);
-        final NodeRef docRef = document.getNodeRef();
         documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_imported"
                 , I18NUtil.getMessage("document_log_creator_dvk")), I18NUtil.getMessage("document_log_creator_dvk"));
         return docRef;
@@ -905,12 +904,8 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         this.documentLogService = documentLogService;
     }
 
-    public void setDocumentTypeService(DocumentTypeService documentTypeService) {
-        this.documentTypeService = documentTypeService;
-    }
-
-    public void setSeriesService(SeriesService seriesService) {
-        this.seriesService = seriesService;
+    public void setDocumentDynamicService(DocumentDynamicService documentDynamicService) {
+        this.documentDynamicService = documentDynamicService;
     }
 
     public void setVolumeService(VolumeService volumeService) {

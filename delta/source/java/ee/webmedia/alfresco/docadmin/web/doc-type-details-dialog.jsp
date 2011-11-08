@@ -18,9 +18,9 @@
 
 <a:booleanEvaluator value="#{DocTypeDetailsDialog.showingLatestVersion}">
    <%-- Use same jsp for both followup and reply association panels --%>
-   <% request.setAttribute("followUpOrReply", "followup"); %>
-   <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/doc-type-assocs.jsp" />
    <% request.setAttribute("followUpOrReply", "reply"); %>
+   <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/doc-type-assocs.jsp" />
+   <% request.setAttribute("followUpOrReply", "followup"); %>
    <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/doc-type-assocs.jsp" />
    <% request.removeAttribute("followUpOrReply"); %>
    

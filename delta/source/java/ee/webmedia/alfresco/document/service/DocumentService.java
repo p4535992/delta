@@ -48,6 +48,7 @@ public interface DocumentService {
         public static final QName TEMP_DOCUMENT_IS_DRAFT_QNAME = RepoUtil.createTransientProp("isDraft");
         public static final String TEMP_DOCUMENT_IS_DRAFT = TEMP_DOCUMENT_IS_DRAFT_QNAME.toString();
         public static final String TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED = "{temp}logging_disabled_docMetadataChanged";
+        public static final QName TEMP_DOCUMENT_DISABLE_UPDATE_INITIAL_ACCESS_RESTRICTION_PROPS = RepoUtil.createTransientProp("disableUpdateInitialAccessRestrictionProps");
     }
 
     String BEAN_NAME = "DocumentService";

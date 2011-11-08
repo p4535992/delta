@@ -251,7 +251,9 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 if (caseRef != null) {
                     caseLabel = getCaseLabel(getCaseService().getCaseByNoderef(caseRef));
                 }
-                updateFnSerVol(functionRef, seriesRef, volumeRef, caseLabel, true);
+                DocumentDynamic documentDynamic = dialogDataProvider.getDocument();
+                boolean updateAccessRestrictionProps = documentDynamic != null ? !documentDynamic.isDisableUpdateInitialAccessRestrictionProps() : false;
+                updateFnSerVol(functionRef, seriesRef, volumeRef, caseLabel, true, updateAccessRestrictionProps);
             } else {
                 String functionLbl = functionRef == null ? null : getFunctionLabel(getFunctionsService().getFunctionByNodeRef(functionRef));
                 String seriesLbl = seriesRef == null ? null : getSeriesLabel(getSeriesService().getSeriesByNodeRef(seriesRef));
@@ -321,14 +323,14 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
 
         public void functionValueChanged(ValueChangeEvent event) {
             NodeRef functionRef = (NodeRef) event.getNewValue();
-            updateFnSerVol(functionRef, null, null, null, false);
+            updateFnSerVol(functionRef, null, null, null, false, true);
         }
 
         public void seriesValueChanged(ValueChangeEvent event) {
             Node document = dialogDataProvider.getNode();
             NodeRef functionRef = (NodeRef) document.getProperties().get(functionProp);
             NodeRef seriesRef = (NodeRef) event.getNewValue();
-            updateFnSerVol(functionRef, seriesRef, null, null, false);
+            updateFnSerVol(functionRef, seriesRef, null, null, false, true);
         }
 
         public void volumeValueChanged(ValueChangeEvent event) {
@@ -336,10 +338,10 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             NodeRef functionRef = (NodeRef) document.getProperties().get(functionProp);
             NodeRef seriesRef = (NodeRef) document.getProperties().get(seriesProp);
             NodeRef volumeRef = (NodeRef) event.getNewValue();
-            updateFnSerVol(functionRef, seriesRef, volumeRef, null, false);
+            updateFnSerVol(functionRef, seriesRef, volumeRef, null, false, true);
         }
 
-        private void updateFnSerVol(NodeRef functionRef, NodeRef seriesRef, NodeRef volumeRef, String caseLabel, boolean addIfMissing) {
+        private void updateFnSerVol(NodeRef functionRef, NodeRef seriesRef, NodeRef volumeRef, String caseLabel, boolean addIfMissing, boolean updateAccessRestrictionProperties) {
             Node document = dialogDataProvider.getNode();
             UIPropertySheet ps = dialogDataProvider.getPropertySheet();
             boolean isSearchFilter = DocumentSearchModel.Types.FILTER.equals(document.getType());
@@ -426,7 +428,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             if (seriesRef == null) {
                 volumes = null;
                 volumeRef = null;
-            } else {
+            } else if (updateAccessRestrictionProperties) {
                 if (ps == null) { // when metadata block is first rendered
                     updateAccessRestrictionProperties(seriesRef);
                 } else { // when value change event is fired

@@ -32,6 +32,7 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfig;
+import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchFilterService;
 import ee.webmedia.alfresco.filter.web.AbstractSearchFilterBlockBean;
@@ -172,6 +173,11 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
     }
 
     // END: getters / setters
+
+    @Override
+    public DocumentDynamic getDocument() {
+        return null;
+    }
 
     @Override
     public Node getNode() {

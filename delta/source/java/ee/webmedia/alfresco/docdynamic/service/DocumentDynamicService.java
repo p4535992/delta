@@ -37,6 +37,8 @@ public interface DocumentDynamicService {
 
     DocumentDynamic getDocument(NodeRef docRef);
 
+    DocumentDynamic getDocumentWithInMemoryChangesForEditing(NodeRef docRef);
+
     void deleteDocumentIfDraft(NodeRef docRef);
 
     /**
@@ -52,5 +54,9 @@ public interface DocumentDynamicService {
     boolean isDraftOrImapOrDvk(NodeRef docRef);
 
     boolean isImapOrDvk(NodeRef docRef);
+
+    boolean isOutgoingLetter(NodeRef docRef);
+
+    String getDocumentTypeName(NodeRef documentRef);
 
 }

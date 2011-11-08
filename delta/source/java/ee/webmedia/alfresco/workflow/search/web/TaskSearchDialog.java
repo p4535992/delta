@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.workflow.search.web;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -151,18 +152,18 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
     /**
      * Action listener for JSP.
      */
-    public void processOwnerSearchResults(String searchResult) {
+    public List<String> processOwnerSearchResults(String searchResult) {
         log.debug("processOwnerSearchResults: " + searchResult);
         if (StringUtils.isBlank(searchResult)) {
-            return;
+            return null;
         }
-        Serializable name = null;
+        String name = null;
         if (searchResult.indexOf('/') > -1) { // contact
             NodeRef contact = new NodeRef(searchResult);
             Map<QName, Serializable> resultProps = getNodeService().getProperties(contact);
             QName resultType = getNodeService().getType(contact);
             if (resultType.equals(Types.ORGANIZATION)) {
-                name = resultProps.get(AddressbookModel.Props.ORGANIZATION_NAME);
+                name = (String) resultProps.get(AddressbookModel.Props.ORGANIZATION_NAME);
             } else {
                 name = UserUtil.getPersonFullName((String) resultProps.get(AddressbookModel.Props.PERSON_FIRST_NAME), (String) resultProps
                         .get(AddressbookModel.Props.PERSON_LAST_NAME));
@@ -171,7 +172,7 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
             Map<QName, Serializable> personProps = getUserService().getUserProperties(searchResult);
             name = UserUtil.getPersonFullName1(personProps);
         }
-        filter.getProperties().put(TaskSearchModel.Props.OWNER_NAME.toString(), name);
+        return Collections.singletonList(name);
     }
 
     /**
