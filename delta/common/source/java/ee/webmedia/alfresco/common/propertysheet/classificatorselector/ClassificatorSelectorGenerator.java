@@ -91,7 +91,7 @@ public class ClassificatorSelectorGenerator extends GeneralSelectorGenerator {
             results.add(selectItem);
         }
 
-        if (null == defaultOrExistingValue && isSingleValued) { // don't add default selection to multivalued component
+        if (isSingleValued) { // don't add default selection to multivalued component
             addDefault(context, results);
         }
         return results;

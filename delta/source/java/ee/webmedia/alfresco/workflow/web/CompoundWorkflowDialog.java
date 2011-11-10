@@ -34,6 +34,8 @@ import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
+import org.joda.time.LocalDate;
+import org.joda.time.LocalTime;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
@@ -56,6 +58,7 @@ import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.WebUtil;
@@ -123,7 +126,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         boolean checkFinished = WorkflowUtil.isStatus(compoundWorkflow, Status.IN_PROGRESS);
-        removeEmptyTasks();
+        preprocessWorkflow();
         if (validate(context, checkFinished, false, false)) {
             if (!askConfirmIfHasSameTask(MessageUtil.getMessage("workflow_compound_save"), DialogAction.SAVING)) {
                 saveCompWorkflow();
@@ -149,7 +152,8 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
 
     private boolean saveCompWorkflow() {
         try {
-            removeEmptyTasks();
+            preprocessWorkflow();
+            removeImproperDueDateDays();
             getWorkflowService().saveCompoundWorkflow(compoundWorkflow);
             if (isUnsavedWorkFlow) {
                 getDocumentLogService().addDocumentLog(compoundWorkflow.getParent(), MessageUtil.getMessage("document_log_status_workflow"));
@@ -234,7 +238,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
 
     public void startWorkflow() {
         log.debug("startWorkflow");
-        removeEmptyTasks();
+        preprocessWorkflow();
         if (validate(FacesContext.getCurrentInstance(), true, false, true)) {
             List<String> confirmationMessages = getConfirmationMessages(true);
             if (confirmationMessages != null && !confirmationMessages.isEmpty()) {
@@ -253,7 +257,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
      */
     public void startValidatedWorkflow(ActionEvent event) {
         try {
-            removeEmptyTasks();
+            preprocessWorkflow();
             if (isUnsavedWorkFlow) {
                 getDocumentLogService().addDocumentLog(compoundWorkflow.getParent(), MessageUtil.getMessage("document_log_status_workflow"));
             }
@@ -321,7 +325,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     public void stopWorkflow(ActionEvent event) {
         log.debug("stopWorkflow");
         try {
-            removeEmptyTasks();
+            preprocessWorkflow();
             if (validate(FacesContext.getCurrentInstance(), false, true, false)) {
                 compoundWorkflow = getWorkflowService().saveAndStopCompoundWorkflow(compoundWorkflow);
                 MessageUtil.addInfoMessage("workflow_compound_stop_success");
@@ -338,7 +342,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     public void continueWorkflow(ActionEvent event) {
         log.debug("continueWorkflow");
         try {
-            removeEmptyTasks();
+            preprocessWorkflow();
             if (validate(FacesContext.getCurrentInstance(), true, false, true)) {
                 List<String> confirmationMessages = getConfirmationMessages(false);
                 if (confirmationMessages != null && !confirmationMessages.isEmpty()) {
@@ -382,7 +386,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     public void finishWorkflow(@SuppressWarnings("unused") ActionEvent event) {
         log.debug("finishWorkflow");
         try {
-            removeEmptyTasks();
+            preprocessWorkflow();
             compoundWorkflow = getWorkflowService().saveAndFinishCompoundWorkflow(compoundWorkflow);
             MessageUtil.addInfoMessage("workflow_compound_finish_success");
         } catch (Exception e) {
@@ -396,10 +400,10 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
      */
     public void copyWorkflow(@SuppressWarnings("unused") ActionEvent event) {
         log.debug("copyWorkflow");
-        removeEmptyTasks();
+        preprocessWorkflow();
         if (validate(FacesContext.getCurrentInstance(), false, false, false)) {
             try {
-                removeEmptyTasks();
+                preprocessWorkflow();
                 compoundWorkflow = getWorkflowService().saveAndCopyCompoundWorkflow(compoundWorkflow);
             } catch (Exception e) {
                 handleException(e, "workflow_compound_copy_workflow_failed");
@@ -414,7 +418,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     public String deleteWorkflow() {
         log.debug("deleteWorkflow");
         try {
-            removeEmptyTasks();
+            preprocessWorkflow();
             getWorkflowService().deleteCompoundWorkflow(compoundWorkflow.getNodeRef());
             resetState();
             MessageUtil.addInfoMessage("workflow_compound_delete_compound_success");
@@ -469,6 +473,55 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         task.setAction(Action.FINISH);
         task.setComment(comment);
         updatePanelGroup();
+    }
+
+    public void calculateDueDate(ActionEvent event) {
+        int wfIndex = ActionUtil.getParam(event, WF_INDEX, Integer.class);
+        int taskIndex = ActionUtil.getParam(event, TASK_INDEX, Integer.class);
+        Workflow block = compoundWorkflow.getWorkflows().get(wfIndex);
+        Task task = block.getTasks().get(taskIndex);
+        Integer dueDateDays = task.getDueDateDays();
+        if (dueDateDays != null) {
+            LocalDate newDueDate = calculateDueDate(task, dueDateDays);
+            LocalTime newTime;
+            Date existingDueDate = task.getDueDate();
+            if (existingDueDate != null) {
+                newTime = new LocalTime(existingDueDate.getHours(), existingDueDate.getMinutes());
+            } else {
+                newTime = new LocalTime(23, 59);
+            }
+            task.setDueDate(newDueDate.toDateTime(newTime).toDate());
+        }
+        updatePanelGroup();
+    }
+
+    @Override
+    protected void preprocessWorkflow() {
+        super.preprocessWorkflow();
+        removeImproperDueDateDays();
+    }
+
+    private void removeImproperDueDateDays() {
+        for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+            for (Task task : workflow.getTasks()) {
+                if (task.isStatus(Status.NEW) && task.getDueDate() != null && task.getDueDateDays() != null) {
+                    if (!DateUtils.isSameDay(task.getDueDate(), calculateDueDate(task, task.getDueDateDays()).toDateMidnight().toDate())) {
+                        task.setProp(WorkflowSpecificModel.Props.DUE_DATE_DAYS, null);
+                        task.setProp(WorkflowSpecificModel.Props.IS_DUE_DATE_WORKING_DAYS, Boolean.FALSE); // reset to default value
+                    }
+                }
+            }
+        }
+    }
+
+    private LocalDate calculateDueDate(Task task, Integer dueDateDays) {
+        LocalDate newDueDate = new LocalDate();
+        if (task.getPropBoolean(WorkflowSpecificModel.Props.IS_DUE_DATE_WORKING_DAYS)) {
+            newDueDate = CalendarUtil.addWorkingDaysToDate(newDueDate, dueDateDays, BeanHelper.getClassificatorService());
+        } else {
+            newDueDate = newDueDate.plusDays(dueDateDays);
+        }
+        return newDueDate;
     }
 
     // /// PROTECTED & PRIVATE METHODS /////
@@ -711,7 +764,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                     }
                     // institutionName and dueDate are required for externalReviewTask
                     else if (taskType.equals(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)) {
-                        if (StringUtils.isBlank(task.getInstitutionName()) != (task.getDueDate() == null && task.getDueDateDays() == null)) {
+                        if (StringUtils.isBlank(task.getInstitutionName()) || task.getDueDate() == null) {
                             MessageUtil.addErrorMessage(context, "task_name_and_due_required", taskOwnerMsg);
                             break;
                         }
@@ -724,10 +777,6 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                             break;
                         }
                     }
-                }
-                if (task.getDueDate() != null && task.getDueDateDays() != null) {
-                    MessageUtil.addErrorMessage(context, "task_due_date_and_days_both_not_allowed", taskOwnerMsg);
-                    break;
                 }
                 regressionTest.checkDueDate(task);
             }

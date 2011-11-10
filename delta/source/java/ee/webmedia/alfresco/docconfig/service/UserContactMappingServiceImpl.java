@@ -55,13 +55,25 @@ public class UserContactMappingServiceImpl implements UserContactMappingService 
     }
 
     @Override
-    public Map<QName, UserContactMappingCode> getFieldIdsMapping(Field field) {
+    public Map<QName, UserContactMappingCode> getFieldIdsMappingOrDefault(Field field) {
+        return getFieldIdsMapping(field, true);
+    }
+
+    @Override
+    public Map<QName, UserContactMappingCode> getFieldIdsMappingOrNull(Field field) {
+        return getFieldIdsMapping(field, false);
+    }
+
+    private Map<QName, UserContactMappingCode> getFieldIdsMapping(Field field, boolean returnDefaultInsteadOfNull) {
         if (!(field.getParent() instanceof FieldGroup) || !((FieldGroup) field.getParent()).isSystematic()) {
             return Collections.singletonMap(field.getQName(), UserContactMappingCode.NAME);
         }
         Map<String, UserContactMappingCode> originalFieldIdsMapping = mappings.get(field.getOriginalFieldId());
         if (originalFieldIdsMapping == null) {
-            return Collections.singletonMap(field.getQName(), UserContactMappingCode.NAME);
+            if (returnDefaultInsteadOfNull) {
+                return Collections.singletonMap(field.getQName(), UserContactMappingCode.NAME);
+            }
+            return null;
         }
         Map<QName, UserContactMappingCode> fieldIdsMapping = new HashMap<QName, UserContactMappingCode>();
         FieldGroup group = (FieldGroup) field.getParent();
@@ -121,6 +133,7 @@ public class UserContactMappingServiceImpl implements UserContactMappingService 
         }
     }
 
+    // TODO Alar: could eliminate this method, because it is not used
     @Override
     public List<String> getMappedValues(List<UserContactMappingCode> mappingCodes, NodeRef userOrContactRef) {
         if (!nodeService.exists(userOrContactRef)) {
@@ -133,6 +146,20 @@ public class UserContactMappingServiceImpl implements UserContactMappingService 
             values.add(getMappedValue(type, props, mappingCode));
         }
         return values;
+    }
+
+    @Override
+    public Map<QName, Serializable> getMappedValues(Map<QName, UserContactMappingCode> fieldIdsMapping, NodeRef userOrContactRef) {
+        if (!nodeService.exists(userOrContactRef)) {
+            return null;
+        }
+        QName type = nodeService.getType(userOrContactRef);
+        Map<QName, Serializable> userOrContactProps = nodeService.getProperties(userOrContactRef);
+        Map<QName, Serializable> resultProps = new HashMap<QName, Serializable>(fieldIdsMapping.size());
+        for (Entry<QName, UserContactMappingCode> entry : fieldIdsMapping.entrySet()) {
+            resultProps.put(entry.getKey(), getMappedValue(type, userOrContactProps, entry.getValue()));
+        }
+        return resultProps;
     }
 
     private String getMappedValue(QName type, Map<QName, Serializable> props, UserContactMappingCode mappingCode) {
@@ -188,18 +215,16 @@ public class UserContactMappingServiceImpl implements UserContactMappingService 
                         ContentModel.PROP_MUNICIPALITY,
                         ContentModel.PROP_POSTAL_CODE,
                         ContentModel.PROP_COUNTY);
-            } else {
-                boolean isPrivPerson = AddressbookModel.Types.PRIV_PERSON.equals(type);
-                if (isOrganization || isPrivPerson) {
-                    return getPropsJoinedWithComma(props,
-                            AddressbookModel.Props.ADDRESS1,
-                            AddressbookModel.Props.ADDRESS2,
-                            AddressbookModel.Props.POSTAL,
-                            AddressbookModel.Props.CITY);
-                } else {
-                    return null;
-                }
             }
+            boolean isPrivPerson = AddressbookModel.Types.PRIV_PERSON.equals(type);
+            if (isOrganization || isPrivPerson) {
+                return getPropsJoinedWithComma(props,
+                        AddressbookModel.Props.ADDRESS1,
+                        AddressbookModel.Props.ADDRESS2,
+                        AddressbookModel.Props.POSTAL,
+                        AddressbookModel.Props.CITY);
+            }
+            return null;
         case EMAIL:
             if (isPerson) {
                 return getProp(props, ContentModel.PROP_EMAIL);

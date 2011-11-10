@@ -145,6 +145,21 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         return null;
     }
 
+    @Override
+    public boolean hasDocumentsTemplate(NodeRef document) {
+        String documentTypeId = (String) nodeService.getProperty(document, DocumentAdminModel.Props.OBJECT_TYPE_ID);
+        for (FileInfo fi : fileFolderService.listFiles(getRoot())) {
+            if (!nodeService.hasAspect(fi.getNodeRef(), DocumentTemplateModel.Aspects.TEMPLATE_DOCUMENT)) {
+                continue;
+            }
+            if (!documentTypeId.equals(fi.getProperties().get(DocumentTemplateModel.Prop.DOCTYPE_ID))) {
+                continue;
+            }
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Sets the properties, adds download URL and NodeRef
      * 

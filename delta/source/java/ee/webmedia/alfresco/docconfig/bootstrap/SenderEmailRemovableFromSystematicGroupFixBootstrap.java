@@ -17,9 +17,16 @@ import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
+ * Fix for task 182461 in already existing deployments
+ * 
  * @author Alar Kvell
  */
 public class SenderEmailRemovableFromSystematicGroupFixBootstrap extends AbstractNodeUpdater {
+
+    @Override
+    protected String getBaseFileName() {
+        return getName();
+    }
 
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {

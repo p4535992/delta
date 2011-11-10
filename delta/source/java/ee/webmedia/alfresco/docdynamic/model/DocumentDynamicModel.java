@@ -36,8 +36,6 @@ public interface DocumentDynamicModel {
 
         QName USER_NAMES = QName.createQName(URI, "userNames");
 
-        QName SUBSTITUTE_NAME = QName.createQName(URI, "substituteName");
-
         /** document name used for ADR */
         QName DOC_NAME_ADR = QName.createQName(URI, "docNameAdr");
         QName SIGNER_ID = QName.createQName(URI, "signerId");
@@ -75,6 +73,14 @@ public interface DocumentDynamicModel {
         QName BEGIN_DATE = QName.createQName(URI, "beginDate");
         QName END_DATE = QName.createQName(URI, "endDate");
         QName CALCULATED_DURATION_DAYS = QName.createQName(URI, "calculatedDurationDays");
+        QName FIRST_KEYWORD_LEVEL = QName.createQName(URI, "firstKeywordLevel");
+        QName SECOND_KEYWORD_LEVEL = QName.createQName(URI, "secondKeywordLevel");
+
+        QName LEAVE_BEGIN_DATE = QName.createQName(URI, "leaveBeginDate");
+        QName LEAVE_END_DATE = QName.createQName(URI, "leaveEndDate");
+        QName LEAVE_WORK_YEAR = QName.createQName(URI, "leaveWorkYear");
+        QName LEAVE_CHANGED_DAYS = QName.createQName(URI, "leaveChangedDays");
+        QName LEAVE_NEW_WORK_YEAR = QName.createQName(URI, "leaveNewWorkYear");
 
     }
 

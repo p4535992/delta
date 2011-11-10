@@ -261,7 +261,7 @@
       <property name="workflowService" ref="WmWorkflowService" />
       <property name="dvkService" ref="DvkService" />
       <property name="nodeService" ref="NodeService" />
-   </bean>  
+   </bean> 
    
    <!-- Used to add temOutcome aspect to external review workflows -->
    <bean id="Version22ReviewWorkflowTempOutcomeUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.Version22ReviewWorkflowTempOutcomeUpdater" parent="abstractNodeUpdater" >

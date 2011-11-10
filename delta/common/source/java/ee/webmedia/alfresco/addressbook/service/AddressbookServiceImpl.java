@@ -113,12 +113,15 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
         return output;
     }
 
+    // XXX this method probably takes too much time to execute and could be optimized
     @Override
     public List<Pair<String, String>> checkIfContactExists(Node contactNode) {
         List<Pair<String, String>> duplicateMessages = new ArrayList<Pair<String, String>>();
+        if (!(contactNode instanceof TransientNode)) {
+            return duplicateMessages;
+        }
         final NodeRef contactRef = contactNode.getNodeRef();
         if (contactNode.getType().equals(Types.PRIV_PERSON)) {
-            final String messageKey = "addressbook_save_person_error_nameExists";
             String fullName = getContactFullName(RepoUtil.toQNameProperties(contactNode.getProperties()), contactNode.getType());
             String code = (String) contactNode.getProperties().get(Props.PERSON_ID);
             final List<Node> persons = listPerson();
@@ -129,12 +132,11 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
                     duplicateMessages.add(new Pair<String, String>(AddressbookAddEditDialog.PERSON_CODE_EXISTS_ERROR, otherCode));
                 }
                 if (isDuplicate(fullName, otherfullName, contactRef, person)) {
-                    duplicateMessages.add(new Pair<String, String>(messageKey, fullName));
+                    duplicateMessages.add(new Pair<String, String>(AddressbookAddEditDialog.PERSON_NAME_EXISTS_ERROR, fullName));
                 }
             }
         }
         if (contactNode.getType().equals(Types.ORGANIZATION)) {
-            final String duplicateMessageKey = "addressbook_save_organization_error_nameExists";
             final List<Node> orgs = listOrganization();
             final String orgName = (String) contactNode.getProperties().get(Props.ORGANIZATION_NAME);
             String code = (String) contactNode.getProperties().get(Props.ORGANIZATION_CODE);
@@ -145,7 +147,7 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
                     duplicateMessages.add(new Pair<String, String>(AddressbookAddEditDialog.ORG_CODE_EXISTS_ERROR, otherCode));
                 }
                 if (isDuplicate(orgName, otherOrgName, contactRef, org)) {
-                    duplicateMessages.add(new Pair<String, String>(duplicateMessageKey, orgName));
+                    duplicateMessages.add(new Pair<String, String>(AddressbookAddEditDialog.ORG_NAME_EXISTS_ERROR, orgName));
                 }
             }
         }

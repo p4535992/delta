@@ -57,13 +57,24 @@
       <property name="generalService" ref="GeneralService" />
    </bean>
 
+   <!-- Fix for task 182461 in already existing deployments -->
+   <bean id="senderEmailRemovableFromSystematicGroupFixBootstrap2" class="ee.webmedia.alfresco.docconfig.bootstrap.SenderEmailRemovableFromSystematicGroupFixBootstrap" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="systematicClearBootstrap" />
+         </list>
+      </property>
+   </bean>
+
    <bean id="systematicFieldDefinitionsBootstrap1" class="ee.webmedia.alfresco.common.bootstrap.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
       <property name="importer" ref="spacesBootstrap" />
       <property name="dependsOn">
          <list>
-            <ref bean="systematicClearBootstrap" />
+            <ref bean="senderEmailRemovableFromSystematicGroupFixBootstrap2" />
          </list>
       </property>
       <property name="bootstrapViews">
@@ -137,6 +148,66 @@
       </property>
    </bean>
 
+   <bean id="systematicFieldDefinitionsBootstrap5" class="ee.webmedia.alfresco.common.bootstrap.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="systematicFieldDefinitionsBootstrap4" />
+         </list>
+      </property>
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/docadmin:fieldDefinitions</prop>
+               <prop key="location">ee/webmedia/alfresco/docconfig/bootstrap/systematicFieldDefinitions5.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="systematicFieldDefinitionsBootstrap6" class="ee.webmedia.alfresco.common.bootstrap.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="systematicFieldDefinitionsBootstrap5" />
+         </list>
+      </property>
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/docadmin:fieldDefinitions</prop>
+               <prop key="location">ee/webmedia/alfresco/docconfig/bootstrap/systematicFieldDefinitions6.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="systematicFieldDefinitionsBootstrap7" class="ee.webmedia.alfresco.common.bootstrap.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="systematicFieldDefinitionsBootstrap6" />
+         </list>
+      </property>
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/docadmin:fieldDefinitions</prop>
+               <prop key="location">ee/webmedia/alfresco/docconfig/bootstrap/systematicFieldDefinitions7.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
    <bean id="systematicFieldGroupDefinitionsBootstrap1" class="ee.webmedia.alfresco.common.bootstrap.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
@@ -197,17 +268,64 @@
       </property>
    </bean>
 
-   <bean id="systematicDocumentTypesFixBootstrap" class="ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentTypesFixBootstrap" parent="module.baseComponent">
+   <bean id="systematicFieldGroupDefinitionsBootstrap4" class="ee.webmedia.alfresco.common.bootstrap.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
       <property name="dependsOn">
          <list>
-            <ref bean="systematicClearBootstrap" />
-            <ref bean="systematicFieldDefinitionsBootstrap4" />
             <ref bean="systematicFieldGroupDefinitionsBootstrap3" />
          </list>
       </property>
-      <property name="documentAdminService" ref="DocumentAdminService" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/docadmin:fieldGroupDefinitions</prop>
+               <prop key="location">ee/webmedia/alfresco/docconfig/bootstrap/systematicFieldGroupDefinitions4.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="systematicFieldGroupDefinitionsBootstrap5" class="ee.webmedia.alfresco.common.bootstrap.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="systematicFieldGroupDefinitionsBootstrap4" />
+         </list>
+      </property>
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/docadmin:fieldGroupDefinitions</prop>
+               <prop key="location">ee/webmedia/alfresco/docconfig/bootstrap/systematicFieldGroupDefinitions5.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="systematicFieldGroupDefinitionsBootstrap6" class="ee.webmedia.alfresco.common.bootstrap.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="systematicFieldGroupDefinitionsBootstrap5" />
+         </list>
+      </property>
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/docadmin:fieldGroupDefinitions</prop>
+               <prop key="location">ee/webmedia/alfresco/docconfig/bootstrap/systematicFieldGroupDefinitions6.xml</prop>
+            </props>
+         </list>
+      </property>
    </bean>
 
    <bean id="systematicDocumentTypesBootstrap" class="ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentTypesBootstrap" parent="module.baseComponent">
@@ -216,15 +334,20 @@
       <property name="importer" ref="spacesBootstrap" />
       <property name="dependsOn">
          <list>
-            <ref bean="systematicClearBootstrap" />
-            <ref bean="systematicDocumentTypesFixBootstrap" />
+            <!-- NB! Must reference all field and group bootstraps here because they are used for additional import -->
             <ref bean="systematicFieldDefinitionsBootstrap1" />
             <ref bean="systematicFieldDefinitionsBootstrap2" />
             <ref bean="systematicFieldDefinitionsBootstrap3" />
             <ref bean="systematicFieldDefinitionsBootstrap4" />
+            <ref bean="systematicFieldDefinitionsBootstrap5" />
+            <ref bean="systematicFieldDefinitionsBootstrap6" />
+            <ref bean="systematicFieldDefinitionsBootstrap7" />
             <ref bean="systematicFieldGroupDefinitionsBootstrap1" />
             <ref bean="systematicFieldGroupDefinitionsBootstrap2" />
             <ref bean="systematicFieldGroupDefinitionsBootstrap3" />
+            <ref bean="systematicFieldGroupDefinitionsBootstrap4" />
+            <ref bean="systematicFieldGroupDefinitionsBootstrap5" />
+            <ref bean="systematicFieldGroupDefinitionsBootstrap6" />
          </list>
       </property>
       <property name="generalService" ref="GeneralService" />
@@ -243,25 +366,27 @@
       <property name="generalService" ref="GeneralService" />
    </bean>
 
-   <bean id="senderEmailRemovableFromSystematicGroupFixBootstrap" class="ee.webmedia.alfresco.docconfig.bootstrap.SenderEmailRemovableFromSystematicGroupFixBootstrap" parent="abstractNodeUpdater">
+   <!-- Fix for task 182456 in already existing deployments -->
+   <bean id="systematicDocumentTypesFixBootstrap" class="ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentTypesFixBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
-            <ref bean="systematicDocumentTypesBootstrap" />
+            <ref bean="systematicMissingBootstrap" />
          </list>
       </property>
+      <property name="documentAdminService" ref="DocumentAdminService" />
    </bean>
 
-   <bean id="documentLocationGenerator" class="ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator">
-      <property name="documentConfigService" ref="DocumentConfigService" />
-      <property name="documentService" ref="DocumentService" />
-      <property name="nodeService" ref="NodeService" />
-      <property name="functionsService" ref="FunctionsService" />
-      <property name="seriesService" ref="SeriesService" />
-      <property name="volumeService" ref="VolumeService" />
-      <property name="caseService" ref="CaseService" />
-      <property name="documentLogService" ref="DocumentLogService" />
+   <!-- Fix for task 182456 in already existing deployments -->
+   <bean id="letterFieldsRemovableFromSystematicDocTypeFixBootstrap" class="ee.webmedia.alfresco.docconfig.bootstrap.LetterFieldsRemovableFromSystematicDocTypeFixBootstrap" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="systematicDocumentTypesFixBootstrap" />
+         </list>
+      </property>
    </bean>
 
    <!-- fieldtype generators -->
@@ -309,6 +434,17 @@
 
    <!-- systematic generators -->
 
+   <bean id="documentLocationGenerator" class="ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator">
+      <property name="documentConfigService" ref="DocumentConfigService" />
+      <property name="documentService" ref="DocumentService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="functionsService" ref="FunctionsService" />
+      <property name="seriesService" ref="SeriesService" />
+      <property name="volumeService" ref="VolumeService" />
+      <property name="caseService" ref="CaseService" />
+      <property name="documentLogService" ref="DocumentLogService" />
+   </bean>
+
    <bean id="accessRestrictionGenerator" class="ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGenerator">
       <property name="nodeService" ref="NodeService" />
       <property name="adrService" ref="AdrService" />
@@ -321,6 +457,10 @@
       <property name="documentConfigService" ref="DocumentConfigService" />
       <property name="namespaceService" ref="NamespaceService" />
       <property name="userContactMappingService" ref="UserContactMappingService" />
+   </bean>
+
+   <bean id="keywordsGenerator" class="ee.webmedia.alfresco.docconfig.generator.systematic.KeywordsGenerator">
+      <property name="documentConfigService" ref="DocumentConfigService" />
    </bean>
 
    <bean id="userContactRelatedGroupGenerator" class="ee.webmedia.alfresco.docconfig.generator.systematic.UserContactRelatedGroupGenerator">

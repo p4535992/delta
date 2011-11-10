@@ -45,7 +45,14 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
     private static final long serialVersionUID = 1L;
 
     private static final Log LOG = LogFactory.getLog(DocumentDynamicSearchDialog.class);
-    private static final List<String> defaultCheckedFields = Arrays.asList("regNumber", "regDateTime", "senderName", "recipientName", "docName", "dueDate", "complienceDate");
+    private static final List<String> defaultCheckedFields = Arrays.asList(
+            "regNumber",
+            "regDateTime",
+            "senderName",
+            "recipientName",
+            "docName",
+            "dueDate",
+            "complienceDate");
 
     private List<SelectItem> stores;
     private DocumentConfig config;
@@ -126,6 +133,7 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
 
             TransientNode transientNode = new TransientNode(DocumentSearchModel.Types.FILTER, null, data);
             transientNode.getProperties().put(DocumentSearchModel.Props.DOCUMENT_TYPE.toString() + WMUIProperty.AFTER_LABEL_BOOLEAN, Boolean.TRUE);
+            transientNode.getProperties().put(DocumentSearchModel.Props.SEND_MODE.toString() + WMUIProperty.AFTER_LABEL_BOOLEAN, Boolean.TRUE);
             List<FieldDefinition> searchableFields = BeanHelper.getDocumentAdminService().getSearchableFieldDefinitions();
             for (FieldDefinition fieldDefinition : searchableFields) {
                 PropertyDefinition def = getDocumentConfigService().getPropertyDefinition(transientNode, fieldDefinition.getQName());

@@ -301,7 +301,7 @@ public class FileServiceImpl implements FileService {
     }
 
     private void addVersionModifiedAspect(NodeRef nodeRef) {
-        if (nodeService.hasAspect(nodeRef, VersionsModel.Aspects.VERSION_MODIFIED) == false) {
+        if (!nodeService.hasAspect(nodeRef, VersionsModel.Aspects.VERSION_MODIFIED)) {
             Map<QName, Serializable> properties = nodeService.getProperties(nodeRef);
 
             String user = (String) properties.get(ContentModel.PROP_CREATOR);

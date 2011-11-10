@@ -106,84 +106,6 @@
       </view:properties>
    </docadmin:fieldGroup>
 
-   <docadmin:fieldGroup view:childName="docadmin:Puhkuse taotlemine">
-      <view:properties>
-         <docadmin:name>Puhkuse taotlemine</docadmin:name>
-         <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:readonlyFieldsName>Palun vormistada mind</docadmin:readonlyFieldsName>
-         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
-         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
-         <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
-         <docadmin:fieldDefinitionIds>
-            <view:values>
-               <view:value>leaveType</view:value>
-               <view:value>leaveBeginDate</view:value>
-               <view:value>leaveEndDate</view:value>
-               <view:value>leaveDays</view:value>
-               <view:value>leaveWorkYear</view:value>
-            </view:values>
-         </docadmin:fieldDefinitionIds>
-      </view:properties>
-   </docadmin:fieldGroup>
-
-   <docadmin:fieldGroup view:childName="docadmin:Puhkuse muutmine">
-      <view:properties>
-         <docadmin:name>Puhkuse muutmine</docadmin:name>
-         <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:readonlyFieldsName>Muuta ajakava- või korraldusejärgne puhkus järgnevalt (lühendamine, pikendamine, üleviimine)</docadmin:readonlyFieldsName>
-         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
-         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
-         <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
-         <docadmin:fieldDefinitionIds>
-            <view:values>
-               <view:value>leaveInitialBeginDate</view:value>
-               <view:value>leaveInitialEndDate</view:value>
-               <view:value>leaveNewBeginDate</view:value>
-               <view:value>leaveNewEndDate</view:value>
-               <view:value>leaveChangedDays</view:value>
-               <view:value>leaveNewWorkYear</view:value>
-            </view:values>
-         </docadmin:fieldDefinitionIds>
-      </view:properties>
-   </docadmin:fieldGroup>
-
-   <docadmin:fieldGroup view:childName="docadmin:Puhkuse tühistamine">
-      <view:properties>
-         <docadmin:name>Puhkuse tühistamine</docadmin:name>
-         <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:readonlyFieldsName>Tühistada ajakava- või korraldusejärgne puhkus</docadmin:readonlyFieldsName>
-         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
-         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
-         <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
-         <docadmin:fieldDefinitionIds>
-            <view:values>
-               <view:value>leaveCancelBeginDate</view:value>
-               <view:value>leaveCancelEndDate</view:value>
-               <view:value>leaveCancelledDay</view:value>
-            </view:values>
-         </docadmin:fieldDefinitionIds>
-      </view:properties>
-   </docadmin:fieldGroup>
-
-   <docadmin:fieldGroup view:childName="docadmin:Asendaja määramine">
-      <view:properties>
-         <docadmin:name>Asendaja määramine</docadmin:name>
-         <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:readonlyFieldsName>Määrata asendajaks</docadmin:readonlyFieldsName>
-         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
-         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
-         <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
-         <docadmin:fieldDefinitionIds>
-            <view:values>
-               <view:value>substituteName</view:value>
-               <view:value>substituteJobTitle</view:value>
-               <view:value>substitutionBeginDate</view:value>
-               <view:value>substitutionEndDate</view:value>
-            </view:values>
-         </docadmin:fieldDefinitionIds>
-      </view:properties>
-   </docadmin:fieldGroup>
-
    <docadmin:fieldGroup view:childName="docadmin:Koolituse taotleja">
       <view:properties>
          <docadmin:name>Koolituse taotleja</docadmin:name>
@@ -328,18 +250,19 @@
       </view:properties>
    </docadmin:fieldGroup>
 
-   <docadmin:fieldGroup view:childName="docadmin:Märksõnad hierarhilisest märksõnastikust">
+   <docadmin:fieldGroup view:childName="docadmin:keywords">
       <view:properties>
          <docadmin:name>Märksõnad hierarhilisest märksõnastikust</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:mandatoryForDoc>false</docadmin:mandatoryForDoc>
+         <docadmin:readonlyFieldsName>Märksõnad</docadmin:readonlyFieldsName>
          <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:thesaurus>kui kaustas /thesauri leidub ainult üks thesaurus tüüpi objekt, siis on see vaikimisi valitud</docadmin:thesaurus>
          <docadmin:fieldDefinitionIds>
             <view:values>
-               <view:value>keywordLevel1</view:value>
-               <view:value>keywordLevel2</view:value>
+               <view:value>firstKeywordLevel</view:value>
+               <view:value>secondKeywordLevel</view:value>
             </view:values>
          </docadmin:fieldDefinitionIds>
       </view:properties>

@@ -6,6 +6,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getNamespaceService;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -25,7 +26,6 @@ import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.dictionary.ModelDefinition;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
@@ -44,7 +44,6 @@ import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO.ConfigItemType;
-import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
@@ -113,6 +112,23 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
         Assert.isTrue(!hiddenFieldDependencies.containsKey(hiddenFieldId));
         hiddenFieldDependencies.put(hiddenFieldId, fieldIdAndOriginalFieldId);
         documentAdminService.registerForbiddenFieldId(hiddenFieldId);
+    }
+
+    @Override
+    public Set<String> getHiddenPropFieldIds(Collection<Field> originalFields) {
+        Set<String> hiddenFields = new HashSet<String>();
+        Set<String> fieldIds = new HashSet<String>();
+        for (Field field : originalFields) {
+            if (field.getFieldId().equals(field.getOriginalFieldId())) {
+                fieldIds.add(field.getFieldId());
+            }
+        }
+        for (Entry<String, String> entry : hiddenFieldDependencies.entrySet()) {
+            if (fieldIds.contains(entry.getValue())) {
+                hiddenFields.add(entry.getKey());
+            }
+        }
+        return hiddenFields;
     }
 
     @Override
@@ -536,7 +552,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
             if (DataTypeDefinition.TEXT.equals(dataType)) {
                 NodeRef userRef = userService.getCurrentUser();
                 if (userRef != null) {
-                    Map<QName, UserContactMappingCode> mapping = userContactMappingService.getFieldIdsMapping(field);
+                    Map<QName, UserContactMappingCode> mapping = userContactMappingService.getFieldIdsMappingOrDefault(field);
                     userContactMappingService.setMappedValues(documentDynamicNode.getProperties(), mapping, userRef, propDef.isMultiValued());
                     return;
                 }
@@ -555,11 +571,14 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
         }
 
         // In Search/MultiValueEditor component, display one empty row by default, not zero rows
-        if (defaultValue == null
-                && (field.getFieldTypeEnum() == FieldType.USERS || field.getFieldTypeEnum() == FieldType.CONTACTS || field.getFieldTypeEnum() == FieldType.USERS_CONTACTS)) {
-            ArrayList<Serializable> list = new ArrayList<Serializable>();
-            list.add(null);
-            defaultValue = list;
+        if (defaultValue == null) {
+            Boolean multiValuedOverride = getMultiValuedOverride(field);
+            if (field.getFieldTypeEnum() == FieldType.USERS || field.getFieldTypeEnum() == FieldType.CONTACTS || field.getFieldTypeEnum() == FieldType.USERS_CONTACTS ||
+                    (multiValuedOverride != null && multiValuedOverride)) {
+                ArrayList<Serializable> list = new ArrayList<Serializable>();
+                list.add(null);
+                defaultValue = list;
+            }
         }
 
         if (defaultValue != null) {
@@ -779,8 +798,6 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
             case USERS_CONTACTS:
             case CONTACTS:
             case LISTBOX:
-            case HIERARCHICAL_KEYWORD_LEVEL1:
-            case HIERARCHICAL_KEYWORD_LEVEL2:
                 return true;
             default:
                 return false;
@@ -842,9 +859,10 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
     private final Set<String> multiValuedOverrideOriginalFieldIds = new HashSet<String>();
 
     @Override
-    public void registerMultiValuedOverrideInSystematicGroup(Set<String> originalFieldIds) {
-        Assert.isTrue(!CollectionUtils.containsAny(multiValuedOverrideOriginalFieldIds, originalFieldIds));
-        multiValuedOverrideOriginalFieldIds.addAll(originalFieldIds);
+    public void registerMultiValuedOverrideInSystematicGroup(String... originalFieldIds) {
+        List<String> originalFieldIdsList = Arrays.asList(originalFieldIds);
+        Assert.isTrue(!CollectionUtils.containsAny(multiValuedOverrideOriginalFieldIds, originalFieldIdsList));
+        multiValuedOverrideOriginalFieldIds.addAll(originalFieldIdsList);
     }
 
     private Boolean getMultiValuedOverride(Field field) {

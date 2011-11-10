@@ -95,7 +95,19 @@
       </property>
       <property name="documentAdminService" ref="DocumentAdminService" />
    </bean>
-   
+
+   <bean id="fieldDefinitionDeletedDocTypesUpdater" class="ee.webmedia.alfresco.docadmin.bootstrap.FieldDefinitionDeletedDocTypesUpdater" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="docTypeSpacesBootstrap" />
+            <ref bean="fieldDefinitionsBootstrap" />
+         </list>
+      </property>
+      <property name="documentAdminService" ref="DocumentAdminService" />
+   </bean>
+
    <!-- Changes filedDefinition with ID "case" name from "Asi" to "Teema" -->
    <bean id="FieldDefinitionCaseNameUpdater" class="ee.webmedia.alfresco.docadmin.bootstrap.FieldDefinitionCaseNameUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
@@ -105,6 +117,11 @@
             <ref bean="fieldDefinitionsBootstrap" />
          </list>
       </property>
+   </bean>
+
+   <bean id="thesauriFieldsUpdater" class="ee.webmedia.alfresco.docadmin.bootstrap.ThesauriFieldsUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
    </bean>
 
    <!-- START: web beans: -->

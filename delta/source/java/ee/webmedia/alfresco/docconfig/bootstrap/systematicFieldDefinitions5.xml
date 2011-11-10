@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:docadmin="http://alfresco.webmedia.ee/model/document/admin/1.0" xmlns:docdyn="http://alfresco.webmedia.ee/model/document/dynamic/1.0">
+
+   <docadmin:fieldDefinition view:childName="docdyn:firstKeywordLevel">
+      <view:properties>
+         <docadmin:fieldId>firstKeywordLevel</docadmin:fieldId>
+         <docadmin:originalFieldId>firstKeywordLevel</docadmin:originalFieldId>
+         <docadmin:name>Märksõna 1. tase</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:onlyInGroup>true</docadmin:onlyInGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:secondKeywordLevel">
+      <view:properties>
+         <docadmin:fieldId>secondKeywordLevel</docadmin:fieldId>
+         <docadmin:originalFieldId>secondKeywordLevel</docadmin:originalFieldId>
+         <docadmin:name>Märksõna 2. tase</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:onlyInGroup>true</docadmin:onlyInGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+</view:view>

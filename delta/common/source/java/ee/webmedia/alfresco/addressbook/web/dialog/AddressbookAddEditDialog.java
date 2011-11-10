@@ -30,7 +30,9 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
 
     public static final String BEAN_NAME = "AddressbookAddEditDialog";
     public static final String PERSON_CODE_EXISTS_ERROR = "addressbook_save_person_error_codeExists";
+    public static final String PERSON_NAME_EXISTS_ERROR = "addressbook_save_person_error_nameExists";
     public static final String ORG_CODE_EXISTS_ERROR = "addressbook_save_organization_error_codeExists";
+    public static final String ORG_NAME_EXISTS_ERROR = "addressbook_save_organization_error_nameExists";
 
     protected Node entry;
     protected NodeRef parentOrg = null;
@@ -129,8 +131,11 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
                     || ORG_CODE_EXISTS_ERROR.equals(messageKey)) {
                 MessageUtil.addErrorMessage(context, messageKey, message.getSecond());
                 allowSave = false;
-            } else if (confirmMessage != null) {
+            } else {
                 confirmMessage = MessageUtil.getMessage(messageKey, message.getSecond());
+                if (confirmMessage != null) {
+                    break;
+                }
             }
         }
         if (!allowSave) {

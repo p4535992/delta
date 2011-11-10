@@ -154,8 +154,6 @@ public class UserContactRelatedGroupGenerator extends BaseSystematicFieldGenerat
             return;
         }
 
-        Map<QName, UserContactMappingCode> mapping = userContactMappingService.getFieldIdsMapping(field);
-
         FieldGroup group = (FieldGroup) field.getParent();
         Pair<Field, Integer> primaryFieldAndIndex = getPrimaryFieldAndIndex(group);
         int fieldIndex = -1;
@@ -228,6 +226,8 @@ public class UserContactRelatedGroupGenerator extends BaseSystematicFieldGenerat
         ItemConfigVO viewModeItem = generatorResults.generateAndAddViewModeText(viewModePropName, group.getReadonlyFieldsName());
         viewModeItem.setComponentGenerator("UnescapedOutputTextGenerator");
 
+        Map<QName, UserContactMappingCode> mapping = userContactMappingService.getFieldIdsMappingOrNull(field);
+        Assert.notNull(mapping);
         generatorResults.addStateHolder(stateHolderKey, new UserContactRelatedGroupState(mapping));
 
         if (field.getOriginalFieldId().equals(DocumentCommonModel.Props.OWNER_NAME.getLocalName())) {

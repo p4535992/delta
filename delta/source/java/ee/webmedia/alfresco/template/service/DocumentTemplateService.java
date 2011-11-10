@@ -81,6 +81,8 @@ public interface DocumentTemplateService {
      */
     DocumentTemplate getDocumentsTemplate(NodeRef document);
 
+    boolean hasDocumentsTemplate(NodeRef document);
+
     /**
      * Scans generated Word documents and replaces patterns which are relevant to registration of the document
      * 

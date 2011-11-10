@@ -9,6 +9,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.web.bean.dialog.BaseDialogBean;
+import org.apache.commons.lang.time.DateUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
@@ -347,7 +348,7 @@ public class MyTasksBean extends BaseDialogBean {
         List<TaskAndDocument> filteredTasks = new ArrayList<TaskAndDocument>(tasks.size());
         for (TaskAndDocument task : tasks) {
             final Date dueDate = task.getTask().getDueDate();
-            if (dueDate != null && dueDate.before(today)) {
+            if (dueDate != null && (dueDate.before(today) || DateUtils.isSameDay(dueDate, today))) {
                 filteredTasks.add(task);
             }
         }

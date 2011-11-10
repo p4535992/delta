@@ -1059,7 +1059,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     private boolean isInProgressCurrentUserAssignmentTask(Task task) {
         return task.getOwnerId() != null && task.getOwnerId().equals(AuthenticationUtil.getRunAsUser())
-                && WorkflowSpecificModel.Types.ASSIGNMENT_TASK.equals(task.getNode().getType())
+                && task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)
                 && isStatus(task, Status.IN_PROGRESS);
     }
 
@@ -1297,6 +1297,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     @Override
+    // XXX QName workflowType is never used
     public boolean hasInProgressActiveResponsibleTasks(NodeRef document, QName workflowType) {
         for (CompoundWorkflow compoundWorkflow : getCompoundWorkflows(document)) {
             for (Workflow workflow : compoundWorkflow.getWorkflows()) {

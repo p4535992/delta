@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.docconfig.service;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -51,8 +52,10 @@ public interface DocumentConfigService {
 
     void setDefaultPropertyValues(Node documentDynamicNode, List<Field> fields, boolean forceOverwrite);
 
-    void registerMultiValuedOverrideInSystematicGroup(Set<String> originalFieldIds);
+    void registerMultiValuedOverrideInSystematicGroup(String... originalFieldIds);
 
     void registerHiddenFieldDependency(String hiddenFieldId, String fieldIdAndOriginalFieldId);
+
+    Set<String> getHiddenPropFieldIds(Collection<Field> originalFields);
 
 }

@@ -32,17 +32,17 @@
          <arg value="${glassfish.domain.name}" />
       </exec>
       <echo message="Wait for the server domain start (see ${dir.glassfish}/domains/${glassfish.domain.name}/logs/server.log)" />
-      <waitfor maxwait="120" maxwaitunit="second" checkevery="2" checkeveryunit="second" timeoutproperty="wait.timeout">
-         <http url="http://${server.host}:${server.admin.port}/" />
+      <waitfor maxwait="300" maxwaitunit="second" checkevery="2" checkeveryunit="second" timeoutproperty="wait.timeout">
+         <http url="http://${server.host}:${server.domain.port}/" />
       </waitfor>
       <fail if="wait.timeout"
-            message="Didn't get response from deployment management url: http://${server.host}:${server.admin.port}. Maybe server.admin.port shouldn't be ${server.admin.port}?" />
-      <echo message="Server started - see http://${server.host}:${server.admin.port}" />
+            message="Didn't get response from deployment management url: http://${server.host}:${server.domain.port}. Maybe server.domain.port shouldn't be ${server.domain.port}?" />
+      <echo message="Server started - see http://${server.host}:${server.domain.port}" />
    </target>
 
    <target name="glassfish-start-done" depends="setup-glassfish">
       <condition property="glassfish.start.done">
-         <http url="http://${server.host}:${server.admin.port}/" />
+         <http url="http://${server.host}:${server.domain.port}/" />
       </condition>
       <antcall target="glassfish-start-conditionally" />
    </target>

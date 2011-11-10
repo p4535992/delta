@@ -170,7 +170,7 @@ public class MultiValueEditorRenderer extends BaseRenderer {
         int rowIndex = 0;
         @SuppressWarnings("unchecked")
         List<UIComponent> children = multiValueEditor.getChildren();
-        int renderedRowCount = ComponentUtil.getRenderedChildrenCount(multiValueEditor, HtmlPanelGroup.class);
+        int renderedRowCount = ComponentUtil.getRenderedChildrenCount(multiValueEditor);
         for (UIComponent child : children) {
             if (!child.isRendered()) {
                 continue;
@@ -181,7 +181,7 @@ public class MultiValueEditorRenderer extends BaseRenderer {
 
                 @SuppressWarnings("unchecked")
                 List<UIComponent> columns = child.getChildren();
-                int renderedColumnCount = ComponentUtil.getRenderedChildrenCount(child, null);
+                int renderedColumnCount = ComponentUtil.getRenderedChildrenCount(child);
                 int columnCount = 0;
                 for (UIComponent column : columns) {
                     if (!column.isRendered()) {

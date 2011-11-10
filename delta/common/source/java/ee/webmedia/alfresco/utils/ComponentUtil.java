@@ -24,11 +24,13 @@ import javax.faces.component.UIParameter;
 import javax.faces.component.UISelectItem;
 import javax.faces.component.UIViewRoot;
 import javax.faces.component.ValueHolder;
+import javax.faces.component.html.HtmlCommandLink;
 import javax.faces.component.html.HtmlSelectManyListbox;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 import javax.faces.convert.Converter;
 import javax.faces.el.ValueBinding;
+import javax.faces.event.ActionEvent;
 import javax.faces.event.FacesEvent;
 import javax.faces.event.PhaseId;
 import javax.faces.model.SelectItem;
@@ -38,6 +40,7 @@ import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.dictionary.TypeDefinition;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.cmr.repository.datatype.TypeConversionException;
+import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.servlet.FacesHelper;
@@ -88,6 +91,7 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
  * @author Ats Uiboupin
  */
 public class ComponentUtil {
+    private static final String ATTR_STYLE_CLASS = "styleClass";
     private static final String JSF_CONVERTER = "jsfConverter";
     public static final String IS_ALWAYS_EDIT = "isAlwaysEdit";
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ComponentUtil.class);
@@ -111,7 +115,7 @@ public class ComponentUtil {
     }
 
     public static UIComponent makeCondenced(final UIComponent component, int condenceSize) {
-        putAttribute(component, "styleClass", "condence" + condenceSize);
+        putAttribute(component, ATTR_STYLE_CLASS, "condence" + condenceSize);
         return component;
     }
 
@@ -558,7 +562,7 @@ public class ComponentUtil {
             readOnly = readOnlyAttr.equals(Boolean.TRUE);
         }
 
-        return (disabled || readOnly) && !ComponentUtil.isAlwaysEditComponent(component);
+        return (disabled || readOnly) && !isAlwaysEditComponent(component);
     }
 
     /**
@@ -892,8 +896,7 @@ public class ComponentUtil {
             }
 
             @Override
-            @SuppressWarnings("unchecked")
-            public List getChildren() {
+            public List<UIComponent> getChildren() {
                 return children;
             }
         };
@@ -945,7 +948,7 @@ public class ComponentUtil {
             component = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_INPUT);
             @SuppressWarnings("unchecked")
             Map<String, Object> attributes = component.getAttributes();
-            attributes.put("styleClass", "date");
+            attributes.put(ATTR_STYLE_CLASS, "date");
             createAndSetConverter(context, DatePickerConverter.CONVERTER_ID, component);
         } else if (StringUtils.equals("ClassificatorSelectorGenerator", type)) {
             if (voCustomAttributes.containsKey(ClassificatorSelectorGenerator.ATTR_CLASSIFICATOR_NAME)) {
@@ -1172,6 +1175,25 @@ public class ComponentUtil {
         return generalService;
     }
 
+    public static <T extends PropertySheetItem> T getPropSheetItem(UIPropertySheet propertySheet, Class<T> componentClass, QName uiPropertyName) {
+        String localName = uiPropertyName.getLocalName();
+        NamespaceService namespaceService = BeanHelper.getNamespaceService();
+        for (UIComponent uiComponent : getChildren(propertySheet)) {
+            if (componentClass.isAssignableFrom(uiComponent.getClass())) {
+                @SuppressWarnings("unchecked")
+                T propSheetItem = (T) uiComponent;
+                String psItemLocalName = propSheetItem.getName();
+                if (psItemLocalName.endsWith(localName)) {
+                    String resolveToQNameString = QName.resolveToQNameString(namespaceService, propSheetItem.getName());
+                    if (uiPropertyName.toString().equals(resolveToQNameString)) {
+                        return propSheetItem;
+                    }
+                }
+            }
+        }
+        throw new IllegalArgumentException("Didn't find " + componentClass.getSimpleName() + " with name " + uiPropertyName + " from given propertySheet");
+    }
+
     /** private class to hold association info for creating value binding */
     private static class AssocInfoHolder {
         int associationIndex;
@@ -1233,7 +1255,7 @@ public class ComponentUtil {
         return attributes.containsKey(IS_ALWAYS_EDIT) && Boolean.valueOf((Boolean) attributes.get(IS_ALWAYS_EDIT));
     }
 
-    public static int getRenderedChildrenCount(UIComponent parent, Class clazz) {
+    public static int getRenderedChildrenCount(UIComponent parent) {
         if (parent == null || parent.getChildCount() == 0) {
             return 0;
         }
@@ -1244,6 +1266,27 @@ public class ComponentUtil {
             }
         }
         return count;
+    }
+
+    public static void addOnchangeClickLink(Application application, List<UIComponent> children, String methodBindingStr, String linkId, UIParameter... parameters) {
+        HtmlCommandLink hiddenLink = new HtmlCommandLink();
+        hiddenLink.setId(linkId);
+        hiddenLink.setActionListener(application.createMethodBinding(methodBindingStr, new Class[] { ActionEvent.class }));
+        for (UIParameter parameter : parameters) {
+            addChildren(hiddenLink, parameter);
+        }
+        hiddenLink.setStyle("display: none;");
+        hiddenLink.setOnclick("setPageScrollY();");
+
+        children.add(hiddenLink);
+    }
+
+    public static void addOnchangeJavascript(UIComponent component) {
+        Map<String, Object> attributes = getAttributes(component);
+        String styleClass = (String) attributes.get(ATTR_STYLE_CLASS);
+        String onchangeStyleClass = GeneralSelectorGenerator.ONCHANGE_PARAM_MARKER_CLASS + GeneralSelectorGenerator.ONCHANGE_SCRIPT_START_MARKER
+                + "var link = jQuery('#' + escapeId4JQ(currElId)).nextAll('a').get(0); link.click();";
+        attributes.put(ATTR_STYLE_CLASS, (StringUtils.isNotBlank(styleClass) ? styleClass + " " : "") + onchangeStyleClass);
     }
 
 }

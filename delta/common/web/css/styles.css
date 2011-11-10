@@ -1035,6 +1035,10 @@ input.spacing-top {
 	width: auto;
 }
 
+#container-content .multiE td select {
+	max-width: 226px;
+}
+
 .suggest-wrapper textarea.suggest {
 	background: transparent;
 	overflow: hidden;

@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.docconfig.service;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
@@ -14,13 +15,20 @@ public interface UserContactMappingService {
 
     void registerOriginalFieldIdsMapping(Map<String, UserContactMappingCode> mapping);
 
+    // TODO Alar: could we eliminate mappingDependency, because hiddenFieldDependency covers the same thing?
     void registerMappingDependency(String fieldIdAndOriginalFieldId, String hiddenFieldId);
 
     /**
-     * @param propName
-     * @return mapping; if custom mapping not found for property, then return NAME mapping.
+     * @param field field. If a registered mapping not found for field, then return NAME mapping.
+     * @return mapping mapping entries. If a field was registered with {@code null} mapping code, then it's entry is not returned.
      */
-    Map<QName, UserContactMappingCode> getFieldIdsMapping(Field field);
+    Map<QName, UserContactMappingCode> getFieldIdsMappingOrDefault(Field field);
+
+    /**
+     * @param field field. If a registered mapping not found for field, then return {@code null}.
+     * @return mapping mapping entries. If a field was registered with {@code null} mapping code, then it's entry is not returned.
+     */
+    Map<QName, UserContactMappingCode> getFieldIdsMappingOrNull(Field field);
 
     /**
      * @param userOrContactRef nodeRef of user or contact
@@ -39,9 +47,16 @@ public interface UserContactMappingService {
 
     /**
      * @param mappingCodes
-     * @param userOrContactRef nodeRefAsString of user or contact
+     * @param userOrContactRef nodeRef of user or contact
      * @return list with same number of elements as mappingCodes; or {@code null} if result does not exist
      */
     List<String> getMappedValues(List<UserContactMappingCode> mappingCodes, NodeRef userOrContactRef);
+
+    /**
+     * @param fieldIdsMapping
+     * @param userOrContactRef nodeRef of user or contact
+     * @return map with same keys as fieldIdsMapping and corresponding mapped values; or {@code null} if result does not exist
+     */
+    Map<QName, Serializable> getMappedValues(Map<QName, UserContactMappingCode> fieldIdsMapping, NodeRef userOrContactRef);
 
 }

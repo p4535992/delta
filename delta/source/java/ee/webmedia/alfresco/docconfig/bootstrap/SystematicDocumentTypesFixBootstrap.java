@@ -20,11 +20,15 @@ import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldAndGroupBase;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docadmin.service.MetadataItem;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.utils.MessageData;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
+/**
+ * Fix for task 182456 in already existing deployments
+ * 
+ * @author Alar Kvell
+ */
 public class SystematicDocumentTypesFixBootstrap extends AbstractModuleComponent {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(SystematicDocumentTypesFixBootstrap.class);
 
@@ -47,7 +51,6 @@ public class SystematicDocumentTypesFixBootstrap extends AbstractModuleComponent
                 new QName[] {
                         DocumentSpecificModel.Props.TRANSMITTAL_MODE,
                         DocumentSpecificModel.Props.DUE_DATE,
-                        DocumentCommonModel.Props.KEYWORDS
         });
 
         addSystematicDocumentType(systematicDocumentTypes, SystematicDocumentType.OUTGOING_LETTER.getId(), "Väljaminev kiri",
@@ -57,10 +60,7 @@ public class SystematicDocumentTypesFixBootstrap extends AbstractModuleComponent
                         SystematicFieldGroupNames.RECIPIENTS,
                         SystematicFieldGroupNames.ADDITIONAL_RECIPIENTS
          },
-                new QName[] {
-                        DocumentCommonModel.Props.KEYWORDS,
-                        DocumentCommonModel.Props.SEND_DESC_VALUE
-         });
+                null);
 
         createSystematicDocumentTypes(systematicDocumentTypes);
     }

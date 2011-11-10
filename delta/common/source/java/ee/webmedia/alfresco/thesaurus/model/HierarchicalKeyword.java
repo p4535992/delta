@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.thesaurus.model;
 
+import java.io.Serializable;
+
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.apache.commons.lang.StringUtils;
 
@@ -10,7 +12,8 @@ import com.thoughtworks.xstream.annotations.XStreamOmitField;
  * @author Kaarel Jõgeva
  */
 @XStreamAlias("keyword")
-public class HierarchicalKeyword implements Comparable<HierarchicalKeyword> {
+public class HierarchicalKeyword implements Comparable<HierarchicalKeyword>, Serializable {
+    private static final long serialVersionUID = 1L;
 
     @XStreamOmitField
     private NodeRef nodeRef;

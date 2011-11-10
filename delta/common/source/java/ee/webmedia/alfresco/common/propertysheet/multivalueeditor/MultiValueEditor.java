@@ -1,10 +1,12 @@
 package ee.webmedia.alfresco.common.propertysheet.multivalueeditor;
 
 import static ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader.AttributeNames.PROP_GENERATOR_DESCRIPTORS;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getNamespaceService;
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomConstants.VALUE_INDEX_IN_MULTIVALUED_PROPERTY;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +24,9 @@ import javax.faces.event.ActionEvent;
 import javax.faces.event.ActionListener;
 import javax.faces.event.FacesEvent;
 
+import org.alfresco.service.namespace.NamespaceService;
+import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
@@ -38,7 +43,8 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 /**
  * Edit multiple multi-valued properties as a table. A {@code javax.faces.Input} component is generated for each cell. Supports deleting any row and appending
  * an empty row at the end (a {@code null} element is added to each {@link List}). When cells are first generated, it is ensured that each column's {@link List} contains the same
- * amount of elements as the list with greatest amount of elements. Again, {@code null} elements are appended, where necessary.
+ * amount of elements as the list with greatest amount of elements. Again, {@code null} elements are appended, where necessary. <br>
+ * Component configuration attributes are documented at {@link MultiValueEditorGenerator}.
  * 
  * @author Alar Kvell
  */
@@ -57,6 +63,8 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
     public static final String INITIAL_ROWS = "initialRows";
     public static final String IS_AUTOMATICALLY_ADD_ROWS = "isAutomaticallyAddRows";
     public static final String NO_ADD_LINK_LABEL = "noAddLinkLabel";
+    public static final String HIDDEN_PROP_NAMES = "hiddenPropNames";
+    public static final String SETTER_CALLBACK_RETURNS_MAP = "setterCallbackReturnsMap";
 
     @Override
     public String getFamily() {
@@ -160,60 +168,91 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
             results = (String[]) preprocessBind.invoke(context, new Object[] { pickerFilterIndex, results });
         }
 
-        List<String> propNames = getPropNames();
-        List<List<Object>> columnLists = new ArrayList<List<Object>>(propNames.size());
+        NamespaceService namespaceService = getNamespaceService();
+        List<String> propNames = getRegularAndHiddenPropNames();
+        List<Pair<QName, List<Object>>> columnListsWithPropNames = new ArrayList<Pair<QName, List<Object>>>();
         for (String propName : propNames) {
-            columnLists.add(getList(context, propName));
+            List<Object> columnList = getList(context, propName);
+            columnListsWithPropNames.add(Pair.newInstance(QName.resolveToQName(namespaceService, propName), columnList));
         }
-        UIPropertySheet propertySheet = null;
         String setterCallback = (String) getAttributes().get(Search.SETTER_CALLBACK);
-        boolean insertInMiddle = columnLists.get(0).size() > rowIndex + 1;
+        boolean setterCallbackReturnsMap = Boolean.TRUE.equals(getAttributes().get(SETTER_CALLBACK_RETURNS_MAP));
+        boolean insertInMiddle = columnListsWithPropNames.get(0).getSecond().size() > rowIndex + 1;
         for (int i = 0; i < results.length; i++) {
             MethodBinding b = getFacesContext().getApplication().createMethodBinding(setterCallback, new Class[] { String.class });
-            @SuppressWarnings("unchecked")
-            List<Object> rowList = (List<Object>) b.invoke(context, new Object[] { results[i] });
+            Map<QName, Object> rowMap = null;
+            List<Object> rowList = null;
+            if (setterCallbackReturnsMap) {
+                rowMap = (Map<QName, Object>) b.invoke(context, new Object[] { results[i] });
+            } else {
+                rowList = (List<Object>) b.invoke(context, new Object[] { results[i] });
+            }
 
-            if (columnLists.get(0).size() > 0 && i == 0) {
+            if (columnListsWithPropNames.get(0).getSecond().size() > 0 && i == 0) { // Only first result overwrites row
                 int columnIndex = 0;
-                for (List<Object> columnList : columnLists) {
-                    if (rowList.size() > columnIndex) {
-                        columnList.set(rowIndex + i, rowList.get(columnIndex));
-                    } else {
-                        columnList.set(rowIndex + i, null);
-                    }
+                for (Pair<QName, List<Object>> columnListWithPropName : columnListsWithPropNames) {
+                    List<Object> columnList = columnListWithPropName.getSecond();
+                    QName propName = columnListWithPropName.getFirst();
+                    processRowOverwrite(rowIndex, setterCallbackReturnsMap, i, rowMap, rowList, columnIndex, columnList, propName);
                     columnIndex++;
                 }
-            } else {
+            } else { // All followings results add rows
                 int columnIndex = 0;
-                for (List<Object> columnList : columnLists) {
-                    if (rowList.size() > columnIndex) {
-                        if (insertInMiddle) {
-                            columnList.add(rowIndex + i, rowList.get(columnIndex));
-                        } else {
-                            columnList.add(rowList.get(columnIndex));
-                        }
-                    } else {
-                        if (insertInMiddle) {
-                            columnList.add(rowIndex + i, null);
-                        } else {
-                            columnList.add(null);
-                        }
-                    }
+                for (Pair<QName, List<Object>> columnListWithPropName : columnListsWithPropNames) {
+                    List<Object> columnList = columnListWithPropName.getSecond();
+                    QName propName = columnListWithPropName.getFirst();
+                    processRowAdd(rowIndex, setterCallbackReturnsMap, insertInMiddle, i, rowMap, rowList, columnIndex, columnList, propName);
                     columnIndex++;
                 }
             }
         }
-        if (propertySheet == null) {
-            propertySheet = ComponentUtil.getAncestorComponent(this, UIPropertySheet.class);
-        }
         clearChildren();
-        int numRows = columnLists.get(0).size();
+        UIPropertySheet propertySheet = ComponentUtil.getAncestorComponent(this, UIPropertySheet.class);
+        int numRows = columnListsWithPropNames.get(0).getSecond().size();
         for (int ri = 0; ri < numRows; ri++) {
             appendRowComponent(context, ri, propertySheet);
         }
 
-        for (List<Object> columnList : columnLists) {
-            log.debug("Column list=" + columnList);
+        if (log.isDebugEnabled()) {
+            for (Pair<QName, List<Object>> columnListWithPropName : columnListsWithPropNames) {
+                log.debug("Column list=" + columnListWithPropName);
+            }
+        }
+    }
+
+    private void processRowOverwrite(int rowIndex, boolean setterCallbackReturnsMap, int i, Map<QName, Object> rowMap, List<Object> rowList, int columnIndex,
+            List<Object> columnList, QName propName) {
+        if (setterCallbackReturnsMap) {
+            // if propName doesn't exist, we don't overwrite value, because it is an existing row
+            if (rowMap.containsKey(propName)) {
+                columnList.set(rowIndex + i, rowMap.get(propName));
+            }
+        } else {
+            if (rowList.size() > columnIndex) {
+                columnList.set(rowIndex + i, rowList.get(columnIndex));
+            } else {
+                columnList.set(rowIndex + i, null);
+            }
+        }
+    }
+
+    private void processRowAdd(int rowIndex, boolean setterCallbackReturnsMap, boolean insertInMiddle, int i, Map<QName, Object> rowMap, List<Object> rowList, int columnIndex,
+            List<Object> columnList, QName propName) {
+        Object value;
+        if (setterCallbackReturnsMap) {
+            // even if propName doesn't exist, we must set the value to null, because we are adding a new row
+            value = rowMap.get(propName);
+        } else {
+            if (rowList.size() > columnIndex) {
+                value = rowList.get(columnIndex);
+            } else {
+                value = null;
+            }
+        }
+        if (insertInMiddle) {
+            columnList.add(rowIndex + i, value);
+        } else {
+            columnList.add(value);
         }
     }
 
@@ -247,7 +286,7 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
     private int initializeRows(FacesContext context) {
         // Ensure that all lists contain the same amount of elements, append null elements if necessary
         int rows = 0;
-        List<String> propNames = getPropNames();
+        List<String> propNames = getRegularAndHiddenPropNames();
         List<List<?>> data = new ArrayList<List<?>>(propNames.size());
         for (String propName : propNames) {
             List<?> list = getList(context, propName);
@@ -297,9 +336,12 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
 
     private void appendRow(FacesContext context) {
         Integer rowIndex = null;
-        for (String propName : getPropNames()) {
+        List<String> propNames = getRegularAndHiddenPropNames();
+        for (String propName : propNames) {
             List<?> list = getList(context, propName);
-            rowIndex = list.size();
+            if (rowIndex == null) {
+                rowIndex = list.size();
+            }
             list.add(null);
         }
         UIPropertySheet propertySheet = ComponentUtil.getAncestorComponent(this, UIPropertySheet.class);
@@ -307,19 +349,20 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
     }
 
     private void removeRow(FacesContext context, int removeIndex) {
-        List<String> propNames = getPropNames();
+        List<String> propNames = getRegularAndHiddenPropNames();
         for (String propName : propNames) {
             List<?> list = getList(context, propName);
             list.remove(removeIndex);
         }
         clearChildren();
-        int numRows = getList(context, getPropNames().get(0)).size();
+        int numRows = getList(context, propNames.get(0)).size();
         for (int ri = 0; ri < numRows; ri++) {
             appendRowComponent(context, ri, ComponentUtil.getAncestorComponent(this, UIPropertySheet.class));
         }
     }
 
     public void clearChildren() {
+        @SuppressWarnings("unchecked")
         List<UIComponent> children = getChildren();
         for (Iterator<UIComponent> i = children.iterator(); i.hasNext();) {
             UIComponent container = i.next();
@@ -356,12 +399,16 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
         return list;
     }
 
-    private List<String> getPropNames() {
+    private List<String> getRegularAndHiddenPropNames() {
         final List<ComponentPropVO> propsVOs = getPropertyGeneratorDescriptors();
         List<String> propNames;
         propNames = new ArrayList<String>(propsVOs.size());
         for (ComponentPropVO componentPropVO : propsVOs) {
             propNames.add(componentPropVO.getPropertyName());
+        }
+        String hiddenPropNames = (String) getAttributes().get(HIDDEN_PROP_NAMES);
+        if (StringUtils.isNotBlank(hiddenPropNames)) {
+            propNames.addAll(Arrays.asList(StringUtils.split(hiddenPropNames, ',')));
         }
         return propNames;
     }

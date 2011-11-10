@@ -8,6 +8,7 @@ import static ee.webmedia.alfresco.common.propertysheet.classificatorselector.Mu
 import static ee.webmedia.alfresco.common.propertysheet.classificatorselector.MultiClassificatorSelectorGenerator.CLASSIFICATOR_NAME_SEPARATOR;
 import static ee.webmedia.alfresco.utils.ComponentUtil.addChildren;
 import static ee.webmedia.alfresco.utils.ComponentUtil.createUIParam;
+import static ee.webmedia.alfresco.utils.ComponentUtil.getChildren;
 import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.TASK_INDEX;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.getActionId;
@@ -276,7 +277,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
                             dueDateTimeInput.setValueBinding("value", application.createValueBinding(dueDateValueBinding));
                             @SuppressWarnings("unchecked")
                             final Map<String, Object> dueDateTimeAttributes = dueDateTimeInput.getAttributes();
-                            if (isTaskRowEditable(responsible, fullAccess, task, taskStatus) && (task.getDueDate() != null || task.getDueDateDays() == null)) {
+                            if (isTaskRowEditable(responsible, fullAccess, task, taskStatus)) {
                                 dateTimePickerGenerator.getCustomAttributes().put(DateTimePickerGenerator.DATE_FIELD_LABEL, MessageUtil.getMessage("task_property_due_date"));
                                 dateTimePickerGenerator.setupValidDateConstraint(context, propertySheet, null, dueDateTimeInput);
                             } else {
@@ -306,13 +307,23 @@ public class TaskListGenerator extends BaseComponentGenerator {
                             classificatorSelector.setRendererType(LabelAndValueSelectorRenderer.LABEL_AND_VALUE_SELECTOR_RENDERER_TYPE);
 
                             ComponentUtil.putAttribute(classificatorSelector, CustomAttributeNames.STYLE_CLASS, "width120 task-due-date-days");
-                            if (!isTaskRowEditable(responsible, fullAccess, task, taskStatus) || (task.getDueDate() != null && task.getDueDateDays() == null)) {
+                            boolean isTaskRowEditable = isTaskRowEditable(responsible, fullAccess, task, taskStatus);
+                            if (!isTaskRowEditable) {
                                 ComponentUtil.putAttribute(classificatorSelector, "readonly", true);
                             }
-                            ComponentUtil.putAttribute(classificatorSelector, "displayMandatoryMark", true);
+                            putAttribute(classificatorSelector, "displayMandatoryMark", true);
                             ComponentUtil.putAttribute(classificatorSelector, "styleClass", "task-due-date-days margin-left-4 width130");
-                            taskGridChildren.add(classificatorSelector);
-
+                            if (!isTaskRowEditable) {
+                                taskGridChildren.add(classificatorSelector);
+                            } else {
+                                final HtmlPanelGroup panel = (HtmlPanelGroup) context.getApplication().createComponent(HtmlPanelGroup.COMPONENT_TYPE);
+                                panel.setId("task-dueDateDays-panel" + listId + "-" + counter);
+                                addChildren(panel, classificatorSelector);
+                                ComponentUtil.addOnchangeJavascript(classificatorSelector);
+                                ComponentUtil.addOnchangeClickLink(application, getChildren(panel), "#{CompoundWorkflowDialog.calculateDueDate}",
+                                        "task-dueDateDays-onclick" + listId + "-" + counter, createWfIndexPraram(wfIndex, application), createTaskIndexParam(counter, application));
+                                taskGridChildren.add(panel);
+                            }
                         }
                         HtmlInputText statusInput = (HtmlInputText) application.createComponent(HtmlInputText.COMPONENT_TYPE);
                         statusInput.setId("task-status-" + taskRowId);

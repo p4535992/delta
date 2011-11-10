@@ -20,7 +20,6 @@ import javax.faces.component.UIInput;
 import javax.faces.component.UIOutput;
 import javax.faces.component.UIParameter;
 import javax.faces.component.html.HtmlCommandButton;
-import javax.faces.component.html.HtmlCommandLink;
 import javax.faces.component.html.HtmlInputText;
 import javax.faces.component.html.HtmlOutputLink;
 import javax.faces.component.html.HtmlPanelGrid;
@@ -705,27 +704,19 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
         transTemplateSelectGroup.setId(TRANS_COMPONENT_ID_PREFIX + "select-template-panel-" + listId);
         UIOutput selectTemplatelabel = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
         selectTemplatelabel.setValue(MessageUtil.getMessage("transactions_select_tempalte") + ": ");
-        transTemplateSelectGroup.getChildren().add(selectTemplatelabel);
+        List<UIComponent> children = ComponentUtil.getChildren(transTemplateSelectGroup);
+        children.add(selectTemplatelabel);
 
         GeneralSelectorGenerator selectorGenerator = new GeneralSelectorGenerator();
         HtmlSelectOneMenu transTemplateSelector = (HtmlSelectOneMenu) selectorGenerator.generateSelectComponent(context, SELECT_TEMPLATE_NAME, false);
         selectorGenerator.getCustomAttributes().put("selectionItems", "#{" + getBeanName() + ".getTransactionTemplates}");
         selectorGenerator.setupSelectComponent(context, null, null, null, transTemplateSelector, false);
         transTemplateSelector.setId(TRANS_TEMPLATE_SELECTOR);
-        transTemplateSelector.getAttributes().put(
-                "styleClass",
-                GeneralSelectorGenerator.ONCHANGE_PARAM_MARKER_CLASS + GeneralSelectorGenerator.ONCHANGE_SCRIPT_START_MARKER
-                        + "var link = jQuery('#' + escapeId4JQ(currElId)).nextAll('a').get(0); link.click();");
-        transTemplateSelectGroup.getChildren().add(transTemplateSelector);
+        ComponentUtil.addOnchangeJavascript(transTemplateSelector);
+        children.add(transTemplateSelector);
 
         // hidden link for submitting form when transTemplateSelector onchange event occurs
-        HtmlCommandLink transTemplateSelectorHiddenLink = new HtmlCommandLink();
-        transTemplateSelectorHiddenLink.setId(TRANS_COMPONENT_ID_PREFIX + "trans-select-template-link-" + listId);
-        transTemplateSelectorHiddenLink.setActionListener(application.createMethodBinding("#{" + getBeanName() + ".copyFromTemplate}", new Class[] { ActionEvent.class }));
-        transTemplateSelectorHiddenLink.setStyle(INLINE_STYLE_DISPLAY_NONE);
-        transTemplateSelectorHiddenLink.setOnclick("setPageScrollY();");
-
-        transTemplateSelectGroup.getChildren().add(transTemplateSelectorHiddenLink);
+        ComponentUtil.addOnchangeClickLink(application, children, "#{" + getBeanName() + ".copyFromTemplate}", TRANS_COMPONENT_ID_PREFIX + "trans-select-template-link-" + listId);
 
         transactionPanel.getFacets().put("title", transTemplateSelectGroup);
     }

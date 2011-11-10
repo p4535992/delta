@@ -356,6 +356,20 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         if (isDocumentTypeUsed(documentType.getDocumentTypeId())) {
             throw new UnableToPerformException("docType_delete_failed_inUse");
         }
+        { // remove documentType from all fieldDefinition documentTypes
+            DocumentType docType = getDocumentType(docTypeRef, DOC_TYPE_WITHOUT_OLDER_DT_VERSION_CHILDREN);
+            String documentTypeId = docType.getDocumentTypeId();
+            Set<String> fieldIds = docType.getLatestDocumentTypeVersion().getFieldsDeeplyById().keySet();
+            Map<String, FieldDefinition> fieldDefinitionsByFieldIds = getFieldDefinitionsByFieldIds();
+            Map<String, FieldDefinition> fieldsToSave = new HashMap<String, FieldDefinition>(fieldIds.size());
+            for (String fieldId : fieldIds) {
+                FieldDefinition fieldDef = fieldDefinitionsByFieldIds.get(fieldId);
+                if (fieldDef != null && fieldDef.getDocTypes().remove(documentTypeId)) {
+                    fieldsToSave.put(fieldDef.getFieldId(), fieldDef);
+                }
+            }
+            saveOrUpdateFieldDefinitions(fieldsToSave.values());
+        }
         nodeService.deleteNode(docTypeRef);
     }
 

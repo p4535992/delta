@@ -21,9 +21,11 @@ import ee.webmedia.alfresco.common.bootstrap.ImporterModuleComponent;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 
+/**
+ * @author Alar Kvell
+ */
 public class SystematicDocumentTypesBootstrap extends AbstractModuleComponent {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(SystematicDocumentTypesBootstrap.class);
 
@@ -48,7 +50,6 @@ public class SystematicDocumentTypesBootstrap extends AbstractModuleComponent {
                 new QName[] {
                         DocumentSpecificModel.Props.TRANSMITTAL_MODE,
                         DocumentSpecificModel.Props.DUE_DATE,
-                        DocumentCommonModel.Props.KEYWORDS
         });
 
         addSystematicDocumentType(systematicDocumentTypes, SystematicDocumentType.OUTGOING_LETTER.getId(), "Väljaminev kiri",
@@ -58,10 +59,7 @@ public class SystematicDocumentTypesBootstrap extends AbstractModuleComponent {
                         SystematicFieldGroupNames.RECIPIENTS,
                         SystematicFieldGroupNames.ADDITIONAL_RECIPIENTS
          },
-                new QName[] {
-                        DocumentCommonModel.Props.KEYWORDS,
-                        DocumentCommonModel.Props.SEND_DESC_VALUE
-         });
+                null);
 
         // addSystematicDocumentType(systematicDocumentTypes, SystematicDocumentType.INVOICE.getId(), "Arve", ..., ...);
 
@@ -69,8 +67,8 @@ public class SystematicDocumentTypesBootstrap extends AbstractModuleComponent {
 
         addSystematicDocumentType(systematicDocumentTypes, SystematicDocumentType.CONTRACT.getId(), "Leping", null, null);
 
-        // addSystematicDocumentType(systematicDocumentTypes, SystematicDocumentType.VACATION_APPLICATION.getId(), "Puhkuse taotlus",
-        // new String[] { SystematicFieldGroupNames.SUBSTITUTE }, null);
+        addSystematicDocumentType(systematicDocumentTypes, SystematicDocumentType.VACATION_APPLICATION.getId(), "Puhkuse taotlus",
+                new String[] { SystematicFieldGroupNames.SUBSTITUTE }, null);
 
         addSystematicDocumentType(systematicDocumentTypes, SystematicDocumentType.ERRAND_ORDER_ABROAD.getId(), "Välislähetuse korraldus", null, null);
 

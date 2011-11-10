@@ -1313,7 +1313,6 @@ function initWithScreenProtected() {
    toggleSubrowToggle.init();
 
    jQuery(".task-due-date-date").live('change', processTaskDueDateDate);
-   jQuery(".task-due-date-days").live('change', processTaskDueDateDays);
    jQuery(".focus").first().focus();
 
    handleHtmlLoaded(null, selects);
@@ -1482,29 +1481,12 @@ function processTaskDueDateDate(){
    var taskDueDateDays = taskRow.find(".task-due-date-days");
    if(dueDateInput.val() == ""){
       taskDueDateTime.val("");
-      taskDueDateDays.attr("disabled", "");
    } else {
       if(taskDueDateTime.val() == ""){
          taskDueDateTime.val("23:59");
       }
-      taskDueDateDays.attr("disabled", "disabled");
    }
-
-}
-
-function processTaskDueDateDays(){
-   var dueDateDaysInput = $jQ(this);
-   var taskRow = dueDateDaysInput.closest("tr");
-   var taskDueDateTime = taskRow.find(".task-due-date-time");
-   var taskDueDateDate = taskRow.find(".task-due-date-date");
-   if(dueDateDaysInput.find(":selected").attr("value") == ""){
-      setReadonly(taskDueDateTime, "");
-      setReadonly(taskDueDateDate, "");
-   } else {
-      setReadonly(taskDueDateTime, "readonly");
-      setReadonly(taskDueDateDate, "readonly");
-   }
-
+   taskDueDateDays.val("");
 }
 
 function setReadonly(element, readonly){
@@ -1745,25 +1727,16 @@ function handleHtmlLoaded(context, selects) {
     * Add onChange functionality to jQuery change event (we can't use onChange attribute because of jQuery bug in IE)
     * @author Riina Tens
     */
-   $jQ("[class^=selectWithOnchangeEvent]", context).each(function (intIndex, selectElement)
+   $jQ("[class*=selectWithOnchangeEvent]", context).each(function (intIndex, selectElement)
    {
       var classString = selectElement.className;
       var currElId = selectElement.id;
       var onChangeJavascript = classString.substring(classString.lastIndexOf('¤¤¤¤') + 4);
       if(onChangeJavascript != ""){
-         if(classString.indexOf('selectWithOnchangeEventParam') == 0){
-            $jQ(this).bind("change", function()
-            {
+            $jQ(this).bind("change", function(){
                //assume onChangeJavascript contains valid function body
                eval("(function(currElId) {" + onChangeJavascript + "}) ('" + selectElement.id + "');");
             });
-         }
-         else{
-            $jQ(this).bind("change", function()
-            {
-               eval("(function() {" + onChangeJavascript + "}) ();");
-            });
-         }
       }
    });
 

@@ -282,6 +282,10 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
             setCustomAttribute(MultiValueEditor.ADD_LABEL_ID, addLabelId);
         }
 
+        public void setInitialRows(int initialRows) {
+            setCustomAttribute(MultiValueEditor.INITIAL_ROWS, Integer.toString(initialRows));
+        }
+
         public void setPropsGeneration(String propsGeneration) {
             setCustomAttribute(CombinedPropReader.AttributeNames.PROPS_GENERATION, propsGeneration);
         }
@@ -376,6 +380,18 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
 
         public void setOptionsSeparator(String optionsSeparator) {
             setCustomAttribute(CombinedPropReader.AttributeNames.OPTIONS_SEPARATOR, optionsSeparator);
+        }
+
+        public void setHiddenPropNames(String hiddenPropNames) {
+            setCustomAttribute(MultiValueEditor.HIDDEN_PROP_NAMES, hiddenPropNames);
+        }
+
+        public void setSetterCallbackReturnsMap(Boolean setterCallbackReturnsMap) {
+            setCustomAttribute(MultiValueEditor.SETTER_CALLBACK_RETURNS_MAP, setterCallbackReturnsMap == null ? null : setterCallbackReturnsMap.toString());
+        }
+
+        public void setDescriptionAsLabel(Boolean descriptionAsLabel) {
+            setCustomAttribute(ClassificatorSelectorGenerator.ATTR_DESCRIPTION_AS_LABEL, descriptionAsLabel == null ? null : descriptionAsLabel.toString());
         }
 
     }

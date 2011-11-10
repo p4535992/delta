@@ -129,7 +129,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         try {
-            removeEmptyTasks();
+            preprocessWorkflow();
             getWorkflowService().saveCompoundWorkflowDefinition((CompoundWorkflowDefinition) compoundWorkflow);
             MessageUtil.addInfoMessage("save_success");
         } catch (Exception e) {
@@ -891,7 +891,8 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         return activeResponsibleAssignedInRepo;
     }
 
-    protected void removeEmptyTasks() {
+    protected void preprocessWorkflow() {
         WorkflowUtil.removeEmptyTasks(compoundWorkflow);
     }
+
 }

@@ -156,7 +156,7 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
                 // TODO: check if this class behaves correctly in IE8 with onChange and jQuery change event both active
                 ((HtmlSelectManyListbox) component).setOnchange(onchange);
             } else {
-                ((UIInput) component).getAttributes().put("onchange", onchange);
+                ComponentUtil.putAttribute(component, "onchange", onchange);
             }
         }
     }

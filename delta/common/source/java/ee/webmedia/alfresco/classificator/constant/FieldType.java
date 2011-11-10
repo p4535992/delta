@@ -49,11 +49,7 @@ public enum FieldType {
     /** Märkeruut */
     CHECKBOX(Props.DEFAULT_SELECTED),
     /** Infotekst */
-    INFORMATION_TEXT(Props.DEFAULT_VALUE),
-    /** Hierarhilise märksõnastiku 1. tase */
-    HIERARCHICAL_KEYWORD_LEVEL1(),
-    /** Hierarhilise märksõnastiku 2. tase */
-    HIERARCHICAL_KEYWORD_LEVEL2();
+    INFORMATION_TEXT(Props.DEFAULT_VALUE);
 
     private List<QName> fieldsUsed;
 
