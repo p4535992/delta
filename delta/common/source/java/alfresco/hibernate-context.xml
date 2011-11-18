@@ -217,13 +217,14 @@
     </bean>
 
     <!-- create a transaction manager -->
-    <bean id="transactionManager" class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+    <bean id="transactionManager" class="org.alfresco.repo.transaction.RetryingTransactionManager">
         <property name="transactionSynchronizationName">
             <value>SYNCHRONIZATION_ALWAYS</value>
         </property>
         <property name="sessionFactory">
             <ref bean="sessionFactory" />
         </property>
+        <property name="transactionService" ref="transactionService"/>
     </bean>
 
     <!-- Hibernate-specific implementations of persistence components -->

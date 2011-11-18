@@ -33,7 +33,7 @@
    </f:facet>
 </h:panelGroup>
 <a:panel id="metadata-panel" facetsId="dialog:dialog-body:metadata-panel-facets" label="#{msg.document_metadata}"
-   styleClass="panel-100 #{(DocumentDynamicDialog.inEditMode == false) ? 'edit-mode' : ''}" progressive="true">
+   styleClass="panel-100 #{(DocumentDynamicDialog.inEditMode == false) ? 'view-mode' : 'edit-mode'}" progressive="true">
    <r:propertySheetGrid id="doc-metatada" binding="#{DocumentDynamicDialog.propertySheet}" value="#{DocumentDynamicDialog.node}" columns="1" mode="#{DocumentDynamicDialog.mode}"
       config="#{DocumentDynamicDialog.propertySheetConfigElement}" externalConfig="true" labelStyleClass="propertiesLabel wrap" />
 </a:panel>

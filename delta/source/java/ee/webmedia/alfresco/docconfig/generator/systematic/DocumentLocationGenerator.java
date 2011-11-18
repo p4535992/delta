@@ -73,14 +73,15 @@ import ee.webmedia.alfresco.volume.service.VolumeService;
  */
 public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentLocationGenerator.class);
+    public static final String[] NODE_REF_FIELD_IDS = new String[] {
+            FUNCTION.getLocalName(),
+            SERIES.getLocalName(),
+            VOLUME.getLocalName(),
+            CASE.getLocalName() };
 
     @Override
     protected String[] getOriginalFieldIds() {
-        return new String[] {
-                FUNCTION.getLocalName(),
-                SERIES.getLocalName(),
-                VOLUME.getLocalName(),
-                CASE.getLocalName() };
+        return NODE_REF_FIELD_IDS;
     }
 
     public static final QName CASE_LABEL_EDITABLE = RepoUtil.createTransientProp(CASE.getLocalName() + "LabelEditable");

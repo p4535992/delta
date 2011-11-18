@@ -24,10 +24,6 @@
  */
 package ee.webmedia.alfresco.webdav;
 
-import static ee.webmedia.alfresco.classificator.constant.FieldType.DATE;
-import static ee.webmedia.alfresco.classificator.constant.FieldType.DOUBLE;
-import static ee.webmedia.alfresco.classificator.constant.FieldType.LONG;
-import static ee.webmedia.alfresco.classificator.constant.FieldType.TEXT_FIELD;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getMsoService;
 
 import java.io.BufferedInputStream;
@@ -36,7 +32,6 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -56,10 +51,10 @@ import org.alfresco.service.cmr.model.FileNotFoundException;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.util.Pair;
 
 import ee.webmedia.alfresco.classificator.constant.FieldChangeableIf;
-import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.Field;
@@ -242,21 +237,10 @@ public class PutMethod extends WebDAVMethod {
                     continue;
                 }
 
-                // TODO to Kaarel: check propDef.getDataType() and propDef.isMultiValued() instead!
-                Serializable value;
-                FieldType fieldType = field.getFieldTypeEnum();
-                if (TEXT_FIELD == fieldType) {
-                    value = formula.getValue();
-                } else if (DATE == fieldType) {
-                    value = new SimpleDateFormat("dd.MM.yyyy").parse(formula.getValue());
-                } else if (LONG == fieldType) {
-                    value = Long.parseLong(formula.getValue());
-                } else if (DOUBLE == fieldType) {
-                    value = Double.parseDouble(formula.getValue());
-                } else {
-                    continue;
+                Serializable value = (Serializable) DefaultTypeConverter.INSTANCE.convert(propDef.getDataType(), formula.getValue());
+                if (propDef.isMultiValued()) {
+                    value = (Serializable) Collections.singletonList(value); // is this correct?
                 }
-
                 doc.setProp(field.getQName(), value);
             }
 

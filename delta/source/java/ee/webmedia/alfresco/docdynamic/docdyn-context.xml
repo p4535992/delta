@@ -67,6 +67,11 @@
       <property name="permissionService" ref="PermissionService" />
    </bean>
 
+   <bean id="repairPropertyTypeMismatchUpdater" class="ee.webmedia.alfresco.document.bootstrap.RepairPropertyTypeMismatchUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="documentConfigService" ref="DocumentConfigService" />
+   </bean>
+
    <!-- START: web beans: -->
 
    <bean id="DocumentDynamicDialog" class="ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog" scope="session" />

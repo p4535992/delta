@@ -392,7 +392,7 @@ public class UIActions extends SelfRenderingComponent
          UIActionLink control = (UIActionLink)facesApp.createComponent(COMPONENT_ACTIONLINK);
          
          control.setRendererType(RENDERER_ACTIONLINK);
-         control.setId(actionDef.getId() + createUniqueId());
+         control.setId(actionDef.getId());
          
          if (actionDef.Action != null)
          {

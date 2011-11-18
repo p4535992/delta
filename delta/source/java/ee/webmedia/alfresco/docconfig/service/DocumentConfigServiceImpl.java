@@ -58,6 +58,7 @@ import ee.webmedia.alfresco.docconfig.generator.FieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
 import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.generator.SaveListener;
+import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
@@ -147,7 +148,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
          */
         {
             // docsearch:store
-            ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.STORE.toString());
+            ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.STORE.toPrefixString(namespaceService));
             itemConfig.setDisplayLabelId("document_search_stores");
             itemConfig.setComponentGenerator("GeneralSelectorGenerator");
             itemConfig.setSelectionItems("#{DocumentDynamicSearchDialog.getStores}");
@@ -161,7 +162,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
          */
         {
             // docsearch:input
-            ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.INPUT.toString());
+            ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.INPUT.toPrefixString(namespaceService));
             itemConfig.setDisplayLabelId("document_search_input");
             itemConfig.setComponentGenerator("TextAreaGenerator");
             itemConfig.setStyleClass("expand19-200 focus");
@@ -175,7 +176,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
          */
         {
             // docsearch:documentType
-            ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.DOCUMENT_TYPE.toString());
+            ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.DOCUMENT_TYPE.toPrefixString(namespaceService));
             itemConfig.setDisplayLabelId("document_docType");
             itemConfig.setComponentGenerator("GeneralSelectorGenerator");
             itemConfig.setSelectionItems("#{DocumentSearchBean.getDocumentTypes}");
@@ -189,7 +190,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
          */
         {
             // docsearch:sendMode
-            ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.SEND_MODE.toString());
+            ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.SEND_MODE.toPrefixString(namespaceService));
             itemConfig.setDisplayLabelId("document_send_mode");
             itemConfig.setComponentGenerator("ClassificatorSelectorGenerator");
             itemConfig.setRenderCheckboxAfterLabel(true);
@@ -203,7 +204,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
             processFieldForSearchView(fieldDefinition);
             processField(config, fieldDefinition, true);
             if (fieldDefinition.getFieldId().equals("regNumber")) {
-                ItemConfigVO itemConfig = new ItemConfigVO(DocumentDynamicModel.Props.SHORT_REG_NUMBER.toString());
+                ItemConfigVO itemConfig = new ItemConfigVO(DocumentDynamicModel.Props.SHORT_REG_NUMBER.toPrefixString(namespaceService));
                 itemConfig.setDisplayLabelId("document_shortRegNumber");
                 itemConfig.setComponentGenerator("TextAreaGenerator");
                 itemConfig.setStyleClass("expand19-200");
@@ -220,7 +221,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
          */
         {
             // docsearch:fund
-            ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.FUND.toString());
+            ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.FUND.toPrefixString(namespaceService));
             itemConfig.setDisplayLabelId("transaction_fund");
             itemConfig.setComponentGenerator("MultiValueEditorGenerator");
             itemConfig.setShowHeaders(false);
@@ -240,7 +241,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
          */
         {
             // docsearch:fundsCenter
-            ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.FUNDS_CENTER.toString());
+            ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.FUNDS_CENTER.toPrefixString(namespaceService));
             itemConfig.setDisplayLabelId("transaction_fundsCenter");
             itemConfig.setComponentGenerator("MultiValueEditorGenerator");
             itemConfig.setShowHeaders(false);
@@ -260,7 +261,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
          */
         {
             // docsearch:eaCommitmentItem
-            ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.EA_COMMITMENT_ITEM.toString());
+            ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.EA_COMMITMENT_ITEM.toPrefixString(namespaceService));
             itemConfig.setDisplayLabelId("transaction_eaCommitmentItem");
             itemConfig.setComponentGenerator("MultiValueEditorGenerator");
             itemConfig.setShowHeaders(false);
@@ -710,6 +711,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
     public static class PropertyDefinitionImpl implements PropertyDefinition {
 
         private final QName name;
+        private final String originalFieldId;
         private final String title;
         private final FieldType fieldType;
         private final boolean mandatory;
@@ -718,6 +720,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
         private PropertyDefinitionImpl(Field field, Boolean multiValuedOverride) {
             Assert.notNull(field, "field");
             name = field.getQName();
+            originalFieldId = field.getOriginalFieldId();
             title = field.getName();
             fieldType = field.getFieldTypeEnum();
             mandatory = field.isMandatory();
@@ -727,6 +730,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
         private PropertyDefinitionImpl(String hiddenFieldId, PropertyDefinitionImpl originalPropertyDefinition) {
             Assert.notNull(hiddenFieldId, "hiddenFieldId");
             name = Field.getQName(hiddenFieldId);
+            originalFieldId = null;
             title = null;
             fieldType = FieldType.TEXT_FIELD;
             mandatory = originalPropertyDefinition.mandatory;
@@ -764,6 +768,9 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
         }
 
         private QName getDataTypeQName() {
+            if (originalFieldId != null && Arrays.asList(DocumentLocationGenerator.NODE_REF_FIELD_IDS).contains(originalFieldId)) {
+                return DataTypeDefinition.NODE_REF;
+            }
             switch (fieldType) {
             case DOUBLE:
                 return DataTypeDefinition.DOUBLE;

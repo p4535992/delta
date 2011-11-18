@@ -173,7 +173,7 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
 
                 for (int i = 0, n = multipart.getCount(); i < n; i++) {
                     Part part = multipart.getBodyPart(i);
-                    if ("attachment".equalsIgnoreCase(part.getDisposition())) {
+                    if (isAttachment(part)) {
                         List<NodeRef> newDocRefs = createInvoice(folderNodeRef, part);
                         newInvoices.addAll(newDocRefs);
                         for (NodeRef newDocRef : newDocRefs) {
@@ -258,7 +258,7 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
             for (int i = 0, n = multipart.getCount(); i < n; i++) {
                 Part part = multipart.getBodyPart(i);
                 if (invoiceRefToAttachment == null || !invoiceRefToAttachment.containsValue(i) || invoiceRefToAttachment.get(document).equals(i)) {
-                    if ("attachment".equalsIgnoreCase(part.getDisposition()) || StringUtils.isNotBlank(part.getFileName())) {
+                    if (isAttachment(part)) {
                         createAttachment(document, part, null);
                         attachments.add(part);
                     }
@@ -267,6 +267,10 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
         }
 
         log.info("MimeMessage:" + getPartDebugInfo(originalMessage, bodyPart, attachments));
+    }
+
+    private boolean isAttachment(Part part) throws MessagingException {
+        return Part.ATTACHMENT.equalsIgnoreCase(part.getDisposition()) || StringUtils.isNotBlank(part.getFileName());
     }
 
     @Override

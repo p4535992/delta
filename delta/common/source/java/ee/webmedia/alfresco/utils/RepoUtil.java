@@ -129,8 +129,7 @@ public class RepoUtil {
         if (property == null) {
             return null;
 
-        } else if (property instanceof String || property instanceof Integer || property instanceof Long || property instanceof Float
-                || property instanceof Double || property instanceof Boolean || property instanceof QName || property instanceof NodeRef) {
+        } else if (isImmutableProperty(property)) {
             // immutable object
             return property;
 
@@ -163,6 +162,28 @@ public class RepoUtil {
             return tmp;
         }
         throw new RuntimeException("Copying property not supported: " + property.getClass());
+    }
+
+    private static boolean isImmutableProperty(Object property) {
+        return property instanceof String || property instanceof Integer || property instanceof Long || property instanceof Float
+                || property instanceof Double || property instanceof Boolean || property instanceof QName || property instanceof NodeRef;
+    }
+
+    public static boolean isValidCopyProperty(Serializable property) {
+        if (property == null) {
+            return true;
+        }
+        if (property instanceof List<?>) {
+            @SuppressWarnings("unchecked")
+            List<Serializable> list = (List<Serializable>) property;
+            for (Serializable prop : list) {
+                if (!isValidCopyProperty(prop)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return isImmutableProperty(property) || property instanceof Date || property instanceof ContentData || property instanceof IClonable<?>;
     }
 
     /**
