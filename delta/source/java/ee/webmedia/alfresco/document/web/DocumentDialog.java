@@ -551,7 +551,6 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         validatePermissions();
         BeanHelper.getVisitedDocumentsBean().getVisitedDocuments().add(node.getNodeRef());
         if (skipInit) {
-            searchBlockBean.init(node, isIncomingInvoice());
             skipInit = false;
             return;
         }
@@ -574,7 +573,6 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         fileBlockBean.init(node);
         typeBlockBean.init();
         assocsBlockBean.init(node);
-        searchBlockBean.init(node, isIncomingInvoice());
         workflowBlockBean.init(node);
         sendOutBlockBean.init(node);
         logBlockBean.init(node);
@@ -896,7 +894,6 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
 
     public void searchDocsAndCases(@SuppressWarnings("unused") ActionEvent event) {
         showDocsAndCasesAssocs = true;
-        searchBlockBean.init(metadataBlockBean.getDocument(), isIncomingInvoice());
         searchBlockBean.setExpanded(true);
     }
 

@@ -29,6 +29,11 @@ public class SenderEmailRemovableFromSystematicGroupFixBootstrap extends Abstrac
     }
 
     @Override
+    protected boolean isRequiresNewTransaction() {
+        return false;
+    }
+
+    @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
         String query = joinQueryPartsAnd(Arrays.asList(
                 generateTypeQuery(DocumentAdminModel.Types.FIELD),

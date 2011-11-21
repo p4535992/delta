@@ -45,7 +45,7 @@ public interface DocumentSearchService {
      */
     List<Document> searchDocumentsQuick(String searchString, NodeRef containerNodeRef);
 
-    List<Document> searchDocumentsAndOrCases(String searchValue, Date regDateTimeBegin, Date regDateTimeEnd, List<QName> documentTypes);
+    List<Document> searchDocumentsAndOrCases(String searchValue, Date regDateTimeBegin, Date regDateTimeEnd, List<String> documentTypes);
 
     /**
      * Searches for documents using a search filter.

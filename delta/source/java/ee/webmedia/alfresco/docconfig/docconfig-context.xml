@@ -58,7 +58,7 @@
    </bean>
 
    <!-- Fix for task 182461 in already existing deployments -->
-   <bean id="senderEmailRemovableFromSystematicGroupFixBootstrap2" class="ee.webmedia.alfresco.docconfig.bootstrap.SenderEmailRemovableFromSystematicGroupFixBootstrap" parent="abstractNodeUpdater">
+   <bean id="senderEmailRemovableFromSystematicGroupFixBootstrap3" class="ee.webmedia.alfresco.docconfig.bootstrap.SenderEmailRemovableFromSystematicGroupFixBootstrap" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
@@ -74,7 +74,7 @@
       <property name="importer" ref="spacesBootstrap" />
       <property name="dependsOn">
          <list>
-            <ref bean="senderEmailRemovableFromSystematicGroupFixBootstrap2" />
+            <ref bean="senderEmailRemovableFromSystematicGroupFixBootstrap3" />
          </list>
       </property>
       <property name="bootstrapViews">
@@ -379,7 +379,7 @@
    </bean>
 
    <!-- Fix for task 182456 in already existing deployments -->
-   <bean id="letterFieldsRemovableFromSystematicDocTypeFixBootstrap" class="ee.webmedia.alfresco.docconfig.bootstrap.LetterFieldsRemovableFromSystematicDocTypeFixBootstrap" parent="abstractNodeUpdater">
+   <bean id="letterFieldsRemovableFromSystematicDocTypeFixBootstrap2" class="ee.webmedia.alfresco.docconfig.bootstrap.LetterFieldsRemovableFromSystematicDocTypeFixBootstrap" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">

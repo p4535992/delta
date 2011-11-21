@@ -45,6 +45,7 @@ public interface DocumentService {
         public static final String VOLUME_NODEREF = RepoUtil.createTransientProp("volume").toString();
         public static final String CASE_NODEREF = RepoUtil.createTransientProp("case").toString();
         public static final QName TEMP_DOCUMENT_IS_DRAFT_OR_IMAP_OR_DVK_QNAME = RepoUtil.createTransientProp("isDraftOrImapOrDvk");
+        public static final QName TEMP_DOCUMENT_IS_INCOMING_INVOICE_QNAME = RepoUtil.createTransientProp("isIncomingInvoice");
         public static final QName TEMP_DOCUMENT_IS_DRAFT_QNAME = RepoUtil.createTransientProp("isDraft");
         public static final String TEMP_DOCUMENT_IS_DRAFT = TEMP_DOCUMENT_IS_DRAFT_QNAME.toString();
         public static final String TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED = "{temp}logging_disabled_docMetadataChanged";

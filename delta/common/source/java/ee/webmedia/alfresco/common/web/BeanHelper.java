@@ -49,6 +49,7 @@ import ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog;
 import ee.webmedia.alfresco.document.assignresponsibility.service.AssignResponsibilityService;
 import ee.webmedia.alfresco.document.assignresponsibility.web.AssignResponsibilityBean;
+import ee.webmedia.alfresco.document.associations.web.AssocsBlockBean;
 import ee.webmedia.alfresco.document.assocsdyn.service.DocumentAssociationsService;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.document.einvoice.web.DimensionDetailsDialog;
@@ -64,6 +65,7 @@ import ee.webmedia.alfresco.document.search.service.DocumentSearchFilterService;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.search.web.DocumentSearchBean;
 import ee.webmedia.alfresco.document.search.web.DocumentSearchResultsDialog;
+import ee.webmedia.alfresco.document.search.web.SearchBlockBean;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.sendout.web.DocumentSendOutDialog;
 import ee.webmedia.alfresco.document.sendout.web.SendOutBlockBean;
@@ -271,6 +273,14 @@ public class BeanHelper {
 
     public static SendOutBlockBean getSendOutBlockBean() {
         return getJsfBean(SendOutBlockBean.class, SendOutBlockBean.BEAN_NAME);
+    }
+
+    public static AssocsBlockBean getAssocsBlockBean() {
+        return getJsfBean(AssocsBlockBean.class, AssocsBlockBean.BEAN_NAME);
+    }
+
+    public static SearchBlockBean getSearchBlockBean() {
+        return getJsfBean(SearchBlockBean.class, SearchBlockBean.BEAN_NAME);
     }
 
     public static AddressbookAddEditDialog getAddressbookAddEditDialog() {

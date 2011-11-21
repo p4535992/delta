@@ -348,6 +348,10 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         return new String[] { "nodeRef" };
     }
 
+    protected boolean isRequiresNewTransaction() {
+        return true;
+    }
+
     private abstract class BatchProgress<E> {
         Collection<E> origin;
         List<E> batchList;
@@ -390,7 +394,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
                     executeBatch();
                     return null;
                 }
-            }, false, true);
+            }, false, isRequiresNewTransaction());
         }
 
         private void step() {

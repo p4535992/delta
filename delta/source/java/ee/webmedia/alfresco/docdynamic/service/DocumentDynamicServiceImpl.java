@@ -189,6 +189,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         DocumentDynamic document = getDocument(docRef);
         document.setDraft(isDraft(docRef));
         document.setDraftOrImapOrDvk(isDraftOrImapOrDvk(docRef));
+        document.setIncomingInvoice(documentService.isIncomingInvoice(docRef));
         if (document.isImapOrDvk()) {
             Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = documentConfigService.getDocumentTypeAndVersion(document.getNode());
             Collection<Field> ownerNameFields = documentTypeAndVersion.getSecond().getFieldsById(Collections.singleton(DocumentCommonModel.Props.OWNER_NAME.getLocalName()));
@@ -220,6 +221,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
         document.setDraft(isDraft(docRef));
         document.setDraftOrImapOrDvk(isDraftOrImapOrDvk(docRef));
+        document.setIncomingInvoice(documentService.isIncomingInvoice(docRef));
 
         ValidationHelperImpl validationHelper = new ValidationHelperImpl();
         for (String saveListenerBeanName : saveListenerBeanNames) {

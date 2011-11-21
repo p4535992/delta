@@ -13,6 +13,7 @@ import org.springframework.util.Assert;
 import ee.webmedia.alfresco.common.model.NodeBaseVO;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
+import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 
 /**
@@ -104,6 +105,18 @@ public class DocumentDynamic extends NodeBaseVO implements Cloneable {
 
     public boolean isImapOrDvk() {
         return isDraftOrImapOrDvk() && !isDraft();
+    }
+
+    public boolean isIncomingInvoice() {
+        return getPropBoolean(DocumentService.TransientProps.TEMP_DOCUMENT_IS_INCOMING_INVOICE_QNAME);
+    }
+
+    public boolean isNotEditable() {
+        return getNode().hasAspect(DocumentSpecificModel.Aspects.NOT_EDITABLE); // FIXME: move aspect to DocumentCommonModel
+    }
+
+    public void setIncomingInvoice(boolean incomingInvoice) {
+        setProp(DocumentService.TransientProps.TEMP_DOCUMENT_IS_INCOMING_INVOICE_QNAME, incomingInvoice);
     }
 
     public boolean isDisableUpdateInitialAccessRestrictionProps() {

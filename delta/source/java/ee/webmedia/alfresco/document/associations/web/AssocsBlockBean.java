@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.document.associations.web;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -16,11 +15,12 @@ import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.service.AssociationModel;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
+import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
+import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicBlock;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog;
 import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
 import ee.webmedia.alfresco.document.assocsdyn.web.AddFollowUpAssocEvaluator;
 import ee.webmedia.alfresco.document.assocsdyn.web.AddReplyAssocEvaluator;
-import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
@@ -28,16 +28,14 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  * 
  * @author Ats Uiboupin
  */
-public class AssocsBlockBean implements Serializable {
+public class AssocsBlockBean implements DocumentDynamicBlock {
     private static final long serialVersionUID = 1L;
 
-    private static final String BEAN_NAME = "AssocsBlockBean";
+    public static final String BEAN_NAME = "AssocsBlockBean";
     private static final String FOLLOWUPS_METHOD_BINDING_NAME = "#{" + BEAN_NAME + ".createAddFollowupsMenu}";
     private static final String REPLIES_METHOD_BINDING_NAME = "#{" + BEAN_NAME + ".createAddRepliesMenu}";
     private static final String DROPDOWN_MENU_ITEM_ICON = "/images/icons/versioned_properties.gif";
     public static final String PARAM_ASSOC_MODEL_REF = "assocModelRef";
-
-    private transient DocumentService documentService;
 
     private Node document;
     private List<DocAssocInfo> docAssocInfos;
@@ -55,6 +53,15 @@ public class AssocsBlockBean implements Serializable {
     public void reset() {
         document = null;
         docAssocInfos = null;
+    }
+
+    @Override
+    public void resetOrInit(DialogDataProvider provider) {
+        if (provider == null) {
+            reset();
+        } else {
+            init(provider.getNode());
+        }
     }
 
     public String getFollowupAssocsBindingName() {
@@ -136,12 +143,6 @@ public class AssocsBlockBean implements Serializable {
         return docAssocInfos;
     }
 
-    protected DocumentService getDocumentService() {
-        if (documentService == null) {
-            documentService = BeanHelper.getDocumentService();
-        }
-        return documentService;
-    }
     // END: getters / setters
 
 }

@@ -9,9 +9,9 @@
 
 <h:panelGroup id="assocs-panel-facets">
    <f:facet name="title">
-      <r:permissionEvaluator id="assocs-permission-evaluator" value="#{DocumentDialog.node}" allow="editDocumentMetaData">
+      <r:permissionEvaluator id="assocs-permission-evaluator" value="#{DocumentDynamicDialog.node}" allow="editDocumentMetaData">
          <a:actionLink image="/images/icons/import.gif" id="col3-text" showLink="false" tooltip="#{msg.document_assocAdd}" value="" 
-            actionListener="#{DocumentDialog.searchDocsAndCases}" action="#docsearch-panel" rendered="#{MetadataBlockBean.mode eq 'view'}" >
+            actionListener="#{DocumentDynamicDialog.searchDocsAndCases}" action="#docsearch-panel" rendered="#{not DocumentDynamicDialog.inEditMode}" >
          </a:actionLink>
       </r:permissionEvaluator>
    </f:facet>
@@ -51,8 +51,8 @@
          <f:facet name="header">
             <a:sortLink id="col4-header" label="#{msg.document_assocsBlockBean_title}" value="title" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col4-text" value="#{r.title}" action="#{DocumentDialog.action}" tooltip="#{msg.document_details_info}" showLink="false"
-            actionListener="#{DocumentDialog.open}" rendered="#{not r.case}">
+         <a:actionLink id="col4-text" value="#{r.title}" tooltip="#{msg.document_details_info}" showLink="false"
+            actionListener="#{DocumentDynamicDialog.openFromDocumentList}" rendered="#{not r.case}">
             <f:param name="nodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
          <a:actionLink id="col4-link2docList" value="#{r.title}" action="dialog:documentListDialog" tooltip="#{msg.document_assocsBlockBean_documentListInfo}"
@@ -72,7 +72,7 @@
          <f:facet name="header">
             <h:outputText id="col6-header" value="#{msg.document_assocsBlockBean_actions}" styleClass="header" />
          </f:facet>
-         <r:permissionEvaluator id="assocs-list-permission-evaluator" value="#{DocumentDialog.node}" allow="editDocumentMetaData">
+         <r:permissionEvaluator id="assocs-list-permission-evaluator" value="#{DocumentDynamicDialog.node}" allow="editDocumentMetaData">
             <a:actionLink id="col6-act" rendered="#{r.assocType.valueName == 'tavaline'}" value="#{r.title}" actionListener="#{DeleteAssocDialog.setupAssoc}" action="dialog:deleteAssoc" showLink="false"
                   image="/images/icons/delete.gif" tooltip="#{msg.document_assocsBlockBean_delete}">
                   <f:param name="nodeRef" value="#{r.nodeRef}"/>

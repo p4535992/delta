@@ -43,6 +43,7 @@ import ee.webmedia.alfresco.document.associations.web.AssocsBlockBean;
 import ee.webmedia.alfresco.document.file.web.FileBlockBean;
 import ee.webmedia.alfresco.document.log.web.LogBlockBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.search.web.SearchBlockBean;
 import ee.webmedia.alfresco.document.sendout.web.SendOutBlockBean;
 import ee.webmedia.alfresco.document.web.FavoritesModalComponent;
 import ee.webmedia.alfresco.simdhs.servlet.ExternalAccessServlet;
@@ -136,6 +137,25 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         open(newDocument.getNodeRef(), newDocument, true);
     }
 
+    public void searchDocsAndCases(@SuppressWarnings("unused") ActionEvent event) {
+        getCurrentSnapshot().showDocsAndCasesAssocs = true;
+        SearchBlockBean searchBlockBean = getSearchBlock();
+        searchBlockBean.init(getDocument());
+        searchBlockBean.setExpanded(true);
+    }
+
+    public void hideSearchBlock(@SuppressWarnings("unused") ActionEvent event) {
+        getSearchBlock().setExpanded(false);
+    }
+
+    private SearchBlockBean getSearchBlock() {
+        return (SearchBlockBean) getBlocks().get(SearchBlockBean.class);
+    }
+
+    public boolean isShowDocsAndCasesAssocs() {
+        return getCurrentSnapshot().showDocsAndCasesAssocs;
+    }
+
     // =========================================================================
 
     static class DocDialogSnapshot implements BaseSnapshotCapableDialog.Snapshot {
@@ -144,6 +164,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         private DocumentDynamic document;
         private boolean inEditMode;
         private boolean viewModeWasOpenedInThePast = false; // intended initial value
+        private boolean showDocsAndCasesAssocs;
         private DocumentConfig config;
 
         @Override
@@ -158,7 +179,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
 
         public String toString(boolean detailed) {
             return "DocDialogSnapshot[document=" + (document == null ? null : (detailed ? document : document.getNodeRef())) + ", inEditMode=" + inEditMode
-                    + ", viewModeWasOpenedInThePast=" + viewModeWasOpenedInThePast + ", config=" + config + "]";
+                    + ", viewModeWasOpenedInThePast=" + viewModeWasOpenedInThePast + ", config=" + config + ", showDocsAndCasesAssocs=" + showDocsAndCasesAssocs + "]";
         }
     }
 
@@ -212,6 +233,9 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
                 currentSnapshot.viewModeWasOpenedInThePast = true;
             }
             currentSnapshot.config = BeanHelper.getDocumentConfigService().getConfig(getNode());
+            if (document.isDraftOrImapOrDvk()) {
+                getCurrentSnapshot().showDocsAndCasesAssocs = false;
+            }
             resetOrInit(getDataProvider());
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Document before rendering: " + getDocument());
@@ -244,6 +268,8 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             blocks.put(LogBlockBean.class, BeanHelper.getLogBlockBean());
             blocks.put(WorkflowBlockBean.class, BeanHelper.getWorkflowBlockBean());
             blocks.put(SendOutBlockBean.class, BeanHelper.getSendOutBlockBean());
+            blocks.put(AssocsBlockBean.class, BeanHelper.getAssocsBlockBean());
+            blocks.put(SearchBlockBean.class, BeanHelper.getSearchBlockBean());
         }
         return blocks;
     }
@@ -345,6 +371,15 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     @Override
     public boolean isFinishButtonVisible(boolean dialogConfOKButtonVisible) {
         return isInEditMode();
+    }
+
+    public boolean isShowSearchBlock() {
+        SearchBlockBean searchBlockBean = (SearchBlockBean) getBlocks().get(SearchBlockBean.class);
+        if ((searchBlockBean.isExpanded() && !getCurrentSnapshot().inEditMode)) {
+            return true;
+        }
+        return getCurrentSnapshot().inEditMode && searchBlockBean.isShow() && !searchBlockBean.isFoundSimilar()
+                && (getDocument().isImapOrDvk() && !getDocument().isNotEditable());
     }
 
     // =========================================================================

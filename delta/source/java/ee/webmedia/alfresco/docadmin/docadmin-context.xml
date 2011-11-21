@@ -109,7 +109,7 @@
    </bean>
 
    <!-- Changes filedDefinition with ID "case" name from "Asi" to "Teema" -->
-   <bean id="FieldDefinitionCaseNameUpdater" class="ee.webmedia.alfresco.docadmin.bootstrap.FieldDefinitionCaseNameUpdater" parent="abstractNodeUpdater">
+   <bean id="fieldDefinitionCaseNameUpdater2" class="ee.webmedia.alfresco.docadmin.bootstrap.FieldDefinitionCaseNameUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
        <property name="dependsOn">
          <list>

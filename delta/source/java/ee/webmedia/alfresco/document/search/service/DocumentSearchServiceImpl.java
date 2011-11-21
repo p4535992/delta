@@ -794,7 +794,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     @Override
-    public List<Document> searchDocumentsAndOrCases(String searchString, Date regDateTimeBegin, Date regDateTimeEnd, List<QName> documentTypes) {
+    public List<Document> searchDocumentsAndOrCases(String searchString, Date regDateTimeBegin, Date regDateTimeEnd, List<String> documentTypes) {
         boolean noRegDates = regDateTimeBegin == null && regDateTimeEnd == null;
         boolean noDocTypes = documentTypes == null || documentTypes.isEmpty();
         boolean includeCaseTitles = noRegDates && noDocTypes;
@@ -805,7 +805,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             throw new UnableToPerformException("error_beginDateMustBeBeforeEndDate");
         }
         List<String> queryParts = new ArrayList<String>(5); // two elements are inserted by generateDocumentSearchQuery()
-        queryParts.add(generateTypeQuery(documentTypes));
+        queryParts.add(generateMultiStringExactQuery(documentTypes, DocumentAdminModel.Props.OBJECT_TYPE_ID));
         queryParts.add(generateQuickSearchQuery(searchString));
         queryParts.add(generateDatePropertyRangeQuery(regDateTimeBegin, regDateTimeEnd, DocumentCommonModel.Props.REG_DATE_TIME));
         String query = generateDocumentSearchQuery(queryParts);
