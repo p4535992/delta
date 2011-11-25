@@ -74,7 +74,9 @@ public interface FileService {
 
     NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType);
 
-    NodeRef addFileToTask(String name, String displayName, NodeRef taskNodeRef, java.io.File file, String mimeType);
+    NodeRef addFile(String name, String displayName, NodeRef taskNodeRef, java.io.File file, String mimeType);
+
+    NodeRef addFile(String name, String displayName, NodeRef taskNodeRef, ContentReader reader);
 
     List<File> getScannedFolders();
 

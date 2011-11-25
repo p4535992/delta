@@ -300,7 +300,7 @@
          </properties>
       </aspect>
 
-      <!-- This aspect is not used in new tasks any more -->
+      <!-- XXX Deprecated: This aspect is not used in new tasks any more -->
       <aspect name="wfs:file">   
           <properties>   
              <property name="wfs:file">    

@@ -804,7 +804,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                 NodeRef taskNodeRef = task.getNodeRef();
                 Pair<String, String> filenames = FilenameUtil.getFilenameFromDisplayname(taskNodeRef, existingDisplayNames, originalDisplayName, generalService);
                 String fileDisplayName = filenames.getSecond();
-                fileService.addFileToTask(filenames.getFirst(), fileDisplayName, taskNodeRef, file.file, file.contentType);
+                fileService.addFile(filenames.getFirst(), fileDisplayName, taskNodeRef, file.file, file.contentType);
                 existingDisplayNames.add(fileDisplayName);
             }
         }

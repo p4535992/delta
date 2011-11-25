@@ -1,10 +1,10 @@
 package ee.webmedia.alfresco.workflow.bootstrap;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
-import org.alfresco.service.cmr.repository.ContentData;
+import org.alfresco.service.cmr.repository.ContentReader;
+import org.alfresco.service.cmr.repository.ContentService;
 import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.search.ResultSet;
@@ -26,6 +26,7 @@ public class MoveTaskFileToChildAssoc extends AbstractNodeUpdater {
 
     private FileService fileService;
     private MimetypeService mimetypeService;
+    private ContentService contentService;
 
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
@@ -38,12 +39,15 @@ public class MoveTaskFileToChildAssoc extends AbstractNodeUpdater {
 
     @Override
     protected String[] updateNode(NodeRef nodeRef) throws Exception {
-        ContentData contentData = (ContentData) nodeService.getProperty(nodeRef, QName.createQName(WorkflowSpecificModel.URI, "file"));
-        File file = new File(contentData.getContentUrl());
-        String fileName = "Arvamuse fail" + mimetypeService.getExtension(contentData.getMimetype());
-        fileService.addFileToTask(fileName, fileName, nodeRef, file, contentData.getMimetype());
-        nodeService.removeAspect(nodeRef, QName.createQName(WorkflowSpecificModel.URI, "file"));
-        return new String[] { fileName };
+        QName propName = QName.createQName(WorkflowSpecificModel.URI, "file");
+        ContentReader reader = contentService.getReader(nodeRef, propName);
+        if (reader == null) {
+            return new String[] { "contentDataIsNull" };
+        }
+        String fileName = "Arvamuse fail" + mimetypeService.getExtension(reader.getMimetype());
+        fileService.addFile(fileName, fileName, nodeRef, reader);
+        nodeService.removeAspect(nodeRef, propName);
+        return new String[] { "addedFileToTask", fileName, reader.getContentUrl(), reader.getEncoding(), "" + reader.getLocale(), reader.getMimetype(), "" + reader.getSize() };
     }
 
     public void setMimetypeService(MimetypeService mimetypeService) {

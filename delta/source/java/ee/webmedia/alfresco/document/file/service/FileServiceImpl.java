@@ -306,11 +306,7 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public NodeRef addFileToTask(String name, String displayName, NodeRef taskNodeRef, java.io.File file, String mimeType) {
-        return addFile(name, displayName, taskNodeRef, file, mimeType);
-    }
-
-    private NodeRef addFile(String name, String displayName, NodeRef nodeRef, java.io.File file, String mimeType) {
+    public NodeRef addFile(String name, String displayName, NodeRef nodeRef, java.io.File file, String mimeType) {
         FileInfo fileInfo = fileFolderService.create(
                 nodeRef,
                 name,
@@ -320,6 +316,21 @@ public class FileServiceImpl implements FileService {
         generalService.writeFile(writer, file, name, mimeType);
         nodeService.setProperty(fileNodeRef, FileModel.Props.DISPLAY_NAME, displayName);
 
+        return fileNodeRef;
+    }
+
+    @Override
+    public NodeRef addFile(String name, String displayName, NodeRef parentNodeRef, ContentReader reader) {
+        FileInfo fileInfo = fileFolderService.create(
+                parentNodeRef,
+                name,
+                ContentModel.TYPE_CONTENT);
+        NodeRef fileNodeRef = fileInfo.getNodeRef();
+        ContentWriter writer = fileFolderService.getWriter(fileNodeRef);
+        writer.setEncoding(reader.getEncoding());
+        writer.setMimetype(reader.getMimetype());
+        writer.putContent(reader.getContentInputStream());
+        nodeService.setProperty(fileNodeRef, FileModel.Props.DISPLAY_NAME, displayName);
         return fileNodeRef;
     }
 
