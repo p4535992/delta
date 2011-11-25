@@ -17,6 +17,7 @@ import java.util.Set;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.i18n.I18NUtil;
+import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
@@ -28,12 +29,17 @@ import org.alfresco.web.bean.repository.TransientNode;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 
+import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
+import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.Document;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
+import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.email.service.EmailException;
 import ee.webmedia.alfresco.email.service.EmailService;
 import ee.webmedia.alfresco.notification.exception.EmailAttachmentSizeLimitException;
@@ -74,6 +80,7 @@ public class NotificationServiceImpl implements NotificationService {
     private FileService fileService;
     private DocumentSearchService documentSearchService;
     private SubstituteService substituteService;
+    private AddressbookService addressbookService;
     private int updateCount = 0;
 
     private static BeanPropertyMapper<GeneralNotification> generalNotificationBeanPropertyMapper;
@@ -180,6 +187,45 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public void notifyCompoundWorkflowEvent(CompoundWorkflow compoundWorkflowEvent) {
         // the future is bright!
+    }
+
+    @Override
+    public void notifySubstitutionEvent(Substitute substitute) {
+        Notification notification = setupNotification(new Notification(), NotificationModel.NotificationType.SUBSTITUTION);
+        notification.setFailOnError(true); // XXX does not do anything at the moment
+        String substituteId = substitute.getSubstituteId();
+        if (log.isDebugEnabled()) {
+            log.debug("Sending notification email to substitute: " + substituteId);
+        }
+
+        NodeRef personRef = userService.getPerson(substituteId);
+        if (personRef == null) {
+            if (log.isDebugEnabled()) {
+                log.debug("Person '" + substituteId + "' not found, no notification email is sent");
+            }
+            return;
+        }
+        String toEmailAddress = (String) nodeService.getProperty(personRef, ContentModel.PROP_EMAIL);
+        if (StringUtils.isEmpty(toEmailAddress)) {
+            if (log.isDebugEnabled()) {
+                log.debug("Person '" + substituteId + "' doesn't have email address defined, no notification email is sent");
+            }
+            return;
+        }
+        notification.addRecipient(substitute.getSubstituteName(), toEmailAddress);
+
+        LinkedHashMap<String, NodeRef> nodeRefs = new LinkedHashMap<String, NodeRef>();
+        nodeRefs.put(null, substitute.getNodeRef());
+
+        try {
+            sendNotification(notification, null, nodeRefs);
+        } catch (EmailException e) {
+            log.error("Substitution event notification e-mail sending failed, ignoring and continuing", e);
+        }
+
+        if (log.isDebugEnabled()) {
+            log.debug("Notification email sent to person '" + substituteId + "' with email address '" + toEmailAddress + "'");
+        }
     }
 
     @Override
@@ -762,9 +808,13 @@ public class NotificationServiceImpl implements NotificationService {
      * @param notification
      */
     private Notification setupNotification(Notification notification, QName notificationType, int version) {
+        return setupNotification(notification, notificationType, version, Parameters.TASK_SENDER_EMAIL);
+    }
+
+    public Notification setupNotification(Notification notification, QName notificationType, int version, Parameters senderEmailParameter) {
         notification.setSubject(getSubject(notificationType, version));
         notification.setTemplateName(getTemplate(notificationType, version));
-        notification.setSenderEmail(parametersService.getStringParameter(Parameters.TASK_SENDER_EMAIL));
+        notification.setSenderEmail(parametersService.getStringParameter(senderEmailParameter));
         return notification;
     }
 
@@ -997,6 +1047,47 @@ public class NotificationServiceImpl implements NotificationService {
         return 0;
     }
 
+    @Override
+    public void processAccessRestrictionChangedNotification(DocumentDynamic document, List<SendInfo> sendInfos) {
+        List<String> recipientEmails = new ArrayList<String>();
+        for (SendInfo sendInfo : sendInfos) {
+            Map<String, Object> properties = sendInfo.getNode().getProperties();
+            String recipientRegNr = (String) properties.get(DocumentCommonModel.Props.SEND_INFO_RECIPIENT_REG_NR);
+            String recipientEmail = null;
+            if (StringUtils.isNotBlank(recipientRegNr)) {
+                List<Node> contacts = addressbookService.getContactsByRegNumber(recipientRegNr);
+                if (contacts != null && contacts.size() > 0) {
+                    recipientEmail = (String) contacts.get(0).getProperties().get(AddressbookModel.Props.EMAIL);
+                }
+            } else {
+                String recipient = sendInfo.getRecipient();
+                if (recipient != null && recipient.contains("(") && recipient.contains(")")) {
+                    int emailStart = recipient.lastIndexOf("(");
+                    int emailEnd = recipient.lastIndexOf(")");
+                    if (emailEnd - emailStart > 1) {
+                        // some characters exist between parentheses
+                        recipientEmail = recipient.substring(emailStart + 1, emailEnd).trim();
+                    }
+                }
+            }
+            if (StringUtils.isNotBlank(recipientEmail)) {
+                recipientEmails.add(recipientEmail);
+            }
+        }
+        if (!recipientEmails.isEmpty()) {
+            Notification notification = setupNotification(new Notification(), NotificationModel.NotificationType.ACCESS_RESTRICTION_REASON_CHANGED, -1, Parameters.DOC_SENDER_EMAIL);
+            notification.setToEmails(recipientEmails);
+            try {
+                LinkedHashMap<String, NodeRef> templateDataNodeRefs = new LinkedHashMap<String, NodeRef>();
+                NodeRef docRef = document.getNodeRef();
+                templateDataNodeRefs.put(null, docRef);
+                sendNotification(notification, docRef, templateDataNodeRefs);
+            } catch (EmailException e) {
+                log.error("Failed to send email notification " + notification, e);
+            }
+        }
+    }
+
     private LinkedHashMap<String, NodeRef> setupTemplateData(Task task) {
         LinkedHashMap<String, NodeRef> templateDataNodeRefs = new LinkedHashMap<String, NodeRef>();
         Workflow workflow = task.getParent();
@@ -1074,11 +1165,17 @@ public class NotificationServiceImpl implements NotificationService {
         // Remove recipients with blank e-mail address
         // So that, if there is at least one recipient with non-blank e-mail address, e-mail sending doesn't fail
         List<String> toEmails = new ArrayList<String>(notification.getToEmails());
-        List<String> toNames = new ArrayList<String>(notification.getToNames());
+        List<String> toNames = null;
+        if (notification.getToNames() != null) {
+            toNames = new ArrayList<String>();
+            toNames.addAll(notification.getToNames());
+        }
         for (int i = 0; i < toEmails.size();) {
             if (StringUtils.isBlank(toEmails.get(i))) {
                 toEmails.remove(i);
-                toNames.remove(i);
+                if (toNames != null) {
+                    toNames.remove(i);
+                }
             } else {
                 i++;
             }
@@ -1124,6 +1221,10 @@ public class NotificationServiceImpl implements NotificationService {
 
     public void setSubstituteService(SubstituteService substituteService) {
         this.substituteService = substituteService;
+    }
+
+    public void setAddressbookService(AddressbookService addressbookService) {
+        this.addressbookService = addressbookService;
     }
 
     // END: setters/getters

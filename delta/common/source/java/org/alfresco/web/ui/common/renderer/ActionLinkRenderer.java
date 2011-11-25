@@ -38,6 +38,7 @@ import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIMenu;
 import org.alfresco.web.ui.repo.component.UIActions;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * @author kevinr
@@ -185,11 +186,13 @@ public class ActionLinkRenderer extends BaseRenderer
          {
             // generate JavaScript to set a hidden form field and submit
             // a form which request attributes that we can decode
-            out.write(Utils.generateFormSubmit(context, 
+            String generateFormSubmit = Utils.generateFormSubmit(context, 
                                                link, 
                                                Utils.getActionHiddenFieldName(context, link), 
                                                link.getClientId(context), 
-                                               getParameterComponents(link)));
+                                               getParameterComponents(link));
+            generateFormSubmit = escapeQuotes(generateFormSubmit);
+            out.write(generateFormSubmit);
          }
          
          out.write('"');
@@ -382,6 +385,7 @@ public class ActionLinkRenderer extends BaseRenderer
                onclickStr = "nextSubmitStaysOnSamePage();" + onclickStr;
             }
             
+            onclickStr = escapeQuotes(onclickStr);
             out.write(onclickStr);
          }
          
@@ -456,4 +460,9 @@ public class ActionLinkRenderer extends BaseRenderer
       }
       return parent;
    }
+
+    private String escapeQuotes(String str) {
+        return StringUtils.replace(str, "\"", "&quot;");
+    }
+
 }

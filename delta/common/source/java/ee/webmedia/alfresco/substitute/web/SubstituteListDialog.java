@@ -20,9 +20,7 @@ import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
-import org.alfresco.util.GUID;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
-import org.apache.commons.collections.Transformer;
 import org.apache.commons.collections.comparators.NullComparator;
 import org.apache.commons.collections.comparators.TransformingComparator;
 import org.apache.commons.lang.StringUtils;
@@ -36,6 +34,7 @@ import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.Transformer;
 import ee.webmedia.alfresco.utils.UserUtil;
 
 /**
@@ -46,13 +45,18 @@ import ee.webmedia.alfresco.utils.UserUtil;
 public class SubstituteListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
     private static final Log log = LogFactory.getLog(SubstituteListDialog.class);
+    private static final TransformingComparator SUBSTITUTE_START_DATE_COMPARATOR = new TransformingComparator(new Transformer<Substitute, Date>() {
+        @Override
+        public Date tr(Substitute component) {
+            return component.getSubstitutionStartDate();
+        }
+    }, new NullComparator());
 
     private NodeRef userNodeRef;
     private Map<String, Substitute> originalSubstitutes = new HashMap<String, Substitute>();
     private List<Substitute> substitutes;
     private Map<String, Substitute> addedSubstitutes;
     private Map<String, String> emailAddresses;
-    private NotificationSender notificationSender = new EmptyNotificationSender();
 
     @Override
     public void init(Map<String, String> params) {
@@ -68,12 +72,7 @@ public class SubstituteListDialog extends BaseDialogBean {
     @SuppressWarnings("unchecked")
     public void refreshData() {
         substitutes = getSubstituteService().getSubstitutes(userNodeRef);
-        Collections.sort(substitutes, new TransformingComparator(new Transformer() {
-            @Override
-            public Object transform(Object input) {
-                return ((Substitute) input).getSubstitutionStartDate();
-            }
-        }, new NullComparator()));
+        Collections.sort(substitutes, SUBSTITUTE_START_DATE_COMPARATOR);
         originalSubstitutes = new HashMap<String, Substitute>();
         emailAddresses = new HashMap<String, String>();
         for (Substitute substitute : substitutes) {
@@ -108,13 +107,13 @@ public class SubstituteListDialog extends BaseDialogBean {
         if (log.isDebugEnabled()) {
             log.debug("Saving substitutes changes");
         }
-        save(context);
+        save();
         isFinished = false;
         return null;
     }
 
-    public void save(FacesContext context) {
-        if (validate(context)) {
+    public void save() {
+        if (validate()) {
             List<Substitute> savedSubstitutes = new ArrayList<Substitute>();
             addSubstitutes(savedSubstitutes);
             updateSubstitutes(savedSubstitutes);
@@ -127,7 +126,7 @@ public class SubstituteListDialog extends BaseDialogBean {
         }
     }
 
-    private boolean validate(FacesContext context) {
+    private boolean validate() {
         boolean isValid = true;
         for (Substitute substitute : substitutes) {
             if (substitute.isReadOnly()) {
@@ -136,41 +135,41 @@ public class SubstituteListDialog extends BaseDialogBean {
             // check mandatory fields
             if (StringUtils.isEmpty(substitute.getSubstituteName())) {
                 isValid = false;
-                addRequiredFieldValidationError(context, "substitute_name");
+                addRequiredFieldValidationError("substitute_name");
             }
             final Date substitutionStartDate = substitute.getSubstitutionStartDate();
             if (substitutionStartDate == null) {
                 isValid = false;
-                addRequiredFieldValidationError(context, "substitute_startdate");
+                addRequiredFieldValidationError("substitute_startdate");
             }
             final Date substitutionEndDate = substitute.getSubstitutionEndDate();
             if (substitutionEndDate == null) {
                 isValid = false;
-                addRequiredFieldValidationError(context, "substitute_enddate");
+                addRequiredFieldValidationError("substitute_enddate");
             }
 
             if (isValid && substitutionStartDate.after(substitutionEndDate)) {
                 isValid = false;
-                MessageUtil.addErrorMessage(context, "substitute_start_after_end");
+                MessageUtil.addErrorMessage("substitute_start_after_end");
             }
 
             if (isValid && substitutionEndDate.before(DateUtils.truncate(new Date(), Calendar.DATE))) {
                 isValid = false;
-                MessageUtil.addErrorMessage(context, "substitute_end_before_now");
+                MessageUtil.addErrorMessage("substitute_end_before_now");
             }
 
             if (isValid &&
                     !getSubstituteService().findSubstitutionDutiesInPeriod(userNodeRef, substitutionStartDate, substitutionEndDate).isEmpty()) {
                 isValid = false;
-                MessageUtil.addErrorMessage(context, "substitute_substitution_while_substituting");
+                MessageUtil.addErrorMessage("substitute_substitution_while_substituting");
             }
 
         }
         return isValid;
     }
 
-    private static void addRequiredFieldValidationError(FacesContext context, String field) {
-        MessageUtil.addErrorMessage(context, "common_propertysheet_validator_mandatory", MessageUtil.getMessage(context, field));
+    private static void addRequiredFieldValidationError(String field) {
+        MessageUtil.addErrorMessage("common_propertysheet_validator_mandatory", MessageUtil.getMessage(field));
     }
 
     @Override
@@ -211,7 +210,7 @@ public class SubstituteListDialog extends BaseDialogBean {
 
     private void sendNotificationEmails(List<Substitute> savedSubstitutes) {
         for (Substitute savedSubstitute : savedSubstitutes) {
-            notificationSender.sendNotification(savedSubstitute);
+            BeanHelper.getNotificationService().notifySubstitutionEvent(savedSubstitute);
         }
     }
 
@@ -259,10 +258,7 @@ public class SubstituteListDialog extends BaseDialogBean {
     }
 
     public void addNewValue(ActionEvent event) {
-        Substitute newSubstitute = new Substitute();
-        newSubstitute.setValid(false);
-        // set the temporary random unique ID to be used in the UI form
-        newSubstitute.setNodeRef(new NodeRef(newSubstitute.hashCode() + "", event.hashCode() + "", GUID.generate()));
+        Substitute newSubstitute = Substitute.newInstance();
         substitutes.add(newSubstitute);
         addedSubstitutes.put(newSubstitute.getNodeRef().toString(), newSubstitute);
     }
@@ -274,23 +270,7 @@ public class SubstituteListDialog extends BaseDialogBean {
         return null;
     }
 
-    public static interface NotificationSender extends Serializable {
-        void sendNotification(Substitute substitute);
-    }
-
     // default implementation that doesn't send any notification
-    public static class EmptyNotificationSender implements NotificationSender {
-        private static final long serialVersionUID = 1L;
-
-        @Override
-        public void sendNotification(Substitute substitute) {
-            // to nothing
-        }
-    }
-
-    public void setNotificationSender(NotificationSender notificationSender) {
-        this.notificationSender = notificationSender;
-    }
 
     // used from JSP
     public String getEmailSubject() {
@@ -301,5 +281,4 @@ public class SubstituteListDialog extends BaseDialogBean {
     public Map<String, String> getEmailAddress() {
         return emailAddresses;
     }
-
 }

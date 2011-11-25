@@ -34,6 +34,13 @@ public interface BaseService {
      */
     <T extends BaseObject> T getObject(NodeRef nodeRef, Class<T> returnCompatibleClass);
 
+    /**
+     * @param <T>
+     * @param nodeRef
+     * @param returnCompatibleClass - if null then type check is not performed
+     * @param effort
+     * @return
+     */
     <T extends BaseObject> T getObject(NodeRef nodeRef, Class<T> returnCompatibleClass, Effort effort);
 
     /**

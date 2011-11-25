@@ -75,7 +75,7 @@
                <mandatory enforced="true">false</mandatory>
                <default>false</default>
             </property>
-            <property name="doctype:documentTypeGroup">
+            <property name="doctype:menuGroupName">
                <type>d:text</type>
             </property>
             <property name="doctype:registrationEnabled">

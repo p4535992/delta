@@ -29,6 +29,7 @@ import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
+import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -36,15 +37,18 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
+import ee.webmedia.alfresco.common.propertysheet.upload.UploadFileInput.FileWithContentType;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
+import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.dvk.service.DvkService;
@@ -52,6 +56,7 @@ import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageDataWrapper;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -113,6 +118,8 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     private OrganizationStructureService organizationStructureService;
     private DvkService dvkService;
     private ParametersService parametersService;
+    private FileFolderService fileFolderService;
+    private FileService fileService;
 
     private final Map<QName, WorkflowType> workflowTypesByWorkflow = new HashMap<QName, WorkflowType>();
     private final Map<QName, WorkflowType> workflowTypesByTask = new HashMap<QName, WorkflowType>();
@@ -353,9 +360,21 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         if (workflowType == null) {
             throw new RuntimeException("Task type '" + taskNode.getType() + "' not registered in service, but existing node has it: " + nodeRef);
         }
-
         // If workflowType exists, then getTaskClass() cannot return null
         Task task = Task.create(workflowType.getTaskClass(), taskNode, workflow, workflowType.getTaskOutcomes());
+        if (taskNode.hasAspect(WorkflowSpecificModel.Aspects.TASK_DUE_DATE_EXTENSION_CONTAINER)) {
+            List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(nodeRef, WorkflowSpecificModel.Assocs.TASK_DUE_DATE_EXTENSION_HISTORY,
+                    WorkflowSpecificModel.Assocs.TASK_DUE_DATE_EXTENSION_HISTORY);
+            List<Pair<String, Date>> historyRecords = task.getDueDateHistoryRecords();
+            for (ChildAssociationRef childRef : childAssocs) {
+                NodeRef historyRef = childRef.getChildRef();
+                historyRecords.add(
+                        new Pair<String, Date>(
+                                (String) nodeService.getProperty(historyRef, WorkflowCommonModel.Props.CHANGE_REASON),
+                                (Date) nodeService.getProperty(historyRef, WorkflowCommonModel.Props.PREVIOUS_DUE_DATE)));
+            }
+        }
+        task.getFiles().addAll(fileService.getAllFiles(nodeRef));
         return task;
     }
 
@@ -767,12 +786,35 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     private boolean saveTask(WorkflowEventQueue queue, Task task) {
-        return createOrUpdate(queue, task, task.getParent().getNodeRef(), WorkflowCommonModel.Assocs.TASK);
+        @SuppressWarnings("unchecked")
+        List<Object> files = (List<Object>) task.getNode().getProperties().get(Task.PROP_TEMP_FILES);
+        boolean changed = createOrUpdate(queue, task, task.getParent().getNodeRef(), WorkflowCommonModel.Assocs.TASK);
+        for (NodeRef removedFileRef : task.getRemovedFiles()) {
+            nodeService.deleteNode(removedFileRef);
+        }
+        if (files != null) {
+            List<String> existingDisplayNames = new ArrayList<String>();
+            for (Object fileObj : files) {
+                if (!(fileObj instanceof FileWithContentType)) {
+                    // existing file, no update needed
+                    continue;
+                }
+                FileWithContentType file = (FileWithContentType) fileObj;
+                String originalDisplayName = FilenameUtil.getDiplayNameFromName(file.fileName);
+                NodeRef taskNodeRef = task.getNodeRef();
+                Pair<String, String> filenames = FilenameUtil.getFilenameFromDisplayname(taskNodeRef, existingDisplayNames, originalDisplayName, generalService);
+                String fileDisplayName = filenames.getSecond();
+                fileService.addFileToTask(filenames.getFirst(), fileDisplayName, taskNodeRef, file.file, file.contentType);
+                existingDisplayNames.add(fileDisplayName);
+            }
+        }
+        return changed;
     }
 
     @Override
     public void saveInProgressTask(Task taskOriginal) throws WorkflowChangedException {
         Task task = taskOriginal.copy();
+        task.getRemovedFiles().addAll(taskOriginal.getRemovedFiles());
         // check status==IN_PROGRESS, owner==currentUser
         requireInProgressCurrentUser(task);
         requireStatusUnchanged(task);
@@ -881,6 +923,8 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                 for (; i < tasks.size(); i++) {
                     if (tasks.get(i).getNodeRef().equals(replacementTask.getNodeRef())) {
                         newTask = replacementTask.copy(workflow);
+                        // this is not general desired behaviour during copy, don't move this to Task.copy method
+                        newTask.getRemovedFiles().addAll(replacementTask.getRemovedFiles());
                         break;
                     }
                 }
@@ -1297,8 +1341,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     @Override
-    // XXX QName workflowType is never used
-    public boolean hasInProgressActiveResponsibleTasks(NodeRef document, QName workflowType) {
+    public boolean hasInProgressActiveResponsibleTasks(NodeRef document) {
         for (CompoundWorkflow compoundWorkflow : getCompoundWorkflows(document)) {
             for (Workflow workflow : compoundWorkflow.getWorkflows()) {
                 for (Task task : workflow.getTasks()) {
@@ -2203,6 +2246,14 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     public void setParametersService(ParametersService parametersService) {
         this.parametersService = parametersService;
+    }
+
+    public void setFileFolderService(FileFolderService fileFolderService) {
+        this.fileFolderService = fileFolderService;
+    }
+
+    public void setFileService(FileService fileService) {
+        this.fileService = fileService;
     }
 
     @Override

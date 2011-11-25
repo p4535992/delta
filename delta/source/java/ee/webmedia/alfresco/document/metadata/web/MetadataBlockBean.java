@@ -7,7 +7,6 @@ import static ee.webmedia.alfresco.utils.TextUtil.joinStringAndStringWithParenth
 import static ee.webmedia.alfresco.utils.TextUtil.joinStringAndStringWithSpace;
 import static org.alfresco.web.ui.common.StringUtils.encode;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.text.DateFormat;
@@ -25,7 +24,6 @@ import javax.faces.component.UIInput;
 import javax.faces.component.UISelectItem;
 import javax.faces.component.html.HtmlSelectOneMenu;
 import javax.faces.context.FacesContext;
-import javax.faces.context.ResponseWriter;
 import javax.faces.event.ActionEvent;
 import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
@@ -33,7 +31,6 @@ import javax.faces.validator.ValidatorException;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
-import org.alfresco.service.cmr.lock.LockStatus;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -44,6 +41,7 @@ import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
+import org.alfresco.web.ui.common.component.PickerSearchParams;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.BooleanUtils;
@@ -74,7 +72,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
-import ee.webmedia.alfresco.document.sendout.web.DocumentSendOutDialog;
 import ee.webmedia.alfresco.document.service.DocLockService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.service.DocumentService.TransientProps;
@@ -1196,15 +1193,15 @@ public class MetadataBlockBean implements ClearStateListener {
         return contactOrUserSearchFilters;
     }
 
-    public SelectItem[] searchUsersOrContacts(int filterIndex, String contains) {
-        log.debug("executeOwnerSearch: " + filterIndex + ", " + contains);
-        if (filterIndex == 0) { // users
-            return userListDialog.searchUsers(-1, contains);
-        } else if (filterIndex == 1) { // contacts
-            List<Node> nodes = getAddressbookService().search(contains);
+    public SelectItem[] searchUsersOrContacts(PickerSearchParams params) {
+        log.debug("executeOwnerSearch: " + params.getFilterIndex() + ", " + params.getSearchString());
+        if (params.isFilterIndex(0)) { // users
+            return userListDialog.searchUsers(params);
+        } else if (params.isFilterIndex(1)) { // contacts
+            List<Node> nodes = getAddressbookService().search(params.getSearchString(), params.getLimit());
             return AddressbookUtil.transformAddressbookNodesToSelectItems(nodes);
         } else {
-            throw new RuntimeException("Unknown filter index value: " + filterIndex);
+            throw new RuntimeException("Unknown filter index value: " + params.getFilterIndex());
         }
     }
 
@@ -1326,7 +1323,7 @@ public class MetadataBlockBean implements ClearStateListener {
     public void reloadDoc(boolean addInvoiceMessages) {
         document = getDocumentService().getDocument(nodeRef);
         if (!inEditMode) {// only create lock for existing doc
-            lockOrUnlockIfNeeded(inEditMode);
+            BeanHelper.getDocumentLockHelperBean().lockOrUnlockIfNeeded(inEditMode);
         }
         afterModeChange();
         if (addInvoiceMessages) {
@@ -1345,7 +1342,7 @@ public class MetadataBlockBean implements ClearStateListener {
 
     public void reset() {
         inEditMode = false;
-        lockOrUnlockIfNeeded(false);
+        BeanHelper.getDocumentLockHelperBean().lockOrUnlockIfNeeded(false);
         document = null;
         propertySheet = null;
         documentTypeName = null;
@@ -1383,7 +1380,7 @@ public class MetadataBlockBean implements ClearStateListener {
         }
         document = doc;
         inEditMode = true;
-        lockOrUnlockIfNeeded(isLockingAllowed());
+        BeanHelper.getDocumentLockHelperBean().lockOrUnlockIfNeeded(BeanHelper.getDocumentLockHelperBean().isLockingAllowed());
         propertySheet.setMode(getMode());
         clearPropertySheet();
         DocumentType documentType = getDocumentTypeService().getDocumentType(document.getType());
@@ -1456,7 +1453,7 @@ public class MetadataBlockBean implements ClearStateListener {
             } catch (ExternalReviewException e) {
                 MessageUtil.addInfoMessage("dvk_sending_failed");
             } finally {
-                lockOrUnlockIfNeeded(isLockingAllowed());
+                BeanHelper.getDocumentLockHelperBean().lockOrUnlockIfNeeded(BeanHelper.getDocumentLockHelperBean().isLockingAllowed());
                 reloadTransientProperties();
             }
             propertySheet.setMode(getMode());
@@ -1816,7 +1813,7 @@ public class MetadataBlockBean implements ClearStateListener {
         }
         document = getDocumentService().getDocument(document.getNodeRef());
         inEditMode = false;
-        lockOrUnlockIfNeeded(isLockingAllowed());
+        BeanHelper.getDocumentLockHelperBean().lockOrUnlockIfNeeded(BeanHelper.getDocumentLockHelperBean().isLockingAllowed());
         propertySheet.setMode(getMode());
         clearPropertySheet();
         reloadTransientProperties();
@@ -1844,7 +1841,6 @@ public class MetadataBlockBean implements ClearStateListener {
             getDocumentService().setTransientProperties(document, parentNodes);
             BaseDialogBean.validatePermission(document, DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA);
             document = getDocumentService().registerDocument(document);
-            getDocumentTemplateService().updateGeneratedFilesOnRegistration(document.getNodeRef());
             ((MenuBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuBean.BEAN_NAME)).processTaskItems();
             MessageUtil.addInfoMessage("document_registerDoc_success");
         } catch (UnableToPerformException e) {
@@ -1853,84 +1849,13 @@ public class MetadataBlockBean implements ClearStateListener {
             }
             MessageUtil.addStatusMessage(FacesContext.getCurrentInstance(), e);
         } catch (NodeLockedException e) {
-            documentDialog.handleLockedNode("document_registerDoc_error_docLocked");
+            BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_registerDoc_error_docLocked");
         }
         getDocumentDialogHelperBean().switchMode(false);
     }
 
     public void setCaseAssignmentNeeded(boolean showModal) {
         // shouldn't be set
-    }
-
-    /**
-     * @return how often (in seconds) clients should call {@link #refreshLockClientHandler()} to refresh lock
-     */
-    public int getClientLockRefreshFrequency() {
-        if (lockRefreshTimeout == null) {
-            lockRefreshTimeout = getDocLockService().getLockTimeout() / 2;
-        }
-        return lockRefreshTimeout;
-    }
-
-    /**
-     * AJAX: Extend lock on document (or create one)
-     */
-    public void refreshLockClientHandler() throws IOException {
-        boolean lockSuccessfullyRefreshed = false;
-        String errMsg = null;
-        if (document == null) {
-            errMsg = "Form is reset";
-        } else {
-            synchronized (document) { // to avoid extending lock after unlock(save/cancel)
-                boolean lockingAllowed = isLockingAllowed();
-                if (lockingAllowed) {
-                    lockSuccessfullyRefreshed = lockOrUnlockIfNeeded(lockingAllowed);
-                } else {
-                    errMsg = "Can't refresh lock - page not in editMode";
-                    log.warn(errMsg);
-                }
-            }
-        }
-        FacesContext context = FacesContext.getCurrentInstance();
-        ResponseWriter out = context.getResponseWriter();
-        StringBuilder xml = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>");
-        xml.append("<refresh-lock success=\"" + lockSuccessfullyRefreshed + "\"");
-        xml.append(" nextReqInMs=\"" + getClientLockRefreshFrequency() * 1000 + "\"");
-        if (errMsg != null) {
-            xml.append(" errMsg=\"" + errMsg + "\"");
-        }
-        xml.append(" />");
-        out.write(xml.toString());
-        log.debug("returning XML: " + xml.toString());
-    }
-
-    /**
-     * @param mustLock4Edit
-     * @return true if current user holds the lock after execution of this function
-     */
-    public boolean lockOrUnlockIfNeeded(boolean mustLock4Edit) {
-        if (document == null) {
-            return false;
-        }
-        final DocLockService lockService = getDocLockService();
-        final NodeRef docRef = document.getNodeRef();
-        synchronized (document) { // to avoid extending lock after unlock(save/cancel)
-            if (mustLock4Edit) {
-                if (lockService.setLockIfFree(docRef) == LockStatus.LOCK_OWNER) {
-                    return true;
-                }
-                log.debug("Lock can't be created");
-                if (log.isDebugEnabled()) {
-                    log.warn("failed to lock: document_validation_alreadyLocked");
-                }
-                MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "document_validation_alreadyLocked",
-                        getUserService().getUserFullName((String) getNodeService().getProperty(docRef, ContentModel.PROP_LOCK_OWNER)));
-                inEditMode = false; // don't allow going to editMode
-                return false;
-            }
-            lockService.unlockIfOwner(docRef);
-        }
-        return false;
     }
 
     public DocumentType getDocumentType() {
@@ -2028,23 +1953,6 @@ public class MetadataBlockBean implements ClearStateListener {
 
     public boolean isInEditMode() {
         return inEditMode;
-    }
-
-    /**
-     * Returns true if required conditions are met for locking.
-     * a) document is in edit mode
-     * OR
-     * b) current document is opened in send out dialog
-     * 
-     * @return true if we can lock, false otherwise.
-     */
-    public boolean isLockingAllowed() {
-        boolean allowed = isInEditMode();
-        DocumentSendOutDialog sendOut = null;
-        if (document != null && (sendOut = BeanHelper.getDocumentSendOutDialog()) != null && sendOut.getModel() != null) {
-            allowed |= document.getNodeRef().equals(sendOut.getModel().getNodeRef());
-        }
-        return allowed;
     }
 
     public boolean isDraft() {

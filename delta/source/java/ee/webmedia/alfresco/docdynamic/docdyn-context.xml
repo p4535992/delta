@@ -3,7 +3,7 @@
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
 
-   <bean parent="dictionaryModelBootstrap" depends-on="documentModelBootstrap">
+   <bean id="documentDynamicModelBootstrap" parent="dictionaryModelBootstrap" depends-on="documentModelBootstrap">
       <property name="models">
          <list>
             <value>ee/webmedia/alfresco/docdynamic/model/documentDynamicModel.xml</value>
@@ -45,6 +45,7 @@
       <property name="documentConfigService" ref="DocumentConfigService" />
       <property name="sendOutService" ref="SendOutService" />
       <property name="documentLogService" ref="DocumentLogService" />
+      <property name="documentTemplateService" ref="DocumentTemplateService" />
    </bean>
 
    <bean id="DocumentDynamicService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -67,16 +68,13 @@
       <property name="permissionService" ref="PermissionService" />
    </bean>
 
-   <bean id="repairPropertyTypeMismatchUpdater" class="ee.webmedia.alfresco.document.bootstrap.RepairPropertyTypeMismatchUpdater" parent="abstractNodeUpdater" >
-      <property name="moduleId" value="simdhs" />
-      <property name="documentConfigService" ref="DocumentConfigService" />
-   </bean>
-
    <!-- START: web beans: -->
 
    <bean id="DocumentDynamicDialog" class="ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog" scope="session" />
 
    <bean id="DocumentDialogHelperBean" class="ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean" scope="session" />
+
+   <bean id="DocumentLockHelperBean" class="ee.webmedia.alfresco.docdynamic.web.DocumentLockHelperBean" scope="session" />
 
    <!-- END: web beans: -->
 

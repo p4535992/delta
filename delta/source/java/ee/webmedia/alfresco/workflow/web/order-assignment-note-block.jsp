@@ -2,6 +2,7 @@
 <%@ taglib uri="http://java.sun.com/jsf/core" prefix="f"%>
 <%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a"%>
 <%@ taglib uri="/WEB-INF/repo.tld" prefix="r"%>
+<%@ taglib uri="/WEB-INF/wm.tld" prefix="wm"%>
 
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
@@ -30,8 +31,7 @@
          <f:facet name="header">
             <a:sortLink id="col3-header" label="#{msg.workflow_file}" value="file" styleClass="header" />
          </f:facet>
-         <%-- TODO actually point to a file --%>
-         <a:actionLink value="#{msg.workflow_task_order_assignment_file}" image="/images/icons/attachment.gif" showLink="false" href="#{r.fileDownloadUrl}" target="_blank" rendered="#{not empty r.fileDownloadUrl}" />
+         <wm:customChildrenContainer childGenerator="#{WorkflowBlockBean.noteBlockRowFileGenerator}" parameterList="#{r.files}"/>
       </a:column>
 
       <a:column id="col4" style="width: 60%;">

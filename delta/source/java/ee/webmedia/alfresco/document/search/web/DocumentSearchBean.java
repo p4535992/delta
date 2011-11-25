@@ -47,7 +47,7 @@ public class DocumentSearchBean implements Serializable {
             List<DocumentType> types = getDocumentAdminService().getDocumentTypes(DocumentAdminService.DONT_INCLUDE_CHILDREN, true);
             documentTypes = new ArrayList<SelectItem>(types.size());
             for (DocumentType documentType : types) {
-                documentTypes.add(new SelectItem(documentType.getDocumentTypeId(), documentType.getName()));
+                documentTypes.add(new SelectItem(documentType.getId(), documentType.getName()));
             }
             WebUtil.sort(documentTypes);
         }

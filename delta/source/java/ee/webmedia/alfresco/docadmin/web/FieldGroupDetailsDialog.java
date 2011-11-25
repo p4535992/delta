@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.docadmin.web;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocTypeDetailsDialog;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.commitToMetadataContainer;
 import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.getDuplicateFieldIds;
@@ -13,7 +12,10 @@ import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docadmin.service.CaseFileType;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
+import ee.webmedia.alfresco.docadmin.service.DynamicType;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicFieldGroupNames;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -43,7 +45,7 @@ public class FieldGroupDetailsDialog extends BaseDialogBean {
         if (validate()) {
             fieldsListBean.doReorder();
             // Don't persist changes to repository - field should be changed when parent documentType is changed
-            commitToMetadataContainer(fieldGroup, parentDocTypeVersion);
+            commitToMetadataContainer(fieldGroup, parentDocTypeVersion, getDynTypeName());
             resetFields();
         } else {
             isFinished = false;
@@ -61,10 +63,14 @@ public class FieldGroupDetailsDialog extends BaseDialogBean {
             Set<String> duplicateFieldIds = getDuplicateFieldIds(fieldGroup.getFields(), parentDocTypeVersion);
             if (!duplicateFieldIds.isEmpty()) {
                 valid = false;
-                MessageUtil.addErrorMessage("fieldGroup_details_error_duplicateFields", TextUtil.collectionToString(duplicateFieldIds));
+                MessageUtil.addErrorMessage("fieldGroup_details_error_duplicateFieldsIn" + getDynTypeName(), TextUtil.collectionToString(duplicateFieldIds));
             }
         }
         return valid;
+    }
+
+    private String getDynTypeName() {
+        return fieldGroup.getParent().getParent().getClass().getSimpleName();
     }
 
     @Override
@@ -80,7 +86,7 @@ public class FieldGroupDetailsDialog extends BaseDialogBean {
 
     @Override
     public boolean isFinishButtonVisible(boolean dialogConfOKButtonVisible) {
-        return getDocTypeDetailsDialog().isShowingLatestVersion();
+        return getDynamicTypeDetailsDialog().isShowingLatestVersion();
     }
 
     private void resetFields() {
@@ -144,14 +150,33 @@ public class FieldGroupDetailsDialog extends BaseDialogBean {
         return fieldGroup.isSystematic() && SystematicFieldGroupNames.THESAURUI.equals(fieldGroup.getName());
     }
 
-    /** used by propertySheet */
-    public boolean isReadOnlyInfoVisible() {
+    private boolean isReadOnlyInfoVisible() {
         return !fieldGroup.isSystematic() || fieldGroup.isReadonlyFieldsNameChangeable() || fieldGroup.isReadonlyFieldsRuleChangeable();
+    }
+
+    private boolean isCaseFile() {
+        return parentDocTypeVersion.getParent() instanceof CaseFileType;
+    }
+
+    /** used by propertySheet */
+    public boolean isCaseFileTypeReadOnlyInfoVisible() {
+        return isCaseFile() && isReadOnlyInfoVisible();
+    }
+
+    /** used by propertySheet */
+    public boolean isDocTypeReadOnlyInfoVisible() {
+        return !isCaseFile() && isReadOnlyInfoVisible();
     }
 
     /** JSP */
     public boolean isAddFieldVisible() {
         return !fieldGroup.isSystematic();
+    }
+
+    /** JSP */
+    public DynamicTypeDetailsDialog getDynamicTypeDetailsDialog() {
+        Class<? extends DynamicType> dynTypeClass = parentDocTypeVersion.getParent().getClass();
+        return BeanHelper.getDynamicTypeDetailsDialog(dynTypeClass);
     }
 
     /** injected by spring */

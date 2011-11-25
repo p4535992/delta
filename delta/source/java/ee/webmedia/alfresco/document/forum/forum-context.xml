@@ -17,4 +17,9 @@
          </list>
       </property>
    </bean>
+
+   <bean class="ee.webmedia.alfresco.document.forum.web.DiscussionsMenuItemProcessor">
+      <property name="menuService" ref="MenuService" />
+      <property name="documentSearchService" ref="DocumentSearchService" />
+   </bean>
 </beans>

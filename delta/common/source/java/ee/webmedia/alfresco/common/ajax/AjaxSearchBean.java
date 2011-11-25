@@ -1,9 +1,13 @@
 package ee.webmedia.alfresco.common.ajax;
 
 import static ee.webmedia.alfresco.common.propertysheet.dimensionselector.DimensionSelectorGenerator.predefinedFilters;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
+import static ee.webmedia.alfresco.parameters.model.Parameters.MAX_MODAL_SEARCH_RESULT_ROWS;
 
 import java.io.IOException;
+import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -18,7 +22,9 @@ import javax.faces.model.SelectItem;
 
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.web.app.servlet.ajax.InvokeCommand.ResponseMimetype;
+import org.alfresco.web.ui.common.component.PickerSearchParams;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
+import org.alfresco.web.ui.common.tag.GenericPickerTag;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.lang.StringUtils;
@@ -97,7 +103,9 @@ public class AjaxSearchBean extends AjaxBean {
         String entryDateString = params.get("entryDate");
         Date entryDate = null;
         if (StringUtils.isNotBlank(entryDateString)) {
-            entryDate = DimensionSelectorRenderer.dateFormat.parse(entryDateString);
+            DateFormat dateFormat = new SimpleDateFormat("dd.M.yyyy");
+            dateFormat.setLenient(false);
+            entryDate = dateFormat.parse(entryDateString);
         }
         if (LOG.isDebugEnabled()) {
             LOG.debug("Searching values for dimension='" + dimensionName + "', term='" + searchString + "', filter='" + predefinedFilterName + ", entryDate='" + entryDateString
@@ -138,8 +146,9 @@ public class AjaxSearchBean extends AjaxBean {
             filter = Integer.parseInt(filterValue);
         }
 
-        MethodBinding b = context.getApplication().createMethodBinding("#{" + callback + "}", new Class[] { int.class, String.class });
-        SelectItem[] result = (SelectItem[]) b.invoke(context, new Object[] { filter, contains });
+        MethodBinding b = context.getApplication().createMethodBinding("#{" + callback + "}", GenericPickerTag.QUERYCALLBACK_CLASS_ARGS);
+        SelectItem[] result = (SelectItem[]) b.invoke(context,
+                new Object[] { new PickerSearchParams(filter, contains, getParametersService().getLongParameter(MAX_MODAL_SEARCH_RESULT_ROWS).intValue()) });
         return result;
     }
 
@@ -168,5 +177,4 @@ public class AjaxSearchBean extends AjaxBean {
         String containerClientId = getParam(context, CONTAINER_CLIENT_ID);
         return ComponentUtil.findChildComponentById(context, viewRoot, containerClientId);
     }
-
 }

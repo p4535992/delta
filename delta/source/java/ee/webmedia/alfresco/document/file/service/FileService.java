@@ -9,6 +9,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
+import ee.webmedia.alfresco.imap.web.ImapFolder;
 
 /**
  * @author Dmitri Melnikov
@@ -73,6 +74,8 @@ public interface FileService {
 
     NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType);
 
+    NodeRef addFileToTask(String name, String displayName, NodeRef taskNodeRef, java.io.File file, String mimeType);
+
     List<File> getScannedFolders();
 
     List<File> getAllScannedFiles();
@@ -121,6 +124,14 @@ public interface FileService {
 
     void deleteGeneratedFilesByType(NodeRef parentRef, GeneratedFileType type);
 
+    boolean isFileGenerated(NodeRef fileRef);
+
+    boolean isFileGeneratedFromTemplate(NodeRef fileRef);
+
     List<String> getDocumentFileDisplayNames(NodeRef folder);
+
+    int getAllFilesExcludingDigidocSubitemsCount(NodeRef attachmentRoot, boolean countFilesInSubfolders);
+
+    public List<ImapFolder> getImapSubfolders(NodeRef parentRef);
 
 }

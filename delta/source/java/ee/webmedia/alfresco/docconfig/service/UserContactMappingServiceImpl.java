@@ -108,7 +108,7 @@ public class UserContactMappingServiceImpl implements UserContactMappingService 
     }
 
     @Override
-    public void setMappedValues(Map<String, Object> props, Map<QName, UserContactMappingCode> fieldIdsMapping, NodeRef userOrContactRef, boolean multiValued) {
+    public void setMappedValues(Map<QName, Serializable> props, Map<QName, UserContactMappingCode> fieldIdsMapping, NodeRef userOrContactRef, boolean multiValued) {
         List<QName> propNames = new ArrayList<QName>(fieldIdsMapping.size());
         List<UserContactMappingCode> mappingCodes = new ArrayList<UserContactMappingCode>(fieldIdsMapping.size());
         for (Entry<QName, UserContactMappingCode> entry : fieldIdsMapping.entrySet()) {
@@ -129,14 +129,13 @@ public class UserContactMappingServiceImpl implements UserContactMappingService 
                     value = list;
                 }
             }
-            props.put(propName.toString(), value);
+            props.put(propName, value);
         }
     }
 
     // TODO Alar: could eliminate this method, because it is not used
-    @Override
-    public List<String> getMappedValues(List<UserContactMappingCode> mappingCodes, NodeRef userOrContactRef) {
-        if (!nodeService.exists(userOrContactRef)) {
+    private List<String> getMappedValues(List<UserContactMappingCode> mappingCodes, NodeRef userOrContactRef) {
+        if (userOrContactRef == null || !nodeService.exists(userOrContactRef)) {
             return null;
         }
         QName type = nodeService.getType(userOrContactRef);

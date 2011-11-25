@@ -1,9 +1,12 @@
 package ee.webmedia.alfresco.common.web;
 
+import java.util.List;
+
 import javax.faces.context.FacesContext;
 
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 
+import ee.webmedia.alfresco.utils.MessageData;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
@@ -18,15 +21,16 @@ public class ConfirmDialog extends BaseDialogBean {
     public static final String BEAN_NAME = "ConfirmDialog";
     private static final long serialVersionUID = 1L;
     private Confirmable sourceObj;
-    private String confirmMessage;
     private String confirmTitle;
     private Object confirmContext;
 
-    public void setupConfirmDialog(Confirmable sourceObj, String confirmMessage, String confirmTitle, Object confirmContext) {
+    public void setupConfirmDialog(Confirmable sourceObj, List<MessageData> messageDataList, String confirmTitle, Object confirmContext) {
         this.sourceObj = sourceObj;
-        this.confirmMessage = confirmMessage;
         this.confirmTitle = confirmTitle;
         this.confirmContext = confirmContext;
+        for (MessageData messageData : messageDataList) {
+            MessageUtil.addStatusMessage(messageData);
+        }
     }
 
     @Override
@@ -38,10 +42,6 @@ public class ConfirmDialog extends BaseDialogBean {
     @Override
     public String getContainerTitle() {
         return confirmTitle;
-    }
-
-    public String getConfirmMessage() {
-        return confirmMessage;
     }
 
     @Override

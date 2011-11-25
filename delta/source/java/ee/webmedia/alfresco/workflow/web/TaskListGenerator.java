@@ -40,6 +40,7 @@ import org.alfresco.web.bean.generator.BaseComponentGenerator;
 import org.alfresco.web.bean.generator.TextAreaGenerator;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
+import org.alfresco.web.ui.common.tag.GenericPickerTag;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
@@ -265,28 +266,28 @@ public class TaskListGenerator extends BaseComponentGenerator {
                     }
 
                     if (dialogManager.getBean() instanceof CompoundWorkflowDialog) {
+                        if (workflow.hasTaskResolution()) {
+                            addResolutionInput(context, application, wfIndex, taskGridChildren, counter, taskRowId, task);
+                        }
+
+                        DateTimePickerGenerator dateTimePickerGenerator = new DateTimePickerGenerator();
+                        final DateTimePicker dueDateTimeInput = (DateTimePicker) dateTimePickerGenerator.generate(context, "task-duedate-" + taskRowId);
+                        taskGridChildren.add(dueDateTimeInput);
+                        String dueDateValueBinding = createPropValueBinding(wfIndex, counter, WorkflowSpecificModel.Props.DUE_DATE);
+                        dueDateTimeInput.setValueBinding("value", application.createValueBinding(dueDateValueBinding));
+                        @SuppressWarnings("unchecked")
+                        final Map<String, Object> dueDateTimeAttributes = dueDateTimeInput.getAttributes();
+                        if (isTaskRowEditable(responsible, fullAccess, task, taskStatus)) {
+                            dateTimePickerGenerator.getCustomAttributes().put(DateTimePickerGenerator.DATE_FIELD_LABEL, MessageUtil.getMessage("task_property_due_date"));
+                            dateTimePickerGenerator.setupValidDateConstraint(context, propertySheet, null, dueDateTimeInput);
+                        } else {
+                            dateTimePickerGenerator.setReadonly(dueDateTimeInput, true);
+                        }
+                        dueDateTimeAttributes.put("styleClass", "margin-left-4");
+                        dueDateTimeAttributes.put(DateTimePickerRenderer.DATE_STYLE_CLASS_ATTR, "task-due-date-date");
+                        dueDateTimeAttributes.put(DateTimePickerRenderer.TIME_STYLE_CLASS_ATTR, "task-due-date-time");
+
                         if (!isDueDateExtension) {
-                            if (workflow.hasTaskResolution()) {
-                                addResolutionInput(context, application, wfIndex, taskGridChildren, counter, taskRowId, task);
-                            }
-
-                            DateTimePickerGenerator dateTimePickerGenerator = new DateTimePickerGenerator();
-                            final DateTimePicker dueDateTimeInput = (DateTimePicker) dateTimePickerGenerator.generate(context, "task-duedate-" + taskRowId);
-                            taskGridChildren.add(dueDateTimeInput);
-                            String dueDateValueBinding = createPropValueBinding(wfIndex, counter, WorkflowSpecificModel.Props.DUE_DATE);
-                            dueDateTimeInput.setValueBinding("value", application.createValueBinding(dueDateValueBinding));
-                            @SuppressWarnings("unchecked")
-                            final Map<String, Object> dueDateTimeAttributes = dueDateTimeInput.getAttributes();
-                            if (isTaskRowEditable(responsible, fullAccess, task, taskStatus)) {
-                                dateTimePickerGenerator.getCustomAttributes().put(DateTimePickerGenerator.DATE_FIELD_LABEL, MessageUtil.getMessage("task_property_due_date"));
-                                dateTimePickerGenerator.setupValidDateConstraint(context, propertySheet, null, dueDateTimeInput);
-                            } else {
-                                dateTimePickerGenerator.setReadonly(dueDateTimeInput, true);
-                            }
-                            dueDateTimeAttributes.put("styleClass", "margin-left-4");
-                            dueDateTimeAttributes.put(DateTimePickerRenderer.DATE_STYLE_CLASS_ATTR, "task-due-date-date");
-                            dueDateTimeAttributes.put(DateTimePickerRenderer.TIME_STYLE_CLASS_ATTR, "task-due-date-time");
-
                             MultiClassificatorSelectorGenerator classificatorSelectorGenerator = new MultiClassificatorSelectorGenerator();
                             UIComponent classificatorSelector = classificatorSelectorGenerator.generateSelectComponent(context, null, false);
                             classificatorSelector.setId("task-dueDateDays-" + listId + "-" + counter);
@@ -375,10 +376,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
                     if (fullAccess
                             && (taskAction == Action.NONE)
                             && (Status.NEW.equals(taskStatus)
-                                    || ((task.getNode().hasAspect(WorkflowSpecificModel.Aspects.RESPONSIBLE) && task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) || task
-                                            .isType(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK)
-                                            && (Status.IN_PROGRESS.equals(taskStatus) || Status.STOPPED
-                                                    .equals(taskStatus))))
+                                    || ((task.getNode().hasAspect(WorkflowSpecificModel.Aspects.RESPONSIBLE) && task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK))))
                                             && (!responsible || Boolean.TRUE.equals(task.getNode().getProperties().get(WorkflowSpecificModel.Props.ACTIVE)))) {
                         UIActionLink taskSearchLink = createOwnerSearchLink(context, application, listId, picker, counter);
                         actionChildren.add(taskSearchLink);
@@ -602,7 +600,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
             callbackB = "#{DialogManager.bean.executeTaskOwnerSearch}";
             searchProcessingB = "#{DialogManager.bean.processOwnerSearchResults}";
         }
-        picker.setQueryCallback(application.createMethodBinding(callbackB, new Class[] { int.class, String.class }));
+        picker.setQueryCallback(application.createMethodBinding(callbackB, GenericPickerTag.QUERYCALLBACK_CLASS_ARGS));
         picker.setActionListener(application.createMethodBinding(searchProcessingB, UIActions.ACTION_CLASS_ARGS));
     }
 

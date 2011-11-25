@@ -66,8 +66,8 @@ public class BaseServiceImpl implements BaseService {
         NodeRef parentRef = nodeService.getPrimaryParent(nodeRef).getParentRef();
         BaseObject object = getObject(nodeRef, parentRef, null, effort);
 
-        if (!returnCompatibleClass.isAssignableFrom(object.getClass())) {
-            throw new IllegalArgumentException("Based on nodeRef type object class should be " + object.getClass()
+        if (returnCompatibleClass != null && !returnCompatibleClass.isAssignableFrom(object.getClass())) {
+            throw new IllegalArgumentException("Based on type of the nodeRef " + nodeRef + " object class should be " + object.getClass()
                     + " based on mapping, but developer incorrectly expected that it is " + returnCompatibleClass);
         }
         @SuppressWarnings("unchecked")

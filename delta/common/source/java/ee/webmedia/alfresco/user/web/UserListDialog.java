@@ -14,6 +14,7 @@ import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.bean.users.UsersBeanProperties;
+import org.alfresco.web.ui.common.component.PickerSearchParams;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
@@ -83,7 +84,7 @@ public class UserListDialog extends BaseDialogBean {
         if (usersList != null) {
             usersList.setValue(null);
         }
-        users = getUserListVOs(getOrganizationStructureService().setUsersUnit(getUserService().searchUsers(properties.getSearchCriteria(), false)));
+        users = getUserListVOs(getOrganizationStructureService().setUsersUnit(getUserService().searchUsers(properties.getSearchCriteria(), false, -1)));
 
         // return null to stay on the same page
         return null;
@@ -123,32 +124,31 @@ public class UserListDialog extends BaseDialogBean {
      * This method is part of the contract to the Generic Picker, it is up to the backing bean
      * to execute whatever query is appropriate and return the results.
      * 
-     * @param filterIndex Index of the filter drop-down selection
-     * @param contains Text from the contains textbox
+     * @param params Search parameters
      * @return An array of SelectItem objects containing the results to display in the picker.
      */
-    public SelectItem[] searchUsers(int filterIndex, String contains) {
-        return searchUsers(contains, false, false, true);
+    public SelectItem[] searchUsers(PickerSearchParams params) {
+        return searchUsers(params, false, false, true);
     }
 
-    public SelectItem[] searchUsersWithoutSubstitutionInfoShown(int filterIndex, String contains) {
-        return searchUsers(contains, false, false, false);
+    public SelectItem[] searchUsersWithoutSubstitutionInfoShown(PickerSearchParams params) {
+        return searchUsers(params, false, false, false);
     }
 
     /**
      * @see #searchUsers(int, String)
      * @return SelectItems representing users. Current user is excluded.
      */
-    public SelectItem[] searchOtherUsers(int filterIndex, String contains) {
-        return searchUsers(contains, true, false, true);
+    public SelectItem[] searchOtherUsers(PickerSearchParams params) {
+        return searchUsers(params, true, false, true);
     }
 
-    public SelectItem[] searchUsersWithNameValue(int filterIndex, String contains) {
-        return searchUsers(contains, false, true, true);
+    public SelectItem[] searchUsersWithNameValue(PickerSearchParams params) {
+        return searchUsers(params, false, true, true);
     }
 
-    private SelectItem[] searchUsers(String contains, boolean excludeCurrentUser, boolean useNameAsValue, boolean showSubstitutionInfo) {
-        List<Node> nodes = getOrganizationStructureService().setUsersUnit(getUserService().searchUsers(contains, true));
+    private SelectItem[] searchUsers(PickerSearchParams params, boolean excludeCurrentUser, boolean useNameAsValue, boolean showSubstitutionInfo) {
+        List<Node> nodes = getOrganizationStructureService().setUsersUnit(getUserService().searchUsers(params.getSearchString(), true, params.getLimit()));
         int nodesSize = nodes.size();
         List<SelectItem> results = new ArrayList<SelectItem>(nodesSize);
 
@@ -217,4 +217,3 @@ public class UserListDialog extends BaseDialogBean {
     }
 
 }
-

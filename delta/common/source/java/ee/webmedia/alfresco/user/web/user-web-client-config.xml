@@ -18,7 +18,7 @@
             icon="/images/icons/users_large.gif" />
 
          <dialog name="permissionsDeleteDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/user/web/permissions-delete-dialog.jsp" managed-bean="PermissionsDeleteDialog"
-            icon="/images/icons/users_large.gif" title-id="manage_invited_users" />
+            icon="/images/icons/users_large.gif" title-id="permission_delete_userOrGroup" />
 
       </dialogs>
       <actions>

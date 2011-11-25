@@ -9,14 +9,6 @@
 
 <%@ include file="searchPanel.jsp" %>
 
-<f:verbatim>
-   <script type="text/javascript">
-   $jQ(document).ready(function() {
-   document.getElementById("dialog:dialog-body:search-text").focus();
-   })
-   </script>
-</f:verbatim>
-
 <a:panel id="classificators-panel" styleClass="panel-100 with-pager" label="#{msg.classificators_list}" progressive="true">
 
    <%-- Spaces List --%>

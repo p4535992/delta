@@ -666,6 +666,16 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
       {
          // build the appropriate data-model wrapper object
          Object val = getValue();
+         if (val == null) {
+             String msg = "value of RichList '" + getId() + "' is null";
+             ValueBinding vb = getValueBinding("value");
+             if (vb != null) {
+                 msg += " (returned by '" + vb.toString() + "')";
+             } else {
+                 msg += " (missing value binding)";
+             }
+             throw new RuntimeException(msg);
+         }
          if (val instanceof List)
          {
             this.dataModel = new GridListDataModel((List)val);

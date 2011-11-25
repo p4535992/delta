@@ -25,11 +25,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 public class LetterFieldsRemovableFromSystematicDocTypeFixBootstrap extends AbstractNodeUpdater {
 
     @Override
-    protected String getBaseFileName() {
-        return getName();
-    }
-
-    @Override
     protected boolean isRequiresNewTransaction() {
         return false;
     }

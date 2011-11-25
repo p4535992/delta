@@ -33,6 +33,6 @@
 
 <h:outputText value="#{DialogManager.bean.confirmMessage}" styleClass="mainSubTitle" />
 
-<a:booleanEvaluator value="#{MetadataBlockBean.inEditMode}" id="deletefile-metaInEditMode2">
-   <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/metadata/web/metadata-block-lockRefresh.jsp" />
+<a:booleanEvaluator value="#{DocumentDialogHelperBean.inEditMode}" id="deletefile-metaInEditMode2">
+   <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/docdynamic/web/metadata-block-lockRefresh.jsp" />
 </a:booleanEvaluator>

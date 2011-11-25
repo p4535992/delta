@@ -1,17 +1,15 @@
 package ee.webmedia.alfresco.workflow.service;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
-import javax.faces.context.FacesContext;
-
-import org.alfresco.service.cmr.repository.ContentData;
-import org.alfresco.service.cmr.repository.MimetypeService;
-import org.alfresco.web.app.servlet.DownloadContentServlet;
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.NodePropertyResolver;
-import org.alfresco.web.bean.repository.Repository;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.lang.time.FastDateFormat;
@@ -19,6 +17,7 @@ import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.web.CssStylable;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
@@ -38,11 +37,15 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
 
     public static String PROP_RESOLUTION = "{temp}resolution";
     public static final String PROP_WORKFLOW_CATEGORY = "{temp}category";
+    public static final String PROP_TEMP_FILES = "{temp}files";
 
     private final Workflow parent;
     private final int outcomes;
     private int outcomeIndex = -1;
     private Action action = Action.NONE;
+    private List<Pair<String, Date>> dueDateHistoryRecords;
+    private List<NodeRef> removedFiles;
+
     /**
      * Task's index in workflow during last save
      * (may not be current index if workflow is changed in memory).
@@ -330,17 +333,6 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
         return "";
     }
 
-    // Can only be called from web layer
-    public String getFileDownloadUrl() {
-        ContentData contentData = getProp(WorkflowSpecificModel.Props.FILE);
-        if (contentData == null) {
-            return null;
-        }
-        MimetypeService mimetypeService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getMimetypeService();
-        String extension = mimetypeService.getExtension(contentData.getMimetype());
-        return DownloadContentServlet.generateDownloadURL(getNodeRef(), "fail." + extension) + "?property=" + WorkflowSpecificModel.Props.FILE;
-    }
-
     @Override
     protected String additionalToString() {
         return "\n  parent=" + WmNode.toString(getParent()) + "\n  outcomes=" + outcomes;
@@ -424,4 +416,30 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
         return parent.getIndexInCompoundWorkflow();
     }
 
+    public void setDueDateHistoryRecords(List<Pair<String, Date>> dueDateHistoryRecords) {
+        this.dueDateHistoryRecords = dueDateHistoryRecords;
+    }
+
+    public List<Pair<String, Date>> getDueDateHistoryRecords() {
+        if (dueDateHistoryRecords == null) {
+            dueDateHistoryRecords = new ArrayList<Pair<String, Date>>();
+        }
+        return dueDateHistoryRecords;
+    }
+
+    /** Return list of FileWithContentType or File objects */
+    @SuppressWarnings("unchecked")
+    public List<Object> getFiles() {
+        if (getNode().getProperties().get(PROP_TEMP_FILES) == null) {
+            getNode().getProperties().put(PROP_TEMP_FILES, new ArrayList<File>());
+        }
+        return (ArrayList<Object>) getNode().getProperties().get(PROP_TEMP_FILES);
+    }
+
+    public List<NodeRef> getRemovedFiles() {
+        if (removedFiles == null) {
+            removedFiles = new ArrayList<NodeRef>();
+        }
+        return removedFiles;
+    }
 }

@@ -6,12 +6,14 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<%-- This JSP is used from multiple dialogs, that's why DialogManager.bean reference is used --%>
-<a:panel id="document-panel" styleClass="panel-100 with-pager" label="#{DialogManager.bean.listTitle}" progressive="true">
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/imap/web/folder-list-dialog.jsp" />
 
-   <%-- Main List --%>
+<%-- This JSP is used from multiple dialogs, that's why DialogManager.bean reference is used --%>   
+<a:panel id="document-panel" styleClass="panel-100 with-pager" label="#{DialogManager.bean.listTitle}" progressive="true">   
+
+   <%-- Document List --%>
    <a:richList id="email-documentList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      width="100%" value="#{DialogManager.bean.documents}" var="r">
+      width="100%" value="#{DialogManager.bean.documents}" var="r" refreshOnBind="true">
 
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog-columns.jsp" />
       
@@ -27,9 +29,8 @@
          </a:actionLink>
       </a:column>
 
-
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
-      <a:dataPager id="pager1" styleClass="pager" />
+      <a:dataPager id="pager2" styleClass="pager" />
    </a:richList>
 
 </a:panel>

@@ -63,6 +63,12 @@
    </managed-bean>
 
    <managed-bean>
+      <managed-bean-name>DiscussionDocumentListDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.web.DiscussionDocumentListDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
       <managed-bean-name>DocumentDialog</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.document.web.DocumentDialog</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
@@ -85,10 +91,6 @@
       <managed-property>
          <property-name>fileBlockBean</property-name>
          <value>#{FileBlockBean}</value>
-      </managed-property>
-      <managed-property>
-         <property-name>typeBlockBean</property-name>
-         <value>#{TypeBlockBean}</value>
       </managed-property>
       <managed-property>
          <property-name>navigator</property-name>
@@ -166,12 +168,6 @@
          <property-name>navigationBean</property-name>
          <value>#{NavigationBean}</value>
       </managed-property>
-   </managed-bean>
-
-   <managed-bean>
-      <managed-bean-name>TypeBlockBean</managed-bean-name>
-      <managed-bean-class>ee.webmedia.alfresco.document.type.web.TypeBlockBean</managed-bean-class>
-      <managed-bean-scope>session</managed-bean-scope>
    </managed-bean>
 
    <managed-bean>

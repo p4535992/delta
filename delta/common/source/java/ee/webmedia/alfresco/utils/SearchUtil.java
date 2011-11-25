@@ -13,6 +13,9 @@ import java.util.StringTokenizer;
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
+import org.alfresco.service.cmr.search.LimitBy;
+import org.alfresco.service.cmr.search.SearchParameters;
+import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Repository;
 import org.apache.commons.lang.StringUtils;
@@ -29,6 +32,11 @@ public class SearchUtil {
     public static FastDateFormat luceneDateFormat = FastDateFormat.getInstance("yyyy-MM-dd'T'00:00:00.000");
     public static FastDateFormat luceneResidualDateFormat = FastDateFormat.getInstance("yyyy-MM-dd");
 
+    /**
+     * @param date
+     * @param residual
+     * @return "yyyy-MM-dd'T'00:00:00.000" if the property is not residual, else "yyyy-MM-dd"
+     */
     public static String formatLuceneDate(Date date, boolean residual) {
         return residual ? luceneResidualDateFormat.format(date) : luceneDateFormat.format(date);
     }
@@ -227,7 +235,11 @@ public class SearchUtil {
             return null;
         }
         // format is like dateProp:"2010-01-08T00:00:00.000"
-        return generatePropertyExactQuery(documentPropName, formatLuceneDate(date, documentPropName.getNamespaceURI().equals(DocumentDynamicModel.URI)), false);
+        boolean isResidual = documentPropName.getNamespaceURI().equals(DocumentDynamicModel.URI);
+        if (isResidual) {
+            return generatePropertyWildcardQuery(documentPropName, formatLuceneDate(date, isResidual), false, false, true);
+        }
+        return generatePropertyExactQuery(documentPropName, formatLuceneDate(date, isResidual), false);
     }
 
     // High-level generation
@@ -466,6 +478,20 @@ public class SearchUtil {
 
     public static boolean isDateProperty(QName dataType) {
         return dataType.equals(DataTypeDefinition.DATE) || dataType.equals(DataTypeDefinition.DATETIME);
+    }
+
+    public static SearchParameters generateLuceneSearchParams(String query, StoreRef store, int limit) {
+        SearchParameters sp = new SearchParameters();
+        sp.setLanguage(SearchService.LANGUAGE_LUCENE);
+        sp.setQuery(query);
+        sp.addStore(store);
+        if (limit < 0) {
+            sp.setLimitBy(LimitBy.UNLIMITED);
+        } else {
+            sp.setLimit(limit);
+            sp.setLimitBy(LimitBy.FINAL_SIZE);
+        }
+        return sp;
     }
 
 }

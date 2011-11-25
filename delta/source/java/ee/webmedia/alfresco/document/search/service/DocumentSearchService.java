@@ -215,8 +215,9 @@ public interface DocumentSearchService {
      * returned.
      * 
      * @param withAdminsAndDocManagers - should administrators and document managers groups be included or filtered out
+     * @param limit
      */
-    List<Authority> searchAuthorityGroups(String groupName, boolean returnAllGroups, boolean withAdminsAndDocManagers);
+    List<Authority> searchAuthorityGroups(String groupName, boolean returnAllGroups, boolean withAdminsAndDocManagers, int limit);
 
     List<Document> searchSimilarInvoiceDocuments(String regNumber, String invoiceNumber, Date invoiceDate);
 
@@ -247,7 +248,7 @@ public interface DocumentSearchService {
      * @return
      */
     // TODO not document specific
-    List<NodeRef> searchNodes(String query, boolean limited, String queryName);
+    List<NodeRef> searchNodes(String query, int limit, String queryName);
 
     /**
      * @param query
@@ -257,5 +258,12 @@ public interface DocumentSearchService {
     boolean isMatch(String query);
 
     boolean isMatch(String query, boolean allStores, String queryName);
+
+    /**
+     * Searches for working documents that have a discussion that involves current user
+     * @param fetchDocuments if true then document is fetched from repository. Otherwise a document object with set NodeRef is returned. 
+     * @return
+     */
+    List<Document> searchDiscussionDocuments(final boolean fetchDocuments);
 
 }

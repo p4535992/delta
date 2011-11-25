@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.docconfig.service;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,8 @@ public interface DocumentConfigService {
     DocumentConfig getSearchConfig();
 
     Pair<DocumentType, DocumentTypeVersion> getDocumentTypeAndVersion(Node documentDynamicNode);
+
+    void setUserContactProps(Map<QName, Serializable> props, String userName, String fieldId);
 
     PropertyDefinition getPropertyDefinition(Node node, QName property);
 

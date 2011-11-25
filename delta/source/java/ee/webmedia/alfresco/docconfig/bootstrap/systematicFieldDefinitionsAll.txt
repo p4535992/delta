@@ -29,7 +29,7 @@ control+shift+f
 ....
 
 <docadmin:fieldType>.*[a-z]+.*</docadmin:fieldType>
-otsida kas leidub mõni
+case-sensitive, otsida kas leidub mõni
 
  +<docadmin:systematicComment>\?\?\?</docadmin:systematicComment>\n
 

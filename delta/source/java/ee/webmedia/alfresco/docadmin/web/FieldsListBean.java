@@ -20,14 +20,17 @@ import javax.faces.model.SelectItem;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.util.Pair;
+import org.alfresco.web.ui.common.component.PickerSearchParams;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.base.BaseObject.ChildrenList;
 import ee.webmedia.alfresco.base.BaseService;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
+import ee.webmedia.alfresco.docadmin.service.CaseFileType;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
+import ee.webmedia.alfresco.docadmin.service.DynamicType;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
@@ -87,7 +90,11 @@ public class FieldsListBean implements DialogBlockBean<Void> {
         }
         NodeRef metaFieldRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
         MetadataItem removed = metadata.remove(metaFieldRef);
-        MessageUtil.addWarningMessage("docType_metadataList_remove_postponed_" + removed.getType());
+        BaseObject dynType = removed.getParent();
+        if (!(dynType instanceof DynamicType)) {
+            dynType = dynType.getParent();
+        }
+        MessageUtil.addWarningMessage("dynType_metadataList_remove_postponed_" + dynType.getNode().getType().getLocalName() + "_" + removed.getType());
     }
 
     /** JSP */
@@ -144,23 +151,25 @@ public class FieldsListBean implements DialogBlockBean<Void> {
      * This method is part of the contract to the Generic Picker, it is up to the backing bean
      * to execute whatever query is appropriate and return the results.
      * 
-     * @param filterIndex Index of the filter drop-down selection
-     * @param contains Text from the contains textBox
+     * @param params Search parameters
      * @return An array of SelectItem objects containing the results to display in the picker.
      */
-    public SelectItem[] searchFieldDefinitions(int filterIndex, String contains) {
+    public SelectItem[] searchFieldDefinitions(PickerSearchParams params) {
         Pair<List<String>, Boolean> res = getMissingFieldsOfSystematicFieldGroup();
         List<String> missingFieldsOfFieldGroup = res.getFirst();
         boolean isDocTypeDetailsViewOrNonSystematicFielsGroup = res.getSecond();
         List<FieldDefinition> fieldDefinitions;
-        if (StringUtils.isBlank(contains)) {
+        if (StringUtils.isBlank(params.getSearchString())) {
             fieldDefinitions = getDocumentAdminService().getFieldDefinitions();
         } else {
-            fieldDefinitions = getDocumentAdminService().searchFieldDefinitions(contains);
+            fieldDefinitions = getDocumentAdminService().searchFieldDefinitions(params.getSearchString());
         }
-        List<SelectItem> results = new ArrayList<SelectItem>(fieldDefinitions.size());
+        List<SelectItem> results = new ArrayList<SelectItem>(params.getLimit());
+
+        Class<? extends DynamicType> dynTypeClass = getDynTypeClass();
         for (FieldDefinition fieldDef : fieldDefinitions) {
-            if (isDocTypeDetailsViewOrNonSystematicFielsGroup && (fieldDef.isOnlyInGroup() || fieldDef.isMandatoryForDoc())) {
+            if (isDocTypeDetailsViewOrNonSystematicFielsGroup
+                    && (fieldDef.isOnlyInGroup() || fieldDef.isMandatoryForDynType(dynTypeClass) || fieldDef.isInapplicableForDynType(dynTypeClass))) {
                 continue;
             }
 
@@ -177,9 +186,23 @@ public class FieldsListBean implements DialogBlockBean<Void> {
             }
             selectItem.setDescription(getMessage("doc_types") + ": " + docTypesString);
             results.add(selectItem);
+            if (results.size() == params.getLimit()) {
+                break;
+            }
         }
         WebUtil.sort(results);
         return results.toArray(new SelectItem[results.size()]);
+    }
+
+    private Class<? extends DynamicType> getDynTypeClass() {
+        DocumentTypeVersion dynTypeVer = null;
+        if (metadataContainer instanceof FieldGroup) {
+            dynTypeVer = ((FieldGroup) metadataContainer).getParent();
+        } else {
+            dynTypeVer = (DocumentTypeVersion) metadataContainer;
+        }
+        Class<? extends DynamicType> dynTypeClass = dynTypeVer.getParent().getClass();
+        return dynTypeClass;
     }
 
     private Pair<List<String>, Boolean> getMissingFieldsOfSystematicFieldGroup() {
@@ -215,18 +238,19 @@ public class FieldsListBean implements DialogBlockBean<Void> {
      * This method is part of the contract to the Generic Picker, it is up to the backing bean
      * to execute whatever query is appropriate and return the results.
      * 
-     * @param filterIndex Index of the filter drop-down selection
-     * @param contains Text from the contains textBox
+     * @param params Search parameters
      * @return An array of SelectItem objects containing the results to display in the picker.
      */
-    public SelectItem[] searchFieldGroups(int filterIndex, String contains) {
+    public SelectItem[] searchFieldGroups(PickerSearchParams params) {
+        boolean isCaseFileType = ((DocumentTypeVersion) metadataContainer).getParent() instanceof CaseFileType;
+
         List<FieldGroup> fieldGrDefinitions;
-        if (StringUtils.isBlank(contains)) {
+        if (StringUtils.isBlank(params.getSearchString())) {
             fieldGrDefinitions = getDocumentAdminService().getFieldGroupDefinitions();
         } else {
-            fieldGrDefinitions = getDocumentAdminService().searchFieldGroupDefinitions(contains);
+            fieldGrDefinitions = getDocumentAdminService().searchFieldGroupDefinitions(params.getSearchString());
         }
-        List<SelectItem> results = new ArrayList<SelectItem>(fieldGrDefinitions.size());
+        List<SelectItem> results = new ArrayList<SelectItem>();
         outer: for (FieldGroup fieldGrDef : fieldGrDefinitions) {
             // XXX Alar: temporarily disallow more than one "Lepingu pooled" field definition to be added to document type
             if (fieldGrDef.getName().equals(SystematicFieldGroupNames.CONTRACT_PARTIES)) {
@@ -237,12 +261,21 @@ public class FieldsListBean implements DialogBlockBean<Void> {
                 }
             }
 
-            if (fieldGrDef.isMandatoryForDoc()) {
-                continue; // mandatory fields should have been already added
+            if (isCaseFileType) {
+                if (fieldGrDef.isMandatoryForVol() || fieldGrDef.isInapplicableForVol()) {
+                    continue; // mandatory fields should have been already added
+                }
+            } else {
+                if (fieldGrDef.isMandatoryForDoc() || fieldGrDef.isInapplicableForDoc()) {
+                    continue; // mandatory fields should have been already added
+                }
             }
             SelectItem selectItem = new SelectItem(fieldGrDef.getNodeRef().toString(), fieldGrDef.getName());
             selectItem.setDescription(getMessage("fieldDefinitions_list") + ": " + fieldGrDef.getAdditionalInfo());
             results.add(selectItem);
+            if (results.size() == params.getLimit()) {
+                break;
+            }
         }
         WebUtil.sort(results);
         return results.toArray(new SelectItem[results.size()]);

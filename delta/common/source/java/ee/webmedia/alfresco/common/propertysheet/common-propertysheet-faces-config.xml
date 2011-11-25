@@ -53,7 +53,12 @@
    <component>
       <component-type>ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent</component-type>
       <component-class>ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent</component-class>
-   </component>    
+   </component>
+   
+   <component>
+      <component-type>ee.webmedia.alfresco.common.propertysheet.customchildrencontainer.CustomChildrenContainer</component-type>
+      <component-class>ee.webmedia.alfresco.common.propertysheet.customchildrencontainer.CustomChildrenContainer</component-class>
+   </component>
 
    <converter>
       <converter-id>ee.webmedia.alfresco.common.propertysheet.converter.QNameConverter</converter-id>

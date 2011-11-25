@@ -23,6 +23,7 @@ import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
 import org.alfresco.web.ui.common.component.data.UIRichList;
+import org.alfresco.web.ui.common.tag.GenericPickerTag;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 
@@ -141,7 +142,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         picker.setWidth(400);
         picker.setMultiSelect(isMultiValued());
         String pickerCallback = (String) getAttributes().get(PICKER_CALLBACK_KEY);
-        MethodBinding b = getFacesContext().getApplication().createMethodBinding(pickerCallback, new Class[] { int.class, String.class });
+        MethodBinding b = getFacesContext().getApplication().createMethodBinding(pickerCallback, GenericPickerTag.QUERYCALLBACK_CLASS_ARGS);
         picker.setQueryCallback(b);
         picker.addActionListener(new PickerFinishActionListener());
 

@@ -42,6 +42,10 @@ public class FieldDefinition extends Field {
         return getPropList(DocumentAdminModel.Props.DOC_TYPES);
     }
 
+    public <D extends DynamicType> List<String> getUsedTypes(Class<D> dynTypeClass) {
+        return CaseFileType.class.isAssignableFrom(dynTypeClass) ? getVolTypes() : getDocTypes();
+    }
+
     public void setDocTypes(List<String> docTypes) {
         setPropList(DocumentAdminModel.Props.DOC_TYPES, docTypes);
     }
@@ -96,11 +100,29 @@ public class FieldDefinition extends Field {
         return getPropBoolean(DocumentAdminModel.Props.IS_FIXED_PARAMETER_IN_VOL_SEARCH);
     }
 
+    public boolean isInapplicableForDoc() {
+        return getPropBoolean(DocumentAdminModel.Props.INAPPLICABLE_FOR_DOC);
+    }
+
+    public boolean isInapplicableForVol() {
+        return getPropBoolean(DocumentAdminModel.Props.INAPPLICABLE_FOR_VOL);
+    }
+
     // END: properties that should not be changed
 
     @Override
     public FieldDefinition clone() {
         return (FieldDefinition) super.clone(); // just return casted type
+    }
+
+    public final <D extends DynamicType> boolean isInapplicableForDynType(Class<D> dynTypeClass) {
+        if (dynTypeClass == DocumentType.class) {
+            return isInapplicableForDoc();
+        } else if (dynTypeClass == CaseFileType.class) {
+            return isInapplicableForVol();
+        } else {
+            throw new RuntimeException("Unknown dynTypeClass " + dynTypeClass);
+        }
     }
 
 }

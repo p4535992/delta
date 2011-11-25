@@ -54,11 +54,13 @@ public interface NotificationModel {
         QName EXTERNAL_REVIEW_WORKFLOW_OWNER_ERROR = QName.createQName(URI, "externalReviewWorkflowOwnerError");
 
         QName DISCUSSION_INVITATION = QName.createQName(URI, "discussionInvitation");
+        QName SUBSTITUTION = QName.createQName(URI, "substitution");
 
         QName TASK_DUE_DATE_APPROACHING = QName.createQName(URI, "dueDateApproaching");
         QName TASK_DUE_DATE_EXCEEDED = QName.createQName(URI, "dueDateExceeded");
         QName VOLUME_DISPOSITION_DATE = QName.createQName(URI, "volumeDispositionDate");
         QName ACCESS_RESTRICTION_END_DATE = QName.createQName(URI, "accessRestrictionEndDate");
+        QName ACCESS_RESTRICTION_REASON_CHANGED = QName.createQName(URI, "accessRestrictionReasonChanged");
     }
 
 }

@@ -34,9 +34,9 @@
          </a:actionLink>
       </a:column>
 
-      <a:column id="documentTypeIdCol" primary="true">
+      <a:column id="idCol" primary="true">
          <f:facet name="header">
-            <a:sortLink id="documentTypeIdCol-sort" label="#{msg.document_type_id}" value="id" mode="case-insensitive" />
+            <a:sortLink id="idCol-sort" label="#{msg.document_type_id}" value="id" mode="case-insensitive" />
          </f:facet>
          <h:outputText value="#{type.id.localName}"/>
       </a:column>

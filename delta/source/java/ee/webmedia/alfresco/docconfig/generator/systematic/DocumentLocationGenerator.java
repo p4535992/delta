@@ -429,29 +429,31 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             if (seriesRef == null) {
                 volumes = null;
                 volumeRef = null;
-            } else if (updateAccessRestrictionProperties) {
-                if (ps == null) { // when metadata block is first rendered
-                    updateAccessRestrictionProperties(seriesRef);
-                } else { // when value change event is fired
-                    final NodeRef finalSeriesRef = seriesRef;
-                    ActionEvent event = new ActionEvent(ps) {
-                        private static final long serialVersionUID = 1L;
+            } else {
+                if (updateAccessRestrictionProperties) {
+                    if (ps == null) { // when metadata block is first rendered
+                        updateAccessRestrictionProperties(seriesRef);
+                    } else { // when value change event is fired
+                        final NodeRef finalSeriesRef = seriesRef;
+                        ActionEvent event = new ActionEvent(ps) {
+                            private static final long serialVersionUID = 1L;
 
-                        boolean notExecuted = true;
+                            boolean notExecuted = true;
 
-                        @Override
-                        public void processListener(FacesListener faceslistener) {
-                            notExecuted = false;
-                            updateAccessRestrictionProperties(finalSeriesRef);
-                        }
+                            @Override
+                            public void processListener(FacesListener faceslistener) {
+                                notExecuted = false;
+                                updateAccessRestrictionProperties(finalSeriesRef);
+                            }
 
-                        @Override
-                        public boolean isAppropriateListener(FacesListener faceslistener) {
-                            return notExecuted;
-                        }
-                    };
-                    event.setPhaseId(PhaseId.INVOKE_APPLICATION);
-                    ps.queueEvent(event);
+                            @Override
+                            public boolean isAppropriateListener(FacesListener faceslistener) {
+                                return notExecuted;
+                            }
+                        };
+                        event.setPhaseId(PhaseId.INVOKE_APPLICATION);
+                        ps.queueEvent(event);
+                    }
                 }
 
                 List<Volume> allVolumes;

@@ -4,6 +4,7 @@ import java.util.Map;
 
 import javax.faces.component.UIComponentBase;
 import javax.faces.context.FacesContext;
+import javax.faces.el.MethodBinding;
 import javax.faces.event.AbortProcessingException;
 import javax.faces.event.ActionEvent;
 import javax.faces.event.ActionListener;
@@ -50,9 +51,7 @@ public class UIMenuComponent extends UIComponentBase {
             // Clear the view stack, otherwise it would grow too big as the cancel button is hidden in some views
             // Later in the life-cycle the view where this action came from is added to the stack, so visible cancel buttons will function properly
             // We mustn't clear the stack and therefore reset breadcrumb for browse MenuItems
-            if ((!(link.getActionListener() != null && link.getActionListener().getExpressionString() != null && link.getActionListener().getExpressionString()
-                    .equals(MenuBean.UPDATE_TREE_ACTTIONLISTENER)) && !createNewDocument) || forceReset) {
-                Utils.setRequestValidationDisabled(context); // Disable validation if user is navigating away
+            if ((!isUpdateTreeActionListener(link) && !createNewDocument) || forceReset) {
                 MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME);
                 MenuBean.clearViewStack(menuBean.getActiveItemId(), clientId);
             }
@@ -83,13 +82,18 @@ public class UIMenuComponent extends UIComponentBase {
                 menuBean.processTaskItems(); // When user registers a doc, changes must reflect in admin session.
             }
 
-            // When creating new document, don't reset
-            if (activeId.startsWith(MenuBean.CREATE_NEW_DOCUMENT + VALUE_SEPARATOR)) {
+            boolean forceReset = link.getAttributes().get(DropdownMenuItem.ATTRIBUTE_XPATH) != null;
+            if (!isUpdateTreeActionListener(link) || forceReset) {
                 Utils.setRequestValidationDisabled(context); // Disable validation if user is navigating away
             }
 
         }
         super.queueEvent(event);
+    }
+
+    private static boolean isUpdateTreeActionListener(UIActionLink link) {
+        MethodBinding actionListener = link.getActionListener();
+        return actionListener != null && MenuBean.UPDATE_TREE_ACTTIONLISTENER.equals(actionListener.getExpressionString());
     }
 
     // TODO - Currently saveState and restoreState aren't working properly. I.e. the active item id isn't returned correctly.

@@ -6,6 +6,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPropertySheetStateBean;
 import static ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGenerator.ACCESS_RESTRICTION_CHANGE_REASON_ERROR;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -13,10 +14,14 @@ import java.util.Map;
 
 import javax.faces.application.Application;
 import javax.faces.component.UIComponent;
+import javax.faces.component.UIInput;
 import javax.faces.component.UIPanel;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.model.ContentModel;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
@@ -54,6 +59,7 @@ import ee.webmedia.alfresco.utils.MessageDataWrapper;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
+import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 
 /**
@@ -74,6 +80,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
 
     public static final String BEAN_NAME = "DocumentDynamicDialog";
     private String renderedModal;
+    private boolean showConfirmationPopup;
 
     // TODO lemmiku tegevus katki? kas foorumi tegevused töötavad?
     // TODO kontrollida et kustutatud dokumendi ekraanile tagasipöördumine töötaks... või tahavad teised blokid laadida uuesti asju? ja siis oleks mõtekam dialoogi mitte kuvada?
@@ -156,6 +163,53 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         return getCurrentSnapshot().showDocsAndCasesAssocs;
     }
 
+    public boolean isIncomingInvoice() {
+        return getDocument().isIncomingInvoice();
+    }
+
+    /**
+     * Should be called only when the document was received from DVK or Outlook.
+     */
+    public void selectedDocumentTypeChanged(ActionEvent event) {
+        String newType = (String) ((UIInput) event.getComponent().findComponent("doc-types-select")).getValue();
+        if (StringUtils.isBlank(newType)) {
+            return;
+        }
+        DocumentDynamic document = getDocument();
+        if (document.getDocumentTypeId().equals(newType)) {
+            return;
+        }
+        BeanHelper.getDocumentDynamicService().changeTypeInMemory(getDocument(), newType);
+        openOrSwitchModeCommon(document, true);
+        setOwnerCurrentUser();
+    }
+
+    /** Used in jsp */
+    public String getOnChangeStyleClass() {
+        return ComponentUtil.getOnChangeStyleClass();
+    }
+
+    public void setOwnerCurrentUser() {
+        setOwner(AuthenticationUtil.getRunAsUser());
+    }
+
+    public void setOwner(String userName) {
+        Map<QName, Serializable> personProps = getPersonProps(userName);
+
+        Map<String, Object> docProps = getDocument().getNode().getProperties();
+        docProps.put(DocumentCommonModel.Props.OWNER_ID.toString(), personProps.get(ContentModel.PROP_USERNAME));
+        docProps.put(DocumentCommonModel.Props.OWNER_NAME.toString(), UserUtil.getPersonFullName1(personProps));
+        docProps.put(DocumentCommonModel.Props.OWNER_JOB_TITLE.toString(), personProps.get(ContentModel.PROP_JOBTITLE));
+        String orgstructName = BeanHelper.getOrganizationStructureService().getOrganizationStructure((String) personProps.get(ContentModel.PROP_ORGID));
+        docProps.put(DocumentCommonModel.Props.OWNER_ORG_STRUCT_UNIT.toString(), orgstructName);
+        docProps.put(DocumentCommonModel.Props.OWNER_EMAIL.toString(), personProps.get(ContentModel.PROP_EMAIL));
+        docProps.put(DocumentCommonModel.Props.OWNER_PHONE.toString(), personProps.get(ContentModel.PROP_TELEPHONE));
+    }
+
+    private Map<QName, Serializable> getPersonProps(String userName) {
+        return BeanHelper.getUserService().getUserProperties(userName);
+    }
+
     // =========================================================================
 
     static class DocDialogSnapshot implements BaseSnapshotCapableDialog.Snapshot {
@@ -221,6 +275,12 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             currentSnapshot.document = document;
 
             // TODO Alar: refactor subnode logic
+
+            // Lock or unlock the node also
+            getDocumentDialogHelperBean().reset(getDataProvider());
+            DocumentLockHelperBean documentLockHelperBean = BeanHelper.getDocumentLockHelperBean();
+            documentLockHelperBean.lockOrUnlockIfNeeded(documentLockHelperBean.isLockingAllowed(inEditMode));
+
             List<Node> subNodeList = currentSnapshot.document.getNode().getAllChildAssociations(DocumentCommonModel.Types.METADATA_CONTAINER);
             if (subNodeList != null) {
                 for (Node subNode : subNodeList) {
@@ -240,6 +300,8 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Document before rendering: " + getDocument());
             }
+        } catch (NodeLockedException e) {
+            BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_validation_alreadyLocked");
         } catch (UnableToPerformException e) {
             throw e;
         } catch (UnableToPerformMultiReasonException e) {
@@ -294,6 +356,16 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         switchMode(true);
     }
 
+    public void sendAccessRestrictionChangedEmails(ActionEvent event) {
+        DocumentDynamic document = getDocument();
+        BeanHelper.getNotificationService().processAccessRestrictionChangedNotification(document, BeanHelper.getSendOutService().getDocumentSendInfos(document.getNodeRef()));
+        cancel();
+    }
+
+    public String cancel(ActionEvent event) {
+        return cancel();
+    }
+
     @Override
     public String cancel() {
         if (getCurrentSnapshot() == null) {
@@ -318,9 +390,10 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             throw new RuntimeException("Document metadata block is not in edit mode");
         }
 
+        DocumentDynamic savedDocument = null;
         try {
             // May throw UnableToPerformException or UnableToPerformMultiReasonException
-            getDocumentDynamicService().updateDocument(getDocument(), getConfig().getSaveListenerBeanNames());
+            savedDocument = getDocumentDynamicService().updateDocument(getDocument(), getConfig().getSaveListenerBeanNames());
         } catch (UnableToPerformMultiReasonException e) {
             if (!handleAccessRestrictionChange(e)) {
                 return null;
@@ -330,6 +403,14 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             throw e;
         }
 
+        if (savedDocument.isAccessRestrictionPropsChanged()) {
+            isFinished = false;
+            // modal has already been displayed, if displaying was necessary
+            renderedModal = null;
+            // confirmation popup shall be displayed
+            showConfirmationPopup = true;
+            return null;
+        }
         // Switch from edit mode back to view mode
         switchMode(false);
         return null;
@@ -380,6 +461,10 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         }
         return getCurrentSnapshot().inEditMode && searchBlockBean.isShow() && !searchBlockBean.isFoundSimilar()
                 && (getDocument().isImapOrDvk() && !getDocument().isNotEditable());
+    }
+
+    public boolean isShowTypeBlock() {
+        return getCurrentSnapshot().inEditMode && getDocument().isImapOrDvk() && !getDocument().isNotEditable();
     }
 
     // =========================================================================
@@ -551,7 +636,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
 
     private void resetModals() {
         renderedModal = null;
-
+        showConfirmationPopup = false;
         // Add favorite modal component
         FavoritesModalComponent favoritesModal = new FavoritesModalComponent();
         final FacesContext context = FacesContext.getCurrentInstance();
@@ -568,6 +653,14 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         children.clear();
         children.add(favoritesModal);
         children.add(reasonModal);
+    }
+
+    public boolean isShowConfirmationPopup() {
+        return showConfirmationPopup;
+    }
+
+    public String getAccessRestrictionChangedMsg() {
+        return MessageUtil.getMessage("document_access_restriction_changed_confirmation");
     }
 
     @Override

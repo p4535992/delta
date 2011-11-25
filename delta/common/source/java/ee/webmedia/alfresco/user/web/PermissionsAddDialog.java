@@ -45,7 +45,10 @@ public class PermissionsAddDialog extends BaseDialogBean {
         nodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
         permission = ActionUtil.getParam(event, "permission");
         if (ActionUtil.hasParam(event, "dialogTitleId")) {
-            dialogTitleId = ActionUtil.getParam(event, "dialogTitleId");
+            String param = ActionUtil.getParam(event, "dialogTitleId");
+            if (param != null && !param.equals("null")) {
+                dialogTitleId = param;
+            }
         }
     }
 
@@ -60,7 +63,7 @@ public class PermissionsAddDialog extends BaseDialogBean {
         if (StringUtils.isNotBlank(dialogTitleId)) {
             return MessageUtil.getMessage(dialogTitleId);
         }
-        return "manage_invited_users";
+        return MessageUtil.getMessage("manage_invited_users");
     }
 
     @Override

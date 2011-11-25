@@ -53,10 +53,12 @@ import org.alfresco.web.bean.groups.GroupsDialog.UserAuthorityDetails;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.ui.common.SortableSelectItem;
 import org.alfresco.web.ui.common.Utils;
+import org.alfresco.web.ui.common.component.PickerSearchParams;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
 import org.apache.lucene.search.BooleanQuery;
 
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
  * Implementation of the add user dialog.
@@ -205,7 +207,7 @@ public class AddUsersDialog extends BaseDialogBean
     * @return An array of SelectItem objects containing the results to display
     *         in the picker.
     */
-   public SelectItem[] pickerCallback(int filterIndex, final String contains)
+   public SelectItem[] pickerCallback(final PickerSearchParams params)
    {
       final FacesContext context = FacesContext.getCurrentInstance();
 
@@ -220,14 +222,11 @@ public class AddUsersDialog extends BaseDialogBean
                SelectItem[] items;
 
                // Use lucene search to retrieve user details
-               String term = LuceneQueryParser.escape(contains.trim());
+               String term = LuceneQueryParser.escape(params.getSearchString().trim());
                StringBuilder query = new StringBuilder(128);
                Utils.generatePersonSearch(query, term);
                List<NodeRef> nodes;
-               ResultSet resultSet = Repository.getServiceRegistry(context).getSearchService().query(
-                       Repository.getStoreRef(),
-                       SearchService.LANGUAGE_LUCENE,
-                       query.toString());
+               ResultSet resultSet = Repository.getServiceRegistry(context).getSearchService().query(SearchUtil.generateLuceneSearchParams(query.toString(), Repository.getStoreRef(), params.getLimit()));
                try
                {
                   nodes = resultSet.getNodeRefs();

@@ -32,15 +32,17 @@ public interface DocumentAdminService {
     /**
      * @return all document type objects from repository
      */
-    List<DocumentType> getDocumentTypes(DocTypeLoadEffort effort);
+    List<DocumentType> getDocumentTypes(DynTypeLoadEffort effort);
+
+    <T extends DynamicType> List<T> getTypes(Class<T> typeClass, DynTypeLoadEffort effort);
 
     /**
      * @param used
      * @return all document type objects from repository with used property equal to argument
      */
-    List<DocumentType> getDocumentTypes(DocTypeLoadEffort effort, boolean used);
+    List<DocumentType> getDocumentTypes(DynTypeLoadEffort effort, boolean used);
 
-    DocumentType getDocumentType(String id, DocTypeLoadEffort effort);
+    DocumentType getDocumentType(String id, DynTypeLoadEffort effort);
 
     Pair<DocumentType, DocumentTypeVersion> getDocumentTypeAndVersion(String docTypeId, Integer docTypeVersionNr);
 
@@ -51,22 +53,11 @@ public interface DocumentAdminService {
      */
     <T> T getDocumentTypeProperty(String docTypeId, QName property, Class<T> returnClass);
 
-    /**
-     * Returns documentType with given NodeRef.
-     * 
-     * @param docTypeRef nodeRef of the document type.
-     * @param effort - how much children to load
-     * @return null or found document type FIXME DLSeadist - Kui kõik süsteemsed dok.liigid on defineeritud, siis võib null kontrolli ja tagastamise eemdaldada
-     */
-    DocumentType getDocumentType(NodeRef docTypeRef, DocTypeLoadEffort effort);
-
     String getDocumentTypeName(String documentTypeId);
 
     String getDocumentTypeName(Node document);
 
     Map<String/* docTypeId */, String/* docTypeName */> getDocumentTypeNames(Boolean used);
-
-    NodeRef getDocumentTypesRoot();
 
     /**
      * Update properties or save new document type.
@@ -77,13 +68,29 @@ public interface DocumentAdminService {
      */
     Pair<DocumentType, MessageData> saveOrUpdateDocumentType(DocumentType docType);
 
-    DocumentType createNewUnSaved();
+    /**
+     * Returns {@link DynamicType} with given NodeRef.
+     * 
+     * @param <D> subclass of {@link DynamicType}
+     * @param dynTypeClass - subclass of DynamicType that this returnable object is expected to be
+     * @param dynTypeRef - object reference
+     * @param effort - how much children to load
+     * @return null or found document type
+     *         FIXME DLSeadist - Kui kõik süsteemsed dok.liigid on defineeritud, siis võib null kontrolli ja tagastamise eemdaldada
+     */
+    <D extends DynamicType> D getDynamicType(Class<D> dynTypeClass, NodeRef dynTypeRef, DynTypeLoadEffort effort);
+
+    <D extends DynamicType> Pair<D, MessageData> saveOrUpdateDynamicType(D docType);
+
+    <D extends DynamicType> D createNewUnSavedDynamicType(Class<D> dynamicTypeClass);
+
+    <D extends DynamicType> NodeRef getDynamicTypesRoot(Class<D> dynTypeClass);
 
     FieldDefinition createNewUnSavedFieldDefinition();
 
-    void deleteDocumentType(NodeRef docTypeRef);
+    void deleteDynamicType(NodeRef dynTypeRef);
 
-    void importDocumentTypes(File xmlFile);
+    <D extends DynamicType> void importDynamicTypes(File xmlFile, Class<D> dynTypeClass);
 
     <F extends Field> F saveOrUpdateField(F originalFieldDef);
 
@@ -122,6 +129,8 @@ public interface DocumentAdminService {
     /** @return true if at least one document is created based on this documentType */
     boolean isDocumentTypeUsed(String documentTypeId);
 
+    boolean isCaseFileTypeUsed(String caseFileTypeId);
+
     AssociationModel saveOrUpdateAssocToDocType(AssociationModel associationModel);
 
     void deleteAssocToDocType(NodeRef assocRef);
@@ -149,41 +158,47 @@ public interface DocumentAdminService {
 
     @SuppressWarnings("unchecked")
     /** It can be used to load DocumentType and first level childNodes */
-    DocTypeLoadEffort DOC_TYPE_WITH_OUT_GRAND_CHILDREN = new DocTypeLoadEffort().setReturnChildrenByParent(DocumentType.class);
+    DynTypeLoadEffort DOC_TYPE_WITH_OUT_GRAND_CHILDREN = new DynTypeLoadEffort().setReturnChildrenByParent(DynamicType.class);
 
     /** It can be used to load DocumentType and first level childNodes plus all children of latest {@link DocumentTypeVersion} */
-    DocTypeLoadEffort DOC_TYPE_WITH_OUT_GRAND_CHILDREN_EXEPT_LATEST_DOCTYPE_VER = new DocTypeLoadEffort().setReturnLatestDocTypeVersionChildren();
+    DynTypeLoadEffort DOC_TYPE_WITH_OUT_GRAND_CHILDREN_EXEPT_LATEST_DOCTYPE_VER = new DynTypeLoadEffort().setReturnLatestDynTypeVersionChildren();
 
     /** DocumentType without fetching children of older {@link DocumentTypeVersion} nodes */
-    DocTypeLoadEffort DOC_TYPE_WITHOUT_OLDER_DT_VERSION_CHILDREN = new DocTypeLoadEffort() {
+    DynTypeLoadEffort DOC_TYPE_WITHOUT_OLDER_DT_VERSION_CHILDREN = new DynTypeLoadEffort() {
         @Override
         public boolean isReturnChildren(BaseObject parent) {
             // everything except children of DocumentTypeVersion
             return (parent instanceof DocumentTypeVersion) ? false : true;
         }
-    }.setReturnLatestDocTypeVersionChildren(); // ... except children of latestDocTypeVersion
+    }.setReturnLatestDynTypeVersionChildren(); // ... except children of latestDocTypeVersion
 
     /** It can be used to load DocumentType without any child nodes */
-    DocTypeLoadEffort DONT_INCLUDE_CHILDREN = new DocTypeLoadEffort() {
+    DynTypeLoadEffort DONT_INCLUDE_CHILDREN = new DynTypeLoadEffort() {
         @Override
         public boolean isReturnChildren(BaseObject parent) {
             return false;
         }
     };
 
-    public static class DocTypeLoadEffort implements Effort {
+    public static class DynTypeLoadEffort implements Effort {
         private Set<Class<? extends BaseObject>> isReturnChildrenByParent;
         private boolean returnLatestDocTypeVersionChildren;
 
         @Override
         public boolean isReturnChildren(BaseObject parent) {
             if (isReturnChildrenByParent != null) {
-                return isReturnChildrenByParent.contains(parent.getClass());
+                Class<? extends BaseObject> parentClass = parent.getClass();
+                for (Class<? extends BaseObject> returnChildrenByParent : isReturnChildrenByParent) {
+                    if (returnChildrenByParent.isAssignableFrom(parentClass)) {
+                        return true;
+                    }
+                }
+                return false;
             }
             throw new RuntimeException("Unimplemented");
         }
 
-        public DocTypeLoadEffort setReturnChildrenByParent(Class<? extends BaseObject>... classes) {
+        public DynTypeLoadEffort setReturnChildrenByParent(Class<? extends BaseObject>... classes) {
             if (isReturnChildrenByParent == null) {
                 isReturnChildrenByParent = new HashSet<Class<? extends BaseObject>>(classes.length);
             }
@@ -193,17 +208,17 @@ public interface DocumentAdminService {
             return this;
         }
 
-        public DocTypeLoadEffort setReturnLatestDocTypeVersionChildren() {
+        public DynTypeLoadEffort setReturnLatestDynTypeVersionChildren() {
             returnLatestDocTypeVersionChildren = true;
             // to return children of latest DocumentTypeVersion, we must load children of DocumentType where DocumentTypeVersion's are
             if (isReturnChildrenByParent == null) {
                 isReturnChildrenByParent = new HashSet<Class<? extends BaseObject>>(3);
             }
-            isReturnChildrenByParent.add(DocumentType.class);
+            isReturnChildrenByParent.add(DynamicType.class);
             return this;
         }
 
-        public boolean isReturnLatestDocTypeVersionChildren() {
+        public boolean isReturnLatestDynTypeVersionChildren() {
             return returnLatestDocTypeVersionChildren;
         }
 

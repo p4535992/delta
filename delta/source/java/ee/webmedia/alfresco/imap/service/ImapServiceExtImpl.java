@@ -507,13 +507,19 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
         CollectionUtils.filter(folders, new Predicate() {
             @Override
             public boolean evaluate(Object o) {
-                MailFolder folder = (MailFolder) o;
+                AlfrescoImapFolder folder = (AlfrescoImapFolder) o;
+                QName parentType = nodeService.getType(folder.getFolderInfo().getNodeRef());
+                if (ImapModel.Types.IMAP_FOLDER.equals(parentType)) {
+                    // this is subfolder, display rights are checked for main folders
+                    return true;
+                }
                 if (getAllowedFolders().contains(folder.getName())) {
                     if (folder.getName().equals(getIncomingInvoiceFolderName())) {
                         return einvoiceService.isEinvoiceEnabled();
                     }
                     return true;
                 }
+
                 return false;
             }
         });

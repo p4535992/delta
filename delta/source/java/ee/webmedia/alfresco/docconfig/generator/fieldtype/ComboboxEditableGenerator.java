@@ -6,7 +6,6 @@ import java.util.List;
 import org.alfresco.web.ui.repo.RepoConstants;
 
 import ee.webmedia.alfresco.classificator.constant.FieldType;
-import ee.webmedia.alfresco.classificator.model.Classificator;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
@@ -34,8 +33,7 @@ public class ComboboxEditableGenerator extends BaseTypeFieldGenerator {
             // Only "case" field should have this special case
             values = Collections.emptyList();
         } else {
-            final Classificator classificator = classificatorService.getClassificatorByName(field.getClassificator());
-            values = classificatorService.getAllClassificatorValues(classificator);
+            values = classificatorService.getAllClassificatorValues(field.getClassificator());
         }
         if (values.isEmpty()) {
             item.setComponentGenerator(RepoConstants.GENERATOR_TEXT_AREA);

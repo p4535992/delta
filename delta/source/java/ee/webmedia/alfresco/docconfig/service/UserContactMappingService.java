@@ -1,7 +1,6 @@
 package ee.webmedia.alfresco.docconfig.service;
 
 import java.io.Serializable;
-import java.util.List;
 import java.util.Map;
 
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -43,14 +42,7 @@ public interface UserContactMappingService {
      * @param fieldIdsMapping
      * @param userOrContactRef nodeRefAsString of user or contact
      */
-    void setMappedValues(Map<String, Object> props, Map<QName, UserContactMappingCode> fieldIdsMapping, NodeRef userOrContactRef, boolean multiValued);
-
-    /**
-     * @param mappingCodes
-     * @param userOrContactRef nodeRef of user or contact
-     * @return list with same number of elements as mappingCodes; or {@code null} if result does not exist
-     */
-    List<String> getMappedValues(List<UserContactMappingCode> mappingCodes, NodeRef userOrContactRef);
+    void setMappedValues(Map<QName, Serializable> props, Map<QName, UserContactMappingCode> fieldIdsMapping, NodeRef userOrContactRef, boolean multiValued);
 
     /**
      * @param fieldIdsMapping

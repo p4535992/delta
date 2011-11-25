@@ -48,8 +48,10 @@ public interface OrganizationStructureService {
 
     /**
      * Find organization structures by name. If input is empty, all organization structures are returned.
+     * 
+     * @param limit
      */
-    List<OrganizationStructure> searchOrganizationStructures(String input);
+    List<OrganizationStructure> searchOrganizationStructures(String input, int limit);
 
     /**
      * Sets correct and up to date unit name for users, based on data found in organization structure list.

@@ -155,10 +155,20 @@ public class FieldGroup extends FieldAndGroupBase implements MetadataContainer {
         setProp(DocumentAdminModel.Props.SHOW_IN_TWO_COLUMNS_CHANGEABLE, showInTwoColumnsChangeable);
     }
 
+    // START: properties needed only for fieldGroup stored under fieldGroupDefinitions
     public List<String> getFieldDefinitionIds() {
         return getPropList(DocumentAdminModel.Props.FIELD_DEFINITIONS_IDS);
     }
 
+    public boolean isInapplicableForDoc() {
+        return getPropBoolean(DocumentAdminModel.Props.INAPPLICABLE_FOR_DOC);
+    }
+
+    public boolean isInapplicableForVol() {
+        return getPropBoolean(DocumentAdminModel.Props.INAPPLICABLE_FOR_VOL);
+    }
+
+    // END: properties needed only for fieldGroup stored under fieldGroupDefinitions
     // END: properties
 
     @Override

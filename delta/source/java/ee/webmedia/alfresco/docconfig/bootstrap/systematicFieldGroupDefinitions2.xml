@@ -8,6 +8,7 @@
          <docadmin:readonlyFieldsNameChangeable>false</docadmin:readonlyFieldsNameChangeable>
          <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
          <docadmin:showInTwoColumns>true</docadmin:showInTwoColumns>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
          <docadmin:fieldDefinitionIds>
             <view:values>
                <view:value>partyName</view:value>
@@ -24,6 +25,7 @@
          <docadmin:name>Esimese lepingu poole kontaktisik</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:showInTwoColumns>true</docadmin:showInTwoColumns>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
          <docadmin:fieldDefinitionIds>
             <view:values>
                <view:value>firstPartyContactPersonName</view:value>

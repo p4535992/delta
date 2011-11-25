@@ -45,7 +45,10 @@ import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.ajax.AjaxUpdateable;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.utils.ComponentUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * @author Kevin Roast
@@ -66,6 +69,7 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
     /** I18N message strings */
     private final static String MSG_SEARCH = "search";
     private final static String MSG_CLEAR = "clear";
+    private final static String MSG_MODAL_SEARCH_LIMITED = "modal_search_limited";
     private final static String MSG_ADD = "add";
     private final static String MSG_RESULTS1 = "results_contains";
     private final static String MSG_RESULTS2 = "results_contains_filter";
@@ -246,8 +250,8 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
                 MethodBinding callback = getQueryCallback();
                 if (callback != null) {
                     // use reflection to execute the query callback method and retrieve results
-                    Object result = callback.invoke(getFacesContext(), new Object[] {
-                            filterIndex, contains.trim() });
+                    Object result = callback.invoke(getFacesContext(), new Object[] { new PickerSearchParams(filterIndex, contains.trim(),
+                            BeanHelper.getParametersService().getLongParameter(Parameters.MAX_MODAL_SEARCH_RESULT_ROWS).intValue()) });
 
                     if (result instanceof SelectItem[]) {
                         currentResults = (SelectItem[]) result;
@@ -338,7 +342,7 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
             }
             out.write(" name='");
             out.write(clientId + FIELD_CONTAINS);
-            out.write("' type='text' class=\"genericpicker-input\" maxlength='256' style='width:120px' value=\"");
+            out.write("' type='text' class=\"genericpicker-input focus\" maxlength='256' style='width:120px' value=\"");
             out.write(Utils.encode(contains));
             out.write("\">&nbsp;");
         }
@@ -351,6 +355,13 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
         out.write("</button>");
         out.write("</td></tr>");
 
+        int size = getSize();
+        if (size == BeanHelper.getParametersService().getLongParameter(Parameters.MAX_MODAL_SEARCH_RESULT_ROWS).intValue()) {
+            out.write("<tr><td>");
+            out.write(Utils.encode(MessageUtil.getMessage(MSG_MODAL_SEARCH_LIMITED, size)));
+            out.write("</td></tr>");
+        }
+
         // information row
         if (currentResults != null && getShowContains() == true) {
             out.write("<tr><td>");
@@ -361,7 +372,6 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
             out.write("</a></td></tr>");
         }
 
-        int size = getSize();
         // results list row
         out.write("<tr");
         if (size < 1) {

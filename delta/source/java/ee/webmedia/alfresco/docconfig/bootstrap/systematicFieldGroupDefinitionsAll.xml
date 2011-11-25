@@ -4,7 +4,7 @@
    <!-- TODO käsitsi muuta view:childName igal fieldGroup'il -->
    <!-- fieldGroup childName is not used anywhere, it is specified only for convenience -->
 
-   <docadmin:fieldGroup view:childName="docadmin:Hankija">
+   <docadmin:fieldGroup view:childName="docadmin:supplier">
       <view:properties>
          <docadmin:name>Hankija</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
@@ -12,6 +12,7 @@
          <docadmin:readonlyFieldsRule>{sellerPartyName}, {sellerPartyRegNumber} SAPi kood: {sellerPartySapAccount}</docadmin:readonlyFieldsRule>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
          <docadmin:fieldDefinitionIds>
             <view:values>
                <view:value>sellerPartyName</view:value>
@@ -22,7 +23,7 @@
       </view:properties>
    </docadmin:fieldGroup>
 
-   <docadmin:fieldGroup view:childName="docadmin:Hankija kontaktisik">
+   <docadmin:fieldGroup view:childName="docadmin:supplierContact">
       <view:properties>
          <docadmin:name>Hankija kontaktisik</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
@@ -30,6 +31,7 @@
          <docadmin:readonlyFieldsRule>{sellerPartyContactName}, {sellerPartyContactPhoneNumber}, {sellerPartyContactEmailAddress}</docadmin:readonlyFieldsRule>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
          <docadmin:fieldDefinitionIds>
             <view:values>
                <view:value>sellerPartyContactName</view:value>
@@ -40,13 +42,14 @@
       </view:properties>
    </docadmin:fieldGroup>
 
-   <docadmin:fieldGroup view:childName="docadmin:Arve kuupäev ja number">
+   <docadmin:fieldGroup view:childName="docadmin:invoiceDateAndNumber">
       <view:properties>
          <docadmin:name>Arve kuupäev ja number</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:readonlyFieldsName>Arve nr ja kpv</docadmin:readonlyFieldsName>
          <docadmin:readonlyFieldsRule>{invoiceNumber}, {invoiceDate}</docadmin:readonlyFieldsRule>
          <docadmin:showInTwoColumns>true</docadmin:showInTwoColumns>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
          <docadmin:fieldDefinitionIds>
             <view:values>
                <view:value>invoiceDate</view:value>
@@ -56,13 +59,14 @@
       </view:properties>
    </docadmin:fieldGroup>
 
-   <docadmin:fieldGroup view:childName="docadmin:Maksetähtaeg">
+   <docadmin:fieldGroup view:childName="docadmin:invoiceDueDate">
       <view:properties>
          <docadmin:name>Maksetähtaeg</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:readonlyFieldsName>Maksetähtaeg</docadmin:readonlyFieldsName>
          <docadmin:readonlyFieldsRule>{invoiceDueDate}, {paymentTerm}</docadmin:readonlyFieldsRule>
          <docadmin:showInTwoColumns>true</docadmin:showInTwoColumns>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
          <docadmin:fieldDefinitionIds>
             <view:values>
                <view:value>invoiceDueDate</view:value>
@@ -72,13 +76,14 @@
       </view:properties>
    </docadmin:fieldGroup>
 
-   <docadmin:fieldGroup view:childName="docadmin:Arve koondsumma">
+   <docadmin:fieldGroup view:childName="docadmin:totalSum">
       <view:properties>
          <docadmin:name>Arve koondsumma</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:readonlyFieldsName>Arve koondsumma</docadmin:readonlyFieldsName>
          <docadmin:readonlyFieldsRule>{totalSum} {currency}, millest summa käibemaksuta: {invoiceSum} {currency} ja käibemaks {vat} {currency}</docadmin:readonlyFieldsRule>
          <docadmin:showInTwoColumns>true</docadmin:showInTwoColumns>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
          <docadmin:fieldDefinitionIds>
             <view:values>
                <view:value>totalSum</view:value>
@@ -90,13 +95,14 @@
       </view:properties>
    </docadmin:fieldGroup>
 
-   <docadmin:fieldGroup view:childName="docadmin:Kande kuupäev ja number SAPis">
+   <docadmin:fieldGroup view:childName="docadmin:entryDateAndSapNumber">
       <view:properties>
          <docadmin:name>Kande kuupäev ja number SAPis</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:readonlyFieldsName>Kande kpv ja nr SAPis</docadmin:readonlyFieldsName>
          <docadmin:readonlyFieldsRule>{entryDate}, {entrySapNumber}</docadmin:readonlyFieldsRule>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
          <docadmin:fieldDefinitionIds>
             <view:values>
                <view:value>entryDate</view:value>
@@ -106,7 +112,7 @@
       </view:properties>
    </docadmin:fieldGroup>
 
-   <docadmin:fieldGroup view:childName="docadmin:Koolituse taotleja">
+   <docadmin:fieldGroup view:childName="docadmin:trainingApplicant">
       <view:properties>
          <docadmin:name>Koolituse taotleja</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
@@ -114,6 +120,7 @@
          <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
          <docadmin:fieldDefinitionIds>
             <view:values>
                <view:value>applicantName</view:value>
@@ -148,7 +155,7 @@
       </view:properties>
    </docadmin:fieldGroup>
 
-   <docadmin:fieldGroup view:childName="docadmin:Siselähetuse taotleja">
+   <docadmin:fieldGroup view:childName="docadmin:errandDomesticApplicant">
       <view:properties>
          <docadmin:name>Siselähetuse taotleja</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
@@ -156,6 +163,7 @@
          <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
          <docadmin:fieldDefinitionIds>
             <view:values>
                <view:value>applicantName</view:value>
@@ -195,7 +203,7 @@
       </view:properties>
    </docadmin:fieldGroup>
 
-   <docadmin:fieldGroup view:childName="docadmin:Välislähetuse taotleja">
+   <docadmin:fieldGroup view:childName="docadmin:errandAbroadApplicant">
       <view:properties>
          <docadmin:name>Välislähetuse taotleja</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
@@ -203,6 +211,7 @@
          <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
          <docadmin:fieldDefinitionIds>
             <view:values>
                <view:value>applicantName</view:value>
@@ -268,7 +277,7 @@
       </view:properties>
    </docadmin:fieldGroup>
 
-   <docadmin:fieldGroup view:childName="docadmin:Lähetuse kulud">
+   <docadmin:fieldGroup view:childName="docadmin:errandExpenses">
       <view:properties>
          <docadmin:name>Lähetuse kulud</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
@@ -276,6 +285,7 @@
          <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
          <docadmin:fieldDefinitionIds>
             <view:values>
                <view:value>expenseTypeChoice</view:value>
@@ -287,7 +297,7 @@
       </view:properties>
    </docadmin:fieldGroup>
 
-   <docadmin:fieldGroup view:childName="docadmin:Lähetuse kulude aruanne">
+   <docadmin:fieldGroup view:childName="docadmin:errandExpensesReport">
       <view:properties>
          <docadmin:name>Lähetuse kulude aruanne</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
@@ -295,6 +305,7 @@
          <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
          <docadmin:fieldDefinitionIds>
             <view:values>
                <view:value>expenseTypeChoice</view:value>
@@ -305,7 +316,7 @@
       </view:properties>
    </docadmin:fieldGroup>
 
-   <docadmin:fieldGroup view:childName="docadmin:Lähetuse kulude aruande koond">
+   <docadmin:fieldGroup view:childName="docadmin:errandExpensesReportSummary">
       <view:properties>
          <docadmin:name>Lähetuse kulude aruande koond</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
@@ -313,6 +324,7 @@
          <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
          <docadmin:fieldDefinitionIds>
             <view:values>
                <view:value>expenseTypeChoice</view:value>
@@ -328,7 +340,7 @@
       </view:properties>
    </docadmin:fieldGroup>
 
-   <docadmin:fieldGroup view:childName="docadmin:Sõiduauto kasutamise hüvitis">
+   <docadmin:fieldGroup view:childName="docadmin:driveCompensation">
       <view:properties>
          <docadmin:name>Sõiduauto kasutamise hüvitis</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
@@ -336,6 +348,7 @@
          <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
          <docadmin:fieldDefinitionIds>
             <view:values>
                <view:value>driveRecordKeeping</view:value>
@@ -354,7 +367,7 @@
       </view:properties>
    </docadmin:fieldGroup>
 
-   <docadmin:fieldGroup view:childName="docadmin:Sõiduauto kasutamise hüvitis (RIK)">
+   <docadmin:fieldGroup view:childName="docadmin:driveCompensationRIK">
       <view:properties>
          <docadmin:name>Sõiduauto kasutamise hüvitis (RIK)</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
@@ -362,6 +375,7 @@
          <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
          <docadmin:fieldDefinitionIds>
             <view:values>
                <view:value>driveTotalKm</view:value>

@@ -136,6 +136,6 @@ $jQ(document).ready(function(){
 <% if (!fileUploaded) { %>
 	<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp" />
 <% } %>
-<a:booleanEvaluator value="#{MetadataBlockBean.inEditMode}" id="addfile-docMetaInEditMode">
-   <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/metadata/web/metadata-block-lockRefresh.jsp" />
+<a:booleanEvaluator value="#{DocumentDialogHelperBean.inEditMode}" id="addfile-docMetaInEditMode">
+   <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/docdynamic/web/metadata-block-lockRefresh.jsp" />
 </a:booleanEvaluator>

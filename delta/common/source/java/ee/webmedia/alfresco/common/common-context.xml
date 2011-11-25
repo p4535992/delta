@@ -219,6 +219,26 @@
       </property>
    </bean>
 
+   <bean id="modalSearchParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/common/bootstrap/modal-search-parameters.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
    <bean id="abstractNodeUpdater" abstract="true" parent="module.baseComponent">
       <property name="inputFolderPath" value="${dir.root}" />
    </bean>

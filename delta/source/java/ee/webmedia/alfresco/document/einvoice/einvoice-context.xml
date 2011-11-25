@@ -20,6 +20,7 @@
    <bean id="eInvoiceService" class="ee.webmedia.alfresco.document.einvoice.service.EInvoiceServiceImpl">
       <property name="addressbookService" ref="AddressbookService" />
       <property name="userService" ref="UserService" />
+      <property name="documentDynamicService" ref="DocumentDynamicService" />
       <property name="nodeService" ref="NodeService" />
       <property name="documentSearchService" ref="DocumentSearchService" />
       <property name="fileFolderService" ref="FileFolderService" />

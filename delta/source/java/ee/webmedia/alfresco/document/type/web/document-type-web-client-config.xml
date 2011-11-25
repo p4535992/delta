@@ -40,7 +40,7 @@
          <show-property name="doctype:publicAdr" />
          <show-property name="doctype:showUnvalued" />
          <show-property name="doctype:changeByNewDocumentEnabled" />
-         <show-property name="doctype:documentTypeGroup" classificatorName="docTypeGroup" component-generator="ClassificatorSelectorGenerator" />
+         <show-property name="doctype:menuGroupName" classificatorName="docTypeGroup" component-generator="ClassificatorSelectorGenerator" />
          <show-property name="doctype:registrationEnabled" />
          <show-property name="doctype:finishDocByRegistration" labelStyleClass="wrap" />
          <show-property name="doctype:sendUnregistratedDocEnabled" labelStyleClass="wrap" />

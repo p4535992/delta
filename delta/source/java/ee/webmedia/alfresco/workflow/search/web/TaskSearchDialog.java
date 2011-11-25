@@ -16,6 +16,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
+import org.alfresco.web.ui.common.component.PickerSearchParams;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
@@ -137,15 +138,15 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
     /**
      * Action listener for JSP.
      */
-    public SelectItem[] executeOwnerSearch(int filterIndex, String contains) {
-        log.debug("executeOwnerSearch: " + filterIndex + ", " + contains);
-        if (filterIndex == 0) { // users
-            return userListDialog.searchUsers(-1, contains);
-        } else if (filterIndex == 1) { // contacts
-            List<Node> nodes = getAddressbookService().search(contains);
+    public SelectItem[] executeOwnerSearch(PickerSearchParams params) {
+        log.debug("executeOwnerSearch: " + params.getFilterIndex() + ", " + params.getSearchString());
+        if (params.isFilterIndex(0)) { // users
+            return userListDialog.searchUsers(params);
+        } else if (params.isFilterIndex(1)) { // contacts
+            List<Node> nodes = getAddressbookService().search(params.getSearchString(), params.getLimit());
             return AddressbookUtil.transformAddressbookNodesToSelectItems(nodes);
         } else {
-            throw new RuntimeException("Unknown filter index value: " + filterIndex);
+            throw new RuntimeException("Unknown filter index value: " + params.getFilterIndex());
         }
     }
 

@@ -32,7 +32,7 @@ $jQ(document).ready(function(){
 
    
    <a:panel id="search-panel">
-      <h:inputText id="search-text" styleClass="admin-user-search-input" value="#{UsersBeanProperties.searchCriteria}" size="35" maxlength="1024" onkeyup="updateButtonState();" />
+      <h:inputText id="search-text" styleClass="admin-user-search-input focus" value="#{UsersBeanProperties.searchCriteria}" size="35" maxlength="1024" onkeyup="updateButtonState();" />
       <h:commandButton id="search-btn" value="#{msg.search}" action="#{DialogManager.bean.search}" disabled="true" style="margin-left: 5px;" />
       <h:commandButton value="#{msg.show_all}" action="#{DialogManager.bean.showAll}" style="margin-left: 5px;"/>
       <f:verbatim>

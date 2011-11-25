@@ -44,6 +44,9 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.dom4j.io.XMLWriter;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+
 /**
  * Implements the WebDAV LOCK method
  * 
@@ -226,6 +229,7 @@ public class LockMethod extends WebDAVMethod {
 
         // Lock the node
         lockService.lock(lockNode, LockType.WRITE_LOCK, getLockTimeout());
+        generatedFileDocumentLock(lockNode);
 
         ((WebDAVCustomHelper) getDAVHelper()).getVersionsService().addVersionLockableAspect(lockNode);
         ((WebDAVCustomHelper) getDAVHelper()).getVersionsService().setVersionLockableAspect(lockNode, false);
@@ -256,12 +260,27 @@ public class LockMethod extends WebDAVMethod {
 
         // Update the expiry for the lock
         lockService.lock(lockNode, LockType.WRITE_LOCK, getLockTimeout());
+        generatedFileDocumentLock(lockNode);
+    }
+
+    private final void generatedFileDocumentLock(NodeRef lockNode) {
+        if (!BeanHelper.getFileService().isFileGenerated(lockNode)) {
+            return;
+        }
+
+        NodeRef docRef = BeanHelper.getGeneralService().getAncestorNodeRefWithType(lockNode, DocumentCommonModel.Types.DOCUMENT);
+        if (docRef != null) {
+            getLockService().lock(docRef, LockType.WRITE_LOCK, getLockTimeout());
+        }
     }
 
     /**
      * Generates the XML lock discovery response body
      */
     private void generateResponse(NodeRef lockNode, String userName) throws Exception {
+        // Send the XML back to the client
+        m_response.setStatus(HttpServletResponse.SC_OK);
+
         XMLWriter xml = createXMLWriter();
 
         xml.startDocument();
@@ -276,8 +295,6 @@ public class LockMethod extends WebDAVMethod {
         // Close off the XML
         xml.endElement(WebDAV.DAV_NS, WebDAV.XML_MULTI_STATUS, WebDAV.XML_NS_MULTI_STATUS);
 
-        // Send the XML back to the client
-        m_response.setStatus(HttpServletResponse.SC_OK);
         xml.flush();
     }
 }

@@ -16,6 +16,7 @@ import javax.faces.model.SelectItem;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.ui.common.component.PickerSearchParams;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
 import org.apache.commons.lang.StringUtils;
 
@@ -110,8 +111,8 @@ public class ContactGroupAddDialog extends ContactGroupBaseDialog {
         setCurrentNode(getAddressbookService().getNode(new NodeRef(groupNodeRef)));
     }
 
-    public SelectItem[] pickerCallback(@SuppressWarnings("unused") int filterIndex, final String contains) {
-        List<Node> nodes = getAddressbookService().search(contains);
+    public SelectItem[] pickerCallback(PickerSearchParams params) {
+        List<Node> nodes = getAddressbookService().search(params.getSearchString(), params.getLimit());
         return AddressbookUtil.transformAddressbookNodesToSelectItems(nodes);
     }
 

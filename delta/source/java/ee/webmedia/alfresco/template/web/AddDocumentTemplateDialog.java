@@ -20,8 +20,8 @@ import org.apache.commons.io.FilenameUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.document.file.web.AddFileDialog;
 import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
+import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
@@ -101,7 +101,7 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
 
         Map<String, Object> templProp = docTemplateNode.getProperties();
         String newName = templProp.get(DocumentTemplateModel.Prop.NAME).toString() + "." + FilenameUtils.getExtension(super.fileName);
-        AddFileDialog.checkPlusInFileName(newName);
+        FilenameUtil.checkPlusInFileName(newName);
         try {
             setFileName(newName);
             saveContent(file, null);

@@ -11,6 +11,7 @@
          <docadmin:changeableIf>ALWAYS_CHANGEABLE</docadmin:changeableIf>
          <docadmin:classificator>publishToAdr</docadmin:classificator>
          <docadmin:classificatorDefaultValue>Läheb ADR-i</docadmin:classificatorDefaultValue>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 

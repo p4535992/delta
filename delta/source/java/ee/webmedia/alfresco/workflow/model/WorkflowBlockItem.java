@@ -1,14 +1,19 @@
 package ee.webmedia.alfresco.workflow.model;
 
 import java.io.Serializable;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.util.Pair;
 import org.apache.commons.collections.Transformer;
 import org.apache.commons.collections.comparators.ComparatorChain;
 import org.apache.commons.collections.comparators.NullComparator;
 import org.apache.commons.collections.comparators.TransformingComparator;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateFormatUtils;
 import org.springframework.web.util.HtmlUtils;
@@ -133,6 +138,29 @@ public class WorkflowBlockItem implements Serializable {
 
     public boolean isTask() {
         return !zebra && !separator;
+    }
+
+    public String getDueDateHistory() {
+        StringBuilder sb = new StringBuilder("");
+        List<Pair<String, Date>> dueDateHistoryRecords = task.getDueDateHistoryRecords();
+        if (!dueDateHistoryRecords.isEmpty()) {
+            sb.append("<a href=\"\" onclick=\"alert('");
+            DateFormat dateFormat = new SimpleDateFormat("dd.M.yyyy");
+            int recordCounter = 0;
+            for (Pair<String, Date> historyRecord : dueDateHistoryRecords) {
+                sb.append(StringEscapeUtils.escapeJavaScript(MessageUtil.getMessage("task_due_date_history_previous_date"))).append(" ");
+                sb.append(StringEscapeUtils.escapeJavaScript(dateFormat.format(historyRecord.getSecond())));
+                sb.append(StringEscapeUtils.escapeJavaScript(MessageUtil.getMessage("task_due_date_history_change_reason"))).append(" ");
+                sb.append(StringEscapeUtils.escapeJavaScript(historyRecord.getFirst()));
+                recordCounter++;
+                if (recordCounter < dueDateHistoryRecords.size()) {
+                    sb.append("\\n");
+                }
+            }
+            sb.append("');return false;\">" + StringEscapeUtils.escapeHtml(MessageUtil.getMessage("task_due_date_history_show_history_start")) + "&nbsp;"
+                    + StringEscapeUtils.escapeHtml(MessageUtil.getMessage("task_due_date_history_show_history_end")) + "</a>");
+        }
+        return sb.toString();
     }
 
     public static final Comparator<WorkflowBlockItem> COMPARATOR;

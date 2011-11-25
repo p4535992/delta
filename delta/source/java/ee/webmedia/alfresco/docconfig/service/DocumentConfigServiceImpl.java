@@ -18,6 +18,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.alfresco.repo.dictionary.IndexTokenisationMode;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
 import org.alfresco.service.cmr.dictionary.ClassDefinition;
 import org.alfresco.service.cmr.dictionary.ConstraintDefinition;
@@ -41,6 +42,8 @@ import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.base.BaseObject.ChildrenList;
 import ee.webmedia.alfresco.classificator.constant.FieldChangeableIf;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
+import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
+import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO.ConfigItemType;
@@ -76,6 +79,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
     private NamespaceService namespaceService;
     private UserContactMappingService userContactMappingService;
     private UserService userService;
+    private ClassificatorService classificatorService;
 
     private final Map<FieldType, FieldGenerator> fieldGenerators = new HashMap<FieldType, FieldGenerator>();
     private final Map<String, FieldGenerator> originalFieldIdGenerators = new HashMap<String, FieldGenerator>();
@@ -285,12 +289,22 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
     }
 
     private Pair<DocumentType, DocumentTypeVersion> getDocumentTypeAndVersion(Pair<String, Integer> docTypeIdAndVersionNr) {
+        if (StringUtils.isBlank(docTypeIdAndVersionNr.getFirst()) || docTypeIdAndVersionNr.getSecond() == null) {
+            return null;
+        }
         return documentAdminService.getDocumentTypeAndVersion(docTypeIdAndVersionNr.getFirst(), docTypeIdAndVersionNr.getSecond());
     }
 
     private Pair<String, Integer> getDocTypeIdAndVersionNr(Node documentDynamicNode) {
         String docTypeId = (String) documentDynamicNode.getProperties().get(Props.OBJECT_TYPE_ID);
         Integer docTypeVersionNr = (Integer) documentDynamicNode.getProperties().get(Props.OBJECT_TYPE_VERSION_NR);
+        Pair<String, Integer> docTypeIdAndVersionNr = new Pair<String, Integer>(docTypeId, docTypeVersionNr);
+        return docTypeIdAndVersionNr;
+    }
+
+    private Pair<String, Integer> getDocTypeIdAndVersionNr(Map<QName, Serializable> props) {
+        String docTypeId = (String) props.get(Props.OBJECT_TYPE_ID);
+        Integer docTypeVersionNr = (Integer) props.get(Props.OBJECT_TYPE_VERSION_NR);
         Pair<String, Integer> docTypeIdAndVersionNr = new Pair<String, Integer>(docTypeId, docTypeVersionNr);
         return docTypeIdAndVersionNr;
     }
@@ -505,7 +519,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
             docVer = documentTypeAndVersion.getSecond();
         } else {
             Pair<String, Integer> docTypeIdAndVersionNr = getDocTypeIdAndVersionNr(documentDynamicNode);
-            Assert.isTrue(ObjectUtils.equals(docVer.getParent().getDocumentTypeId(), docTypeIdAndVersionNr.getFirst()));
+            Assert.isTrue(ObjectUtils.equals(docVer.getParent().getId(), docTypeIdAndVersionNr.getFirst()));
             Assert.isTrue(ObjectUtils.equals(docVer.getVersionNr(), docTypeIdAndVersionNr.getSecond()));
         }
         for (Field field : docVer.getFieldsDeeply()) {
@@ -544,19 +558,35 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
                 }
             }
 
+        } else if (StringUtils.isNotBlank(field.getClassificator())) {
+            if (DataTypeDefinition.TEXT.equals(dataType) && field.getFieldTypeEnum() != FieldType.INFORMATION_TEXT) {
+                if (StringUtils.isNotBlank(field.getClassificatorDefaultValue())) {
+                    defaultValue = field.getClassificatorDefaultValue();
+                } else {
+                    List<ClassificatorValue> classificatorValues = classificatorService.getAllClassificatorValues(field.getClassificator());
+                    for (ClassificatorValue classificatorValue : classificatorValues) {
+                        if (classificatorValue.isByDefault()) {
+                            defaultValue = classificatorValue.getValueName();
+                            break;
+                        }
+                    }
+                }
+            }
+
         } else if (field.isDefaultDateSysdate()) {
             if (DataTypeDefinition.DATE.equals(dataType)) {
                 defaultValue = new Date(AlfrescoTransactionSupport.getTransactionStartTime());
             }
 
         } else if (field.isDefaultUserLoggedIn()) {
-            if (DataTypeDefinition.TEXT.equals(dataType)) {
-                NodeRef userRef = userService.getCurrentUser();
-                if (userRef != null) {
-                    Map<QName, UserContactMappingCode> mapping = userContactMappingService.getFieldIdsMappingOrDefault(field);
-                    userContactMappingService.setMappedValues(documentDynamicNode.getProperties(), mapping, userRef, propDef.isMultiValued());
-                    return;
+            if (DataTypeDefinition.TEXT.equals(dataType) && field.getFieldTypeEnum() != FieldType.INFORMATION_TEXT) {
+                // XXX Alar inconvenient
+                Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+                setUserContactProps(props, AuthenticationUtil.getRunAsUser(), propDef, field);
+                for (Entry<QName, Serializable> entry : props.entrySet()) {
+                    documentDynamicNode.getProperties().put(entry.getKey().toString(), entry.getValue());
                 }
+                return;
             }
 
         } else if (field.isDefaultSelected()) {
@@ -584,6 +614,27 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
 
         if (defaultValue != null) {
             documentDynamicNode.getProperties().put(field.getQName().toString(), defaultValue);
+        }
+    }
+
+    @Override
+    public void setUserContactProps(Map<QName, Serializable> props, String userName, String fieldId) {
+        Map<String, Pair<PropertyDefinition, Field>> propDefs = getPropertyDefinitions(getDocTypeIdAndVersionNr(props));
+        Pair<PropertyDefinition, Field> propDefAndField = propDefs.get(fieldId);
+        setUserContactProps(props, userName, propDefAndField.getFirst(), propDefAndField.getSecond());
+    }
+
+    private void setUserContactProps(Map<QName, Serializable> props, String userName, PropertyDefinition propDef, Field field) {
+        NodeRef userRef = userService.getPerson(userName);
+        // userRef may be null, then all fields are set to null
+        Map<QName, UserContactMappingCode> mapping = userContactMappingService.getFieldIdsMappingOrDefault(field);
+        userContactMappingService.setMappedValues(props, mapping, userRef, propDef.isMultiValued());
+        if (userRef == null) {
+            for (Entry<QName, UserContactMappingCode> entry : mapping.entrySet()) {
+                if (entry.getValue() == UserContactMappingCode.CODE) {
+                    props.put(entry.getKey(), userName);
+                }
+            }
         }
     }
 
@@ -661,11 +712,17 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
         if (!DocumentCommonModel.Types.DOCUMENT.equals(documentDynamicNode.getType()) && !DocumentCommonModel.Types.METADATA_CONTAINER.equals(documentDynamicNode.getType())) {
             return null;
         }
-        Pair<String, Integer> cacheKey = getDocTypeIdAndVersionNr(documentDynamicNode);
-        Map<String, Pair<PropertyDefinition, Field>> propertyDefinitions = propertyDefinitionCache.get(cacheKey);
+        return getPropertyDefinitions(getDocTypeIdAndVersionNr(documentDynamicNode));
+    }
+
+    private Map<String, Pair<PropertyDefinition, Field>> getPropertyDefinitions(Pair<String, Integer> docTypeIdAndVersionNr) {
+        Map<String, Pair<PropertyDefinition, Field>> propertyDefinitions = propertyDefinitionCache.get(docTypeIdAndVersionNr);
         if (propertyDefinitions == null) {
             propertyDefinitions = new HashMap<String, Pair<PropertyDefinition, Field>>();
-            Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = getDocumentTypeAndVersion(cacheKey);
+            Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = getDocumentTypeAndVersion(docTypeIdAndVersionNr);
+            if (documentTypeAndVersion == null) {
+                return null;
+            }
             DocumentTypeVersion docVersion = documentTypeAndVersion.getSecond();
             docVersion.resetParent();
             // TODO documentTypeVersion, fields and fieldGroups should be immutable; or they should be cloned in get method
@@ -684,7 +741,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
             }
             if (LOG.isDebugEnabled()) {
                 StringBuilder s = new StringBuilder();
-                s.append("Created propertyDefinitions for cacheKey=").append(cacheKey).append(" - ");
+                s.append("Created propertyDefinitions for cacheKey=").append(docTypeIdAndVersionNr).append(" - ");
                 s.append("[").append(propertyDefinitions.size()).append("]");
                 for (Entry<String, Pair<PropertyDefinition, Field>> entry : propertyDefinitions.entrySet()) {
                     s.append("\n  ").append(entry.getKey()).append("=");
@@ -694,7 +751,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
                 }
                 LOG.debug(s.toString());
             }
-            propertyDefinitionCache.put(cacheKey, Collections.unmodifiableMap(propertyDefinitions));
+            propertyDefinitionCache.put(docTypeIdAndVersionNr, Collections.unmodifiableMap(propertyDefinitions));
         }
         return propertyDefinitions;
     }
@@ -910,6 +967,10 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
 
     public void setUserService(UserService userService) {
         this.userService = userService;
+    }
+
+    public void setClassificatorService(ClassificatorService classificatorService) {
+        this.classificatorService = classificatorService;
     }
     // END: setters
 

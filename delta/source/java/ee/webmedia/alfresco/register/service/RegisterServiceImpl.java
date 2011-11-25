@@ -123,37 +123,38 @@ public class RegisterServiceImpl implements RegisterService {
     public Node createRegister() {
         // Set the default values
         Map<QName, Serializable> prop = new HashMap<QName, Serializable>();
-        prop.put(RegisterModel.Prop.COUNTER, DEFAULT_COUNTER_INITIAL_VALUE);
         prop.put(RegisterModel.Prop.ACTIVE, Boolean.TRUE);
-        TransientNode transientNode = new TransientNode( //
+        TransientNode transientNode = new TransientNode(
                 RegisterModel.Types.REGISTER, QName.createQName(RegisterModel.URI, "temp").toString(), prop);
-        transientNode.getProperties();
+        transientNode.getProperties().put(RegisterModel.Prop.COUNTER.toString(), DEFAULT_COUNTER_INITIAL_VALUE);
         return transientNode;
     }
 
     @Override
     public void updateProperties(Node register) {
-        // Check if node is new or it is being updated
+        Integer counter;
+        String counterLabel = MessageUtil.getMessage("register_counter");
         Map<String, Object> prop = register.getProperties();
+        try {
+            counter = DefaultTypeConverter.INSTANCE.convert(Integer.class, prop.get(RegisterModel.Prop.COUNTER));
+        } catch (TypeConversionException e) {
+            throw new UnableToPerformException("validation_is_nonegative_int_number", counterLabel);
+        }
+        if (counter == null || counter < 0) {
+            throw new UnableToPerformException("validation_is_nonegative_int_number", counterLabel);
+        }
+        // Check if node is new or it is being updated
         if (!nodeService.exists(register.getNodeRef())) {
             Integer regId = getMaxRegisterId() + 1;
             prop.put(RegisterModel.Prop.ID.toString(), regId);
             createSequence(regId);
             nodeService.createNode(getRoot(), RegisterModel.Assoc.REGISTER,
-                    QName.createQName(RegisterModel.URI, regId.toString()), RegisterModel.Types.REGISTER, //
+                    QName.createQName(RegisterModel.URI, regId.toString()), RegisterModel.Types.REGISTER,
                     RepoUtil.toQNameProperties(prop));
+            setSequenceCurrentValue(getSequenceName(regId), counter);
         } else {
-            Integer counter;
-            String counterLabel = MessageUtil.getMessage("register_counter");
-            try {
-                counter = DefaultTypeConverter.INSTANCE.convert(Integer.class, prop.get(RegisterModel.Prop.COUNTER));
-            } catch (TypeConversionException e) {
-                throw new UnableToPerformException("validation_is_nonegative_int_number", counterLabel);
-            }
-            if (counter == null || counter < 0) {
-                throw new UnableToPerformException("validation_is_nonegative_int_number", counterLabel);
-            }
             nodeService.setProperties(register.getNodeRef(), RepoUtil.toQNameProperties(prop));
+            setSequenceCurrentValue(getSequenceName((Integer) prop.get(RegisterModel.Prop.ID)), counter);
         }
     }
 

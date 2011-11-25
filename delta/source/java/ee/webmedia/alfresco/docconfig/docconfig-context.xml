@@ -8,6 +8,7 @@
       <property name="namespaceService" ref="NamespaceService" />
       <property name="userContactMappingService" ref="UserContactMappingService" />
       <property name="userService" ref="UserService" />
+      <property name="classificatorService" ref="ClassificatorService" />
    </bean>
 
    <bean id="DocumentConfigService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -45,6 +46,11 @@
       </property>
    </bean>
 
+   <bean id="repairPropertyTypeMismatchUpdater2" class="ee.webmedia.alfresco.document.bootstrap.RepairPropertyTypeMismatchUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="documentConfigService" ref="DocumentConfigService" />
+   </bean>
+
    <bean id="systematicClearBootstrap" class="ee.webmedia.alfresco.docconfig.bootstrap.SystematicClearBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
@@ -75,6 +81,11 @@
       <property name="dependsOn">
          <list>
             <ref bean="senderEmailRemovableFromSystematicGroupFixBootstrap3" />
+            <!-- 
+            this updater was added after systematicFieldDefinitionsBootstrap7 but if systematicFieldDefinitionsBootstrap1 has not been started
+            then updater shouldn't need to do anything - expecting that bootstrap files are updated as well
+             -->
+            <ref bean="fieldDefPropsUpdater" />
          </list>
       </property>
       <property name="bootstrapViews">
@@ -208,6 +219,26 @@
       </property>
    </bean>
 
+   <bean id="systematicFieldDefinitionsBootstrap8" class="ee.webmedia.alfresco.common.bootstrap.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="systematicFieldDefinitionsBootstrap7" />
+         </list>
+      </property>
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/docadmin:fieldDefinitions</prop>
+               <prop key="location">ee/webmedia/alfresco/docconfig/bootstrap/systematicFieldDefinitions8.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
    <bean id="systematicFieldGroupDefinitionsBootstrap1" class="ee.webmedia.alfresco.common.bootstrap.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
@@ -215,6 +246,11 @@
       <property name="dependsOn">
          <list>
             <ref bean="systematicClearBootstrap" />
+            <!-- 
+            this updater was added after systematicFieldGroupDefinitions6 but if systematicFieldGroupDefinitions6.xml has not been started
+            then updater shouldn't need to do anything - expecting that bootstrap files are updated as well
+             -->
+            <ref bean="fieldGroupDefPropsUpdater" />
          </list>
       </property>
       <property name="bootstrapViews">
@@ -323,6 +359,26 @@
                <prop key="encoding">UTF-8</prop>
                <prop key="path">/docadmin:fieldGroupDefinitions</prop>
                <prop key="location">ee/webmedia/alfresco/docconfig/bootstrap/systematicFieldGroupDefinitions6.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="systematicFieldGroupDefinitionsBootstrap7" class="ee.webmedia.alfresco.common.bootstrap.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="systematicFieldGroupDefinitionsBootstrap6" />
+         </list>
+      </property>
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/docadmin:fieldGroupDefinitions</prop>
+               <prop key="location">ee/webmedia/alfresco/docconfig/bootstrap/systematicFieldGroupDefinitions7.xml</prop>
             </props>
          </list>
       </property>

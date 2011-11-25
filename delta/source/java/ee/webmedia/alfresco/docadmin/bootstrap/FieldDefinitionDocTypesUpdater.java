@@ -34,8 +34,8 @@ public class FieldDefinitionDocTypesUpdater extends AbstractModuleComponent {
                     FieldDefinition fieldDef = fieldDefinitions.get(field.getFieldId());
                     if (fieldDef != null) {
                         List<String> docTypesOfFieldDef = fieldDef.getDocTypes();
-                        if (!docTypesOfFieldDef.contains(docType.getDocumentTypeId())) {
-                            docTypesOfFieldDef.add(docType.getDocumentTypeId());
+                        if (!docTypesOfFieldDef.contains(docType.getId())) {
+                            docTypesOfFieldDef.add(docType.getId());
                             fieldDefinitionsToUpdate.put(fieldDef.getFieldId(), fieldDef);
                         }
                     }

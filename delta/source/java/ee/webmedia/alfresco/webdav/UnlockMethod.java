@@ -14,7 +14,11 @@ import org.alfresco.service.cmr.lock.LockService;
 import org.alfresco.service.cmr.lock.LockStatus;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 public class UnlockMethod extends org.alfresco.repo.webdav.UnlockMethod {
 
@@ -49,6 +53,14 @@ public class UnlockMethod extends org.alfresco.repo.webdav.UnlockMethod {
         if (lockSts == LockStatus.LOCK_OWNER) {
             // Unlock the node
             lockService.unlock(lockNodeInfo.getNodeRef());
+
+            // Unlock the document also if we are dealing with generated file.
+            if (BeanHelper.getFileService().isFileGenerated(lockNodeInfo.getNodeRef())) {
+                NodeRef docRef = BeanHelper.getGeneralService().getAncestorNodeRefWithType(lockNodeInfo.getNodeRef(), DocumentCommonModel.Types.DOCUMENT);
+                if (docRef != null) {
+                    lockService.unlock(docRef);
+                }
+            }
 
             // Indicate that the unlock was successful
             m_response.setStatus(HttpServletResponse.SC_NO_CONTENT);

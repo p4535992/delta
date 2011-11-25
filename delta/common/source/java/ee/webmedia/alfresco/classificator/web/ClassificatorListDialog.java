@@ -16,6 +16,7 @@ import javax.faces.model.SelectItem;
 import javax.servlet.http.HttpServletResponse;
 
 import org.alfresco.web.bean.dialog.BaseDialogBean;
+import org.alfresco.web.ui.common.component.PickerSearchParams;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.application.jsp.JspStateManagerImpl;
@@ -132,18 +133,20 @@ public class ClassificatorListDialog extends BaseDialogBean {
      * This method is part of the contract to the Generic Picker, it is up to the backing bean
      * to execute whatever query is appropriate and return the results.
      * 
-     * @param filterIndex Index of the filter drop-down selection
-     * @param contains Text from the contains textBox
+     * @param params Search parameters
      * @return An array of SelectItem objects containing the results to display in the picker.
      */
-    public SelectItem[] searchClassificators(int filterIndex, String contains) {
+    public SelectItem[] searchClassificators(PickerSearchParams params) { // XXX why not use lucene search??
         List<Classificator> allClassificators = getClassificatorService().getAllClassificators();
         List<SelectItem> results = new ArrayList<SelectItem>(allClassificators.size());
-        boolean doFilter = StringUtils.isNotBlank(contains);
+        boolean doFilter = StringUtils.isNotBlank(params.getSearchString());
         for (Classificator node : allClassificators) {
             String classificatorName = node.getName();
-            if (!doFilter || StringUtils.containsIgnoreCase(classificatorName, contains)) {
+            if (!doFilter || StringUtils.containsIgnoreCase(classificatorName, params.getSearchString())) {
                 results.add(new SelectItem(classificatorName, classificatorName));
+            }
+            if (results.size() == params.getLimit()) {
+                break;
             }
         }
         WebUtil.sort(results);

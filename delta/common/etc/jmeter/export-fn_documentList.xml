@@ -128,24 +128,24 @@
                         <cm:name>10a1332a-7525-4adf-b6cd-43640c2c81b0</cm:name>
                         <sys:node-dbid>7797</sys:node-dbid>
                         <sys:store-identifier>SpacesStore</sys:store-identifier>
-                        <vol:sendToDestruction>false</vol:sendToDestruction>
-                        <vol:title>Toimik 1-1-1</vol:title>
-                        <vol:status>avatud</vol:status>
+                        <docdyn:sendToDestruction>false</docdyn:sendToDestruction>
+                        <docdyn:title>Toimik 1-1-1</docdyn:title>
+                        <docdyn:status>avatud</docdyn:status>
                         <sys:node-uuid>10a1332a-7525-4adf-b6cd-43640c2c81b0</sys:node-uuid>
-                        <vol:archivingNote></vol:archivingNote>
-                        <vol:description></vol:description>
-                        <vol:volumeMark>TEST1-1-1</vol:volumeMark>
-                        <vol:volumeType>ANNUAL_FILE</vol:volumeType>
-                        <vol:dispositionDate>
+                        <docdyn:archivingNote></docdyn:archivingNote>
+                        <docdyn:description></docdyn:description>
+                        <docdyn:volumeMark>TEST1-1-1</docdyn:volumeMark>
+                        <docdyn:volumeType>ANNUAL_FILE</docdyn:volumeType>
+                        <docdyn:dispositionDate>
                           <view:value view:isNull="true"></view:value>
-                        </vol:dispositionDate>
-                        <vol:validFrom>2011-11-16T00:00:00.000+02:00</vol:validFrom>
-                        <vol:validTo>
+                        </docdyn:dispositionDate>
+                        <docdyn:validFrom>2011-11-16T00:00:00.000+02:00</docdyn:validFrom>
+                        <docdyn:validTo>
                           <view:value view:isNull="true"></view:value>
-                        </vol:validTo>
+                        </docdyn:validTo>
                         <sys:store-protocol>workspace</sys:store-protocol>
-                        <vol:containsCases>false</vol:containsCases>
-                        <vol:containingDocsCount>0</vol:containingDocsCount>
+                        <docdyn:containsCases>false</docdyn:containsCases>
+                        <docdyn:containingDocsCount>0</docdyn:containingDocsCount>
                       </view:properties>
                     </vol:volume>
                     <vol:volume view:childName="vol:volume">
@@ -158,24 +158,24 @@
                         <cm:name>96aee762-0254-4371-817e-6daa442e6064</cm:name>
                         <sys:node-dbid>7812</sys:node-dbid>
                         <sys:store-identifier>SpacesStore</sys:store-identifier>
-                        <vol:sendToDestruction>false</vol:sendToDestruction>
-                        <vol:title>Toimik 1-1-2</vol:title>
-                        <vol:status>avatud</vol:status>
+                        <docdyn:sendToDestruction>false</docdyn:sendToDestruction>
+                        <docdyn:title>Toimik 1-1-2</docdyn:title>
+                        <docdyn:status>avatud</docdyn:status>
                         <sys:node-uuid>96aee762-0254-4371-817e-6daa442e6064</sys:node-uuid>
-                        <vol:archivingNote></vol:archivingNote>
-                        <vol:description></vol:description>
-                        <vol:volumeMark>TEST1-1-2</vol:volumeMark>
-                        <vol:volumeType>ANNUAL_FILE</vol:volumeType>
-                        <vol:dispositionDate>
+                        <docdyn:archivingNote></docdyn:archivingNote>
+                        <docdyn:description></docdyn:description>
+                        <docdyn:volumeMark>TEST1-1-2</docdyn:volumeMark>
+                        <docdyn:volumeType>ANNUAL_FILE</docdyn:volumeType>
+                        <docdyn:dispositionDate>
                           <view:value view:isNull="true"></view:value>
-                        </vol:dispositionDate>
-                        <vol:validFrom>2011-11-16T00:00:00.000+02:00</vol:validFrom>
-                        <vol:validTo>
+                        </docdyn:dispositionDate>
+                        <docdyn:validFrom>2011-11-16T00:00:00.000+02:00</docdyn:validFrom>
+                        <docdyn:validTo>
                           <view:value view:isNull="true"></view:value>
-                        </vol:validTo>
+                        </docdyn:validTo>
                         <sys:store-protocol>workspace</sys:store-protocol>
-                        <vol:containsCases>false</vol:containsCases>
-                        <vol:containingDocsCount>0</vol:containingDocsCount>
+                        <docdyn:containsCases>false</docdyn:containsCases>
+                        <docdyn:containingDocsCount>0</docdyn:containingDocsCount>
                       </view:properties>
                     </vol:volume>
                   </vol:volume>
@@ -316,24 +316,24 @@
                         <cm:name>1374f542-e45b-479c-b9b1-a0b1a4dad3f0</cm:name>
                         <sys:node-dbid>7815</sys:node-dbid>
                         <sys:store-identifier>SpacesStore</sys:store-identifier>
-                        <vol:sendToDestruction>false</vol:sendToDestruction>
-                        <vol:title>Toimik 1-2-1</vol:title>
-                        <vol:status>avatud</vol:status>
+                        <docdyn:sendToDestruction>false</docdyn:sendToDestruction>
+                        <docdyn:title>Toimik 1-2-1</docdyn:title>
+                        <docdyn:status>avatud</docdyn:status>
                         <sys:node-uuid>1374f542-e45b-479c-b9b1-a0b1a4dad3f0</sys:node-uuid>
-                        <vol:archivingNote></vol:archivingNote>
-                        <vol:description></vol:description>
-                        <vol:volumeMark>TEST1-2-1</vol:volumeMark>
-                        <vol:volumeType>ANNUAL_FILE</vol:volumeType>
-                        <vol:dispositionDate>
+                        <docdyn:archivingNote></docdyn:archivingNote>
+                        <docdyn:description></docdyn:description>
+                        <docdyn:volumeMark>TEST1-2-1</docdyn:volumeMark>
+                        <docdyn:volumeType>ANNUAL_FILE</docdyn:volumeType>
+                        <docdyn:dispositionDate>
                           <view:value view:isNull="true"></view:value>
-                        </vol:dispositionDate>
-                        <vol:validFrom>2011-11-16T00:00:00.000+02:00</vol:validFrom>
-                        <vol:validTo>
+                        </docdyn:dispositionDate>
+                        <docdyn:validFrom>2011-11-16T00:00:00.000+02:00</docdyn:validFrom>
+                        <docdyn:validTo>
                           <view:value view:isNull="true"></view:value>
-                        </vol:validTo>
+                        </docdyn:validTo>
                         <sys:store-protocol>workspace</sys:store-protocol>
-                        <vol:containsCases>false</vol:containsCases>
-                        <vol:containingDocsCount>0</vol:containingDocsCount>
+                        <docdyn:containsCases>false</docdyn:containsCases>
+                        <docdyn:containingDocsCount>0</docdyn:containingDocsCount>
                       </view:properties>
                     </vol:volume>
                     <vol:volume view:childName="vol:volume">
@@ -346,24 +346,24 @@
                         <cm:name>b5e79f73-b001-4bcf-9905-4490258463a4</cm:name>
                         <sys:node-dbid>7818</sys:node-dbid>
                         <sys:store-identifier>SpacesStore</sys:store-identifier>
-                        <vol:sendToDestruction>false</vol:sendToDestruction>
-                        <vol:title>Toimik 1-2-2</vol:title>
-                        <vol:status>avatud</vol:status>
+                        <docdyn:sendToDestruction>false</docdyn:sendToDestruction>
+                        <docdyn:title>Toimik 1-2-2</docdyn:title>
+                        <docdyn:status>avatud</docdyn:status>
                         <sys:node-uuid>b5e79f73-b001-4bcf-9905-4490258463a4</sys:node-uuid>
-                        <vol:archivingNote></vol:archivingNote>
-                        <vol:description></vol:description>
-                        <vol:volumeMark>TEST1-2-2</vol:volumeMark>
-                        <vol:volumeType>ANNUAL_FILE</vol:volumeType>
-                        <vol:dispositionDate>
+                        <docdyn:archivingNote></docdyn:archivingNote>
+                        <docdyn:description></docdyn:description>
+                        <docdyn:volumeMark>TEST1-2-2</docdyn:volumeMark>
+                        <docdyn:volumeType>ANNUAL_FILE</docdyn:volumeType>
+                        <docdyn:dispositionDate>
                           <view:value view:isNull="true"></view:value>
-                        </vol:dispositionDate>
-                        <vol:validFrom>2011-11-16T00:00:00.000+02:00</vol:validFrom>
-                        <vol:validTo>
+                        </docdyn:dispositionDate>
+                        <docdyn:validFrom>2011-11-16T00:00:00.000+02:00</docdyn:validFrom>
+                        <docdyn:validTo>
                           <view:value view:isNull="true"></view:value>
-                        </vol:validTo>
+                        </docdyn:validTo>
                         <sys:store-protocol>workspace</sys:store-protocol>
-                        <vol:containsCases>false</vol:containsCases>
-                        <vol:containingDocsCount>0</vol:containingDocsCount>
+                        <docdyn:containsCases>false</docdyn:containsCases>
+                        <docdyn:containingDocsCount>0</docdyn:containingDocsCount>
                       </view:properties>
                     </vol:volume>
                   </vol:volume>
@@ -510,24 +510,24 @@
                         <cm:name>b76a623f-91f8-4d07-8a5a-7532fccf8844</cm:name>
                         <sys:node-dbid>7840</sys:node-dbid>
                         <sys:store-identifier>SpacesStore</sys:store-identifier>
-                        <vol:sendToDestruction>false</vol:sendToDestruction>
-                        <vol:title>Toimik 2-1-1</vol:title>
-                        <vol:status>avatud</vol:status>
+                        <docdyn:sendToDestruction>false</docdyn:sendToDestruction>
+                        <docdyn:title>Toimik 2-1-1</docdyn:title>
+                        <docdyn:status>avatud</docdyn:status>
                         <sys:node-uuid>b76a623f-91f8-4d07-8a5a-7532fccf8844</sys:node-uuid>
-                        <vol:archivingNote></vol:archivingNote>
-                        <vol:description></vol:description>
-                        <vol:volumeMark>TEST2-1-1</vol:volumeMark>
-                        <vol:volumeType>ANNUAL_FILE</vol:volumeType>
-                        <vol:dispositionDate>
+                        <docdyn:archivingNote></docdyn:archivingNote>
+                        <docdyn:description></docdyn:description>
+                        <docdyn:volumeMark>TEST2-1-1</docdyn:volumeMark>
+                        <docdyn:volumeType>ANNUAL_FILE</docdyn:volumeType>
+                        <docdyn:dispositionDate>
                           <view:value view:isNull="true"></view:value>
-                        </vol:dispositionDate>
-                        <vol:validFrom>2011-11-16T00:00:00.000+02:00</vol:validFrom>
-                        <vol:validTo>
+                        </docdyn:dispositionDate>
+                        <docdyn:validFrom>2011-11-16T00:00:00.000+02:00</docdyn:validFrom>
+                        <docdyn:validTo>
                           <view:value view:isNull="true"></view:value>
-                        </vol:validTo>
+                        </docdyn:validTo>
                         <sys:store-protocol>workspace</sys:store-protocol>
-                        <vol:containsCases>false</vol:containsCases>
-                        <vol:containingDocsCount>0</vol:containingDocsCount>
+                        <docdyn:containsCases>false</docdyn:containsCases>
+                        <docdyn:containingDocsCount>0</docdyn:containingDocsCount>
                       </view:properties>
                     </vol:volume>
                     <vol:volume view:childName="vol:volume">
@@ -540,24 +540,24 @@
                         <cm:name>89583826-21a5-4557-8151-bb021203c32b</cm:name>
                         <sys:node-dbid>7843</sys:node-dbid>
                         <sys:store-identifier>SpacesStore</sys:store-identifier>
-                        <vol:sendToDestruction>false</vol:sendToDestruction>
-                        <vol:title>Toimik 2-1-2</vol:title>
-                        <vol:status>avatud</vol:status>
+                        <docdyn:sendToDestruction>false</docdyn:sendToDestruction>
+                        <docdyn:title>Toimik 2-1-2</docdyn:title>
+                        <docdyn:status>avatud</docdyn:status>
                         <sys:node-uuid>89583826-21a5-4557-8151-bb021203c32b</sys:node-uuid>
-                        <vol:archivingNote></vol:archivingNote>
-                        <vol:description></vol:description>
-                        <vol:volumeMark>TEST2-1-2</vol:volumeMark>
-                        <vol:volumeType>ANNUAL_FILE</vol:volumeType>
-                        <vol:dispositionDate>
+                        <docdyn:archivingNote></docdyn:archivingNote>
+                        <docdyn:description></docdyn:description>
+                        <docdyn:volumeMark>TEST2-1-2</docdyn:volumeMark>
+                        <docdyn:volumeType>ANNUAL_FILE</docdyn:volumeType>
+                        <docdyn:dispositionDate>
                           <view:value view:isNull="true"></view:value>
-                        </vol:dispositionDate>
-                        <vol:validFrom>2011-11-16T00:00:00.000+02:00</vol:validFrom>
-                        <vol:validTo>
+                        </docdyn:dispositionDate>
+                        <docdyn:validFrom>2011-11-16T00:00:00.000+02:00</docdyn:validFrom>
+                        <docdyn:validTo>
                           <view:value view:isNull="true"></view:value>
-                        </vol:validTo>
+                        </docdyn:validTo>
                         <sys:store-protocol>workspace</sys:store-protocol>
-                        <vol:containsCases>false</vol:containsCases>
-                        <vol:containingDocsCount>0</vol:containingDocsCount>
+                        <docdyn:containsCases>false</docdyn:containsCases>
+                        <docdyn:containingDocsCount>0</docdyn:containingDocsCount>
                       </view:properties>
                     </vol:volume>
                   </vol:volume>
@@ -698,24 +698,24 @@
                         <cm:name>4d9f1e0f-db0a-4c75-8570-15443b502717</cm:name>
                         <sys:node-dbid>7846</sys:node-dbid>
                         <sys:store-identifier>SpacesStore</sys:store-identifier>
-                        <vol:sendToDestruction>false</vol:sendToDestruction>
-                        <vol:title>Toimik 2-2-1</vol:title>
-                        <vol:status>avatud</vol:status>
+                        <docdyn:sendToDestruction>false</docdyn:sendToDestruction>
+                        <docdyn:title>Toimik 2-2-1</docdyn:title>
+                        <docdyn:status>avatud</docdyn:status>
                         <sys:node-uuid>4d9f1e0f-db0a-4c75-8570-15443b502717</sys:node-uuid>
-                        <vol:archivingNote></vol:archivingNote>
-                        <vol:description></vol:description>
-                        <vol:volumeMark>TEST2-2-1</vol:volumeMark>
-                        <vol:volumeType>ANNUAL_FILE</vol:volumeType>
-                        <vol:dispositionDate>
+                        <docdyn:archivingNote></docdyn:archivingNote>
+                        <docdyn:description></docdyn:description>
+                        <docdyn:volumeMark>TEST2-2-1</docdyn:volumeMark>
+                        <docdyn:volumeType>ANNUAL_FILE</docdyn:volumeType>
+                        <docdyn:dispositionDate>
                           <view:value view:isNull="true"></view:value>
-                        </vol:dispositionDate>
-                        <vol:validFrom>2011-11-16T00:00:00.000+02:00</vol:validFrom>
-                        <vol:validTo>
+                        </docdyn:dispositionDate>
+                        <docdyn:validFrom>2011-11-16T00:00:00.000+02:00</docdyn:validFrom>
+                        <docdyn:validTo>
                           <view:value view:isNull="true"></view:value>
-                        </vol:validTo>
+                        </docdyn:validTo>
                         <sys:store-protocol>workspace</sys:store-protocol>
-                        <vol:containsCases>false</vol:containsCases>
-                        <vol:containingDocsCount>0</vol:containingDocsCount>
+                        <docdyn:containsCases>false</docdyn:containsCases>
+                        <docdyn:containingDocsCount>0</docdyn:containingDocsCount>
                       </view:properties>
                     </vol:volume>
                     <vol:volume view:childName="vol:volume">
@@ -728,24 +728,24 @@
                         <cm:name>a77ef515-fc63-41bc-af6d-5eb214f61f1b</cm:name>
                         <sys:node-dbid>7849</sys:node-dbid>
                         <sys:store-identifier>SpacesStore</sys:store-identifier>
-                        <vol:sendToDestruction>false</vol:sendToDestruction>
-                        <vol:title>Toimik 2-2-2</vol:title>
-                        <vol:status>avatud</vol:status>
+                        <docdyn:sendToDestruction>false</docdyn:sendToDestruction>
+                        <docdyn:title>Toimik 2-2-2</docdyn:title>
+                        <docdyn:status>avatud</docdyn:status>
                         <sys:node-uuid>a77ef515-fc63-41bc-af6d-5eb214f61f1b</sys:node-uuid>
-                        <vol:archivingNote></vol:archivingNote>
-                        <vol:description></vol:description>
-                        <vol:volumeMark>TEST2-2-2</vol:volumeMark>
-                        <vol:volumeType>ANNUAL_FILE</vol:volumeType>
-                        <vol:dispositionDate>
+                        <docdyn:archivingNote></docdyn:archivingNote>
+                        <docdyn:description></docdyn:description>
+                        <docdyn:volumeMark>TEST2-2-2</docdyn:volumeMark>
+                        <docdyn:volumeType>ANNUAL_FILE</docdyn:volumeType>
+                        <docdyn:dispositionDate>
                           <view:value view:isNull="true"></view:value>
-                        </vol:dispositionDate>
-                        <vol:validFrom>2011-11-16T00:00:00.000+02:00</vol:validFrom>
-                        <vol:validTo>
+                        </docdyn:dispositionDate>
+                        <docdyn:validFrom>2011-11-16T00:00:00.000+02:00</docdyn:validFrom>
+                        <docdyn:validTo>
                           <view:value view:isNull="true"></view:value>
-                        </vol:validTo>
+                        </docdyn:validTo>
                         <sys:store-protocol>workspace</sys:store-protocol>
-                        <vol:containsCases>false</vol:containsCases>
-                        <vol:containingDocsCount>0</vol:containingDocsCount>
+                        <docdyn:containsCases>false</docdyn:containsCases>
+                        <docdyn:containingDocsCount>0</docdyn:containingDocsCount>
                       </view:properties>
                     </vol:volume>
                   </vol:volume>

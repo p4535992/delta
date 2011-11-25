@@ -8,7 +8,7 @@
 <%@ page isELIgnored="false"%>
 
 <a:panel id="thesaurus-keyword-search" styleClass="panel-100" label="#{msg.thesaurus_search}" progressive="true" rendered="#{!ThesaurusDetailsDialog.new}">
-   <h:inputText id="search-text" styleClass="admin-user-search-input width250" value="#{ThesaurusDetailsDialog.keywordFilter}" size="35" maxlength="1024" />
+   <h:inputText id="search-text" styleClass="admin-user-search-input width250 focus" value="#{ThesaurusDetailsDialog.keywordFilter}" size="35" maxlength="1024" />
    <h:commandButton id="search-btn" value="#{msg.search}" action="#{ThesaurusDetailsDialog.filterKeywords}" style="margin-left: 5px;"/>
    <h:commandButton value="#{msg.show_all}" action="#{ThesaurusDetailsDialog.showAll}" style="margin-left: 5px;"/>
 </a:panel>
@@ -25,7 +25,7 @@
          <f:verbatim><span class="red">*&nbsp;</span></f:verbatim>
          <h:outputText value="#{msg.thesaurus_name}"  />
       </h:panelGroup>
-      <h:inputText value="#{ThesaurusDetailsDialog.thesaurus.name}" rendered="#{ThesaurusDetailsDialog.new}" />
+      <h:inputText value="#{ThesaurusDetailsDialog.thesaurus.name}" rendered="#{ThesaurusDetailsDialog.new}" styleClass="focus" />
 
       <h:outputText value="#{msg.thesaurus_description}" />
       <h:inputTextarea styleClass="expand19-200" value="#{ThesaurusDetailsDialog.thesaurus.description}" />

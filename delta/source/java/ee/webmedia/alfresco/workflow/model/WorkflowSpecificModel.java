@@ -68,6 +68,7 @@ public interface WorkflowSpecificModel {
         QName RESPONSIBLE = QName.createQName(URI, "responsible");
         QName SEARCHABLE = QName.createQName(URI, "searchable");
         QName TEMP_OUTCOME = QName.createQName(URI, "tempOutcome");
+        QName TASK_DUE_DATE_EXTENSION_CONTAINER = QName.createQName(URI, "taskDueDateExtensionContainer");
     }
 
     interface Props {
@@ -76,7 +77,6 @@ public interface WorkflowSpecificModel {
         QName IS_DUE_DATE_WORKING_DAYS = QName.createQName(URI, "isDueDateDaysWorkingDays");
         QName DESCRIPTION = QName.createQName(URI, "description");
         QName RESOLUTION = QName.createQName(URI, "resolution");
-        QName FILE = QName.createQName(URI, "file");
         QName ACTIVE = QName.createQName(URI, "active");
         QName COMMENT = QName.createQName(URI, "comment");
         QName WORKFLOW_RESOLUTION = QName.createQName(URI, "workflowResolution");

@@ -32,7 +32,7 @@ public class DocumentDialogHelperBean implements Serializable {
     }
 
     public Node getNode() {
-        return dialogDataProvider.getNode();
+        return dialogDataProvider == null ? null : dialogDataProvider.getNode();
     }
 
     public boolean isInEditMode() {

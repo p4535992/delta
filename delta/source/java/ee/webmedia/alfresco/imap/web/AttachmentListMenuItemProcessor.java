@@ -17,7 +17,7 @@ public class AttachmentListMenuItemProcessor extends CountAddingMenuItemProcesso
 
     @Override
     public int getCount(MenuItem menuItem) {
-        return fileService.getAllFilesExcludingDigidocSubitems(imapServiceExt.getAttachmentRoot()).size();
+        return fileService.getAllFilesExcludingDigidocSubitemsCount(imapServiceExt.getAttachmentRoot(), true);
     }
 
     @Override

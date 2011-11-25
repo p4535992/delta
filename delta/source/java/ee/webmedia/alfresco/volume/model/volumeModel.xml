@@ -8,6 +8,7 @@
       <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
       <import uri="http://alfresco.webmedia.ee/model/document/common/1.0" prefix="doccom" />
       <import uri="http://alfresco.webmedia.ee/model/case/1.0" prefix="case" />
+      <import uri="http://alfresco.webmedia.ee/model/document/dynamic/1.0" prefix="docdyn" />
    </imports>
 
    <namespaces>
@@ -18,44 +19,44 @@
       <type name="vol:volume">
          <parent>sys:base</parent>
          <properties>
-            <property name="vol:title">
+            <property name="docdyn:title">
                <type>d:text</type>
                <mandatory>true</mandatory>
             </property>
-            <property name="vol:containsCases">
+            <property name="docdyn:containsCases">
                <type>d:boolean</type>
             </property>
-            <property name="vol:description">
+            <property name="docdyn:description">
                <type>d:text</type>
             </property>
-            <property name="vol:status">
+            <property name="docdyn:status">
                <type>d:text</type>
             </property>
-            <property name="vol:validFrom">
+            <property name="docdyn:validFrom">
                <type>d:date</type>
                <mandatory>true</mandatory>
             </property>
-            <property name="vol:validTo">
+            <property name="docdyn:validTo">
                <type>d:date</type>
             </property>
-            <property name="vol:dispositionDate">
+            <property name="docdyn:dispositionDate">
                <type>d:date</type>
             </property>
-            <property name="vol:volumeType">
+            <property name="docdyn:volumeType">
                <type>d:text</type>
                <mandatory>true</mandatory>
             </property>
-            <property name="vol:volumeMark">
+            <property name="docdyn:volumeMark">
                <type>d:text</type>
                <mandatory>true</mandatory>
             </property>
-            <property name="vol:sendToDestruction">
+            <property name="docdyn:sendToDestruction">
                 <type>d:boolean</type>
             </property>
-             <property name="vol:archivingNote">
+             <property name="docdyn:archivingNote">
                  <type>d:text</type>
              </property>
-             <property name="vol:containingDocsCount">
+             <property name="docdyn:containingDocsCount">
                <type>d:int</type>
                <default>0</default>
             </property>

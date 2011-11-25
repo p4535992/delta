@@ -6,6 +6,8 @@ import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FUNC
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SERIES;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.VOLUME;
 
+import java.util.Date;
+
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
@@ -13,6 +15,7 @@ import org.springframework.util.Assert;
 import ee.webmedia.alfresco.common.model.NodeBaseVO;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 
@@ -127,4 +130,27 @@ public class DocumentDynamic extends NodeBaseVO implements Cloneable {
         setProp(DocumentService.TransientProps.TEMP_DOCUMENT_DISABLE_UPDATE_INITIAL_ACCESS_RESTRICTION_PROPS, disableUpdateInitialAccessRestrictionProps);
     }
 
+    public boolean isAccessRestrictionPropsChanged() {
+        return getPropBoolean(DocumentService.TransientProps.TEMP_DOCUMENT_ACCESS_RESTRICTION_PROPS_CHANGED);
+    }
+
+    public void setAccessRestrictionPropsChanged(boolean accessRestrictionPropsChanged) {
+        setProp(DocumentService.TransientProps.TEMP_DOCUMENT_ACCESS_RESTRICTION_PROPS_CHANGED, accessRestrictionPropsChanged);
+    }
+
+    public String getDocName() {
+        return getProp(DocumentCommonModel.Props.DOC_NAME);
+    }
+
+    public String getRegNumber() {
+        return getProp(DocumentCommonModel.Props.REG_NUMBER);
+    }
+
+    public Date getRegDateTime() {
+        return getProp(DocumentCommonModel.Props.REG_DATE_TIME);
+    }
+
+    public String getOwnerName() {
+        return getProp(DocumentCommonModel.Props.OWNER_NAME);
+    }
 }

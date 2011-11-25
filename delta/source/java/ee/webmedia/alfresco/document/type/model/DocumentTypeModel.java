@@ -28,7 +28,7 @@ public interface DocumentTypeModel {
         QName SHOW_UNVALUED = QName.createQName(URI, "showUnvalued");
         QName CHANGE_BY_NEW_DOCUMENT_ENABLED = QName.createQName(URI, "changeByNewDocumentEnabled");
         QName SYSTEMATIC = QName.createQName(URI, "systematic");
-        QName DOCUMENT_TYPE_GROUP = QName.createQName(URI, "documentTypeGroup");
+        QName MENU_GROUP_NAME = QName.createQName(URI, "menuGroupName");
         QName REGISTRATION_ENABLED = QName.createQName(URI, "registrationEnabled");
         QName FINISH_DOC_BY_REGISTRATION = QName.createQName(URI, "finishDocByRegistration");
         QName SEND_UNREGISTRATED_DOC_ENABLED = QName.createQName(URI, "sendUnregistratedDocEnabled");

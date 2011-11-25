@@ -158,7 +158,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
     }
 
     @Override
-    protected void executeInternal() throws Throwable {
+    final protected void executeInternal() throws Throwable {
         if (!enabled) {
             log.info("Skipping node updater, because it is disabled" + (isExecuteOnceOnly() ? ". It will not be executed again, because executeOnceOnly=true" : ""));
             return;
@@ -166,7 +166,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         executeUpdater();
     }
 
-    protected void executeUpdater() throws Exception {
+    private void executeUpdater() throws Exception {
         log.info("Starting node updater");
         nodesFile = new File(inputFolder, getNodesCsvFileName());
         nodes = loadNodesFromFile(nodesFile, false);
@@ -198,23 +198,23 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         log.info("Completed nodes updater");
     }
 
-    protected String getBaseFileName() {
-        return getClass().getSimpleName();
+    final protected String getBaseFileName() {
+        return getName();
     }
 
-    protected String getNodesCsvFileName() {
+    private String getNodesCsvFileName() {
         return getBaseFileName() + ".csv";
     }
 
-    protected String getCompletedNodesCsvFileName() {
+    private String getCompletedNodesCsvFileName() {
         return getBaseFileName() + "Completed.csv";
     }
 
-    protected String getRollbackNodesCsvFileName() {
+    private String getRollbackNodesCsvFileName() {
         return getBaseFileName() + "Rollback-" + dateTimeFormat.format(new Date()) + ".csv";
     }
 
-    protected Set<NodeRef> loadNodesFromFile(File file, boolean readHeaders) throws Exception {
+    private Set<NodeRef> loadNodesFromFile(File file, boolean readHeaders) throws Exception {
         if (!file.exists()) {
             log.info("Skipping loading nodes, file does not exist: " + file.getAbsolutePath());
             return null;
@@ -239,7 +239,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         return loadedNodes;
     }
 
-    protected void writeNodesToFile(File file, Set<NodeRef> nodesToWrite) throws Exception {
+    private void writeNodesToFile(File file, Set<NodeRef> nodesToWrite) throws Exception {
         log.info("Writing " + nodesToWrite.size() + " nodes to file " + file.getAbsolutePath());
         try {
             CsvWriter writer = new CsvWriter(new FileOutputStream(file), CSV_SEPARATOR, CSV_CHARSET);
@@ -255,7 +255,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         }
     }
 
-    protected Set<NodeRef> loadNodesFromRepo() throws Exception {
+    private Set<NodeRef> loadNodesFromRepo() throws Exception {
         log.info("Searching nodes from repository");
         List<ResultSet> resultSets = getNodeLoadingResultSet();
         if (resultSets == null || resultSets.size() == 0) {
@@ -300,7 +300,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         }
     }
 
-    protected void updateNodesBatch(final List<NodeRef> batchList) throws Exception {
+    private void updateNodesBatch(final List<NodeRef> batchList) throws Exception {
         final List<String[]> batchInfos = new ArrayList<String[]>(batchSize);
         for (NodeRef nodeRef : batchList) {
             if (!nodeService.exists(nodeRef)) {

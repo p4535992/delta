@@ -119,12 +119,12 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
     }
 
     @Override
-    public List<OrganizationStructure> searchOrganizationStructures(String input) {
+    public List<OrganizationStructure> searchOrganizationStructures(String input, int limit) {
         Set<QName> props = new HashSet<QName>(1);
         props.add(OrganizationStructureModel.Props.NAME);
 
         // why doesn't lucene sorting work? as a workaround we sort in java
-        List<NodeRef> nodes = generalService.searchNodes(input, OrganizationStructureModel.Types.ORGSTRUCT, props);
+        List<NodeRef> nodes = generalService.searchNodes(input, OrganizationStructureModel.Types.ORGSTRUCT, props, limit);
 
         if (nodes == null) {
             return sortByName(getAllOrganizationStructures());

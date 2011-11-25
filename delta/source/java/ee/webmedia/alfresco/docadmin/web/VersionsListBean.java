@@ -13,39 +13,46 @@ import org.apache.commons.collections.comparators.TransformingComparator;
 
 import ee.webmedia.alfresco.base.BaseObject.ChildrenList;
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
+import ee.webmedia.alfresco.docadmin.service.DynamicType;
 import ee.webmedia.alfresco.docdynamic.web.DialogBlockBean;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComparableTransformer;
 
 /**
- * Shows the list of saved {@link DocumentTypeVersion} under {@link DocumentType}
+ * Shows the list of saved {@link DocumentTypeVersion} under {@link DynamicType}
  * 
  * @author Ats Uiboupin
  */
-public class VersionsListBean implements DialogBlockBean<DocumentType> {
+public class VersionsListBean<D extends DynamicType> implements DialogBlockBean<D> {
     private static final long serialVersionUID = 1L;
-    private DocumentType documentType;
+
+    // TODO ALSeadist Ats - ümber nimetada
+    private D dynType;
     private List<DocumentTypeVersionListItem> savedVersionsList;
+    private final Class<D> dynTypeClass;
+
+    public VersionsListBean(Class<D> dynTypeClass) {
+        this.dynTypeClass = dynTypeClass;
+    }
 
     @Override
-    public void resetOrInit(DocumentType docType) {
-        if (documentType != docType) {
-            // no need to reinitialize savedVersionsList when closing previous version of DocumentType
-            documentType = docType;
+    public void resetOrInit(D docType) {
+        if (dynType != docType) {
+            // no need to reinitialize savedVersionsList when closing previous version of DynamicType
+            dynType = docType;
             savedVersionsList = null;
         }
     }
 
-    public void viewDocTypeVersion(ActionEvent event) {
+    public void viewTypeVersion(ActionEvent event) {
         NodeRef docTypeVersionRef = ActionUtil.getParam(event, "nodeRef", NodeRef.class);
-        BeanHelper.getDocTypeDetailsDialog().init(documentType, docTypeVersionRef);
+        BeanHelper.getDynamicTypeDetailsDialog(dynTypeClass).init(dynType, docTypeVersionRef);
     }
 
     public List<DocumentTypeVersionListItem> getSavedVersionsList() {
         if (savedVersionsList == null) {
-            ChildrenList<DocumentTypeVersion> documentTypeVersions = documentType.getDocumentTypeVersions();
+            ChildrenList<DocumentTypeVersion> documentTypeVersions = dynType.getDocumentTypeVersions();
             if (documentTypeVersions == null) {
                 return Collections.emptyList();
             }

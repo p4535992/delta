@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.document.file.web;
 
 import static ee.webmedia.alfresco.utils.ComponentUtil.addChildren;
 import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
+import static ee.webmedia.alfresco.utils.FilenameUtil.getFilenameFromDisplayname;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -47,6 +48,7 @@ import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.einvoice.generated.EInvoice;
 import ee.webmedia.alfresco.document.einvoice.generated.Invoice;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
@@ -73,7 +75,6 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
     public static final String BEAN_NAME = "AddFileDialog";
 
     private static final String ERR_EXISTING_FILE = "add_file_existing_file";
-    private static final String ERR_INVALID_FILE_NAME = "add_file_invalid_file_name";
 
     private transient UserService userService;
     private transient ImapServiceExt imapServiceExt;
@@ -214,7 +215,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
                 createAdditionalInvoices(fileInvoices, documentNodeRef, !documentDialog.isDraft());
 
             } catch (NodeLockedException e) {
-                documentDialog.handleLockedNode("document_addFile_error_docLocked");
+                BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_addFile_error_docLocked");
                 return outcome;
             }
             return outcome;
@@ -227,18 +228,12 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
     public Pair<String, String> getFileFilenames(NodeRef documentNodeRef, List<String> existingFilenames
             , List<String> fileNames, List<String> fileNameWithoutExtension, int i) {
         String displayName = fileNameWithoutExtension.get(i) + "." + FilenameUtils.getExtension(fileNames.get(i));
-        return getFilenameFromDisplayname(documentNodeRef, existingFilenames, displayName);
+        return getFilenameFromDisplayname(documentNodeRef, existingFilenames, displayName, BeanHelper.getGeneralService());
     }
 
     public Pair<String, String> getAttachmentFilenames(NodeRef documentNodeRef, List<String> existingDisplayNames, int i) {
         String displayName = selectedFileNameWithoutExtension.get(i) + "." + FilenameUtils.getExtension(selectedFileName.get(i));
-        return getFilenameFromDisplayname(documentNodeRef, existingDisplayNames, displayName);
-    }
-
-    private Pair<String, String> getFilenameFromDisplayname(NodeRef documentNodeRef, List<String> existingDisplayNames, String displayName) {
-        displayName = FilenameUtil.generateUniqueFileDisplayName(displayName, existingDisplayNames);
-        String name = checkAndGetUniqueFilename(documentNodeRef, displayName);
-        return new Pair<String, String>(name, displayName);
+        return getFilenameFromDisplayname(documentNodeRef, existingDisplayNames, displayName, BeanHelper.getGeneralService());
     }
 
     public void addFileAndFilename(String name, String displayName, NodeRef documentNodeRef, NodeRef fileRef, List<String> existingFilenames) {
@@ -334,24 +329,6 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         return false;
     }
 
-    /**
-     * NB! this method is intended only for cm:name property!
-     */
-    public String checkAndGetUniqueFilename(NodeRef documentNodeRef, String displayName) {
-        checkPlusInFileName(displayName);
-        String safeFilename = FilenameUtil.makeSafeFilename(displayName);
-        return getGeneralService().getUniqueFileName(documentNodeRef, safeFilename);
-    }
-
-    public static void checkPlusInFileName(String displayName) {
-        if (displayName.contains("+")) {
-            // On some server environments(concrete case with GlassFish on Linux server - on other Linux/Windows machine there were no such problem) when using
-            // encoded "+" ("%2B") in url's request.getRequestURI() returns unEncoded value of "+" (instead of "%2B") and
-            // further decoding will replace + with space. Hence when looking for file by name there is " " instead of "+" and file will not be found.
-            throw new RuntimeException(MessageUtil.getMessage(FacesContext.getCurrentInstance(), ERR_INVALID_FILE_NAME));
-        }
-    }
-
     @Override
     public void restored() {
         refreshUploadedFilesPanelGroup();
@@ -361,7 +338,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
     @Override
     protected String getErrorOutcome(Throwable exception) {
         if (exception instanceof IntegrityException) {
-            Utils.addErrorMessage(MessageUtil.getMessage(FacesContext.getCurrentInstance(), ERR_INVALID_FILE_NAME));
+            Utils.addErrorMessage(MessageUtil.getMessage(FacesContext.getCurrentInstance(), FilenameUtil.ERR_INVALID_FILE_NAME));
             return ""; // Don't return null!
         }
         return super.getErrorOutcome(exception);

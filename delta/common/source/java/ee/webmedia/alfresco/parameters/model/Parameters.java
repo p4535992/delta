@@ -76,6 +76,7 @@ public enum Parameters {
     DOC_PROP_VACATION_ORDER_LEGAL_BASIS_NAME("docPropVacationOrderLegalBasisName"),
     DOC_PROP_CHANCELLORS_ORDER_SIGNER_NAME("docPropChancellorsOrderSignerName"),
     SEARCH_RESULTS_LIMIT("searchResultsLimit"),
+    MAX_MODAL_SEARCH_RESULT_ROWS("maxModalSearchResultRows"),
     HEADER_TEXT("headerText"),
     FOOTER_TEXT("footerText"),
     VOLUME_AUTOMATIC_CLOSING_TIME("volumeAutomaticClosingTime"),

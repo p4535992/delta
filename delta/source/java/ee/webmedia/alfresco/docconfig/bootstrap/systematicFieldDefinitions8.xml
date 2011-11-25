@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:docadmin="http://alfresco.webmedia.ee/model/document/admin/1.0" xmlns:docdyn="http://alfresco.webmedia.ee/model/document/dynamic/1.0">
+
+   <docadmin:fieldDefinition view:childName="docdyn:volumeMark">
+      <view:properties>
+         <docadmin:fieldId>volumeMark</docadmin:fieldId>
+         <docadmin:originalFieldId>volumeMark</docadmin:originalFieldId>
+         <docadmin:name>Asjatoimiku viit</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForVol>true</docadmin:mandatoryForVol>
+         <docadmin:mandatory>true</docadmin:mandatory>
+         <docadmin:mandatoryChangeable>false</docadmin:mandatoryChangeable>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:changeableIfChangeable>true</docadmin:changeableIfChangeable>
+         <docadmin:isParameterInDocSearch>false</docadmin:isParameterInDocSearch>
+         <docadmin:isParameterInVolSearch>true</docadmin:isParameterInVolSearch>
+         <docadmin:isFixedParameterInDocSearch>false</docadmin:isFixedParameterInDocSearch>
+         <docadmin:isFixedParameterInVolSearch>true</docadmin:isFixedParameterInVolSearch>
+         <docadmin:inapplicableForDoc>true</docadmin:inapplicableForDoc>
+         <docadmin:order>4</docadmin:order>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:title">
+      <view:properties>
+         <docadmin:fieldId>title</docadmin:fieldId>
+         <docadmin:originalFieldId>title</docadmin:originalFieldId>
+         <docadmin:name>Asjatoimiku pealkiri</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForVol>true</docadmin:mandatoryForVol>
+         <docadmin:mandatory>true</docadmin:mandatory>
+         <docadmin:mandatoryChangeable>false</docadmin:mandatoryChangeable>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:isParameterInDocSearch>false</docadmin:isParameterInDocSearch>
+         <docadmin:isParameterInVolSearch>true</docadmin:isParameterInVolSearch>
+         <docadmin:isFixedParameterInDocSearch>false</docadmin:isFixedParameterInDocSearch>
+         <docadmin:isFixedParameterInVolSearch>true</docadmin:isFixedParameterInVolSearch>
+         <docadmin:inapplicableForDoc>true</docadmin:inapplicableForDoc>
+         <docadmin:order>5</docadmin:order>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:description">
+      <view:properties>
+         <docadmin:fieldId>description</docadmin:fieldId>
+         <docadmin:originalFieldId>description</docadmin:originalFieldId>
+         <docadmin:name>Kirjeldus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>false</docadmin:mandatoryForDoc>
+         <docadmin:mandatoryForVol>true</docadmin:mandatoryForVol>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:isParameterInDocSearch>false</docadmin:isParameterInDocSearch>
+         <docadmin:isParameterInVolSearch>true</docadmin:isParameterInVolSearch>
+         <docadmin:isFixedParameterInDocSearch>false</docadmin:isFixedParameterInDocSearch>
+         <docadmin:isFixedParameterInVolSearch>false</docadmin:isFixedParameterInVolSearch>
+         <docadmin:inapplicableForDoc>true</docadmin:inapplicableForDoc>
+         <docadmin:order>6</docadmin:order>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:validFrom">
+      <view:properties>
+         <docadmin:fieldId>validFrom</docadmin:fieldId>
+         <docadmin:originalFieldId>validFrom</docadmin:originalFieldId>
+         <docadmin:name>Kehtiv alates</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:systematicComment>Toimiku kehtivuse alguskuupäev</docadmin:systematicComment>
+         <docadmin:mandatoryForVol>true</docadmin:mandatoryForVol>
+         <docadmin:mandatory>true</docadmin:mandatory>
+         <docadmin:mandatoryChangeable>true</docadmin:mandatoryChangeable>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:defaultDateSysdate>true</docadmin:defaultDateSysdate>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:isParameterInDocSearch>false</docadmin:isParameterInDocSearch>
+         <docadmin:isParameterInVolSearch>true</docadmin:isParameterInVolSearch>
+         <docadmin:isFixedParameterInDocSearch>false</docadmin:isFixedParameterInDocSearch>
+         <docadmin:isFixedParameterInVolSearch>true</docadmin:isFixedParameterInVolSearch>
+         <docadmin:inapplicableForDoc>true</docadmin:inapplicableForDoc>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:validTo">
+      <view:properties>
+         <docadmin:fieldId>validTo</docadmin:fieldId>
+         <docadmin:originalFieldId>validTo</docadmin:originalFieldId>
+         <docadmin:name>Kehtiv kuni</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:systematicComment>Toimiku kehtivuse lõppkuupäev</docadmin:systematicComment>
+         <docadmin:mandatoryForVol>true</docadmin:mandatoryForVol>
+         <docadmin:mandatory>false</docadmin:mandatory>
+         <docadmin:mandatoryChangeable>true</docadmin:mandatoryChangeable>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:isParameterInDocSearch>false</docadmin:isParameterInDocSearch>
+         <docadmin:isParameterInVolSearch>true</docadmin:isParameterInVolSearch>
+         <docadmin:isFixedParameterInDocSearch>false</docadmin:isFixedParameterInDocSearch>
+         <docadmin:isFixedParameterInVolSearch>true</docadmin:isFixedParameterInVolSearch>
+         <docadmin:inapplicableForDoc>true</docadmin:inapplicableForDoc>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:status">
+      <view:properties>
+         <docadmin:fieldId>status</docadmin:fieldId>
+         <docadmin:originalFieldId>status</docadmin:originalFieldId>
+         <docadmin:name>Staatus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:systematicComment>Asjatoimiku staatus</docadmin:systematicComment>
+         <docadmin:mandatoryForVol>true</docadmin:mandatoryForVol>
+         <docadmin:mandatory>true</docadmin:mandatory>
+         <docadmin:mandatoryChangeable>false</docadmin:mandatoryChangeable>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>ALWAYS_NOT_CHANGEABLE</docadmin:changeableIf>
+         <docadmin:isParameterInDocSearch>false</docadmin:isParameterInDocSearch>
+         <docadmin:isParameterInVolSearch>true</docadmin:isParameterInVolSearch>
+         <docadmin:isFixedParameterInDocSearch>false</docadmin:isFixedParameterInDocSearch>
+         <docadmin:isFixedParameterInVolSearch>true</docadmin:isFixedParameterInVolSearch>
+         <docadmin:inapplicableForDoc>true</docadmin:inapplicableForDoc>
+         <docadmin:order>8</docadmin:order>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:workflowDueDate">
+      <view:properties>
+         <docadmin:fieldId>workflowDueDate</docadmin:fieldId>
+         <docadmin:originalFieldId>workflowDueDate</docadmin:originalFieldId>
+         <docadmin:name>Menetluse tähtaeg</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:systematicComment>Menetluse tähtaeg (asjatoimiku juures)</docadmin:systematicComment>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForDoc>true</docadmin:inapplicableForDoc>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:workflowEndDate">
+      <view:properties>
+         <docadmin:fieldId>workflowEndDate</docadmin:fieldId>
+         <docadmin:originalFieldId>workflowEndDate</docadmin:originalFieldId>
+         <docadmin:name>Menetluse lõppkuupäev</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:systematicComment>Menetluse lõppkuupäev (asjatoimiku juures)</docadmin:systematicComment>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForDoc>true</docadmin:inapplicableForDoc>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+</view:view>

@@ -87,8 +87,9 @@ public interface DocumentTemplateService {
      * Scans generated Word documents and replaces patterns which are relevant to registration of the document
      * 
      * @param nodeRef nodeRef that is being registered
+     * @param isRegistering if document is also registered the generated document is finalized (/* {emptyField} *\/ markings are removed)
      */
-    void updateGeneratedFilesOnRegistration(NodeRef nodeRef);
+    void updateGeneratedFiles(NodeRef nodeRef, boolean isRegistering);
 
     /**
      * Fetches template NodeRef for system templates that are specified by file name

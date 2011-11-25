@@ -119,7 +119,6 @@
          <parent>wfc:task</parent>
          <mandatory-aspects>
             <aspect>wfs:commonTask</aspect>
-            <aspect>wfs:file</aspect>
          </mandatory-aspects>
       </type>
 
@@ -165,7 +164,6 @@
          <mandatory-aspects>
             <aspect>wfs:commonTask</aspect>
             <aspect>wfs:resolution</aspect>
-            <aspect>wfs:file</aspect>
             <aspect>wfs:taskDueDateExtensionContainer</aspect>
          </mandatory-aspects>
       </type>
@@ -302,12 +300,13 @@
          </properties>
       </aspect>
 
-      <aspect name="wfs:file">
-         <properties>
-            <property name="wfs:file">
-               <type>d:content</type>
-            </property>
-         </properties>
+      <!-- This aspect is not used in new tasks any more -->
+      <aspect name="wfs:file">   
+          <properties>   
+             <property name="wfs:file">    
+                <type>d:content</type>  
+             </property>    
+          </properties>  
       </aspect>
 
       <!-- some assignmentTask-s have aspect wfs:responsible, see specification -->

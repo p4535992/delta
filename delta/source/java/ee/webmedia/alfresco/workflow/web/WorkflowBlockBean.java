@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.workflow.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPermissionService;
 import static ee.webmedia.alfresco.utils.ComponentUtil.getAttributes;
 import static ee.webmedia.alfresco.utils.ComponentUtil.getChildren;
@@ -39,14 +40,16 @@ import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.config.ActionsConfigElement.ActionDefinition;
 import org.alfresco.web.ui.common.Utils;
+import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIPanel;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.time.DateUtils;
+import org.joda.time.LocalDate;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIPropertySheet;
+import ee.webmedia.alfresco.common.propertysheet.customchildrencontainer.CustomChildrenCreator;
 import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter;
 import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerGenerator;
 import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent;
@@ -75,6 +78,7 @@ import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.signature.web.SignatureAppletModalComponent;
 import ee.webmedia.alfresco.signature.web.SignatureBlockBean;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
@@ -136,6 +140,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     private List<Task> finishedOpinionTasks;
     private List<Task> finishedOrderAssignmentTasks;
     private SignatureTask signatureTask;
+    private List<File> removedFiles;
 
     @Override
     public void resetOrInit(DialogDataProvider provider) {
@@ -163,6 +168,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         finishedOrderAssignmentTasks = null;
         signatureTask = null;
         dataTableGroup = null;
+        removedFiles = null;
         delegationBean.reset();
         actionDefinitions = Collections.emptyList();
     }
@@ -174,6 +180,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         finishedOpinionTasks = WorkflowUtil.getFinishedTasks(compoundWorkflows, WorkflowSpecificModel.Types.OPINION_TASK);
         finishedOrderAssignmentTasks = WorkflowUtil.getFinishedTasks(compoundWorkflows, WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK);
         signatureTask = null;
+        removedFiles = null;
         delegationBean.reset();
         // rebuild the whole task panel
         constructTaskPanelGroup();
@@ -262,7 +269,9 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     public void saveTask(ActionEvent event) {
         Integer index = (Integer) event.getComponent().getAttributes().get(ATTRIB_INDEX);
         try {
-            getWorkflowService().saveInProgressTask(getMyTasks().get(index));
+            Task task = getMyTasks().get(index);
+            addRemovedFiles(task);
+            getWorkflowService().saveInProgressTask(task);
             MessageUtil.addInfoMessage("save_success");
         } catch (WorkflowChangedException e) {
             log.debug("Saving task failed", e);
@@ -329,6 +338,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         }
         // finish the task
         try {
+            addRemovedFiles(task);
             getWorkflowService().finishInProgressTask(task, outcomeIndex);
             MessageUtil.addInfoMessage("task_finish_success_defaultMsg");
         } catch (InvalidNodeRefException e) {
@@ -342,6 +352,17 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         }
 
         getDocumentDialogHelperBean().switchMode(false);
+    }
+
+    private void addRemovedFiles(Task task) {
+        for (File file : getRemovedFiles()) {
+            for (File taskFile : BeanHelper.getFileService().getAllFiles(task.getNodeRef())) {
+                if (taskFile.getNodeRef().equals(file.getNodeRef())) {
+                    task.getRemovedFiles().add(taskFile.getNodeRef());
+                }
+            }
+        }
+        removedFiles = null;
     }
 
     public boolean showOrderAssignmentCategory() {
@@ -367,6 +388,8 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         task.setOwnerEmail(initiatingTask.getOwnerEmail());
         workflow.setProp(WorkflowSpecificModel.Props.RESOLUTION, reason);
         task.setProposedDueDate(newDate);
+        dueDate.setHours(23);
+        dueDate.setMinutes(59);
         task.setDueDate(dueDate);
         getWorkflowService().createDueDateExtension(compoundWorkflow, initiatingTask.getNodeRef());
         MessageUtil.addInfoMessage("task_sendDueDateExtensionRequest_success_defaultMsg");
@@ -396,7 +419,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 return Arrays.asList(new Pair<String, String>("task_validation_assignmentTask_comment", null));
             }
         } else if (WorkflowSpecificModel.Types.OPINION_TASK.equals(taskType)) {
-            if (StringUtils.isBlank(task.getComment()) && task.getProp(WorkflowSpecificModel.Props.FILE) == null) {
+            if (StringUtils.isBlank(task.getComment()) && (task.getFiles() == null || task.getFiles().isEmpty())) {
                 return Arrays.asList(new Pair<String, String>("task_validation_opinionTask_comment", null));
             }
         } else if (WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK.equals(taskType)) {
@@ -717,17 +740,19 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         addDateInput(context, layerChildren, "workflow_dueDateExtension_proposedDueDate", MODAL_KEY_PROPOSED_DUE_DATE);
 
         TextAreaGenerator textAreaGenerator = new TextAreaGenerator();
-        UIComponent reasonInput = textAreaGenerator.generate(context, "task-due-date-extension-reason");
+        UIInput reasonInput = (UIInput) textAreaGenerator.generate(context, "task-due-date-extension-reason");
         reasonInput.setId(MODAL_KEY_REASON);
         Map<String, Object> reasonAttributes = ComponentUtil.getAttributes(reasonInput);
         reasonAttributes.put(ModalLayerComponent.ATTR_LABEL_KEY, "workflow_dueDateExtension_Reason");
         reasonAttributes.put(ModalLayerComponent.ATTR_MANDATORY, Boolean.TRUE);
         reasonAttributes.put("styleClass", "expand19-200");
         reasonAttributes.put("style", "height: 50px;");
+        reasonInput.setValue(null);
         layerChildren.add(reasonInput);
 
         UIInput dueDateInput = addDateInput(context, layerChildren, "workflow_dueDateExtension_dueDate", MODAL_KEY_DUE_DATE);
-        dueDateInput.setValue(DateUtils.addDays(new Date(), 2));
+        dueDateInput.setValue(CalendarUtil.addWorkingDaysToDate(new LocalDate(), 2, BeanHelper.getClassificatorService()).toDateTimeAtCurrentTime().toDate());
+        ComponentUtil.putAttribute(dueDateInput, ModalLayerComponent.ATTR_PRESERVE_VALUES, Boolean.TRUE);
 
         dueDateExtensionLayer.setActionListener(app.createMethodBinding("#{WorkflowBlockBean.sendTaskDueDateExtensionRequest}", UIActions.ACTION_CLASS_ARGS));
         panelGroupChildren.add(dueDateExtensionLayer);
@@ -784,7 +809,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
 
     private boolean checkRights(Workflow workflow) {
         boolean localRights = getUserService().isDocumentManager()
-                || getDocumentService().isDocumentOwner(docRef, AuthenticationUtil.getRunAsUser())
+                || getDocumentDynamicService().isOwner(docRef, AuthenticationUtil.getRunAsUser())
                 || getWorkflowService().isOwner(workflow.getParent())
                 || getWorkflowService().isOwnerOfInProgressAssignmentTask(workflow.getParent());
         boolean externalReviewRights = !workflow.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW)
@@ -930,6 +955,46 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         items.remove(items.size() - 1); // remove two last ones
         items.remove(items.size() - 1);
         return items;
+    }
+
+    public CustomChildrenCreator getNoteBlockRowFileGenerator() {
+        CustomChildrenCreator fileComponentCreator = new CustomChildrenCreator() {
+
+            @Override
+            public List<UIComponent> createChildren(List<Object> params) {
+                List<UIComponent> components = new ArrayList<UIComponent>();
+                if (params != null) {
+                    Application application = FacesContext.getCurrentInstance().getApplication();
+                    int fileCounter = 0;
+                    for (Object obj : params) {
+                        File file = (File) obj;
+                        final UIActionLink fileLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
+                        fileLink.setValue("");
+                        fileLink.setTooltip(file.getDisplayName());
+                        fileLink.setShowLink(false);
+                        fileLink.setHref(file.getDownloadUrl());
+                        fileLink.setImage("/images/icons/attachment.gif");
+                        fileLink.setTarget("_blank");
+                        ComponentUtil.getAttributes(fileLink).put("styleClass", "inlineAction webdav-readOnly");
+                        components.add(fileLink);
+                        fileCounter++;
+                    }
+                }
+                return components;
+            }
+        };
+        return fileComponentCreator;
+    }
+
+    public List<File> getRemovedFiles() {
+        if (removedFiles == null) {
+            removedFiles = new ArrayList<File>();
+        }
+        return removedFiles;
+    }
+
+    public void setRemovedFiles(List<File> removedFiles) {
+        this.removedFiles = removedFiles;
     }
 
     // END: getters / setters

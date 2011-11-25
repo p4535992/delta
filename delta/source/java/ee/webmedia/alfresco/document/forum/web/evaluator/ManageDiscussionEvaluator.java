@@ -7,14 +7,14 @@ import javax.faces.context.FacesContext;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
-import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.document.metadata.web.MetadataBlockBean;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator;
 import ee.webmedia.alfresco.document.web.evaluator.IsOwnerEvaluator;
@@ -38,19 +38,14 @@ public class ManageDiscussionEvaluator extends BaseActionEvaluator {
 
     @Override
     public boolean evaluate(Node _notUsed) {
-        FacesContext context = FacesContext.getCurrentInstance();
-        MetadataBlockBean bean = (MetadataBlockBean) FacesHelper.getManagedBean(context, MetadataBlockBean.BEAN_NAME);
-        final Node docNode = getDocNode(bean);
+        DocumentDialogHelperBean bean = BeanHelper.getDocumentDialogHelperBean();
+        final Node docNode = bean.getNode();
         return evaluateState(bean, docNode) && isAppropriateUser(docNode);
     }
 
-    private boolean evaluateState(MetadataBlockBean bean, Node docNode) {
+    private boolean evaluateState(DocumentDialogHelperBean bean, Node docNode) {
         return !bean.isInEditMode() //
                 && DocumentStatus.WORKING.getValueName().equals(docNode.getProperties().get(DocumentCommonModel.Props.DOC_STATUS.toString()).toString());
-    }
-
-    private Node getDocNode(MetadataBlockBean bean) {
-        return bean.getDocument();
     }
 
     private boolean isAppropriateUser(Node node) {

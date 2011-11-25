@@ -1,12 +1,5 @@
 package ee.webmedia.alfresco.user.service;
 
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_EMAIL;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_ID;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_JOB_TITLE;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_NAME;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_ORG_STRUCT_UNIT;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_PHONE;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -180,26 +173,26 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<Node> searchUsers(String input, boolean returnAllUsers) {
-        return searchUsers(input, returnAllUsers, null);
+    public List<Node> searchUsers(String input, boolean returnAllUsers, int limit) {
+        return searchUsers(input, returnAllUsers, null, limit);
     }
 
     @Override
-    public List<Node> searchUsers(String input, boolean returnAllUsers, String group) {
+    public List<Node> searchUsers(String input, boolean returnAllUsers, String group, int limit) {
         Set<QName> props = new HashSet<QName>(2);
         props.add(ContentModel.PROP_FIRSTNAME);
         props.add(ContentModel.PROP_LASTNAME);
 
-        return searchUsersByProps(input, returnAllUsers, group, props);
+        return searchUsersByProps(input, returnAllUsers, group, props, limit);
     }
 
     // XXX filtering by group is not optimal - it is done after searching/getting all users
-    private List<Node> searchUsersByProps(String input, boolean returnAllUsers, String group, Set<QName> props) {
-        List<NodeRef> nodeRefs = generalService.searchNodes(input, ContentModel.TYPE_PERSON, props);
+    private List<Node> searchUsersByProps(String input, boolean returnAllUsers, String group, Set<QName> props, int limit) {
+        List<NodeRef> nodeRefs = generalService.searchNodes(input, ContentModel.TYPE_PERSON, props, limit);
         if (nodeRefs == null) {
             if (returnAllUsers) {
                 // XXX use alfresco services instead
-                List<Node> users = getUsers();
+                List<Node> users = getUsers(limit);
                 filterByGroup(users, group);
                 return users;
             }
@@ -380,30 +373,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void setOwnerPropsFromUser(Map<QName, Serializable> docProps, Map<QName, Serializable> userProps) {
-        if (userProps == null) {
-            return;
-        }
-        docProps.put(OWNER_ID, userProps.get(ContentModel.PROP_USERNAME));
-        docProps.put(OWNER_NAME, UserUtil.getPersonFullName1(userProps));
-        docProps.put(OWNER_JOB_TITLE, userProps.get(ContentModel.PROP_JOBTITLE));
-        String orgstructName = organizationStructureService.getOrganizationStructure((String) userProps.get(ContentModel.PROP_ORGID));
-        docProps.put(OWNER_ORG_STRUCT_UNIT, orgstructName);
-        docProps.put(OWNER_EMAIL, userProps.get(ContentModel.PROP_EMAIL));
-        docProps.put(OWNER_PHONE, userProps.get(ContentModel.PROP_TELEPHONE));
-    }
-
-    @Override
-    public void setOwnerPropsFromUser(Map<String, Object> docProps) {
-        Map<QName, Serializable> userProps = getUserProperties(AuthenticationUtil.getRunAsUser());
-
-        Map<QName, Serializable> qNameDocProps = new HashMap<QName, Serializable>();
-        setOwnerPropsFromUser(qNameDocProps, userProps);
-        Map<String, Object> stringDocProps = RepoUtil.toStringProperties(qNameDocProps);
-        docProps.putAll(stringDocProps);
-    }
-
-    @Override
     public NodeRef getCurrentUser() {
         return getPerson(authenticationService.getCurrentUserName());
     }
@@ -487,7 +456,7 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    private List<Node> getUsers() {
+    private List<Node> getUsers(int limit) {
         List<Node> personNodes = null;
 
         List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(personService.getPeopleContainer());
@@ -509,6 +478,9 @@ public class UserServiceImpl implements UserService {
                 }
 
                 personNodes.add(node);
+            }
+            if (limit > -1 && personNodes.size() == limit) {
+                break;
             }
         }
         return personNodes;

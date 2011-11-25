@@ -57,6 +57,7 @@
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -69,6 +70,7 @@
          <docadmin:mandatory>true</docadmin:mandatory>
          <docadmin:fieldType>CONTACT</docadmin:fieldType>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -81,6 +83,7 @@
          <docadmin:fieldType>USER</docadmin:fieldType>
          <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -92,6 +95,7 @@
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:fieldType>DOUBLE</docadmin:fieldType>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -125,6 +129,7 @@
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -136,6 +141,7 @@
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -147,6 +153,7 @@
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -158,6 +165,7 @@
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -169,6 +177,7 @@
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -180,6 +189,7 @@
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -191,6 +201,7 @@
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 

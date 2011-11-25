@@ -99,16 +99,38 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     private DocumentSearchService documentSearchService;
     private ImporterService importerService;
 
-    private NodeRef documentTypesRoot;
     private NodeRef fieldDefinitionsRoot;
     private NodeRef fieldGroupDefinitionsRoot;
     private Set<String> fieldPropNames;
     private final Set<String> forbiddenFieldIds = new HashSet<String>();
     private final Set<String> groupShowShowInTwoColumnsOriginalFieldIds = new HashSet<String>();
 
+    /**
+     * Get nodeRef lazily.
+     * Workaround to NPE when trying to get nodeRef from afterProperties set
+     * 
+     * @author Ats Uiboupin
+     */
+    class NodeRefInitializer {
+        private final String xPath;
+        private NodeRef nodeRef;
+
+        public NodeRefInitializer(String xPath) {
+            this.xPath = xPath;
+        }
+
+        public NodeRef getNodeRef() {
+            if (nodeRef == null) {
+                nodeRef = generalService.getNodeRef(xPath);
+            }
+            return nodeRef;
+        }
+    }
+
     @Override
     public void afterPropertiesSet() throws Exception {
         baseService.addTypeMapping(DocumentAdminModel.Types.DOCUMENT_TYPE, DocumentType.class);
+        baseService.addTypeMapping(DocumentAdminModel.Types.CASE_FILE_TYPE, CaseFileType.class);
         baseService.addTypeMapping(DocumentAdminModel.Types.DOCUMENT_TYPE_VERSION, DocumentTypeVersion.class);
         baseService.addTypeMapping(DocumentAdminModel.Types.FIELD, Field.class);
         baseService.addTypeMapping(DocumentAdminModel.Types.FIELD_GROUP, FieldGroup.class);
@@ -117,6 +139,33 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         baseService.addTypeMapping(DocumentAdminModel.Types.FOLLOWUP_ASSOCIATION, FollowupAssociation.class);
         baseService.addTypeMapping(DocumentAdminModel.Types.REPLY_ASSOCIATION, ReplyAssociation.class);
         baseService.addTypeMapping(DocumentAdminModel.Types.FIELD_MAPPING, FieldMapping.class);
+
+        addTypeRootRefMappings(DocumentType.class, new NodeRefInitializer(DocumentAdminModel.Repo.DOCUMENT_TYPES_SPACE));
+        addTypeRootRefMappings(CaseFileType.class, new NodeRefInitializer(DocumentAdminModel.Repo.CASE_FILE_TYPES_SPACE));
+    }
+
+    private final Map<Class<? extends BaseObject>, NodeRefInitializer> typeRootRefMappings = new HashMap<Class<? extends BaseObject>, NodeRefInitializer>();
+
+    private void addTypeRootRefMappings(Class<? extends BaseObject> clazz, NodeRefInitializer initializer) {
+        Assert.notNull(clazz, "class");
+        Assert.notNull(initializer, "initializer");
+        if (!BeanHelper.getApplicationService().isTest()) {
+            // this check is disabled in development to allow JRebel do it's magic when reloading spring context
+            Assert.isTrue(!typeRootRefMappings.containsKey(clazz), "rootRef by " + clazz.getSimpleName() + " is already mapped");
+        }
+        typeRootRefMappings.put(clazz, initializer);
+    }
+
+    @Override
+    public <D extends DynamicType> NodeRef getDynamicTypesRoot(Class<D> dynTypeClass) {
+        Assert.notNull(dynTypeClass, "dynTypeClass");
+        NodeRefInitializer rootRefInitializer = typeRootRefMappings.get(dynTypeClass);
+        Assert.notNull(rootRefInitializer, "rootRefInitializer");
+        return rootRefInitializer.getNodeRef();
+    }
+
+    private NodeRef getDocumentTypesRoot() {
+        return getDynamicTypesRoot(DocumentType.class);
     }
 
     @Override
@@ -132,17 +181,23 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
-    public List<DocumentType> getDocumentTypes(DocTypeLoadEffort effort) {
+    public List<DocumentType> getDocumentTypes(DynTypeLoadEffort effort) {
         return getAllDocumentTypes(null, getDocumentTypesRoot(), effort);
     }
 
     @Override
-    public List<DocumentType> getDocumentTypes(DocTypeLoadEffort effort, boolean used) {
+    public <T extends DynamicType> List<T> getTypes(Class<T> typeClass, DynTypeLoadEffort effort) {
+        NodeRef typesRootRef = getDynamicTypesRoot(typeClass);
+        return getAllTypes(typeClass, null, typesRootRef, effort);
+    }
+
+    @Override
+    public List<DocumentType> getDocumentTypes(DynTypeLoadEffort effort, boolean used) {
         return getAllDocumentTypes(Boolean.valueOf(used), getDocumentTypesRoot(), effort);
     }
 
     @Override
-    public DocumentType getDocumentType(String id, DocTypeLoadEffort effort) {
+    public DocumentType getDocumentType(String id, DynTypeLoadEffort effort) {
         NodeRef documentTypeRef = getDocumentTypeRef(id);
         return getDocumentType(documentTypeRef, effort);
     }
@@ -171,7 +226,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     public Pair<DocumentType, DocumentTypeVersion> getDocumentTypeAndVersion(String docTypeId, Integer docTypeVersionNr) {
         DocumentType docType = getDocumentType(docTypeId, DocumentAdminService.DOC_TYPE_WITH_OUT_GRAND_CHILDREN);
         if (docType == null) {
-            throw new RuntimeException("documentType with documentTypeId=" + docTypeId + " not found");
+            return null;
         }
         DocumentTypeVersion docVersion = null;
         for (DocumentTypeVersion version : docType.getDocumentTypeVersions()) {
@@ -182,19 +237,23 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
             }
         }
         if (docVersion == null) {
-            throw new RuntimeException("documentTypeVersion with versionNr=" + docTypeVersionNr + " not found under documentType=" + docType.toString());
+            return null;
         }
         return new Pair<DocumentType, DocumentTypeVersion>(docType, docVersion);
     }
 
+    private DocumentType getDocumentType(NodeRef docTypeRef, DynTypeLoadEffort effort) {
+        return getDynamicType(DocumentType.class, docTypeRef, effort);
+    }
+
     @Override
-    public DocumentType getDocumentType(NodeRef docTypeRef, DocTypeLoadEffort effort) {
+    public <D extends DynamicType> D getDynamicType(Class<D> dynTypeClass, NodeRef dynTypeRef, DynTypeLoadEffort effort) {
         // FIXME DLSeadist - Kui kõik süsteemsed dok.liigid on defineeritud, siis võib null kontrolli ja tagastamise eemdaldada
-        if (docTypeRef == null) {
+        if (dynTypeRef == null) {
             return null;
         }
-        DocumentType object = baseService.getObject(docTypeRef, DocumentType.class, effort);
-        if (effort != null && effort.isReturnLatestDocTypeVersionChildren()) {
+        D object = baseService.getObject(dynTypeRef, dynTypeClass, effort);
+        if (effort != null && effort.isReturnLatestDynTypeVersionChildren()) {
             DocumentTypeVersion latestDocTypeVersion = object.getLatestDocumentTypeVersion();
             baseService.loadChildren(latestDocTypeVersion, null);
         }
@@ -216,7 +275,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
     @Override
     public String getDocumentTypeName(Node document) {
-        String documentTypeId = (String) document.getProperties().get(DocumentAdminModel.Props.DOCUMENT_TYPE_ID);
+        String documentTypeId = (String) document.getProperties().get(DocumentAdminModel.Props.ID);
         return getDocumentTypeName(documentTypeId);
     }
 
@@ -227,7 +286,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
             Map<QName, Serializable> props = nodeService.getProperties(childAssoc.getChildRef());
             Boolean documentTypeUsed = (Boolean) props.get(DocumentAdminModel.Props.USED);
             if (used == null || documentTypeUsed == used) {
-                String documentTypeId = (String) props.get(DocumentAdminModel.Props.DOCUMENT_TYPE_ID);
+                String documentTypeId = (String) props.get(DocumentAdminModel.Props.ID);
                 String documentTypeName = (String) props.get(DocumentAdminModel.Props.NAME);
                 docTypesByDocTypeId.put(documentTypeId, documentTypeName);
             }
@@ -237,15 +296,20 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
     @Override
     public void addSystematicMetadataItems(DocumentTypeVersion docVer) {
+        DynamicType dynType = docVer.getParent();
+        final boolean dynTypeIsCaseFile = dynType instanceof CaseFileType;
+        if (!dynTypeIsCaseFile) {
+            Assert.isTrue(dynType instanceof DocumentType, "Parent of dynamic type version should be DocumentType (if it is not CaseFileType)");
+        }
         addMetadataItems(docVer, new Predicate<FieldGroup>() {
             @Override
             public boolean eval(FieldGroup sourceGroup) {
-                return sourceGroup.isMandatoryForDoc();
+                return dynTypeIsCaseFile ? sourceGroup.isMandatoryForVol() : sourceGroup.isMandatoryForDoc();
             }
         }, new Predicate<FieldDefinition>() {
             @Override
             public boolean eval(FieldDefinition sourceFieldDef) {
-                return sourceFieldDef.isMandatoryForDoc();
+                return dynTypeIsCaseFile ? sourceFieldDef.isMandatoryForVol() : sourceFieldDef.isMandatoryForDoc();
             }
         });
     }
@@ -328,18 +392,33 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         return fieldDef;
     }
 
-    private List<DocumentType> getAllDocumentTypes(final Boolean used, NodeRef docTypesRootRef, DocTypeLoadEffort effort) {
-        return baseService.getChildren(docTypesRootRef, DocumentType.class, new Predicate<DocumentType>() {
+    private List<DocumentType> getAllDocumentTypes(final Boolean used, NodeRef docTypesRootRef, DynTypeLoadEffort effort) {
+        return getAllTypes(DocumentType.class, used, docTypesRootRef, effort);
+    }
+
+    private <T extends DynamicType> List<T> getAllTypes(Class<T> typeClass, final Boolean used, NodeRef docTypesRootRef, DynTypeLoadEffort effort) {
+        return baseService.getChildren(docTypesRootRef, typeClass, new Predicate<T>() {
             @Override
-            public boolean eval(DocumentType documentType) {
-                return used == null || documentType.isUsed() == used;
+            public boolean eval(T dynType) {
+                return used == null || dynType.isUsed() == used;
             }
         }, effort);
     }
 
     @Override
-    public DocumentType createNewUnSaved() {
-        return new DocumentType(getDocumentTypesRoot());
+    public <D extends DynamicType> D createNewUnSavedDynamicType(Class<D> dynamicTypeClass) {
+        NodeRef rootRef = getDynamicTypesRoot(dynamicTypeClass);
+        if (DocumentType.class.equals(dynamicTypeClass)) {
+            @SuppressWarnings("unchecked")
+            D tmp = (D) new DocumentType(rootRef);
+            return tmp;
+        } else if (CaseFileType.class.equals(dynamicTypeClass)) {
+            @SuppressWarnings("unchecked")
+            D tmp = (D) new CaseFileType(rootRef);
+            return tmp;
+        } else {
+            throw new RuntimeException("Unimplemented crating new unSaved DynamicType " + dynamicTypeClass.getCanonicalName());
+        }
     }
 
     @Override
@@ -348,23 +427,30 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
-    public void deleteDocumentType(NodeRef docTypeRef) {
-        DocumentType documentType = getDocumentType(docTypeRef, DONT_INCLUDE_CHILDREN);
-        if (documentType.isSystematic()) {
-            throw new IllegalArgumentException("docType_list_action_delete_failed_systematic"); // shouldn't happen, because systematic can't be changed at runtime
+    public void deleteDynamicType(NodeRef docTypeRef) {
+        DynamicType dynType = getDynamicType(null, docTypeRef, DOC_TYPE_WITHOUT_OLDER_DT_VERSION_CHILDREN);
+        if (dynType instanceof DocumentType) {
+            DocumentType docType = (DocumentType) dynType;
+            if (docType.isSystematic()) {
+                throw new IllegalArgumentException("docType_list_action_delete_failed_systematic"); // shouldn't happen, because systematic can't be changed at runtime
+            }
+            if (isDocumentTypeUsed(docType.getId())) {
+                throw new UnableToPerformException("docType_delete_failed_inUse");
+            }
+        } else {
+            Assert.isTrue(CaseFileType.class.equals(dynType.getClass()), "expected that deletable node is CaseFileType (if it is not DocumentType)");
+            if (isCaseFileTypeUsed(dynType.getId())) {
+                throw new UnableToPerformException("caseFileType_delete_failed_inUse");
+            }
         }
-        if (isDocumentTypeUsed(documentType.getDocumentTypeId())) {
-            throw new UnableToPerformException("docType_delete_failed_inUse");
-        }
-        { // remove documentType from all fieldDefinition documentTypes
-            DocumentType docType = getDocumentType(docTypeRef, DOC_TYPE_WITHOUT_OLDER_DT_VERSION_CHILDREN);
-            String documentTypeId = docType.getDocumentTypeId();
-            Set<String> fieldIds = docType.getLatestDocumentTypeVersion().getFieldsDeeplyById().keySet();
+        { // remove references to dynamicType from all fieldDefinitions
+            String documentTypeId = dynType.getId();
+            Set<String> fieldIds = dynType.getLatestDocumentTypeVersion().getFieldsDeeplyById().keySet();
             Map<String, FieldDefinition> fieldDefinitionsByFieldIds = getFieldDefinitionsByFieldIds();
             Map<String, FieldDefinition> fieldsToSave = new HashMap<String, FieldDefinition>(fieldIds.size());
             for (String fieldId : fieldIds) {
                 FieldDefinition fieldDef = fieldDefinitionsByFieldIds.get(fieldId);
-                if (fieldDef != null && fieldDef.getDocTypes().remove(documentTypeId)) {
+                if (fieldDef != null && fieldDef.getUsedTypes(dynType.getClass()).remove(documentTypeId)) {
                     fieldsToSave.put(fieldDef.getFieldId(), fieldDef);
                 }
             }
@@ -375,18 +461,29 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
     @Override
     public Pair<DocumentType, MessageData> saveOrUpdateDocumentType(DocumentType docTypeOriginal) {
-        DocumentType docType = docTypeOriginal.clone();
-        boolean wasUnsaved = docType.isUnsaved();
+        return saveOrUpdateDynamicType(docTypeOriginal);
+    }
+
+    @Override
+    public <D extends DynamicType> Pair<D, MessageData> saveOrUpdateDynamicType(D dynTypeOriginal) {
+        @SuppressWarnings("unchecked")
+        D dynType = (D) dynTypeOriginal.clone();
+        boolean wasUnsaved = dynType.isUnsaved();
 
         // validating duplicated documentTypeId is done in baseService
-        MessageData message = updateChildren(docType);
-        checkFieldMappings(docType);
-        baseService.saveObject(docType);
-        updatePublicAdr(docType, wasUnsaved);
-        if (wasUnsaved || docTypeOriginal.isPropertyChanged(DocumentAdminModel.Props.USED, DocumentAdminModel.Props.NAME, DocumentAdminModel.Props.DOCUMENT_TYPE_GROUP)) {
+        MessageData message = updateChildren(dynType);
+        DocumentType docType = dynType instanceof DocumentType ? (DocumentType) dynType : null;
+        if (docType != null) {
+            checkFieldMappings(docType);
+        }
+        baseService.saveObject(dynType);
+        if (docType != null) {
+            updatePublicAdr(docType, wasUnsaved);
+        }
+        if (wasUnsaved || dynTypeOriginal.isPropertyChanged(DocumentAdminModel.Props.USED, DocumentAdminModel.Props.NAME, DocumentAdminModel.Props.MENU_GROUP_NAME)) {
             menuService.menuUpdated();
         }
-        return Pair.newInstance(docType, message);
+        return Pair.newInstance(dynType, message);
     }
 
     @Override
@@ -654,6 +751,11 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
+    public boolean isCaseFileTypeUsed(String caseFileTypeId) {
+        return false; // TODO CL_TASK 183635
+    }
+
+    @Override
     public void createSystematicDocumentTypes(
             Map<String /* documentTypeId */, Pair<String /* documentTypeName */, Pair<Set<String> /* fieldGroupNames */, Set<QName> /* fieldGroupNames */>>> systematicDocumentTypes,
             NodeRef fieldGroupDefinitionsTmp, NodeRef fieldDefinitionsTmp) {
@@ -694,8 +796,8 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                     Assert.isTrue(field.getFieldTypeEnum().equals(fieldDef.getFieldTypeEnum()));
                     // field is added based on existing fieldDefinition
                     List<String> docTypesOfFieldDef = fieldDef.getDocTypes();
-                    if (!docTypesOfFieldDef.contains(docType.getDocumentTypeId())) {
-                        docTypesOfFieldDef.add(docType.getDocumentTypeId());
+                    if (!docTypesOfFieldDef.contains(docType.getId())) {
+                        docTypesOfFieldDef.add(docType.getId());
                         fieldDefinitionsToUpdate.put(fieldDef.getFieldId(), fieldDef);
                     }
                 }
@@ -719,8 +821,8 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     private Pair<DocumentType, MessageData> createSystematicDocumentType(String documentTypeId, String documentTypeName
             , final Set<String> fieldGroupNames, final Collection<String> fieldDefinitionIds) {
         LOG.info("Creating systematic document type: " + documentTypeId);
-        DocumentType docType = createNewUnSaved();
-        docType.setDocumentTypeId(documentTypeId);
+        DocumentType docType = createNewUnSavedDynamicType(DocumentType.class);
+        docType.setId(documentTypeId);
         docType.setName(documentTypeName);
         docType.setSystematic(true);
         DocumentTypeVersion ver = docType.addNewLatestDocumentTypeVersion();
@@ -766,7 +868,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
         if (oldPublicAdr.booleanValue() != newPublicAdr.booleanValue()) {
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Changing publicAdr of DocumentType " + docType.getDocumentTypeId() + " from "
+                LOG.debug("Changing publicAdr of DocumentType " + docType.getId() + " from "
                         + oldPublicAdr.toString().toUpperCase() + " to " + newPublicAdr.toString().toUpperCase());
             }
             QName id = docType.getAssocName();
@@ -778,15 +880,15 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         }
     }
 
-    private MessageData updateChildren(DocumentType docType) {
+    private <D extends DynamicType> MessageData updateChildren(D dynType) {
         int versionNr = 1;
-        boolean saved = docType.isSaved();
+        boolean saved = dynType.isSaved();
         if (saved) {
-            DocumentTypeVersion latestDocumentTypeVersion = docType.getLatestDocumentTypeVersion();
+            DocumentTypeVersion latestDocumentTypeVersion = dynType.getLatestDocumentTypeVersion();
             ChildrenList<MetadataItem> unSavedMetadata = latestDocumentTypeVersion.getMetadata();
-            DocumentType latestDocTypeInRepo = getDocumentType(docType.getNodeRef(), DOC_TYPE_WITH_OUT_GRAND_CHILDREN);
+            DynamicType latestDocTypeInRepo = getDynamicType(dynType.getClass(), dynType.getNodeRef(), DOC_TYPE_WITH_OUT_GRAND_CHILDREN);
             int docTypeVersions = latestDocTypeInRepo.getDocumentTypeVersions().size();
-            Boolean dontSaveDocTypeVer = docType.getProp(PROP_DONT_SAVED_DOC_TYPE_VER);
+            Boolean dontSaveDocTypeVer = dynType.getProp(PROP_DONT_SAVED_DOC_TYPE_VER);
             if (dontSaveDocTypeVer == null) {
                 versionNr = latestDocTypeInRepo.getLatestVersion(); // someone might have saved meanwhile new version of the same docType
                 Assert.isTrue(versionNr == docTypeVersions, "in repository DocumentType.latestVersion=" + versionNr + ", but actually it contains " + docTypeVersions + " versions");
@@ -797,7 +899,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
             boolean latestDocTypeVerSaved = latestDocumentTypeVersion.isSaved();
             if (!latestDocTypeVerSaved) {
                 Assert.isTrue(dontSaveDocTypeVer == null);
-                ChildrenList<DocumentTypeVersion> documentTypeVersions = docType.getDocumentTypeVersions();
+                ChildrenList<DocumentTypeVersion> documentTypeVersions = dynType.getDocumentTypeVersions();
                 { // no need to inspect previous versions of DocType when saving
                     for (DocumentTypeVersion documentTypeVersion : documentTypeVersions) {
                         if (documentTypeVersion != latestDocumentTypeVersion) {
@@ -809,7 +911,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                 if (!MetadataItemCompareUtil.isClidrenListChanged(savedMetadata, unSavedMetadata)) {
                     // metaData list is not changed, don't save new DocumentTypeVersion (currently as new latestDocumentTypeVersion)
                     documentTypeVersions.remove(latestDocumentTypeVersion);
-                    docType.setLatestVersion(versionNr); // don't overwrite latest version number
+                    dynType.setLatestVersion(versionNr); // don't overwrite latest version number
                     return null;
                 }
                 versionNr++;
@@ -818,15 +920,15 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
             }
         }
         String userId = AuthenticationUtil.getFullyAuthenticatedUser();
-        DocumentTypeVersion docVer = docType.getLatestDocumentTypeVersion();
+        DocumentTypeVersion docVer = dynType.getLatestDocumentTypeVersion();
         docVer.setCreatorId(userId);
         docVer.setCreatorName(userService.getUserFullName(userId));
         docVer.setVersionNr(versionNr);
-        docType.setLatestVersion(versionNr);
+        dynType.setLatestVersion(versionNr);
         docVer.setCreatedDateTime(new Date(AlfrescoTransactionSupport.getTransactionStartTime()));
         Map<String, FieldDefinition> fieldDefinitions = getFieldDefinitionsByFieldIds();
         // save new fields to fieldDefinitions
-        String documentTypeId = docType.getDocumentTypeId();
+        String documentTypeId = dynType.getId();
         boolean addFieldsAddedRemovedWarning = false;
         List<Field> docTypeVerFields = docVer.getFieldsDeeply();
         Map<String, FieldDefinition> fieldsToSave = new HashMap<String, FieldDefinition>(docTypeVerFields.size());
@@ -841,7 +943,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                                 , fieldDef.getFieldNameWithIdAndType(), field.getFieldNameWithIdAndType());
                     }
                     // field is added based on existing fieldDefinition
-                    List<String> docTypesOfFieldDef = fieldDef.getDocTypes();
+                    List<String> docTypesOfFieldDef = fieldDef.getUsedTypes(dynType.getClass());
                     if (!docTypesOfFieldDef.contains(documentTypeId)) {
                         docTypesOfFieldDef.add(documentTypeId);
                         fieldsToSave.put(fieldDef.getFieldId(), fieldDef);
@@ -854,13 +956,17 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                     }
                     // added new field (not based on fieldDefinition)
                     fieldDef = createFieldDefinition(field);
-                    fieldDef.getDocTypes().add(documentTypeId);
+                    fieldDef.getUsedTypes(dynType.getClass()).add(documentTypeId);
                     fieldsToSave.put(fieldDef.getFieldId(), fieldDef);
                 }
             }
         }
 
-        List<String> removedFieldIds = deleteFieldMappings(docType, docVer);
+        List<String> removedFieldIds = docVer.getRemovedFieldIdsDeeply();
+        if (dynType instanceof DocumentType) {
+            DocumentType documentType = (DocumentType) dynType;
+            removedFieldIds = deleteFieldMappings(documentType, removedFieldIds);
+        }
         if (!removedFieldIds.isEmpty()) {
             addFieldsAddedRemovedWarning = true;
             for (String removedFieldId : removedFieldIds) {
@@ -869,11 +975,11 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                     removedFieldFD = getFieldDefinition(removedFieldId);
                     fieldsToSave.put(removedFieldId, removedFieldFD);
                 }
-                removedFieldFD.getDocTypes().remove(documentTypeId);
+                removedFieldFD.getUsedTypes(dynType.getClass()).remove(documentTypeId);
             }
         }
         saveOrUpdateFieldDefinitions(fieldsToSave.values());
-        if (addFieldsAddedRemovedWarning) {
+        if (addFieldsAddedRemovedWarning && dynType instanceof DocumentType) {
             return new MessageDataImpl(MessageSeverity.INFO, "docType_metadataList_changedWarning");
         }
         return null;
@@ -905,10 +1011,10 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                 String assocType = StringUtils.uncapitalize(MessageUtil.getTypeName(associationModel.getNode().getType()));
                 if (!isFromSide) {
                     feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, "docType_save_error_multipleMappingsSameToField"
-                            , docType.getDocumentTypeId(), assocType, associationModel.getDocType(), TextUtil.collectionToString(fieldsList), fieldId));
+                            , docType.getId(), assocType, associationModel.getDocType(), TextUtil.collectionToString(fieldsList), fieldId));
                 } else {
                     feedback.addFeedbackItem(new MessageDataImpl(MessageSeverity.ERROR, "docType_save_error_multipleMappingsSameFromField"
-                            , docType.getDocumentTypeId(), assocType, associationModel.getDocType(), fieldId, TextUtil.collectionToString(fieldsList)));
+                            , docType.getId(), assocType, associationModel.getDocType(), fieldId, TextUtil.collectionToString(fieldsList)));
                 }
             }
         }
@@ -923,12 +1029,11 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         fieldsList.add(otherField);
     }
 
-    private List<String> deleteFieldMappings(DocumentType docType, DocumentTypeVersion docVer) {
-        List<String> removedFieldIds = docVer.getRemovedFieldIdsDeeply();
+    private List<String> deleteFieldMappings(DocumentType docType, List<String> removedFieldIds) {
         if (removedFieldIds.isEmpty()) {
             return removedFieldIds; // don't need to delete any field mappings
         }
-        String docTypeId = docType.getDocumentTypeId();
+        String docTypeId = docType.getId();
         for (AssociationModel associationModel : docType.getAssociationModels(null)) { // for each removed field remove field mapping held in memory
             ChildrenList<FieldMapping> fieldMappings = associationModel.getFieldMappings();
             String otherDocType = associationModel.getDocType();
@@ -946,7 +1051,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                 generateTypeQuery(DocumentAdminModel.Types.FOLLOWUP_ASSOCIATION, DocumentAdminModel.Types.REPLY_ASSOCIATION)
                 , generatePropertyExactQuery(DocumentAdminModel.Props.DOC_TYPE, docTypeId, false)
                 );
-        List<NodeRef> associatedDocTypes = documentSearchService.searchNodes(query, false, "searchAssocsToDocType:" + docTypeId);
+        List<NodeRef> associatedDocTypes = documentSearchService.searchNodes(query, -1, "searchAssocsToDocType:" + docTypeId);
 
         List<AssociationModel> assocsToDocTypes = getAssocsToDocType(associatedDocTypes);
         NodeRef docTypeRef = docType.getNodeRef();
@@ -968,15 +1073,6 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
             }
         }
         return removedFieldIds;
-    }
-
-    @Override
-    public NodeRef getDocumentTypesRoot() {
-        if (documentTypesRoot == null) {
-            String xPath = DocumentAdminModel.Repo.DOCUMENT_TYPES_SPACE;
-            documentTypesRoot = generalService.getNodeRef(xPath);
-        }
-        return documentTypesRoot;
     }
 
     private NodeRef getFieldDefinitionsRoot() {
@@ -1037,8 +1133,8 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
-    public void importDocumentTypes(File xmlFile) {
-        new ImportHelper().importDocumentTypes(xmlFile);
+    public <D extends DynamicType> void importDynamicTypes(File xmlFile, Class<D> dynTypeClass) {
+        new ImportHelper().importDynamicTypes(xmlFile, dynTypeClass);
     }
 
     /**
@@ -1063,8 +1159,9 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
      */
     private class ImportHelper {
 
-        void importDocumentTypes(File xmlFile) {
-            LOG.info("Starting to import docTypes");
+        <D extends DynamicType> void importDynamicTypes(File xmlFile, Class<D> dynTypeClass) {
+            final String dynTypeMsg = dynTypeClass.getSimpleName() + "s";
+            LOG.info("Starting to import " + dynTypeMsg);
             QName assocQName = RepoUtil.createTransientProp("tmp");
             NodeRef tmpFolderRef = generalService.getNodeRef("/" + assocQName);
             QName assocType = ContentModel.ASSOC_CHILDREN;
@@ -1082,15 +1179,18 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                 fileReader = new InputStreamReader(new FileInputStream(xmlFile), AppConstants.CHARSET);
                 importerService.importView(fileReader, location, null, new ImportTimerProgress() {
                     @Override
-                    public void nodeCreated(NodeRef nodeRef, NodeRef parentRef, QName assocName, QName childName) {
-                        super.nodeCreated(nodeRef, parentRef, assocName, childName);
+                    public void nodeCreated(NodeRef nodeRef, NodeRef parentRef, QName assocName, QName childAssocName) {
+                        super.nodeCreated(nodeRef, parentRef, assocName, childAssocName);
                         if (tmpDocumentTypesRef[0] == null) { // first node imported is the root of imported nodes
                             tmpDocumentTypesRef[0] = nodeRef;
+                        }
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("importing " + dynTypeMsg + ": created " + assocName.getLocalName() + " using assocName " + childAssocName.getLocalName());
                         }
                     }
                 });
                 importableDocTypesRootRef = tmpDocumentTypesRef[0];
-                importDocumentTypes(importableDocTypesRootRef);
+                importDynamicTypes(importableDocTypesRootRef, dynTypeClass);
             } catch (FileNotFoundException e) {
                 throw new RuntimeException("Failed to read data for importing parameters from uploaded file: '" + xmlFile.getAbsolutePath() + "'", e);
             } catch (UnsupportedEncodingException e) {
@@ -1103,56 +1203,51 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                 if (importableDocTypesRootRef != null && nodeService.exists(importableDocTypesRootRef)) {
                     nodeService.deleteNode(importableDocTypesRootRef);
                 }
-                LOG.info("Finished importing docTypes");
+                LOG.info("Finished importing " + dynTypeMsg);
             }
         }
 
-        private void importDocumentTypes(NodeRef importableDocTypesRootRef) {
-            List<DocumentType> existingDocTypes = getAllDocumentTypes(null, getDocumentTypesRoot(), null);
-            Map<String, DocumentType> existingDocTypesById = new HashMap<String, DocumentType>(existingDocTypes.size());
-            for (DocumentType docType : existingDocTypes) {
-                existingDocTypesById.put(docType.getDocumentTypeId(), docType);
+        private <D extends DynamicType> void importDynamicTypes(NodeRef importableDocTypesRootRef, Class<D> dynTypeClass) {
+            List<D> existingDynTypes = getTypes(dynTypeClass, null);
+            Map<String, D> existingDocTypesById = new HashMap<String, D>(existingDynTypes.size());
+            for (D docType : existingDynTypes) {
+                existingDocTypesById.put(docType.getId(), docType);
             }
 
-            Map<String, DocumentType> importedDocTypesById = new HashMap<String, DocumentType>();
+            Map<String, D> importedDocTypesById = new HashMap<String, D>();
             Map<String, Pair<List<FollowupAssociation>, List<ReplyAssociation>>> imporableDocTypesById = new HashMap<String, Pair<List<FollowupAssociation>, List<ReplyAssociation>>>();
             // first add/merge metadataItems
-            List<DocumentType> allDocumentTypes = getAllDocumentTypes(null, importableDocTypesRootRef, null);
+            List<D> allDocumentTypes = getAllTypes(dynTypeClass, null, importableDocTypesRootRef, null);
             int totalDocTypes = allDocumentTypes.size();
-            LOG.info("Starting to import metadata of " + totalDocTypes + " document types");
+            LOG.info("Starting to import metadata of " + totalDocTypes + " " + dynTypeClass.getSimpleName() + "s");
             int i = 0;
             Set<MessageData> messages = new LinkedHashSet<MessageData>();
-            for (DocumentType importableDocType : allDocumentTypes) {
+            for (D importableDynType : allDocumentTypes) {
                 i++;
-                LOG.info("Starting to import metadata of " + i + "/" + totalDocTypes + ". document type: " + importableDocType.getNameAndId());
-                String documentTypeId = importableDocType.getDocumentTypeId();
-                DocumentType existingDocType = existingDocTypesById.get(documentTypeId);
-                DocumentType importedDocType;
-                { // in first phase of import don't save add associations so that assocs wouldn't be lost because of fields that might not be present on docType not jet
-                    List<FollowupAssociation> followupAssocs = importableDocType.getFollowupAssociations();
-                    List<ReplyAssociation> replyAssocs = importableDocType.getReplyAssociations();
-                    List<FollowupAssociation> followUpsToImport = new ArrayList<FollowupAssociation>(followupAssocs);
-                    List<ReplyAssociation> repliesToImport = new ArrayList<ReplyAssociation>(replyAssocs);
-                    imporableDocTypesById.put(documentTypeId, Pair.newInstance(followUpsToImport, repliesToImport));
-                    followupAssocs.clear();
-                    repliesToImport.clear();
+                LOG.info("Starting to import metadata of " + i + "/" + totalDocTypes + ". " + dynTypeClass.getSimpleName() + ": " + importableDynType.getNameAndId());
+                String documentTypeId = importableDynType.getId();
+                D existingDocType = existingDocTypesById.get(documentTypeId);
+                D importedDocType;
+                // in first phase of import don't save add associations so that assocs wouldn't be lost because of fields that might not be present on docType not jet
+                if (importableDynType instanceof DocumentType) {
+                    collectDocTypeAssocs(importableDynType, documentTypeId, imporableDocTypesById);
                 }
                 if (existingDocType != null) {
-                    setProps(importableDocType, existingDocType);
+                    setProps(importableDynType, existingDocType);
                     final DocumentTypeVersion lastDocTypeVer = existingDocType.getLatestDocumentTypeVersion();
                     DocumentTypeVersion newLatestDocTypeVer = existingDocType.addNewLatestDocumentTypeVersion();
-                    DocumentTypeVersion importableDocTypeVer = importableDocType.getLatestDocumentTypeVersion();
+                    DocumentTypeVersion importableDocTypeVer = importableDynType.getLatestDocumentTypeVersion();
 
                     int sizeBefore = newLatestDocTypeVer.getMetadata().size();
                     mergeMetadaItems(importableDocTypeVer, lastDocTypeVer, newLatestDocTypeVer);
                     int sizeAfter = newLatestDocTypeVer.getMetadata().size();
-                    LOG.debug("Adding " + (sizeAfter - sizeBefore) + " MetadataItems to existingDocType " + existingDocType.getNodeRef());
+                    LOG.debug("Adding " + (sizeAfter - sizeBefore) + " MetadataItems to existing " + dynTypeClass.getSimpleName() + " " + existingDocType.getNodeRef());
                     importedDocType = existingDocType;
                 } else {
-                    importableDocType.nextSaveToParent(getDocumentTypesRoot());
-                    importedDocType = importableDocType;
+                    importableDynType.nextSaveToParent(getDynamicTypesRoot(dynTypeClass));
+                    importedDocType = importableDynType;
                 }
-                Pair<DocumentType, MessageData> result = saveOrUpdateDocumentType(importedDocType);
+                Pair<D, MessageData> result = saveOrUpdateDynamicType(importedDocType);
                 importedDocType = result.getFirst();
                 MessageData messageData = result.getSecond();
                 if (messageData != null) {
@@ -1163,10 +1258,30 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
             for (MessageData messageData : messages) {
                 MessageUtil.addStatusMessage(messageData);
             }
-            Map<String, DocumentType> docTypesCache = new HashMap<String, DocumentType>(importedDocTypesById);
-            Map<String /* docTypeId */, Set<String> /* docTypeFields */> docTypeFieldsCache = new HashMap<String, Set<String>>();
 
-            i = 0;
+            if (dynTypeClass == DocumentType.class) {
+                @SuppressWarnings("unchecked")
+                Map<String, DocumentType> tmp = (Map<String, DocumentType>) importedDocTypesById;
+                Map<String, DocumentType> docTypesCache = new HashMap<String, DocumentType>(tmp);
+                processDocTypeAssocs(docTypesCache, imporableDocTypesById, totalDocTypes);
+            }
+        }
+
+        private <D> void collectDocTypeAssocs(D importableDynType, String documentTypeId, Map<String, Pair<List<FollowupAssociation>, List<ReplyAssociation>>> imporableDocTypesById) {
+            DocumentType importableDocType = (DocumentType) importableDynType;
+            List<FollowupAssociation> followupAssocs = importableDocType.getFollowupAssociations();
+            List<ReplyAssociation> replyAssocs = importableDocType.getReplyAssociations();
+            List<FollowupAssociation> followUpsToImport = new ArrayList<FollowupAssociation>(followupAssocs);
+            List<ReplyAssociation> repliesToImport = new ArrayList<ReplyAssociation>(replyAssocs);
+            imporableDocTypesById.put(documentTypeId, Pair.newInstance(followUpsToImport, repliesToImport));
+            followupAssocs.clear();
+            repliesToImport.clear();
+        }
+
+        private <D> void processDocTypeAssocs(Map<String, DocumentType> docTypesCache, Map<String, Pair<List<FollowupAssociation>
+                , List<ReplyAssociation>>> imporableDocTypesById, int totalDocTypes) {
+            Map<String /* docTypeId */, Set<String> /* docTypeFields */> docTypeFieldsCache = new HashMap<String, Set<String>>();
+            int i = 0;
             LOG.info("Starting to import associations of " + totalDocTypes + " document types");
             /** Add {@link AssociationModel}s or merge {@link FieldMapping}s under existing {@link AssociationModel}s <br> */
             MessageDataWrapper errorsMessageDataWrapper = null;
@@ -1176,7 +1291,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                 LOG.info("Starting to import associations of " + i + "/" + totalDocTypes + ". document type: " + documentTypeId);
                 try {
                     Pair<List<FollowupAssociation>, List<ReplyAssociation>> importableDocTypeAssocs = entry.getValue();
-                    DocumentType importedDocType = importedDocTypesById.get(documentTypeId);
+                    DocumentType importedDocType = docTypesCache.get(documentTypeId);
                     List<ReplyAssociation> replies = importableDocTypeAssocs.getSecond();
                     LOG.info("Starting to import followup associations of " + i + "/" + totalDocTypes + ". document type: " + documentTypeId);
                     mergeAssocModels(DocTypeAssocType.FOLLOWUP, importableDocTypeAssocs.getFirst(), importedDocType, docTypesCache, docTypeFieldsCache);
@@ -1207,7 +1322,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
             for (AssociationModel existingAssoc : importedDocType.getAssociationModels(assocType)) {
                 existingAssocsByDocType.put(existingAssoc.getDocType(), existingAssoc);
             }
-            Set<String> fieldsById = getDocTypeFieldsFromCache(importedDocType.getDocumentTypeId(), docTypesCache, docTypeFieldsCache);
+            Set<String> fieldsById = getDocTypeFieldsFromCache(importedDocType.getId(), docTypesCache, docTypeFieldsCache);
             for (AssociationModel importableAssocM : assocModels) {
                 String targetDocType = importableAssocM.getDocType();
                 Set<String> relatedDocTypeFieldsById = getDocTypeFieldsFromCache(targetDocType, docTypesCache, docTypeFieldsCache);

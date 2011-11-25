@@ -63,11 +63,6 @@ public class Field extends FieldAndGroupBase {
         return QName.createQName(DocumentDynamicModel.URI, getFieldId());
     }
 
-    @Override
-    public BaseObject getParent() {
-        return super.getParent();
-    }
-
     protected void nextSaveToParent(FieldGroup newParentFieldGroup) {
         nextSaveToParent(checkParentType(newParentFieldGroup), Field.class);
     }

@@ -32,11 +32,6 @@ public class FieldDefinitionCaseNameUpdater extends AbstractNodeUpdater {
     }
 
     @Override
-    protected String getBaseFileName() {
-        return getName();
-    }
-
-    @Override
     protected List<ResultSet> getNodeLoadingResultSet() {
         String query = joinQueryPartsAnd(Arrays.asList(
                 generateTypeQuery(DocumentAdminModel.Types.FIELD),

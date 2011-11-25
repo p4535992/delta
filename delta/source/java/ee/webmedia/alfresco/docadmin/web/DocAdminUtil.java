@@ -30,7 +30,7 @@ public class DocAdminUtil {
      * @param metadataItem - field or fieldGroup
      * @param metadataContainer - metadataItem will be replaced in there (when updating) or added there(when creating new)
      */
-    static void commitToMetadataContainer(MetadataItem metadataItem, MetadataContainer metadataContainer) {
+    static void commitToMetadataContainer(MetadataItem metadataItem, MetadataContainer metadataContainer, String dynTypeName) {
         // Don't persist changes to repository - field should be changed when parent documentType is changed
         @SuppressWarnings("unchecked")
         ChildrenList<MetadataItem> metadata = (ChildrenList<MetadataItem>) metadataContainer.getMetadata();
@@ -45,7 +45,7 @@ public class DocAdminUtil {
             // field has been added to the DocumentType but not previously persisted
             metadata.replaceChild(metadataItem); // but since we cloned it, we need to replace
         }
-        MessageUtil.addWarningMessage("fieldOrFieldGroup_details_affirm_changes_warning");
+        MessageUtil.addWarningMessage("fieldOrFieldGroup_details_affirm_changes_warning_" + dynTypeName);
     }
 
     /**

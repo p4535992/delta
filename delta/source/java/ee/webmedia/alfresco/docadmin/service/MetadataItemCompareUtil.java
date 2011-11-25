@@ -334,7 +334,18 @@ public class MetadataItemCompareUtil {
                 return new CollectionComparator<Field>(input.getFields(), FIELD_COMPARATOR);
             }
         }, new NullComparator()));
-
+        chain.addComparator(new TransformingComparator(new ComparableTransformer<FieldGroup>() {
+            @Override
+            public Comparable<?> tr(FieldGroup input) {
+                return input.isInapplicableForDoc();
+            }
+        }, new NullComparator()));
+        chain.addComparator(new TransformingComparator(new ComparableTransformer<FieldGroup>() {
+            @Override
+            public Comparable<?> tr(FieldGroup input) {
+                return input.isInapplicableForVol();
+            }
+        }, new NullComparator()));
         return cast(chain, FieldGroup.class);
     }
 
@@ -386,6 +397,18 @@ public class MetadataItemCompareUtil {
             @Override
             public Comparable<?> tr(FieldDefinition input) {
                 return input.isFixedParameterInVolSearch();
+            }
+        }, new NullComparator()));
+        chain.addComparator(new TransformingComparator(new ComparableTransformer<FieldDefinition>() {
+            @Override
+            public Comparable<?> tr(FieldDefinition input) {
+                return input.isInapplicableForDoc();
+            }
+        }, new NullComparator()));
+        chain.addComparator(new TransformingComparator(new ComparableTransformer<FieldDefinition>() {
+            @Override
+            public Comparable<?> tr(FieldDefinition input) {
+                return input.isInapplicableForVol();
             }
         }, new NullComparator()));
         return cast(chain, FieldDefinition.class);

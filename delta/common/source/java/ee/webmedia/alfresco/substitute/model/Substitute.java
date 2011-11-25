@@ -9,6 +9,7 @@ import java.util.Date;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.apache.commons.lang.time.DateUtils;
 
+import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
 
@@ -40,6 +41,14 @@ public class Substitute implements Serializable {
         substitutionStartDate = sub.substitutionStartDate;
         substitutionEndDate = sub.substitutionEndDate;
         nodeRef = sub.nodeRef;
+    }
+
+    public static Substitute newInstance() {
+        Substitute newSubstitute = new Substitute();
+        newSubstitute.setValid(false);
+        // set the temporary random unique ID to be used in the UI form
+        newSubstitute.setNodeRef(RepoUtil.createNewUnsavedNodeRef());
+        return newSubstitute;
     }
 
     @Override
@@ -139,6 +148,9 @@ public class Substitute implements Serializable {
     }
 
     public boolean isActive() {
+        if (substitutionEndDate == null || substitutionStartDate == null) {
+            return false;
+        }
         Date currentDate = DateUtils.truncate(new Date(), Calendar.DATE);
         return (currentDate.after(substitutionStartDate) && currentDate.before(substitutionEndDate))
                 || DateUtils.isSameDay(currentDate, substitutionEndDate)

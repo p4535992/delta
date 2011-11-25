@@ -132,6 +132,7 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
 
     @Override
     public NodeRef getNodeRef(String nodeRefXPath, NodeRef root) {
+        Assert.notNull(root, "rootRef is a mandatory parameter");
         NodeRef nodeRef = root;
         String[] xPathParts;
 
@@ -164,6 +165,7 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     }
 
     private NodeRef getChildByAssocName(NodeRef parentRef, QNamePattern assocNamePattern, String nodeRefXPath) {
+        Assert.notNull(parentRef, "parentRef is a mandatory parameter");
         List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parentRef, RegexQNamePattern.MATCH_ALL, assocNamePattern);
         if (childAssocs.size() != 1) {
             StringBuilder msg = new StringBuilder("Expected 1, got ").append(childAssocs.size()).append(" childAssocs for assocName '")
@@ -397,6 +399,7 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
 
     @Override
     public List<NodeRef> searchNodes(String input, QName type, Set<QName> props, int limit) {
+        limit = limit < 0 ? 100 : limit;
         if (input == null) {
             return null;
         }

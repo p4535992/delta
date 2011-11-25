@@ -346,7 +346,7 @@ function addUIAutocompleter(input, valuesArray, dimensionName, dimensionQueryDat
                      }
                      response(data);
                   }
-              });               
+              });
             }
          },
          focus: function( event, ui ) {
@@ -1312,8 +1312,7 @@ function initWithScreenProtected() {
    toggleSubrow.init();
    toggleSubrowToggle.init();
 
-   jQuery(".task-due-date-date").live('change', processTaskDueDateDate);
-   jQuery(".focus").first().focus();
+   jQuery(".task-due-date-date").change(processTaskDueDateDate);
 
    handleHtmlLoaded(null, selects);
 };
@@ -1636,6 +1635,9 @@ function handleHtmlLoaded(context, selects) {
    ////////////////////////////////////////////////////////////////////////////////////////////////////
    $jQ(".genericpicker-input:visible").focus();
 
+   var container = $jQ("#"+escapeId4JQ('container-content'));
+      $jQ("input:text,textarea", container).filter(':visible:enabled[readonly!="readonly"].focus').first().focus();
+
    applyAutocompleters();
 
 
@@ -1717,8 +1719,7 @@ function handleHtmlLoaded(context, selects) {
          var targetElem = $jQ("#" + escapeId4JQ(textAreaId));
          targetElem.val(initialValue);
       }
-      $jQ(this).bind("change", function()
-      {
+      $jQ(this).change(function() {
          appendSelection($jQ(this), textAreaId);
       });
    });
@@ -1733,7 +1734,7 @@ function handleHtmlLoaded(context, selects) {
       var currElId = selectElement.id;
       var onChangeJavascript = classString.substring(classString.lastIndexOf('¤¤¤¤') + 4);
       if(onChangeJavascript != ""){
-            $jQ(this).bind("change", function(){
+            $jQ(this).change(function(){
                //assume onChangeJavascript contains valid function body
                eval("(function(currElId) {" + onChangeJavascript + "}) ('" + selectElement.id + "');");
             });
@@ -1978,7 +1979,7 @@ function confirmWorkflow(){
          return false;
       }
    }
-   $jQ("[class='workflow-after-confirmation-link']").get(0).click();
+   $jQ("[class='workflow-after-confirmation-link']").eq(0).click();
 }
 
 function clearFormHiddenParams(currFormName, newTargetVal) {
@@ -2054,4 +2055,8 @@ function setDateFromEnum(beginDate,endDate,selectedEnum){
    endDate.datepicker("option","minDate",startDate);
    endDate.datepicker("option","defaultDate",finishDate);
    endDate.datepicker("setDate",finishDate);
+}
+
+function clickNextLink(currElId){
+   $jQ("#" + escapeId4JQ(currElId)).nextAll("a").eq(0).click();
 }

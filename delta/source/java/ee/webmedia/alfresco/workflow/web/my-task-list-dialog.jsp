@@ -24,20 +24,6 @@
 
 </a:panel>
 
-<a:panel id="order-assignment-tasks-panel" styleClass="panel-100 #{(MyTasksBean.orderAssignmentPagerVisible) ? 'with-pager' : ''}" label="#{msg.task_list_order_assignment_title}" progressive="true" rendered="#{not empty MyTasksBean.orderAssignmentTasks}">
-
-   <%-- Main List --%>
-   <a:richList id="order-assignment-task-list" viewMode="details" pageSize="#{MyTasksBean.pageSize}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      width="100%" value="#{MyTasksBean.orderAssignmentTasks}" var="r">
-
-      <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/task-list-dialog-columns.jsp" />
-      <a:booleanEvaluator value="#{MyTasksBean.orderAssignmentPagerVisible}">
-         <a:dataPager id="order-assignment-pager" styleClass="pager" />
-      </a:booleanEvaluator>
-   </a:richList>
-
-</a:panel>
-
 <a:panel id="information-tasks-panel" styleClass="panel-100 #{(MyTasksBean.informationPagerVisible) ? 'with-pager' : ''}" label="#{msg.task_list_information_title}" progressive="true" rendered="#{not empty MyTasksBean.informationTasks}">
 
    <%-- Main List --%>
@@ -48,6 +34,20 @@
 
       <a:booleanEvaluator value="#{MyTasksBean.informationPagerVisible}">
          <a:dataPager id="information-pager" styleClass="pager" />
+      </a:booleanEvaluator>
+   </a:richList>
+
+</a:panel>
+
+<a:panel id="order-assignment-tasks-panel" styleClass="panel-100 #{(MyTasksBean.orderAssignmentPagerVisible) ? 'with-pager' : ''}" label="#{msg.task_list_order_assignment_title}" progressive="true" rendered="#{not empty MyTasksBean.orderAssignmentTasks}">
+
+   <%-- Main List --%>
+   <a:richList id="order-assignment-task-list" viewMode="details" pageSize="#{MyTasksBean.pageSize}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
+      width="100%" value="#{MyTasksBean.orderAssignmentTasks}" var="r">
+
+      <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/task-list-dialog-columns.jsp" />
+      <a:booleanEvaluator value="#{MyTasksBean.orderAssignmentPagerVisible}">
+         <a:dataPager id="order-assignment-pager" styleClass="pager" />
       </a:booleanEvaluator>
    </a:richList>
 

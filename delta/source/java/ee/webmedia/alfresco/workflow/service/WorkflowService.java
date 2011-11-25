@@ -121,6 +121,7 @@ public interface WorkflowService {
     /**
      * Save task properties and finish task with specified outcome.
      * 
+     * @param removedFiles
      * @throws WorkflowChangedException If task's status is not IN_PROGRESS or ownerId does not equal to current run-as user.
      */
     void finishInProgressTask(Task task, int outcomeIndex) throws WorkflowChangedException;
@@ -192,7 +193,7 @@ public interface WorkflowService {
 
     boolean getOrderAssignmentCategoryEnabled();
 
-    boolean hasInProgressActiveResponsibleTasks(NodeRef document, QName workflowType);
+    boolean hasInProgressActiveResponsibleTasks(NodeRef document);
 
     boolean hasInProgressOtherUserOrderAssignmentTasks(NodeRef originalDocRef);
 

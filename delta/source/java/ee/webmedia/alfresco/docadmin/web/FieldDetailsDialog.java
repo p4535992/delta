@@ -1,7 +1,6 @@
 package ee.webmedia.alfresco.docadmin.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getClassificatorService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocTypeDetailsDialog;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 import static ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props.CLASSIFICATOR;
 import static ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props.CLASSIFICATOR_DEFAULT_VALUE;
@@ -37,6 +36,7 @@ import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.collections.Closure;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
@@ -45,6 +45,7 @@ import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter_ET_EN;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
+import ee.webmedia.alfresco.docadmin.service.DynamicType;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
@@ -88,7 +89,7 @@ public class FieldDetailsDialog extends BaseDialogBean {
                 field = getDocumentAdminService().saveOrUpdateField(field);
                 MessageUtil.addInfoMessage(context, "save_success");
             } else {
-                commitToMetadataContainer(field, fieldParent);
+                commitToMetadataContainer(field, fieldParent, getDynTypeName());
             }
         } else {
             isFinished = false;
@@ -154,11 +155,21 @@ public class FieldDetailsDialog extends BaseDialogBean {
                         throw new IllegalStateException("Expected at most one element (fieldId of editable field). duplicateFieldIds=" + duplicateFieldIds);
                     }
                     valid = false;
-                    MessageUtil.addErrorMessage("field_details_error_docField_sameIdFieldInDocType", fieldIdLocalName);
+                    MessageUtil.addErrorMessage("field_details_error_field_sameIdFieldIn" + getDynTypeName(), fieldIdLocalName);
                 }
             }
         }
         return valid;
+    }
+
+    private String getDynTypeName() {
+        final DocumentTypeVersion dynTypeVer;
+        if (fieldParent instanceof FieldGroup) {
+            dynTypeVer = ((FieldGroup) fieldParent).getParent();
+        } else {
+            dynTypeVer = (DocumentTypeVersion) fieldParent;
+        }
+        return dynTypeVer.getParent().getClass().getSimpleName();
     }
 
     @Override
@@ -261,7 +272,25 @@ public class FieldDetailsDialog extends BaseDialogBean {
     public boolean isShowAdditionalFieldsSeparator() {
         FieldType fieldType = field.getFieldTypeEnum();
         boolean fieldTypeHasAdditionalFields = fieldType == null ? false : !fieldType.getFieldsUsed(field.isComboboxNotRelatedToClassificator()).isEmpty();
-        return fieldTypeHasAdditionalFields && BeanHelper.getDocTypeDetailsDialog().isShowingLatestVersion();
+        return fieldTypeHasAdditionalFields && isPropertySheetEditable();
+    }
+
+    public boolean isShowInapplicableForVol() {
+        return isFieldDefinition() && BeanHelper.getVolumeService().isCaseVolumeEnabled();
+    }
+
+    public DynamicTypeDetailsDialog getDynamicTypeDetailsDialog() {
+        BaseObject ancestor = field.getParent();
+        DocumentTypeVersion dynTypeVer;
+        if (ancestor instanceof FieldGroup) {
+            dynTypeVer = ((FieldGroup) ancestor).getParent();
+            ancestor = dynTypeVer;
+        } else {
+            Assert.isTrue(ancestor instanceof DocumentTypeVersion, "expected that ancestor of field is version of dynamic type");
+            dynTypeVer = (DocumentTypeVersion) ancestor;
+        }
+        Class<? extends DynamicType> dynTypeClass = dynTypeVer.getParent().getClass();
+        return BeanHelper.getDynamicTypeDetailsDialog(dynTypeClass);
     }
 
     /** used by property sheet */
@@ -275,7 +304,7 @@ public class FieldDetailsDialog extends BaseDialogBean {
     }
 
     private boolean isPropertySheetEditable() {
-        return field instanceof FieldDefinition || getDocTypeDetailsDialog().isShowingLatestVersion();
+        return field instanceof FieldDefinition || getDynamicTypeDetailsDialog().isShowingLatestVersion();
     }
 
     /** used by property sheet */

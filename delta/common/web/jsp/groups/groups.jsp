@@ -29,38 +29,26 @@
          
 <%-- Group Path Breadcrumb --%>
 <a:panel id="groups-breadcrumb" styleClass="breadcrumb">
-   <a:breadcrumb value="#{DialogManager.bean.location}" />
+   <a:breadcrumb id="groups-breacdrumb-visible" value="#{DialogManager.bean.location}" />
 </a:panel>
 
    <%-- Groups List --%>
    <a:panel id="groups-panel" label="#{msg.groups}" styleClass="with-pager">
 
-      <a:richList id="groups-list" binding="#{DialogManager.bean.groupsRichList}" viewMode="#{DialogManager.bean.viewMode}" pageSize="12"
+      <a:richList id="groups-list" binding="#{DialogManager.bean.groupsRichList}" viewMode="details" pageSize="12"
             rowStyleClass="recordSetRow" altRowStyleClass="odd" width="100%" value="#{DialogManager.bean.groups}" var="r" initialSortColumn="name" initialSortDescending="true">
          
-         <%-- Primary column for icons view mode --%>
-         <a:column primary="true" style="padding:2px;text-align:left;vertical-align:top" rendered="#{DialogManager.bean.viewMode == 'icons'}">
-            <f:facet name="large-icon">
-               <a:actionLink value="#{r.name}" image="/images/icons/group_large.gif" actionListener="#{DialogManager.bean.clickGroup}" showLink="false" padding="11">
-                  <f:param name="id" value="#{r.id}" />
-               </a:actionLink>
-            </f:facet>
-            <a:actionLink value="#{r.name}" actionListener="#{DialogManager.bean.clickGroup}" styleClass="header">
-               <f:param name="id" value="#{r.id}" />
-            </a:actionLink>
-         </a:column>
-         
          <%-- Primary column for details view mode --%>
-         <a:column primary="true" style="padding:2px;text-align:left" rendered="#{DialogManager.bean.viewMode == 'details'}">
+         <a:column primary="true" style="padding:2px;text-align:left">
             <f:facet name="small-icon">
-               <a:actionLink value="#{r.name}" image="/images/icons/group.gif" actionListener="#{DialogManager.bean.clickGroup}" showLink="false">
+               <a:actionLink id="groups-list-details-icon-link" value="#{r.name}" image="/images/icons/group.gif" actionListener="#{DialogManager.bean.clickGroup}" showLink="false">
                   <f:param name="id" value="#{r.id}" />
                </a:actionLink>
             </f:facet>
             <f:facet name="header">
-               <a:sortLink label="#{msg.identifier}" value="name" mode="case-insensitive" styleClass="header"/>
+               <a:sortLink id="groups-list-primary-header" label="#{msg.identifier}" value="name" mode="case-insensitive" styleClass="header"/>
             </f:facet>
-            <a:actionLink value="#{r.name}" actionListener="#{DialogManager.bean.clickGroup}">
+            <a:actionLink id="groups-list-primary-action-link" value="#{r.name}" actionListener="#{DialogManager.bean.clickGroup}">
                <f:param name="id" value="#{r.id}" />
             </a:actionLink>
          </a:column>
@@ -68,7 +56,7 @@
          <%-- Actions column --%>
          <a:column actions="true" style="text-align:left">
             <f:facet name="header">
-               <h:outputText value="#{msg.actions}"/>
+               <h:outputText id="groups-list-actions-header" value="#{msg.actions}"/>
             </f:facet>
             <r:actions id="inline-group-actions" value="group_inline_actions" context="#{r}" showLink="false" styleClass="inlineAction" />
          </a:column>
@@ -84,39 +72,31 @@
             rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" value="#{DialogManager.bean.users}" var="r" initialSortColumn="name"
             initialSortDescending="true">
          
-         <%-- Primary column for icons view mode --%>
-         <a:column primary="true" style="padding:2px;text-align:left;vertical-align:top;font-weight: bold;" rendered="#{DialogManager.bean.viewMode == 'icons'}">
-            <f:facet name="large-icon">
-               <h:graphicImage alt="#{r.name}" value="/images/icons/user_large.gif" />
-            </f:facet>
-            <h:outputText value="#{r.name}" />
-         </a:column>
-         
          <%-- Primary column for details view mode --%>
-         <a:column primary="true" style="padding:2px;text-align:left;" rendered="#{DialogManager.bean.viewMode == 'details'}">
+         <a:column primary="true" style="padding:2px;text-align:left;">
             <f:facet name="small-icon">
-               <h:graphicImage alt="#{r.name}" value="/images/icons/person.gif" />
+               <h:graphicImage id="users-list-details-image" alt="#{r.name}" value="/images/icons/person.gif" />
             </f:facet>
             <f:facet name="header">
-               <a:sortLink label="#{msg.name}" value="name" mode="case-insensitive" styleClass="header"/>
+               <a:sortLink id="users-list-details-primary-header" label="#{msg.name}" value="name" mode="case-insensitive" styleClass="header"/>
             </f:facet>
-            <h:outputText value="#{r.name}" />
+            <h:outputText id="users-list-details-primary-text" value="#{r.name}" />
          </a:column>
          
          <%-- Username column --%>
          <a:column width="120" style="text-align:left">
             <f:facet name="header">
-               <a:sortLink label="#{msg.username}" value="userName" styleClass="header"/>
+               <a:sortLink id="users-list-username-sort" label="#{msg.username}" value="userName" styleClass="header"/>
             </f:facet>
-            <h:outputText value="#{r.userName}" />
+            <h:outputText id="users-list-username-text" value="#{r.userName}" />
          </a:column>
          
          <%-- Actions column --%>
          <a:column actions="true" style="text-align:left">
             <f:facet name="header">
-               <h:outputText value="#{msg.actions}"/>
+               <h:outputText id="users-list-actions-header" value="#{msg.actions}"/>
             </f:facet>
-            <a:actionLink value="#{msg.remove}" image="/images/icons/remove_user.gif" showLink="false" styleClass="inlineAction" actionListener="#{DialogManager.bean.removeUser}">
+            <a:actionLink id="users-list-remove-action" value="#{msg.remove}" image="/images/icons/remove_user.gif" showLink="false" styleClass="inlineAction" actionListener="#{DialogManager.bean.removeUser}">
                <f:param name="id" value="#{r.id}" />
             </a:actionLink>
          </a:column>

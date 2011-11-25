@@ -26,7 +26,7 @@ public class CreateWordFileFromTemplateEvaluator extends BaseActionEvaluator {
         Object docStatus = node.getProperties().get(DocumentCommonModel.Props.DOC_STATUS.toString());
         Set<Task> allActiveTasks = getWorkflowService().getTasks(node.getNodeRef(), allActiveTasksPredicate);
         return viewMode
-                && (allActiveTasks.isEmpty() || containsAssignmentTasks(allActiveTasks))
+                && (allActiveTasks.isEmpty() || containsResponsibleAssignmentTask(allActiveTasks))
                 && EqualsHelper.nullSafeEquals(DocumentStatus.WORKING.getValueName(), docStatus)
                 && getDocumentTemplateService().hasDocumentsTemplate(node.getNodeRef())
                 && node.hasPermission(DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA);
@@ -39,9 +39,9 @@ public class CreateWordFileFromTemplateEvaluator extends BaseActionEvaluator {
         }
     };
 
-    private boolean containsAssignmentTasks(Set<Task> tasks) {
+    private boolean containsResponsibleAssignmentTask(Set<Task> tasks) {
         for (Task task : tasks) {
-            if (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
+            if (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK) && task.getNode().hasAspect(WorkflowSpecificModel.Aspects.RESPONSIBLE)) {
                 return true;
             }
         }

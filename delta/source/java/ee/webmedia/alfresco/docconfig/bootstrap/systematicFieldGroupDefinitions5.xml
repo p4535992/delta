@@ -9,6 +9,7 @@
          <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
          <docadmin:fieldDefinitionIds>
             <view:values>
                <view:value>substituteName</view:value>

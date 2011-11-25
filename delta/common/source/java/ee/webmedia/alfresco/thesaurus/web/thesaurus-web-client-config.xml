@@ -10,7 +10,7 @@
          </action>
          
          <action id="thesaurus_import">
-            <label-id>thesaurus_import</label-id>
+            <label-id>import_xml</label-id>
             <image>/images/icons/versioned_properties.gif</image>
             <action>dialog:thesaurusImportDialog</action>
          </action>

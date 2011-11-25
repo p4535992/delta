@@ -97,10 +97,10 @@ public class AssociationModelDetailsDialog extends BaseDialogBean {
             associatedDocTypes.add(assocModel.getDocType());
         }
         for (DocumentType docType : docTypes) {
-            if (associatedDocTypes.contains(docType.getDocumentTypeId())) {
+            if (associatedDocTypes.contains(docType.getId())) {
                 continue;
             }
-            SelectItem selectItem = new SelectItem(docType.getDocumentTypeId(), docType.getNameAndId());
+            SelectItem selectItem = new SelectItem(docType.getId(), docType.getNameAndId());
             results.add(selectItem);
         }
         return results;

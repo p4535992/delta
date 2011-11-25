@@ -35,10 +35,16 @@ import ee.webmedia.alfresco.classificator.web.ClassificatorDetailsDialog;
 import ee.webmedia.alfresco.classificator.web.ClassificatorsImportDialog;
 import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.docadmin.service.CaseFileType;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
+import ee.webmedia.alfresco.docadmin.service.DocumentType;
+import ee.webmedia.alfresco.docadmin.service.DynamicType;
 import ee.webmedia.alfresco.docadmin.web.AssociationModelDetailsDialog;
+import ee.webmedia.alfresco.docadmin.web.CaseFileTypeDetailsDialog;
 import ee.webmedia.alfresco.docadmin.web.DocTypeDetailsDialog;
 import ee.webmedia.alfresco.docadmin.web.DocumentTypesImportDialog;
+import ee.webmedia.alfresco.docadmin.web.DynamicTypeDetailsDialog;
+import ee.webmedia.alfresco.docadmin.web.DynamicTypeDetailsDialog.DynTypeDialogSnapshot;
 import ee.webmedia.alfresco.docadmin.web.FieldDetailsDialog;
 import ee.webmedia.alfresco.docadmin.web.FieldGroupDetailsDialog;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
@@ -47,6 +53,7 @@ import ee.webmedia.alfresco.docconfig.web.PropertySheetStateBean;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog;
+import ee.webmedia.alfresco.docdynamic.web.DocumentLockHelperBean;
 import ee.webmedia.alfresco.document.assignresponsibility.service.AssignResponsibilityService;
 import ee.webmedia.alfresco.document.assignresponsibility.web.AssignResponsibilityBean;
 import ee.webmedia.alfresco.document.associations.web.AssocsBlockBean;
@@ -83,6 +90,7 @@ import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.mso.service.MsoService;
+import ee.webmedia.alfresco.notification.service.NotificationService;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.parameters.web.ParametersImportDialog;
@@ -195,6 +203,20 @@ public class BeanHelper {
         return getJsfBean(DocTypeDetailsDialog.class, DocTypeDetailsDialog.BEAN_NAME);
     }
 
+    @SuppressWarnings({ "cast", "rawtypes", "unchecked" })
+    public static <D extends DynamicType, S extends DynTypeDialogSnapshot<D>> DynamicTypeDetailsDialog<D, S> getDynamicTypeDetailsDialog(Class<D> dynTypeClass) {
+        if (DocumentType.class.equals(dynTypeClass)) {
+            // not using getDocTypeDetailsDialog() as unlike smarter eclipse compiler javac can't handle complicated generics
+            DynamicTypeDetailsDialog tmp = (DynamicTypeDetailsDialog) getJsfBean(DocTypeDetailsDialog.class, DocTypeDetailsDialog.BEAN_NAME);
+            return tmp;
+        } else if (CaseFileType.class.equals(dynTypeClass)) {
+            DynamicTypeDetailsDialog tmp = (DynamicTypeDetailsDialog) getJsfBean(CaseFileTypeDetailsDialog.class, CaseFileTypeDetailsDialog.BEAN_NAME);
+            return tmp;
+        } else {
+            throw new RuntimeException("Returning details dialog for " + dynTypeClass.getSimpleName() + " is unimplemented");
+        }
+    }
+
     public static VisitedDocumentsBean getVisitedDocumentsBean() {
         return getJsfBean(VisitedDocumentsBean.class, VisitedDocumentsBean.BEAN_NAME);
     }
@@ -257,6 +279,10 @@ public class BeanHelper {
 
     public static DocumentDialogHelperBean getDocumentDialogHelperBean() {
         return getJsfBean(DocumentDialogHelperBean.class, DocumentDialogHelperBean.BEAN_NAME);
+    }
+
+    public static DocumentLockHelperBean getDocumentLockHelperBean() {
+        return getSpringBean(DocumentLockHelperBean.class, DocumentLockHelperBean.BEAN_NAME);
     }
 
     public static FileBlockBean getFileBlockBean() {
@@ -525,6 +551,10 @@ public class BeanHelper {
 
     public static DocumentSearchFilterService getDocumentSearchFilterService() {
         return getService(DocumentSearchFilterService.class, DocumentSearchFilterService.BEAN_NAME);
+    }
+
+    public static NotificationService getNotificationService() {
+        return getService(NotificationService.class, NotificationService.BEAN_NAME);
     }
 
     // END: delta services

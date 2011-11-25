@@ -18,6 +18,7 @@ import javax.xml.ws.soap.SOAPFaultException;
 
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
+import org.alfresco.model.ForumModel;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.model.FileFolderService;
@@ -40,7 +41,9 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.service.OpenOfficeService;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
+import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.document.file.model.FileModel;
+import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.Document;
@@ -51,6 +54,7 @@ import ee.webmedia.alfresco.mso.service.MsoService;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.template.model.DocumentTemplate;
 import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
+import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.ISOLatin1Util;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
@@ -69,6 +73,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentTemplateServiceImpl.class);
 
     private static final FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
+    private static final FastDateFormat dateTimeFormat = FastDateFormat.getInstance("dd.MM.yyyy HH:mm");
     private static final String SEPARATOR = ".";
     private static final Pattern TEMPLATE_FORMULA_GROUP_PATTERN = Pattern.compile(OpenOfficeService.REGEXP_GROUP_PATTERN);
     private static final Pattern TEMPLATE_FORMULA_PATTERN = Pattern.compile(OpenOfficeService.REGEXP_PATTERN);
@@ -84,6 +89,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     private MsoService msoService;
     private ApplicationService applicationService;
     private ServletContext servletContext;
+    private UserService userService;
 
     private static BeanPropertyMapper<DocumentTemplate> templateBeanPropertyMapper;
     static {
@@ -91,7 +97,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     }
 
     @Override
-    public void updateGeneratedFilesOnRegistration(NodeRef docRef) {
+    public void updateGeneratedFiles(NodeRef docRef, boolean isRegistering) {
         if (!msoService.isAvailable()) {
             // Temporary safeguard until OO document templates & formulas are properly implemented
             return;
@@ -102,10 +108,10 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             // This check ensures, that only proper DOC files are passed to Word
             // Unfortunately DOT files have mimetype application/octet-stream, and therefore MsoService must accept this mimetype also
             // So without this check, every binary file would be passed to word, which would be unnecessary and very time consuming
-            if ((file.getProperties().get(ee.webmedia.alfresco.document.file.model.FileModel.Props.ACTIVE) == null
-                    || Boolean.TRUE.equals(file.getProperties().get(ee.webmedia.alfresco.document.file.model.FileModel.Props.ACTIVE)))
-                    && file.getProperties().get(ee.webmedia.alfresco.document.file.model.FileModel.Props.GENERATED) != null) {
-                replaceFormulas(docRef, file.getNodeRef(), file.getNodeRef(), file.getName());
+            Map<QName, Serializable> fileProps = file.getProperties();
+            if ((fileProps.get(FileModel.Props.ACTIVE) == null || Boolean.TRUE.equals(fileProps.get(FileModel.Props.ACTIVE)))
+                    && fileService.isFileGeneratedFromTemplate(file.getNodeRef())) {
+                replaceFormulas(docRef, file.getNodeRef(), file.getNodeRef(), file.getName(), isRegistering);
             }
         }
     }
@@ -213,7 +219,10 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
         ee.webmedia.alfresco.document.file.model.File populatedTemplate = new ee.webmedia.alfresco.document.file.model.File(fileFolderService.create(
                 documentNodeRef, name, ContentModel.TYPE_CONTENT));
-        nodeService.setProperty(populatedTemplate.getNodeRef(), ee.webmedia.alfresco.document.file.model.FileModel.Props.GENERATED, true); // Set generated flag
+        // Mark down the template that was used to generate the file
+        nodeService.setProperty(populatedTemplate.getNodeRef(), FileModel.Props.GENERATED_FROM_TEMPLATE, templateFilename);
+        nodeService.setProperty(populatedTemplate.getNodeRef(), FileModel.Props.GENERATION_TYPE, GeneratedFileType.WORD_TEMPLATE.name());
+
         // so we can process it during document registration
         nodeService.setProperty(populatedTemplate.getNodeRef(), FileModel.Props.DISPLAY_NAME, displayName);
 
@@ -226,6 +235,10 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     }
 
     private void replaceFormulas(NodeRef document, NodeRef sourceFile, NodeRef destinationFile, String sourceFileName) {
+        replaceFormulas(document, sourceFile, destinationFile, sourceFileName, false);
+    }
+
+    private void replaceFormulas(NodeRef document, NodeRef sourceFile, NodeRef destinationFile, String sourceFileName, boolean finalize) {
         if (!StringUtils.endsWithIgnoreCase(sourceFileName, ".doc") && !StringUtils.endsWithIgnoreCase(sourceFileName, ".docx")
                 && !StringUtils.endsWithIgnoreCase(sourceFileName, ".dot") && !StringUtils.endsWithIgnoreCase(sourceFileName, ".dotx")) {
             throw new UnableToPerformException(MessageSeverity.ERROR, "template_replace_formulas_invalid_file_extension");
@@ -236,6 +249,9 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             log.debug("Produced formulas " + WmNode.toString(formulas.entrySet()));
         }
         if (msoService.isAvailable()) {
+            if (finalize) {
+                formulas.put("FINALIZE", "1");
+            }
             ContentReader documentReader = fileFolderService.getReader(sourceFile);
             ContentWriter documentWriter = fileFolderService.getWriter(destinationFile);
             try {
@@ -320,26 +336,16 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             for (Document doc : documents) {
                 Date endDate = doc.getAccessRestrictionEndDate();
                 if (endDate != null) {
-                    String regNr = "";
-                    if (doc.getRegNumber() != null) {
-                        regNr = doc.getRegNumber();
-                    } else {
-                        regNr = I18NUtil.getMessage("notification_document_not_registered", doc.getDocName());
-                    }
-
                     String formattedDate = dateFormat.format(endDate);
-                    sb.append(regNr)
-                            .append(" (")
-                            .append(I18NUtil.getMessage("notification_access_restriction_end"))
-                            .append(": ")
-                            .append(formattedDate)
-                            .append(")")
-                            .append("<br>\n");
+                    generateAccessRestrictionDocumentRow(sb, doc, formattedDate);
+
                     debugInfo.append("\n  * ").append(endDate.getTime()).append(" ").append(endDate.toString()).append(" -> ").append(formattedDate).append(" - ")
-                            .append(doc.getNodeRefAsString());
+                    .append(doc.getNodeRef().toString());
                 }
             }
             if (sb.length() > 0) {
+                sb.insert(0, "<table cellspacing=\"0\" cellpadding=\"0\" border=\"0\">");
+                sb.append("</table>");
                 templateText = templateText.replaceAll("\\{accessRestrEndDateNotificationData\\}", sb.toString());
             }
             log.info(debugInfo.toString());
@@ -350,22 +356,42 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             StringBuilder sb = new StringBuilder();
             for (Document doc : documents) {
                 if (doc.getAccessRestrictionEndDate() == null) {
-                    sb.append(doc.getRegNumber())
-                            .append(" (")
-                            .append(I18NUtil.getMessage("notification_access_restriction_end"))
-                            .append(": ")
-                            .append(doc.getAccessRestrictionEndDesc())
-                            .append(")")
-                            .append("<br>\n");
+                    generateAccessRestrictionDocumentRow(sb, doc, doc.getAccessRestrictionEndDesc());
                 }
             }
             if (sb.length() > 0) {
+                sb.insert(0, "<table cellspacing=\"0\" cellpadding=\"0\" border=\"0\">");
+                sb.append("</table>");
                 templateText = templateText.replaceAll("\\{accessRestrNoEndDateNotificationData\\}", sb.toString());
             }
 
         }
 
         return templateText;
+    }
+
+    private void generateAccessRestrictionDocumentRow(StringBuilder sb, Document doc, String lastColValue) {
+        String regNr = doc.getRegNumber();
+        if (regNr == null) {
+            regNr = I18NUtil.getMessage("notification_document_not_registered", doc.getDocName());
+        }
+
+        sb.append("<tr><td>")
+        .append(regNr)
+        .append("</td><td>")
+        .append(doc.getRegDateTime() == null ? "" : dateTimeFormat.format(doc.getRegDateTime()))
+        .append("</td><td>")
+        .append(doc.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID))
+        .append("</td><td>")
+        .append("<a href=\"").append(getDocumentUrl(doc.getNodeRef())).append(">").append(doc.getDocName()).append("</a>")
+        .append("</td><td>")
+        .append(doc.getOwnerName())
+        .append("</td><td>")
+        .append(I18NUtil.getMessage("notification_access_restriction_end"))
+        .append(": ")
+        .append(lastColValue)
+        .append("</td></tr>")
+        .append("\n");
     }
 
     @Override
@@ -437,11 +463,11 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         return result.toString();
     }
 
-    private Map<String, String> getFormulas(NodeRef document) {
+    private Map<String, String> getFormulas(NodeRef objectRef) {
         Map<String, String> formulas = new LinkedHashMap<String, String>();
 
         // All properties
-        Map<QName, Serializable> props = nodeService.getProperties(document);
+        Map<QName, Serializable> props = nodeService.getProperties(objectRef);
         for (Entry<QName, Serializable> entry : props.entrySet()) {
             String propName = entry.getKey().getLocalName();
             Serializable propValue = entry.getValue();
@@ -459,27 +485,32 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
                 List<String> items = new ArrayList<String>(list.size());
                 for (Object object : list) {
-                    String itemValue = getTypeSpecificReplacement(object);
+                    String itemValue = getTypeSpecificReplacement(object, false);
                     if (StringUtils.isNotBlank(itemValue)) {
                         items.add(itemValue);
                     }
                 }
                 formulas.put(propName, StringUtils.join(items.iterator(), separator));
             } else {
-                formulas.put(propName, getTypeSpecificReplacement(propValue));
+                boolean alternate = false;
+                if ("task.startedDateTime".equals(propName)) {
+                    alternate = true;
+                }
+
+                formulas.put(propName, getTypeSpecificReplacement(propValue, alternate));
             }
         }
 
         // Specific formulas
-        QName documentType = nodeService.getType(document);
-        if (dictionaryService.isSubClass(documentType, DocumentCommonModel.Types.DOCUMENT)) {
-            formulas.put("functionTitle", getAncestorProperty(document, FunctionsModel.Types.FUNCTION, FunctionsModel.Props.TITLE));
-            formulas.put("functionMark", getAncestorProperty(document, FunctionsModel.Types.FUNCTION, FunctionsModel.Props.MARK));
-            formulas.put("seriesTitle", getAncestorProperty(document, SeriesModel.Types.SERIES, SeriesModel.Props.TITLE));
-            formulas.put("seriesIdentifier", getAncestorProperty(document, SeriesModel.Types.SERIES, SeriesModel.Props.SERIES_IDENTIFIER));
-            formulas.put("volumeTitle", getAncestorProperty(document, VolumeModel.Types.VOLUME, VolumeModel.Props.TITLE));
-            formulas.put("volumeMark", getAncestorProperty(document, VolumeModel.Types.VOLUME, VolumeModel.Props.MARK));
-            String docUrl = getDocumentUrl(document);
+        QName objectType = nodeService.getType(objectRef);
+        if (dictionaryService.isSubClass(objectType, DocumentCommonModel.Types.DOCUMENT)) {
+            formulas.put("functionTitle", getAncestorProperty(objectRef, FunctionsModel.Types.FUNCTION, FunctionsModel.Props.TITLE));
+            formulas.put("functionMark", getAncestorProperty(objectRef, FunctionsModel.Types.FUNCTION, FunctionsModel.Props.MARK));
+            formulas.put("seriesTitle", getAncestorProperty(objectRef, SeriesModel.Types.SERIES, SeriesModel.Props.TITLE));
+            formulas.put("seriesIdentifier", getAncestorProperty(objectRef, SeriesModel.Types.SERIES, SeriesModel.Props.SERIES_IDENTIFIER));
+            formulas.put("volumeTitle", getAncestorProperty(objectRef, VolumeModel.Types.VOLUME, VolumeModel.Props.TITLE));
+            formulas.put("volumeMark", getAncestorProperty(objectRef, VolumeModel.Types.VOLUME, VolumeModel.Props.MARK));
+            String docUrl = getDocumentUrl(objectRef);
             formulas.put("docUrl", docUrl);
         }
 
@@ -499,12 +530,12 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             formulas.put("additionalRecipientNameEmail", generateNameAndEmail(names, emails));
         }
 
-        if (nodeService.hasAspect(document, DocumentSpecificModel.Aspects.VACATION_ORDER)) {
+        if (SystematicDocumentType.VACATION_APPLICATION.getId().equals(nodeService.getProperty(objectRef, DocumentAdminModel.Props.OBJECT_TYPE_ID))) {
             formulas.put("vacationOrderSubstitutionData", getVacationOrderSubstitutionData(props));
         }
 
-        if (dictionaryService.isSubClass(documentType, WorkflowCommonModel.Types.TASK)) {
-            if (nodeService.hasAspect(document, WorkflowSpecificModel.Aspects.RESPONSIBLE)) {
+        if (dictionaryService.isSubClass(objectType, WorkflowCommonModel.Types.TASK)) {
+            if (nodeService.hasAspect(objectRef, WorkflowSpecificModel.Aspects.RESPONSIBLE)) {
                 Serializable activeProp = props.get(WorkflowSpecificModel.Props.ACTIVE);
                 if (activeProp != null) {
                     Boolean isActive = (Boolean) activeProp;
@@ -517,6 +548,11 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             } else {
                 formulas.put("coResponsible", Boolean.TRUE.toString());
             }
+        }
+
+        if (objectType.equals(ForumModel.TYPE_FORUM)) {
+            Map<QName, Serializable> properties = nodeService.getProperties(objectRef);
+            formulas.put("creatorName", userService.getUserFullName((String) properties.get(ContentModel.PROP_CREATOR)));
         }
 
         /*
@@ -539,7 +575,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         return applicationService.getServerUrl() + servletContext.getContextPath() + "/n/document/" + document.getId();
     }
 
-    private String getTypeSpecificReplacement(Object object) {
+    private String getTypeSpecificReplacement(Object object, boolean alternate) {
         if (object == null) {
             return null;
         }
@@ -547,7 +583,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             return (String) object;
         }
         if (object instanceof Date) {
-            return dateFormat.format((Date) object);
+            return alternate ? dateTimeFormat.format((Date) object) : dateFormat.format((Date) object);
         }
         if (object instanceof Integer || object instanceof Long || object instanceof Float || object instanceof Double || object instanceof Boolean) {
             return object.toString();
@@ -766,6 +802,10 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
     public void setApplicationService(ApplicationService applicationService) {
         this.applicationService = applicationService;
+    }
+
+    public void setUserService(UserService userService) {
+        this.userService = userService;
     }
 
     // END: getters / setters

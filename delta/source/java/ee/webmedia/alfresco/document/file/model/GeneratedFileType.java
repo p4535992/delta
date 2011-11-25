@@ -9,5 +9,6 @@ import ee.webmedia.alfresco.document.file.model.FileModel.Props;
  */
 public enum GeneratedFileType {
     /** files with {@link Props#GENERATION_TYPE} value equal to this constant name() are files generated during signing */
-    SIGNED_PDF
+    SIGNED_PDF,
+    WORD_TEMPLATE
 }

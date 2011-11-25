@@ -31,7 +31,6 @@ import javax.faces.event.ActionEvent;
 import javax.faces.event.ValueChangeEvent;
 
 import org.alfresco.config.Config;
-import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.permissions.AccessDeniedException;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.model.FileNotFoundException;
@@ -77,7 +76,6 @@ import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.search.web.SearchBlockBean;
 import ee.webmedia.alfresco.document.sendout.web.SendOutBlockBean;
 import ee.webmedia.alfresco.document.service.DocumentService;
-import ee.webmedia.alfresco.document.type.web.TypeBlockBean;
 import ee.webmedia.alfresco.document.web.FavoritesModalComponent.AddToFavoritesEvent;
 import ee.webmedia.alfresco.document.web.evaluator.RegisterDocumentEvaluator;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
@@ -120,7 +118,6 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     private transient UIPanel modalContainer;
 
     private SearchBlockBean searchBlockBean;
-    private TypeBlockBean typeBlockBean;
     private MetadataBlockBean metadataBlockBean;
     private FileBlockBean fileBlockBean;
     private SendOutBlockBean sendOutBlockBean;
@@ -165,15 +162,6 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         }
     }
 
-    public void handleLockedNode(String messageId) {
-        handleLockedNode(messageId, node.getNodeRef());
-    }
-
-    private void handleLockedNode(String messageId, NodeRef nodeRef) {
-        MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), messageId,
-                BeanHelper.getUserService().getUserFullName((String) getNodeService().getProperty(nodeRef, ContentModel.PROP_LOCK_OWNER)));
-    }
-
     /**
      * Should be called only when the document was received from DVK.
      */
@@ -190,7 +178,6 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
 
         setupAction(true);
         metadataBlockBean.setOwnerCurrentUser();
-        typeBlockBean.setSelected(newType.toString());
     }
 
     public void populateTemplate(ActionEvent event) {
@@ -207,7 +194,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             WebUtil.navigateTo(getDefaultCancelOutcome(), context);
             return;
         } catch (NodeLockedException e) {
-            handleLockedNode("document_createWordFile_error_docLocked");
+            BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_createWordFile_error_docLocked");
         } catch (RuntimeException e) {
             log.error("Populate template failed", e);
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), ERR_TEMPLATE_PROCESSING_FAILED);
@@ -290,7 +277,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         try {
             getDocumentService().endDocument(node.getNodeRef());
         } catch (NodeLockedException e) {
-            handleLockedNode("document_end_error_docLocked");
+            BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_end_error_docLocked");
             return;
         }
         final String docStatusAfter = DocumentStatus.FINISHED.getValueName();
@@ -309,7 +296,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         try {
             getDocumentService().reopenDocument(node.getNodeRef());
         } catch (NodeLockedException e) {
-            handleLockedNode("document_reopen_error_docLocked");
+            BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_reopen_error_docLocked");
             return;
         }
         final String docStatusAfter = DocumentStatus.WORKING.getValueName();
@@ -333,7 +320,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_delete_error_accessDenied");
             return;
         } catch (NodeLockedException e) {
-            handleLockedNode("document_delete_error_docLocked");
+            BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_delete_error_docLocked");
             return;
         } catch (InvalidNodeRefException e) {
             final FacesContext context = FacesContext.getCurrentInstance();
@@ -383,7 +370,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             final FacesContext context = FacesContext.getCurrentInstance();
             MessageUtil.addErrorMessage(context, "document_addFollowUp_error_docDeleted");
         } catch (NodeLockedException e) {
-            handleLockedNode("document_addFollowUp_error_docLocked");
+            BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_addFollowUp_error_docLocked");
         }
     }
 
@@ -413,7 +400,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             final FacesContext context = FacesContext.getCurrentInstance();
             MessageUtil.addErrorMessage(context, "document_addReply_error_docDeleted");
         } catch (NodeLockedException e) {
-            handleLockedNode("document_addReply_error_docLocked");
+            BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_addReply_error_docLocked");
         }
     }
 
@@ -571,7 +558,6 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         getDocumentDialogHelperBean().reset(this);
 
         fileBlockBean.init(node);
-        typeBlockBean.init();
         assocsBlockBean.init(node);
         workflowBlockBean.init(node);
         sendOutBlockBean.init(node);
@@ -885,7 +871,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         } catch (NodeLockedException e) {
             NodeRef nodeRef = e.getNodeRef();
             String messageId = nodeRef.equals(sourceRef) ? "document_assocAdd_error_sourceLocked" : "document_assocAdd_error_targetLocked";
-            handleLockedNode(messageId, nodeRef);
+            BeanHelper.getDocumentLockHelperBean().handleLockedNode(messageId, nodeRef);
             return;
         }
         assocsBlockBean.restore();
@@ -987,7 +973,6 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
                 log.debug("didn't restore document snapshot recursively");
                 // node exists, just re-init other beans as well
                 fileBlockBean.init(node);
-                typeBlockBean.init();
                 assocsBlockBean.init(node);
                 workflowBlockBean.init(node);
                 sendOutBlockBean.init(node);
@@ -1105,14 +1090,6 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
 
     public SearchBlockBean getSearch() {
         return searchBlockBean;
-    }
-
-    public void setTypeBlockBean(TypeBlockBean typeBlockBean) {
-        this.typeBlockBean = typeBlockBean;
-    }
-
-    public TypeBlockBean getType() {
-        return typeBlockBean;
     }
 
     public boolean isDraft() {

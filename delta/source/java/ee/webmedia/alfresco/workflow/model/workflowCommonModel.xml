@@ -5,6 +5,7 @@
    <imports>
       <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
       <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+      <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
    </imports>
 
    <namespaces>
@@ -131,7 +132,7 @@
       </type>
 
       <type name="wfc:task">
-         <parent>sys:base</parent>
+         <parent>cm:folder</parent>
          <properties>
             <property name="wfc:ownerEmail">
                <type>d:text</type>

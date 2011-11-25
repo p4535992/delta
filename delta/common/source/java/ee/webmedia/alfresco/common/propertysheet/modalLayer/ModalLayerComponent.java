@@ -39,6 +39,7 @@ public class ModalLayerComponent extends UICommand implements Serializable {
     public static final String ATTR_MANDATORY = "mandatory";
     public static final String ATTR_IS_HIDDEN = "isHidden";
     public static final String ATTR_SUBMIT_BUTTON_MSG_KEY = "submitButtonMsgKey";
+    public static final String ATTR_PRESERVE_VALUES = "attrPreserveValues";
     public static final String ACTION_INDEX = "actionIndex";
 
     private final static int ACTION_CLEAR = 1;
@@ -128,7 +129,7 @@ public class ModalLayerComponent extends UICommand implements Serializable {
             out.write("<tr><td class=\"propertiesLabel" + (isHidden ? " hidden" : "") + "\">");
             out.write(MessageUtil.getMessage((String) attributes.get(ATTR_LABEL_KEY)) + ":</td>");
             out.write("<td>");
-            if (child instanceof UIInput) {
+            if (child instanceof UIInput && !isHidden && !attrIsTrue(attributes, ATTR_PRESERVE_VALUES)) {
                 ((UIInput) child).setValue(null);
             }
             Utils.encodeRecursive(context, child);

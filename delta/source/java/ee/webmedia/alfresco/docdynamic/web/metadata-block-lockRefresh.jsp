@@ -1,8 +1,5 @@
 <%@page import="ee.webmedia.alfresco.common.web.BeanHelper"%>
-<%@ taglib uri="http://java.sun.com/jsf/html" prefix="h"%>
 <%@ taglib uri="http://java.sun.com/jsf/core" prefix="f"%>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
-<%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a"%>
 <%@ taglib uri="/WEB-INF/repo.tld" prefix="r"%>
 
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
@@ -11,15 +8,15 @@
 <f:verbatim>
 <script type="text/javascript" id="metaLockRefreshScript" >
 $jQ(document).ready(function(){
-   var lockingAllowed = <%= BeanHelper.getMetadataBlockBean().isLockingAllowed() %>;
+   var lockingAllowed = <%= BeanHelper.getDocumentLockHelperBean().isLockingAllowed() %>;
    if(lockingAllowed){
-      var clientLockRefreshFrequency = <%= BeanHelper.getMetadataBlockBean().getClientLockRefreshFrequency() %>;
-      setTimeout(requestForLockRefresh, clientLockRefreshFrequency/3);
+      var clientLockRefreshFrequency = <%= BeanHelper.getDocumentLockHelperBean().getLockExpiryPeriod() %>;
+      setTimeout(requestForLockRefresh, clientLockRefreshFrequency/3); // We need to lock sooner for the first time (add file dialog etc.)
    }
 });
 
 function requestForLockRefresh() {
-   var uri = getContextPath() + '/ajax/invoke/MetadataBlockBean.refreshLockClientHandler';
+   var uri = getContextPath() + '/ajax/invoke/DocumentLockHelperBean.refreshLockClientHandler';
    $jQ.ajax({
       type: 'POST',
       url: uri,
@@ -36,7 +33,7 @@ function requestForLockRefreshSuccess(xml) {
    xml = xml.documentElement;
    var success = xml.getAttribute('success');
    var nextReqInMs = xml.getAttribute('nextReqInMs');
-   setTimeout(requestForLockRefresh, nextReqInMs); // start new request based on sugessted timeout
+   setTimeout(requestForLockRefresh, nextReqInMs/2); // start new request based on suggested timeout (take page loading and request times into account, divide by two)
    if(!success){
       var errMsg = xml.getAttribute('errMsg');
       alert("failed to refresh lock on document: "+errMsg);

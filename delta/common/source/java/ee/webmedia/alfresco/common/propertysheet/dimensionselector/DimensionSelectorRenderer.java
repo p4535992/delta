@@ -33,7 +33,6 @@ import flexjson.JSONSerializer;
 public class DimensionSelectorRenderer extends HtmlTextareaRenderer {
 
     public static final String DIMENSION_SELECTOR_RENDERER_TYPE = DimensionSelectorRenderer.class.getCanonicalName();
-    public static DateFormat dateFormat = new SimpleDateFormat("dd.M.yyyy");
 
     @Override
     public void encodeEnd(FacesContext facesContext, UIComponent component) throws IOException {
@@ -113,6 +112,7 @@ public class DimensionSelectorRenderer extends HtmlTextareaRenderer {
     private String getJavascriptFunctionCall(String inputClientId, List<DimensionValue> suggesterValues, String dimensionName, Date entryDate, String predefinedFilterName,
             String clickLinkId) {
         Assert.notNull(dimensionName);
+        DateFormat dateFormat = new SimpleDateFormat("dd.M.yyyy");
         JSONSerializer jsonSerializer = new JSONSerializer();
         List<String> jsFunctionArgs = new ArrayList<String>();
         jsFunctionArgs.add(jsonSerializer.serialize(inputClientId));
@@ -128,12 +128,13 @@ public class DimensionSelectorRenderer extends HtmlTextareaRenderer {
     public static String getValuesAsJsArrayString(List<DimensionValue> suggesterValues) {
         List<Map<String, String>> suggesterDimensionsValues = new ArrayList<Map<String, String>>();
         if (suggesterValues != null) {
+            DateFormat dateFormat = new SimpleDateFormat("dd.M.yyyy");
             for (DimensionValue value : suggesterValues) {
                 Map<String, String> suggesterDimensionValue = new HashMap<String, String>();
                 suggesterDimensionValue.put("value", value.getValueName());
                 String expiryPeriod = "";
                 if (value.getBeginDateTime() != null || value.getEndDateTime() != null) {
-                    expiryPeriod = " (kehtiv " + getDateOrDots(value.getBeginDateTime()) + " - " + getDateOrDots(value.getEndDateTime()) + ")";
+                    expiryPeriod = " (kehtiv " + getDateOrDots(value.getBeginDateTime(), dateFormat) + " - " + getDateOrDots(value.getEndDateTime(), dateFormat) + ")";
                 }
                 String valueCommentStr = StringUtils.isNotBlank(value.getValueComment()) ? ". " + value.getValueComment() : "";
                 suggesterDimensionValue.put("label", value.getValue() + valueCommentStr + expiryPeriod);
@@ -152,7 +153,7 @@ public class DimensionSelectorRenderer extends HtmlTextareaRenderer {
         return StringEscapeUtils.escapeJavaScript(value);
     }
 
-    private static String getDateOrDots(Date date) {
+    private static String getDateOrDots(Date date, DateFormat dateFormat) {
         return date == null ? "..." : dateFormat.format(date);
     }
 

@@ -7,8 +7,13 @@
 <%@ page isELIgnored="false"%>
 
 <a:panel label="#{msg.document_type_block}" id="types-panel" styleClass="panel-100" progressive="true">
-   <h:panelGrid>
-      <r:propertySheetGrid id="doc-types" value="#{DocumentDialog.type.selector}" columns="1" mode="edit" externalConfig="true"
-         labelStyleClass="propertiesLabel" />
+   <h:panelGrid columns="2" columnClasses="propertiesLabel">
+      <h:outputText value="#{msg.document_docType}" />
+      <a:panel id="submit-doc-type">
+         <h:selectOneMenu id="doc-types-select" value="#{DocumentDynamicDialog.documentType.id}" styleClass="#{DocumentDynamicDialog.onChangeStyleClass}">
+            <f:selectItems value="#{DocumentSearchBean.documentTypes}" />
+         </h:selectOneMenu>
+         <a:actionLink id="submit-doc-type-link" value="" actionListener="#{DocumentDynamicDialog.selectedDocumentTypeChanged}" styleClass="hidden" />
+      </a:panel>
    </h:panelGrid>
 </a:panel>

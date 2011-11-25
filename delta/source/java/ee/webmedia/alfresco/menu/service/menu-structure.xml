@@ -25,10 +25,19 @@
                   <action-listener>#{MyTasksBean.setupInformationTasks}</action-listener>
                   <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}informationTask</processor>
                </item>
+               <item id="orderAssignmentTasks" title-id="menu_for_order_assignment">
+                  <outcome>dialog:taskListDialog</outcome>
+                  <action-listener>#{MyTasksBean.setupOrderAssignmentTasks}</action-listener>
+                  <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}orderAssignmentTask</processor>
+               </item>               
                <item id="opinionTasks" title-id="menu_for_opinion">
                   <outcome>dialog:taskListDialog</outcome>
                   <action-listener>#{MyTasksBean.setupOpinionTasks}</action-listener>
                   <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}opinionTask</processor>
+               </item>
+               <item id="discussions" title-id="menu_for_discussion">
+                  <outcome>dialog:discussionDocumentListDialog</outcome> 
+                  <action-listener>#{DiscussionDocumentListDialog.setup}</action-listener>
                </item>
                <item id="reviewTasks" title-id="menu_for_review">
                   <outcome>dialog:taskListDialog</outcome>
@@ -40,24 +49,16 @@
                   <action-listener>#{MyTasksBean.setupExternalReviewTasks}</action-listener>
                   <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}externalReviewTask</processor>
                </item>
+               <item id="confirmationTasks" title-id="menu_for_confirmation">
+                  <outcome>dialog:taskListDialog</outcome>
+                  <action-listener>#{MyTasksBean.setupConfirmationTasks}</action-listener>
+                  <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}confirmationTask</processor>
+               </item>                
                <item id="signatureTasks" title-id="menu_for_signature">
                   <outcome>dialog:taskListDialog</outcome>
                   <action-listener>#{MyTasksBean.setupSignatureTasks}</action-listener>
                   <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}signatureTask</processor>
                </item>
-               <item id="orderAssignmentTasks" title-id="menu_for_order_assignment">
-                  <outcome>dialog:taskListDialog</outcome>
-                  <action-listener>#{MyTasksBean.setupOrderAssignmentTasks}</action-listener>
-                  <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}orderAssignmentTask</processor>
-               </item>
-               <item id="confirmationTasks" title-id="menu_for_confirmation">
-                  <outcome>dialog:taskListDialog</outcome>
-                  <action-listener>#{MyTasksBean.setupConfirmationTasks}</action-listener>
-                  <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}confirmationTask</processor>
-               </item> 
-               <!-- TODO CL 163439
-               <item id="discussions" title-id="menu_for_discussion" />
-               -->
                <item id="forRegisteringList" title-id="menu_for_registering" document-manager="true">
                   <outcome>dialog:forRegisteringListDialog</outcome> 
                   <action-listener>#{ForRegisteringListDialog.setup}</action-listener> 
@@ -251,6 +252,9 @@
          </item>
          <item id="documentTypeManagement" title-id="menu_document_types" admin="true">
             <outcome>dialog:docTypeListDialog</outcome>
+         </item>
+         <item id="caseFileTypeManagement" title-id="menu_caseFile_types" admin="true">
+            <outcome>dialog:caseFileTypeListDialog</outcome>
          </item>
          <item id="documentTypeFields" title-id="menu_document_type_fields" admin="true">
             <outcome>dialog:fieldDefinitionListDialog</outcome>

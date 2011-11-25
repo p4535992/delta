@@ -30,6 +30,7 @@ import org.apache.myfaces.shared_impl.util.StateUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.service.DocLockService;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import flexjson.JSONSerializer;
 
@@ -48,6 +49,7 @@ public class AjaxBean implements Serializable {
 
     @ResponseMimetype(MimetypeMap.MIMETYPE_HTML)
     public void isFileLocked() throws IOException {
+        // FIXME XXX This method isn't called when opening WebDAV file in IE! CL 161673
         FacesContext context = FacesContext.getCurrentInstance();
 
         @SuppressWarnings("unchecked")
@@ -61,16 +63,22 @@ public class AjaxBean implements Serializable {
         NodeRef docRef = new NodeRef(StoreRef.STORE_REF_WORKSPACE_SPACESSTORE, id);
         NodeRef fileRef = BeanHelper.getFileFolderService().searchSimple(docRef, filename);
         String lockOwner = null;
+        DocLockService docLockService = BeanHelper.getDocLockService();
+        boolean generated = false;
         if (fileRef != null) {
-            lockOwner = BeanHelper.getDocLockService().getLockOwnerIfLocked(fileRef);
+            generated = BeanHelper.getFileService().isFileGenerated(fileRef);
+            lockOwner = docLockService.getLockOwnerIfLocked(generated ? docRef : fileRef);
         }
 
         ResponseWriter out = context.getResponseWriter();
         if (lockOwner != null) {
             out.write(BeanHelper.getUserService().getUserFullName(lockOwner));
-        } else {
-            out.write("NOT_LOCKED");
+            return;
         }
+        if (generated) {
+            docLockService.setLockIfFree(docRef); // Lock the document. File is locked by WebDAV client
+        }
+        out.write("NOT_LOCKED");
     }
 
     @ResponseMimetype(MimetypeMap.MIMETYPE_HTML)

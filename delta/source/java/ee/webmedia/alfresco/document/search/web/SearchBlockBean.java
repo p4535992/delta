@@ -40,7 +40,7 @@ public class SearchBlockBean implements DocumentDynamicBlock {
 
     public static final String BEAN_NAME = "SearchBlockBean";
 
-    private static final String PARAM_NODEREF = "nodeRef";
+    public static final String PARAM_NODEREF = "nodeRef";
     private transient DocumentSearchService documentSearchService;
     private transient CaseService caseService;
     private transient DocumentService documentService;

@@ -2,7 +2,7 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
-   <bean id="volumeModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap,documentModelBootstrap,caseModelBootstrap" >
+   <bean id="volumeModelBootstrap" parent="dictionaryModelBootstrap" depends-on="documentDynamicModelBootstrap,caseModelBootstrap" >
       <property name="models">
          <list>
             <value>ee/webmedia/alfresco/volume/model/volumeModel.xml</value>
@@ -89,8 +89,11 @@
       </property>
    </bean>
    
- <!-- Used to update volume type value. CL task: 177957 -->
-   <bean id="VolumeTypeUpdater" class="ee.webmedia.alfresco.volume.bootstrap.VolumeTypeUpdater" parent="abstractNodeUpdater" >
+   <!-- 
+   	  1) Updates volume type from estonian string literals to translatable constants and 
+   	  2) changes namespaces of volume properties
+   -->
+   <bean id="volumeTypeAndNamespaceUpdater" class="ee.webmedia.alfresco.volume.bootstrap.VolumeTypeUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
    </bean>
 </beans>

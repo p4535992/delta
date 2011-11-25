@@ -6,9 +6,13 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:booleanEvaluator value="#{DocTypeDetailsDialog.showingLatestVersion}">
-   <a:panel id="docTypeVersions-panel" label="#{msg.doc_type_details_panel_versions}" styleClass="panel-100 with-pager" progressive="true" >
-      <a:richList id="docTypeVersionsList" value="#{VersionsListBean.savedVersionsList}" var="r" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}"
+<%-- 
+   DialogManager.bean is used to refer to subclass of DynamicTypeDetailsDialog - 
+   either DocTypeDetailsDialog or CaseFileTypeDetailsDialog
+ --%>
+<a:booleanEvaluator value="#{DialogManager.bean.showingLatestVersion}">
+   <a:panel id="docTypeVersions-panel" label="#{msg.doc_type_details_panel_versions}" styleClass="panel-100 with-pager" progressive="true" expanded="false">
+      <a:richList id="docTypeVersionsList" value="#{DialogManager.bean.versionsListBean.savedVersionsList}" var="r" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}"
          rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%">
 
          <a:column id="versionNr" >
@@ -34,11 +38,11 @@
          </a:column>
    
          <a:column id="actionsCol">
-            <a:actionLink value="" actionListener="#{VersionsListBean.viewDocTypeVersion}" showLink="false" image="/images/icons/view_properties.gif" tooltip="#{msg.docType_versionsList_action_viewVersion}" >
+            <a:actionLink value="" actionListener="#{DialogManager.bean.versionsListBean.viewTypeVersion}" showLink="false" image="/images/icons/view_properties.gif" tooltip="#{msg.docType_versionsList_action_viewVersion}" >
                <f:param name="nodeRef" value="#{r.nodeRef}" />
             </a:actionLink>
          </a:column>
-   
+
          <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
          <a:dataPager id="pagerMetadata" styleClass="pager" />
       </a:richList>

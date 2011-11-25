@@ -54,12 +54,10 @@
             <f:facet name="header">
                <h:outputText value="#{msg.actions}" rendered="#{UserService.groupsEditingAllowed}" />
             </f:facet>
+            <r:actions id="add-user-group" value="base_group_inline_actions" context="#{r}" showLink="false" styleClass="inlineAction"
+               rendered="#{UserService.groupsEditingAllowed}" />
             <r:actions id="inline-group-actions" value="group_inline_actions_no_subgroup" context="#{r}" showLink="false" styleClass="inlineAction"
                rendered="#{r.group ne UserService.documentManagersGroup and r.group ne UserService.administratorsGroup and r.group ne UserService.accountantsGroup and UserService.groupsEditingAllowed}" />
-               
-            <r:actions id="add-user-group" value="base_group_inline_actions" context="#{r}" showLink="false" styleClass="inlineAction"
-               rendered="#{(r.group eq UserService.documentManagersGroup or r.group eq UserService.administratorsGroup or r.group eq UserService.accountantsGroup) and UserService.groupsEditingAllowed}" />
-               
          </a:column>
          
          <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />

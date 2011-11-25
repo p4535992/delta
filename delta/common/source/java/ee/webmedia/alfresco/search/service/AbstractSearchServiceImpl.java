@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.search.service;
 
 import static ee.webmedia.alfresco.utils.SearchUtil.formatLuceneDate;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateLuceneSearchParams;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -27,7 +28,6 @@ import org.alfresco.repo.search.impl.lucene.analysis.MLTokenDuplicator;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
-import org.alfresco.service.cmr.search.LimitBy;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchParameters;
 import org.alfresco.service.cmr.search.SearchService;
@@ -81,27 +81,6 @@ public abstract class AbstractSearchServiceImpl {
             queryParts.add(generateStringWordsWildcardQuery(value, leftWildcard, rightWildcard, documentPropNames));
         }
         return SearchUtil.joinQueryPartsOr(queryParts);
-    }
-
-    private SearchParameters buildSearchParameters(String query, boolean limited) {
-        return buildSearchParameters(query, limited ? RESULTS_LIMIT : null);
-    }
-
-    protected SearchParameters buildSearchParameters(String query, Integer limit) {
-        // build up the search parameters
-        SearchParameters sp = new SearchParameters();
-        sp.setLanguage(SearchService.LANGUAGE_LUCENE);
-        sp.setQuery(query);
-
-        // This limit does not work when ACLEntryAfterInvocationProvider has been disabled
-        // So we perform our own limiting in this service also
-        if (limit != null) {
-            sp.setLimit(limit);
-            sp.setLimitBy(LimitBy.FINAL_SIZE);
-        } else {
-            sp.setLimitBy(LimitBy.UNLIMITED);
-        }
-        return sp;
     }
 
     /**
@@ -192,10 +171,10 @@ public abstract class AbstractSearchServiceImpl {
         return count;
     }
 
-    protected List<NodeRef> searchNodes(String query, boolean limited, String queryName, StoreRef storeRef) {
-        ResultSet resultSet = doSearch(query, limited, queryName, storeRef);
+    protected List<NodeRef> searchNodes(String query, int limit, String queryName, StoreRef storeRef) {
+        ResultSet resultSet = doSearch(query, limit, queryName, storeRef);
         try {
-            return limitResults(resultSet.getNodeRefs(), limited);
+            return limitResults(resultSet.getNodeRefs(), limit);
         } finally {
             try {
                 resultSet.close();
@@ -205,9 +184,9 @@ public abstract class AbstractSearchServiceImpl {
         }
     }
 
-    protected <E> List<E> limitResults(List<E> allResults, boolean limited) {
-        if (limited && allResults.size() > RESULTS_LIMIT) {
-            return allResults.subList(0, RESULTS_LIMIT);
+    protected <E> List<E> limitResults(List<E> allResults, int limit) {
+        if (limit > -1 && allResults.size() > limit) {
+            return allResults.subList(0, limit);
         }
         return allResults;
     }
@@ -219,21 +198,17 @@ public abstract class AbstractSearchServiceImpl {
      * @param limited if true, only 100 first results are returned
      * @return query resultset
      */
-    protected ResultSet doSearch(String query, boolean limited, String queryName, StoreRef storeRef) {
-        SearchParameters sp = buildSearchParameters(query, limited);
-        sp.addStore(storeRef == null ? generalService.getStore() : storeRef);
+    protected ResultSet doSearch(String query, int limit, String queryName, StoreRef storeRef) {
+        SearchParameters sp = generateLuceneSearchParams(query, storeRef == null ? generalService.getStore() : storeRef, limit);
         return doSearchQuery(sp, queryName);
     }
 
-    protected List<ResultSet> doSearches(String query, boolean limited, String queryName, Collection<StoreRef> storeRefs) {
-        return doSearches(query, limited, -1, queryName, storeRefs);
+    protected List<ResultSet> doSearches(String query, String queryName, Collection<StoreRef> storeRefs) {
+        return doSearches(query, -1, queryName, storeRefs);
     }
 
-    protected List<ResultSet> doSearches(String query, boolean limited, int limit, String queryName, Collection<StoreRef> storeRefs) {
-        SearchParameters sp = buildSearchParameters(query, limited);
-        if (limit > 0) {
-            sp.setLimit(limit);
-        }
+    protected List<ResultSet> doSearches(String query, int limit, String queryName, Collection<StoreRef> storeRefs) {
+        SearchParameters sp = generateLuceneSearchParams(query, null, limit);
         if (storeRefs == null || storeRefs.size() == 0) {
             storeRefs = Arrays.asList(generalService.getStore());
         }
@@ -244,7 +219,7 @@ public abstract class AbstractSearchServiceImpl {
             results.add(doSearchQuery(sp, queryName));
 
             // Optimization: don't search from other stores if limit is reached
-            if (limited && results.size() >= RESULTS_LIMIT) {
+            if (limit > -1 && results.size() >= RESULTS_LIMIT) {
                 break;
             }
         }

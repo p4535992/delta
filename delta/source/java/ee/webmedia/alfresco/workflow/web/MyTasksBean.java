@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.workflow.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getSubstitutionBean;
+
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -16,7 +18,6 @@ import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
-import ee.webmedia.alfresco.substitute.web.SubstitutionBean;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.workflow.model.TaskAndDocument;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
@@ -58,7 +59,6 @@ public class MyTasksBean extends BaseDialogBean {
     private transient ParametersService parametersService;
     private transient DocumentService documentService;
     private transient DocumentSearchService documentSearchService;
-    private SubstitutionBean substitutionBean;
 
     // START: dialog overrides
 
@@ -315,14 +315,6 @@ public class MyTasksBean extends BaseDialogBean {
 
     public void setDocumentService(DocumentService documentService) {
         this.documentService = documentService;
-    }
-
-    protected SubstitutionBean getSubstitutionBean() {
-        if (substitutionBean == null) {
-            substitutionBean = (SubstitutionBean) FacesContextUtils.getRequiredWebApplicationContext( //
-                    FacesContext.getCurrentInstance()).getBean(SubstitutionBean.BEAN_NAME);
-        }
-        return substitutionBean;
     }
 
     // END: getters/setters

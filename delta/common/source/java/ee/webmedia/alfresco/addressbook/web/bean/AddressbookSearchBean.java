@@ -11,6 +11,7 @@ import javax.faces.model.SelectItem;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.web.ui.common.component.PickerSearchParams;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.util.AddressbookUtil;
@@ -28,12 +29,11 @@ public class AddressbookSearchBean {
      * This method is part of the contract to the Generic Picker, it is up to the backing bean
      * to execute whatever query is appropriate and return the results.
      * 
-     * @param filterIndex Index of the filter drop-down selection
-     * @param contains Text from the contains textbox
+     * @param params Search parameters
      * @return An array of SelectItem objects containing the results to display in the picker.
      */
-    public SelectItem[] searchContacts(int filterIndex, String contains) {
-        return transformAddressbookNodesToSelectItems(getAddressbookService().search(contains));
+    public SelectItem[] searchContacts(PickerSearchParams params) {
+        return transformAddressbookNodesToSelectItems(getAddressbookService().search(params.getSearchString(), params.getLimit()));
     }
 
     /**
@@ -41,12 +41,11 @@ public class AddressbookSearchBean {
      * This method is part of the contract to the Generic Picker, it is up to the backing bean
      * to execute whatever query is appropriate and return the results.
      * 
-     * @param filterIndex Index of the filter drop-down selection
-     * @param contains Text from the contains textbox
+     * @param params Search parameters
      * @return An array of SelectItem objects containing the results to display in the picker.
      */
-    public SelectItem[] searchOrgContacts(int filterIndex, String contains) {
-        return transformAddressbookNodesToSelectItems(getAddressbookService().searchOrgContacts(contains));
+    public SelectItem[] searchOrgContacts(PickerSearchParams params) {
+        return transformAddressbookNodesToSelectItems(getAddressbookService().searchOrgContacts(params.getSearchString(), params.getLimit()));
     }
 
     /**
@@ -54,12 +53,11 @@ public class AddressbookSearchBean {
      * This method is part of the contract to the Generic Picker, it is up to the backing bean
      * to execute whatever query is appropriate and return the results.
      * 
-     * @param filterIndex Index of the filter drop-down selection
-     * @param contains Text from the contains textbox
+     * @param params Search parameters
      * @return An array of SelectItem objects containing the results to display in the picker.
      */
-    public SelectItem[] searchContactGroups(int filterIndex, String contains) {
-        return transformAddressbookNodesToSelectItems(getAddressbookService().searchContactGroups(contains, false, false));
+    public SelectItem[] searchContactGroups(PickerSearchParams params) {
+        return transformAddressbookNodesToSelectItems(getAddressbookService().searchContactGroups(params.getSearchString(), false, false, params.getLimit()));
     }
 
     public List<String> getContactData(String nodeRef) {

@@ -393,6 +393,9 @@
 
          <dialog name="favoritesDocumentListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="FavoritesDocumentListDialog"
             icon="/images/icons/versioned_properties_large.gif" title-id="document_myFavorites" show-ok-button="false" />
+
+         <dialog name="discussionDocumentListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="DiscussionDocumentListDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="browse_topics" show-ok-button="false" />
       </dialogs>
    </config>
 </alfresco-config>

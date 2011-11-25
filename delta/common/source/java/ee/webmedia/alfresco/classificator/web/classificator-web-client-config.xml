@@ -30,7 +30,7 @@
          </action>
 
          <action id="classificator_import">
-            <label-id>classificators_import</label-id>
+            <label-id>import_xml</label-id>
             <image>/images/icons/add_item.gif</image>
             <action>dialog:classificatorsImport</action>
          </action>
@@ -67,14 +67,14 @@
          <!-- TODO DLSeadist tuleb teha et, nupp "kustuta" kuvatakse ka kui deleteEnabled = false ja klassifikaator ei ole seotud ühegi andmeväljaga -->
 
          <dialog name="classificatorsImport" page="/WEB-INF/classes/ee/webmedia/alfresco/classificator/web/classificators-import-dialog.jsp" managed-bean="ClassificatorsImportDialog"
-            icon="/images/icons/add_content_large.gif" title-id="classificators_import" description-id="import_classificators_desc" />
+            icon="/images/icons/add_content_large.gif" title-id="import_xml" description-id="import_classificators_desc" />
             
       </dialogs>
    </config>
 
    <config evaluator="node-type" condition="cl:classificator" >
       <property-sheet>
-         <show-property name="cl:name" rendered="#{ClassificatorDetailsDialog.isUnsavedClassificator}" />
+         <show-property name="cl:name" rendered="#{ClassificatorDetailsDialog.isUnsavedClassificator}" styleClass="focus" />
          <show-property name="cl:description" styleClass="expand19-200" component-generator="TextAreaGenerator" />
          <show-property name="cl:alfabeticOrder" component-generator="BooleanRadioGenerator" labelTrue="classificator_order_alfabetic" labelFalse="classificator_order_sequental" nullValue="false" rendered="#{ClassificatorDetailsDialog.isSavedClassificator}" />
       </property-sheet>

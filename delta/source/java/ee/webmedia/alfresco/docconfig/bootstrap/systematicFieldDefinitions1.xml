@@ -15,10 +15,11 @@
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
          <docadmin:removableFromSystematicDocType>false</docadmin:removableFromSystematicDocType>
          <docadmin:isParameterInDocSearch>true</docadmin:isParameterInDocSearch>
-         <docadmin:isParameterInVolSearch>true</docadmin:isParameterInVolSearch>
+         <docadmin:isParameterInVolSearch>false</docadmin:isParameterInVolSearch>
          <docadmin:isFixedParameterInDocSearch>true</docadmin:isFixedParameterInDocSearch>
          <docadmin:isFixedParameterInVolSearch>true</docadmin:isFixedParameterInVolSearch>
          <docadmin:order>3</docadmin:order>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -31,6 +32,7 @@
          <docadmin:fieldType>COMBOBOX_EDITABLE</docadmin:fieldType>
          <docadmin:classificator>docNameAdr</docadmin:classificator>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -51,6 +53,7 @@
          <docadmin:removableFromSystematicDocType>false</docadmin:removableFromSystematicDocType>
          <docadmin:mappingRestriction>MAPPING_FORBIDDEN</docadmin:mappingRestriction>
          <docadmin:order>6</docadmin:order>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -68,6 +71,7 @@
          <docadmin:classificator>storageType</docadmin:classificator>
          <docadmin:removableFromSystematicDocType>false</docadmin:removableFromSystematicDocType>
          <docadmin:order>9</docadmin:order>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -81,6 +85,7 @@
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
          <docadmin:comboboxNotRelatedToClassificator>true</docadmin:comboboxNotRelatedToClassificator>
          <docadmin:mappingRestriction>IDENTICAL_FIELD_MAPPING_ONLY</docadmin:mappingRestriction>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -92,6 +97,7 @@
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -106,6 +112,7 @@
          <docadmin:classificator>keywords</docadmin:classificator>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
          <docadmin:order>8</docadmin:order>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -131,6 +138,7 @@
          <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
          <docadmin:classificator>transmittalMode</docadmin:classificator>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -142,6 +150,7 @@
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:fieldType>DATE</docadmin:fieldType>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -162,6 +171,7 @@
          <docadmin:isFixedParameterInDocSearch>true</docadmin:isFixedParameterInDocSearch>
          <docadmin:isFixedParameterInVolSearch>false</docadmin:isFixedParameterInVolSearch>
          <docadmin:mappingRestriction>MAPPING_FORBIDDEN</docadmin:mappingRestriction>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -178,6 +188,7 @@
          <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
          <docadmin:removableFromSystematicDocType>false</docadmin:removableFromSystematicDocType>
          <docadmin:mappingRestriction>MAPPING_FORBIDDEN</docadmin:mappingRestriction>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -201,6 +212,7 @@
          <docadmin:isFixedParameterInVolSearch>true</docadmin:isFixedParameterInVolSearch>
          <docadmin:comboboxNotRelatedToClassificator>true</docadmin:comboboxNotRelatedToClassificator>
          <docadmin:mappingRestriction>IDENTICAL_FIELD_MAPPING_ONLY</docadmin:mappingRestriction>
+         <docadmin:mandatoryForVol>true</docadmin:mandatoryForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -224,6 +236,7 @@
          <docadmin:isFixedParameterInVolSearch>true</docadmin:isFixedParameterInVolSearch>
          <docadmin:comboboxNotRelatedToClassificator>true</docadmin:comboboxNotRelatedToClassificator>
          <docadmin:mappingRestriction>IDENTICAL_FIELD_MAPPING_ONLY</docadmin:mappingRestriction>
+         <docadmin:mandatoryForVol>true</docadmin:mandatoryForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -247,6 +260,7 @@
          <docadmin:isFixedParameterInVolSearch>true</docadmin:isFixedParameterInVolSearch>
          <docadmin:comboboxNotRelatedToClassificator>true</docadmin:comboboxNotRelatedToClassificator>
          <docadmin:mappingRestriction>IDENTICAL_FIELD_MAPPING_ONLY</docadmin:mappingRestriction>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -270,6 +284,7 @@
          <docadmin:isFixedParameterInVolSearch>true</docadmin:isFixedParameterInVolSearch>
          <docadmin:comboboxNotRelatedToClassificator>true</docadmin:comboboxNotRelatedToClassificator>
          <docadmin:mappingRestriction>IDENTICAL_FIELD_MAPPING_ONLY</docadmin:mappingRestriction>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -374,6 +389,7 @@
          <docadmin:defaultUserLoggedIn>true</docadmin:defaultUserLoggedIn>
          <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
          <docadmin:removableFromSystematicDocType>false</docadmin:removableFromSystematicDocType>
+         <docadmin:mandatoryForVol>true</docadmin:mandatoryForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -823,6 +839,7 @@
          <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
          <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -835,6 +852,7 @@
          <docadmin:fieldType>DATE</docadmin:fieldType>
          <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 

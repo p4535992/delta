@@ -43,6 +43,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.ui.common.component.PickerSearchParams;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
 import org.alfresco.web.ui.common.component.UIMenu;
@@ -295,74 +296,77 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     }
 
     // merge this into UserContactGroupSearchBean#searchAll
-    private SelectItem[] executeOwnerSearch(int filterIndex, String contains, boolean orgOnly, boolean taskCapableOnly, boolean dvkCapableOnly, String institutionToRemove) {
-        log.debug("executeOwnerSearch: " + filterIndex + ", " + contains);
-        if (filterIndex == 0) { // users
+    private SelectItem[] executeOwnerSearch(PickerSearchParams params, boolean orgOnly, boolean taskCapableOnly, boolean dvkCapableOnly, String institutionToRemove) {
+        log.debug("executeOwnerSearch: " + params.getFilterIndex() + ", " + params.getSearchString());
+        List<Node> nodes = null;
+        switch (params.getFilterIndex()) {
+        case 0: // users
+            params.setFilterIndex(-1);
             if (this instanceof CompoundWorkflowDialog) {
-                return getUserListDialog().searchUsers(-1, contains);
+                return getUserListDialog().searchUsers(params);
             }
-            return getUserListDialog().searchUsersWithoutSubstitutionInfoShown(-1, contains);
-        } else if (filterIndex == 1) { // user groups
-            return getUserContactGroupSearchBean().searchGroups(contains, false);
-        } else if (filterIndex == 2) { // contacts
-            List<Node> nodes = null;
+            return getUserListDialog().searchUsersWithoutSubstitutionInfoShown(params);
+        case 1: // user groups
+            return getUserContactGroupSearchBean().searchGroups(params, false);
+        case 2: // contacts
             if (taskCapableOnly) {
-                nodes = getAddressbookService().searchTaskCapableContacts(contains, orgOnly, dvkCapableOnly, institutionToRemove);
+                nodes = getAddressbookService().searchTaskCapableContacts(params.getSearchString(), orgOnly, dvkCapableOnly, institutionToRemove, params.getLimit());
             } else {
-                nodes = getAddressbookService().search(contains);
+                nodes = getAddressbookService().search(params.getSearchString(), params.getLimit());
             }
             return transformAddressbookNodesToSelectItems(nodes);
-        } else if (filterIndex == 3) { // contact groups
-            List<Node> nodes = null;
+        case 3: // contact groups
             if (taskCapableOnly) {
-                nodes = getAddressbookService().searchTaskCapableContactGroups(contains, orgOnly, taskCapableOnly, institutionToRemove);
+                nodes = getAddressbookService().searchTaskCapableContactGroups(params.getSearchString(), orgOnly, taskCapableOnly, institutionToRemove, params.getLimit());
             } else {
-                nodes = getAddressbookService().searchContactGroups(contains, true, false);
+                nodes = getAddressbookService().searchContactGroups(params.getSearchString(), true, false, params.getLimit());
             }
             return transformAddressbookNodesToSelectItems(nodes);
-        } else {
-            throw new RuntimeException("Unknown filter index value: " + filterIndex);
+        default:
+            throw new RuntimeException("Unknown filter index value: " + params.getFilterIndex());
         }
     }
 
     /**
      * Action listener for JSP.
      */
-    public SelectItem[] executeOwnerSearch(int filterIndex, String contains) {
-        return executeOwnerSearch(filterIndex, contains, false, false, false, null);
+    public SelectItem[] executeOwnerSearch(PickerSearchParams params) {
+        return executeOwnerSearch(params, false, false, false, null);
     }
 
     /**
      * Action listener for JSP.
      */
-    public SelectItem[] executeTaskOwnerSearch(int filterIndex, String contains) {
-        return executeOwnerSearch(filterIndex, contains, false, true, false, null);
+    public SelectItem[] executeTaskOwnerSearch(PickerSearchParams params) {
+        return executeOwnerSearch(params, false, true, false, null);
     }
 
     /**
      * Action listener for JSP.
      */
-    public SelectItem[] executeResponsibleOwnerSearch(int filterIndex, String contains) {
-        int newIndex = (filterIndex == 1) ? 2 : filterIndex;
-        return executeOwnerSearch(newIndex, contains, false, true, false, null);
+    public SelectItem[] executeResponsibleOwnerSearch(PickerSearchParams params) {
+        if (params.getFilterIndex() == 1) {
+            params.setFilterIndex(2);
+        }
+        return executeOwnerSearch(params, false, true, false, null);
     }
 
     /**
      * Action listener for JSP.
      */
-    public SelectItem[] executeExternalReviewOwnerSearch(int filterIndex, String contains) {
-        int newIndex = (filterIndex == 0) ? 2 : 3;
+    public SelectItem[] executeExternalReviewOwnerSearch(PickerSearchParams params) {
+        params.setFilterIndex((params.getFilterIndex() == 0) ? 2 : 3);
         if (getWorkflowService().isInternalTesting()) {
-            return executeOwnerSearch(newIndex, contains, true, true, true, null);
+            return executeOwnerSearch(params, true, true, true, null);
         }
-        return executeOwnerSearch(newIndex, contains, true, true, true, getDvkService().getInstitutionCode());
+        return executeOwnerSearch(params, true, true, true, getDvkService().getInstitutionCode());
     }
 
     /**
      * Action listener for JSP.
      */
-    public SelectItem[] executeDueDateExtensionOwnerSearch(int filterIndex, String contains) {
-        return executeOwnerSearch(filterIndex, contains, false, false, false, null);
+    public SelectItem[] executeDueDateExtensionOwnerSearch(PickerSearchParams params) {
+        return executeOwnerSearch(params, false, false, false, null);
     }
 
     /**

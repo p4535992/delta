@@ -72,7 +72,7 @@
             <f:verbatim escape="false"><span class="red">* </span></f:verbatim>
             <h:outputText value="#{msg.identifier}" />
          </h:panelGroup>
-         <h:inputText id="name" value="#{DialogManager.bean.name}" size="35" maxlength="1024" validator="#{DialogManager.bean.validateGroupName}" />
+         <h:inputText id="name" value="#{DialogManager.bean.name}" size="35" maxlength="1024" validator="#{DialogManager.bean.validateGroupName}" styleClass="focus" />
 
       </h:panelGrid>
    </a:panel>

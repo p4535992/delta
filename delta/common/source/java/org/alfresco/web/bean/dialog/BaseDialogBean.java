@@ -189,6 +189,10 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
         String outcome;
         // reset the flag so we can re-attempt the operation
         isFinished = false;
+        Throwable cause = e.getCause();
+        if(cause!=null && (e instanceof UnableToPerformException || e instanceof UnableToPerformMultiReasonException)) {
+            e = cause;
+        }
         outcome = getErrorOutcome(e);
         if (e instanceof UnableToPerformException) {
             MessageUtil.addStatusMessage((MessageData) e);

@@ -24,6 +24,8 @@
  */
 package org.alfresco.web.bean;
 
+import static ee.webmedia.alfresco.utils.FilenameUtil.getFilenameWithoutExtension;
+
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -130,10 +132,10 @@ public final class FileUploadBean implements Serializable
 
         if (!multiple) {
             this.fileName.add(0, fileName);
-            this.fileNameWithoutExtension.add(0, fileName.substring(0, fileName.lastIndexOf(".")));
+            this.fileNameWithoutExtension.add(0, getFilenameWithoutExtension(fileName));
         } else {
             this.fileName.add(fileName);
-            this.fileNameWithoutExtension.add(fileName.substring(0, fileName.lastIndexOf(".")));
+            this.fileNameWithoutExtension.add(getFilenameWithoutExtension(fileName));
         }
         
    }

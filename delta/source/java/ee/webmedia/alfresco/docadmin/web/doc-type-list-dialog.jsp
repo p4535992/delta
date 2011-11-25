@@ -9,7 +9,11 @@
 <%@ page isELIgnored="false"%>
 
 <a:panel id="docType-panel" label="#{msg.doc_types_list}" styleClass="panel-100 with-pager">
-   <a:richList id="docTypeList" value="#{DocTypeListDialog.documentTypes}" refreshOnBind="true" var="type" viewMode="details" 
+   <%-- 
+   DialogManager.bean is used to refer to subclass of DynamicTypeListDialog - 
+   either DocTypeListDialog or CaseFileTypeListDialog
+    --%>
+   <a:richList id="docTypeList" value="#{DialogManager.bean.types}" refreshOnBind="true" var="type" viewMode="details" 
       pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" initialSortColumn="name">
 
       <a:column id="docTypeUsedCol">
@@ -19,7 +23,7 @@
          <h:outputText value="#{type.used}"><a:convertBoolean /></h:outputText>
       </a:column>
 
-      <a:column id="docTypePublicAdrCol">
+      <a:column id="docTypePublicAdrCol" rendered="#{DialogManager.bean == DocTypeListDialog}">
          <f:facet name="header">
             <a:outputText value="#{msg.document_type_public_adr}" />
          </f:facet>
@@ -30,7 +34,7 @@
          <f:facet name="header">
             <a:sortLink id="docTypeNameCol-sort" label="#{msg.document_type_name}" value="name" mode="case-insensitive" />
          </f:facet>
-         <a:actionLink id="docTypeNameCol-input" value="#{type.name}" actionListener="#{DocTypeDetailsDialog.showDetails}">
+         <a:actionLink id="docTypeNameCol-input" value="#{type.name}" actionListener="#{DialogManager.bean.showDetails}">
             <f:param name="nodeRef" value="#{type.nodeRef}" />
          </a:actionLink>
       </a:column>
@@ -39,7 +43,7 @@
          <f:facet name="header">
             <a:sortLink id="docTypeIdCol-sort" label="#{msg.document_type_id}" value="id" mode="case-insensitive" />
          </f:facet>
-         <h:outputText value="#{type.documentTypeId}"/>
+         <h:outputText value="#{type.id}"/>
       </a:column>
 
       <a:column id="docTypeCommentCol">

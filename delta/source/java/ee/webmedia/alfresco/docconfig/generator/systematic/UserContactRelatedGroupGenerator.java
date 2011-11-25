@@ -2,10 +2,12 @@ package ee.webmedia.alfresco.docconfig.generator.systematic;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserContactMappingService;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -201,7 +203,6 @@ public class UserContactRelatedGroupGenerator extends BaseSystematicFieldGenerat
                 subPropSheetItem.setActionsGroupId("document_contractMvParty");
                 subPropSheetItem.setTitleLabelId("document_contractMv_partyBlock_title");
                 // TODO
-                subPropSheetItem.getCustomAttributes().put("borderless", "true");
                 generatorResults.addItem(subPropSheetItem);
             }
         }
@@ -283,7 +284,13 @@ public class UserContactRelatedGroupGenerator extends BaseSystematicFieldGenerat
         }
 
         public void setData(String result, Node node) {
-            getUserContactMappingService().setMappedValues(node.getProperties(), mapping, new NodeRef(result), false);
+            // XXX Alar inconvenient
+            Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+            getUserContactMappingService().setMappedValues(props, mapping, new NodeRef(result), false);
+            for (Entry<QName, Serializable> entry : props.entrySet()) {
+                node.getProperties().put(entry.getKey().toString(), entry.getValue());
+            }
+            return;
         }
 
     }

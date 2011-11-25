@@ -1284,9 +1284,12 @@ public class ComponentUtil {
     public static void addOnchangeJavascript(UIComponent component) {
         Map<String, Object> attributes = getAttributes(component);
         String styleClass = (String) attributes.get(ATTR_STYLE_CLASS);
-        String onchangeStyleClass = GeneralSelectorGenerator.ONCHANGE_PARAM_MARKER_CLASS + GeneralSelectorGenerator.ONCHANGE_SCRIPT_START_MARKER
-                + "var link = jQuery('#' + escapeId4JQ(currElId)).nextAll('a').get(0); link.click();";
-        attributes.put(ATTR_STYLE_CLASS, (StringUtils.isNotBlank(styleClass) ? styleClass + " " : "") + onchangeStyleClass);
+        attributes.put(ATTR_STYLE_CLASS, (StringUtils.isNotBlank(styleClass) ? styleClass + " " : "") + getOnChangeStyleClass());
+    }
+
+    public static String getOnChangeStyleClass() {
+        return GeneralSelectorGenerator.ONCHANGE_PARAM_MARKER_CLASS + GeneralSelectorGenerator.ONCHANGE_SCRIPT_START_MARKER
+                + "var link = jQuery('#' + escapeId4JQ(currElId)).nextAll('a').eq(0); link.click();";
     }
 
 }

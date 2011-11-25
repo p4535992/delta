@@ -75,7 +75,7 @@ public class AddressbookListDialog extends BaseDialogBean {
     }
 
     public String search() {
-        List<Node> a = getAddressbookService().search(getSearchCriteria());
+        List<Node> a = getAddressbookService().search(getSearchCriteria(), -1);
         setOrganizations(new ArrayList<Node>());
         setPeople(new ArrayList<Node>());
         setOrgPeople(new ArrayList<Node>());

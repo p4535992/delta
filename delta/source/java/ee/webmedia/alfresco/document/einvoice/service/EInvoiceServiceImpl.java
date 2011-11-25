@@ -69,6 +69,7 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
+import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.einvoice.account.generated.Arve;
 import ee.webmedia.alfresco.document.einvoice.account.generated.ArveInfo;
 import ee.webmedia.alfresco.document.einvoice.account.generated.Hankija;
@@ -143,6 +144,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
 
     private AddressbookService addressbookService;
     private UserService userService;
+    private DocumentDynamicService documentDynamicService;
     private DocumentSearchService documentSearchService;
     private FileFolderService fileFolderService;
     private NodeService nodeService;
@@ -264,14 +266,15 @@ public class EInvoiceServiceImpl implements EInvoiceService {
             if (StringUtils.isNotBlank(contactCode)) {
                 userProps = userService.getUserProperties(contactCode);
                 if (UserUtil.hasSameName(firstNameLastName, userProps)) {
-                    userService.setOwnerPropsFromUser(props, userProps);
+                    documentDynamicService.setOwner(props, contactCode, false);
                 }
             } else {
                 if (firstNameLastName != null && firstNameLastName.getFirst() != null && firstNameLastName.getSecond() != null) {
                     List<NodeRef> users = documentSearchService.searchUsersByFirstNameLastName(firstNameLastName.getFirst(), firstNameLastName.getSecond());
                     if (users.size() == 1) {
                         userProps = nodeService.getProperties(users.get(0));
-                        userService.setOwnerPropsFromUser(props, userProps);
+                        String userName = (String) userProps.get(ContentModel.PROP_USERNAME);
+                        documentDynamicService.setOwner(props, userName, false);
                     }
                 }
             }
@@ -281,9 +284,10 @@ public class EInvoiceServiceImpl implements EInvoiceService {
                 List<Document> contracts = documentSearchService.searchContractsByRegNumber(contractRegNumber);
                 if (contracts.size() == 1) {
                     Document document = contracts.get(0);
-                    Node user = userService.getUser(document.getOwnerId());
+                    String ownerId = document.getOwnerId();
+                    Node user = userService.getUser(ownerId);
                     if (user != null) {
-                        setOwnerPropsFromDocument(props, document.getProperties());
+                        documentDynamicService.setOwner(props, ownerId, false);
                         ownerSet = true;
                     }
                 }
@@ -291,17 +295,6 @@ public class EInvoiceServiceImpl implements EInvoiceService {
             if (!ownerSet && StringUtils.isNotBlank(contactName)) {
                 props.put(DocumentCommonModel.Props.COMMENT, contactName);
             }
-        }
-    }
-
-    private void setOwnerPropsFromDocument(Map<QName, Serializable> props, Map<String, Object> docProps) {
-        if (docProps != null) {
-            props.put(DocumentCommonModel.Props.OWNER_ID, (Serializable) docProps.get(DocumentCommonModel.Props.OWNER_ID));
-            props.put(DocumentCommonModel.Props.OWNER_NAME, (Serializable) docProps.get(DocumentCommonModel.Props.OWNER_NAME));
-            props.put(DocumentCommonModel.Props.OWNER_JOB_TITLE, (Serializable) docProps.get(DocumentCommonModel.Props.OWNER_JOB_TITLE));
-            props.put(DocumentCommonModel.Props.OWNER_ORG_STRUCT_UNIT, (Serializable) docProps.get(DocumentCommonModel.Props.OWNER_ORG_STRUCT_UNIT));
-            props.put(DocumentCommonModel.Props.OWNER_EMAIL, (Serializable) docProps.get(DocumentCommonModel.Props.OWNER_EMAIL));
-            props.put(DocumentCommonModel.Props.OWNER_PHONE, (Serializable) docProps.get(DocumentCommonModel.Props.OWNER_PHONE));
         }
     }
 
@@ -1580,6 +1573,10 @@ public class EInvoiceServiceImpl implements EInvoiceService {
 
     public void setUserService(UserService userService) {
         this.userService = userService;
+    }
+
+    public void setDocumentDynamicService(DocumentDynamicService documentDynamicService) {
+        this.documentDynamicService = documentDynamicService;
     }
 
     public void setDocumentSearchService(DocumentSearchService documentSearchService) {

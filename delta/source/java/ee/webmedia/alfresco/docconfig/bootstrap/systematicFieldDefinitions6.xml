@@ -10,6 +10,7 @@
          <docadmin:fieldType>USER</docadmin:fieldType>
          <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -21,6 +22,7 @@
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -33,6 +35,7 @@
          <docadmin:fieldType>DATE</docadmin:fieldType>
          <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -45,6 +48,7 @@
          <docadmin:fieldType>DATE</docadmin:fieldType>
          <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>
    </docadmin:fieldDefinition>
 

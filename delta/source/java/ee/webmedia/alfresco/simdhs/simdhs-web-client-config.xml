@@ -29,7 +29,6 @@
 
          <!-- These groups are used in group list dialog, since adding subgroups is not allowed per spec.  -->
          <action-group id="group_inline_actions_no_subgroup">
-            <action idref="add_group_user" />
             <action idref="delete_group" />
          </action-group>
          

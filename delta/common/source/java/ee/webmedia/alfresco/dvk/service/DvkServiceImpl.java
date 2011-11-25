@@ -765,6 +765,11 @@ public abstract class DvkServiceImpl implements DvkService {
         this.receivedDvkDocumentsPath = receivedDvkDocumentsPath;
     }
 
+    @Override
+    public String getReceivedDvkDocumentsPath() {
+        return receivedDvkDocumentsPath;
+    }
+
     public void setCorruptDvkDocumentsPath(String receivedDvkDocumentsPath) {
         corruptDvkDocumentsPath = receivedDvkDocumentsPath;
     }

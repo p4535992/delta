@@ -189,16 +189,21 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
             if (changedAccessRestrictionFieldIds.isEmpty()) {
                 return;
             }
-
+            document.setAccessRestrictionPropsChanged(true);
             final List<FieldDefinition> fields = documentAdminService.getFieldDefinitions(changedAccessRestrictionFieldIds);
             final String reason = document.getProp(DocumentCommonModel.Props.ACCESS_RESTRICTION_CHANGE_REASON);
+            String emptyValue = MessageUtil.getMessage("document_log_status_empty");
             for (FieldDefinition field : fields) {
-                Serializable propValue = oldProps.get(field.getQName());
-                if (propValue == null || propValue instanceof String && StringUtils.isBlank((String) propValue)) {
-                    propValue = MessageUtil.getMessage("document_log_status_empty");
+                Serializable oldPropValue = oldProps.get(field.getQName());
+                if (oldPropValue == null || oldPropValue instanceof String && StringUtils.isBlank((String) oldPropValue)) {
+                    oldPropValue = emptyValue;
+                }
+                Object newPropValue = newProps.get(field.getQName());
+                if (newPropValue == null || newPropValue instanceof String && StringUtils.isBlank((String) newPropValue)) {
+                    newPropValue = emptyValue;
                 }
                 documentLogService.addDocumentLog(docRef, MessageUtil.getMessage("document_log_status_accessRestrictionChanged"
-                        , field.getName(), propValue, reason));
+                        , field.getName(), oldPropValue, newPropValue, reason));
             }
         }
     }

@@ -59,5 +59,5 @@ return true;
       <span class="red">* </span>
    </f:verbatim>
    <h:outputText value="#{msg.message}:" />
-   <h:inputTextarea id="message" value="#{DialogManager.bean.content}" rows="6" cols="70" styleClass="expand100-250 margin-top-10" />
+   <h:inputTextarea id="message" value="#{DialogManager.bean.content}" rows="6" cols="70" styleClass="expand100-250 margin-top-10 focus" />
 </a:panel>

@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.document.file.service;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -34,6 +35,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.URLEncoder;
 import org.alfresco.web.app.servlet.DownloadContentServlet;
+import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
@@ -43,6 +45,9 @@ import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.imap.model.ImapModel;
+import ee.webmedia.alfresco.imap.web.ImapFolder;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 import ee.webmedia.alfresco.signature.service.SignatureService;
@@ -55,6 +60,8 @@ import ee.webmedia.alfresco.versions.model.VersionsModel;
  * @author Dmitri Melnikov
  */
 public class FileServiceImpl implements FileService {
+    private static final String PROP_HAS_FILES = "hasFiles";
+
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(FileServiceImpl.class);
 
     private FileFolderService fileFolderService;
@@ -77,6 +84,18 @@ public class FileServiceImpl implements FileService {
         active = !active;
         nodeService.setProperty(nodeRef, FileModel.Props.ACTIVE, active);
         return active;
+    }
+
+    @Override
+    public int getAllFilesExcludingDigidocSubitemsCount(NodeRef attachmentRoot, boolean countFilesInSubfolders) {
+        int count = 0;
+        count = getAllFilesExcludingDigidocSubitems(attachmentRoot).size();
+        if (countFilesInSubfolders) {
+            for (ImapFolder imapFolder : getImapSubfolders(attachmentRoot)) {
+                count += getAllFilesExcludingDigidocSubitemsCount(imapFolder.getNodeRef(), countFilesInSubfolders);
+            }
+        }
+        return count;
     }
 
     @Override
@@ -281,21 +300,30 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType) {
+        NodeRef fileNodeRef = addFile(name, displayName, documentNodeRef, file, mimeType);
+        addFileToDocument(displayName, documentNodeRef, fileNodeRef);
+        return fileNodeRef;
+    }
+
+    @Override
+    public NodeRef addFileToTask(String name, String displayName, NodeRef taskNodeRef, java.io.File file, String mimeType) {
+        return addFile(name, displayName, taskNodeRef, file, mimeType);
+    }
+
+    private NodeRef addFile(String name, String displayName, NodeRef nodeRef, java.io.File file, String mimeType) {
         FileInfo fileInfo = fileFolderService.create(
-                documentNodeRef,
+                nodeRef,
                 name,
                 ContentModel.TYPE_CONTENT);
         NodeRef fileNodeRef = fileInfo.getNodeRef();
         ContentWriter writer = fileFolderService.getWriter(fileNodeRef);
         generalService.writeFile(writer, file, name, mimeType);
-
-        addFileToDocument(displayName, documentNodeRef, fileNodeRef);
+        nodeService.setProperty(fileNodeRef, FileModel.Props.DISPLAY_NAME, displayName);
 
         return fileNodeRef;
     }
 
     private void addFileToDocument(String displayName, NodeRef documentNodeRef, NodeRef fileNodeRef) {
-        nodeService.setProperty(fileNodeRef, FileModel.Props.DISPLAY_NAME, displayName);
         addVersionModifiedAspect(fileNodeRef);
         documentLogService.addDocumentLog(documentNodeRef, MessageUtil.getMessage("document_log_status_fileAdded", displayName));
     }
@@ -439,6 +467,29 @@ public class FileServiceImpl implements FileService {
                 }
             }
         }
+    }
+
+    @Override
+    public List<ImapFolder> getImapSubfolders(NodeRef parentRef) {
+        List<ImapFolder> subfolders = new ArrayList<ImapFolder>();
+        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parentRef, Collections.singleton(ImapModel.Types.IMAP_FOLDER));
+        for (ChildAssociationRef childAssocRef : childAssocs) {
+            NodeRef childRef = childAssocRef.getChildRef();
+            Node folder = new Node(childRef);
+            List<ChildAssociationRef> documents = nodeService.getChildAssocs(childRef, Collections.singleton(DocumentCommonModel.Types.DOCUMENT));
+            subfolders.add(new ImapFolder(folder, documents == null || documents.isEmpty()));
+        }
+        return subfolders;
+    }
+
+    @Override
+    public boolean isFileGenerated(NodeRef fileRef) {
+        return isFileGeneratedFromTemplate(fileRef) || nodeService.getProperty(fileRef, FileModel.Props.GENERATION_TYPE) != null;
+    }
+
+    @Override
+    public boolean isFileGeneratedFromTemplate(NodeRef fileRef) {
+        return nodeService.getProperty(fileRef, FileModel.Props.GENERATED_FROM_TEMPLATE) != null;
     }
 
     // START: getters / setters

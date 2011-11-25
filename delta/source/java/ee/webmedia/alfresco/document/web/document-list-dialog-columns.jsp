@@ -93,43 +93,43 @@
               <a:param value="false"/>
           </f:facet>
 
-         <wm:docPermissionEvaluator value="#{r.files[0].node}" allow="viewDocumentFiles">
+         <wm:docPermissionEvaluator id="eval-1" value="#{r.files[0].node}" allow="viewDocumentFiles">
             <a:actionLink id="col10-act1" value="#{r.files[0].name}" href="#{r.files[0].downloadUrl}" target="_blank" showLink="false"
                image="/images/icons/#{r.files[0].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction webdav-readOnly" />
          </wm:docPermissionEvaluator>
-         <wm:docPermissionEvaluator value="#{r.files[0].node}" deny="viewDocumentFiles">
+         <wm:docPermissionEvaluator id="eval-2" value="#{r.files[0].node}" deny="viewDocumentFiles">
             <h:graphicImage value="/images/icons/#{r.files[0].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" alt="#{r.files[0].name}"
                title="#{r.files[0].name}" rendered="#{r.files[0] != null}" />
          </wm:docPermissionEvaluator>
-         <wm:docPermissionEvaluator value="#{r.files[1].node}" allow="viewDocumentFiles">
+         <wm:docPermissionEvaluator id="eval-3" value="#{r.files[1].node}" allow="viewDocumentFiles">
             <a:actionLink id="col10-act2" value="#{r.files[1].name}" href="#{r.files[1].downloadUrl}" target="_blank" showLink="false"
                image="/images/icons/#{r.files[1].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction webdav-readOnly" />
          </wm:docPermissionEvaluator>
-         <wm:docPermissionEvaluator value="#{r.files[1].node}" deny="viewDocumentFiles">
+         <wm:docPermissionEvaluator id="eval-4" value="#{r.files[1].node}" deny="viewDocumentFiles">
             <h:graphicImage value="/images/icons/#{r.files[1].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" alt="#{r.files[1].name}"
                title="#{r.files[1].name}" rendered="#{r.files[1] != null}" />
          </wm:docPermissionEvaluator>
-         <wm:docPermissionEvaluator value="#{r.files[2].node}" allow="viewDocumentFiles">
+         <wm:docPermissionEvaluator id="eval-5" value="#{r.files[2].node}" allow="viewDocumentFiles">
             <a:actionLink id="col10-act3" value="#{r.files[2].name}" href="#{r.files[2].downloadUrl}" target="_blank" showLink="false"
                image="/images/icons/#{r.files[2].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction webdav-readOnly" />
          </wm:docPermissionEvaluator>
-         <wm:docPermissionEvaluator value="#{r.files[2].node}" deny="viewDocumentFiles">
+         <wm:docPermissionEvaluator id="eval-6" value="#{r.files[2].node}" deny="viewDocumentFiles">
             <h:graphicImage value="/images/icons/#{r.files[2].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" alt="#{r.files[2].name}"
                title="#{r.files[2].name}" rendered="#{r.files[2] != null}" />
          </wm:docPermissionEvaluator>
-         <wm:docPermissionEvaluator value="#{r.files[3].node}" allow="viewDocumentFiles">
+         <wm:docPermissionEvaluator id="eval-7" value="#{r.files[3].node}" allow="viewDocumentFiles">
             <a:actionLink id="col10-act4" value="#{r.files[3].name}" href="#{r.files[3].downloadUrl}" target="_blank" showLink="false"
                image="/images/icons/#{r.files[3].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction webdav-readOnly" />
          </wm:docPermissionEvaluator>
-         <wm:docPermissionEvaluator value="#{r.files[3].node}" deny="viewDocumentFiles">
+         <wm:docPermissionEvaluator id="eval-8" value="#{r.files[3].node}" deny="viewDocumentFiles">
             <h:graphicImage value="/images/icons/#{r.files[3].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" alt="#{r.files[3].name}"
                title="#{r.files[3].name}" rendered="#{r.files[3] != null}" />
          </wm:docPermissionEvaluator>
-         <wm:docPermissionEvaluator value="#{r.files[4].node}" allow="viewDocumentFiles">
+         <wm:docPermissionEvaluator id="eval-9" value="#{r.files[4].node}" allow="viewDocumentFiles">
             <a:actionLink id="col10-act5" value="#{r.files[4].name}" href="#{r.files[4].downloadUrl}" target="_blank" showLink="false"
                image="/images/icons/#{r.files[4].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction webdav-readOnly" />
          </wm:docPermissionEvaluator>
-         <wm:docPermissionEvaluator value="#{r.files[4].node}" deny="viewDocumentFiles">
+         <wm:docPermissionEvaluator id="eval-10" value="#{r.files[4].node}" deny="viewDocumentFiles">
             <h:graphicImage value="/images/icons/#{r.files[4].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" alt="#{r.files[4].name}"
                title="#{r.files[4].name}" rendered="#{r.files[4] != null}" />
          </wm:docPermissionEvaluator>

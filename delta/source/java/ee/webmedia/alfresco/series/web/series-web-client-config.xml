@@ -27,6 +27,7 @@
             <params>
                <param name="nodeRef">#{SeriesDetailsDialog.currentNode.nodeRef}</param>
                <param name="permission">DocumentFileRead</param>
+               <param name="alternateDialogTitleId">series_permissions_management</param>
             </params>
          </action>
 

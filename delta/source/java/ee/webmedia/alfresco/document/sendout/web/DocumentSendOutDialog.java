@@ -6,7 +6,6 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentTemplateService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFileService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getMetadataBlockBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getSendOutService;
 
@@ -48,6 +47,7 @@ import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.classificator.model.Classificator;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docdynamic.web.DocumentLockHelperBean;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
@@ -90,6 +90,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
                 MessageUtil.addErrorMessage(context, "document_sendOut_error_docLocked");
             }
             if (success) {
+                BeanHelper.getDocumentLockHelperBean().lockOrUnlockIfNeeded(false);
                 resetState();
                 MessageUtil.addInfoMessage("document_sendOut_success");
                 return outcome;
@@ -101,6 +102,8 @@ public class DocumentSendOutDialog extends BaseDialogBean {
 
     @Override
     public String cancel() {
+        // Unlock when finished
+        BeanHelper.getDocumentLockHelperBean().lockOrUnlockIfNeeded(false);
         resetState();
         return super.cancel();
     }
@@ -127,13 +130,14 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
         }
 
-        // TODO DLSeadist ????
-        if (!DocumentCommonModel.Types.DOCUMENT.equals(docNode.getType()) && !getMetadataBlockBean().lockOrUnlockIfNeeded(getMetadataBlockBean().isLockingAllowed())) {
-            return null;
-        }
-
         try {
+            // Lock the node
+            DocumentLockHelperBean documentLockHelperBean = BeanHelper.getDocumentLockHelperBean();
+            documentLockHelperBean.lockOrUnlockIfNeeded(documentLockHelperBean.isLockingAllowed());
             BaseDialogBean.validatePermission(docNode, DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA);
+        } catch (NodeLockedException e) {
+            BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_validation_alreadyLocked");
+            return null;
         } catch (UnableToPerformException e) {
             MessageUtil.addStatusMessage(context, e);
             return null;

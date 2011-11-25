@@ -30,7 +30,7 @@ public class FieldDefinitionDeletedDocTypesUpdater extends AbstractModuleCompone
         LOG.info("found " + documentTypes.size() + " document types");
         Set<String> existingDocTypes = new HashSet<String>(documentTypes.size());
         for (DocumentType docType : documentTypes) {
-            existingDocTypes.add(docType.getDocumentTypeId());
+            existingDocTypes.add(docType.getId());
         }
 
         Set<FieldDefinition> fieldDefinitionsToUpdate = new HashSet<FieldDefinition>();

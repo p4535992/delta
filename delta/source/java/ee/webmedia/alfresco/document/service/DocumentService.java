@@ -46,10 +46,12 @@ public interface DocumentService {
         public static final String CASE_NODEREF = RepoUtil.createTransientProp("case").toString();
         public static final QName TEMP_DOCUMENT_IS_DRAFT_OR_IMAP_OR_DVK_QNAME = RepoUtil.createTransientProp("isDraftOrImapOrDvk");
         public static final QName TEMP_DOCUMENT_IS_INCOMING_INVOICE_QNAME = RepoUtil.createTransientProp("isIncomingInvoice");
+        public static final QName TEMP_DOCUMENT_IS_DVK_QNAME = RepoUtil.createTransientProp("isDvk");
         public static final QName TEMP_DOCUMENT_IS_DRAFT_QNAME = RepoUtil.createTransientProp("isDraft");
         public static final String TEMP_DOCUMENT_IS_DRAFT = TEMP_DOCUMENT_IS_DRAFT_QNAME.toString();
         public static final String TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED = "{temp}logging_disabled_docMetadataChanged";
         public static final QName TEMP_DOCUMENT_DISABLE_UPDATE_INITIAL_ACCESS_RESTRICTION_PROPS = RepoUtil.createTransientProp("disableUpdateInitialAccessRestrictionProps");
+        public static final QName TEMP_DOCUMENT_ACCESS_RESTRICTION_PROPS_CHANGED = RepoUtil.createTransientProp("accessRestrictionPropsChanged");
     }
 
     String BEAN_NAME = "DocumentService";
@@ -240,7 +242,7 @@ public interface DocumentService {
      */
     DocumentParentNodesVO getAncestorNodesByDocument(NodeRef nodeRef);
 
-    void registerDocumentIfNotRegistered(NodeRef document, boolean logging);
+    boolean registerDocumentIfNotRegistered(NodeRef document, boolean logging);
 
     void registerDocumentRelocating(Node docNode);
 
@@ -313,24 +315,6 @@ public interface DocumentService {
      * @param newType
      */
     void changeTypeInMemory(Node node, QName newType);
-
-    /**
-     * @param document
-     * @param user
-     * @return true when the user is the document's OWNER_ID property
-     */
-    boolean isDocumentOwner(NodeRef document, String user);
-
-    void setDocumentOwner(NodeRef document, String userName);
-
-    /**
-     * Updates documents ownerId. If retainPreviousOwnerId is true, current owner is stored on the previousOwnerId field.
-     * 
-     * @param document
-     * @param userName
-     * @param retainPreviousOwnerId
-     */
-    void setDocumentOwner(NodeRef document, String userName, boolean retainPreviousOwnerId);
 
     /**
      * @param docNode
@@ -471,5 +455,7 @@ public interface DocumentService {
     void throwIfNotDynamicDoc(Node docNode);
 
     void addPrivilegesBasedOnSeriesOnBackground(NodeRef docRef);
+
+    List<Document> getIncomingDocuments(NodeRef incomingNodeRef);
 
 }

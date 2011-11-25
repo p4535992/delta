@@ -2,15 +2,18 @@ package ee.webmedia.alfresco.volume.model;
 
 import org.alfresco.service.namespace.QName;
 
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
+
 public interface VolumeModel {
-    String URI = "http://alfresco.webmedia.ee/model/volume/1.0";
+    String VOLUME_MODEL_URI = "http://alfresco.webmedia.ee/model/volume/1.0";
+    String URI = DocumentDynamicModel.URI;
 
     interface Types {
-        QName VOLUME = QName.createQName(URI, "volume");
+        QName VOLUME = QName.createQName(VOLUME_MODEL_URI, "volume");
     }
 
     interface Associations {
-        QName VOLUME = QName.createQName(URI, "volume");
+        QName VOLUME = QName.createQName(VOLUME_MODEL_URI, "volume");
     }
 
     /**

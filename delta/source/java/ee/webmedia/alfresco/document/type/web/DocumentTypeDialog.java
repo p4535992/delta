@@ -11,6 +11,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.web.bean.dialog.BaseDialogBean;
+import org.alfresco.web.ui.common.component.PickerSearchParams;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
@@ -69,12 +70,11 @@ public class DocumentTypeDialog extends BaseDialogBean {
      * This method is part of the contract to the Generic Picker, it is up to the backing bean
      * to execute whatever query is appropriate and return the results.
      * 
-     * @param filterIndex Index of the filter drop-down selection
-     * @param substring Text from the search textbox
+     * @param params Search parameters
      * @return An array of SelectItem objects containing the results to display in the picker.
      */
-    public SelectItem[] searchUsedDocTypes(int filterIndex, String substring) {
-        return searchUsedDocTypes(substring, false);
+    public SelectItem[] searchUsedDocTypes(PickerSearchParams params) {
+        return searchUsedDocTypes(params, false);
     }
 
     /**
@@ -84,7 +84,8 @@ public class DocumentTypeDialog extends BaseDialogBean {
         return Arrays.asList(searchUsedDocTypes(null, true));
     }
 
-    private SelectItem[] searchUsedDocTypes(String substring, boolean addEmptyItem) {
+    private SelectItem[] searchUsedDocTypes(PickerSearchParams params, boolean addEmptyItem) {
+        String substring = params == null ? null : params.getSearchString();
         final List<DocumentType> usedDocTypes = getDocumentTypeService().getAllDocumentTypes(true);
         substring = StringUtils.trimToNull(substring);
         substring = (substring != null ? substring.toLowerCase() : null);
@@ -97,6 +98,9 @@ public class DocumentTypeDialog extends BaseDialogBean {
             final String name = documentType.getName();
             if (substring == null || name.toLowerCase().contains(substring)) {
                 results.add(new SelectItem(documentType.getId().toString(), name));
+            }
+            if (params != null && results.size() == params.getLimit()) {
+                break;
             }
         }
         SelectItem[] resultArray = new SelectItem[results.size()];
@@ -129,7 +133,7 @@ public class DocumentTypeDialog extends BaseDialogBean {
     public DocumentTypeService getDocumentTypeService() {
         if (documentTypeService == null) {
             documentTypeService = (DocumentTypeService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-            .getBean(DocumentTypeService.BEAN_NAME);
+                    .getBean(DocumentTypeService.BEAN_NAME);
         }
         return documentTypeService;
     }

@@ -308,6 +308,7 @@
       <permission name="editDocumentFiles" expose="false" />
       <permission name="deleteDocumentFiles" expose="false" />
       <permission name="createDocument" expose="false" />
+      <permission name="createCaseFile" expose="false" />
       <!-- END: delta permissions -->
    </permissionSet>
    

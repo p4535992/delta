@@ -14,6 +14,7 @@ public interface DocumentAdminModel {
     public interface Repo {
         String DOCUMENT_TYPES_PARENT = "/";
         String DOCUMENT_TYPES_SPACE = DOCUMENT_TYPES_PARENT + PREFIX + "documentTypes";
+        String CASE_FILE_TYPES_SPACE = DOCUMENT_TYPES_PARENT + PREFIX + "caseFileTypes";
         String FIELD_DEFINITIONS_SPACE = DOCUMENT_TYPES_PARENT + PREFIX + "fieldDefinitions";
         String FIELD_DEFINITIONS_TMP_SPACE = FIELD_DEFINITIONS_SPACE + "Tmp";
         String FIELD_GROUP_DEFINITIONS_SPACE = DOCUMENT_TYPES_PARENT + PREFIX + "fieldGroupDefinitions";
@@ -29,6 +30,7 @@ public interface DocumentAdminModel {
         QName FIELD_DEFINITIONS = QName.createQName(URI, "fieldDefinitions");
         QName FIELD_GROUP_DEFINITIONS = QName.createQName(URI, "fieldGroupDefinitions");
         QName DOCUMENT_TYPE = QName.createQName(URI, "documentType");
+        QName CASE_FILE_TYPE = QName.createQName(URI, "caseFileType");
         QName DOCUMENT_TYPE_VERSION = QName.createQName(URI, "documentTypeVersion");
         QName FIELD = QName.createQName(URI, "field");
         QName FIELD_DEFINITION = QName.createQName(URI, "fieldDefinition");
@@ -44,7 +46,8 @@ public interface DocumentAdminModel {
         QName OBJECT_TYPE_ID = QName.createQName(URI, "objectTypeId");
         QName OBJECT_TYPE_VERSION_NR = QName.createQName(URI, "objectTypeVersionNr");
 
-        QName DOCUMENT_TYPE_ID = QName.createQName(URI, "documentTypeId");
+        /** DynamicType.id */
+        QName ID = QName.createQName(URI, "id");
 
         // START: properties of type fieldBase
         QName FIELD_ID = QName.createQName(URI, "fieldId");
@@ -90,7 +93,7 @@ public interface DocumentAdminModel {
         QName PUBLIC_ADR = QName.createQName(URI, "publicAdr");
         QName SHOW_UNVALUED = QName.createQName(URI, "showUnvalued");
         QName CHANGE_BY_NEW_DOCUMENT_ENABLED = QName.createQName(URI, "changeByNewDocumentEnabled");
-        QName DOCUMENT_TYPE_GROUP = QName.createQName(URI, "documentTypeGroup");
+        QName MENU_GROUP_NAME = QName.createQName(URI, "menuGroupName");
         QName REGISTRATION_ENABLED = QName.createQName(URI, "registrationEnabled");
         QName FINISH_DOC_BY_REGISTRATION = QName.createQName(URI, "finishDocByRegistration");
         QName SEND_UNREGISTRATED_DOC_ENABLED = QName.createQName(URI, "sendUnregistratedDocEnabled");
@@ -133,6 +136,12 @@ public interface DocumentAdminModel {
         QName REMOVABLE_FROM_SYSTEMATIC_DOC_TYPE = QName.createQName(URI, "removableFromSystematicDocType");
         QName MANDATORY_FOR_VOL = QName.createQName(URI, "mandatoryForVol");
         // END: properties of aspect mandatoryForVol
+
+        // START: properties of aspect inapplicableForType
+        QName INAPPLICABLE_FOR_DOC = QName.createQName(URI, "inapplicableForDoc");
+        QName INAPPLICABLE_FOR_VOL = QName.createQName(URI, "inapplicableForVol");
+        // END: properties of aspect inapplicableForType
+
     }
 
 }

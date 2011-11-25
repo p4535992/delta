@@ -44,10 +44,11 @@ public interface DocumentDynamicService {
     /**
      * @param document document to save; document object is cloned in this service, so that argument object is preserved.
      * @param saveListenerBeanNames save and validation listener bean names
+     * @return cloned document, possibly modified by save listeners
      * @throws UnableToPerformException one error message if validation or save was unsuccessful.
      * @throws UnableToPerformMultiReasonException multiple error messages if validation or save was unsuccessful.
      */
-    void updateDocument(DocumentDynamic document, List<String> saveListenerBeanNames);
+    DocumentDynamic updateDocument(DocumentDynamic document, List<String> saveListenerBeanNames);
 
     boolean isDraft(NodeRef docRef);
 
@@ -58,5 +59,13 @@ public interface DocumentDynamicService {
     boolean isOutgoingLetter(NodeRef docRef);
 
     String getDocumentTypeName(NodeRef documentRef);
+
+    void setOwner(NodeRef docRef, String ownerId, boolean retainPreviousOwnerId);
+
+    void setOwner(Map<QName, Serializable> props, String ownerId, boolean retainPreviousOwnerId);
+
+    boolean isOwner(NodeRef docRef, String ownerId);
+
+    public void changeTypeInMemory(DocumentDynamic document, String newTypeId);
 
 }

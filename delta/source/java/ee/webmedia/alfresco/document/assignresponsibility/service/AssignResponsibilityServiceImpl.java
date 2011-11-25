@@ -4,8 +4,8 @@ import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 
+import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
-import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
@@ -15,7 +15,7 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
 public class AssignResponsibilityServiceImpl implements AssignResponsibilityService {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AssignResponsibilityServiceImpl.class);
 
-    private DocumentService documentService;
+    private DocumentDynamicService documentDynamicService;
     private WorkflowService workflowService;
     private DocumentSearchService documentSearchService;
     private UserService userService;
@@ -29,7 +29,7 @@ public class AssignResponsibilityServiceImpl implements AssignResponsibilityServ
         List<NodeRef> documents = documentSearchService.searchWorkingDocumentsByOwnerId(fromOwnerId, !isLeaving);
         String newOwnerId = (isLeaving) ? toOwnerId : fromOwnerId;
         for (NodeRef document : documents) {
-            documentService.setDocumentOwner(document, newOwnerId, isLeaving);
+            documentDynamicService.setOwner(document, newOwnerId, isLeaving);
         }
         List<NodeRef> tasks = documentSearchService.searchNewTasksByOwnerId(fromOwnerId, !isLeaving);
         for (NodeRef task : tasks) {
@@ -46,8 +46,8 @@ public class AssignResponsibilityServiceImpl implements AssignResponsibilityServ
 
     // START: getters / setters
 
-    public void setDocumentService(DocumentService documentService) {
-        this.documentService = documentService;
+    public void setDocumentDynamicService(DocumentDynamicService documentDynamicService) {
+        this.documentDynamicService = documentDynamicService;
     }
 
     public void setWorkflowService(WorkflowService workflowService) {

@@ -36,6 +36,16 @@ public abstract class FieldAndGroupBase extends MetadataItem {
         super(parent, node);
     }
 
+    public final <D extends DynamicType> boolean isMandatoryForDynType(Class<D> dynTypeClass) {
+        if (dynTypeClass == DocumentType.class) {
+            return isMandatoryForDoc();
+        } else if (dynTypeClass == CaseFileType.class) {
+            return isMandatoryForVol();
+        } else {
+            throw new RuntimeException("Unknown dynTypeClass " + dynTypeClass);
+        }
+    }
+
     // Properties
 
     public final String getName() {
@@ -93,17 +103,27 @@ public abstract class FieldAndGroupBase extends MetadataItem {
     @Override
     public boolean isRemovableFromList() {
         // if subclass delegates method call here, then expecting that parent is DocumentTypeVersion
-        if (isMandatoryForDoc()) {
-            return false;
-        }
-        DocumentTypeVersion docTypeVersion = (DocumentTypeVersion) getParent();
-        DocumentType docType = docTypeVersion.getParent();
-        if (!docType.isSystematic()) {
-            return true;
+        DocumentTypeVersion dynTypeVersion = (DocumentTypeVersion) getParent();
+        DynamicType dynamicType = dynTypeVersion.getParent();
+        if (dynamicType instanceof DocumentType) {
+            if (isMandatoryForDoc()) {
+                return false;
+            }
+            DocumentType docType = (DocumentType) dynamicType;
+            if (!docType.isSystematic()) {
+                return true;
+            }
+        } else if (dynamicType instanceof CaseFileType) {
+            if (isMandatoryForVol()) {
+                return false;
+            }
+        } else {
+            throw new RuntimeException("Unknown dynamic type " + dynamicType);
         }
         if (isRemovableFromSystematicDocType()) {
             return true;
         }
         return false;
     }
+
 }

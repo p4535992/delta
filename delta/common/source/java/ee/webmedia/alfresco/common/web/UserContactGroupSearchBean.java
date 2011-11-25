@@ -12,9 +12,8 @@ import java.util.Set;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.web.ui.common.component.PickerSearchParams;
 
-import ee.webmedia.alfresco.addressbook.util.AddressbookUtil;
-import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
@@ -107,16 +106,16 @@ public class UserContactGroupSearchBean implements Serializable {
      * pickerCallback methods
      */
 
-    public SelectItem[] searchAll(int filterIndex, String contains) {
-        return searchAll(filterIndex, contains, false);
+    public SelectItem[] searchAll(PickerSearchParams params) {
+        return searchAll(params, false);
     }
 
-    public SelectItem[] searchAllWithAdminsAndDocManagers(int filterIndex, String contains) {
-        return searchAll(filterIndex, contains, true);
+    public SelectItem[] searchAllWithAdminsAndDocManagers(PickerSearchParams params) {
+        return searchAll(params, true);
     }
 
-    public SelectItem[] searchGroupsWithAdminsAndDocManagers(@SuppressWarnings("unused") int filterIndex, String contains) {
-        return searchGroups(contains, true);
+    public SelectItem[] searchGroupsWithAdminsAndDocManagers(PickerSearchParams params) {
+        return searchGroups(params, true);
     }
 
     /*
@@ -124,21 +123,21 @@ public class UserContactGroupSearchBean implements Serializable {
      */
 
     // TODO merge CompoundWorkflowDefinitionDialog#executeOwnerSearch to here
-    public SelectItem[] searchAll(int filterIndex, String contains, boolean withAdminsAndDocManagers) {
-        if (filterIndex == USERS_FILTER) {
-            return BeanHelper.getUserListDialog().searchUsers(-1, contains);
-        } else if (filterIndex == USER_GROUPS_FILTER) {
-            return searchGroups(contains, withAdminsAndDocManagers);
-        } else if (filterIndex == CONTACTS_FILTER) {
-            return BeanHelper.getAddressbookSearchBean().searchContacts(-1, contains);
-        } else if (filterIndex == CONTACT_GROUPS_FILTER) {
-            return BeanHelper.getAddressbookSearchBean().searchContactGroups(-1, contains);
+    public SelectItem[] searchAll(PickerSearchParams params, boolean withAdminsAndDocManagers) {
+        if (params.isFilterIndex(USERS_FILTER)) {
+            return BeanHelper.getUserListDialog().searchUsers(params);
+        } else if (params.isFilterIndex(USER_GROUPS_FILTER)) {
+            return searchGroups(params, withAdminsAndDocManagers);
+        } else if (params.isFilterIndex(CONTACTS_FILTER)) {
+            return BeanHelper.getAddressbookSearchBean().searchContacts(params);
+        } else if (params.isFilterIndex(CONTACT_GROUPS_FILTER)) {
+            return BeanHelper.getAddressbookSearchBean().searchContactGroups(params);
         }
-        throw new RuntimeException("filterIndex out of range: " + filterIndex);
+        throw new RuntimeException("filterIndex out of range: " + params.getFilterIndex());
     }
 
-    public SelectItem[] searchGroups(String contains, boolean withAdminsAndDocManagers) {
-        List<Authority> results = BeanHelper.getDocumentSearchService().searchAuthorityGroups(contains, true, withAdminsAndDocManagers);
+    public SelectItem[] searchGroups(PickerSearchParams params, boolean withAdminsAndDocManagers) {
+        List<Authority> results = BeanHelper.getDocumentSearchService().searchAuthorityGroups(params.getSearchString(), true, withAdminsAndDocManagers, params.getLimit());
         SelectItem[] selectItems = new SelectItem[results.size()];
         int i = 0;
         for (Authority authority : results) {
@@ -183,10 +182,6 @@ public class UserContactGroupSearchBean implements Serializable {
             }
         }
         return processedResult.toArray(new String[processedResult.size()]);
-    }
-
-    private String getContactFullName(NodeRef contact) {
-        return AddressbookUtil.getContactFullName(contact);
     }
 
     public String[] preprocessResultsToNames(int filterIndex, String[] results) {

@@ -116,17 +116,19 @@ public interface AddressbookService {
      * searches the addressbook for private contacts, organizations and organization contacts
      * 
      * @param searchCriteria - the search string
+     * @param limit
      * @return list of node results
      */
-    List<Node> search(String searchCriteria);
+    List<Node> search(String searchCriteria, int limit);
 
     /**
      * Searches the addressbook for contact groups only
      * 
      * @param searchCriteria - the search string
+     * @param limit
      * @return list of node results
      */
-    List<Node> searchTaskCapableContactGroups(String searchCriteria, boolean orgOnly, boolean dvkCapableOnly, String institutionToRemove);
+    List<Node> searchTaskCapableContactGroups(String searchCriteria, boolean orgOnly, boolean dvkCapableOnly, String institutionToRemove, int limit);
 
     /**
      * returns the parent of the given node
@@ -160,11 +162,11 @@ public interface AddressbookService {
      */
     NodeRef getAddressbookRoot();
 
-    List<Node> searchTaskCapableContacts(String searchCriteria, boolean orgOnly, boolean dvkCapableOnly, String institutionToRemove);
+    List<Node> searchTaskCapableContacts(String searchCriteria, boolean orgOnly, boolean dvkCapableOnly, String institutionToRemove, int limit);
 
     List<Node> getDvkCapableOrgs();
 
-    List<Node> searchContactGroups(String searchCriteria, boolean showAdminManageable, boolean excludeTaskCapable);
+    List<Node> searchContactGroups(String searchCriteria, boolean showAdminManageable, boolean excludeTaskCapable, int limit);
 
     /**
      * @param regNumber
@@ -173,11 +175,11 @@ public interface AddressbookService {
      */
     List<Node> getContactsByRegNumber(String regNumber);
 
-    List<Node> searchPersonContacts(String searchCriteria);
+    List<Node> searchPersonContacts(String searchCriteria, int limit);
 
     List<Node> getPersonContactsByCode(String code);
 
-    List<Node> searchOrgContacts(String searchCriteria);
+    List<Node> searchOrgContacts(String searchCriteria, int limit);
 
     boolean isTaskCapableGroupMember(NodeRef contactRef);
 

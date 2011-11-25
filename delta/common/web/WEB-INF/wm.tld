@@ -284,6 +284,24 @@
          <description>custom message key for the tooltip to be used for search link</description>
       </attribute>
    </tag>
+   
+   <tag>
+      <name>customChildrenContainer</name>
+      <tag-class>ee.webmedia.alfresco.common.propertysheet.customchildrencontainer.CustomChildrenContainerTag</tag-class>
+      <body-content>empty</body-content>
+      <attribute>
+         <name>parameterList</name>
+         <required>true</required>
+         <rtexprvalue>true</rtexprvalue>
+         <description>Parameter list for children generator</description>
+      </attribute>
+      <attribute>
+         <name>childGenerator</name>
+         <required>true</required>
+         <rtexprvalue>true</rtexprvalue>
+         <description>Children generator implementing ee.webmedia.alfresco.common.propertysheet.customchildrencontainer.CustomChildrenCreator</description>
+      </attribute>      
+   </tag>    
 
    <tag>
       <name>docPermissionEvaluator</name>

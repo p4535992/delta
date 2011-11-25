@@ -59,7 +59,7 @@ return true;
       <span class="red">* </span>
    </f:verbatim>
    <h:outputText value="#{msg.message}:" />
-   <h:inputTextarea id="message" value="#{DialogManager.bean.content}" rows="6" cols="70" />
+   <h:inputTextarea id="message" value="#{DialogManager.bean.content}" rows="6" cols="70" styleClass="focus" />
 </a:panel>
 
 <h:outputText value="#{ForumsBean.replyBubbleHTML}" escape="false" />

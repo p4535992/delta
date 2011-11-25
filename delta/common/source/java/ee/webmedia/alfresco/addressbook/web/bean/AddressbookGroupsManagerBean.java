@@ -15,6 +15,7 @@ import javax.faces.model.SelectItem;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.ui.common.component.PickerSearchParams;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.web.dialog.ContactGroupAddDialog.UserDetails;
@@ -64,8 +65,9 @@ public class AddressbookGroupsManagerBean implements Serializable {
         resetGroups();
     }
 
-    public SelectItem[] searchContactGroups(@SuppressWarnings("unused") int filterIndex, String contains) {
-        List<Node> nodes = getAddressbookService().searchContactGroups(contains, false, !getNodeService().getType(currentNode).equals(AddressbookModel.Types.ORGANIZATION));
+    public SelectItem[] searchContactGroups(PickerSearchParams params) {
+        List<Node> nodes = getAddressbookService().searchContactGroups(params.getSearchString(), false,
+                !getNodeService().getType(currentNode).equals(AddressbookModel.Types.ORGANIZATION), params.getLimit());
         return transformAddressbookNodesToSelectItems(nodes);
     }
 

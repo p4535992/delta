@@ -150,6 +150,8 @@
       <property name="organizationStructureService" ref="OrganizationStructureService" />
       <property name="dvkService" ref="DvkService" />
       <property name="parametersService" ref="ParametersService" />
+      <property name="fileFolderService" ref="FileFolderService" />
+      <property name="fileService" ref="FileService" />
       <property name="internalTesting" value="${project.test}" />
       <property name="orderAssignmentCategoryEnabled" value="${conf.workflow.order-assignment-task-category.enabled}" />
    </bean>
@@ -212,6 +214,7 @@
       <property name="taskTypeString" value="wfs:assignmentTask" />
       <property name="taskOutcomes" value="1" />
       <property name="documentService" ref="DocumentService" />
+      <property name="documentDynamicService" ref="DocumentDynamicService" />
       <property name="nodeService" ref="NodeService" />
    </bean>
    
@@ -282,7 +285,14 @@
             <ref bean="ParallelTasksPropertiesUpdater" /> <!-- kas on vaja veel m6nda dependsOn-i? nagu chnageAllOldDocTypesToNewThatHaveTheDocTypeProp -->
          </list>
       </property>
-   </bean> 
+   </bean>
+   
+   <bean id="moveTaskFileToChildAssoc1" class="ee.webmedia.alfresco.workflow.bootstrap.MoveTaskFileToChildAssoc" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="fileService" ref="FileService" />
+      <property name="mimetypeService" ref="MimetypeService" />
+   </bean>
 
    <!-- START: web beans: -->
       

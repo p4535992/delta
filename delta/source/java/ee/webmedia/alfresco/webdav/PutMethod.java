@@ -244,8 +244,7 @@ public class PutMethod extends WebDAVMethod {
                 doc.setProp(field.getQName(), value);
             }
 
-            documentDynamicService.updateDocument(doc, Collections.<String> emptyList());
-            BeanHelper.getDocumentTemplateService().updateGeneratedFilesOnRegistration(document);
+            documentDynamicService.updateDocument(doc, Collections.<String> emptyList()); // This also updates generated files
         }
     }
 }

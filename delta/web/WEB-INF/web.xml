@@ -39,7 +39,6 @@
          ,/WEB-INF/classes/ee/webmedia/alfresco/versions/versions-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/imap/imap-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/document/forum/forum-faces-config.xml
-         ,/WEB-INF/classes/ee/webmedia/alfresco/substitute/substitute-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/workflow/workflow-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/workflow/search/task-search-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/notification/notification-faces-config.xml

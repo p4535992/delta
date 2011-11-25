@@ -75,6 +75,7 @@
       <property name="menuService" ref="MenuService" />
       <property name="documentLogService" ref="DocumentLogService" />
       <property name="userService" ref="UserService" />
+      <property name="substituteService" ref="SubstituteService" />
       <property name="sendOutService" ref="SendOutService" />
       <property name="privilegeService" ref="PrivilegeService" />
       <property name="permissionService" ref="PermissionService" />

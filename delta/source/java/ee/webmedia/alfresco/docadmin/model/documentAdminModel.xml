@@ -50,7 +50,7 @@
                   <mandatory>false</mandatory>
                   <many>true</many>
                </target>
-               <duplicate>false</duplicate><!-- docadmin:documentTypeId -->
+               <duplicate>false</duplicate><!-- docadmin:id -->
             </child-association>
          </associations>
          <mandatory-aspects>
@@ -58,10 +58,31 @@
          </mandatory-aspects>
       </type>
 
-      <type name="docadmin:documentType"><!-- path name should be id -->
+      <type name="docadmin:caseFileTypes">
+         <parent>sys:base</parent>
+         <associations>
+            <child-association name="docadmin:caseFileType">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docadmin:caseFileType</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+               <duplicate>false</duplicate><!-- docadmin:id -->
+            </child-association>
+         </associations>
+         <mandatory-aspects>
+            <aspect>sys:aspect_root</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="docadmin:dynamicType"><!-- path name should be id -->
          <parent>sys:base</parent>
          <properties>
-            <property name="docadmin:documentTypeId">
+            <property name="docadmin:id">
                <type>d:text</type>
                <mandatory enforced="true">true</mandatory>
                <constraints>
@@ -72,27 +93,55 @@
                <type>d:boolean</type>
                <default>false</default>
             </property>
+            <property name="docadmin:showUnvalued">
+               <type>d:boolean</type>
+               <mandatory enforced="true">false</mandatory>
+               <default>false</default>
+            </property>
+            <property name="docadmin:menuGroupName">
+               <type>d:text</type>
+            </property>
             <property name="docadmin:latestVersion">
                <type>d:int</type>
                <mandatory enforced="true">true</mandatory>
                <default>1</default>
             </property>
+         </properties>
+         <associations>
+            <child-association name="docadmin:documentTypeVersion">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docadmin:documentTypeVersion</class>
+                  <mandatory>true</mandatory>
+                  <many>true</many>
+               </target>
+               <duplicate>false</duplicate><!-- docadmin:versionNr -->
+            </child-association>
+         </associations>
+         <mandatory-aspects>
+            <aspect>docadmin:name</aspect>
+            <aspect>docadmin:comment</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="docadmin:caseFileType"><!-- path name should be id -->
+         <parent>docadmin:dynamicType</parent>
+      </type>
+
+      <type name="docadmin:documentType"><!-- path name should be id -->
+         <parent>docadmin:dynamicType</parent>
+         <properties>
             <property name="docadmin:publicAdr">
                <type>d:boolean</type>
-               <default>false</default>
-            </property>
-            <property name="docadmin:showUnvalued">
-               <type>d:boolean</type>
-               <mandatory enforced="true">false</mandatory>
                <default>false</default>
             </property>
             <property name="docadmin:changeByNewDocumentEnabled">
                <type>d:boolean</type>
                <mandatory enforced="true">false</mandatory>
                <default>false</default>
-            </property>
-            <property name="docadmin:documentTypeGroup">
-               <type>d:text</type>
             </property>
             <property name="docadmin:registrationEnabled">
                <type>d:boolean</type>
@@ -126,18 +175,6 @@
             </property>
          </properties>
          <associations>
-            <child-association name="docadmin:documentTypeVersion">
-               <source>
-                  <mandatory>true</mandatory>
-                  <many>false</many>
-               </source>
-               <target>
-                  <class>docadmin:documentTypeVersion</class>
-                  <mandatory>true</mandatory>
-                  <many>true</many>
-               </target>
-               <duplicate>false</duplicate><!-- docadmin:versionNr -->
-            </child-association>
             <child-association name="docadmin:followupAssociation">
                <source>
                   <mandatory>true</mandatory>
@@ -162,9 +199,7 @@
             </child-association>
          </associations>
          <mandatory-aspects>
-            <aspect>docadmin:name</aspect>
             <aspect>docadmin:systematic</aspect>
-            <aspect>docadmin:comment</aspect>
          </mandatory-aspects>
       </type>
 
@@ -233,6 +268,7 @@
          <mandatory-aspects>
             <aspect>docadmin:fieldContainer</aspect>
             <aspect>docadmin:fieldAndGroupCommon</aspect>
+            <aspect>docadmin:inapplicableForType</aspect><!-- needed only for fieldGroup stored under fieldGroupDefinitions -->
             <!-- if you add new aspects, update MetadataItemCompareUtil.getFieldGroupComparator() -->
          </mandatory-aspects>
       </type>
@@ -314,7 +350,7 @@
             <aspect>docadmin:fieldAndGroupCommon</aspect>
             <!-- if you add new aspects, update MetadataItemCompareUtil.getFieldComparator() -->
          </mandatory-aspects>
-         
+
       </type>
 
       <type name="docadmin:fieldDefinition">
@@ -347,7 +383,10 @@
                <multiple>true</multiple>
             </property>
          </properties>
-         <!-- if you add new aspects, update MetadataItemCompareUtil.getFieldAndGroupBaseComparatorChain() -->
+         <!-- if you add new properties/aspects, update MetadataItemCompareUtil.getFieldDefinitionComparator() -->
+         <mandatory-aspects>
+            <aspect>docadmin:inapplicableForType</aspect>
+         </mandatory-aspects>
       </type>
 
       <type name="docadmin:separationLine">
@@ -560,9 +599,20 @@
             <aspect>docadmin:name</aspect>
             <aspect>docadmin:systematic</aspect>
             <aspect>docadmin:comment</aspect>
-            <aspect>docadmin:order</aspect><!-- actually fieldDefinition doesn't need order property, but we put it here to make model easier (to avoid creating extra types)  -->
+            <aspect>docadmin:order</aspect><!-- for fieldDefinition order property is used for initial ordering of mandatory fields added to new dynamicType -->
             <!-- if you add new aspects, update MetadataItemCompareUtil.getFieldAndGroupBaseComparatorChain() -->
          </mandatory-aspects>
+      </aspect>
+
+      <aspect name="docadmin:inapplicableForType">
+         <properties>
+            <property name="docadmin:inapplicableForDoc">
+               <type>d:boolean</type>
+            </property>
+            <property name="docadmin:inapplicableForVol">
+               <type>d:boolean</type>
+            </property>
+         </properties>
       </aspect>
    </aspects>
 

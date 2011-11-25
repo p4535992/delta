@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.workflow.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 import static ee.webmedia.alfresco.parameters.model.Parameters.MAX_ATTACHED_FILE_SIZE;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.TASK_INDEX;
@@ -29,6 +30,7 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
+import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
@@ -44,10 +46,10 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.Confirmable;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
-import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
@@ -59,8 +61,11 @@ import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.CalendarUtil;
+import ee.webmedia.alfresco.utils.MessageData;
+import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
+import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.workflow.exception.WorkflowActiveResponsibleTaskException;
 import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
@@ -125,9 +130,12 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
-        boolean checkFinished = WorkflowUtil.isStatus(compoundWorkflow, Status.IN_PROGRESS);
+        boolean isInProgress = WorkflowUtil.isStatus(compoundWorkflow, Status.IN_PROGRESS);
         preprocessWorkflow();
-        if (validate(context, checkFinished, false, false)) {
+        if (isInProgress && hasOwnerWithNoEmail("workflow_compound_save_failed_owner_without_email")) {
+            return null;
+        }
+        if (validate(context, isInProgress, false, false)) {
             if (!askConfirmIfHasSameTask(MessageUtil.getMessage("workflow_compound_save"), DialogAction.SAVING)) {
                 saveCompWorkflow();
                 return outcome;
@@ -136,13 +144,32 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         return null;
     }
 
+    private boolean hasOwnerWithNoEmail(String messageKey) {
+        List<String> ownersWithNoEmail = WorkflowUtil.getOwnersWithNoEmail(compoundWorkflow);
+        if (!ownersWithNoEmail.isEmpty()) {
+            for (String owner : ownersWithNoEmail) {
+                MessageUtil.addErrorMessage(messageKey, owner);
+            }
+            MessageUtil.addErrorMessage("workflow_compound_contact_administrator");
+            return true;
+        }
+        return false;
+    }
+
     private boolean askConfirmIfHasSameTask(String title, DialogAction requiredAction) {
-        Pair<String, QName> hasSameTask = WorkflowUtil.hasSameTask(compoundWorkflow);
-        if (hasSameTask != null) {
-            String typeName = MessageUtil.getTypeName(hasSameTask.getSecond());
-            String message = MessageUtil.getMessage("workflow_compound_confirm_same_task", hasSameTask.getFirst(),
-                    typeName);
-            BeanHelper.getConfirmDialog().setupConfirmDialog(this, message, title, requiredAction);
+        List<Pair<String, QName>> hasSameTask = WorkflowUtil.haveSameTask(compoundWorkflow);
+        if (!hasSameTask.isEmpty()) {
+            ArrayList<MessageData> messageDataList = new ArrayList<MessageData>();
+            String msgKey = "workflow_compound_confirm_same_task";
+            for (Pair<String, QName> ownerNameTypePair : hasSameTask) {
+                List<String> values = new ArrayList<String>();
+                values.add(ownerNameTypePair.getFirst());
+                values.add(MessageUtil.getTypeName(ownerNameTypePair.getSecond()));
+                MessageData msgData = new MessageDataImpl(MessageSeverity.WARN, msgKey, values);
+                messageDataList.add(msgData);
+            }
+            messageDataList.add(new MessageDataImpl(MessageSeverity.WARN, "workflow_compound_confirm_continue"));
+            BeanHelper.getConfirmDialog().setupConfirmDialog(this, messageDataList, title, requiredAction);
             isFinished = false;
             WebUtil.navigateTo("dialog:confirmDialog", null);
             return true;
@@ -153,7 +180,6 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     private boolean saveCompWorkflow() {
         try {
             preprocessWorkflow();
-            removeImproperDueDateDays();
             getWorkflowService().saveCompoundWorkflow(compoundWorkflow);
             if (isUnsavedWorkFlow) {
                 getDocumentLogService().addDocumentLog(compoundWorkflow.getParent(), MessageUtil.getMessage("document_log_status_workflow"));
@@ -239,6 +265,9 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     public void startWorkflow() {
         log.debug("startWorkflow");
         preprocessWorkflow();
+        if (hasOwnerWithNoEmail("workflow_compound_start_failed_owner_without_email")) {
+            return;
+        }
         if (validate(FacesContext.getCurrentInstance(), true, false, true)) {
             List<String> confirmationMessages = getConfirmationMessages(true);
             if (confirmationMessages != null && !confirmationMessages.isEmpty()) {
@@ -277,7 +306,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         NodeRef docRef = compoundWorkflow.getParent();
         Date invoiceDueDate = null;
         Date notInvoiceDueDate = null;
-        if (SystematicDocumentType.INVOICE.isSameType((String) nodeService.getProperty(docRef, DocumentAdminModel.Props.DOCUMENT_TYPE_ID))) {
+        if (SystematicDocumentType.INVOICE.isSameType((String) nodeService.getProperty(docRef, DocumentAdminModel.Props.ID))) {
             invoiceDueDate = (Date) nodeService.getProperty(docRef, DocumentSpecificModel.Props.INVOICE_DUE_DATE);
         } else {
             notInvoiceDueDate = (Date) nodeService.getProperty(docRef, DocumentSpecificModel.Props.DUE_DATE);
@@ -343,6 +372,9 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         log.debug("continueWorkflow");
         try {
             preprocessWorkflow();
+            if (hasOwnerWithNoEmail("workflow_compound_continue_failed_owner_without_email")) {
+                return;
+            }
             if (validate(FacesContext.getCurrentInstance(), true, false, true)) {
                 List<String> confirmationMessages = getConfirmationMessages(false);
                 if (confirmationMessages != null && !confirmationMessages.isEmpty()) {
@@ -539,34 +571,35 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     protected TreeMap<String, QName> getSortedTypes() {
         if (sortedTypes == null) {
             NodeRef docRef = compoundWorkflow.getParent();
-            Document doc = getDocumentService().getDocumentByNodeRef(docRef);
             WorkflowService workflowService = getWorkflowService();
-            boolean isDocOwnerOrManager = StringUtils.equals(doc.getOwnerId(), AuthenticationUtil.getRunAsUser()) || getUserService().isDocumentManager();
-            boolean isOwnerOfInProgressAssignmentTask = workflowService.isOwnerOfInProgressAssignmentTask(compoundWorkflow);
-            boolean isOwnerOfInProgressExternalReviewTask = workflowService.isOwnerOfInProgressExternalReviewTask(compoundWorkflow);
 
             sortedTypes = new TreeMap<String, QName>();
             Map<QName, WorkflowType> workflowTypes = workflowService.getWorkflowTypes();
+            String docStatus = (String) BeanHelper.getNodeService().getProperty(docRef, DocumentDynamicModel.Props.DOC_STATUS);
+            boolean isDocStatusWorking = DocumentStatus.WORKING.getValueName().equals(docStatus);
             for (QName wfType : workflowTypes.keySet()) {
-                boolean addType = false;
-                if (wfType.equals(WorkflowSpecificModel.Types.OPINION_WORKFLOW) || wfType.equals(WorkflowSpecificModel.Types.INFORMATION_WORKFLOW)
-                        || wfType.equals(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW) || wfType.equals(WorkflowSpecificModel.Types.CONFIRMATION_WORKFLOW)) {
-                    addType = true;
-                } else if ((wfType.equals(WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW)
-                        || wfType.equals(WorkflowSpecificModel.Types.DOC_REGISTRATION_WORKFLOW)
-                        || wfType.equals(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW))
-                        && (isDocOwnerOrManager || isOwnerOfInProgressAssignmentTask)) {
-                    addType = true;
-                } else if (wfType.equals(WorkflowSpecificModel.Types.REVIEW_WORKFLOW)
-                        && (isDocOwnerOrManager || isOwnerOfInProgressAssignmentTask || isOwnerOfInProgressExternalReviewTask)) {
-                    addType = true;
-                } else if (wfType.equals(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW) && workflowService.externalReviewWorkflowEnabled()) {
-                    addType = true;
+                if ((wfType.equals(WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW)
+                            || wfType.equals(WorkflowSpecificModel.Types.OPINION_WORKFLOW)
+                            || wfType.equals(WorkflowSpecificModel.Types.REVIEW_WORKFLOW))
+                            && !isDocStatusWorking) {
+                    continue;
                 }
-                if (addType) {
-                    String tmpName = MessageUtil.getMessage(wfType.getLocalName());
-                    sortedTypes.put(tmpName, wfType);
+                if ((wfType.equals(WorkflowSpecificModel.Types.OPINION_WORKFLOW)
+                            || wfType.equals(WorkflowSpecificModel.Types.CONFIRMATION_WORKFLOW)
+                            || wfType.equals(WorkflowSpecificModel.Types.REVIEW_WORKFLOW))
+                            && !BaseDialogBean.hasPermission(docRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA)) {
+                    continue;
                 }
+                if (wfType.equals(WorkflowSpecificModel.Types.DOC_REGISTRATION_WORKFLOW)
+                            && !BeanHelper.getUserService().isAdministrator()) {
+                    continue;
+                }
+                if (wfType.equals(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW) && !workflowService.externalReviewWorkflowEnabled()) {
+                    continue;
+
+                }
+                String tmpName = MessageUtil.getMessage(wfType.getLocalName());
+                sortedTypes.put(tmpName, wfType);
             }
         }
         return sortedTypes;
@@ -614,7 +647,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
 
         if (getUserService().isDocumentManager()) {
             fullAccess = true;
-        } else if (getDocumentService().isDocumentOwner(compoundWorkflow.getParent(), AuthenticationUtil.getRunAsUser())) {
+        } else if (getDocumentDynamicService().isOwner(compoundWorkflow.getParent(), AuthenticationUtil.getRunAsUser())) {
             fullAccess = true;
         } else if (StringUtils.equals(compoundWorkflow.getOwnerId(), AuthenticationUtil.getRunAsUser())) {
             fullAccess = true;

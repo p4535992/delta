@@ -3,4 +3,3 @@
 
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8" %>
 <%@ page isELIgnored="false" %>
-<h:outputText value="#{ConfirmDialog.confirmMessage}"/>

@@ -236,6 +236,20 @@ public class WorkflowUtil {
         return checkWorkflow(workflow, false, requiredStatuses);
     }
 
+    public static List<String> getOwnersWithNoEmail(CompoundWorkflow compoundWorkflow) {
+        List<String> ownersNames = new ArrayList<String>();
+        for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+            for (Task task : workflow.getTasks()) {
+                String ownerEmail = task.getOwnerEmail();
+                String ownerName = task.getOwnerName();
+                if (StringUtils.isNotBlank(ownerName) && StringUtils.isBlank(ownerEmail)) {
+                    ownersNames.add(ownerName);
+                }
+            }
+        }
+        return ownersNames;
+    }
+
     public static Status checkWorkflow(Workflow workflow, boolean skipPropChecks, Status... requiredStatuses) {
         Status status = Status.of(workflow.getStatus());
         List<Task> tasks = workflow.getTasks();
@@ -525,39 +539,46 @@ public class WorkflowUtil {
      * @param compoundWorkflow
      * @return
      */
-    public static Pair<String, QName> hasSameTask(CompoundWorkflow compoundWorkflow) {
-        Pair<String, QName> ownerIdTypePair = null;
+    public static List<Pair<String, QName>> haveSameTask(CompoundWorkflow compoundWorkflow) {
+        List<Pair<String, QName>> ownerNameTypeList = new ArrayList<Pair<String, QName>>();
         List<Task> thisTasks = new ArrayList<Task>();
+        List<Task> tasksForComparing = new ArrayList<Task>();
         for (Workflow wf : compoundWorkflow.getWorkflows()) {
             thisTasks.addAll(wf.getTasks());
+            tasksForComparing.addAll(thisTasks);
         }
         if (thisTasks.isEmpty()) {
-            return null;
+            return ownerNameTypeList;
         }
-        for (Task taskForCheck : thisTasks) {
-            for (CompoundWorkflow compWf : compoundWorkflow.getOtherCompoundWorkflows()) {
-                if (compWf.getStatus().equals(Status.NEW)) {
+        for (CompoundWorkflow compWf : compoundWorkflow.getOtherCompoundWorkflows()) {
+            if (isStatus(compWf, Status.NEW)) {
+                continue;
+            }
+            for (Workflow workflow : compWf.getWorkflows()) {
+                if (isStatus(workflow, Status.NEW)) {
                     continue;
                 }
-                for (Workflow workflow : compWf.getWorkflows()) {
-                    if (workflow.getStatus().equals(Status.NEW)) {
-                        continue;
-                    }
-                    for (Task task : workflow.getTasks()) {
-                        String ownerId = task.getOwnerId();
-                        QName type = task.getType();
-                        String status = task.getStatus();
-                        if (ownerId != null && ownerId.equals(taskForCheck.getOwnerId()) && type.equals(taskForCheck.getType())
-                                && !status.equals(Status.NEW) && !status.equals(Status.UNFINISHED)) {
-                            ownerIdTypePair = new Pair<String, QName>(ownerId, type);
-                            return ownerIdTypePair;
-                        }
+                tasksForComparing.addAll(workflow.getTasks());
+            }
+        }
+        for (Task thisTask : thisTasks) {
+            QName thisTaskType = thisTask.getType();
+            for (Task taskForComparing : tasksForComparing) {
+                if (thisTask.equals(taskForComparing)) {
+                    continue;
+                }
+                String comparingTaskOwnerId = taskForComparing.getOwnerId();
+                if (comparingTaskOwnerId != null && comparingTaskOwnerId.equals(thisTask.getOwnerId()) && (taskForComparing.isType(thisTaskType))
+                        && !isStatus(taskForComparing, Status.NEW) && !isStatus(taskForComparing, Status.UNFINISHED)) {
+                    Pair<String, QName> ownerNameTypePair = new Pair<String, QName>(taskForComparing.getOwnerName(), taskForComparing.getType());
+                    if (!ownerNameTypeList.contains(ownerNameTypePair)) {
+                        ownerNameTypeList.add(ownerNameTypePair);
                     }
                 }
             }
         }
 
-        return ownerIdTypePair;
+        return ownerNameTypeList;
     }
 
     public static Task createTaskCopy(Task myTask) {

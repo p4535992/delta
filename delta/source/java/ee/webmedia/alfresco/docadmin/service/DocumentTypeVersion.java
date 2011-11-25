@@ -33,8 +33,8 @@ public class DocumentTypeVersion extends BaseObject implements MetadataContainer
     }
 
     @Override
-    public DocumentType getParent() {
-        return (DocumentType) super.getParent();
+    public DynamicType getParent() {
+        return (DynamicType) super.getParent();
     }
 
     @Override

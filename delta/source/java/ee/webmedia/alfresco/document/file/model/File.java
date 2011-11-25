@@ -2,18 +2,20 @@ package ee.webmedia.alfresco.document.file.model;
 
 import static ee.webmedia.alfresco.document.file.model.FileModel.Props.ACTIVE;
 import static ee.webmedia.alfresco.document.file.model.FileModel.Props.DISPLAY_NAME;
-import static ee.webmedia.alfresco.document.file.model.FileModel.Props.GENERATED;
 
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.web.scripts.FileTypeImageUtils;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
+import ee.webmedia.alfresco.common.service.IClonable;
 import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
@@ -21,7 +23,7 @@ import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 /**
  * @author Dmitri Melnikov
  */
-public class File implements Serializable {
+public class File implements Serializable, IClonable<File> {
 
     private static final long serialVersionUID = 1L;
 
@@ -52,7 +54,8 @@ public class File implements Serializable {
 
     public File(FileInfo fileInfo) {
         name = fileInfo.getName();
-        displayName = (fileInfo.getProperties().get(DISPLAY_NAME) == null) ? name : fileInfo.getProperties().get(DISPLAY_NAME).toString();
+        Map<QName, Serializable> fileProps = fileInfo.getProperties();
+        displayName = (fileProps.get(DISPLAY_NAME) == null) ? name : fileProps.get(DISPLAY_NAME).toString();
         created = fileInfo.getCreatedDate();
         modified = fileInfo.getModifiedDate();
         // fileInfo.getContentData() != null is here for testing purposes only; normally fileInfo.getContentData() shouldn't be null
@@ -64,11 +67,11 @@ public class File implements Serializable {
         nodeRef = fileInfo.getNodeRef();
         node = new Node(nodeRef);
         digiDocItem = false;
-        versionable = fileInfo.getProperties().get(ContentModel.PROP_VERSION_LABEL) != null;
+        versionable = fileProps.get(ContentModel.PROP_VERSION_LABEL) != null;
         creator = "";
         modifier = "";
-        generated = fileInfo.getProperties().get(GENERATED) != null;
-        active = (fileInfo.getProperties().get(ACTIVE) == null) ? true : Boolean.parseBoolean(fileInfo.getProperties().get(ACTIVE).toString());
+        generated = fileProps.get(FileModel.Props.GENERATED_FROM_TEMPLATE) != null || fileProps.get(FileModel.Props.GENERATION_TYPE) != null;
+        active = (fileProps.get(ACTIVE) == null) ? true : Boolean.parseBoolean(fileProps.get(ACTIVE).toString());
     }
 
     public String getName() {
@@ -283,4 +286,17 @@ public class File implements Serializable {
         return isPdf;
     }
 
+    @Override
+    public File clone() {
+        File file;
+        try {
+            file = (File) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
+        file.setCreated((Date) created.clone());
+        file.setModified((Date) modified.clone());
+        file.setNode(new Node(nodeRef));
+        return file;
+    }
 }

@@ -30,6 +30,7 @@ import org.alfresco.util.Pair;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
+import org.alfresco.web.ui.common.tag.GenericPickerTag;
 import org.alfresco.web.ui.repo.component.UIMultiValueEditor;
 import org.alfresco.web.ui.repo.component.UIMultiValueEditor.MultiValueEditorEvent;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
@@ -110,7 +111,7 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
         picker.setMultiSelect(true);
         String pickerCallback = getPickerCallback();
         Application application = getFacesContext().getApplication();
-        MethodBinding b = application.createMethodBinding(pickerCallback, new Class[] { int.class, String.class });
+        MethodBinding b = application.createMethodBinding(pickerCallback, GenericPickerTag.QUERYCALLBACK_CLASS_ARGS);
         picker.setQueryCallback(b);
 
         String filters = (String) getAttributes().get(FILTERS);

@@ -17,9 +17,8 @@ import javax.faces.event.ActionEvent;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
-
-import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
@@ -56,7 +55,6 @@ public class UserDetailsDialog extends BaseDialogBean {
         super.init(parameters);
         substituteListDialog = new SubstituteListDialog();
         substituteListDialog.setUserNodeRef(user.getNodeRef());
-        setNotificationSender();
         substituteListDialog.refreshData();
         setupGroups();
     }
@@ -74,18 +72,10 @@ public class UserDetailsDialog extends BaseDialogBean {
         groups = UserUtil.getGroupsFromAuthorities(getAuthorityService(), authorities);
     }
 
-    private void setNotificationSender() {
-        SubstituteListDialog.NotificationSender notificationSender =
-                (SubstituteListDialog.NotificationSender) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), NOTIFICATION_SENDER_LABEL);
-        if (notificationSender != null) {
-            substituteListDialog.setNotificationSender(notificationSender);
-        }
-    }
-
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         if (validate()) {
-            substituteListDialog.save(context);
+            substituteListDialog.save();
             BeanHelper.getUserService().updateUser(user);
             setupUser((String) user.getProperties().get(ContentModel.PROP_USERNAME));
         }

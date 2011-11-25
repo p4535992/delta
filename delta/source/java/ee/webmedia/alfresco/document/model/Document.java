@@ -41,6 +41,7 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     public static FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
 
     private List<File> files; // load lazily
+    private String workflowStatus;
     private Map<QName, Serializable> searchableProperties;
     private boolean initialized;
 
@@ -145,6 +146,25 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     public String getAllRecipients() {
         return join(DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME,
                 DocumentSpecificModel.Props.SECOND_PARTY_NAME, DocumentSpecificModel.Props.THIRD_PARTY_NAME, DocumentCommonModel.Props.SEARCHABLE_PARTY_NAME);
+    }
+
+    public String getSenderOrRecipients() {
+        QName docType = getType();
+        if (DocumentTypeHelper.isIncomingLetter(docType)) {
+            return (String) getProperties().get(DocumentSpecificModel.Props.SENDER_DETAILS_NAME);
+        } else if (DocumentSubtypeModel.Types.INVOICE.equals(docType)) {
+            return (String) getProperties().get(DocumentSpecificModel.Props.SELLER_PARTY_NAME);
+        }
+
+        return getAllRecipients();
+    }
+
+    public String getWorkflowStatus() {
+        return workflowStatus;
+    }
+
+    public void setWorkflowStatus(String workflowStatus) {
+        this.workflowStatus = workflowStatus;
     }
 
     public String getDocName() {

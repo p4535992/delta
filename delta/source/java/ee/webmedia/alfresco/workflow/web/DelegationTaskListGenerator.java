@@ -23,6 +23,7 @@ import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
+import org.alfresco.web.ui.common.tag.GenericPickerTag;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
@@ -331,7 +332,7 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
             selectedSearchProcessingB = "#{DelegationBean.processOwnerSearchResults}";
         }
         picker.setValueBinding("filters", application.createValueBinding(getOwnerSearchFiltersB));
-        picker.setQueryCallback(application.createMethodBinding(executeSearchCallbackB, new Class[] { int.class, String.class }));
+        picker.setQueryCallback(application.createMethodBinding(executeSearchCallbackB, GenericPickerTag.QUERYCALLBACK_CLASS_ARGS));
         picker.setActionListener(application.createMethodBinding(selectedSearchProcessingB, UIActions.ACTION_CLASS_ARGS));
     }
 

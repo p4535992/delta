@@ -208,15 +208,15 @@
       </property-sheet>
    </config>
    
-   <config evaluator="aspect-name" condition="wfs:file">
+   <config evaluator="node-type" condition="wfs:opinionTask">
       <property-sheet>
-         <show-property name="wfs:file" component-generator="UploadFileGenerator" />
+         <show-property name="{temp}files" removedValues="#{WorkflowBlockBean.removedFiles}" display-label-id="task_file_upload" component-generator="UploadFileGenerator" successMsgKey="opinion_file_uploaded" ignore-if-missing="false" />
       </property-sheet>
    </config>
    
    <config evaluator="node-type" condition="wfs:orderAssignmentTask">
       <property-sheet>
-         <show-property name="wfs:file" component-generator="UploadFileGenerator" successMsgKey="orderAssignment_file_uploaded" />
+         <show-property name="{temp}files" removedValues="#{WorkflowBlockBean.removedFiles}" display-label-id="task_file_upload" component-generator="UploadFileGenerator" successMsgKey="orderAssignment_file_uploaded" ignore-if-missing="false" />
       </property-sheet>
    </config>   
 

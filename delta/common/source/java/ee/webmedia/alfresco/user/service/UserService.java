@@ -72,15 +72,17 @@ public interface UserService {
      * Searches for users by first name and last name. If {@code input} is empty, all users are returned if {@code returnAllUsers} is {@code true}, otherwise an
      * empty list is returned. The results from this method should be processed by {@link OrganizationStructureService#setUsersUnit(List)} if correct unit name
      * is desired.
+     * 
+     * @param limit
      */
-    List<Node> searchUsers(String input, boolean returnAllUsers);
+    List<Node> searchUsers(String input, boolean returnAllUsers, int limit);
 
     /**
      * Searches for users from a specified group.
      * 
      * @see #searchUsers(String, boolean)
      */
-    List<Node> searchUsers(String input, boolean returnAllUsers, String group);
+    List<Node> searchUsers(String input, boolean returnAllUsers, String group, int limit);
 
     /**
      * Fetches the users node
@@ -143,10 +145,6 @@ public interface UserService {
     Set<String> getUsernamesByStructUnit(List<Integer> structUnits);
 
     boolean isGroupsEditingAllowed();
-
-    void setOwnerPropsFromUser(Map<QName, Serializable> docProps, Map<QName, Serializable> userProps);
-
-    void setOwnerPropsFromUser(Map<String, Object> docProps);
 
     String getAccountantsGroup();
 

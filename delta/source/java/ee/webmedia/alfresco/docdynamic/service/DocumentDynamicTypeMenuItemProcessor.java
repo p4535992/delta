@@ -51,10 +51,17 @@ public class DocumentDynamicTypeMenuItemProcessor implements InitializingBean, M
 
         Map<String, List<DocumentType>> structure = new HashMap<String, List<DocumentType>>();
         List<DocumentType> subitems;
+        /*
+         * TODO ALSeadist asjatoimiku liikide menüü loomine, õiguste kontrolli puhul kasutada
+         * DocumentCommonModel.Privileges.CREATE_DOCUMENT
+         * asemel õigust:
+         * public static final String CREATE_CASE_FILE = "createCaseFile";
+         */
         for (DocumentType documentType : documentTypes) {
             // Check if current user can create this type of document
             boolean restricted = false;
             for (AccessPermission accessPermission : permissionService.getAllSetPermissions(documentType.getNodeRef())) {
+
                 if (CREATE_DOCUMENT.equals(accessPermission.getPermission())) {
                     restricted = true;
                     break;
@@ -65,14 +72,14 @@ public class DocumentDynamicTypeMenuItemProcessor implements InitializingBean, M
                 continue;
             }
 
-            String documentTypeGroup = documentType.getDocumentTypeGroup();
-            if (isBlank(documentTypeGroup)) {
-                documentTypeGroup = "";
+            String menuGroupName = documentType.getMenuGroupName();
+            if (isBlank(menuGroupName)) {
+                menuGroupName = "";
             }
 
-            subitems = structure.get(documentTypeGroup);
+            subitems = structure.get(menuGroupName);
             if (subitems == null) {
-                structure.put(documentTypeGroup, new ArrayList<DocumentType>(Arrays.asList(documentType)));
+                structure.put(menuGroupName, new ArrayList<DocumentType>(Arrays.asList(documentType)));
             } else {
                 subitems.add(documentType);
             }
@@ -96,7 +103,7 @@ public class DocumentDynamicTypeMenuItemProcessor implements InitializingBean, M
                 MenuItem item = new MenuItem();
                 item.setTitle(type.getName());
                 item.setActionListener("#{DocumentDynamicDialog.createDraft}");
-                item.getParams().put("documentTypeId", type.getDocumentTypeId());
+                item.getParams().put("documentTypeId", type.getId());
                 children.add(item);
             }
 
