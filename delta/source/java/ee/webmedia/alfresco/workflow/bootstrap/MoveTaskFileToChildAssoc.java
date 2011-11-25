@@ -58,4 +58,8 @@ public class MoveTaskFileToChildAssoc extends AbstractNodeUpdater {
         this.fileService = fileService;
     }
 
+    public void setContentService(ContentService contentService) {
+        this.contentService = contentService;
+    }
+
 }

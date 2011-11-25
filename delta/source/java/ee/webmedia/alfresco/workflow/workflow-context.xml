@@ -292,6 +292,7 @@
       <property name="executeOnceOnly" value="true" />
       <property name="fileService" ref="FileService" />
       <property name="mimetypeService" ref="MimetypeService" />
+      <property name="contentService" ref="ContentService" />
    </bean>
 
    <!-- START: web beans: -->
