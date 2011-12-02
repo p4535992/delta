@@ -158,7 +158,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
     }
 
     @Override
-    final protected void executeInternal() throws Throwable {
+    protected void executeInternal() throws Throwable {
         if (!enabled) {
             log.info("Skipping node updater, because it is disabled" + (isExecuteOnceOnly() ? ". It will not be executed again, because executeOnceOnly=true" : ""));
             return;
@@ -166,7 +166,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         executeUpdater();
     }
 
-    private void executeUpdater() throws Exception {
+    protected void executeUpdater() throws Exception {
         log.info("Starting node updater");
         nodesFile = new File(inputFolder, getNodesCsvFileName());
         nodes = loadNodesFromFile(nodesFile, false);

@@ -46,7 +46,7 @@
       </property>
    </bean>
 
-   <bean id="repairPropertyTypeMismatchUpdater2" class="ee.webmedia.alfresco.document.bootstrap.RepairPropertyTypeMismatchUpdater" parent="abstractNodeUpdater">
+   <bean id="repairPropertyTypeMismatchUpdater4" class="ee.webmedia.alfresco.document.bootstrap.RepairPropertyTypeMismatchUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="documentConfigService" ref="DocumentConfigService" />
    </bean>
@@ -85,7 +85,7 @@
             this updater was added after systematicFieldDefinitionsBootstrap7 but if systematicFieldDefinitionsBootstrap1 has not been started
             then updater shouldn't need to do anything - expecting that bootstrap files are updated as well
              -->
-            <ref bean="fieldDefPropsUpdater" />
+            <ref bean="fieldDefPropsUpdater2" />
          </list>
       </property>
       <property name="bootstrapViews">
@@ -250,7 +250,7 @@
             this updater was added after systematicFieldGroupDefinitions6 but if systematicFieldGroupDefinitions6.xml has not been started
             then updater shouldn't need to do anything - expecting that bootstrap files are updated as well
              -->
-            <ref bean="fieldGroupDefPropsUpdater" />
+            <ref bean="fieldGroupDefPropsUpdater2" />
          </list>
       </property>
       <property name="bootstrapViews">

@@ -44,10 +44,8 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
+import ee.webmedia.alfresco.document.file.web.Subfolder;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.imap.model.ImapModel;
-import ee.webmedia.alfresco.imap.web.ImapFolder;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 import ee.webmedia.alfresco.signature.service.SignatureService;
@@ -60,8 +58,6 @@ import ee.webmedia.alfresco.versions.model.VersionsModel;
  * @author Dmitri Melnikov
  */
 public class FileServiceImpl implements FileService {
-    private static final String PROP_HAS_FILES = "hasFiles";
-
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(FileServiceImpl.class);
 
     private FileFolderService fileFolderService;
@@ -84,18 +80,6 @@ public class FileServiceImpl implements FileService {
         active = !active;
         nodeService.setProperty(nodeRef, FileModel.Props.ACTIVE, active);
         return active;
-    }
-
-    @Override
-    public int getAllFilesExcludingDigidocSubitemsCount(NodeRef attachmentRoot, boolean countFilesInSubfolders) {
-        int count = 0;
-        count = getAllFilesExcludingDigidocSubitems(attachmentRoot).size();
-        if (countFilesInSubfolders) {
-            for (ImapFolder imapFolder : getImapSubfolders(attachmentRoot)) {
-                count += getAllFilesExcludingDigidocSubitemsCount(imapFolder.getNodeRef(), countFilesInSubfolders);
-            }
-        }
-        return count;
     }
 
     @Override
@@ -380,19 +364,6 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public List<File> getAllScannedFiles() {
-        NodeRef scannedNodeRef = generalService.getNodeRef(scannedFilesPath);
-        Assert.notNull(scannedNodeRef, "Scanned files node reference not found");
-        List<FileInfo> fileInfos = fileFolderService.listFolders(scannedNodeRef);
-        List<File> files = new ArrayList<File>(fileInfos.size());
-        for (FileInfo fileInfo : fileInfos) {
-            final List<File> filesInFolder = getScannedFiles(fileInfo.getNodeRef());
-            files.addAll(filesInFolder);
-        }
-        return files;
-    }
-
-    @Override
     public List<File> getScannedFiles(NodeRef folderRef) {
         if (log.isDebugEnabled()) {
             log.debug("Getting scanned files");
@@ -481,16 +452,27 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public List<ImapFolder> getImapSubfolders(NodeRef parentRef) {
-        List<ImapFolder> subfolders = new ArrayList<ImapFolder>();
-        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parentRef, Collections.singleton(ImapModel.Types.IMAP_FOLDER));
+    public List<Subfolder> getSubfolders(NodeRef parentRef, QName childNodeType, QName countableChildNodeType) {
+        List<Subfolder> subfolders = new ArrayList<Subfolder>();
+        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parentRef, Collections.singleton(childNodeType));
         for (ChildAssociationRef childAssocRef : childAssocs) {
             NodeRef childRef = childAssocRef.getChildRef();
             Node folder = new Node(childRef);
-            List<ChildAssociationRef> documents = nodeService.getChildAssocs(childRef, Collections.singleton(DocumentCommonModel.Types.DOCUMENT));
-            subfolders.add(new ImapFolder(folder, documents == null || documents.isEmpty()));
+            List<ChildAssociationRef> documents = nodeService.getChildAssocs(childRef, Collections.singleton(countableChildNodeType));
+            subfolders.add(new Subfolder(folder, documents == null ? 0 : documents.size()));
         }
         return subfolders;
+    }
+
+    @Override
+    public NodeRef findSubfolderWithName(NodeRef parentNodeRef, String folderName, QName subfolderType) {
+        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parentNodeRef, Collections.singleton(subfolderType));
+        for (ChildAssociationRef childAssoc : childAssocs) {
+            if (childAssoc.getQName().getLocalName().equals(folderName)) {
+                return childAssoc.getChildRef();
+            }
+        }
+        return null;
     }
 
     @Override

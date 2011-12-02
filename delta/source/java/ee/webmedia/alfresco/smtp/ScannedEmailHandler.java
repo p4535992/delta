@@ -24,6 +24,7 @@ import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.ocr.service.OcrService;
 import ee.webmedia.alfresco.user.service.UserService;
 
@@ -37,6 +38,7 @@ public class ScannedEmailHandler extends AbstractForumEmailMessageHandler {
     private UserService userService;
     private GeneralService generalService;
     private OcrService ocrService;
+    private FileService fileService;
 
     @Override
     public void processMessage(NodeRef contentNodeRef, EmailMessage message) {
@@ -123,10 +125,10 @@ public class ScannedEmailHandler extends AbstractForumEmailMessageHandler {
 
     private NodeRef getPersonalFolderRef(NodeRef contentNodeRef, String userIdCode) {
         final QName SCANNED_BY_PERSONS_ASSOC = ContentModel.ASSOC_CONTAINS;
-        NodeRef spaceNodeRef = getNodeService().getChildByName(contentNodeRef, SCANNED_BY_PERSONS_ASSOC, userIdCode);
+        NodeRef spaceNodeRef = fileService.findSubfolderWithName(contentNodeRef, userIdCode, ContentModel.TYPE_FOLDER);
         if (spaceNodeRef == null) {
             final HashMap<QName, Serializable> props = new HashMap<QName, Serializable>();
-            props.put(ContentModel.PROP_NAME, userIdCode);
+            props.put(ContentModel.PROP_NAME, userService.getUserFullName(userIdCode));
             ChildAssociationRef association = getNodeService().createNode(
                     contentNodeRef,
                     SCANNED_BY_PERSONS_ASSOC,
@@ -191,6 +193,10 @@ public class ScannedEmailHandler extends AbstractForumEmailMessageHandler {
 
     public void setOcrService(OcrService ocrService) {
         this.ocrService = ocrService;
+    }
+
+    public void setFileService(FileService fileService) {
+        this.fileService = fileService;
     }
     // END: getters / setters
 }

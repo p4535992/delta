@@ -52,16 +52,20 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     private FunctionsService _functionsService;
 
     @Override
-    public List<ChildAssociationRef> getAllSeriesAssocsByFunction(NodeRef functionRef) {
-        return nodeService.getChildAssocs(functionRef, RegexQNamePattern.MATCH_ALL, SeriesModel.Associations.SERIES);
+    public List<NodeRef> getAllSeriesRefsByFunction(NodeRef functionRef) {
+        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(functionRef, RegexQNamePattern.MATCH_ALL, SeriesModel.Associations.SERIES);
+        List<NodeRef> seriesRefs = new ArrayList<NodeRef>(childAssocs.size());
+        for (ChildAssociationRef series : childAssocs) {
+            seriesRefs.add(series.getChildRef());
+        }
+        return seriesRefs;
     }
 
     @Override
     public List<Series> getAllSeriesByFunction(NodeRef functionNodeRef) {
-        List<ChildAssociationRef> seriesAssocs = getAllSeriesAssocsByFunction(functionNodeRef);
-        List<Series> seriesOfFunction = new ArrayList<Series>(seriesAssocs.size());
-        for (ChildAssociationRef series : seriesAssocs) {
-            NodeRef seriesNodeRef = series.getChildRef();
+        List<NodeRef> seriesRefs = getAllSeriesRefsByFunction(functionNodeRef);
+        List<Series> seriesOfFunction = new ArrayList<Series>(seriesRefs.size());
+        for (NodeRef seriesNodeRef : seriesRefs) {
             seriesOfFunction.add(getSeriesByNoderef(seriesNodeRef, functionNodeRef));
         }
         Collections.sort(seriesOfFunction);

@@ -91,7 +91,7 @@ public class FieldsListBean implements DialogBlockBean<Void> {
         NodeRef metaFieldRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
         MetadataItem removed = metadata.remove(metaFieldRef);
         BaseObject dynType = removed.getParent();
-        if (!(dynType instanceof DynamicType)) {
+        while (!(dynType instanceof DynamicType)) {
             dynType = dynType.getParent();
         }
         MessageUtil.addWarningMessage("dynType_metadataList_remove_postponed_" + dynType.getNode().getType().getLocalName() + "_" + removed.getType());

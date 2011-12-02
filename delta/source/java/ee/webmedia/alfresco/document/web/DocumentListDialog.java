@@ -60,8 +60,10 @@ public class DocumentListDialog extends BaseDocumentListDialog {
         QName type = getNodeService().getType(parentRef);
         if (VolumeModel.Types.VOLUME.equals(type)) {
             parentVolume = getVolumeService().getVolumeByNodeRef(parentRef);
+            parentCase = null;
         } else if (CaseModel.Types.CASE.equals(type)) {
             parentCase = getCaseService().getCaseByNoderef(parentRef);
+            parentVolume = null;
         } else {
             throw new RuntimeException("Unsupported type: " + type);
         }
@@ -75,9 +77,11 @@ public class DocumentListDialog extends BaseDocumentListDialog {
         if (parameterMap.containsKey(VOLUME_NODE_REF)) {
             param = ActionUtil.getParam(event, VOLUME_NODE_REF);
             parentVolume = getVolumeService().getVolumeByNodeRef(param);
+            parentCase = null;
         } else {
             param = ActionUtil.getParam(event, CASE_NODE_REF);
             parentCase = getCaseService().getCaseByNoderef(param);
+            parentVolume = null;
         }
         restored();
     }

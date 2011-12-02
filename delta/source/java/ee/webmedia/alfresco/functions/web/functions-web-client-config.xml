@@ -90,7 +90,9 @@
             <action idref="docList_export" />
             <action idref="docList_import" />
             <action idref="docList_createNewYearBasedVolumes" />
+            <!-- counting this functionality seems to work OK. commenting out, because after import etc, it might be needed again 
             <action idref="docList_updateDocCounters" />
+             -->
             <action idref="postipoiss_structure_import" />
             <action idref="postipoiss_documents_import" />
             <!--<action idref="postipoiss_documents_fix" />-->

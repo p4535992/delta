@@ -323,6 +323,172 @@
             </property>
          </properties>
       </aspect>
+      
+   <!-- FIXME: remove the following definitions after all existing static documents are migrated to dynamic documents -->      
+      <aspect name="doccom:common">
+         <properties>
+            <property name="doccom:function">
+               <type>d:noderef</type>
+            </property>
+            <property name="doccom:series">
+               <type>d:noderef</type>
+            </property>
+            <property name="doccom:volume">
+               <type>d:noderef</type>
+            </property>
+            <property name="doccom:case">
+               <type>d:noderef</type>
+            </property>
+            <property name="doccom:docName"><!-- Pealkiri -->
+               <type>d:text</type>
+               <mandatory enforced="false">true</mandatory>
+            </property>
+            <property name="doccom:regNumber"><!-- Viit -->
+               <type>d:text</type>
+            </property>
+            <property name="doccom:shortRegNumber"><!-- Registreerimisnumber -->
+               <type>d:text</type>
+            </property>
+            <property name="doccom:regDateTime"><!-- Registreerimise kuupäev -->
+               <type>d:datetime</type>
+            </property>
+            <property name="doccom:docStatus"><!-- Staatus -->
+               <type>d:text</type>
+               <!-- Väärtus võetakse klassifikaatorist, väli on metaandmete muutmise vaates alati readonly. -->
+               <default>töös</default>
+            </property>
+            <property name="doccom:comment"><!-- Täiendav info -->
+               <type>d:text</type>
+            </property>
+            <property name="doccom:storageType"><!-- Teabekandja -->
+               <type>d:text</type>
+               <mandatory enforced="false">true</mandatory>
+               <!-- Valik klassifikaatori väärtuste hulgast -->
+            </property>
+            <property name="doccom:keywords"><!-- Märksõnad -->
+               <type>d:text</type>
+            </property>
+         </properties>
+         <mandatory-aspects>
+            <aspect>doccom:owner</aspect>
+            <aspect>doccom:accessRights</aspect>
+         </mandatory-aspects>
+      </aspect>
+            
+      <aspect name="doccom:sendDesc">
+         <!-- Välja saatmise selgitus -->
+         <properties>
+            <property name="doccom:sendDescValue">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="doccom:owner">
+         <!--
+            Valik DHS kasutajate hulgast (kõik gruppi kuuluvad väljad täidetakse valitud kasutaja andmetega)
+            või sisestatakse tekstina va. prevoiusOwnerId väli
+         -->
+         <properties>
+            <property name="doccom:ownerName"><!-- Koostaja -->
+               <type>d:text</type>
+               <mandatory enforced="false">true</mandatory>
+            </property>
+            <property name="doccom:ownerId"><!-- Koostaja isikukood -->
+               <type>d:text</type>
+               <mandatory enforced="false">true</mandatory>
+               <index enabled="true">
+                  <atomic>true</atomic>
+                  <stored>false</stored>
+                  <tokenised>false</tokenised><!-- default was true -->
+               </index>
+            </property>
+            <property name="doccom:ownerJobTitle"><!-- Koostaja ametinimetus -->
+               <type>d:text</type>
+            </property>
+            <property name="doccom:ownerOrgStructUnit"><!-- Koostaja osakond -->
+               <type>d:text</type>
+            </property>
+            <property name="doccom:ownerEmail"><!-- Koostaja e-post -->
+               <type>d:text</type>
+            </property>
+            <property name="doccom:ownerPhone"><!-- Koostaja telefon -->
+               <type>d:text</type>
+            </property>
+            <property name="doccom:previousOwnerId"><!-- Eelmise omaniku ownerId vastutuse tagasivõtmise jaoks -->
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="doccom:recipient">
+         <!--
+            Valik kontaktandmebaasist (kõik gruppi kuuluvad väljad täidetakse valitud konktakti andmetega)
+            või sisestatakse tekstina
+         -->
+         <properties>
+            <property name="doccom:recipientName"><!-- Adressaat -->
+               <type>d:text</type>
+               <multiple>true</multiple>
+               <default></default>
+            </property>
+            <property name="doccom:recipientEmail"><!-- Adressaadi e-post -->
+               <type>d:text</type>
+               <multiple>true</multiple>
+               <default></default>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="doccom:additionalRecipient">
+         <!--
+            Valik kontaktandmebaasist (kõik gruppi kuuluvad väljad täidetakse valitud konktakti andmetega)
+            või sisestatakse tekstina
+         -->
+         <properties>
+            <property name="doccom:additionalRecipientName"><!-- Lisaadressaat -->
+               <type>d:text</type>
+               <multiple>true</multiple>
+               <default></default>
+            </property>
+            <property name="doccom:additionalRecipientEmail"><!-- Lisaadressaadi e-post -->
+               <type>d:text</type>
+               <multiple>true</multiple>
+               <default></default>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="doccom:signer">
+         <properties>
+            <property name="doccom:signerJobTitle"><!-- Allkirjastaja ametinimetus -->
+               <type>d:text</type>
+            </property>
+         </properties>
+         <mandatory-aspects>
+            <aspect>doccom:signerName</aspect>
+         </mandatory-aspects>
+      </aspect>
+      
+      <aspect name="doccom:signerName">
+         <!--
+            Valik DHS kasutajate hulgast (kõik gruppi kuuluvad väljad täidetakse valitud kasutaja andmetega)
+            või sisestatakse tekstina
+         -->
+         <properties>
+            <property name="doccom:signerName"><!-- Allkirjastaja -->
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>  
+      
+      <aspect name="doccom:legalBasis">
+         <properties>
+            <property name="doccom:legalBasisName">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>      
 
    </aspects>
 

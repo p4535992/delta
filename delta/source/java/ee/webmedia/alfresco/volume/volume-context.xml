@@ -33,7 +33,7 @@
       <property name="seriesService" ref="SeriesService" />
       <property name="caseService" ref="CaseService" />
       <property name="documentService" ref="documentService" />
-      <property name="caseVolumeEnabled" value="${conf.case-volume.enabled}" />
+      <property name="caseVolumeEnabled" value="${conf.casefile.enabled}" />
    </bean>
 
    <bean id="VolumeService" class="org.springframework.aop.framework.ProxyFactoryBean">

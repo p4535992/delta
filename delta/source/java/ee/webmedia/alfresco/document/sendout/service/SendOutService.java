@@ -74,4 +74,6 @@ public interface SendOutService {
 
     void addSapSendInfo(Node document, String dvkId);
 
+    boolean hasDocumentSendInfos(NodeRef document);
+
 }

@@ -2,13 +2,16 @@ package ee.webmedia.alfresco.imap.web;
 
 import java.util.List;
 
-public interface FolderListDialog {
+import ee.webmedia.alfresco.document.file.web.Subfolder;
 
-    String PARAM_PARENT_NODEREF = "parentNodeRef";
+/**
+ * @author Riina Tens
+ */
+public interface FolderListDialog {
 
     public boolean isShowFolderList();
 
-    public List<ImapFolder> getFolders();
+    public List<Subfolder> getFolders();
 
     public String getFolderListTitle();
 

@@ -7,29 +7,44 @@ import java.util.List;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
-import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.file.model.File;
-import ee.webmedia.alfresco.document.file.service.FileService;
+import ee.webmedia.alfresco.document.file.web.Subfolder;
+import ee.webmedia.alfresco.document.scanned.model.ScannedModel;
+import ee.webmedia.alfresco.imap.web.FolderListDialog;
 import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Dialog for scanned documents list
  * 
  * @author Romet Aidla
  */
-public class ScannedDocumentsList extends BaseDialogBean {
+public class ScannedDocumentsList extends BaseDialogBean implements FolderListDialog {
     private static final long serialVersionUID = 0L;
 
-    private transient FileService fileService;
     private List<File> files;
     private NodeRef folderRef;
+    private List<Subfolder> folders;
+
+    public void setup(ActionEvent event) {
+        init(event);
+    }
 
     public void init(ActionEvent event) {
-        folderRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
+        folderRef = ActionUtil.getParentNodeRefParam(event);
+        if (folderRef == null) {
+            folderRef = getMainFolderRef();
+        }
         readFiles();
+    }
+
+    private NodeRef getMainFolderRef() {
+        return BeanHelper.getGeneralService().getNodeRef(ScannedModel.Repo.SCANNED_SPACE);
     }
 
     @Override
@@ -38,7 +53,7 @@ public class ScannedDocumentsList extends BaseDialogBean {
     }
 
     private void readFiles() {
-        files = getFileService().getScannedFiles(folderRef);
+        files = BeanHelper.getFileService().getScannedFiles(folderRef);
         Collections.sort(files, new Comparator<File>() {
 
             @Override
@@ -52,6 +67,7 @@ public class ScannedDocumentsList extends BaseDialogBean {
                 return f2.getCreated().compareTo(f1.getCreated());
             }
         });
+        folders = BeanHelper.getFileService().getSubfolders(folderRef, ContentModel.TYPE_FOLDER, ContentModel.TYPE_CONTENT);
     }
 
     public List<File> getFiles() {
@@ -69,11 +85,22 @@ public class ScannedDocumentsList extends BaseDialogBean {
         return null; // Finish button is always hidden
     }
 
-    public FileService getFileService() {
-        if (fileService == null) {
-            fileService = (FileService) FacesContextUtils.getRequiredWebApplicationContext(
-                    FacesContext.getCurrentInstance()).getBean(FileService.BEAN_NAME);
-        }
-        return fileService;
+    public boolean isShowFileList() {
+        return (files != null && !files.isEmpty()) || !isShowFolderList();
+    }
+
+    @Override
+    public boolean isShowFolderList() {
+        return folders != null && !folders.isEmpty();
+    }
+
+    @Override
+    public List<Subfolder> getFolders() {
+        return folders;
+    }
+
+    @Override
+    public String getFolderListTitle() {
+        return MessageUtil.getMessage("document_incoming_emails_folders");
     }
 }

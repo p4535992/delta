@@ -128,13 +128,7 @@ public interface DocumentService {
     @Deprecated
     Node createFollowUp(QName docType, NodeRef nodeRef);
 
-    /**
-     * @param volumeRef
-     * @return all documents that have been assigned under given volume
-     */
-    List<Document> getAllDocumentsByVolume(NodeRef volumeRef);
-
-    List<Document> getAllDocumentsByCase(NodeRef caseRef);
+    List<NodeRef> getAllDocumentRefsByParentRef(NodeRef parentRef);
 
     List<Document> getAllDocumentFromDvk();
 

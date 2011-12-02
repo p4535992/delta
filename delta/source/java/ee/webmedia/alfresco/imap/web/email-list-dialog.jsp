@@ -13,7 +13,7 @@
 
    <%-- Document List --%>
    <a:richList id="email-documentList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      width="100%" value="#{DialogManager.bean.documents}" var="r" refreshOnBind="true">
+      width="100%" value="#{DialogManager.bean.documents}" var="r" refreshOnBind="true" rendered="#{DialogManager.bean.showFileList}">
 
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog-columns.jsp" />
       

@@ -7,13 +7,17 @@ import javax.faces.component.UIComponent;
 import javax.faces.component.UIParameter;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.web.ui.common.component.UIActionLink;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * @author Keit Tehvan
  */
 public class ActionUtil {
+
+    public static String PARAM_PARENT_NODEREF = "parentNodeRef";
 
     public static String getParam(ActionEvent event, String key, String defaultValue) {
         return getParamInternal(event, key, defaultValue);
@@ -91,6 +95,17 @@ public class ActionUtil {
             }
         }
         return params;
+    }
+
+    public static NodeRef getParentNodeRefParam(ActionEvent event) {
+        NodeRef folderRef = null;
+        if (hasParam(event, PARAM_PARENT_NODEREF)) {
+            String folderRefStr = getParam(event, PARAM_PARENT_NODEREF);
+            if (StringUtils.isNotBlank(folderRefStr)) {
+                folderRef = new NodeRef(folderRefStr);
+            }
+        }
+        return folderRef;
     }
 
 }

@@ -238,6 +238,11 @@ public class TaskListGenerator extends BaseComponentGenerator {
                             if (StringUtils.isNotBlank(signerId)) {
                                 task.setOwnerName(signerName);
                                 task.setOwnerId(signerId);
+                                String signerEmail = (String) nodeService.getProperty(docRef, DocumentDynamicModel.Props.SIGNER_EMAIL);
+                                if (StringUtils.isBlank(signerEmail)) {
+                                    signerEmail = BeanHelper.getUserService().getUserEmail(signerId);
+                                }
+                                task.setOwnerEmail(signerEmail);
                             }
                         }
                         nameValueBinding = createPropValueBinding(wfIndex, counter, WorkflowCommonModel.Props.OWNER_NAME);

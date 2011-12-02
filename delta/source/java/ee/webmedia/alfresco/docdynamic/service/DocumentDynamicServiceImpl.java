@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.docdynamic.service;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ACCESS_RESTRICTION;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.CASE;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FILE_CONTENTS;
@@ -53,7 +54,6 @@ import ee.webmedia.alfresco.docconfig.bootstrap.SystematicFieldGroupNames;
 import ee.webmedia.alfresco.docconfig.generator.SaveListener;
 import ee.webmedia.alfresco.docconfig.generator.systematic.UserContactRelatedGroupGenerator;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
-import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
@@ -157,34 +157,40 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         WmNode docNode = document.getNode();
         documentConfigService.setDefaultPropertyValues(docNode, docVer);
 
-        createSubnodes(docVer, document.getNode());
+        createSubnodes(docVer, document.getNode(), false);
 
         generalService.setPropertiesIgnoringSystem(docRef, docNode.getProperties());
         return document;
     }
 
-    private List<NodeRef> createSubnodes(DocumentTypeVersion docVer, Node document) {
-        List<NodeRef> subnodeRefs = new ArrayList<NodeRef>();
+    private List<Node> createSubnodes(DocumentTypeVersion docVer, Node document, boolean createInMemory) {
+        List<Node> subnodeRefs = new ArrayList<Node>();
+        Map<String, Object> docProps = document.getProperties();
         for (MetadataItem metadataItem : docVer.getMetadata()) {
             if (metadataItem instanceof FieldGroup) {
                 FieldGroup group = (FieldGroup) metadataItem;
                 if (group.getName().equals(SystematicFieldGroupNames.CONTRACT_PARTIES)) {
                     Map<QName, Serializable> subNodeProps = new HashMap<QName, Serializable>();
                     for (Field field : group.getFields()) {
-                        Map<String, Object> docProps = document.getProperties();
                         if (docProps.containsKey(field.getQName().toString())) {
                             Serializable value = (Serializable) docProps.remove(field.getQName().toString());
                             subNodeProps.put(field.getQName(), value);
                         }
                     }
                     Pair<Field, Integer> primaryFieldAndIndex = UserContactRelatedGroupGenerator.getPrimaryFieldAndIndex(group);
-                    NodeRef subNodeRef = nodeService.createNode(
-                            document.getNodeRef(),
-                            DocumentCommonModel.Types.METADATA_CONTAINER,
-                            primaryFieldAndIndex.getFirst().getQName(),
-                            DocumentCommonModel.Types.METADATA_CONTAINER,
-                            subNodeProps).getChildRef();
-                    subnodeRefs.add(subNodeRef);
+                    if (!createInMemory) {
+                        NodeRef subNodeRef = nodeService.createNode(
+                                document.getNodeRef(),
+                                DocumentCommonModel.Types.METADATA_CONTAINER,
+                                primaryFieldAndIndex.getFirst().getQName(),
+                                DocumentCommonModel.Types.METADATA_CONTAINER,
+                                subNodeProps).getChildRef();
+                        subnodeRefs.add(new Node(subNodeRef));
+                    } else {
+                        WmNode subNode = getGeneralService().createNewUnSaved(DocumentCommonModel.Types.METADATA_CONTAINER, null);
+                        subnodeRefs.add(subNode);
+                    }
+
                 }
             }
         }
@@ -238,9 +244,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     @Override
     public DocumentDynamic getDocumentWithInMemoryChangesForEditing(NodeRef docRef) {
         DocumentDynamic document = getDocument(docRef);
-        document.setDraft(isDraft(docRef));
-        document.setDraftOrImapOrDvk(isDraftOrImapOrDvk(docRef));
-        document.setIncomingInvoice(documentService.isIncomingInvoice(docRef));
+        setParentFolderProps(document);
         if (document.isImapOrDvk()) {
             Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = documentConfigService.getDocumentTypeAndVersion(document.getNode());
             Collection<Field> ownerNameFields = documentTypeAndVersion.getSecond().getFieldsById(Collections.singleton(DocumentCommonModel.Props.OWNER_NAME.getLocalName()));
@@ -266,14 +270,13 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         Map<String, Object> properties = document.getNode().getProperties();
         Map<String, Object> newProps = new HashMap<String, Object>();
         newProps.putAll(RepoUtil.toStringProperties(typeProps));
-        newProps.put(DocumentDynamicModel.Props.DOC_NAME.toString(), properties.get(DocumentDynamicModel.Props.DOC_NAME));
-        newProps.put(DocumentDynamicModel.Props.ACCESS_RESTRICTION.toString(), properties.get(DocumentDynamicModel.Props.ACCESS_RESTRICTION));
-        newProps.put(DocumentDynamicModel.Props.ACCESS_RESTRICTION_BEGIN_DATE.toString(), properties.get(DocumentDynamicModel.Props.ACCESS_RESTRICTION_BEGIN_DATE));
-        newProps.put(DocumentDynamicModel.Props.ACCESS_RESTRICTION_END_DATE.toString(), properties.get(DocumentDynamicModel.Props.ACCESS_RESTRICTION_END_DATE));
-        newProps.put(DocumentDynamicModel.Props.ACCESS_RESTRICTION_REASON.toString(), properties.get(DocumentDynamicModel.Props.ACCESS_RESTRICTION_REASON));
-        Object status = properties.get(DocumentDynamicModel.Props.DOC_STATUS);
-        newProps.put(DocumentDynamicModel.Props.DOC_STATUS.toString(), status == null ? DocumentStatus.WORKING.getValueName() : status);
-        newProps.put(DocumentDynamicModel.Props.STORAGE_TYPE.toString(), properties.get(DocumentDynamicModel.Props.STORAGE_TYPE));
+        newProps.put(DocumentCommonModel.Props.DOC_NAME.toString(), properties.get(DocumentCommonModel.Props.DOC_NAME));
+        newProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION.toString(), properties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION));
+        newProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE.toString(), properties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE));
+        newProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE.toString(), properties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE));
+        newProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON.toString(), properties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON));
+        newProps.put(DocumentCommonModel.Props.DOC_STATUS.toString(), properties.get(DocumentCommonModel.Props.DOC_STATUS));
+        newProps.put(DocumentCommonModel.Props.STORAGE_TYPE.toString(), properties.get(DocumentCommonModel.Props.STORAGE_TYPE));
 
         properties.clear();
         properties.putAll(newProps);
@@ -288,9 +291,9 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             document.getNode().removeChildAssociations(subnodeAssoc, subnodes);
         }
 
-        List<NodeRef> subnodeRefs = createSubnodes(docVer, document.getNode());
-        for (NodeRef nodeRef : subnodeRefs) {
-            document.getNode().addChildAssociations(subnodeAssoc, new Node(nodeRef));
+        List<Node> newSubnodes = createSubnodes(docVer, document.getNode(), true);
+        for (Node subnode : newSubnodes) {
+            document.getNode().addChildAssociations(subnodeAssoc, subnode);
         }
     }
 

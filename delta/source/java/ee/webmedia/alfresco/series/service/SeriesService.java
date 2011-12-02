@@ -2,7 +2,6 @@ package ee.webmedia.alfresco.series.service;
 
 import java.util.List;
 
-import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.Node;
 
@@ -52,6 +51,6 @@ public interface SeriesService {
 
     void updateContainingDocsCountByVolume(NodeRef seriesNodeRef, NodeRef volumeNodeRef, boolean volumeAdded);
 
-    List<ChildAssociationRef> getAllSeriesAssocsByFunction(NodeRef functionRef);
+    List<NodeRef> getAllSeriesRefsByFunction(NodeRef functionRef);
 
 }

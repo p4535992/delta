@@ -42,6 +42,10 @@ public interface DocumentAdminModel {
         QName FIELD_MAPPING = QName.createQName(URI, "fieldMapping");
     }
 
+    interface Aspects {
+        QName INAPPLICABLE_FOR_TYPE = QName.createQName(URI, "inapplicableForType");
+    }
+
     interface Props {
         QName OBJECT_TYPE_ID = QName.createQName(URI, "objectTypeId");
         QName OBJECT_TYPE_VERSION_NR = QName.createQName(URI, "objectTypeVersionNr");

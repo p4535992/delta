@@ -52,4 +52,5 @@ public class ScannedFoldersListDialog extends BaseDialogBean {
         }
         return fileService;
     }
+
 }

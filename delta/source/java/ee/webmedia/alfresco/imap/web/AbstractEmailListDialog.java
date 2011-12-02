@@ -5,9 +5,10 @@ import java.util.List;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.file.web.Subfolder;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.web.BaseDocumentListDialog;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -20,18 +21,12 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 public abstract class AbstractEmailListDialog extends BaseDocumentListDialog implements FolderListDialog {
     private static final long serialVersionUID = 0L;
 
-    private List<ImapFolder> folders;
+    private List<Subfolder> folders;
     private NodeRef parentRef;
 
     /** @param event */
     public void setup(ActionEvent event) {
-        parentRef = null;
-        if (ActionUtil.hasParam(event, PARAM_PARENT_NODEREF)) {
-            String folderRef = ActionUtil.getParam(event, PARAM_PARENT_NODEREF);
-            if (StringUtils.isNotBlank(folderRef)) {
-                parentRef = new NodeRef(folderRef);
-            }
-        }
+        parentRef = ActionUtil.getParentNodeRefParam(event);
         if (parentRef == null) {
             parentRef = getMainFolderRef();
         }
@@ -41,7 +36,7 @@ public abstract class AbstractEmailListDialog extends BaseDocumentListDialog imp
     @Override
     public void restored() {
         documents = getDocumentService().getIncomingDocuments(parentRef);
-        folders = BeanHelper.getFileService().getImapSubfolders(parentRef);
+        folders = BeanHelper.getImapServiceExt().getImapSubfolders(parentRef, DocumentCommonModel.Types.DOCUMENT);
     }
 
     protected abstract NodeRef getMainFolderRef();
@@ -57,13 +52,17 @@ public abstract class AbstractEmailListDialog extends BaseDocumentListDialog imp
     }
 
     @Override
-    public List<ImapFolder> getFolders() {
+    public List<Subfolder> getFolders() {
         return folders;
     }
 
     @Override
     public boolean isShowFolderList() {
         return folders != null && !folders.isEmpty();
+    }
+
+    public boolean isShowFileList() {
+        return (documents != null && !documents.isEmpty()) || !isShowFolderList();
     }
 
 }

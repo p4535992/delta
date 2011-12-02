@@ -3,17 +3,18 @@
    xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
 
    <imports>
-<!--       <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" /> -->
-<!--       <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" /> -->
-<!--       <import uri="http://alfresco.webmedia.ee/model/document/common/1.0" prefix="doccom" /> -->
-<!--       <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" /> -->
+   <!-- FIXME: remove the following imports after all existing static documents are migrated to dynamic documents -->
+       <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+       <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
+       <import uri="http://alfresco.webmedia.ee/model/document/common/1.0" prefix="doccom" />
+       <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
    </imports>
 
    <namespaces>
       <namespace uri="http://alfresco.webmedia.ee/model/document/specific/1.0" prefix="docspec" />
    </namespaces>
 
-<!--
+<!-- FIXME: remove the following definitions after all existing static documents are migrated to dynamic documents -->
 
    <types>
       <type name="docspec:errandOrderApplicantAbroadType">
@@ -1655,5 +1656,5 @@
       </aspect>
 
    </aspects>
--->
+
 </model>

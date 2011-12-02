@@ -7,6 +7,7 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 <%@ page import="ee.webmedia.alfresco.utils.MessageUtil"%>
+<%@ page import="ee.webmedia.alfresco.utils.ComponentUtil"%>
 <%@ page import="javax.faces.context.FacesContext"%>
 <%@ page import="org.alfresco.web.app.Application"%>
 <%@ page import="org.alfresco.web.app.servlet.FacesHelper"%>
@@ -88,17 +89,39 @@
    </f:verbatim>
    </a:panel>
 
-    <a:panel styleClass="column panel-50" id="attachment-upload" label="#{msg.file_add_attachment}">
-       <h:outputText id="out_attachment" value="#{msg.file_add_attachment_label}" styleClass="dialogpanel-title block"/>
-       <h:selectManyMenu id="select_attachment" style="width: 100%; height: 200px;" binding="#{AddFileDialog.attachmentSelect}" validator="#{AddFileDialog.validate}">
-           <f:selectItems value="#{DialogManager.bean.attachments}"/>
-       </h:selectManyMenu>
-    </a:panel>
+   <a:panel styleClass="column panel-50" id="attachment-upload" label="#{msg.file_add_attachment}">
+      <a:panel id="attachment-folder-panel" rendered="#{AddFileDialog.showAttachmentFolderSelect}">
+         <h:panelGrid id="attachment-folder-select-panel" columns="2" columnClasses="vertical-align-middle,vertical-align-middle" >
+            <h:outputText id="attachment-folder-label" value="#{msg.file_add_folder_label}" />
+            <a:panel id="att-folder-panel">
+               <h:selectOneMenu id="attachment-folder-select" styleClass="#{AddFileDialog.onChangeStyleClass}">
+                  <f:selectItems value="#{AddFileDialog.attachmentFolders}" />
+               </h:selectOneMenu>
+               <a:actionLink id="submit-att-folder-link" value="" actionListener="#{AddFileDialog.attachmentFolderSelected}" styleClass="hidden" />
+            </a:panel>
+         </h:panelGrid>
+      </a:panel>
+      <h:outputText id="out_attachment" value="#{msg.file_add_attachment_label}" styleClass="dialogpanel-title block" />
+      <h:selectManyMenu id="select_attachment" style="width: 100%; height: 200px;" binding="#{AddFileDialog.attachmentSelect}" validator="#{AddFileDialog.validate}">
+         <f:selectItems value="#{AddFileDialog.attachments}" />
+      </h:selectManyMenu>
+   </a:panel>
 
     <a:panel styleClass="column panel-50-f" id="scanned-file-upload" label="#{msg.file_add_scanned}">
+      <a:panel id="scanned-folder-panel" rendered="#{AddFileDialog.showScannedFolderSelect}">
+         <h:panelGrid id="scanned-folder-select-panel" columns="2" columnClasses="vertical-align-middle,vertical-align-middle" >
+            <h:outputText id="scanned-folder-label" value="#{msg.file_add_folder_label}" />
+            <a:panel id="scan-folder-panel">
+               <h:selectOneMenu id="scanned-folder-select" styleClass="#{AddFileDialog.onChangeStyleClass}">
+                  <f:selectItems value="#{AddFileDialog.scannedFolders}" />
+               </h:selectOneMenu>
+               <a:actionLink id="submit-scan-folder-link" value="" actionListener="#{AddFileDialog.scannedFolderSelected}" styleClass="hidden" />
+            </a:panel>
+         </h:panelGrid>
+      </a:panel>    
        <h:outputText id="out_scanned_file" value="#{msg.file_add_scanned_label}" styleClass="dialogpanel-title block"/>
        <h:selectManyMenu id="select_scanned_file" style="width: 100%; height: 200px;" binding="#{AddFileDialog.scannedSelect}" validator="#{AddFileDialog.validate}">
-           <f:selectItems value="#{DialogManager.bean.scannedFiles}"/>
+           <f:selectItems value="#{AddFileDialog.scannedFiles}"/>
        </h:selectManyMenu>
     </a:panel>
    

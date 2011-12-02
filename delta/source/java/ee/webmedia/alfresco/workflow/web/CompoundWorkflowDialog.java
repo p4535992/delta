@@ -46,7 +46,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.Confirmable;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
-import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
@@ -162,10 +161,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             ArrayList<MessageData> messageDataList = new ArrayList<MessageData>();
             String msgKey = "workflow_compound_confirm_same_task";
             for (Pair<String, QName> ownerNameTypePair : hasSameTask) {
-                List<String> values = new ArrayList<String>();
-                values.add(ownerNameTypePair.getFirst());
-                values.add(MessageUtil.getTypeName(ownerNameTypePair.getSecond()));
-                MessageData msgData = new MessageDataImpl(MessageSeverity.WARN, msgKey, values);
+                MessageData msgData = new MessageDataImpl(MessageSeverity.WARN, msgKey, ownerNameTypePair.getFirst(), MessageUtil.getTypeName(ownerNameTypePair.getSecond()));
                 messageDataList.add(msgData);
             }
             messageDataList.add(new MessageDataImpl(MessageSeverity.WARN, "workflow_compound_confirm_continue"));
@@ -575,9 +571,12 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
 
             sortedTypes = new TreeMap<String, QName>();
             Map<QName, WorkflowType> workflowTypes = workflowService.getWorkflowTypes();
-            String docStatus = (String) BeanHelper.getNodeService().getProperty(docRef, DocumentDynamicModel.Props.DOC_STATUS);
+            String docStatus = (String) BeanHelper.getNodeService().getProperty(docRef, DocumentCommonModel.Props.DOC_STATUS);
             boolean isDocStatusWorking = DocumentStatus.WORKING.getValueName().equals(docStatus);
             for (QName wfType : workflowTypes.keySet()) {
+                if (wfType.equals(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_WORKFLOW)) {
+                    continue;
+                }
                 if ((wfType.equals(WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW)
                             || wfType.equals(WorkflowSpecificModel.Types.OPINION_WORKFLOW)
                             || wfType.equals(WorkflowSpecificModel.Types.REVIEW_WORKFLOW))

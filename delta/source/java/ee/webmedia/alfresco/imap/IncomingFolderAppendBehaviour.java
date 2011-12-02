@@ -24,6 +24,6 @@ public class IncomingFolderAppendBehaviour implements AppendBehaviour {
 
     @Override
     public long appendMessage(ImmutableFolder folder, MimeMessage mimeMessage, Flags flags, Date date) throws FolderException {
-        return imapService.saveEmail(folder.getFolderNodeRef(), mimeMessage, true);
+        return imapService.findFolderAndSaveEmail(folder.getFolderNodeRef(), mimeMessage, BEHAVIOUR_NAME, true);
     }
 }

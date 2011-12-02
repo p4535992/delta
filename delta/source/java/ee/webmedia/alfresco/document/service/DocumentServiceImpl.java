@@ -118,6 +118,7 @@ import ee.webmedia.alfresco.document.assocsdyn.service.DocumentAssociationsServi
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
 import ee.webmedia.alfresco.document.file.service.FileService;
+import ee.webmedia.alfresco.document.file.web.Subfolder;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
@@ -134,7 +135,7 @@ import ee.webmedia.alfresco.document.sendout.web.DocumentSendOutDialog;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeHelper;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.imap.model.ImapModel;
-import ee.webmedia.alfresco.imap.web.ImapFolder;
+import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.notification.service.NotificationService;
 import ee.webmedia.alfresco.privilege.model.PrivilegeMappings;
@@ -203,6 +204,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
     private NotificationService _notificationService;
     private CaseService _caseService;
     private DocumentSearchService _documentSearchService;
+    private ImapServiceExt _imapServiceExt;
     // END: properties that would cause dependency cycle when trying to inject them
     protected BeanFactory beanFactory;
 
@@ -1559,16 +1561,6 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
     }
 
     @Override
-    public List<Document> getAllDocumentsByVolume(NodeRef volumeRef) {
-        return getAllDocumentsByParentNodeRef(volumeRef);
-    }
-
-    @Override
-    public List<Document> getAllDocumentsByCase(NodeRef caseRef) {
-        return getAllDocumentsByParentNodeRef(caseRef);
-    }
-
-    @Override
     public List<Document> getAllDocumentFromDvk() {
         List<Document> documents = getAllDocumentsByParentNodeRef(generalService.getNodeRef(fromDvkXPath));
         Collections.sort(documents);
@@ -1658,12 +1650,12 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         return countDocumentsInFolder(generalService.getNodeRef(incomingEmailPath), true);
     }
 
-    public int countDocumentsInFolder(NodeRef parentRef, boolean countFilesInSubfolders) {
+    private int countDocumentsInFolder(NodeRef parentRef, boolean countFilesInSubfolders) {
         int count = 0;
         List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parentRef, Collections.singleton(DocumentCommonModel.Types.DOCUMENT));
         count = childAssocs != null ? childAssocs.size() : 0;
         if (countFilesInSubfolders) {
-            for (ImapFolder subfolder : fileService.getImapSubfolders(parentRef)) {
+            for (Subfolder subfolder : getImapServiceExt().getImapSubfolders(parentRef, DocumentCommonModel.Types.DOCUMENT)) {
                 count += countDocumentsInFolder(subfolder.getNodeRef(), countFilesInSubfolders);
             }
         }
@@ -2074,8 +2066,6 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
                     documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_registered"));
                 }
             }
-            // Update generated files
-            documentTemplateService.updateGeneratedFiles(docNode.getNodeRef(), true);
             return updateDocument(docNode);
         }
         throw new UnableToPerformException(MessageSeverity.INFO, "document_errorMsg_register_initialDocNotRegistered");
@@ -2159,16 +2149,26 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
     }
 
     private List<Document> getAllDocumentsByParentNodeRef(NodeRef parentRef) {
+        List<NodeRef> docsRefs = getAllDocumentRefsByParentRef(parentRef);
+        List<Document> docsOfParent = new ArrayList<Document>(docsRefs.size());
+        for (NodeRef docRef : docsRefs) {
+            docsOfParent.add(getDocumentByNodeRef(docRef));
+        }
+        return docsOfParent;
+    }
+
+    @Override
+    public List<NodeRef> getAllDocumentRefsByParentRef(NodeRef parentRef) {
         List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parentRef, RegexQNamePattern.MATCH_ALL, RegexQNamePattern.MATCH_ALL);
-        List<Document> docsOfParent = new ArrayList<Document>(childAssocs.size());
+        List<NodeRef> docsRefs = new ArrayList<NodeRef>(childAssocs.size());
         for (ChildAssociationRef childAssocRef : childAssocs) {
             NodeRef docRef = childAssocRef.getChildRef();
             if (!DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(docRef))) { // XXX DLSeadist filter out old document types
                 continue;
             }
-            docsOfParent.add(getDocumentByNodeRef(docRef));
+            docsRefs.add(docRef);
         }
-        return docsOfParent;
+        return docsRefs;
     }
 
     private NodeRef getInitialDocument(NodeRef followupDocRef) {
@@ -3170,6 +3170,13 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
             _documentSearchService = (DocumentSearchService) beanFactory.getBean(DocumentSearchService.BEAN_NAME);
         }
         return _documentSearchService;
+    }
+
+    protected ImapServiceExt getImapServiceExt() {
+        if (_imapServiceExt == null) {
+            _imapServiceExt = (ImapServiceExt) beanFactory.getBean(ImapServiceExt.BEAN_NAME);
+        }
+        return _imapServiceExt;
     }
 
     // dependency cicle documentService -> documentAssociationsService -> documentAdminService -> documentSearchService -> documentService

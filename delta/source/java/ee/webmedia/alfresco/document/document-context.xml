@@ -322,6 +322,15 @@
       <property name="privilegeService" ref="PrivilegeService" />
       <property name="fileService" ref="FileService" />
    </bean>
+   
+   <!-- NB! In the future replace this with 2.5 -> 3.x migration script -->
+   <bean id="deleteSubtypedDocuments" class="ee.webmedia.alfresco.document.bootstrap.DeleteSubtypedDocuments" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dictionaryService" ref="DictionaryService" />
+      <property name="transactionService" ref="TransactionService" />
+      <property name="functionsService" ref="FunctionsService" />
+   </bean>   
 
    <!-- START: web beans: -->
 

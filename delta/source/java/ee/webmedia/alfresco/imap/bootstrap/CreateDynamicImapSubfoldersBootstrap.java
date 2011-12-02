@@ -1,75 +1,45 @@
 package ee.webmedia.alfresco.imap.bootstrap;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.StringTokenizer;
-
-import org.alfresco.model.ContentModel;
 import org.alfresco.repo.module.AbstractModuleComponent;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.namespace.QName;
-import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.imap.model.ImapModel;
+import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 
+/**
+ * Dynamically create subfolders for fixed type imap folders
+ * 
+ * @author Riina Tens
+ */
 public class CreateDynamicImapSubfoldersBootstrap extends AbstractModuleComponent {
-
-    private String incomingLettersSubfolderType;
-    private String attachmentsSubfolderType;
-    private String outgoingLettersSubfolderType;
-    private static final String TYPE_PREFIX_FIXED = "fixed";
 
     private GeneralService generalService;
     private NodeService nodeService;
+    private ImapServiceExt imapServiceExt;
+    private FileService fileService;
 
     @Override
     protected void executeInternal() throws Throwable {
-        addSubfolders(incomingLettersSubfolderType, ImapModel.Repo.INCOMING_SPACE);
-        addSubfolders(attachmentsSubfolderType, ImapModel.Repo.ATTACHMENT_SPACE);
-        addSubfolders(outgoingLettersSubfolderType, ImapModel.Repo.SENT_SPACE);
+        addSubfolders(ImapModel.Repo.INCOMING_SPACE);
+        addSubfolders(ImapModel.Repo.ATTACHMENT_SPACE);
+        addSubfolders(ImapModel.Repo.SENT_SPACE);
     }
 
-    private void addSubfolders(String subfolderType, String parentNodeXPath) {
-        if (StringUtils.isNotBlank(subfolderType)) {
-            StringTokenizer tokenizer = new StringTokenizer(subfolderType, ";");
-            if (TYPE_PREFIX_FIXED.equals(tokenizer.nextToken())) {
-                NodeRef parentFolderNodeRef = generalService.getNodeRef(parentNodeXPath);
-                String behaviour = (String) nodeService.getProperty(parentFolderNodeRef, ImapModel.Properties.APPEND_BEHAVIOUR);
-                List<String> newLocalnames = new ArrayList<String>();
-                while (tokenizer.hasMoreTokens()) {
-                    String folderName = tokenizer.nextToken();
-                    if (StringUtils.isNotBlank(folderName)) {
-                        String assocLocalName = QName.createValidLocalName(folderName);
-                        NodeRef childFolder = nodeService.getChildByName(parentFolderNodeRef, ContentModel.ASSOC_CONTAINS, assocLocalName);
-                        if (childFolder == null && !newLocalnames.contains(assocLocalName)) {
-                            QName assocName = QName.createQName(ImapModel.URI, assocLocalName);
-                            Map<QName, Serializable> props = new HashMap<QName, Serializable>();
-                            props.put(ContentModel.PROP_NAME, folderName);
-                            props.put(ImapModel.Properties.APPEND_BEHAVIOUR, behaviour);
-                            nodeService.createNode(parentFolderNodeRef, ContentModel.ASSOC_CONTAINS, assocName, ImapModel.Types.IMAP_FOLDER, props);
-                            newLocalnames.add(assocLocalName);
-                        }
-                    }
+    private void addSubfolders(String parentNodeXPath) {
+        NodeRef parentRef = generalService.getNodeRef(parentNodeXPath);
+        if (imapServiceExt.isFixedFolder(parentRef)) {
+            NodeRef parentFolderNodeRef = generalService.getNodeRef(parentNodeXPath);
+            String behaviour = (String) nodeService.getProperty(parentFolderNodeRef, ImapModel.Properties.APPEND_BEHAVIOUR);
+            for (String subfolderName : imapServiceExt.getFixedSubfolderNames(parentRef)) {
+                NodeRef childFolder = fileService.findSubfolderWithName(parentRef, subfolderName, ImapModel.Types.IMAP_FOLDER);
+                if (childFolder == null) {
+                    imapServiceExt.createImapSubfolder(parentFolderNodeRef, behaviour, subfolderName, subfolderName);
                 }
             }
         }
-    }
-
-    public void setIncomingLettersSubfolderType(String incomingLettersSubfolderType) {
-        this.incomingLettersSubfolderType = incomingLettersSubfolderType;
-    }
-
-    public void setAttachmentsSubfolderType(String attachmentsSubfolderType) {
-        this.attachmentsSubfolderType = attachmentsSubfolderType;
-    }
-
-    public void setOutgoingLettersSubfolderType(String outgoingLettersSubfolderType) {
-        this.outgoingLettersSubfolderType = outgoingLettersSubfolderType;
     }
 
     public void setGeneralService(GeneralService generalService) {
@@ -78,6 +48,18 @@ public class CreateDynamicImapSubfoldersBootstrap extends AbstractModuleComponen
 
     public void setNodeService(NodeService nodeService) {
         this.nodeService = nodeService;
+    }
+
+    public void setImapServiceExt(ImapServiceExt imapServiceExt) {
+        this.imapServiceExt = imapServiceExt;
+    }
+
+    public ImapServiceExt getImapServiceExt() {
+        return imapServiceExt;
+    }
+
+    public void setFileService(FileService fileService) {
+        this.fileService = fileService;
     }
 
 }

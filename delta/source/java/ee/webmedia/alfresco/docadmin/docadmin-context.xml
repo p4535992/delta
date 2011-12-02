@@ -144,12 +144,12 @@
       <property name="executeOnceOnly" value="true" />
    </bean>
 
-   <bean id="fieldDefPropsUpdater" class="ee.webmedia.alfresco.docadmin.bootstrap.FieldDefPropsUpdater" parent="abstractNodeUpdater">
+   <bean id="fieldDefPropsUpdater2" class="ee.webmedia.alfresco.docadmin.bootstrap.FieldDefPropsUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
    </bean>
 
-   <bean id="fieldGroupDefPropsUpdater" class="ee.webmedia.alfresco.docadmin.bootstrap.FieldGroupDefPropsUpdater" parent="abstractNodeUpdater">
+   <bean id="fieldGroupDefPropsUpdater2" class="ee.webmedia.alfresco.docadmin.bootstrap.FieldGroupDefPropsUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
    </bean>

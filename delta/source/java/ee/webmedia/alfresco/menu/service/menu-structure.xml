@@ -94,8 +94,8 @@
                   <action-listener>#{DvkCorruptListDialog.init}</action-listener>
                </item>
                <item id="scannedDocuments" title-id="menu_scanned_documents" document-manager="true">
-                  <outcome>dialog:scannedFoldersListDialog</outcome>
-                  <action-listener>#{ScannedFoldersListDialog.init}</action-listener>
+                  <outcome>dialog:scannedDocsListDialog</outcome>
+                  <action-listener>#{ScannedDocsListDialog.init}</action-listener>
                </item>
                <!-- TODO CL 163430
                <item id="sendingFailed" title-id="menu_sending_failed" document-manager="true" />

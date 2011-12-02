@@ -69,10 +69,15 @@ public class FieldDefPropsUpdater extends AbstractNodeUpdater {
         if (removeFormVolSearch) {
             nodeService.setProperty(fieldDefRef, DocumentAdminModel.Props.IS_PARAMETER_IN_VOL_SEARCH, false);
         }
+        boolean hadInapplicableAspect = nodeService.hasAspect(fieldDefRef, DocumentAdminModel.Aspects.INAPPLICABLE_FOR_TYPE);
+        if (!hadInapplicableAspect) {
+            nodeService.addAspect(fieldDefRef, DocumentAdminModel.Aspects.INAPPLICABLE_FOR_TYPE, null);
+        }
         return new String[] { fieldId
                 , updateInapplicableForVol ? DocumentAdminModel.Props.INAPPLICABLE_FOR_VOL.getLocalName() : ""
                 , updateMandatoryForVol ? DocumentAdminModel.Props.MANDATORY_FOR_VOL.getLocalName() : ""
-                , removeFormVolSearch ? DocumentAdminModel.Props.IS_PARAMETER_IN_VOL_SEARCH.getLocalName() + "=false" : "" };
+                , removeFormVolSearch ? DocumentAdminModel.Props.IS_PARAMETER_IN_VOL_SEARCH.getLocalName() + "=false" : ""
+                , hadInapplicableAspect ? "" : DocumentAdminModel.Aspects.INAPPLICABLE_FOR_TYPE.getLocalName() };
     }
 
     @Override

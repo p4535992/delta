@@ -25,8 +25,6 @@ import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.document.model.Document;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
@@ -301,32 +299,22 @@ public class FunctionsServiceImpl implements FunctionsService {
         for (Function function : getAllFunctions()) {
             long docCountInFunction = 0;
             final NodeRef functionRef = function.getNodeRef();
-            for (Series series : seriesService.getAllSeriesByFunction(functionRef)) {
+            for (NodeRef seriesRef : seriesService.getAllSeriesRefsByFunction(functionRef)) {
                 long docCountInSeries = 0;
-                final NodeRef seriesRef = series.getNode().getNodeRef();
                 for (Volume volume : volumeService.getAllVolumesBySeries(seriesRef)) {
                     long docCountInVolume = 0;
                     final NodeRef volumeRef = volume.getNode().getNodeRef();
                     if (volume.isContainsCases()) {
                         for (Case aCase : caseService.getAllCasesByVolume(volumeRef)) {
                             final NodeRef caseRef = aCase.getNode().getNodeRef();
-                            final List<Document> allDocumentsByCase = documentService.getAllDocumentsByCase(caseRef);
-                            for (Document doc : allDocumentsByCase) {
-                                final Map<String, Object> props = doc.getNode().getProperties();
-                                props.put(DocumentCommonModel.Props.CASE.toString(), caseRef.toString());
-                                setFunctionSeriesVolumeRefs(functionRef, seriesRef, volumeRef, doc.getNodeRef(), props);
-                            }
+                            final List<NodeRef> allDocumentsByCase = documentService.getAllDocumentRefsByParentRef(caseRef);
                             final int documentsCountByCase = allDocumentsByCase.size();
                             nodeService.setProperty(caseRef, CaseModel.Props.CONTAINING_DOCS_COUNT, documentsCountByCase);
                             docCountInVolume += documentsCountByCase;
                         }
                     } else {
-                        final List<Document> allDocumentsByVolume = documentService.getAllDocumentsByVolume(volumeRef);
+                        final List<NodeRef> allDocumentsByVolume = documentService.getAllDocumentRefsByParentRef(volumeRef);
                         final int documentsCountByVolume = allDocumentsByVolume.size();
-                        for (Document doc : allDocumentsByVolume) {
-                            final Map<String, Object> props = doc.getNode().getProperties();
-                            setFunctionSeriesVolumeRefs(functionRef, seriesRef, volumeRef, doc.getNodeRef(), props);
-                        }
                         docCountInVolume += documentsCountByVolume;
                     }
                     nodeService.setProperty(volumeRef, VolumeModel.Props.CONTAINING_DOCS_COUNT, docCountInVolume);
@@ -349,9 +337,8 @@ public class FunctionsServiceImpl implements FunctionsService {
         for (ChildAssociationRef function : getFunctionAssocs(getFunctionsRoot())) {
             long docCountInFunction = 0;
             final NodeRef functionRef = function.getChildRef();
-            for (ChildAssociationRef series : seriesService.getAllSeriesAssocsByFunction(functionRef)) {
+            for (NodeRef seriesRef : seriesService.getAllSeriesRefsByFunction(functionRef)) {
                 long docCountInSeries = 0;
-                final NodeRef seriesRef = series.getChildRef();
                 for (ChildAssociationRef volume : volumeService.getAllVolumeRefsBySeries(seriesRef)) {
                     long docCountInVolume = 0;
                     final NodeRef volumeRef = volume.getChildRef();
@@ -382,12 +369,4 @@ public class FunctionsServiceImpl implements FunctionsService {
         return new Pair<List<NodeRef>, Long>(c, deletedDocCount);
     }
 
-    private void setFunctionSeriesVolumeRefs(final NodeRef functionRef, final NodeRef seriesRef, final NodeRef volumeRef, NodeRef docRef,
-            final Map<String, Object> props) {
-        props.put(DocumentCommonModel.Props.FUNCTION.toString(), functionRef.toString());
-        props.put(DocumentCommonModel.Props.SERIES.toString(), seriesRef.toString());
-        props.put(DocumentCommonModel.Props.VOLUME.toString(), volumeRef.toString());
-        final Map<QName, Serializable> qNameProperties = RepoUtil.toQNameProperties(props);
-        nodeService.setProperties(docRef, qNameProperties);
-    }
 }

@@ -6,10 +6,11 @@ import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
 import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
-import ee.webmedia.alfresco.imap.web.ImapFolder;
+import ee.webmedia.alfresco.document.file.web.Subfolder;
 
 /**
  * @author Dmitri Melnikov
@@ -80,8 +81,6 @@ public interface FileService {
 
     List<File> getScannedFolders();
 
-    List<File> getAllScannedFiles();
-
     /**
      * Gets list of scanned files.
      * 
@@ -132,8 +131,14 @@ public interface FileService {
 
     List<String> getDocumentFileDisplayNames(NodeRef folder);
 
-    int getAllFilesExcludingDigidocSubitemsCount(NodeRef attachmentRoot, boolean countFilesInSubfolders);
+    /**
+     * @param parentRef
+     * @param subfolderNodeType - type to get as subfolder
+     * @param countableChildNodeType - type for counting non-subfolder children
+     * @return
+     */
+    List<Subfolder> getSubfolders(NodeRef parentRef, QName subfolderNodeType, QName countableChildNodeType);
 
-    public List<ImapFolder> getImapSubfolders(NodeRef parentRef);
+    NodeRef findSubfolderWithName(NodeRef parentNodeRef, String folderName, QName subfolderType);
 
 }

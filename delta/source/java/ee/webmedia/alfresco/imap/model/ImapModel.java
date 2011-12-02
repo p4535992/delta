@@ -27,10 +27,6 @@ public interface ImapModel {
         QName BEHAVIOURS = QName.createQName(URI, "behaviours");
     }
 
-    interface Assocs {
-        QName IMAP_SUBFOLDER = QName.createQName(URI, "imapSubfolder");
-    }
-
     interface Properties {
         QName APPEND_BEHAVIOUR = QName.createQName(URI, "appendBehaviour");
     }

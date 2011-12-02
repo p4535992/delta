@@ -17,7 +17,7 @@
          <f:facet name="header">
             <a:sortLink id="col1-sort" label="#{msg.document_docName}" value="name" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col6-text-1" value="#{f.node.name}" actionListener="#{DialogManager.bean.setup}" >
+         <a:actionLink id="col6-text-1" value="#{f.node.name} (#{f.nrOfChildren})" actionListener="#{DialogManager.bean.setup}" >
             <f:param name="parentNodeRef" value="#{f.nodeRef}" />
          </a:actionLink>
       </a:column>

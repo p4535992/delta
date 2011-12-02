@@ -27,6 +27,7 @@ import javax.faces.model.SelectItem;
 import javax.faces.validator.Validator;
 import javax.faces.validator.ValidatorException;
 
+import org.alfresco.model.ContentModel;
 import org.alfresco.repo.node.integrity.IntegrityException;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.model.FileExistsException;
@@ -58,11 +59,13 @@ import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
+import ee.webmedia.alfresco.document.scanned.model.ScannedModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.web.DocumentDialog;
 import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
@@ -93,6 +96,9 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
     private List<String> selectedFileName;
     private List<String> selectedFileNameWithoutExtension;
     private DocumentDialog documentDialog;
+
+    private NodeRef attachmentParentRef;
+    private NodeRef scannedParentRef;
 
     @Override
     public String cancel() {
@@ -131,6 +137,8 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         uploadedFilesPanelGroup = null;
         attachmentSelect = null;
         scannedSelect = null;
+        attachmentParentRef = null;
+        scannedParentRef = null;
         clearUpload();
         return null;
     }
@@ -327,6 +335,14 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
             }
         }
         return false;
+    }
+
+    public boolean isShowAttachmentFolderSelect() {
+        return getAttachmentFolders().size() > 1;
+    }
+
+    public boolean isShowScannedFolderSelect() {
+        return getScannedFolders().size() > 1;
     }
 
     @Override
@@ -576,6 +592,24 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         isFileSelected = (selectedFileNodeRef.size() > 0);
     }
 
+    public void attachmentFolderSelected(ActionEvent event) {
+        String folderNodeRefStr = (String) ((UIInput) event.getComponent().findComponent("attachment-folder-select")).getValue();
+        if (StringUtils.isBlank(folderNodeRefStr)) {
+            attachmentParentRef = null;
+        } else {
+            attachmentParentRef = new NodeRef(folderNodeRefStr);
+        }
+    }
+
+    public void scannedFolderSelected(ActionEvent event) {
+        String folderNodeRefStr = (String) ((UIInput) event.getComponent().findComponent("scanned-folder-select")).getValue();
+        if (StringUtils.isBlank(folderNodeRefStr)) {
+            scannedParentRef = null;
+        } else {
+            scannedParentRef = new NodeRef(folderNodeRefStr);
+        }
+    }
+
     // START: getters / setters
 
     public void setUserService(UserService userService) {
@@ -648,20 +682,62 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
 
     public List<SelectItem> getAttachments() {
         List<SelectItem> attachments = new ArrayList<SelectItem>();
-        List<File> files = getFileService().getAllFilesExcludingDigidocSubitems(getImapServiceExt().getAttachmentRoot());
+        List<File> files = getFileService().getAllFilesExcludingDigidocSubitems(getAttachmentParenNodeRef());
         for (File file : files) {
             attachments.add(new SelectItem(file.getNodeRef().toString(), file.getName()));
         }
         return attachments;
     }
 
+    public NodeRef getAttachmentParenNodeRef() {
+        if (attachmentParentRef == null) {
+            attachmentParentRef = BeanHelper.getImapServiceExt().getAttachmentRoot();
+        }
+        return attachmentParentRef;
+    }
+
+    public List<SelectItem> getAttachmentFolders() {
+        List<SelectItem> attachmentFolders = new ArrayList<SelectItem>();
+        NodeRef attachmentRootFolderRef = BeanHelper.getImapServiceExt().getAttachmentRoot();
+        attachmentFolders.add(new SelectItem(attachmentRootFolderRef.toString(), MessageUtil.getMessage("menu_email_attachments")));
+        addFolderSelectItems(attachmentFolders, BeanHelper.getImapServiceExt().getImapSubfolders(attachmentRootFolderRef, ContentModel.TYPE_CONTENT), " ");
+        return attachmentFolders;
+    }
+
+    public NodeRef getScannedParenNodeRef() {
+        if (scannedParentRef == null) {
+            scannedParentRef = BeanHelper.getGeneralService().getNodeRef(ScannedModel.Repo.SCANNED_SPACE);
+        }
+        return scannedParentRef;
+    }
+
+    public List<SelectItem> getScannedFolders() {
+        List<SelectItem> attachmentFolders = new ArrayList<SelectItem>();
+        NodeRef scannedRootFolderRef = BeanHelper.getGeneralService().getNodeRef(ScannedModel.Repo.SCANNED_SPACE);
+        attachmentFolders.add(new SelectItem(scannedRootFolderRef.toString(), MessageUtil.getMessage("menu_scanned_documents")));
+        addFolderSelectItems(attachmentFolders, BeanHelper.getFileService().getSubfolders(scannedRootFolderRef, ContentModel.TYPE_FOLDER, ContentModel.TYPE_CONTENT), " ");
+        return attachmentFolders;
+    }
+
+    private void addFolderSelectItems(List<SelectItem> attachmentFolders, List<Subfolder> subfolders, String prefix) {
+        for (Subfolder subfolder : subfolders) {
+            String itemLabel = prefix + subfolder.getName();
+            attachmentFolders.add(new SelectItem(subfolder.getNodeRef().toString(), itemLabel));
+            addFolderSelectItems(attachmentFolders, BeanHelper.getImapServiceExt().getImapSubfolders(subfolder.getNodeRef(), ContentModel.TYPE_CONTENT), prefix + prefix);
+        }
+    }
+
     public List<SelectItem> getScannedFiles() {
         List<SelectItem> scannedFiles = new ArrayList<SelectItem>();
-        List<File> files = getFileService().getAllScannedFiles();
+        List<File> files = getFileService().getScannedFiles(getScannedParenNodeRef());
         for (File file : files) {
             scannedFiles.add(new SelectItem(file.getNodeRef().toString(), file.getName()));
         }
         return scannedFiles;
+    }
+
+    public String getOnChangeStyleClass() {
+        return ComponentUtil.getOnChangeStyleClass();
     }
 
     public HtmlSelectManyMenu getScannedSelect() {

@@ -56,13 +56,13 @@
       <property name="dependsOn">
          <list>
             <ref bean="imapSpacesBootstrap" />
+            <ref bean="scannedSpacesBootstrap" />
          </list>
       </property>      
       <property name="generalService" ref="GeneralService" />
       <property name="nodeService" ref="NodeService" />
-      <property name="incomingLettersSubfolderType" value="${imap-folders.incomingLetters.subfolderType}" />
-      <property name="attachmentsSubfolderType" value="${imap-folders.attachments.subfolderType}" />
-      <property name="outgoingLettersSubfolderType" value="${imap-foders.outgoingLetters.subfolderType}" />
+      <property name="imapServiceExt" ref="ImapServiceExt" />
+      <property name="fileService" ref="FileService" />
    </bean>
 
    <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
@@ -92,7 +92,11 @@
       <property name="mimetypeService" ref="MimetypeService" />
       <property name="documentDynamicService" ref="DocumentDynamicService" />
       <property name="einvoiceService" ref="EInvoiceService" />
+      <property name="userService" ref="UserService" />
       <property name="messageCopyFolder" value="${imap.messageFolder}" />
+      <property name="incomingLettersSubfolderType" value="${imap-folders.incomingLetters.subfolderType}" />
+      <property name="attachmentsSubfolderType" value="${imap-folders.attachments.subfolderType}" />
+      <property name="outgoingLettersSubfolderType" value="${imap-foders.outgoingLetters.subfolderType}" />      
    </bean>
 
    <bean id="ImapServiceExt" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -116,7 +120,6 @@
 
    <bean class="ee.webmedia.alfresco.imap.web.AttachmentListMenuItemProcessor">
       <property name="menuService" ref="MenuService" />
-      <property name="fileService" ref="FileService" />
       <property name="imapServiceExt" ref="ImapServiceExt" />
    </bean>
    

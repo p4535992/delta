@@ -6,14 +6,15 @@ import java.util.List;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.document.file.web.Subfolder;
 import ee.webmedia.alfresco.imap.model.ImapModel;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -27,7 +28,7 @@ public class AttachmentListDialog extends BaseDialogBean implements FolderListDi
     private static final long serialVersionUID = 1L;
 
     private List<File> files;
-    private List<ImapFolder> folders;
+    private List<Subfolder> folders;
     private NodeRef parentRef;
 
     public void setup(ActionEvent event) {
@@ -35,13 +36,7 @@ public class AttachmentListDialog extends BaseDialogBean implements FolderListDi
     }
 
     public void init(ActionEvent event) {
-        parentRef = null;
-        if (ActionUtil.hasParam(event, PARAM_PARENT_NODEREF)) {
-            String folderRef = ActionUtil.getParam(event, PARAM_PARENT_NODEREF);
-            if (StringUtils.isNotBlank(folderRef)) {
-                parentRef = new NodeRef(folderRef);
-            }
-        }
+        parentRef = ActionUtil.getParentNodeRefParam(event);
         if (parentRef == null) {
             parentRef = getMainFolderRef();
         }
@@ -65,7 +60,7 @@ public class AttachmentListDialog extends BaseDialogBean implements FolderListDi
         for (int i = temp.size(); i > 0; i--) {
             files.add(temp.get(i - 1));
         }
-        folders = BeanHelper.getFileService().getImapSubfolders(parentRef);
+        folders = BeanHelper.getImapServiceExt().getImapSubfolders(parentRef, ContentModel.TYPE_CONTENT);
     }
 
     public List<File> getFiles() {
@@ -88,7 +83,7 @@ public class AttachmentListDialog extends BaseDialogBean implements FolderListDi
     }
 
     @Override
-    public List<ImapFolder> getFolders() {
+    public List<Subfolder> getFolders() {
         return folders;
     }
 
@@ -96,4 +91,9 @@ public class AttachmentListDialog extends BaseDialogBean implements FolderListDi
     public String getFolderListTitle() {
         return MessageUtil.getMessage("document_incoming_emails_folders");
     }
+
+    public boolean isShowFileList() {
+        return (files != null && !files.isEmpty()) || !isShowFolderList();
+    }
+
 }

@@ -35,6 +35,8 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.CallbackPreferringPlatformTransactionManager;
 import org.springframework.transaction.support.TransactionCallback;
 
+import ee.webmedia.alfresco.common.transaction.TransactionHelperWrapperException;
+
 /**
  * AOP Alliance MethodInterceptor for declarative transaction
  * management using the common Spring transaction infrastructure
@@ -123,12 +125,15 @@ public class TransactionInterceptor extends TransactionAspectSupport implements 
                         public Object execute() throws Throwable {
                             return invocation.proceed();
                         }
-                    }, isReadOnly);
+                    }, isReadOnly, false, true);
                 } else {
                     retVal = invocation.proceed();
                 }
             } catch (Throwable ex) {
                 // target invocation exception
+                if (ex instanceof TransactionHelperWrapperException){
+                    ex = ex.getCause();
+                }
                 completeTransactionAfterThrowing(txInfo, ex);
                 throw ex;
             }

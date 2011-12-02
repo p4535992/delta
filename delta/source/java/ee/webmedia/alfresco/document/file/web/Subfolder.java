@@ -1,4 +1,4 @@
-package ee.webmedia.alfresco.imap.web;
+package ee.webmedia.alfresco.document.file.web;
 
 import java.io.Serializable;
 
@@ -7,16 +7,19 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.Node;
 import org.springframework.util.Assert;
 
-public class ImapFolder implements Serializable {
+/**
+ * @author Riina Tens
+ */
+public class Subfolder implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private final Node node;
-    private final boolean isEmpty;
+    private int nrOfChildren = 0;
 
-    public ImapFolder(Node node, boolean isEmpty) {
+    public Subfolder(Node node, int nrOfChildren) {
         Assert.notNull(node);
         this.node = node;
-        this.isEmpty = isEmpty;
+        this.nrOfChildren = nrOfChildren;
     }
 
     public Node getNode() {
@@ -28,10 +31,14 @@ public class ImapFolder implements Serializable {
     }
 
     public boolean getIsEmpty() {
-        return isEmpty;
+        return nrOfChildren == 0;
     }
 
     public String getName() {
         return (String) node.getProperties().get(ContentModel.PROP_NAME);
+    }
+
+    public int getNrOfChildren() {
+        return nrOfChildren;
     }
 }

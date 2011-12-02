@@ -36,17 +36,6 @@ public interface DocumentDynamicModel {
 
         QName USER_NAMES = QName.createQName(URI, "userNames");
 
-        QName DOC_NAME = QName.createQName(URI, "docName");
-        QName DOC_STATUS = QName.createQName(URI, "docStatus");
-        QName STORAGE_TYPE = QName.createQName(URI, "storageType");
-
-        QName ACCESS_RESTRICTION = QName.createQName(URI, "accessRestriction");
-        QName ACCESS_RESTRICTION_REASON = QName.createQName(URI, "accessRestrictionReason");
-        QName ACCESS_RESTRICTION_BEGIN_DATE = QName.createQName(URI, "accessRestrictionBeginDate");
-        QName ACCESS_RESTRICTION_END_DATE = QName.createQName(URI, "accessRestrictionEndDate");
-        QName ACCESS_RESTRICTION_END_DESC = QName.createQName(URI, "accessRestrictionEndDesc");
-        QName ACCESS_RESTRICTION_CHANGE_REASON = QName.createQName(URI, "accessRestrictionChangeReason");
-
         /** document name used for ADR */
         QName DOC_NAME_ADR = QName.createQName(URI, "docNameAdr");
         QName SIGNER_ID = QName.createQName(URI, "signerId");

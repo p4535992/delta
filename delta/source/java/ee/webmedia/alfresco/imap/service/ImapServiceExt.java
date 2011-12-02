@@ -2,16 +2,21 @@ package ee.webmedia.alfresco.imap.service;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 
 import org.alfresco.repo.imap.AlfrescoImapUser;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
 import org.apache.xml.security.transforms.TransformationException;
 
 import com.icegreen.greenmail.store.FolderException;
 import com.icegreen.greenmail.store.MailFolder;
+
+import ee.webmedia.alfresco.document.file.web.Subfolder;
 
 /**
  * Extended imap service.
@@ -21,6 +26,8 @@ import com.icegreen.greenmail.store.MailFolder;
 public interface ImapServiceExt {
 
     String BEAN_NAME = "ImapServiceExt";
+    String FOLDER_TYPE_PREFIX_FIXED = "fixed";
+    String FOLDER_TYPE_PREFIX_USER_BASED = "userBased";
 
     /**
      * Gets IMAP folder.
@@ -70,5 +77,22 @@ public interface ImapServiceExt {
     NodeRef getAttachmentRoot();
 
     void saveIncomingEInvoice(NodeRef folderNodeRef, MimeMessage mimeMessage) throws FolderException;
+
+    boolean isFixedFolder(NodeRef folderRef);
+
+    boolean isUserBasedFolder(NodeRef folderRef);
+
+    Set<String> getFixedSubfolderNames(NodeRef parentFolderRef);
+
+    NodeRef createImapSubfolder(NodeRef parentFolderNodeRef, String behaviour, String subfolderName, String folderAssocName);
+
+    long findFolderAndSaveEmail(NodeRef folderNodeRef, MimeMessage mimeMessage, String behaviour, boolean incomingEmail) throws FolderException;
+
+    void findFolderAndSaveAttachments(NodeRef document, MimeMessage originalMessage, boolean saveBody) throws IOException, MessagingException, TransformationException,
+            FolderException;
+
+    List<Subfolder> getImapSubfolders(NodeRef parentRef, QName countableChildNodeType);
+
+    int getAllFilesCount(NodeRef attachmentRoot, boolean countFilesInSubfolders);
 
 }

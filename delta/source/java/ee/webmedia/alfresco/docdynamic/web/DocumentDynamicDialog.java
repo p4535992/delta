@@ -6,7 +6,6 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPropertySheetStateBean;
 import static ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGenerator.ACCESS_RESTRICTION_CHANGE_REASON_ERROR;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -19,8 +18,6 @@ import javax.faces.component.UIPanel;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
-import org.alfresco.model.ContentModel;
-import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
@@ -59,7 +56,6 @@ import ee.webmedia.alfresco.utils.MessageDataWrapper;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
-import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 
 /**
@@ -163,10 +159,6 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         return getCurrentSnapshot().showDocsAndCasesAssocs;
     }
 
-    public boolean isIncomingInvoice() {
-        return getDocument().isIncomingInvoice();
-    }
-
     /**
      * Should be called only when the document was received from DVK or Outlook.
      */
@@ -179,35 +171,13 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         if (document.getDocumentTypeId().equals(newType)) {
             return;
         }
-        BeanHelper.getDocumentDynamicService().changeTypeInMemory(getDocument(), newType);
+        BeanHelper.getDocumentDynamicService().changeTypeInMemory(document, newType);
         openOrSwitchModeCommon(document, true);
-        setOwnerCurrentUser();
     }
 
     /** Used in jsp */
     public String getOnChangeStyleClass() {
         return ComponentUtil.getOnChangeStyleClass();
-    }
-
-    public void setOwnerCurrentUser() {
-        setOwner(AuthenticationUtil.getRunAsUser());
-    }
-
-    public void setOwner(String userName) {
-        Map<QName, Serializable> personProps = getPersonProps(userName);
-
-        Map<String, Object> docProps = getDocument().getNode().getProperties();
-        docProps.put(DocumentCommonModel.Props.OWNER_ID.toString(), personProps.get(ContentModel.PROP_USERNAME));
-        docProps.put(DocumentCommonModel.Props.OWNER_NAME.toString(), UserUtil.getPersonFullName1(personProps));
-        docProps.put(DocumentCommonModel.Props.OWNER_JOB_TITLE.toString(), personProps.get(ContentModel.PROP_JOBTITLE));
-        String orgstructName = BeanHelper.getOrganizationStructureService().getOrganizationStructure((String) personProps.get(ContentModel.PROP_ORGID));
-        docProps.put(DocumentCommonModel.Props.OWNER_ORG_STRUCT_UNIT.toString(), orgstructName);
-        docProps.put(DocumentCommonModel.Props.OWNER_EMAIL.toString(), personProps.get(ContentModel.PROP_EMAIL));
-        docProps.put(DocumentCommonModel.Props.OWNER_PHONE.toString(), personProps.get(ContentModel.PROP_TELEPHONE));
-    }
-
-    private Map<QName, Serializable> getPersonProps(String userName) {
-        return BeanHelper.getUserService().getUserProperties(userName);
     }
 
     // =========================================================================
@@ -403,7 +373,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             throw e;
         }
 
-        if (savedDocument.isAccessRestrictionPropsChanged()) {
+        if (savedDocument.isAccessRestrictionPropsChanged() && BeanHelper.getSendOutService().hasDocumentSendInfos(savedDocument.getNodeRef())) {
             isFinished = false;
             // modal has already been displayed, if displaying was necessary
             renderedModal = null;

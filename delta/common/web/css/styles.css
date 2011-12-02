@@ -2529,3 +2529,7 @@ DIV.trans-scroll TABLE {
 	overflow-y: scroll; 
 	overflow-x: hidden;
 }
+
+.vertical-align-middle {
+	vertical-align: middle;	
+}

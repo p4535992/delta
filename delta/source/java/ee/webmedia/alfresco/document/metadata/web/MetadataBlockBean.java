@@ -1841,6 +1841,8 @@ public class MetadataBlockBean implements ClearStateListener {
             getDocumentService().setTransientProperties(document, parentNodes);
             BaseDialogBean.validatePermission(document, DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA);
             document = getDocumentService().registerDocument(document);
+			// Update generated files
+            BeanHelper.getDocumentTemplateService().updateGeneratedFiles(document.getNodeRef(), true);
             ((MenuBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuBean.BEAN_NAME)).processTaskItems();
             MessageUtil.addInfoMessage("document_registerDoc_success");
         } catch (UnableToPerformException e) {

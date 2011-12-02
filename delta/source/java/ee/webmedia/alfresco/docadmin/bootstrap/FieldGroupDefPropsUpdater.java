@@ -76,9 +76,14 @@ public class FieldGroupDefPropsUpdater extends AbstractNodeUpdater {
             props.put(DocumentAdminModel.Props.MANDATORY_FOR_VOL, true);
             nodeService.addProperties(fieldGroupDefRef, props);
         }
+        boolean hadInapplicableAspect = nodeService.hasAspect(fieldGroupDefRef, DocumentAdminModel.Aspects.INAPPLICABLE_FOR_TYPE);
+        if (!hadInapplicableAspect) {
+            nodeService.addAspect(fieldGroupDefRef, DocumentAdminModel.Aspects.INAPPLICABLE_FOR_TYPE, null);
+        }
         return new String[] { fieldGroupDefName
                 , updateInapplicableForVol ? DocumentAdminModel.Props.INAPPLICABLE_FOR_VOL.getLocalName() : ""
-                , isDocOwnerGroup ? DocumentAdminModel.Props.MANDATORY_FOR_VOL.getLocalName() : "" };
+                , isDocOwnerGroup ? DocumentAdminModel.Props.MANDATORY_FOR_VOL.getLocalName() : ""
+                , hadInapplicableAspect ? "" : DocumentAdminModel.Aspects.INAPPLICABLE_FOR_TYPE.getLocalName() };
     }
 
     @Override

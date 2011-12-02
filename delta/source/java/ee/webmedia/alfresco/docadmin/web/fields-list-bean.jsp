@@ -73,7 +73,7 @@ TODO: ALSeadist CL_TASK 181259 181260 DocTypeDetailsDialog
          </a:booleanEvaluator>
       </a:column>
 
-      <a:column id="type" rendered="#{DialogManager.bean == DocTypeDetailsDialog}">
+      <a:column id="type" rendered="#{DialogManager.bean == DocTypeDetailsDialog || DialogManager.bean == CaseFileTypeDetailsDialog}">
          <f:facet name="header">
             <a:outputText value="#{msg.docType_metadataList_type}" />
          </f:facet>

@@ -78,7 +78,8 @@ public class RepairPropertyTypeMismatchUpdater extends AbstractNodeUpdater {
             Pair<PropertyDefinition, Field> def = defs.get(entry.getKey().getLocalName());
             if (def == null) {
                 nodeService.removeProperty(nodeRef, entry.getKey());
-                result.add(entry.getKey().toPrefixString(namespaceService) + " had null propertyDefinition, removed property: " + entry.getValue().getClass().getSimpleName());
+                result.add(entry.getKey().toPrefixString(namespaceService) + " had null propertyDefinition, removed property: "
+                        + (entry.getValue() == null ? "null" : entry.getValue().getClass().getSimpleName()));
                 continue;
             }
             if (entry.getValue() == null) {

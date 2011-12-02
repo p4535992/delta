@@ -235,7 +235,7 @@
          <show-property name="docadmin:mandatoryForDoc" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" />
          <show-property name="docadmin:fieldType" component-generator="EnumSelectorGenerator" enumClass="ee.webmedia.alfresco.classificator.constant.FieldType" readOnlyIf="#{FieldDetailsDialog.fieldTypeReadOnly}" valueChangeListener="#{FieldDetailsDialog.fieldTypeChanged}" />
          <show-property name="docadmin:mandatory" readOnlyIf="#{FieldDetailsDialog.mandatoryReadOnly}" />
-         <show-property name="docadmin:changeableIf" component-generator="EnumSelectorGenerator" enumClass="ee.webmedia.alfresco.classificator.constant.FieldChangeableIf" forcedMandatory="#{!FieldDetailsDialog.fieldDefinition}" />
+         <show-property name="docadmin:changeableIf" component-generator="EnumSelectorGenerator" enumClass="ee.webmedia.alfresco.classificator.constant.FieldChangeableIf" forcedMandatory="#{!FieldDetailsDialog.fieldDefinition}" readOnlyIf="#{FieldDetailsDialog.changeableIfReadOnly}" />
 
          <!-- START: properties conditionally shown based on value of fieldType -->
          <separator name="sep-conditionalProps-before" show="#{FieldDetailsDialog.showAdditionalFieldsSeparator}" />

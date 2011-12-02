@@ -77,6 +77,12 @@ public class SendOutServiceImpl implements SendOutService {
     }
 
     @Override
+    public boolean hasDocumentSendInfos(NodeRef document) {
+        List<ChildAssociationRef> assocs = nodeService.getChildAssocs(document, RegexQNamePattern.MATCH_ALL, DocumentCommonModel.Assocs.SEND_INFO);
+        return !assocs.isEmpty();
+    }
+
+    @Override
     public List<SendInfo> getDocumentAndTaskSendInfos(NodeRef document, List<CompoundWorkflow> compoundWorkflows) {
         List<SendInfo> result = getDocumentSendInfos(document);
         for (CompoundWorkflow compoundWorkflow : compoundWorkflows) {

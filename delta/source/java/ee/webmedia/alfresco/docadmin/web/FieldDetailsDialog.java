@@ -316,6 +316,10 @@ public class FieldDetailsDialog extends BaseDialogBean {
         return !field.isMandatoryChangeable();
     }
 
+    public boolean isChangeableIfReadOnly() {
+        return !field.isChangeableIfChangeable();
+    }
+
     /** used by property sheet */
     public void fieldTypeChanged(ValueChangeEvent e) {
         FieldType newFieldType = DefaultTypeConverter.INSTANCE.convert(FieldType.class, e.getNewValue());
