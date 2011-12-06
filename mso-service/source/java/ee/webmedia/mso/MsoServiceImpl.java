@@ -230,7 +230,7 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
     }
 
     @Override
-    public synchronized ModifiedFormulasOutput getModifiedFormulas(MsoDocumentInput msoDocumentInput) throws Exception {
+    public synchronized ModifiedFormulasOutput modifiedFormulas(MsoDocumentInput msoDocumentInput) throws Exception {
         reset();
         Exception exception = null;
         long startTime = System.currentTimeMillis();
@@ -242,6 +242,11 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
             MsoProgram program = saveFile(msoDocumentInput);
             programName = program.getProgramName();
             macroName = MACRO_MODIFIED_FORMULAS;
+            
+            if (!"word".equals(programName)) {
+                throw new RuntimeException("Replacing formulas is only supported with Word, mimeType must be '" + MIMETYPE_DOC_DOT + "', this input mimeType="
+                        + inputMimeType + " programName=" + programName);
+            }
 
             startConvertAndWaitToComplete(program, null);
 
@@ -249,7 +254,7 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
             List<String> lines = FileUtils.readLines(buildOutput());
             Set<Formula> formulas = new HashSet<Formula>(lines.size());
             for (String line : lines) {
-                String[] split = line.split("=");
+                String[] split = org.apache.commons.lang.StringUtils.split(line, "=", 2);
                 Formula f = new Formula();
                 f.setKey(split[0]);
                 f.setValue(split[1]);

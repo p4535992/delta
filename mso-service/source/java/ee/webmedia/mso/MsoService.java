@@ -9,6 +9,6 @@ public interface MsoService {
 
     MsoDocumentAndPdfOutput replaceFormulasAndConvertToPdf(MsoDocumentAndFormulasInput input) throws Exception;
 
-    ModifiedFormulasOutput getModifiedFormulas(MsoDocumentInput msoDocumentInput) throws Exception;
+    ModifiedFormulasOutput modifiedFormulas(MsoDocumentInput msoDocumentInput) throws Exception;
 
 }

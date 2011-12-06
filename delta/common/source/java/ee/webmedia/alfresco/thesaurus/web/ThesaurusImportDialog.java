@@ -91,7 +91,7 @@ public class ThesaurusImportDialog extends AbstractImportDialog {
             if (indexOf > -1) {
                 repoThesaurus = repoThesauri.get(indexOf);
                 // Check for added keywords ...
-                if (CollectionUtils.subtract(repoThesaurus.getKeywords(), thesaurus.getKeywords()).size() > 0) {
+                if (CollectionUtils.subtract(thesaurus.getKeywords(), repoThesaurus.getKeywords()).size() > 0) {
                     statusMsg += "_keywords";
                 }
                 // ... and changed description

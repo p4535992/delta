@@ -22,7 +22,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
@@ -36,7 +35,6 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
-import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
@@ -120,10 +118,20 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     }
 
     @Override
+    public DocumentDynamic createNewDocument(DocumentTypeVersion docVer, NodeRef parent) {
+        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        docVer = setTypeProps(docVer, props);
+        return createNewDocument(docVer, parent, props);
+    }
+
+    @Override
     public DocumentDynamic createNewDocument(String documentTypeId, NodeRef parent) {
-        QName type = DocumentCommonModel.Types.DOCUMENT;
         Map<QName, Serializable> props = new HashMap<QName, Serializable>();
         DocumentTypeVersion docVer = setTypeProps(documentTypeId, props);
+        return createNewDocument(docVer, parent, props);
+    }
+
+    private DocumentDynamic createNewDocument(DocumentTypeVersion docVer, NodeRef parent, Map<QName, Serializable> props) {
 
         // TODO temporary
         props.put(DocumentCommonModel.Props.DOC_STATUS, DocumentStatus.WORKING.getValueName()); // / FIXME should be handled by setDefaultPropertyValues
@@ -143,6 +151,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         // documentService.callbackAspectProperiesModifier(docAspect, props);
         // }
 
+        QName type = DocumentCommonModel.Types.DOCUMENT;
         NodeRef docRef = nodeService.createNode(parent, DocumentCommonModel.Assocs.DOCUMENT, DocumentCommonModel.Assocs.DOCUMENT, type,
                 props).getChildRef();
 
@@ -199,9 +208,12 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
     private DocumentTypeVersion setTypeProps(String documentTypeId, Map<QName, Serializable> props) {
         DocumentType documentType = documentAdminService.getDocumentType(documentTypeId, DocumentAdminService.DOC_TYPE_WITH_OUT_GRAND_CHILDREN_EXEPT_LATEST_DOCTYPE_VER);
-
-        props.put(Props.OBJECT_TYPE_ID, documentType.getId());
         DocumentTypeVersion docVer = documentType.getLatestDocumentTypeVersion();
+        return setTypeProps(docVer, props);
+    }
+
+    private DocumentTypeVersion setTypeProps(DocumentTypeVersion docVer, Map<QName, Serializable> props) {
+        props.put(Props.OBJECT_TYPE_ID, docVer.getParent().getId());
         props.put(Props.OBJECT_TYPE_VERSION_NR, docVer.getVersionNr());
         return docVer;
     }
@@ -231,13 +243,10 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
     @Override
     public DocumentDynamic getDocument(NodeRef docRef) {
-        QName type = nodeService.getType(docRef);
-        Assert.isTrue(DocumentCommonModel.Types.DOCUMENT.equals(type));
-        Set<QName> aspects = RepoUtil.getAspectsIgnoringSystem(nodeService.getAspects(docRef));
-        Map<QName, Serializable> props = RepoUtil.getPropertiesIgnoringSystem(nodeService.getProperties(docRef), dictionaryService);
-        WmNode docNode = new WmNode(docRef, type, aspects, props);
-        DocumentDynamic doc = new DocumentDynamic(docNode);
-        LOG.info("getDocument document=" + doc);
+        DocumentDynamic doc = new DocumentDynamic(generalService.fetchObjectNode(docRef, DocumentCommonModel.Types.DOCUMENT));
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("getDocument document=" + doc);
+        }
         return doc;
     }
 
@@ -309,7 +318,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     }
 
     @Override
-    public DocumentDynamic updateDocument(DocumentDynamic documentOriginal, List<String> saveListenerBeanNames) {
+    public DocumentDynamic updateDocument(DocumentDynamic documentOriginal, List<String> saveListenerBeanNames, boolean addPrivilegesOnBackground) {
         DocumentDynamic document = documentOriginal.clone();
         NodeRef docRef = document.getNodeRef();
 
@@ -337,7 +346,9 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             docProps.put(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE.toString(), sendOutService.buildSearchableSendMode(docRef));
         }
 
-        LOG.info("updateDocument after validation and save listeners, before real saving: " + document);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("updateDocument after validation and save listeners, before real saving: " + document);
+        }
 
         // generalService.saveAddedAssocs(document.getNode());
 
@@ -360,7 +371,11 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
         documentTemplateService.updateGeneratedFiles(docRef, false);
         if (document.isDraftOrImapOrDvk()) {
-            documentService.addPrivilegesBasedOnSeriesOnBackground(docRef);
+            if (addPrivilegesOnBackground) {
+                documentService.addPrivilegesBasedOnSeriesOnBackground(docRef);
+            } else {
+                documentService.addPrivilegesBasedOnSeries(docRef);
+            }
         }
         return document;
     }

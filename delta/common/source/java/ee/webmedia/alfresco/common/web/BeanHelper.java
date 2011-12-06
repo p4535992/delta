@@ -5,6 +5,7 @@ import javax.faces.context.FacesContext;
 import org.alfresco.service.ServiceRegistry;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.model.FileFolderService;
+import org.alfresco.service.cmr.repository.ContentService;
 import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.search.SearchService;
@@ -379,6 +380,10 @@ public class BeanHelper {
 
     public static NamespaceService getNamespaceService() {
         return getAlfrescoService(NamespaceService.class, ServiceRegistry.NAMESPACE_SERVICE);
+    }
+
+    public static ContentService getContentService() {
+        return getAlfrescoService(ContentService.class, ServiceRegistry.CONTENT_SERVICE);
     }
 
     // END: alfresco services

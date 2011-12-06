@@ -16,6 +16,7 @@ import com.thoughtworks.xstream.annotations.XStreamAlias;
 import com.thoughtworks.xstream.annotations.XStreamOmitField;
 
 import ee.webmedia.alfresco.utils.ComparableTransformer;
+import ee.webmedia.alfresco.utils.RepoUtil;
 
 /**
  * @author Kaarel Jõgeva
@@ -49,8 +50,7 @@ public class Thesaurus implements Serializable, Comparable<Thesaurus> {
     }
 
     public boolean removeKeyword(HierarchicalKeyword keyword) {
-        NodeRef nodeRef2 = keyword.getNodeRef();
-        if (nodeRef2 != null) {
+        if (RepoUtil.isSaved(keyword.getNodeRef())) {
             removedKeywords.add(keyword);
         }
         return keywords.remove(keyword);

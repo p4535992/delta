@@ -179,6 +179,15 @@ public interface GeneralService {
     Node fetchNode(NodeRef nodeRef);
 
     /**
+     * Fetches WmNode from repository
+     * 
+     * @param objectRef NodeRef of the desired object
+     * @param objectType Type of the object
+     * @return WmNode representation of the repository object
+     */
+    WmNode fetchObjectNode(NodeRef objectRef, QName objectType);
+
+    /**
      * @param type - node type
      * @param props - initial properties or null
      * @return new WmNode with given type and properties (aspects are set based on model)
@@ -261,5 +270,6 @@ public interface GeneralService {
      * @param threadName name to give the new thread that is created for executing work
      */
     void runOnBackground(final RunAsWork<Void> work, final String threadName);
+
 
 }

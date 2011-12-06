@@ -12,8 +12,7 @@
    <h:commandButton id="search-btn" value="#{msg.search}" action="#{ThesaurusDetailsDialog.filterKeywords}" style="margin-left: 5px;"/>
    <h:commandButton value="#{msg.show_all}" action="#{ThesaurusDetailsDialog.showAll}" style="margin-left: 5px;"/>
 </a:panel>
-
-<a:panel id="thesaurus-details-panel" styleClass="panel-100" label="#{msg.thesaurus_data}" progressive="true">
+<a:panel id="thesaurus-details-panel" styleClass="panel-100 with-pager" label="#{msg.thesaurus_data}" progressive="true">
    
    <f:verbatim></span>
          <script type="text/javascript">
@@ -31,34 +30,41 @@
       <h:inputTextarea styleClass="expand19-200" value="#{ThesaurusDetailsDialog.thesaurus.description}" />
    </h:panelGrid>
    
-   <h:dataTable binding="#{ThesaurusDetailsDialog.keywordTable}" id="keywords" value="#{ThesaurusDetailsDialog.keywords}" var="keyword" width="100%" rendered="#{!ThesaurusDetailsDialog.new}" rowClasses="recordSetRow,recordSetRowAlt">
-      <h:column>
-         <f:facet name="header">
+   <a:richList id="keywords" refreshOnBind="true" value="#{ThesaurusDetailsDialog.keywords}" var="keyword" width="100%" rendered="#{!ThesaurusDetailsDialog.new}" altRowStyleClass="recordSetRowAlt" rowStyleClass="recordSetRow" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}">
+      <a:column>
+      <f:facet name="header">
             <h:outputText value="#{msg.thesaurus_keyword_level_1}" />
          </f:facet>
          <f:verbatim><span class="suggest-wrapper"></f:verbatim>
             <h:inputText id="level1" styleClass="suggest" value="#{keyword.keywordLevel1}" />
          <f:verbatim></span>
          <script type="text/javascript">
-			addAutocompleter("dialog:dialog-body:keywords:</f:verbatim><h:outputText value="#{ThesaurusDetailsDialog.keywordTable.rowIndex}" /><f:verbatim>:level1", l1Keywords);        
+         addAutocompleter("dialog:dialog-body:keywords:</f:verbatim><h:outputText value="#{ThesaurusDetailsDialog.andIncreaseRowIndex}" /><f:verbatim>:level1", l1Keywords);        
          </script>
          </f:verbatim>
-      </h:column>
+      </a:column>
       
-      <h:column>
+      <a:column>
          <f:facet name="header">
             <h:outputText value="#{msg.thesaurus_keyword_level_2}" />
          </f:facet>
          <h:inputTextarea id="level2" styleClass="expand19-200 width250" value="#{keyword.keywordLevel2 }" />
-      </h:column>
+      </a:column>
       
-      <h:column>
+      <a:column actions="true" styleClass="actions-column">
          <f:facet name="header">
             <h:outputText value="&nbsp;" escape="false" />
          </f:facet>
-         <a:actionLink actionListener="#{ThesaurusDetailsDialog.removeKeyword}" image="/images/icons/delete.gif" value="#{msg.remove}" showLink="false" />
-      </h:column>
-   </h:dataTable>
-   
+         <a:actionLink actionListener="#{ThesaurusDetailsDialog.removeKeyword}" image="/images/icons/delete.gif" value="#{msg.remove}" showLink="false">
+            <f:param name="nodeRef" value="#{keyword.nodeRef}"/>
+            <f:param name="keywordLevel1" value="#{keyword.keywordLevel1}"/>
+            <f:param name="keywordLevel2" value="#{keyword.keywordLevel2}"/>
+         </a:actionLink>
+      </a:column>
 
+      <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
+      <a:dataPager id="pager1" styleClass="pager" />
+
+   </a:richList>
+   
 </a:panel>

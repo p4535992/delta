@@ -478,14 +478,14 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         try {
             Assert.notNull(AlfrescoTransactionSupport.getTransactionId(), "No transaction is present");
 
-            if (log.isDebugEnabled()) {
+            if (log.isTraceEnabled()) {
                 StringBuilder s = new StringBuilder("bindCleanTempFiles");
                 s.append("\n  signedDoc=").append(ObjectUtils.identityToString(signedDoc));
                 s.append("\n  countDataFiles=").append(signedDoc.countDataFiles());
                 for (int i = 0; i < signedDoc.countDataFiles(); i++) {
                     s.append("\n  dataFile[").append(i).append("]=").append(signedDoc.getDataFile(i).getFileName());
                 }
-                log.debug(s.toString());
+                log.trace(s.toString());
             }
 
             AlfrescoTransactionSupport.bindListener(new TransactionListenerAdapter() {
@@ -502,14 +502,14 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
 
     private static void cleanTempFiles(SignedDoc signedDoc) {
         try {
-            if (log.isDebugEnabled()) {
+            if (log.isTraceEnabled()) {
                 StringBuilder s = new StringBuilder("cleanTempFiles");
                 s.append("\n  signedDoc=").append(ObjectUtils.identityToString(signedDoc));
                 s.append("\n  countDataFiles=").append(signedDoc.countDataFiles());
                 for (int i = 0; i < signedDoc.countDataFiles(); i++) {
                     s.append("\n  dataFile[").append(i).append("]=").append(signedDoc.getDataFile(i).getFileName());
                 }
-                log.debug(s.toString());
+                log.trace(s.toString());
             }
 
             signedDoc.cleanupDfCache();

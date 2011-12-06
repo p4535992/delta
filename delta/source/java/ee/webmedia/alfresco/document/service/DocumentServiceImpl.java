@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.document.service;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
+import static ee.webmedia.alfresco.document.file.model.FileModel.Props.DISPLAY_NAME;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ACCESS_RESTRICTION;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME;
@@ -182,7 +183,6 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
     protected NodeService nodeService;
     private CopyService copyService;
     protected GeneralService generalService;
-    private DocumentTemplateService documentTemplateService;
     private RegisterService registerService;
     protected VolumeService volumeService;
     protected SeriesService seriesService;
@@ -200,6 +200,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
     private SubstituteService substituteService;
     // START: properties that would cause dependency cycle when trying to inject them
     // private DocumentAdminService documentAdminService; // dependency cycle: DocumentAdminService -> DocumentSearchService -> DocumentService
+    private DocumentTemplateService _documentTemplateService;
     private AdrService _adrService;
     private NotificationService _notificationService;
     private CaseService _caseService;
@@ -887,8 +888,11 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
     public List<String> getSearchableFileNames(NodeRef document) {
         List<FileInfo> files = fileFolderService.listFiles(document);
         List<String> fileNames = new ArrayList<String>(files.size());
-        for (FileInfo file : files) {
-            fileNames.add(file.getName());
+        for (FileInfo fileInfo : files) {
+            String name = fileInfo.getName();
+            String displayName = (String) fileInfo.getProperties().get(DISPLAY_NAME);
+            displayName = StringUtils.isBlank(displayName) ? name : displayName;
+            fileNames.add(displayName);
         }
         return fileNames;
     }
@@ -2379,7 +2383,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
                 boolean didRegister = registerDocumentIfNotRegistered(document, false);
                 long step1 = System.currentTimeMillis();
                 if (!didRegister) {
-                    documentTemplateService.updateGeneratedFiles(document, true);
+                    getDocumentTemplateService().updateGeneratedFiles(document, true);
                 }
                 long step2 = System.currentTimeMillis();
                 // Generate PDF-files for all the files that support it.
@@ -2942,7 +2946,8 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         generalService.runOnBackground(work, "addPrivilegesBasedOnSeries-" + docRef.getId());
     }
 
-    private Set<String> addPrivilegesBasedOnSeries(NodeRef docRef) {
+    @Override
+    public void addPrivilegesBasedOnSeries(final NodeRef docRef) {
         Map<String, Object> docProps = new HashMap<String, Object>();
         Set<String> result = addPrivilegesBasedOnSeries(docRef, docProps, null);
 
@@ -2952,7 +2957,6 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         List<String> privGroups = (List<String>) docProps.get(PrivilegeModel.Props.GROUP.toString());
 
         privilegeService.mergePrivilegeUsersGroupsLists(docRef, privUsers, privGroups);
-        return result;
     }
 
     @Override
@@ -3073,10 +3077,6 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         this.seriesService = seriesService;
     }
 
-    public void setDocumentTemplateService(DocumentTemplateService documentTemplateService) {
-        this.documentTemplateService = documentTemplateService;
-    }
-
     public void setPrivilegeService(PrivilegeService privilegeService) {
         this.privilegeService = privilegeService;
     }
@@ -3149,6 +3149,13 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
             _adrService = (AdrService) beanFactory.getBean(AdrService.BEAN_NAME);
         }
         return _adrService;
+    }
+
+    private DocumentTemplateService getDocumentTemplateService() {
+        if (_documentTemplateService == null) {
+            _documentTemplateService = (DocumentTemplateService) beanFactory.getBean(DocumentTemplateService.BEAN_NAME);
+        }
+        return _documentTemplateService;
     }
 
     private NotificationService getNotificationService() {

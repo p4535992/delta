@@ -101,8 +101,11 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
     public UserService userService;
 
     private String messageCopyFolder;
-    private final Map<NodeRef, String> imapFolderTypes = new HashMap<NodeRef, String>();
-    private final Map<NodeRef, Set<String>> imapFolderFixedSubfolders = new HashMap<NodeRef, Set<String>>();
+    private String incomingLetterSubfolderType;
+    private String attachmentsSubfolderType;
+    private String outgoingLettersSubfolderType;
+    private Map<NodeRef, String> imapFolderTypes = null;
+    private Map<NodeRef, Set<String>> imapFolderFixedSubfolders = null;
 
     // todo: make this configurable with spring
     private Set<String> allowedFolders = null;
@@ -329,17 +332,17 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
 
     @Override
     public boolean isFixedFolder(NodeRef folderRef) {
-        return StringUtils.equals(FOLDER_TYPE_PREFIX_FIXED, imapFolderTypes.get(folderRef));
+        return StringUtils.equals(FOLDER_TYPE_PREFIX_FIXED, getImapFolderTypes().get(folderRef));
     }
 
     @Override
     public boolean isUserBasedFolder(NodeRef folderRef) {
-        return StringUtils.equals(FOLDER_TYPE_PREFIX_USER_BASED, imapFolderTypes.get(folderRef));
+        return StringUtils.equals(FOLDER_TYPE_PREFIX_USER_BASED, getImapFolderTypes().get(folderRef));
     }
 
     @Override
     public Set<String> getFixedSubfolderNames(NodeRef parentFolderRef) {
-        Set<String> subfolderNames = imapFolderFixedSubfolders.get(parentFolderRef);
+        Set<String> subfolderNames = getImapFolderFixedSubfolders().get(parentFolderRef);
         if (subfolderNames == null) {
             return new HashSet<String>();
         }
@@ -644,15 +647,11 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
         return I18NUtil.getMessage("imap.folder_incomingInvoice");
     }
 
-    public void setIncomingLettersSubfolderType(String incomingLetterSubfolderType) {
+    private synchronized void setImapFolderTypesAndSubFolders() {
+        imapFolderTypes = new HashMap<NodeRef, String>();
+        imapFolderFixedSubfolders = new HashMap<NodeRef, Set<String>>();
         setSubfolderType(incomingLetterSubfolderType, generalService.getNodeRef(ImapModel.Repo.INCOMING_SPACE));
-    }
-
-    public void setAttachmentsSubfolderType(String attachmentsSubfolderType) {
         setSubfolderType(attachmentsSubfolderType, generalService.getNodeRef(ImapModel.Repo.ATTACHMENT_SPACE));
-    }
-
-    public void setOutgoingLettersSubfolderType(String outgoingLettersSubfolderType) {
         setSubfolderType(outgoingLettersSubfolderType, generalService.getNodeRef(ImapModel.Repo.SENT_SPACE));
     }
 
@@ -676,6 +675,32 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
                 imapFolderFixedSubfolders.remove(parentNodeRef);
             }
         }
+    }
+
+    public Map<NodeRef, String> getImapFolderTypes() {
+        if (imapFolderTypes == null) {
+            setImapFolderTypesAndSubFolders();
+        }
+        return imapFolderTypes;
+    }
+
+    public Map<NodeRef, Set<String>> getImapFolderFixedSubfolders() {
+        if (imapFolderFixedSubfolders == null) {
+            setImapFolderTypesAndSubFolders();
+        }
+        return imapFolderFixedSubfolders;
+    }
+
+    public void setIncomingLettersSubfolderType(String incomingLetterSubfolderType) {
+        this.incomingLetterSubfolderType = incomingLetterSubfolderType;
+    }
+
+    public void setAttachmentsSubfolderType(String attachmentsSubfolderType) {
+        this.attachmentsSubfolderType = attachmentsSubfolderType;
+    }
+
+    public void setOutgoingLettersSubfolderType(String outgoingLettersSubfolderType) {
+        this.outgoingLettersSubfolderType = outgoingLettersSubfolderType;
     }
 
     public void setImapService(ImapService imapService) {

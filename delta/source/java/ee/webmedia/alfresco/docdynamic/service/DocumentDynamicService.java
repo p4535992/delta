@@ -7,6 +7,7 @@ import java.util.Map;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 
+import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 
@@ -25,6 +26,8 @@ public interface DocumentDynamicService {
      * @return
      */
     DocumentDynamic createNewDocument(String documentTypeId, NodeRef parent);
+
+    DocumentDynamic createNewDocument(DocumentTypeVersion docVer, NodeRef parent);
 
     /**
      * Create a new document in drafts and set default property values according to fully authenticated user.
@@ -48,7 +51,7 @@ public interface DocumentDynamicService {
      * @throws UnableToPerformException one error message if validation or save was unsuccessful.
      * @throws UnableToPerformMultiReasonException multiple error messages if validation or save was unsuccessful.
      */
-    DocumentDynamic updateDocument(DocumentDynamic document, List<String> saveListenerBeanNames);
+    DocumentDynamic updateDocument(DocumentDynamic document, List<String> saveListenerBeanNames, boolean addPrivilegesOnBackground);
 
     boolean isDraft(NodeRef docRef);
 

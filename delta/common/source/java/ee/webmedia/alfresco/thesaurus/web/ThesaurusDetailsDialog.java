@@ -1,5 +1,9 @@
 package ee.webmedia.alfresco.thesaurus.web;
 
+import static ee.webmedia.alfresco.utils.ActionUtil.getParam;
+import static ee.webmedia.alfresco.utils.ActionUtil.hasParam;
+import static org.apache.commons.lang.StringUtils.defaultIfEmpty;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -8,7 +12,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import javax.faces.component.html.HtmlDataTable;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
@@ -35,11 +38,11 @@ public class ThesaurusDetailsDialog extends BaseDialogBean {
 
     private static final long serialVersionUID = 1L;
     private transient ThesaurusService thesaurusService;
-    private transient HtmlDataTable keywordTable;
 
     private Thesaurus thesaurus;
     private boolean isNew;
     private String keywordFilter;
+    private int rowIndex = 0;
 
     @Override
     public Object getActionsContext() {
@@ -52,20 +55,28 @@ public class ThesaurusDetailsDialog extends BaseDialogBean {
         keywordFilter = null;
     }
 
-    public void addNew(ActionEvent event) {
+    public void addNew(@SuppressWarnings("unused") ActionEvent event) {
         MessageUtil.addInfoMessage("thesaurus_name_info");
         isNew = true;
         thesaurus = new Thesaurus();
         keywordFilter = null;
     }
 
-    public void addKeyword(ActionEvent event) {
+    public void addKeyword(@SuppressWarnings("unused") ActionEvent event) {
         thesaurus.addKeyword();
     }
 
     public void removeKeyword(ActionEvent event) {
-        HierarchicalKeyword rowData = (HierarchicalKeyword) keywordTable.getRowData();
-        thesaurus.removeKeyword(rowData);
+        if (!hasParam(event, "nodeRef") || !hasParam(event, "keywordLevel1") || !hasParam(event, "keywordLevel2")) {
+            return;
+        }
+        NodeRef nodeRef = getParam(event, "nodeRef", NodeRef.class);
+        String l1 = defaultIfEmpty(getParam(event, "keywordLevel1"), "");
+        String l2 = defaultIfEmpty(getParam(event, "keywordLevel2"), "");
+        HierarchicalKeyword keyword = new HierarchicalKeyword(nodeRef, "null".equals(l1) ? "" : l1, "null".equals(l2) ? "" : l2);
+        if (thesaurus.removeKeyword(keyword)) {
+            MessageUtil.addInfoMessage("thesaurus_keyword_removed");
+        }
     }
 
     public void filterKeywords() {
@@ -90,7 +101,7 @@ public class ThesaurusDetailsDialog extends BaseDialogBean {
                 public boolean evaluate(Object object) {
                     HierarchicalKeyword keyword = (HierarchicalKeyword) object;
                     return StringUtils.containsIgnoreCase(keyword.getKeywordLevel1(), keywordFilter)
-                    || StringUtils.containsIgnoreCase(keyword.getKeywordLevel2(), keywordFilter);
+                            || StringUtils.containsIgnoreCase(keyword.getKeywordLevel2(), keywordFilter);
                 }
             });
         }
@@ -180,6 +191,12 @@ public class ThesaurusDetailsDialog extends BaseDialogBean {
         return WebUtil.getValuesAsJsArrayString(level1);
     }
 
+    public int getAndIncreaseRowIndex() {
+        int index = rowIndex;
+        rowIndex++;
+        return index;
+    }
+
     // START: getters / setters
 
     public boolean isNew() {
@@ -203,17 +220,6 @@ public class ThesaurusDetailsDialog extends BaseDialogBean {
             thesaurusService = BeanHelper.getThesaurusService();
         }
         return thesaurusService;
-    }
-
-    public HtmlDataTable getKeywordTable() {
-        if (keywordTable == null) {
-            keywordTable = new HtmlDataTable();
-        }
-        return keywordTable;
-    }
-
-    public void setKeywordTable(HtmlDataTable keywordTable) {
-        this.keywordTable = keywordTable;
     }
 
     public String getKeywordFilter() {

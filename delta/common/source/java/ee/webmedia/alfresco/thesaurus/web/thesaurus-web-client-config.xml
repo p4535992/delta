@@ -38,7 +38,7 @@
             <action-listener>#{DeleteDialog.setupDeleteDialog}</action-listener>
             <params>
                <param name="nodeRef">#{actionContext.nodeRef}</param>
-               <param name="confirmMessagePlaceholder">#{actionContext.name}</param>
+               <param name="confirmMessagePlaceholder0">#{actionContext.name}</param>
                <param name="dialogsToClose">2</param>
             </params>
             <action>dialog:deleteDialog</action>

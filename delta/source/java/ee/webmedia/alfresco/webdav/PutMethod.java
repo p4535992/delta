@@ -32,9 +32,13 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
@@ -48,19 +52,29 @@ import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
+import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.classificator.constant.FieldChangeableIf;
+import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.Field;
+import ee.webmedia.alfresco.docadmin.service.FieldGroup;
+import ee.webmedia.alfresco.docconfig.bootstrap.SystematicFieldGroupNames;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.mso.ws.Formula;
 import ee.webmedia.alfresco.mso.ws.ModifiedFormulasOutput;
 
@@ -212,39 +226,142 @@ public class PutMethod extends WebDAVMethod {
             log.debug("MsoService is not available, skipping updating document");
             return;
         }
-        ModifiedFormulasOutput modifiedFormulas = getMsoService().getModifiedFormulas(
+        ModifiedFormulasOutput modifiedFormulas = getMsoService().modifiedFormulas(
                 getContentService().getReader(contentNodeInfo.getNodeRef(), ContentModel.PROP_CONTENT));
 
-        if (modifiedFormulas != null) {
-            Collection<Formula> formulas = modifiedFormulas.getModifiedFormulas(); // Set is returned
-            DocumentDynamicService documentDynamicService = BeanHelper.getDocumentDynamicService();
-            DocumentDynamic doc = documentDynamicService.getDocument(document);
-            Map<String, Pair<PropertyDefinition, Field>> propertyDefinitions = BeanHelper.getDocumentConfigService().getPropertyDefinitions(doc.getNode());
+        if (modifiedFormulas == null) {
+            return;
+        }
 
-            for (Formula formula : formulas) {
-                Pair<PropertyDefinition, Field> propDefAndField = propertyDefinitions.get(formula.getKey());
-                if (propDefAndField == null || propDefAndField.getSecond() == null) {
-                    continue;
+        Collection<Formula> formulas = modifiedFormulas.getModifiedFormulas(); // Set is returned
+        DocumentDynamicService documentDynamicService = BeanHelper.getDocumentDynamicService();
+        DocumentDynamic doc = documentDynamicService.getDocument(document);
+        /*
+         * TODO CL 179488, Mallide loomine.docx 3.1.8.1
+         * if (!doc.isUpdateMetadataInFile()) {
+         * return;
+         * }
+         */
+
+        Map<String, Pair<PropertyDefinition, Field>> propertyDefinitions = BeanHelper.getDocumentConfigService().getPropertyDefinitions(doc.getNode());
+
+        List<String> updateDisabled = Arrays.asList(
+                DocumentCommonModel.Props.OWNER_NAME.getLocalName(), DocumentCommonModel.Props.SIGNER_NAME.getLocalName()
+                , DocumentSpecificModel.Props.SUBSTITUTE_NAME.getLocalName(), DocumentCommonModel.Props.OWNER_ID.getLocalName()
+                , DocumentDynamicModel.Props.SIGNER_ID.getLocalName(), DocumentDynamicModel.Props.SUBSTITUTE_ID.getLocalName()
+                , DocumentCommonModel.Props.DOC_STATUS.getLocalName(), DocumentCommonModel.Props.REG_NUMBER.getLocalName()
+                , DocumentCommonModel.Props.SHORT_REG_NUMBER.getLocalName(), DocumentCommonModel.Props.REG_DATE_TIME.getLocalName());
+        List<FieldType> readOnlyFields = Arrays.asList(FieldType.COMBOBOX_AND_TEXT_NOT_EDITABLE, FieldType.LISTBOX, FieldType.CHECKBOX, FieldType.INFORMATION_TEXT);
+        List<ContractPartyField> partyFields = new ArrayList<ContractPartyField>();
+
+        for (Formula formula : formulas) {
+            String formulaKey = formula.getKey();
+
+            // Check for special fields like recipients or contract parties
+            int propIndex = -1;
+            if (formulaKey.contains(".")) {
+                String[] split = StringUtils.split(formulaKey, '.');
+                formulaKey = split[0];
+                propIndex = Integer.parseInt(split[1]) - 1; // Formula uses base 1 index
+
+                // Since contract party is implemented using child nodes, we cannot check directly from document property definitions
+                QName fieldQName = null;
+                if (DocumentSpecificModel.Props.PARTY_NAME.getLocalName().equals(formulaKey)) {
+                    fieldQName = DocumentSpecificModel.Props.PARTY_NAME;
+                } else if (DocumentSpecificModel.Props.PARTY_EMAIL.getLocalName().equals(formulaKey)) {
+                    fieldQName = DocumentSpecificModel.Props.PARTY_EMAIL;
+                } else if (DocumentSpecificModel.Props.PARTY_SIGNER.getLocalName().equals(formulaKey)) {
+                    fieldQName = DocumentSpecificModel.Props.PARTY_SIGNER;
+                } else if (DocumentSpecificModel.Props.PARTY_CONTACT_PERSON.getLocalName().equals(formulaKey)) {
+                    fieldQName = DocumentSpecificModel.Props.PARTY_CONTACT_PERSON;
                 }
-
-                PropertyDefinition propDef = propDefAndField.getFirst();
-                Field field = propDefAndField.getSecond();
-
-                // If field is not changeable, then don't allow it.
-                if (FieldChangeableIf.ALWAYS_NOT_CHANGEABLE == field.getChangeableIfEnum()
-                        || FieldChangeableIf.CHANGEABLE_IF_WORKING_DOC == field.getChangeableIfEnum()
-                        && !DocumentStatus.WORKING.getValueName().equals(doc.getProp(DocumentCommonModel.Props.DOC_STATUS))) {
-                    continue;
+                if (fieldQName != null) {
+                    partyFields.add(new ContractPartyField(propIndex, fieldQName, formula.getValue()));
                 }
-
-                Serializable value = (Serializable) DefaultTypeConverter.INSTANCE.convert(propDef.getDataType(), formula.getValue());
-                if (propDef.isMultiValued()) {
-                    value = (Serializable) Collections.singletonList(value); // is this correct?
-                }
-                doc.setProp(field.getQName(), value);
             }
 
-            documentDynamicService.updateDocument(doc, Collections.<String> emptyList()); // This also updates generated files
+            Pair<PropertyDefinition, Field> propDefAndField = propertyDefinitions.get(formulaKey);
+            if (propDefAndField == null || propDefAndField.getSecond() == null) {
+                continue;
+            }
+
+            PropertyDefinition propDef = propDefAndField.getFirst();
+            Field field = propDefAndField.getSecond();
+
+            // If field is not changeable, then don't allow it.
+            if (isFieldUnchangeable(doc, updateDisabled, readOnlyFields, field)) {
+                continue;
+            }
+
+            BaseObject parent = field.getParent();
+            if (parent instanceof FieldGroup) {
+                FieldGroup group = (FieldGroup) parent;
+                String name = group.getName();
+
+                if (SystematicFieldGroupNames.RECIPIENTS.equals(name) || SystematicFieldGroupNames.ADDITIONAL_RECIPIENTS.equals(name)) {
+                    Serializable propValue = doc.getProp(field.getQName());
+                    if (propDef.isMultiValued()) {
+                        @SuppressWarnings("unchecked")
+                        List<Serializable> values = (List<Serializable>) propValue;
+                        values.set(propIndex, (Serializable) DefaultTypeConverter.INSTANCE.convert(propDef.getDataType(), formula.getValue()));
+                        propValue = (Serializable) values;
+                    }
+                    doc.setProp(field.getQName(), propValue);
+                    continue;
+                }
+            }
+
+            Serializable value = (Serializable) DefaultTypeConverter.INSTANCE.convert(propDef.getDataType(), formula.getValue());
+            if (propDef.isMultiValued()) {
+                value = (Serializable) Collections.singletonList(value); // is this correct?
+            }
+            doc.setProp(field.getQName(), value);
+        }
+
+        // Update sub-nodes
+        if (!partyFields.isEmpty()) {
+            NodeService nodeService = getNodeService();
+            List<ChildAssociationRef> metadataContainers = nodeService.getChildAssocs(document, new HashSet<QName>(Arrays.asList(DocumentCommonModel.Types.METADATA_CONTAINER)));
+            for (ContractPartyField field : partyFields) {
+                nodeService.setProperty(metadataContainers.get(field.getIndex()).getChildRef(), field.getField(), field.getValue());
+            }
+        }
+
+        documentDynamicService.updateDocument(doc, Collections.<String> emptyList(), true); // This also updates generated files
+    }
+
+    private boolean isFieldUnchangeable(DocumentDynamic doc, List<String> updateDisabled, List<FieldType> readOnlyFields, Field field) {
+        return FieldChangeableIf.ALWAYS_NOT_CHANGEABLE == field.getChangeableIfEnum()
+                || FieldChangeableIf.CHANGEABLE_IF_WORKING_DOC == field.getChangeableIfEnum()
+                && !DocumentStatus.WORKING.getValueName().equals(doc.getProp(DocumentCommonModel.Props.DOC_STATUS))
+                || updateDisabled.contains(field.getFieldId()) || readOnlyFields.contains(field.getFieldTypeEnum())
+                || DocumentDynamicModel.Props.FIRST_KEYWORD_LEVEL.getLocalName().equals(field.getOriginalFieldId())
+                || DocumentDynamicModel.Props.SECOND_KEYWORD_LEVEL.getLocalName().equals(field.getOriginalFieldId());
+    }
+
+    private class ContractPartyField implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        final private int index;
+        final private QName field;
+        final private Serializable value;
+
+        public ContractPartyField(int index, QName field, Serializable value) {
+            this.index = index;
+            this.field = field;
+            this.value = value;
+        }
+
+        public int getIndex() {
+            return index;
+        }
+
+        public QName getField() {
+            return field;
+        }
+
+        public Serializable getValue() {
+            return value;
         }
     }
 }

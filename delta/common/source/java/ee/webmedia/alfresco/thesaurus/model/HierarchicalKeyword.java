@@ -8,6 +8,8 @@ import org.apache.commons.lang.StringUtils;
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 import com.thoughtworks.xstream.annotations.XStreamOmitField;
 
+import ee.webmedia.alfresco.utils.RepoUtil;
+
 /**
  * @author Kaarel Jõgeva
  */
@@ -22,6 +24,7 @@ public class HierarchicalKeyword implements Comparable<HierarchicalKeyword>, Ser
 
     public HierarchicalKeyword() {
         // Default constructor
+        nodeRef = RepoUtil.createNewUnsavedNodeRef();
     }
 
     public HierarchicalKeyword(NodeRef nodeRef, String level1, String level2) {

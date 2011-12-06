@@ -61,10 +61,25 @@
    
    <script type="text/javascript">
    $jQ(document).ready(function() {
-	var uploader = document.jumpLoaderApplet.getUploader();
-	var attrSet = uploader.getAttributeSet();
-	var returnPage = attrSet.createStringAttribute("return-page", "ajax");
-	returnPage.setSendToServer(true);
+      var uploaderInitialized = false;
+      try {
+         var uploader = document.jumpLoaderApplet.getUploader();
+         var attrSet = uploader.getAttributeSet();
+         var returnPage = attrSet.createStringAttribute("return-page", "ajax");
+         returnPage.setSendToServer(true);
+         uploaderInitialized = true;
+      } catch (e) {
+         if (typeof $jQ.log !== "undefined") {
+            $jQ.log('jumpLoaderApplet error: ' + e);
+         }
+      }
+      if (typeof $jQ.log !== "undefined"){
+         $jQ.log('jumpLoaderApplet initialized = ' + uploaderInitialized);
+      }
+      if (uploaderInitialized !== true) {
+         $jQ('#uploader-wrapper').hide();
+         $jQ('#' + escapeId4JQ('dialog:dialog-body:upload_panel')).show();
+      }
    });
 
    function uploaderStatusChanged( uploader ) {
@@ -87,6 +102,13 @@
    
    </script>
    </f:verbatim>
+
+   <h:panelGrid id="upload_panel" columns="2" cellpadding="2" cellspacing="2" border="0" width="100%"
+      columnClasses="panelGridLabelColumn,panelGridValueColumn,panelGridRequiredImageColumn" style="display: none;">
+      <h:outputText id="out_schema" value="#{msg.file_location}:" style="padding-left:8px" />
+      <r:upload id="uploader" value="" framework="dialog" />
+   </h:panelGrid>
+
    </a:panel>
 
    <a:panel styleClass="column panel-50" id="attachment-upload" label="#{msg.file_add_attachment}">

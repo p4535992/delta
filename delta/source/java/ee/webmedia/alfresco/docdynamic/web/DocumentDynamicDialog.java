@@ -6,6 +6,8 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPropertySheetStateBean;
 import static ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGenerator.ACCESS_RESTRICTION_CHANGE_REASON_ERROR;
 
+import java.io.Serializable;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -54,6 +56,7 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageData;
 import ee.webmedia.alfresco.utils.MessageDataWrapper;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
@@ -122,6 +125,22 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         String documentTypeId = ActionUtil.getParam(event, "documentTypeId");
         DocumentDynamic doc = getDocumentDynamicService().createNewDocumentInDrafts(documentTypeId);
         open(doc.getNodeRef(), doc, true);
+    }
+
+    public void changeByNewDocument(@SuppressWarnings("unused") ActionEvent event) {
+        DocumentDynamic baseDoc = getCurrentSnapshot().document;
+        Map<QName, Serializable> overrides = new HashMap<QName, Serializable>(1);
+        Date regDateTime = baseDoc.getProp(DocumentCommonModel.Props.REG_DATE_TIME);
+        overrides.put(DocumentCommonModel.Props.DOC_NAME, MessageUtil.getMessage("docdyn_changeByNewDocument_name"//
+                , BeanHelper.getDocumentAdminService().getDocumentTypeName(baseDoc.getDocumentTypeId())
+                , StringUtils.defaultIfEmpty((String) baseDoc.getProp(DocumentCommonModel.Props.REG_NUMBER), "")
+                , regDateTime == null ? "" : regDateTime));
+        NodeRef docRef = getDocumentDynamicService().copyDocument(baseDoc, overrides, DocumentCommonModel.Props.REG_NUMBER, DocumentCommonModel.Props.REG_DATE_TIME, DocumentCommonModel.Props.DOC_STATUS);
+
+        open(docRef, true);
+
+        // Add followUp association when new document is saved
+        RepoUtil.addAssoc(getCurrentSnapshot().document.getNode(), baseDoc.getNodeRef(), DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP, false);
     }
 
     public void createAssoc(ActionEvent event) {
@@ -363,7 +382,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         DocumentDynamic savedDocument = null;
         try {
             // May throw UnableToPerformException or UnableToPerformMultiReasonException
-            savedDocument = getDocumentDynamicService().updateDocument(getDocument(), getConfig().getSaveListenerBeanNames());
+            savedDocument = getDocumentDynamicService().updateDocument(getDocument(), getConfig().getSaveListenerBeanNames(), true);
         } catch (UnableToPerformMultiReasonException e) {
             if (!handleAccessRestrictionChange(e)) {
                 return null;

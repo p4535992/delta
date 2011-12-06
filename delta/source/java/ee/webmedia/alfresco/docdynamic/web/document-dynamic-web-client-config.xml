@@ -39,7 +39,7 @@
             <action idref="document_manage_permissions" />
 <!--             <action idref="document_sendToSap" /> -->
 <!--             <action idref="document_sendToSapManually" /> -->
-<!--             <action idref="document_changeByNewDocument" /> -->
+            <action idref="document_changeByNewDocument" />
          </action-group>
 
       </actions>

@@ -35,7 +35,7 @@ public interface Mso {
     @WebResult(name = "modifiedFormulasOutput", targetNamespace = "http://webmedia.ee/mso")
     @RequestWrapper(localName = "modifiedFormulas", targetNamespace = "http://webmedia.ee/mso", className = "ee.webmedia.mso.ModifiedFormulas")
     @ResponseWrapper(localName = "modifiedFormulasResponse", targetNamespace = "http://webmedia.ee/mso", className = "ee.webmedia.mso.ModifiedFormulasResponse")
-    ModifiedFormulasOutput getModifiedFormulas(
+    ModifiedFormulasOutput modifiedFormulas(
             @WebParam(name = "msoDocumentInput", targetNamespace = "http://webmedia.ee/mso") MsoDocumentInput msoDocumentInput);
 
 }

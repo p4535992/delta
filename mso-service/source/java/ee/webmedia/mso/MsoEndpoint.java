@@ -82,9 +82,9 @@ public class MsoEndpoint implements Mso {
     @WebResult(name = "modifiedFormulasOutput", targetNamespace = "")
     @RequestWrapper(localName = "modifiedFormulas", targetNamespace = "", className = "ee.webmedia.mso.ModifiedFormulas")
     @ResponseWrapper(localName = "modifiedFormulasResponse", targetNamespace = "", className = "ee.webmedia.mso.ModifiedFormulasResponse")
-    public ModifiedFormulasOutput getModifiedFormulas(@WebParam(name = "msoDocumentInput", targetNamespace = "") MsoDocumentInput msoDocumentInput) {
+    public ModifiedFormulasOutput modifiedFormulas(@WebParam(name = "msoDocumentInput", targetNamespace = "") MsoDocumentInput msoDocumentInput) {
         try {
-            return msoService.getModifiedFormulas(msoDocumentInput);
+            return msoService.modifiedFormulas(msoDocumentInput);
         } catch (Exception e) {
             if (e instanceof RuntimeException) {
                 throw (RuntimeException) e;

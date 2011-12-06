@@ -277,6 +277,16 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     }
 
     @Override
+    public WmNode fetchObjectNode(NodeRef objectRef, QName objectType) {
+        QName type = nodeService.getType(objectRef);
+        Assert.isTrue(objectType.equals(type));
+        Set<QName> aspects = RepoUtil.getAspectsIgnoringSystem(nodeService.getAspects(objectRef));
+        Map<QName, Serializable> props = RepoUtil.getPropertiesIgnoringSystem(nodeService.getProperties(objectRef), dictionaryService);
+
+        return new WmNode(objectRef, type, aspects, props);
+    }
+
+    @Override
     public WmNode createNewUnSaved(QName type, Map<QName, Serializable> props) {
         Set<QName> aspects = getDefaultAspects(type);
         props = addDefaultValues(type, aspects, props);

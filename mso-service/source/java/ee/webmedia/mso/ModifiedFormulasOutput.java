@@ -14,7 +14,7 @@ public class ModifiedFormulasOutput {
     @XmlElement(required = true)
     protected Set<Formula> modifiedFormulas;
 
-    public Set<Formula> getFormulas() {
+    public Set<Formula> getModifiedFormulas() {
         return modifiedFormulas;
     }
 

@@ -147,7 +147,7 @@ public class FieldGroupDetailsDialog extends BaseDialogBean {
 
     /** used by propertySheet */
     public boolean isThesaurusVisible() {
-        return fieldGroup.isSystematic() && SystematicFieldGroupNames.THESAURUI.equals(fieldGroup.getName());
+        return fieldGroup.isSystematic() && SystematicFieldGroupNames.THESAURI.equals(fieldGroup.getName());
     }
 
     private boolean isReadOnlyInfoVisible() {

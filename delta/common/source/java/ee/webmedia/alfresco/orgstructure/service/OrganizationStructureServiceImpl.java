@@ -42,6 +42,8 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
     private NodeService nodeService;
     private AMRService amrService;
 
+    private NodeRef orgStructsRoot;
+
     @Override
     public int updateOrganisationStructures() {
         YksusExt[] yksusArray = amrService.getYksusByAsutusId();
@@ -51,19 +53,22 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         }
         Set<QName> childNodeTypeQnames = new HashSet<QName>();
         childNodeTypeQnames.add(OrganizationStructureModel.Assocs.ORGSTRUCT);
-        String orgStructXPath = OrganizationStructureModel.Repo.SPACE;
-        NodeRef orgsNodeRef = generalService.getNodeRef(orgStructXPath);
         // save old organization structures, that will be removed if everything goes right
-        List<ChildAssociationRef> oldOrganizations = nodeService.getChildAssocs(orgsNodeRef, childNodeTypeQnames);
+        List<ChildAssociationRef> oldOrganizations = nodeService.getChildAssocs(getOrgStructsRoot(), childNodeTypeQnames);
         for (OrganizationStructure org : orgStructures) {
-            Map<QName, Serializable> properties = organizationStructureBeanPropertyMapper.toProperties(org);
-            nodeService.createNode(orgsNodeRef, OrganizationStructureModel.Assocs.ORGSTRUCT, //
-                    QName.createQName(OrganizationStructureModel.URI, String.valueOf(org.getUnitId())), OrganizationStructureModel.Types.ORGSTRUCT, properties);
+            createOrganisationStructure(org);
         }
         for (ChildAssociationRef oldOrganization : oldOrganizations) { // remove all old organizations
             nodeService.removeChildAssociation(oldOrganization);
         }
         return orgStructures.size();
+    }
+
+    @Override
+    public void createOrganisationStructure(OrganizationStructure org) {
+        Map<QName, Serializable> properties = organizationStructureBeanPropertyMapper.toProperties(org);
+        nodeService.createNode(getOrgStructsRoot(), OrganizationStructureModel.Assocs.ORGSTRUCT, //
+                QName.createQName(OrganizationStructureModel.URI, String.valueOf(org.getUnitId())), OrganizationStructureModel.Types.ORGSTRUCT, properties);
     }
 
     @Override
@@ -183,6 +188,14 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         }
         org.setOrganizationPath(UserUtil.formatYksusRadaToOrganizationPath(yksus.getYksusRada()));
         return org;
+    }
+
+    private NodeRef getOrgStructsRoot() {
+        if (orgStructsRoot == null) {
+            String orgStructXPath = OrganizationStructureModel.Repo.SPACE;
+            orgStructsRoot = generalService.getNodeRef(orgStructXPath);
+        }
+        return orgStructsRoot;
     }
 
     // END: private methods

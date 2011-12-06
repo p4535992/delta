@@ -71,10 +71,16 @@ function handle_upload_helper(fileInputElement,
 
 function upload_complete_helper(id, args)
 {
-  var upload = _uploads[id];
-  upload.callback(id, 
+  var submitButton = $jQ("#" + escapeId4JQ("dialog:confirmFileSelectionButton"));
+  if (submitButton.length) {
+    $jQ('#alfFileInput_upload_form').remove();
+    submitButton.click();
+  } else {
+    var upload = _uploads[id];
+    upload.callback(id, 
                   upload.path, 
                   upload.path.replace(/.*[\/\\]([^\/\\]+)/, "$1"),
                   args.fileTypeImage,
                   args.error != "${_UPLOAD_ERROR}" ? args.error : null);
+  }
 }

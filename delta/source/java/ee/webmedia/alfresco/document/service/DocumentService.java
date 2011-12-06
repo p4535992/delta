@@ -450,6 +450,8 @@ public interface DocumentService {
 
     void addPrivilegesBasedOnSeriesOnBackground(NodeRef docRef);
 
+    void addPrivilegesBasedOnSeries(NodeRef docRef);
+
     List<Document> getIncomingDocuments(NodeRef incomingNodeRef);
 
 }

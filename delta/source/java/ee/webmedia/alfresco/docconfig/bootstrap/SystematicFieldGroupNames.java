@@ -7,9 +7,10 @@ package ee.webmedia.alfresco.docconfig.bootstrap;
  */
 public class SystematicFieldGroupNames {
     public static final String USER = "Kasutaja";
+    public static final String USERS_TABLE = "Kasutajad tabelis";
     public static final String SIGNER = "Allkirjastaja";
     public static final String DOCUMENT_OWNER = "Dokumendi/asjatoimiku vastutaja";
-    public static final String THESAURUI = "Märksõnad hierarhilisest märksõnastikust";
+    public static final String THESAURI = "Märksõnad hierarhilisest märksõnastikust";
     public static final String SENDER_NAME_AND_EMAIL = "Saatja nimi ja e-post";
     public static final String SENDER_REG_NUMBER_AND_DATE = "Saatja reg nr ja kpv";
     public static final String RECIPIENTS = "Adressaadid";
@@ -37,4 +38,5 @@ public class SystematicFieldGroupNames {
     public static final String ERRAND_EXPENSES_REPORT_SUMMARY = "Lähetuse kulude aruande koond";
     public static final String DRIVE_COMPENSATION = "Sõiduauto kasutamise hüvitis";
     public static final String DRIVE_COMPENSATION_RIK = "Sõiduauto kasutamise hüvitis (RIK)";
+    public static final String ACCESS_RESTRICTION = "Juurdepääsupiirang";
 }

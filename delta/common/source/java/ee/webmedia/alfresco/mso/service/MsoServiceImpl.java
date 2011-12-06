@@ -83,7 +83,7 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
     }
 
     @Override
-    public ModifiedFormulasOutput getModifiedFormulas(ContentReader documentReader) throws Exception {
+    public ModifiedFormulasOutput modifiedFormulas(ContentReader documentReader) throws Exception {
         try {
             if (documentReader == null) {
                 return null;

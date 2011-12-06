@@ -31,6 +31,6 @@ public interface MsoService {
 
     void replaceFormulasAndTransformToPdf(Map<String, String> formulas, ContentReader documentReader, ContentWriter documentWriter, ContentWriter pdfWriter) throws Exception;
 
-    ModifiedFormulasOutput getModifiedFormulas(ContentReader documentReader) throws Exception;
+    ModifiedFormulasOutput modifiedFormulas(ContentReader documentReader) throws Exception;
 
 }

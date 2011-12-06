@@ -61,4 +61,6 @@ public interface OrganizationStructureService {
      */
     List<Node> setUsersUnit(List<Node> users);
 
+    void createOrganisationStructure(OrganizationStructure org);
+
 }

@@ -79,6 +79,86 @@
 
 <f:verbatim><hr/></f:verbatim>
 
+<h:outputText value="E-maili teavituste saatmine: "/>
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="processAccessRestrictionEndDateNotifications" value="processAccessRestrictionEndDateNotifications" type="submit"
+   actionListener="#{NotificationService.processAccessRestrictionEndDateNotifications}" rendered="#{ApplicationService.test}" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="processTaskDueDateNotifications" value="processTaskDueDateNotifications" type="submit"
+   actionListener="#{NotificationService.processTaskDueDateNotifications}" rendered="#{ApplicationService.test}" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="processVolumeDispositionDateNotifications" value="processVolumeDispositionDateNotifications" type="submit"
+   actionListener="#{NotificationService.processVolumeDispositionDateNotifications}" rendered="#{ApplicationService.test}" />
+
+<f:verbatim><hr/></f:verbatim>
+
+<h:outputText value="Testandmete genereerimine: "/>
+<f:verbatim>
+<br/>
+<ol>
+<li>* Kopeerida SVN'ist delta/common/etc/testdata/*.csv failid dir.root kausta</li>
+<li>* Kopeerida ADR failide kaust asukohta dir.root/contentstore/testfiles . Seega peaksid ADR failid asuma dir.root/contentstore/testfiles/1/1234 jne.</li>
+<li>* Importida dok.liigid SVN'ist failist delta/common/etc/jmeter/documentTypes.xml</li>
+<li>* Importida klassifikaatorid SVN'ist delta/common/etc/jmeter/classificators.xml</li>
+<li>* Lucene indekseerimine lülitada välja parema kiiruse saavutamiseks, ja pärast teha ühekorraga järgi (nii nagu SIM 1.10 -> 2.5 juhendis kirjeldatud juuni 2011).</li>
+<li>* Vajutada Käivita testandmete genereerimine. Progressi saab jälgida logist.</li>
+<li>* Andmete genereerimise käivitamisel määratakse employeeRegReceiveUsersPeriod parameetri väärtuseks 500000, et loodud kasutajaid sünkimisel ei kustutataks.</li>
+<li>* (TODO struktuuriüksuste sünkimine lülitada välja, et loodud struktuuriüksusi sünkimisel ei kustutataks.)</li>
+<li>* Kasutajate loomise lõpus kirjutatakse kõik eksisteerivad kasutajanimed faili dir.root/users.csv . Seda faili läheb vaja koormustestide sisendina.</li>
+</ul>
+<br/>
+</f:verbatim>
+
+<h:outputText value="Kasutajate e-mail: "/>
+<h:inputText value="#{TestDataService.testEmail}" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="Struktuuriüksuste arv: "/>
+<h:inputText value="#{TestDataService.orgUnitsCount}" converter="javax.faces.Integer" size="4" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="Kasutajate arv: "/>
+<h:inputText value="#{TestDataService.usersCount}" converter="javax.faces.Integer" size="4" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="Kontaktide arv: "/>
+<h:inputText value="#{TestDataService.contactsCount}" converter="javax.faces.Integer" size="4" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="Registrite arv: "/>
+<h:inputText value="#{TestDataService.registersCount}" converter="javax.faces.Integer" size="4" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="Funktsioonide arv: "/>
+<h:inputText value="#{TestDataService.functionsCount}" converter="javax.faces.Integer" size="4" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="Sarjade arv: "/>
+<h:inputText value="#{TestDataService.seriesCount}" converter="javax.faces.Integer" size="4" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="Toimikute arv: "/>
+<h:inputText value="#{TestDataService.volumesCount}" converter="javax.faces.Integer" size="4" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="Asjade arv: "/>
+<h:inputText value="#{TestDataService.casesCount}" converter="javax.faces.Integer" size="4" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="Dokumentide arv: "/>
+<h:inputText value="#{TestDataService.documentsCount}" converter="javax.faces.Integer" size="7" />
+<f:verbatim><br/><br/></f:verbatim>
+
+   <h:commandButton id="startTestDataGenerator" value="Käivita andmete genereerimine" type="submit"
+      actionListener="#{TestDataService.executeUpdaterInBackground}"
+      rendered="#{TestDataService.updaterRunning == false}" />
+   <h:commandButton id="stopTestDataGenerator" value="Peata andmete genereerimine" type="submit"
+      actionListener="#{TestDataService.stopUpdater}"
+      rendered="#{TestDataService.updaterRunning == true}"
+      disabled="#{TestDataService.updaterStopping == true}" />
+
+<f:verbatim><hr/></f:verbatim>
+
 <h:outputText styleClass="mainTitle" value="Arendajale testimiseks"/>
 <f:verbatim><br/></f:verbatim>
 
@@ -90,13 +170,3 @@
 
  <%-- FIXME DLSeadist ajutine link test keskkonna jaoks --%>
 <%-- <a:actionLink value="DeleteFieldAndFieldGroupsAndBootstrapInfo" actionListener="#{TestingForDeveloperBean.deleteFieldAndFieldGroupsAndBootstrapInfo}" /> --%>
-
-<br/>
-<h:commandButton id="processAccessRestrictionEndDateNotifications" value="processAccessRestrictionEndDateNotifications" type="submit"
-   actionListener="#{NotificationService.processAccessRestrictionEndDateNotifications}" rendered="#{ApplicationService.test}" />
-<br/>
-<h:commandButton id="processTaskDueDateNotifications" value="processTaskDueDateNotifications" type="submit"
-   actionListener="#{NotificationService.processTaskDueDateNotifications}" rendered="#{ApplicationService.test}" />
-<br/>
-<h:commandButton id="processVolumeDispositionDateNotifications" value="processVolumeDispositionDateNotifications" type="submit"
-   actionListener="#{NotificationService.processVolumeDispositionDateNotifications}" rendered="#{ApplicationService.test}" />
