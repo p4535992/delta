@@ -12,8 +12,10 @@ import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docdynamic.model.DocumentChildModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.SearchUtil;
@@ -47,7 +49,8 @@ public class ContractPartyAssocUpdater extends AbstractNodeUpdater {
             info.add("addedContractPartyContainerAspect");
         }
         List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(docRef, DocumentCommonModel.Types.METADATA_CONTAINER, RegexQNamePattern.MATCH_ALL);
-        int i = 0;
+        List<String> childRefs = new ArrayList<String>();
+        StringBuilder sb = new StringBuilder();
         for (ChildAssociationRef childAssociationRef : childAssocs) {
             NodeRef childRef = childAssociationRef.getChildRef();
             QName childType = nodeService.getType(childRef);
@@ -56,12 +59,32 @@ public class ContractPartyAssocUpdater extends AbstractNodeUpdater {
                 continue;
             }
             Map<QName, Serializable> props = nodeService.getProperties(childRef);
-            nodeService.createNode(docRef, DocumentChildModel.Assocs.CONTRACT_PARTY, DocumentChildModel.Assocs.CONTRACT_PARTY, DocumentChildModel.Assocs.CONTRACT_PARTY, props);
             nodeService.deleteNode(childRef);
-            i++;
+            detectProblems(props, childRef, sb);
+            NodeRef childNodeRef = nodeService.createNode(docRef, DocumentChildModel.Assocs.CONTRACT_PARTY, DocumentChildModel.Assocs.CONTRACT_PARTY,
+                    DocumentChildModel.Assocs.CONTRACT_PARTY, props).getChildRef();
+            childRefs.add(childNodeRef.toString());
         }
-        info.add("createdAndDeletedChildNodes," + i);
+        info.add("createdAndDeletedChildNodes, " + childRefs.size() + " ( " + StringUtils.join(childRefs, " ") + " )");
+        String problems = sb.toString();
+        if (!problems.isEmpty()) {
+            info.add(problems);
+        }
         return info.toArray(new String[info.size()]);
     }
 
+    private void detectProblems(Map<QName, Serializable> props, NodeRef docChildRef, StringBuilder sb) {
+        if (!props.containsKey(DocumentAdminModel.Props.OBJECT_TYPE_ID)) {
+            // props.put(DocumentAdminModel.Props.OBJECT_TYPE_ID, "valueWasMissing");
+            sb.append("objectTypeId valueWasMissing ");
+        }
+        if (!props.containsKey(DocumentAdminModel.Props.OBJECT_TYPE_VERSION_NR)) {
+            // props.put(DocumentAdminModel.Props.OBJECT_TYPE_VERSION_NR, -99);
+            sb.append("objectTypeVersionNr valueWasMissing ");
+        }
+        String problems = sb.toString();
+        if (!problems.isEmpty()) {
+            sb.append("on docChildRef=").append(docChildRef).append(" ");
+        }
+    }
 }
