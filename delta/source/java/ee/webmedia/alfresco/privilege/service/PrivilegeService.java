@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.privilege.service;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -8,6 +9,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
 
+import ee.webmedia.alfresco.privilege.model.PrivMappings;
 import ee.webmedia.alfresco.privilege.model.PrivilegeMappings;
 import ee.webmedia.alfresco.privilege.model.PrivilegeModel;
 import ee.webmedia.alfresco.privilege.model.UserPrivileges;
@@ -21,15 +23,36 @@ import ee.webmedia.alfresco.privilege.web.ManagePrivilegesDialog;
 public interface PrivilegeService {
     String BEAN_NAME = "PrivilegeService";
 
+    @Deprecated
     PrivilegeMappings getPrivilegeMappings(NodeRef manageableRef);
 
     /**
+     * @param manageableRef
+     * @param manageablePermissions - only ACL entries with given permissions are used to fill {@link PrivMappings} that is returned
+     * @return
+     */
+    PrivMappings getPrivMappings(NodeRef manageableRef, Collection<String> manageablePermissions);
+
+    /**
+     * FIXME PRIV2 Ats - vana privileegide halduse meetod
+     * 
      * @param manageableRef
      * @param privilegesByUsername - VO's that contain information about user and his/her static privileges to add/remove for <code>manageableRef</code>
      * @param ignoredGroups
      * @param listener - optional listener(must have been registered using this QName) to be called, that can cause side-effects, such as adding privileges to related nodes
      */
+    @Deprecated
     void savePrivileges(NodeRef manageableRef, Map<String, UserPrivileges> privilegesByUsername, Set<String> ignoredGroups, QName listenerCode);
+
+    /**
+     * @param manageableRef
+     * @param privilegesByUsername - VO's that contain information about user and his/her static privileges to add/remove for <code>manageableRef</code>
+     * @param privilegesByGroup
+     * @param ignoredGroups
+     * @param listener - optional listener(must have been registered using this QName) to be called, that can cause side-effects, such as adding privileges to related nodes
+     */
+    void savePrivileges(NodeRef manageableRef, Map<String, UserPrivileges> privilegesByUsername
+            , Map<String, UserPrivileges> privilegesByGroup, QName listenerCode);
 
     /**
      * adds permission <code>permission</code> to <code>nodeRef</code> and adds <code>autority</code> to {@link PrivilegeModel.Props#USER} if it didn't already contain it

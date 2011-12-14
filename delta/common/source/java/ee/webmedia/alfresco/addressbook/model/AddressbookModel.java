@@ -39,6 +39,8 @@ public interface AddressbookModel {
         QName PERSON_ID = QName.createQName(AddressbookModel.URI, "personId");
         QName JOB_NAME = QName.createQName(AddressbookModel.URI, "jobName");
         QName PHONE = QName.createQName(AddressbookModel.URI, "phone");
+        QName FIRST_ADDITIONAL_PHONE = QName.createQName(AddressbookModel.URI, "firstAdditionalPhone");
+        QName SECOND_ADDITIONAL_PHONE = QName.createQName(AddressbookModel.URI, "secondAdditionalPhone");
         QName MOBILE_PHONE = QName.createQName(AddressbookModel.URI, "mobilePhone");
         QName ORGANIZATION_NAME = QName.createQName(AddressbookModel.URI, "orgName");
         QName ORGANIZATION_ALTERNATE_NAME = QName.createQName(AddressbookModel.URI, "orgAltName");
@@ -48,6 +50,8 @@ public interface AddressbookModel {
         QName TASK_CAPABLE = QName.createQName(AddressbookModel.URI, "taskCapable");
         QName GROUP_NAME = QName.createQName(AddressbookModel.URI, "groupName");
         QName EMAIL = QName.createQName(AddressbookModel.URI, "email");
+        QName FIRST_ADDITIONAL_EMAIL = QName.createQName(AddressbookModel.URI, "firstAdditionalEmail");
+        QName SECOND_ADDITIONAL_EMAIL = QName.createQName(AddressbookModel.URI, "secondAdditionalEmail");
         QName FAX = QName.createQName(AddressbookModel.URI, "fax");
         QName POSTAL = QName.createQName(AddressbookModel.URI, "postal");
         QName WEBSITE = QName.createQName(AddressbookModel.URI, "website");

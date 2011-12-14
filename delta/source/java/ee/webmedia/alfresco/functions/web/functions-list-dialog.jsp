@@ -20,7 +20,10 @@
          <f:facet name="header">
             <a:sortLink id="col2-sort" label="#{msg.function_mark}" value="mark" styleClass="header" />
          </f:facet>
-         <h:outputText id="col2-text" value="#{r.mark}" />
+         <a:actionLink id="col2-text" value="#{r.mark}" action="dialog:seriesListDialog" tooltip="#{msg.series_list_info}"
+            showLink="false" actionListener="#{SeriesListDialog.showAll}" styleClass="no-underline" >
+            <f:param name="functionNodeRef" value="#{r.nodeRef}" />
+         </a:actionLink>
       </a:column>
 
       <%-- Title--%>
@@ -40,7 +43,10 @@
          <f:facet name="header">
             <a:sortLink id="col1-sort" label="#{msg.function_type}" value="type" styleClass="header" />
          </f:facet>
-         <h:outputText id="col1-text" value="#{r.type}" />
+           <a:actionLink id="col1-text" value="#{r.type}" action="dialog:seriesListDialog" tooltip="#{msg.series_list_info}"
+            showLink="false" actionListener="#{SeriesListDialog.showAll}" styleClass="no-underline" >
+            <f:param name="functionNodeRef" value="#{r.nodeRef}" />
+         </a:actionLink>
       </a:column>
 
       <%-- Status --%>
@@ -48,7 +54,10 @@
          <f:facet name="header">
             <a:sortLink id="col4-sort" label="#{msg.function_status}" value="status" styleClass="header" />
          </f:facet>
-         <h:outputText id="col4-text" value="#{r.status}" />
+           <a:actionLink id="col4-text" value="#{r.status}" action="dialog:seriesListDialog" tooltip="#{msg.series_list_info}"
+            showLink="false" actionListener="#{SeriesListDialog.showAll}" styleClass="no-underline" >
+            <f:param name="functionNodeRef" value="#{r.nodeRef}" />
+         </a:actionLink>
       </a:column>
 
       <%-- Details actions column --%>

@@ -74,11 +74,11 @@
     $jQ(function() {
        $jQ(document).keyup(function (event) {
           if (event.keyCode == 13 && $jQ("#overlay:visible").length < 1) {
-             $jQ("#"+escapeId4JQ("dialog:finish-button")).click();
+             clickFinishButton();
           }
         });
 
-       $jQ("#"+escapeId4JQ("dialog:finish-button") + ",#" + escapeId4JQ("dialog:finish-button-2")).click(function (event) {
+       getFinishButtons().click(function (event) {
             if(!validateDatePeriods()){
                return false;
             }

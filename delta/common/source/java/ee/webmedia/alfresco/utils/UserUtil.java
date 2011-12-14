@@ -19,6 +19,8 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
+import com.ibm.icu.util.StringTokenizer;
+
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.substitute.model.Substitute;
@@ -152,6 +154,7 @@ public class UserUtil {
             authMap.put("group", authority);
             authMap.put("groupName", name);
             authMap.put("displayName", authorityService.getAuthorityDisplayName(authority));
+            authMap.put("structUnitBased", authorityService.getAuthorityZones(authority).contains(OrganizationStructureService.STRUCT_UNIT_BASED) ? "true" : "false");
 
             groups.add(authMap);
         }
@@ -171,14 +174,49 @@ public class UserUtil {
     }
 
     public static String getUserDisplayUnit(Map<String, Object> properties) {
-        String organizationPath = (String) properties.get(ContentModel.PROP_ORGANIZATION_PATH);
+        @SuppressWarnings("unchecked")
+        String organizationPath = getDisplayUnit((List<String>) properties.get(ContentModel.PROP_ORGANIZATION_PATH));
         if (StringUtils.isNotBlank(organizationPath)) {
             return organizationPath;
         }
         return (String) properties.get(OrganizationStructureService.UNIT_NAME_PROP);
     }
 
-    public static String formatYksusRadaToOrganizationPath(String yksusRada) {
+    public static String getDisplayUnit(List<String> organizationPaths) {
+        if (organizationPaths == null) {
+            return null;
+        }
+        String organizationPath = "";
+        for (String path : organizationPaths) {
+            if (StringUtils.isNotBlank(path)) {
+                String notEmptyPath = path.trim();
+                if (organizationPath.length() < notEmptyPath.length()) {
+                    organizationPath = notEmptyPath;
+                }
+            }
+        }
+        return organizationPath;
+    }
+
+    public static int getLongestValueIndex(List<String> organizationPaths) {
+        if (organizationPaths == null) {
+            return -1;
+        }
+        String organizationPath = "";
+        int longestIndex = 0;
+        for (int index = 0; index < organizationPaths.size(); index++) {
+            String path = organizationPaths.get(index);
+            if (StringUtils.isNotBlank(path)) {
+                String notEmptyPath = path.trim();
+                if (organizationPath.length() < notEmptyPath.length()) {
+                    longestIndex = index;
+                }
+            }
+        }
+        return longestIndex;
+    }
+
+    public static List<String> formatYksusRadaToOrganizationPath(String yksusRada) {
         if (StringUtils.isBlank(yksusRada)) {
             return null;
         }
@@ -187,9 +225,25 @@ public class UserUtil {
         int firstIndexOfSep = organizationPath.indexOf(separator);
         if (firstIndexOfSep != -1) {
             organizationPath = organizationPath.substring(firstIndexOfSep + (firstIndexOfSep == organizationPath.length() - 1 ? 0 : 1));
-            organizationPath = organizationPath.replaceAll(separator, ", ");
         }
-        return organizationPath;
+        List<String> organizationPaths = getPathHierarchy(organizationPath, separator);
+        return organizationPaths;
     }
 
+    public static List<String> getPathHierarchy(String organizationPath, String separator) {
+        List<String> organizationPaths = new ArrayList<String>();
+        StringTokenizer tokenizer = new StringTokenizer(organizationPath, separator);
+        String lastPath = "";
+        while (tokenizer.hasMoreTokens()) {
+            String token = tokenizer.nextToken().trim();
+            if (StringUtils.isNotBlank(token)) {
+                if (lastPath.length() > 0) {
+                    lastPath += ", ";
+                }
+                lastPath += token;
+                organizationPaths.add(lastPath);
+            }
+        }
+        return organizationPaths;
+    }
 }

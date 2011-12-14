@@ -19,9 +19,7 @@ public enum Parameters {
     /** period in minutes */
     DVK_RECEIVE_DOC_SEND_STATUSES("dvkReceiveDocSendStatusesInterval"),
     DVK_ORGANIZATION_NAME("dvkOrganizationName"), // kui tühi, kasutatakse xtee confist
-    EMPLOYEE_REG_RECEIVE_STRUCT_UNITS_TIME("employeeRegReceiveStructUnitsTime"),
-    /** period that is used to update users registry */
-    EMPLOYEE_REG_RECEIVE_USERS_PERIOD("employeeRegReceiveUsersPeriod"),
+    SYNC_USERS_GROUPS_STRUCT_UNITS_TIME("syncUsersGroupsStructUnitsTime"),
     EMPLOYEE_REG_ORGANISATION_ID("employeeRegOrganisationId"),
     EXTERNAL_REVIEW_AUTOMATIC_FOLDER("externalReviewAutomaticFolder"),
     // Default sender email value when sending out a document

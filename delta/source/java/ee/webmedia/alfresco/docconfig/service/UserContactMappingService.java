@@ -33,7 +33,7 @@ public interface UserContactMappingService {
      * @param userOrContactRef nodeRef of user or contact
      * @return single value String if result exists or null if it doesn't exist.
      */
-    String getMappedNameValue(NodeRef userOrContactRef);
+    Serializable getMappedNameValue(NodeRef userOrContactRef);
 
     /**
      * Sets each prop value if result exists or null if it doesn't exist.

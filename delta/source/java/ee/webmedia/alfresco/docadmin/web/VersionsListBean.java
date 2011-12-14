@@ -27,7 +27,6 @@ import ee.webmedia.alfresco.utils.ComparableTransformer;
 public class VersionsListBean<D extends DynamicType> implements DialogBlockBean<D> {
     private static final long serialVersionUID = 1L;
 
-    // TODO ALSeadist Ats - ümber nimetada
     private D dynType;
     private List<DocumentTypeVersionListItem> savedVersionsList;
     private final Class<D> dynTypeClass;

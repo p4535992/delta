@@ -21,6 +21,7 @@ public interface UserService {
     String ADMINISTRATORS_GROUP = "ALFRESCO_ADMINISTRATORS";
     String ACCOUNTANTS_GROUP = "ACCOUNTANTS";
     String SUPERVISION_GROUP = "SUPERVISION";
+    String ARCHIVIST_GROUP = "ARCHIVISTS";
 
     String AUTH_DOCUMENT_MANAGERS_GROUP = AuthorityType.GROUP.getPrefixString() + DOCUMENT_MANAGERS_GROUP;
     String AUTH_ADMINISTRATORS_GROUP = AuthorityType.GROUP.getPrefixString() + ADMINISTRATORS_GROUP;
@@ -29,6 +30,7 @@ public interface UserService {
     String ALFRESCO_ADMINISTRATORS_DISPLAY_NAME = "alfresco_administrators_display_name";
     String ACCOUNTANTS_DISPLAY_NAME = "accountants_display_name";
     String SUPERVISION_DISPLAY_NAME = "supervision_display_name";
+    String ARCHIVISTS_DISPLAY_NAME = "archivists_display_name";
 
     /**
      * Fetches the node reference, where user preferences are kept
@@ -145,6 +147,8 @@ public interface UserService {
     Set<String> getUsernamesByStructUnit(List<Integer> structUnits);
 
     boolean isGroupsEditingAllowed();
+
+    boolean isGroupDeleteAllowed(String group);
 
     String getAccountantsGroup();
 

@@ -76,6 +76,7 @@
                   <many>true</many>
                </target>
             </child-association>
+            <!-- FIXME: remove the following child-association after all existing static documents are migrated to dynamic documents -->
             <child-association name="doccom:metadataContainer">
                <source>
                   <mandatory>true</mandatory>
@@ -102,8 +103,18 @@
          </mandatory-aspects>
       </type>
 
+      <!-- Currently child-nodes are not directly doccom:metadataContainer type, but one of its subtypes;
+           this is because different child nodes are referenced by assocTypeQName
+      -->
+      <!-- XXX Actually, it would be a more general solution to reference differenct subnodes by assocQName
+           * then we could use the same fieldgroup multiple times on one documentType 
+           * we could get rid of different child-node types, child-assoc types and container aspects
+      -->
       <type name="doccom:metadataContainer">
          <parent>sys:base</parent>
+         <mandatory-aspects>
+            <aspect>docadmin:object</aspect>
+         </mandatory-aspects>
       </type>
 
        <type name="doccom:scannedDocs">
@@ -486,6 +497,15 @@
          <properties>
             <property name="doccom:legalBasisName">
                <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>      
+
+      <aspect name="doccom:forumParticipants">
+         <properties>
+            <property name="doccom:forumParticipants">
+               <type>d:text</type>
+               <multiple>true</multiple>
             </property>
          </properties>
       </aspect>      

@@ -26,6 +26,8 @@ import javax.faces.event.ActionEvent;
 import javax.faces.event.ActionListener;
 
 import org.alfresco.error.AlfrescoRuntimeException;
+import org.alfresco.model.ContentModel;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.util.Pair;
@@ -75,6 +77,9 @@ public class MenuBean implements Serializable {
     public static final int DOCUMENT_REGISTER_ID = 1;
     public static final int MY_DOCUMENTS_ID = 2;
     public static final int CREATE_NEW_DOCUMENT = 6;
+
+    public static final List<String> HIDDEN_WHEN_EMPTY = Arrays.asList("assignmentTasks", "informationTasks", "orderAssignmentTasks", "opinionTasks", "discussions", "reviewTasks",
+            "externalReviewTasks", "confirmationTasks", "signatureTasks", "forRegisteringList", "userWorkingDocuments");
 
     private transient HtmlPanelGroup shortcutsPanelGroup;
     private transient HtmlPanelGroup breadcrumb;
@@ -596,7 +601,7 @@ public class MenuBean implements Serializable {
         }
         MenuItem item = menuItemAndPath.getFirst();
         MenuItemWrapper wrapper = (MenuItemWrapper) item.createComponent(context, SHORTCUT_MENU_ITEM_PREFIX + shortcutsPanelGroup.getChildCount()
-                , getUserService(), getWorkflowService(), getEinvoiceService(), false);
+                , getUserService(), getWorkflowService(), getEinvoiceService(), BeanHelper.getRSService(), false);
         if (wrapper == null) {
             return false; // no permissions or for some other reason wrapper is not created
         }
@@ -801,6 +806,35 @@ public class MenuBean implements Serializable {
             // do nothing
         }
 
+    }
+
+    public boolean isMenuItemHidden(String menuItemId) {
+        if (StringUtils.isBlank(menuItemId)) {
+            return false;
+        }
+
+        if (HIDDEN_WHEN_EMPTY.contains(menuItemId)) {
+            Boolean showEmpty = (Boolean) getUserService().getUserProperties(AuthenticationUtil.getRunAsUser()).get(ContentModel.SHOW_EMPTY_TASK_MENU);
+            return showEmpty == null || !showEmpty;
+        }
+
+        return false;
+    }
+
+    public String getRestrictedDeltaName() {
+        return BeanHelper.getRSService().getRestrictedDeltaName();
+    }
+
+    public String getDeltaName() {
+        return BeanHelper.getRSService().getDeltaName();
+    }
+
+    public String getRestrictedDeltaUrl() {
+        return BeanHelper.getRSService().getRestrictedDeltaUrl();
+    }
+
+    public String getDeltaUrl() {
+        return BeanHelper.getRSService().getDeltaUrl();
     }
 
     // START: getters / setters

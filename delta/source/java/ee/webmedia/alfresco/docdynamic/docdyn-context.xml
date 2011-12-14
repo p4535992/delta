@@ -7,6 +7,7 @@
       <property name="models">
          <list>
             <value>ee/webmedia/alfresco/docdynamic/model/documentDynamicModel.xml</value>
+            <value>ee/webmedia/alfresco/docdynamic/model/documentChildModel.xml</value>
          </list>
       </property>
    </bean>
@@ -46,6 +47,7 @@
       <property name="sendOutService" ref="SendOutService" />
       <property name="documentLogService" ref="DocumentLogService" />
       <property name="documentTemplateService" ref="DocumentTemplateService" />
+      <property name="showMessageIfUnregistered" value="${conf.document-regnumber.showMessageIfUnregistered}" />
    </bean>
 
    <bean id="DocumentDynamicService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -75,6 +77,8 @@
    <bean id="DocumentDialogHelperBean" class="ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean" scope="session" />
 
    <bean id="DocumentLockHelperBean" class="ee.webmedia.alfresco.docdynamic.web.DocumentLockHelperBean" scope="session" />
+
+   <bean id="DocumentTypePrivilegesHandler" class="ee.webmedia.alfresco.docdynamic.web.DocumentTypePrivilegesHandler" scope="session" />
 
    <!-- END: web beans: -->
 

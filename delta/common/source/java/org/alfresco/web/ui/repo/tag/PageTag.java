@@ -31,6 +31,7 @@ import java.util.List;
 
 import javax.faces.context.FacesContext;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.tagext.TagSupport;
 
@@ -245,10 +246,16 @@ public class PageTag extends TagSupport
       if (logger.isDebugEnabled())
          startTime = System.currentTimeMillis();
       
+      HttpServletRequest httpServletRequest = (HttpServletRequest)pageContext.getRequest();
+      doStartTag(httpServletRequest, pageContext.getOut(), pageContext.getSession());
+      
+      return EVAL_BODY_INCLUDE;
+   }
+
+   public void doStartTag(HttpServletRequest httpServletRequest, Writer out, HttpSession session) throws JspException {
       try
       {
-         String reqPath = ((HttpServletRequest)pageContext.getRequest()).getContextPath();
-         Writer out = pageContext.getOut();
+         String reqPath = httpServletRequest.getContextPath();
          
          if (!Application.inPortalServer())
          {
@@ -272,7 +279,7 @@ public class PageTag extends TagSupport
             out.write("<html><head><title>");
             if (this.titleId != null && this.titleId.length() != 0)
             {
-               out.write(Utils.encode(Application.getMessage(pageContext.getSession(), this.titleId)));
+            out.write(Utils.encode(Application.getMessage(session, this.titleId)));
             }
             else if (this.title != null && this.title.length() != 0)
             {
@@ -365,8 +372,6 @@ public class PageTag extends TagSupport
       {
          throw new JspException(ioe.toString());
       }
-      
-      return EVAL_BODY_INCLUDE;
    }
 
 /**
@@ -374,25 +379,30 @@ public class PageTag extends TagSupport
     */
    public int doEndTag() throws JspException
    {
-      try
-      {
-         if (!Application.inPortalServer())
-         {
-            pageContext.getOut().write("\n</div></body></html>");
-         }
-      }
-      catch (IOException ioe)
-      {
-         throw new JspException(ioe.toString());
-      }
-      
-      final int result = super.doEndTag();
-      if (logger.isDebugEnabled())
-      {
-         long endTime = System.currentTimeMillis();
-         logger.debug("Time to generate JSF page: " + (endTime - startTime) + "ms");
-      }
-      return result;
+      return doEndTag(!Application.inPortalServer() ? pageContext.getOut() : null);
+   }
+
+   public int doEndTag(Writer out) throws JspException
+   {
+       try
+       {
+           if (!Application.inPortalServer())
+           {
+               out.write("\n</div></body></html>");
+           }
+       }
+       catch (IOException ioe)
+       {
+           throw new JspException(ioe.toString());
+       }
+       
+       final int result = super.doEndTag();
+       if (logger.isDebugEnabled())
+       {
+           long endTime = System.currentTimeMillis();
+           logger.debug("Time to generate JSF page: " + (endTime - startTime) + "ms");
+       }
+       return result;
    }
    
    /**

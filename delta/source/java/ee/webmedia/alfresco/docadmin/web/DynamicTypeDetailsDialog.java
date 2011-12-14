@@ -122,6 +122,9 @@ public abstract class DynamicTypeDetailsDialog<D extends DynamicType, S extends 
     @Override
     public Object getActionsContext() {
         S currentSnapshot = getCurrentSnapshot();
+        if (currentSnapshot == null) {
+            return null;
+        }
         return currentSnapshot.getDynType();
     }
 

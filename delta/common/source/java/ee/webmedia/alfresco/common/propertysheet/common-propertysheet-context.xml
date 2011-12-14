@@ -24,6 +24,11 @@
    <bean id="InformationTextGenerator" class="ee.webmedia.alfresco.common.propertysheet.generator.InformationTextGenerator" scope="request" />
 
    <bean id="ActionLinkGenerator" class="ee.webmedia.alfresco.common.propertysheet.generator.ActionLinkGenerator" scope="request" />
+   
+   <bean id="StructUnitSearchGenerator" class="ee.webmedia.alfresco.common.propertysheet.search.StructUnitSearchGenerator" scope="request" />
+   
+   <!-- Same as ClassificatorSelectorGenerator, adds renderer id LabelAndValueSelectorRenderer.LABEL_AND_VALUE_SELECTOR_RENDERER_TYPE -->
+   <bean id="ClassificatorSelectorWithTitleGenerator" class="ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorWithTitleGenerator" scope="request" />
 
    <!-- END: web beans: -->
 </beans>

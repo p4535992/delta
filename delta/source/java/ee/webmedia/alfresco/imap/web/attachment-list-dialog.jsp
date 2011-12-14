@@ -22,8 +22,8 @@
          <f:facet name="small-icon">
             <h:panelGroup>
                <r:permissionEvaluator value="#{r.node}" allow="viewDocumentFiles">
-                  <a:actionLink id="col1-act1" value="#{r.name}" href="#{r.downloadUrl}" target="_blank" image="#{r.fileType16}" showLink="false"
-                     styleClass="inlineAction" />
+                  <a:actionLink id="col1-act1" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" image="#{r.fileType16}" showLink="false"
+                     styleClass="inlineAction no-underline" />
                </r:permissionEvaluator>
                <r:permissionEvaluator value="#{r.node}" deny="viewDocumentFiles">
                   <h:graphicImage value="#{r.fileType16}" />
@@ -31,7 +31,7 @@
             </h:panelGroup>
          </f:facet>
          <r:permissionEvaluator value="#{r.node}" allow="viewDocumentFiles">
-            <a:actionLink id="col1-act2" value="#{r.name}" href="#{r.downloadUrl}" target="_blank"/>
+            <a:actionLink id="col1-act2" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" styleClass="inlineAction no-underline" />
          </r:permissionEvaluator>
          <r:permissionEvaluator value="#{r.node}" deny="viewDocumentFiles">
             <h:outputText value="#{r.name}" />
@@ -43,9 +43,29 @@
          <f:facet name="header">
             <h:outputText id="col3-header" value="#{msg.file_added_time}" styleClass="header" />
          </f:facet>
-         <h:outputText id="col3-txt" value="#{r.created}" rendered="#{r.digiDocItem == false}">
-            <a:convertXMLDate type="both" pattern="#{msg.date_time_pattern}" />
-         </h:outputText>
+               <r:permissionEvaluator value="#{r.node}" allow="viewDocumentFiles">
+                  <a:actionLink id="col3-act1" value="#{r.createdTimeStr}" href="#{r.downloadUrl}" target="_blank" showLink="false"
+                     styleClass="inlineAction no-underline" />
+               </r:permissionEvaluator>
+               <r:permissionEvaluator value="#{r.node}" deny="viewDocumentFiles">
+               		<h:outputText id="col3-txt" value="#{r.created}" rendered="#{r.digiDocItem == false}">
+            			<a:convertXMLDate type="both" pattern="#{msg.date_time_pattern}" />
+			         </h:outputText>
+               </r:permissionEvaluator>
+      </a:column>
+      
+      <%-- Owner name column. Rendered in AttachmentListDialog only--%>
+      <a:column id="column-ownerName" rendered="#{DialogManager.bean == AttachmentListDialog}" >
+         <f:facet name="header">
+            <h:outputText id="column-ownerName-header" value="#{msg.imap_ownerName}" styleClass="header" />
+         </f:facet>
+               <r:permissionEvaluator value="#{r.node}" allow="viewDocumentFiles">
+                  <a:actionLink id="column-ownerName-act1" value="#{r.creator}" href="#{r.downloadUrl}" target="_blank" showLink="false"
+                     styleClass="inlineAction no-underline" />
+               </r:permissionEvaluator>
+               <r:permissionEvaluator value="#{r.node}" deny="viewDocumentFiles">
+               		<h:outputText id="column-ownerName-txt" value="#{r.creator}" />
+               </r:permissionEvaluator>
       </a:column>
 
       <%-- Remove column --%>

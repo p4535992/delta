@@ -26,6 +26,7 @@ public class RegNumberGenerator extends BaseSystematicFieldGenerator {
     @Override
     public void afterPropertiesSet() {
         documentConfigService.registerHiddenFieldDependency(DocumentCommonModel.Props.SHORT_REG_NUMBER.getLocalName(), DocumentCommonModel.Props.REG_NUMBER.getLocalName());
+        documentConfigService.registerHiddenFieldDependency(DocumentCommonModel.Props.INDIVIDUAL_NUMBER.getLocalName(), DocumentCommonModel.Props.REG_NUMBER.getLocalName());
 
         super.afterPropertiesSet();
     }

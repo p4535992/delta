@@ -30,6 +30,7 @@ public class PrivilegeMappings implements Serializable {
         return manageableRef;
     }
 
+    @Deprecated
     public Set<String> getMembersByGroup(String group) {
         Set<String> curGroupMembers = getMembersByGroups().get(group);
         if (curGroupMembers == null) {
@@ -39,6 +40,7 @@ public class PrivilegeMappings implements Serializable {
         return curGroupMembers;
     }
 
+    /** @return returns existing UserPrivileges or creates new UserPrivileges (probably only in cases where all effective user privileges are granted by some dynamic authority) */
     public UserPrivileges getOrCreateUserPrivilegesVO(String userName) {
         UserPrivileges privs = getPrivilegesByUsername().get(userName);
         if (privs == null) {
@@ -48,6 +50,8 @@ public class PrivilegeMappings implements Serializable {
         return privs;
     }
 
+    // FIXME PRIV2 Ats
+    @Deprecated
     public Map<String, Set<String>> getMembersByGroups() {
         return membersByGroups;
     }
@@ -60,6 +64,8 @@ public class PrivilegeMappings implements Serializable {
         return userGroups;
     }
 
+    // FIXME PRIV2 Ats
+    @Deprecated
     public void setMembersByGroups(Map<String/* groupCode */, Set<String> /* members */> membersByGroups) {
         this.membersByGroups = membersByGroups;
     }

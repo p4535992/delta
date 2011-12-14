@@ -52,9 +52,5 @@
          <property-name>dictionaryService</property-name>
          <value>#{DictionaryService}</value>
       </managed-property>
-      <managed-property>
-         <property-name>generalService</property-name>
-         <value>#{GeneralService}</value>
-      </managed-property>
    </managed-bean>
 </faces-config>

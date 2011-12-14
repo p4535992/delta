@@ -40,13 +40,11 @@
 <%-- <a:booleanEvaluator id="foundSimilarEvaluator" value="#{DocumentDialog.showFoundSimilar}"> --%>
 <%--    <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/search/web/document-similar-block.jsp" /> --%>
 <%-- </a:booleanEvaluator> --%>
-<a:booleanEvaluator id="typeBlockEvaluator" value="#{DocumentDynamicDialog.showTypeBlock}">
-   <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/type/web/document-type-block.jsp" />
-</a:booleanEvaluator>
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/type/web/document-type-block.jsp" />
 
 <h:panelGroup id="metadata-panel-facets">
    <f:facet name="title">
-      <r:permissionEvaluator value="#{DocumentDynamicDialog.node}" allow="editDocumentMetaData">
+      <r:permissionEvaluator id="metadata-link-edit-evaluator" value="#{DocumentDynamicDialog.node}" allow="editDocumentMetaData">
          <a:actionLink id="metadata-link-edit" showLink="false" image="/images/icons/edit_properties.gif" value="#{msg.modify}" tooltip="#{msg.modify}"
             actionListener="#{DocumentDynamicDialog.switchToEditMode}" rendered="#{!DocumentDialogHelperBean.inEditMode}" />
       </r:permissionEvaluator>
@@ -63,7 +61,7 @@ $jQ(document).ready(function() {
 <a:panel id="metadata-panel" facetsId="dialog:dialog-body:metadata-panel-facets" label="#{msg.document_metadata}"
    styleClass="panel-100 #{(DocumentDialogHelperBean.inEditMode == false) ? 'view-mode' : 'edit-mode'}" progressive="true">
    <r:propertySheetGrid id="doc-metatada" binding="#{DocumentDynamicDialog.propertySheet}" value="#{DocumentDynamicDialog.node}" columns="1" mode="#{DocumentDynamicDialog.mode}"
-      config="#{DocumentDynamicDialog.propertySheetConfigElement}" externalConfig="true" labelStyleClass="propertiesLabel wrap" />
+      config="#{DocumentDynamicDialog.propertySheetConfigElement}" showUnvalued="#{DocumentDynamicDialog.propertySheetConfigElement.showUnvalued}" externalConfig="true" labelStyleClass="propertiesLabel wrap" />
 </a:panel>
 
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/file/web/file-block.jsp" />

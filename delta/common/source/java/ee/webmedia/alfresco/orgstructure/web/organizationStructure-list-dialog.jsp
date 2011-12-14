@@ -33,9 +33,9 @@
       <%-- Organization path--%>
       <a:column id="col3">
          <f:facet name="header">
-            <a:sortLink id="col3-sort" label="#{msg.orgstruct_organizationPath}" value="organizationPath" styleClass="header" />
+            <a:sortLink id="col3-sort" label="#{msg.orgstruct_organizationPath}" value="organizationDisplayPath" styleClass="header" />
          </f:facet>
-         <h:outputText id="col3-text" value="#{os.organizationPath}" />
+         <h:outputText id="col3-text" value="#{os.organizationDisplayPath}" />
       </a:column>      
       
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />

@@ -154,6 +154,8 @@ public interface DocumentService {
 
     void deleteDocument(NodeRef nodeRef);
 
+    void deleteDocument(NodeRef nodeRef, String comment);
+
     /**
      * Add callback to document creation phase, where default values for the properties could be created or overridden when creatable document has given
      * aspect(or the document has aspect that is one parent types of given aspect).<br>
@@ -238,7 +240,7 @@ public interface DocumentService {
 
     boolean registerDocumentIfNotRegistered(NodeRef document, boolean logging);
 
-    void registerDocumentRelocating(Node docNode);
+    void registerDocumentRelocating(Node docNode, Node previousVolume);
 
     /**
      * @param documentNode
@@ -453,5 +455,6 @@ public interface DocumentService {
     void addPrivilegesBasedOnSeries(NodeRef docRef);
 
     List<Document> getIncomingDocuments(NodeRef incomingNodeRef);
+
 
 }

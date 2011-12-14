@@ -21,6 +21,8 @@ import org.apache.myfaces.shared_impl.renderkit.RendererUtils;
 import org.apache.myfaces.shared_impl.renderkit.html.HTML;
 import org.apache.myfaces.shared_impl.renderkit.html.HtmlRendererUtils;
 
+import ee.webmedia.alfresco.utils.ComponentUtil;
+
 /**
  * Render different texts in value attribute and option label
  * 
@@ -29,6 +31,7 @@ import org.apache.myfaces.shared_impl.renderkit.html.HtmlRendererUtils;
 public class LabelAndValueSelectorRenderer extends HtmlMenuRenderer {
 
     public static final String LABEL_AND_VALUE_SELECTOR_RENDERER_TYPE = LabelAndValueSelectorRenderer.class.getCanonicalName();
+    public static final String ATTR_DESCRIPTION_AS_TOOLTIP = "descriptionAsTooltip";
 
     @Override
     public void encodeEnd(FacesContext facesContext, UIComponent component) throws IOException {
@@ -77,6 +80,9 @@ public class LabelAndValueSelectorRenderer extends HtmlMenuRenderer {
         } else {
             writer.writeAttribute("size", Integer.toString(size), null);
         }
+        // don't overwrite title attribute value in javascript
+        ComponentUtil.addStyleClass(uiComponent, "noOptionTitle");
+
         HtmlRendererUtils.renderHTMLAttributes(writer, uiComponent, HTML.SELECT_PASSTHROUGH_ATTRIBUTES_WITHOUT_DISABLED);
 
         if (disabled) {
@@ -117,7 +123,11 @@ public class LabelAndValueSelectorRenderer extends HtmlMenuRenderer {
                 writer.write(9);
                 writer.startElement("option", component);
                 writer.writeAttribute("value", itemStrValue == null ? "" : itemStrValue, null);
-                writer.writeAttribute("title", selectItem.getLabel(), null);
+                if (isTrue(component.getAttributes().get(ATTR_DESCRIPTION_AS_TOOLTIP))) {
+                    writer.writeAttribute("title", selectItem.getDescription(), null);
+                } else {
+                    writer.writeAttribute("title", selectItem.getLabel(), null);
+                }
 
                 if (lookupSet.contains(itemStrValue)) {
                     writer.writeAttribute("selected", "selected", null);

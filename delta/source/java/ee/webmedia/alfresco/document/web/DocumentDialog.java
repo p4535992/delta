@@ -19,6 +19,7 @@ import static ee.webmedia.alfresco.utils.RepoUtil.addAssoc;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -79,9 +80,11 @@ import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.web.FavoritesModalComponent.AddToFavoritesEvent;
 import ee.webmedia.alfresco.document.web.evaluator.RegisterDocumentEvaluator;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
+import ee.webmedia.alfresco.template.exception.ExistingFileFromTemplateException;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
+import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.PermissionDeniedException;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
@@ -110,6 +113,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     private static final String PARAM_DOCUMENT_TYPE = "documentType";
     private static final String PARAM_DOCUMENT_NODE_REF = "documentNodeRef";
     private static final String PARAM_NODEREF = "nodeRef";
+    private static final String PARAM_OVERWRITE_GRANTED = "overwriteGranted";
 
     private transient DocumentService documentService;
     private transient DocumentLogService documentLogService;
@@ -181,9 +185,21 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     }
 
     public void populateTemplate(ActionEvent event) {
+        boolean overwriteGranted = false;
+        if (ActionUtil.hasParam(event, PARAM_OVERWRITE_GRANTED)) {
+            overwriteGranted = ActionUtil.getParam(event, PARAM_OVERWRITE_GRANTED, Boolean.class);
+        }
+        NodeRef documentRef = new NodeRef(ActionUtil.getParam(event, PARAM_DOCUMENT_NODE_REF));
         try {
-            final String wordFileDisplayName = getDocumentTemplateService().populateTemplate(new NodeRef(ActionUtil.getParam(event, PARAM_DOCUMENT_NODE_REF)));
+            final String wordFileDisplayName = getDocumentTemplateService().populateTemplate(documentRef, overwriteGranted);
             MessageUtil.addInfoMessage("document_createWordFile_success", wordFileDisplayName);
+        } catch (ExistingFileFromTemplateException e) {
+            Map<String, String> params = new HashMap<String, String>(2);
+            params.put(PARAM_DOCUMENT_NODE_REF, documentRef.toString());
+            params.put(PARAM_OVERWRITE_GRANTED, Boolean.TRUE.toString());
+            BeanHelper.getUserConfirmHelper().setup(new MessageDataImpl("template_file_exists_from_template", e.getTemplateName()), null, "#{DocumentDialog.populateTemplate}",
+                    params, null, null, null);
+            return;
         } catch (UnableToPerformException e) {
             MessageUtil.addStatusMessage(FacesContext.getCurrentInstance(), e);
         } catch (FileNotFoundException e) {
@@ -305,32 +321,6 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         if (!StringUtils.equals(docStatusBefore, docStatusAfter)) {
             MessageUtil.addInfoMessage("document_reopen_success");
         }
-    }
-
-    public void deleteDocument(@SuppressWarnings("unused") ActionEvent event) {
-        Node node = getDocumentDialogHelperBean().getNode();
-        Assert.notNull(node, "No current document");
-        try {
-            validatePermission(node, DocumentCommonModel.Privileges.DELETE_DOCUMENT_META_DATA);
-            getDocumentService().deleteDocument(node.getNodeRef());
-        } catch (UnableToPerformException e) {
-            MessageUtil.addStatusMessage(e);
-            return;
-        } catch (AccessDeniedException e) {
-            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_delete_error_accessDenied");
-            return;
-        } catch (NodeLockedException e) {
-            BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_delete_error_docLocked");
-            return;
-        } catch (InvalidNodeRefException e) {
-            final FacesContext context = FacesContext.getCurrentInstance();
-            MessageUtil.addErrorMessage(context, "document_delete_error_docDeleted");
-            WebUtil.navigateTo(getDefaultCancelOutcome(), context);
-            return;
-        }
-        // go back
-        WebUtil.navigateTo(BeanHelper.getDialogManager().cancel());
-        MessageUtil.addInfoMessage("document_delete_success");
     }
 
     public boolean isInprogressCompoundWorkflows() {

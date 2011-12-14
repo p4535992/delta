@@ -146,6 +146,12 @@ NÜÜD enam dokumendile õiguseid ülevaltpoolt ei pärandata ja õigem nimetus 
 
    </permissionSet>
 
+   <permissionSet type="fm:forum" >
+
+      <permission name="participateAtForum" expose="false" />
+
+   </permissionSet>
+
    <permissionSet type="wfc:compoundWorkflow" expose="selected" >
 
       <permissionGroup name="WorkflowUser" expose="true" allowFullControl="false">

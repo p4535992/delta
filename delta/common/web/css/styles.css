@@ -1136,6 +1136,11 @@ textarea.inline {
 	line-height: 20px;
 }
 
+.print {
+	background: url("../images/icons/print.gif") no-repeat;
+	line-height: 20px;
+}
+
 .finish-task {
 	background: url("../images/icons/completed_workflow_item.gif") no-repeat;
 	line-height: 20px;
@@ -2265,6 +2270,10 @@ table.detailsMultiTbody tbody.tbGroup td.collapsed {
 	background: #e9ecef url("../images/icons/plus.gif") no-repeat 50% 50%;
 }
 
+.users {
+	background: #e9ecef url("../images/icons/users.gif") no-repeat 50% 50%;
+}
+
 table.detailsMultiTbody th {
 	padding-top: 6px;
 	border-bottom: none;
@@ -2509,7 +2518,8 @@ DIV.trans-scroll TABLE {
 
 /* End transaction block styles */
 
-.hidden {
+.hidden,
+.hiddenMenuItem {
 	display: none;
 }
 

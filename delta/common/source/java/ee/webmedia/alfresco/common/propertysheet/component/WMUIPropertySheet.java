@@ -34,6 +34,7 @@ public class WMUIPropertySheet extends UIPropertySheet {
     public static final String SHOW = "show";
     public static final String DISPLAY = "display";
     public static final String INLINE = "inline";
+    public static final String ATTR_SHOW_UNVALUED = "showUnvalued";
 
     /**
      * If this propertySheet represents a subPropertySheet(meaning it is in another propertySheet), it is associated to the parent using some type of
@@ -66,6 +67,14 @@ public class WMUIPropertySheet extends UIPropertySheet {
             CustomAttributes wmPropSheetItem = propSheetItem;
             wmPropSheetItem.setCustomAttributes(wMPropertyConfig.getCustomAttributes());
         }
+    }
+
+    public boolean isShowUnvalued() {
+        ValueBinding vb = getValueBinding(ATTR_SHOW_UNVALUED);
+        if (vb == null) {
+            return true;
+        }
+        return (Boolean) vb.getValue(getFacesContext());
     }
 
     @Override

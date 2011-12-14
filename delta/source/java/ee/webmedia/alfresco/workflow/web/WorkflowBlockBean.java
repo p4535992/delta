@@ -42,6 +42,7 @@ import org.alfresco.web.config.ActionsConfigElement.ActionDefinition;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIPanel;
+import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
@@ -129,6 +130,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     private transient DvkService dvkService;
 
     private transient HtmlPanelGroup dataTableGroup;
+    private transient UIRichList reviewNotesRichList;
     private transient List<ActionDefinition> actionDefinitions;
 
     private NodeRef docRef;
@@ -171,6 +173,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         removedFiles = null;
         delegationBean.reset();
         actionDefinitions = Collections.emptyList();
+        reviewNotesRichList = null;
     }
 
     public void restore() {
@@ -497,6 +500,14 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
 
     public boolean getReviewNoteBlockRendered() {
         return getFinishedReviewTasks().size() != 0;
+    }
+
+    public String getReviewNotesPrintUrl() {
+        String requestContextPath = FacesContext.getCurrentInstance().getExternalContext().getRequestContextPath();
+        if (!StringUtils.endsWith(requestContextPath, "/")) {
+            requestContextPath += "/";
+        }
+        return requestContextPath + "printReviewNotes/?param1=param1Val2";
     }
 
     public boolean getOpinionNoteBlockRendered() {
@@ -867,6 +878,14 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             taskPanelControlDocument = docRef;
         }
         this.dataTableGroup = dataTableGroup;
+    }
+
+    public UIRichList getReviewNotesRichList() {
+        return reviewNotesRichList;
+    }
+
+    public void setReviewNotesRichList(UIRichList reviewNotesRichList) {
+        this.reviewNotesRichList = reviewNotesRichList;
     }
 
     protected UserService getUserService() {

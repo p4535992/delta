@@ -26,6 +26,7 @@ public class CreateDynamicImapSubfoldersBootstrap extends AbstractModuleComponen
         addSubfolders(ImapModel.Repo.INCOMING_SPACE);
         addSubfolders(ImapModel.Repo.ATTACHMENT_SPACE);
         addSubfolders(ImapModel.Repo.SENT_SPACE);
+        addSubfolders(ImapModel.Repo.SEND_FAILURE_NOTICE_SPACE);
     }
 
     private void addSubfolders(String parentNodeXPath) {

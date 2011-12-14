@@ -199,7 +199,7 @@
 
          <action id="document_manage_permissions">
             <evaluator>ee.webmedia.alfresco.privilege.web.ManagePrivilegesEvaluator</evaluator>
-            <label-id>document_manage_permissions</label-id>
+            <label-id>manage_invited_users</label-id>
             <image>/images/icons/users.gif</image>
             <action>dialog:managePrivilegesDialog</action>
             <action-listener>#{ManagePrivilegesDialog.init}</action-listener>
@@ -272,7 +272,7 @@
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.DeleteDocumentEvaluator</evaluator>
             <label-id>document_delete</label-id>
             <image>/images/icons/versioned_properties.gif</image>
-            <action-listener>#{DocumentDialog.deleteDocument}</action-listener>
+            <action-listener>#{DocumentDynamicDialog.deleteDocument}</action-listener>
          </action>
 
           <action id="document_favorites_add">
@@ -325,6 +325,15 @@
             <action-listener>#{DvkBean.updateDocSendStatuses}</action-listener>
          </action>
 
+         <action id="docList_moveMass">
+            <label-id>document_move</label-id>
+            <onclick>showModal('documentLocation_popup'); return false;</onclick>
+         </action>
+
+         <action-group id="docListActions">
+            <action idref="docList_moveMass" />
+         </action-group>
+
          <action-group id="document_actions">
             <action idref="document_copy" />
             <action idref="word_file_from_document" />
@@ -340,6 +349,9 @@
             <action idref="document_favorites_add"/>
             <action idref="document_favorites_remove"/>
             <action idref="document_manage_permissions" />
+            <!-- FIXME PRIV2 Ats - tarne jaoks välja kommenteeritud
+            <action idref="document_manage_inheritable_permissions" />
+             -->
             <action idref="document_sendToSap" />
             <action idref="document_sendToSapManually" />
          </action-group>
@@ -370,7 +382,7 @@
       <dialogs>
 
          <dialog name="documentListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="DocumentListDialog"
-            icon="/images/icons/versioned_properties_large.gif" title-id="document_list" description-id="document_list_info" />
+            icon="/images/icons/versioned_properties_large.gif" title-id="document_list" description-id="document_list_info" actions-config-id="docListActions" />
 
          <dialog name="document" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-dialog.jsp" managed-bean="DocumentDialog"
             icon="/images/icons/details_large.gif" title-id="document" actions-config-id="document_actions" 
@@ -378,9 +390,6 @@
 
          <dialog name="documentSendOutDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/sendout/web/document-send-out-dialog.jsp" managed-bean="DocumentSendOutDialog"
             icon="/images/icons/details_large.gif" title-id="document_send_out" />
-
-         <dialog name="managePrivilegesDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/privilege/web/manage-privileges-dialog.jsp" managed-bean="ManagePrivilegesDialog"
-            icon="/images/icons/users_large.gif" title-id="document_manage_permissions" />
 
          <dialog name="outboxDocumentListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="OutboxDocumentListDialog"
             icon="/images/icons/versioned_properties_large.gif" title-id="document_outbox" show-ok-button="false" />

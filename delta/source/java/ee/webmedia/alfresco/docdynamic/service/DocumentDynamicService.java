@@ -6,6 +6,8 @@ import java.util.Map;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
+import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
@@ -25,16 +27,16 @@ public interface DocumentDynamicService {
      * @param parent
      * @return
      */
-    DocumentDynamic createNewDocument(String documentTypeId, NodeRef parent);
+    Pair<DocumentDynamic, DocumentTypeVersion> createNewDocument(String documentTypeId, NodeRef parent);
 
-    DocumentDynamic createNewDocument(DocumentTypeVersion docVer, NodeRef parent);
+    Pair<DocumentDynamic, DocumentTypeVersion> createNewDocument(DocumentTypeVersion docVer, NodeRef parent);
 
     /**
      * Create a new document in drafts and set default property values according to fully authenticated user.
      * 
      * @see #createNewDocument(String, NodeRef)
      */
-    DocumentDynamic createNewDocumentInDrafts(String documentTypeId);
+    Pair<DocumentDynamic, DocumentTypeVersion> createNewDocumentInDrafts(String documentTypeId);
 
     NodeRef copyDocument(DocumentDynamic document, Map<QName, Serializable> overriddenProperties, QName... ignoredProperty);
 
@@ -70,5 +72,9 @@ public interface DocumentDynamicService {
     boolean isOwner(NodeRef docRef, String ownerId);
 
     public void changeTypeInMemory(DocumentDynamic document, String newTypeId);
+
+    void createChildNodesHierarchyAndSetDefaultPropertyValues(Node parentNode, QName[] childAssocTypeQNameHierarchy, DocumentTypeVersion docVer);
+
+    boolean isShowMessageIfUnregistered();
 
 }

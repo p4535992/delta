@@ -19,49 +19,59 @@
                   <outcome>dialog:taskListDialog</outcome>
                   <action-listener>#{MyTasksBean.setupAssignmentTasks}</action-listener>
                   <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}assignmentTask</processor>
+                  <hidden>#{MenuBean.isMenuItemHidden}</hidden>
                </item>
                <item id="informationTasks" title-id="menu_for_information">
                   <outcome>dialog:taskListDialog</outcome>
                   <action-listener>#{MyTasksBean.setupInformationTasks}</action-listener>
                   <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}informationTask</processor>
+                  <hidden>#{MenuBean.isMenuItemHidden}</hidden>
                </item>
                <item id="orderAssignmentTasks" title-id="menu_for_order_assignment">
                   <outcome>dialog:taskListDialog</outcome>
                   <action-listener>#{MyTasksBean.setupOrderAssignmentTasks}</action-listener>
                   <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}orderAssignmentTask</processor>
+                  <hidden>#{MenuBean.isMenuItemHidden}</hidden>
                </item>               
                <item id="opinionTasks" title-id="menu_for_opinion">
                   <outcome>dialog:taskListDialog</outcome>
                   <action-listener>#{MyTasksBean.setupOpinionTasks}</action-listener>
                   <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}opinionTask</processor>
+                  <hidden>#{MenuBean.isMenuItemHidden}</hidden>
                </item>
                <item id="discussions" title-id="menu_for_discussion">
                   <outcome>dialog:discussionDocumentListDialog</outcome> 
                   <action-listener>#{DiscussionDocumentListDialog.setup}</action-listener>
+                  <hidden>#{MenuBean.isMenuItemHidden}</hidden>
                </item>
                <item id="reviewTasks" title-id="menu_for_review">
                   <outcome>dialog:taskListDialog</outcome>
                   <action-listener>#{MyTasksBean.setupReviewTasks}</action-listener>
                   <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}reviewTask</processor>
+                  <hidden>#{MenuBean.isMenuItemHidden}</hidden>
                </item>
                <item id="externalReviewTasks" title-id="menu_for_external_review">
                   <outcome>dialog:taskListDialog</outcome>
                   <action-listener>#{MyTasksBean.setupExternalReviewTasks}</action-listener>
                   <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}externalReviewTask</processor>
+                  <hidden>#{MenuBean.isMenuItemHidden}</hidden>
                </item>
                <item id="confirmationTasks" title-id="menu_for_confirmation">
                   <outcome>dialog:taskListDialog</outcome>
                   <action-listener>#{MyTasksBean.setupConfirmationTasks}</action-listener>
                   <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}confirmationTask</processor>
+                  <hidden>#{MenuBean.isMenuItemHidden}</hidden>
                </item>                
                <item id="signatureTasks" title-id="menu_for_signature">
                   <outcome>dialog:taskListDialog</outcome>
                   <action-listener>#{MyTasksBean.setupSignatureTasks}</action-listener>
                   <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}signatureTask</processor>
+                  <hidden>#{MenuBean.isMenuItemHidden}</hidden>
                </item>
                <item id="forRegisteringList" title-id="menu_for_registering" document-manager="true">
                   <outcome>dialog:forRegisteringListDialog</outcome> 
-                  <action-listener>#{ForRegisteringListDialog.setup}</action-listener> 
+                  <action-listener>#{ForRegisteringListDialog.setup}</action-listener>
+                  <hidden>#{MenuBean.isMenuItemHidden}</hidden> 
                </item>
             </subitems>
          </dropdown>
@@ -71,6 +81,7 @@
                <item id="userWorkingDocuments" title-id="menu_working_documents">
                   <outcome>dialog:userWorkingDocumentsSearchResultsDialog</outcome>
                   <action-listener>#{UserWorkingDocumentsSearchResultsDialog.setup}</action-listener>
+                  <hidden>#{MenuBean.isMenuItemHidden}</hidden>
                </item>
             </subitems>
          </dropdown>
@@ -97,9 +108,10 @@
                   <outcome>dialog:scannedDocsListDialog</outcome>
                   <action-listener>#{ScannedDocsListDialog.init}</action-listener>
                </item>
-               <!-- TODO CL 163430
-               <item id="sendingFailed" title-id="menu_sending_failed" document-manager="true" />
-               -->
+               <item id="sendFailureNotification" title-id="menu_send_failure_notifications" document-manager="true">
+                  <outcome>dialog:sendFailureNotificationsListDialog</outcome>
+                  <action-listener>#{SendFailureNotificationsListDialog.init}</action-listener>
+               </item>               
                <item id="dvkDocuments" title-id="menu_dvk_documents" document-manager="true">
                   <outcome>dialog:dvkDocumentListDialog</outcome>
                   <action-listener>#{DvkDocumentListDialog.setup}</action-listener>
@@ -132,7 +144,7 @@
    </item>
 
    <!-- DOKUMENDIREGISTER -->
-   <item title-id="menu_document_register">
+   <item id="documentRegister" title-id="menu_document_register">
       <outcome>dialog:todayRegisteredDocumentsSearchResultsDialog</outcome>
       <action-listener>#{TodayRegisteredDocumentsSearchResultsDialog.setup}</action-listener>
       <subitems>
@@ -140,13 +152,6 @@
             <xpath>/{http://alfresco.webmedia.ee/model/functions/1.0}documentList</xpath>
             <submenu-id>document-register</submenu-id>
             <outcome>dialog:functionsListDialog</outcome>
-            <action-listener>#{MenuBean.updateTree}</action-listener>
-         </dropdown>
-         <dropdown title-id="menu_archivals_list" browse="true">
-            <xpath>/{http://alfresco.webmedia.ee/model/functions/1.0}archivals</xpath>
-            <store>workspace://ArchivalsStore</store>
-            <submenu-id>document-register</submenu-id>
-            <outcome>dialog:archivedFunctionsListDialog</outcome>
             <action-listener>#{MenuBean.updateTree}</action-listener>
          </dropdown>
       </subitems>
@@ -222,7 +227,7 @@
          <item id="userManagement" title-id="menu_user_management" document-manager="true">
             <outcome>dialog:userListDialog</outcome>
          </item>
-         <item id="userGroupManagement" title-id="menu_user_group_management" document-manager="true">
+         <item id="userGroupManagement" title-id="groups_management" document-manager="true">
             <outcome>dialog:manageGroups</outcome>
             <action-listener>#{GroupsDialog.reset}</action-listener>
          </item>
@@ -277,6 +282,12 @@
          </item>
       </subitems>
    </item>
+   <item id="restrictedDelta" title="#{MenuBean.restrictedDeltaName}">
+      <href>#{MenuBean.restrictedDeltaUrl}</href>
+   </item>
+   <item id="regularDelta" title="#{MenuBean.deltaName}">
+      <href>#{MenuBean.deltaUrl}</href>
+   </item>   
 
    <!-- ALUSTA UUT DOKUMENTI -->
    <dropdown id="documentDynamicTypes" title-id="menu_start_new_document" skinnable="true" temporary="true">

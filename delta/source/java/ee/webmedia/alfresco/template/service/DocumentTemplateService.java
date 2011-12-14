@@ -10,6 +10,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.document.model.Document;
+import ee.webmedia.alfresco.template.exception.ExistingFileFromTemplateException;
 import ee.webmedia.alfresco.template.model.DocumentTemplate;
 import ee.webmedia.alfresco.volume.model.Volume;
 
@@ -57,7 +58,7 @@ public interface DocumentTemplateService {
      * @throws FileNotFoundException throws when document has a template which has been deleted
      * @throws Exception
      */
-    String populateTemplate(NodeRef documentNodeRef) throws FileNotFoundException;
+    String populateTemplate(NodeRef documentNodeRef, boolean overWritingGranted) throws FileNotFoundException, ExistingFileFromTemplateException;
 
     String getProcessedVolumeDispositionTemplate(List<Volume> volumes, NodeRef template);
 
@@ -72,6 +73,17 @@ public interface DocumentTemplateService {
      * @return processed content, where formulas are replaced with their values (if formula has a non-empty value)
      */
     String getProcessedEmailTemplate(Map<String, NodeRef> dataNodeRefs, NodeRef template);
+
+    /**
+     * Fetches template content, processes the formulas and returns the processed content.
+     * 
+     * @param dataNodeRefs Map where key is prefix in the formulas and value is NodeRef that has properties for that formula group. Prefix may also be null or
+     *            empty, in that case this formula group is used without prefix.
+     * @param templatetemplate file NodeRef
+     * @param additionalFormulas additional formulas that can be used. Can be null.
+     * @return processed content, where formulas are replaced with their values (if formula has a non-empty value)
+     */
+    String getProcessedEmailTemplate(Map<String, NodeRef> dataNodeRefs, NodeRef template, Map<String, String> additionalFormulas);
 
     /**
      * Check if supplied document has a template that can be used
@@ -97,7 +109,7 @@ public interface DocumentTemplateService {
      * @param templateName file name (e.g. foobar.html)
      * @return template template NodeRef or {@code null} if template not found
      */
-    NodeRef getSystemTemplateByName(String templateName);
+    NodeRef getNotificationTemplateByName(String templateName);
 
     String getDocumentUrl(NodeRef document);
 

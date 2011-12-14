@@ -123,6 +123,12 @@
                <view:value>contactFaxNumber</view:value>
                <view:value>contactWebPage</view:value>
                <view:value>contactRegNumber</view:value>
+               <view:value>contactStreetHouse</view:value>
+               <view:value>contactPostalCity</view:value>
+               <view:value>contactFirstAdditionalEmail</view:value>
+               <view:value>contactSecondAdditionalEmail</view:value>
+               <view:value>contactFirstAdditionalPhone</view:value>
+               <view:value>contactSecondAdditionalPhone</view:value>
             </view:values>
          </docadmin:fieldDefinitionIds>
       </view:properties>

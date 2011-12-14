@@ -174,24 +174,10 @@ public class MetadataBlockBean implements ClearStateListener {
         Map<QName, Serializable> personProps = getPersonProps(userName);
         targetProps.put(DocumentSpecificModel.Props.APPLICANT_NAME.toString(), UserUtil.getPersonFullName1(personProps));
         targetProps.put(DocumentSpecificModel.Props.APPLICANT_JOB_TITLE.toString(), personProps.get(ContentModel.PROP_JOBTITLE));
-        String orgstructName = getOrganizationStructureService().getOrganizationStructure((String) personProps.get(ContentModel.PROP_ORGID));
-        targetProps.put(DocumentSpecificModel.Props.APPLICANT_STRUCT_UNIT_NAME.toString(), orgstructName);
 
         // Set properties related to certain aspects if needed
         if (docAspects == null || docAspects.isEmpty()) {
             return RepoUtil.toQNameProperties(targetProps);
-        }
-
-        if (StringUtils.isNotBlank(orgstructName) && docAspects.contains(DocumentSpecificModel.Aspects.ERRAND_ORDER_APPLICANT_ABROAD_V2)) {
-            targetProps.put(DocumentSpecificModel.Props.COST_MANAGER.toString(), getActiveClassificatorValue("errandOrderAbroadCostManager", orgstructName));
-            targetProps.put(DocumentSpecificModel.Props.EXPENDITURE_ITEM.toString(), getActiveClassificatorValue("errandOrderExpenditureItem", orgstructName));
-        }
-
-        if (StringUtils.isNotBlank(orgstructName) && docAspects.contains(DocumentSpecificModel.Types.ERRAND_APPLICATION_DOMESTIC_APPLICANT_TYPE_V2)) {
-            targetProps.put(DocumentSpecificModel.Props.COST_MANAGER.toString(),
-                    getActiveClassificatorValue("errandApplicationDomesticCostManager", orgstructName));
-            targetProps.put(DocumentSpecificModel.Props.COST_ELEMENT.toString(),
-                    getActiveClassificatorValue("errandApplicationDomesticCostElement", orgstructName));
         }
 
         return RepoUtil.toQNameProperties(targetProps);
@@ -287,8 +273,6 @@ public class MetadataBlockBean implements ClearStateListener {
 
         Map<String, Object> docProps = document.getProperties();
         docProps.put(DocumentSpecificModel.Props.RESPONSIBLE_NAME.toString(), UserUtil.getPersonFullName1(personProps));
-        String orgstructName = getOrganizationStructureService().getOrganizationStructure((String) personProps.get(ContentModel.PROP_ORGID));
-        docProps.put(DocumentSpecificModel.Props.RESPONSIBLE_STRUCT_UNIT.toString(), orgstructName);
     }
 
     public void setOrganization(String nodeRefStr) {
@@ -312,8 +296,6 @@ public class MetadataBlockBean implements ClearStateListener {
         docProps.put(DocumentCommonModel.Props.OWNER_ID.toString(), personProps.get(ContentModel.PROP_USERNAME));
         docProps.put(DocumentCommonModel.Props.OWNER_NAME.toString(), UserUtil.getPersonFullName1(personProps));
         docProps.put(DocumentCommonModel.Props.OWNER_JOB_TITLE.toString(), personProps.get(ContentModel.PROP_JOBTITLE));
-        String orgstructName = getOrganizationStructureService().getOrganizationStructure((String) personProps.get(ContentModel.PROP_ORGID));
-        docProps.put(DocumentCommonModel.Props.OWNER_ORG_STRUCT_UNIT.toString(), orgstructName);
         docProps.put(DocumentCommonModel.Props.OWNER_EMAIL.toString(), personProps.get(ContentModel.PROP_EMAIL));
         docProps.put(DocumentCommonModel.Props.OWNER_PHONE.toString(), personProps.get(ContentModel.PROP_TELEPHONE));
     }
@@ -356,8 +338,6 @@ public class MetadataBlockBean implements ClearStateListener {
         Map<String, Object> docProps = document.getProperties();
         docProps.put(DocumentSpecificModel.Props.DELIVERER_NAME.toString(), UserUtil.getPersonFullName1(personProps));
         docProps.put(DocumentSpecificModel.Props.DELIVERER_JOB_TITLE.toString(), personProps.get(ContentModel.PROP_JOBTITLE));
-        String orgstructName = getOrganizationStructureService().getOrganizationStructure((String) personProps.get(ContentModel.PROP_ORGID));
-        docProps.put(DocumentSpecificModel.Props.DELIVERER_STRUCT_UNIT.toString(), orgstructName);
     }
 
     public void setCompensationApplicantName(String userName) {
@@ -366,8 +346,6 @@ public class MetadataBlockBean implements ClearStateListener {
         Map<String, Object> docProps = document.getProperties();
         docProps.put(DocumentSpecificModel.Props.COMPENSATION_APPLICANT_NAME.toString(), UserUtil.getPersonFullName1(personProps));
         docProps.put(DocumentSpecificModel.Props.COMPENSATION_APPLICANT_JOB_TITLE.toString(), personProps.get(ContentModel.PROP_JOBTITLE));
-        String orgstructName = getOrganizationStructureService().getOrganizationStructure((String) personProps.get(ContentModel.PROP_ORGID));
-        docProps.put(DocumentSpecificModel.Props.COMPENSATION_APPLICANT_STRUCT_UNIT_NAME.toString(), orgstructName);
     }
 
     public void setReceiver(String userName) {
@@ -376,8 +354,6 @@ public class MetadataBlockBean implements ClearStateListener {
         Map<String, Object> docProps = document.getProperties();
         docProps.put(DocumentSpecificModel.Props.RECEIVER_NAME.toString(), UserUtil.getPersonFullName1(personProps));
         docProps.put(DocumentSpecificModel.Props.RECEIVER_JOB_TITLE.toString(), personProps.get(ContentModel.PROP_JOBTITLE));
-        String orgstructName = getOrganizationStructureService().getOrganizationStructure((String) personProps.get(ContentModel.PROP_ORGID));
-        docProps.put(DocumentSpecificModel.Props.RECEIVER_STRUCT_UNIT.toString(), orgstructName);
     }
 
     public void setSender(String nodeRefStr) {
@@ -451,8 +427,6 @@ public class MetadataBlockBean implements ClearStateListener {
         List<String> list = new ArrayList<String>(3);
         list.add(UserUtil.getPersonFullName1(personProps));
         list.add((String) personProps.get(ContentModel.PROP_JOBTITLE));
-        String orgstructName = getOrganizationStructureService().getOrganizationStructure((String) personProps.get(ContentModel.PROP_ORGID));
-        list.add(orgstructName);
         return list;
     }
 
@@ -1841,7 +1815,7 @@ public class MetadataBlockBean implements ClearStateListener {
             getDocumentService().setTransientProperties(document, parentNodes);
             BaseDialogBean.validatePermission(document, DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA);
             document = getDocumentService().registerDocument(document);
-			// Update generated files
+            // Update generated files
             BeanHelper.getDocumentTemplateService().updateGeneratedFiles(document.getNodeRef(), true);
             ((MenuBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuBean.BEAN_NAME)).processTaskItems();
             MessageUtil.addInfoMessage("document_registerDoc_success");

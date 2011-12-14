@@ -768,7 +768,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         String name = UserUtil.getPersonFullName1(resultProps);
         Serializable id = resultProps.get(ContentModel.PROP_USERNAME);
         Serializable email = resultProps.get(ContentModel.PROP_EMAIL);
-        Serializable orgName = getOrganizationStructureService().getOrganizationStructure((String) resultProps.get(ContentModel.PROP_ORGID));
+        Serializable orgName = (Serializable) getOrganizationStructureService().getOrganizationStructurePaths((String) resultProps.get(ContentModel.PROP_ORGID));
         Serializable jobTitle = resultProps.get(ContentModel.PROP_JOBTITLE);
         setPropsToTask(block, taskIndex, name, id, email, orgName, jobTitle);
     }
@@ -777,7 +777,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         String name = UserUtil.getPersonFullName1(personProps);
         Serializable id = personProps.get(ContentModel.PROP_USERNAME);
         Serializable email = personProps.get(ContentModel.PROP_EMAIL);
-        Serializable orgName = getOrganizationStructureService().getOrganizationStructure((String) personProps.get(ContentModel.PROP_ORGID));
+        Serializable orgName = (Serializable) getOrganizationStructureService().getOrganizationStructurePaths((String) personProps.get(ContentModel.PROP_ORGID));
         Serializable jobTitle = personProps.get(ContentModel.PROP_JOBTITLE);
         setPropsToTask(task, name, id, email, orgName, jobTitle);
     }

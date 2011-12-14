@@ -19,7 +19,6 @@ import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
-import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -28,6 +27,8 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.lang.ArrayUtils;
+import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.base.BaseService;
 import ee.webmedia.alfresco.base.BaseService.Effort;
@@ -45,6 +46,7 @@ import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldMapping;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
+import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
@@ -78,13 +80,15 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
         DocumentDynamic baseDoc = documentDynamicService.getDocument(baseDocRef);
         WmNode baseDocNode = baseDoc.getNode();
 
-        DocumentDynamic newDoc = documentDynamicService.createNewDocumentInDrafts(newDocTypeId);
+        Pair<DocumentDynamic, DocumentTypeVersion> newDocAndVer = documentDynamicService.createNewDocumentInDrafts(newDocTypeId);
+        DocumentDynamic newDoc = newDocAndVer.getFirst();
         WmNode newDocNode = newDoc.getNode();
 
         String baseDocTypeId = baseDoc.getDocumentTypeId();
-        Integer documentTypeVersionNr = baseDoc.getDocumentTypeVersionNr();
+        Integer baseDocTypeVersionNr = baseDoc.getDocumentTypeVersionNr();
+        Integer newDocTypeVersionNr = newDoc.getDocumentTypeVersionNr();
 
-        Pair<DocumentType, DocumentTypeVersion> baseDocTypeAndVersion = documentAdminService.getDocumentTypeAndVersion(baseDocTypeId, documentTypeVersionNr);
+        Pair<DocumentType, DocumentTypeVersion> baseDocTypeAndVersion = documentAdminService.getDocumentTypeAndVersion(baseDocTypeId, baseDocTypeVersionNr);
         DocumentType baseDocType = baseDocTypeAndVersion.getFirst();
 
         DocTypeAssocType replyOrF = DocTypeAssocType.valueOf(replyOrFollowUp);
@@ -98,83 +102,38 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
                     "primaryParent.parentRef=" + primaryParent.getParentRef() + ", baseDocType.nodeRef=" + baseDocType.getNodeRef());
         }
 
-        DocumentTypeVersion baseDocTypeVersion = baseDocTypeAndVersion.getSecond();
-        Map<String, Field> baseDocTypeFieldsById = baseDocTypeVersion.getFieldsDeeplyById();
-
         // FIXME: kas source prop def. on mitmeväärtuseline või kas property ise on mitmeväärtuseline - võib vist ainult viimase järgi kontrollida?
-        Map<String, Pair<PropertyDefinition, Field>> baseDocPropDefinitions = documentConfigService.getPropertyDefinitions(baseDocNode);
-        Map<String, Pair<PropertyDefinition, Field>> newDocPropDefinitions = documentConfigService.getPropertyDefinitions(newDocNode);
-
-        DocumentType newDocType = documentAdminService.getDocumentType(newDocTypeId, DocumentAdminService.DOC_TYPE_WITH_OUT_GRAND_CHILDREN_EXEPT_LATEST_DOCTYPE_VER);
-        Map<String, Field> newDocTypeFieldsById = newDocType.getLatestDocumentTypeVersion().getFieldsDeeplyById();
-
-        Map<String, Object> followupProps = newDocNode.getProperties();
-        Map<String, Object> docProps = baseDocNode.getProperties();
+        Map<String, Pair<DynamicPropertyDefinition, Field>> baseDocPropDefinitions = documentConfigService.getPropertyDefinitions(baseDocNode);
+        Map<String, Pair<DynamicPropertyDefinition, Field>> newDocPropDefinitions = documentConfigService.getPropertyDefinitions(newDocNode);
 
         for (FieldMapping fieldMapping : assocModel.getFieldMappings()) {
             String fromFieldId = fieldMapping.getFromField();
             String toFieldId = fieldMapping.getToField();
-            Field toFieldObject = newDocTypeFieldsById.get(toFieldId);
-            if (toFieldObject == null) {
-                LOG.warn("Creating assoc from " + baseDocTypeId + ". Found mapping " + fromFieldId + "->" + toFieldId + " but "
-                        + newDocTypeId + " doesn't seem to have field " + toFieldId + ". Mapping: " + fieldMapping.getNodeRef());
+            Pair<DynamicPropertyDefinition, Field> baseDocPropDefAndField = baseDocPropDefinitions.get(toFieldId);
+            Pair<DynamicPropertyDefinition, Field> newDocPropDefAndField = newDocPropDefinitions.get(toFieldId);
+            if (baseDocPropDefAndField == null || baseDocPropDefAndField.getSecond() == null) {
+                LOG.warn("Creating assoc to " + newDocTypeId + ". Found mapping " + fromFieldId + "->" + toFieldId + " but " + baseDocTypeId + " ver " + baseDocTypeVersionNr
+                        + " doesn't seem to have source field " + fromFieldId + ". Mapping: " + fieldMapping.getNodeRef());
                 continue;
             }
-            QName fromField = QName.createQName(DocumentDynamicModel.URI, fromFieldId);
-            QName toField = QName.createQName(DocumentDynamicModel.URI, toFieldId);
-            if (!docProps.containsKey(fromField.toString())) {
-                continue; // if value is missing then don't overwrite with null
+            if (newDocPropDefAndField == null || newDocPropDefAndField.getSecond() == null) {
+                LOG.warn("Creating assoc from " + baseDocTypeId + ". Found mapping " + fromFieldId + "->" + toFieldId + " but " + newDocTypeId + " ver " + newDocTypeVersionNr
+                        + " doesn't seem to have target field " + toFieldId + ". Mapping: " + fieldMapping.getNodeRef());
+                continue;
             }
-            Object existingProp = docProps.get(fromField.toString());
-            if (existingProp != null) {
-                Pair<PropertyDefinition, Field> newDocPropDefAndField = newDocPropDefinitions.get(toFieldId);
-                boolean toPropIsMultivalued = newDocPropDefAndField.getFirst().isMultiValued();
-                if (existingProp instanceof Collection<?>) {
-                    Collection<?> existingPropCol = (Collection<?>) existingProp;
-                    boolean existingPropNotEmpty = !existingPropCol.isEmpty();
-                    if (!toPropIsMultivalued) {
-                        // multivalued -> singlevalued
-                        existingProp = existingPropNotEmpty ? existingPropCol.iterator().next() : null;
-                    } else if (existingPropNotEmpty) {
-                        Field newDocTypeField = newDocTypeFieldsById.get(toFieldId);
-                        FieldType newDocFieldTypeEnum = newDocTypeField.getFieldTypeEnum();
-                        FieldType baseDocFieldType = baseDocTypeFieldsById.get(fromFieldId).getFieldTypeEnum();
-                        if (!toPropIsMultivalued) {
-                            // only first value is used when target is not multiValued
-                            existingProp = existingPropCol.iterator().next();
-                        } else if (FieldType.LISTBOX.equals(newDocFieldTypeEnum) && FieldType.LISTBOX.equals(baseDocFieldType)) {
-                            existingProp = filterExistingClassificatorValues(newDocTypeField, existingPropCol);
-                        }
-                    }
-                } else {
-                    // existing prop is singleValued
-                    if (toPropIsMultivalued) {
-                        // singlevalued -> multivalued
-                        existingProp = new ArrayList<Object>(Collections.singleton(existingProp));
-                    } else {
-                        // both singleValued
-                        Field newDocTypeField = newDocTypeFieldsById.get(toFieldId);
-                        FieldType newDocFieldTypeEnum = newDocTypeField.getFieldTypeEnum();
-                        FieldType baseDocFieldType = baseDocTypeFieldsById.get(fromFieldId).getFieldTypeEnum();
-                        if (FieldType.COMBOBOX.equals(newDocFieldTypeEnum) && FieldType.COMBOBOX.equals(baseDocFieldType)) {
-                            // value should be copied only if classificator of toField has that value
-                            List<Object> classificatorValue = filterExistingClassificatorValues(newDocTypeField, Arrays.asList(existingProp));
-                            existingProp = classificatorValue.isEmpty() ? null : classificatorValue.get(0);
-                        }
-                    }
-                }
+            Field baseDocTypeField = baseDocPropDefAndField.getSecond();
+            Field newDocTypeField = newDocPropDefAndField.getSecond();
+            DynamicPropertyDefinition baseDocPropDef = baseDocPropDefAndField.getFirst();
+            DynamicPropertyDefinition newDocPropDef = newDocPropDefAndField.getFirst();
+            QName[] baseHierarchy = baseDocPropDef.getChildAssocTypeQNameHierarchy();
+            QName[] newHierarchy = newDocPropDef.getChildAssocTypeQNameHierarchy();
+            if (baseHierarchy == null) {
+                baseHierarchy = new QName[] {};
             }
-            followupProps.put(toField.toString(), existingProp);
-            // copy special properties related to owner and signer
-            if (DocumentDynamicModel.Props.OWNER_NAME.equals(fromField) && DocumentDynamicModel.Props.OWNER_NAME.equals(toField)) {
-                QName prop = DocumentDynamicModel.Props.OWNER_ID;
-                Object existingOwnerId = docProps.get(prop);
-                followupProps.put(prop.toString(), existingOwnerId);
-            } else if (DocumentDynamicModel.Props.SIGNER_NAME.equals(fromField) && DocumentDynamicModel.Props.SIGNER_NAME.equals(toField)) {
-                QName prop = DocumentDynamicModel.Props.SIGNER_ID;
-                Object existingOwnerId = docProps.get(prop);
-                followupProps.put(prop.toString(), existingOwnerId);
+            if (newHierarchy == null) {
+                newHierarchy = new QName[] {};
             }
+            copyPropertyRecursively(0, baseHierarchy, newHierarchy, baseDocNode, newDocNode, baseDocTypeField, newDocTypeField, newDocPropDef, newDocAndVer.getSecond());
         }
         createAssoc(newDocNode.getNodeRef(), baseDocNode.getNodeRef(), replyOrF.getAssocBetweenDocs());
 
@@ -185,6 +144,105 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
             LOG.debug("Created " + replyOrF + " " + newDocTypeId + ": from " + baseDoc.getDocumentTypeId());
         }
         return newDoc;
+    }
+
+    private void copyPropertyRecursively(int i, QName[] baseHierarchy, QName[] newHierarchy, Node baseDocNode, Node newDocNode, Field baseDocTypeField, Field newDocTypeField,
+            DynamicPropertyDefinition newDocPropDef, DocumentTypeVersion newDocTypeVer) {
+        if (i >= baseHierarchy.length && i >= newHierarchy.length) {
+            // direct
+            copyPropertyValue(baseDocNode, newDocNode, baseDocTypeField, newDocTypeField, newDocPropDef);
+
+        } else if (i < baseHierarchy.length && i < newHierarchy.length) {
+            // recurse
+            List<Node> baseChildNodes = baseDocNode.getAllChildAssociations(baseHierarchy[i]);
+            if (baseChildNodes == null || baseChildNodes.isEmpty()) {
+                return;
+            }
+            List<Node> newChildNodes = newDocNode.getAllChildAssociations(newHierarchy[i]);
+            Assert.isTrue(newChildNodes != null && !newChildNodes.isEmpty()); // createNewDocument/createNewChild should have created one child node for each child assoc
+            for (int j = 0; j < baseChildNodes.size(); j++) {
+                if (j >= newChildNodes.size()) {
+                    QName[] newChildHierarchy = (QName[]) ArrayUtils.subarray(newHierarchy, 0, i + 1);
+                    documentDynamicService.createChildNodesHierarchyAndSetDefaultPropertyValues(newDocNode, newChildHierarchy, newDocTypeVer);
+                    // create
+                }
+                copyPropertyRecursively(i + 1, baseHierarchy, newHierarchy, baseChildNodes.get(j), newChildNodes.get(j), baseDocTypeField, newDocTypeField, newDocPropDef,
+                        newDocTypeVer);
+            }
+
+        } else if (i >= baseHierarchy.length) {
+            Assert.isTrue(i < newHierarchy.length);
+            List<Node> newChildNodes = newDocNode.getAllChildAssociations(newHierarchy[i]);
+            Assert.isTrue(newChildNodes != null && !newChildNodes.isEmpty()); // createNewDocument/createNewChild should have created one child node for each child assoc
+            copyPropertyRecursively(i + 1, baseHierarchy, newHierarchy, baseDocNode, newChildNodes.get(0), baseDocTypeField, newDocTypeField, newDocPropDef, newDocTypeVer);
+
+        } else if (i >= newHierarchy.length) {
+            Assert.isTrue(i < baseHierarchy.length);
+            List<Node> baseChildNodes = baseDocNode.getAllChildAssociations(baseHierarchy[i]);
+            if (baseChildNodes == null || baseChildNodes.isEmpty()) {
+                return;
+            }
+            copyPropertyRecursively(i + 1, baseHierarchy, newHierarchy, baseChildNodes.get(0), newDocNode, baseDocTypeField, newDocTypeField, newDocPropDef, newDocTypeVer);
+
+        } else {
+            Assert.isTrue(false);
+        }
+    }
+
+    private void copyPropertyValue(Node baseDocNode, Node newDocNode, Field baseDocTypeField, Field newDocTypeField, DynamicPropertyDefinition newDocPropDef) {
+        Map<String, Object> docProps = baseDocNode.getProperties();
+        Map<String, Object> followupProps = newDocNode.getProperties();
+        FieldType baseDocFieldType = baseDocTypeField.getFieldTypeEnum();
+        FieldType newDocFieldType = newDocTypeField.getFieldTypeEnum();
+
+        QName fromField = baseDocTypeField.getQName();
+        QName toField = newDocTypeField.getQName();
+        if (!docProps.containsKey(fromField.toString())) {
+            return; // if value is missing then don't overwrite with null
+        }
+        Object existingProp = docProps.get(fromField.toString());
+        if (existingProp != null) {
+            boolean toPropIsMultivalued = newDocPropDef.isMultiValued();
+            if (existingProp instanceof Collection<?>) {
+                Collection<?> existingPropCol = (Collection<?>) existingProp;
+                boolean existingPropNotEmpty = !existingPropCol.isEmpty();
+                if (!toPropIsMultivalued) {
+                    // multivalued -> singlevalued
+                    existingProp = existingPropNotEmpty ? existingPropCol.iterator().next() : null;
+                } else if (existingPropNotEmpty) {
+                    if (!toPropIsMultivalued) {
+                        // only first value is used when target is not multiValued
+                        existingProp = existingPropCol.iterator().next();
+                    } else if (FieldType.LISTBOX.equals(newDocFieldType) && FieldType.LISTBOX.equals(baseDocFieldType)) {
+                        existingProp = filterExistingClassificatorValues(newDocTypeField, existingPropCol);
+                    }
+                }
+            } else {
+                // existing prop is singleValued
+                if (toPropIsMultivalued) {
+                    // singlevalued -> multivalued
+                    existingProp = new ArrayList<Object>(Collections.singleton(existingProp));
+                } else {
+                    // both singleValued
+                    if (FieldType.COMBOBOX.equals(newDocFieldType) && FieldType.COMBOBOX.equals(baseDocFieldType)) {
+                        // value should be copied only if classificator of toField has that value
+                        List<Object> classificatorValue = filterExistingClassificatorValues(newDocTypeField, Arrays.asList(existingProp));
+                        existingProp = classificatorValue.isEmpty() ? null : classificatorValue.get(0);
+                    }
+                }
+            }
+        }
+        followupProps.put(toField.toString(), existingProp);
+        // copy special properties related to owner and signer
+        if (DocumentDynamicModel.Props.OWNER_NAME.equals(fromField) && DocumentDynamicModel.Props.OWNER_NAME.equals(toField)) {
+            QName prop = DocumentDynamicModel.Props.OWNER_ID;
+            Object existingOwnerId = docProps.get(prop);
+            followupProps.put(prop.toString(), existingOwnerId);
+        } else if (DocumentDynamicModel.Props.SIGNER_NAME.equals(fromField) && DocumentDynamicModel.Props.SIGNER_NAME.equals(toField)) {
+            QName prop = DocumentDynamicModel.Props.SIGNER_ID;
+            Object existingOwnerId = docProps.get(prop);
+            followupProps.put(prop.toString(), existingOwnerId);
+        }
     }
 
     private List<Object> filterExistingClassificatorValues(Field newDocTypeField, Collection<?> col) {

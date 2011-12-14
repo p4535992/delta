@@ -45,7 +45,6 @@ import de.schlichtherle.io.FileInputStream;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Assocs;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
-import ee.webmedia.alfresco.archivals.model.ArchivalsModel;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
@@ -557,7 +556,7 @@ public class PostipoissStructureImporter {
 
     private NodeRef getArchivalRoot() {
         if (archivalRoot == null) {
-            archivalRoot = generalService.getNodeRef(ArchivalsModel.Repo.ARCHIVALS_SPACE, archivalStore);
+            archivalRoot = generalService.getPrimaryArchivalsNodeRef();
         }
         return archivalRoot;
     }

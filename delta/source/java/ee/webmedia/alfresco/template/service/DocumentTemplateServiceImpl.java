@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -23,7 +24,6 @@ import org.alfresco.model.ContentModel;
 import org.alfresco.model.ForumModel;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
-import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
@@ -36,6 +36,7 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.springframework.util.Assert;
@@ -48,10 +49,12 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.service.OpenOfficeService;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
+import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicFieldGroupNames;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
+import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
@@ -63,15 +66,18 @@ import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.mso.service.MsoService;
 import ee.webmedia.alfresco.series.model.SeriesModel;
+import ee.webmedia.alfresco.template.exception.ExistingFileFromTemplateException;
 import ee.webmedia.alfresco.template.model.DocumentTemplate;
 import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.ISOLatin1Util;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
+import ee.webmedia.alfresco.versions.service.VersionsService;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
@@ -89,6 +95,8 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     private static final String SEPARATOR = ".";
     private static final Pattern TEMPLATE_FORMULA_GROUP_PATTERN = Pattern.compile(OpenOfficeService.REGEXP_GROUP_PATTERN);
     private static final Pattern TEMPLATE_FORMULA_PATTERN = Pattern.compile(OpenOfficeService.REGEXP_PATTERN);
+    public static final QName TEMP_PROP_FILE_NAME_BASE = RepoUtil.createTransientProp("fileNameBase");
+    public static final QName TEMP_PROP_FILE_NAME_EXTENSION = RepoUtil.createTransientProp("fileNameExtension");
 
     private GeneralService generalService;
     private NodeService nodeService;
@@ -103,6 +111,8 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     private ServletContext servletContext;
     private UserService userService;
     private DocumentConfigService documentConfigService;
+    private DocumentAdminService documentAdminService;
+    private VersionsService versionsService;
 
     private static BeanPropertyMapper<DocumentTemplate> templateBeanPropertyMapper;
     static {
@@ -115,15 +125,14 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             // Temporary safeguard until OO document templates & formulas are properly implemented
             return;
         }
+        String docTemplateName = (String) nodeService.getProperty(docRef, DocumentSpecificModel.Props.TEMPLATE_NAME);
         List<FileInfo> files = fileFolderService.listFiles(docRef);
         log.debug("Found " + files.size() + " files under document " + docRef);
         for (FileInfo file : files) {
-            // This check ensures, that only proper DOC files are passed to Word
-            // Unfortunately DOT files have mimetype application/octet-stream, and therefore MsoService must accept this mimetype also
-            // So without this check, every binary file would be passed to word, which would be unnecessary and very time consuming
-            Map<QName, Serializable> fileProps = file.getProperties();
-            if ((fileProps.get(FileModel.Props.ACTIVE) == null || Boolean.TRUE.equals(fileProps.get(FileModel.Props.ACTIVE)))
-                    && fileService.isFileGeneratedFromTemplate(file.getNodeRef())) {
+            if (StringUtils.isBlank(docTemplateName)) {
+                docTemplateName = getDocumentsTemplate(docRef).getName();
+            }
+            if (StringUtils.equals(docTemplateName, (String) file.getProperties().get(FileModel.Props.GENERATED_FROM_TEMPLATE))) {
                 replaceFormulas(docRef, file.getNodeRef(), file.getNodeRef(), file.getName(), isRegistering);
             }
         }
@@ -131,7 +140,11 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
     @Override
     public void updateDocTemplate(Node docTemplNode) {
-        generalService.setPropertiesIgnoringSystem(docTemplNode.getNodeRef(), docTemplNode.getProperties());
+        Map<String, Object> properties = docTemplNode.getProperties();
+        String newName = properties.remove(TEMP_PROP_FILE_NAME_BASE.toString()) + "."
+                + properties.remove(TEMP_PROP_FILE_NAME_EXTENSION.toString());
+        properties.put(DocumentTemplateModel.Prop.NAME.toString(), newName);
+        generalService.setPropertiesIgnoringSystem(docTemplNode.getNodeRef(), properties);
     }
 
     @Override
@@ -174,6 +187,8 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             if (!documentTypeId.equals(fi.getProperties().get(DocumentTemplateModel.Prop.DOCTYPE_ID))) {
                 continue;
             }
+            String fileNameExtension = FilenameUtils.getExtension((String) fi.getProperties().get(DocumentTemplateModel.Prop.NAME));
+            Assert.isTrue(StringUtils.equals("dotx", fileNameExtension) || StringUtils.equals("dot", fileNameExtension));
             return true;
         }
         return false;
@@ -193,7 +208,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     }
 
     @Override
-    public String populateTemplate(NodeRef documentNodeRef) throws FileNotFoundException {
+    public String populateTemplate(NodeRef documentNodeRef, boolean overWritingGranted) throws FileNotFoundException {
         if (!msoService.isAvailable()) {
             // Temporary safeguard until OO document templates & formulas are properly implemented
             throw new UnableToPerformException("document_errorMsg_template_processsing_failed_mso_missing");
@@ -218,32 +233,56 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         String templateFilename = (String) nodeService.getProperty(nodeRef, ContentModel.PROP_NAME);
         log.debug("Using template: " + templateFilename);
 
-        String extension = mimetypeService.getExtension(MimetypeMap.MIMETYPE_WORD);
-        if (StringUtils.endsWithIgnoreCase(templateFilename, ".dotx")) {
-            extension += "x"; // Well, ain't this nice! :) (Filename must end with docx if 2003/2007 template is used)
+        NodeRef existingGeneratedFile = null;
+        String displayName = null;
+        { // Check if we already have a file that is generated using this template and overwrite
+            for (ChildAssociationRef caRef : nodeService.getChildAssocs(documentNodeRef, new HashSet<QName>(Arrays.asList(ContentModel.TYPE_CONTENT)))) {
+                NodeRef fileRef = caRef.getChildRef();
+                String genTemplName = (String) nodeService.getProperty(fileRef, FileModel.Props.GENERATED_FROM_TEMPLATE);
+                if (!StringUtils.equals(genTemplName, templateFilename)) {
+                    continue;
+                }
+
+                if (!overWritingGranted) {
+                    throw new ExistingFileFromTemplateException(templateFilename);
+                }
+                displayName = (String) nodeService.getProperty(fileRef, FileModel.Props.DISPLAY_NAME);
+                existingGeneratedFile = fileRef;
+                // Create new version for the file. Aspect must be added, so do this now (no point of checking if file already has it).
+                versionsService.addVersionLockableAspect(existingGeneratedFile);
+                versionsService.updateVersion(fileRef, displayName, false);
+                break; // Assume there is only one file.
+            }
         }
-        String name = ((String) docProp.get(DocumentCommonModel.Props.DOC_NAME));
-        String displayName = fileService.getUniqueFileDisplayName(documentNodeRef, name + "." + extension);
-        name = FilenameUtil.replaceAmpersand(ISOLatin1Util.removeAccents(FilenameUtil.buildFileName(name,
-                extension)));
-        name = FilenameUtil.replaceNonAsciiCharacters(name);
-        name = FilenameUtil.limitFileNameLength(name);
-        name = generalService.getUniqueFileName(documentNodeRef, name);
 
-        ee.webmedia.alfresco.document.file.model.File populatedTemplate = new ee.webmedia.alfresco.document.file.model.File(fileFolderService.create(
-                documentNodeRef, name, ContentModel.TYPE_CONTENT));
-        // Mark down the template that was used to generate the file
-        nodeService.setProperty(populatedTemplate.getNodeRef(), FileModel.Props.GENERATED_FROM_TEMPLATE, templateFilename);
-        nodeService.setProperty(populatedTemplate.getNodeRef(), FileModel.Props.GENERATION_TYPE, GeneratedFileType.WORD_TEMPLATE.name());
+        if (existingGeneratedFile == null) { // Create the container for template content
+            String extension = mimetypeService.getExtension(MimetypeMap.MIMETYPE_WORD);
+            if (StringUtils.endsWithIgnoreCase(templateFilename, ".dotx")) {
+                extension += "x"; // Well, ain't this nice! :) (Filename must end with docx if 2003/2007 template is used)
+            }
+            String name = ((String) docProp.get(DocumentCommonModel.Props.DOC_NAME));
+            displayName = fileService.getUniqueFileDisplayName(documentNodeRef, name + "." + extension);
+            name = FilenameUtil.replaceAmpersand(ISOLatin1Util.removeAccents(FilenameUtil.buildFileName(name, extension)));
+            name = FilenameUtil.replaceNonAsciiCharacters(name);
+            name = FilenameUtil.limitFileNameLength(name);
+            name = generalService.getUniqueFileName(documentNodeRef, name);
 
-        // so we can process it during document registration
-        nodeService.setProperty(populatedTemplate.getNodeRef(), FileModel.Props.DISPLAY_NAME, displayName);
+            existingGeneratedFile = fileFolderService.create(documentNodeRef, name, ContentModel.TYPE_CONTENT).getNodeRef();
 
-        documentLogService.addDocumentLog(documentNodeRef, I18NUtil.getMessage("document_log_status_fileAdded", displayName));
-        log.debug("Created new node: " + populatedTemplate.getNodeRef() + "\nwith name: " + name + "; displayName: " + displayName);
-        // Set document content's mimetype and encoding from template
+            Map<QName, Serializable> templateProps = new HashMap<QName, Serializable>(3);
+            // Mark down the template that was used to generate the file
+            templateProps.put(FileModel.Props.GENERATED_FROM_TEMPLATE, templateFilename);
+            templateProps.put(FileModel.Props.GENERATION_TYPE, GeneratedFileType.WORD_TEMPLATE.name());
+            // Set the display name so we can process it during document registration
+            templateProps.put(FileModel.Props.DISPLAY_NAME, displayName);
+            nodeService.addProperties(existingGeneratedFile, templateProps);
 
-        replaceFormulas(documentNodeRef, nodeRef, populatedTemplate.getNodeRef(), templateFilename);
+            documentLogService.addDocumentLog(documentNodeRef, I18NUtil.getMessage("document_log_status_fileAdded", displayName));
+            log.debug("Created new node: " + existingGeneratedFile + "\nwith name: " + name + "; displayName: " + displayName);
+        }
+
+        // Set document content's MIME type and encoding from template
+        replaceFormulas(documentNodeRef, nodeRef, existingGeneratedFile, templateFilename);
         return displayName;
     }
 
@@ -353,7 +392,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                     generateAccessRestrictionDocumentRow(sb, doc, formattedDate);
 
                     debugInfo.append("\n  * ").append(endDate.getTime()).append(" ").append(endDate.toString()).append(" -> ").append(formattedDate).append(" - ")
-                    .append(doc.getNodeRef().toString());
+                            .append(doc.getNodeRef().toString());
                 }
             }
             if (sb.length() > 0) {
@@ -390,32 +429,38 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         }
 
         sb.append("<tr><td>")
-        .append(regNr)
-        .append("</td><td>")
-        .append(doc.getRegDateTime() == null ? "" : dateTimeFormat.format(doc.getRegDateTime()))
-        .append("</td><td>")
-        .append(doc.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID))
-        .append("</td><td>")
-        .append("<a href=\"").append(getDocumentUrl(doc.getNodeRef())).append(">").append(doc.getDocName()).append("</a>")
-        .append("</td><td>")
-        .append(doc.getOwnerName())
-        .append("</td><td>")
-        .append(I18NUtil.getMessage("notification_access_restriction_end"))
-        .append(": ")
-        .append(lastColValue)
-        .append("</td></tr>")
-        .append("\n");
+                .append(regNr)
+                .append("</td><td>")
+                .append(doc.getRegDateTime() == null ? "" : dateTimeFormat.format(doc.getRegDateTime()))
+                .append("</td><td>")
+                .append(documentAdminService.getDocumentTypeName((String) doc.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID)))
+                .append("</td><td>")
+                .append("<a href=\"").append(getDocumentUrl(doc.getNodeRef())).append("\">").append(doc.getDocName()).append("</a>")
+                .append("</td><td>")
+                .append(doc.getOwnerName())
+                .append("</td><td>")
+                .append(I18NUtil.getMessage("notification_access_restriction_end"))
+                .append(": ")
+                .append(lastColValue)
+                .append("</td></tr>")
+                .append("\n");
     }
 
     @Override
     public String getProcessedEmailTemplate(Map<String, NodeRef> dataNodeRefs, NodeRef template) {
+        return getProcessedEmailTemplate(dataNodeRefs, template, null);
+    }
+
+    @Override
+    public String getProcessedEmailTemplate(Map<String, NodeRef> dataNodeRefs, NodeRef template, Map<String, String> additionalFormulas) {
         ContentReader templateReader = fileFolderService.getReader(template);
         String templateTxt = templateReader.getContentString();
         if (dataNodeRefs.size() == 0) {
             return templateTxt;
         }
 
-        Map<String, String> allFormulas = new LinkedHashMap<String, String>();
+        // Use existing values as baseline if possible
+        Map<String, String> allFormulas = (additionalFormulas == null) ? new LinkedHashMap<String, String>() : additionalFormulas;
         for (Entry<String, NodeRef> entry : dataNodeRefs.entrySet()) {
             Map<String, String> formulas = getEmailFormulas(entry.getValue());
             String keyPrefix = entry.getKey();
@@ -478,11 +523,11 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
     private Map<String, String> getDocumentFormulas(NodeRef objectRef) {
         Map<String, String> formulas = new LinkedHashMap<String, String>();
-        Map<String, Pair<PropertyDefinition, Field>> propertyDefinitions = documentConfigService.getPropertyDefinitions(generalService.fetchObjectNode(objectRef,
+        Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions = documentConfigService.getPropertyDefinitions(generalService.fetchObjectNode(objectRef,
                 DocumentCommonModel.Types.DOCUMENT));
 
         Map<QName, Serializable> props = nodeService.getProperties(objectRef);
-        for (Entry<String, Pair<PropertyDefinition, Field>> definition : propertyDefinitions.entrySet()) {
+        for (Entry<String, Pair<DynamicPropertyDefinition, Field>> definition : propertyDefinitions.entrySet()) {
             Field field = definition.getValue().getSecond();
             if (field == null) {
                 continue; // Hidden fields can be ignored
@@ -643,7 +688,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                 formulas.put(propName, StringUtils.join(items.iterator(), separator));
             } else {
                 boolean alternate = false;
-                if ("task.startedDateTime".equals(propName)) {
+                if (WorkflowCommonModel.Props.STARTED_DATE_TIME.getLocalName().equals(propName) && nodeService.hasAspect(objectRef, WorkflowSpecificModel.Aspects.COMMON_TASK)) {
                     alternate = true;
                 }
 
@@ -889,16 +934,16 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     }
 
     @Override
-    public NodeRef getSystemTemplateByName(String templateName) {
+    public NodeRef getNotificationTemplateByName(String templateName) {
         if (StringUtils.isNotEmpty(templateName)) {
             NodeRef template = fileFolderService.searchSimple(getRoot(), templateName);
-            if (template != null) {
+            if (template != null && nodeService.hasAspect(template, DocumentTemplateModel.Aspects.TEMPLATE_NOTIFICATION)) {
                 return template;
             }
             if (StringUtils.endsWith(templateName, ".html")) {
                 // try alternative ".htm" that is default when adding system template through GUI
                 templateName = templateName.substring(0, templateName.length() - 1);
-                return getSystemTemplateByName(templateName);
+                return getNotificationTemplateByName(templateName);
             }
         }
         return null;
@@ -961,6 +1006,14 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
     public void setDocumentConfigService(DocumentConfigService documentConfigService) {
         this.documentConfigService = documentConfigService;
+    }
+
+    public void setDocumentAdminService(DocumentAdminService documentAdminService) {
+        this.documentAdminService = documentAdminService;
+    }
+
+    public void setVersionsService(VersionsService versionsService) {
+        this.versionsService = versionsService;
     }
 
     // END: getters / setters

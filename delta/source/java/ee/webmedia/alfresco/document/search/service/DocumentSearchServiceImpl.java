@@ -80,6 +80,7 @@ import ee.webmedia.alfresco.docconfig.generator.fieldtype.DateGenerator;
 import ee.webmedia.alfresco.docconfig.generator.fieldtype.DoubleGenerator;
 import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
+import ee.webmedia.alfresco.document.forum.web.evaluator.DiscussNodeEvaluator;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
@@ -141,7 +142,8 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     public List<Document> searchDiscussionDocuments(final boolean fetchDocuments) {
         long startTime = System.currentTimeMillis();
         String query = generateTypeQuery(ForumModel.TYPE_FORUM);
-        final AccessPermissionImpl requiredPermission = new AccessPermissionImpl("DocumentFileRead", AccessStatus.ALLOWED, AuthenticationUtil.getRunAsUser(), 0);
+        final AccessPermissionImpl requiredPermission = new AccessPermissionImpl(DiscussNodeEvaluator.PARTICIPATE_AT_FORUM, AccessStatus.ALLOWED,
+                AuthenticationUtil.getRunAsUser(), 0);
         List<Document> results = searchGeneralImpl(query, -1, /* queryName */"discussionDocuments", new SearchCallback<Document>() {
 
             @Override
@@ -1176,7 +1178,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         List<String> sendMode = (List<String>) props.get(DocumentSearchModel.Props.SEND_MODE);
         queryParts.add(generateMultiStringExactQuery(sendMode, DocumentCommonModel.Props.SEARCHABLE_SEND_MODE));
         // Dokumendi reg. number
-        queryParts.add(generateStringExactQuery((String) props.get(DocumentDynamicModel.Props.SHORT_REG_NUMBER), DocumentDynamicModel.Props.SHORT_REG_NUMBER));
+        queryParts.add(generateStringExactQuery((String) props.get(DocumentCommonModel.Props.SHORT_REG_NUMBER), DocumentCommonModel.Props.SHORT_REG_NUMBER));
         // Projekt
         @SuppressWarnings("unchecked")
         List<String> fund = (List<String>) props.get(DocumentSearchModel.Props.FUND);
@@ -1200,7 +1202,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             } else if (propQName.getLocalName().contains("_")) {
                 continue;
             }
-            if (!propQName.equals(DocumentDynamicModel.Props.SHORT_REG_NUMBER) && propQName.getNamespaceURI().equals(DocumentDynamicModel.URI)) {
+            if (!propQName.equals(DocumentCommonModel.Props.SHORT_REG_NUMBER) && propQName.getNamespaceURI().equals(DocumentDynamicModel.URI)) {
                 Object value = entry.getValue();
                 if (value instanceof String) {
                     queryParts.add(generateStringWordsWildcardQuery((String) value, propQName));
@@ -1393,8 +1395,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         queryParts.add(generateMultiStringWordsWildcardQuery((List<String>) props.get(TaskSearchModel.Props.OUTCOME), true, true, WorkflowCommonModel.Props.OUTCOME));
         queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.CREATOR_NAME), true, true, WorkflowCommonModel.Props.CREATOR_NAME));
         queryParts.add(generateMultiStringExactQuery((List<String>) props.get(TaskSearchModel.Props.DOC_TYPE), WorkflowCommonModel.Props.DOCUMENT_TYPE));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.ORGANIZATION_NAME), true, true,
-                WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME));
+        queryParts.add(generateMultiStringExactQuery((List<String>) props.get(TaskSearchModel.Props.ORGANIZATION_NAME), WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME));
         queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.JOB_TITLE), true, true, WorkflowCommonModel.Props.OWNER_JOB_TITLE));
         queryParts.add(generateDatePropertyRangeQuery((Date) props.get(TaskSearchModel.Props.DUE_DATE_TIME_BEGIN),
                 (Date) props.get(TaskSearchModel.Props.DUE_DATE_TIME_END), WorkflowSpecificModel.Props.DUE_DATE));

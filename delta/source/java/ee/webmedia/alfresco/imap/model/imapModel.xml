@@ -17,6 +17,7 @@
                     <value>incomingInvoiceBehaviour</value>
                     <value>attachmentBehaviour</value>
                     <value>sentBehaviour</value>
+                    <value>sendFailureBehaviour</value>
                 </list>
             </parameter>
             

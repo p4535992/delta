@@ -11,6 +11,7 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 
 /**
+ * // FIXME PRIV2 Ats - dokhalduritele ei tohiks enam mingil juhul dünaamiliselt õigusi anda
  * Evaluates if current runAsUser is member of documentManagers group and also has permission set for series of the document.
  * 
  * @author Ats Uiboupin

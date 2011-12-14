@@ -31,6 +31,7 @@ import ee.webmedia.alfresco.document.type.service.DocumentTypeHelper;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.series.model.Series;
+import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 
 public class Document extends Node implements Comparable<Document>, CssStylable, CreatedAndRegistered {
@@ -225,6 +226,11 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
         return dueDate != null ? dateFormat.format(dueDate) : "";
     }
 
+    public String getComplienceDateStr() {
+        final Date complienceDate = getComplienceDate();
+        return complienceDate != null ? dateFormat.format(complienceDate) : "";
+    }
+
     public Date getComplienceDate() {
         // Only docsub:incomingLetter has this property
         return (Date) getNode().getProperties().get(DocumentSpecificModel.Props.COMPLIENCE_DATE);
@@ -290,8 +296,9 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
         return (String) getNode().getProperties().get(DocumentCommonModel.Props.OWNER_NAME);
     }
 
+    @SuppressWarnings("unchecked")
     public String getOwnerOrgStructUnit() {
-        return (String) getNode().getProperties().get(DocumentCommonModel.Props.OWNER_ORG_STRUCT_UNIT);
+        return UserUtil.getDisplayUnit((List<String>) getNode().getProperties().get(DocumentCommonModel.Props.OWNER_ORG_STRUCT_UNIT));
     }
 
     public String getOwnerJobTitle() {
@@ -510,6 +517,66 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
                     DocumentTypeService.BEAN_NAME);
         }
         return documentTypeService;
+    }
+
+    public DateAndMultiPropsConvertedMap convertedPropsMap = new DateAndMultiPropsConvertedMap();
+
+    /**
+     * @author Vladimir Drozdik
+     *         converts date type or multivalue properties for binding from JSP.
+     */
+    public class DateAndMultiPropsConvertedMap extends HashMap<String, Object> {
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public Object get(Object propKey) {
+            Object propValue = getProperties().get(propKey);
+            if (propValue instanceof Date) {
+                return dateFormat.format(propValue);
+            } else if (propValue instanceof Collection) {
+                if (propValue instanceof List && !((List) propValue).isEmpty() && ((List) propValue).get(0) instanceof String) {
+                    return UserUtil.getDisplayUnit((List<String>) propValue);
+                }
+                return propValue.toString();
+            } else {
+                return propValue;
+            }
+        }
+
+    }
+
+    public Map<String, Object> getConvertedPropsMap() {
+        return convertedPropsMap;
+    }
+
+    public UnitStrucPropsConvertedMap unitStrucPropsConvertedMap = new UnitStrucPropsConvertedMap();
+
+    /**
+     * @author Vladimir Drozdik
+     *         converts unit structure for binding from JSP.
+     */
+    public class UnitStrucPropsConvertedMap extends HashMap<String, Object> {
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public Object get(Object propKey) {
+            Object propValue = getProperties().get(propKey);
+            if (propValue == null) {
+                return null;
+            }
+            StringBuilder buffer = new StringBuilder();
+            for (Object obj : (Collection) propValue) {
+                if (buffer.length() != 0) {
+                    buffer.append(", ");
+                }
+                buffer.append(obj.toString());
+            }
+            return buffer.toString();
+        }
+    }
+
+    public Map<String, Object> getUnitStrucPropsConvertedMap() {
+        return unitStrucPropsConvertedMap;
     }
 
 }

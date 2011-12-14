@@ -1,6 +1,8 @@
 package ee.webmedia.alfresco.document.forum.web;
 
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +14,9 @@ import javax.faces.event.ActionEvent;
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.security.PermissionService;
+import org.alfresco.service.namespace.QName;
 import org.apache.cxf.common.util.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
@@ -52,16 +57,75 @@ public class InviteUsersDialog extends PermissionsAddDialog {
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         if (templateName != null) {
-            notifySelectedUsers();
+            @SuppressWarnings("unchecked")
+            List<Authority> addedAuthorities = (List<Authority>) getAuthorities().getWrappedData();
+            if (addedAuthorities != null && !addedAuthorities.isEmpty()) {
+                List<String> addedAuths = new ArrayList<String>(addedAuthorities.size());
+                for (Authority authority : addedAuthorities) {
+                    addedAuths.add(authority.getAuthority());
+                }
+                updateDocument(addedAuths, getNodeRef());
+            }
+            notifySelectedUsers(addedAuthorities);
         } else {
             MessageUtil.addErrorMessage(context, "forum_template_not_specified");
         }
         return super.finishImpl(context, outcome);
     }
 
-    private void notifySelectedUsers() {
+    /**
+     * 1) Add static permissions to view document and its files
+     * 2) duplicate addedAuthorities to document FORUM_PARTICIPANTS property (useful for optimized searching of documents with having user as participant)
+     */
+    public static void updateDocument(List<String> addedAuthorities, NodeRef forumRef) {
+        if (addedAuthorities != null && !addedAuthorities.isEmpty()) {
+            NodeService nodeService = BeanHelper.getNodeService();
+            NodeRef docRef = nodeService.getPrimaryParent(forumRef).getParentRef();
+            @SuppressWarnings("unchecked")
+            List<String> forumParticipants = (List<String>) nodeService.getProperty(docRef, DocumentCommonModel.Props.FORUM_PARTICIPANTS);
+            // FIXME ALSeadist Ats test
+            boolean addAspect = !nodeService.hasAspect(docRef, DocumentCommonModel.Aspects.FORUM_PARTICIPANTS);
+            if (forumParticipants == null) {
+                forumParticipants = new ArrayList<String>();
+                addAspect = true;
+            }
+            PermissionService permissionService = BeanHelper.getPermissionService();
+            for (String authority : addedAuthorities) {
+                if (!forumParticipants.contains(authority)) {
+                    forumParticipants.add(authority);
+                }
+                permissionService.setPermission(docRef, authority, DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA, true);
+                permissionService.setPermission(docRef, authority, DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES, true);
+            }
+            if (addAspect) {
+                Map<QName, Serializable> aspectProps = new HashMap<QName, Serializable>();
+                aspectProps.put(DocumentCommonModel.Props.FORUM_PARTICIPANTS, (Serializable) forumParticipants);
+                nodeService.addAspect(docRef, DocumentCommonModel.Aspects.FORUM_PARTICIPANTS, aspectProps);
+            } else {
+                nodeService.setProperty(docRef, DocumentCommonModel.Props.FORUM_PARTICIPANTS, (Serializable) forumParticipants);
+            }
+        }
+    }
+
+    /** called using MethodBinding */
+    public void removeAuthority(NodeRef manageableRef, String authorityToRemove, String permissionToRemove) {
+        NodeRef docRef = BeanHelper.getGeneralService().getParentNodeRefWithType(manageableRef, DocumentCommonModel.Types.DOCUMENT);
+        NodeService nodeService = BeanHelper.getNodeService();
         @SuppressWarnings("unchecked")
-        List<Authority> auth = (List<Authority>) getAuthorities().getWrappedData();
+        List<String> forumParticipants = (List<String>) nodeService.getProperty(docRef, DocumentCommonModel.Props.FORUM_PARTICIPANTS);
+        forumParticipants.remove(authorityToRemove);
+        if (forumParticipants.isEmpty()) {
+            nodeService.removeAspect(docRef, DocumentCommonModel.Aspects.FORUM_PARTICIPANTS);
+            // must also remove property so that aspect wouldn't reappear
+            nodeService.removeProperty(docRef, DocumentCommonModel.Props.FORUM_PARTICIPANTS);
+        } else {
+            nodeService.setProperty(docRef, DocumentCommonModel.Props.FORUM_PARTICIPANTS, (Serializable) forumParticipants);
+        }
+        BeanHelper.getPermissionService().deletePermission(manageableRef, authorityToRemove, permissionToRemove);
+        MessageUtil.addInfoMessage("delete_success");
+    }
+
+    private void notifySelectedUsers(List<Authority> auth) {
         List<String> toEmails = new ArrayList<String>(auth.size());
         List<String> toNames = new ArrayList<String>(auth.size());
         String fromEmail = getParametersService().getStringParameter(Parameters.TASK_SENDER_EMAIL);
@@ -78,7 +142,7 @@ public class InviteUsersDialog extends PermissionsAddDialog {
             log.debug("Sending invitation to discussion failed, template to be used is not specified!");
             return;
         }
-        NodeRef templateNodeRef = getDocumentTemplateService().getSystemTemplateByName(templateName);
+        NodeRef templateNodeRef = getDocumentTemplateService().getNotificationTemplateByName(templateName);
         if (templateNodeRef == null) {
             log.debug("Discussion invitation email template '" + templateName + "' not found, no email notification is sent");
             // Ignore, because sending a message is a bonus across the system

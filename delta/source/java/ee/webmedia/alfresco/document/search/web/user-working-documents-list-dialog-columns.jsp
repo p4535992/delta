@@ -17,9 +17,8 @@
       <%-- Sender/Recipient --%>
       <a:column id="col5" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
-            <a:sortLink id="col5-sort" label="#{msg.document_sender_recipient}" value="sender" styleClass="header" />
+            <a:sortLink id="col5-sort" label="#{msg.document_sender_recipient}" value="senderOrRecipients" styleClass="header" />
          </f:facet>
-         
          <h:outputText id="col5-text-1" value="#{r.senderOrRecipients}" styleClass="condence20- tooltip" />
       </a:column>
 

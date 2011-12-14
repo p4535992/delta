@@ -79,8 +79,8 @@ public class Node implements Serializable, NamespacePrefixResolverProvider
    protected boolean assocsRetrieved = false;
    protected QNameNodeMap<String, List<AssociationRef>> associations;
    
-   private Map<String/*assocTypeQName*/, Map<String/*childRef*/, ChildAssociationRef>> childAssociationsAdded;
-   private Map<String/*assocTypeQName*/, Map<String/*childRef*/, ChildAssociationRef>> childAssociationsRemoved;
+   protected Map<String/*assocTypeQName*/, Map<String/*childRef*/, ChildAssociationRef>> childAssociationsAdded;
+   protected Map<String/*assocTypeQName*/, Map<String/*childRef*/, ChildAssociationRef>> childAssociationsRemoved;
    private Map<String, Map<String, AssociationRef>> associationsAdded;
    private Map<String, Map<String, AssociationRef>> associationsRemoved;
    
@@ -561,7 +561,7 @@ public class Node implements Serializable, NamespacePrefixResolverProvider
    
    
     protected boolean allChildAssociationsByAssocTypeRetrieved = false;
-    private Map<String/* assocTypeQName */, List<Node>> allChildAssociationsByAssocType;
+    protected Map<String/* assocTypeQName */, List<Node>> allChildAssociationsByAssocType;
 
     /**
      * This method is used by {@link BaseComponentGenerator} to create value binding for propertySheetItems on subPropertySheets.

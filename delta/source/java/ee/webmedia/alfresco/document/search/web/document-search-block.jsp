@@ -21,21 +21,21 @@
                function _ifenter2(event) { if (event && event.keyCode == 13) {$jQ('#docsearch-button.panel input[id$=quickSearchBtn2]').click();return false;} else {return true;} }
             </script>
          </f:verbatim>
-         <h:panelGrid styleClass="docSearch-inputs" columns="2" columnClasses="propertiesLabel" >
-            <h:outputText value="#{msg.document_search_input} " />
+         <h:panelGrid id="docsearch-button-panelgrid" styleClass="docSearch-inputs" columns="2" columnClasses="propertiesLabel" >
+            <h:outputText id="text1" value="#{msg.document_search_input} " />
             <h:inputText id="docsearchField" value="#{SearchBlockBean.searchValue}" maxlength="50" onkeypress="return _ifenter2(event)" />
-            <h:outputText value="#{msg.document_regDateTime2}" />
-            <h:outputText>
-               <h:outputText value="#{msg.from} " />
+            <h:outputText id="text2" value="#{msg.document_regDateTime2}" />
+            <h:outputText id="text3">
+               <h:outputText id="text4" value="#{msg.from} " />
                <h:inputText id="regDateTimeBegin" value="#{SearchBlockBean.regDateTimeBegin}" styleClass="date">
                   <f:converter converterId="ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter" />
                </h:inputText>
-               <h:outputText value=" #{msg.to} " />
+               <h:outputText id="text5" value=" #{msg.to} " />
                <h:inputText id="regDateTimeEnd" value="#{SearchBlockBean.regDateTimeEnd}" styleClass="date">
                   <f:converter converterId="ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter" />
                </h:inputText>
             </h:outputText>
-            <h:outputText value="#{msg.document_docType}" />
+            <h:outputText id="text6" value="#{msg.document_docType}" />
             <h:selectManyListbox value="#{SearchBlockBean.selectedDocumentTypes}" size="5" >
                <f:selectItems value="#{DocumentSearchBean.documentTypes}" />
             </h:selectManyListbox>

@@ -197,6 +197,11 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
             if (child.getOriginalFieldId().equals(DocumentSpecificModel.Props.SUBSTITUTE_NAME.getLocalName())) {
                 componentGeneratorAndProps += "¤read-only=true";
             }
+            if (DocumentSpecificModel.Props.SUBSTITUTION_BEGIN_DATE.getLocalName().equals(child.getOriginalFieldId())
+                    || DocumentSpecificModel.Props.SUBSTITUTION_END_DATE.getLocalName().equals(child.getOriginalFieldId())) {
+                Field substituteNameField = group.getFieldsByOriginalId().get(DocumentSpecificModel.Props.SUBSTITUTE_NAME.getLocalName());
+                componentGeneratorAndProps += "¤mandatoryIf=" + substituteNameField.getQName().toPrefixString(namespaceService) + "!=null";
+            }
             props.add(fieldId.toPrefixString(namespaceService) + "¤" + componentGeneratorAndProps);
             propNames.add(fieldId);
         }

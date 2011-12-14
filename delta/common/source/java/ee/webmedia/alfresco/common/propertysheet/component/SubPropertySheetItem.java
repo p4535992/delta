@@ -381,9 +381,11 @@ public class SubPropertySheetItem extends PropertySheetItem {
                 if (itemConfig instanceof ItemConfigVO) {
                     ItemConfigVO itemConfigVO = (ItemConfigVO) itemConfig;
                     String belongsToSubPropertySheetId = itemConfigVO.getCustomAttributes().get(ATTR_BELONGS_TO_SUB_PROPERTY_SHEET_ID);
-                    if (subPropertySheetId.equals(belongsToSubPropertySheetId)) {
+                    if (belongsToSubPropertySheetId != null && belongsToSubPropertySheetId.startsWith(subPropertySheetId)) {
                         ItemConfigVO copyItem = itemConfigVO.copyAsReadOnly();
-                        copyItem.getCustomAttributes().remove(ATTR_BELONGS_TO_SUB_PROPERTY_SHEET_ID);
+                        if (belongsToSubPropertySheetId.equals(subPropertySheetId)) {
+                            copyItem.getCustomAttributes().remove(ATTR_BELONGS_TO_SUB_PROPERTY_SHEET_ID);
+                        }
                         subConfig.addItem(copyItem);
                     }
                 }

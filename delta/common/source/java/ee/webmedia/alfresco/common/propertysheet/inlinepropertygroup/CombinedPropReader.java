@@ -30,6 +30,7 @@ public class CombinedPropReader {
     public interface AttributeNames {
         String OPTIONS_SEPARATOR = "optionsSeparator";
         String PROPERTIES_SEPARATOR = "propertiesSeparator";
+        String DEFAULT_PROPERTIES_SEPARATOR = ",";
         String PROPS_GENERATION = "propsGeneration";
         String PROPS = "props";
         String TEXT_ID = "textId";
@@ -75,7 +76,7 @@ public class CombinedPropReader {
     public static List<ComponentPropVO> readProperties(String propertyDescriptionsEncoded, String propertiesSeparator, String optionsSeparator, Node node,
             FacesContext context) {
         if (StringUtils.isBlank(propertiesSeparator)) {
-            propertiesSeparator = ",";
+            propertiesSeparator = AttributeNames.DEFAULT_PROPERTIES_SEPARATOR;
         }
         if (StringUtils.isBlank(optionsSeparator)) {
             optionsSeparator = "\\|"; // XXX: default could be "¤", as it is probably not used as often as "|".

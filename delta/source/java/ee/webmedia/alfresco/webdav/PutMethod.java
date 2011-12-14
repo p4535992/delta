@@ -70,6 +70,7 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicFieldGroupNames;
+import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
@@ -166,7 +167,7 @@ public class PutMethod extends WebDAVMethod {
 
         // Update the version if the node is unlocked
         NodeRef fileRef = contentNodeInfo.getNodeRef();
-        boolean createdNewVersion = ((WebDAVCustomHelper) getDAVHelper()).getVersionsService().updateVersionIfNeeded(fileRef, contentNodeInfo.getName());
+        boolean createdNewVersion = ((WebDAVCustomHelper) getDAVHelper()).getVersionsService().updateVersion(fileRef, contentNodeInfo.getName(), true);
 
         // Access the content
         ContentWriter writer = fileFolderService.getWriter(fileRef);
@@ -243,14 +244,15 @@ public class PutMethod extends WebDAVMethod {
          * }
          */
 
-        Map<String, Pair<PropertyDefinition, Field>> propertyDefinitions = BeanHelper.getDocumentConfigService().getPropertyDefinitions(doc.getNode());
+        Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions = BeanHelper.getDocumentConfigService().getPropertyDefinitions(doc.getNode());
 
         List<String> updateDisabled = Arrays.asList(
                 DocumentCommonModel.Props.OWNER_NAME.getLocalName(), DocumentCommonModel.Props.SIGNER_NAME.getLocalName()
                 , DocumentSpecificModel.Props.SUBSTITUTE_NAME.getLocalName(), DocumentCommonModel.Props.OWNER_ID.getLocalName()
                 , DocumentDynamicModel.Props.SIGNER_ID.getLocalName(), DocumentDynamicModel.Props.SUBSTITUTE_ID.getLocalName()
                 , DocumentCommonModel.Props.DOC_STATUS.getLocalName(), DocumentCommonModel.Props.REG_NUMBER.getLocalName()
-                , DocumentCommonModel.Props.SHORT_REG_NUMBER.getLocalName(), DocumentCommonModel.Props.REG_DATE_TIME.getLocalName());
+                , DocumentCommonModel.Props.SHORT_REG_NUMBER.getLocalName(), DocumentCommonModel.Props.REG_DATE_TIME.getLocalName()
+                , DocumentCommonModel.Props.INDIVIDUAL_NUMBER.getLocalName());
         List<FieldType> readOnlyFields = Arrays.asList(FieldType.COMBOBOX_AND_TEXT_NOT_EDITABLE, FieldType.LISTBOX, FieldType.CHECKBOX, FieldType.INFORMATION_TEXT);
         List<ContractPartyField> partyFields = new ArrayList<ContractPartyField>();
 
@@ -280,7 +282,7 @@ public class PutMethod extends WebDAVMethod {
                 }
             }
 
-            Pair<PropertyDefinition, Field> propDefAndField = propertyDefinitions.get(formulaKey);
+            Pair<DynamicPropertyDefinition, Field> propDefAndField = propertyDefinitions.get(formulaKey);
             if (propDefAndField == null || propDefAndField.getSecond() == null) {
                 continue;
             }
@@ -303,7 +305,9 @@ public class PutMethod extends WebDAVMethod {
                     if (propDef.isMultiValued()) {
                         @SuppressWarnings("unchecked")
                         List<Serializable> values = (List<Serializable>) propValue;
-                        values.set(propIndex, (Serializable) DefaultTypeConverter.INSTANCE.convert(propDef.getDataType(), formula.getValue()));
+                        if (propIndex > -1 && propIndex < values.size()) {
+                            values.set(propIndex, (Serializable) DefaultTypeConverter.INSTANCE.convert(propDef.getDataType(), formula.getValue()));
+                        }
                         propValue = (Serializable) values;
                     }
                     doc.setProp(field.getQName(), propValue);

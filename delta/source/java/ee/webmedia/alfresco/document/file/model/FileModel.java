@@ -20,6 +20,7 @@ public interface FileModel {
         QName GENERATION_TYPE = QName.createQName(URI, "generationType");
         QName ACTIVE = QName.createQName(URI, "active");
         QName DISPLAY_NAME = QName.createQName(URI, "displayName");
+        QName NEW_VERSION_ON_NEXT_SAVE = QName.createQName(URI, "newVersionOnNextSave");
 
     }
 }

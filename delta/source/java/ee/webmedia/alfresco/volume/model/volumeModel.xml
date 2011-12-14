@@ -16,6 +16,28 @@
    </namespaces>
 
    <types>
+      <type name="vol:deletedDocument">
+         <parent>sys:base</parent>
+         <properties>
+            <property name="vol:actor">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="vol:deletedDateTime">
+               <type>d:date</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="vol:documentData">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="vol:comment">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+         </properties>
+      </type>
+   
       <type name="vol:volume">
          <parent>sys:base</parent>
          <properties>
@@ -62,6 +84,17 @@
             </property>
          </properties>
          <associations><!-- Volumes can have either documents as direct children or cases as children with documents -->
+            <child-association name="vol:deletedDocument">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>vol:deletedDocument</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
             <child-association name="case:case">
                <source>
                   <mandatory>true</mandatory>

@@ -170,8 +170,8 @@ $jQ(document).ready(function() {
    function bindOnChangeUpdateHeaderCheckboxState(groupBodyCBs) {
       groupBodyCBs.each(function() {
          $jQ(this).change(function() {
-            updateHeaderCheckboxState(false);
             addDependantPrivileges($jQ(this));
+            updateHeaderCheckboxState(false);
          });
       });
    }

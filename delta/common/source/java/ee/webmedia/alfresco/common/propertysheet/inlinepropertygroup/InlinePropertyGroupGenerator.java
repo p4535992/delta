@@ -100,7 +100,7 @@ public class InlinePropertyGroupGenerator extends BaseComponentGenerator impleme
             List<ComponentPropVO> propVOs, String text, boolean escapeText) {
         final int nrOfParts;
         if (text.startsWith(PLACEHOLDER) && text.endsWith(PLACEHOLDER)) {
-            nrOfParts = propVOs.size() - 1;
+            nrOfParts = propVOs.size();
         } else if (!text.startsWith(PLACEHOLDER) && !text.endsWith(PLACEHOLDER)) {
             nrOfParts = propVOs.size() + 1;
         } else {
@@ -111,6 +111,11 @@ public class InlinePropertyGroupGenerator extends BaseComponentGenerator impleme
         if (last.endsWith(PLACEHOLDER)) {
             textParts.set(textParts.size() - 1, last.substring(0, last.length() - 1));
             textParts.add("");
+        }
+        String first = textParts.get(0);
+        if (first.startsWith(PLACEHOLDER)) {
+            textParts.set(0, first.substring(1));
+            textParts.add(0, "");
         }
         for (int i = 0; i < textParts.size(); i++) {
             final String textPart = textParts.get(i);

@@ -6,7 +6,7 @@
 <script type="text/javascript">
    $jQ("#" + escapeId4JQ("container-content")).live('keydown', function(event) {
       if (event.keyCode == 13) {
-         $jQ("#" + escapeId4JQ("dialog:finish-button")).click();
+          clickFinishButton();
           return false;
       }
    });

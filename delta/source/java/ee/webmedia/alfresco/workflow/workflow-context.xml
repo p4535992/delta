@@ -150,8 +150,8 @@
       <property name="organizationStructureService" ref="OrganizationStructureService" />
       <property name="dvkService" ref="DvkService" />
       <property name="parametersService" ref="ParametersService" />
-      <property name="fileFolderService" ref="FileFolderService" />
       <property name="fileService" ref="FileService" />
+      <property name="versionsService" ref="VersionsService" />
       <property name="internalTesting" value="${project.test}" />
       <property name="orderAssignmentCategoryEnabled" value="${conf.workflow.order-assignment-task-category.enabled}" />
    </bean>
@@ -293,6 +293,11 @@
       <property name="fileService" ref="FileService" />
       <property name="mimetypeService" ref="MimetypeService" />
       <property name="contentService" ref="ContentService" />
+   </bean>
+   
+   <bean id="ownerOrganizationNameToMultivaluedUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.OwnerOrganizationNameToMultivaluedUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
    </bean>
 
    <!-- START: web beans: -->

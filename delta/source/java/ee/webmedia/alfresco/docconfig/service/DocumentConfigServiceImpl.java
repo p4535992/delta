@@ -1,7 +1,6 @@
 package ee.webmedia.alfresco.docconfig.service;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDictionaryService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getNamespaceService;
+import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.getDocTypeIdAndVersionNr;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -17,14 +16,10 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.alfresco.repo.dictionary.IndexTokenisationMode;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
-import org.alfresco.service.cmr.dictionary.ClassDefinition;
-import org.alfresco.service.cmr.dictionary.ConstraintDefinition;
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
-import org.alfresco.service.cmr.dictionary.ModelDefinition;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
@@ -34,6 +29,7 @@ import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.repo.RepoConstants;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
@@ -47,8 +43,6 @@ import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO.ConfigItemType;
-import ee.webmedia.alfresco.common.web.WmNode;
-import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
@@ -58,15 +52,17 @@ import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docadmin.service.MetadataItem;
 import ee.webmedia.alfresco.docadmin.service.SeparatorLine;
 import ee.webmedia.alfresco.docconfig.generator.FieldGenerator;
+import ee.webmedia.alfresco.docconfig.generator.FieldGroupGenerator;
+import ee.webmedia.alfresco.docconfig.generator.FieldGroupGeneratorResults;
 import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
 import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.generator.SaveListener;
-import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.TreeNode;
 
 /**
  * @author Alar Kvell
@@ -83,8 +79,10 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
 
     private final Map<FieldType, FieldGenerator> fieldGenerators = new HashMap<FieldType, FieldGenerator>();
     private final Map<String, FieldGenerator> originalFieldIdGenerators = new HashMap<String, FieldGenerator>();
+    private final Map<String /* systematicGroupName */, FieldGroupGenerator> fieldGroupGenerators = new HashMap<String, FieldGroupGenerator>();
 
-    private final Map<Pair<String /* documentTypeId */, Integer /* documentTypeVersionNr */>, Map<String /* fieldId */, Pair<PropertyDefinition, Field>>> propertyDefinitionCache = new ConcurrentHashMap<Pair<String, Integer>, Map<String, Pair<PropertyDefinition, Field>>>();
+    private final Map<Pair<String /* documentTypeId */, Integer /* documentTypeVersionNr */>, Map<String /* fieldId */, Pair<DynamicPropertyDefinition, Field>>> propertyDefinitionCache = new ConcurrentHashMap<Pair<String, Integer>, Map<String, Pair<DynamicPropertyDefinition, Field>>>();
+    private final Map<Pair<String /* documentTypeId */, Integer /* documentTypeVersionNr */>, TreeNode<QName>> childAssocTypeQNameTreeCache = new ConcurrentHashMap<Pair<String, Integer>, TreeNode<QName>>();
 
     private final Map<String /* hiddenFieldId */, String /* fieldIdAndOriginalFieldId */> hiddenFieldDependencies = new HashMap<String, String>();
 
@@ -107,6 +105,16 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
             Assert.notNull(originalFieldId, "originalFieldId");
             Assert.isTrue(!originalFieldIdGenerators.containsKey(originalFieldId), "FieldGenerator with originalFieldId already registered: " + originalFieldId);
             originalFieldIdGenerators.put(originalFieldId, fieldGenerator);
+        }
+    }
+
+    @Override
+    public void registerFieldGroupGenerator(FieldGroupGenerator fieldGroupGenerator, String... systematicGroupNames) {
+        Assert.notNull(fieldGroupGenerator, "fieldGroupGenerator");
+        for (String systematicGroupName : systematicGroupNames) {
+            Assert.notNull(systematicGroupName, "systematicGroupName");
+            Assert.isTrue(!fieldGroupGenerators.containsKey(systematicGroupName), "FieldGroupGenerator with systematicGroupName already registered: " + systematicGroupName);
+            fieldGroupGenerators.put(systematicGroupName, fieldGroupGenerator);
         }
     }
 
@@ -140,12 +148,28 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
     public DocumentConfig getConfig(Node documentDynamicNode) {
         Assert.isTrue(DocumentCommonModel.Types.DOCUMENT.equals(documentDynamicNode.getType()));
         Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = getDocumentTypeAndVersion(documentDynamicNode);
-        return getConfig(documentTypeAndVersion.getFirst(), documentTypeAndVersion.getSecond());
+        return getConfig(documentTypeAndVersion.getSecond(), documentTypeAndVersion.getFirst().isShowUnvalued());
+    }
+
+    @Override
+    public DocumentConfig getDocLocationConfig() {
+        List<String> defList = new ArrayList<String>();
+        defList.add(DocumentCommonModel.Props.FUNCTION.getLocalName());
+        defList.add(DocumentCommonModel.Props.SERIES.getLocalName());
+        defList.add(DocumentCommonModel.Props.VOLUME.getLocalName());
+        defList.add(DocumentCommonModel.Props.CASE.getLocalName());
+        DocumentConfig config = getEmptyConfig(null, null);
+        for (String localName : defList) {
+            FieldDefinition fieldDefinition = documentAdminService.getFieldDefinition(localName);
+            fieldDefinition.setChangeableIfEnum(FieldChangeableIf.ALWAYS_CHANGEABLE);
+            processField(config, fieldDefinition, false);
+        }
+        return config;
     }
 
     @Override
     public DocumentConfig getSearchConfig() {
-        DocumentConfig config = getEmptyConfig(null);
+        DocumentConfig config = getEmptyConfig(null, null);
         /**
          * <show-property name="docsearch:store" display-label-id="document_search_stores" component-generator="GeneralSelectorGenerator"
          * selectionItems="#{DocumentSearchDialog.getStores}" converter="ee.webmedia.alfresco.common.propertysheet.converter.StoreRefConverter" />
@@ -208,7 +232,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
             processFieldForSearchView(fieldDefinition);
             processField(config, fieldDefinition, true);
             if (fieldDefinition.getFieldId().equals("regNumber")) {
-                ItemConfigVO itemConfig = new ItemConfigVO(DocumentDynamicModel.Props.SHORT_REG_NUMBER.toPrefixString(namespaceService));
+                ItemConfigVO itemConfig = new ItemConfigVO(DocumentCommonModel.Props.SHORT_REG_NUMBER.toPrefixString(namespaceService));
                 itemConfig.setDisplayLabelId("document_shortRegNumber");
                 itemConfig.setComponentGenerator("TextAreaGenerator");
                 itemConfig.setStyleClass("expand19-200");
@@ -295,22 +319,8 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
         return documentAdminService.getDocumentTypeAndVersion(docTypeIdAndVersionNr.getFirst(), docTypeIdAndVersionNr.getSecond());
     }
 
-    private Pair<String, Integer> getDocTypeIdAndVersionNr(Node documentDynamicNode) {
-        String docTypeId = (String) documentDynamicNode.getProperties().get(Props.OBJECT_TYPE_ID);
-        Integer docTypeVersionNr = (Integer) documentDynamicNode.getProperties().get(Props.OBJECT_TYPE_VERSION_NR);
-        Pair<String, Integer> docTypeIdAndVersionNr = new Pair<String, Integer>(docTypeId, docTypeVersionNr);
-        return docTypeIdAndVersionNr;
-    }
-
-    private Pair<String, Integer> getDocTypeIdAndVersionNr(Map<QName, Serializable> props) {
-        String docTypeId = (String) props.get(Props.OBJECT_TYPE_ID);
-        Integer docTypeVersionNr = (Integer) props.get(Props.OBJECT_TYPE_VERSION_NR);
-        Pair<String, Integer> docTypeIdAndVersionNr = new Pair<String, Integer>(docTypeId, docTypeVersionNr);
-        return docTypeIdAndVersionNr;
-    }
-
-    private DocumentConfig getConfig(DocumentType docType, DocumentTypeVersion docVersion) {
-        DocumentConfig config = getEmptyConfig(docType);
+    private DocumentConfig getConfig(DocumentTypeVersion docVersion, Boolean showUnvalued) {
+        DocumentConfig config = getEmptyConfig(docVersion, showUnvalued);
 
         int separatorCount = 0;
         for (MetadataItem metadataItem : docVersion.getMetadata()) {
@@ -329,17 +339,16 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
                 throw new RuntimeException("Unsupported metadataItem class=" + metadataItem.getClass() + " under documentTypeVersion=" + docVersion.toString());
             }
         }
-
         DocumentConfig unmodifiableConfig = config.cloneAsUnmodifiable();
-        LOG.info("Returning " + unmodifiableConfig);
         return unmodifiableConfig;
     }
 
-    private DocumentConfig getEmptyConfig(DocumentType docType) {
+    private DocumentConfig getEmptyConfig(DocumentTypeVersion docVersion, Boolean showUnvalued) {
         WMPropertySheetConfigElement propSheet = new WMPropertySheetConfigElement();
+        propSheet.setShowUnvalued(showUnvalued != null ? showUnvalued : true);
         Map<String, PropertySheetStateHolder> stateHolders = new HashMap<String, PropertySheetStateHolder>();
         List<String> saveListenerBeanNames = new ArrayList<String>();
-        return new DocumentConfig(propSheet, stateHolders, saveListenerBeanNames, docType);
+        return new DocumentConfig(propSheet, stateHolders, saveListenerBeanNames, docVersion);
     }
 
     private static class GeneratorResultsImpl implements GeneratorResults {
@@ -363,14 +372,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
 
         @Override
         public ItemConfigVO generateAndAddViewModeText(String name, String label) {
-            ItemConfigVO viewModeTextItem = new ItemConfigVO(name);
-            viewModeTextItem.setConfigItemType(ConfigItemType.PROPERTY);
-            viewModeTextItem.setShowInEditMode(false);
-            viewModeTextItem.setDisplayLabel(label);
-            WMPropertySheetConfigElement propSheet = config.getPropertySheetConfigElement();
-            Assert.isTrue(!propSheet.getItems().containsKey(viewModeTextItem.getName()), "PropertySheetItem with name already exists: " + viewModeTextItem.getName());
-            propSheet.addItem(viewModeTextItem);
-            return viewModeTextItem;
+            return generateAndAddViewModeTextInternal(name, label, config);
         }
 
         @Override
@@ -390,6 +392,65 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
 
     }
 
+    private class FieldGroupGeneratorResultsImpl implements FieldGroupGeneratorResults {
+
+        private final DocumentConfig config;
+
+        public FieldGroupGeneratorResultsImpl(DocumentConfig config) {
+            this.config = config;
+        }
+
+        @Override
+        public Pair<Map<String, ItemConfigVO>, Map<String, PropertySheetStateHolder>> generateItems(Field... fields) {
+            DocumentConfig tempConfig = getEmptyConfig(null, null);
+            for (Field field : fields) {
+                processField(tempConfig, field, false);
+            }
+            Map<?, ?> items1 = tempConfig.getPropertySheetConfigElement().getItems();
+            @SuppressWarnings("unchecked")
+            Map<String, ItemConfigVO> items = (Map<String, ItemConfigVO>) items1;
+            Map<String, PropertySheetStateHolder> stateHolders = tempConfig.getStateHolders();
+            return Pair.newInstance(items, stateHolders);
+        }
+
+        @Override
+        public ItemConfigVO generateItemBase(Field field) {
+            return processFieldBase(field, false);
+        }
+
+        @Override
+        public ItemConfigVO generateAndAddViewModeText(String name, String label) {
+            return generateAndAddViewModeTextInternal(name, label, config);
+        }
+
+        @Override
+        public void addItem(ItemConfigVO item) {
+            WMPropertySheetConfigElement propSheet = config.getPropertySheetConfigElement();
+            Assert.isTrue(!propSheet.getItems().containsKey(item.getName()), "PropertySheetItem with name already exists: " + item.getName());
+            propSheet.addItem(item);
+        }
+
+        @Override
+        public void addStateHolder(String key, PropertySheetStateHolder stateHolder) {
+            Assert.notNull(key, "key");
+            Map<String, PropertySheetStateHolder> stateHolders = config.getStateHolders();
+            Assert.isTrue(!stateHolders.containsKey(key));
+            stateHolders.put(key, stateHolder);
+        }
+
+    }
+
+    private static ItemConfigVO generateAndAddViewModeTextInternal(String name, String label, DocumentConfig config) {
+        ItemConfigVO viewModeTextItem = new ItemConfigVO(name);
+        viewModeTextItem.setConfigItemType(ConfigItemType.PROPERTY);
+        viewModeTextItem.setShowInEditMode(false);
+        viewModeTextItem.setDisplayLabel(label);
+        WMPropertySheetConfigElement propSheet = config.getPropertySheetConfigElement();
+        Assert.isTrue(!propSheet.getItems().containsKey(viewModeTextItem.getName()), "PropertySheetItem with name already exists: " + viewModeTextItem.getName());
+        propSheet.addItem(viewModeTextItem);
+        return viewModeTextItem;
+    }
+
     private void processSeparatorLine(DocumentConfig config, int separatorCount) {
         String name = "_separator" + separatorCount;
 
@@ -403,6 +464,13 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
     }
 
     private void processFieldGroup(DocumentConfig config, FieldGroup fieldGroup) {
+        if (fieldGroup.isSystematic()) {
+            FieldGroupGenerator fieldGroupGenerator = fieldGroupGenerators.get(fieldGroup.getName());
+            if (fieldGroupGenerator != null) {
+                fieldGroupGenerator.generateFieldGroup(fieldGroup, new FieldGroupGeneratorResultsImpl(config));
+                return;
+            }
+        }
         ChildrenList<Field> fields = fieldGroup.getFields();
         for (Field field : fields) {
             processField(config, field, false);
@@ -410,35 +478,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
     }
 
     private boolean processField(DocumentConfig config, Field field, boolean renderCheckboxAfterLabel) {
-        String name = field.getQName().toPrefixString(namespaceService);
-        ItemConfigVO item = new ItemConfigVO(name);
-        item.setConfigItemType(ConfigItemType.PROPERTY);
-        item.setIgnoreIfMissing(false);
-        item.setRenderCheckboxAfterLabel(renderCheckboxAfterLabel);
-        item.setDisplayLabel(field.getName());
-
-        // Default values:
-        // item.setDisplayLabelId(null);
-        // item.setConverter(null);
-        // item.setComponentGenerator(null); // Must be set by implementation
-        // item.setReadOnly(false);
-        // item.setShowInViewMode(true);
-        // item.setShowInEditMode(true);
-
-        // forcedMandatory is not set here; BaseComponentGenerator sets mandatory based on PropertyDefinition.isMandatory
-        FieldChangeableIf changeableIf = field.getChangeableIfEnum();
-        if (changeableIf != null) {
-            switch (changeableIf) {
-            case ALWAYS_CHANGEABLE:
-                break;
-            case ALWAYS_NOT_CHANGEABLE:
-                item.setReadOnly(true);
-                break;
-            case CHANGEABLE_IF_WORKING_DOC:
-                item.setReadOnlyIf("#{" + DocumentDialogHelperBean.BEAN_NAME + ".notWorkingOrNotEditable}");
-                break;
-            }
-        }
+        ItemConfigVO item = processFieldBase(field, renderCheckboxAfterLabel);
 
         /*
          * 1) Run "by fieldType" generator
@@ -501,6 +541,39 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
         return true;
     }
 
+    private ItemConfigVO processFieldBase(Field field, boolean renderCheckboxAfterLabel) {
+        String name = field.getQName().toPrefixString(namespaceService);
+        ItemConfigVO item = new ItemConfigVO(name);
+        item.setConfigItemType(ConfigItemType.PROPERTY);
+        item.setIgnoreIfMissing(false);
+        item.setRenderCheckboxAfterLabel(renderCheckboxAfterLabel);
+        item.setDisplayLabel(field.getName());
+
+        // Default values:
+        // item.setDisplayLabelId(null);
+        // item.setConverter(null);
+        // item.setComponentGenerator(null); // Must be set by implementation
+        // item.setReadOnly(false);
+        // item.setShowInViewMode(true);
+        // item.setShowInEditMode(true);
+
+        // forcedMandatory is not set here; BaseComponentGenerator sets mandatory based on PropertyDefinition.isMandatory
+        FieldChangeableIf changeableIf = field.getChangeableIfEnum();
+        if (changeableIf != null) {
+            switch (changeableIf) {
+            case ALWAYS_CHANGEABLE:
+                break;
+            case ALWAYS_NOT_CHANGEABLE:
+                item.setReadOnly(true);
+                break;
+            case CHANGEABLE_IF_WORKING_DOC:
+                item.setReadOnlyIf("#{" + DocumentDialogHelperBean.BEAN_NAME + ".notWorkingOrNotEditable}");
+                break;
+            }
+        }
+        return item;
+    }
+
     private void addSaveListener(DocumentConfig config, FieldGenerator fieldGenerator) {
         if (fieldGenerator instanceof SaveListener) {
             SaveListener saveListener = (SaveListener) fieldGenerator;
@@ -513,114 +586,188 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
     }
 
     @Override
-    public void setDefaultPropertyValues(Node documentDynamicNode, DocumentTypeVersion docVer) {
+    public void setDefaultPropertyValues(Node node, QName[] childAssocTypeQNameHierarchy, boolean forceOverwrite, boolean reallySetDefaultValues, DocumentTypeVersion docVer) {
         if (docVer == null) {
-            Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = getDocumentTypeAndVersion(documentDynamicNode);
+            Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = getDocumentTypeAndVersion(node);
             docVer = documentTypeAndVersion.getSecond();
         } else {
-            Pair<String, Integer> docTypeIdAndVersionNr = getDocTypeIdAndVersionNr(documentDynamicNode);
+            Pair<String, Integer> docTypeIdAndVersionNr = getDocTypeIdAndVersionNr(node);
             Assert.isTrue(ObjectUtils.equals(docVer.getParent().getId(), docTypeIdAndVersionNr.getFirst()));
             Assert.isTrue(ObjectUtils.equals(docVer.getVersionNr(), docTypeIdAndVersionNr.getSecond()));
         }
-        for (Field field : docVer.getFieldsDeeply()) {
-            setDefaultPropertyValue(documentDynamicNode, field, false);
-        }
+        Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions = getPropertyDefinitions(getDocTypeIdAndVersionNr(docVer));
+        setDefaultPropertyValues(node, childAssocTypeQNameHierarchy, forceOverwrite, reallySetDefaultValues, propertyDefinitions);
     }
 
     @Override
-    public void setDefaultPropertyValues(Node documentDynamicNode, List<Field> fields, boolean forceOverwrite) {
-        for (Field field : fields) {
-            setDefaultPropertyValue(documentDynamicNode, field, forceOverwrite);
-        }
+    public void setDefaultPropertyValues(Node node, QName[] requiredHierarchy, boolean forceOverwrite, boolean reallySetDefaultValues, List<Field> fields) {
+        Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions = createPropertyDefinitions(fields);
+        setDefaultPropertyValues(node, requiredHierarchy, forceOverwrite, reallySetDefaultValues, propertyDefinitions);
     }
 
-    private void setDefaultPropertyValue(Node documentDynamicNode, Field field, boolean forceOverwrite) {
-        Serializable value = (Serializable) documentDynamicNode.getProperties().get(field.getQName());
-        if (value != null && !forceOverwrite) {
-            return;
+    private void setDefaultPropertyValues(Node node, QName[] requiredHierarchy, boolean forceOverwrite, boolean reallySetDefaultValues,
+            Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions) {
+        if (requiredHierarchy == null) {
+            requiredHierarchy = new QName[] {};
         }
+        outer: for (Pair<DynamicPropertyDefinition, Field> fieldAndPropDef : propertyDefinitions.values()) {
+            DynamicPropertyDefinition propDef = fieldAndPropDef.getFirst();
+            Field field = fieldAndPropDef.getSecond();
+            if (field == null) {
+                continue;
+            }
 
-        PropertyDefinitionImpl propDef = createPropertyDefinition(field);
+            // Traverse to child-node
 
-        QName dataType = propDef.getDataTypeQName();
-        Serializable defaultValue = null;
-        if (StringUtils.isNotEmpty(field.getDefaultValue())) {
-            if (DataTypeDefinition.TEXT.equals(dataType) && field.getFieldTypeEnum() != FieldType.INFORMATION_TEXT) {
-                defaultValue = field.getDefaultValue();
-            } else if (DataTypeDefinition.LONG.equals(dataType) || DataTypeDefinition.DOUBLE.equals(dataType)) {
-                DataTypeDefinition dataTypeDefinition = dictionaryService.getDataType(dataType);
-                try {
-                    defaultValue = (Serializable) DefaultTypeConverter.INSTANCE.convert(dataTypeDefinition, field.getDefaultValue());
-                } catch (Exception e) {
-                    // TODO change to debug
-                    LOG.warn("Failed to convert defaultValue to required data type\nfield=" + field.toString() + "\ndocumentDynamicNode=" + documentDynamicNode, e);
-                    // Do nothing, defaultValue stays null
+            QName[] hierarchy = propDef.getChildAssocTypeQNameHierarchy();
+            if (hierarchy == null) {
+                hierarchy = new QName[] {};
+            }
+
+            // if (propDef.hierarchy startsWith requiredHierarchy)
+            int i = 0;
+            for (; i < requiredHierarchy.length; i++) {
+                if (hierarchy.length <= i) {
+                    // propDef.hierarchy is shorter, so it doesn't match
+                    continue outer;
+                }
+                if (!hierarchy[i].equals(requiredHierarchy[i])) {
+                    // doesn't match
+                    continue outer;
                 }
             }
 
-        } else if (StringUtils.isNotBlank(field.getClassificator())) {
-            if (DataTypeDefinition.TEXT.equals(dataType) && field.getFieldTypeEnum() != FieldType.INFORMATION_TEXT) {
-                if (StringUtils.isNotBlank(field.getClassificatorDefaultValue())) {
-                    defaultValue = field.getClassificatorDefaultValue();
-                } else {
-                    List<ClassificatorValue> classificatorValues = classificatorService.getAllClassificatorValues(field.getClassificator());
-                    for (ClassificatorValue classificatorValue : classificatorValues) {
-                        if (classificatorValue.isByDefault()) {
-                            defaultValue = classificatorValue.getValueName();
-                            break;
+            // TODO Alar: would be better to refactor this to be more efficient and happen in a more general place (one or two methods above)
+            if (field.getParent() instanceof FieldGroup) {
+                FieldGroup group = (FieldGroup) field.getParent();
+                if (group.isSystematic()) {
+                    FieldGroupGenerator fieldGroupGenerator = fieldGroupGenerators.get(group.getName());
+                    if (fieldGroupGenerator != null) {
+                        Pair<Field, List<Field>> relatedFields = fieldGroupGenerator.collectAndRemoveFieldsInOriginalOrderToFakeGroup(new ArrayList<Field>(group.getFields()),
+                                field, group.getFieldsByOriginalId());
+                        if (relatedFields != null) {
+                            field = relatedFields.getFirst();
                         }
                     }
                 }
             }
 
-        } else if (field.isDefaultDateSysdate()) {
-            if (DataTypeDefinition.DATE.equals(dataType)) {
-                defaultValue = new Date(AlfrescoTransactionSupport.getTransactionStartTime());
+            List<Node> childNodes = collectChildNodes(node, hierarchy, i);
+            for (Node childNode : childNodes) {
+                setDefaultPropertyValue(childNode, propDef, forceOverwrite, reallySetDefaultValues, field, propertyDefinitions);
             }
+        }
+    }
 
-        } else if (field.isDefaultUserLoggedIn()) {
-            if (DataTypeDefinition.TEXT.equals(dataType) && field.getFieldTypeEnum() != FieldType.INFORMATION_TEXT) {
-                // XXX Alar inconvenient
-                Map<QName, Serializable> props = new HashMap<QName, Serializable>();
-                setUserContactProps(props, AuthenticationUtil.getRunAsUser(), propDef, field);
-                for (Entry<QName, Serializable> entry : props.entrySet()) {
-                    documentDynamicNode.getProperties().put(entry.getKey().toString(), entry.getValue());
+    private List<Node> collectChildNodes(Node node, QName[] hierarchy, int i) {
+        if (i >= hierarchy.length) {
+            return Collections.singletonList(node);
+        }
+        List<Node> results = new ArrayList<Node>();
+        List<Node> childNodes = node.getAllChildAssociations(hierarchy[i]);
+        for (Node childNode : childNodes) {
+            results.addAll(collectChildNodes(childNode, hierarchy, i + 1));
+        }
+        return results;
+    }
+
+    private void setDefaultPropertyValue(Node node, DynamicPropertyDefinition propDef, boolean forceOverwrite, boolean reallySetDefaultValues, Field field,
+            Map<String, Pair<DynamicPropertyDefinition, Field>> allFieldsAndPropDefs) {
+        Serializable value = (Serializable) node.getProperties().get(field.getQName());
+        if (value != null && !forceOverwrite) {
+            return;
+        }
+
+        Serializable defaultValue = null;
+        if (reallySetDefaultValues) {
+            QName dataType = propDef.getDataTypeQName();
+            if (StringUtils.isNotEmpty(field.getDefaultValue())) {
+                if (DataTypeDefinition.TEXT.equals(dataType) && field.getFieldTypeEnum() != FieldType.INFORMATION_TEXT) {
+                    defaultValue = field.getDefaultValue();
+                } else if (DataTypeDefinition.LONG.equals(dataType) || DataTypeDefinition.DOUBLE.equals(dataType)) {
+                    DataTypeDefinition dataTypeDefinition = dictionaryService.getDataType(dataType);
+                    try {
+                        defaultValue = (Serializable) DefaultTypeConverter.INSTANCE.convert(dataTypeDefinition, field.getDefaultValue());
+                    } catch (Exception e) {
+                        // TODO change to debug
+                        LOG.warn("Failed to convert defaultValue to required data type\nfield=" + field.toString() + "\nnode=" + node, e);
+                        // Do nothing, defaultValue stays null
+                    }
                 }
-                return;
+
+            } else if (StringUtils.isNotBlank(field.getClassificator())) {
+                if (DataTypeDefinition.TEXT.equals(dataType) && field.getFieldTypeEnum() != FieldType.INFORMATION_TEXT) {
+                    if (StringUtils.isNotBlank(field.getClassificatorDefaultValue())) {
+                        defaultValue = field.getClassificatorDefaultValue();
+                    } else {
+                        List<ClassificatorValue> classificatorValues = classificatorService.getAllClassificatorValues(field.getClassificator());
+                        for (ClassificatorValue classificatorValue : classificatorValues) {
+                            if (classificatorValue.isByDefault()) {
+                                defaultValue = classificatorValue.getValueName();
+                                break;
+                            }
+                        }
+                    }
+                }
+
+            } else if (field.isDefaultDateSysdate()) {
+                if (DataTypeDefinition.DATE.equals(dataType)) {
+                    defaultValue = new Date(AlfrescoTransactionSupport.getTransactionStartTime());
+                }
+
+            } else if (field.isDefaultUserLoggedIn()) {
+                if (DataTypeDefinition.TEXT.equals(dataType) && field.getFieldTypeEnum() != FieldType.INFORMATION_TEXT) {
+                    Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+                    setUserContactProps(props, AuthenticationUtil.getRunAsUser(), propDef, field);
+                    for (Entry<QName, Serializable> entry : props.entrySet()) {
+                        QName propName = entry.getKey();
+                        Pair<DynamicPropertyDefinition, Field> fieldAndPropDef = allFieldsAndPropDefs.get(propName.getLocalName());
+                        // Check that all properties are on the same node
+                        Assert.isTrue(fieldAndPropDef != null
+                                && Arrays.equals(fieldAndPropDef.getFirst().getChildAssocTypeQNameHierarchy(), propDef.getChildAssocTypeQNameHierarchy()));
+                        node.getProperties().put(propName.toString(), entry.getValue());
+                    }
+                    return;
+                }
+
+            } else if (field.isDefaultSelected()) {
+                if (DataTypeDefinition.BOOLEAN.equals(dataType)) {
+                    defaultValue = Boolean.TRUE;
+                }
             }
 
-        } else if (field.isDefaultSelected()) {
-            if (DataTypeDefinition.BOOLEAN.equals(dataType)) {
-                defaultValue = Boolean.TRUE;
-            }
-        }
-
-        if (defaultValue != null && propDef.isMultiValued()) {
-            ArrayList<Serializable> list = new ArrayList<Serializable>();
-            list.add(defaultValue);
-            defaultValue = list;
-        }
-
-        // In Search/MultiValueEditor component, display one empty row by default, not zero rows
-        if (defaultValue == null) {
-            Boolean multiValuedOverride = getMultiValuedOverride(field);
-            if (field.getFieldTypeEnum() == FieldType.USERS || field.getFieldTypeEnum() == FieldType.CONTACTS || field.getFieldTypeEnum() == FieldType.USERS_CONTACTS ||
-                    (multiValuedOverride != null && multiValuedOverride)) {
+            if (defaultValue != null && propDef.isMultiValued()) {
                 ArrayList<Serializable> list = new ArrayList<Serializable>();
-                list.add(null);
+                list.add(defaultValue);
                 defaultValue = list;
             }
         }
 
+        if (defaultValue == null) {
+            // In Search/MultiValueEditor component, display one empty row by default, not zero rows
+            Boolean multiValuedOverride = propDef.getMultiValuedOverride();
+            if (field.getFieldTypeEnum() == FieldType.USERS || field.getFieldTypeEnum() == FieldType.CONTACTS || field.getFieldTypeEnum() == FieldType.USERS_CONTACTS
+                    || field.getFieldTypeEnum() == FieldType.STRUCT_UNIT ||
+                    (multiValuedOverride != null && multiValuedOverride)) {
+                ArrayList<Serializable> list = new ArrayList<Serializable>();
+                list.add(null);
+                defaultValue = list;
+
+            } else if (field.getFieldTypeEnum() == FieldType.LISTBOX) {
+                // UISelectMany component needs value to be List or Array, does not accept null value
+                defaultValue = new ArrayList<String>();
+            }
+        }
+
         if (defaultValue != null) {
-            documentDynamicNode.getProperties().put(field.getQName().toString(), defaultValue);
+            node.getProperties().put(field.getQName().toString(), defaultValue);
         }
     }
 
     @Override
     public void setUserContactProps(Map<QName, Serializable> props, String userName, String fieldId) {
-        Map<String, Pair<PropertyDefinition, Field>> propDefs = getPropertyDefinitions(getDocTypeIdAndVersionNr(props));
-        Pair<PropertyDefinition, Field> propDefAndField = propDefs.get(fieldId);
+        Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs = getPropertyDefinitions(getDocTypeIdAndVersionNr(props));
+        Pair<DynamicPropertyDefinition, Field> propDefAndField = propDefs.get(fieldId);
         setUserContactProps(props, userName, propDefAndField.getFirst(), propDefAndField.getSecond());
     }
 
@@ -639,24 +786,24 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
     }
 
     @Override
-    public PropertyDefinition getPropertyDefinition(Node documentDynamicNode, QName property) {
+    public DynamicPropertyDefinition getPropertyDefinition(Node documentDynamicNode, QName property) {
         if (!DocumentDynamicModel.URI.equals(property.getNamespaceURI())) {
             return null;
         }
         if (DocumentSearchModel.Types.FILTER.equals(documentDynamicNode.getType())) {
             if (hiddenFieldDependencies.containsKey(property.getLocalName())) {
                 String originalFieldId = hiddenFieldDependencies.get(property.getLocalName());
-                PropertyDefinition originalPropDef = getPropDefForSearch(originalFieldId);
-                PropertyDefinitionImpl propDef = createPropertyDefinitionForHiddenField(property.getLocalName(), originalPropDef);
+                DynamicPropertyDefinition originalPropDef = getPropDefForSearch(originalFieldId);
+                DynamicPropertyDefinition propDef = createPropertyDefinitionForHiddenField(property.getLocalName(), originalPropDef);
                 return propDef;
             }
             return getPropDefForSearch(property.getLocalName());
         }
-        Map<String, Pair<PropertyDefinition, Field>> propertyDefinitions = getPropertyDefinitions(documentDynamicNode);
+        Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions = getPropertyDefinitions(documentDynamicNode);
         if (propertyDefinitions == null) {
             return null;
         }
-        Pair<PropertyDefinition, Field> propertyDefinition = propertyDefinitions.get(property.getLocalName());
+        Pair<DynamicPropertyDefinition, Field> propertyDefinition = propertyDefinitions.get(property.getLocalName());
         if (propertyDefinition == null) {
             LOG.warn("\n\n!!!!!!!!!!!!!!!!!!! fieldId=" + property + " not found, documentDynamicNode=" + documentDynamicNode + "\n");
             return null;
@@ -664,7 +811,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
         return propertyDefinition.getFirst();
     }
 
-    private PropertyDefinition getPropDefForSearch(String fieldId) {
+    private DynamicPropertyDefinition getPropDefForSearch(String fieldId) {
         FieldDefinition field;
         if (fieldId.contains("_")) {
             field = documentAdminService.getFieldDefinition(fieldId.substring(0, fieldId.indexOf("_")));
@@ -676,7 +823,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
             return null;
         }
         processFieldForSearchView(field);
-        return new PropertyDefinitionImpl(field, isFieldForcedMultipleInSearch(field));
+        return new DynamicPropertyDefinitionImpl(field, isFieldForcedMultipleInSearch(field), null);
     }
 
     private static final List<String> comboboxFieldsNotMultiple = Arrays.asList("function", "series", "volume");
@@ -704,46 +851,33 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
     }
 
     @Override
-    public Map<String, Pair<PropertyDefinition, Field>> getPropertyDefinitions(Node documentDynamicNode) {
+    public Map<String, Pair<DynamicPropertyDefinition, Field>> getPropertyDefinitions(Node node) {
         // TODO Alar: restore this behaviour or leave current?
         // while (DocumentCommonModel.Types.METADATA_CONTAINER.equals(documentDynamicNode.getType())) {
         // documentDynamicNode = generalService.getPrimaryParent(documentDynamicNode.getNodeRef());
         // }
-        if (!DocumentCommonModel.Types.DOCUMENT.equals(documentDynamicNode.getType()) && !DocumentCommonModel.Types.METADATA_CONTAINER.equals(documentDynamicNode.getType())) {
+        QName type = node.getType();
+        if (!DocumentCommonModel.Types.DOCUMENT.equals(type) && !dictionaryService.isSubClass(type, DocumentCommonModel.Types.METADATA_CONTAINER)) {
             return null;
         }
-        return getPropertyDefinitions(getDocTypeIdAndVersionNr(documentDynamicNode));
+        return getPropertyDefinitions(getDocTypeIdAndVersionNr(node));
     }
 
-    private Map<String, Pair<PropertyDefinition, Field>> getPropertyDefinitions(Pair<String, Integer> docTypeIdAndVersionNr) {
-        Map<String, Pair<PropertyDefinition, Field>> propertyDefinitions = propertyDefinitionCache.get(docTypeIdAndVersionNr);
+    private Map<String, Pair<DynamicPropertyDefinition, Field>> getPropertyDefinitions(Pair<String, Integer> docTypeIdAndVersionNr) {
+        Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions = propertyDefinitionCache.get(docTypeIdAndVersionNr);
         if (propertyDefinitions == null) {
-            propertyDefinitions = new HashMap<String, Pair<PropertyDefinition, Field>>();
             Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = getDocumentTypeAndVersion(docTypeIdAndVersionNr);
             if (documentTypeAndVersion == null) {
                 return null;
             }
             DocumentTypeVersion docVersion = documentTypeAndVersion.getSecond();
             docVersion.resetParent();
-            // TODO documentTypeVersion, fields and fieldGroups should be immutable; or they should be cloned in get method
-            for (Field field : docVersion.getFieldsDeeply()) {
-                String fieldId = field.getFieldId();
-                Assert.isTrue(!propertyDefinitions.containsKey(fieldId));
-                propertyDefinitions.put(fieldId, new Pair<PropertyDefinition, Field>(createPropertyDefinition(field), field));
-            }
-            for (Entry<String, String> entry : hiddenFieldDependencies.entrySet()) {
-                Pair<PropertyDefinition, Field> originalPropDefAndField = propertyDefinitions.get(entry.getValue());
-                if (originalPropDefAndField != null && originalPropDefAndField.getSecond().getOriginalFieldId().equals(entry.getValue())) {
-                    String hiddenFieldId = entry.getKey();
-                    PropertyDefinitionImpl propDef = createPropertyDefinitionForHiddenField(hiddenFieldId, originalPropDefAndField.getFirst());
-                    propertyDefinitions.put(hiddenFieldId, new Pair<PropertyDefinition, Field>(propDef, null));
-                }
-            }
+            propertyDefinitions = createPropertyDefinitions(docVersion.getFieldsDeeply());
             if (LOG.isDebugEnabled()) {
                 StringBuilder s = new StringBuilder();
                 s.append("Created propertyDefinitions for cacheKey=").append(docTypeIdAndVersionNr).append(" - ");
                 s.append("[").append(propertyDefinitions.size()).append("]");
-                for (Entry<String, Pair<PropertyDefinition, Field>> entry : propertyDefinitions.entrySet()) {
+                for (Entry<String, Pair<DynamicPropertyDefinition, Field>> entry : propertyDefinitions.entrySet()) {
                     s.append("\n  ").append(entry.getKey()).append("=");
                     s.append("\n    propertyDefinition=").append(entry.getValue().getFirst());
                     Field field = entry.getValue().getSecond();
@@ -756,177 +890,177 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
         return propertyDefinitions;
     }
 
-    private PropertyDefinitionImpl createPropertyDefinition(Field field) {
+    private Map<String, Pair<DynamicPropertyDefinition, Field>> createPropertyDefinitions(List<Field> fields) {
+        Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions = new HashMap<String, Pair<DynamicPropertyDefinition, Field>>();
+        // TODO documentTypeVersion, fields and fieldGroups should be immutable; or they should be cloned in get method
+        for (Field field : fields) {
+            String fieldId = field.getFieldId();
+            Assert.isTrue(!propertyDefinitions.containsKey(fieldId));
+            DynamicPropertyDefinition propDef = createPropertyDefinition(field);
+            propertyDefinitions.put(fieldId, new Pair<DynamicPropertyDefinition, Field>(propDef, field));
+        }
+        for (Entry<String, String> entry : hiddenFieldDependencies.entrySet()) {
+            Pair<DynamicPropertyDefinition, Field> originalPropDefAndField = propertyDefinitions.get(entry.getValue());
+            // XXX originalPropDefAndField.getSecond().getOriginalFieldId() may be null if this is a field which is not systematic, but should be - was defined before this
+            // systematic fieldDefinition was imported. Correct would be to fix incorrect data, see task 185569
+            if (originalPropDefAndField != null && entry.getValue().equals(originalPropDefAndField.getSecond().getOriginalFieldId())) {
+                String hiddenFieldId = entry.getKey();
+                DynamicPropertyDefinition propDef = createPropertyDefinitionForHiddenField(hiddenFieldId, originalPropDefAndField.getFirst());
+                propertyDefinitions.put(hiddenFieldId, new Pair<DynamicPropertyDefinition, Field>(propDef, null));
+            }
+        }
+        return propertyDefinitions;
+    }
+
+    @Override
+    public DynamicPropertyDefinition createPropertyDefinition(Field field) {
         Boolean multiValuedOverride = getMultiValuedOverride(field);
-        return new PropertyDefinitionImpl(field, multiValuedOverride);
+        QName[] childAssocTypeQNameHierarchy = getChildAssocTypeQNameHierarchy(field);
+        return new DynamicPropertyDefinitionImpl(field, multiValuedOverride, childAssocTypeQNameHierarchy);
     }
 
-    private PropertyDefinitionImpl createPropertyDefinitionForHiddenField(String hiddenFieldId, PropertyDefinition originalPropertyDefinition) {
-        return new PropertyDefinitionImpl(hiddenFieldId, (PropertyDefinitionImpl) originalPropertyDefinition);
+    private DynamicPropertyDefinition createPropertyDefinitionForHiddenField(String hiddenFieldId, PropertyDefinition originalPropertyDefinition) {
+        return new DynamicPropertyDefinitionImpl(hiddenFieldId, (DynamicPropertyDefinitionImpl) originalPropertyDefinition);
     }
 
-    public static class PropertyDefinitionImpl implements PropertyDefinition {
+    private final Map<Pair<String /* systematicGroupName */, String /* originalFieldId */>, QName[]> childAssocTypeQNameHierarchies = new HashMap<Pair<String, String>, QName[]>();
 
-        private final QName name;
-        private final String originalFieldId;
-        private final String title;
-        private final FieldType fieldType;
-        private final boolean mandatory;
-        private final Boolean multiValuedOverride;
-
-        private PropertyDefinitionImpl(Field field, Boolean multiValuedOverride) {
-            Assert.notNull(field, "field");
-            name = field.getQName();
-            originalFieldId = field.getOriginalFieldId();
-            title = field.getName();
-            fieldType = field.getFieldTypeEnum();
-            mandatory = field.isMandatory();
-            this.multiValuedOverride = multiValuedOverride;
+    @Override
+    public void registerChildAssocTypeQNameHierarchy(String systematicGroupName, QName childAssocTypeQName, Map<QName[], Set<String>> additionalChildAssocTypeQNameHierarchy) {
+        Assert.hasLength(systematicGroupName);
+        Assert.notNull(childAssocTypeQName);
+        // Add by groupName only, covers all fields in systematic group
+        Pair<String, String> globalKey = Pair.newInstance(systematicGroupName, (String) null);
+        Assert.isTrue(!childAssocTypeQNameHierarchies.containsKey(globalKey));
+        for (QName[] qNames : childAssocTypeQNameHierarchies.values()) {
+            Assert.isTrue(!childAssocTypeQName.equals(qNames[0]));
         }
+        childAssocTypeQNameHierarchies.put(globalKey, new QName[] { childAssocTypeQName });
 
-        private PropertyDefinitionImpl(String hiddenFieldId, PropertyDefinitionImpl originalPropertyDefinition) {
-            Assert.notNull(hiddenFieldId, "hiddenFieldId");
-            name = Field.getQName(hiddenFieldId);
-            originalFieldId = null;
-            title = null;
-            fieldType = FieldType.TEXT_FIELD;
-            mandatory = originalPropertyDefinition.mandatory;
-            multiValuedOverride = originalPropertyDefinition.multiValuedOverride;
-        }
-
-        @Override
-        public ModelDefinition getModel() {
-            return getDictionaryService().getModel(DocumentDynamicModel.MODEL); // TODO FIXME WARNING!! uses BeanHelper
-        }
-
-        @Override
-        public QName getName() {
-            return name;
-        }
-
-        @Override
-        public String getTitle() {
-            return title;
-        }
-
-        @Override
-        public String getDescription() {
-            return null;
-        }
-
-        @Override
-        public String getDefaultValue() {
-            return null;
-        }
-
-        @Override
-        public DataTypeDefinition getDataType() {
-            return getDictionaryService().getDataType(getDataTypeQName()); // TODO FIXME WARNING!! uses BeanHelper
-        }
-
-        private QName getDataTypeQName() {
-            if (originalFieldId != null && Arrays.asList(DocumentLocationGenerator.NODE_REF_FIELD_IDS).contains(originalFieldId)) {
-                return DataTypeDefinition.NODE_REF;
-            }
-            switch (fieldType) {
-            case DOUBLE:
-                return DataTypeDefinition.DOUBLE;
-            case LONG:
-                return DataTypeDefinition.LONG;
-            case DATE:
-                return DataTypeDefinition.DATE;
-            case CHECKBOX:
-                return DataTypeDefinition.BOOLEAN;
-            default:
-                return DataTypeDefinition.TEXT;
+        // Add by groupName + specific originalFieldId
+        if (additionalChildAssocTypeQNameHierarchy != null) {
+            Set<String> allOriginalFieldIds = new HashSet<String>();
+            for (Entry<QName[], Set<String>> entry : additionalChildAssocTypeQNameHierarchy.entrySet()) {
+                QName[] additionalAssocTypeQNames = entry.getKey();
+                Assert.notNull(additionalAssocTypeQNames);
+                Assert.isTrue(additionalAssocTypeQNames.length > 0 && !Arrays.asList(additionalAssocTypeQNames).contains(null));
+                for (String originalFieldId : entry.getValue()) {
+                    Assert.notNull(originalFieldId);
+                    Assert.isTrue(!allOriginalFieldIds.contains(originalFieldId));
+                    allOriginalFieldIds.add(originalFieldId);
+                    Pair<String, String> key = Pair.newInstance(systematicGroupName, originalFieldId);
+                    Assert.isTrue(!childAssocTypeQNameHierarchies.containsKey(key));
+                    childAssocTypeQNameHierarchies.put(key, (QName[]) ArrayUtils.add(additionalAssocTypeQNames, 0, childAssocTypeQName));
+                }
             }
         }
 
-        @Override
-        public ClassDefinition getContainerClass() {
-            return null;
-        }
+        documentAdminService.registerGroupLimitSingle(systematicGroupName);
+    }
 
-        @Override
-        public boolean isOverride() {
-            return false;
-        }
-
-        @Override
-        public boolean isMultiValued() {
-            if (multiValuedOverride != null) {
-                return multiValuedOverride;
+    private QName[] getChildAssocTypeQNameHierarchy(Field field) {
+        if (field.getParent() instanceof FieldGroup) {
+            FieldGroup group = (FieldGroup) field.getParent();
+            if (!group.isSystematic()) {
+                return null;
             }
-            switch (fieldType) {
-            case USERS:
-            case USERS_CONTACTS:
-            case CONTACTS:
-            case LISTBOX:
-                return true;
-            default:
-                return false;
+            Assert.notNull(field.getOriginalFieldId());
+            // Find by groupName + specific originalFieldId
+            QName[] hierarchies = childAssocTypeQNameHierarchies.get(Pair.newInstance(group.getName(), field.getOriginalFieldId()));
+            if (hierarchies != null) {
+                return hierarchies;
+            }
+            // Find by groupName only, covers all fields in systematic group
+            hierarchies = childAssocTypeQNameHierarchies.get(Pair.newInstance(group.getName(), (String) null));
+            return hierarchies;
+        }
+        return null;
+    }
+
+    @Override
+    public TreeNode<QName> getChildAssocTypeQNameTree(DocumentTypeVersion docVer) {
+        Pair<String, Integer> cacheKey = Pair.newInstance(docVer.getParent().getId(), docVer.getVersionNr());
+        TreeNode<QName> root = childAssocTypeQNameTreeCache.get(cacheKey);
+        if (root != null) {
+            return root;
+        }
+        root = new TreeNode<QName>(null);
+        for (MetadataItem metadataItem : docVer.getMetadata()) {
+            if (!(metadataItem instanceof FieldGroup)) {
+                continue;
+            }
+            FieldGroup group = (FieldGroup) metadataItem;
+            if (!group.isSystematic()) {
+                continue;
+            }
+            QName[] hierarchy = childAssocTypeQNameHierarchies.get(Pair.newInstance(group.getName(), null));
+            if (hierarchy == null) {
+                continue;
+            }
+
+            Assert.isTrue(hierarchy.length == 1 && hierarchy[0] != null);
+            for (TreeNode<QName> treeNode : root.getChildren()) {
+                Assert.isTrue(!treeNode.getData().equals(hierarchy[0]));
+            }
+            TreeNode<QName> treeNode = new TreeNode<QName>(hierarchy[0]);
+            root.getChildren().add(treeNode);
+
+            for (Field field : group.getFields()) {
+                Assert.notNull(field.getOriginalFieldId());
+                hierarchy = childAssocTypeQNameHierarchies.get(Pair.newInstance(group.getName(), field.getOriginalFieldId()));
+                if (hierarchy == null) {
+                    continue;
+                }
+                Assert.isTrue(hierarchy.length >= 2 && treeNode.getData().equals(hierarchy[0]));
+                int i = 1;
+                TreeNode<QName> current = treeNode;
+                while (i < hierarchy.length) {
+                    Assert.isTrue(hierarchy[i] != null);
+                    TreeNode<QName> foundChild = null;
+                    for (TreeNode<QName> currentChild : current.getChildren()) {
+                        if (currentChild.getData().equals(hierarchy[i])) {
+                            Assert.isNull(foundChild);
+                            foundChild = currentChild;
+                        }
+                    }
+                    if (foundChild == null) {
+                        foundChild = new TreeNode<QName>(hierarchy[i]);
+                        current.getChildren().add(foundChild);
+                    }
+                    current = foundChild;
+                    i++;
+                }
             }
         }
+        childAssocTypeQNameTreeCache.put(cacheKey, root);
+        return root;
+    }
 
-        @Override
-        public boolean isMandatory() {
-            return mandatory;
+    @Override
+    public TreeNode<QName> getChildAssocTypeQNameTree(Node documentDynamicNode) {
+        Pair<String, Integer> cacheKey = getDocTypeIdAndVersionNr(documentDynamicNode);
+        TreeNode<QName> childAssocTypeQNames = childAssocTypeQNameTreeCache.get(cacheKey);
+        if (childAssocTypeQNames == null) {
+            Pair<DocumentType, DocumentTypeVersion> docTypeAndVer = getDocumentTypeAndVersion(cacheKey);
+            childAssocTypeQNames = getChildAssocTypeQNameTree(docTypeAndVer.getSecond());
         }
-
-        @Override
-        public boolean isMandatoryEnforced() {
-            return false;
-        }
-
-        @Override
-        public boolean isProtected() {
-            return false;
-        }
-
-        @Override
-        public boolean isIndexed() {
-            return true;
-        }
-
-        @Override
-        public boolean isStoredInIndex() {
-            return false;
-        }
-
-        @Override
-        public IndexTokenisationMode getIndexTokenisationMode() {
-            return IndexTokenisationMode.TRUE;
-        }
-
-        @Override
-        public boolean isIndexedAtomically() {
-            return true;
-        }
-
-        @Override
-        public List<ConstraintDefinition> getConstraints() {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public String toString() {
-            return WmNode.toString(this) + "[" +
-                    "name=" + name.toPrefixString(getNamespaceService()) +
-                    " fieldType=" + fieldType +
-                    " mandatory=" + mandatory +
-                    " multiValuedOverride=" + multiValuedOverride +
-                    "]";
-        }
-
+        return childAssocTypeQNames;
     }
 
     private final Set<String> multiValuedOverrideOriginalFieldIds = new HashSet<String>();
+    private final Map<String, Set<String>> multiValuedOverrideBySystematicGroup = new HashMap<String, Set<String>>();
 
     @Override
     public void registerMultiValuedOverrideInSystematicGroup(String... originalFieldIds) {
         List<String> originalFieldIdsList = Arrays.asList(originalFieldIds);
         Assert.isTrue(!CollectionUtils.containsAny(multiValuedOverrideOriginalFieldIds, originalFieldIdsList));
         multiValuedOverrideOriginalFieldIds.addAll(originalFieldIdsList);
+    }
+
+    @Override
+    public void registerMultiValuedOverrideBySystematicGroupName(String systematicGroupName, Set<String> originalFieldIds) {
+        Assert.isTrue(!multiValuedOverrideBySystematicGroup.containsKey(systematicGroupName));
+        multiValuedOverrideBySystematicGroup.put(systematicGroupName, new HashSet<String>(originalFieldIds));
     }
 
     private Boolean getMultiValuedOverride(Field field) {
@@ -939,10 +1073,17 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
             return null;
         }
         if (inGroup && ((FieldGroup) parent).isSystematic()) {
-            Set<String> originalFieldIds = ((FieldGroup) parent).getOriginalFieldIds();
-            originalFieldIds.retainAll(multiValuedOverrideOriginalFieldIds);
-            if (!originalFieldIds.isEmpty()) {
-                multiValuedOverride = Boolean.TRUE;
+            Set<String> set = multiValuedOverrideBySystematicGroup.get(((FieldGroup) parent).getName());
+            if (set != null) {
+                if (set.contains(field.getOriginalFieldId())) {
+                    multiValuedOverride = Boolean.TRUE;
+                }
+            } else {
+                Set<String> originalFieldIds = ((FieldGroup) parent).getOriginalFieldIds();
+                originalFieldIds.retainAll(multiValuedOverrideOriginalFieldIds);
+                if (!originalFieldIds.isEmpty()) {
+                    multiValuedOverride = Boolean.TRUE;
+                }
             }
         }
         return multiValuedOverride;

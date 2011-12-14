@@ -244,6 +244,10 @@ function getCloseButtons() {
    return $jQ(escapeId4JQ("#dialog:close-button, #dialog:close-button-2"));
 }
 
+function clickFinishButton() {
+   return $jQ(escapeId4JQ("#dialog:finish-button")).click();
+}
+
 function disableAndRemoveButton(buttonId) {
    var finishButton = $jQ('#' + escapeId4JQ(buttonId));
    finishButton.remove();
@@ -909,7 +913,11 @@ function updateMenuItemCount(menuItemId) {
             }
 
             // Update on all elements with same menuitemid
-            $jQ('.menuItemCount[menuitemid=' + menuItemId + '] a').text(text).attr('title', text);
+            var menuItem = $jQ('.menuItemCount[menuitemid=' + menuItemId + '] a');
+            menuItem.text(text).attr('title', text);
+            if (count.length > 2) {
+               menuItem.parent().removeClass("hiddenMenuItem");
+            }
          }
 
          //Continuous update disabled - if you stay on the same page, the counts are updated only once.

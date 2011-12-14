@@ -170,7 +170,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
     protected NodeRef createDocumentNode(DvkReceivedLetterDocument rd, NodeRef dvkIncomingFolder, String nvlDocumentTitle) {
         final NodeRef docRef = documentDynamicService.createNewDocument(
                 SystematicDocumentType.INCOMING_LETTER.getId(),
-                dvkIncomingFolder).getNodeRef();
+                dvkIncomingFolder).getFirst().getNodeRef();
 
         final Map<QName, Serializable> props = new HashMap<QName, Serializable>();
         fillPropsFromDvkReceivedDocument(rd, props);

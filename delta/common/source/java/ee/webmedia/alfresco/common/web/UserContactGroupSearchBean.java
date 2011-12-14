@@ -188,9 +188,9 @@ public class UserContactGroupSearchBean implements Serializable {
         results = preprocessResultsToNodeRefs(filterIndex, results);
         List<String> processedResult = new ArrayList<String>();
         for (String result : results) {
-            String name = getUserContactMappingService().getMappedNameValue(new NodeRef(result));
-            if (name != null) {
-                processedResult.add(name);
+            Object nameObj = getUserContactMappingService().getMappedNameValue(new NodeRef(result));
+            if (nameObj != null && nameObj instanceof String) {
+                processedResult.add((String) nameObj);
             }
         }
         return processedResult.toArray(new String[processedResult.size()]);

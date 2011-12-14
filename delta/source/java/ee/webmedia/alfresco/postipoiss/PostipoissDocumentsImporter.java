@@ -66,6 +66,7 @@ import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
+import ee.webmedia.alfresco.document.register.model.RegNrHolder;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.service.DocumentService.AssocType;
@@ -1629,7 +1630,9 @@ public class PostipoissDocumentsImporter {
             propsMap.put(DocumentCommonModel.Props.DOC_STATUS, open ? DocumentStatus.WORKING.getValueName() : DocumentStatus.FINISHED.getValueName());
             propsMap.put(DocumentCommonModel.Props.REG_NUMBER, regNumber /* root.elementText(PP_ELEMENT_TOIMIK_SARI) */);
             // XXX XXX XXX - THIS IS UNTESTED! Must set this field to support document search functionality.
-            propsMap.put(DocumentCommonModel.Props.SHORT_REG_NUMBER, StringUtils.substringAfter(regNumber, DocumentService.VOLUME_MARK_SEPARATOR));
+            RegNrHolder regNrHolder = new RegNrHolder(regNumber);
+            propsMap.put(DocumentCommonModel.Props.SHORT_REG_NUMBER, regNrHolder.getShortRegNrWithoutIndividualizingNr());
+            propsMap.put(DocumentCommonModel.Props.INDIVIDUAL_NUMBER, regNrHolder.getIndividualizingNr().toString());
             propsMap.put(ContentModel.PROP_CREATOR, CREATOR_MODIFIER);
             propsMap.put(ContentModel.PROP_MODIFIER, CREATOR_MODIFIER);
 

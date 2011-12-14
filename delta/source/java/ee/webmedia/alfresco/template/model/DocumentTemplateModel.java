@@ -25,6 +25,9 @@ public interface DocumentTemplateModel {
         QName NAME = QName.createQName(URI, "name");
         QName COMMENT = QName.createQName(URI, "comment");
         QName DOCTYPE_ID = QName.createQName(URI, "docTypeId");
+        QName TEMPLATE_TYPE = QName.createQName(URI, "templateType");
+        QName REPORT_OUTPUT_TYPE = QName.createQName(URI, "reportOutputType");
+        QName REPORT_TYPE = QName.createQName(URI, "reportType");
     }
 
     interface Assoc {
@@ -33,9 +36,10 @@ public interface DocumentTemplateModel {
 
     interface Aspects {
         QName TEMPLATE = QName.createQName(URI, "template");
-        QName TEMPLATE_SYSTEM = QName.createQName(URI, "systemTemplate");
+        QName TEMPLATE_NOTIFICATION = QName.createQName(URI, "notificationTemplate");
         QName TEMPLATE_EMAIL = QName.createQName(URI, "emailTemplate");
         QName TEMPLATE_DOCUMENT = QName.createQName(URI, "documentTemplate");
+        QName TEMPLATE_REPORT = QName.createQName(URI, "reportTemplate");
     }
 
 }

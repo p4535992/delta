@@ -6,7 +6,7 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:panel label="#{msg.document_type_block}" id="types-panel" styleClass="panel-100" progressive="true">
+<a:panel label="#{msg.document_type_block}" id="types-panel" styleClass="panel-100" progressive="true" rendered="#{DocumentDynamicDialog.showTypeBlock}">
    <h:panelGrid columns="2" columnClasses="propertiesLabel">
       <h:outputText value="#{msg.document_docType}" />
       <a:panel id="submit-doc-type">

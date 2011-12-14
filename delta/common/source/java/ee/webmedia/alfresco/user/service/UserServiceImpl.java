@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.user.service;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -59,6 +60,7 @@ public class UserServiceImpl implements UserService {
     private ConfigurableService configurableService;
     private NamespaceService namespaceService;
     private boolean groupsEditingAllowed;
+    private List<String> systematicGroups;
 
     @Override
     public NodeRef getUsersPreferenceNodeRef(String userName) {
@@ -165,6 +167,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public String getSupervisionGroup() {
         return authorityService.getName(AuthorityType.GROUP, SUPERVISION_GROUP);
+    }
+
+    private String getArchivistsGroup() {
+        return authorityService.getName(AuthorityType.GROUP, ARCHIVIST_GROUP);
     }
 
     @Override
@@ -359,7 +365,7 @@ public class UserServiceImpl implements UserService {
             return userName;
         }
         String unitId = (String) props.get(ContentModel.PROP_ORGID);
-        String unitName = organizationStructureService.getOrganizationStructure(unitId);
+        String unitName = organizationStructureService.getOrganizationStructureName(unitId);
         return UserUtil.getPersonFullNameWithUnitName(props, unitName);
     }
 
@@ -385,6 +391,19 @@ public class UserServiceImpl implements UserService {
     @Override
     public boolean isGroupsEditingAllowed() {
         return groupsEditingAllowed;
+    }
+
+    @Override
+    public boolean isGroupDeleteAllowed(String group) {
+        return isGroupsEditingAllowed() && !getSystematicGroups().contains(group);
+    }
+
+    private List<String> getSystematicGroups() {
+        if (systematicGroups == null) {
+            systematicGroups = Arrays.asList(getAdministratorsGroup(), getDocumentManagersGroup(), getAccountantsGroup()
+                    , getSupervisionGroup(), getAccountantsGroup(), getArchivistsGroup());
+        }
+        return systematicGroups;
     }
 
     @Override

@@ -30,7 +30,6 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.security.AccessStatus;
-import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
@@ -65,6 +64,7 @@ import ee.webmedia.alfresco.document.web.evaluator.IsOwnerEvaluator;
 import ee.webmedia.alfresco.privilege.model.PrivilegeMappings;
 import ee.webmedia.alfresco.privilege.model.UserPrivileges;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
+import ee.webmedia.alfresco.privilege.web.ManageInheritablePrivilegesDialog.GroupTranslatorMap;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.service.UserService;
@@ -106,7 +106,6 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
     private transient PermissionService permissionService;
     private transient PrivilegeService privilegeService;
     private transient UserService userService;
-    private transient AuthorityService authorityService;
     // UIComponents
     private transient UIRichList permissionsRichList;
     private transient UIGenericPicker picker;
@@ -181,7 +180,7 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
                 MessageUtil.addErrorMessage("save_failed", e.getMessage());
             }
             rebuildUserPrivilegesRows = true;
-            picker.queueEvent(new UIGenericPicker.PickerEvent(picker, 1 /* ACTION_CLEAR */, 0, null, null));
+            picker.queueEvent(new UIGenericPicker.PickerEvent(picker, UIGenericPicker.ACTION_CLEAR, 0, null, null));
         }
         return null;
     }
@@ -247,10 +246,10 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
                     FacesContext context = FacesContext.getCurrentInstance();
                     missingPrivileges.add(MessageUtil.getMessage(context, "permission_" + privilege));
                 }
-                missingUserPrivilegeMessages.add(new MessageDataImpl("manage_permissions_save_error_removedWfPrivileges_missingUserPrivileges"
+                missingUserPrivilegeMessages.add(new MessageDataImpl("document_manage_permissions_save_error_removedWfPrivileges_missingUserPrivileges"
                         , userDisplayName, missingPrivileges));
             }
-            MessageUtil.addErrorMessage("manage_permissions_save_error_removedWfPrivileges", missingUserPrivilegeMessages);
+            MessageUtil.addErrorMessage("document_manage_permissions_save_error_removedWfPrivileges", missingUserPrivilegeMessages);
         }
         return removedWFPrivilege;
     }
@@ -551,7 +550,7 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
                     break;
                 }
             }
-            String extraPrivilegeReason = MessageUtil.getMessage("manage_permissions_extraInfo_userIsDocOwner");
+            String extraPrivilegeReason = MessageUtil.getMessage("document_manage_permissions_extraInfo_userIsOwner");
             if (ownerRow == null) {
                 // this might happen when rebuilding UserPrivilegesRows after removing all members of group
                 ownerRow = addAuthorityRow(ownerId, manageablePermissions, GROUPLESS_GROUP, extraPrivilegeReason);
@@ -570,7 +569,7 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
           // (but showing those privileges only on rows already added because of some other reason)
             String accessRestriction = (String) getNodeService().getProperty(manageableRef, DocumentCommonModel.Props.ACCESS_RESTRICTION);
             if (StringUtils.equals(accessRestriction, AccessRestriction.OPEN.getValueName())) {
-                String docIsPublic = MessageUtil.getMessage("manage_permissions_extraInfo_documentIsPublic");
+                String docIsPublic = MessageUtil.getMessage("document_manage_permissions_extraInfo_documentIsPublic");
                 for (UserPrivilegesRow row : userPrivilegesRows) {
                     row.addDynamicPrivilege(DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA, docIsPublic);
                     row.addDynamicPrivilege(DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES, docIsPublic);
@@ -582,7 +581,7 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
     /**
      * @return usernames of those authorities that are given and also have SeriesDocManagerDynamicAuthority.SERIES_MANAGEABLE_PERMISSION permission for series of given document
      */
-    public Set<String> filterSeriesAuthorities(Set<String> authorities, NodeRef seriesOrDecendantOfSeriesRef) {
+    private Set<String> filterSeriesAuthorities(Set<String> authorities, NodeRef seriesOrDecendantOfSeriesRef) {
         final NodeRef seriesRef;
         if (SeriesModel.Types.SERIES.equals(getNodeService().getType(seriesOrDecendantOfSeriesRef))) {
             seriesRef = seriesOrDecendantOfSeriesRef;
@@ -635,25 +634,6 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
             userPrivilegesRows.add(privilegeTableRow);
         }
         return privilegeTableRow;
-    }
-
-    class GroupTranslatorMap extends HashMap<String, String> {
-        private static final long serialVersionUID = 1L;
-
-        @Override
-        public String get(Object key) {
-            String groupCode = (String) key;
-            String value = super.get(groupCode);
-            if (value == null) {
-                if (GROUPLESS_GROUP.equals(key)) {
-                    value = MessageUtil.getMessage("manage_permissions_group_groupless");
-                } else {
-                    value = getAuthorityService().getAuthorityDisplayName(groupCode);
-                }
-                put(groupCode, value);
-            }
-            return value;
-        }
     }
 
     private void addTbodyAttributesByGroup(String groupCode) {
@@ -756,7 +736,7 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
         removeLink.setValue("");
         removeLink.setShowLink(false);
         removeLink.setImage("/images/icons/" + (isPerson ? "remove_user.gif" : "delete_group.gif"));
-        removeLink.setTooltip(MessageUtil.getMessage(isPerson ? "manage_permissions_deletePerson" : "manage_permissions_deleteGroupMembers"));
+        removeLink.setTooltip(MessageUtil.getMessage(isPerson ? "manage_permissions_removePerson" : "manage_permissions_removeGroupWithUsers"));
         removeLink.setActionListener(application.createMethodBinding(
                 "#{" + BEAN_NAME + (isPerson ? ".deletePerson}" : ".deleteGroup}"), new Class[] { javax.faces.event.ActionEvent.class }));
         ComponentUtil.putAttribute(removeLink, "styleClass", isPerson ? "deletePerson" : "deleteGroup");
@@ -811,13 +791,6 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
             userService = BeanHelper.getUserService();
         }
         return userService;
-    }
-
-    private AuthorityService getAuthorityService() {
-        if (authorityService == null) {
-            authorityService = BeanHelper.getAuthorityService();
-        }
-        return authorityService;
     }
 
     // /// PRIVATE METHODS /////

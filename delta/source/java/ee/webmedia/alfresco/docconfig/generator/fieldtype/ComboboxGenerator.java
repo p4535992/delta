@@ -13,7 +13,7 @@ public class ComboboxGenerator extends BaseTypeFieldGenerator {
 
     @Override
     protected FieldType[] getFieldTypes() {
-        return new FieldType[] { FieldType.COMBOBOX };
+        return new FieldType[] { FieldType.COMBOBOX, FieldType.LISTBOX };
     }
 
     @Override

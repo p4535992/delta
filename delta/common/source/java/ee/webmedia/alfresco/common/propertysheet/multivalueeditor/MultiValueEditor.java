@@ -156,7 +156,7 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
         innerPickerFinish(picker.getFilterIndex(), rowIndex, results, FacesContext.getCurrentInstance());
 
         getAttributes().remove(Search.OPEN_DIALOG_KEY);
-        picker.queueEvent(new UIGenericPicker.PickerEvent(picker, 1 /* ACTION_CLEAR */, 0, null, null));
+        picker.queueEvent(new UIGenericPicker.PickerEvent(picker, UIGenericPicker.ACTION_CLEAR, 0, null, null));
     }
 
     public void innerPickerFinish(int pickerFilterIndex, int rowIndex, String[] results, FacesContext context) {

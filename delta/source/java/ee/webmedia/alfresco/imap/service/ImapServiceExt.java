@@ -86,13 +86,17 @@ public interface ImapServiceExt {
 
     NodeRef createImapSubfolder(NodeRef parentFolderNodeRef, String behaviour, String subfolderName, String folderAssocName);
 
-    long findFolderAndSaveEmail(NodeRef folderNodeRef, MimeMessage mimeMessage, String behaviour, boolean incomingEmail) throws FolderException;
+    long saveEmailToSubfolder(NodeRef folderNodeRef, MimeMessage mimeMessage, String behaviour, boolean incomingEmail) throws FolderException;
 
-    void findFolderAndSaveAttachments(NodeRef document, MimeMessage originalMessage, boolean saveBody) throws IOException, MessagingException, TransformationException,
+    void saveAttachmentsToSubfolder(NodeRef document, MimeMessage originalMessage, boolean saveBody) throws IOException, MessagingException, TransformationException,
             FolderException;
 
     List<Subfolder> getImapSubfolders(NodeRef parentRef, QName countableChildNodeType);
 
     int getAllFilesCount(NodeRef attachmentRoot, boolean countFilesInSubfolders);
+
+    void saveFailureNoticeToSubfolder(NodeRef folderNodeRef, MimeMessage mimeMessage, String behaviour) throws FolderException;
+
+    NodeRef getSendFailureNoticeRoot();
 
 }

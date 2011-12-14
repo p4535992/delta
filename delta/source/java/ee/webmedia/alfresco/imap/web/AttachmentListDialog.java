@@ -43,7 +43,7 @@ public class AttachmentListDialog extends BaseDialogBean implements FolderListDi
         readFiles();
     }
 
-    private NodeRef getMainFolderRef() {
+    protected NodeRef getMainFolderRef() {
         return BeanHelper.getGeneralService().getNodeRef(ImapModel.Repo.ATTACHMENT_SPACE);
     }
 

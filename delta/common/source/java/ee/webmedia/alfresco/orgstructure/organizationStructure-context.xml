@@ -55,6 +55,47 @@
       </property>
    </bean>
 
+   <bean id="deleteEmployeeRegReceiveStructUnitsTimeBootstrap" class="ee.webmedia.alfresco.common.bootstrap.DeleteNodeByXPathBootstrap" parent="abstractDeleteNodeByXPathBootstrap">
+      <property name="moduleId" value="common" />
+      <property name="nodeXPath" value="/param:parameters/param:employeeRegReceiveStructUnitsTime" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>      
+   </bean>
+
+   <bean id="deleteEmployeeRegReceiveUsersPeriodBootstrap" class="ee.webmedia.alfresco.common.bootstrap.DeleteNodeByXPathBootstrap" parent="abstractDeleteNodeByXPathBootstrap">
+      <property name="moduleId" value="common" />
+      <property name="nodeXPath" value="/param:parameters/param:employeeRegReceiveUsersPeriod" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>      
+   </bean>
+
+   <bean id="orgstructureParametersBootstrap2" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+            <ref bean="deleteEmployeeRegReceiveStructUnitsTimeBootstrap" />
+            <ref bean="deleteEmployeeRegReceiveUsersPeriodBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/orgstructure/bootstrap/organizationStructure-parameters2.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
    <bean class="ee.webmedia.alfresco.common.bootstrap.ModuleComponentDependsOnSetter">
       <property name="source" ref="parameterRescheduledJobsBootstrap" />
       <property name="dependsOn" ref="orgstructureParametersBootstrap" />
@@ -72,6 +113,7 @@
       <property name="generalService" ref="GeneralService" />
       <property name="nodeService" ref="NodeService" />
       <property name="amrService" ref="AmrService" />
+      <property name="authorityService" ref="AuthorityService" />
    </bean>
 
    <bean id="OrganizationStructureService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -88,16 +130,22 @@
       </property>
    </bean>
 
-   <bean id="updateOrganizationsListTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent">
+   <bean id="updateUsersGroupsOrganizationsListTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent">
       <property name="enabled" value="${organizationStructure.updateEnabled}" />
-      <property name="parameterName" value="employeeRegReceiveStructUnitsTime" />
+      <property name="parameterName" value="syncUsersGroupsStructUnitsTime" />
       <property name="parameterFormat" value="H:mm" />
       <!--      <property name="jobDetail" ref="updateOrganizationsListJobDetails" />-->
       <property name="jobDetail">
          <bean id="updateOrganizationsListJobDetails" class="org.springframework.scheduling.quartz.JobDetailBean">
-            <property name="jobClass" value="ee.webmedia.alfresco.orgstructure.job.UpdateOrganizationsListJob" />
+            <property name="jobClass" value="ee.webmedia.alfresco.orgstructure.job.UpdateUsersGroupsOrganizationsListJob" />
             <property name="jobDataAsMap">
                <map>
+                  <entry key="userRegistrySynchronizer">
+                     <ref bean="UserRegistrySynchronizer" />
+                  </entry>
+                  <entry key="synchronizeChangesOnly">
+                     <value>${synchronization.synchronizeChangesOnly}</value>
+                  </entry>
                   <entry key="organizationStructureService" value-ref="OrganizationStructureService" />
                </map>
             </property>
@@ -114,5 +162,7 @@
          </list>
       </property>         
    </bean>
+   
+   <bean id="RsAccessStatusBean" class="ee.webmedia.alfresco.orgstructure.web.RsAccessStatusBean" scope="session" />
 
 </beans>

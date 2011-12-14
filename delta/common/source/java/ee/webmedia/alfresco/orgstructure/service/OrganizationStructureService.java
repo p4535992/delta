@@ -2,6 +2,8 @@ package ee.webmedia.alfresco.orgstructure.service;
 
 import java.util.List;
 
+import javax.faces.event.ActionEvent;
+
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.orgstructure.model.OrganizationStructure;
@@ -17,6 +19,7 @@ public interface OrganizationStructureService {
 
     String UNIT_PROP = "unit";
     String UNIT_NAME_PROP = "unitName";
+    String STRUCT_UNIT_BASED = "STRUCT.UNIT.BASED";
 
     /**
      * Returns a list of all found organization structures.
@@ -39,7 +42,7 @@ public interface OrganizationStructureService {
      * @param unitId
      * @return organization structure or {@code null} of not found
      */
-    String getOrganizationStructure(String unitId);
+    String getOrganizationStructureName(String unitId);
 
     /**
      * @return number of organisations updated
@@ -62,5 +65,11 @@ public interface OrganizationStructureService {
     List<Node> setUsersUnit(List<Node> users);
 
     void createOrganisationStructure(OrganizationStructure org);
+
+    int updateOrganisationStructureBasedGroups();
+
+    void updateOrganisationStructureBasedGroups(ActionEvent event);
+
+    List<String> getOrganizationStructurePaths(String value);
 
 }

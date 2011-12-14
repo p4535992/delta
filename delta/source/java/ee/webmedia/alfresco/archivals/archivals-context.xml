@@ -2,12 +2,27 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
-   <bean id="archivalsBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">
-      <property name="resourceBundles">
+   <bean id="renameOldPrimaryArchivalsRootBootstrap" class="ee.webmedia.alfresco.archivals.bootstrap.RenameOldPrimaryArchivalsRootBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="generalService" ref="GeneralService" />
+   </bean>
+
+   <bean id="archivalsStoresBootstrap" class="ee.webmedia.alfresco.archivals.bootstrap.ArchivalsStoresBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="dependsOn">
          <list>
-            <value>ee.webmedia.alfresco.archivals.web.archivals-webclient</value>
+            <ref bean="renameOldPrimaryArchivalsRootBootstrap" />
          </list>
       </property>
+      <property name="generalService" ref="GeneralService" />
+      <property name="additionalArchivals" value="${archivals-additional}" />
+   </bean>
+
+   <bean class="ee.webmedia.alfresco.archivals.service.DocumentRegisterMenuItemProcessor">
+      <property name="menuService" ref="MenuService" />
+      <property name="generalService" ref="GeneralService" />
    </bean>
 
     <bean id="archivalsTempBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
@@ -25,39 +40,6 @@
          </list>
       </property>
    </bean>
-
-
-    <bean id="archivalsBootstrapImporter" parent="storeImporter" scope="singleton">
-        <property name="storeUrl">
-            <value>workspace://ArchivalsStore</value>
-        </property>
-         <property name="bootstrapViews">
-         <list>
-            <props>
-               <prop key="encoding">UTF-8</prop>
-               <prop key="path">/</prop>
-               <prop key="location">ee/webmedia/alfresco/archivals/bootstrap/archivals.xml</prop>
-            </props>
-         </list>
-      </property>
-    </bean>
-
-
-    <bean id="archivalsPermissionBootstrapImporter" parent="storeImporter" scope="singleton">
-        <property name="storeUrl">
-            <value>workspace://ArchivalsStore</value>
-        </property>
-        <property name="useExistingStore" value="true"/>
-         <property name="bootstrapViews">
-         <list>
-            <props>
-               <prop key="encoding">UTF-8</prop>
-               <prop key="path">/</prop>
-               <prop key="location">ee/webmedia/alfresco/archivals/bootstrap/archivals-permission.xml</prop>
-            </props>
-         </list>
-      </property>
-    </bean>
 
     <bean id="archivalsParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />

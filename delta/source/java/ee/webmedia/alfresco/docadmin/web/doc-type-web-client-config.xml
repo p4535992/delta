@@ -205,9 +205,7 @@
          <show-property name="docadmin:used" />
          <show-property name="docadmin:systematic" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" />
          <show-property name="docadmin:publicAdr" />
-         <!-- TODO DLSeadist comment in when using this is implemented 
          <show-property name="docadmin:showUnvalued" />
-          -->
       </property-sheet>
    </config>
 
@@ -217,10 +215,8 @@
          <show-property name="docadmin:registrationEnabled" />
          <show-property name="docadmin:finishDocByRegistration" labelStyleClass="wrap" />
          <show-property name="docadmin:sendUnregistratedDocEnabled" labelStyleClass="wrap" />
-         <!-- TODO DLSeadist comment in when using this is implemented
          <show-property name="docadmin:addFollowUpToUnregistratedDocEnabled" labelStyleClass="wrap" />
          <show-property name="docadmin:addReplyToUnregistratedDocEnabled" labelStyleClass="wrap" />
-          -->
          <show-property name="docadmin:editFilesOfFinishedDocEnabled" labelStyleClass="wrap"/>
       </property-sheet>
    </config>

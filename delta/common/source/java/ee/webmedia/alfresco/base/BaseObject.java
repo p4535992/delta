@@ -119,7 +119,7 @@ public abstract class BaseObject extends NodeBaseVO implements Cloneable {
         return RepoUtil.getPropertiesIgnoringSystem(BeanHelper.getGeneralService().getDefaultProperties(type), BeanHelper.getDictionaryService());
     }
 
-    protected <T extends BaseObject> void nextSaveToParent(BaseObject newParent, Class<T> childrenListClass) {
+    public <T extends BaseObject> void nextSaveToParent(BaseObject newParent, Class<T> childrenListClass) {
         Assert.notNull(newParent, "new parent shouldn't be null");
         setParent(newParent);
         nextSaveToParent(newParent.getNodeRef());

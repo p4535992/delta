@@ -29,6 +29,7 @@ import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
+import ee.webmedia.alfresco.volume.model.DeletedDocument;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
@@ -38,6 +39,7 @@ import ee.webmedia.alfresco.volume.model.VolumeModel;
 public class VolumeServiceImpl implements VolumeService {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(VolumeServiceImpl.class);
     private static final BeanPropertyMapper<Volume> volumeBeanPropertyMapper = BeanPropertyMapper.newInstance(Volume.class);
+    private static final BeanPropertyMapper<DeletedDocument> deletedDocumentBeanPropertyMapper = BeanPropertyMapper.newInstance(DeletedDocument.class);
 
     private DictionaryService dictionaryService;
     private NodeService nodeService;
@@ -363,6 +365,33 @@ public class VolumeServiceImpl implements VolumeService {
             log.debug("Found volume: " + volume);
         }
         return volume;
+    }
+
+    @Override
+    public void saveDeletedDocument(NodeRef volumeNodeRef, DeletedDocument deletedDocument) {
+        nodeService.createNode(volumeNodeRef, VolumeModel.Associations.DELETED_DOCUMENT, VolumeModel.Associations.DELETED_DOCUMENT
+                , VolumeModel.Types.DELETED_DOCUMENT, deletedDocumentBeanPropertyMapper.toProperties(deletedDocument));
+    }
+
+    @Override
+    public List<DeletedDocument> getDeletedDocuments(NodeRef volumeNodeRef) {
+        List<ChildAssociationRef> documentAssocs = nodeService.getChildAssocs(volumeNodeRef, RegexQNamePattern.MATCH_ALL, VolumeModel.Associations.DELETED_DOCUMENT);
+        List<DeletedDocument> deletedDocuments = new ArrayList<DeletedDocument>(documentAssocs.size());
+        for (ChildAssociationRef docAssoc : documentAssocs) {
+            NodeRef deletedDocNodeRef = docAssoc.getChildRef();
+            deletedDocuments.add(getDeletedDocument(deletedDocNodeRef));
+        }
+        Collections.sort(deletedDocuments);
+        return deletedDocuments;
+    }
+
+    @Override
+    public DeletedDocument getDeletedDocument(NodeRef deletedDocumentNodeRef) {
+        if (!VolumeModel.Types.DELETED_DOCUMENT.equals(nodeService.getType(deletedDocumentNodeRef))) {
+            throw new RuntimeException("Given noderef '" + deletedDocumentNodeRef + "' is not deletedDocument type:\n\texpected '" //
+                    + VolumeModel.Types.DELETED_DOCUMENT + "'\n\tbut got '" + nodeService.getType(deletedDocumentNodeRef) + "'");
+        }
+        return deletedDocumentBeanPropertyMapper.toObject(nodeService.getProperties(deletedDocumentNodeRef), new DeletedDocument());
     }
 
     // START: getters / setters

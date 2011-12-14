@@ -2,26 +2,140 @@
    <config>
       <actions>
 
-         <action id="document_contractMvParty_add">
-            <label-id>document_contractMv_addParty</label-id>
-            <tooltip-id>document_contractMv_addParty_tooltip</tooltip-id>
-            <image>/images/icons/add_user.gif</image>
-            <action-listener>#{DocumentDynamicDialog.addSubNode}</action-listener>
-         </action>
-
-         <action id="document_contractParty_remove">
-            <label-id>document_contractMv_deleteParty</label-id>
-            <tooltip-id>document_contractMv_deleteParty_tooltip</tooltip-id>
-            <image>/images/icons/remove_user.gif</image>
-            <action-listener>#{DocumentDynamicDialog.removeSubNode}</action-listener>
+         <action id="document_manage_inheritable_permissions">
+            <evaluator>ee.webmedia.alfresco.privilege.web.ManagePrivilegesEvaluator</evaluator>
+            <label-id>manage_invited_users</label-id>
+            <image>/images/icons/users.gif</image>
+            <action>dialog:manageInheritablePrivilegesDialog</action>
+            <action-listener>#{ManageInheritablePrivilegesDialog.init}</action-listener>
             <params>
-               <param name="subPropsheetsRequiredCount">1</param><!-- contract must have at least 2 parties(1 main party + 1 additional party) -->
+               <param name="manageableRef">#{DocumentDialogHelperBean.nodeRef}</param>
             </params>
          </action>
 
-         <action-group id="document_contractMvParty">
-            <action idref="document_contractMvParty_add" />
-            <action idref="document_contractParty_remove" />
+         <action id="subPropSheet_contractParty_add">
+            <label-id>subPropSheet_contractParty_add</label-id>
+            <tooltip-id>subPropSheet_contractParty_add_tooltip</tooltip-id>
+            <image>/images/icons/add_user.gif</image>
+            <action-listener>#{DocumentDynamicDialog.addChildNode}</action-listener>
+            <params>
+               <param name="childAssocTypeQNameHierarchy">docchild:contractParty</param>
+            </params>
+         </action>
+
+         <action id="subPropSheet_contractParty_remove">
+            <label-id>subPropSheet_contractParty_remove</label-id>
+            <tooltip-id>subPropSheet_contractParty_remove_tooltip</tooltip-id>
+            <image>/images/icons/remove_user.gif</image>
+            <action-listener>#{DocumentDynamicDialog.removeChildNode}</action-listener>
+            <params>
+               <param name="childAssocTypeQNameHierarchy">docchild:contractParty</param>
+            </params>
+         </action>
+
+         <action-group id="subPropSheet_contractParty">
+            <action idref="subPropSheet_contractParty_add" />
+            <action idref="subPropSheet_contractParty_remove" />
+         </action-group>         
+
+         <action id="subPropSheet_applicantDomestic_add">
+            <label-id>subPropSheet_applicantDomestic_add</label-id>
+            <tooltip-id>subPropSheet_applicantDomestic_add_tooltip</tooltip-id>
+            <image>/images/icons/add_user.gif</image>
+            <action-listener>#{DocumentDynamicDialog.addChildNode}</action-listener>
+            <params>
+               <param name="childAssocTypeQNameHierarchy">docchild:applicantDomestic</param>
+            </params>
+         </action>
+
+         <action id="subPropSheet_applicantDomestic_remove">
+            <label-id>subPropSheet_applicantDomestic_remove</label-id>
+            <tooltip-id>subPropSheet_applicantDomestic_remove_tooltip</tooltip-id>
+            <image>/images/icons/remove_user.gif</image>
+            <action-listener>#{DocumentDynamicDialog.removeChildNode}</action-listener>
+            <params>
+               <param name="childAssocTypeQNameHierarchy">docchild:applicantDomestic</param>
+            </params>
+         </action>
+
+         <action-group id="subPropSheet_applicantDomestic">
+            <action idref="subPropSheet_applicantDomestic_add" />
+            <action idref="subPropSheet_applicantDomestic_remove" />
+         </action-group>         
+
+         <action id="subPropSheet_applicantDomestic_errandDomestic_add">
+            <label-id>subPropSheet_applicantDomestic_errandDomestic_add</label-id>
+            <tooltip-id>subPropSheet_applicantDomestic_errandDomestic_add_tooltip</tooltip-id>
+            <image>/images/icons/add_user.gif</image>
+            <action-listener>#{DocumentDynamicDialog.addChildNode}</action-listener>
+            <params>
+               <param name="childAssocTypeQNameHierarchy">docchild:applicantDomestic/docchild:errandDomestic</param>
+            </params>
+         </action>
+
+         <action id="subPropSheet_applicantDomestic_errandDomestic_remove">
+            <label-id>subPropSheet_applicantDomestic_errandDomestic_remove</label-id>
+            <tooltip-id>subPropSheet_applicantDomestic_errandDomestic_remove_tooltip</tooltip-id>
+            <image>/images/icons/remove_user.gif</image>
+            <action-listener>#{DocumentDynamicDialog.removeChildNode}</action-listener>
+            <params>
+               <param name="childAssocTypeQNameHierarchy">docchild:applicantDomestic/docchild:errandDomestic</param>
+            </params>
+         </action>
+
+         <action-group id="subPropSheet_applicantDomestic_errandDomestic">
+            <action idref="subPropSheet_applicantDomestic_errandDomestic_add" />
+            <action idref="subPropSheet_applicantDomestic_errandDomestic_remove" />
+         </action-group>         
+
+         <action id="subPropSheet_applicantAbroad_add">
+            <label-id>subPropSheet_applicantAbroad_add</label-id>
+            <tooltip-id>subPropSheet_applicantAbroad_add_tooltip</tooltip-id>
+            <image>/images/icons/add_user.gif</image>
+            <action-listener>#{DocumentDynamicDialog.addChildNode}</action-listener>
+            <params>
+               <param name="childAssocTypeQNameHierarchy">docchild:applicantAbroad</param>
+            </params>
+         </action>
+
+         <action id="subPropSheet_applicantAbroad_remove">
+            <label-id>subPropSheet_applicantAbroad_remove</label-id>
+            <tooltip-id>subPropSheet_applicantAbroad_remove_tooltip</tooltip-id>
+            <image>/images/icons/remove_user.gif</image>
+            <action-listener>#{DocumentDynamicDialog.removeChildNode}</action-listener>
+            <params>
+               <param name="childAssocTypeQNameHierarchy">docchild:applicantAbroad</param>
+            </params>
+         </action>
+
+         <action-group id="subPropSheet_applicantAbroad">
+            <action idref="subPropSheet_applicantAbroad_add" />
+            <action idref="subPropSheet_applicantAbroad_remove" />
+         </action-group>         
+
+         <action id="subPropSheet_applicantAbroad_errandAbroad_add">
+            <label-id>subPropSheet_applicantAbroad_errandAbroad_add</label-id>
+            <tooltip-id>subPropSheet_applicantAbroad_errandAbroad_add_tooltip</tooltip-id>
+            <image>/images/icons/add_user.gif</image>
+            <action-listener>#{DocumentDynamicDialog.addChildNode}</action-listener>
+            <params>
+               <param name="childAssocTypeQNameHierarchy">docchild:applicantAbroad/docchild:errandAbroad</param>
+            </params>
+         </action>
+
+         <action id="subPropSheet_applicantAbroad_errandAbroad_remove">
+            <label-id>subPropSheet_applicantAbroad_errandAbroad_remove</label-id>
+            <tooltip-id>subPropSheet_applicantAbroad_errandAbroad_remove_tooltip</tooltip-id>
+            <image>/images/icons/remove_user.gif</image>
+            <action-listener>#{DocumentDynamicDialog.removeChildNode}</action-listener>
+            <params>
+               <param name="childAssocTypeQNameHierarchy">docchild:applicantAbroad/docchild:errandAbroad</param>
+            </params>
+         </action>
+
+         <action-group id="subPropSheet_applicantAbroad_errandAbroad">
+            <action idref="subPropSheet_applicantAbroad_errandAbroad_add" />
+            <action idref="subPropSheet_applicantAbroad_errandAbroad_remove" />
          </action-group>         
 
          <action-group id="document_dynamic_actions">
@@ -36,6 +150,9 @@
             <action idref="document_delete" />
 <!-- TODO            <action idref="document_favorites_add" /> -->
             <action idref="document_favorites_remove" />
+<!-- FIXME PRIV2 Ats - tarneks poolik lahendus välja kommenteeritud
+            <action idref="document_manage_inheritable_permissions" />
+ -->
             <action idref="document_manage_permissions" />
 <!--             <action idref="document_sendToSap" /> -->
 <!--             <action idref="document_sendToSapManually" /> -->

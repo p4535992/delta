@@ -208,6 +208,7 @@
             </property>
             <property name="cm:organizationPath">
                <type>d:text</type>
+               <multiple>true</multiple>
             </property>            
             <property name="cm:county">
                <type>d:text</type>
@@ -269,7 +270,10 @@
             <property name="cm:relatedFundsCenter">
                <type>d:text</type>
                <multiple>true</multiple>
-            </property>            
+            </property>
+            <property name="cm:showEmptyTaskMenu">
+               <type>d:boolean</type>
+            </property>         
             
             <!-- system maintained values -->
             <property name="cm:sizeCurrent">

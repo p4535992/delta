@@ -129,6 +129,10 @@ public class DocumentType extends DynamicType {
         setProp(DocumentAdminModel.Props.ADD_FOLLOW_UP_TO_UNREGISTRATED_DOC_ENABLED, addFollowUpToUnregistratedDocEnabled);
     }
 
+    public boolean isShowUnvalued() {
+        return getPropBoolean(DocumentAdminModel.Props.SHOW_UNVALUED);
+    }
+
     @Override
     public DocumentType clone() {
         return (DocumentType) super.clone(); // just return casted type

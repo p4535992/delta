@@ -3,7 +3,7 @@
       <dialogs>
           <dialog name="archivedFunctionsListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/functions/web/functions-list-dialog.jsp"
                   managed-bean="ArchivedFunctionsListDialog" icon="/images/icons/versioned_properties_large.gif"
-                  title-id="archivals_list" show-ok-button="false" />
+                  show-ok-button="false" />
 
       </dialogs>
    </config>

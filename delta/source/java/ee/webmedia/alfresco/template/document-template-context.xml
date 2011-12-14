@@ -54,6 +54,10 @@
       <property name="moduleId" value="simdhs" />
    </bean>
    
+   <bean id="DocumentTemplateTypeUpdater" class="ee.webmedia.alfresco.template.bootstrap.DocumentTemplateTypeUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+   </bean>
+   
    <!-- Import the OpenOfficeService from the third party subsystem -->
    <bean id="openOfficeService" class="org.alfresco.repo.management.subsystems.SubsystemProxyFactory">
       <property name="sourceApplicationContextFactory">
@@ -82,6 +86,8 @@
       <property name="msoService" ref="msoService" />
       <property name="userService" ref="UserService" />
       <property name="documentConfigService" ref="DocumentConfigService" />
+      <property name="documentAdminService" ref="DocumentAdminService" />
+      <property name="versionsService" ref="VersionsService" />
    </bean>
 
    <bean id="DocumentTemplateService" class="org.springframework.aop.framework.ProxyFactoryBean">

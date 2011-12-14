@@ -87,7 +87,8 @@ public class DocumentLockHelperBean implements Serializable {
 
     public boolean isLockingAllowed(boolean inEditMode) {
         DocumentSendOutDialog sendOut = null;
-        final Node docNode = getDocumentDialogHelperBean().getNode();
+        DocumentDialogHelperBean documentDialogHelperBean = getDocumentDialogHelperBean();
+        final Node docNode = documentDialogHelperBean.getNode();
         if (docNode != null && (sendOut = BeanHelper.getDocumentSendOutDialog()) != null && sendOut.getModel() != null) {
             inEditMode |= docNode.getNodeRef().equals(sendOut.getModel().getNodeRef());
         }

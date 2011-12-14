@@ -50,7 +50,8 @@ public class MandatoryIfValidator extends ForcedMandatoryValidator implements St
     public static final String ATTR_MANDATORY_IF = "mandatoryIf";
     public static final String ATTR_MANDATORY_IF_LABEL_ID = "mandatoryIfLabelId";
     public static final String ATTR_MANDATORY_IF_ALL_MANDATORY = "mandatoryIfAllMandatory";
-    private static final List<String> SELECT_VALUES_INDICATING_MANDATORY = Arrays.asList("Jah", "true", "yes", AccessRestriction.AK.getValueName());
+    private static final List<String> SELECT_VALUES_INDICATING_MANDATORY = Arrays.asList("Jah", "true", "yes", AccessRestriction.AK.getValueName(),
+            AccessRestriction.LIMITED.getValueName());
 
     /**
      * Expression to be used to decide whether UIInput being validated is required or not.

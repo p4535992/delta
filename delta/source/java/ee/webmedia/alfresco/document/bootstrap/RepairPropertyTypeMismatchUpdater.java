@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.cmr.search.ResultSet;
@@ -25,6 +24,7 @@ import org.alfresco.web.bean.repository.Node;
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
+import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
@@ -57,7 +57,7 @@ public class RepairPropertyTypeMismatchUpdater extends AbstractNodeUpdater {
             return new String[] { "notDocumentType:" + type.toPrefixString(namespaceService) };
         }
         Map<QName, Serializable> props = nodeService.getProperties(nodeRef);
-        Map<String, Pair<PropertyDefinition, Field>> defs = null;
+        Map<String, Pair<DynamicPropertyDefinition, Field>> defs = null;
         try {
             defs = documentConfigService.getPropertyDefinitions(new Node(nodeRef));
         } catch (RuntimeException ex) {
@@ -75,7 +75,7 @@ public class RepairPropertyTypeMismatchUpdater extends AbstractNodeUpdater {
             if (!entry.getKey().getNamespaceURI().equals(DocumentDynamicModel.URI)) {
                 continue;
             }
-            Pair<PropertyDefinition, Field> def = defs.get(entry.getKey().getLocalName());
+            Pair<DynamicPropertyDefinition, Field> def = defs.get(entry.getKey().getLocalName());
             if (def == null) {
                 nodeService.removeProperty(nodeRef, entry.getKey());
                 result.add(entry.getKey().toPrefixString(namespaceService) + " had null propertyDefinition, removed property: "

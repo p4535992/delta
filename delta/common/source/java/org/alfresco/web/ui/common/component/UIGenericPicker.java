@@ -57,7 +57,7 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
     /** action ids */
     private final static int ACTION_NONE = -1;
     private final static int ACTION_SEARCH = 0;
-    private final static int ACTION_CLEAR = 1;
+    public final static int ACTION_CLEAR = 1;
     private final static int ACTION_FILTER = 2;
     private final static int ACTION_ADD = 3;
 

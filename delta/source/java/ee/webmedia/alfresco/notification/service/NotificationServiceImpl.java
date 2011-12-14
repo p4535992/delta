@@ -28,9 +28,11 @@ import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
+import org.joda.time.LocalDate;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
+import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
@@ -38,6 +40,7 @@ import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.email.service.EmailException;
@@ -52,6 +55,8 @@ import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.substitute.service.SubstituteService;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.CalendarUtil;
+import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.workflow.model.Status;
@@ -81,6 +86,7 @@ public class NotificationServiceImpl implements NotificationService {
     private DocumentSearchService documentSearchService;
     private SubstituteService substituteService;
     private AddressbookService addressbookService;
+    private ClassificatorService classificatorService;
     private int updateCount = 0;
 
     private static BeanPropertyMapper<GeneralNotification> generalNotificationBeanPropertyMapper;
@@ -315,8 +321,8 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public String generateTemplateContent(QName notificationType, Task task) {
         String templateName = getTemplate(notificationType, -1);
-        NodeRef systemTemplateByName = templateService.getSystemTemplateByName(templateName);
-        if (systemTemplateByName == null) {
+        NodeRef notificationTemplateByName = templateService.getNotificationTemplateByName(templateName);
+        if (notificationTemplateByName == null) {
             if (log.isDebugEnabled()) {
                 log.debug("Workflow notification email template '" + templateName + "' not found, no notification email is sent");
             }
@@ -324,19 +330,19 @@ public class NotificationServiceImpl implements NotificationService {
         }
         getTemplate(notificationType, -1);
         LinkedHashMap<String, NodeRef> templateDataNodeRefs = setupTemplateData(task);
-        return templateService.getProcessedEmailTemplate(templateDataNodeRefs, systemTemplateByName);
+        return templateService.getProcessedEmailTemplate(templateDataNodeRefs, notificationTemplateByName);
     }
 
     private void sendNotification(Notification notification, NodeRef docRef, LinkedHashMap<String, NodeRef> templateDataNodeRefs) throws EmailException {
-        NodeRef systemTemplateByName = templateService.getSystemTemplateByName(notification.getTemplateName());
-        if (systemTemplateByName == null) {
+        NodeRef notificationTemplateByName = templateService.getNotificationTemplateByName(notification.getTemplateName());
+        if (notificationTemplateByName == null) {
             if (log.isDebugEnabled()) {
                 log.debug("Workflow notification email template '" + notification.getTemplateName() + "' not found, no notification email is sent");
             }
             return; // if the admins are lazy and we don't have a template, we don't have to send out notifications... :)
         }
 
-        String content = templateService.getProcessedEmailTemplate(templateDataNodeRefs, systemTemplateByName);
+        String content = templateService.getProcessedEmailTemplate(templateDataNodeRefs, notificationTemplateByName, notification.getAdditionalFormulas());
 
         sendFilesAndContent(notification, docRef, content);
     }
@@ -521,6 +527,7 @@ public class NotificationServiceImpl implements NotificationService {
             }
             return null;
         }
+        notification.addAdditionalFomula("personSubstituted", UserUtil.getPersonFullName2(taskOwnerUser.getProperties(), false));
         List<Substitute> substitutes = substituteService.getSubstitutes(taskOwnerUser.getNodeRef());
         if (log.isDebugEnabled()) {
             log.debug("Found " + substitutes.size() + " substitutes for new task notification:\n  task=" + task + "\n  substitutes=" + substitutes);
@@ -540,6 +547,8 @@ public class NotificationServiceImpl implements NotificationService {
             if (isSubstituting(substitutionStartDate, substitutionEndDate, now) && substitutionStartDate.before(task.getDueDate())
                                 && calendar.getTime().after(task.getDueDate())) {
                 notification.addRecipient(sub.getSubstituteName(), userService.getUserEmail(sub.getSubstituteId()));
+                notification.addAdditionalFomula(DocumentSpecificModel.Props.SUBSTITUTION_BEGIN_DATE.getLocalName(), Task.dateFormat.format(substitutionStartDate));
+                notification.addAdditionalFomula(DocumentSpecificModel.Props.SUBSTITUTION_END_DATE.getLocalName(), Task.dateFormat.format(substitutionEndDate));
                 result = true;
             }
             if (log.isDebugEnabled()) {
@@ -861,7 +870,15 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public int processTaskDueDateNotifications() {
+    public int processTaskDueDateNotificationsIfWorkingDay(Date firingDate) {
+        if (!CalendarUtil.isWorkingDay(new LocalDate(firingDate), classificatorService)) {
+            log.debug("Not working day " + firingDate + ", cancelling sending task due date notifications.");
+            return 0;
+        }
+        return processTaskDueDateNotifications();
+    }
+
+    private int processTaskDueDateNotifications() {
         int taskDueDateNotifictionDays = parametersService.getLongParameter(Parameters.TASK_DUE_DATE_NOTIFICATION_DAYS).intValue();
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.DATE, taskDueDateNotifictionDays);
@@ -940,8 +957,8 @@ public class NotificationServiceImpl implements NotificationService {
             return 0; // no doc managers available
         }
 
-        NodeRef systemTemplateByName = templateService.getSystemTemplateByName(notification.getTemplateName());
-        if (systemTemplateByName == null) {
+        NodeRef notificationTemplateByName = templateService.getNotificationTemplateByName(notification.getTemplateName());
+        if (notificationTemplateByName == null) {
             if (log.isDebugEnabled()) {
                 log.debug("Volume disposition date notification email template '" + notification.getTemplateName()
                         + "' not found, no notification email is sent");
@@ -949,7 +966,7 @@ public class NotificationServiceImpl implements NotificationService {
             return 0; // if the admins are lazy and we don't have a template, we don't have to send out notifications... :)
         }
 
-        String content = templateService.getProcessedVolumeDispositionTemplate(volumesDispositionedAfterDate, systemTemplateByName);
+        String content = templateService.getProcessedVolumeDispositionTemplate(volumesDispositionedAfterDate, notificationTemplateByName);
         try {
             sendEmail(notification, content, null);
             return notification.getToEmails().size();
@@ -989,8 +1006,8 @@ public class NotificationServiceImpl implements NotificationService {
 
         Notification notification = setupNotification(new Notification(), NotificationModel.NotificationType.ACCESS_RESTRICTION_END_DATE);
 
-        NodeRef systemTemplateByName = templateService.getSystemTemplateByName(notification.getTemplateName());
-        if (systemTemplateByName == null) {
+        NodeRef notificationTemplateByName = templateService.getNotificationTemplateByName(notification.getTemplateName());
+        if (notificationTemplateByName == null) {
             if (log.isDebugEnabled()) {
                 log.debug("Access restriction end date notification email template '" + notification.getTemplateName()
                         + "' not found, no notification email is sent");
@@ -1010,7 +1027,7 @@ public class NotificationServiceImpl implements NotificationService {
             notification.addRecipient(userFullName, userEmail);
             List<Document> userDocuments = entry.getValue();
             Collections.sort(userDocuments, endDateComparator);
-            String content = templateService.getProcessedAccessRestrictionEndDateTemplate(userDocuments, systemTemplateByName);
+            String content = templateService.getProcessedAccessRestrictionEndDateTemplate(userDocuments, notificationTemplateByName);
 
             try {
                 sendEmail(notification, content, null);
@@ -1024,8 +1041,8 @@ public class NotificationServiceImpl implements NotificationService {
         notification.clearRecipients();
         notification = setupNotification(notification, NotificationModel.NotificationType.ACCESS_RESTRICTION_END_DATE, 1);
 
-        systemTemplateByName = templateService.getSystemTemplateByName(notification.getTemplateName());
-        if (systemTemplateByName == null) {
+        notificationTemplateByName = templateService.getNotificationTemplateByName(notification.getTemplateName());
+        if (notificationTemplateByName == null) {
             if (log.isDebugEnabled()) {
                 log.debug("Access restriction end date notification email template '" + notification.getTemplateName()
                         + "' not found, no notification email is sent");
@@ -1036,7 +1053,7 @@ public class NotificationServiceImpl implements NotificationService {
         notification = addDocumentManagersAsRecipients(notification);
         DocumentRegNrComparator regNrComparator = new DocumentRegNrComparator();
         Collections.sort(documents, regNrComparator);
-        String content = templateService.getProcessedAccessRestrictionEndDateTemplate(documents, systemTemplateByName);
+        String content = templateService.getProcessedAccessRestrictionEndDateTemplate(documents, notificationTemplateByName);
 
         try {
             sendEmail(notification, content, null);
@@ -1225,6 +1242,10 @@ public class NotificationServiceImpl implements NotificationService {
 
     public void setAddressbookService(AddressbookService addressbookService) {
         this.addressbookService = addressbookService;
+    }
+
+    public void setClassificatorService(ClassificatorService classificatorService) {
+        this.classificatorService = classificatorService;
     }
 
     // END: setters/getters

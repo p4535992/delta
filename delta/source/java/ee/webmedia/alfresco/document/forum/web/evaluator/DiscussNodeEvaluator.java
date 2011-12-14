@@ -24,10 +24,9 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 
 /**
  * UI Action Evaluator - Discuss a node.
- * 
- * @author Kevin Roast
  */
 public class DiscussNodeEvaluator extends BaseActionEvaluator {
+    public static final String PARTICIPATE_AT_FORUM = "participateAtForum";
     private static final long serialVersionUID = 1L;
 
     /**
@@ -59,6 +58,6 @@ public class DiscussNodeEvaluator extends BaseActionEvaluator {
 
     private boolean isUserInvited(NodeRef forumNodeRef) {
         return BeanHelper.getPermissionService().getAllSetPermissions(forumNodeRef)
-                .contains(new AccessPermissionImpl("DocumentFileRead", AccessStatus.ALLOWED, AuthenticationUtil.getRunAsUser(), 0));
+                .contains(new AccessPermissionImpl(PARTICIPATE_AT_FORUM, AccessStatus.ALLOWED, AuthenticationUtil.getRunAsUser(), 0));
     }
 }

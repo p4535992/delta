@@ -10,10 +10,12 @@ public interface VolumeModel {
 
     interface Types {
         QName VOLUME = QName.createQName(VOLUME_MODEL_URI, "volume");
+        QName DELETED_DOCUMENT = QName.createQName(VOLUME_MODEL_URI, "deletedDocument");
     }
 
     interface Associations {
         QName VOLUME = QName.createQName(VOLUME_MODEL_URI, "volume");
+        QName DELETED_DOCUMENT = QName.createQName(VOLUME_MODEL_URI, "deletedDocument");
     }
 
     /**
@@ -32,5 +34,10 @@ public interface VolumeModel {
         QName SEND_TO_DESTRUCTION = QName.createQName(URI, "sendToDestruction");
         QName CONTAINING_DOCS_COUNT = QName.createQName(URI, "containingDocsCount");
         QName CONTAINS_CASES = QName.createQName(URI, "containsCases");
+
+        QName ACTOR = QName.createQName(URI, "actor");
+        QName DELETED_DATE_TIME = QName.createQName(URI, "deletedDateTime");
+        QName DOCUMENT_DATA = QName.createQName(URI, "documentData");
+        QName COMMENT = QName.createQName(URI, "comment");
     }
 }

@@ -42,7 +42,6 @@ public interface DocumentDynamicModel {
         QName SIGNER_NAME = QName.createQName(URI, "signerName");
         QName SUBSTITUTE_ID = QName.createQName(URI, "substituteId");
         QName PREVIOUS_OWNER_ID = QName.createQName(URI, "previousOwnerId");
-        QName SHORT_REG_NUMBER = QName.createQName(URI, "shortRegNumber");
 
         QName USER_NAME = QName.createQName(URI, "userName");
         QName USER_SERVICE_RANK = QName.createQName(URI, "userServiceRank");
@@ -52,6 +51,15 @@ public interface DocumentDynamicModel {
         QName USER_EMAIL = QName.createQName(URI, "userEmail");
         QName USER_PHONE = QName.createQName(URI, "userPhone");
         QName USER_ID = QName.createQName(URI, "userId");
+
+        QName APPLICANT_NAME = QName.createQName(URI, "applicantName");
+        QName APPLICANT_ID = QName.createQName(URI, "applicantId");
+        QName APPLICANT_SERVICE_RANK = QName.createQName(URI, "applicantServiceRank");
+        QName APPLICANT_JOB_TITLE = QName.createQName(URI, "applicantJobTitle");
+        QName APPLICANT_ORG_STRUCT_UNIT = QName.createQName(URI, "applicantOrgStructUnit");
+        QName APPLICANT_WORK_ADDRESS = QName.createQName(URI, "applicantWorkAddress");
+        QName APPLICANT_EMAIL = QName.createQName(URI, "applicantEmail");
+        QName APPLICANT_PHONE = QName.createQName(URI, "applicantPhone");
 
         QName FIRST_PARTY_CONTACT_PERSON_NAME = QName.createQName(URI, "firstPartyContactPersonName");
         QName FIRST_PARTY_CONTACT_PERSON_SERVICE_RANK = QName.createQName(URI, "firstPartyContactPersonServiceRank");
@@ -64,8 +72,14 @@ public interface DocumentDynamicModel {
 
         QName CONTACT_NAME = QName.createQName(URI, "contactName");
         QName CONTACT_ADDRESS = QName.createQName(URI, "contactAddress");
+        QName CONTACT_STREET_HOUSE = QName.createQName(URI, "contactStreetHouse");
+        QName CONTACT_POSTAL_CITY = QName.createQName(URI, "contactPostalCity");
         QName CONTACT_EMAIL = QName.createQName(URI, "contactEmail");
+        QName CONTACT_FIRST_ADDITIONAL_EMAIL = QName.createQName(URI, "contactFirstAdditionalEmail");
+        QName CONTACT_SECOND_ADDITIONAL_EMAIL = QName.createQName(URI, "contactSecondAdditionalEmail");
         QName CONTACT_PHONE = QName.createQName(URI, "contactPhone");
+        QName CONTACT_FIRST_ADDITIONAL_PHONE = QName.createQName(URI, "contactFirstAdditionalPhone");
+        QName CONTACT_SECOND_ADDITIONAL_PHONE = QName.createQName(URI, "contactSecondAdditionalPhone");
         QName CONTACT_FAX_NUMBER = QName.createQName(URI, "contactFaxNumber");
         QName CONTACT_WEB_PAGE = QName.createQName(URI, "contactWebPage");
         QName CONTACT_REG_NUMBER = QName.createQName(URI, "contactRegNumber");

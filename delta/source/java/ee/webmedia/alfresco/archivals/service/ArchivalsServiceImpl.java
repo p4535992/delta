@@ -184,7 +184,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     }
 
     private NodeRef getArchivalRoot() {
-        return generalService.getNodeRef(ArchivalsModel.Repo.ARCHIVALS_SPACE, archivalsStore);
+        return generalService.getPrimaryArchivalsNodeRef();
     }
 
     private NodeRef getTempArchivalRoot() {

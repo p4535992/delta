@@ -44,10 +44,11 @@
                Aga peale *_security interceptory'ite välja lülitamist ei tohiks ka seda enam vaja olla.
                Nii et tegelikult ei tohiks  DocumentFileRead permissionil mingit pistmist olla foorumiga ja võib-olla võiks selle hoopis teisiti ümber nimetada
                 -->
-               <param name="permission">DocumentFileRead</param>
+               <param name="permission">participateAtForum</param><!-- == DiscussNodeEvaluator.PARTICIPATE_AT_FORUM -->
                <param name="notify">true</param>
                <param name="alternateConfigId">forum_invite_users</param>
                <param name="alternateDialogTitleId">forum_invite_users</param>
+               <param name="delegateRemoveAuthorityMB">InviteUsersDialog.removeAuthority</param>
             </params>
          </action>
 

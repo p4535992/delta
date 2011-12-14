@@ -8,13 +8,15 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
+
+import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * VO that maintains information about user privileges(permissions, group belongings)
@@ -22,7 +24,6 @@ import org.apache.commons.lang.builder.ToStringStyle;
  * @author Ats Uiboupin
  */
 public class UserPrivileges implements Serializable {
-    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(UserPrivileges.class);
     private static final long serialVersionUID = 1L;
 
     /** used for grouping consecutive rows with same value into same tbody element */
@@ -43,6 +44,42 @@ public class UserPrivileges implements Serializable {
     private Set<String> staticPrivilegesBeforeChanges;
     /** static & dynamic privileges (some privileges that have neither been added nor removed are not included in this map) */
     private final Map<String/* privilege */, Boolean/* active */> privileges = new HashMap<String, Boolean>();
+    protected final Map<String/* privilege */, Boolean/* inherited */> inheritanceByPrivilege = new HashMap<String, Boolean>();
+    private String inheritedMsg;
+    protected final Map<String/* privilege */, String/* explanation */> explanationByPrivilege = new HashMap<String, String>() {
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public String get(Object privilege) {
+            String explanation = getDynamicPrivReasons().get(privilege);
+            Boolean inherited = inheritanceByPrivilege.get(privilege);
+            if (inherited != null && inherited) {
+                if (inheritedMsg == null) {
+                    inheritedMsg = MessageUtil.getMessage("manage_permissions_extraInfo_inherited");
+                }
+                explanation = explanation != null ? explanation + "; " : "";
+                return explanation + inheritedMsg;
+            }
+            return explanation;
+        }
+    };
+
+    private final Map<String/* privilege */, Boolean /* checkboxDisabled */> disabledByPrivilege = new HashMap<String, Boolean>() {
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public Boolean get(Object privilege) {
+            if (dynamicPrivileges.get(privilege) != null) {
+                return true; // has dynamic privilege (doesn't matter if also static or not)
+            }
+            Boolean inherited = inheritanceByPrivilege.get(privilege);
+            // return (inherited != null && inherited);
+            if (inherited != null && inherited) {
+                return true;
+            }
+            return false;
+        }
+    };
 
     public UserPrivileges(String userName, String userDisplayName) {
         this.userName = userName;
@@ -68,18 +105,18 @@ public class UserPrivileges implements Serializable {
         if (hasPriv) {
             return;
         }
-        addPrivilege(privilege);
+        boolean inherited = false; // FIXME PRIV2 Ats ok?
+        addPrivilege(privilege, inherited);
     }
 
-    public void addPrivilege(String... privsToAdd) {
-        for (String privilege : privsToAdd) {
-            privileges.put(privilege, true);
-        }
+    public void addPrivilege(String privToAdd, boolean inherited) {
+        privileges.put(privToAdd, true);
+        inheritanceByPrivilege.put(privToAdd, inherited);
     }
 
     public void addPrivileges(Collection<String> privsToAdd) {
         for (String privilege : privsToAdd) {
-            privileges.put(privilege, true);
+            addPrivilege(privilege, false);
         }
     }
 
@@ -166,6 +203,7 @@ public class UserPrivileges implements Serializable {
     }
 
     // START: getters / setters
+    /** Used for JSF binding */
     public Map<String, Boolean> getPrivileges() {
         return privileges;
     }
@@ -183,8 +221,18 @@ public class UserPrivileges implements Serializable {
         return dynamicPrivReasonsCached;
     }
 
+    public Map<String, String> getExplanationByPrivilege() {
+        return explanationByPrivilege;
+    }
+
+    @Deprecated
     public Map<String, Boolean> getDynamicPrivileges() {
         return dynamicPrivileges;
+    }
+
+    /** used by JSF to determine if checkBox should be readRnly */
+    public Map<String, Boolean> getDisabledByPrivilege() {
+        return disabledByPrivilege;
     }
 
     public Set<String> getGroups() {

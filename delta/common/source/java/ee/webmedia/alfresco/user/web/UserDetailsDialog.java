@@ -14,10 +14,12 @@ import java.util.Set;
 import javax.faces.component.UIInput;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
+import javax.faces.event.ValueChangeEvent;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
@@ -77,7 +79,7 @@ public class UserDetailsDialog extends BaseDialogBean {
         if (validate()) {
             substituteListDialog.save();
             BeanHelper.getUserService().updateUser(user);
-            setupUser((String) user.getProperties().get(ContentModel.PROP_USERNAME));
+            setupUser((String) user.getProperties().get(ContentModel.PROP_USERNAME.toString()));
         }
         isFinished = false;
         return null;
@@ -86,7 +88,7 @@ public class UserDetailsDialog extends BaseDialogBean {
     private boolean validate() {
         List<String> erroneousValues = new ArrayList<String>();
         @SuppressWarnings("unchecked")
-        List<String> relatedFundCenters = (List<String>) user.getProperties().get(ContentModel.PROP_RELATED_FUNDS_CENTER);
+        List<String> relatedFundCenters = (List<String>) user.getProperties().get(ContentModel.PROP_RELATED_FUNDS_CENTER.toString());
         if (relatedFundCenters != null) {
             EInvoiceService eInvoiceService = BeanHelper.getEInvoiceService();
             NodeRef dimensionRef = eInvoiceService.getDimension(Dimensions.INVOICE_FUNDS_CENTERS);
@@ -126,6 +128,18 @@ public class UserDetailsDialog extends BaseDialogBean {
         return false;
     }
 
+    public boolean isShowEmptyTaskMenuNotEditable() {
+        return !isShowEmptyTaskMenuEditable();
+    }
+
+    public void showEmptyTaskMenuChanged(ValueChangeEvent e) {
+        user.getProperties().put(ContentModel.SHOW_EMPTY_TASK_MENU.toString(), DefaultTypeConverter.INSTANCE.convert(Boolean.class, e.getNewValue()));
+    }
+
+    public boolean isShowEmptyTaskMenuEditable() {
+        return BeanHelper.getUserService().isAdministrator() || user.getProperties().get(ContentModel.PROP_USERNAME.toString()).equals(AuthenticationUtil.getRunAsUser());
+    }
+
     public boolean isRelatedFundsCenterNotEditable() {
         return !isRelatedFundsCenterEditable();
     }
@@ -135,7 +149,7 @@ public class UserDetailsDialog extends BaseDialogBean {
     }
 
     public boolean isServiceRankRendered() {
-        return StringUtils.isNotBlank((String) user.getProperties().get(ContentModel.PROP_SERVICE_RANK));
+        return StringUtils.isNotBlank((String) user.getProperties().get(ContentModel.PROP_SERVICE_RANK.toString()));
     }
 
     /**
@@ -194,6 +208,14 @@ public class UserDetailsDialog extends BaseDialogBean {
             }
         }
         user.getProperties().put("{temp}relatedFundsCenter", sb.toString());
+
+        Boolean showEmpty = (Boolean) user.getProperties().get(ContentModel.SHOW_EMPTY_TASK_MENU.toString());
+        if (showEmpty == null) {
+            user.getProperties().put(ContentModel.SHOW_EMPTY_TASK_MENU.toString(), false);
+            showEmpty = false;
+        }
+        String emptyTaskMenuString = MessageUtil.getMessage(showEmpty ? "yes" : "no");
+        user.getProperties().put("{temp}" + ContentModel.SHOW_EMPTY_TASK_MENU.getLocalName(), emptyTaskMenuString);
     }
 
     public void removeFromGroup(ActionEvent event) {

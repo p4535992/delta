@@ -37,7 +37,18 @@
               <image>/images/icons/versioned_properties.gif</image>
               <action-listener>#{VolumeDetailsDialog.open}</action-listener>
           </action>
-          
+
+         <action id="volume_manage_permissions">
+            <evaluator>ee.webmedia.alfresco.privilege.web.ManagePrivilegesEvaluator</evaluator>
+            <label-id>manage_invited_users</label-id>
+            <image>/images/icons/users.gif</image>
+            <action>dialog:manageInheritablePrivilegesDialog</action>
+            <action-listener>#{ManageInheritablePrivilegesDialog.init}</action-listener>
+            <params>
+               <param name="manageableRef">#{VolumeDetailsDialog.currentNode.nodeRef}</param>
+            </params>
+         </action>
+
          <action-group id="browse_actions_volume">
             <action idref="volume_add_new" />
          </action-group>
@@ -46,6 +57,9 @@
               <action idref="volume_archive"/>
               <action idref="volume_close"/>
               <action idref="volume_open"/>
+<!-- FIXME PRIV2 Ats - tarneks poolik lahendus välja kommenteeritud
+              <action idref="volume_manage_permissions"/>
+ -->
           </action-group>
 
       </actions>

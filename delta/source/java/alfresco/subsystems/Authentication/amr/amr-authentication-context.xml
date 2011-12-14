@@ -22,6 +22,7 @@
    <!-- @Override ../external/external-authentication-context.xml -->
    <bean id="authenticationComponent" class="ee.webmedia.alfresco.orgstructure.amr.AMRSimpleAuthenticationImpl" parent="authenticationComponentBase">
       <property name="amrService" ref="AmrService" />
+      <property name="rsService" ref="RsService" />
       <property name="nodeService" ref="nodeService" />
       <property name="personService" ref="personService" />
       <property name="namespacePrefixResolver" ref="namespaceService" />
@@ -37,6 +38,7 @@
       <property name="active" value="true" />
       <property name="userService" ref="UserService" />
       <property name="amrService" ref="AmrService" />
+      <property name="rsService" ref="RsService" />
       <property name="applicationService" ref="ApplicationService" />
       <property name="testEmail" value="${mail.from.default}" />
    </bean>

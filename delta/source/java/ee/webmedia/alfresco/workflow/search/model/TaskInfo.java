@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.workflow.search.model;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.web.bean.repository.Node;
@@ -14,6 +15,7 @@ import ee.webmedia.alfresco.document.model.CreatedAndRegistered;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.type.web.DocumentTypeConverter;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.workflow.model.TaskAndDocument;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
@@ -96,7 +98,7 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
     }
 
     public Object getOwnerOrganizationName() {
-        return task.getProperties().get(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME);
+        return UserUtil.getDisplayUnit((List<String>) task.getProperties().get(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME));
     }
 
     public Object getOwnerJobTitle() {

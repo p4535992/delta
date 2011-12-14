@@ -49,6 +49,11 @@
    <bean id="repairPropertyTypeMismatchUpdater4" class="ee.webmedia.alfresco.document.bootstrap.RepairPropertyTypeMismatchUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="documentConfigService" ref="DocumentConfigService" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="structUnitPropertiesToMultivaluedUpdater" />
+         </list>
+      </property>      
    </bean>
 
    <bean id="systematicClearBootstrap" class="ee.webmedia.alfresco.docconfig.bootstrap.SystematicClearBootstrap" parent="module.baseComponent">
@@ -239,6 +244,46 @@
       </property>
    </bean>
 
+   <bean id="systematicFieldDefinitionsBootstrap9" class="ee.webmedia.alfresco.common.bootstrap.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="systematicFieldDefinitionsBootstrap8" />
+         </list>
+      </property>
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/docadmin:fieldDefinitions</prop>
+               <prop key="location">ee/webmedia/alfresco/docconfig/bootstrap/systematicFieldDefinitions9.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="systematicFieldDefinitionsBootstrap10" class="ee.webmedia.alfresco.common.bootstrap.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="systematicFieldDefinitionsBootstrap9" />
+         </list>
+      </property>
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/docadmin:fieldDefinitions</prop>
+               <prop key="location">ee/webmedia/alfresco/docconfig/bootstrap/systematicFieldDefinitions10.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>   
+
    <bean id="systematicFieldGroupDefinitionsBootstrap1" class="ee.webmedia.alfresco.common.bootstrap.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
@@ -384,6 +429,26 @@
       </property>
    </bean>
 
+   <bean id="systematicFieldGroupDefinitionsBootstrap8" class="ee.webmedia.alfresco.common.bootstrap.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="systematicFieldGroupDefinitionsBootstrap7" />
+         </list>
+      </property>
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/docadmin:fieldGroupDefinitions</prop>
+               <prop key="location">ee/webmedia/alfresco/docconfig/bootstrap/systematicFieldGroupDefinitions8.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
    <bean id="systematicDocumentTypesBootstrap" class="ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentTypesBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="false" />
@@ -398,12 +463,17 @@
             <ref bean="systematicFieldDefinitionsBootstrap5" />
             <ref bean="systematicFieldDefinitionsBootstrap6" />
             <ref bean="systematicFieldDefinitionsBootstrap7" />
+            <ref bean="systematicFieldDefinitionsBootstrap8" />
+            <ref bean="systematicFieldDefinitionsBootstrap9" />
+            <ref bean="systematicFieldDefinitionsBootstrap10" />
             <ref bean="systematicFieldGroupDefinitionsBootstrap1" />
             <ref bean="systematicFieldGroupDefinitionsBootstrap2" />
             <ref bean="systematicFieldGroupDefinitionsBootstrap3" />
             <ref bean="systematicFieldGroupDefinitionsBootstrap4" />
             <ref bean="systematicFieldGroupDefinitionsBootstrap5" />
             <ref bean="systematicFieldGroupDefinitionsBootstrap6" />
+            <ref bean="systematicFieldGroupDefinitionsBootstrap7" />
+            <ref bean="systematicFieldGroupDefinitionsBootstrap8" />
          </list>
       </property>
       <property name="generalService" ref="GeneralService" />
@@ -444,6 +514,19 @@
          </list>
       </property>
    </bean>
+   
+   <bean id="contactSystematicGroupAddFieldsUpdater" class="ee.webmedia.alfresco.docconfig.bootstrap.ContactSystematicGroupAddFieldsUpdater" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="systematicFieldDefinitionsBootstrap9" />
+            <ref bean="systematicFieldGroupDefinitionsBootstrap8" />
+         </list>
+      </property>
+      <property name="generalService" ref="GeneralService" />
+      <property name="nodeService" ref="NodeService" />
+   </bean>     
 
    <!-- fieldtype generators -->
 
@@ -479,6 +562,10 @@
    <bean id="usersContactsGenerator" class="ee.webmedia.alfresco.docconfig.generator.fieldtype.UserContactGenerator">
       <property name="documentConfigService" ref="DocumentConfigService" />
    </bean>
+   
+   <bean id="structUnitGenerator" class="ee.webmedia.alfresco.docconfig.generator.fieldtype.StructUnitGenerator">
+      <property name="documentConfigService" ref="DocumentConfigService" />
+   </bean>   
 
    <bean id="checkboxGenerator" class="ee.webmedia.alfresco.docconfig.generator.fieldtype.CheckboxGenerator">
       <property name="documentConfigService" ref="DocumentConfigService" />
@@ -507,6 +594,7 @@
       <property name="documentLogService" ref="DocumentLogService" />
       <property name="documentAdminService" ref="DocumentAdminService" />
       <property name="documentConfigService" ref="DocumentConfigService" />
+      <property name="namespaceService" ref="NamespaceService" />
    </bean>
 
    <bean id="userContactTableGenerator" class="ee.webmedia.alfresco.docconfig.generator.systematic.UserContactTableGenerator">
@@ -537,6 +625,11 @@
    </bean>
 
    <bean id="durationGenerator" class="ee.webmedia.alfresco.docconfig.generator.systematic.DurationGenerator">
+      <property name="documentConfigService" ref="DocumentConfigService" />
+      <property name="namespaceService" ref="NamespaceService" />
+   </bean>
+
+   <bean id="errandGenerator" class="ee.webmedia.alfresco.docconfig.generator.systematic.ErrandGenerator">
       <property name="documentConfigService" ref="DocumentConfigService" />
       <property name="namespaceService" ref="NamespaceService" />
    </bean>

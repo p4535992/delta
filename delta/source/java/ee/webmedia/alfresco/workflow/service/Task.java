@@ -241,6 +241,10 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
         }
     }
 
+    public String getFileVersions() {
+        return getProp(WorkflowSpecificModel.Props.FILE_VERSIONS);
+    }
+
     /**
      * Not stored in repository, only provided during finishTaskInProgress service call.
      */

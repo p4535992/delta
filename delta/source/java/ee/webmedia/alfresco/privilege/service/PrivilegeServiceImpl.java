@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.privilege.service;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,6 +17,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.security.AccessPermission;
 import org.alfresco.service.cmr.security.AccessStatus;
+import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.QName;
@@ -26,6 +28,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.privilege.model.PrivMappings;
 import ee.webmedia.alfresco.privilege.model.PrivilegeMappings;
 import ee.webmedia.alfresco.privilege.model.PrivilegeModel;
 import ee.webmedia.alfresco.privilege.model.UserPrivileges;
@@ -40,6 +43,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
     private PermissionService permissionService;
     private NodeService nodeService;
     private UserService userService;
+    private AuthorityService authorityService;
     private GeneralService generalService;
     private final Map<QName, PrivilegesChangedListener> privilegesChangedListeners = new HashMap<QName, PrivilegeServiceImpl.PrivilegesChangedListener>();
     @SuppressWarnings("unchecked")
@@ -51,6 +55,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
         privilegesChangedListeners.put(listenerCode, listener);
     }
 
+    @Deprecated
     @Override
     public PrivilegeMappings getPrivilegeMappings(NodeRef manageableRef) {
         PrivilegeMappings privMappings = fillMembersByGroup(manageableRef);
@@ -76,10 +81,11 @@ public class PrivilegeServiceImpl implements PrivilegeService {
                     }
                     String user = privUsers.get(i);
 
-                    Set<String> curUserGroups = privMappings.getUserGroups().get(user);
+                    Map<String, Set<String>> userGroups = privMappings.getUserGroups();
+                    Set<String> curUserGroups = userGroups.get(user);
                     if (curUserGroups == null) {
                         curUserGroups = new HashSet<String>();
-                        privMappings.getUserGroups().put(user, curUserGroups);
+                        userGroups.put(user, curUserGroups);
                     }
                     curUserGroups.add(group);
 
@@ -117,25 +123,107 @@ public class PrivilegeServiceImpl implements PrivilegeService {
             }
             boolean allowed = AccessStatus.ALLOWED.equals(accessPermission.getAccessStatus());
             Assert.isTrue(allowed, "Expected to see only allowed permissions. accessPermission=" + accessPermission + "\nmanageableRef=" + privMappings.getManageableRef());
-            userPrivileges.addPrivilege(accessPermission.getPermission());
+            userPrivileges.addPrivilege(accessPermission.getPermission(), accessPermission.isInherited());
         }
         privMappings.setPrivilegesByUsername(privilegesByUsername);
         return privilegesByUsername;
     }
 
     @Override
-    public void savePrivileges(NodeRef manageableRef, Map<String/* userName */, UserPrivileges> privilegesByUsername, Set<String> ignoredGroups, QName listener) {
+    public PrivMappings getPrivMappings(NodeRef manageableRef, Collection<String> manageablePermissions) {
+        PrivMappings privMappings = new PrivMappings(manageableRef);// fillMembersByGroup(manageableRef);
+        Map<String/* userName */, UserPrivileges> privilegesByUsername = new HashMap<String, UserPrivileges>();
+        Map<String/* groupName */, UserPrivileges> privilegesByGroup = new HashMap<String, UserPrivileges>();
+        NodeRef parentRef = nodeService.getPrimaryParent(manageableRef).getParentRef();
+        for (AccessPermission accessPermission : permissionService.getAllSetPermissions(privMappings.getManageableRef())) {
+            String authority = accessPermission.getAuthority();
+            String permission = accessPermission.getPermission();
+            if (StringUtils.startsWith(authority, AuthorityType.ROLE.getPrefixString()) || !manageablePermissions.contains(permission)) {
+                continue; // not interested in roles added directly to the manageableRef nor permissions that are not requested
+            }
+            boolean inherited = accessPermission.isInherited();
+            if (!inherited) {
+                // permission is assigned directly, but we need to know if it is also inherited from parent node.
+                inherited = AccessStatus.ALLOWED.equals(permissionService.hasPermission(parentRef, permission));
+                // FIXME ALSeadist Ats test - at the moment smth wrong with inheritance - probably old dynamic privileges grant permissions to more people:
+                // ALLOWED doesn't mean that this permission is set directly - it might be granted dynamically as well
+                // - for example to users listed by external.authentication.defaultAdministratorUserNames
+            }
+            if (StringUtils.startsWith(authority, AuthorityType.GROUP.getPrefixString())) {
+                UserPrivileges authPrivileges = privilegesByGroup.get(authority);
+                if (authPrivileges == null) {
+                    authPrivileges = new UserPrivileges(authority, authorityService.getAuthorityDisplayName(authority));
+                    privilegesByGroup.put(authority, authPrivileges);
+                }
+                boolean allowed = AccessStatus.ALLOWED.equals(accessPermission.getAccessStatus());
+                Assert.isTrue(allowed, "Expected to see only allowed permissions. accessPermission=" + accessPermission + "\nmanageableRef=" + privMappings.getManageableRef());
+                authPrivileges.addPrivilege(permission, inherited);
+            } else {
+                UserPrivileges authPrivileges = privilegesByUsername.get(authority);
+                if (authPrivileges == null) {
+                    authPrivileges = new UserPrivileges(authority, userService.getUserFullName(authority));
+                    privilegesByUsername.put(authority, authPrivileges);
+
+                    Set<String> curUserGroups = privMappings.getUserGroups().get(authority);
+                    if (curUserGroups != null) {
+                        authPrivileges.getGroups().addAll(curUserGroups);
+                    }
+                }
+                boolean allowed = AccessStatus.ALLOWED.equals(accessPermission.getAccessStatus());
+                Assert.isTrue(allowed, "Expected to see only allowed permissions. accessPermission=" + accessPermission + "\nmanageableRef=" + privMappings.getManageableRef());
+                authPrivileges.addPrivilege(permission, inherited);
+            }
+        }
+        privMappings.setPrivilegesByUsername(privilegesByUsername);
+        privMappings.setPrivilegesByGroup(privilegesByGroup);
+        return privMappings;
+    }
+
+    @Override
+    @Deprecated
+    public void savePrivileges(NodeRef manageableRef, Map<String, UserPrivileges> privilegesByUsername, Set<String> ignoredGroups, QName listenerCode) {
+        notifyListeners(manageableRef, privilegesByUsername, listenerCode);
+        save(manageableRef, privilegesByUsername, ignoredGroups);
+    }
+
+    @Override
+    public void savePrivileges(NodeRef manageableRef, Map<String, UserPrivileges> privilegesByUsername, Map<String, UserPrivileges> privilegesByGroup, QName listenerCode) {
+        // FIXME PRIV2 Ats - at the moment (at least for documents) there is no need for listeners
+        // notifyListeners(manageableRef, privilegesByUsername, listenerCode);
+        updatePrivileges(manageableRef, privilegesByUsername);
+        updatePrivileges(manageableRef, privilegesByGroup);
+    }
+
+    private void notifyListeners(NodeRef manageableRef, Map<String, UserPrivileges> privilegesByUsername, QName listener) {
         PrivilegesChangedListener privilegesChangedListener = privilegesChangedListeners.get(listener);
         if (privilegesChangedListener != null) {
             privilegesChangedListener.onSavePrivileges(manageableRef, privilegesByUsername);
         }
-        save(manageableRef, privilegesByUsername, ignoredGroups);
+    }
+
+    private void updatePrivileges(NodeRef manageableRef, Map<String, UserPrivileges> privilegesByUsername) {
+        for (Iterator<Entry<String, UserPrivileges>> it = privilegesByUsername.entrySet().iterator(); it.hasNext();) {
+            Entry<String, UserPrivileges> entry = it.next();
+            String userName = entry.getKey();
+            UserPrivileges vo = entry.getValue();
+            for (String permission : vo.getPrivilegesToDelete()) {
+                permissionService.deletePermission(manageableRef, userName, permission);
+            }
+            if (vo.isDeleted()) {
+                it.remove();
+            } else {
+                if (vo.hasManageablePrivileges()) {
+                    for (String permission : vo.getPrivilegesToAdd()) {
+                        permissionService.setPermission(manageableRef, userName, permission, true);
+                    }
+                }
+            }
+        }
     }
 
     private void save(NodeRef manageableRef, Map<String/* userName */, UserPrivileges> privilegesByUsername, Set<String> ignoredGroups) {
         ArrayList<String> privUsers = new ArrayList<String>();
         ArrayList<String> privGroups = new ArrayList<String>();
-        RepoUtil.validateSameSize(privUsers, privGroups, "users", "groups");
 
         for (Iterator<Entry<String, UserPrivileges>> it = privilegesByUsername.entrySet().iterator(); it.hasNext();) {
             Entry<String, UserPrivileges> entry = it.next();
@@ -297,6 +385,10 @@ public class PrivilegeServiceImpl implements PrivilegeService {
     // START: getters / setters
     public void setUserService(UserService userService) {
         this.userService = userService;
+    }
+
+    public void setAuthorityService(AuthorityService authorityService) {
+        this.authorityService = authorityService;
     }
 
     public void setPermissionService(PermissionService permissionService) {

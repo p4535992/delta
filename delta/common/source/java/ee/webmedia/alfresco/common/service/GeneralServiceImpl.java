@@ -76,6 +76,7 @@ import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.app.AppConstants;
+import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.upload.UploadFileInput.FileWithContentType;
 import ee.webmedia.alfresco.common.web.WmNode;
@@ -113,6 +114,23 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     @Override
     public StoreRef getStore() {
         return store;
+    }
+
+    private LinkedHashSet<ArchivalsStoreVO> archivalsStoreVOs;
+
+    @Override
+    public void setArchivalsStoreVOs(LinkedHashSet<ArchivalsStoreVO> archivalsStoreVOs) {
+        this.archivalsStoreVOs = new LinkedHashSet<ArchivalsStoreVO>(archivalsStoreVOs);
+    }
+
+    @Override
+    public LinkedHashSet<ArchivalsStoreVO> getArchivalsStoreVOs() {
+        return archivalsStoreVOs;
+    }
+
+    @Override
+    public NodeRef getPrimaryArchivalsNodeRef() {
+        return archivalsStoreVOs.iterator().next().getNodeRef();
     }
 
     @Override
@@ -373,6 +391,32 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     @Override
     public TypeDefinition getAnonymousType(Node node) {
         return dictionaryService.getAnonymousType(node.getType(), node.getAspects());
+    }
+
+    @Override
+    public boolean setAspectsIgnoringSystem(Node node) {
+        return setAspectsIgnoringSystem(node.getNodeRef(), node.getAspects());
+    }
+
+    @Override
+    public boolean setAspectsIgnoringSystem(NodeRef nodeRef, Set<QName> nodeAspects) {
+        boolean modified = false;
+        Set<QName> repoAspects = RepoUtil.getAspectsIgnoringSystem(nodeService.getAspects(nodeRef));
+        nodeAspects = RepoUtil.getAspectsIgnoringSystem(nodeAspects);
+
+        List<QName> aspectsToRemove = new ArrayList<QName>(repoAspects);
+        aspectsToRemove.removeAll(nodeAspects);
+        for (QName aspect : aspectsToRemove) {
+            nodeService.removeAspect(nodeRef, aspect);
+            modified = true;
+        }
+        List<QName> aspectsToAdd = new ArrayList<QName>(nodeAspects);
+        aspectsToAdd.removeAll(repoAspects);
+        for (QName aspect : aspectsToAdd) {
+            nodeService.addAspect(nodeRef, aspect, null);
+            modified = true;
+        }
+        return modified;
     }
 
     @Override

@@ -101,7 +101,7 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
    protected Map<String, String> propertySheetItemAttributes;
    
    public static final String READONLY_IF = "readOnlyIf";
-   private static final String RENDERED = "rendered";
+   public static final String RENDERED = "rendered";
    /** should control component of propertySheet item be disabled */
    private static final String DISABLED = "disabled";
    
@@ -214,12 +214,12 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
       setReadOnlyBasedOnExpressionIfNessesary(component, item, context, propertySheet);
       setDisabledBasedOnAttribute(component, item, context);
 
-      processCustomAttributes(component);
+      processCustomAttributes(context, component);
 
       return component;
    }
 
-    protected void processCustomAttributes(UIComponent component) {
+    protected void processCustomAttributes(FacesContext context, UIComponent component) {
         @SuppressWarnings("unchecked")
         Map<String, Object> attributes = component.getAttributes();
 
@@ -604,12 +604,17 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
    }
 
     protected boolean useGenerator(FacesContext context, UIPropertySheet propertySheet) {
-        return (propertySheet.inEditMode() || this instanceof HandlesViewMode) && !isCreateOutputText(context);
+        return (propertySheet.inEditMode() || this instanceof HandlesViewMode || isAlwaysEdit(context)) && !isCreateOutputText(context);
     }
 
     protected boolean isCreateOutputText(FacesContext context) {
         String outputTextAttr = getCustomAttributes().get(OUTPUT_TEXT);
         return isNotBlank(outputTextAttr) ? evaluateBoolean(outputTextAttr, context) : false;
+    }
+
+    protected boolean isAlwaysEdit(FacesContext context) {
+        String alwaysEdit = getCustomAttributes().get(ComponentUtil.IS_ALWAYS_EDIT);
+        return isNotBlank(alwaysEdit) ? evaluateBoolean(alwaysEdit, context) : false;
     }
    
    /**
@@ -676,8 +681,8 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
 
         // disable the component if it is read only or protected
         // or if the property sheet is in view mode
-        if (propertySheet.inEditMode() == false || item.isReadOnly() ||
-                (propertyDef != null && propertyDef.isProtected())) {
+        if (!isAlwaysEdit(context) && (!propertySheet.inEditMode() || item.isReadOnly() ||
+                (propertyDef != null && propertyDef.isProtected()))) {
             ComponentUtil.setReadonlyAttributeRecursively(component);
         }
     }

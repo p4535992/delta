@@ -38,6 +38,7 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.WebUtil;
+import ee.webmedia.alfresco.volume.model.DeletedDocument;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
@@ -54,6 +55,7 @@ public class VolumeDetailsDialog extends BaseDialogBean {
     private static final String PARAM_VOLUME_NODEREF = "volumeNodeRef";
 
     private Volume currentEntry;
+    private List<DeletedDocument> deletedDocuments;
     private boolean newVolume;
     private transient UIPropertySheet propertySheet;
 
@@ -73,8 +75,9 @@ public class VolumeDetailsDialog extends BaseDialogBean {
 
     // START: jsf actions/accessors
     public void showDetails(ActionEvent event) {
-        String volumeNodeRef = ActionUtil.getParam(event, PARAM_VOLUME_NODEREF);
+        NodeRef volumeNodeRef = ActionUtil.getParam(event, PARAM_VOLUME_NODEREF, NodeRef.class);
         currentEntry = getVolumeService().getVolumeByNodeRef(volumeNodeRef);
+        deletedDocuments = getVolumeService().getDeletedDocuments(volumeNodeRef);
     }
 
     public void addNewVolume(ActionEvent event) {
@@ -232,6 +235,14 @@ public class VolumeDetailsDialog extends BaseDialogBean {
 
     public UIPropertySheet getPropertySheet() {
         return propertySheet;
+    }
+
+    public List<DeletedDocument> getDeletedDocuments() {
+        return deletedDocuments;
+    }
+
+    public void setDeletedDocuments(List<DeletedDocument> deletedDocuments) {
+        this.deletedDocuments = deletedDocuments;
     }
     // END: getters / setters
 }

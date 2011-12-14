@@ -2,9 +2,11 @@ package ee.webmedia.alfresco.docdynamic.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPropertySheetStateBean;
 import static ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGenerator.ACCESS_RESTRICTION_CHANGE_REASON_ERROR;
+import static ee.webmedia.alfresco.docdynamic.web.ChangeReasonModalComponent.ACCESS_RESTRICTION_CHANGE_REASON_MODAL_ID;
+import static ee.webmedia.alfresco.docdynamic.web.ChangeReasonModalComponent.DELETE_DOCUMENT_REASON_MODAL_ID;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -20,7 +22,9 @@ import javax.faces.component.UIPanel;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.repo.security.permissions.AccessDeniedException;
 import org.alfresco.service.cmr.lock.NodeLockedException;
+import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
@@ -35,13 +39,13 @@ import org.springframework.util.Assert;
 import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
-import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
+import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
 import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfig;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
-import ee.webmedia.alfresco.docdynamic.web.AccessRestrictionChangeReasonModalComponent.AccessRestrictionChangeReasonEvent;
+import ee.webmedia.alfresco.docdynamic.web.ChangeReasonModalComponent.ChangeReasonEvent;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog.DocDialogSnapshot;
 import ee.webmedia.alfresco.document.associations.web.AssocsBlockBean;
 import ee.webmedia.alfresco.document.file.web.FileBlockBean;
@@ -50,15 +54,18 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.web.SearchBlockBean;
 import ee.webmedia.alfresco.document.sendout.web.SendOutBlockBean;
 import ee.webmedia.alfresco.document.web.FavoritesModalComponent;
+import ee.webmedia.alfresco.document.web.evaluator.DeleteDocumentEvaluator;
 import ee.webmedia.alfresco.simdhs.servlet.ExternalAccessServlet;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageData;
+import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageDataWrapper;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
+import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 
 /**
@@ -123,7 +130,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     /** @param event */
     public void createDraft(ActionEvent event) {
         String documentTypeId = ActionUtil.getParam(event, "documentTypeId");
-        DocumentDynamic doc = getDocumentDynamicService().createNewDocumentInDrafts(documentTypeId);
+        DocumentDynamic doc = getDocumentDynamicService().createNewDocumentInDrafts(documentTypeId).getFirst();
         open(doc.getNodeRef(), doc, true);
     }
 
@@ -135,7 +142,8 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
                 , BeanHelper.getDocumentAdminService().getDocumentTypeName(baseDoc.getDocumentTypeId())
                 , StringUtils.defaultIfEmpty((String) baseDoc.getProp(DocumentCommonModel.Props.REG_NUMBER), "")
                 , regDateTime == null ? "" : regDateTime));
-        NodeRef docRef = getDocumentDynamicService().copyDocument(baseDoc, overrides, DocumentCommonModel.Props.REG_NUMBER, DocumentCommonModel.Props.REG_DATE_TIME, DocumentCommonModel.Props.DOC_STATUS);
+        NodeRef docRef = getDocumentDynamicService().copyDocument(baseDoc, overrides, DocumentCommonModel.Props.REG_NUMBER, DocumentCommonModel.Props.REG_DATE_TIME,
+                DocumentCommonModel.Props.DOC_STATUS);
 
         open(docRef, true);
 
@@ -263,23 +271,18 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         try {
             currentSnapshot.document = document;
 
-            // TODO Alar: refactor subnode logic
-
             // Lock or unlock the node also
             getDocumentDialogHelperBean().reset(getDataProvider());
             DocumentLockHelperBean documentLockHelperBean = BeanHelper.getDocumentLockHelperBean();
             documentLockHelperBean.lockOrUnlockIfNeeded(documentLockHelperBean.isLockingAllowed(inEditMode));
 
-            List<Node> subNodeList = currentSnapshot.document.getNode().getAllChildAssociations(DocumentCommonModel.Types.METADATA_CONTAINER);
-            if (subNodeList != null) {
-                for (Node subNode : subNodeList) {
-                    setSubNodeProps(subNode);
-                }
-            }
-
             currentSnapshot.inEditMode = inEditMode;
             if (!inEditMode) {
+                if (StringUtils.isBlank(document.getRegNumber()) && document.getRegDateTime() == null && BeanHelper.getDocumentDynamicService().isShowMessageIfUnregistered()) {
+                    MessageUtil.addInfoMessage("document_info_not_registered");
+                }
                 currentSnapshot.viewModeWasOpenedInThePast = true;
+                BeanHelper.getDocumentLogService().addDocumentLog(docRef, MessageUtil.getMessage("document_log_status_opened_not_inEditMode"));
             }
             currentSnapshot.config = BeanHelper.getDocumentConfigService().getConfig(getNode());
             if (document.isDraftOrImapOrDvk()) {
@@ -299,11 +302,6 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             throw new RuntimeException("Failed to switch mode to " + (inEditMode ? "edit" : "view") + "\n  docRef=" + docRef + "\n  snapshot="
                     + (currentSnapshot == null ? null : currentSnapshot.toString(true)), e);
         }
-    }
-
-    private void setSubNodeProps(Node subNode) {
-        subNode.getProperties().put(DocumentAdminModel.Props.OBJECT_TYPE_ID.toString(), getDocument().getDocumentTypeId());
-        subNode.getProperties().put(DocumentAdminModel.Props.OBJECT_TYPE_VERSION_NR.toString(), getDocument().getDocumentTypeVersionNr());
     }
 
     // =========================================================================
@@ -409,7 +407,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         final MessageDataWrapper messageDataWrapper = e.getMessageDataWrapper();
         if (messageDataWrapper.getFeedbackItemCount() == 1 && ACCESS_RESTRICTION_CHANGE_REASON_ERROR.equals(messageDataWrapper.iterator().next().getMessageKey())) {
             isFinished = false;
-            renderedModal = AccessRestrictionChangeReasonModalComponent.ACCESS_RESTRICTION_CHANGE_REASON_MODAL_ID;
+            renderedModal = ChangeReasonModalComponent.ACCESS_RESTRICTION_CHANGE_REASON_MODAL_ID;
             return false;
         }
 
@@ -426,7 +424,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     }
 
     public void setAccessRestrictionChangeReason(ActionEvent event) {
-        getDocument().setProp(DocumentCommonModel.Props.ACCESS_RESTRICTION_CHANGE_REASON, ((AccessRestrictionChangeReasonEvent) event).getReason());
+        getDocument().setProp(DocumentCommonModel.Props.ACCESS_RESTRICTION_CHANGE_REASON, ((ChangeReasonEvent) event).getReason());
         finish();
     }
 
@@ -454,6 +452,45 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
 
     public boolean isShowTypeBlock() {
         return getCurrentSnapshot().inEditMode && getDocument().isImapOrDvk() && !getDocument().isNotEditable();
+    }
+
+    // =========================================================================
+    // Action handlers
+    // =========================================================================
+
+    public void deleteDocument(ActionEvent event) {
+        Node node = getDocumentDialogHelperBean().getNode();
+        Assert.notNull(node, "No current document");
+        try {
+            // Before asking for reason let's check if it is locked
+            BeanHelper.getDocLockService().checkForLock(node.getNodeRef());
+            if (!(event instanceof ChangeReasonEvent) || StringUtils.isBlank(((ChangeReasonEvent) event).getReason())) {
+                renderedModal = DELETE_DOCUMENT_REASON_MODAL_ID;
+                return;
+            }
+
+            if (!new DeleteDocumentEvaluator().evaluate(node)) {
+                throw new UnableToPerformException("action_failed_missingPermission", new MessageDataImpl("permission_" + DocumentCommonModel.Privileges.DELETE_DOCUMENT_META_DATA));
+            }
+            getDocumentService().deleteDocument(node.getNodeRef(), ((ChangeReasonEvent) event).getReason());
+        } catch (UnableToPerformException e) {
+            MessageUtil.addStatusMessage(e);
+            return;
+        } catch (AccessDeniedException e) {
+            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_delete_error_accessDenied");
+            return;
+        } catch (NodeLockedException e) {
+            BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_delete_error_docLocked");
+            return;
+        } catch (InvalidNodeRefException e) {
+            final FacesContext context = FacesContext.getCurrentInstance();
+            MessageUtil.addErrorMessage(context, "document_delete_error_docDeleted");
+            WebUtil.navigateTo(getDefaultCancelOutcome(), context);
+            return;
+        }
+        // go back
+        WebUtil.navigateTo(BeanHelper.getDialogManager().cancel());
+        MessageUtil.addInfoMessage("document_delete_success");
     }
 
     // =========================================================================
@@ -513,6 +550,14 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             return null;
         }
         return snapshot.config.getDocType();
+    }
+
+    public DocumentTypeVersion getDocumentVersion() {
+        DocDialogSnapshot snapshot = getCurrentSnapshot();
+        if (snapshot == null) {
+            return null;
+        }
+        return snapshot.config.getDocVersion();
     }
 
     @Override
@@ -623,6 +668,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         super.resetOrInit(provider); // reset blocks
     }
 
+    @SuppressWarnings("deprecation")
     private void resetModals() {
         renderedModal = null;
         showConfirmationPopup = false;
@@ -634,14 +680,23 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         favoritesModal.setId("favorite-popup-" + context.getViewRoot().createUniqueId());
 
         // Access restriction change reason
-        AccessRestrictionChangeReasonModalComponent reasonModal = new AccessRestrictionChangeReasonModalComponent();
-        reasonModal.setActionListener(application.createMethodBinding("#{DocumentDynamicDialog.setAccessRestrictionChangeReason}", UIActions.ACTION_CLASS_ARGS));
-        favoritesModal.setId("access-restriction-change-reason-popup-" + context.getViewRoot().createUniqueId());
+        ChangeReasonModalComponent accessRestrictionChangeReasonModal = new ChangeReasonModalComponent(ACCESS_RESTRICTION_CHANGE_REASON_MODAL_ID
+                , "docdyn_accesRestrictionChangeReason_modal_header", "docdyn_accesRestrictionChangeReason");
+        accessRestrictionChangeReasonModal.setActionListener(application.createMethodBinding("#{DocumentDynamicDialog.setAccessRestrictionChangeReason}",
+                UIActions.ACTION_CLASS_ARGS));
+        accessRestrictionChangeReasonModal.setId("access-restriction-change-reason-popup-" + context.getViewRoot().createUniqueId());
+
+        ChangeReasonModalComponent docDeleteReasonModal = new ChangeReasonModalComponent(DELETE_DOCUMENT_REASON_MODAL_ID
+                , "docdyn_deleteDocumentReason_modal_header", "docdyn_deleteDocumentReason");
+        docDeleteReasonModal.setActionListener(application.createMethodBinding("#{DocumentDynamicDialog.deleteDocument}", UIActions.ACTION_CLASS_ARGS));
+        docDeleteReasonModal.setFinishButtonLabelId("delete");
+        accessRestrictionChangeReasonModal.setId("document-delete-reason-popup-" + context.getViewRoot().createUniqueId());
 
         List<UIComponent> children = ComponentUtil.getChildren(getModalContainer());
         children.clear();
         children.add(favoritesModal);
-        children.add(reasonModal);
+        children.add(accessRestrictionChangeReasonModal);
+        children.add(docDeleteReasonModal);
     }
 
     public boolean isShowConfirmationPopup() {
@@ -670,29 +725,40 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         this.modalContainer = modalContainer;
     }
 
-    // TODO Alar: refactor subnode logic
+    // =========================================================================
+    // Child-node logic
+    // =========================================================================
 
-    public void addSubNode(ActionEvent event) {
-        // TODO do we need to set default values when adding a new child node?
-        final Node docNode = getParentNode(event);
-        QName partyType = DocumentCommonModel.Types.METADATA_CONTAINER;
-        final WmNode subNode = getGeneralService().createNewUnSaved(partyType, null);
-        setSubNodeProps(subNode);
-        QName partyAssoc = DocumentCommonModel.Types.METADATA_CONTAINER;
-        docNode.addChildAssociations(partyAssoc, subNode);
+    public void addChildNode(ActionEvent event) {
+        final Node parentNode = getParentNode(event);
+        final QName[] childAssocTypeQNameHierarchy = getChildAssocTypeQNameHierarchy(event);
+
+        getDocumentDynamicService().createChildNodesHierarchyAndSetDefaultPropertyValues(parentNode, childAssocTypeQNameHierarchy, getDocumentVersion());
     }
 
-    public void removeSubNode(ActionEvent event) {
-        final Node docNode = getParentNode(event);
+    public void removeChildNode(ActionEvent event) {
+        final Node parentNode = getParentNode(event);
+        final QName[] childAssocTypeQNameHierarchy = getChildAssocTypeQNameHierarchy(event);
+        final QName assocTypeQName = childAssocTypeQNameHierarchy[childAssocTypeQNameHierarchy.length - 1];
+
         final String assocIndexParam = ActionUtil.getParam(event, SubPropertySheetItem.PARAM_ASSOC_INDEX);
         final int assocIndex = Integer.parseInt(assocIndexParam);
-        QName partyAssoc = DocumentCommonModel.Types.METADATA_CONTAINER;
-        docNode.removeChildAssociations(partyAssoc, assocIndex);
+
+        parentNode.removeChildAssociations(assocTypeQName, assocIndex);
     }
 
     private Node getParentNode(ActionEvent event) {
         final SubPropertySheetItem propSheet = ComponentUtil.getAncestorComponent(event.getComponent(), SubPropertySheetItem.class);
         return propSheet.getParentPropSheetNode();
+    }
+
+    private QName[] getChildAssocTypeQNameHierarchy(ActionEvent event) {
+        final String[] childAssocTypeQNameHierarchyParam = StringUtils.split(ActionUtil.getParam(event, "childAssocTypeQNameHierarchy"), '/');
+        final QName[] childAssocTypeQNameHierarchy = new QName[childAssocTypeQNameHierarchyParam.length];
+        for (int i = 0; i < childAssocTypeQNameHierarchyParam.length; i++) {
+            childAssocTypeQNameHierarchy[i] = QName.createQName(childAssocTypeQNameHierarchyParam[i], getNamespaceService());
+        }
+        return childAssocTypeQNameHierarchy;
     }
 
 }

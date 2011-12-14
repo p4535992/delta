@@ -295,8 +295,12 @@
       
       <!-- START: delta permissions -->
       <permission name="viewDocumentMetaData" expose="false" />
+      <!-- FIXME PRIV2 Ats editDocumentMetaData peaks vist ära kaduma -->
       <permission name="editDocumentMetaData" expose="false" />
       <permission name="deleteDocumentMetaData" expose="false" />
+      <permission name="viewCaseFile" expose="false" />
+      <permission name="editCaseFile" expose="false" />
+      <permission name="editDocument" expose="false" />
       <!-- to check following(file permissions), perform check on document nodeRef, not on file NodeRef
       (because even static permissions are inherited document, dynamic authorities don't check if given node is file - for better performance)
       docRef = file.parentRef;
@@ -305,6 +309,7 @@
       }
        -->
       <permission name="viewDocumentFiles" expose="false" />
+      <!-- FIXME PRIV2 Ats editDocumentFiles peaks vist ära kaduma -->
       <permission name="editDocumentFiles" expose="false" />
       <permission name="deleteDocumentFiles" expose="false" />
       <permission name="createDocument" expose="false" />
@@ -578,6 +583,7 @@
    <globalPermission permission="editDocumentFiles" authority="ROLE_PROP_DOC_OWNER"/>
    <globalPermission permission="deleteDocumentFiles" authority="ROLE_PROP_DOC_OWNER"/>
    <globalPermission permission="deleteDocumentMetaData" authority="ROLE_PROP_DOC_OWNER"/>
+   <globalPermission permission="editDocument" authority="ROLE_PROP_DOC_OWNER"/>
 
    <!-- permission granted to members of ALFRESCO_ADMINISTRATORS -->
    <globalPermission permission="viewDocumentMetaData" authority="GROUP_ALFRESCO_ADMINISTRATORS"/>
@@ -586,12 +592,17 @@
    <globalPermission permission="editDocumentFiles" authority="GROUP_ALFRESCO_ADMINISTRATORS"/>
    <globalPermission permission="deleteDocumentFiles" authority="GROUP_ALFRESCO_ADMINISTRATORS"/>
    <globalPermission permission="deleteDocumentMetaData" authority="GROUP_ALFRESCO_ADMINISTRATORS"/>
+   <globalPermission permission="editDocument" authority="GROUP_ALFRESCO_ADMINISTRATORS"/>
+   <globalPermission permission="editCaseFile" authority="GROUP_ALFRESCO_ADMINISTRATORS"/>
+   <globalPermission permission="viewCaseFile" authority="GROUP_ALFRESCO_ADMINISTRATORS"/>
 
+   <!-- FIXME PRIV2 Ats - dokhalduritele ei tohiks enam mingil juhul dünaamiliselt õigusi anda -->
    <!-- permission granted to members of DOCUMENT_MANAGERS -->
    <globalPermission permission="viewDocumentMetaData" authority="GROUP_DOCUMENT_MANAGERS"/>
    <globalPermission permission="editDocumentMetaData" authority="GROUP_DOCUMENT_MANAGERS"/>
    <globalPermission permission="deleteDocumentMetaData" authority="GROUP_DOCUMENT_MANAGERS"/>
    
+   <!-- FIXME PRIV2 Ats - dokhalduritele ei tohiks enam mingil juhul dünaamiliselt õigusi anda -->
    <!-- permission granted to members of DOCUMENT_MANAGERS that are added to the series through management interface -->
    <globalPermission permission="viewDocumentMetaData" authority="ROLE_SERIES_DOCUMENT_MANAGERS"/>
    <globalPermission permission="editDocumentMetaData" authority="ROLE_SERIES_DOCUMENT_MANAGERS"/>

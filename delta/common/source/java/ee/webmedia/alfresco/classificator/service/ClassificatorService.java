@@ -111,4 +111,6 @@ public interface ClassificatorService {
 
     List<Classificator> getClassificatorsByNodeRefs(List<NodeRef> classifRefs);
 
+    String getClassificatorValuesValueData(String classificatorName, String classificatorValueName);
+
 }

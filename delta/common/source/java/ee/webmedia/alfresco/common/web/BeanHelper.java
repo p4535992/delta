@@ -19,6 +19,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.DialogManager;
+import org.alfresco.web.bean.groups.GroupsDialog;
 
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.addressbook.web.bean.AddressbookGroupsManagerBean;
@@ -92,10 +93,13 @@ import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.mso.service.MsoService;
 import ee.webmedia.alfresco.notification.service.NotificationService;
+import ee.webmedia.alfresco.orgstructure.amr.service.RSService;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
+import ee.webmedia.alfresco.orgstructure.web.RsAccessStatusBean;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.parameters.web.ParametersImportDialog;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
+import ee.webmedia.alfresco.privilege.web.ManageInheritablePrivilegesDialog;
 import ee.webmedia.alfresco.privilege.web.ManagePrivilegesDialog;
 import ee.webmedia.alfresco.register.service.RegisterService;
 import ee.webmedia.alfresco.series.service.SeriesService;
@@ -129,6 +133,10 @@ public class BeanHelper {
 
     public static ManagePrivilegesDialog getManagePrivilegesDialog() {
         return getJsfBean(ManagePrivilegesDialog.class, ManagePrivilegesDialog.BEAN_NAME);
+    }
+
+    public static ManageInheritablePrivilegesDialog getManageInheritablePrivilegesDialog() {
+        return getJsfBean(ManageInheritablePrivilegesDialog.class, ManageInheritablePrivilegesDialog.BEAN_NAME);
     }
 
     public static DocumentSendOutDialog getDocumentSendOutDialog() {
@@ -318,8 +326,20 @@ public class BeanHelper {
         return getJsfBean(UserContactGroupSearchBean.class, UserContactGroupSearchBean.BEAN_NAME);
     }
 
+    public static GroupsDialog getGroupsDialog() {
+        return getJsfBean(GroupsDialog.class, GroupsDialog.BEAN_NAME);
+    }
+
     public static DocumentListDialog getDocumentListDialog() {
         return getJsfBean(DocumentListDialog.class, DocumentListDialog.BEAN_NAME);
+    }
+
+    public static UserConfirmHelper getUserConfirmHelper() {
+        return getSpringBean(UserConfirmHelper.class, UserConfirmHelper.BEAN_NAME);
+    }
+
+    public static RsAccessStatusBean getRsAccessStatusBean() {
+        return getSpringBean(RsAccessStatusBean.class, RsAccessStatusBean.BEAN_NAME);
     }
 
     // END: JSF web beans
@@ -560,6 +580,10 @@ public class BeanHelper {
 
     public static NotificationService getNotificationService() {
         return getService(NotificationService.class, NotificationService.BEAN_NAME);
+    }
+
+    public static RSService getRSService() {
+        return getService(RSService.class, RSService.BEAN_NAME);
     }
 
     // END: delta services

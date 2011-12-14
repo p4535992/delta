@@ -140,7 +140,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
             picker.setValueBinding("filters", pickerV);
         }
         picker.setWidth(400);
-        picker.setMultiSelect(isMultiValued());
+        picker.setMultiSelect(isMultiSelect());
         String pickerCallback = (String) getAttributes().get(PICKER_CALLBACK_KEY);
         MethodBinding b = getFacesContext().getApplication().createMethodBinding(pickerCallback, GenericPickerTag.QUERYCALLBACK_CLASS_ARGS);
         picker.setQueryCallback(b);
@@ -160,6 +160,10 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         children.add(picker);
     }
 
+    protected boolean isMultiSelect() {
+        return isMultiValued();
+    }
+
     protected void pickerFinish(UIGenericPicker picker) {
         String[] results = picker.getSelectedResults();
         FacesContext context = FacesContext.getCurrentInstance();
@@ -175,9 +179,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         }
 
         if (isMultiValued()) {
-            for (String result : results) {
-                appendRow(context, result);
-            }
+            multiValuedPickerFinish(results, context);
         } else {
             if (results.length > 1) {
                 throw new RuntimeException("Single-valued property does not support multiple values");
@@ -187,7 +189,13 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
             }
         }
         getAttributes().remove(OPEN_DIALOG_KEY);
-        picker.queueEvent(new UIGenericPicker.PickerEvent(picker, 1 /* ACTION_CLEAR */, 0, null, null));
+        picker.queueEvent(new UIGenericPicker.PickerEvent(picker, UIGenericPicker.ACTION_CLEAR, 0, null, null));
+    }
+
+    protected void multiValuedPickerFinish(String[] results, FacesContext context) {
+        for (String result : results) {
+            appendRow(context, result);
+        }
     }
 
     public void singleValuedPickerFinish(FacesContext context, String value) {

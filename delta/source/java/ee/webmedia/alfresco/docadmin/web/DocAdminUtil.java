@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.docadmin.web;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -9,8 +10,11 @@ import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
+import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.base.BaseObject.ChildrenList;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
@@ -87,6 +91,25 @@ public class DocAdminUtil {
 
     public static <T extends MetadataItem> BaseObjectOrderModifier<T> getMetadataItemReorderHelper(QName orderProp) {
         return new BaseObjectOrderModifier<T>(orderProp);
+    }
+
+    public static Pair<String, Integer> getDocTypeIdAndVersionNr(Node documentDynamicNode) {
+        String docTypeId = (String) documentDynamicNode.getProperties().get(Props.OBJECT_TYPE_ID);
+        Integer docTypeVersionNr = (Integer) documentDynamicNode.getProperties().get(Props.OBJECT_TYPE_VERSION_NR);
+        Pair<String, Integer> docTypeIdAndVersionNr = new Pair<String, Integer>(docTypeId, docTypeVersionNr);
+        return docTypeIdAndVersionNr;
+    }
+
+    public static Pair<String, Integer> getDocTypeIdAndVersionNr(Map<QName, Serializable> props) {
+        String docTypeId = (String) props.get(Props.OBJECT_TYPE_ID);
+        Integer docTypeVersionNr = (Integer) props.get(Props.OBJECT_TYPE_VERSION_NR);
+        Pair<String, Integer> docTypeIdAndVersionNr = new Pair<String, Integer>(docTypeId, docTypeVersionNr);
+        return docTypeIdAndVersionNr;
+    }
+
+    public static Pair<String, Integer> getDocTypeIdAndVersionNr(DocumentTypeVersion docVer) {
+        Pair<String, Integer> docTypeIdAndVersionNr = Pair.newInstance(docVer.getParent().getId(), docVer.getVersionNr());
+        return docTypeIdAndVersionNr;
     }
 
 }

@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.utils;
 
+import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames.STYLE_CLASS;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -243,6 +245,16 @@ public class ComponentUtil {
         final AddRemoveActionListener listener = new AddRemoveActionListener();
         link.addActionListener(listener);
         link.setShowLink(actionDef.ShowLink);
+
+        @SuppressWarnings("unchecked")
+        List<UIComponent> children = link.getChildren();
+        for (Entry<String, String> entry : actionDef.getParams().entrySet()) {
+            UIParameter param = (UIParameter) application.createComponent(UIParameter.COMPONENT_TYPE);
+            param.setName(entry.getKey());
+            param.setValue(entry.getValue());
+            children.add(param);
+        }
+
         return link;
     }
 
@@ -1290,6 +1302,12 @@ public class ComponentUtil {
     public static String getOnChangeStyleClass() {
         return GeneralSelectorGenerator.ONCHANGE_PARAM_MARKER_CLASS + GeneralSelectorGenerator.ONCHANGE_SCRIPT_START_MARKER
                 + "var link = jQuery('#' + escapeId4JQ(currElId)).nextAll('a').eq(0); link.click();";
+    }
+
+    public static void addStyleClass(UIComponent uiComponent, String styleClassName) {
+        String styleClass = (String) getAttribute(uiComponent, STYLE_CLASS);
+        styleClass = styleClassName + (StringUtils.isBlank(styleClass) ? "" : " " + styleClass);
+        putAttribute(uiComponent, STYLE_CLASS, styleClass);
     }
 
 }

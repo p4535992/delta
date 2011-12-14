@@ -49,7 +49,9 @@ public enum FieldType {
     /** Märkeruut */
     CHECKBOX(Props.DEFAULT_SELECTED),
     /** Infotekst */
-    INFORMATION_TEXT(Props.DEFAULT_VALUE);
+    INFORMATION_TEXT(Props.DEFAULT_VALUE),
+    /** Struktuuriüksus */
+    STRUCT_UNIT(Props.DEFAULT_VALUE);
 
     private List<QName> fieldsUsed;
 

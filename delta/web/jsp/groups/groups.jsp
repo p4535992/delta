@@ -55,9 +55,9 @@
                <h:outputText value="#{msg.actions}" rendered="#{UserService.groupsEditingAllowed}" />
             </f:facet>
             <r:actions id="add-user-group" value="base_group_inline_actions" context="#{r}" showLink="false" styleClass="inlineAction"
-               rendered="#{UserService.groupsEditingAllowed}" />
+               rendered="#{UserService.groupsEditingAllowed && r.structUnitBased == 'false'}" />
             <r:actions id="inline-group-actions" value="group_inline_actions_no_subgroup" context="#{r}" showLink="false" styleClass="inlineAction"
-               rendered="#{r.group ne UserService.documentManagersGroup and r.group ne UserService.administratorsGroup and r.group ne UserService.accountantsGroup and UserService.groupsEditingAllowed}" />
+               rendered="#{GroupsDialog.deleteEnabledByGroup[r.group] and r.structUnitBased == 'false'}" />
          </a:column>
          
          <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
@@ -93,9 +93,9 @@
          <%-- Actions column --%>
          <a:column actions="true" style="text-align:left">
             <f:facet name="header">
-               <h:outputText value="#{msg.actions}" rendered="#{UserService.groupsEditingAllowed}" />
+               <h:outputText value="#{msg.actions}" rendered="#{UserService.groupsEditingAllowed && !GroupsDialog.disableActions}" />
             </f:facet>
-            <a:actionLink value="#{msg.remove}" image="/images/icons/remove_user.gif" showLink="false" styleClass="inlineAction" actionListener="#{DialogManager.bean.removeUser}"  rendered="#{UserService.groupsEditingAllowed}">
+            <a:actionLink value="#{msg.remove}" image="/images/icons/remove_user.gif" showLink="false" styleClass="inlineAction" actionListener="#{DialogManager.bean.removeUser}"  rendered="#{UserService.groupsEditingAllowed  && !GroupsDialog.disableActions && r.structUnitBased == 'false'}">
                <f:param name="id" value="#{r.id}" />
             </a:actionLink>
          </a:column>

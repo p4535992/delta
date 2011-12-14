@@ -156,6 +156,10 @@ public interface DocumentAdminService {
 
     boolean isGroupShowShowInTwoColumns(FieldGroup group);
 
+    void registerGroupLimitSingle(String groupName);
+
+    boolean isGroupLimitSingle(FieldGroup group);
+
     @SuppressWarnings("unchecked")
     /** It can be used to load DocumentType and first level childNodes */
     DynTypeLoadEffort DOC_TYPE_WITH_OUT_GRAND_CHILDREN = new DynTypeLoadEffort().setReturnChildrenByParent(DynamicType.class);

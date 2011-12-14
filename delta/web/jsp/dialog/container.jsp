@@ -412,6 +412,7 @@
       <% } %>
       </a:panel>
    </a:panel>
+   <h:panelGroup binding="#{UserConfirmHelper.confirmContainer}" />
    <%@ include file="../parts/footer.jsp"%>
    </h:form>
 </f:view>

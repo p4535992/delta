@@ -148,6 +148,7 @@
             </property>
             <property name="wfc:ownerOrganizationName">
                <type>d:text</type>
+               <multiple>true</multiple>
             </property>
             <property name="wfc:ownerJobTitle">
                <type>d:text</type>

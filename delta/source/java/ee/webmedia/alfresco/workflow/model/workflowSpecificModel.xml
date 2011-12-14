@@ -40,6 +40,7 @@
          <mandatory-aspects>
             <aspect>wfs:commonWorkflow</aspect>
             <aspect>wfs:tempOutcome</aspect>
+            <aspect>wfs:fileVersions</aspect>
          </mandatory-aspects>
       </type>
       
@@ -348,7 +349,15 @@
                </target>
             </child-association>           
          </associations>
-      </aspect>      
+      </aspect> 
+      
+     <aspect name="wfs:fileVersions">
+         <properties>
+            <property name="wfs:fileVersions">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
       
    </aspects>
 

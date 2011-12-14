@@ -45,6 +45,7 @@
       <property name="documentSearchService" ref="DocumentSearchService" />
       <property name="substituteService" ref="SubstituteService" />
       <property name="addressbookService" ref="AddressbookService" />
+      <property name="classificatorService" ref="ClassificatorService" />
    </bean>
 
    <bean id="NotificationService" class="org.springframework.aop.framework.ProxyFactoryBean">

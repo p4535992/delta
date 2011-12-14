@@ -1,0 +1,13 @@
+<alfresco-config>
+   <config>
+      <dialogs>
+
+         <dialog name="managePrivilegesDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/privilege/web/manage-privileges-dialog.jsp" managed-bean="ManagePrivilegesDialog"
+            icon="/images/icons/users_large.gif" title-id="manage_invited_users" />
+
+         <dialog name="manageInheritablePrivilegesDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/privilege/web/manage-inheritable-privileges-dialog.jsp" managed-bean="ManageInheritablePrivilegesDialog"
+            icon="/images/icons/users_large.gif" title-id="manage_invited_users" />
+
+      </dialogs>
+   </config>
+</alfresco-config>

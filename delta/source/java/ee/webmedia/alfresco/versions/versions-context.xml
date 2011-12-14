@@ -26,8 +26,56 @@
       </property>
    </bean>
 
+   <!-- Override alfresco bean definition -->   
+    <bean id="versionService" class="ee.webmedia.alfresco.versions.service.VersionServiceExtImpl" init-method="initialise">
+        <property name="nodeService">
+            <ref bean="NodeService" />
+        </property>
+        <property name="dbNodeService">
+            <ref bean="mtAwareNodeService" />
+        </property>
+        <property name="versionCounterService">
+            <ref bean="versionCounterService" />
+        </property>
+        <property name="searcher">
+            <ref bean="versionSearchService" />
+        </property>
+        <property name="dictionaryService">
+            <ref bean="dictionaryService" />
+        </property>
+        <property name="policyComponent">
+            <ref bean="policyComponent" />
+        </property>
+        <property name="policyBehaviourFilter">
+            <ref bean="policyBehaviourFilter" />
+        </property>
+        <property name="permissionService">
+            <ref bean="permissionService" />
+        </property>
+        <property name="onlyUseDeprecatedV1">
+            <value>${version.store.onlyUseDeprecatedV1}</value>
+        </property>
+    </bean>
+    
+    <bean id="VersionService" class="org.springframework.aop.framework.ProxyFactoryBean">
+        <property name="proxyInterfaces">
+            <value>ee.webmedia.alfresco.versions.service.VersionServiceExt</value>
+        </property>
+        <property name="target">
+            <ref bean="versionService"/>
+        </property>
+        <property name="interceptorNames">
+            <list>
+                <idref bean="VersionService_transaction"/>
+                <idref bean="AuditMethodInterceptor"/>
+                <idref bean="exceptionTranslator"/>
+                <idref bean="VersionService_security"/>
+            </list>
+        </property>
+    </bean> 
+
    <bean id="versionsService" class="ee.webmedia.alfresco.versions.service.VersionsServiceImpl">
-      <property name="versionService" ref="VersionService" />
+      <property name="versionServiceExt" ref="VersionService" />
       <property name="nodeService" ref="NodeService" />
       <property name="userService" ref="UserService" />
       <property name="documentLogService" ref="DocumentLogService" />

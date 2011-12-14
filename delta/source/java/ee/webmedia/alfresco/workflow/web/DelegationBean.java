@@ -418,7 +418,7 @@ public class DelegationBean implements Serializable {
         String name = UserUtil.getPersonFullName1(resultProps);
         Serializable id = resultProps.get(ContentModel.PROP_USERNAME);
         Serializable email = resultProps.get(ContentModel.PROP_EMAIL);
-        Serializable orgName = getOrganizationStructureService().getOrganizationStructure((String) resultProps.get(ContentModel.PROP_ORGID));
+        Serializable orgName = (Serializable) getOrganizationStructureService().getOrganizationStructurePaths((String) resultProps.get(ContentModel.PROP_ORGID));
         Serializable jobTitle = resultProps.get(ContentModel.PROP_JOBTITLE);
         setPropsToTask(workflow, taskIndex, name, id, email, orgName, jobTitle);
     }

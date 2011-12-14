@@ -37,7 +37,6 @@ import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docadmin.service.MetadataContainer;
 import ee.webmedia.alfresco.docadmin.service.MetadataItem;
 import ee.webmedia.alfresco.docadmin.service.SeparatorLine;
-import ee.webmedia.alfresco.docconfig.bootstrap.SystematicFieldGroupNames;
 import ee.webmedia.alfresco.docdynamic.web.DialogBlockBean;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -252,10 +251,10 @@ public class FieldsListBean implements DialogBlockBean<Void> {
         }
         List<SelectItem> results = new ArrayList<SelectItem>();
         outer: for (FieldGroup fieldGrDef : fieldGrDefinitions) {
-            // XXX Alar: temporarily disallow more than one "Lepingu pooled" field definition to be added to document type
-            if (fieldGrDef.getName().equals(SystematicFieldGroupNames.CONTRACT_PARTIES)) {
+            // If a systematic group uses child-nodes, then disallow more than one of that same group to be added to document type
+            if (getDocumentAdminService().isGroupLimitSingle(fieldGrDef)) {
                 for (MetadataItem item : metadataContainer.getMetadata()) {
-                    if ((item instanceof FieldGroup) && ((FieldGroup) item).getName().equals(fieldGrDef.getName())) {
+                    if ((item instanceof FieldGroup) && ((FieldGroup) item).isSystematic() && ((FieldGroup) item).getName().equals(fieldGrDef.getName())) {
                         continue outer;
                     }
                 }

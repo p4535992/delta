@@ -9,6 +9,7 @@ import org.alfresco.config.ConfigException;
 import org.alfresco.web.bean.generator.BaseComponentGenerator;
 import org.alfresco.web.config.PropertySheetConfigElement;
 import org.alfresco.web.config.PropertySheetElementReader;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorAndTextGenerator;
@@ -34,6 +35,8 @@ import ee.webmedia.alfresco.common.propertysheet.validator.MandatoryIfValidator;
  */
 public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
     private static final long serialVersionUID = 1L;
+
+    private boolean showUnvalued;
 
     /**
      * Default constructor
@@ -119,6 +122,10 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
             setCustomAttribute(PropertySheetElementReader.ATTR_READ_ONLY, Boolean.toString(readOnly));
         }
 
+        public void setRendered(String rendered) {
+            setCustomAttribute(BaseComponentGenerator.RENDERED, rendered);
+        }
+
         public boolean isShowInViewMode() {
             return showInViewMode;
         }
@@ -178,6 +185,31 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
         @Override
         public Map<String, String> getCustomAttributes() {
             return customAttributes;
+        }
+
+        public String toPropString(String optionsSeparator) {
+            StringBuilder s = new StringBuilder();
+            s.append(getName());
+            s.append(optionsSeparator).append(getComponentGenerator());
+            for (Entry<String, String> entry : customAttributes.entrySet()) {
+                String attrKey = entry.getKey();
+                if (StringUtils.isBlank(attrKey)
+                        || PropertySheetElementReader.ATTR_NAME.equals(attrKey)
+                        || PropertySheetElementReader.ATTR_COMPONENT_GENERATOR.equals(attrKey)) {
+                    continue;
+                }
+                if (StringUtils.contains(attrKey, '=')) {
+                    throw new RuntimeException("Attribute key contains key and value separator: " + getName() + " " + attrKey + "=" + entry.getValue());
+                }
+                if (StringUtils.contains(attrKey, optionsSeparator)) {
+                    throw new RuntimeException("Attribute key contains optionsSeparator: " + getName() + " " + attrKey + "=" + entry.getValue());
+                }
+                if (StringUtils.contains(entry.getValue(), optionsSeparator)) {
+                    throw new RuntimeException("Attribute value contains optionsSeparator: " + getName() + " " + attrKey + "=" + entry.getValue());
+                }
+                s.append(optionsSeparator).append(attrKey).append('=').append(entry.getValue());
+            }
+            return s.toString();
         }
 
         @Override
@@ -398,6 +430,14 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
 
     public void addItem(ItemConfigVO itemConfig) {
         super.addItem(itemConfig);
+    }
+
+    public void setShowUnvalued(boolean showUnvalued) {
+        this.showUnvalued = showUnvalued;
+    }
+
+    public boolean isShowUnvalued() {
+        return showUnvalued;
     }
 
 }

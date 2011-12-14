@@ -412,7 +412,7 @@
          <docadmin:name>Vastutaja struktuuriüksus</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
-         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:fieldType>STRUCT_UNIT</docadmin:fieldType>
          <docadmin:changeableIf>ALWAYS_CHANGEABLE</docadmin:changeableIf>
       </view:properties>
    </docadmin:fieldDefinition>
@@ -470,7 +470,7 @@
          <docadmin:originalFieldId>userOrgStructUnit</docadmin:originalFieldId>
          <docadmin:name>Kasutaja struktuuriüksus</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:fieldType>STRUCT_UNIT</docadmin:fieldType>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
       </view:properties>
    </docadmin:fieldDefinition>
@@ -719,7 +719,7 @@
          <docadmin:originalFieldId>signerOrgStructUnit</docadmin:originalFieldId>
          <docadmin:name>Allkirjastaja struktuuriüksus</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:fieldType>STRUCT_UNIT</docadmin:fieldType>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
       </view:properties>
    </docadmin:fieldDefinition>

@@ -151,7 +151,7 @@
          <docadmin:originalFieldId>firstPartyContactPersonOrgStructUnit</docadmin:originalFieldId>
          <docadmin:name>Esimese lepingu poole kontaktisiku struktuuriüksus</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:fieldType>STRUCT_UNIT</docadmin:fieldType>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
          <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
       </view:properties>

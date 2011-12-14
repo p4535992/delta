@@ -25,17 +25,13 @@
     }
 
     if (fileUploaded == true) {
-        String name = dialog.getFileName();
-        // FIXME check conditions!
-        if (!dialog.isEmailTemplate() && !dialog.isSystemTemplate() && !FilenameUtils.getExtension(name).equalsIgnoreCase("dot") && !FilenameUtils.getExtension(name).equalsIgnoreCase("dotx") ||
-             (dialog.isEmailTemplate() || dialog.isSystemTemplate()) && !FilenameUtils.getExtension(name).equalsIgnoreCase("htm") && !FilenameUtils.getExtension(name).equalsIgnoreCase("html")) {
+        if (!dialog.validateFileExtension()) {
             fileUploaded = false;
             wrongFormat = true;
         }
     }
 
     if (fileUploaded && dialog.isFirstLoad()) {
-        dialog.updateNodeFileName(dialog.getFileName());
         dialog.setFirstLoad(false);
     }
 %>
@@ -44,41 +40,37 @@
 
 <%
     if (wrongFormat) {
-            PanelGenerator.generatePanelStart(out, request.getContextPath(), "message", "#ffffcc");
-            out.write("<img alt='' align='absmiddle' src='");
-            out.write(request.getContextPath());
-            out.write("/images/icons/info_icon.gif' />&nbsp;&nbsp;");
-            if (dialog.isEmailTemplate() || dialog.isSystemTemplate()) {
-                out.write(Application.getBundle(context).getString("template_wrong_file_format_email"));
-            } else {
-                out.write(Application.getBundle(context).getString("template_wrong_file_format_doc"));
-            }
-            PanelGenerator.generatePanelEnd(out, request.getContextPath(), "yellowInner");
-            out.write("<div style='padding:2px;'></div>");
-            dialog.removeUploadedFile();
-        }
+       PanelGenerator.generatePanelStart(out, request.getContextPath(), "message", "#ffffcc");
+       out.write("<img alt='' align='absmiddle' src='");
+       out.write(request.getContextPath());
+       out.write("/images/icons/info_icon.gif' />&nbsp;&nbsp;");
+       out.write(Application.getBundle(context).getString(dialog.getWrongFormatMsgKey()));
+       PanelGenerator.generatePanelEnd(out, request.getContextPath(), "yellowInner");
+       out.write("<div style='padding:2px;'></div>");
+       dialog.removeUploadedFile();
+       }
 
-        if (fileUploaded) {
-            PanelGenerator.generatePanelStart(out, request.getContextPath(), "message", "#ffffcc");
-            out.write("<img alt='' align='absmiddle' src='");
-            out.write(request.getContextPath());
-            out.write("/images/icons/info_icon.gif' />&nbsp;&nbsp;");
-            out.write(dialog.getFileUploadSuccessMsg());
-            PanelGenerator.generatePanelEnd(out, request.getContextPath(), "yellowInner");
-            out.write("<div style='padding:2px;'></div>");
-        }
+    if (fileUploaded) {
+       dialog.setTempPropsFromFileName();
+       PanelGenerator.generatePanelStart(out, request.getContextPath(), "message", "#ffffcc");
+       out.write("<img alt='' align='absmiddle' src='");
+       out.write(request.getContextPath());
+       out.write("/images/icons/info_icon.gif' />&nbsp;&nbsp;");
+       out.write(dialog.getFileUploadSuccessMsg());
+       PanelGenerator.generatePanelEnd(out, request.getContextPath(), "yellowInner");
+       out.write("<div style='padding:2px;'></div>");
+       }
 %>
 
 </f:verbatim>
 <%
     if (fileUploaded == false) {
 %>
-
    <a:panel styleClass="column panel-100" id="file-upload" label="#{msg.upload_content}">
       <h:panelGrid id="upload_panel" columns="2" cellpadding="2" cellspacing="2" border="0" width="100%"
          columnClasses="panelGridLabelColumn,panelGridValueColumn,panelGridRequiredImageColumn">
          <h:outputText id="out_schema" value="#{msg.file_location}:" style="padding-left:8px" />
-         <r:upload id="uploader" value="#{DialogManager.bean.fileName}" framework="dialog" />
+         <r:upload id="uploader" value="#{AddDocumentTemplateDialog.fileName}" framework="dialog" />
       </h:panelGrid>
    </a:panel>
 
@@ -89,12 +81,12 @@
    <a:panel styleClass="column panel-90" id="file-upload" label="#{msg.uploaded_content}">
    
       <h:panelGroup>
-         <a:actionLink image="/images/icons/delete.gif" value="#{msg.remove}" action="#{DialogManager.bean.removeUploadedFile}" showLink="false" id="link1" />
-         <h:outputText id="text1" value="#{DialogManager.bean.fileName}" styleClass="dialogpanel-title filename" />
+         <a:actionLink image="/images/icons/delete.gif" value="#{msg.remove}" action="#{AddDocumentTemplateDialog.removeUploadedFile}" showLink="false" id="link1" />
+         <h:outputText id="text1" value="#{AddDocumentTemplateDialog.fileName}" styleClass="dialogpanel-title filename" />
       </h:panelGroup>
    
       <h:outputText id="text2" value="#{msg.general_properties}" styleClass="dialogpanel-title" />
-      <r:propertySheetGrid value="#{DialogManager.bean.docTemplateNode}" mode="edit" labelStyleClass="propertiesLabel" externalConfig="true" columns="1" />
+      <r:propertySheetGrid value="#{AddDocumentTemplateDialog.docTemplateNode}" binding="#{AddDocumentTemplateDialog.propertySheet}" mode="edit" labelStyleClass="propertiesLabel" externalConfig="true" columns="1" />
    
    </a:panel>
 <%

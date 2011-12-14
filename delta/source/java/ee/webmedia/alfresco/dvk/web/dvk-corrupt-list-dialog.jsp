@@ -45,9 +45,15 @@
          <f:facet name="header">
             <h:outputText id="col3-header" value="#{msg.file_added_time}" styleClass="header" />
          </f:facet>
-         <h:outputText id="col3-txt" value="#{r.created}" rendered="#{r.digiDocItem == false}">
-            <a:convertXMLDate type="both" pattern="#{msg.date_time_pattern}" />
-         </h:outputText>
+         <r:permissionEvaluator value="#{r.node}" allow="viewDocumentFiles">
+             <a:actionLink id="col3-act1" value="#{r.createdTimeStr}" href="#{r.downloadUrl}" target="_blank" showLink="false"
+               styleClass="inlineAction no-underline" rendered="#{r.digiDocItem == false}" />
+          </r:permissionEvaluator>
+          <r:permissionEvaluator value="#{r.node}" deny="viewDocumentFiles">
+          	 <h:outputText id="col3-txt" value="#{r.created}" rendered="#{r.digiDocItem == false}">
+            	<a:convertXMLDate type="both" pattern="#{msg.date_time_pattern}" />
+         	</h:outputText>
+           </r:permissionEvaluator>
       </a:column>
 
       <%-- Remove column --%>

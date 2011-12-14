@@ -182,7 +182,7 @@ public class FieldMappingsListBean implements Serializable {
 
     private static final Set<FieldType> TO_TEXT_FIELD_COMPATIBLE_TYPES = new HashSet<FieldType>(
             Arrays.asList(FieldType.COMBOBOX, FieldType.COMBOBOX_EDITABLE, FieldType.USER, FieldType.CONTACT, FieldType.USERS
-                    , FieldType.CONTACTS, FieldType.USERS_CONTACTS, FieldType.COMBOBOX_AND_TEXT, FieldType.COMBOBOX_AND_TEXT_NOT_EDITABLE));
+                    , FieldType.CONTACTS, FieldType.USERS_CONTACTS, FieldType.COMBOBOX_AND_TEXT, FieldType.COMBOBOX_AND_TEXT_NOT_EDITABLE, FieldType.STRUCT_UNIT));
     private static final Set<FieldType> FROM_USER_CONTACT_COMPATIBLE_TYPES = new HashSet<FieldType>(
             Arrays.asList(FieldType.USERS, FieldType.USER_CONTACT, FieldType.USERS_CONTACTS));
 

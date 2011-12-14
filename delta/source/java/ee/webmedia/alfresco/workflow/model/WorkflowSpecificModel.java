@@ -69,6 +69,7 @@ public interface WorkflowSpecificModel {
         QName SEARCHABLE = QName.createQName(URI, "searchable");
         QName TEMP_OUTCOME = QName.createQName(URI, "tempOutcome");
         QName TASK_DUE_DATE_EXTENSION_CONTAINER = QName.createQName(URI, "taskDueDateExtensionContainer");
+        QName COMMON_TASK = QName.createQName(URI, "commonTask");
     }
 
     interface Props {
@@ -96,6 +97,7 @@ public interface WorkflowSpecificModel {
         QName PROPOSED_DUE_DATE = QName.createQName(URI, "proposedDueDate");
         QName CONFIRMED_DUE_DATE = QName.createQName(URI, "confirmedDueDate");
         QName SEND_ORDER_ASSIGNMENT_COMPLETED_EMAIL = QName.createQName(URI, "sendOrderAssignmentCompletedEmail");
+        QName FILE_VERSIONS = QName.createQName(URI, "fileVersions");
     }
 
     enum SignatureTaskOutcome {

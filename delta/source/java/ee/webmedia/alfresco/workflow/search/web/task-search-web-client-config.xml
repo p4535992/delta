@@ -36,7 +36,8 @@
             propsGeneration="tasksearch:ownerName¤¤styleClass=expand19-200" />
          <show-property name="tasksearch:creatorName" display-label-id="task_search_creator" component-generator="SearchGenerator"
             pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{TaskSearchDialog.processCreatorSearchResults}" dialogTitleId="users_search_title" />
-         <show-property name="tasksearch:organizationName" display-label-id="task_search_organization" component-generator="TextAreaGenerator" styleClass="expand19-200" />
+         <show-property name="tasksearch:organizationName" display-label-id="task_search_organization" component-generator="SearchGenerator" editable="false" 
+            dialogTitleId="series_structUnit_popUpInfo" pickerCallback="#{OrganizationStructureListDialog.searchOrgstructs}" preprocessCallback="#{OrganizationStructureListDialog.preprocessResultsToLongestNames}" />
          <show-property name="tasksearch:jobTitle" display-label-id="task_search_job_title" component-generator="TextAreaGenerator" styleClass="expand19-200" />
          <show-property name="tasksearch:dueDateTimeBegin" display-label-id="task_search_dueDateTime" component-generator="InlinePropertyGroupGenerator"
             props="tasksearch:dueDateTimeBegin||styleClass=date,tasksearch:dueDateTimeBegin_EndDate||styleClass=date,tasksearch:dueDateTimeBegin_DateRangePicker|EnumSelectorGenerator|disableSorting=true|styleClass=quickDateRangePicker|enumClass=ee.webmedia.alfresco.classificator.enums.DatePeriods" 

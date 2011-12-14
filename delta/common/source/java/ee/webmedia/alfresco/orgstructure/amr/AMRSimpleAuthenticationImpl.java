@@ -22,6 +22,7 @@ import org.springframework.ws.soap.client.SoapFaultClientException;
 import smit.ametnik.services.AmetnikExt;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.orgstructure.amr.service.AMRService;
+import ee.webmedia.alfresco.orgstructure.amr.service.RSService;
 import ee.webmedia.alfresco.user.service.UserNotFoundException;
 
 /**
@@ -33,6 +34,7 @@ import ee.webmedia.alfresco.user.service.UserNotFoundException;
 public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenticationComponentImpl {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AMRSimpleAuthenticationImpl.class);
     private AMRService amrService;
+    private RSService rsService;
     private NamespacePrefixResolver namespacePrefixResolver;
     private AuthorityService authorityService;
     private AMRUserRegistry userRegistry;
@@ -67,6 +69,11 @@ public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenti
             if (!StringUtils.equals(userName, user.getIsikukood())) {
                 throw new AuthenticationException("Social security id is supposed to be equal to userName");
             }
+            boolean hasRsAccess = rsService.hasRsLubaByIsikukood(userName);
+            if (rsService.isRestrictedDelta() && !hasRsAccess) {
+                throw new AuthenticationException("User " + userName + " has been granted no access to this instance of restricted Delta.");
+            }
+            BeanHelper.getRsAccessStatusBean().setCanUserAccessRestrictedDelta(hasRsAccess);
             NodeRef person = getPersonService().getPerson(userName);
             Map<QName, Serializable> personProperties = getNodeService().getProperties(person);
             userRegistry.fillPropertiesFromAmetnik(user, personProperties);
@@ -120,6 +127,10 @@ public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenti
 
     public void setUserRegistry(AMRUserRegistry userRegistry) {
         this.userRegistry = userRegistry;
+    }
+
+    public void setRsService(RSService rsService) {
+        this.rsService = rsService;
     }
     // END: getters / setters
 

@@ -7,6 +7,9 @@
             <image>/images/icons/template_add.gif</image>
             <action>dialog:addDocumentTemplate</action>
             <action-listener>#{AddDocumentTemplateDialog.start}</action-listener>
+            <params>
+               <param name="templateType">DOCUMENT_TEMPLATE</param>
+            </params>
 
          </action>
          <action id="template_add_new_email">
@@ -16,8 +19,12 @@
             <label-id>template_add_new_email_template</label-id>
             <image>/images/icons/template_add.gif</image>
             <action>dialog:addDocumentTemplate</action>
-            <action-listener>#{AddDocumentTemplateDialog.startEmail}</action-listener>
+            <action-listener>#{AddDocumentTemplateDialog.start}</action-listener>
+            <params>
+               <param name="templateType">EMAIL_TEMPLATE</param>
+            </params>
          </action>
+         
          <action id="template_add_new_system">
             <permissions>
                <permission allow="true">CreateChildren</permission>
@@ -25,13 +32,30 @@
             <label-id>template_add_new_system_template</label-id>
             <image>/images/icons/template_add.gif</image>
             <action>dialog:addDocumentTemplate</action>
-            <action-listener>#{AddDocumentTemplateDialog.startSystem}</action-listener>
+            <action-listener>#{AddDocumentTemplateDialog.start}</action-listener>
+            <params>
+               <param name="templateType">NOTIFICATION_TEMPLATE</param>
+            </params>
+         </action>
+         
+         <action id="template_add_new_report">
+            <permissions>
+               <permission allow="true">CreateChildren</permission>
+            </permissions>
+            <label-id>template_add_new_report_template</label-id>
+            <image>/images/icons/template_add.gif</image>
+            <action>dialog:addDocumentTemplate</action>
+            <action-listener>#{AddDocumentTemplateDialog.start}</action-listener>
+            <params>
+               <param name="templateType">REPORT_TEMPLATE</param>
+            </params>
          </action>
 
          <action-group id="template_list_actions">
             <action idref="template_add_new_doc" />
             <action idref="template_add_new_email" />
             <action idref="template_add_new_system" />
+            <action idref="template_add_new_report" />
          </action-group>
       </actions>
 
@@ -40,24 +64,41 @@
             managed-bean="DocumentTemplateListDialog" icon="/images/icons/template_large.gif" title-id="templates" show-ok-button="false" actions-config-id="template_list_actions" />
             
          <dialog name="documentTemplateDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/template/web/document-template-details-dialog.jsp"
-            managed-bean="DocumentTemplateDetailsDialog" icon="/images/icons/template_large.gif" title-id="general_properties" />
+            managed-bean="DocumentTemplateDetailsDialog" icon="/images/icons/template_large.gif" title-id="templates_title" />
 
          <dialog name="addDocumentTemplate" page="/WEB-INF/classes/ee/webmedia/alfresco/template/web/add-document-template-dialog.jsp" managed-bean="AddDocumentTemplateDialog"
-            icon="/images/icons/template_large_add.gif" description-id="add_document_template_desc" />
+            icon="/images/icons/template_large_add.gif" description-id="add_document_template_desc" title-id="templates_title" />
       </dialogs>
 
 
    </config>
    <config evaluator="aspect-name" condition="docTempl:template" replace="true">
       <property-sheet>
-         <show-property name="docTempl:name" display-label-id="template_name" styleClass="focus"/>
+         <show-property name="docTempl:templateType" display-label-id="template_templateType" read-only="true" />
+         <show-property name="docTempl:name" display-label-id="template_name" textId="templates_file_name"
+         component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" propertiesSeparator="£" props="
+            {temp}fileNameBase¤¤
+            £{temp}fileNameExtension¤¤styleClass=small¤disabled=true
+            "
+         />
          <show-property name="docTempl:comment" display-label-id="template_comment" styleClass="expand19-200" component-generator="TextAreaGenerator" />
       </property-sheet>
    </config>
+   
    <config evaluator="aspect-name" condition="docTempl:documentTemplate">
       <property-sheet>
          <show-property name="docTempl:docTypeId" display-label-id="template_document_type" converter="ee.webmedia.alfresco.document.type.web.DocumentTypeConverter"
-            component-generator="SearchGenerator" pickerCallback="#{DocTypeListDialog.searchUsedDocTypes}" dialogTitleId="templates_docType_popup" editable="false" />
+            component-generator="SearchGenerator" pickerCallback="#{DocTypeListDialog.searchUsedDocTypes}" dialogTitleId="templates_docType_popup" editable="false" forcedMandatory="true"/>
+      </property-sheet>
+   </config>
+   
+   <config evaluator="aspect-name" condition="docTempl:reportTemplate">
+      <property-sheet>
+      <!-- DialogManager.bean value is 'DocumentTemplateDetailsDialog' or 'AddDocumentTemplateDialog'  -->
+         <show-property name="docTempl:reportType" display-label-id="template_reportType" editable="false" component-generator="EnumSelectorGenerator" 
+            enumClass="ee.webmedia.alfresco.classificator.enums.TemplateReportType" readOnlyIf="#{DialogManager.bean == 'DocumentTemplateDetailsDialog'}" valueChangeListener="#{AddDocumentTemplateDialog.reportTypeValueChanged}"/>
+         <show-property name="docTempl:reportOutputType" display-label-id="template_reportOutputType" editable="false" component-generator="EnumSelectorGenerator" 
+            enumClass="ee.webmedia.alfresco.classificator.enums.TemplateReportOutputType" readOnlyIf="#{DialogManager.bean == 'DocumentTemplateDetailsDialog'}" show="#{DialogManager.bean.showReportOutputType}" forcedMandatory="#{DialogManager.bean.showReportOutputType}"/>
       </property-sheet>
    </config>
 </alfresco-config>

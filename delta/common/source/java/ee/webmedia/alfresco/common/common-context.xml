@@ -255,5 +255,7 @@
 
    <bean id="UserContactGroupSearchBean" class="ee.webmedia.alfresco.common.web.UserContactGroupSearchBean" scope="session" />
 
+   <bean id="UserConfirmHelper" class="ee.webmedia.alfresco.common.web.UserConfirmHelper" scope="session" />
+
    <!-- END: web beans: -->
 </beans>

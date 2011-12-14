@@ -14,7 +14,6 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
@@ -102,8 +101,8 @@ public class UserContactMappingServiceImpl implements UserContactMappingService 
     }
 
     @Override
-    public String getMappedNameValue(NodeRef userOrContactRef) {
-        List<String> values = getMappedValues(Collections.singletonList(UserContactMappingCode.NAME), userOrContactRef);
+    public Serializable getMappedNameValue(NodeRef userOrContactRef) {
+        List<Serializable> values = getMappedValues(Collections.singletonList(UserContactMappingCode.NAME), userOrContactRef);
         return values == null ? null : values.get(0);
     }
 
@@ -115,7 +114,7 @@ public class UserContactMappingServiceImpl implements UserContactMappingService 
             propNames.add(entry.getKey());
             mappingCodes.add(entry.getValue());
         }
-        List<String> values = getMappedValues(mappingCodes, userOrContactRef);
+        List<Serializable> values = getMappedValues(mappingCodes, userOrContactRef);
         for (int i = 0; i < fieldIdsMapping.size(); i++) {
             QName propName = propNames.get(i);
             Serializable value;
@@ -134,13 +133,13 @@ public class UserContactMappingServiceImpl implements UserContactMappingService 
     }
 
     // TODO Alar: could eliminate this method, because it is not used
-    private List<String> getMappedValues(List<UserContactMappingCode> mappingCodes, NodeRef userOrContactRef) {
+    private List<Serializable> getMappedValues(List<UserContactMappingCode> mappingCodes, NodeRef userOrContactRef) {
         if (userOrContactRef == null || !nodeService.exists(userOrContactRef)) {
             return null;
         }
         QName type = nodeService.getType(userOrContactRef);
         Map<QName, Serializable> props = nodeService.getProperties(userOrContactRef);
-        ArrayList<String> values = new ArrayList<String>(mappingCodes.size());
+        ArrayList<Serializable> values = new ArrayList<Serializable>(mappingCodes.size());
         for (UserContactMappingCode mappingCode : mappingCodes) {
             values.add(getMappedValue(type, props, mappingCode));
         }
@@ -161,7 +160,7 @@ public class UserContactMappingServiceImpl implements UserContactMappingService 
         return resultProps;
     }
 
-    private String getMappedValue(QName type, Map<QName, Serializable> props, UserContactMappingCode mappingCode) {
+    private Serializable getMappedValue(QName type, Map<QName, Serializable> props, UserContactMappingCode mappingCode) {
         if (mappingCode == null) {
             return null;
         }
@@ -198,12 +197,13 @@ public class UserContactMappingServiceImpl implements UserContactMappingService 
             return null;
         case ORG_STRUCT_UNIT:
             if (isPerson) {
-                String orgPath = getProp(props, ContentModel.PROP_ORGANIZATION_PATH);
-                if (StringUtils.isNotBlank(orgPath)) {
-                    return orgPath;
+                @SuppressWarnings("unchecked")
+                List<String> orgPaths = (List<String>) props.get(ContentModel.PROP_ORGANIZATION_PATH);
+                if (orgPaths != null && !orgPaths.isEmpty()) {
+                    return (Serializable) orgPaths;
                 }
                 String orgId = getProp(props, ContentModel.PROP_ORGID);
-                return BeanHelper.getOrganizationStructureService().getOrganizationStructure(orgId);
+                return (Serializable) Collections.singleton(BeanHelper.getOrganizationStructureService().getOrganizationStructureName(orgId));
             }
             return null;
         case ADDRESS:
@@ -229,6 +229,16 @@ public class UserContactMappingServiceImpl implements UserContactMappingService 
                 return getProp(props, ContentModel.PROP_EMAIL);
             }
             return getProp(props, AddressbookModel.Props.EMAIL);
+        case FIRST_ADDITIONAL_EMAIL:
+            if (isOrganization) {
+                return getProp(props, AddressbookModel.Props.FIRST_ADDITIONAL_EMAIL);
+            }
+            return null;
+        case SECOND_ADDITIONAL_EMAIL:
+            if (isOrganization) {
+                return getProp(props, AddressbookModel.Props.SECOND_ADDITIONAL_EMAIL);
+            }
+            return null;
         case PHONE:
             if (isPerson) {
                 return getProp(props, ContentModel.PROP_TELEPHONE);
@@ -239,6 +249,16 @@ public class UserContactMappingServiceImpl implements UserContactMappingService 
                         AddressbookModel.Props.PHONE,
                         AddressbookModel.Props.MOBILE_PHONE);
             }
+        case FIRST_ADDITIONAL_PHONE:
+            if (isOrganization) {
+                return getProp(props, AddressbookModel.Props.FIRST_ADDITIONAL_PHONE);
+            }
+            return null;
+        case SECOND_ADDITIONAL_PHONE:
+            if (isOrganization) {
+                return getProp(props, AddressbookModel.Props.SECOND_ADDITIONAL_PHONE);
+            }
+            return null;
         case FAX:
             return getProp(props, AddressbookModel.Props.FAX);
         case WEBSITE:

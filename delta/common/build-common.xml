@@ -535,6 +535,10 @@
          <param name="name" value="amr" />
          <param name="wsdl" value="amr.wsdl" />
       </antcall>
+    <antcall target="generate-xmlbeans-conditionally">
+       <param name="name" value="rs" />
+       <param name="wsdl" value="rs.wsdl" />
+    </antcall>    	
       <antcall target="generate-jaxws-conditionally">
          <param name="name" value="adr" />
          <param name="wsdl" value="AvalikDokumendiRegisterService.wsdl" />

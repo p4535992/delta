@@ -30,8 +30,6 @@ public class OwnerPropertiesModifierCallback extends PropertiesModifierCallback 
         properties.put(DocumentCommonModel.Props.OWNER_ID, personProps.get(ContentModel.PROP_USERNAME));
         properties.put(DocumentCommonModel.Props.OWNER_NAME, UserUtil.getPersonFullName1(personProps));
         properties.put(DocumentCommonModel.Props.OWNER_JOB_TITLE, personProps.get(ContentModel.PROP_JOBTITLE));
-        String orgstructName = organizationStructureService.getOrganizationStructure((String) personProps.get(ContentModel.PROP_ORGID));
-        properties.put(DocumentCommonModel.Props.OWNER_ORG_STRUCT_UNIT, orgstructName);
         properties.put(DocumentCommonModel.Props.OWNER_EMAIL, personProps.get(ContentModel.PROP_EMAIL));
         properties.put(DocumentCommonModel.Props.OWNER_PHONE, personProps.get(ContentModel.PROP_TELEPHONE));
     }

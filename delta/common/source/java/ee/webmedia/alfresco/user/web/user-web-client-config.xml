@@ -9,7 +9,7 @@
             icon="/images/icons/user_console_large.gif" title-id="user_data" actions-config-id="user_actions" />
 
          <dialog name="userConsole" page="/jsp/users/user-console.jsp" managed-bean="UserDetailsDialog" icon="/images/icons/user_console_large.gif" 
-            title-id="user_console_info" description-id="user_console_description" show-ok-button="false" actions-config-id="user_add_to_group_actions"/>
+            title-id="user_console_info" description-id="user_console_description" actions-config-id="user_add_to_group_actions"/>
 
          <dialog name="permissionsListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/user/web/permissions-list-dialog.jsp" managed-bean="PermissionsListDialog"
             icon="/images/icons/users_large.gif" title-id="manage_invited_users" actions-config-id="browse_actions_permissions" />
@@ -77,6 +77,8 @@
          <show-property name="cm:telephone" display-label-id="telephone" />
          <show-property name="cm:email" display-label-id="user_email" />
          <show-property name="cm:homeFolder" display-label-id="user_home_folder" component-generator="HomespaceLinkGenerator" />
+         <show-property name="{temp}showEmptyTaskMenu" display-label-id="user_showEmptyTaskMenu" rendered="#{UserDetailsDialog.isShowEmptyTaskMenuNotEditable}" component-generator="UnescapedOutputTextGenerator" />
+         <show-property name="cm:showEmptyTaskMenu" display-label-id="user_showEmptyTaskMenu" rendered="#{UserDetailsDialog.isShowEmptyTaskMenuEditable}" isAlwaysEdit="true" component-generator="CheckboxGenerator" valueChangeListener="#{UserDetailsDialog.showEmptyTaskMenuChanged}" />
          <show-property name="{temp}relatedFundsCenter" display-label-id="user_relatedFundsCenter" rendered="#{UserDetailsDialog.isRelatedFundsCenterNotEditable}" component-generator="UnescapedOutputTextGenerator" />
          <show-property name="cm:relatedFundsCenter" display-label-id="user_relatedFundsCenter" component-generator="MultiValueEditorGenerator"
             showHeaders="false" rendered="#{UserDetailsDialog.isRelatedFundsCenterEditable}" styleClass="add-default" 

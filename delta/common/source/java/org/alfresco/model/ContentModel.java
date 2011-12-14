@@ -204,6 +204,7 @@ public interface ContentModel
     static final QName PROP_SKYPE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "skype");
     static final QName PROP_INSTANTMSG = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "instantmsg");
     static final QName PROP_RELATED_FUNDS_CENTER = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "relatedFundsCenter");
+    static final QName SHOW_EMPTY_TASK_MENU = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "showEmptyTaskMenu");
     
     static final QName PROP_SIZE_CURRENT = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "sizeCurrent");
     static final QName PROP_SIZE_QUOTA = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "sizeQuota");

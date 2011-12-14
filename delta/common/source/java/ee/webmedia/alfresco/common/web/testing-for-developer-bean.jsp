@@ -92,6 +92,12 @@
 
 <f:verbatim><hr/></f:verbatim>
 
+<h:outputText value="Taustatööd: "/>
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="updateOrganisationStructureBasedGroups" value="updateOrganisationStructureBasedGroups" type="submit"
+   actionListener="#{OrganizationStructureService.updateOrganisationStructureBasedGroups}" rendered="#{ApplicationService.test}" />
+<f:verbatim><br/><br/><br/></f:verbatim>
+
 <h:outputText value="Testandmete genereerimine: "/>
 <f:verbatim>
 <br/>

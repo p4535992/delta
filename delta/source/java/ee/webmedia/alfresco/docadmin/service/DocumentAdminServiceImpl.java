@@ -104,6 +104,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     private Set<String> fieldPropNames;
     private final Set<String> forbiddenFieldIds = new HashSet<String>();
     private final Set<String> groupShowShowInTwoColumnsOriginalFieldIds = new HashSet<String>();
+    private final Set<String> groupNamesLimitSingle = new HashSet<String>();
 
     /**
      * Get nodeRef lazily.
@@ -1508,6 +1509,20 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         }
         Set<String> originalFieldIds = group.getOriginalFieldIds();
         return CollectionUtils.containsAny(groupShowShowInTwoColumnsOriginalFieldIds, originalFieldIds);
+    }
+
+    @Override
+    public void registerGroupLimitSingle(String groupName) {
+        Assert.isTrue(!groupNamesLimitSingle.contains(groupName));
+        groupNamesLimitSingle.add(groupName);
+    }
+
+    @Override
+    public boolean isGroupLimitSingle(FieldGroup group) {
+        if (!group.isSystematic()) {
+            return false;
+        }
+        return groupNamesLimitSingle.contains(group.getName());
     }
 
 }

@@ -29,7 +29,6 @@ import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
-import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -48,6 +47,8 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
+import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
@@ -66,6 +67,7 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 import ee.webmedia.alfresco.utils.UserUtil;
+import ee.webmedia.alfresco.versions.service.VersionsService;
 import ee.webmedia.alfresco.workflow.exception.WorkflowActiveResponsibleTaskException;
 import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.model.Status;
@@ -90,6 +92,8 @@ import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 public class WorkflowServiceImpl implements WorkflowService, WorkflowModifications {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(WorkflowServiceImpl.class);
     private static final int SIGNATURE_TASK_OUTCOME_NOT_SIGNED = 0;
+    private static final int REVIEW_TASK_OUTCOME_ACCEPTED = 0;
+    private static final int REVIEW_TASK_OUTCOME_ACCEPTED_WITH_COMMENT = 1;
     private static final int REVIEW_TASK_OUTCOME_REJECTED = 2;
     private static final int CONFIRMATION_TASK_OUTCOME_REJECTED = 1;
 
@@ -118,8 +122,8 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     private OrganizationStructureService organizationStructureService;
     private DvkService dvkService;
     private ParametersService parametersService;
-    private FileFolderService fileFolderService;
     private FileService fileService;
+    private VersionsService versionsService;
 
     private final Map<QName, WorkflowType> workflowTypesByWorkflow = new HashMap<QName, WorkflowType>();
     private final Map<QName, WorkflowType> workflowTypesByTask = new HashMap<QName, WorkflowType>();
@@ -1446,7 +1450,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         props.put(WorkflowCommonModel.Props.OWNER_ID, personProps.get(ContentModel.PROP_USERNAME));
         props.put(WorkflowCommonModel.Props.OWNER_NAME, UserUtil.getPersonFullName1(personProps));
         props.put(WorkflowCommonModel.Props.OWNER_EMAIL, personProps.get(ContentModel.PROP_EMAIL));
-        props.put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME, organizationStructureService.getOrganizationStructure(
+        props.put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME, (Serializable) organizationStructureService.getOrganizationStructurePaths(
                 (String) personProps.get(ContentModel.PROP_ORGID)));
         props.put(WorkflowCommonModel.Props.OWNER_JOB_TITLE, personProps.get(ContentModel.PROP_JOBTITLE));
         String previousOwnerId = (retainPreviousOwnerId) ? existingOwnerId : null;
@@ -1959,6 +1963,17 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         if (isStoppingNeeded(task, outcomeIndex)) {
             stopIfNeeded(task, queue);
         }
+        if (outcomeIndex == REVIEW_TASK_OUTCOME_ACCEPTED || outcomeIndex == REVIEW_TASK_OUTCOME_ACCEPTED_WITH_COMMENT) {
+            List<File> files = fileService.getAllFiles(task.getParent().getParent().getParent());
+            List<String> filesWithVersions = new ArrayList<String>();
+            for (File file : files) {
+                NodeRef fileRef = file.getNodeRef();
+                String nextVersionLabel = versionsService.calculateNextVersionLabel(fileRef);
+                filesWithVersions.add(file.getDisplayName() + " " + nextVersionLabel);
+                nodeService.setProperty(fileRef, FileModel.Props.NEW_VERSION_ON_NEXT_SAVE, Boolean.TRUE);
+            }
+            task.setProp(WorkflowSpecificModel.Props.FILE_VERSIONS, StringUtils.join(filesWithVersions, ", "));
+        }
     }
 
     private boolean isStoppingNeeded(Task task, int outcomeIndex) {
@@ -2248,8 +2263,8 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         this.parametersService = parametersService;
     }
 
-    public void setFileFolderService(FileFolderService fileFolderService) {
-        this.fileFolderService = fileFolderService;
+    public void setVersionsService(VersionsService versionsService) {
+        this.versionsService = versionsService;
     }
 
     public void setFileService(FileService fileService) {

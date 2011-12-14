@@ -75,11 +75,7 @@ public class ClassificatorSelectorGenerator extends GeneralSelectorGenerator {
         boolean isSingleValued = isSingleValued(context, multiValued); //
         for (ClassificatorSelectorValueProvider classificator : valueProviders) {
             UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
-            if (isDescriptionAsLabel()) {
-                selectItem.setItemLabel(classificator.getClassificatorDescription());
-            } else {
-                selectItem.setItemLabel(classificator.getSelectorValueName());
-            }
+            setOptionDescriptionAndLabel(classificator, selectItem);
             // Convert value so validation doesn't fail
             selectItem.setItemValue(RendererUtils.getConvertedUIOutputValue(context, component, classificator.getSelectorValueName())); // must not be null or empty
             if (isSingleValued
@@ -95,6 +91,14 @@ public class ClassificatorSelectorGenerator extends GeneralSelectorGenerator {
             addDefault(context, results);
         }
         return results;
+    }
+
+    protected void setOptionDescriptionAndLabel(ClassificatorSelectorValueProvider classificator, UISelectItem selectItem) {
+        if (isDescriptionAsLabel()) {
+            selectItem.setItemLabel(classificator.getClassificatorDescription());
+        } else {
+            selectItem.setItemLabel(classificator.getSelectorValueName());
+        }
     }
 
     protected List<ClassificatorSelectorValueProvider> getSelectorValueProviders(String classificatorName, UIComponent component, FacesContext context) {

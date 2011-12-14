@@ -14,7 +14,6 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNamespaceService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getOrganizationStructureService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPersonService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getRegisterService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getSeriesService;
@@ -108,14 +107,13 @@ import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicFieldGroupNames;
 import ee.webmedia.alfresco.docconfig.generator.SaveListener;
+import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.orgstructure.model.OrganizationStructure;
-import ee.webmedia.alfresco.parameters.model.Parameter;
-import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.register.model.Register;
 import ee.webmedia.alfresco.register.model.RegisterModel;
 import ee.webmedia.alfresco.series.model.Series;
@@ -653,7 +651,7 @@ public class TestDataService implements SaveListener {
                 orgStruct.setUnitId(++maxUnitId);
                 orgStruct.setSuperUnitId(0);
                 orgStruct.setName(rootOrgUnit.getName());
-                orgStruct.setOrganizationPath(rootOrgUnit.getPath());
+                orgStruct.setOrganizationPath(UserUtil.getPathHierarchy(rootOrgUnit.getPath(), ","));
                 getOrganizationStructureService().createOrganisationStructure(orgStruct);
                 structUnits.add(orgStruct);
                 structUnitsByUnitId.put(orgStruct.getUnitId(), orgStruct);
@@ -679,7 +677,7 @@ public class TestDataService implements SaveListener {
                 }
                 orgStruct.setName(name);
                 OrgUnit subUnit = new OrgUnit(orgStruct.getName(), orgStruct.getUnitId(), parentOrgUnit.getLevel() + 1, parentOrgUnit.getPath());
-                orgStruct.setOrganizationPath(subUnit.getPath());
+                orgStruct.setOrganizationPath(UserUtil.getPathHierarchy(subUnit.getPath(), ","));
                 getOrganizationStructureService().createOrganisationStructure(orgStruct);
                 structUnits.add(orgStruct);
                 structUnitsByUnitId.put(orgStruct.getUnitId(), orgStruct);
@@ -711,6 +709,9 @@ public class TestDataService implements SaveListener {
 
     private void createUsers(int count) throws Exception {
         log.info("Creating users");
+        // FIXME ALAR: Following parameter has been removed.
+        //@formatter:off
+        /*
         @SuppressWarnings("unchecked")
         Parameter<Long> employeeRegReceiveUsersPeriod = (Parameter<Long>) getParametersService().getParameter(Parameters.EMPLOYEE_REG_RECEIVE_USERS_PERIOD);
         employeeRegReceiveUsersPeriod.setParamValue(500000L);
@@ -718,6 +719,8 @@ public class TestDataService implements SaveListener {
         params.add(employeeRegReceiveUsersPeriod);
         getParametersService().updateParameters(params);
         log.info("Set parameter " + employeeRegReceiveUsersPeriod.getParamName() + " value to " + employeeRegReceiveUsersPeriod.getParamValue());
+         */
+        // @formatter:on
 
         DefaultChildApplicationContextManager authentication = BeanHelper.getSpringBean(DefaultChildApplicationContextManager.class, "Authentication");
         Collection<String> instanceIds = authentication.getInstanceIds();
@@ -843,7 +846,7 @@ public class TestDataService implements SaveListener {
         properties.put(ContentModel.PROP_EMAIL, testEmail);
         OrganizationStructure structUnit = getRandom(structUnits);
         properties.put(ContentModel.PROP_ORGID, structUnit.getUnitId());
-        properties.put(ContentModel.PROP_ORGANIZATION_PATH, structUnit.getOrganizationPath());
+        properties.put(ContentModel.PROP_ORGANIZATION_PATH, (ArrayList<String>) structUnit.getOrganizationPath());
 
         // FUTURE: Jäävad praegu tühjaks, sest sisulist kasu ei ole
         // properties.put(ContentModel.PROP_TELEPHONE, reader.get(4));
@@ -1291,7 +1294,7 @@ public class TestDataService implements SaveListener {
             docVer = docType.getLatestDocumentTypeVersion();
             docVersions.put(docTypeId, docVer);
         }
-        DocumentDynamic doc = getDocumentDynamicService().createNewDocument(docVer, docLocation.getDocumentParentRef());
+        DocumentDynamic doc = getDocumentDynamicService().createNewDocument(docVer, docLocation.getDocumentParentRef()).getFirst();
 
         doc.setProp(DocumentCommonModel.Props.FUNCTION, docLocation.getFunctionRef());
         doc.setProp(DocumentCommonModel.Props.SERIES, docLocation.getSeriesRef());
@@ -1316,8 +1319,8 @@ public class TestDataService implements SaveListener {
             isRegistered = true;
         }
 
-        Map<String, Pair<PropertyDefinition, Field>> propDefs = getDocumentConfigService().getPropertyDefinitions(doc.getNode());
-        for (Pair<PropertyDefinition, Field> pair : propDefs.values()) {
+        Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs = getDocumentConfigService().getPropertyDefinitions(doc.getNode());
+        for (Pair<DynamicPropertyDefinition, Field> pair : propDefs.values()) {
             PropertyDefinition propDef = pair.getFirst();
             Field field = pair.getSecond();
             if (field == null) {
@@ -1570,7 +1573,8 @@ public class TestDataService implements SaveListener {
                 props.put(WorkflowCommonModel.Props.OWNER_NAME, taskOwnerFullName);
                 props.put(WorkflowCommonModel.Props.OWNER_EMAIL, taskOwnerEmail);
                 props.put(WorkflowCommonModel.Props.OWNER_JOB_TITLE, taskOwnerJobTitle);
-                props.put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME, taskOwnerStructUnit != null ? taskOwnerStructUnit.getName() : null);
+                props.put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME, (Serializable) (taskOwnerStructUnit != null ? Collections.singleton(taskOwnerStructUnit.getName())
+                        : null));
 
                 props.put(WorkflowCommonModel.Props.DOCUMENT_TYPE, docTypeId);
 

@@ -1,6 +1,8 @@
 package ee.alfresco.web.ui.common.renderer.data;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -47,6 +49,8 @@ public class RichListMultiTbodyRenderer extends RichListRenderer {
          */
         public static final String ATTR_GROUP_TBODY_ATTRIBUTES = "tbodyAttributesByGroup";
         public static final String ATTR_ADDITIONAL_ROW_STYLE_BINDING = "additionalRowStyleClassBinding";
+        /** Can be used to render facets of type {@link UITableRow} after regular rows */
+        public static final String ATTR_FACET_ROWS = "facetRows";
         private int rowIndex = 0;
 
         @Override
@@ -200,8 +204,28 @@ public class RichListMultiTbodyRenderer extends RichListRenderer {
                 }
             }
             out.write("</td></tr>");
+            Collection<String> facetRows = getFacetRows(richList);
+            if (facetRows != null) {
+                for (String rowFacetName : facetRows) {
+                    UIComponent facet = richList.getFacet(rowFacetName);
+                    if (facet instanceof UITableRow) {
+                        UITableRow groupFirstTr = (UITableRow) facet;
+                        RendererUtils.renderChild(context, groupFirstTr);
+                    }
+                }
+            }
             // when we only have one group then without this line after refreshing group header would not be created
             ComponentUtil.putAttribute(richList, ATTR_GROUP_PREVIOUS, NULL);
+        }
+
+        public static Collection<String> getFacetRows(UIRichList richList) {
+            @SuppressWarnings("unchecked")
+            Collection<String> facetRows = (Collection<String>) ComponentUtil.getAttribute(richList, ATTR_FACET_ROWS);
+            if (facetRows == null) {
+                facetRows = new HashSet<String>(5);
+                ComponentUtil.putAttribute(richList, ATTR_FACET_ROWS, facetRows);
+            }
+            return facetRows;
         }
 
     }

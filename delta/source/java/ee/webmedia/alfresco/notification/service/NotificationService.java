@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.notification.service;
 
+import java.util.Date;
 import java.util.List;
 
 import javax.faces.event.ActionEvent;
@@ -38,7 +39,7 @@ public interface NotificationService {
 
     public boolean processOutgoingInformationTask(Task task);
 
-    public int processTaskDueDateNotifications();
+    public int processTaskDueDateNotificationsIfWorkingDay(Date firingDate);
 
     public int processVolumeDispositionDateNotifications();
 

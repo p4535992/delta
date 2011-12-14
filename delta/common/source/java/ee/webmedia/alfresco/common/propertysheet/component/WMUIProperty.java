@@ -1,17 +1,20 @@
 package ee.webmedia.alfresco.common.propertysheet.component;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import javax.faces.component.UIComponent;
 import javax.faces.component.html.HtmlOutputText;
 import javax.faces.component.html.HtmlPanelGrid;
 import javax.faces.context.FacesContext;
+import javax.faces.el.ValueBinding;
 
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.repo.component.property.UIProperty;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
@@ -39,7 +42,7 @@ public class WMUIProperty extends UIProperty {
         if (getChildCount() == 0) {
             // get the variable being used from the parent
             UIComponent parent = getParent();
-            if ((parent instanceof UIPropertySheet) == false) {
+            if (!(parent instanceof UIPropertySheet)) {
                 throw new IllegalStateException(getIncorrectParentMsg());
             }
             // only build the components if there are currently no children
@@ -57,6 +60,23 @@ public class WMUIProperty extends UIProperty {
             UIComponent child = getChildren().get(1);
             if (Boolean.TRUE.equals(child.getAttributes().get(DONT_RENDER_IF_DISABLED_ATTR)) && ComponentUtil.isComponentDisabledOrReadOnly(child)) {
                 return false;
+            }
+            if (getParent() instanceof WMUIPropertySheet) {
+                WMUIPropertySheet parent = (WMUIPropertySheet) getParent();
+                if (!parent.inEditMode() && !parent.isShowUnvalued()) {
+                    ValueBinding vb = child.getValueBinding("value");
+                    if (vb == null) {
+                        return false;
+                    }
+                    Object value = vb.getValue(getFacesContext());
+                    if (value == null) {
+                        return false;
+                    } else if (value instanceof String && StringUtils.isBlank((String) value)) {
+                        return false;
+                    } else if (value instanceof List && ((List) value).isEmpty()) {
+                        return false;
+                    }
+                }
             }
         }
         return super.isRendered();

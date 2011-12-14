@@ -29,6 +29,7 @@ import ee.webmedia.alfresco.docconfig.generator.BaseSystematicFieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
 import ee.webmedia.alfresco.docconfig.service.UserContactMappingCode;
 import ee.webmedia.alfresco.docconfig.service.UserContactMappingService;
+import ee.webmedia.alfresco.docdynamic.model.DocumentChildModel;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
@@ -116,8 +117,14 @@ public class UserContactRelatedGroupGenerator extends BaseSystematicFieldGenerat
         Map<String, UserContactMappingCode> contactMapping = new HashMap<String, UserContactMappingCode>();
         contactMapping.put(DocumentDynamicModel.Props.CONTACT_NAME.getLocalName(), UserContactMappingCode.NAME);
         contactMapping.put(DocumentDynamicModel.Props.CONTACT_ADDRESS.getLocalName(), UserContactMappingCode.ADDRESS);
+        contactMapping.put(DocumentDynamicModel.Props.CONTACT_STREET_HOUSE.getLocalName(), UserContactMappingCode.STREET_HOUSE);
+        contactMapping.put(DocumentDynamicModel.Props.CONTACT_POSTAL_CITY.getLocalName(), UserContactMappingCode.POSTAL_CITY);
         contactMapping.put(DocumentDynamicModel.Props.CONTACT_EMAIL.getLocalName(), UserContactMappingCode.EMAIL);
+        contactMapping.put(DocumentDynamicModel.Props.CONTACT_FIRST_ADDITIONAL_EMAIL.getLocalName(), UserContactMappingCode.FIRST_ADDITIONAL_EMAIL);
+        contactMapping.put(DocumentDynamicModel.Props.CONTACT_SECOND_ADDITIONAL_EMAIL.getLocalName(), UserContactMappingCode.SECOND_ADDITIONAL_EMAIL);
         contactMapping.put(DocumentDynamicModel.Props.CONTACT_PHONE.getLocalName(), UserContactMappingCode.PHONE);
+        contactMapping.put(DocumentDynamicModel.Props.CONTACT_FIRST_ADDITIONAL_PHONE.getLocalName(), UserContactMappingCode.FIRST_ADDITIONAL_PHONE);
+        contactMapping.put(DocumentDynamicModel.Props.CONTACT_SECOND_ADDITIONAL_PHONE.getLocalName(), UserContactMappingCode.SECOND_ADDITIONAL_PHONE);
         contactMapping.put(DocumentDynamicModel.Props.CONTACT_FAX_NUMBER.getLocalName(), UserContactMappingCode.FAX);
         contactMapping.put(DocumentDynamicModel.Props.CONTACT_WEB_PAGE.getLocalName(), UserContactMappingCode.WEBSITE);
         contactMapping.put(DocumentDynamicModel.Props.CONTACT_REG_NUMBER.getLocalName(), UserContactMappingCode.CODE);
@@ -131,6 +138,18 @@ public class UserContactRelatedGroupGenerator extends BaseSystematicFieldGenerat
         partyMapping.put(DocumentSpecificModel.Props.PARTY_CONTACT_PERSON.getLocalName(), null);
         mappings.add(partyMapping);
         documentAdminService.registerGroupShowShowInTwoColumns(partyMapping.keySet());
+        documentConfigService.registerChildAssocTypeQNameHierarchy(SystematicFieldGroupNames.CONTRACT_PARTIES, DocumentChildModel.Assocs.CONTRACT_PARTY, null);
+
+        Map<String, UserContactMappingCode> applicantMapping = new HashMap<String, UserContactMappingCode>();
+        applicantMapping.put(DocumentDynamicModel.Props.APPLICANT_NAME.getLocalName(), UserContactMappingCode.NAME);
+        applicantMapping.put(DocumentDynamicModel.Props.APPLICANT_ID.getLocalName(), UserContactMappingCode.CODE);
+        applicantMapping.put(DocumentDynamicModel.Props.APPLICANT_SERVICE_RANK.getLocalName(), UserContactMappingCode.SERVICE_RANK);
+        applicantMapping.put(DocumentDynamicModel.Props.APPLICANT_JOB_TITLE.getLocalName(), UserContactMappingCode.JOB_TITLE);
+        applicantMapping.put(DocumentDynamicModel.Props.APPLICANT_ORG_STRUCT_UNIT.getLocalName(), UserContactMappingCode.ORG_STRUCT_UNIT);
+        applicantMapping.put(DocumentDynamicModel.Props.APPLICANT_WORK_ADDRESS.getLocalName(), UserContactMappingCode.ADDRESS);
+        applicantMapping.put(DocumentDynamicModel.Props.APPLICANT_EMAIL.getLocalName(), UserContactMappingCode.EMAIL);
+        applicantMapping.put(DocumentDynamicModel.Props.APPLICANT_PHONE.getLocalName(), UserContactMappingCode.PHONE);
+        mappings.add(applicantMapping);
 
         Set<String> fields = new HashSet<String>();
         for (Map<String, UserContactMappingCode> mapping : mappings) {
@@ -192,16 +211,16 @@ public class UserContactRelatedGroupGenerator extends BaseSystematicFieldGenerat
         // TODO Alar: forbid adding multiple contractParties groups to document in DocTypeDetailsDialog search!!
         // OR
         // TODO Alar: change SubPropsheetItem, so that assocName wouldn't be assocTypeQName, but assocQName - that way multiple different subpropsheetitems can be used
-        if (group.getName().equals(SystematicFieldGroupNames.CONTRACT_PARTIES)) {
+        if (SystematicFieldGroupNames.CONTRACT_PARTIES.equals(group.getName())) {
             item.setBelongsToSubPropertySheetId(primaryField.getFieldId());
             if (field == primaryField) {
                 ItemConfigVO subPropSheetItem = new ItemConfigVO(RepoUtil.createTransientProp(primaryField.getFieldId()).toPrefixString(namespaceService));
                 subPropSheetItem.setConfigItemType(ConfigItemType.SUB_PROPERTY_SHEET);
                 subPropSheetItem.setSubPropertySheetId(primaryField.getFieldId());
                 subPropSheetItem.setAssocBrand("children");
-                subPropSheetItem.setAssocName(DocumentCommonModel.Types.METADATA_CONTAINER.toPrefixString(namespaceService));
-                subPropSheetItem.setActionsGroupId("document_contractMvParty");
-                subPropSheetItem.setTitleLabelId("document_contractMv_partyBlock_title");
+                subPropSheetItem.setAssocName(DocumentChildModel.Assocs.CONTRACT_PARTY.toPrefixString(namespaceService));
+                subPropSheetItem.setActionsGroupId("subPropSheet_contractParty");
+                subPropSheetItem.setTitleLabelId("subPropSheet_contractParty");
                 // TODO
                 generatorResults.addItem(subPropSheetItem);
             }
@@ -251,7 +270,7 @@ public class UserContactRelatedGroupGenerator extends BaseSystematicFieldGenerat
 
     public static Pair<Field, Integer> getPrimaryFieldAndIndex(FieldGroup group) {
         // Ensure that exactly one USER/CONTACT/USER_CONTACT field is in this group;
-        // and all other fields /*that have mapping*/ are TEXT_FIELD
+        // and all other fields /*that have mapping*/ are TEXT_FIELD or STRUCT_UNIT
         Field primaryField = null;
         int primaryFieldIndex = -1;
         int i = 0;
@@ -262,7 +281,7 @@ public class UserContactRelatedGroupGenerator extends BaseSystematicFieldGenerat
                 primaryFieldIndex = i;
             } else {
                 // if (mapping.get(child.getQName()) != null) {
-                Assert.isTrue(child.getFieldTypeEnum() == FieldType.TEXT_FIELD);
+                Assert.isTrue(child.getFieldTypeEnum() == FieldType.TEXT_FIELD || child.getFieldTypeEnum() == FieldType.STRUCT_UNIT);
                 // }
             }
             i++;

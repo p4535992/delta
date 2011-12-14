@@ -50,6 +50,7 @@ public interface DocumentCommonModel {
         QName ADDITIONAL_RECIPIENT = QName.createQName(DOCCOM_URI, "additionalRecipient");
         QName FAVORITE_CONTAINER = QName.createQName(DOCCOM_URI, "favoriteContainer");
         QName FAVORITE_DIRECTORY_ASPECT = QName.createQName(DOCCOM_URI, "favoriteDirectoryAspect");// new
+        QName FORUM_PARTICIPANTS = QName.createQName(DOCCOM_URI, "forumParticipants");
 
     }
 
@@ -114,6 +115,7 @@ public interface DocumentCommonModel {
 
         QName REG_NUMBER = QName.createQName(URI, "regNumber");
         QName SHORT_REG_NUMBER = QName.createQName(URI, "shortRegNumber");
+        QName INDIVIDUAL_NUMBER = QName.createQName(URI, "individualNumber");
         QName REG_DATE_TIME = QName.createQName(URI, "regDateTime");
 
         QName COMMENT = QName.createQName(URI, "comment");
@@ -147,6 +149,7 @@ public interface DocumentCommonModel {
         QName SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS = QName.createQName(DOCCOM_URI, "searchableHasStartedCompoundWorkflows");
 
         QName LEGAL_BASIS_NAME = QName.createQName(URI, "legalBasisName");
+        QName FORUM_PARTICIPANTS = QName.createQName(URI, "forumParticipants");
     }
 
     /**

@@ -13,6 +13,9 @@
           <dialog name="sentEmailListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/imap/web/email-list-dialog.jsp"
                   managed-bean="SentEmailListDialog" show-ok-button="false"
             icon="/images/icons/details_large.gif" title-id="document_sent_emails" />
+          <dialog name="sendFailureNotificationsListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/imap/web/attachment-list-dialog.jsp"
+                  managed-bean="SendFailureNotificationsListDialog" show-ok-button="false"
+            icon="/images/icons/details_large.gif" title-id="imap_send_failure_notifications_list" />            
       </dialogs>
    </config>
 </alfresco-config>

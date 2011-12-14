@@ -1,7 +1,6 @@
 package ee.webmedia.alfresco.document.search.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getSendOutService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getVisitedDocumentsBean;
 
@@ -21,7 +20,6 @@ import javax.faces.component.UIParameter;
 import javax.faces.component.html.HtmlGraphicImage;
 import javax.faces.component.html.HtmlOutputText;
 import javax.faces.context.FacesContext;
-import javax.faces.convert.Converter;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.namespace.QName;
@@ -31,7 +29,6 @@ import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.data.UIColumn;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.alfresco.web.ui.common.component.data.UISortLink;
-import org.alfresco.web.ui.common.converter.MultiValueConverter;
 import org.alfresco.web.ui.common.tag.data.ColumnTag;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.apache.lucene.search.BooleanQuery;
@@ -42,7 +39,6 @@ import org.apache.myfaces.shared_impl.taglib.UIComponentTagUtils;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.enums.SendMode;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
-import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
 import ee.webmedia.alfresco.document.model.Document;
@@ -171,6 +167,7 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
     /**
      * @param richList - partially preconfigured RichList from jsp
      */
+    @Override
     public void setRichList(UIRichList richList) {
         this.richList = richList;
         if (!richList.getChildren().isEmpty()) {
@@ -181,18 +178,20 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
         List<FieldDefinition> searchableFields = getDocumentAdminService().getSearchableFieldDefinitions();
         QName dokLiikBoolean = getLabelBoolean(DocumentSearchModel.Props.DOCUMENT_TYPE);
         QName sendModeBoolean = getLabelBoolean(DocumentSearchModel.Props.SEND_MODE);
-        if (Boolean.TRUE.equals(props.get(dokLiikBoolean.toString()))) {
-            UIComponent valueComponent = createTextValueComponent(context, "#{r.documentTypeName}", null, false);
-            createAndAddColumn(context, richList, MessageUtil.getMessage("document_docType"), "documentTypeName", false, valueComponent);
-        }
-        if (Boolean.TRUE.equals(props.get(sendModeBoolean.toString()))) {
-            UIComponent valueComponent = createTextValueComponent(context, "#{r.sendMode}", null, false);
-            createAndAddColumn(context, richList, MessageUtil.getMessage("document_send_mode"), "sendMode", false, valueComponent);
-        }
-        Set<String> keys = props.keySet();
         final Map<String, String> titleLinkParams = new HashMap<String, String>(2);
         titleLinkParams.put("nodeRef", "#{r.node.nodeRef}");
         titleLinkParams.put("caseNodeRef", "#{r.node.nodeRef}");
+        if (Boolean.TRUE.equals(props.get(dokLiikBoolean.toString()))) {
+            UIComponent valueComponent = createActionLink(context, "#{r.documentTypeName}", "#{DocumentDialog.action}", null, "#{DocumentDialog.open}", null,
+                    titleLinkParams);
+            createAndAddColumn(context, richList, MessageUtil.getMessage("document_docType"), "documentTypeName", false, valueComponent);
+        }
+        if (Boolean.TRUE.equals(props.get(sendModeBoolean.toString()))) {
+            UIComponent valueComponent = createActionLink(context, "#{r.sendMode}", "#{DocumentDialog.action}", null, "#{DocumentDialog.open}", null,
+                    titleLinkParams);
+            createAndAddColumn(context, richList, MessageUtil.getMessage("document_send_mode"), "sendMode", false, valueComponent);
+        }
+        Set<String> keys = props.keySet();
         for (FieldDefinition fieldDefinition : searchableFields) {
             QName primaryQName = fieldDefinition.getQName();
             QName tamperedQName = RepoUtil.createTransientProp(primaryQName.getLocalName() + "LabelEditable");
@@ -214,8 +213,10 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
                 valueBinding = "#{r.seriesLabel}";
             } else if (primaryQName.equals(DocumentCommonModel.Props.VOLUME)) {
                 valueBinding = "#{r.volumeLabel}";
+            } else if (fieldDefinition.getType().equals(FieldType.STRUCT_UNIT)) {
+                valueBinding = "#{r.unitStrucPropsConvertedMap['" + primaryQName.toPrefixString(getNamespaceService()) + "']}";
             } else {
-                valueBinding = "#{r.properties['" + primaryQName.toPrefixString(getNamespaceService()) + "']}";
+                valueBinding = "#{r.convertedPropsMap['" + primaryQName.toPrefixString(getNamespaceService()) + "']}";
             }
             List<UIComponent> valueComponent = new ArrayList<UIComponent>();
             if (primaryQName.equals(DocumentCommonModel.Props.DOC_NAME)) {
@@ -228,8 +229,8 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
                 volumeLinkParams.put("volumeNodeRef", "#{r.properties['" + primaryQName.toPrefixString(getNamespaceService()) + "']}");
                 valueComponent.add(createActionLink(context, valueBinding, null, null, "#{VolumeListDialog.showVolumeContents}", null, volumeLinkParams));
             } else {
-                boolean multiValued = getDocumentConfigService().getPropertyDefinition(searchFilter, fieldDefinition.getQName()).isMultiValued();
-                valueComponent.add(createTextValueComponent(context, valueBinding, fieldDefinition, multiValued));
+                createActionLink(context, valueBinding, "#{DocumentDialog.action}", null, "#{DocumentDialog.open}", null,
+                        titleLinkParams);
             }
             createAndAddColumn(context, richList, fieldTitle, primaryQName.getLocalName(), false, valueComponent.toArray(new UIComponent[valueComponent.size()]));
         }
@@ -240,6 +241,7 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
         return QName.createQName(propQname.toString() + WMUIProperty.AFTER_LABEL_BOOLEAN);
     }
 
+    @Override
     public UIRichList getRichList() {
         return null;
     }
@@ -270,22 +272,6 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
         ComponentUtil.addChildren(column, valueComponent);
         ComponentUtil.addChildren(richList, column);
         return column;
-    }
-
-    private static UIComponent createTextValueComponent(FacesContext context, String valueBinding, FieldDefinition fieldDef, boolean multiValued) {
-        Application application = context.getApplication();
-        HtmlOutputText bodyText = (HtmlOutputText) application.createComponent(HtmlOutputText.COMPONENT_TYPE);
-        UIComponentTagUtils.setStringProperty(context, bodyText, "styleClass", "tooltip condence20-");
-        UIComponentTagUtils.setValueProperty(context, bodyText, valueBinding);
-        if (fieldDef != null && fieldDef.getFieldTypeEnum().equals(FieldType.DATE)) {
-            Converter converter = application.createConverter(DatePickerConverter.CONVERTER_ID);
-            bodyText.setConverter(converter);
-        }
-        if (multiValued) {
-            Converter converter = application.createConverter(MultiValueConverter.CONVERTER_ID);
-            bodyText.setConverter(converter);
-        }
-        return bodyText;
     }
 
     private static UIComponent createActionLink(FacesContext context, String valueBinding, String actionBinding, String action, String actionListenerBinding,

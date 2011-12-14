@@ -15,17 +15,25 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import javax.faces.event.PhaseId;
+import javax.faces.event.ValueChangeEvent;
+
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
+import org.apache.commons.collections.Closure;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.DateUtils;
 
 import ee.webmedia.alfresco.adr.service.AdrService;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
@@ -38,6 +46,7 @@ import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
+import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
@@ -46,6 +55,7 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
 
     public static final String ACCESS_RESTRICTION_CHANGE_REASON_ERROR = "accessRestrictionChangeReasonError";
+    private NamespaceService namespaceService;
 
     @Override
     public void afterPropertiesSet() {
@@ -74,36 +84,76 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
 
         Map<String, Field> fieldsByOriginalId = ((FieldGroup) field.getParent()).getFieldsByOriginalId();
         QName accessRestrictionProp = getProp(fieldsByOriginalId, ACCESS_RESTRICTION);
+        QName accessRestrictionReasonProp = getProp(fieldsByOriginalId, ACCESS_RESTRICTION_REASON);
+        QName accessRestrictionBeginDateProp = getProp(fieldsByOriginalId, ACCESS_RESTRICTION_BEGIN_DATE);
+        QName accessRestrictionEndDateProp = getProp(fieldsByOriginalId, ACCESS_RESTRICTION_END_DATE);
         QName accessRestrictionEndDescProp = getProp(fieldsByOriginalId, ACCESS_RESTRICTION_END_DESC);
+
+        if (field.getOriginalFieldId().equals(ACCESS_RESTRICTION_END_DATE.getLocalName())) {
+            // access restriction end date is generated with access restriction begin date as part of inline group
+            return;
+        }
+
+        String accessRestrictionPropName = accessRestrictionProp.getLocalName();
+        String stateHolderKey = accessRestrictionPropName;
 
         final ItemConfigVO item = generatorResults.getAndAddPreGeneratedItem();
         if (field.getQName().equals(accessRestrictionProp)) {
-            String stateHolderKey = field.getFieldId();
-            generatorResults.addStateHolder(stateHolderKey, new AccessRestrictionState());
-            return;
-        } else if (field.getOriginalFieldId().equals(ACCESS_RESTRICTION_REASON.getLocalName())) {
-            item.setMandatoryIf(accessRestrictionProp.getLocalName());
-            return;
-        } else if (field.getOriginalFieldId().equals(ACCESS_RESTRICTION_BEGIN_DATE.getLocalName())) {
-            item.setMandatoryIf(accessRestrictionProp.getLocalName());
-            return;
-        } else if (field.getOriginalFieldId().equals(ACCESS_RESTRICTION_END_DATE.getLocalName())) {
-            item.setMandatoryIf(accessRestrictionProp.getLocalName() + "," + accessRestrictionEndDescProp.getLocalName() + "=null");
-            return;
-        } else if (field.getOriginalFieldId().equals(ACCESS_RESTRICTION_END_DESC.getLocalName())) {
-            return;
+            item.setValueChangeListener(getBindingName("accessRestrictionValueChanged", stateHolderKey));
+            item.setAjaxParentLevel(1);
+        } else {
+            item.getCustomAttributes().put("rendered", getBindingName("renderAllAccessRestrictionFields", stateHolderKey));
+            if (field.getOriginalFieldId().equals(ACCESS_RESTRICTION_REASON.getLocalName())) {
+                item.setValueChangeListener(getBindingName("accessRestrictionReasonValueChanged", stateHolderKey));
+                item.setAjaxParentLevel(1);
+                item.setMandatoryIf(accessRestrictionPropName);
+                item.setComponentGenerator("ClassificatorSelectorWithTitleGenerator");
+                generatorResults.addStateHolder(stateHolderKey, new AccessRestrictionState(accessRestrictionProp, accessRestrictionReasonProp, accessRestrictionBeginDateProp,
+                        accessRestrictionEndDateProp, accessRestrictionEndDescProp, field.getClassificator()));
+            } else if (field.getOriginalFieldId().equals(ACCESS_RESTRICTION_BEGIN_DATE.getLocalName())) {
+                String itemLabel = MessageUtil.getMessage("document_accessRestrictionDate");
+                List<String> components = DurationGenerator.generateDurationFields(field, item, accessRestrictionBeginDateProp, accessRestrictionEndDateProp,
+                        itemLabel,
+                        namespaceService);
+                List<String> componentsWithMandatoryIf = new ArrayList<String>();
+                componentsWithMandatoryIf.add(components.get(0) + "¤mandatoryIf=" + accessRestrictionPropName);
+                componentsWithMandatoryIf.add(components.get(1) + "¤mandatoryIf=" + accessRestrictionPropName + "," + accessRestrictionEndDescProp.getLocalName() + "=null");
+                // TODO XXX FIXME from Alar to Riina: should call item.setPropertiesSeparator, because cannot use comma both inside value ^^ and as a separator
+                item.setProps(StringUtils.join(componentsWithMandatoryIf, ','));
+                item.setTextId("document_accessRestrictionDates_templateText");
+            } else if (field.getOriginalFieldId().equals(ACCESS_RESTRICTION_END_DESC.getLocalName())) {
+                return;
+            } else {
+                throw new RuntimeException("Unsupported field: " + field);
+            }
         }
-        throw new RuntimeException("Unsupported field: " + field);
     }
 
     private QName getProp(Map<String, Field> fieldsByOriginalId, QName propName) {
         return fieldsByOriginalId.get(propName.getLocalName()).getQName();
     }
 
-    // ===============================================================================================================================
+    // =======================================================================================================
 
     public static class AccessRestrictionState extends BasePropertySheetStateHolder {
         private static final long serialVersionUID = 1L;
+
+        private final QName accessRestrictionProp;
+        private final QName accessRestrictionReasonProp;
+        private final QName accessRestrictionBeginDateProp;
+        private final QName accessRestrictionEndDateProp;
+        private final QName accessRestrictionEndDescProp;
+        private final String accessRestrictionReasonClassificatorName;
+
+        public AccessRestrictionState(QName accessRestrictionProp, QName accessRestrictionReasonProp, QName accessRestrictionBeginDateProp, QName accessRestrictionEndDateProp,
+                                      QName accessRestrictionEndDescProp, String accessRestrictionReasonClassificatorName) {
+            this.accessRestrictionProp = accessRestrictionProp;
+            this.accessRestrictionReasonProp = accessRestrictionReasonProp;
+            this.accessRestrictionBeginDateProp = accessRestrictionBeginDateProp;
+            this.accessRestrictionEndDateProp = accessRestrictionEndDateProp;
+            this.accessRestrictionEndDescProp = accessRestrictionEndDescProp;
+            this.accessRestrictionReasonClassificatorName = accessRestrictionReasonClassificatorName;
+        }
 
         /**
          * Called after selection has been made from series dropdown.<br>
@@ -132,6 +182,81 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
                 docProps.put(ACCESS_RESTRICTION_END_DATE.toString(), serAccessRestrictionEndDate);
                 docProps.put(ACCESS_RESTRICTION_END_DESC.toString(), serAccessRestrictionEndDesc);
             }
+        }
+
+        public void accessRestrictionValueChanged(ValueChangeEvent event) {
+            String oldValue = StringUtils.trimToEmpty((String) event.getOldValue());
+            String newValue = StringUtils.trimToEmpty((String) event.getNewValue());
+            if (ObjectUtils.equals(oldValue, newValue)) {
+                return;
+            }
+            final String accessRestriction = (String) event.getNewValue();
+            ComponentUtil.executeLater(PhaseId.INVOKE_APPLICATION, dialogDataProvider.getPropertySheet(), new Closure() {
+                @Override
+                public void execute(Object input) {
+                    if (AccessRestriction.AK.equals(accessRestriction) || AccessRestriction.LIMITED.equals(accessRestriction)) {
+                        Node document = dialogDataProvider.getNode();
+                        final Map<String, Object> docProps = document.getProperties();
+                        if (docProps.get(accessRestrictionBeginDateProp.toString()) == null) {
+                            docProps.put(accessRestrictionBeginDateProp.toString(), new Date());
+                        }
+                    }
+                    clearPropertySheet();
+                }
+            });
+        }
+
+        public void accessRestrictionReasonValueChanged(ValueChangeEvent event) {
+            String oldValue = StringUtils.trimToEmpty((String) event.getOldValue());
+            String newValue = StringUtils.trimToEmpty((String) event.getNewValue());
+            if (ObjectUtils.equals(oldValue, newValue)) {
+                return;
+            }
+            final String accessRestrictionReason = (String) event.getNewValue();
+            ComponentUtil.executeLater(PhaseId.INVOKE_APPLICATION, dialogDataProvider.getPropertySheet(), new Closure() {
+                @Override
+                public void execute(Object input) {
+                    String valueData = BeanHelper.getClassificatorService().getClassificatorValuesValueData(accessRestrictionReasonClassificatorName, accessRestrictionReason);
+                    Integer monthsToAdd = null;
+                    try {
+                        monthsToAdd = Integer.parseInt(valueData);
+                    } catch (NumberFormatException e) {
+                        // use as String value
+                    }
+                    final Map<String, Object> docProps = dialogDataProvider.getNode().getProperties();
+                    if (monthsToAdd != null) {
+                        Date restrictionBeginDate = (Date) docProps.get(accessRestrictionBeginDateProp.toString());
+                        if (restrictionBeginDate != null) {
+                            Date newRestrictionEndDate = DateUtils.addMonths(restrictionBeginDate, monthsToAdd);
+                            Date restrictionEndDate = (Date) docProps.get(accessRestrictionEndDateProp.toString());
+                            if (restrictionEndDate == null || restrictionEndDate.before(newRestrictionEndDate)) {
+                                docProps.put(accessRestrictionEndDateProp.toString(), newRestrictionEndDate);
+                                clearPropertySheet();
+                            }
+                        }
+                    } else {
+                        String accessRestrictionEndDesc = (String) docProps.get(accessRestrictionEndDescProp.toString());
+                        String newAccessRestrictionEndDesc = StringUtils.isBlank(accessRestrictionEndDesc) ? accessRestrictionReason : accessRestrictionEndDesc + " "
+                                + accessRestrictionReason;
+                        docProps.put(accessRestrictionEndDescProp.toString(), newAccessRestrictionEndDesc);
+                        clearPropertySheet();
+                    }
+                }
+            });
+
+        }
+
+        private void clearPropertySheet() {
+            UIPropertySheet propertySheet = dialogDataProvider.getPropertySheet();
+            if (propertySheet != null) {
+                propertySheet.getChildren().clear();
+                propertySheet.getClientValidations().clear();
+            }
+        }
+
+        public boolean isRenderAllAccessRestrictionFields() {
+            String accessRestriction = (String) dialogDataProvider.getDocument().getProp(ACCESS_RESTRICTION);
+            return !AccessRestriction.OPEN.equals(accessRestriction) && !AccessRestriction.INTERNAL.equals(accessRestriction);
         }
     }
 
@@ -170,8 +295,8 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
         final Map<QName, Serializable> oldProps = nodeService.getProperties(docRef);
 
         // If accessRestriction changes from OPEN/AK to INTERNAL/LIMITED
-        if (AccessRestriction.INTERNAL.equals((String) newProps.get(ACCESS_RESTRICTION))
-                || AccessRestriction.LIMITED.equals((String) newProps.get(ACCESS_RESTRICTION))) {
+        String accessRestriction = (String) newProps.get(ACCESS_RESTRICTION);
+        if (AccessRestriction.INTERNAL.equals(accessRestriction) || AccessRestriction.LIMITED.equals(accessRestriction)) {
             String oldAccessRestriction = (String) oldProps.get(ACCESS_RESTRICTION);
             if (!(AccessRestriction.INTERNAL.equals(oldAccessRestriction) || AccessRestriction.LIMITED.equals(oldAccessRestriction))) {
 
@@ -245,6 +370,10 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
 
     public void setDocumentAdminService(DocumentAdminService documentAdminService) {
         this.documentAdminService = documentAdminService;
+    }
+
+    public void setNamespaceService(NamespaceService namespaceService) {
+        this.namespaceService = namespaceService;
     }
 
     // END: setters

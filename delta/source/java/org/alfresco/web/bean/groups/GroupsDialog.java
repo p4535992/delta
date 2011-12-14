@@ -59,6 +59,9 @@ import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
+import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 
@@ -76,6 +79,9 @@ public class GroupsDialog extends BaseDialogBean
    public static final String PARAM_GROUP = "group";
    public static final String PARAM_GROUP_NAME = "groupName";
    
+   public static final String BEAN_NAME = "GroupsDialog";
+   private boolean disableActions;
+
    /** The AuthorityService to be used by the bean */
    transient private AuthorityService authService;
 
@@ -111,7 +117,7 @@ public class GroupsDialog extends BaseDialogBean
    
    private static final String MSG_ROOT_GROUPS = "root_groups";
    private static final String MSG_CLOSE = "close";
-   
+
    private static Log logger = LogFactory.getLog(GroupsDialog.class);
    
    // ------------------------------------------------------------------------------
@@ -168,10 +174,37 @@ public class GroupsDialog extends BaseDialogBean
    @Override
     public String cancel() {
         setCurrentGroup(null, Application.getMessage(FacesContext.getCurrentInstance(), MSG_ROOT_GROUPS));
-        return "dialog:close:dialog:manageGroups";
+        return "dialog:close";
     }
-   
+
+    public void setDisableActions(boolean disableActions) {
+        this.disableActions = disableActions;
+    }
+
+    public boolean isDisableActions() {
+        return disableActions;
+    }
+
+    /** class that helps to decide for jsp whether to render deleting group button or not */
+    public class DeleteEnambledDeciderMap extends HashMap<String, Boolean> {
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public Boolean get(Object gr) {
+            String group = (String) gr;
+            UserService userService = BeanHelper.getUserService();
+            return userService.isGroupDeleteAllowed(group);
+        }
+    }
+
+    private DeleteEnambledDeciderMap deleteEnambledDeciderMap = new DeleteEnambledDeciderMap();
+
+    public Map<String, Boolean> getDeleteEnabledByGroup() {
+        return deleteEnambledDeciderMap;
+    }
+
    public void reset(ActionEvent event) {
+       disableActions = false;
        restored();
    }
    
@@ -411,6 +444,7 @@ public class GroupsDialog extends BaseDialogBean
          tx.begin();
          
          Set<String> authorities;
+         boolean structUnitBased = false;
          if (this.group == null)
          {
             authorities = Collections.<String>emptySet();
@@ -420,15 +454,17 @@ public class GroupsDialog extends BaseDialogBean
             // users of an existing group
             boolean immediate = (this.filterMode.equals(FILTER_CHILDREN));
             authorities = this.getAuthorityService().getContainedAuthorities(AuthorityType.USER, this.group, immediate);
+            structUnitBased = this.getAuthorityService().getAuthorityZones(this.group).contains(OrganizationStructureService.STRUCT_UNIT_BASED);
          }
          users = new ArrayList<Map>(authorities.size());
          for (String authority : authorities)
          {
-            Map<String, String> authMap = new HashMap<String, String>(3, 1.0f);
+            Map<String, String> authMap = new HashMap<String, String>(4, 1.0f);
             
             String userName = this.getAuthorityService().getShortName(authority);
             authMap.put("userName", userName);
             authMap.put("id", authority);
+            authMap.put("structUnitBased", (structUnitBased) ? "true" : "false");
             
             // get Person details for this Authority
             NodeRef ref = this.getPersonService().getPerson(authority);

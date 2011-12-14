@@ -205,6 +205,20 @@ public class ClassificatorServiceImpl implements ClassificatorService {
         return getAllClassificatorValues(getClassificatorRefByName(classificator));
     }
 
+    @Override
+    public String getClassificatorValuesValueData(String classificatorName, String classificatorValueName) {
+        if (StringUtils.isBlank(classificatorValueName) || StringUtils.isBlank(classificatorName)) {
+            return null;
+        }
+        List<ClassificatorValue> classificatorValues = getAllClassificatorValues(getClassificatorRefByName(classificatorName));
+        for (ClassificatorValue classificatorValue : classificatorValues) {
+            if (classificatorValueName.equals(classificatorValue.getValueName())) {
+                return classificatorValue.getValueData();
+            }
+        }
+        return null;
+    }
+
     private List<ClassificatorValue> getClassificatorValuesByNodeRefs(List<NodeRef> clValueNodeRefs) {
         List<ClassificatorValue> classificatorValues = new ArrayList<ClassificatorValue>(clValueNodeRefs.size());
         for (NodeRef valueRef : clValueNodeRefs) {

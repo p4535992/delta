@@ -29,7 +29,12 @@
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
    </bean>
-   
+
+   <bean id="archivistsGroupBootstrap" class="ee.webmedia.alfresco.user.bootstrap.ArchivistsGroupBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+   </bean>
+
    <bean id="accountantsGroupNameChangeBootstrap" class="ee.webmedia.alfresco.user.bootstrap.AccountantsGroupNameChangeBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />

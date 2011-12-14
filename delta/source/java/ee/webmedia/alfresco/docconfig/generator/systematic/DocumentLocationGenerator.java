@@ -348,6 +348,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             boolean isSearchFilter = DocumentSearchModel.Types.FILTER.equals(document.getType());
 
             String documentTypeId = (String) document.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID);
+            boolean isSearchFilterOrDocTypeNull = isSearchFilter || documentTypeId == null;
             { // Function
                 List<Function> allFunctions;
                 if (isSearchFilter) {
@@ -360,7 +361,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 boolean functionFound = false;
                 for (Function function : allFunctions) {
                     List<Series> openSeries;
-                    if (isSearchFilter) {
+                    if (isSearchFilterOrDocTypeNull) {
                         openSeries = getSeriesService().getAllSeriesByFunction(function.getNodeRef());
                     } else {
                         openSeries = getSeriesService().getAllSeriesByFunction(function.getNodeRef(), DocListUnitStatus.OPEN, documentTypeId);
@@ -395,7 +396,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 seriesRef = null;
             } else {
                 List<Series> allSeries;
-                if (isSearchFilter) {
+                if (isSearchFilterOrDocTypeNull) {
                     allSeries = getSeriesService().getAllSeriesByFunction(functionRef);
                 } else {
                     allSeries = getSeriesService().getAllSeriesByFunction(functionRef, DocListUnitStatus.OPEN, documentTypeId);
@@ -457,7 +458,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 }
 
                 List<Volume> allVolumes;
-                if (isSearchFilter) {
+                if (isSearchFilterOrDocTypeNull) {
                     allVolumes = getVolumeService().getAllValidVolumesBySeries(seriesRef);
                 } else {
                     allVolumes = getVolumeService().getAllValidVolumesBySeries(seriesRef, DocListUnitStatus.OPEN);
@@ -494,7 +495,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             } else {
                 if (getVolumeService().getVolumeByNodeRef(volumeRef).isContainsCases()) {
                     List<Case> allCases;
-                    if (isSearchFilter) {
+                    if (isSearchFilterOrDocTypeNull) {
                         allCases = getCaseService().getAllCasesByVolume(volumeRef);
                     } else {
                         allCases = getCaseService().getAllCasesByVolume(volumeRef, DocListUnitStatus.OPEN);
@@ -646,7 +647,6 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
     @Override
     public void save(DocumentDynamic document) {
         NodeRef docNodeRef = document.getNodeRef();
-
         // Prepare caseNodeRef
         final NodeRef volumeNodeRef = document.getVolume();
         NodeRef caseNodeRef = getCaseNodeRef(document, volumeNodeRef);
@@ -696,6 +696,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
         document.setCase(caseNodeRef);
 
         if (existingParentNode == null || !targetParentRef.equals(existingParentNode.getNodeRef())) {
+
             // was not saved (under volume nor case) or saved, but parent (volume or case) must be changed
             Node previousCase = documentService.getCaseByDocument(docNodeRef);
             Node previousVolume = documentService.getVolumeByDocument(docNodeRef, previousCase);
@@ -723,7 +724,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                     if (StringUtils.isNotBlank(existingRegNr)) {
                         // reg. number is changed if function, series or volume is changed
                         if (!previousVolume.getNodeRef().equals(volumeNodeRef)) {
-                            documentService.registerDocumentRelocating(document.getNode());
+                            documentService.registerDocumentRelocating(document.getNode(), previousVolume);
                         }
                     }
                 } else {

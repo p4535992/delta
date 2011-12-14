@@ -6,10 +6,12 @@ import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ACCE
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.CASE;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.DOC_NAME;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.DOC_STATUS;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FILE_CONTENTS;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FILE_NAMES;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FUNCTION;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.INDIVIDUAL_NUMBER;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.RECIPIENT_EMAIL;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.RECIPIENT_NAME;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_DATE_TIME;
@@ -27,6 +29,7 @@ import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SEAR
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SERIES;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SHORT_REG_NUMBER;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.VOLUME;
+import static ee.webmedia.alfresco.utils.UserUtil.getUserFullNameAndId;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -128,6 +131,7 @@ import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.permissions.SeriesDocManagerDynamicAuthority;
+import ee.webmedia.alfresco.document.register.model.RegNrHolder;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
@@ -163,6 +167,7 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
+import ee.webmedia.alfresco.volume.model.DeletedDocument;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
@@ -213,6 +218,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
     private String incomingEmailPath;
     protected String receivedInvoicePath;
     private String sentEmailPath;
+    private boolean generateNewRegNumberInReregistration;
 
     // doesn't need to be synchronized, because it is not modified during runtime
     private final Map<QName/* nodeType/nodeAspect */, PropertiesModifierCallback> creationPropertiesModifierCallbacks = new LinkedHashMap<QName, PropertiesModifierCallback>();
@@ -461,7 +467,8 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         final Map<String, Object> docProps = docNode.getProperties();
 
         // Prepare caseNodeRef
-        final NodeRef volumeNodeRef = (NodeRef) docProps.get(TransientProps.VOLUME_NODEREF);
+        final NodeRef volumeNodeRef = (NodeRef) (docProps.containsKey(TransientProps.VOLUME_NODEREF) ? docProps.get(TransientProps.VOLUME_NODEREF) : docProps
+                .get(DocumentCommonModel.Props.VOLUME));
         NodeRef caseNodeRef = getCaseNodeRef(docProps, volumeNodeRef);
 
         // Prepare existingParentNode and targetParentRef properties
@@ -564,7 +571,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
             propertyChangesMonitorHelper = new PropertyChangesMonitorHelper();// FIXME:
             propsChanged |= propertyChangesMonitorHelper.setPropertiesIgnoringSystemAndReturnIfChanged(docNodeRef, docProps //
                     , FUNCTION, SERIES, VOLUME, CASE // location changes
-                    , REG_NUMBER, SHORT_REG_NUMBER, REG_DATE_TIME // registration changes
+                    , REG_NUMBER, SHORT_REG_NUMBER, INDIVIDUAL_NUMBER, REG_DATE_TIME // registration changes
                     , ACCESS_RESTRICTION // access restriction changed
                     );
             if (!EventsLoggingHelper.isLoggingDisabled(docNode, DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED)) {
@@ -613,7 +620,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
                     if (StringUtils.isNotBlank(existingRegNr)) {
                         // reg. number is changed if function, series or volume is changed
                         if (!previousVolume.getNodeRef().equals(volumeNodeRef)) {
-                            registerDocumentRelocating(docNode);
+                            registerDocumentRelocating(docNode, previousVolume);
                         }
                     }
                 } else {
@@ -663,8 +670,11 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
     }
 
     private NodeRef getCaseNodeRef(final Map<String, Object> docProps, final NodeRef volumeNodeRef) {
-        NodeRef caseNodeRef = (NodeRef) docProps.get(TransientProps.CASE_NODEREF);
-        String caseLabel = (String) docProps.get(TransientProps.CASE_LABEL_EDITABLE);
+        NodeRef caseNodeRef = (NodeRef) (docProps.containsKey(TransientProps.CASE_NODEREF) ? docProps.get(TransientProps.CASE_NODEREF) : docProps
+                .get(DocumentCommonModel.Props.CASE));
+        String caseLabel = (String) (docProps.containsKey(TransientProps.CASE_NODEREF) || caseNodeRef == null ? docProps.get(TransientProps.CASE_LABEL_EDITABLE) : getCaseService()
+                .getCaseByNoderef(
+                        caseNodeRef).getTitle());
         if (StringUtils.isBlank(caseLabel)) {
             caseNodeRef = null;
         }
@@ -1538,6 +1548,11 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
 
     @Override
     public void deleteDocument(NodeRef nodeRef) {
+        deleteDocument(nodeRef, null);
+    }
+
+    @Override
+    public void deleteDocument(NodeRef nodeRef, String comment) {
         log.debug("Deleting document: " + nodeRef);
         getAdrService().addDeletedDocument(nodeRef);
         List<AssociationRef> assocs = nodeService.getTargetAssocs(nodeRef, RegexQNamePattern.MATCH_ALL);
@@ -1558,6 +1573,14 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
             }
         }
         updateParentNodesContainingDocsCount(nodeRef, false);
+        if (StringUtils.isNotBlank(comment)) { // Create deletedDocument under parent volume
+            DeletedDocument deletedDocument = new DeletedDocument();
+            deletedDocument.setActor(getUserFullNameAndId(userService.getCurrentUserProperties()));
+            deletedDocument.createDocumentData((String) nodeService.getProperty(nodeRef, REG_NUMBER), (String) nodeService.getProperty(nodeRef, DOC_NAME));
+            deletedDocument.setComment(comment);
+            volumeService.saveDeletedDocument(generalService.getAncestorNodeRefWithType(nodeRef, VolumeModel.Types.VOLUME), deletedDocument);
+        }
+
         nodeService.deleteNode(nodeRef);
         if (favDirRemoved) {
             menuService.process(BeanHelper.getMenuBean().getMenu(), false, true);
@@ -1815,16 +1838,16 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
     }
 
     @Override
-    public void registerDocumentRelocating(final Node docNode) {
+    public void registerDocumentRelocating(final Node docNode, final Node previousVolume) {
         EventsLoggingHelper.disableLogging(docNode, DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED);
-        registerDocument(docNode, true);
+        registerDocument(docNode, true, previousVolume);
         EventsLoggingHelper.enableLogging(docNode, DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED);
     }
 
     /**
      * NB! This method can be called only once per registration. Otherwise register sequence is increased without a reason.
      */
-    private String parseRegNrPattern(Series series, NodeRef volumeNodeRef, Register register, Date regDateTime) {
+    private String parseRegNrPattern(Series series, NodeRef volumeNodeRef, Register register, String existingRegNr, Date regDateTime) {
         String pattern = series.getDocNumberPattern();
         Volume volume = null;
         if (pattern.indexOf("{T") >= 0) {
@@ -1837,7 +1860,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         List<String> failedMatches = new ArrayList<String>();
         while (groupMatcher.find()) {
             String group = groupMatcher.group(1);
-            String replacedParams = replaceParams(group, series, volume, register, registerCounter, regDateTime);
+            String replacedParams = replaceParams(group, series, volume, register, registerCounter, existingRegNr, regDateTime);
             String noMatch = group.replaceAll("\\{(.*?)\\}", "");
             if (replacedParams.equals(noMatch)) { // if last match isn't replaced we need to remove this part later.
                 failedMatches.add(groupMatcher.group());
@@ -1850,24 +1873,24 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         for (String failedMatch : failedMatches) {
             groupsReplacedRegNr = StringUtils.replaceOnce(groupsReplacedRegNr, failedMatch, "");
         }
-        return replaceParams(groupsReplacedRegNr, series, volume, register, registerCounter, regDateTime);// regNr.toString();
+        return replaceParams(groupsReplacedRegNr, series, volume, register, registerCounter, existingRegNr, regDateTime);// regNr.toString();
     }
 
-    private String replaceParams(String string, Series series, Volume volume, Register register, int registerCounter, Date regDateTime) {
+    private String replaceParams(String string, Series series, Volume volume, Register register, int registerCounter, String existingRegNumber, Date regDateTime) {
         Pattern paramPattern = Pattern.compile("\\{(.*?)\\}");
         StringBuffer result = new StringBuffer();
 
         // Replace parameters
         Matcher paramMatcher = paramPattern.matcher(string);
         while (paramMatcher.find()) {
-            paramMatcher.appendReplacement(result, lookupParamValue(paramMatcher.group(1), series, volume, register, registerCounter, regDateTime));
+            paramMatcher.appendReplacement(result, lookupParamValue(paramMatcher.group(1), series, volume, register, registerCounter, existingRegNumber, regDateTime));
         }
         paramMatcher.appendTail(result);
 
         return result.toString();
     }
 
-    private String lookupParamValue(String parameter, Series series, Volume volume, Register register, int registerCounter, Date regDateTime) {
+    private String lookupParamValue(String parameter, Series series, Volume volume, Register register, int registerCounter, String existingRegNumber, Date regDateTime) {
         RegisterNumberPatternParams param = RegisterNumberPatternParams.getValidParam(parameter);
         if (param == null) {
             return "";
@@ -1884,6 +1907,10 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         case TN:
             return ""; // FIXME DLSeadist kui asjatoimik saab tehtud, peaks ka sellele asendus tekkima.
         case DN:
+            if (existingRegNumber != null && !generateNewRegNumberInReregistration) {
+                RegNrHolder holder = new RegNrHolder(existingRegNumber);
+                return holder.getShortRegNrWithoutIndividualizingNr();
+            }
             if (registerCounter == register.getCounter()) { // Increase if first time
                 register.setCounter(registerService.increaseCount(register.getId()));
             }
@@ -1908,33 +1935,37 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
 
     @Override
     public Node registerDocument(Node docNode) {
-        return registerDocument(docNode, false);
+        return registerDocument(docNode, false, null);
     }
 
-    private Node registerDocument(Node docNode, boolean isRelocating) {
+    private Node registerDocument(Node docNode, boolean isRelocating, Node previousVolume) {
         final Map<String, Object> props = docNode.getProperties();
         if (isRegistered(docNode) && !isRelocating) {
             throw new RuntimeException("Document already registered! docNode=" + docNode);
         }
         // only register when no existingRegNr or when relocating
-        final NodeRef volumeNodeRef = (NodeRef) props.get(TransientProps.VOLUME_NODEREF);
-        final NodeRef seriesNodeRef = (NodeRef) props.get(TransientProps.SERIES_NODEREF);
-        final NodeRef caseNodeRef = (NodeRef) props.get(TransientProps.CASE_NODEREF);
+        final NodeRef volumeNodeRef = (NodeRef) (props.containsKey(TransientProps.VOLUME_NODEREF) ? props.get(TransientProps.VOLUME_NODEREF) : props
+                .get(DocumentCommonModel.Props.VOLUME));
+        final NodeRef seriesNodeRef = (NodeRef) (props.containsKey(TransientProps.SERIES_NODEREF) ? props.get(TransientProps.SERIES_NODEREF) : props
+                .get(DocumentCommonModel.Props.SERIES));
+        final NodeRef caseNodeRef = (NodeRef) (props.containsKey(TransientProps.CASE_NODEREF) ? props.get(TransientProps.CASE_NODEREF) : props.get(DocumentCommonModel.Props.CASE));
         final NodeRef docRef = docNode.getNodeRef();
         QName documentTypeId = docNode.getType();
         final List<AssociationRef> replyAssocs = nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY);
         final boolean isReplyOrFollowupDoc = isReplyOrFollowupDoc(docRef, replyAssocs);
         final Series series = seriesService.getSeriesByNodeRef(seriesNodeRef);
         Register register = registerService.getRegister(series.getRegister());
-        String regNumber = null;
+        String regNumber = (String) props.get(DocumentCommonModel.Props.REG_NUMBER);
         final Date now = new Date();
+        final NodeRef initDocParentRef = caseNodeRef != null ? caseNodeRef : volumeNodeRef;
         if (!isReplyOrFollowupDoc) {
             log.debug("Starting to register initialDocument, docRef=" + docRef);
             // registration of initial document ("Algatusdokument")
-            regNumber = parseRegNrPattern(series, volumeNodeRef, register, now);
+            regNumber = parseRegNrPattern(series, volumeNodeRef, register, regNumber, now);
             if (!series.isNewNumberForEveryDoc() && series.isIndividualizingNumbers()) {
                 regNumber += REGISTRATION_INDIVIDUALIZING_NUM_SUFFIX;
             }
+            regNumber = addUniqueNumberIfNeccessary(regNumber, initDocParentRef, isRelocating);
         } else { // registration of reply/followUp("Järg- või vastusdokument")
             log.debug("Starting to register " + (replyAssocs.size() > 0 ? "reply" : "followUp") + " document, docRef=" + docRef);
             final Node initialDoc = getDocument(getInitialDocument(docRef));
@@ -1942,92 +1973,64 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
             final String initDocRegNr = (String) initDocProps.get(REG_NUMBER.toString());
             boolean initDocRegNrNotBlank = StringUtils.isNotBlank(initDocRegNr);
             if (series.isNewNumberForEveryDoc()) {
-                regNumber = parseRegNrPattern(series, volumeNodeRef, register, now);
+                regNumber = addUniqueNumberIfNeccessary(parseRegNrPattern(series, volumeNodeRef, register, regNumber, now), initDocParentRef, isRelocating);
             } else if (initDocRegNrNotBlank && !series.isIndividualizingNumbers() && !series.isNewNumberForEveryDoc()) {
-                regNumber = initDocRegNr;
+                regNumber = addUniqueNumberIfNeccessary(initDocRegNr, initDocParentRef, isRelocating);
             } else if (initDocRegNrNotBlank && !series.isNewNumberForEveryDoc() && series.isIndividualizingNumbers()) {
-                final NodeRef initDocSeriesNodeRef = (NodeRef) initDocProps.get(TransientProps.SERIES_NODEREF.toString());
                 { // add individualizing number to regNr
                     final RegNrHolder initDocRegNrHolder = new RegNrHolder(initDocRegNr);
                     if (initDocRegNrHolder.getIndividualizingNr() != null) {
-                        final NodeRef initDocParentRef = caseNodeRef != null ? caseNodeRef : volumeNodeRef;
-                        int maxIndivNr = initDocRegNrHolder.getIndividualizingNr();
-                        for (Document anotherDoc : getAllDocumentsByParentNodeRef(initDocParentRef)) {
-                            if (!docRef.equals(anotherDoc.getNodeRef())) {
-                                final RegNrHolder anotherDocRegNrHolder = new RegNrHolder(anotherDoc.getRegNumber());
-                                if (StringUtils.equals(initDocRegNrHolder.getRegNrWithoutIndividualizingNr() //
-                                        , anotherDocRegNrHolder.getRegNrWithoutIndividualizingNr())) {
-                                    final Integer anotherDocIndivNr = anotherDocRegNrHolder.getIndividualizingNr();
-                                    if (anotherDocIndivNr != null) {
-                                        maxIndivNr = Math.max(maxIndivNr, anotherDocIndivNr);
-                                    }
-                                }
-                            }
-                        }
+
+                        int maxIndivNr = getMaxIndivNrInParent(docRef, initDocRegNrHolder, initDocParentRef, initDocRegNrHolder.getIndividualizingNr());
                         regNumber = initDocRegNrHolder.getRegNrWithoutIndividualizingNr() + (maxIndivNr + 1);
+                        regNumber = addUniqueNumberIfNeccessary(regNumber, initDocParentRef, isRelocating);
                     } else {
                         // with correct data and *current* expected user behaviors this code should not be reached,
                         // however Maiga insisted that this behavior would be applied if smth. goes wrong
-                        regNumber = initDocRegNr;
+                        regNumber = addUniqueNumberIfNeccessary(initDocRegNr, initDocParentRef, isRelocating);
                     }
                 }
-                if (StringUtils.isNotBlank(regNumber) && (documentTypeId.equals(DocumentSubtypeModel.Types.INSTRUMENT_OF_DELIVERY_AND_RECEIPT)
-                        || documentTypeId.equals(DocumentSubtypeModel.Types.INSTRUMENT_OF_DELIVERY_AND_RECEIPT_MV))) {
-                    if (replyAssocs.size() > 0) {
-                        final NodeRef contractDocRef = replyAssocs.get(0).getTargetRef();
-                        Date finalTermOfDeliveryAndReceiptDate = (Date) nodeService.getProperty(contractDocRef,
-                                DocumentSpecificModel.Props.FINAL_TERM_OF_DELIVERY_AND_RECEIPT);
-                        if (finalTermOfDeliveryAndReceiptDate == null) {
-                            setPropertyAsSystemUser(DocumentSpecificModel.Props.FINAL_TERM_OF_DELIVERY_AND_RECEIPT, now, contractDocRef);
-                        }
-                    }
-                }
-                // Check if its a reply outgoing letter and update originating document info (if needed)
-                if (StringUtils.isNotBlank(regNumber) && documentTypeId.equals(DocumentSubtypeModel.Types.OUTGOING_LETTER)) {
-                    if (replyAssocs.size() > 0) {
-                        final NodeRef originalDocRef = replyAssocs.get(0).getTargetRef();
-                        if (nodeService.hasAspect(originalDocRef, DocumentSpecificModel.Aspects.COMPLIENCE)) {
-                            Date complienceDate = (Date) nodeService.getProperty(originalDocRef, DocumentSpecificModel.Props.COMPLIENCE_DATE);
-                            if (complienceDate == null && !workflowService.hasInProgressOtherUserOrderAssignmentTasks(originalDocRef)) {
-                                setPropertyAsSystemUser(DocumentSpecificModel.Props.COMPLIENCE_DATE, now, originalDocRef);
-                                setDocStatusFinished(originalDocRef);
+                if (StringUtils.isNotBlank(regNumber)) {
+                    if ((documentTypeId.equals(DocumentSubtypeModel.Types.INSTRUMENT_OF_DELIVERY_AND_RECEIPT) || documentTypeId
+                            .equals(DocumentSubtypeModel.Types.INSTRUMENT_OF_DELIVERY_AND_RECEIPT_MV))) {
+                        if (replyAssocs.size() > 0) {
+                            final NodeRef contractDocRef = replyAssocs.get(0).getTargetRef();
+                            Date finalTermOfDeliveryAndReceiptDate = (Date) nodeService.getProperty(contractDocRef,
+                                    DocumentSpecificModel.Props.FINAL_TERM_OF_DELIVERY_AND_RECEIPT);
+                            if (finalTermOfDeliveryAndReceiptDate == null) {
+                                setPropertyAsSystemUser(DocumentSpecificModel.Props.FINAL_TERM_OF_DELIVERY_AND_RECEIPT, now, contractDocRef);
                             }
                         }
-                        DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
-                        String comment = I18NUtil.getMessage("task_comment_finished_by_register_doc", regNumber, dateFormat.format(now));
-                        workflowService.finishTasksOrCompoundWorkflowsOnRegisterDoc(originalDocRef, comment);
                     }
-                }
-                // Check if its a reply outgoing mv letter and update originating document info (if needed)
-                if (StringUtils.isNotBlank(regNumber) && documentTypeId.equals(DocumentSubtypeModel.Types.INCOMING_LETTER_MV)) {
-                    if (replyAssocs.size() > 0) {
-                        final NodeRef originalDocRef = replyAssocs.get(0).getTargetRef();
-                        if (nodeService.hasAspect(originalDocRef, DocumentSpecificModel.Aspects.OUTGOING_LETTER_MV)) {
-                            Date replyDate = (Date) nodeService.getProperty(originalDocRef, DocumentSpecificModel.Props.REPLY_DATE);
-                            if (replyDate == null) {
-                                AuthenticationUtil.runAs(new RunAsWork<NodeRef>() {
-                                    @Override
-                                    public NodeRef doWork() throws Exception {
-                                        nodeService.setProperty(originalDocRef, DocumentSpecificModel.Props.REPLY_DATE, now);
-                                        return null;
-                                    }
-                                }, AuthenticationUtil.getSystemUserName());
-                            }
-                        }
-                        String docStatus = (String) nodeService.getProperty(originalDocRef, DOC_STATUS);
-                        if (!DocumentStatus.FINISHED.getValueName().equals(docStatus)) {
-                            AuthenticationUtil.runAs(new RunAsWork<NodeRef>() {
-                                @Override
-                                public NodeRef doWork() throws Exception {
-                                    nodeService.setProperty(originalDocRef, DOC_STATUS, DocumentStatus.FINISHED.getValueName());
-                                    return null;
+                    // Check if its a reply outgoing letter and update originating document info (if needed)
+                    if (documentTypeId.equals(DocumentSubtypeModel.Types.OUTGOING_LETTER)) {
+                        if (replyAssocs.size() > 0) {
+                            final NodeRef originalDocRef = replyAssocs.get(0).getTargetRef();
+                            if (nodeService.hasAspect(originalDocRef, DocumentSpecificModel.Aspects.COMPLIENCE)) {
+                                Date complienceDate = (Date) nodeService.getProperty(originalDocRef, DocumentSpecificModel.Props.COMPLIENCE_DATE);
+                                if (complienceDate == null && !workflowService.hasInProgressOtherUserOrderAssignmentTasks(originalDocRef)) {
+                                    setPropertyAsSystemUser(DocumentSpecificModel.Props.COMPLIENCE_DATE, now, originalDocRef);
+                                    setDocStatusFinished(originalDocRef);
                                 }
-                            }, AuthenticationUtil.getSystemUserName());
-                            documentLogService.addDocumentLog(originalDocRef, I18NUtil.getMessage("document_log_status_proceedingFinish") //
-                                    , I18NUtil.getMessage("document_log_creator_dhs"));
+                            }
+                            DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
+                            String comment = I18NUtil.getMessage("task_comment_finished_by_register_doc", regNumber, dateFormat.format(now));
+                            workflowService.finishTasksOrCompoundWorkflowsOnRegisterDoc(originalDocRef, comment);
                         }
                     }
-
+                    // Check if its a reply outgoing mv letter and update originating document info (if needed)
+                    if (documentTypeId.equals(DocumentSubtypeModel.Types.INCOMING_LETTER_MV)) {
+                        if (replyAssocs.size() > 0) {
+                            final NodeRef originalDocRef = replyAssocs.get(0).getTargetRef();
+                            if (nodeService.hasAspect(originalDocRef, DocumentSpecificModel.Aspects.OUTGOING_LETTER_MV)) {
+                                Date replyDate = (Date) nodeService.getProperty(originalDocRef, DocumentSpecificModel.Props.REPLY_DATE);
+                                if (replyDate == null) {
+                                    setPropertyAsSystemUser(DocumentSpecificModel.Props.REPLY_DATE, now, originalDocRef);
+                                }
+                            }
+                            setDocStatusFinished(originalDocRef);
+                        }
+                    }
                 }
             }
         }
@@ -2040,9 +2043,16 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
             }
 
             props.put(REG_NUMBER.toString(), regNumber);
-            props.put(SHORT_REG_NUMBER.toString(), StringUtils.substringAfterLast(regNumber, VOLUME_MARK_SEPARATOR));
             propertyChangesMonitorHelper.addIgnoredProps(props, REG_NUMBER);
-            propertyChangesMonitorHelper.addIgnoredProps(props, SHORT_REG_NUMBER);
+            if (!isRelocating || (generateNewRegNumberInReregistration && changeShortRegAndIndividualOnRelocatingDoc(previousVolume, series))) {
+                RegNrHolder regNrHolder = new RegNrHolder(regNumber);
+                props.put(SHORT_REG_NUMBER.toString(), regNrHolder.getShortRegNrWithoutIndividualizingNr());
+                propertyChangesMonitorHelper.addIgnoredProps(props, SHORT_REG_NUMBER);
+                if (regNrHolder.getIndividualizingNr() != null) {
+                    props.put(INDIVIDUAL_NUMBER.toString(), regNrHolder.getIndividualizingNr().toString());
+                    propertyChangesMonitorHelper.addIgnoredProps(props, INDIVIDUAL_NUMBER);
+                }
+            }
             if (!isRelocating) {
                 Date oldRegDateTime = (Date) nodeService.getProperty(docRef, REG_DATE_TIME);
                 if (oldRegDateTime != null && !adrDeletedDocumentAdded) {
@@ -2055,7 +2065,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
 
             throwIfNotDynamicDoc(docNode);
             String objectTypeId = (String) props.get(Props.OBJECT_TYPE_ID);
-            if (SystematicDocumentType.VACATION_APPLICATION.isSameType(objectTypeId)) {
+            if (SystematicDocumentType.VACATION_APPLICATION.isSameType(objectTypeId) && StringUtils.isBlank(oldRegNumber)) {
                 createSubstitutions(props);
             }
             if (getDocumentAdminService().getDocumentTypeProperty(objectTypeId, DocumentAdminModel.Props.FINISH_DOC_BY_REGISTRATION, Boolean.class)) {
@@ -2073,6 +2083,50 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
             return updateDocument(docNode);
         }
         throw new UnableToPerformException(MessageSeverity.INFO, "document_errorMsg_register_initialDocNotRegistered");
+    }
+
+    private String addUniqueNumberIfNeccessary(String regNumber, NodeRef initDocParentRef, boolean isRelocating) {
+        if (!isRelocating) {
+            return regNumber;
+        }
+        final RegNrHolder initDocRegNrHolder = new RegNrHolder(regNumber);
+        int uniqueNumber = 0;
+        for (Document anotherDoc : getAllDocumentsByParentNodeRef(initDocParentRef)) {
+            final RegNrHolder anotherDocRegNrHolder = new RegNrHolder(anotherDoc.getRegNumber());
+            if (StringUtils.equals(initDocRegNrHolder.getRegNrWithIndividualizingNr(), anotherDocRegNrHolder.getRegNrWithIndividualizingNr())) {
+                final Integer anotherDocUniqueNr = anotherDocRegNrHolder.getUniqueNumber();
+                if (anotherDocUniqueNr != null) {
+                    uniqueNumber = Math.max(uniqueNumber, anotherDocUniqueNr);
+                }
+            }
+        }
+        return regNumber + (uniqueNumber == 0 ? "" : "(" + (uniqueNumber + 1) + ")");
+    }
+
+    private int getMaxIndivNrInParent(final NodeRef docRef, final RegNrHolder initDocRegNrHolder, final NodeRef initDocParentRef, int maxIndivNr) {
+        for (Document anotherDoc : getAllDocumentsByParentNodeRef(initDocParentRef)) {
+            if (!docRef.equals(anotherDoc.getNodeRef())) {
+                final RegNrHolder anotherDocRegNrHolder = new RegNrHolder(anotherDoc.getRegNumber());
+                if (StringUtils.equals(initDocRegNrHolder.getRegNrWithoutIndividualizingNr(), anotherDocRegNrHolder.getRegNrWithoutIndividualizingNr())) {
+                    final Integer anotherDocIndivNr = anotherDocRegNrHolder.getIndividualizingNr();
+                    if (anotherDocIndivNr != null) {
+                        maxIndivNr = Math.max(maxIndivNr, anotherDocIndivNr);
+                    }
+                }
+            }
+        }
+        return maxIndivNr;
+    }
+
+    private boolean changeShortRegAndIndividualOnRelocatingDoc(Node previousVolumeNode, Series newSeries) {
+        Volume previousVolume = volumeService.getVolumeByNodeRef(previousVolumeNode.getNodeRef());
+        Series previousSeries = seriesService.getSeriesByNodeRef(previousVolume.getSeriesNodeRef());
+
+        boolean wasNoNewNumberButNowIs = !previousSeries.isNewNumberForEveryDoc() && newSeries.isNewNumberForEveryDoc();
+        boolean isSameNumberPattern = previousSeries.getDocNumberPattern().equals(newSeries.getDocNumberPattern());
+        boolean isSameRegister = previousSeries.getRegister() == newSeries.getRegister();
+
+        return wasNoNewNumberButNowIs || isSameNumberPattern || isSameRegister;
     }
 
     private void createSubstitutions(final Map<String, Object> props) {
@@ -2209,7 +2263,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
          * @param props
          * @param newIgnoredProps
          */
-        private void addIgnoredProps(final Map<String, Object> props, QName... newIgnoredProps) {
+        public void addIgnoredProps(final Map<String, Object> props, QName... newIgnoredProps) {
             if (newIgnoredProps == null) {
                 return;
             }
@@ -2228,14 +2282,15 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
          * @param nodeRef
          * @param propsToSave
          * @param ignoredProps
-         * @return true, if some property was changed <br>
+         * @return List<Pair<QName, Pair<Serializable oldValue, Serializable newValue>>> <br>
          *         This method ignores properties that
          *         <ul>
          *         <li>are given as an argument to this method call</li>
          *         <li>added to <code>propsToSave</code> using {@link #addIgnoredProps(Map, QName...)}</li>
          *         </ul>
          */
-        public boolean setPropertiesIgnoringSystemAndReturnIfChanged(final NodeRef nodeRef, final Map<String, Object> propsToSave, QName... ignoredProps) {
+        public List<Pair<QName, Pair<Serializable, Serializable>>> setPropertiesIgnoringSystemAndReturnNewValues(final NodeRef nodeRef, final Map<String, Object> propsToSave,
+                QName... ignoredProps) {
             final List<QName> ignored = ignoredProps == null ? Collections.<QName> emptyList() : Arrays.asList(ignoredProps);
             final Map<QName, Serializable> oldProps = BeanHelper.getGeneralService().getPropertiesIgnoringSys(BeanHelper.getNodeService().getProperties(nodeRef));
             final Map<QName, Serializable> docQNameProps = RepoUtil.toQNameProperties(propsToSave);
@@ -2248,14 +2303,16 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
             return checkPropertyChanges(oldProps, propsIgnoringSystem, ignored);
         }
 
-        private boolean checkPropertyChanges(final Map<QName, Serializable> oldProps, final Map<QName, Serializable> newProps, final List<QName> ignoredProps) {
+        public boolean setPropertiesIgnoringSystemAndReturnIfChanged(final NodeRef nodeRef, final Map<String, Object> propsToSave, QName... ignoredProps) {
+            return !setPropertiesIgnoringSystemAndReturnNewValues(nodeRef, propsToSave, ignoredProps).isEmpty();
+
+        }
+
+        private List<Pair<QName, Pair<Serializable, Serializable>>> checkPropertyChanges(final Map<QName, Serializable> oldProps, final Map<QName, Serializable> newProps,
+                final List<QName> ignoredProps) {
             if (oldProps.size() != newProps.size()) {
-                if (isPropNamesDifferent(oldProps, newProps, ignoredProps, "removed ignored props: ")) {
-                    return true;
-                }
-                if (isPropNamesDifferent(newProps, oldProps, ignoredProps, "added ignored props: ")) {
-                    return true;
-                }
+                isPropNamesDifferent(oldProps, newProps, ignoredProps, "removed ignored props: ");
+                isPropNamesDifferent(newProps, oldProps, ignoredProps, "added ignored props: ");
             }
             return isChanges(oldProps, newProps, ignoredProps);
         }
@@ -2268,7 +2325,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
             oldKeys.removeAll(newKeys);
             if (oldKeys.size() > 0) {
                 if (!ignoredProps.containsAll(oldKeys)) {
-                    differentPropNames = isChanges(oldProps, newProps, ignoredProps);
+                    differentPropNames = !isChanges(oldProps, newProps, ignoredProps).isEmpty();
                     if (differentPropNames && log.isDebugEnabled()) {
                         log.debug(debugPrefix + oldKeys);
                     }
@@ -2277,8 +2334,10 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
             return differentPropNames;
         }
 
-        private boolean isChanges(final Map<QName, Serializable> oldProps, final Map<QName, Serializable> newProps, final List<QName> ignoredProps) {
+        private List<Pair<QName, Pair<Serializable, Serializable>>> isChanges(final Map<QName, Serializable> oldProps, final Map<QName, Serializable> newProps,
+                final List<QName> ignoredProps) {
             Collection<QName> extraIgnoredProps = null;
+            List<Pair<QName, Pair<Serializable, Serializable>>> changedPropsNameNewValue = new ArrayList<Pair<QName, Pair<Serializable, Serializable>>>();
             for (Entry<QName, Serializable> entry : newProps.entrySet()) {
                 final QName key = entry.getKey();
                 final Serializable newValue = entry.getValue();
@@ -2295,49 +2354,11 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
                             continue;
                         }
                     }
-                    return true;
+
+                    changedPropsNameNewValue.add(new Pair<QName, Pair<Serializable, Serializable>>(key, new Pair<Serializable, Serializable>(oldValue, newValue)));
                 }
             }
-            return false;
-        }
-    }
-
-    /**
-     * Class that divides whole regNumber, that might contain individualizing number into individualizing number and rest of it
-     * 
-     * @author Ats Uiboupin
-     */
-    private static class RegNrHolder {
-        /**
-         * regNrWithoutIndividualizingNr - arbitary char-sequence ending with dash and followed by individualizingNr at the end<br>
-         * individualizingNr - integer number at the end of regNr
-         */
-        private static final Pattern individualizingNrPattern = Pattern.compile("(.*-)(\\d{1,})\\z");
-        private final String regNrWithoutIndividualizingNr;
-        private final Integer individualizingNr;
-
-        public RegNrHolder(String wholeRegNr) {
-            if (StringUtils.isNotBlank(wholeRegNr)) {
-                Matcher matcher = individualizingNrPattern.matcher(wholeRegNr.trim());
-                if (matcher.find()) {
-                    regNrWithoutIndividualizingNr = matcher.group(1);
-                    individualizingNr = Integer.valueOf(matcher.group(2));
-                } else {
-                    regNrWithoutIndividualizingNr = wholeRegNr;
-                    individualizingNr = null;
-                }
-            } else {
-                regNrWithoutIndividualizingNr = wholeRegNr;
-                individualizingNr = null;
-            }
-        }
-
-        public String getRegNrWithoutIndividualizingNr() {
-            return regNrWithoutIndividualizingNr;
-        }
-
-        public Integer getIndividualizingNr() {
-            return individualizingNr;
+            return changedPropsNameNewValue;
         }
     }
 
@@ -3049,6 +3070,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
                 privilegeService.addPrivilege(toRef, toNodeUserGroupMapping, null, otherDocOwner, Privileges.VIEW_DOCUMENT_META_DATA);
             }
         }
+        // FIXME PRIV2 Ats
         PrivilegeMappings privMappingsFrom = privilegeService.getPrivilegeMappings(fromRef);
         Collection<UserPrivileges> fromNodeUserPrivileges = privMappingsFrom.getPrivilegesByUsername().values();
         if (!fromNodeUserPrivileges.isEmpty()) {
@@ -3219,6 +3241,10 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
 
     public void setMenuService(MenuService menuService) {
         this.menuService = menuService;
+    }
+
+    public void setGenerateNewRegNumberInReregistration(boolean generateNewRegNumberInReregistration) {
+        this.generateNewRegNumberInReregistration = generateNewRegNumberInReregistration;
     }
 
     // END: getters / setters

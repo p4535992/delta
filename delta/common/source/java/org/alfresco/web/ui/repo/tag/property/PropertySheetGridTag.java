@@ -27,6 +27,8 @@ package org.alfresco.web.ui.repo.tag.property;
 import javax.faces.component.UIComponent;
 import org.alfresco.web.ui.common.tag.BaseComponentTag;
 
+import ee.webmedia.alfresco.common.propertysheet.component.WMUIPropertySheet;
+
 /**
  * Tag to represent the combination of a PropertySheet component
  * and a Grid renderer
@@ -49,6 +51,7 @@ public class PropertySheetGridTag extends BaseComponentTag
    private String finishButtonId;
    private String nextButtonId;
    private String config;
+   private String showUnvalued;
    
    /**
     * @see javax.faces.webapp.UIComponentTag#getComponentType()
@@ -177,6 +180,13 @@ public class PropertySheetGridTag extends BaseComponentTag
    {
       this.config = config;
    }
+   
+    /**
+     * @param showUnvalued Sets the showUnvalued
+     */
+    public void setShowUnvalued(String showUnvalued) {
+        this.showUnvalued = showUnvalued;
+    }   
 
    /**
     * @see javax.faces.webapp.UIComponentTag#setProperties(javax.faces.component.UIComponent)
@@ -194,6 +204,7 @@ public class PropertySheetGridTag extends BaseComponentTag
       setBooleanProperty(component, "externalConfig", this.externalConfig);
       setBooleanProperty(component, "readOnly", this.readOnly);
       setBooleanProperty(component, "validationEnabled", this.validationEnabled);
+      setBooleanProperty(component, WMUIPropertySheet.ATTR_SHOW_UNVALUED, showUnvalued);
       setStringStaticProperty(component, "cellpadding", this.cellpadding);
       setStringStaticProperty(component, "cellspacing", this.cellspacing);
       setStringStaticProperty(component, "finishButtonId", this.finishButtonId);

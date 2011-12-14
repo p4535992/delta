@@ -56,7 +56,7 @@ public abstract class FieldAndGroupBase extends MetadataItem {
         setProp(DocumentAdminModel.Props.NAME, name);
     }
 
-    protected final void setSystematic(boolean systematic) {
+    public final void setSystematic(boolean systematic) {
         setProp(DocumentAdminModel.Props.SYSTEMATIC, systematic);
     }
 

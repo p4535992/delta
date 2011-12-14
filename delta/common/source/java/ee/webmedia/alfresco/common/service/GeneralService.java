@@ -23,6 +23,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.QNamePattern;
 import org.alfresco.web.bean.repository.Node;
 
+import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.web.WmNode;
 
@@ -38,10 +39,16 @@ public interface GeneralService {
      */
     StoreRef getStore();
 
+    void setArchivalsStoreVOs(LinkedHashSet<ArchivalsStoreVO> archivalsStoreVOs);
+
+    LinkedHashSet<ArchivalsStoreVO> getArchivalsStoreVOs();
+
     /**
      * @return store where archived documents are stored
      */
     StoreRef getArchivalsStoreRef();
+
+    NodeRef getPrimaryArchivalsNodeRef();
 
     /**
      * Search for NodeRef with an XPath expression.
@@ -159,6 +166,16 @@ public interface GeneralService {
     TypeDefinition getAnonymousType(Node node);
 
     /**
+     * Add and remove aspects in repository according to node aspects.
+     * 
+     * @param node
+     * @return if node was modified in repository
+     */
+    boolean setAspectsIgnoringSystem(Node node);
+
+    boolean setAspectsIgnoringSystem(NodeRef nodeRef, Set<QName> nodeAspects);
+
+    /**
      * @param node
      * @return number of new associations created to repository
      */
@@ -270,6 +287,5 @@ public interface GeneralService {
      * @param threadName name to give the new thread that is created for executing work
      */
     void runOnBackground(final RunAsWork<Void> work, final String threadName);
-
 
 }

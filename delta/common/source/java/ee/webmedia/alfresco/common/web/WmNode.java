@@ -120,7 +120,17 @@ public class WmNode extends TransientNode {
 
     @Override
     public WmNode clone() {
-        return new WmNode(getNodeRef(), getType(), getAspects(), RepoUtil.toQNameProperties(getProperties(), true), getAddedAssociations());
+        WmNode clone = new WmNode(getNodeRef(), getType(), getAspects(), RepoUtil.toQNameProperties(getProperties(), true), getAddedAssociations());
+
+        // TODO Alar: deep cloning of values would be more correct
+        clone.allChildAssociationsByAssocType = allChildAssociationsByAssocType;
+        clone.allChildAssociationsByAssocTypeRetrieved = allChildAssociationsByAssocTypeRetrieved;
+        clone.childAssocsRetrieved = childAssocsRetrieved;
+        clone.childAssociations = childAssociations;
+        clone.childAssociationsAdded = childAssociationsAdded;
+        clone.childAssociationsRemoved = childAssociationsRemoved;
+
+        return clone;
     }
 
     public void updateNodeRef(NodeRef newRef) {

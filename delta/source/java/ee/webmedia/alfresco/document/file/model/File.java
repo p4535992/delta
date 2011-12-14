@@ -14,6 +14,7 @@ import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.lang.time.FastDateFormat;
 
 import ee.webmedia.alfresco.common.service.IClonable;
 import ee.webmedia.alfresco.signature.model.DataItem;
@@ -48,6 +49,7 @@ public class File implements Serializable, IClonable<File> {
     private boolean isTransformableToPdf;
     private long nrOfChildren; // used to show childCount if the file represents folder
     private boolean isPdf;
+    public static FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy HH:mm");
 
     public File() {
     }
@@ -128,6 +130,10 @@ public class File implements Serializable, IClonable<File> {
 
     public void setCreated(Date created) {
         this.created = created;
+    }
+
+    public String getCreatedTimeStr() {
+        return getCreated() != null ? dateFormat.format(getCreated()) : "";
     }
 
     public Date getModified() {

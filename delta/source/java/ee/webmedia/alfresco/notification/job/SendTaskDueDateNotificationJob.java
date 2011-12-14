@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.notification.job;
 
+import java.util.Date;
+
 import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
@@ -19,18 +21,22 @@ public class SendTaskDueDateNotificationJob implements StatefulJob {
     public void execute(JobExecutionContext context) throws JobExecutionException {
         log.debug("Starting SendTaskDueDateNotificationJob");
         JobDataMap jobData = context.getJobDetail().getJobDataMap();
-        Object workerObj = jobData.get("notificationService");
+
+        String objectName = "notificationService";
+        Object workerObj = jobData.get(objectName);
         if (workerObj == null || !(workerObj instanceof NotificationService)) {
-            throw new AlfrescoRuntimeException("SendTaskDueDateJob data must contain valid 'notificationService' reference, but contained: "
+            throw new AlfrescoRuntimeException("SendTaskDueDateJob data must contain valid '" + objectName + "' reference, but contained: "
                     + workerObj);
         }
         final NotificationService worker = (NotificationService) workerObj;
+
+        final Date firingTime = context.getFireTime();
 
         // Run job as with systemUser privileges
         final Integer notificationCount = AuthenticationUtil.runAs(new RunAsWork<Integer>() {
             @Override
             public Integer doWork() throws Exception {
-                return worker.processTaskDueDateNotifications();
+                return worker.processTaskDueDateNotificationsIfWorkingDay(firingTime);
             }
         }, AuthenticationUtil.getSystemUserName());
         // Done

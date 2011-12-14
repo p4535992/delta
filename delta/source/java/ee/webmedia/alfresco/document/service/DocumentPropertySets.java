@@ -60,6 +60,7 @@ public class DocumentPropertySets {
     static {
         ignoredPropertiesWhenMakingCopy.add(DocumentCommonModel.Props.REG_NUMBER.toString());
         ignoredPropertiesWhenMakingCopy.add(DocumentCommonModel.Props.SHORT_REG_NUMBER.toString());
+        ignoredPropertiesWhenMakingCopy.add(DocumentCommonModel.Props.INDIVIDUAL_NUMBER.toString());
         ignoredPropertiesWhenMakingCopy.add(DocumentCommonModel.Props.REG_DATE_TIME.toString());
         ignoredPropertiesWhenMakingCopy.add(DocumentCommonModel.Props.SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS.toString());
         ignoredPropertiesWhenMakingCopy.addAll(ownerProperties);

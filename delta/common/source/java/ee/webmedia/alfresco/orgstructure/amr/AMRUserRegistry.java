@@ -3,9 +3,11 @@ package ee.webmedia.alfresco.orgstructure.amr;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import org.alfresco.model.ContentModel;
@@ -20,6 +22,7 @@ import smit.ametnik.services.Aadress;
 import smit.ametnik.services.AmetnikExt;
 import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.orgstructure.amr.service.AMRService;
+import ee.webmedia.alfresco.orgstructure.amr.service.RSService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.UserUtil;
 
@@ -33,6 +36,7 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
 
     private UserService userService;
     private AMRService amrService;
+    private RSService rsService;
     private ApplicationService applicationService;
     private String testEmail;
 
@@ -43,7 +47,16 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
     public Iterator<NodeDescription> getPersons(Date modifiedSince) {
         AmetnikExt[] ametnikArray = amrService.getAmetnikByAsutusId();
         ArrayList<NodeDescription> persons = new ArrayList<NodeDescription>(ametnikArray.length);
+        boolean isRestrictedDelta = rsService.isRestrictedDelta();
+        List<String> restrictedDeltaUsers = new ArrayList<String>();
+        if (isRestrictedDelta) {
+            // avoid retrieving restricted delta users if not in restricted delta
+            restrictedDeltaUsers = Arrays.asList(rsService.getIsikukoodByAsutusIdAndHasRsLubaRequest());
+        }
         for (AmetnikExt ametnik : ametnikArray) {
+            if (checkRestrictedDeltaUsers(isRestrictedDelta, restrictedDeltaUsers, ametnik)) {
+                continue;
+            }
             NodeDescription person = mergePersonDescription(ametnik);
             person.setLastModified(new Date());// actually should be when modified in remote system
             persons.add(person);
@@ -56,10 +69,17 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
         return persons.iterator();
     }
 
+    private boolean checkRestrictedDeltaUsers(boolean isRestrictedDelta, List<String> restrictedDeltaUsers, AmetnikExt ametnik) {
+        return isRestrictedDelta && !restrictedDeltaUsers.contains(ametnik.getIsikukood());
+    }
+
     @Override
     public Iterator<NodeDescription> getPersonByIdCode(String idCode) {
         AmetnikExt ametnik = amrService.getAmetnikByIsikukood(idCode);
         if (ametnik == null) {
+            return Collections.<NodeDescription> emptyList().iterator();
+        }
+        if (rsService.isRestrictedDelta() && !rsService.hasRsLubaByIsikukood(idCode)) {
             return Collections.<NodeDescription> emptyList().iterator();
         }
         return Collections.singleton(mergePersonDescription(ametnik)).iterator();
@@ -118,7 +138,7 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
         properties.put(ContentModel.PROP_LASTNAME, ametnik.getPerekonnanimi());
         properties.put(ContentModel.PROP_TELEPHONE, ametnik.getKontakttelefon());
         properties.put(ContentModel.PROP_JOBTITLE, ametnik.getAmetikoht());
-        properties.put(ContentModel.PROP_ORGANIZATION_PATH, UserUtil.formatYksusRadaToOrganizationPath(ametnik.getYksusRada()));
+        properties.put(ContentModel.PROP_ORGANIZATION_PATH, (ArrayList<String>) UserUtil.formatYksusRadaToOrganizationPath(ametnik.getYksusRada()));
         Aadress aadress = ametnik.getAadress();
         if (aadress != null) {
             properties.put(ContentModel.PROP_COUNTY, aadress.getMaakond());
@@ -160,6 +180,11 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
     public void setTestEmail(String testEmail) {
         this.testEmail = testEmail;
     }
+
+    public void setRsService(RSService rsService) {
+        this.rsService = rsService;
+    }
+
     // END: getters / setters
 
 }

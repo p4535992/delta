@@ -50,6 +50,7 @@
             </property>
             <property name="tasksearch:organizationName">
                <type>d:text</type>
+               <multiple>true</multiple>
             </property>
             <property name="tasksearch:jobTitle">
                <type>d:text</type>
@@ -91,7 +92,7 @@
                <type>d:date</type>
             </property>
             <property name="tasksearch:docType">
-               <type>d:date</type>
+               <type>d:text</type>
                <multiple>true</multiple>
             </property>
          </properties>

@@ -17,6 +17,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.context.servlet.ServletFacesContextImpl;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.menu.model.DropdownMenuItem;
 import ee.webmedia.alfresco.menu.model.Menu;
@@ -25,6 +26,7 @@ import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.menu.service.MenuService.MenuItemFilter;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.menu.web.MenuItemCountBean;
+import ee.webmedia.alfresco.orgstructure.amr.service.RSService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
@@ -161,7 +163,7 @@ public class MenuRenderer extends BaseRenderer {
             int i = 0;
             String id = SECONDARY_MENU_PREFIX;
             for (MenuItem item : menuItems) {
-                UIComponent menuItem = item.createComponent(context, id + i, getUserService(), getWorkflowService(), getEinvoiceService());
+                UIComponent menuItem = item.createComponent(context, id + i, getUserService(), getWorkflowService(), getEinvoiceService(), getRsService());
                 if (menuItem != null) {
                     children.add(menuItem);
                     i++;
@@ -172,6 +174,10 @@ public class MenuRenderer extends BaseRenderer {
                 Utils.encodeRecursive(context, (UIComponent) o);
             }
         }
+    }
+
+    protected RSService getRsService() {
+        return BeanHelper.getRSService();
     }
 
     /**
@@ -196,7 +202,7 @@ public class MenuRenderer extends BaseRenderer {
         Map<String, MenuItemFilter> menuItemFilters = getMenuService().getMenuItemFilters();
         for (MenuItem item : menuItems) {
             if (activeItemid.equals(Integer.toString(i))) {
-                UIComponent menuItem = item.createComponent(context, id + i, true, getUserService(), getWorkflowService(), getEinvoiceService(), false);
+                UIComponent menuItem = item.createComponent(context, id + i, true, getUserService(), getWorkflowService(), getEinvoiceService(), getRsService(), false);
                 if (menuItem != null) {
                     children.add(menuItem);
                 }
@@ -212,12 +218,12 @@ public class MenuRenderer extends BaseRenderer {
                     filter = null; // reset for next cycle
                 }
 
-                UIComponent menuItem = item.createComponent(context, id + i, getUserService(), getWorkflowService(), getEinvoiceService());
+                UIComponent menuItem = item.createComponent(context, id + i, getUserService(), getWorkflowService(), getEinvoiceService(), getRsService());
                 if (menuItem != null) {
                     children.add(removeTooltipRecursive(menuItem));
                 }
             } else {
-                UIComponent menuItem = item.createComponent(context, id + i, getUserService(), getWorkflowService(), getEinvoiceService());
+                UIComponent menuItem = item.createComponent(context, id + i, getUserService(), getWorkflowService(), getEinvoiceService(), getRsService());
                 if (menuItem != null) {
                     children.add(menuItem);
                 }

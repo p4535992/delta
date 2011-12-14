@@ -40,7 +40,7 @@ public interface VersionsService {
      * @param filename TODO
      * @return true if new version was created
      */
-    boolean updateVersionIfNeeded(NodeRef nodeRef, String filename);
+    boolean updateVersion(NodeRef nodeRef, String filename, boolean updateOnlyIfNeeded);
 
     /**
      * Returns the value of the VersionsModel.Props.VersionLockable.LOCKED property if the node has VersionsModel.Aspects.VERSION_LOCKABLE aspect.
@@ -66,4 +66,13 @@ public interface VersionsService {
      * @param lockNode
      */
     void addVersionLockableAspect(NodeRef lockNode);
+
+    /**
+     * Calculate next version label based on current version (no new version is actually created)
+     * 
+     * @param nodeRef
+     * @return
+     */
+    String calculateNextVersionLabel(NodeRef fileRef);
+
 }

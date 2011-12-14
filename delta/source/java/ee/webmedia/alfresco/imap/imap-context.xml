@@ -30,6 +30,11 @@
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
       <property name="importer" ref="spacesBootstrap" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="imapSpacesBootstrap" />
+         </list>
+      </property>       
       <property name="bootstrapViews">
          <list>
             <props>
@@ -40,7 +45,28 @@
             </props>
          </list>
       </property>
-   </bean>    
+   </bean>
+   
+    <bean id="sendFailureNoticesSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="imapSpacesBootstrap" />
+         </list>
+      </property>        
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/imap-ext:imap-root</prop>
+               <prop key="location">ee/webmedia/alfresco/imap/bootstrap/imap-folders2.xml</prop>
+               <prop key="messages">ee/webmedia/alfresco/imap/bootstrap/imap-folders-bootstrap</prop>
+            </props>
+         </list>
+      </property>
+   </bean> 
 
    <bean id="imapWebClientBootstrap" class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
       <property name="configs">
@@ -57,6 +83,7 @@
          <list>
             <ref bean="imapSpacesBootstrap" />
             <ref bean="scannedSpacesBootstrap" />
+            <ref bean="sendFailureNoticesSpacesBootstrap" />
          </list>
       </property>      
       <property name="generalService" ref="GeneralService" />
@@ -96,7 +123,8 @@
       <property name="messageCopyFolder" value="${imap.messageFolder}" />
       <property name="incomingLettersSubfolderType" value="${imap-folders.incomingLetters.subfolderType}" />
       <property name="attachmentsSubfolderType" value="${imap-folders.attachments.subfolderType}" />
-      <property name="outgoingLettersSubfolderType" value="${imap-foders.outgoingLetters.subfolderType}" />      
+      <property name="outgoingLettersSubfolderType" value="${imap-foders.outgoingLetters.subfolderType}" />
+      <property name="sendFailureNoticesSubfolderType" value="${imap-folders.sendingFailed.subfolderType}" />    
    </bean>
 
    <bean id="ImapServiceExt" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -127,4 +155,12 @@
       <property name="menuService" ref="MenuService" />
       <property name="documentService" ref="DocumentService" />
    </bean>
+   
+   <bean class="ee.webmedia.alfresco.imap.web.SendFailureNotificationListMenuItemProcessor">
+      <property name="menuService" ref="MenuService" />
+      <property name="imapServiceExt" ref="ImapServiceExt" />
+   </bean>
+   
+   <bean id="SendFailureNotificationsListDialog" class="ee.webmedia.alfresco.imap.web.SendFailureNotificationsListDialog" scope="session" />
+      
 </beans>

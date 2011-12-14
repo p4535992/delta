@@ -76,6 +76,7 @@ import ee.webmedia.alfresco.imap.ImmutableFolder;
 import ee.webmedia.alfresco.imap.IncomingEInvoiceCreateBehaviour;
 import ee.webmedia.alfresco.imap.IncomingFolderAppendBehaviour;
 import ee.webmedia.alfresco.imap.PermissionDeniedAppendBehaviour;
+import ee.webmedia.alfresco.imap.SendFailureAppendBehaviour;
 import ee.webmedia.alfresco.imap.SentFolderAppendBehaviour;
 import ee.webmedia.alfresco.imap.model.ImapModel;
 import ee.webmedia.alfresco.user.service.UserService;
@@ -104,6 +105,7 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
     private String incomingLetterSubfolderType;
     private String attachmentsSubfolderType;
     private String outgoingLettersSubfolderType;
+    private String sendFailureNoticesSubfolderType;
     private Map<NodeRef, String> imapFolderTypes = null;
     private Map<NodeRef, Set<String>> imapFolderFixedSubfolders = null;
 
@@ -122,9 +124,24 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
     }
 
     @Override
-    public long findFolderAndSaveEmail(NodeRef folderNodeRef, MimeMessage mimeMessage, String behaviour, boolean incomingEmail) throws FolderException {
+    public long saveEmailToSubfolder(NodeRef folderNodeRef, MimeMessage mimeMessage, String behaviour, boolean incomingEmail) throws FolderException {
         NodeRef parentNodeRef = findOrCreateFolder(folderNodeRef, behaviour);
         return saveEmail(parentNodeRef, mimeMessage, incomingEmail);
+    }
+
+    @Override
+    public void saveFailureNoticeToSubfolder(NodeRef folderNodeRef, MimeMessage mimeMessage, String behaviour) throws FolderException {
+        NodeRef parentNodeRef = findOrCreateFolder(folderNodeRef, behaviour);
+        saveFailureNotice(parentNodeRef, mimeMessage);
+    }
+
+    private void saveFailureNotice(NodeRef parentNodeRef, MimeMessage mimeMessage) throws FolderException {
+        try {
+            createBody(parentNodeRef, mimeMessage, mimeMessage.getSubject());
+        } catch (Exception e) {
+            log.warn("Cannot save email, folderNodeRef=" + parentNodeRef, e);
+            throw new FolderException("Cannot save email: " + e.getMessage());
+        }
     }
 
     private NodeRef findOrCreateFolder(NodeRef folderNodeRef, String behaviour) throws FolderException {
@@ -151,7 +168,7 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
             } else {
                 docTypeId = SystematicDocumentType.OUTGOING_LETTER.getId();
             }
-            NodeRef docRef = documentDynamicService.createNewDocument(docTypeId, folderNodeRef).getNodeRef();
+            NodeRef docRef = documentDynamicService.createNewDocument(docTypeId, folderNodeRef).getFirst().getNodeRef();
 
             Map<QName, Serializable> properties = new HashMap<QName, Serializable>();
             String subject = mimeMessage.getSubject();
@@ -281,7 +298,7 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
     }
 
     @Override
-    public void findFolderAndSaveAttachments(NodeRef document, MimeMessage originalMessage, boolean saveBody) throws IOException, MessagingException, TransformationException,
+    public void saveAttachmentsToSubfolder(NodeRef document, MimeMessage originalMessage, boolean saveBody) throws IOException, MessagingException, TransformationException,
             FolderException {
         NodeRef parentNodeRef = findOrCreateFolder(document, AttachmentsFolderAppendBehaviour.BEHAVIOUR_NAME);
         saveAttachments(parentNodeRef, originalMessage, saveBody);
@@ -328,6 +345,13 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
         NodeRef attachmentSpaceRef = generalService.getNodeRef(ImapModel.Repo.ATTACHMENT_SPACE);
         Assert.notNull(attachmentSpaceRef, "Attachment node reference not found");
         return attachmentSpaceRef;
+    }
+
+    @Override
+    public NodeRef getSendFailureNoticeRoot() {
+        NodeRef sendFailureNoticeSpaceRef = generalService.getNodeRef(ImapModel.Repo.SEND_FAILURE_NOTICE_SPACE);
+        Assert.notNull(sendFailureNoticeSpaceRef, "Send failure notice node reference not found");
+        return sendFailureNoticeSpaceRef;
     }
 
     @Override
@@ -398,6 +422,11 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
     }
 
     private Part createBody(NodeRef document, MimeMessage originalMessage) throws MessagingException, IOException {
+        String filename = I18NUtil.getMessage("imap.letter_body_filename");
+        return createBody(document, originalMessage, filename);
+    }
+
+    public Part createBody(NodeRef document, MimeMessage originalMessage, String filename) throws MessagingException, IOException {
         Part p = getText(originalMessage);
         if (p == null) {
             log.debug("No body part found from message, skipping body PDF creation");
@@ -431,7 +460,6 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
 
         ContentReader reader = tempWriter.getReader();
 
-        String filename = I18NUtil.getMessage("imap.letter_body_filename");
         FileInfo createdFile = fileService.transformToPdf(document, reader, filename, filename);
         if (createdFile == null) {
             createAttachment(document, p, filename);
@@ -567,6 +595,8 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
             return new AttachmentsFolderAppendBehaviour(this);
         } else if (SentFolderAppendBehaviour.BEHAVIOUR_NAME.equals(behaviour)) {
             return new SentFolderAppendBehaviour(this);
+        } else if (SendFailureAppendBehaviour.BEHAVIOUR_NAME.equals(behaviour)) {
+            return new SendFailureAppendBehaviour(this);
         } else {
             throw new RuntimeException("Unknown behaviour: " + behaviour);
         }
@@ -639,6 +669,7 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
             allowedFolders.add(getIncomingInvoiceFolderName());
             allowedFolders.add(I18NUtil.getMessage("imap.folder_attachments"));
             allowedFolders.add(I18NUtil.getMessage("imap.folder_sent_letters"));
+            allowedFolders.add(I18NUtil.getMessage("imap-folders.sendFailureNotices"));
         }
         return allowedFolders;
     }
@@ -653,6 +684,7 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
         setSubfolderType(incomingLetterSubfolderType, generalService.getNodeRef(ImapModel.Repo.INCOMING_SPACE));
         setSubfolderType(attachmentsSubfolderType, generalService.getNodeRef(ImapModel.Repo.ATTACHMENT_SPACE));
         setSubfolderType(outgoingLettersSubfolderType, generalService.getNodeRef(ImapModel.Repo.SENT_SPACE));
+        setSubfolderType(sendFailureNoticesSubfolderType, generalService.getNodeRef(ImapModel.Repo.SEND_FAILURE_NOTICE_SPACE));
     }
 
     private void setSubfolderType(String subfolderType, NodeRef parentNodeRef) {
@@ -701,6 +733,10 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
 
     public void setOutgoingLettersSubfolderType(String outgoingLettersSubfolderType) {
         this.outgoingLettersSubfolderType = outgoingLettersSubfolderType;
+    }
+
+    public void setSendFailureNoticesSubfolderType(String sendFailureNoticesSubfolderType) {
+        this.sendFailureNoticesSubfolderType = sendFailureNoticesSubfolderType;
     }
 
     public void setImapService(ImapService imapService) {

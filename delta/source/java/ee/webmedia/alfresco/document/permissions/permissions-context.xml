@@ -116,6 +116,7 @@
             <value>editDocumentFiles</value>
             <value>deleteDocumentFiles</value>
             <value>deleteDocumentMetaData</value>
+            <value>editDocument</value>
          </list>
       </property>
    </bean>

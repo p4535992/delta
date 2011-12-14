@@ -14,7 +14,6 @@ import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
-import org.alfresco.service.cmr.version.VersionService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.servlet.DownloadContentServlet;
 import org.apache.commons.lang.StringUtils;
@@ -32,7 +31,7 @@ public class VersionsServiceImpl implements VersionsService {
 
     private static org.apache.commons.logging.Log logger = org.apache.commons.logging.LogFactory.getLog(VersionsServiceImpl.class);
 
-    private VersionService versionService;
+    private VersionServiceExt versionServiceExt;
     private NodeService nodeService;
     private UserService userService;
     private DocumentLogService documentLogService;
@@ -54,7 +53,8 @@ public class VersionsServiceImpl implements VersionsService {
 
     @Override
     public List<Version> getAllVersions(NodeRef nodeRef, String fileName) {
-        List<org.alfresco.service.cmr.version.Version> versionHistory = (List<org.alfresco.service.cmr.version.Version>) versionService.getVersionHistory(nodeRef).getAllVersions();
+        List<org.alfresco.service.cmr.version.Version> versionHistory = (List<org.alfresco.service.cmr.version.Version>) versionServiceExt.getVersionHistory(nodeRef)
+                .getAllVersions();
         List<Version> list = new ArrayList<Version>(versionHistory.size());
         for (org.alfresco.service.cmr.version.Version v : versionHistory) {
             Version ver = transformVersion(v, fileName);
@@ -64,7 +64,12 @@ public class VersionsServiceImpl implements VersionsService {
     }
 
     @Override
-    public boolean updateVersionIfNeeded(NodeRef nodeRef, String filename) {
+    public String calculateNextVersionLabel(NodeRef nodeRef) {
+        return versionServiceExt.calculateNextVersionLabel(nodeRef);
+    }
+
+    @Override
+    public boolean updateVersion(NodeRef nodeRef, String filename, boolean updateOnlyIfNeeded) {
         if (nodeService.hasAspect(nodeRef, VersionsModel.Aspects.VERSION_LOCKABLE) == true) {
             // if not locked, then a new version can be made
             boolean isLocked = getVersionLockableAspect(nodeRef);
@@ -81,19 +86,21 @@ public class VersionsServiceImpl implements VersionsService {
                     }
                 }
 
-                org.alfresco.service.cmr.version.Version previousLatestVer = versionService.getCurrentVersion(nodeRef);
-                if (previousLatestVer != null) {
-                    Date frozenModifiedTime = previousLatestVer.getFrozenModifiedDate();
-                    String modifier = previousLatestVer.getFrozenModifier();
-                    // previousLatestVer.getVersionProperty(name)
-                    if (DateUtils.isSameDay(frozenModifiedTime, new Date()) && StringUtils.equals(AuthenticationUtil.getFullyAuthenticatedUser(), modifier)) {
-                        logger.info("not creating new version of file with nodeRef=" + nodeRef + " - latest version is modified by same user today");
-                        return false;
+                if (updateOnlyIfNeeded) {
+                    org.alfresco.service.cmr.version.Version previousLatestVer = versionServiceExt.getCurrentVersion(nodeRef);
+                    if (previousLatestVer != null) {
+                        Date frozenModifiedTime = previousLatestVer.getFrozenModifiedDate();
+                        String modifier = previousLatestVer.getFrozenModifier();
+                        // previousLatestVer.getVersionProperty(name)
+                        if (DateUtils.isSameDay(frozenModifiedTime, new Date()) && StringUtils.equals(AuthenticationUtil.getFullyAuthenticatedUser(), modifier)) {
+                            logger.info("not creating new version of file with nodeRef=" + nodeRef + " - latest version is modified by same user today");
+                            return false;
+                        }
                     }
                 }
 
                 // create a new version
-                versionService.createVersion(nodeRef, getVersionModifiedAspectProperties(nodeRef));
+                versionServiceExt.createVersion(nodeRef, getVersionModifiedAspectProperties(nodeRef));
                 // check the flag as true to prevent creation of new versions until the node is unlocked in UnlockMethod
                 setVersionLockableAspect(nodeRef, true);
                 // log the event
@@ -197,8 +204,8 @@ public class VersionsServiceImpl implements VersionsService {
 
     // START: getters / setters
 
-    public void setVersionService(VersionService versionService) {
-        this.versionService = versionService;
+    public void setVersionServiceExt(VersionServiceExt versionServiceExt) {
+        this.versionServiceExt = versionServiceExt;
     }
 
     public void setNodeService(NodeService nodeService) {

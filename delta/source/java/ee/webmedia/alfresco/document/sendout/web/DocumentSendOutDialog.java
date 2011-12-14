@@ -480,6 +480,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         }
         if (!result) {
             MessageUtil.addErrorMessage(context, "document_send_failed");
+            getDocumentLogService().addDocumentLog(model.getNodeRef(), MessageUtil.getMessage("document_log_status_sending_failed"));
         } else {
             getDocumentLogService().addDocumentLog(model.getNodeRef(), MessageUtil.getMessage("document_log_status_sent"));
             ((MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME)).processTaskItem(

@@ -96,4 +96,11 @@
    <bean id="volumeTypeAndNamespaceUpdater" class="ee.webmedia.alfresco.volume.bootstrap.VolumeTypeUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
    </bean>
+
+   <!-- START: web beans: -->
+
+   <bean id="VolumeTypePrivilegesHandler" class="ee.webmedia.alfresco.volume.web.VolumeTypePrivilegesHandler" scope="session" />
+
+   <!-- END: web beans: -->
+
 </beans>

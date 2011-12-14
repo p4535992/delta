@@ -33,4 +33,9 @@ public class ForRegisteringListDialog extends BaseDocumentListDialog {
     public String getColumnsFile() {
         return "/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog-columns.jsp";
     }
+
+    @Override
+    public boolean isShowOrgStructColumn() {
+        return true;
+    }
 }

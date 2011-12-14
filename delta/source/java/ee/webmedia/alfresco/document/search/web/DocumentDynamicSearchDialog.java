@@ -27,6 +27,7 @@ import org.alfresco.web.config.PropertySheetConfigElement;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
@@ -62,9 +63,11 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
         super.init(params);
 
         if (stores == null) {
-            stores = new ArrayList<SelectItem>(2);
+            stores = new ArrayList<SelectItem>();
             stores.add(new SelectItem(getGeneralService().getStore(), MessageUtil.getMessage("functions_title")));
-            stores.add(new SelectItem(getGeneralService().getArchivalsStoreRef(), MessageUtil.getMessage("archivals_list")));
+            for (ArchivalsStoreVO archivalsStoreVO : getGeneralService().getArchivalsStoreVOs()) {
+                stores.add(new SelectItem(archivalsStoreVO.getStoreRef(), archivalsStoreVO.getTitle()));
+            }
         }
 
         config = getDocumentConfigService().getSearchConfig();

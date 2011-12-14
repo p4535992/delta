@@ -22,7 +22,7 @@ public class DeleteDocumentEvaluator extends BaseActionEvaluator {
         }
         boolean isAdminOrDocManager = new IsAdminOrDocManagerEvaluator().evaluate(docNode);
         return isAdminOrDocManager || (StringUtils.isBlank((String) docNode.getProperties().get(DocumentCommonModel.Props.REG_NUMBER))
-                && docNode.hasPermission(DocumentCommonModel.Privileges.DELETE_DOCUMENT_META_DATA));
+                && new IsOwnerEvaluator().evaluate(docNode));
     }
 
 }

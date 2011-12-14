@@ -43,6 +43,10 @@ public class CalendarUtil {
         return date;
     }
 
+    public static boolean isWorkingDay(LocalDate date, ClassificatorService classificatorService) {
+        return isWorkingDay(date, getNationalHolidays(classificatorService));
+    }
+
     private static boolean isWorkingDay(LocalDate date, List<LocalDate> holidays) {
         if (date.getDayOfWeek() == DateTimeConstants.SATURDAY || date.getDayOfWeek() == DateTimeConstants.SUNDAY) {
             return false;
