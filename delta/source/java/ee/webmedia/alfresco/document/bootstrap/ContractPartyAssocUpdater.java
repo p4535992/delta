@@ -48,6 +48,7 @@ public class ContractPartyAssocUpdater extends AbstractNodeUpdater {
             nodeService.addAspect(docRef, DocumentChildModel.Aspects.CONTRACT_PARTY_CONTAINER, null);
             info.add("addedContractPartyContainerAspect");
         }
+        Map<QName, Serializable> docProps = nodeService.getProperties(docRef);
         List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(docRef, DocumentCommonModel.Types.METADATA_CONTAINER, RegexQNamePattern.MATCH_ALL);
         List<String> childRefs = new ArrayList<String>();
         StringBuilder sb = new StringBuilder();
@@ -58,11 +59,11 @@ public class ContractPartyAssocUpdater extends AbstractNodeUpdater {
                 info.add("childTypeIsNotMetadataContainer," + childType.toPrefixString(serviceRegistry.getNamespaceService()));
                 continue;
             }
-            Map<QName, Serializable> props = nodeService.getProperties(childRef);
+            Map<QName, Serializable> childProps = nodeService.getProperties(childRef);
             nodeService.deleteNode(childRef);
-            detectProblems(props, childRef, sb);
+            detectProblems(childProps, childRef, docProps, sb);
             NodeRef childNodeRef = nodeService.createNode(docRef, DocumentChildModel.Assocs.CONTRACT_PARTY, DocumentChildModel.Assocs.CONTRACT_PARTY,
-                    DocumentChildModel.Assocs.CONTRACT_PARTY, props).getChildRef();
+                    DocumentChildModel.Assocs.CONTRACT_PARTY, childProps).getChildRef();
             childRefs.add(childNodeRef.toString());
         }
         info.add("createdAndDeletedChildNodes, " + childRefs.size() + " ( " + StringUtils.join(childRefs, " ") + " )");
@@ -73,18 +74,20 @@ public class ContractPartyAssocUpdater extends AbstractNodeUpdater {
         return info.toArray(new String[info.size()]);
     }
 
-    private void detectProblems(Map<QName, Serializable> props, NodeRef docChildRef, StringBuilder sb) {
-        if (!props.containsKey(DocumentAdminModel.Props.OBJECT_TYPE_ID)) {
-            // props.put(DocumentAdminModel.Props.OBJECT_TYPE_ID, "valueWasMissing");
-            sb.append("objectTypeId valueWasMissing ");
+    private void detectProblems(Map<QName, Serializable> childProps, NodeRef childRef, Map<QName, Serializable> docProps, StringBuilder sb) {
+        if (childProps.get(DocumentAdminModel.Props.OBJECT_TYPE_ID) == null) {
+            Serializable value = docProps.get(DocumentAdminModel.Props.OBJECT_TYPE_ID);
+            childProps.put(DocumentAdminModel.Props.OBJECT_TYPE_ID, value);
+            sb.append("objectTypeId valueWasMissing, set " + value + " ");
         }
-        if (!props.containsKey(DocumentAdminModel.Props.OBJECT_TYPE_VERSION_NR)) {
-            // props.put(DocumentAdminModel.Props.OBJECT_TYPE_VERSION_NR, -99);
-            sb.append("objectTypeVersionNr valueWasMissing ");
+        if (childProps.get(DocumentAdminModel.Props.OBJECT_TYPE_VERSION_NR) == null) {
+            Serializable value = docProps.get(DocumentAdminModel.Props.OBJECT_TYPE_VERSION_NR);
+            childProps.put(DocumentAdminModel.Props.OBJECT_TYPE_VERSION_NR, value);
+            sb.append("objectTypeVersionNr valueWasMissing, set " + value + " ");
         }
         String problems = sb.toString();
         if (!problems.isEmpty()) {
-            sb.append("on docChildRef=").append(docChildRef).append(" ");
+            sb.append("on docChildRef=").append(childRef).append(" ");
         }
     }
 }
