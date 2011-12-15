@@ -1440,7 +1440,7 @@ public class TestDataService implements SaveListener {
 
         // ASSOCS
         Random assocsRandom = new Random();
-        int assocsCount = Math.abs(getRandomGaussian2(assocsRandom, 16) - 8);
+        int assocsCount = docs.isEmpty() ? 0 : Math.abs(getRandomGaussian2(assocsRandom, 16) - 8);
         Set<NodeRef> assocOtherDocRefs = new HashSet<NodeRef>();
         for (int i = 0; i < assocsCount; i++) {
             QName assocQName = DocumentCommonModel.Assocs.DOCUMENT_2_DOCUMENT;
