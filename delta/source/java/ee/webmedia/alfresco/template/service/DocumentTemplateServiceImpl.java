@@ -125,13 +125,17 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             // Temporary safeguard until OO document templates & formulas are properly implemented
             return;
         }
-        String docTemplateName = (String) nodeService.getProperty(docRef, DocumentSpecificModel.Props.TEMPLATE_NAME);
         List<FileInfo> files = fileFolderService.listFiles(docRef);
         log.debug("Found " + files.size() + " files under document " + docRef);
+        if (files.isEmpty()) {
+            return;
+        }
+        String docTemplateName = (String) nodeService.getProperty(docRef, DocumentSpecificModel.Props.TEMPLATE_NAME);
+        if (StringUtils.isBlank(docTemplateName)) {
+            DocumentTemplate docTemplate = getDocumentsTemplate(docRef);
+            docTemplateName = docTemplate == null ? null : docTemplate.getName();
+        }
         for (FileInfo file : files) {
-            if (StringUtils.isBlank(docTemplateName)) {
-                docTemplateName = getDocumentsTemplate(docRef).getName();
-            }
             if (StringUtils.equals(docTemplateName, (String) file.getProperties().get(FileModel.Props.GENERATED_FROM_TEMPLATE))) {
                 replaceFormulas(docRef, file.getNodeRef(), file.getNodeRef(), file.getName(), isRegistering);
             }
