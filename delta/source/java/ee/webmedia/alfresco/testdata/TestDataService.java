@@ -1722,6 +1722,9 @@ public class TestDataService implements SaveListener {
     private final Locale locale = new Locale("et", "EE");
 
     private String getRandomClassificatorValue(String classificatorName) {
+        if (StringUtils.isBlank(classificatorName)) {
+            return null;
+        }
         List<ClassificatorValue> classificatorValues = classificators.get(classificatorName);
         if (classificatorValues == null) {
             classificatorValues = getClassificatorService().getAllClassificatorValues(classificatorName);
