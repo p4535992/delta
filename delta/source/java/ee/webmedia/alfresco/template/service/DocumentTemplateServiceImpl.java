@@ -135,6 +135,9 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             DocumentTemplate docTemplate = getDocumentsTemplate(docRef);
             docTemplateName = docTemplate == null ? null : docTemplate.getName();
         }
+        if (StringUtils.isBlank(docTemplateName)) {
+            return;
+        }
         for (FileInfo file : files) {
             if (StringUtils.equals(docTemplateName, (String) file.getProperties().get(FileModel.Props.GENERATED_FROM_TEMPLATE))) {
                 replaceFormulas(docRef, file.getNodeRef(), file.getNodeRef(), file.getName(), isRegistering);
