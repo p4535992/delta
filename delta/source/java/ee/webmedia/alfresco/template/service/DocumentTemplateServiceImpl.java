@@ -130,16 +130,8 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         if (files.isEmpty()) {
             return;
         }
-        String docTemplateName = (String) nodeService.getProperty(docRef, DocumentSpecificModel.Props.TEMPLATE_NAME);
-        if (StringUtils.isBlank(docTemplateName)) {
-            DocumentTemplate docTemplate = getDocumentsTemplate(docRef);
-            docTemplateName = docTemplate == null ? null : docTemplate.getName();
-        }
-        if (StringUtils.isBlank(docTemplateName)) {
-            return;
-        }
         for (FileInfo file : files) {
-            if (StringUtils.equals(docTemplateName, (String) file.getProperties().get(FileModel.Props.GENERATED_FROM_TEMPLATE))) {
+            if (StringUtils.isNotBlank((String) file.getProperties().get(FileModel.Props.GENERATED_FROM_TEMPLATE))) {
                 replaceFormulas(docRef, file.getNodeRef(), file.getNodeRef(), file.getName(), isRegistering);
             }
         }
@@ -233,9 +225,13 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             // No template specified, try to use default, if any
             // NOTE: we don't need to check for null, because in that case the button triggering this action isn't shown
             log.debug("Document template not specified, looking for default template! Document: " + documentNodeRef);
-            nodeRef = getDocumentsTemplate(documentNodeRef).getNodeRef();
+            DocumentTemplate templ = getDocumentsTemplate(documentNodeRef);
+            nodeRef = templ == null ? null : templ.getNodeRef();
         } else {
             nodeRef = getTemplateByName(templName).getNodeRef();
+        }
+        if (nodeRef == null) {
+            throw new UnableToPerformException("document_errorMsg_template_not_found");
         }
         String templateFilename = (String) nodeService.getProperty(nodeRef, ContentModel.PROP_NAME);
         log.debug("Using template: " + templateFilename);
