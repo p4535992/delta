@@ -1,7 +1,7 @@
 package ee.webmedia.alfresco.docconfig.bootstrap;
 
 import java.io.Serializable;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -24,12 +24,13 @@ public class ContactSystematicGroupAddFieldsUpdater extends AbstractModuleCompon
         if (contactGroupDefinitionRef != null) {
             @SuppressWarnings("unchecked")
             List<String> existingIds = (List<String>) nodeService.getProperty(contactGroupDefinitionRef, DocumentAdminModel.Props.FIELD_DEFINITIONS_IDS);
-            List<String> idsToAdd = Arrays.asList(new String[] { DocumentDynamicModel.Props.CONTACT_STREET_HOUSE.getLocalName(),
-                    DocumentDynamicModel.Props.CONTACT_POSTAL_CITY.getLocalName(),
-                    DocumentDynamicModel.Props.CONTACT_FIRST_ADDITIONAL_EMAIL.getLocalName(),
-                    DocumentDynamicModel.Props.CONTACT_SECOND_ADDITIONAL_EMAIL.getLocalName(),
-                    DocumentDynamicModel.Props.CONTACT_FIRST_ADDITIONAL_PHONE.getLocalName(),
-                    DocumentDynamicModel.Props.CONTACT_SECOND_ADDITIONAL_PHONE.getLocalName() });
+            List<String> idsToAdd = new ArrayList<String>();
+            idsToAdd.add(DocumentDynamicModel.Props.CONTACT_STREET_HOUSE.getLocalName());
+            idsToAdd.add(DocumentDynamicModel.Props.CONTACT_POSTAL_CITY.getLocalName());
+            idsToAdd.add(DocumentDynamicModel.Props.CONTACT_FIRST_ADDITIONAL_EMAIL.getLocalName());
+            idsToAdd.add(DocumentDynamicModel.Props.CONTACT_SECOND_ADDITIONAL_EMAIL.getLocalName());
+            idsToAdd.add(DocumentDynamicModel.Props.CONTACT_FIRST_ADDITIONAL_PHONE.getLocalName());
+            idsToAdd.add(DocumentDynamicModel.Props.CONTACT_SECOND_ADDITIONAL_PHONE.getLocalName());
             for (Iterator<String> i = idsToAdd.iterator(); i.hasNext();) {
                 String idToAdd = i.next();
                 if (existingIds.contains(idToAdd)) {

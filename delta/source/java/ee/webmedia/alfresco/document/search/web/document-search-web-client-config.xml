@@ -29,9 +29,6 @@
          <dialog name="documentSearchResultsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/search/web/document-search-results-dialog.jsp" managed-bean="DocumentSearchResultsDialog"
             icon="/images/icons/versioned_properties_large.gif" title-id="document_search" actions-config-id="document_search_actions"/>
 
-         <dialog name="documentSearchExtendedResultsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/search/web/document-search-extended-results-dialog.jsp" managed-bean="DocumentSearchResultsDialog"
-            icon="/images/icons/versioned_properties_large.gif" title-id="document_search" actions-config-id="document_search_actions"/>
-
          <dialog name="documentQuickSearchResultsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="DocumentQuickSearchResultsDialog"
             icon="/images/icons/versioned_properties_large.gif" title-id="document_quick_search" show-ok-button="false" />
 

@@ -30,7 +30,7 @@
          <xs:element name="IsikukoodByAsutusIdAndHasRsLubaResponse">
             <xs:complexType>
                <xs:sequence>
-                  <xs:element name="isikukood" type="xs:string" minOccurs="0" maxOccurs="unbounded" />
+                  <xs:element maxOccurs="unbounded" minOccurs="0" name="isikukood" type="xs:string" />
                </xs:sequence>
             </xs:complexType>
          </xs:element>

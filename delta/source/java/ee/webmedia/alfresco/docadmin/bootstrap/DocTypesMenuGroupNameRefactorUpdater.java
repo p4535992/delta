@@ -23,6 +23,11 @@ public class DocTypesMenuGroupNameRefactorUpdater extends AbstractNodeUpdater {
     private static final QName OLD_MENU_GROUP_NAME = QName.createQName(DocumentAdminModel.URI, "documentTypeGroup");
 
     @Override
+    protected boolean isRequiresNewTransaction() {
+        return false;
+    }
+
+    @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
         String query = SearchUtil.generateTypeQuery(DocumentAdminModel.Types.DOCUMENT_TYPE);
         return Arrays.asList(searchService.query(generalService.getStore(), SearchService.LANGUAGE_LUCENE, query));

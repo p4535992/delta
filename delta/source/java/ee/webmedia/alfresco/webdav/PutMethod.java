@@ -37,7 +37,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -59,6 +58,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.Pair;
 import org.apache.commons.lang.StringUtils;
 
@@ -71,6 +71,7 @@ import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicFieldGroupNames;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
+import ee.webmedia.alfresco.docdynamic.model.DocumentChildModel;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
@@ -323,15 +324,16 @@ public class PutMethod extends WebDAVMethod {
         }
 
         // Update sub-nodes
+        // TODO from Alar: implement generic child-node support using propertyDefinition.getChildAssocTypeQNameHierarchy()
         if (!partyFields.isEmpty()) {
             NodeService nodeService = getNodeService();
-            List<ChildAssociationRef> metadataContainers = nodeService.getChildAssocs(document, new HashSet<QName>(Arrays.asList(DocumentCommonModel.Types.METADATA_CONTAINER)));
+            List<ChildAssociationRef> contractPartyChildAssocs = nodeService.getChildAssocs(document, DocumentChildModel.Assocs.CONTRACT_PARTY, RegexQNamePattern.MATCH_ALL);
             for (ContractPartyField field : partyFields) {
-                nodeService.setProperty(metadataContainers.get(field.getIndex()).getChildRef(), field.getField(), field.getValue());
+                nodeService.setProperty(contractPartyChildAssocs.get(field.getIndex()).getChildRef(), field.getField(), field.getValue());
             }
         }
 
-        documentDynamicService.updateDocument(doc, Collections.<String> emptyList(), true); // This also updates generated files
+        documentDynamicService.updateDocument(doc, null, true); // This also updates generated files
     }
 
     private boolean isFieldUnchangeable(DocumentDynamic doc, List<String> updateDisabled, List<FieldType> readOnlyFields, Field field) {

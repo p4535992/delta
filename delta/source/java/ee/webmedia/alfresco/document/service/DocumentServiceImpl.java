@@ -16,16 +16,7 @@ import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.RECI
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.RECIPIENT_NAME;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_DATE_TIME;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_NUMBER;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SEARCHABLE_APPLICANT_NAME;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SEARCHABLE_COST_MANAGER;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SEARCHABLE_ERRAND_BEGIN_DATE;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SEARCHABLE_ERRAND_CITY;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SEARCHABLE_ERRAND_COUNTRY;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SEARCHABLE_ERRAND_COUNTY;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SEARCHABLE_ERRAND_END_DATE;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SEARCHABLE_PARTY_NAME;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SEARCHABLE_SEND_MODE;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SEARCHABLE_SUB_NODE_PROPERTIES;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SERIES;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SHORT_REG_NUMBER;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.VOLUME;
@@ -54,7 +45,6 @@ import java.util.regex.Pattern;
 
 import javax.faces.context.FacesContext;
 
-import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.content.transform.ContentTransformer;
@@ -78,7 +68,6 @@ import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.CopyService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
@@ -90,7 +79,6 @@ import org.alfresco.web.ui.common.Utils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.text.StrBuilder;
 import org.apache.commons.lang.time.DateFormatUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.hibernate.StaleObjectStateException;
@@ -112,7 +100,6 @@ import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.classificator.enums.LeaveType;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
@@ -461,8 +448,11 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         }
     }
 
-    @Override
-    public Node updateDocument(final Node docNode) {
+    /*
+     * TODO use documentDynamicService.update... instead
+     */
+    @Deprecated
+    private Node updateDocument(final Node docNode) {
         final NodeRef docNodeRef = docNode.getNodeRef();
         final Map<String, Object> docProps = docNode.getProperties();
 
@@ -530,18 +520,6 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         // docProps.putAll(getSearchableOtherProps(docNode));
         docProps.put(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE.toString(), sendOutService.buildSearchableSendMode(docNodeRef));
 
-        boolean propsChanged = saveChildNodes(docNode);
-        // add any associations added in the UI
-        propsChanged |= generalService.saveAddedAssocs(docNode) > 0;
-        DocumentAssociationsService documentAssociationsService = getDocumentAssociationsService();
-        for (Map<String, AssociationRef> typedAssoc : docNode.getAddedAssociations().values()) {
-            for (AssociationRef assoc : typedAssoc.values()) {
-                documentAssociationsService.updateModifiedDateTime(assoc.getSourceRef(), assoc.getTargetRef());
-            }
-        }
-
-        makeChildNodesSearchable(docNodeRef);
-
         // If accessRestriction changes from OPEN/AK to INTERNAL/LIMITED
         if (AccessRestriction.INTERNAL.equals((String) docProps.get(ACCESS_RESTRICTION)) || AccessRestriction.LIMITED.equals((String) docProps.get(ACCESS_RESTRICTION))) {
             String oldAccessRestriction = (String) nodeService.getProperty(docNodeRef, ACCESS_RESTRICTION);
@@ -569,7 +547,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
             // XXX If owner is changed to another user, then after previous call we don't have permissions any more to write document properties
 
             propertyChangesMonitorHelper = new PropertyChangesMonitorHelper();// FIXME:
-            propsChanged |= propertyChangesMonitorHelper.setPropertiesIgnoringSystemAndReturnIfChanged(docNodeRef, docProps //
+            boolean propsChanged = propertyChangesMonitorHelper.setPropertiesIgnoringSystemAndReturnIfChanged(docNodeRef, docProps //
                     , FUNCTION, SERIES, VOLUME, CASE // location changes
                     , REG_NUMBER, SHORT_REG_NUMBER, INDIVIDUAL_NUMBER, REG_DATE_TIME // registration changes
                     , ACCESS_RESTRICTION // access restriction changed
@@ -700,160 +678,6 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         }
         docProps.put(TransientProps.CASE_NODEREF, caseNodeRef);
         return caseNodeRef;
-    }
-
-    private boolean saveChildNodes(Node docNode) {
-        boolean propsChanged = false;
-        QName docNodeType = docNode.getType();
-        final boolean isErrandDocAbroad = DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD.equals(docNodeType);
-        final boolean isErrandMvDocAbroad = DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD_MV.equals(docNodeType);
-        final boolean isErrandDocDomestic = DocumentSubtypeModel.Types.ERRAND_APPLICATION_DOMESTIC.equals(docNodeType);
-        final boolean isTraining = DocumentSubtypeModel.Types.TRAINING_APPLICATION.equals(docNodeType);
-        final boolean isContract = DocumentSubtypeModel.Types.CONTRACT_MV.equals(docNodeType)
-                || DocumentSubtypeModel.Types.CONTRACT_SIM.equals(docNodeType) || DocumentSubtypeModel.Types.CONTRACT_SMIT.equals(docNodeType);
-        propsChanged |= saveRemovedChildAssocsAndReturnCount(docNode) > 0;
-        if (isErrandDocAbroad || isErrandMvDocAbroad || isErrandDocDomestic || isTraining) {
-            final QName applicantAssoc;
-            final QName errandAssocType;
-            if (isErrandDocAbroad) {
-                boolean v2 = docNode.hasAspect(DocumentSpecificModel.Aspects.ERRAND_ORDER_ABROAD_V2);
-                applicantAssoc = v2 ? DocumentSpecificModel.Assocs.ERRAND_ORDER_APPLICANTS_ABROAD_V2
-                        : DocumentSpecificModel.Assocs.ERRAND_ORDER_APPLICANTS_ABROAD;
-                errandAssocType = v2 ? DocumentSpecificModel.Assocs.ERRAND_ABROAD_V2 : DocumentSpecificModel.Assocs.ERRAND_ABROAD;
-            } else if (isErrandMvDocAbroad) {
-                applicantAssoc = DocumentSpecificModel.Assocs.ERRAND_ORDER_ABROAD_MV_APPLICANTS;
-                errandAssocType = DocumentSpecificModel.Assocs.ERRAND_ABROAD_MV;
-            } else if (isErrandDocDomestic) {
-                boolean v2 = docNode.hasAspect(DocumentSpecificModel.Aspects.ERRAND_APPLICATION_DOMESTIC_V2);
-                applicantAssoc = v2 ? DocumentSpecificModel.Assocs.ERRAND_APPLICATION_DOMESTIC_APPLICANTS_V2
-                        : DocumentSpecificModel.Assocs.ERRAND_APPLICATION_DOMESTIC_APPLICANTS;
-                errandAssocType = v2 ? DocumentSpecificModel.Assocs.ERRAND_DOMESTIC_V2 : DocumentSpecificModel.Assocs.ERRAND_DOMESTIC;
-            } else if (isTraining) {
-                boolean v2 = docNode.hasAspect(DocumentSpecificModel.Aspects.TRAINING_APPLICATION_V2);
-                applicantAssoc = v2 ? DocumentSpecificModel.Assocs.TRAINING_APPLICATION_APPLICANTS_V2
-                        : DocumentSpecificModel.Assocs.TRAINING_APPLICATION_APPLICANTS;
-                errandAssocType = null;
-            } else {
-                throw new RuntimeException("Unimplemented");
-            }
-
-            final List<Node> applicants = docNode.getAllChildAssociations(applicantAssoc);
-            if (applicants != null && applicants.size() >= 0) {
-                for (int i = 0; i < applicants.size(); i++) {
-                    Node applicantNode = applicants.get(i);
-                    propsChanged |= saveRemovedChildAssocsAndReturnCount(applicantNode) > 0;
-                    Node newApplicantNode = saveChildNode(docNode, applicantNode, applicantAssoc, applicants, i);
-                    final List<Node> errandNodes = errandAssocType == null ? null : applicantNode.getAllChildAssociations(errandAssocType);
-                    if (newApplicantNode == null) {
-                        propsChanged |= propertyChangesMonitorHelper.setPropertiesIgnoringSystemAndReturnIfChanged(applicantNode.getNodeRef(), applicantNode
-                                .getProperties());
-                    } else {
-                        propsChanged = true;
-                        applicantNode = newApplicantNode;
-                    }
-                    if (errandAssocType == null) {
-                        continue;
-                    }
-                    for (int j = 0; j < errandNodes.size(); j++) {
-                        Node errandNode = errandNodes.get(j);
-
-                        propsChanged |= saveRemovedChildAssocsAndReturnCount(errandNode) > 0;
-                        try {
-                            Node newErrandNode = saveChildNode(applicantNode, errandNode, errandAssocType, errandNodes, j);
-                            if (newErrandNode == null) {
-                                propsChanged |= propertyChangesMonitorHelper.setPropertiesIgnoringSystemAndReturnIfChanged(errandNode.getNodeRef(), errandNode
-                                        .getProperties());
-                            } else {
-                                propsChanged = true;
-                            }
-                        } catch (AlfrescoRuntimeException e) {
-                            final String msg = "failed to set properties for nodeRef=" + errandNode.getNodeRef()
-                                    + "; properties: " + errandNode.getProperties();
-                            log.error(msg, e);
-                            throw e;
-                        }
-                    }
-                }
-            }
-        }
-        if (isContract) {
-            QName partyAssoc = (DocumentSubtypeModel.Types.CONTRACT_MV.equals(docNodeType))
-                    ? DocumentSpecificModel.Assocs.CONTRACT_MV_PARTIES
-                    : DocumentSpecificModel.Assocs.CONTRACT_PARTIES;
-            final List<Node> parties = docNode.getAllChildAssociations(partyAssoc);
-            if (parties != null && parties.size() >= 0) {
-                for (int i = 0; i < parties.size(); i++) {
-                    Node partyNode = parties.get(i);
-                    propsChanged |= saveRemovedChildAssocsAndReturnCount(partyNode) > 0;
-                    Node newPartyNode = saveChildNode(docNode, partyNode, partyAssoc, parties, i);
-                    if (newPartyNode == null) {
-                        propsChanged |= propertyChangesMonitorHelper.setPropertiesIgnoringSystemAndReturnIfChanged(partyNode.getNodeRef(), partyNode
-                                .getProperties());
-                    } else {
-                        propsChanged = true;
-                    }
-                }
-            }
-        }
-        return propsChanged;
-    }
-
-    private int saveRemovedChildAssocsAndReturnCount(Node applicantNode) {
-        return generalService.saveRemovedChildAssocs(applicantNode);
-    }
-
-    private void makeChildNodesSearchable(final NodeRef docRef) {
-        String childProps = getChildNodesPropsForIndexing(docRef, new StringBuilder()).toString();
-        nodeService.setProperty(docRef, SEARCHABLE_SUB_NODE_PROPERTIES, childProps);
-    }
-
-    private Node saveChildNode(Node docNode, Node applicantNode, final QName assocTypeAndNameQName, final List<Node> applicants, int i) {
-        if (applicantNode instanceof WmNode) {
-            WmNode wmNode = (WmNode) applicantNode;
-            if (wmNode.isUnsaved()) {
-                final Map<QName, Serializable> props = RepoUtil.toQNameProperties(applicantNode.getProperties());
-                final ChildAssociationRef applicantNode2 = nodeService.createNode(docNode.getNodeRef(), assocTypeAndNameQName
-                        , assocTypeAndNameQName, applicantNode.getType(), props);
-                final Node newApplicantNode = generalService.fetchNode(applicantNode2.getChildRef());
-                applicants.remove(i);
-                applicants.add(i, newApplicantNode);
-                return newApplicantNode;
-            }
-        }
-        return null;
-    }
-
-    @Override
-    public StringBuilder getChildNodesPropsForIndexing(NodeRef parentRef, StringBuilder sb) {
-        final List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parentRef);
-        for (ChildAssociationRef childAssocRef : childAssocs) {
-            if (DocumentSpecificModel.URI.equals(childAssocRef.getQName().getNamespaceURI())) {
-                final NodeRef childRef = childAssocRef.getChildRef();
-                combineChildAssocProps(childRef, sb);
-                getChildNodesPropsForIndexing(childRef, sb.append("\n"));
-            }
-        }
-        return sb;
-    }
-
-    private void combineChildAssocProps(NodeRef nodeRef, StringBuilder sb) {
-        final Map<QName, Serializable> nonSysProps = generalService.getPropertiesIgnoringSys(nodeService.getProperties(nodeRef));
-        for (Entry<QName, Serializable> entry : nonSysProps.entrySet()) {
-            final String propVal;
-            final Serializable value = entry.getValue();
-            if (value instanceof Date) {
-                propVal = userDateFormat.format(value);
-            } else if (value instanceof List<?>) {
-                final StrBuilder sb2 = new StrBuilder();
-                for (Object singleValue : (List<?>) value) {
-                    sb2.append(DefaultTypeConverter.INSTANCE.convert(String.class, singleValue) + "\n");
-                }
-                propVal = sb2.toString();
-            } else {
-                propVal = DefaultTypeConverter.INSTANCE.convert(String.class, value);
-            }
-            sb.append(propVal + "\n");
-        }
     }
 
     /**
@@ -2080,7 +1904,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
                     documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_registered"));
                 }
             }
-            return updateDocument(docNode);
+            return updateDocument(docNode); // TODO XXX FIXME use documentDynamicService.update... instead of this
         }
         throw new UnableToPerformException(MessageSeverity.INFO, "document_errorMsg_register_initialDocNotRegistered");
     }
@@ -2656,111 +2480,23 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
     }
 
     // ========================================================================
-    // ========== COLLECT DOCUMENT SEARCHABLE PROPERTIES FOR INDEXING =========
-    // ========================================================================
-
-    private Map<String, Object> getSearchableOtherProps(Node document) {
-        Map<String, Object> props = new HashMap<String, Object>();
-        // searchableSendMode is updated in SendOutServiceImpl#sendOut
-        setCollectedProps(document, props, SEARCHABLE_COST_MANAGER, DocumentSpecificModel.Props.COST_MANAGER);
-        setCollectedProps(document, props, SEARCHABLE_APPLICANT_NAME, DocumentSpecificModel.Props.APPLICANT_NAME,
-                DocumentSpecificModel.Props.PROCUREMENT_APPLICANT_NAME);
-        setCollectedProps(document, props, SEARCHABLE_ERRAND_BEGIN_DATE, DocumentSpecificModel.Props.ERRAND_BEGIN_DATE);
-        setCollectedProps(document, props, SEARCHABLE_ERRAND_END_DATE, DocumentSpecificModel.Props.ERRAND_END_DATE);
-        setCollectedProps(document, props, SEARCHABLE_ERRAND_COUNTRY, DocumentSpecificModel.Props.ERRAND_COUNTRY);
-        setCollectedProps(document, props, SEARCHABLE_ERRAND_COUNTY, DocumentSpecificModel.Props.ERRAND_COUNTY);
-        setCollectedProps(document, props, SEARCHABLE_ERRAND_CITY, DocumentSpecificModel.Props.ERRAND_CITY);
-        setCollectedProps(document, props, SEARCHABLE_PARTY_NAME, DocumentSpecificModel.Props.PARTY_NAME);
-        return props;
-    }
-
-    private void setCollectedProps(Node document, Map<String, Object> props, QName targetProp, QName... sourceProps) {
-        ArrayList<Serializable> results = collectProperties(document, sourceProps);
-        log.debug("Collected properties " + targetProp.toPrefixString(namespaceService) + " " + results);
-        props.put(targetProp.toString(), results);
-    }
-
-    private ArrayList<Serializable> collectProperties(Node node, QName... propNames) {
-        ArrayList<Serializable> values = new ArrayList<Serializable>();
-        for (QName propName : propNames) {
-            PropertyDefinition propDef = dictionaryService.getProperty(propName);
-            QName aspect = ((AspectDefinition) propDef.getContainerClass()).getName();
-            collectProperties(values, node, propName, aspect);
-        }
-        return values;
-    }
-
-    private static void collectProperties(List<Serializable> values, Node node, QName propName, QName aspect) {
-        if (node.hasAspect(aspect)) {
-            Serializable value = (Serializable) node.getProperties().get(propName);
-            if (value instanceof List<?>) {
-                @SuppressWarnings("unchecked")
-                List<Serializable> list = (List<Serializable>) value;
-                values.addAll(list);
-            } else {
-                values.add(value);
-            }
-        }
-        for (List<Node> list : node.getAllChildAssociationsByAssocType().values()) {
-            for (Node childNode : list) {
-                collectProperties(values, childNode, propName, aspect);
-            }
-        }
-    }
-
-    // ========================================================================
-    // ========== COLLECT DOCUMENT SEARCHABLE PROPERTIES - methods with services, instead of node
-    // ========================================================================
-
-    @Override
-    public ArrayList<Serializable> collectProperties(NodeRef nodeRef, List<ChildAssociationRef> childAssocs, QName... propNames) {
-        ArrayList<Serializable> values = new ArrayList<Serializable>();
-        for (QName propName : propNames) {
-            PropertyDefinition propDef = dictionaryService.getProperty(propName);
-            QName aspect = ((AspectDefinition) propDef.getContainerClass()).getName();
-            collectProperties(values, nodeRef, propName, aspect, childAssocs);
-        }
-        return values;
-    }
-
-    private void collectProperties(List<Serializable> values, NodeRef nodeRef, QName propName, QName aspect, List<ChildAssociationRef> childAssocs) {
-        if (nodeService.getAspects(nodeRef).contains(aspect)) {
-            Serializable value = nodeService.getProperty(nodeRef, propName);
-            if (value instanceof List<?>) {
-                @SuppressWarnings("unchecked")
-                List<Serializable> list = (List<Serializable>) value;
-                values.addAll(list);
-            } else {
-                values.add(value);
-            }
-        }
-        List<ChildAssociationRef> childAssocRefs = childAssocs;
-        if (childAssocRefs == null) {
-            childAssocRefs = nodeService.getChildAssocs(nodeRef);
-        }
-        for (ChildAssociationRef childAssocRef : nodeService.getChildAssocs(nodeRef)) {
-            collectProperties(values, childAssocRef.getChildRef(), propName, aspect, null);
-        }
-    }
-
-    // ========================================================================
     // ==================== PROCESS EXTENDED SEARCH RESULTS ===================
     // ========================================================================
 
     private static Map<QName/* searchable */, List<QName>/* filter */> searchableToFilter = new HashMap<QName, List<QName>>();
     private static Map<QName/* searchable */, List<QName>/* document */> searchableToDocument = new HashMap<QName, List<QName>>();
     static {
-        searchableToDocument.put(SEARCHABLE_COST_MANAGER, Arrays.asList(DocumentSpecificModel.Props.COST_MANAGER));
-        searchableToDocument.put(SEARCHABLE_APPLICANT_NAME, Arrays.asList(DocumentSpecificModel.Props.APPLICANT_NAME,
-                DocumentSpecificModel.Props.PROCUREMENT_APPLICANT_NAME));
-        searchableToDocument.put(SEARCHABLE_ERRAND_BEGIN_DATE, Arrays.asList(DocumentSpecificModel.Props.ERRAND_BEGIN_DATE));
-        searchableToDocument.put(SEARCHABLE_ERRAND_END_DATE, Arrays.asList(DocumentSpecificModel.Props.ERRAND_END_DATE));
-        searchableToDocument.put(SEARCHABLE_ERRAND_COUNTRY, Arrays.asList(DocumentSpecificModel.Props.ERRAND_COUNTRY));
-        searchableToDocument.put(SEARCHABLE_ERRAND_COUNTY, Arrays.asList(DocumentSpecificModel.Props.ERRAND_COUNTY));
-        searchableToDocument.put(SEARCHABLE_ERRAND_CITY, Arrays.asList(DocumentSpecificModel.Props.ERRAND_CITY));
+        // TODO for reports, rewrite the logic to use dynamic document searchable properties
+        // searchableToDocument.put(SEARCHABLE_COST_MANAGER, Arrays.asList(DocumentSpecificModel.Props.COST_MANAGER));
+        // searchableToDocument.put(SEARCHABLE_APPLICANT_NAME, Arrays.asList(DocumentSpecificModel.Props.APPLICANT_NAME,
+        // DocumentSpecificModel.Props.PROCUREMENT_APPLICANT_NAME));
+        // searchableToDocument.put(SEARCHABLE_ERRAND_BEGIN_DATE, Arrays.asList(DocumentSpecificModel.Props.ERRAND_BEGIN_DATE));
+        // searchableToDocument.put(SEARCHABLE_ERRAND_END_DATE, Arrays.asList(DocumentSpecificModel.Props.ERRAND_END_DATE));
+        // searchableToDocument.put(SEARCHABLE_ERRAND_COUNTRY, Arrays.asList(DocumentSpecificModel.Props.ERRAND_COUNTRY));
+        // searchableToDocument.put(SEARCHABLE_ERRAND_COUNTY, Arrays.asList(DocumentSpecificModel.Props.ERRAND_COUNTY));
+        // searchableToDocument.put(SEARCHABLE_ERRAND_CITY, Arrays.asList(DocumentSpecificModel.Props.ERRAND_CITY));
     }
 
-    @Override
     /*
      * Dokumentide _laiendatud_ otsing on 8 välja (4.1.2.23-30 - need mis child-node'idega on seotud) väärtuste võrdlemise puhul rangem kui _lihtne_ otsing!
      * Sest nende väljade puhul tehakse laiendatud otsingu tulemuste kuvamisel Java koodis lisavõrdlemist, peaaegu (aga mitte täpselt) ühtib Lucene käitumisega.

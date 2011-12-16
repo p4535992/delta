@@ -1,13 +1,11 @@
 package ee.webmedia.alfresco.document.service;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.alfresco.service.cmr.repository.AssociationRef;
-import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
@@ -85,14 +83,6 @@ public interface DocumentService {
     Node createDocument(QName documentTypeId, NodeRef parentFolderRef, Map<QName, Serializable> props);
 
     Node createPPImportDocument(QName documentTypeId, NodeRef parentRef, Map<QName, Serializable> properties);
-
-    /**
-     * Save new values for document properties to repository.
-     * 
-     * @param node document with new property values
-     * @return new Node representing document if node had reference to volumeNodeRef
-     */
-    Node updateDocument(Node node);
 
     void updateSearchableFiles(NodeRef document);
 
@@ -387,8 +377,6 @@ public interface DocumentService {
 
     void removeFavorite(NodeRef nodeRef);
 
-    List<Document> processExtendedSearchResults(List<Document> documents, Node filter);
-
     /**
      * @param base
      * @return list of documents that are reply or follow up to base
@@ -407,11 +395,7 @@ public interface DocumentService {
 
     ContentData getSearchableFileContents(NodeRef document);
 
-    StringBuilder getChildNodesPropsForIndexing(NodeRef parentRef, StringBuilder sb);
-
     Map<QName, NodeRef> getDocumentParents(NodeRef documentRef);
-
-    ArrayList<Serializable> collectProperties(NodeRef nodeRef, List<ChildAssociationRef> childAssocs, QName... propNames);
 
     void setDocStatusFinished(final NodeRef docRef);
 
@@ -455,6 +439,5 @@ public interface DocumentService {
     void addPrivilegesBasedOnSeries(NodeRef docRef);
 
     List<Document> getIncomingDocuments(NodeRef incomingNodeRef);
-
 
 }

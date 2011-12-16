@@ -146,7 +146,7 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
 
     public String getAllRecipients() {
         return join(DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME,
-                DocumentSpecificModel.Props.SECOND_PARTY_NAME, DocumentSpecificModel.Props.THIRD_PARTY_NAME, DocumentCommonModel.Props.SEARCHABLE_PARTY_NAME);
+                DocumentSpecificModel.Props.SECOND_PARTY_NAME, DocumentSpecificModel.Props.THIRD_PARTY_NAME, DocumentSpecificModel.Props.PARTY_NAME);
     }
 
     public String getSenderOrRecipients() {
@@ -323,34 +323,6 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
 
     public String getSendMode() {
         return (String) getSearchableProperties().get(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE);
-    }
-
-    public String getCostManager() {
-        return (String) getSearchableProperties().get(DocumentCommonModel.Props.SEARCHABLE_COST_MANAGER);
-    }
-
-    public String getApplicantName() {
-        return (String) getSearchableProperties().get(DocumentCommonModel.Props.SEARCHABLE_APPLICANT_NAME);
-    }
-
-    public String getErrandBeginDate() {
-        return (String) getSearchableProperties().get(DocumentCommonModel.Props.SEARCHABLE_ERRAND_BEGIN_DATE);
-    }
-
-    public String getErrandEndDate() {
-        return (String) getSearchableProperties().get(DocumentCommonModel.Props.SEARCHABLE_ERRAND_END_DATE);
-    }
-
-    public String getErrandCountry() {
-        return (String) getSearchableProperties().get(DocumentCommonModel.Props.SEARCHABLE_ERRAND_COUNTRY);
-    }
-
-    public String getErrandCounty() {
-        return (String) getSearchableProperties().get(DocumentCommonModel.Props.SEARCHABLE_ERRAND_COUNTY);
-    }
-
-    public String getErrandCity() {
-        return (String) getSearchableProperties().get(DocumentCommonModel.Props.SEARCHABLE_ERRAND_CITY);
     }
 
     public String getResponsibleName() {

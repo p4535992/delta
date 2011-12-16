@@ -34,6 +34,7 @@ import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.io.FilenameUtils;
@@ -55,6 +56,7 @@ import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicFieldGroupNames;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
+import ee.webmedia.alfresco.docdynamic.model.DocumentChildModel;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
@@ -631,14 +633,10 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     }
 
     private void getContractPartyFormulae(NodeRef objectRef, Map<String, String> formulas) {
-        // XXX - If other metadata containers are added, this behavior must be refactored!
-        List<ChildAssociationRef> metadataContainers = nodeService.getChildAssocs(objectRef, new HashSet<QName>(Arrays.asList(DocumentCommonModel.Types.METADATA_CONTAINER)));
-        if (metadataContainers.isEmpty()) {
-            return;
-        }
-
+        // TODO from Alar: implement generic child-node support using propertyDefinition.getChildAssocTypeQNameHierarchy()
+        List<ChildAssociationRef> contractPartyChildAssocs = nodeService.getChildAssocs(objectRef, DocumentChildModel.Assocs.CONTRACT_PARTY, RegexQNamePattern.MATCH_ALL);
         int index = 1;
-        for (ChildAssociationRef childAssociationRef : metadataContainers) {
+        for (ChildAssociationRef childAssociationRef : contractPartyChildAssocs) {
             Map<QName, Serializable> properties = nodeService.getProperties(childAssociationRef.getChildRef());
             formulas.put(DocumentSpecificModel.Props.PARTY_NAME.getLocalName() + "." + index, (String) properties.get(DocumentSpecificModel.Props.PARTY_NAME));
             formulas.put(DocumentSpecificModel.Props.PARTY_EMAIL.getLocalName() + "." + index, (String) properties.get(DocumentSpecificModel.Props.PARTY_EMAIL));

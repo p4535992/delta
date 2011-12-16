@@ -289,10 +289,10 @@
                <type>d:text</type>
                <multiple>true</multiple>
             </property>
--->
             <property name="doccom:searchableSubNodeProperties">
                <type>d:text</type>
             </property>
+-->
             <property name="doccom:searchableHasStartedCompoundWorkflows">
                <type>d:boolean</type>
             </property>
@@ -310,6 +310,15 @@
             </property>
          </properties>
       </aspect>
+
+      <aspect name="doccom:forumParticipants">
+         <properties>
+            <property name="doccom:forumParticipants">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+         </properties>
+      </aspect>      
 
       <!-- Needed for series -->
       <aspect name="doccom:accessRights">
@@ -334,8 +343,10 @@
             </property>
          </properties>
       </aspect>
-      
-   <!-- FIXME: remove the following definitions after all existing static documents are migrated to dynamic documents -->      
+
+   <!-- ============================================================================================================= -->
+   <!-- FIXME: remove the following definitions after all existing static documents are migrated to dynamic documents -->
+
       <aspect name="doccom:common">
          <properties>
             <property name="doccom:function">
@@ -497,15 +508,6 @@
          <properties>
             <property name="doccom:legalBasisName">
                <type>d:text</type>
-            </property>
-         </properties>
-      </aspect>      
-
-      <aspect name="doccom:forumParticipants">
-         <properties>
-            <property name="doccom:forumParticipants">
-               <type>d:text</type>
-               <multiple>true</multiple>
             </property>
          </properties>
       </aspect>      

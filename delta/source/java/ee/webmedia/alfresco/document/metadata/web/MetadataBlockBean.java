@@ -1389,7 +1389,13 @@ public class MetadataBlockBean implements ClearStateListener {
         return save(isDraft, newInvoiveDocuments, true);
     }
 
+    @Deprecated
+    // This code should not be called any more
+    // Move the necessary functionality to documentDynamicService.update...
     public boolean save(boolean isDraft, List<NodeRef> newInvoiveDocuments, boolean addInvoiceMessages) {
+        if (true) {
+            throw new RuntimeException("This code should not be called any more");
+        }
         log.debug("save: docNodeRef=" + document.getNodeRefAsString());
         if (!inEditMode) {
             throw new RuntimeException("Document metadata block is not in edit mode");
@@ -1403,7 +1409,7 @@ public class MetadataBlockBean implements ClearStateListener {
                 if (DocumentSubtypeModel.Types.INVOICE.equals(document.getType())) {
                     document.getProperties().putAll(EInvoiceUtil.getTransSearchableProperties(BeanHelper.getEInvoiceService().getInvoiceTransactions(nodeRef)));
                 }
-                document = getDocumentService().updateDocument(document);
+                // document = getDocumentService().updateDocument(document);
                 NodeRef volume = (NodeRef) document.getProperties().get(TransientProps.VOLUME_NODEREF);
                 NodeRef series = (NodeRef) document.getProperties().get(TransientProps.SERIES_NODEREF);
                 NodeRef function = (NodeRef) document.getProperties().get(TransientProps.FUNCTION_NODEREF);
@@ -1412,7 +1418,7 @@ public class MetadataBlockBean implements ClearStateListener {
                     invoice.getProperties().put(TransientProps.VOLUME_NODEREF, volume);
                     invoice.getProperties().put(TransientProps.SERIES_NODEREF, series);
                     invoice.getProperties().put(TransientProps.FUNCTION_NODEREF, function);
-                    getDocumentService().updateDocument(invoice);
+                    // getDocumentService().updateDocument(invoice);
                 }
                 if (!isDraft && getWorkflowService().isSendableExternalWorkflowDoc(document.getNodeRef())) {
                     getDvkService().sendDvkTasksWithDocument(document.getNodeRef(), null, null);

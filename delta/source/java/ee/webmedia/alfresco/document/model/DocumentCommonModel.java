@@ -75,20 +75,16 @@ public interface DocumentCommonModel {
         QName SERIES = QName.createQName(URI, "series");
         QName VOLUME = QName.createQName(URI, "volume");
         QName CASE = QName.createQName(URI, "case");
+
         QName FILE_NAMES = QName.createQName(DOCCOM_URI, "fileNames");
         QName FILE_CONTENTS = QName.createQName(DOCCOM_URI, "fileContents");
         QName SEARCHABLE_SEND_MODE = QName.createQName(DOCCOM_URI, "searchableSendMode");
-        QName SEARCHABLE_COST_MANAGER = QName.createQName(DOCCOM_URI, "searchableCostManager");
-        QName SEARCHABLE_APPLICANT_NAME = QName.createQName(DOCCOM_URI, "searchableApplicantName");
-        QName SEARCHABLE_ERRAND_BEGIN_DATE = QName.createQName(DOCCOM_URI, "searchableErrandBeginDate");
-        QName SEARCHABLE_ERRAND_END_DATE = QName.createQName(DOCCOM_URI, "searchableErrandEndDate");
-        QName SEARCHABLE_ERRAND_COUNTRY = QName.createQName(DOCCOM_URI, "searchableErrandCountry");
-        QName SEARCHABLE_ERRAND_COUNTY = QName.createQName(DOCCOM_URI, "searchableErrandCounty");
-        QName SEARCHABLE_ERRAND_CITY = QName.createQName(DOCCOM_URI, "searchableErrandCity");
-        QName SEARCHABLE_PARTY_NAME = QName.createQName(DOCCOM_URI, "searchablePartyName");
+        /** shows if the document contains at least one compoundWorkflow, that has startedDateTime set */
+        QName SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS = QName.createQName(DOCCOM_URI, "searchableHasStartedCompoundWorkflows");
         QName SEARCHABLE_FUND = QName.createQName(DOCCOM_URI, "searchableFund");
         QName SEARCHABLE_FUNDS_CENTER = QName.createQName(DOCCOM_URI, "searchableFundsCenter");
         QName SEARCHABLE_EA_COMMITMENT_ITEM = QName.createQName(DOCCOM_URI, "searchableEaCommitmentItem");
+        QName FORUM_PARTICIPANTS = QName.createQName(DOCCOM_URI, "forumParticipants");
 
         QName DOC_NAME = QName.createQName(URI, "docName");
         QName DOC_STATUS = QName.createQName(URI, "docStatus");
@@ -143,13 +139,7 @@ public interface DocumentCommonModel {
         QName CREATOR_NAME = QName.createQName(DOCCOM_URI, "creatorName");
         QName EVENT_DESCRIPTION = QName.createQName(DOCCOM_URI, "eventDescription");
 
-        /** holds non-system properties of childnodes (childNodes, that are defined in DocumentSubTypeModel) for searching */
-        QName SEARCHABLE_SUB_NODE_PROPERTIES = QName.createQName(DOCCOM_URI, "searchableSubNodeProperties");
-        /** shows if the document contains at least one compoundWorkflow, that has startedDateTime set */
-        QName SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS = QName.createQName(DOCCOM_URI, "searchableHasStartedCompoundWorkflows");
-
         QName LEGAL_BASIS_NAME = QName.createQName(URI, "legalBasisName");
-        QName FORUM_PARTICIPANTS = QName.createQName(URI, "forumParticipants");
     }
 
     /**

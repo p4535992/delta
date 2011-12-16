@@ -102,15 +102,15 @@
 <f:verbatim>
 <br/>
 <ol>
-<li>* Kopeerida SVN'ist delta/common/etc/testdata/*.csv failid dir.root kausta</li>
-<li>* Kopeerida ADR failide kaust asukohta dir.root/contentstore/testfiles . Seega peaksid ADR failid asuma dir.root/contentstore/testfiles/1/1234 jne.</li>
+<li>* Kopeerida SVN'ist delta/common/etc/testdata/*.csv failid \${dir.root} kausta</li>
+<li>* Kopeerida ADR failide kaust asukohta \${dir.root}/contentstore/testfiles . Seega peaksid ADR failid asuma \${dir.root}/contentstore/testfiles/1/1234 jne.</li>
 <li>* Importida dok.liigid SVN'ist failist delta/common/etc/jmeter/documentTypes.xml</li>
 <li>* Importida klassifikaatorid SVN'ist delta/common/etc/jmeter/classificators.xml</li>
+<li>* Kui kasutajaid ja/või struktuuriüksusi genereeritakse (genereeritakse siis kui lahtrites kasutajate arv / struktuuriüksuste on suuremad arvud kui praegu eksisteerivaid objekte), siis peab arvestama sellega, et järgmisel sünkimisel kustutatakse genereeritud objektid! Ainus võimalus sünkimise ära hoidmiseks on konf.failis \${amr.service.url} muuta mittetöötava/mitteeksisteeriva URL'i peale.
 <li>* Lucene indekseerimine lülitada välja parema kiiruse saavutamiseks, ja pärast teha ühekorraga järgi (nii nagu SIM 1.10 -> 2.5 juhendis kirjeldatud juuni 2011).</li>
 <li>* Vajutada Käivita testandmete genereerimine. Progressi saab jälgida logist.</li>
-<li>* Andmete genereerimise käivitamisel määratakse employeeRegReceiveUsersPeriod parameetri väärtuseks 500000, et loodud kasutajaid sünkimisel ei kustutataks.</li>
 <li>* (TODO struktuuriüksuste sünkimine lülitada välja, et loodud struktuuriüksusi sünkimisel ei kustutataks.)</li>
-<li>* Kasutajate loomise lõpus kirjutatakse kõik eksisteerivad kasutajanimed faili dir.root/users.csv . Seda faili läheb vaja koormustestide sisendina.</li>
+<li>* Kasutajate loomise lõpus kirjutatakse kõik eksisteerivad kasutajanimed faili \${dir.root}/users.csv . Seda faili läheb vaja koormustestide sisendina.</li>
 </ul>
 <br/>
 </f:verbatim>
@@ -153,6 +153,10 @@
 
 <h:outputText value="Dokumentide arv: "/>
 <h:inputText value="#{TestDataService.documentsCount}" converter="javax.faces.Integer" size="7" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="Dokumentide genereerimiseks paralleelsete lõimede arv: "/>
+<h:inputText value="#{TestDataService.documentGeneratorThreads}" converter="javax.faces.Integer" size="4" />
 <f:verbatim><br/><br/></f:verbatim>
 
    <h:commandButton id="startTestDataGenerator" value="Käivita andmete genereerimine" type="submit"

@@ -42,7 +42,6 @@ import org.alfresco.repo.transaction.TransactionListenerAdapter;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.AssociationRef;
-import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -65,7 +64,6 @@ import ee.webmedia.alfresco.classificator.enums.SendMode;
 import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.register.model.RegNrHolder;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.service.DocumentService;
@@ -1724,25 +1722,35 @@ public class PostipoissDocumentsImporter {
             propsMap.put(DocumentCommonModel.Props.VOLUME, parentRefs.get(DocumentCommonModel.Props.VOLUME));
             propsMap.put(DocumentCommonModel.Props.CASE, parentRefs.get(DocumentCommonModel.Props.CASE));
 
-            List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(documentRef);
-            Serializable value;
-            value = documentService.collectProperties(documentRef, childAssocs, DocumentSpecificModel.Props.COST_MANAGER);
-            propsMap.put(DocumentCommonModel.Props.SEARCHABLE_COST_MANAGER, value);
-            value = documentService.collectProperties(documentRef, childAssocs, DocumentSpecificModel.Props.APPLICANT_NAME, DocumentSpecificModel.Props.PROCUREMENT_APPLICANT_NAME);
-            propsMap.put(DocumentCommonModel.Props.SEARCHABLE_APPLICANT_NAME, value);
-            value = documentService.collectProperties(documentRef, childAssocs, DocumentSpecificModel.Props.ERRAND_BEGIN_DATE);
-            propsMap.put(DocumentCommonModel.Props.SEARCHABLE_ERRAND_BEGIN_DATE, value);
-            value = documentService.collectProperties(documentRef, childAssocs, DocumentSpecificModel.Props.ERRAND_END_DATE);
-            propsMap.put(DocumentCommonModel.Props.SEARCHABLE_ERRAND_END_DATE, value);
-            value = documentService.collectProperties(documentRef, childAssocs, DocumentSpecificModel.Props.ERRAND_COUNTRY);
-            propsMap.put(DocumentCommonModel.Props.SEARCHABLE_ERRAND_COUNTRY, value);
-            value = documentService.collectProperties(documentRef, childAssocs, DocumentSpecificModel.Props.ERRAND_COUNTY);
-            propsMap.put(DocumentCommonModel.Props.SEARCHABLE_ERRAND_COUNTY, value);
-            value = documentService.collectProperties(documentRef, childAssocs, DocumentSpecificModel.Props.ERRAND_CITY);
-            propsMap.put(DocumentCommonModel.Props.SEARCHABLE_ERRAND_CITY, value);
-            String childProps = documentService.getChildNodesPropsForIndexing(documentRef, new StringBuilder()).toString();
-            propsMap.put(DocumentCommonModel.Props.SEARCHABLE_SUB_NODE_PROPERTIES, childProps);
+            // TODO use documentDynamicService.update... instead
+
+            // List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(documentRef);
+            // Serializable value;
+            // value = documentService.collectProperties(documentRef, childAssocs, DocumentSpecificModel.Props.COST_MANAGER);
+            // propsMap.put(DocumentCommonModel.Props.SEARCHABLE_COST_MANAGER, value);
+            // value = documentService.collectProperties(documentRef, childAssocs, DocumentSpecificModel.Props.APPLICANT_NAME,
+            // DocumentSpecificModel.Props.PROCUREMENT_APPLICANT_NAME);
+            // propsMap.put(DocumentCommonModel.Props.SEARCHABLE_APPLICANT_NAME, value);
+            // value = documentService.collectProperties(documentRef, childAssocs, DocumentSpecificModel.Props.ERRAND_BEGIN_DATE);
+            // propsMap.put(DocumentCommonModel.Props.SEARCHABLE_ERRAND_BEGIN_DATE, value);
+            // value = documentService.collectProperties(documentRef, childAssocs, DocumentSpecificModel.Props.ERRAND_END_DATE);
+            // propsMap.put(DocumentCommonModel.Props.SEARCHABLE_ERRAND_END_DATE, value);
+            // value = documentService.collectProperties(documentRef, childAssocs, DocumentSpecificModel.Props.ERRAND_COUNTRY);
+            // propsMap.put(DocumentCommonModel.Props.SEARCHABLE_ERRAND_COUNTRY, value);
+            // value = documentService.collectProperties(documentRef, childAssocs, DocumentSpecificModel.Props.ERRAND_COUNTY);
+            // propsMap.put(DocumentCommonModel.Props.SEARCHABLE_ERRAND_COUNTY, value);
+            // value = documentService.collectProperties(documentRef, childAssocs, DocumentSpecificModel.Props.ERRAND_CITY);
+            // propsMap.put(DocumentCommonModel.Props.SEARCHABLE_ERRAND_CITY, value);
+            // String childProps = documentService.getChildNodesPropsForIndexing(documentRef, new StringBuilder()).toString();
+            // propsMap.put(DocumentCommonModel.Props.SEARCHABLE_SUB_NODE_PROPERTIES, childProps);
             propsMap.put(ContentModel.PROP_MODIFIER, CREATOR_MODIFIER);
+
+            if (true) {
+                throw new RuntimeException("Update code");
+            }
+            // Use documentDynamicService.update... instead;
+            // it does some necessary things (updates searchable props),
+            // but investigate if it does some things too much !!!
             nodeService.addProperties(documentRef, propsMap);
 
             return new ImportedDocument(documentId, documentRef, root.elementText(PP_ELEMENT_TOIMIK_SARI)

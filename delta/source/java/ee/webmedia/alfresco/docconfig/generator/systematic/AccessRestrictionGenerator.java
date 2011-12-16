@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.docconfig.generator.systematic;
 
+import static ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader.AttributeNames.PROPERTIES_SEPARATOR;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getSeriesService;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ACCESS_RESTRICTION;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE;
@@ -15,6 +16,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import javax.faces.context.FacesContext;
 import javax.faces.event.PhaseId;
 import javax.faces.event.ValueChangeEvent;
 
@@ -32,7 +34,9 @@ import org.apache.commons.lang.time.DateUtils;
 import ee.webmedia.alfresco.adr.service.AdrService;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
+import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorAndTextGenerator;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
+import ee.webmedia.alfresco.common.propertysheet.multivalueeditor.PropsBuilder;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.Field;
@@ -48,13 +52,23 @@ import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.RepoUtil;
 
 /**
  * @author Alar Kvell
  */
 public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
 
+    private static final String VIEW_MODE_PROP_SUFFIX = "_view_mode";
     public static final String ACCESS_RESTRICTION_CHANGE_REASON_ERROR = "accessRestrictionChangeReasonError";
+
+    public static final QName[] ACCESS_RESTRICTION_PROPS = {
+            ACCESS_RESTRICTION,
+            ACCESS_RESTRICTION_REASON,
+            ACCESS_RESTRICTION_BEGIN_DATE,
+            ACCESS_RESTRICTION_END_DATE,
+            ACCESS_RESTRICTION_END_DESC };
+
     private NamespaceService namespaceService;
 
     @Override
@@ -65,12 +79,11 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
 
     @Override
     protected String[] getOriginalFieldIds() {
-        return new String[] {
-                ACCESS_RESTRICTION.getLocalName(),
-                ACCESS_RESTRICTION_REASON.getLocalName(),
-                ACCESS_RESTRICTION_BEGIN_DATE.getLocalName(),
-                ACCESS_RESTRICTION_END_DATE.getLocalName(),
-                ACCESS_RESTRICTION_END_DESC.getLocalName() };
+        ArrayList<String> originalFieldIds = new ArrayList<String>();
+        for (QName propName : ACCESS_RESTRICTION_PROPS) {
+            originalFieldIds.add(propName.getLocalName());
+        }
+        return originalFieldIds.toArray(new String[originalFieldIds.size()]);
     }
 
     @Override
@@ -88,6 +101,7 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
         QName accessRestrictionBeginDateProp = getProp(fieldsByOriginalId, ACCESS_RESTRICTION_BEGIN_DATE);
         QName accessRestrictionEndDateProp = getProp(fieldsByOriginalId, ACCESS_RESTRICTION_END_DATE);
         QName accessRestrictionEndDescProp = getProp(fieldsByOriginalId, ACCESS_RESTRICTION_END_DESC);
+        QName accessRestrictionReasonSelectorProp = RepoUtil.createTransientProp(accessRestrictionReasonProp.getLocalName() + "_selector_value");
 
         if (field.getOriginalFieldId().equals(ACCESS_RESTRICTION_END_DATE.getLocalName())) {
             // access restriction end date is generated with access restriction begin date as part of inline group
@@ -107,9 +121,10 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
                 item.setValueChangeListener(getBindingName("accessRestrictionReasonValueChanged", stateHolderKey));
                 item.setAjaxParentLevel(1);
                 item.setMandatoryIf(accessRestrictionPropName);
-                item.setComponentGenerator("ClassificatorSelectorWithTitleGenerator");
+                item.getCustomAttributes().put(ClassificatorSelectorAndTextGenerator.IS_LABEL_AND_VALUE_SELECT, Boolean.TRUE.toString());
+                item.getCustomAttributes().put(ClassificatorSelectorAndTextGenerator.SELECTOR_VALUE_KEY, accessRestrictionReasonSelectorProp.toString());
                 generatorResults.addStateHolder(stateHolderKey, new AccessRestrictionState(accessRestrictionProp, accessRestrictionReasonProp, accessRestrictionBeginDateProp,
-                        accessRestrictionEndDateProp, accessRestrictionEndDescProp, field.getClassificator()));
+                        accessRestrictionEndDateProp, accessRestrictionEndDescProp, accessRestrictionReasonSelectorProp, field.getClassificator()));
             } else if (field.getOriginalFieldId().equals(ACCESS_RESTRICTION_BEGIN_DATE.getLocalName())) {
                 String itemLabel = MessageUtil.getMessage("document_accessRestrictionDate");
                 List<String> components = DurationGenerator.generateDurationFields(field, item, accessRestrictionBeginDateProp, accessRestrictionEndDateProp,
@@ -118,9 +133,23 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
                 List<String> componentsWithMandatoryIf = new ArrayList<String>();
                 componentsWithMandatoryIf.add(components.get(0) + "¤mandatoryIf=" + accessRestrictionPropName);
                 componentsWithMandatoryIf.add(components.get(1) + "¤mandatoryIf=" + accessRestrictionPropName + "," + accessRestrictionEndDescProp.getLocalName() + "=null");
-                // TODO XXX FIXME from Alar to Riina: should call item.setPropertiesSeparator, because cannot use comma both inside value ^^ and as a separator
-                item.setProps(StringUtils.join(componentsWithMandatoryIf, ','));
-                item.setTextId("document_accessRestrictionDates_templateText");
+                item.setOptionsSeparator(PropsBuilder.DEFAULT_OPTIONS_SEPARATOR);
+                String propSeparator = "|";
+                item.getCustomAttributes().put(PROPERTIES_SEPARATOR, propSeparator);
+                item.setProps(StringUtils.join(componentsWithMandatoryIf, propSeparator));
+                item.setTextId("document_eventDates_templateText");
+                item.setShowInViewMode(false);
+
+                // same as edit mode item, only difference is template format text and validation not needed in view mode
+                ItemConfigVO viewModeItem = generatorResults.generateAndAddViewModeText(accessRestrictionBeginDateProp.getLocalName() + VIEW_MODE_PROP_SUFFIX, itemLabel);
+                viewModeItem.setRendered(getBindingName("renderAllAccessRestrictionFields", stateHolderKey));
+                components = DurationGenerator.generateDurationFields(field, viewModeItem, accessRestrictionBeginDateProp, accessRestrictionEndDateProp,
+                        itemLabel,
+                        namespaceService);
+                viewModeItem.setName(accessRestrictionBeginDateProp.getLocalName() + VIEW_MODE_PROP_SUFFIX);
+                viewModeItem.setOptionsSeparator(PropsBuilder.DEFAULT_OPTIONS_SEPARATOR);
+                viewModeItem.setProps(StringUtils.join(components, ','));
+                viewModeItem.setTextId("document_accessRestrictionDates_templateText");
             } else if (field.getOriginalFieldId().equals(ACCESS_RESTRICTION_END_DESC.getLocalName())) {
                 return;
             } else {
@@ -143,16 +172,26 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
         private final QName accessRestrictionBeginDateProp;
         private final QName accessRestrictionEndDateProp;
         private final QName accessRestrictionEndDescProp;
+        private final QName accessRestrictionReasonSelectorProp;
         private final String accessRestrictionReasonClassificatorName;
 
         public AccessRestrictionState(QName accessRestrictionProp, QName accessRestrictionReasonProp, QName accessRestrictionBeginDateProp, QName accessRestrictionEndDateProp,
-                                      QName accessRestrictionEndDescProp, String accessRestrictionReasonClassificatorName) {
+                                      QName accessRestrictionEndDescProp, QName accessRestrictionReasonSelectorProp, String accessRestrictionReasonClassificatorName) {
             this.accessRestrictionProp = accessRestrictionProp;
             this.accessRestrictionReasonProp = accessRestrictionReasonProp;
             this.accessRestrictionBeginDateProp = accessRestrictionBeginDateProp;
             this.accessRestrictionEndDateProp = accessRestrictionEndDateProp;
             this.accessRestrictionEndDescProp = accessRestrictionEndDescProp;
             this.accessRestrictionReasonClassificatorName = accessRestrictionReasonClassificatorName;
+            this.accessRestrictionReasonSelectorProp = accessRestrictionReasonSelectorProp;
+        }
+
+        @Override
+        public void reset(boolean inEditMode) {
+            if (!inEditMode) {
+                final Node document = dialogDataProvider.getNode();
+                document.getProperties().put(accessRestrictionBeginDateProp.getLocalName() + VIEW_MODE_PROP_SUFFIX, document.getProperties().get(accessRestrictionBeginDateProp));
+            }
         }
 
         /**
@@ -232,15 +271,24 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
                             if (restrictionEndDate == null || restrictionEndDate.before(newRestrictionEndDate)) {
                                 docProps.put(accessRestrictionEndDateProp.toString(), newRestrictionEndDate);
                                 clearPropertySheet();
+                                addSelectorValueToContext(accessRestrictionReason);
+                                ;
                             }
                         }
                     } else {
-                        String accessRestrictionEndDesc = (String) docProps.get(accessRestrictionEndDescProp.toString());
-                        String newAccessRestrictionEndDesc = StringUtils.isBlank(accessRestrictionEndDesc) ? accessRestrictionReason : accessRestrictionEndDesc + " "
+                        String accessRestrictionEndDesc = (String) docProps.get(accessRestrictionReasonProp.toString());
+                        String newAccessRestrictionEndDesc = StringUtils.isBlank(accessRestrictionEndDesc) ? accessRestrictionReason : accessRestrictionEndDesc + ", "
                                 + accessRestrictionReason;
-                        docProps.put(accessRestrictionEndDescProp.toString(), newAccessRestrictionEndDesc);
+                        docProps.put(accessRestrictionReasonProp.toString(), newAccessRestrictionEndDesc);
                         clearPropertySheet();
+                        addSelectorValueToContext(accessRestrictionReason);
                     }
+                }
+
+                protected void addSelectorValueToContext(final String accessRestrictionReason) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> requestMap = FacesContext.getCurrentInstance().getExternalContext().getRequestMap();
+                    requestMap.put(accessRestrictionReasonSelectorProp.toString(), new Object[] { accessRestrictionReason });
                 }
             });
 
@@ -310,6 +358,7 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
 
         // Log changes
         if (!document.isDraftOrImapOrDvk()) {
+            // TODO refactor, so that accessRestriction changes would be logged in DocumentDynamicServiceImpl.logChangedProp, not here
             final List<String> changedAccessRestrictionFieldIds = getChangedAccessRestrictionFieldIds(document, oldProps);
             if (changedAccessRestrictionFieldIds.isEmpty()) {
                 return;
@@ -334,24 +383,12 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
     }
 
     private List<String> getChangedAccessRestrictionFieldIds(DocumentDynamic document, Map<QName, Serializable> oldProps) {
-        List<String> fields = new ArrayList<String>(5);
-
-        if (!StringUtils.equals((String) document.getProp(ACCESS_RESTRICTION), (String) oldProps.get(ACCESS_RESTRICTION))) {
-            fields.add(ACCESS_RESTRICTION.getLocalName());
+        List<String> fields = new ArrayList<String>();
+        for (QName propName : ACCESS_RESTRICTION_PROPS) {
+            if (!ObjectUtils.equals(document.getProp(propName), oldProps.get(propName))) {
+                fields.add(propName.getLocalName());
+            }
         }
-        if (!StringUtils.equals((String) document.getProp(ACCESS_RESTRICTION_REASON), (String) oldProps.get(ACCESS_RESTRICTION_REASON))) {
-            fields.add(ACCESS_RESTRICTION_REASON.getLocalName());
-        }
-        if (!StringUtils.equals((String) document.getProp(ACCESS_RESTRICTION_END_DESC), (String) oldProps.get(ACCESS_RESTRICTION_END_DESC))) {
-            fields.add(ACCESS_RESTRICTION_END_DESC.getLocalName());
-        }
-        if (!ObjectUtils.equals(document.getProp(ACCESS_RESTRICTION_BEGIN_DATE), oldProps.get(ACCESS_RESTRICTION_BEGIN_DATE))) {
-            fields.add(ACCESS_RESTRICTION_BEGIN_DATE.getLocalName());
-        }
-        if (!ObjectUtils.equals(document.getProp(ACCESS_RESTRICTION_END_DATE), oldProps.get(ACCESS_RESTRICTION_END_DATE))) {
-            fields.add(ACCESS_RESTRICTION_END_DATE.getLocalName());
-        }
-
         return fields;
     }
 

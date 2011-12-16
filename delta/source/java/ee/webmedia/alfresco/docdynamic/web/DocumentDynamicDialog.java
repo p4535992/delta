@@ -142,7 +142,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
                 , BeanHelper.getDocumentAdminService().getDocumentTypeName(baseDoc.getDocumentTypeId())
                 , StringUtils.defaultIfEmpty((String) baseDoc.getProp(DocumentCommonModel.Props.REG_NUMBER), "")
                 , regDateTime == null ? "" : regDateTime));
-        NodeRef docRef = getDocumentDynamicService().copyDocument(baseDoc, overrides, DocumentCommonModel.Props.REG_NUMBER, DocumentCommonModel.Props.REG_DATE_TIME,
+        NodeRef docRef = getDocumentDynamicService().copyDocumentToDrafts(baseDoc, overrides, DocumentCommonModel.Props.REG_NUMBER, DocumentCommonModel.Props.REG_DATE_TIME,
                 DocumentCommonModel.Props.DOC_STATUS);
 
         open(docRef, true);

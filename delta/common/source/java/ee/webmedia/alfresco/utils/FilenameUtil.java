@@ -79,7 +79,7 @@ public class FilenameUtil {
     }
 
     public static String generateUniqueFileDisplayName(String displayName, List<String> existingDisplayNames) {
-        String baseName = displayName.substring(0, FilenameUtils.indexOfExtension(displayName));
+        String baseName = FilenameUtils.removeExtension(displayName);
         String extension = FilenameUtils.getExtension(displayName);
         if (StringUtils.isBlank(extension)) {
             extension = MimetypeMap.EXTENSION_BINARY;

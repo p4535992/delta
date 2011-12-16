@@ -2,7 +2,6 @@ package ee.webmedia.alfresco.docdynamic.service;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.getDocTypeIdAndVersionNr;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ACCESS_RESTRICTION;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FILE_CONTENTS;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FILE_NAMES;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.INDIVIDUAL_NUMBER;
@@ -58,6 +57,7 @@ import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.docconfig.generator.SaveListener;
+import ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGenerator;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
@@ -166,7 +166,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         documentConfigService.setDefaultPropertyValues(docNode, null, false, true, docVer);
 
         DocumentServiceImpl.PropertyChangesMonitorHelper propertyChangesMonitorHelper = new DocumentServiceImpl.PropertyChangesMonitorHelper();
-        saveThisNodeAndChildNodes(null, docNode, childAssocTypeQNamesRoot.getChildren(), propertyChangesMonitorHelper);
+        saveThisNodeAndChildNodes(null, docNode, childAssocTypeQNamesRoot.getChildren(), null, propertyChangesMonitorHelper, null);
 
         return Pair.newInstance(getDocument(docRef), docVer);
     }
@@ -225,7 +225,9 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         } else if (containerClass instanceof AspectDefinition) {
             if (!parentNode.hasAspect(containerClass.getName())) {
                 parentNode.getAspects().add(containerClass.getName());
-                LOG.info("node " + parentNode.getType().toPrefixString(namespaceService) + " addAspect " + containerClass.getName().toPrefixString(namespaceService));
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("node " + parentNode.getType().toPrefixString(namespaceService) + " addAspect " + containerClass.getName().toPrefixString(namespaceService));
+                }
             }
         } else {
             throw new RuntimeException("Unknown subclass of ClassDefinition: " + WmNode.toString(containerClass));
@@ -304,7 +306,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     }
 
     @Override
-    public NodeRef copyDocument(DocumentDynamic sourceDocument, Map<QName, Serializable> overrideProps, QName... ignoredProps) {
+    public NodeRef copyDocumentToDrafts(DocumentDynamic sourceDocument, Map<QName, Serializable> overrideProps, QName... ignoredProps) {
         DocumentDynamic targetDocument = createNewDocumentInDrafts(sourceDocument.getDocumentTypeId()).getFirst();
 
         Set<QName> ignoredPropsSet = new HashSet<QName>(Arrays.asList(ignoredProps));
@@ -313,12 +315,11 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         TreeNode<QName> childAssocTypeQNamesRoot = documentConfigService.getChildAssocTypeQNameTree(targetDocument.getNode());
         Assert.isNull(childAssocTypeQNamesRoot.getData());
 
-        // TODO XXX FIXME Alar: something does not work correctly with removing child nodes
-        removeChildNodes(sourceDocument, childAssocTypeQNamesRoot);
+        removeChildNodes(targetDocument, childAssocTypeQNamesRoot);
         copyPropsAndChildNodesHierarchy(sourceDocument.getNode(), targetDocument.getNode(), childAssocTypeQNamesRoot.getChildren(), propDefs, overrideProps, ignoredPropsSet, null);
 
         DocumentServiceImpl.PropertyChangesMonitorHelper propertyChangesMonitorHelper = new DocumentServiceImpl.PropertyChangesMonitorHelper();
-        saveThisNodeAndChildNodes(null, targetDocument.getNode(), childAssocTypeQNamesRoot.getChildren(), propertyChangesMonitorHelper);
+        saveThisNodeAndChildNodes(null, targetDocument.getNode(), childAssocTypeQNamesRoot.getChildren(), null, propertyChangesMonitorHelper, null);
 
         return targetDocument.getNodeRef();
     }
@@ -386,9 +387,10 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     private void removeChildNodes(DocumentDynamic document, TreeNode<QName> childAssocTypeQNamesRoot) {
         for (TreeNode<QName> childAssocTypeQName : childAssocTypeQNamesRoot.getChildren()) {
             QName assocTypeQName = childAssocTypeQName.getData();
-            List<Node> childNodes = document.getNode().getAllChildAssociationsByAssocType().get(assocTypeQName);
-            if (childNodes != null && !childNodes.isEmpty()) {
-                document.getNode().removeChildAssociations(assocTypeQName, childNodes);
+            List<Node> childNodes = document.getNode().getAllChildAssociations(assocTypeQName);
+            while (childNodes != null && !childNodes.isEmpty()) {
+                document.getNode().removeChildAssociations(assocTypeQName, 0);
+                childNodes = document.getNode().getAllChildAssociations(assocTypeQName);
             }
             // We don't remove container aspects, it is not strictly necessary
         }
@@ -412,17 +414,19 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
         setParentFolderProps(document);
 
-        ValidationHelperImpl validationHelper = new ValidationHelperImpl();
-        for (String saveListenerBeanName : saveListenerBeanNames) {
-            SaveListener saveListener = (SaveListener) beanFactory.getBean(saveListenerBeanName, SaveListener.class);
-            saveListener.validate(document, validationHelper);
-        }
-        if (!validationHelper.errorMessages.isEmpty()) {
-            throw new UnableToPerformMultiReasonException(new MessageDataWrapper(validationHelper.errorMessages));
-        }
-        for (String saveListenerBeanName : saveListenerBeanNames) {
-            SaveListener saveListener = (SaveListener) beanFactory.getBean(saveListenerBeanName, SaveListener.class);
-            saveListener.save(document);
+        if (saveListenerBeanNames != null) {
+            ValidationHelperImpl validationHelper = new ValidationHelperImpl();
+            for (String saveListenerBeanName : saveListenerBeanNames) {
+                SaveListener saveListener = (SaveListener) beanFactory.getBean(saveListenerBeanName, SaveListener.class);
+                saveListener.validate(document, validationHelper);
+            }
+            if (!validationHelper.errorMessages.isEmpty()) {
+                throw new UnableToPerformMultiReasonException(new MessageDataWrapper(validationHelper.errorMessages));
+            }
+            for (String saveListenerBeanName : saveListenerBeanNames) {
+                SaveListener saveListener = (SaveListener) beanFactory.getBean(saveListenerBeanName, SaveListener.class);
+                saveListener.save(document);
+            }
         }
 
         WmNode docNode = document.getNode();
@@ -443,61 +447,28 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         TreeNode<QName> childAssocTypeQNamesRoot = documentConfigService.getChildAssocTypeQNameTree(document.getNode());
         Assert.isNull(childAssocTypeQNamesRoot.getData());
 
+        Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs = documentConfigService.getPropertyDefinitions(document.getNode());
+
+        updateSearchableChildNodeProps(docNode, null, childAssocTypeQNamesRoot.getChildren(), propDefs);
+
         { // update properties and log changes made in properties
             DocumentServiceImpl.PropertyChangesMonitorHelper propertyChangesMonitorHelper = new DocumentServiceImpl.PropertyChangesMonitorHelper();
             propertyChangesMonitorHelper.addIgnoredProps(docProps //
                     , REG_NUMBER, SHORT_REG_NUMBER, INDIVIDUAL_NUMBER, REG_DATE_TIME // registration changes
-                    , ACCESS_RESTRICTION // access restriction changed
                     );
-            List<Pair<QName, Pair<Serializable, Serializable>>> changedPropsNewValues = saveThisNodeAndChildNodesAndReturnChanged(null, document.getNode(),
-                    childAssocTypeQNamesRoot.getChildren(),
-                    propertyChangesMonitorHelper);
+            // TODO refactor, so that accessRestriction changes would be logged here, not in AccessRestrictionGenerator
+            propertyChangesMonitorHelper.addIgnoredProps(docProps //
+                    , AccessRestrictionGenerator.ACCESS_RESTRICTION_PROPS // access restriction changed
+                    );
+            List<Pair<QName, Pair<Serializable, Serializable>>> changedPropsNewValues = saveThisNodeAndChildNodes(null, docNode,
+                    childAssocTypeQNamesRoot.getChildren(), null, propertyChangesMonitorHelper, propDefs);
             boolean propsChanged = !changedPropsNewValues.isEmpty();
             if (!EventsLoggingHelper.isLoggingDisabled(docNode, DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED)) {
                 if (document.isDraft()) {
                     documentLogService.addDocumentLog(docRef, MessageUtil.getMessage("document_log_status_created"));
                 } else if (propsChanged) {
-                    Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs = documentConfigService.getPropertyDefinitions(document.getNode());
                     for (Pair<QName, Pair<Serializable, Serializable>> keyOldNewValuesPair : changedPropsNewValues) {
-                        if (!DocumentDynamicModel.URI.equals(keyOldNewValuesPair.getFirst().getNamespaceURI())) {
-                            continue;
-                        }
-                        Pair<DynamicPropertyDefinition, Field> pair = propDefs.get(keyOldNewValuesPair.getFirst().getLocalName());
-                        Field field = pair.getSecond();
-                        if (field == null) {
-                            continue;
-                        }
-                        String originalFieldId = field.getOriginalFieldId();
-                        Serializable oldValue = keyOldNewValuesPair.getSecond().getFirst();
-                        Serializable newValue = keyOldNewValuesPair.getSecond().getSecond();
-                        String messageKey = "document_log_location_changed";
-                        if (DocumentCommonModel.Props.FUNCTION.getLocalName().equals(originalFieldId)) {
-                            oldValue = nodeService.getProperty((NodeRef) oldValue, FunctionsModel.Props.MARK) + " "
-                                    + nodeService.getProperty((NodeRef) oldValue, FunctionsModel.Props.TITLE);
-                            newValue = nodeService.getProperty((NodeRef) newValue, FunctionsModel.Props.MARK) + " "
-                                    + nodeService.getProperty((NodeRef) newValue, FunctionsModel.Props.TITLE);
-                        } else if (DocumentCommonModel.Props.SERIES.getLocalName().equals(originalFieldId)) {
-                            oldValue = nodeService.getProperty((NodeRef) oldValue, SeriesModel.Props.SERIES_IDENTIFIER) + " "
-                                    + nodeService.getProperty((NodeRef) oldValue, SeriesModel.Props.TITLE);
-                            newValue = nodeService.getProperty((NodeRef) newValue, SeriesModel.Props.SERIES_IDENTIFIER) + " "
-                                    + nodeService.getProperty((NodeRef) newValue, SeriesModel.Props.TITLE);
-                        } else if (DocumentCommonModel.Props.VOLUME.getLocalName().equals(originalFieldId)) {
-                            oldValue = nodeService.getProperty((NodeRef) oldValue, VolumeModel.Props.MARK) + " "
-                                    + nodeService.getProperty((NodeRef) oldValue, VolumeModel.Props.TITLE);
-                            newValue = nodeService.getProperty((NodeRef) newValue, VolumeModel.Props.MARK) + " "
-                                    + nodeService.getProperty((NodeRef) newValue, VolumeModel.Props.TITLE);
-                        } else if (DocumentCommonModel.Props.CASE.getLocalName().equals(originalFieldId)) {
-                            if (oldValue != null) {
-                                oldValue = nodeService.getProperty((NodeRef) oldValue, CaseModel.Props.TITLE);
-                            }
-                            if (newValue != null) {
-                                newValue = nodeService.getProperty((NodeRef) newValue, CaseModel.Props.TITLE);
-                            }
-                        } else {
-                            messageKey = "document_log_status_changed";
-                        }
-                        String message = MessageUtil.getMessage(messageKey, field.getName(), oldValue, newValue);
-                        documentLogService.addDocumentLog(docRef, message);
+                        logChangedProp(docRef, propDefs, keyOldNewValuesPair);
                     }
                 }
             }
@@ -514,7 +485,49 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         return document;
     }
 
-    public void setParentFolderProps(DocumentDynamic document) {
+    private void logChangedProp(NodeRef docRef, Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs, Pair<QName, Pair<Serializable, Serializable>> keyOldNewValuesPair) {
+        if (!DocumentDynamicModel.URI.equals(keyOldNewValuesPair.getFirst().getNamespaceURI())) {
+            return;
+        }
+        Pair<DynamicPropertyDefinition, Field> pair = propDefs.get(keyOldNewValuesPair.getFirst().getLocalName());
+        Field field = pair.getSecond();
+        if (field == null) {
+            return;
+        }
+        String originalFieldId = field.getOriginalFieldId();
+        Serializable oldValue = keyOldNewValuesPair.getSecond().getFirst();
+        Serializable newValue = keyOldNewValuesPair.getSecond().getSecond();
+        String messageKey = "document_log_location_changed";
+        if (DocumentCommonModel.Props.FUNCTION.getLocalName().equals(originalFieldId)) {
+            oldValue = nodeService.getProperty((NodeRef) oldValue, FunctionsModel.Props.MARK) + " "
+                    + nodeService.getProperty((NodeRef) oldValue, FunctionsModel.Props.TITLE);
+            newValue = nodeService.getProperty((NodeRef) newValue, FunctionsModel.Props.MARK) + " "
+                    + nodeService.getProperty((NodeRef) newValue, FunctionsModel.Props.TITLE);
+        } else if (DocumentCommonModel.Props.SERIES.getLocalName().equals(originalFieldId)) {
+            oldValue = nodeService.getProperty((NodeRef) oldValue, SeriesModel.Props.SERIES_IDENTIFIER) + " "
+                    + nodeService.getProperty((NodeRef) oldValue, SeriesModel.Props.TITLE);
+            newValue = nodeService.getProperty((NodeRef) newValue, SeriesModel.Props.SERIES_IDENTIFIER) + " "
+                    + nodeService.getProperty((NodeRef) newValue, SeriesModel.Props.TITLE);
+        } else if (DocumentCommonModel.Props.VOLUME.getLocalName().equals(originalFieldId)) {
+            oldValue = nodeService.getProperty((NodeRef) oldValue, VolumeModel.Props.MARK) + " "
+                    + nodeService.getProperty((NodeRef) oldValue, VolumeModel.Props.TITLE);
+            newValue = nodeService.getProperty((NodeRef) newValue, VolumeModel.Props.MARK) + " "
+                    + nodeService.getProperty((NodeRef) newValue, VolumeModel.Props.TITLE);
+        } else if (DocumentCommonModel.Props.CASE.getLocalName().equals(originalFieldId)) {
+            if (oldValue != null) {
+                oldValue = nodeService.getProperty((NodeRef) oldValue, CaseModel.Props.TITLE);
+            }
+            if (newValue != null) {
+                newValue = nodeService.getProperty((NodeRef) newValue, CaseModel.Props.TITLE);
+            }
+        } else {
+            messageKey = "document_log_status_changed";
+        }
+        String message = MessageUtil.getMessage(messageKey, field.getName(), oldValue, newValue);
+        documentLogService.addDocumentLog(docRef, message);
+    }
+
+    private void setParentFolderProps(DocumentDynamic document) {
         NodeRef docRef = document.getNodeRef();
         document.setDraft(isDraft(docRef));
         document.setDraftOrImapOrDvk(isDraftOrImapOrDvk(docRef));
@@ -578,10 +591,135 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         return documentAdminService.getDocumentTypeProperty(docTypeIdOfDoc, DocumentAdminModel.Props.NAME, String.class);
     }
 
-    private List<Pair<QName, Pair<Serializable, Serializable>>> saveThisNodeAndChildNodesAndReturnChanged(NodeRef parentRef, Node node, List<TreeNode<QName>> childAssocTypeQNames,
-            DocumentServiceImpl.PropertyChangesMonitorHelper propertyChangesMonitorHelper) {
+    /*
+     * For reports to work correctly, all values (even nulls and blank Strings) are added to searchable props
+     * *
+     * NB! We don't support the following scenario for _reports_ (document search works):
+     * Doc -> ChildType1 -> ChildType2
+     * Doc -> ChildType1 -> ChildType3
+     * *
+     * NB! We don't support multi-valued properties on child/grand-child for _reports_ (document search works).
+     */
+    private void updateSearchableChildNodeProps(Node node, QName[] currentHierarchy, List<TreeNode<QName>> childAssocTypeQNames,
+            Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs) {
+        if (currentHierarchy == null) {
+            currentHierarchy = new QName[] {};
+        }
+        for (Pair<DynamicPropertyDefinition, Field> pair : propDefs.values()) {
+            DynamicPropertyDefinition propDef = pair.getFirst();
+            QName[] propHierarchy = propDef.getChildAssocTypeQNameHierarchy();
+            if (propHierarchy == null) {
+                propHierarchy = new QName[] {};
+            }
+            if (propHierarchy.length > currentHierarchy.length) { // prop is on child or grand-child node, not on current node
+                if (Arrays.equals(ArrayUtils.subarray(propHierarchy, 0, currentHierarchy.length), currentHierarchy)) {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Setting on " + node.getType().toPrefixString(namespaceService) + " prop " + propDef.getName().toPrefixString(namespaceService)
+                                + " to empty list");
+                    }
+                    node.getProperties().put(propDef.getName().toString(), new ArrayList<Object>());
+                }
+            }
+        }
+        for (TreeNode<QName> childAssocTypeQName : childAssocTypeQNames) {
+            QName assocTypeQName = childAssocTypeQName.getData();
+            List<Node> childNodes = node.getAllChildAssociations(assocTypeQName);
+            if (childNodes == null) {
+                continue;
+            }
+            for (Node childNode : childNodes) {
+                QName[] childHierarchy = (QName[]) ArrayUtils.add(currentHierarchy, assocTypeQName);
+                updateSearchableChildNodeProps(childNode, childHierarchy, childAssocTypeQName.getChildren(), propDefs);
+
+                int nrOfTimesToDuplicate = -1;
+                Map<QName, Object> propsToDuplicate = new HashMap<QName, Object>();
+
+                for (Pair<DynamicPropertyDefinition, Field> pair : propDefs.values()) {
+                    DynamicPropertyDefinition propDef = pair.getFirst();
+                    QName[] propHierarchy = propDef.getChildAssocTypeQNameHierarchy();
+                    if (propHierarchy == null) {
+                        propHierarchy = new QName[] {};
+                    }
+                    if (propHierarchy.length < childHierarchy.length) {
+                        continue;// prop is not on child or grand-child node
+                    }
+                    if (!Arrays.equals(ArrayUtils.subarray(propHierarchy, 0, childHierarchy.length), childHierarchy)) {
+                        continue;
+                    }
+                    QName propName = propDef.getName();
+                    @SuppressWarnings("unchecked")
+                    List<Object> list = (List<Object>) node.getProperties().get(propName.toString());
+                    Object value = childNode.getProperties().get(propName.toString());
+
+                    if (propHierarchy.length == childHierarchy.length) {
+                        // prop is directly on child node
+                        if (!propDef.isMultiValued()) {
+                            // duplicate later
+                            Assert.isTrue(!(value instanceof Collection));
+                            propsToDuplicate.put(propName, value);
+                            continue;
+                        } else if (value != null) {
+                            Assert.isTrue(value instanceof Collection);
+                        }
+                    } else {
+                        // prop is on grand-child node, it means that on child node it is already a collected List
+                        @SuppressWarnings("unchecked")
+                        List<Object> valueList = (List<Object>) value;
+                        if (!propDef.isMultiValued()) {
+                            // All valueList-s must be the same size
+                            if (nrOfTimesToDuplicate < 0) {
+                                nrOfTimesToDuplicate = valueList.size();
+                            } else {
+                                Assert.isTrue(nrOfTimesToDuplicate == valueList.size());
+                            }
+                        }
+                    }
+
+                    if (value instanceof Collection) {
+                        for (Object object : (Collection<?>) ((Collection<?>) value)) {
+                            list.add(object);
+                        }
+                    } else {
+                        list.add(value);
+                    }
+
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Setting on " + node.getType().toPrefixString(namespaceService) + " prop " + propName.toPrefixString(namespaceService)
+                                                + " to " + list);
+                    }
+                    node.getProperties().put(propName.toString(), list);
+                }
+                Assert.isTrue(nrOfTimesToDuplicate != 0);
+                if (nrOfTimesToDuplicate < 1) {
+                    nrOfTimesToDuplicate = 1;
+                }
+                for (Entry<QName, Object> entry : propsToDuplicate.entrySet()) {
+                    QName propName = entry.getKey();
+                    Object value = entry.getValue();
+
+                    @SuppressWarnings("unchecked")
+                    List<Object> list = (List<Object>) node.getProperties().get(propName.toString());
+
+                    for (int i = 0; i < nrOfTimesToDuplicate; i++) {
+                        list.add(value);
+                    }
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Duplicated (" + nrOfTimesToDuplicate + "), setting on " + node.getType().toPrefixString(namespaceService) + " prop "
+                                + propName.toPrefixString(namespaceService) + " to " + list);
+                    }
+                    node.getProperties().put(propName.toString(), list);
+                }
+            }
+        }
+    }
+
+    private List<Pair<QName, Pair<Serializable, Serializable>>> saveThisNodeAndChildNodes(NodeRef parentRef, Node node, List<TreeNode<QName>> childAssocTypeQNames,
+            QName[] currentHierarchy, DocumentServiceImpl.PropertyChangesMonitorHelper propertyChangesMonitorHelper, Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs) {
         boolean propsChanged = false;
         NodeRef nodeRef;
+        if (currentHierarchy == null) {
+            currentHierarchy = new QName[] {};
+        }
         List<Pair<QName, Pair<Serializable, Serializable>>> changedPropsNewValues = new ArrayList<Pair<QName, Pair<Serializable, Serializable>>>();
         if (RepoUtil.isUnsaved(node)) {
             propsChanged = true;
@@ -590,7 +728,23 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             generalService.setAspectsIgnoringSystem(nodeRef, node.getAspects());
         } else {
             generalService.setAspectsIgnoringSystem(node);
-            changedPropsNewValues = propertyChangesMonitorHelper.setPropertiesIgnoringSystemAndReturnNewValues(node.getNodeRef(), node.getProperties());
+
+            List<QName> ignoredProps = new ArrayList<QName>();
+            if (propDefs != null) {
+                for (Pair<DynamicPropertyDefinition, Field> pair : propDefs.values()) {
+                    DynamicPropertyDefinition propDef = pair.getFirst();
+                    QName[] propHierarchy = propDef.getChildAssocTypeQNameHierarchy();
+                    if (propHierarchy == null) {
+                        propHierarchy = new QName[] {};
+                    }
+                    if (!Arrays.equals(propHierarchy, currentHierarchy)) {
+                        ignoredProps.add(pair.getFirst().getName());
+                    }
+                }
+            }
+
+            QName[] ignoredPropsArray = ignoredProps.toArray(new QName[ignoredProps.size()]);
+            changedPropsNewValues = propertyChangesMonitorHelper.setPropertiesIgnoringSystemAndReturnNewValues(node.getNodeRef(), node.getProperties(), ignoredPropsArray);
             propsChanged |= !changedPropsNewValues.isEmpty();
             propsChanged |= generalService.saveRemovedChildAssocs(node) > 0;
             nodeRef = node.getNodeRef();
@@ -601,20 +755,14 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             List<Node> childNodes = node.getAllChildAssociations(assocTypeQName);
             if (childNodes != null) {
                 for (Node childNode : childNodes) {
-                    List<Pair<QName, Pair<Serializable, Serializable>>> changedChildNodePropsNewValues = saveThisNodeAndChildNodesAndReturnChanged(nodeRef, childNode,
-                            childAssocTypeQName.getChildren(), propertyChangesMonitorHelper);
-                    if (!changedChildNodePropsNewValues.isEmpty()) {
-                        changedPropsNewValues.addAll(changedChildNodePropsNewValues);
-                    }
+                    QName[] childHierarchy = (QName[]) ArrayUtils.add(currentHierarchy, assocTypeQName);
+                    List<Pair<QName, Pair<Serializable, Serializable>>> changedChildNodePropsNewValues = saveThisNodeAndChildNodes(nodeRef, childNode,
+                            childAssocTypeQName.getChildren(), childHierarchy, propertyChangesMonitorHelper, propDefs);
+                    changedPropsNewValues.addAll(changedChildNodePropsNewValues);
                 }
             }
         }
         return changedPropsNewValues;
-    }
-
-    private boolean saveThisNodeAndChildNodes(NodeRef parentRef, Node node, List<TreeNode<QName>> childAssocTypeQNames,
-            DocumentServiceImpl.PropertyChangesMonitorHelper propertyChangesMonitorHelper) {
-        return !saveThisNodeAndChildNodesAndReturnChanged(parentRef, node, childAssocTypeQNames, propertyChangesMonitorHelper).isEmpty();
     }
 
     // START: setters

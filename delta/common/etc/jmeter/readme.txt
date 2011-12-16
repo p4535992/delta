@@ -21,7 +21,7 @@ Kui on tühi repo, siis:
 
 Testi jooksutamiseks
 --------------------
-1) Kui jooksustati andmete genereerimise skripti, siis võtta dir.root/users.csv
+1) Kui jooksustati andmete genereerimise skripti, siis võtta ${dir.root}/users.csv
    fail ja asetada delta.jmx'iga samasse kausta
 1) Avada JMeter'is delta.jmx
 2) Vali "Delta load test" ja muuda protocol, host, port sobivaks

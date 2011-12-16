@@ -124,18 +124,24 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
                 @SuppressWarnings("unchecked")
                 List<String> orgPath = (List<String>) props.get(ContentModel.PROP_ORGANIZATION_PATH);
                 Serializable orgId = props.get(ContentModel.PROP_ORGID);
-                for (String op : orgPath) {
-                    if (StringUtils.equals(op, groupName)) {
-                        authorityService.addAuthority(newGroup, (String) props.get(ContentModel.PROP_USERNAME));
-                        continue OUTER;
+                if (orgPath != null) {
+                    for (String op : orgPath) {
+                        if (StringUtils.equals(op, groupName)) {
+                            authorityService.addAuthority(newGroup, (String) props.get(ContentModel.PROP_USERNAME));
+                            continue OUTER;
+                        }
                     }
                 }
 
                 if (orgId == null) {
                     continue;
                 }
+                OrganizationStructure orgStruct = null;
+                try {
+                    orgStruct = getOrganizationStructure(Integer.valueOf((String) orgId));
+                } catch (NumberFormatException e) {
 
-                OrganizationStructure orgStruct = getOrganizationStructure(Integer.valueOf((String) orgId));
+                }
                 if (orgStruct == null) {
                     continue;
                 }

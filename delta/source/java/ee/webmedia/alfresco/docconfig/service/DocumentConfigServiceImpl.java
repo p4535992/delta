@@ -852,11 +852,8 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
 
     @Override
     public Map<String, Pair<DynamicPropertyDefinition, Field>> getPropertyDefinitions(Node node) {
-        // TODO Alar: restore this behaviour or leave current?
-        // while (DocumentCommonModel.Types.METADATA_CONTAINER.equals(documentDynamicNode.getType())) {
-        // documentDynamicNode = generalService.getPrimaryParent(documentDynamicNode.getNodeRef());
-        // }
         QName type = node.getType();
+        // XXX Alar: checking hasAspect(OBJECT) would be the same
         if (!DocumentCommonModel.Types.DOCUMENT.equals(type) && !dictionaryService.isSubClass(type, DocumentCommonModel.Types.METADATA_CONTAINER)) {
             return null;
         }

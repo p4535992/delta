@@ -18,7 +18,7 @@
       </property>
    </bean>
 
-   <bean id="forumPermissionRefactorUpdater" class="ee.webmedia.alfresco.document.forum.bootstrap.ForumPermissionRefactorUpdater" parent="abstractNodeUpdater" >
+   <bean id="forumPermissionRefactorUpdater1" class="ee.webmedia.alfresco.document.forum.bootstrap.ForumPermissionRefactorUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
    </bean>

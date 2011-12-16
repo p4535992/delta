@@ -38,7 +38,7 @@ public interface DocumentDynamicService {
      */
     Pair<DocumentDynamic, DocumentTypeVersion> createNewDocumentInDrafts(String documentTypeId);
 
-    NodeRef copyDocument(DocumentDynamic document, Map<QName, Serializable> overriddenProperties, QName... ignoredProperty);
+    NodeRef copyDocumentToDrafts(DocumentDynamic document, Map<QName, Serializable> overriddenProperties, QName... ignoredProperty);
 
     DocumentDynamic getDocument(NodeRef docRef);
 
@@ -47,8 +47,17 @@ public interface DocumentDynamicService {
     void deleteDocumentIfDraft(NodeRef docRef);
 
     /**
+     * Save properties and aspects of document node and all meta-data child-nodes and grand-child-nodes.
+     * Also does the following:
+     * <ul>
+     * <li>calls save-listeners to perform validation and additional stuff</li>
+     * <li>adds log messages about changed property values</li>
+     * <li>updates searchable properties</li>
+     * <li>updates generated files</li>
+     * </ul>
+     * 
      * @param document document to save; document object is cloned in this service, so that argument object is preserved.
-     * @param saveListenerBeanNames save and validation listener bean names
+     * @param saveListenerBeanNames save and validation listener bean names; can be {@code null}
      * @return cloned document, possibly modified by save listeners
      * @throws UnableToPerformException one error message if validation or save was unsuccessful.
      * @throws UnableToPerformMultiReasonException multiple error messages if validation or save was unsuccessful.

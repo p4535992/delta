@@ -83,8 +83,7 @@ public class InviteUsersDialog extends PermissionsAddDialog {
             NodeRef docRef = nodeService.getPrimaryParent(forumRef).getParentRef();
             @SuppressWarnings("unchecked")
             List<String> forumParticipants = (List<String>) nodeService.getProperty(docRef, DocumentCommonModel.Props.FORUM_PARTICIPANTS);
-            // FIXME ALSeadist Ats test
-            boolean addAspect = !nodeService.hasAspect(docRef, DocumentCommonModel.Aspects.FORUM_PARTICIPANTS);
+            boolean addAspect = false;
             if (forumParticipants == null) {
                 forumParticipants = new ArrayList<String>();
                 addAspect = true;

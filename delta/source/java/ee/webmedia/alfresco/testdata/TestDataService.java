@@ -49,6 +49,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.faces.event.ActionEvent;
@@ -63,7 +64,6 @@ import org.alfresco.repo.management.subsystems.DefaultChildApplicationContextMan
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
-import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.ContentIOException;
@@ -93,6 +93,7 @@ import com.csvreader.CsvWriter;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.model.CaseModel;
+import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
@@ -158,7 +159,7 @@ public class TestDataService implements SaveListener {
 
     public void stopUpdater() {
         stopFlag.set(true);
-        log.info("Stop requested. Stopping after current batch.");
+        log.info("Stop requested.");
     }
 
     /** @param event */
@@ -206,7 +207,7 @@ public class TestDataService implements SaveListener {
                         }, AuthenticationUtil.getSystemUserName());
                     } finally {
                         updaterRunning.set(false);
-                        log.info("Thread stopped");
+                        log.info("Main thread stopped");
                     }
                 }
             }, "TestDataGeneratorThread").start();
@@ -247,6 +248,10 @@ public class TestDataService implements SaveListener {
     private List<Node> contactNodes;
     private List<DocumentLocationVO> docLocations;
     private List<NodeRef> docs;
+    private Map<String /* fileUrl */, Object /* lock object */> textFileLocks;
+    private Object textFileLocksGlobalLock;
+    private Random docLocationsRandom;
+    private Random usersRandom;
     private Map<String, DocumentTypeVersion> docVersions;
     private Map<String, List<ClassificatorValue>> classificators;
     private List<Pair<RootOrgUnit, List<OrgUnit>>> orgUnits;
@@ -264,6 +269,7 @@ public class TestDataService implements SaveListener {
     private int volumesCount = 5000;
     private int casesCount = 500;
     private int documentsCount = 1714500;
+    private int documentGeneratorThreads = 1;
 
     private void executeUpdater() throws Exception {
         usersFirstNames = loadCsv("users-firstnames.csv");
@@ -296,16 +302,16 @@ public class TestDataService implements SaveListener {
         createCases(casesCount); // TODO et kõikide toimikute all oleks vähemalt üks asi
         createDocuments(documentsCount);
 
+        // TODO arhiivi ka genereerida! fn-sari-toimik-asi võib identsed või samade arvude alusel genereerida vist, aga lihtsalt suletud
+
         // TODO progressi raporteerimine iga 50 ühiku järel - panna tsükli algusesse, siis on näha kohe
         // TODO statistika kirjutamine csv failidesse
 
         // TODO vaadata et nimekirjades Menetluses, Registreerimiseks, Saatmata, Saatmisel oleks sobiv arv dokumente
 
-        // TODO kas arhiivi ka genereerida? kui jah, siis fn-sari-toimik-asi võib identsed või samade arvude alusel genereerida vist, aga lihtsalt suletud
-
         // ---------------
         // XXX koormustestimisega läbi mängida indekseerimise juhud: kui storeInIndex välja lülitada; kui propertite väärtused indexist küsida
-        // XXX koormustestimisega läbi mängida store'de juhud: kui storeInIndex välja lülitada; kui propertite väärtused indexist küsida
+        // XXX koormustestimisega läbi mängida store'de juhud: kas vähem või rohkem store'sid kasulikum
         // XXX koormustestimisel uurida kustutamise aeglust ja workaroundi (öösel kustutamise) sobivust
         // XXX koormustestimisel jälgida gkrellm'iga ja jconsole'iga koormust; veel parem kui millegagi lindistada saaks graafikuid
     }
@@ -613,7 +619,6 @@ public class TestDataService implements SaveListener {
         // if (count < 5) {
         // return;
         // }
-        // TODO disable orgUnits sync
 
         orgUnits = new ArrayList<Pair<RootOrgUnit, List<OrgUnit>>>();
         createRootOrgUnit("PPA", (int) (count / 3.19d));
@@ -709,19 +714,6 @@ public class TestDataService implements SaveListener {
 
     private void createUsers(int count) throws Exception {
         log.info("Creating users");
-        // FIXME ALAR: Following parameter has been removed.
-        //@formatter:off
-        /*
-        @SuppressWarnings("unchecked")
-        Parameter<Long> employeeRegReceiveUsersPeriod = (Parameter<Long>) getParametersService().getParameter(Parameters.EMPLOYEE_REG_RECEIVE_USERS_PERIOD);
-        employeeRegReceiveUsersPeriod.setParamValue(500000L);
-        Collection<Parameter<? extends Serializable>> params = new ArrayList<Parameter<? extends Serializable>>();
-        params.add(employeeRegReceiveUsersPeriod);
-        getParametersService().updateParameters(params);
-        log.info("Set parameter " + employeeRegReceiveUsersPeriod.getParamName() + " value to " + employeeRegReceiveUsersPeriod.getParamValue());
-         */
-        // @formatter:on
-
         DefaultChildApplicationContextManager authentication = BeanHelper.getSpringBean(DefaultChildApplicationContextManager.class, "Authentication");
         Collection<String> instanceIds = authentication.getInstanceIds();
         Set<String> zones = new HashSet<String>();
@@ -759,7 +751,7 @@ public class TestDataService implements SaveListener {
     private Map<String, Pair<NodeRef, Map<QName, Serializable>>> userDataByUserName;
 
     private void createSubstitutes() {
-        userDataByUserName = new HashMap<String, Pair<NodeRef, Map<QName, Serializable>>>();
+        userDataByUserName = new ConcurrentHashMap<String, Pair<NodeRef, Map<QName, Serializable>>>();
         if (userNamesList.size() < 2) {
             return;
         }
@@ -1245,13 +1237,15 @@ public class TestDataService implements SaveListener {
 
     private void createDocuments(int count) throws Exception {
         checkStop();
-        docVersions = new HashMap<String, DocumentTypeVersion>();
-        classificators = new HashMap<String, List<ClassificatorValue>>();
-        Collections.shuffle(docLocations);
-        Random docLocationsRandom = new Random();
-        Random usersRandom = new Random();
 
-        docs = new ArrayList<NodeRef>();
+        docVersions = new ConcurrentHashMap<String, DocumentTypeVersion>();
+        classificators = new ConcurrentHashMap<String, List<ClassificatorValue>>();
+        textFileLocks = new ConcurrentHashMap<String, Object>();
+        textFileLocksGlobalLock = new Object();
+        docs = Collections.synchronizedList(new ArrayList<NodeRef>());
+        docLocationsRandom = new Random();
+        usersRandom = new Random();
+
         for (DocumentLocationVO docLocation : docLocations) {
             NodeRef parentRef = docLocation.getDocumentParentRef();
             List<ChildAssociationRef> childAssocs = getNodeService().getChildAssocs(parentRef, DocumentCommonModel.Assocs.DOCUMENT, RegexQNamePattern.MATCH_ALL);
@@ -1264,26 +1258,67 @@ public class TestDataService implements SaveListener {
             }
         }
         Assert.isTrue(new HashSet<NodeRef>(docs).size() == docs.size());
+        Collections.shuffle(docLocations);
 
+        log.info("Starting " + documentGeneratorThreads + " threads for generating documents");
+        List<Thread> threads = new ArrayList<Thread>();
         try {
-            while (docs.size() < documentsCount) {
-                checkStop();
-                final DocumentLocationVO docLocation = getRandomGaussian3(docLocations, docLocationsRandom);
-                String userName = getRandomGaussian3(userNamesList, usersRandom);
-                AuthenticationUtil.setFullyAuthenticatedUser(userName); // also sets runAsUser
-                getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
+            for (int i = 0; i < documentGeneratorThreads; i++) {
+                String threadName = "DocumentGeneratorThread-" + i;
+                log.info("Starting thread " + threadName);
+                Thread thread = new Thread(new Runnable() {
                     @Override
-                    public Void execute() throws Throwable {
-                        createDocument(docLocation);
-                        return null;
+                    public void run() {
+                        createDocumentsLoop();
                     }
-                }, false);
+                }, threadName);
+                thread.start();
+                threads.add(thread);
+            }
+            log.info("Document generator threads started. Waiting for all threads to complete");
+        } finally {
+            for (Thread thread : threads) {
+                log.info("Waiting for " + thread.getName() + " to complete");
+                thread.join();
+            }
+            log.info("All document generator threads completed.");
+            log.info("There are " + docs.size() + " documents; goal was " + count + " documents");
+            log.info("Now updating document counters...");
+            getFunctionsService().updateDocCounters();
+            log.info("Completed updating document counters");
+        }
+    }
+
+    private void createDocumentsLoop() {
+        try {
+            log.info("Documents generator thread started");
+            try {
+                while (docs.size() < documentsCount) {
+                    checkStop();
+                    try {
+                        final DocumentLocationVO docLocation = getRandomGaussian3(docLocations, docLocationsRandom);
+                        String userName = getRandomGaussian3(userNamesList, usersRandom);
+                        AuthenticationUtil.setFullyAuthenticatedUser(userName); // also sets runAsUser
+                        getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
+                            @Override
+                            public Void execute() throws Throwable {
+                                createDocument(docLocation);
+                                return null;
+                            }
+                        }, false);
+                    } catch (Exception e) {
+                        log.error("Documents generator thread error", e);
+                        Thread.sleep(Math.max(documentGeneratorThreads * 1000, 1000));
+                    }
+                }
+            } catch (StopException e) {
+                log.info("Stop requested");
+            } catch (Exception e) {
+                log.error("Documents generator thread error", e);
             }
         } finally {
-            AuthenticationUtil.setFullyAuthenticatedUser(AuthenticationUtil.getSystemUserName());
-            getFunctionsService().updateDocCounters();
+            log.info("Documents generator thread stopped");
         }
-        log.info("There are " + docs.size() + " documents; goal was " + count + " documents");
     }
 
     private void createDocument(DocumentLocationVO docLocation) throws Exception {
@@ -1321,13 +1356,24 @@ public class TestDataService implements SaveListener {
 
         Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs = getDocumentConfigService().getPropertyDefinitions(doc.getNode());
         for (Pair<DynamicPropertyDefinition, Field> pair : propDefs.values()) {
-            PropertyDefinition propDef = pair.getFirst();
+            DynamicPropertyDefinition propDef = pair.getFirst();
             Field field = pair.getSecond();
             if (field == null) {
                 continue;
             }
+
+            Node propNode = doc.getNode();
+            QName[] hierarchy = propDef.getChildAssocTypeQNameHierarchy();
+            if (hierarchy != null) {
+                int i = 0;
+                while (i < hierarchy.length) {
+                    propNode = propNode.getAllChildAssociations(hierarchy[i]).get(0);
+                    i++;
+                }
+            }
+
             QName propName = field.getQName();
-            Serializable value = doc.getProp(propName);
+            Serializable value = (Serializable) propNode.getProperties().get(propName.toString());
             String systematicGroupName = null;
             if (field.getParent() instanceof FieldGroup && ((FieldGroup) field.getParent()).isSystematic()) {
                 systematicGroupName = ((FieldGroup) field.getParent()).getName();
@@ -1340,8 +1386,6 @@ public class TestDataService implements SaveListener {
             } else if (SystematicFieldGroupNames.REGISTRATION_DATA.equals(systematicGroupName)) {
                 continue;
             } else if (SystematicFieldGroupNames.DOCUMENT_LOCATION.equals(systematicGroupName)) {
-                continue;
-            } else if (SystematicFieldGroupNames.CONTRACT_PARTIES.equals(systematicGroupName)) { // TODO subnode support!
                 continue;
             }
 
@@ -1366,6 +1410,9 @@ public class TestDataService implements SaveListener {
                 case COMBOBOX_AND_TEXT_NOT_EDITABLE:
                 case LISTBOX: // FUTURE IMPROVEMENT: multiple values can be selected
                     value = getRandomClassificatorValue(field.getClassificator());
+                    if (value == null && field.getFieldTypeEnum() == FieldType.LISTBOX) {
+                        value = new ArrayList<String>();
+                    }
                     break;
                 case TEXT_FIELD:
                 case USER: // FUTURE IMPROVEMENT: users/contacts group mappings can be used
@@ -1391,6 +1438,11 @@ public class TestDataService implements SaveListener {
                 case LONG:
                     value = (long) ((Math.random() - 0.5d) * 20000);
                     break;
+                case STRUCT_UNIT:
+                    if (value == null) {
+                        value = new ArrayList<String>();
+                    }
+                    break;
                 case INFORMATION_TEXT:
                     // do nothing
                     continue;
@@ -1402,7 +1454,7 @@ public class TestDataService implements SaveListener {
                     value = list;
                 }
 
-                doc.setProp(propName, value);
+                propNode.getProperties().put(propName.toString(), value);
             }
 
         }
@@ -1481,12 +1533,13 @@ public class TestDataService implements SaveListener {
         }
 
         String creatorUserName = getRandom(userNamesList);
-        Map<QName, Serializable> creatorProps = userDataByUserName.get(creatorUserName).getSecond();
+
+        Map<QName, Serializable> creatorProps = getUserData(creatorUserName).getSecond();
         String creatorFullName = UserUtil.getPersonFullName1(creatorProps);
         String creatorEmail = (String) creatorProps.get(ContentModel.PROP_EMAIL);
 
         String cwfOwnerUserName = getRandom(userNamesList);
-        String cwfOwnerFullName = UserUtil.getPersonFullName1(userDataByUserName.get(cwfOwnerUserName).getSecond());
+        String cwfOwnerFullName = UserUtil.getPersonFullName1(getUserData(cwfOwnerUserName).getSecond());
 
         HashMap<QName, Serializable> props = new HashMap<QName, Serializable>();
         props.put(WorkflowCommonModel.Props.STATUS, inProgress ? Status.IN_PROGRESS.getName() : Status.FINISHED.getName());
@@ -1666,48 +1719,63 @@ public class TestDataService implements SaveListener {
         fileTitles.add(fileTitle);
 
         File textFile = new File(dataFolder + "/contentstore/testfiles/" + fileUrl + ".txt");
-        if (!textFile.exists()) {
-            textFile.createNewFile();
-            boolean readerReady = true;
-            ContentReader reader = getFileFolderService().getReader(fileRef);
-            if (reader != null && reader.exists()) {
-                if (!EqualsHelper.nullSafeEquals(reader.getMimetype(), MimetypeMap.MIMETYPE_TEXT_PLAIN)
-                        || !EqualsHelper.nullSafeEquals(reader.getEncoding(), "UTF-8")) {
-                    final ContentTransformer transformer = getContentService().getTransformer(reader.getMimetype(), MimetypeMap.MIMETYPE_TEXT_PLAIN);
-                    if (transformer == null) {
-                        log.debug("No transformer found for " + reader.getMimetype());
-                        readerReady = false;
-                    } else {
-                        final ContentWriter writer = getContentService().getTempWriter();
-                        writer.setMimetype(MimetypeMap.MIMETYPE_TEXT_PLAIN);
-                        writer.setEncoding("UTF-8");
-                        try {
-                            transformer.transform(reader, writer);
-                            reader = writer.getReader();
-                            if (!reader.exists()) {
+        Object lockObject;
+        synchronized (textFileLocksGlobalLock) {
+            lockObject = textFileLocks.get(fileUrl);
+            if (lockObject == null) {
+                lockObject = new Object();
+                textFileLocks.put(fileUrl, lockObject);
+            }
+        }
+        synchronized (lockObject) {
+            if (!textFile.exists()) {
+                log.info("Transforming file contents: " + fileUrl + " - size=" + fileSize + " fromMimeType=" + fileMimeType + " fromEncoding=" + fileEncoding + " toMimeType="
+                        + MimetypeMap.MIMETYPE_TEXT_PLAIN + " toEncoding=UTF-8");
+                long startTime = System.currentTimeMillis();
+                textFile.createNewFile();
+                boolean readerReady = true;
+                ContentReader reader = getFileFolderService().getReader(fileRef);
+                if (reader != null && reader.exists()) {
+                    if (!EqualsHelper.nullSafeEquals(reader.getMimetype(), MimetypeMap.MIMETYPE_TEXT_PLAIN)
+                            || !EqualsHelper.nullSafeEquals(reader.getEncoding(), "UTF-8")) {
+                        final ContentTransformer transformer = getContentService().getTransformer(reader.getMimetype(), MimetypeMap.MIMETYPE_TEXT_PLAIN);
+                        if (transformer == null) {
+                            log.debug("No transformer found for " + reader.getMimetype());
+                            readerReady = false;
+                        } else {
+                            final ContentWriter writer = getContentService().getTempWriter();
+                            writer.setMimetype(MimetypeMap.MIMETYPE_TEXT_PLAIN);
+                            writer.setEncoding("UTF-8");
+                            try {
+                                transformer.transform(reader, writer);
+                                reader = writer.getReader();
+                                if (!reader.exists()) {
+                                    if (log.isDebugEnabled()) {
+                                        log.debug("Transformation did not write any content, fileName '" + fileName + "', " + fileRef);
+                                    }
+                                    readerReady = false;
+                                }
+                            } catch (ContentIOException e) {
                                 if (log.isDebugEnabled()) {
-                                    log.debug("Transformation did not write any content, fileName '" + fileName + "', " + fileRef);
+                                    log.debug("Transformation failed, fileName '" + fileName + "', " + fileRef, e);
                                 }
                                 readerReady = false;
                             }
-                        } catch (ContentIOException e) {
-                            if (log.isDebugEnabled()) {
-                                log.debug("Transformation failed, fileName '" + fileName + "', " + fileRef, e);
-                            }
-                            readerReady = false;
                         }
                     }
+                } else {
+                    readerReady = false;
                 }
-            } else {
-                readerReady = false;
-            }
-            if (readerReady) {
-                @SuppressWarnings("null")
-                InputStream input = reader.getContentInputStream();
-                BufferedOutputStream output = new BufferedOutputStream(new FileOutputStream(textFile));
-                FileCopyUtils.copy(input, output);
-            } else {
-                FileCopyUtils.copy(new byte[] {}, textFile);
+                if (readerReady) {
+                    @SuppressWarnings("null")
+                    InputStream input = reader.getContentInputStream();
+                    BufferedOutputStream output = new BufferedOutputStream(new FileOutputStream(textFile));
+                    FileCopyUtils.copy(input, output);
+                } else {
+                    FileCopyUtils.copy(new byte[] {}, textFile);
+                }
+                long stopTime = System.currentTimeMillis();
+                log.info("Completed transforming file contents: " + fileUrl + " - took " + (stopTime - startTime) + " ms");
             }
         }
         InputStream input = new BufferedInputStream(new FileInputStream(textFile));
@@ -1861,6 +1929,14 @@ public class TestDataService implements SaveListener {
 
     public void setDocumentsCount(int documentsCount) {
         this.documentsCount = documentsCount;
+    }
+
+    public int getDocumentGeneratorThreads() {
+        return documentGeneratorThreads;
+    }
+
+    public void setDocumentGeneratorThreads(int documentGeneratorThreads) {
+        this.documentGeneratorThreads = documentGeneratorThreads;
     }
 
 }

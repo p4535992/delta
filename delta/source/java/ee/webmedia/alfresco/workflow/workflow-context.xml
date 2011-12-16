@@ -131,7 +131,12 @@
    <!-- Used to fix invalid parallelTasks property and update lucene index (CL task 155454) -->
    <bean id="ParallelTasksPropertiesUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.ParallelTasksPropertiesUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="false" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="deleteSubtypedDocuments" />
+         </list>
+      </property>
       <property name="enabled" value="${parallelTasksPropertiesUpdater.enabled}" />
    </bean>
    
@@ -139,6 +144,11 @@
    <bean id="notStartedFinishedTaskUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.NotStartedFinishedTaskUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="ParallelTasksPropertiesUpdater" />
+         </list>
+      </property>
    </bean>    
 
    <bean id="wmWorkflowService" class="ee.webmedia.alfresco.workflow.service.WorkflowServiceImpl">
@@ -290,6 +300,11 @@
    <bean id="moveTaskFileToChildAssoc1" class="ee.webmedia.alfresco.workflow.bootstrap.MoveTaskFileToChildAssoc" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="addDocTypeToTaskNodeUpdater" />
+         </list>
+      </property>
       <property name="fileService" ref="FileService" />
       <property name="mimetypeService" ref="MimetypeService" />
       <property name="contentService" ref="ContentService" />
@@ -298,6 +313,11 @@
    <bean id="ownerOrganizationNameToMultivaluedUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.OwnerOrganizationNameToMultivaluedUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="moveTaskFileToChildAssoc1" />
+         </list>
+      </property>
    </bean>
 
    <!-- START: web beans: -->

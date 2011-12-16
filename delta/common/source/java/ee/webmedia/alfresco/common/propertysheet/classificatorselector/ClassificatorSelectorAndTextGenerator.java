@@ -25,7 +25,9 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
+import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
  * Generator, that generates a DropDown selection with values given by classificator with name defined using "classificatorName" attribute in the show-property
@@ -50,6 +52,8 @@ public class ClassificatorSelectorAndTextGenerator extends TextAreaGenerator {
     private UIInput textTargetComponent;
 
     public static final String BINDING_MARKER_CLASS = "selectBoundWithText";
+    public static final String IS_LABEL_AND_VALUE_SELECT = "isLabelAndValueSelect";
+    public static final String SELECTOR_VALUE_KEY = "selectorValueKey";
 
     public interface CustomAttributeNames {
         String RENDERER_TYPE = "rendererType";
@@ -122,6 +126,10 @@ public class ClassificatorSelectorAndTextGenerator extends TextAreaGenerator {
     private HtmlSelectOneMenu getSelectionComponent(FacesContext context, String id) {
         HtmlSelectOneMenu selectComponent = (HtmlSelectOneMenu) context.getApplication().createComponent(HtmlSelectOneMenu.COMPONENT_TYPE);
         selectComponent.setId(id);
+        if (Boolean.parseBoolean(getCustomAttributes().get(IS_LABEL_AND_VALUE_SELECT))) {
+            selectComponent.setRendererType(LabelAndValueSelectorRenderer.LABEL_AND_VALUE_SELECTOR_RENDERER_TYPE);
+            ComponentUtil.putAttribute(selectComponent, LabelAndValueSelectorRenderer.ATTR_DESCRIPTION_AS_TOOLTIP, Boolean.TRUE);
+        }
 
         @SuppressWarnings("unchecked")
         List<UISelectItem> selectOptions = selectComponent.getChildren();
@@ -133,13 +141,32 @@ public class ClassificatorSelectorAndTextGenerator extends TextAreaGenerator {
         List<ClassificatorValue> classificators //
         = classificatorService.getActiveClassificatorValues(classificatorService.getClassificatorByName(classificatorName));
 
+        String selectedValue = null;
+        boolean selectedValueFound = false;
+        String selectorValueKey = getCustomAttributes().get(SELECTOR_VALUE_KEY);
+        if (StringUtils.isNotBlank(selectorValueKey)) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> requestMap = FacesContext.getCurrentInstance().getExternalContext().getRequestMap();
+            final Object[] selectorValue = (Object[]) requestMap.get(selectorValueKey);
+            requestMap.remove(SELECTOR_VALUE_KEY);
+            if (selectorValue != null && selectorValue.length > 0) {
+                selectedValue = (String) selectorValue[0];
+                selectedValueFound = true;
+            }
+        }
+
         Collections.sort(classificators);
         ClassificatorValue defaultValue = null;
         for (ClassificatorValue classificator : classificators) {
             UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
-            selectItem.setItemLabel(classificator.getValueName());
+            selectItem.setItemDescription(classificator.getClassificatorDescription());
+            selectItem.setItemLabel(classificator.getSelectorValueName());
             selectItem.setItemValue(classificator.getValueName()); // must not be null or emtpy (even if using only label)
-            if (classificator.isByDefault()) {
+            if (selectedValueFound) {
+                if (StringUtils.equals(classificator.getValueName(), selectedValue)) {
+                    selectComponent.setValue(selectItem.getItemValue());
+                }
+            } else if (classificator.isByDefault()) {
                 selectComponent.setValue(selectItem.getItemValue()); // make the selection
                 defaultValue = classificator;
             }
@@ -148,8 +175,28 @@ public class ClassificatorSelectorAndTextGenerator extends TextAreaGenerator {
         if (null == defaultValue) {
             ClassificatorSelectorGenerator.addDefault(context, selectOptions);
         }
-        selectComponent.setStyleClass(BINDING_MARKER_CLASS);
+        Map<String, String> customAttributes = getCustomAttributes();
+        // if value change listener is provided, use it instead of default behaviour defined in javascript
+        if (!customAttributes.containsKey(GeneralSelectorGenerator.ATTR_VALUE_CHANGE_LISTENER)) {
+            selectComponent.setStyleClass(BINDING_MARKER_CLASS);
+        }
         return selectComponent;
+    }
+
+    @Override
+    protected void setupMandatoryPropertyIfNecessary(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem property, PropertyDefinition propertyDef,
+            UIComponent component) {
+        super.setupMandatoryPropertyIfNecessary(context, propertySheet, property, propertyDef, component);
+        setupValueChangeListener(context, component, getCustomAttributes());
+    }
+
+    private void setupValueChangeListener(FacesContext context, UIComponent component, Map<String, String> customAttributes) {
+        if (component != null) {
+            List<UIComponent> components = ComponentUtil.getChildren(component);
+            if (components != null && !components.isEmpty()) {
+                GeneralSelectorGenerator.setupValueChangeListener(context, components.get(0), customAttributes);
+            }
+        }
     }
 
     private String getClassificatorName() {

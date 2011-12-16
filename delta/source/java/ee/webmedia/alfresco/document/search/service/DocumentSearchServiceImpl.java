@@ -472,7 +472,9 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     private String generateRecipientFinichedQuery() {
         List<String> queryParts = new ArrayList<String>();
         queryParts.add(generateStringNotEmptyQuery(DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME,
-                DocumentSpecificModel.Props.SECOND_PARTY_NAME, DocumentSpecificModel.Props.THIRD_PARTY_NAME, DocumentCommonModel.Props.SEARCHABLE_PARTY_NAME));
+                DocumentSpecificModel.Props.SECOND_PARTY_NAME, DocumentSpecificModel.Props.THIRD_PARTY_NAME,
+                DocumentSpecificModel.Props.PARTY_NAME /* on document node, duplicates partyName property values from all contractParty child-nodes */
+        ));
         queryParts.add(generateStringExactQuery(DocumentStatus.FINISHED.getValueName(), DocumentCommonModel.Props.DOC_STATUS));
         queryParts.add(generateStringNullQuery(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE));
         String query = generateDocumentSearchQuery(queryParts);
@@ -1005,7 +1007,8 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             List<String> contractQueryParts = new ArrayList<String>(4);
             contractQueryParts.add(SearchUtil.generateTypeQuery(DocumentTypeHelper.CONTRACT_TYPES));
             contractQueryParts.add(SearchUtil.generateStringExactQuery(contractNumber, DocumentCommonModel.Props.REG_NUMBER));
-            contractQueryParts.add(generateStringWordsWildcardQuery(sellerPartyName, DocumentCommonModel.Props.SEARCHABLE_PARTY_NAME));
+            // on document node, duplicates partyName property values from all contractParty child-nodes
+            contractQueryParts.add(generateStringWordsWildcardQuery(sellerPartyName, DocumentSpecificModel.Props.PARTY_NAME));
             // NB! If more contract types are added, endDate properties should be added here also
             contractQueryParts.add(SearchUtil.generateDatePropertyRangeQuery(new Date(), null, DocumentSpecificModel.Props.CONTRACT_MV_END_DATE,
                     DocumentSpecificModel.Props.CONTRACT_SIM_END_DATE, DocumentSpecificModel.Props.CONTRACT_SMIT_END_DATE));

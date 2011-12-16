@@ -472,7 +472,13 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         }
         metadataBlockBean.getDocument().getProperties().put(DocumentSpecificModel.Props.ENTRY_SAP_NUMBER.toString(), entrySapNumber);
         metadataBlockBean.getDocument().getProperties().put(DocumentCommonModel.Props.DOC_STATUS.toString(), DocumentStatus.FINISHED.getValueName());
-        BeanHelper.getDocumentService().updateDocument(metadataBlockBean.getDocument());
+        // E-invoice functionality is not yet enabled in Delta 3.x
+        // When enabling e-invoice functionality in Delta 3.x, update the following code:
+        if (true) {
+            throw new RuntimeException("Update code");
+        }
+        // Use documentDynamicService.update... instead
+        // BeanHelper.getDocumentService().updateDocument(metadataBlockBean.getDocument());
         BeanHelper.getDocumentLogService().addDocumentLog(node.getNodeRef(), MessageUtil.getMessage("document_log_status_send_to_sap_manually"));
         BeanHelper.getWorkflowService().finishUserActiveResponsibleInProgressTask(node.getNodeRef(), MessageUtil.getMessage("task_comment_sentToSap_manually"));
         reloadDocAndClearPropertySheet(false);

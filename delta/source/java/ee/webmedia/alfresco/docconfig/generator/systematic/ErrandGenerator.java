@@ -154,7 +154,10 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator {
             QName[] hierarchy = propDef.getChildAssocTypeQNameHierarchy();
             Assert.isTrue(hierarchy != null && hierarchy.length >= 1);
             List<QName> hierarchyList = Arrays.asList(hierarchy);
-            LOG.info("Field " + field.getFieldId() + " multiValuedOverride=" + propDef.getMultiValuedOverride() + " hierarchy=" + WmNode.toString(hierarchyList, namespaceService));
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Field " + field.getFieldId() + " multiValuedOverride=" + propDef.getMultiValuedOverride() + " hierarchy="
+                        + WmNode.toString(hierarchyList, namespaceService));
+            }
             if (!addedSubPropSheets.contains(hierarchyList)) {
                 String subPropertySheetId = convertHierarchyToString(hierarchy);
 

@@ -43,6 +43,7 @@ public interface DocumentAdminModel {
     }
 
     interface Aspects {
+        QName OBJECT = QName.createQName(URI, "object");
         QName INAPPLICABLE_FOR_TYPE = QName.createQName(URI, "inapplicableForType");
     }
 

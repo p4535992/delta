@@ -24,6 +24,7 @@ import org.apache.commons.io.FilenameUtils;
 
 import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
 import ee.webmedia.alfresco.classificator.enums.TemplateType;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
 import ee.webmedia.alfresco.template.service.DocumentTemplateServiceImpl;
 import ee.webmedia.alfresco.utils.ActionUtil;
@@ -131,6 +132,7 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
         FilenameUtil.checkPlusInFileName(newName);
         try {
             setFileName(newName);
+            navigator.setCurrentNodeId(BeanHelper.getDocumentTemplateService().getRoot().getId());
             saveContent(file, null);
         } catch (FileExistsException e) {
             isFinished = false;

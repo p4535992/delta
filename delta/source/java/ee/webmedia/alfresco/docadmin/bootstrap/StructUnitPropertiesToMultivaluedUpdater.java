@@ -14,6 +14,7 @@ import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.SearchUtil;
 
@@ -28,7 +29,10 @@ public class StructUnitPropertiesToMultivaluedUpdater extends AbstractNodeUpdate
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
         // All documents have structUnit field in owner group,
         // so there's no point in making more specific query by orgStruct properties
-        String query = SearchUtil.generateTypeQuery(DocumentCommonModel.Types.DOCUMENT);
+        String query = SearchUtil.joinQueryPartsAnd(
+                SearchUtil.generateTypeQuery(DocumentCommonModel.Types.DOCUMENT),
+                SearchUtil.generateAspectQuery(DocumentAdminModel.Aspects.OBJECT)
+                );
         return Arrays.asList(searchService.query(generalService.getStore(), SearchService.LANGUAGE_LUCENE, query),
                 searchService.query(generalService.getArchivalsStoreRef(), SearchService.LANGUAGE_LUCENE, query));
     }

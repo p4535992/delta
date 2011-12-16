@@ -28,7 +28,6 @@ import javax.faces.model.SelectItem;
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.model.FileInfo;
-import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
@@ -216,17 +215,14 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             names.add(StringUtils.isNotBlank(contractName) ? contractName : "");
             emails.add(StringUtils.isNotBlank(contractEmail) ? contractEmail : "");
         }
-        if (getNodeService().hasAspect(node.getNodeRef(), DocumentSpecificModel.Aspects.CONTRACT_COMMON_DETAILS)) {
-            List<ChildAssociationRef> childAssocs = getNodeService().getChildAssocs(node.getNodeRef());
-            ArrayList<Serializable> partyNames = getDocumentService().collectProperties(node.getNodeRef(), childAssocs, DocumentSpecificModel.Props.PARTY_NAME);
-            ArrayList<Serializable> partyEmails = getDocumentService().collectProperties(node.getNodeRef(), childAssocs, DocumentSpecificModel.Props.PARTY_EMAIL);
-            if (partyNames.size() != partyEmails.size()) {
-                throw new RuntimeException("Document has uneven count of docspec:partyName and docspec:partyEmail values! Check code!");
-            }
+        List<String> partyNames = (List<String>) props.get(DocumentSpecificModel.Props.PARTY_NAME);
+        List<String> partyEmails = (List<String>) props.get(DocumentSpecificModel.Props.PARTY_EMAIL);
+        if (partyNames != null && partyEmails != null) {
+            RepoUtil.validateSameSize(partyNames, partyEmails, "partyNames", "partyEmails");
             String name, email;
             for (int i = 0; i < partyNames.size(); i++) {
-                name = (String) partyNames.get(i);
-                email = (String) partyEmails.get(i);
+                name = partyNames.get(i);
+                email = partyEmails.get(i);
                 if (StringUtils.isBlank(name) && StringUtils.isBlank(email)) {
                     continue;
                 }

@@ -4,10 +4,12 @@ import java.math.BigInteger;
 
 import org.springframework.ws.client.core.WebServiceTemplate;
 
+import smit.ametnik.services.IsikukoodByAsutusIdAndHasRsLubaRequestDocument;
 import smit.ametnik.services.IsikukoodByAsutusIdAndHasRsLubaRequestDocument.IsikukoodByAsutusIdAndHasRsLubaRequest;
-import smit.ametnik.services.IsikukoodByAsutusIdAndHasRsLubaResponseDocument.IsikukoodByAsutusIdAndHasRsLubaResponse;
+import smit.ametnik.services.IsikukoodByAsutusIdAndHasRsLubaResponseDocument;
+import smit.ametnik.services.RSLubaByIsikukoodRequestDocument;
 import smit.ametnik.services.RSLubaByIsikukoodRequestDocument.RSLubaByIsikukoodRequest;
-import smit.ametnik.services.RSLubaByIsikukoodResponseDocument.RSLubaByIsikukoodResponse;
+import smit.ametnik.services.RSLubaByIsikukoodResponseDocument;
 
 /**
  * @author Riina Tens
@@ -25,28 +27,28 @@ public class RSServiceImpl extends WebServiceTemplate implements RSService {
     @Override
     public boolean hasRsLubaByIsikukood(String idCode) {
         long startTime = System.currentTimeMillis();
-        RSLubaByIsikukoodRequest request = RSLubaByIsikukoodRequest.Factory.newInstance();
+        RSLubaByIsikukoodRequest request = RSLubaByIsikukoodRequestDocument.Factory.newInstance().addNewRSLubaByIsikukoodRequest();
         request.setIsikukood(idCode);
         request.setAsutusId(BigInteger.valueOf(asutusId));
-        RSLubaByIsikukoodResponse response = (RSLubaByIsikukoodResponse) marshalSendAndReceive(request);
+        RSLubaByIsikukoodResponseDocument response = (RSLubaByIsikukoodResponseDocument) marshalSendAndReceive(request);
         if (log.isDebugEnabled()) {
             log.debug("hasRsLubaByIsikukood idCode '" + idCode + "', time " + (System.currentTimeMillis() - startTime)
                     + " ms, response:\n" + response);
         }
-        return response.getRsluba();
+        return response.getRSLubaByIsikukoodResponse().getRsluba();
     }
 
     @Override
     public String[] getIsikukoodByAsutusIdAndHasRsLubaRequest() {
         long startTime = System.currentTimeMillis();
-        IsikukoodByAsutusIdAndHasRsLubaRequest request = IsikukoodByAsutusIdAndHasRsLubaRequest.Factory.newInstance();
+        IsikukoodByAsutusIdAndHasRsLubaRequest request = IsikukoodByAsutusIdAndHasRsLubaRequestDocument.Factory.newInstance().addNewIsikukoodByAsutusIdAndHasRsLubaRequest();
         request.setAsutusId(BigInteger.valueOf(asutusId));
-        IsikukoodByAsutusIdAndHasRsLubaResponse response = (IsikukoodByAsutusIdAndHasRsLubaResponse) marshalSendAndReceive(request);
+        IsikukoodByAsutusIdAndHasRsLubaResponseDocument response = (IsikukoodByAsutusIdAndHasRsLubaResponseDocument) marshalSendAndReceive(request);
         if (log.isDebugEnabled()) {
             log.debug("getIsikukoodByAsutusIdAndHasRsLubaRequest time " + (System.currentTimeMillis() - startTime)
                     + " ms, response:\n" + response);
         }
-        return response.getIsikukoodArray();
+        return response.getIsikukoodByAsutusIdAndHasRsLubaResponse().getIsikukoodArray();
     }
 
     @Override

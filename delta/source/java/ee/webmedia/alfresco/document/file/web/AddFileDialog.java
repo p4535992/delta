@@ -288,7 +288,13 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
                     }
                 }
                 if (save) {
-                    getDocumentService().updateDocument(doc);
+                    // E-invoice functionality is not yet enabled in Delta 3.x
+                    // When enabling e-invoice functionality in Delta 3.x, update the following code:
+                    if (true) {
+                        throw new RuntimeException("Update code");
+                    }
+                    // Use documentDynamicService.update... instead
+                    // getDocumentService().updateDocument(doc);
                     getDocumentService().updateSearchableFiles(docRef);
                 } else {
                     documentDialog.getNewInvoiceDocuments().add(docRef);
