@@ -71,6 +71,7 @@ import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.template.exception.ExistingFileFromTemplateException;
 import ee.webmedia.alfresco.template.model.DocumentTemplate;
 import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
+import ee.webmedia.alfresco.template.web.AddDocumentTemplateDialog;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.ISOLatin1Util;
@@ -142,10 +143,19 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     @Override
     public void updateDocTemplate(Node docTemplNode) {
         Map<String, Object> properties = docTemplNode.getProperties();
-        String newName = properties.remove(TEMP_PROP_FILE_NAME_BASE.toString()) + "."
-                + properties.remove(TEMP_PROP_FILE_NAME_EXTENSION.toString());
+        String oldName = (String) properties.get(DocumentTemplateModel.Prop.NAME.toString());
+        String newName = properties.get(TEMP_PROP_FILE_NAME_BASE.toString()) + "."
+                + properties.get(TEMP_PROP_FILE_NAME_EXTENSION.toString());
+        for (DocumentTemplate documentTemplate : getTemplates()) {
+            String nameForCheck = documentTemplate.getName();
+            if (!StringUtils.equals(nameForCheck, oldName) && StringUtils.equals(nameForCheck, newName)) {
+                throw new UnableToPerformException(AddDocumentTemplateDialog.ERR_EXISTING_FILE, newName);
+            }
+        }
         properties.put(DocumentTemplateModel.Prop.NAME.toString(), newName);
-        generalService.setPropertiesIgnoringSystem(docTemplNode.getNodeRef(), properties);
+        NodeRef docTemplateNodeRef = docTemplNode.getNodeRef();
+        generalService.setPropertiesIgnoringSystem(docTemplateNodeRef, properties);
+        nodeService.setProperty(docTemplateNodeRef, ContentModel.PROP_NAME, newName);
     }
 
     @Override

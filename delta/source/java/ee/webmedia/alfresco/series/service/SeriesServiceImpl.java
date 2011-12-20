@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.series.service;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -14,6 +15,7 @@ import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.web.bean.repository.Node;
@@ -28,9 +30,11 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.docadmin.web.ListReorderHelper;
 import ee.webmedia.alfresco.docadmin.web.NodeOrderModifier;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
+import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
 import ee.webmedia.alfresco.volume.model.Volume;
@@ -43,6 +47,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
 
     private DictionaryService dictionaryService;
     private NodeService nodeService;
+    private PermissionService permissionService;
     private GeneralService generalService;
     private DocumentLogService logService;
     private BeanFactory beanFactory;
@@ -128,6 +133,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
             NodeRef seriesNodeRef = nodeService.createNode(series.getFunctionNodeRef(),
                     SeriesModel.Associations.SERIES, SeriesModel.Associations.SERIES, SeriesModel.Types.SERIES,
                     RepoUtil.toQNameProperties(stringQNameProperties, false, true)).getChildRef();
+            setSeriesDefaultPermissionsOnCreate(seriesNodeRef);
             series.setNode(generalService.fetchNode(seriesNodeRef));
             logService.addSeriesLog(seriesNodeRef, I18NUtil.getMessage("series_log_status_created"));
         } else { // update
@@ -187,6 +193,30 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         series.setInitialSeriesIdentifier(initialSeriesIdentifier);
         series.setValidFromDate(new Date());
         return series;
+    }
+
+    @Override
+    public void setSeriesDefaultPermissionsOnCreate(NodeRef seriesRef) {
+        addPermissions(seriesRef, UserService.AUTH_DOCUMENT_MANAGERS_GROUP, Arrays.asList(Privileges.VIEW_DOCUMENT_META_DATA));
+
+        List<String> archivistsPermissionsToAdd = new ArrayList<String>();
+        archivistsPermissionsToAdd.add(Privileges.VIEW_DOCUMENT_META_DATA);
+        boolean caseVolumeEnabled = getVolumeService().isCaseVolumeEnabled();
+        if (caseVolumeEnabled) {
+            archivistsPermissionsToAdd.add(Privileges.VIEW_CASE_FILE);
+        }
+        addPermissions(seriesRef, UserService.AUTH_ARCHIVIST_GROUP, archivistsPermissionsToAdd);
+
+        List<String> supervisionsPermissionsToAdd = new ArrayList<String>();
+        supervisionsPermissionsToAdd.add(Privileges.VIEW_DOCUMENT_META_DATA);
+        supervisionsPermissionsToAdd.add(Privileges.VIEW_DOCUMENT_FILES);
+        addPermissions(seriesRef, UserService.AUTH_SUPERVISION_GROUP, supervisionsPermissionsToAdd);
+    }
+
+    private void addPermissions(NodeRef seriesRef, String authority, List<String> permissionsToAdd) {
+        for (String permission : permissionsToAdd) {
+            permissionService.setPermission(seriesRef, authority, permission, true);
+        }
     }
 
     @Override
@@ -277,6 +307,10 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
 
     public void setNodeService(NodeService nodeService) {
         this.nodeService = nodeService;
+    }
+
+    public void setPermissionService(PermissionService permissionService) {
+        this.permissionService = permissionService;
     }
 
     public void setGeneralService(GeneralService generalService) {

@@ -21,21 +21,35 @@
          }
       }
    </script>
+<%-- FIXME PRIV2 Ats - test
    <script type="text/javascript" src="<%=request.getContextPath()%>/scripts/manage-inheritable-privileges-dialog.js?r=<%=PageTag.urlSuffix%>"> </script>
+ --%>
+   <script type="text/javascript" src="<%=request.getContextPath()%>/scripts/manage-inheritable-privileges-dialog.js?r=<%=System.currentTimeMillis()%>"> </script>
 </f:verbatim>
 
-<a:panel id="permissions-panel" label="#{msg.users_groups}">
-   <a:booleanEvaluator value="#{ManageInheritablePrivilegesDialog.editable}">
-      <a:genericPicker id="picker" filters="#{UserContactGroupSearchBean.usersGroupsFilters}" queryCallback="#{UserContactGroupSearchBean.searchAll}"
-         actionListener="#{ManageInheritablePrivilegesDialog.addAuthorities}" binding="#{ManageInheritablePrivilegesDialog.picker}"/>
-   </a:booleanEvaluator>
+<%-- FIXME PRIV2 Ats - test
+ --%>
+<h:outputText value="#{ManageInheritablePrivilegesDialog.state.manageableRef}" />
+
+<a:panel id="permissions-search-panel" label="#{msg.users_usergroups_search_title}" progressive="true">
+   <a:genericPicker id="picker" filters="#{UserContactGroupSearchBean.usersGroupsFilters}" queryCallback="#{UserContactGroupSearchBean.searchAllWithAdminsAndDocManagers}"
+      actionListener="#{ManageInheritablePrivilegesDialog.addAuthorities}" binding="#{ManageInheritablePrivilegesDialog.picker}"
+      rendered="#{ManageInheritablePrivilegesDialog.typeHandler.editable}"/>
+</a:panel>
+
+<a:panel id="permissions-panel" label="#{msg.manage_permissions_panel}">
+<h:panelGroup id="removeMeWhenImplemented" rendered="#{ManageInheritablePrivilegesDialog.typeHandler.checkboxValue != null}">
+   <%-- FIXME PRIV2 Ats - wrapper is temp hack for removing checkbox from series permissions management view where it means different thing.
+   Wrapper should be removed when this is resolved
+    --%>
 
    <%-- checkbox: inherit permissions 
    or in case of series permissions management: 
    documents without view-permission are visible
     --%>
    <h:outputText value="#{ManageInheritablePrivilegesDialog.typeHandler.checkboxLabel}" />
-   <h:selectBooleanCheckbox value="#{ManageInheritablePrivilegesDialog.typeHandler.checkboxValue}" onchange="saveIfNeeded(this)" valueChangeListener="#{ManageInheritablePrivilegesDialog.typeHandler.checkboxChanged}" />
+   <h:selectBooleanCheckbox value="#{ManageInheritablePrivilegesDialog.typeHandler.checkboxValue}" onchange="saveIfNeeded(this)" valueChangeListener="#{ManageInheritablePrivilegesDialog.typeHandler.checkboxChanged}" disabled="#{!ManageInheritablePrivilegesDialog.typeHandler.editable}" />
+</h:panelGroup>
 
    <a:richList id="permissions-list" binding="#{ManageInheritablePrivilegesDialog.permissionsRichList}" value="#{ManageInheritablePrivilegesDialog.userPrivilegesRows}" var="r" refreshOnBind="true"
       viewMode="detailsMultiTbody" width="100%" styleClass="privileges detailsMultiTbody" headerStyleClass="recordSetHeader" rowStyleClass="recordSetRow"

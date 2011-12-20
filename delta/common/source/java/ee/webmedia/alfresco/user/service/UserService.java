@@ -25,6 +25,8 @@ public interface UserService {
 
     String AUTH_DOCUMENT_MANAGERS_GROUP = AuthorityType.GROUP.getPrefixString() + DOCUMENT_MANAGERS_GROUP;
     String AUTH_ADMINISTRATORS_GROUP = AuthorityType.GROUP.getPrefixString() + ADMINISTRATORS_GROUP;
+    String AUTH_SUPERVISION_GROUP = AuthorityType.GROUP.getPrefixString() + SUPERVISION_GROUP;
+    String AUTH_ARCHIVIST_GROUP = AuthorityType.GROUP.getPrefixString() + ARCHIVIST_GROUP;
 
     String DOCUMENT_MANAGERS_DISPLAY_NAME = "document_managers_display_name";
     String ALFRESCO_ADMINISTRATORS_DISPLAY_NAME = "alfresco_administrators_display_name";

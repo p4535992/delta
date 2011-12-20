@@ -135,7 +135,7 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
             if (caseLabel != null) {
                 document.getNode().getProperties().put(DocumentLocationGenerator.CASE_LABEL_EDITABLE.toString(), caseLabel);
             }
-            getDocumentDynamicService().updateDocument(document, cfg.getSaveListenerBeanNames(), true);
+            getDocumentDynamicService().updateDocument(document, cfg.getSaveListenerBeanNames());
         }
         restored();
     }

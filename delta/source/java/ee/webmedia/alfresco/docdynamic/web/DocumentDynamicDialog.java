@@ -380,7 +380,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         DocumentDynamic savedDocument = null;
         try {
             // May throw UnableToPerformException or UnableToPerformMultiReasonException
-            savedDocument = getDocumentDynamicService().updateDocument(getDocument(), getConfig().getSaveListenerBeanNames(), true);
+            savedDocument = getDocumentDynamicService().updateDocument(getDocument(), getConfig().getSaveListenerBeanNames());
         } catch (UnableToPerformMultiReasonException e) {
             if (!handleAccessRestrictionChange(e)) {
                 return null;
@@ -470,7 +470,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             }
 
             if (!new DeleteDocumentEvaluator().evaluate(node)) {
-                throw new UnableToPerformException("action_failed_missingPermission", new MessageDataImpl("permission_" + DocumentCommonModel.Privileges.DELETE_DOCUMENT_META_DATA));
+                throw new UnableToPerformException("action_failed_missingPermission", new MessageDataImpl("permission_" + "FIXME_KAAREL"));
             }
             getDocumentService().deleteDocument(node.getNodeRef(), ((ChangeReasonEvent) event).getReason());
         } catch (UnableToPerformException e) {
@@ -518,7 +518,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     }
 
     private static boolean validateEditMetaDataPermission(NodeRef docRef) {
-        return validatePermissionWithErrorMessage(docRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA);
+        return validatePermissionWithErrorMessage(docRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT);
     }
 
     private static boolean validatePermissionWithErrorMessage(NodeRef docRef, String permission) {

@@ -263,7 +263,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         // or user's id is document 'ownerId'
         // or user's id is 'taskOwnerId' and 'taskStatus' = IN_PROGRESS of some document's task
 
-        if (!getMyTasks().isEmpty() || getPermissionService().hasPermission(docRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA) == AccessStatus.ALLOWED) {
+        if (!getMyTasks().isEmpty() || getPermissionService().hasPermission(docRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT) == AccessStatus.ALLOWED) {
             return WORKFLOW_METHOD_BINDING_NAME;
         }
         return null;

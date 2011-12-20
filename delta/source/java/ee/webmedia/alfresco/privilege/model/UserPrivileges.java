@@ -8,8 +8,8 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
@@ -25,9 +25,10 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  */
 public class UserPrivileges implements Serializable {
     private static final long serialVersionUID = 1L;
+    public static final String EMPTY_DYN_PRIV_REASON = "";
 
     /** used for grouping consecutive rows with same value into same tbody element */
-    private final String userName;
+    private final String authName;
     private final String userDisplayName;
     private final Set<String> groups = new HashSet<String>();
 
@@ -81,8 +82,8 @@ public class UserPrivileges implements Serializable {
         }
     };
 
-    public UserPrivileges(String userName, String userDisplayName) {
-        this.userName = userName;
+    public UserPrivileges(String authName, String userDisplayName) {
+        this.authName = authName;
         this.userDisplayName = userDisplayName;
     }
 
@@ -214,7 +215,8 @@ public class UserPrivileges implements Serializable {
             dynamicPrivReasonsCached = new HashMap<String, String>(entrySet.size());
             for (Entry<String, Set<String>> entry : entrySet) {
                 String priv = entry.getKey();
-                Set<String> reasons = entry.getValue();
+                Set<String> reasons = new HashSet<String>(entry.getValue());
+                reasons.remove(EMPTY_DYN_PRIV_REASON);
                 dynamicPrivReasonsCached.put(priv, StringUtils.join(reasons, "; "));
             }
         }
@@ -240,7 +242,7 @@ public class UserPrivileges implements Serializable {
     }
 
     public String getUserName() {
-        return userName;
+        return authName;
     }
 
     public String getUserDisplayName() {
@@ -267,6 +269,36 @@ public class UserPrivileges implements Serializable {
     @Override
     public String toString() {
         return ReflectionToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((authName == null) ? 0 : authName.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        UserPrivileges other = (UserPrivileges) obj;
+        if (authName == null) {
+            if (other.authName != null) {
+                return false;
+            }
+        } else if (!authName.equals(other.authName)) {
+            return false;
+        }
+        return true;
     }
 
 }

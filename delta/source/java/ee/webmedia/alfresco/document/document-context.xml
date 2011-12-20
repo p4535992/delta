@@ -330,6 +330,7 @@
       <property name="dependsOn">
          <list>
             <ref bean="functionsRootBootstrap" />
+            <ref bean="volumeTypeAndNamespaceUpdater" />
          </list>
       </property>
       <property name="dictionaryService" ref="DictionaryService" />

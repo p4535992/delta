@@ -51,7 +51,7 @@
       <property name="documentConfigService" ref="DocumentConfigService" />
       <property name="dependsOn">
          <list>
-            <ref bean="structUnitPropertiesToMultivaluedUpdater" />
+            <ref bean="documentUpdater" />
          </list>
       </property>      
    </bean>

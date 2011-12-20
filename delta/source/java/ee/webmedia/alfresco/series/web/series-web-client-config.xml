@@ -17,17 +17,12 @@
          </action>
 
          <action id="series_permissions">
-            <permissions>
-               <permission allow="true">ReadPermissions</permission>
-            </permissions>
             <label-id>manage_invited_users</label-id>
-            <image>/images/icons/invite.gif</image>
-            <action-listener>#{PermissionsListDialog.setup}</action-listener>
-            <action>dialog:permissionsListDialog</action>
+            <image>/images/icons/users.gif</image>
+            <action>dialog:manageInheritablePrivilegesDialog</action>
+            <action-listener>#{ManageInheritablePrivilegesDialog.init}</action-listener>
             <params>
-               <param name="nodeRef">#{SeriesDetailsDialog.currentNode.nodeRef}</param>
-               <param name="permission">DocumentFileRead</param>
-               <param name="alternateDialogTitleId">series_permissions_management</param>
+               <param name="manageableRef">#{SeriesDetailsDialog.currentNode.nodeRef}</param>
             </params>
          </action>
 

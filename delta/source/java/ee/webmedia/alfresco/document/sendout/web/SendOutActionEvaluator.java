@@ -27,7 +27,7 @@ public class SendOutActionEvaluator extends BaseActionEvaluator {
     @Override
     public boolean evaluate(Node node) {
         boolean result = new ViewStateActionEvaluator().evaluate(node) && new DocumentSavedActionEvaluator().evaluate(node)
-                && node.hasPermission(DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA);
+                && node.hasPermission(DocumentCommonModel.Privileges.EDIT_DOCUMENT);
         if (result) {
             final Map<String, Object> props = node.getProperties();
             final String regNumber = (String) props.get(DocumentCommonModel.Props.REG_NUMBER);

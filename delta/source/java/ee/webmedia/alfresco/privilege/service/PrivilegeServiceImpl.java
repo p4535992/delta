@@ -13,6 +13,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.security.AccessPermission;
@@ -28,6 +30,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.privilege.model.PrivMappings;
 import ee.webmedia.alfresco.privilege.model.PrivilegeMappings;
 import ee.webmedia.alfresco.privilege.model.PrivilegeModel;
@@ -144,10 +147,11 @@ public class PrivilegeServiceImpl implements PrivilegeService {
             boolean inherited = accessPermission.isInherited();
             if (!inherited) {
                 // permission is assigned directly, but we need to know if it is also inherited from parent node.
-                inherited = AccessStatus.ALLOWED.equals(permissionService.hasPermission(parentRef, permission));
-                // FIXME ALSeadist Ats test - at the moment smth wrong with inheritance - probably old dynamic privileges grant permissions to more people:
-                // ALLOWED doesn't mean that this permission is set directly - it might be granted dynamically as well
+                boolean hasPermissionForParentRef = hasPermission(parentRef, permission, authority);
+                // hasPermissionForParentRef doesn't mean that this permission is set directly to parentRef
+                // - it might be granted dynamically as well as inherited from parent of parent
                 // - for example to users listed by external.authentication.defaultAdministratorUserNames
+                inherited = hasPermissionForParentRef;
             }
             if (StringUtils.startsWith(authority, AuthorityType.GROUP.getPrefixString())) {
                 UserPrivileges authPrivileges = privilegesByGroup.get(authority);
@@ -177,6 +181,16 @@ public class PrivilegeServiceImpl implements PrivilegeService {
         privMappings.setPrivilegesByUsername(privilegesByUsername);
         privMappings.setPrivilegesByGroup(privilegesByGroup);
         return privMappings;
+    }
+
+    private boolean hasPermission(final NodeRef targetRef, final String permission, String userName) {
+        return AuthenticationUtil.runAs(new RunAsWork<Boolean>() {
+            @Override
+            public Boolean doWork() throws Exception {
+                AccessStatus hasPermission = permissionService.hasPermission(targetRef, permission);
+                return AccessStatus.ALLOWED.equals(hasPermission);
+            }
+        }, userName);
     }
 
     @Override
@@ -213,7 +227,14 @@ public class PrivilegeServiceImpl implements PrivilegeService {
                 it.remove();
             } else {
                 if (vo.hasManageablePrivileges()) {
-                    for (String permission : vo.getPrivilegesToAdd()) {
+                    Set<String> permissions = vo.getPrivilegesToAdd();
+                    for (String permission : permissions) {
+                        Set<String> privilegeDependencies = DocumentCommonModel.Privileges.PRIVILEGE_DEPENDENCIES.get(permission);
+                        if (privilegeDependencies != null) {
+                            permissions.addAll(privilegeDependencies);
+                        }
+                    }
+                    for (String permission : permissions) {
                         permissionService.setPermission(manageableRef, userName, permission, true);
                     }
                 }
@@ -255,48 +276,6 @@ public class PrivilegeServiceImpl implements PrivilegeService {
         userGroupMappingProps.put(PrivilegeModel.Props.USER, privUsers);
         userGroupMappingProps.put(PrivilegeModel.Props.GROUP, privGroups);
         nodeService.addProperties(manageableRef, userGroupMappingProps);
-    }
-
-    @Override
-    public void mergePrivilegeUsersGroupsLists(NodeRef manageableRef, List<String> privUsers, List<String> privGroups) {
-        if (privUsers == null || privUsers.isEmpty() || privGroups == null || privGroups.isEmpty()) {
-            return;
-        }
-
-        @SuppressWarnings("unchecked")
-        List<String> currentPrivUsers = (List<String>) nodeService.getProperty(manageableRef, PrivilegeModel.Props.USER);
-        @SuppressWarnings("unchecked")
-        List<String> currentPrivGroups = (List<String>) nodeService.getProperty(manageableRef, PrivilegeModel.Props.GROUP);
-        if (currentPrivUsers == null) {
-            currentPrivUsers = new ArrayList<String>();
-        }
-        if (currentPrivGroups == null) {
-            currentPrivGroups = new ArrayList<String>();
-        }
-
-        // Add from privUsers to currentPrivUsers if doesn't exist there
-        for (int i = 0; i < privUsers.size(); i++) {
-            String authority = privUsers.get(i);
-            String group = privGroups.get(i);
-
-            boolean found = false;
-            for (int j = 0; j < currentPrivUsers.size(); j++) {
-                if (authority.equals(currentPrivUsers.get(j)) && group.equals(currentPrivGroups.get(j))) {
-                    found = true;
-                    break;
-                }
-            }
-            // Add, if same user+group combination is not yet added
-            if (!found) {
-                currentPrivUsers.add(authority);
-                currentPrivGroups.add(group);
-            }
-        }
-
-        Map<QName, Serializable> addProps = new HashMap<QName, Serializable>();
-        addProps.put(PrivilegeModel.Props.USER, (Serializable) currentPrivUsers);
-        addProps.put(PrivilegeModel.Props.GROUP, (Serializable) currentPrivGroups);
-        nodeService.addProperties(manageableRef, addProps);
     }
 
     @Override

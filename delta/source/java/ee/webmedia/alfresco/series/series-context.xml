@@ -35,7 +35,7 @@
    </bean>
    
    <!-- Used to update series volume types values. CL task: 177957 -->
-   <bean id="seriesVolumeTypesUpdater2" class="ee.webmedia.alfresco.series.bootstrap.SeriesVolumeTypesUpdater" parent="abstractNodeUpdater">
+   <bean id="seriesUpdater" class="ee.webmedia.alfresco.series.bootstrap.SeriesUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
    </bean>
 
@@ -44,6 +44,7 @@
       <property name="nodeService" ref="NodeService" />
       <property name="generalService" ref="GeneralService" />
       <property name="logService" ref="DocumentLogService" />
+      <property name="permissionService" ref="PermissionService" />
       <!--  XXX: property:volumeService - retrieved from applicationContext to avoid circular dependency between VolumeService and SeriesService      -->
    </bean>
 
@@ -70,5 +71,11 @@
    <bean id="SeriesDocNumberPatternAddRegisterSufPrefUpdater" class="ee.webmedia.alfresco.document.bootstrap.SeriesDocNumberPatternAddRegisterSufPrefUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
    </bean>
+
+   <!-- START: web beans: -->
+
+   <bean id="SeriesTypePrivilegesHandler" class="ee.webmedia.alfresco.series.web.SeriesTypePrivilegesHandler" scope="session"/>
+
+   <!-- END: web beans: -->
 
 </beans>

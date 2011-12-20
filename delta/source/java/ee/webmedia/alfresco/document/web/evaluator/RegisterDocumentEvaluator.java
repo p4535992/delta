@@ -51,7 +51,7 @@ public class RegisterDocumentEvaluator extends BaseActionEvaluator {
         if (!documentService.isSaved(docNode.getNodeRef())) {
             return false;
         }
-        return docNode.hasPermission(DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA);
+        return docNode.hasPermission(DocumentCommonModel.Privileges.EDIT_DOCUMENT);
     }
 
     public static boolean isNotRegistered(Node docNode) {

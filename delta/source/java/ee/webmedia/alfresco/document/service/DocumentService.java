@@ -3,20 +3,16 @@ package ee.webmedia.alfresco.document.service;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
-import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.springframework.beans.factory.InitializingBean;
 
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
-import ee.webmedia.alfresco.document.permissions.SeriesDocManagerDynamicAuthority;
-import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.exception.SignatureRuntimeException;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
@@ -409,20 +405,6 @@ public interface DocumentService {
 
     boolean isIncomingInvoice(NodeRef nodeRef);
 
-    /**
-     * Adds privileges to the users that<br>
-     * 1) are added to the list of {@link SeriesModel.Props#STRUCT_UNIT} of the document ancestor series<br>
-     * 2) have {@link SeriesDocManagerDynamicAuthority#SERIES_MANAGEABLE_PERMISSION} (directly, not trough group)
-     * 
-     * @param docRef
-     * @param docProps
-     * @param parentRef
-     * @return groups that have {@link SeriesDocManagerDynamicAuthority#SERIES_MANAGEABLE_PERMISSION}
-     */
-    Set<String> addPrivilegesBasedOnSeries(NodeRef docRef, Map<String, Object> docProps, NodeRef parentRef);
-
-    Pair<Set<String> /* users */, Set<String> /* groups */> getSeriesAuthorities(NodeRef seriesRef);
-
     List<String> getFavoriteDirectoryNames();
 
     List<Document> getIncomingEInvoicesForUser(String userFullName);
@@ -433,10 +415,6 @@ public interface DocumentService {
 
     // FIXME DLSeadist - selle meetodi peaks eemaldama igalt poolt pärast DLSeadist valmimist kui staatilised dokumendid on konverditud dünaamilisteks
     void throwIfNotDynamicDoc(Node docNode);
-
-    void addPrivilegesBasedOnSeriesOnBackground(NodeRef docRef);
-
-    void addPrivilegesBasedOnSeries(NodeRef docRef);
 
     List<Document> getIncomingDocuments(NodeRef incomingNodeRef);
 

@@ -117,7 +117,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
-import ee.webmedia.alfresco.document.permissions.SeriesDocManagerDynamicAuthority;
 import ee.webmedia.alfresco.document.register.model.RegNrHolder;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
@@ -147,7 +146,6 @@ import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.substitute.service.SubstituteService;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
-import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -534,9 +532,6 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         }
 
         boolean isDraft = RepoUtil.getPropertyBooleanValue(docProps, DocumentService.TransientProps.TEMP_DOCUMENT_IS_DRAFT);
-        if (isDraft) {
-            addPrivilegesBasedOnSeriesOnBackground(docNodeRef);
-        }
         { // update properties and log changes made in properties
             final String previousAccessrestriction = (String) nodeService.getProperty(docNodeRef, ACCESS_RESTRICTION);
 
@@ -631,20 +626,6 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
             }
         }
         return getDocument(docNodeRef);
-    }
-
-    @Override
-    public Pair<Set<String> /* users */, Set<String> /* groups */> getSeriesAuthorities(NodeRef seriesRef) {
-        Set<String> users = new HashSet<String>();
-        Set<String> groups = new HashSet<String>();
-        for (Authority authority : userService.getAuthorities(seriesRef, SeriesDocManagerDynamicAuthority.SERIES_MANAGEABLE_PERMISSION)) {
-            if (authority.isGroup()) {
-                groups.add(authority.getAuthority());
-            } else {
-                users.add(authority.getAuthority());
-            }
-        }
-        return new Pair<Set<String>, Set<String>>(users, groups);
     }
 
     private NodeRef getCaseNodeRef(final Map<String, Object> docProps, final NodeRef volumeNodeRef) {
@@ -2692,65 +2673,10 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
     }
 
     @Override
-    public void addPrivilegesBasedOnSeriesOnBackground(final NodeRef docRef) {
-        RunAsWork<Void> work = new RunAsWork<Void>() {
-            @Override
-            public Void doWork() throws Exception {
-                addPrivilegesBasedOnSeries(docRef);
-                return null;
-            }
-        };
-        generalService.runOnBackground(work, "addPrivilegesBasedOnSeries-" + docRef.getId());
-    }
-
-    @Override
-    public void addPrivilegesBasedOnSeries(final NodeRef docRef) {
-        Map<String, Object> docProps = new HashMap<String, Object>();
-        Set<String> result = addPrivilegesBasedOnSeries(docRef, docProps, null);
-
-        @SuppressWarnings("unchecked")
-        List<String> privUsers = (List<String>) docProps.get(PrivilegeModel.Props.USER.toString());
-        @SuppressWarnings("unchecked")
-        List<String> privGroups = (List<String>) docProps.get(PrivilegeModel.Props.GROUP.toString());
-
-        privilegeService.mergePrivilegeUsersGroupsLists(docRef, privUsers, privGroups);
-    }
-
-    @Override
-    public Set<String> addPrivilegesBasedOnSeries(NodeRef docRef, Map<String, Object> docProps, NodeRef parentRef) {
-        NodeRef seriesRef = generalService.getAncestorNodeRefWithType(parentRef != null ? parentRef : docRef, SeriesModel.Types.SERIES);
-        if (seriesRef == null) {
-            log.info("Document is not under documentList, skipping adding privileges based on series: " + docRef.toString());
-            return Collections.<String> emptySet();
-        }
-        Pair<Set<String>, Set<String>> usersAndGroups = getSeriesAuthorities(seriesRef);
-        Set<String> usersOfThisSeries = usersAndGroups.getFirst();
-        @SuppressWarnings("unchecked")
-        List<Integer> structUnits = (List<Integer>) nodeService.getProperty(seriesRef, SeriesModel.Props.STRUCT_UNIT);
-        Set<String> seriesStructunitsUsers = userService.getUsernamesByStructUnit(structUnits);
-        usersOfThisSeries.addAll(seriesStructunitsUsers);
-        for (String userName : usersOfThisSeries) {
-            // 3.1.18.2 a,b & 3.1.18.4 a,b
-
-            privilegeService.addPrivilege(docRef, docProps, DocumentCommonModel.Types.DOCUMENT, userName
-                    , DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA, DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES);
-        }
-        Set<String> groups = usersAndGroups.getSecond();
-        final QName addPrivListener = DocumentCommonModel.Types.DOCUMENT;
-        for (String group : groups) {
-            Set<String> authorities = userService.getUserNamesInGroup(group);
-            for (String authority : authorities) {
-                privilegeService.addPrivilege(docRef, docProps, addPrivListener, authority, group, SERIES_GROUPMEMBERS_PRIVILEGES);
-            }
-        }
-        return groups;
-    }
-
-    @Override
     public void onSavePrivileges(NodeRef docRef, Map<String, UserPrivileges> privilegesByUsername) {
         DocumentAssociationsService docAssocService = getDocumentAssociationsService();
         for (UserPrivileges vo : privilegesByUsername.values()) {
-            if (!vo.isDeleted() && vo.getPrivilegesToAdd().contains(DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA)) {
+            if (!vo.isDeleted() && vo.getPrivilegesToAdd().contains(DocumentCommonModel.Privileges.EDIT_DOCUMENT)) {
                 List<DocAssocInfo> assocInfos = docAssocService.getAssocInfos(new Node(docRef));
                 for (DocAssocInfo docAssocInfo : assocInfos) {
                     if (!docAssocInfo.isCase()) {
@@ -2812,7 +2738,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         if (!fromNodeUserPrivileges.isEmpty()) {
             for (UserPrivileges userPrivs : fromNodeUserPrivileges) {
                 Set<String> staticPrivileges = userPrivs.getStaticPrivileges();
-                if (staticPrivileges.contains(DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA)) {
+                if (staticPrivileges.contains(DocumentCommonModel.Privileges.EDIT_DOCUMENT)) {
                     privilegeService.addPrivilege(toRef, toNodeUserGroupMapping, DocumentCommonModel.Types.DOCUMENT, userPrivs.getUserName(),
                             DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA);
                 }

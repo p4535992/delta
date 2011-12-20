@@ -19,7 +19,9 @@ import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 import ee.webmedia.alfresco.document.service.event.DocumentWorkflowStatusEventListener;
+import ee.webmedia.alfresco.document.web.evaluator.IsOwnerEvaluator;
 import ee.webmedia.alfresco.privilege.model.UserPrivileges;
 import ee.webmedia.alfresco.privilege.web.AbstractInheritingPrivilegesHandler;
 import ee.webmedia.alfresco.privilege.web.PrivilegesHandler;
@@ -42,12 +44,17 @@ public class DocumentTypePrivilegesHandler extends AbstractInheritingPrivilegesH
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentTypePrivilegesHandler.class);
 
     protected DocumentTypePrivilegesHandler() {
-        super(DocumentCommonModel.Types.DOCUMENT, Arrays.asList("viewDocumentMetaData", "viewDocumentFiles", "editDocument"));
+        super(DocumentCommonModel.Types.DOCUMENT, Arrays.asList(Privileges.VIEW_DOCUMENT_META_DATA, Privileges.VIEW_DOCUMENT_FILES, Privileges.EDIT_DOCUMENT));
     }
 
     @Override
     public String getObjectOwner() {
         return (String) getNodeService().getProperty(state.getManageableRef(), DocumentCommonModel.Props.OWNER_ID);
+    }
+
+    @Override
+    public boolean isEditable() {
+        return super.isEditable() || new IsOwnerEvaluator().evaluate(state.getManageableRef());
     }
 
     @Override
@@ -58,9 +65,7 @@ public class DocumentTypePrivilegesHandler extends AbstractInheritingPrivilegesH
         if (StringUtils.equals(accessRestriction, AccessRestriction.OPEN.getValueName())) {
             String docIsPublic = MessageUtil.getMessage("document_manage_permissions_extraInfo_documentIsPublic");
             for (UserPrivileges privs : state.getUserPrivileges()) {
-                // FIXME PRIV2 Ats VIEW_DOCUMENT_META_DATA lisamine vist pole vajalik - selle tulba kuvamise peaks hiljem eemaldama
-                privs.addDynamicPrivilege(DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA, docIsPublic);
-                privs.addDynamicPrivilege(DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES, docIsPublic);
+                privs.addDynamicPrivilege(Privileges.VIEW_DOCUMENT_FILES, docIsPublic);
             }
         }
     }

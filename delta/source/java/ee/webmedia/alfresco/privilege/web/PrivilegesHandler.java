@@ -1,19 +1,28 @@
 package ee.webmedia.alfresco.privilege.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getPermissionService;
+
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
 import javax.faces.event.ValueChangeEvent;
 
+import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.apache.commons.lang.ObjectUtils;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 import ee.webmedia.alfresco.privilege.model.UserPrivileges;
 import ee.webmedia.alfresco.privilege.web.ManageInheritablePrivilegesDialog.State;
+import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.MessageData;
+import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 
 /**
  * Base class for node-type specific logic related to {@link ManageInheritablePrivilegesDialog}
@@ -22,20 +31,14 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  */
 public abstract class PrivilegesHandler implements Serializable {
     private static final long serialVersionUID = 1L;
-    /** used by series and volume permissions management */
-    public static final Collection<String> DEFAULT_MANAGEABLE_PERMISSIONS = Arrays.asList(
-            "viewCaseFile", "editCaseFile", "viewDocumentMetaData", "viewDocumentFiles", "editDocument");
 
     private final Collection<String> manageablePermissions;
     private final QName nodeType;
 
     protected Boolean checkboxValue;
+    private Boolean editable;
     protected ManageInheritablePrivilegesDialog dialogBean;
     protected State state;
-
-    protected PrivilegesHandler(QName nodeType) {
-        this(nodeType, DEFAULT_MANAGEABLE_PERMISSIONS);
-    }
 
     protected PrivilegesHandler(QName nodeType, Collection<String> manageablePermissions) {
         this.nodeType = nodeType;
@@ -48,12 +51,13 @@ public abstract class PrivilegesHandler implements Serializable {
 
     public void reset() {
         checkboxValue = null;
+        editable = null;
         dialogBean = null;
         state = null;
     }
 
     /** Called by JSF before {@link BaseDialogBean#finish()} */
-    final public void checkboxChanged(ValueChangeEvent e) {
+    public void checkboxChanged(ValueChangeEvent e) {
         boolean newValue = (Boolean) e.getNewValue();
         if (checkboxValue.equals(newValue)) {
             throw new RuntimeException("FIXME checkboxValue=" + checkboxValue + ", newValue=" + newValue + " oldValue=" + e.getOldValue());
@@ -93,6 +97,10 @@ public abstract class PrivilegesHandler implements Serializable {
         return null;
     }
 
+    public String getImplicidPrivilege() {
+        return DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA;
+    }
+
     protected void addDynamicPrivileges() {
         // subclasses could add more dynamic privileges if needed
     }
@@ -108,6 +116,29 @@ public abstract class PrivilegesHandler implements Serializable {
 
     public Collection<String> getManageablePermissions() {
         return manageablePermissions;
+    }
+
+    public boolean isEditable() {
+        if (editable == null) {
+            UserService userService = BeanHelper.getUserService();
+            if (userService.isAdministrator()) {
+                editable = true;
+            } else if (userService.isDocumentManager()
+                    && AccessStatus.ALLOWED == getPermissionService().hasPermission(state.getManageableRef(), Privileges.VIEW_DOCUMENT_META_DATA)) {
+                editable = true;
+            } else {
+                editable = false;
+            }
+        }
+        return editable;
+    }
+
+    public String getContainerTitle() {
+        return MessageUtil.getMessage(getNodeType().getLocalName() + "_manage_permissions_title");
+    }
+
+    public MessageData getInfoMessage() {
+        return new MessageDataImpl(MessageSeverity.INFO, getNodeType().getLocalName() + "_manage_permissions_info");
     }
 
 }

@@ -75,8 +75,8 @@ public class MenuBean implements Serializable {
     // If you change menu item order in menu-structure.xml, also update constants below!
     public static final int MY_TASKS_AND_DOCUMENTS_ID = 0;
     public static final int DOCUMENT_REGISTER_ID = 1;
-    public static final int MY_DOCUMENTS_ID = 2;
-    public static final int CREATE_NEW_DOCUMENT = 6;
+    public static final int MY_DOCUMENTS_ID = 3;
+    public static final int CREATE_NEW_DOCUMENT = 8;
 
     public static final List<String> HIDDEN_WHEN_EMPTY = Arrays.asList("assignmentTasks", "informationTasks", "orderAssignmentTasks", "opinionTasks", "discussions", "reviewTasks",
             "externalReviewTasks", "confirmationTasks", "signatureTasks", "forRegisteringList", "userWorkingDocuments");

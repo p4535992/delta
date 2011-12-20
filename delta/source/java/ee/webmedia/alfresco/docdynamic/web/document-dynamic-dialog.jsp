@@ -44,7 +44,7 @@
 
 <h:panelGroup id="metadata-panel-facets">
    <f:facet name="title">
-      <r:permissionEvaluator id="metadata-link-edit-evaluator" value="#{DocumentDynamicDialog.node}" allow="editDocumentMetaData">
+      <r:permissionEvaluator id="metadata-link-edit-evaluator" value="#{DocumentDynamicDialog.node}" allow="editDocument">
          <a:actionLink id="metadata-link-edit" showLink="false" image="/images/icons/edit_properties.gif" value="#{msg.modify}" tooltip="#{msg.modify}"
             actionListener="#{DocumentDynamicDialog.switchToEditMode}" rendered="#{!DocumentDialogHelperBean.inEditMode}" />
       </r:permissionEvaluator>

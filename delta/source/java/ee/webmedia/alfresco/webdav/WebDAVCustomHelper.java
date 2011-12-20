@@ -111,7 +111,7 @@ public class WebDAVCustomHelper extends WebDAVHelper {
         }
 
         // no special cases, just check permission on document
-        String permission = DocumentCommonModel.Privileges.EDIT_DOCUMENT_FILES;
+        String permission = DocumentCommonModel.Privileges.EDIT_DOCUMENT;
         if (AccessStatus.ALLOWED != BeanHelper.getPermissionService().hasPermission(docRef, permission)) {
             throw new AccessDeniedException("permission " + permission + " denied for file of document " + docRef);
         }

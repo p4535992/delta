@@ -1,7 +1,6 @@
 package ee.webmedia.alfresco.privilege.service;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -80,7 +79,5 @@ public interface PrivilegeService {
 
         void onAddPrivileges(NodeRef nodeRef, Set<String> permissions);
     }
-
-    void mergePrivilegeUsersGroupsLists(NodeRef manageableRef, List<String> privUsers, List<String> privGroups);
 
 }

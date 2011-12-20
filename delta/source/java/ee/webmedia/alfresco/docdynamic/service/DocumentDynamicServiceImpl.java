@@ -408,7 +408,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     }
 
     @Override
-    public DocumentDynamic updateDocument(DocumentDynamic documentOriginal, List<String> saveListenerBeanNames, boolean addPrivilegesOnBackground) {
+    public DocumentDynamic updateDocument(DocumentDynamic documentOriginal, List<String> saveListenerBeanNames) {
         DocumentDynamic document = documentOriginal.clone();
         NodeRef docRef = document.getNodeRef();
 
@@ -474,13 +474,6 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             }
 
             documentTemplateService.updateGeneratedFiles(docRef, false);
-            if (document.isDraftOrImapOrDvk()) {
-                if (addPrivilegesOnBackground) {
-                    documentService.addPrivilegesBasedOnSeriesOnBackground(docRef);
-                } else {
-                    documentService.addPrivilegesBasedOnSeries(docRef);
-                }
-            }
         }
         return document;
     }

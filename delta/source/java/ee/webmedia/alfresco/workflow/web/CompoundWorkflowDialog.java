@@ -586,7 +586,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                 if ((wfType.equals(WorkflowSpecificModel.Types.OPINION_WORKFLOW)
                             || wfType.equals(WorkflowSpecificModel.Types.CONFIRMATION_WORKFLOW)
                             || wfType.equals(WorkflowSpecificModel.Types.REVIEW_WORKFLOW))
-                            && !BaseDialogBean.hasPermission(docRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA)) {
+                            && !BaseDialogBean.hasPermission(docRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT)) {
                     continue;
                 }
                 if (wfType.equals(WorkflowSpecificModel.Types.DOC_REGISTRATION_WORKFLOW)

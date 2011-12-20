@@ -360,6 +360,7 @@ public class VolumeServiceImpl implements VolumeService {
             seriesNodeRef = parentAssocs.get(0).getParentRef();
         }
         volume.setVolumeType((String) nodeService.getProperty(volumeNodeRef, VolumeModel.Props.VOLUME_TYPE));
+        volume.setTitle((String) nodeService.getProperty(volumeNodeRef, VolumeModel.Props.TITLE));
         volume.setSeriesNodeRef(seriesNodeRef);
         if (log.isDebugEnabled()) {
             log.debug("Found volume: " + volume);

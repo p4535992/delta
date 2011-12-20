@@ -41,7 +41,7 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
 public class AddDocumentTemplateDialog extends AddContentDialog {
 
     private static final long serialVersionUID = 1L;
-    private static final String ERR_EXISTING_FILE = "add_file_existing_file";
+    public static final String ERR_EXISTING_FILE = "add_file_existing_file";
     private static final String ERR_INVALID_FILE_NAME = "add_file_invalid_file_name";
     private Node docTemplateNode;
     boolean firstLoad;
@@ -105,7 +105,7 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
 
     public void setTempPropsFromFileName() {
         docTemplateNode.getProperties().put(DocumentTemplateServiceImpl.TEMP_PROP_FILE_NAME_BASE.toString(), FilenameUtils.getBaseName(fileName));
-        docTemplateNode.getProperties().put(DocumentTemplateServiceImpl.TEMP_PROP_FILE_NAME_EXTENSION.toString(), FilenameUtils.getExtension(fileName));
+        docTemplateNode.getProperties().put(DocumentTemplateServiceImpl.TEMP_PROP_FILE_NAME_EXTENSION.toString(), "." + FilenameUtils.getExtension(fileName));
     }
 
     @Override
@@ -127,8 +127,8 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
         }
 
         Map<String, Object> props = docTemplateNode.getProperties();
-        String newName = props.remove(DocumentTemplateServiceImpl.TEMP_PROP_FILE_NAME_BASE.toString()) + "."
-                + props.remove(DocumentTemplateServiceImpl.TEMP_PROP_FILE_NAME_EXTENSION.toString());
+        String newName = (String) props.get(DocumentTemplateServiceImpl.TEMP_PROP_FILE_NAME_BASE.toString())
+                + props.get(DocumentTemplateServiceImpl.TEMP_PROP_FILE_NAME_EXTENSION.toString());
         FilenameUtil.checkPlusInFileName(newName);
         try {
             setFileName(newName);
@@ -136,7 +136,7 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
             saveContent(file, null);
         } catch (FileExistsException e) {
             isFinished = false;
-            throw new RuntimeException(MessageUtil.getMessage(context, ERR_EXISTING_FILE, e.getName()));
+            throw new UnableToPerformException(ERR_EXISTING_FILE, e.getName());
         }
         Map<QName, Serializable> properties = RepoUtil.toQNameProperties(props);
         properties.put(DocumentTemplateModel.Prop.NAME, newName);
@@ -195,6 +195,11 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
             errorMsgKey = "template_wrong_file_format_email";
         }
         return errorMsgKey;
+    }
+
+    @Override
+    public String getCancelButtonLabel() {
+        return MessageUtil.getMessage("back_button");
     }
 
     public void setPropertySheet(UIPropertySheet propertySheet) {

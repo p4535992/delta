@@ -78,16 +78,10 @@
     }
     if (fileUploaded) {
 %>
-   <a:panel styleClass="column panel-90" id="file-upload" label="#{msg.uploaded_content}">
-   
-      <h:panelGroup>
-         <a:actionLink image="/images/icons/delete.gif" value="#{msg.remove}" action="#{AddDocumentTemplateDialog.removeUploadedFile}" showLink="false" id="link1" />
-         <h:outputText id="text1" value="#{AddDocumentTemplateDialog.fileName}" styleClass="dialogpanel-title filename" />
-      </h:panelGroup>
-   
-      <h:outputText id="text2" value="#{msg.general_properties}" styleClass="dialogpanel-title" />
+   <a:panel styleClass="column panel-90" id="file-upload2" label="#{msg.templates_title}">
+   <!--    empty panelGroup tag prevent casting error  -->
+   <h:panelGroup/>
       <r:propertySheetGrid value="#{AddDocumentTemplateDialog.docTemplateNode}" binding="#{AddDocumentTemplateDialog.propertySheet}" mode="edit" labelStyleClass="propertiesLabel" externalConfig="true" columns="1" />
-   
    </a:panel>
 <%
     }

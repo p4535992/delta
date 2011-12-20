@@ -133,7 +133,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             // Lock the node
             DocumentLockHelperBean documentLockHelperBean = BeanHelper.getDocumentLockHelperBean();
             documentLockHelperBean.lockOrUnlockIfNeeded(documentLockHelperBean.isLockingAllowed());
-            BaseDialogBean.validatePermission(docNode, DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA);
+            BaseDialogBean.validatePermission(docNode, DocumentCommonModel.Privileges.EDIT_DOCUMENT);
         } catch (NodeLockedException e) {
             BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_validation_alreadyLocked");
             return null;

@@ -29,7 +29,7 @@ public class CreateWordFileFromTemplateEvaluator extends BaseActionEvaluator {
                 && (allActiveTasks.isEmpty() || containsResponsibleAssignmentTask(allActiveTasks))
                 && EqualsHelper.nullSafeEquals(DocumentStatus.WORKING.getValueName(), docStatus)
                 && getDocumentTemplateService().hasDocumentsTemplate(node.getNodeRef())
-                && node.hasPermission(DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA);
+                && node.hasPermission(DocumentCommonModel.Privileges.EDIT_DOCUMENT);
     }
 
     private static final Predicate<Task> allActiveTasksPredicate = new Predicate<Task>() {

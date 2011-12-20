@@ -9,7 +9,12 @@ import org.alfresco.service.cmr.security.PermissionService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.user.service.UserService;
 
-public class ScannedDocumentManagersPermissionsBootstrap extends AbstractModuleComponent {
+/**
+ * reverts what ScannedDocumentManagersPermissionsBootstrap used to do
+ * 
+ * @author Ats Uiboupin
+ */
+public class UndoScannedDocumentManagersPermissionsBootstrap extends AbstractModuleComponent {
 
     private GeneralService generalService;
     private String scannedFilesPath;
@@ -21,7 +26,7 @@ public class ScannedDocumentManagersPermissionsBootstrap extends AbstractModuleC
 
         NodeRef nodeRef = generalService.getNodeRef(scannedFilesPath);
         String authority = authorityService.getName(AuthorityType.GROUP, UserService.DOCUMENT_MANAGERS_GROUP);
-        permissionService.setPermission(nodeRef, authority, "DocumentFileRead", true);
+        permissionService.deletePermission(nodeRef, authority, "DocumentFileRead");
     }
 
     public void setGeneralService(GeneralService generalService) {

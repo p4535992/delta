@@ -151,23 +151,17 @@ public interface DocumentCommonModel {
         /** Permission used on dynamic document types. Indicates that user can create new document of specific type. */
         public static final String CREATE_DOCUMENT = "createDocument";
         public static final String VIEW_DOCUMENT_META_DATA = "viewDocumentMetaData";
-        public static final String EDIT_DOCUMENT_META_DATA = "editDocumentMetaData";
+        public static final String EDIT_DOCUMENT = "editDocument";
         public static final String VIEW_DOCUMENT_FILES = "viewDocumentFiles";
-        /** ADD or edit document files */
-        public static final String EDIT_DOCUMENT_FILES = "editDocumentFiles";
-        public static final String DELETE_DOCUMENT_FILES = "deleteDocumentFiles";
-        /** can delete document */
-        public static final String DELETE_DOCUMENT_META_DATA = "deleteDocumentMetaData";
-
-        public static final Set<String> READ_ONLY_PRIVILEGES = new HashSet<String>(Arrays.asList(DELETE_DOCUMENT_FILES, DELETE_DOCUMENT_META_DATA));
+        public static final String VIEW_CASE_FILE = "viewCaseFile";
+        public static final String EDIT_CASE_FILE = "editCaseFile";
+        /** when entry.key is added, then entry.values should be also added */
         public static final Map<String, Set<String>> PRIVILEGE_DEPENDENCIES;
         static {
             Map<String, Set<String>> m = new HashMap<String, Set<String>>();
-            m.put(EDIT_DOCUMENT_META_DATA, Collections.singleton(VIEW_DOCUMENT_META_DATA));
+            m.put(EDIT_DOCUMENT, Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(VIEW_DOCUMENT_META_DATA, VIEW_DOCUMENT_FILES))));
             m.put(VIEW_DOCUMENT_FILES, Collections.singleton(VIEW_DOCUMENT_META_DATA));
-            m.put(EDIT_DOCUMENT_FILES, Collections.singleton(VIEW_DOCUMENT_META_DATA));
-            m.put(DELETE_DOCUMENT_FILES, Collections.singleton(VIEW_DOCUMENT_META_DATA));
-            m.put(DELETE_DOCUMENT_META_DATA, Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(VIEW_DOCUMENT_META_DATA, VIEW_DOCUMENT_FILES))));
+            m.put(EDIT_CASE_FILE, Collections.singleton(VIEW_CASE_FILE));
             PRIVILEGE_DEPENDENCIES = Collections.unmodifiableMap(m);
         }
     }

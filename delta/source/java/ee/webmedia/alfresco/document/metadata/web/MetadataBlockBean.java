@@ -1349,7 +1349,7 @@ public class MetadataBlockBean implements ClearStateListener {
     }
 
     public void editDocument(Node doc) {
-        if (!doc.hasPermission(DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA)) {
+        if (!doc.hasPermission(DocumentCommonModel.Privileges.EDIT_DOCUMENT)) {
             return;
         }
         document = doc;
@@ -1366,7 +1366,7 @@ public class MetadataBlockBean implements ClearStateListener {
 
     public String editAction() {
         try {
-            BaseDialogBean.validatePermission(document, DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA);
+            BaseDialogBean.validatePermission(document, DocumentCommonModel.Privileges.EDIT_DOCUMENT);
         } catch (UnableToPerformException e) {
             MessageUtil.addStatusMessage(e);
         }
@@ -1819,7 +1819,7 @@ public class MetadataBlockBean implements ClearStateListener {
             Node document = getDocumentDialogHelperBean().getNode();
             DocumentParentNodesVO parentNodes = getDocumentService().getAncestorNodesByDocument(document.getNodeRef());
             getDocumentService().setTransientProperties(document, parentNodes);
-            BaseDialogBean.validatePermission(document, DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA);
+            BaseDialogBean.validatePermission(document, DocumentCommonModel.Privileges.EDIT_DOCUMENT);
             document = getDocumentService().registerDocument(document);
             // Update generated files
             BeanHelper.getDocumentTemplateService().updateGeneratedFiles(document.getNodeRef(), true);

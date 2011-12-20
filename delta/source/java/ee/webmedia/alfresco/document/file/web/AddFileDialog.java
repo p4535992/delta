@@ -158,7 +158,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         try {
             try {
                 NodeRef documentNodeRef = new NodeRef(Repository.getStoreRef(), navigator.getCurrentNodeId());
-                validatePermission(documentNodeRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT_FILES);
+                validatePermission(documentNodeRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT);
                 List<String> existingDisplayNames = getFileService().getDocumentFileDisplayNames(documentNodeRef);
                 Map<Integer, EInvoice> attachmentInvoices = new HashMap<Integer, EInvoice>();
                 Map<Integer, EInvoice> fileInvoices = new HashMap<Integer, EInvoice>();

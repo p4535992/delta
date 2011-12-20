@@ -17,6 +17,7 @@ import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.ws.client.WebServiceIOException;
 import org.springframework.ws.client.WebServiceTransportException;
+import org.springframework.ws.client.core.WebServiceTemplate;
 import org.springframework.ws.soap.client.SoapFaultClientException;
 
 import smit.ametnik.services.AmetnikExt;
@@ -69,7 +70,10 @@ public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenti
             if (!StringUtils.equals(userName, user.getIsikukood())) {
                 throw new AuthenticationException("Social security id is supposed to be equal to userName");
             }
-            boolean hasRsAccess = rsService.hasRsLubaByIsikukood(userName);
+            boolean hasRsAccess = false;
+            if (rsService.isRestrictedDelta() || StringUtils.isNotBlank(((WebServiceTemplate) rsService).getDefaultUri())) {
+                hasRsAccess = rsService.hasRsLubaByIsikukood(userName);
+            }
             if (rsService.isRestrictedDelta() && !hasRsAccess) {
                 throw new AuthenticationException("User " + userName + " has been granted no access to this instance of restricted Delta.");
             }

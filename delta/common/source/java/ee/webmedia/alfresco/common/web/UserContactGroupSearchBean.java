@@ -123,7 +123,7 @@ public class UserContactGroupSearchBean implements Serializable {
      */
 
     // TODO merge CompoundWorkflowDefinitionDialog#executeOwnerSearch to here
-    public SelectItem[] searchAll(PickerSearchParams params, boolean withAdminsAndDocManagers) {
+    private SelectItem[] searchAll(PickerSearchParams params, boolean withAdminsAndDocManagers) {
         if (params.isFilterIndex(USERS_FILTER)) {
             return BeanHelper.getUserListDialog().searchUsers(params);
         } else if (params.isFilterIndex(USER_GROUPS_FILTER)) {

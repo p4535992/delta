@@ -91,7 +91,7 @@
 
       <%-- Remove and Version column --%>
       <a:column id="col7" rendered="#{r.activeAndNotDigiDoc}">
-         <wm:docPermissionEvaluator id="col7-act33-eval" value="#{r.node}" allow="editDocumentMetaData">
+         <wm:docPermissionEvaluator id="col7-act33-eval" value="#{r.node}" allow="editDocument">
             <a:actionLink id="col7-act33" value="#{r.name}" actionListener="#{FileBlockBean.toggleActive}" showLink="false"
                image="/images/icons/document-convert.png" tooltip="#{msg.file_toggle_deactive} " rendered="#{!DocumentDialogHelperBean.notEditable}">
                <f:param name="nodeRef" value="#{r.nodeRef}" />
@@ -104,14 +104,12 @@
                <f:param name="nodeRef" value="#{r.nodeRef}" />
             </a:actionLink>
          </wm:docPermissionEvaluator>
-         <wm:docPermissionEvaluator id="col7-acteval" value="#{r.node}" allow="deleteDocumentFiles">
-            <a:actionLink id="col7-act" value="#{r.name}" actionListener="#{BrowseBean.setupContentAction}" action="dialog:deleteFile" showLink="false"
-               image="/images/icons/delete.gif" tooltip="#{msg.file_remove}" rendered="#{!DocumentDialogHelperBean.inprogressCompoundWorkflows && !DocumentDialogHelperBean.notEditable}">
-               <f:param name="id" value="#{r.id}" />
-               <f:param name="ref" value="#{r.nodeRef}" />
-            </a:actionLink>
-         </wm:docPermissionEvaluator>
-         <wm:docPermissionEvaluator id="col7-act4-eval" value="#{r.node}" allow="editDocumentFiles">
+         <a:actionLink id="col7-act" value="#{r.name}" actionListener="#{BrowseBean.setupContentAction}" action="dialog:deleteFile" showLink="false"
+            image="/images/icons/delete.gif" tooltip="#{msg.file_remove}" rendered="#{FileBlockBean.deleteFileAllowed}">
+            <f:param name="id" value="#{r.id}" />
+            <f:param name="ref" value="#{r.nodeRef}" />
+         </a:actionLink>
+         <wm:docPermissionEvaluator id="col7-act4-eval" value="#{r.node}" allow="editDocument">
             <a:actionLink id="col7-act4" value="#{r.name}" actionListener="#{FileBlockBean.transformToPdf}" showLink="false"
                image="/images/filetypes/pdf.gif" tooltip="#{msg.file_generate_pdf}" rendered="#{r.transformableToPdf && !DocumentDialogHelperBean.notEditable}">
                <f:param name="nodeRef" value="#{r.nodeRef}" />
@@ -263,7 +261,7 @@
 
       <%-- Remove and Version column --%>
       <a:column id="col27" rendered="#{r.notActiveAndNotDigiDoc}">
-         <wm:docPermissionEvaluator id="col27-act3-eval-allow" value="#{r.node}" allow="editDocumentMetaData,editDocumentFiles">
+         <wm:docPermissionEvaluator id="col27-act3-eval-allow" value="#{r.node}" allow="editDocument">
             <a:actionLink id="col27-act3" value="#{r.name}" actionListener="#{FileBlockBean.toggleActive}" showLink="false"
                image="/images/icons/document-convert.png" tooltip="#{msg.file_toggle_active}">
                <f:param name="nodeRef" value="#{r.nodeRef}" />
@@ -276,13 +274,11 @@
                <f:param name="nodeRef" value="#{r.nodeRef}" />
             </a:actionLink>
          </wm:docPermissionEvaluator>
-         <wm:docPermissionEvaluator id="col27-act-eval-allow" value="#{r.node}" allow="deleteDocumentFiles">
-            <a:actionLink id="col27-act" value="#{r.name}" actionListener="#{BrowseBean.setupContentAction}" action="dialog:deleteFile" showLink="false"
-               image="/images/icons/delete.gif" tooltip="#{msg.file_remove}" rendered="#{!DocumentDialogHelperBean.inprogressCompoundWorkflows && !DocumentDialogHelperBean.notEditable}">
-               <f:param name="id" value="#{r.id}" />
-               <f:param name="ref" value="#{r.nodeRef}" />
-            </a:actionLink>
-         </wm:docPermissionEvaluator>
+         <a:actionLink id="col27-act" value="#{r.name}" actionListener="#{BrowseBean.setupContentAction}" action="dialog:deleteFile" showLink="false"
+            image="/images/icons/delete.gif" tooltip="#{msg.file_remove}" rendered="#{FileBlockBean.deleteInactiveFileAllowed}">
+            <f:param name="id" value="#{r.id}" />
+            <f:param name="ref" value="#{r.nodeRef}" />
+         </a:actionLink>
          <wm:docPermissionEvaluator id="col27-act5-eval-allow" value="#{r.node}" allow="WriteContent">
             <a:actionLink id="col27-act5" value="#{r.name}" actionListener="#{FileBlockBean.viewPdf}" showLink="false"
                image="/images/filetypes/file-small-gray.png" tooltip="#{msg.file_view_pdf}" rendered="#{r.pdf}">

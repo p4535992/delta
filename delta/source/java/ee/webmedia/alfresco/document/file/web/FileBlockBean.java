@@ -1,5 +1,8 @@
 package ee.webmedia.alfresco.document.file.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
+
 import java.util.List;
 
 import javax.faces.context.FacesContext;
@@ -23,11 +26,14 @@ import org.springframework.web.jsf.FacesContextUtils;
 import ee.webmedia.alfresco.common.listener.RefreshEventListener;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
+import ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicBlock;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator;
+import ee.webmedia.alfresco.document.web.evaluator.IsOwnerEvaluator;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
@@ -51,7 +57,7 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
         NodeRef fileNodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
 
         try {
-            BaseDialogBean.validatePermission(docRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA);
+            BaseDialogBean.validatePermission(docRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT);
             final boolean active = getFileService().toggleActive(fileNodeRef);
             restore(); // refresh the files list
             MessageUtil.addInfoMessage(active ? "file_toggle_active_success" : "file_toggle_deactive_success", getFileName(fileNodeRef));
@@ -149,6 +155,24 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
      */
     public List<File> getFiles() {
         return files;
+    }
+
+    public boolean isDeleteFileAllowed() {
+        return isDeleteFileAllowed(true);
+    }
+
+    public boolean isDeleteInactiveFileAllowed() {
+        return isDeleteFileAllowed(false);
+    }
+
+    private boolean isDeleteFileAllowed(boolean activeFile) {
+        DocumentDialogHelperBean documentDialogHelperBean = getDocumentDialogHelperBean();
+        Node docNode = documentDialogHelperBean.getNode();
+        return !documentDialogHelperBean.isNotEditable() && isAdminOrDocManagerOrOwner(docNode) && (!activeFile || !getWorkflowService().hasInprogressCompoundWorkflows(docRef));
+    }
+
+    private boolean isAdminOrDocManagerOrOwner(Node docNode) {
+        return new IsAdminOrDocManagerEvaluator().evaluate(docNode) || new IsOwnerEvaluator().evaluate(docNode);
     }
 
     // START: getters / setters

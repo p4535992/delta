@@ -74,7 +74,7 @@
    </config>
    <config evaluator="aspect-name" condition="docTempl:template" replace="true">
       <property-sheet>
-         <show-property name="docTempl:templateType" display-label-id="template_templateType" read-only="true" />
+        <show-property name="docTempl:templateType" display-label-id="template_templateType" read-only="true" converter="ee.webmedia.alfresco.template.web.DocumentTemplateTypeConverter" />
          <show-property name="docTempl:name" display-label-id="template_name" textId="templates_file_name"
          component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" propertiesSeparator="£" props="
             {temp}fileNameBase¤¤

@@ -62,7 +62,7 @@ public interface DocumentDynamicService {
      * @throws UnableToPerformException one error message if validation or save was unsuccessful.
      * @throws UnableToPerformMultiReasonException multiple error messages if validation or save was unsuccessful.
      */
-    DocumentDynamic updateDocument(DocumentDynamic document, List<String> saveListenerBeanNames, boolean addPrivilegesOnBackground);
+    DocumentDynamic updateDocument(DocumentDynamic document, List<String> saveListenerBeanNames);
 
     boolean isDraft(NodeRef docRef);
 

@@ -79,6 +79,7 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
         if (ametnik == null) {
             return Collections.<NodeDescription> emptyList().iterator();
         }
+        // TODO merge logic from AMRSimpleAuthenticationImpl to here (RsAccessStatusBean and other...)
         if (rsService.isRestrictedDelta() && !rsService.hasRsLubaByIsikukood(idCode)) {
             return Collections.<NodeDescription> emptyList().iterator();
         }

@@ -2272,6 +2272,7 @@ table.detailsMultiTbody tbody.tbGroup td.collapsed {
 
 .users {
 	background: #e9ecef url("../images/icons/users.gif") no-repeat 50% 50%;
+	width: 16px;
 }
 
 table.detailsMultiTbody th {

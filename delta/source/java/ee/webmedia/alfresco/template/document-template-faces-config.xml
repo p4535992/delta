@@ -53,4 +53,9 @@
          <value>#{DictionaryService}</value>
       </managed-property>
    </managed-bean>
+   
+   <converter>
+      <converter-id>ee.webmedia.alfresco.template.web.DocumentTemplateTypeConverter</converter-id>
+      <converter-class>ee.webmedia.alfresco.template.web.DocumentTemplateTypeConverter</converter-class>
+   </converter>
 </faces-config>

@@ -53,4 +53,7 @@ public interface SeriesService {
 
     List<NodeRef> getAllSeriesRefsByFunction(NodeRef functionRef);
 
+    /** this method should only be called by the updater */
+    void setSeriesDefaultPermissionsOnCreate(NodeRef seriesRef);
+
 }

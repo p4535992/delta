@@ -70,6 +70,7 @@ public class DocumentWorkflowStatusEventListener implements WorkflowEventListene
         }
     }
 
+    // FIXME PRIV2 Ats - EDIT_DOCUMENT
     public static Set<String> getRequiredPrivsForInprogressTask(Task task, NodeRef docRef, FileService fileService) {
         Set<String> requiredPrivileges = new HashSet<String>(4);
         // 3.1.18.4 c
@@ -77,16 +78,16 @@ public class DocumentWorkflowStatusEventListener implements WorkflowEventListene
         boolean isReview = task.isType(WorkflowSpecificModel.Types.REVIEW_TASK);
         if (isReview || task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
             // 3.1.18.3 a
-            requiredPrivileges.add(DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA);
+            requiredPrivileges.add(DocumentCommonModel.Privileges.EDIT_DOCUMENT);
         }
         boolean isActiveResponsible = isActiveResponsible(task);
         if (isReview || isActiveResponsible || isFirstSignatureTask(task, docRef, fileService)) {
             // 3.1.18.5 a,b,c
-            requiredPrivileges.add(DocumentCommonModel.Privileges.EDIT_DOCUMENT_FILES);
+            requiredPrivileges.add(DocumentCommonModel.Privileges.EDIT_DOCUMENT);
         }
         if (isActiveResponsible) {
             // 3.1.18.6 a
-            requiredPrivileges.add(DocumentCommonModel.Privileges.DELETE_DOCUMENT_FILES);
+            // requiredPrivileges.add(DocumentCommonModel.Privileges.DELETE_DOCUMENT_FILES);
         }
         return requiredPrivileges;
     }

@@ -31,7 +31,6 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.cmr.security.PermissionService;
-import org.alfresco.util.Pair;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
@@ -65,7 +64,6 @@ import ee.webmedia.alfresco.privilege.model.PrivilegeMappings;
 import ee.webmedia.alfresco.privilege.model.UserPrivileges;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.privilege.web.ManageInheritablePrivilegesDialog.GroupTranslatorMap;
-import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
@@ -82,6 +80,7 @@ import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import flexjson.JSONSerializer;
 
+// FIXME ALSeadist Ats - see dialoog koos jsp'ga kaob ära
 /**
  * Dialog bean for managing privileges.
  * 
@@ -165,8 +164,8 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
                 init(manageableRef, manageablePermissions, true);
                 List<String> users = new ArrayList<String>();
                 for (UserPrivileges vo : loosingPrivileges.values()) {
-                    if (vo.getPrivilegesToDelete().contains(DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA)
-                                && !vo.getActivePrivileges().contains(DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA)) {
+                    if (vo.getPrivilegesToDelete().contains(DocumentCommonModel.Privileges.EDIT_DOCUMENT)
+                                && !vo.getActivePrivileges().contains(DocumentCommonModel.Privileges.EDIT_DOCUMENT)) {
                         users.add(vo.getUserDisplayName());
                     }
                 }
@@ -311,7 +310,7 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
             FacesContext context = FacesContext.getCurrentInstance();
             List<UIComponent> permissionRLChildren = ComponentUtil.getChildren(permissionsRichList);
             for (String permission : manageablePermissions) {
-                boolean columnMaybeEditable = editable && !DocumentCommonModel.Privileges.READ_ONLY_PRIVILEGES.contains(permission);
+                boolean columnMaybeEditable = editable /* && !DocumentCommonModel.Privileges.READ_ONLY_PRIVILEGES.contains(permission) */;
                 permissionRLChildren.add(createPermissionColumn(permission, context, columnMaybeEditable));
             }
             permissionRLChildren.add(createActionsColumn(context));
@@ -534,7 +533,7 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
             addRows(group, manageablePermissions, seriesDocManagerAuths, extraPrivilegeReason);
 
             Collection<String> privileges = Arrays.asList(DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA
-                    , DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA, DocumentCommonModel.Privileges.DELETE_DOCUMENT_META_DATA);
+                    , DocumentCommonModel.Privileges.EDIT_DOCUMENT);
             extraPrivilegeReason = MessageUtil.getMessage("manage_permissions_extraInfo_userIsDocManager");
             Set<String> docManagerAuthorities = new HashSet<String>(authorities);
             docManagerAuthorities.removeAll(seriesDocManagerAuths);
@@ -582,6 +581,8 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
      * @return usernames of those authorities that are given and also have SeriesDocManagerDynamicAuthority.SERIES_MANAGEABLE_PERMISSION permission for series of given document
      */
     private Set<String> filterSeriesAuthorities(Set<String> authorities, NodeRef seriesOrDecendantOfSeriesRef) {
+//@formatter:off
+        /*
         final NodeRef seriesRef;
         if (SeriesModel.Types.SERIES.equals(getNodeService().getType(seriesOrDecendantOfSeriesRef))) {
             seriesRef = seriesOrDecendantOfSeriesRef;
@@ -596,6 +597,9 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
         }
         seriesAuths.retainAll(authorities);
         return seriesAuths;
+         */
+//@formatter:on
+        return new HashSet<String>();
     }
 
     private String getDocumentOwner() {
@@ -667,7 +671,7 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
             for (String permission : manageablePermissions) {
                 tableCell = new UITableCell();
                 HtmlSelectBooleanCheckbox cb = (HtmlSelectBooleanCheckbox) application.createComponent(HtmlSelectBooleanCheckbox.COMPONENT_TYPE);
-                boolean columnMaybeEditable = editable && !DocumentCommonModel.Privileges.READ_ONLY_PRIVILEGES.contains(permission);
+                boolean columnMaybeEditable = editable /* && !DocumentCommonModel.Privileges.READ_ONLY_PRIVILEGES.contains(permission) */;
                 cb.setDisabled(!columnMaybeEditable);
                 cb.setStyleClass("permission_" + permission);
                 addChildren(tableCell, cb);

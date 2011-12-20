@@ -197,10 +197,10 @@ public class GroupsDialog extends BaseDialogBean
         }
     }
 
-    private DeleteEnambledDeciderMap deleteEnambledDeciderMap = new DeleteEnambledDeciderMap();
+    private DeleteEnambledDeciderMap deleteEnabledDeciderMap = new DeleteEnambledDeciderMap();
 
     public Map<String, Boolean> getDeleteEnabledByGroup() {
-        return deleteEnambledDeciderMap;
+        return deleteEnabledDeciderMap;
     }
 
    public void reset(ActionEvent event) {

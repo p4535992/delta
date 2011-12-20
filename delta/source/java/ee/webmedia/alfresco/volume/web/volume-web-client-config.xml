@@ -57,9 +57,7 @@
               <action idref="volume_archive"/>
               <action idref="volume_close"/>
               <action idref="volume_open"/>
-<!-- FIXME PRIV2 Ats - tarneks poolik lahendus välja kommenteeritud
               <action idref="volume_manage_permissions"/>
- -->
           </action-group>
 
       </actions>

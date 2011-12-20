@@ -197,18 +197,6 @@
             <params><param name="documentNodeRef">#{DocumentDialogHelperBean.nodeRef}</param></params>
          </action>
 
-         <action id="document_manage_permissions">
-            <evaluator>ee.webmedia.alfresco.privilege.web.ManagePrivilegesEvaluator</evaluator>
-            <label-id>manage_invited_users</label-id>
-            <image>/images/icons/users.gif</image>
-            <action>dialog:managePrivilegesDialog</action>
-            <action-listener>#{ManagePrivilegesDialog.init}</action-listener>
-            <params>
-               <param name="manageableRef">#{DocumentDialogHelperBean.nodeRef}</param>
-               <param name="manageablePermissions">viewDocumentMetaData editDocumentMetaData viewDocumentFiles editDocumentFiles deleteDocumentFiles deleteDocumentMetaData</param>
-            </params>
-         </action>
-
          <action id="document_errandOrderApplicant_add">
             <label-id>document_errand_addApplicant</label-id>
             <tooltip-id>document_errand_addApplicant_tooltip</tooltip-id>
@@ -348,10 +336,6 @@
             <action idref="document_delete"/>
             <action idref="document_favorites_add"/>
             <action idref="document_favorites_remove"/>
-            <action idref="document_manage_permissions" />
-            <!-- FIXME PRIV2 Ats - tarne jaoks välja kommenteeritud
-            <action idref="document_manage_inheritable_permissions" />
-             -->
             <action idref="document_sendToSap" />
             <action idref="document_sendToSapManually" />
          </action-group>

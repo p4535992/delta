@@ -108,14 +108,9 @@
 
    <permissionSet type="ser:series" expose="selected" >
 
-<!--
-VAREM kehtis DocumentFileRead kohta järgnev:
-   Sarjale'ile lisatakse õigused (inherit=true):
-    * GRUPP või Kasutaja - DocumentFileRead
-   Siis saavad kõik sarjaga seotud kasutajad:
-   * Lugeda dokumendi alla kuuluvate failide sisu
-NÜÜD enam dokumendile õiguseid ülevaltpoolt ei pärandata ja õigem nimetus DocumentFileRead permissionGroup'ile oleks "manageDocumentFiles".
--->
+      <!-- FIXME PRIV2 - DocumentFileRead kasutamine on ära kaotatud, aga seda ei saa enne eemaldada, kui kõigi nodede küljest on need permissionid eemaldatud
+      Seda kasutati kahes erinevas kohas: 1) dokumendi küljes, 2) foorumi küljes(kuigi oleks pidanud uue permissioni tekitama) 
+       -->
       <permissionGroup name="DocumentFileRead" expose="true" allowFullControl="false">
            <includePermissionGroup type="sys:base" permissionGroup="ReadContent"/>
       </permissionGroup>
@@ -195,7 +190,6 @@ NÜÜD enam dokumendile õiguseid ülevaltpoolt ei pärandata ja õigem nimetus 
 
    <globalPermission permission="DocumentChildMetadata" authority="ROLE_DOCUMENT_CHILD_METADATA"/>
 
-   <globalPermission permission="DocumentFileRead" authority="ROLE_DOCUMENT_FILE_READ"/>
    <globalPermission permission="DocumentFileWrite" authority="ROLE_DOCUMENT_FILE_WRITE"/>
 
    <globalPermission permission="DocumentListCreate" authority="ROLE_DOCUMENT_LIST_CREATE"/>

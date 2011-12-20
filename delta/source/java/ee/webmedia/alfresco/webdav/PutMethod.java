@@ -333,7 +333,7 @@ public class PutMethod extends WebDAVMethod {
             }
         }
 
-        documentDynamicService.updateDocument(doc, null, true); // This also updates generated files
+        documentDynamicService.updateDocument(doc, null); // This also updates generated files
     }
 
     private boolean isFieldUnchangeable(DocumentDynamic doc, List<String> updateDisabled, List<FieldType> readOnlyFields, Field field) {

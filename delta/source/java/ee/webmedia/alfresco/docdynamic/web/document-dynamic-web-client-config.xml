@@ -150,10 +150,7 @@
             <action idref="document_delete" />
 <!-- TODO            <action idref="document_favorites_add" /> -->
             <action idref="document_favorites_remove" />
-<!-- FIXME PRIV2 Ats - tarneks poolik lahendus välja kommenteeritud
             <action idref="document_manage_inheritable_permissions" />
- -->
-            <action idref="document_manage_permissions" />
 <!--             <action idref="document_sendToSap" /> -->
 <!--             <action idref="document_sendToSapManually" /> -->
             <action idref="document_changeByNewDocument" />
