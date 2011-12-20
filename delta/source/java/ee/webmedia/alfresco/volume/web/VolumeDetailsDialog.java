@@ -8,6 +8,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getVolumeService;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -85,6 +86,7 @@ public class VolumeDetailsDialog extends BaseDialogBean {
         NodeRef seriesRef = new NodeRef(ActionUtil.getParam(event, PARAM_SERIES_NODEREF));
         // create new node for currentEntry
         currentEntry = getVolumeService().createVolume(seriesRef);
+        deletedDocuments = Collections.<DeletedDocument> emptyList();
     }
 
     public Node getCurrentNode() {
@@ -225,6 +227,7 @@ public class VolumeDetailsDialog extends BaseDialogBean {
         currentEntry = null;
         newVolume = false;
         propertySheet = null;
+        deletedDocuments = null;
     }
 
     // START: getters / setters
@@ -241,6 +244,7 @@ public class VolumeDetailsDialog extends BaseDialogBean {
         return deletedDocuments;
     }
 
+    // FIXME Ats to Kaarel - milleks see meetod?
     public void setDeletedDocuments(List<DeletedDocument> deletedDocuments) {
         this.deletedDocuments = deletedDocuments;
     }
