@@ -24,6 +24,8 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  */
 public class FavoritesModalComponent extends UICommand {
 
+    public static final String ADD_TO_FAVORITES_MODAL_ID = "addToFavorites";
+
     public FavoritesModalComponent() {
         setRendererType(null);
     }
@@ -53,7 +55,7 @@ public class FavoritesModalComponent extends UICommand {
         ResponseWriter out = context.getResponseWriter();
 
         // modal popup code
-        ComponentUtil.writeModalHeader(out, "addToFavorites", MessageUtil.getMessage("document_favorites_add"), null);
+        ComponentUtil.writeModalHeader(out, ADD_TO_FAVORITES_MODAL_ID, MessageUtil.getMessage("document_favorites_add"), null);
 
         // popup content
         out.write("<table><tbody>");

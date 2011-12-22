@@ -307,7 +307,7 @@ public class UserServiceImpl implements UserService {
     public Integer getCurrentUsersStructUnitId() {
         Map<QName, Serializable> userProperties = getUserProperties(AuthenticationUtil.getRunAsUser());
         Serializable orgId = userProperties.get(ContentModel.PROP_ORGID);
-        if (orgId == null) {
+        if (StringUtils.isBlank((String) orgId)) {
             return null;
         }
         return Integer.parseInt(orgId.toString());

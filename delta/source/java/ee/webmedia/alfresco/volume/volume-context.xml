@@ -75,6 +75,7 @@
 
    <bean id="volumeAutomaticClosingTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent"
       depends-on="volumeParametersBootstrap">
+      <property name="enabled" value="${jobs.enabled}" />
       <property name="parameterName" value="volumeAutomaticClosingTime" />
       <property name="parameterFormat" value="H:mm" />
       <property name="jobDetail">

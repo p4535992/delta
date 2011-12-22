@@ -1,7 +1,15 @@
 package ee.webmedia.alfresco.series.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
+
+import java.util.Collection;
+
 import javax.faces.event.ValueChangeEvent;
 
+import org.alfresco.service.cmr.repository.NodeRef;
+
+import ee.webmedia.alfresco.classificator.enums.VolumeType;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 import ee.webmedia.alfresco.privilege.web.PrivilegesHandler;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -44,4 +52,16 @@ public class SeriesTypePrivilegesHandler extends PrivilegesHandler {
         return false;
     }
 
+    @Override
+    public boolean isPermissionColumnDisabled(String privilege) {
+        if (Privileges.VIEW_CASE_FILE.equals(privilege) || Privileges.EDIT_CASE_FILE.equals(privilege)) {
+            NodeRef seriesRef = state.getManageableRef();
+            @SuppressWarnings("unchecked")
+            Collection<String> volumeType = (Collection<String>) getNodeService().getProperty(seriesRef, SeriesModel.Props.VOL_TYPE);
+            if (!volumeType.contains(VolumeType.CASE_FILE.name())) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

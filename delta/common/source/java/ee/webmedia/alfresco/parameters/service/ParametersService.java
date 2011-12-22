@@ -69,4 +69,6 @@ public interface ParametersService {
      */
     Map<String, Set<Parameters>> getSwappedStringParameters(List<Parameters> collection);
 
+    boolean isJobsEnabled();
+
 }

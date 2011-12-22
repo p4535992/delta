@@ -747,8 +747,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
             // In Search/MultiValueEditor component, display one empty row by default, not zero rows
             Boolean multiValuedOverride = propDef.getMultiValuedOverride();
             if (field.getFieldTypeEnum() == FieldType.USERS || field.getFieldTypeEnum() == FieldType.CONTACTS || field.getFieldTypeEnum() == FieldType.USERS_CONTACTS
-                    || field.getFieldTypeEnum() == FieldType.STRUCT_UNIT ||
-                    (multiValuedOverride != null && multiValuedOverride)) {
+                    || (multiValuedOverride != null && multiValuedOverride)) {
                 ArrayList<Serializable> list = new ArrayList<Serializable>();
                 list.add(null);
                 defaultValue = list;

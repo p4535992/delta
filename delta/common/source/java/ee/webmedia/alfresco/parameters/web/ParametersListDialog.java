@@ -39,10 +39,17 @@ public class ParametersListDialog extends BaseDialogBean {
     @Override
     public void restored() {
         parameters = getParametersService().getAllParameters();
+        if (!getParametersService().isJobsEnabled()) {
+            MessageUtil.addErrorMessage("parameters_jobs_not_rescheduled");
+        }
     }
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
+        if (!getParametersService().isJobsEnabled()) {
+            MessageUtil.addErrorMessage("parameters_jobs_not_rescheduled");
+        }
+
         final Set<String> messages = new HashSet<String>(3); // there will probably be not more than 3 messages
         for (Parameter<?> parameter : parameters) {
             String validationMessage = parameter.validateValue();
@@ -108,7 +115,7 @@ public class ParametersListDialog extends BaseDialogBean {
     public ParametersService getParametersService() {
         if (parametersService == null) {
             parametersService = (ParametersService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-            .getBean(ParametersService.BEAN_NAME);
+                    .getBean(ParametersService.BEAN_NAME);
         }
         return parametersService;
     }

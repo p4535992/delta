@@ -252,7 +252,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
                 continue;
             }
             QName propName = propDef.getName();
-            if (overrideProps.containsKey(propName)) {
+            if (overrideProps != null && overrideProps.containsKey(propName)) {
                 targetProps.put(propName.toString(), overrideProps.get(propName));
                 continue;
             }
@@ -392,7 +392,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
                 document.getNode().removeChildAssociations(assocTypeQName, 0);
                 childNodes = document.getNode().getAllChildAssociations(assocTypeQName);
             }
-            // We don't remove container aspects, it is not strictly necessary
+            // FIXME 163447 We should remove container aspects, otherwise an error occurs
         }
     }
 
@@ -475,6 +475,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
             documentTemplateService.updateGeneratedFiles(docRef, false);
         }
+        generalService.saveAddedAssocs(docNode);
         return document;
     }
 
@@ -492,18 +493,27 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         Serializable newValue = keyOldNewValuesPair.getSecond().getSecond();
         String messageKey = "document_log_location_changed";
         if (DocumentCommonModel.Props.FUNCTION.getLocalName().equals(originalFieldId)) {
-            oldValue = nodeService.getProperty((NodeRef) oldValue, FunctionsModel.Props.MARK) + " "
-                    + nodeService.getProperty((NodeRef) oldValue, FunctionsModel.Props.TITLE);
+            NodeRef functionRef = (NodeRef) oldValue;
+            if (functionRef != null) {
+                oldValue = nodeService.getProperty(functionRef, FunctionsModel.Props.MARK) + " "
+                        + nodeService.getProperty(functionRef, FunctionsModel.Props.TITLE);
+            }
             newValue = nodeService.getProperty((NodeRef) newValue, FunctionsModel.Props.MARK) + " "
                     + nodeService.getProperty((NodeRef) newValue, FunctionsModel.Props.TITLE);
         } else if (DocumentCommonModel.Props.SERIES.getLocalName().equals(originalFieldId)) {
-            oldValue = nodeService.getProperty((NodeRef) oldValue, SeriesModel.Props.SERIES_IDENTIFIER) + " "
-                    + nodeService.getProperty((NodeRef) oldValue, SeriesModel.Props.TITLE);
+            NodeRef seriesRef = (NodeRef) oldValue;
+            if (seriesRef != null) {
+                oldValue = nodeService.getProperty(seriesRef, SeriesModel.Props.SERIES_IDENTIFIER) + " "
+                        + nodeService.getProperty(seriesRef, SeriesModel.Props.TITLE);
+            }
             newValue = nodeService.getProperty((NodeRef) newValue, SeriesModel.Props.SERIES_IDENTIFIER) + " "
                     + nodeService.getProperty((NodeRef) newValue, SeriesModel.Props.TITLE);
         } else if (DocumentCommonModel.Props.VOLUME.getLocalName().equals(originalFieldId)) {
-            oldValue = nodeService.getProperty((NodeRef) oldValue, VolumeModel.Props.MARK) + " "
-                    + nodeService.getProperty((NodeRef) oldValue, VolumeModel.Props.TITLE);
+            NodeRef volumeRef = (NodeRef) oldValue;
+            if (volumeRef != null) {
+                oldValue = nodeService.getProperty(volumeRef, VolumeModel.Props.MARK) + " "
+                        + nodeService.getProperty(volumeRef, VolumeModel.Props.TITLE);
+            }
             newValue = nodeService.getProperty((NodeRef) newValue, VolumeModel.Props.MARK) + " "
                     + nodeService.getProperty((NodeRef) newValue, VolumeModel.Props.TITLE);
         } else if (DocumentCommonModel.Props.CASE.getLocalName().equals(originalFieldId)) {

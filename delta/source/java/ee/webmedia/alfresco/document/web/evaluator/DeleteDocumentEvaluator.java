@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.document.web.evaluator;
 
+import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.isAdminOrDocmanagerWithViewDocPermission;
+
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
@@ -20,9 +22,8 @@ public class DeleteDocumentEvaluator extends BaseActionEvaluator {
         if (!new ViewStateActionEvaluator().evaluate(docNode)) {
             return false;
         }
-        boolean isAdminOrDocManager = new IsAdminOrDocManagerEvaluator().evaluate(docNode);
-        return isAdminOrDocManager || (StringUtils.isBlank((String) docNode.getProperties().get(DocumentCommonModel.Props.REG_NUMBER))
-                && new IsOwnerEvaluator().evaluate(docNode));
+        return isAdminOrDocmanagerWithViewDocPermission(docNode)
+                || (StringUtils.isBlank((String) docNode.getProperties().get(DocumentCommonModel.Props.REG_NUMBER)) && new IsOwnerEvaluator().evaluate(docNode));
     }
 
 }

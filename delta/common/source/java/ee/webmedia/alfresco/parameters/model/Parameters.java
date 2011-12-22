@@ -20,7 +20,6 @@ public enum Parameters {
     DVK_RECEIVE_DOC_SEND_STATUSES("dvkReceiveDocSendStatusesInterval"),
     DVK_ORGANIZATION_NAME("dvkOrganizationName"), // kui tühi, kasutatakse xtee confist
     SYNC_USERS_GROUPS_STRUCT_UNITS_TIME("syncUsersGroupsStructUnitsTime"),
-    EMPLOYEE_REG_ORGANISATION_ID("employeeRegOrganisationId"),
     EXTERNAL_REVIEW_AUTOMATIC_FOLDER("externalReviewAutomaticFolder"),
     // Default sender email value when sending out a document
     DOC_SENDER_EMAIL("docSenderEmail"),

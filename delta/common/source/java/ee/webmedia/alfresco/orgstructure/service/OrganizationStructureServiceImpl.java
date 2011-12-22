@@ -47,7 +47,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
     private static BeanPropertyMapper<OrganizationStructure> organizationStructureBeanPropertyMapper = BeanPropertyMapper
             .newInstance(OrganizationStructure.class);
 
-
+    private boolean organizationStructureUpdateEnabled;
     private GeneralService generalService;
     private NodeService nodeService;
     private AMRService amrService;
@@ -60,6 +60,10 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
 
     @Override
     public int updateOrganisationStructures() {
+        if (!organizationStructureUpdateEnabled) {
+            return 0;
+        }
+
         YksusExt[] yksusArray = amrService.getYksusByAsutusId();
         List<OrganizationStructure> orgStructures = new ArrayList<OrganizationStructure>(yksusArray.length);
         for (YksusExt yksus : yksusArray) {
@@ -343,6 +347,10 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
 
     public void setAuthorityService(AuthorityService authorityService) {
         this.authorityService = authorityService;
+    }
+
+    public void setOrganizationStructureUpdateEnabled(boolean organizationStructureUpdateEnabled) {
+        this.organizationStructureUpdateEnabled = organizationStructureUpdateEnabled;
     }
 
     // END: getters / setters

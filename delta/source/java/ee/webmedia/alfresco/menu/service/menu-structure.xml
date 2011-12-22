@@ -179,8 +179,8 @@
             <outcome>dialog:userConsole</outcome>
             <action-listener>#{UserDetailsDialog.setupCurrentUser}</action-listener>
          </item>
-         <dropdown id="myFavourites" title-id="menu_my_favourites" browse="true">
-            <!-- NB! typo here Favo***u***rites vs favorites -->
+         <!-- NB! if change id from Favo***u***rites to favorites, then repo updater is neccessary -->
+         <dropdown id="myFavourites" title-id="menu_my_favorites" browse="true">
             <submenu-id>myFavorites-submenu</submenu-id>
             <outcome>dialog:favoritesDocumentListDialog</outcome>
             <action-listener>#{MenuBean.toggle}</action-listener>

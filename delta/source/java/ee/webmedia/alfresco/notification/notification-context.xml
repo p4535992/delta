@@ -115,6 +115,7 @@
    </bean>
    
    <bean id="taskDueDateNotificationTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent">
+      <property name="enabled" value="${jobs.enabled}" />
       <property name="parameterName" value="taskDueDateNotificationTime" />
       <property name="parameterFormat" value="H:mm" />
       <property name="jobDetail">
@@ -130,6 +131,7 @@
    </bean>
    
    <bean id="volumeDispositionDateNotificationTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent">
+      <property name="enabled" value="${jobs.enabled}" />
       <property name="parameterName" value="volumeDispositionDateNotificationDays" />
       <property name="parameterFormat" value="D" />
       <property name="jobDetail">
@@ -145,6 +147,7 @@
    </bean>
    
    <bean id="accessRestrictionEndDateNotificationTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent">
+      <property name="enabled" value="${jobs.enabled}" />
       <property name="parameterName" value="accessRestrictionEndDateNotificationDays" />
       <property name="parameterFormat" value="D" />
       <property name="jobDetail">

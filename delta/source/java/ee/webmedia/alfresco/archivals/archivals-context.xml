@@ -102,6 +102,7 @@
 
    <bean id="destroyVolumesTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean"
          parent="parameterRescheduledTriggerParent" depends-on="archivalsParametersBootstrap">
+      <property name="enabled" value="${jobs.enabled}" />
       <property name="parameterName" value="volumeDestructionPeriod" />
       <property name="parameterFormat" value="D" />
       <property name="jobDetail">

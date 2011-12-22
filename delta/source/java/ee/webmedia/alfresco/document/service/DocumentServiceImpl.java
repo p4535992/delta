@@ -124,6 +124,7 @@ import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.sendout.web.DocumentSendOutDialog;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeHelper;
+import ee.webmedia.alfresco.document.web.evaluator.RegisterDocumentEvaluator;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.imap.model.ImapModel;
 import ee.webmedia.alfresco.imap.service.ImapServiceExt;
@@ -1744,6 +1745,10 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
     }
 
     private Node registerDocument(Node docNode, boolean isRelocating, Node previousVolume) {
+        docNode.clearPermissionsCache(); // permissions might have been lost after rendering registration button
+        if (!new RegisterDocumentEvaluator().evaluate(docNode)) {
+            throw new UnableToPerformException("document_registerDoc_error_noPermission");
+        }
         final Map<String, Object> props = docNode.getProperties();
         if (isRegistered(docNode) && !isRelocating) {
             throw new RuntimeException("Document already registered! docNode=" + docNode);

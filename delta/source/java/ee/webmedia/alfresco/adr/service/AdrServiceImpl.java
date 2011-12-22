@@ -177,7 +177,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         }
 
         // failiga seotud dokumendi docStatus = lõpetatud või incomingLetter & registreeritud
-        boolean isFinished = DocumentStatus.FINISHED.getValueName().equals(doc.getDocStatus());
+        boolean isFinished = doc.isDocStatus(DocumentStatus.FINISHED);
         boolean isRegisteredIncomingLetter = DocumentTypeHelper.isIncomingLetter(doc.getType())
                 && StringUtils.isNotBlank((String) doc.getProperties().get(DocumentCommonModel.Props.REG_NUMBER));
         if (!isFinished && !isRegisteredIncomingLetter) {
@@ -580,7 +580,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         List<Document> docs = documentService.getReplyOrFollowUpDocuments(document);
         List<Dokument> list = new ArrayList<Dokument>(docs.size());
         for (Document doc : docs) {
-            if ((DocumentStatus.FINISHED.getValueName().equals(doc.getDocStatus()) || DocumentTypeHelper.isIncomingLetter(doc.getType()))
+            if ((doc.isDocStatus(DocumentStatus.FINISHED) || DocumentTypeHelper.isIncomingLetter(doc.getType()))
                     && (AccessRestriction.OPEN.equals(doc.getAccessRestriction()) || AccessRestriction.AK.equals(doc.getAccessRestriction()))
                     && StringUtils.isNotEmpty(doc.getRegNumber()) && doc.getRegDateTime() != null && documentTypes.contains(doc.getType())) {
 

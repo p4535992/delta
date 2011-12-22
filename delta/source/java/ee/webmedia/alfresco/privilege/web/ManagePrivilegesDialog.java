@@ -390,6 +390,8 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
     }
 
     private boolean canBeRemovedFromGroup(UserPrivileges curUserPrivileges, String groupCode) {
+//@formatter:off
+/*
         if (curUserPrivileges.isReadOnly()) {
             if (dynamicPrivilegesGroups.contains(groupCode)) {
                 return false;
@@ -402,6 +404,8 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
                 return false;
             }
         }
+*/
+//@formatter:on
         return true;
     }
 
@@ -826,11 +830,6 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
         /** used by JSF value binding */
         public Map<String, Boolean> getDynamicPrivileges() {
             return wrapped.getDynamicPrivileges();
-        }
-
-        /** used by JSF value binding */
-        public boolean isReadOnly() {
-            return wrapped.isReadOnly();
         }
 
         public void setReadOnly(boolean readOnly) {

@@ -402,6 +402,21 @@ public class Node implements Serializable, NamespacePrefixResolverProvider
       return valid.booleanValue();
    }
 
+   public boolean hasPermissions(String... permissionsToCheck) {
+       if (permissionsToCheck != null) {
+           for (String permission : permissionsToCheck) {
+               if (!hasPermission(permission)) {
+                   return false;
+               }
+           }
+       }
+       return true;
+   }
+
+   /** Clear permissions cache - for example to validate that permission is not lost meanwhile */
+   public void clearPermissionsCache() {
+       permissions = null;
+   }
    /**
     * @return The GUID for the node
     */

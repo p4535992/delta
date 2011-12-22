@@ -22,6 +22,13 @@ import ee.webmedia.alfresco.privilege.web.ManagePrivilegesDialog;
 public interface PrivilegeService {
     String BEAN_NAME = "PrivilegeService";
 
+    /**
+     * @param nodeRef
+     * @param permissions
+     * @return true if current user has all permissions for given nodeRef
+     */
+    public boolean hasPermissions(NodeRef nodeRef, String... permissions);
+
     @Deprecated
     PrivilegeMappings getPrivilegeMappings(NodeRef manageableRef);
 

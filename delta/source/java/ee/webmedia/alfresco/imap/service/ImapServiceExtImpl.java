@@ -80,6 +80,7 @@ import ee.webmedia.alfresco.imap.SendFailureAppendBehaviour;
 import ee.webmedia.alfresco.imap.SentFolderAppendBehaviour;
 import ee.webmedia.alfresco.imap.model.ImapModel;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.FilenameUtil;
 
 /**
  * SimDhs specific IMAP logic.
@@ -460,7 +461,8 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
 
         ContentReader reader = tempWriter.getReader();
 
-        FileInfo createdFile = fileService.transformToPdf(document, reader, filename, filename);
+        String safeFileName = FilenameUtil.makeSafeFilename(filename);
+        FileInfo createdFile = fileService.transformToPdf(document, reader, safeFileName, filename);
         if (createdFile == null) {
             createAttachment(document, p, filename);
         }

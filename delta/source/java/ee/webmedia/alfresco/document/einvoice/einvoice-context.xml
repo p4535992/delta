@@ -338,6 +338,7 @@
    </bean>   
    
    <bean id="einvoiceUpdateDocumentSapAccountTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent">
+      <property name="enabled" value="${jobs.enabled}" />
       <property name="parameterName" value="sapContactUpdateTime" />
       <property name="parameterFormat" value="H:mm" />
       <property name="jobDetail">
@@ -353,6 +354,7 @@
    </bean>
    
    <bean id="einvoiceDeleteNotUsedDimensionValuesTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent" >
+      <property name="enabled" value="${jobs.enabled}" />
       <property name="parameterName" value="dimensionDeletionPeriod" />
       <property name="parameterFormat" value="D" />
       <property name="timeParameterName" value="dimensionDeletionTime" />

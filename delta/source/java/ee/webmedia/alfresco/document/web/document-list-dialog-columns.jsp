@@ -63,7 +63,10 @@
          <f:facet name="header">
             <a:sortLink id="col4_1-sort" label="#{msg.document_ownerStructUnit}" value="ownerOrgStructUnit" styleClass="header" />
          </f:facet>
-         <h:outputText id="col4_1-text-1" value="#{r.ownerOrgStructUnit}" title="#{r.ownerOrgStructUnit}" styleClass="tooltip condence50-" />
+        	<a:actionLink id="col4_1-text-1" value="#{r.ownerOrgStructUnit}" action="#{DocumentDialog.action}" tooltip="#{r.ownerOrgStructUnit}"
+          actionListener="#{DocumentDialog.open}" styleClass="tooltip condence50- no-underline" >
+            <f:param name="nodeRef" value="#{r.node.nodeRef}" />
+           </a:actionLink>
       </a:column>      
       
       <%-- All Recipients --%>

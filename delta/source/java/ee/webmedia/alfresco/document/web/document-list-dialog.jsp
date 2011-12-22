@@ -28,7 +28,7 @@ $jQ(".selectAllHeader").change(function() {
 
    <%-- Main List --%>
    <a:richList id="documentList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      width="100%" value="#{DialogManager.bean.documents}" var="r" binding="#{DialogManager.bean.richList}" initialSortColumn="<%=((BaseDocumentListDialog)Application.getDialogManager().getBean()).getInitialSortColumn() %>" >
+      width="100%" value="#{DialogManager.bean.documents}" var="r" binding="#{DialogManager.bean.richList}" refreshOnBind="true" initialSortColumn="<%=((BaseDocumentListDialog)Application.getDialogManager().getBean()).getInitialSortColumn() %>" >
       
       <%-- checkbox --%>
       <a:column id="col0" primary="true" styleClass="#{r.cssStyleClass}" rendered="#{UserService.documentManager && DialogManager.bean.showCheckboxes}" >

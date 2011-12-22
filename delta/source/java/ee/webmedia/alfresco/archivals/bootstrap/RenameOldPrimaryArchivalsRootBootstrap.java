@@ -5,6 +5,7 @@ import org.alfresco.repo.module.AbstractModuleComponent;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
@@ -20,8 +21,13 @@ public class RenameOldPrimaryArchivalsRootBootstrap extends AbstractModuleCompon
 
     @Override
     protected void executeInternal() throws Throwable {
-        LOG.info("Renaming /fn:archivals to /fn:documentList");
-        NodeRef nodeRef = generalService.getNodeRef("/fn:archivals", generalService.getArchivalsStoreRef());
+        StoreRef archivalsStoreRef = generalService.getArchivalsStoreRef();
+        if (!serviceRegistry.getNodeService().exists(archivalsStoreRef)) {
+            LOG.info("Skipping renaming /fn:archivals to /fn:documentList, store does not exist: " + archivalsStoreRef);
+            return;
+        }
+        LOG.info("Renaming /fn:archivals to /fn:documentList in " + archivalsStoreRef);
+        NodeRef nodeRef = generalService.getNodeRef("/fn:archivals", archivalsStoreRef);
         NodeService nodeService = serviceRegistry.getNodeService();
         NodeRef parentRef = nodeService.getPrimaryParent(nodeRef).getParentRef();
         ChildAssociationRef oldAssocRef = nodeService.getPrimaryParent(nodeRef);

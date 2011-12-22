@@ -3,7 +3,6 @@ package ee.webmedia.alfresco.document.web;
 import java.util.Collections;
 import java.util.Map;
 
-import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
@@ -44,7 +43,7 @@ public class FavoritesDocumentListDialog extends BaseDocumentListDialog {
     @Override
     public String getListTitle() {
         if (StringUtils.isBlank(dirName)) {
-            return MessageUtil.getMessage("document_my_favourites");
+            return MessageUtil.getMessage("document_my_favorites");
         }
         String title = dirName;
         dirName = null;

@@ -76,6 +76,18 @@
       </property>
    </bean>
    
+   <bean id="removeImapSubfolderContainerAspect" class="ee.webmedia.alfresco.imap.bootstrap.RemoveImapSubfolderContainerAspect" parent="module.baseComponent" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="imapSpacesBootstrap" />
+            <ref bean="scannedSpacesBootstrap" />
+            <ref bean="sendFailureNoticesSpacesBootstrap" />
+         </list>
+      </property>
+   </bean>
+   
    <bean id="createDynamicImapSubfoldersBootstrap" class="ee.webmedia.alfresco.imap.bootstrap.CreateDynamicImapSubfoldersBootstrap" parent="module.baseComponent" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="false" />

@@ -172,6 +172,7 @@
    </bean>
 
    <bean id="dvkReceiveDocumentsTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent">
+      <property name="enabled" value="${jobs.enabled}" />
       <property name="parameterName" value="dvkReceiveDocumentsInterval" />
       <property name="parameterFormat" value="m" />
       <property name="jobDetail" ref="dvkReceiveDocumentsJobDetails" />
@@ -187,6 +188,7 @@
    </bean>
 
    <bean id="dvkReceiveDocSendStatusesTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent">
+      <property name="enabled" value="${jobs.enabled}" />
       <property name="parameterName" value="dvkReceiveDocSendStatusesInterval" />
       <property name="parameterFormat" value="m" />
       <property name="jobDetail" ref="dvkReceiveDocSendStatusesJobDetails" />
@@ -209,6 +211,7 @@
    </bean>
 
    <bean id="dvkReceiveOrganizationsTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent">
+      <property name="enabled" value="${jobs.enabled}" />
       <property name="parameterName" value="dvkReceiveOrganizations" />
       <property name="parameterFormat" value="H:mm" />
       <property name="jobDetail">

@@ -9,6 +9,7 @@ import org.alfresco.service.cmr.repository.ContentService;
 import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.search.SearchService;
+import org.alfresco.service.cmr.security.AuthenticationService;
 import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.cmr.security.PersonService;
@@ -360,6 +361,10 @@ public class BeanHelper {
 
     public static AuthorityService getAuthorityService() {
         return getAlfrescoService(AuthorityService.class, ServiceRegistry.AUTHORITY_SERVICE);
+    }
+
+    public static AuthenticationService getAuthenticationService() {
+        return getAlfrescoService(AuthenticationService.class, ServiceRegistry.AUTHENTICATION_SERVICE);
     }
 
     public static PersonService getPersonService() {

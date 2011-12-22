@@ -16,7 +16,7 @@
 
    <%-- Main List --%>
    <a:richList id="documentList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      width="100%" binding="#{DocumentSearchResultsDialog.richList}" value="#{DocumentSearchResultsDialog.documents}" var="r" >
+      width="100%" binding="#{DocumentSearchResultsDialog.richList}" refreshOnBind="true" value="#{DocumentSearchResultsDialog.documents}" var="r" >
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
       <a:dataPager id="pager1" styleClass="pager" />
    </a:richList>

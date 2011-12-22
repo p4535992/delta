@@ -1819,17 +1819,17 @@ public class MetadataBlockBean implements ClearStateListener {
             Node document = getDocumentDialogHelperBean().getNode();
             DocumentParentNodesVO parentNodes = getDocumentService().getAncestorNodesByDocument(document.getNodeRef());
             getDocumentService().setTransientProperties(document, parentNodes);
-            BaseDialogBean.validatePermission(document, DocumentCommonModel.Privileges.EDIT_DOCUMENT);
             document = getDocumentService().registerDocument(document);
             // Update generated files
             BeanHelper.getDocumentTemplateService().updateGeneratedFiles(document.getNodeRef(), true);
             ((MenuBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuBean.BEAN_NAME)).processTaskItems();
             MessageUtil.addInfoMessage("document_registerDoc_success");
+
         } catch (UnableToPerformException e) {
             if (log.isDebugEnabled()) {
                 log.warn("failed to register: " + e.getMessage());
             }
-            MessageUtil.addStatusMessage(FacesContext.getCurrentInstance(), e);
+            MessageUtil.addStatusMessage(e);
         } catch (NodeLockedException e) {
             BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_registerDoc_error_docLocked");
         }

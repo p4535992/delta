@@ -2,7 +2,8 @@ package ee.webmedia.alfresco.workflow.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getPermissionService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getPrivilegeService;
+import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.isAdminOrDocmanagerWithPermission;
 import static ee.webmedia.alfresco.utils.ComponentUtil.getAttributes;
 import static ee.webmedia.alfresco.utils.ComponentUtil.getChildren;
 import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
@@ -11,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -31,7 +33,6 @@ import org.alfresco.service.cmr.model.FileExistsException;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
@@ -49,6 +50,7 @@ import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIPropertySheet;
 import ee.webmedia.alfresco.common.propertysheet.customchildrencontainer.CustomChildrenCreator;
 import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter;
@@ -68,6 +70,7 @@ import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.file.web.FileBlockBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
@@ -131,7 +134,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
 
     private transient HtmlPanelGroup dataTableGroup;
     private transient UIRichList reviewNotesRichList;
-    private transient List<ActionDefinition> actionDefinitions;
 
     private NodeRef docRef;
     private Node document;
@@ -157,12 +159,12 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         this.document = document;
         docRef = document.getNodeRef();
         delegationBean.setWorkflowBlockBean(this);
-        actionDefinitions = null; // force to rebuild actionDefinitions
         restore();
     }
 
     public void reset() {
         document = null;
+        docRef = null;
         compoundWorkflows = null;
         myTasks = null;
         finishedReviewTasks = null;
@@ -172,7 +174,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         dataTableGroup = null;
         removedFiles = null;
         delegationBean.reset();
-        actionDefinitions = Collections.emptyList();
         reviewNotesRichList = null;
     }
 
@@ -198,11 +199,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         if (document == null) {
             return Collections.emptyList();
         }
-        if (actionDefinitions != null) {
-            return actionDefinitions;
-        }
 
-        WorkflowService workflowService = getWorkflowService();
         boolean showCWorkflowDefsWith1Workflow = false;
         for (CompoundWorkflow cWorkflow : compoundWorkflows) {
             if (cWorkflow.isStatus(Status.IN_PROGRESS, Status.STOPPED) && cWorkflow.getWorkflows().size() > 1) {
@@ -213,29 +210,70 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         String documentTypeId = (String) document.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID);
         String documentStatus = (String) document.getProperties().get(DocumentCommonModel.Props.DOC_STATUS);
 
-        List<CompoundWorkflowDefinition> workflowDefs = workflowService.getCompoundWorkflowDefinitions(documentTypeId, documentStatus);
-        actionDefinitions = new ArrayList<ActionDefinition>(workflowDefs.size());
+        WorkflowService wfService = getWorkflowService();
+        List<CompoundWorkflowDefinition> workflowDefs = wfService.getCompoundWorkflowDefinitions();
+        List<ActionDefinition> actionDefinitions = new ArrayList<ActionDefinition>(workflowDefs.size());
         String userId = AuthenticationUtil.getRunAsUser();
-        for (CompoundWorkflowDefinition compoundWorkflowDefinition : workflowDefs) {
+        // remove CompoundWorkflowDefinitions that shouldn't be visible the user viewing this document regardless permissions
+        for (Iterator<CompoundWorkflowDefinition> it = workflowDefs.iterator(); it.hasNext();) {
+            CompoundWorkflowDefinition compoundWorkflowDefinition = it.next();
             String cWFUserId = compoundWorkflowDefinition.getUserId();
-            if (cWFUserId != null && StringUtils.equals(cWFUserId, userId) // defined by other user for private use
-                    || (showCWorkflowDefsWith1Workflow && compoundWorkflowDefinition.getWorkflows().size() > 1)) {
-                continue;
-            }
-            if (workflowService.externalReviewWorkflowEnabled() || !containsExternalReviewWorkflows(compoundWorkflowDefinition)) {
-                ActionDefinition actionDefinition = new ActionDefinition("compoundWorkflowDefinitionAction");
-                actionDefinition.Image = DROPDOWN_MENU_ITEM_ICON;
-                actionDefinition.Label = compoundWorkflowDefinition.getName();
-                actionDefinition.Action = "#{WorkflowBlockBean.getCompoundWorkflowDialog}";
-                actionDefinition.ActionListener = "#{CompoundWorkflowDialog.setupNewWorkflow}";
-                actionDefinition.addParam("compoundWorkflowDefinitionNodeRef", compoundWorkflowDefinition.getNodeRef().toString());
-                actionDefinition.addParam("documentNodeRef", document.getNodeRefAsString());
-
-                actionDefinitions.add(actionDefinition);
+            if (cWFUserId != null && !StringUtils.equals(cWFUserId, userId)) {
+                it.remove(); // defined by other user for private use
+            } else if (!compoundWorkflowDefinition.getDocumentTypes().contains(documentTypeId)) {
+                it.remove(); // not for same DocType
+            } else if (showCWorkflowDefsWith1Workflow && compoundWorkflowDefinition.getWorkflows().size() > 1) {
+                it.remove(); // already have active cWorkflow with multiple workflows - allowed only one at the time
+            } else if (!wfService.externalReviewWorkflowEnabled() && containsExternalReviewWorkflows(compoundWorkflowDefinition)) {
+                it.remove();
             }
         }
 
+        boolean isWorking = DocumentStatus.WORKING.getValueName().equals(documentStatus);
+        boolean isFinished = DocumentStatus.FINISHED.getValueName().equals(documentStatus);
+        boolean hasPrivEditDoc = getPrivilegeService().hasPermissions(docRef, Privileges.EDIT_DOCUMENT);
+        boolean hasViewPrivsWithoutEdit = !hasPrivEditDoc && getPrivilegeService().hasPermissions(docRef, Privileges.VIEW_DOCUMENT_META_DATA, Privileges.VIEW_DOCUMENT_FILES);
+        Boolean adminOrDocmanagerWithPermission = null;
+        for (CompoundWorkflowDefinition cWorkflowDef : workflowDefs) {
+            if (isWorking && hasPrivEditDoc) {
+                actionDefinitions.add(createActionDef(cWorkflowDef));
+            } else if (isFinished || hasViewPrivsWithoutEdit) {
+                if (!hasOtherWFs(cWorkflowDef, WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW
+                        , WorkflowSpecificModel.Types.INFORMATION_WORKFLOW, WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW)) {
+                    actionDefinitions.add(createActionDef(cWorkflowDef));
+                }
+            } else if (isFinished) {
+                if (adminOrDocmanagerWithPermission == null) {
+                    adminOrDocmanagerWithPermission = isAdminOrDocmanagerWithPermission(new Node(docRef), Privileges.VIEW_DOCUMENT_META_DATA, Privileges.VIEW_DOCUMENT_FILES);
+                }
+                if (adminOrDocmanagerWithPermission
+                        && !hasOtherWFs(cWorkflowDef, WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW, WorkflowSpecificModel.Types.INFORMATION_WORKFLOW,
+                                WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW, WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW)) {
+                    actionDefinitions.add(createActionDef(cWorkflowDef));
+                }
+            }
+        }
         return actionDefinitions;
+    }
+
+    private ActionDefinition createActionDef(CompoundWorkflowDefinition compoundWorkflowDefinition) {
+        ActionDefinition actionDefinition = new ActionDefinition("compoundWorkflowDefinitionAction");
+        actionDefinition.Image = DROPDOWN_MENU_ITEM_ICON;
+        actionDefinition.Label = compoundWorkflowDefinition.getName();
+        actionDefinition.Action = "#{WorkflowBlockBean.getCompoundWorkflowDialog}";
+        actionDefinition.ActionListener = "#{CompoundWorkflowDialog.setupNewWorkflow}";
+        actionDefinition.addParam("compoundWorkflowDefinitionNodeRef", compoundWorkflowDefinition.getNodeRef().toString());
+        actionDefinition.addParam("documentNodeRef", document.getNodeRefAsString());
+        return actionDefinition;
+    }
+
+    private boolean hasOtherWFs(CompoundWorkflowDefinition cWorkflowDef, QName... expectedWFTypes) {
+        for (Workflow workflow : cWorkflowDef.getWorkflows()) {
+            if (!workflow.isType(expectedWFTypes)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean containsExternalReviewWorkflows(CompoundWorkflowDefinition compoundWorkflowDefinition) {
@@ -263,7 +301,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         // or user's id is document 'ownerId'
         // or user's id is 'taskOwnerId' and 'taskStatus' = IN_PROGRESS of some document's task
 
-        if (!getMyTasks().isEmpty() || getPermissionService().hasPermission(docRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT) == AccessStatus.ALLOWED) {
+        if (getPrivilegeService().hasPermissions(docRef, Privileges.VIEW_DOCUMENT_META_DATA, Privileges.VIEW_DOCUMENT_FILES)) {
             return WORKFLOW_METHOD_BINDING_NAME;
         }
         return null;

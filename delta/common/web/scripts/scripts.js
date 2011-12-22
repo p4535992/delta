@@ -1973,9 +1973,6 @@ function isActiveXOK(plugin) {
 function sendToSapManually(){
    return showModal('entrySapNumber_popup');
 }
-function addToFavorites() {
-   return showModal("addToFavorites");
-}
 
 function confirmWorkflow(){
    var confirmationMessagesSelect = $jQ("[class='workflow-confirmation-messages']").get(0);

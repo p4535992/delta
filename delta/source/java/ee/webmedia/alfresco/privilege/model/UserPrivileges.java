@@ -112,7 +112,9 @@ public class UserPrivileges implements Serializable {
 
     public void addPrivilege(String privToAdd, boolean inherited) {
         privileges.put(privToAdd, true);
-        inheritanceByPrivilege.put(privToAdd, inherited);
+        if (inherited) {
+            inheritanceByPrivilege.put(privToAdd, inherited);
+        }
     }
 
     public void addPrivileges(Collection<String> privsToAdd) {
@@ -251,6 +253,11 @@ public class UserPrivileges implements Serializable {
 
     public boolean isReadOnly() {
         return readOnly;
+    }
+
+    /** used by JSF to determine if checkBox should be readRnly */
+    public boolean isRemovable() {
+        return dynamicPrivileges.isEmpty() && inheritanceByPrivilege.isEmpty();
     }
 
     public void setReadOnly(boolean readOnly) {

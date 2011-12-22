@@ -22,6 +22,6 @@ public class EndDocumentEvaluator extends BaseActionEvaluator {
             return false;
         }
         boolean isWorking = DocumentStatus.WORKING.getValueName().equals(node.getProperties().get(DocumentCommonModel.Props.DOC_STATUS.toString()));
-        return isWorking && new ViewStateActionEvaluator().evaluate(node) && ReopenDocumentEvaluator.hasUserRights(node);
+        return isWorking && ReopenDocumentEvaluator.hasUserRights(node);
     }
 }

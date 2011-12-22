@@ -24,17 +24,26 @@ public class GetMethod extends org.alfresco.repo.webdav.GetMethod {
     protected void checkPreConditions(FileInfo nodeInfo) throws WebDAVServerException {
         NodeRef fileRef = nodeInfo.getNodeRef();
         NodeRef docRef = BeanHelper.getGeneralService().getAncestorNodeRefWithType(fileRef, DocumentCommonModel.Types.DOCUMENT, true);
-        if (docRef == null && !isAdminOrDocumentManager()) {
-            throw new AccessDeniedException("Not allowing reading - file is not under document and user is not documentManager. File=" + fileRef);
-        }
-        String permission = DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES;
-        if (AccessStatus.ALLOWED != BeanHelper.getPermissionService().hasPermission(docRef, permission)) {
-            throw new AccessDeniedException("permission " + permission + " denied for file of document " + docRef);
+        if (docRef == null && !isAdmin()) {
+            if (!hasViewDocFilesPermission(fileRef)) {
+                throw new AccessDeniedException("Not allowing reading - file is not under document and user has no permission to view files. File=" + fileRef);
+            }
+        } else if (!hasViewDocFilesPermission(docRef)) {
+            throw new AccessDeniedException("permission " + DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES + " denied for file of document " + docRef);
         }
         super.checkPreConditions(nodeInfo);
     }
 
-    protected boolean isAdminOrDocumentManager() {
+    /**
+     * @param docOrFileRef - docRef when file is under document (then dynamic permissions can be evaluated)
+     *            or fileRef when file is not under document (for example under email attachments)
+     * @return
+     */
+    private boolean hasViewDocFilesPermission(NodeRef docOrFileRef) {
+        return AccessStatus.ALLOWED == BeanHelper.getPermissionService().hasPermission(docOrFileRef, DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES);
+    }
+
+    private boolean isAdmin() {
         final Set<String> authorities = BeanHelper.getAuthorityService().getAuthorities();
         return authorities.contains(UserService.AUTH_ADMINISTRATORS_GROUP) || authorities.contains(PermissionService.ADMINISTRATOR_AUTHORITY);
     }

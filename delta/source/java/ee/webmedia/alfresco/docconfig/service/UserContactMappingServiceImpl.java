@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.docconfig.service;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getOrganizationStructureService;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,7 +20,6 @@ import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.utils.TextUtil;
@@ -203,7 +204,8 @@ public class UserContactMappingServiceImpl implements UserContactMappingService 
                     return (Serializable) orgPaths;
                 }
                 String orgId = getProp(props, ContentModel.PROP_ORGID);
-                return (Serializable) Collections.singleton(BeanHelper.getOrganizationStructureService().getOrganizationStructureName(orgId));
+                String orgName = getOrganizationStructureService().getOrganizationStructureName(orgId);
+                return new ArrayList<String>(Collections.singleton(orgName));
             }
             return null;
         case ADDRESS:

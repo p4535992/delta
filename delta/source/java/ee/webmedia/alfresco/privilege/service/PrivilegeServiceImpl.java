@@ -30,12 +30,14 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.privilege.model.PrivMappings;
 import ee.webmedia.alfresco.privilege.model.PrivilegeMappings;
 import ee.webmedia.alfresco.privilege.model.PrivilegeModel;
 import ee.webmedia.alfresco.privilege.model.UserPrivileges;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 
 /**
@@ -56,6 +58,18 @@ public class PrivilegeServiceImpl implements PrivilegeService {
     @Override
     public void registerListener(QName listenerCode, PrivilegesChangedListener listener) {
         privilegesChangedListeners.put(listenerCode, listener);
+    }
+
+    @Override
+    public boolean hasPermissions(NodeRef nodeRef, String... permissions) {
+        if (permissions != null) {
+            for (String permission : permissions) {
+                if (permissionService.hasPermission(nodeRef, permission) == AccessStatus.DENIED) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     @Deprecated
@@ -138,6 +152,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
         Map<String/* userName */, UserPrivileges> privilegesByUsername = new HashMap<String, UserPrivileges>();
         Map<String/* groupName */, UserPrivileges> privilegesByGroup = new HashMap<String, UserPrivileges>();
         NodeRef parentRef = nodeService.getPrimaryParent(manageableRef).getParentRef();
+        Set<String> defaultAdmins = BeanHelper.getAuthenticationService().getDefaultAdministratorUserNames();
         for (AccessPermission accessPermission : permissionService.getAllSetPermissions(privMappings.getManageableRef())) {
             String authority = accessPermission.getAuthority();
             String permission = accessPermission.getPermission();
@@ -146,11 +161,19 @@ public class PrivilegeServiceImpl implements PrivilegeService {
             }
             boolean inherited = accessPermission.isInherited();
             if (!inherited) {
-                // permission is assigned directly, but we need to know if it is also inherited from parent node.
+                // permission is assigned directly, but we need to know if it is also given dynamically
                 boolean hasPermissionForParentRef = hasPermission(parentRef, permission, authority);
-                // hasPermissionForParentRef doesn't mean that this permission is set directly to parentRef
-                // - it might be granted dynamically as well as inherited from parent of parent
-                // - for example to users listed by external.authentication.defaultAdministratorUserNames
+//@formatter:off
+/*
+                if (inherited != hasPermissionForParentRef && !defaultAdmins.contains(authority)) {
+                    // hasPermissionForParentRef doesn't mean that this permission is set directly to parentRef
+                    // - it might be granted dynamically as well as inherited from parent of parent
+                    // - for example to users listed by external.authentication.defaultAdministratorUserNames
+                    // FIXME PRIV2 Ats - teadet võidakse kuvada, kui sama permission on antud ka parent-nodele (kasutajale või mõnele kasutaja grupile)
+                    MessageUtil.addWarningMessage(authority + " has permission " + permission + " - it is not inherited, but it is still somehow granted");
+                }
+*/
+//@formatter:on
                 inherited = hasPermissionForParentRef;
             }
             if (StringUtils.startsWith(authority, AuthorityType.GROUP.getPrefixString())) {
@@ -175,11 +198,23 @@ public class PrivilegeServiceImpl implements PrivilegeService {
                 }
                 boolean allowed = AccessStatus.ALLOWED.equals(accessPermission.getAccessStatus());
                 Assert.isTrue(allowed, "Expected to see only allowed permissions. accessPermission=" + accessPermission + "\nmanageableRef=" + privMappings.getManageableRef());
-                authPrivileges.addPrivilege(permission, inherited);
+                if (defaultAdmins.contains(authority)) {
+                    authPrivileges.addDynamicPrivilege(permission, MessageUtil.getMessage("manage_permissions_extraInfo_defaultAdmin"));
+                } else {
+                    authPrivileges.addPrivilege(permission, inherited);
+                }
             }
         }
         privMappings.setPrivilegesByUsername(privilegesByUsername);
         privMappings.setPrivilegesByGroup(privilegesByGroup);
+
+        // add all manageable permissions to all default administrators
+        for (String defaultAdmin : defaultAdmins) {
+            UserPrivileges authPrivileges = privMappings.getOrCreateUserPrivilegesVO(defaultAdmin);
+            for (String permission : manageablePermissions) {
+                authPrivileges.addDynamicPrivilege(permission, MessageUtil.getMessage("manage_permissions_extraInfo_defaultAdmin"));
+            }
+        }
         return privMappings;
     }
 
@@ -228,13 +263,14 @@ public class PrivilegeServiceImpl implements PrivilegeService {
             } else {
                 if (vo.hasManageablePrivileges()) {
                     Set<String> permissions = vo.getPrivilegesToAdd();
+                    Set<String> permissionsWithDependencies = new HashSet<String>(permissions);
                     for (String permission : permissions) {
                         Set<String> privilegeDependencies = DocumentCommonModel.Privileges.PRIVILEGE_DEPENDENCIES.get(permission);
                         if (privilegeDependencies != null) {
-                            permissions.addAll(privilegeDependencies);
+                            permissionsWithDependencies.addAll(privilegeDependencies);
                         }
                     }
-                    for (String permission : permissions) {
+                    for (String permission : permissionsWithDependencies) {
                         permissionService.setPermission(manageableRef, userName, permission, true);
                     }
                 }

@@ -622,13 +622,13 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
             }
 
             boolean editable = typeHandler.isEditable();
+            String groupPrivsBindingPrefix = BEAN_NAME + ".privilegesByGroup['" + groupCode + "']";
             for (String permission : typeHandler.getManageablePermissions()) {
                 if (permission.equals(typeHandler.getImplicidPrivilege())) {
                     continue; // don't add implicit privilege column
                 }
                 tableCell = new UITableCell();
                 // disable checkboxes when group only has dynamic privilege
-                String groupPrivsBindingPrefix = BEAN_NAME + ".privilegesByGroup['" + groupCode + "']";
                 HtmlSelectBooleanCheckbox cb = createCB(permission, context, editable, groupPrivsBindingPrefix);
                 FacesHelper.setupComponentId(context, cb, groupCode + "-" + permission);
 
@@ -644,13 +644,14 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
             tableCell = new UITableCell();
             if (editable && !dynamicPrivilegesGroups.contains(groupCode)) {
                 if (!grouplessGroup) {
-                    UIActionLink inlineGroupLink = createRemoveLink(application, RemoveLink.INLINE_GROUP_USERS);
+                    UIActionLink inlineGroupLink = createRemoveLink(context, RemoveLink.INLINE_GROUP_USERS, groupPrivsBindingPrefix);
                     addChildren(inlineGroupLink, createUIParam(PARAM_CURRENT_GROUP, groupCode, application));
                     addChildren(tableCell, inlineGroupLink);
+
+                    UIActionLink removeGroupLink = createRemoveLink(context, RemoveLink.REMOVE_GROUP_WITH_USERS, groupPrivsBindingPrefix);
+                    addChildren(removeGroupLink, createUIParam(PARAM_CURRENT_GROUP, groupCode, application));
+                    addChildren(tableCell, removeGroupLink);
                 }
-                UIActionLink removeGroupLink = createRemoveLink(application, RemoveLink.REMOVE_GROUP_WITH_USERS);
-                addChildren(removeGroupLink, createUIParam(PARAM_CURRENT_GROUP, groupCode, application));
-                addChildren(tableCell, removeGroupLink);
             }
             addChildren(tr, tableCell);
             ComponentUtil.addFacet(permissionsRichList, groupCode, tr);
@@ -696,18 +697,15 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
     private UIColumn createActionsColumn(FacesContext context) {
         Application application = context.getApplication();
         UIColumn column = (UIColumn) application.createComponent(ColumnTag.COMPONENT_TYPE);
-
-        if (typeHandler.isEditable()) {
-            UIActionLink removePersonLink = createRemoveLink(application, RemoveLink.REMOVE_PERSON);
-            UIComponentTagUtils.setValueBinding(context, removePersonLink, "rendered", "#{!r.readOnly}");
+        if (typeHandler.isEditable()) { // don't add remove link when dialog is not editable
+            UIActionLink removePersonLink = createRemoveLink(context, RemoveLink.REMOVE_PERSON, "r");
             addChildren(removePersonLink, createUIParam("userName", "#{r.userName}", application));
-
-            UIPanel empty = new UIPanel();// workaround for IE7 - otherwise if removePersonLink is not rendered, then underline is not rendered either
-            ComponentUtil.putAttribute(empty, "styleClass", "linkReplacement"); // workaround for IE make lines without remove link the same height as rest of them
-            UIComponentTagUtils.setValueBinding(context, empty, "rendered", "#{r.readOnly}");
-
-            addChildren(column, removePersonLink, empty);
+            addChildren(column, removePersonLink);
         }
+        UIPanel empty = new UIPanel();// workaround for IE7 - otherwise if removePersonLink is not rendered, then underline is not rendered either
+        ComponentUtil.putAttribute(empty, "styleClass", "linkReplacement"); // workaround for IE make lines without remove link the same height as rest of them
+        UIComponentTagUtils.setValueBinding(context, empty, "rendered", "#{!r.removable}");
+        addChildren(column, empty);
         return column;
     }
 
@@ -732,13 +730,15 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
         }
     }
 
-    private UIActionLink createRemoveLink(Application application, RemoveLink linkType) {
+    private UIActionLink createRemoveLink(FacesContext context, RemoveLink linkType, String rowBindingVar) {
+        Application application = context.getApplication();
         UIActionLink removeLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
         removeLink.setValue("");
         removeLink.setShowLink(false);
         removeLink.setImage("/images/icons/" + linkType.iconName);
         removeLink.setTooltip(MessageUtil.getMessage(linkType.tooltip));
         removeLink.setActionListener(application.createMethodBinding(linkType.getMethodBinding(), new Class[] { javax.faces.event.ActionEvent.class }));
+        UIComponentTagUtils.setValueBinding(context, removeLink, "rendered", "#{" + rowBindingVar + ".removable}");
         ComponentUtil.putAttribute(removeLink, "styleClass", linkType.styleClass);
         return removeLink;
     }
@@ -748,7 +748,6 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
         HtmlOutputText headerText = new HtmlOutputText();
         headerText.setValue(MessageUtil.getMessage("permission_" + privilege));
         ComponentUtil.addFacet(column, "header", headerText);
-
         HtmlSelectBooleanCheckbox cb = createCB(privilege, context, columnMaybeEditable, "r");
         UIComponentTagUtils.setValueProperty(context, cb, "#{" + BEAN_NAME + ".privilegesByUsername[r.userName].privileges['" + privilege + "']}");
         UIComponentTagUtils.setValueBinding(context, cb, "styleClass", "userId_#{r.userName} permission_" + privilege + " tooltip");
@@ -759,6 +758,9 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
 
     private HtmlSelectBooleanCheckbox createCB(String permission, FacesContext context, boolean maybeEditable, String rowBindingVar) {
         HtmlSelectBooleanCheckbox cb = new HtmlSelectBooleanCheckbox();
+        if (maybeEditable) {
+            maybeEditable = !typeHandler.isPermissionColumnDisabled(permission);
+        }
         if (maybeEditable) {
             UIComponentTagUtils.setValueBinding(context, cb, "disabled", "#{" + rowBindingVar + ".disabledByPrivilege['" + permission + "']==true}");
         } else {

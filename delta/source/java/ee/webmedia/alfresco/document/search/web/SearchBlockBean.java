@@ -91,7 +91,7 @@ public class SearchBlockBean implements DocumentDynamicBlock {
     /** @param event from JSP */
     public void setup(ActionEvent event) {
         try {
-            documents = getDocumentSearchService().searchDocumentsAndOrCases(searchValue, regDateTimeBegin, regDateTimeEnd, selectedDocumentTypes);
+            documents = getDocumentSearchService().searchDocumentsAndOrCases(searchValue, regDateTimeBegin, regDateTimeEnd, selectedDocumentTypes, !isBaseDocumentSearch());
         } catch (UnableToPerformException e) {
             MessageUtil.addStatusMessage(e);
             documents = Collections.<Document> emptyList();
@@ -135,10 +135,14 @@ public class SearchBlockBean implements DocumentDynamicBlock {
     }
 
     public String getSearchBlockTitle() {
-        if ((document.isImapOrDvk() && !document.isNotEditable()) || document.isIncomingInvoice()) {
+        if (isBaseDocumentSearch()) {
             return MessageUtil.getMessage("document_search_base_title");
         }
         return MessageUtil.getMessage("document_search_docOrCase_title");
+    }
+
+    private boolean isBaseDocumentSearch() {
+        return (document.isImapOrDvk() && !document.isNotEditable()) || document.isIncomingInvoice();
     }
 
     // START: snapshot logic

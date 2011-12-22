@@ -41,7 +41,6 @@ import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
-import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.propertysheet.upload.UploadFileInput.FileWithContentType;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -146,8 +145,10 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
      * asutuse enda regitrikoodiga kontakt.
      * NB! Live keskkonnas PEAB INTERNAL_TESTING väärtus olema false!!!
      */
-    private boolean INTERNAL_TESTING = false;
-    private boolean orderAssignmentCategoryEnabled = false;
+    private boolean INTERNAL_TESTING;
+    private boolean orderAssignmentCategoryEnabled;
+    private boolean orderAssignmentWorkflowEnabled;
+    private boolean confirmationWorkflowEnabled;
 
     @Override
     public void registerWorkflowType(WorkflowType workflowType) {
@@ -191,32 +192,6 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         for (ChildAssociationRef childAssoc : childAssocs) {
             NodeRef nodeRef = childAssoc.getChildRef();
             compoundWorkflowDefinitions.add(getCompoundWorkflowDefinition(nodeRef, root));
-        }
-        return compoundWorkflowDefinitions;
-    }
-
-    @Override
-    public List<CompoundWorkflowDefinition> getCompoundWorkflowDefinitions(String documentTypeId, String documentStatus) {
-        boolean isFinished = DocumentStatus.FINISHED.getValueName().equals(documentStatus);
-        List<CompoundWorkflowDefinition> compoundWorkflowDefinitions = getCompoundWorkflowDefinitions();
-        outer: //
-        for (Iterator<CompoundWorkflowDefinition> i = compoundWorkflowDefinitions.iterator(); i.hasNext();) {
-            CompoundWorkflowDefinition compoundWorkflowDefinition = i.next();
-            if (!compoundWorkflowDefinition.getDocumentTypes().contains(documentTypeId)) {
-                i.remove();
-                continue outer;
-            }
-            if (isFinished) {
-                for (Workflow workflow : compoundWorkflowDefinition.getWorkflows()) {
-                    QName workflowType = workflow.getNode().getType();
-                    if (WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW.equals(workflowType) ||
-                                WorkflowSpecificModel.Types.REVIEW_WORKFLOW.equals(workflowType) ||
-                                WorkflowSpecificModel.Types.OPINION_WORKFLOW.equals(workflowType)) {
-                        i.remove();
-                        continue outer;
-                    }
-                }
-            }
         }
         return compoundWorkflowDefinitions;
     }
@@ -738,6 +713,24 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     public void setOrderAssignmentCategoryEnabled(boolean orderAssignmentCategoryEnabled) {
         this.orderAssignmentCategoryEnabled = orderAssignmentCategoryEnabled;
+    }
+
+    @Override
+    public boolean isOrderAssignmentWorkflowEnabled() {
+        return orderAssignmentWorkflowEnabled;
+    }
+
+    public void setOrderAssignmentWorkflowEnabled(boolean enabled) {
+        orderAssignmentWorkflowEnabled = enabled;
+    }
+
+    public void setConfirmationWorkflowEnabled(boolean enabled) {
+        confirmationWorkflowEnabled = enabled;
+    }
+
+    @Override
+    public boolean isConfirmationWorkflowEnabled() {
+        return confirmationWorkflowEnabled;
     }
 
     @Override
@@ -1964,7 +1957,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             stopIfNeeded(task, queue);
         }
         if (outcomeIndex == REVIEW_TASK_OUTCOME_ACCEPTED || outcomeIndex == REVIEW_TASK_OUTCOME_ACCEPTED_WITH_COMMENT) {
-            List<File> files = fileService.getAllFiles(task.getParent().getParent().getParent());
+            List<File> files = fileService.getAllFilesExcludingDigidocSubitems(task.getParent().getParent().getParent());
             List<String> filesWithVersions = new ArrayList<String>();
             for (File file : files) {
                 NodeRef fileRef = file.getNodeRef();

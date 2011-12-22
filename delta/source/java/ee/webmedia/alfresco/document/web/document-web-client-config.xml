@@ -24,8 +24,7 @@
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.CopyDocumentActionEvaluator</evaluator>
             <label-id>document_copy</label-id>
             <image>/images/icons/versioned_properties.gif</image>
-            <action>#{DocumentDialog.action}</action>
-            <action-listener>#{DocumentDialog.copy}</action-listener>
+            <action-listener>#{DocumentDynamicDialog.copyDocument}</action-listener>
          </action>
 
          <action id="document_createReply">
@@ -267,7 +266,7 @@
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.AddFavoritesDocumentEvaluator</evaluator>
             <label-id>document_favorites_add</label-id>
             <image>/images/icons/versioned_properties.gif</image>
-            <onclick>addToFavorites(); return false;</onclick>
+            <action-listener>#{DocumentDynamicDialog.addDocumentToFavorites}</action-listener>
          </action>
 
           <action id="document_favorites_remove">

@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.docdynamic.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAssociationsService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentService;
@@ -22,8 +23,10 @@ import javax.faces.component.UIPanel;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.permissions.AccessDeniedException;
 import org.alfresco.service.cmr.lock.NodeLockedException;
+import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
@@ -47,14 +50,19 @@ import ee.webmedia.alfresco.docconfig.service.DocumentConfig;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.docdynamic.web.ChangeReasonModalComponent.ChangeReasonEvent;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog.DocDialogSnapshot;
+import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
 import ee.webmedia.alfresco.document.associations.web.AssocsBlockBean;
 import ee.webmedia.alfresco.document.file.web.FileBlockBean;
 import ee.webmedia.alfresco.document.log.web.LogBlockBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
+import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.search.web.SearchBlockBean;
 import ee.webmedia.alfresco.document.sendout.web.SendOutBlockBean;
 import ee.webmedia.alfresco.document.web.FavoritesModalComponent;
+import ee.webmedia.alfresco.document.web.FavoritesModalComponent.AddToFavoritesEvent;
 import ee.webmedia.alfresco.document.web.evaluator.DeleteDocumentEvaluator;
+import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.simdhs.servlet.ExternalAccessServlet;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
@@ -85,10 +93,10 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentDynamicDialog.class);
 
     public static final String BEAN_NAME = "DocumentDynamicDialog";
+    private static final String PARAM_NODEREF = "nodeRef";
     private String renderedModal;
     private boolean showConfirmationPopup;
 
-    // TODO lemmiku tegevus katki? kas foorumi tegevused töötavad?
     // TODO kontrollida et kustutatud dokumendi ekraanile tagasipöördumine töötaks... või tahavad teised blokid laadida uuesti asju? ja siis oleks mõtekam dialoogi mitte kuvada?
 
     // Closing this dialog has the following logic:
@@ -136,19 +144,43 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
 
     public void changeByNewDocument(@SuppressWarnings("unused") ActionEvent event) {
         DocumentDynamic baseDoc = getCurrentSnapshot().document;
-        Map<QName, Serializable> overrides = new HashMap<QName, Serializable>(1);
+
         Date regDateTime = baseDoc.getProp(DocumentCommonModel.Props.REG_DATE_TIME);
-        overrides.put(DocumentCommonModel.Props.DOC_NAME, MessageUtil.getMessage("docdyn_changeByNewDocument_name"//
+        String docName = MessageUtil.getMessage("docdyn_changeByNewDocument_name"//
                 , BeanHelper.getDocumentAdminService().getDocumentTypeName(baseDoc.getDocumentTypeId())
                 , StringUtils.defaultIfEmpty((String) baseDoc.getProp(DocumentCommonModel.Props.REG_NUMBER), "")
-                , regDateTime == null ? "" : regDateTime));
-        NodeRef docRef = getDocumentDynamicService().copyDocumentToDrafts(baseDoc, overrides, DocumentCommonModel.Props.REG_NUMBER, DocumentCommonModel.Props.REG_DATE_TIME,
+                , regDateTime == null ? "" : regDateTime);
+
+        Map<QName, Serializable> overrides = new HashMap<QName, Serializable>(1);
+        overrides.put(DocumentCommonModel.Props.DOC_NAME, docName);
+
+        NodeRef docRef = getDocumentDynamicService().copyDocumentToDrafts(baseDoc, overrides,
+                DocumentCommonModel.Props.REG_NUMBER,
+                DocumentCommonModel.Props.REG_DATE_TIME,
+                DocumentCommonModel.Props.SHORT_REG_NUMBER,
+                DocumentCommonModel.Props.INDIVIDUAL_NUMBER,
                 DocumentCommonModel.Props.DOC_STATUS);
 
         open(docRef, true);
 
-        // Add followUp association when new document is saved
-        RepoUtil.addAssoc(getCurrentSnapshot().document.getNode(), baseDoc.getNodeRef(), DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP, false);
+        addTargetAssoc(baseDoc.getNodeRef(), DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP, false);
+    }
+
+    public void copyDocument(@SuppressWarnings("unused") ActionEvent event) {
+        DocumentDynamic baseDoc = getCurrentSnapshot().document;
+
+        NodeRef docRef = getDocumentDynamicService().copyDocumentToDrafts(baseDoc, null,
+                DocumentSpecificModel.Props.ENTRY_DATE,
+                DocumentSpecificModel.Props.ENTRY_SAP_NUMBER,
+                DocumentCommonModel.Props.REG_NUMBER,
+                DocumentCommonModel.Props.REG_DATE_TIME,
+                DocumentCommonModel.Props.SHORT_REG_NUMBER,
+                DocumentCommonModel.Props.INDIVIDUAL_NUMBER,
+                DocumentCommonModel.Props.DOC_STATUS);
+
+        getDocumentDynamicService().setOwner(docRef, AuthenticationUtil.getRunAsUser(), false);
+
+        open(docRef, true);
     }
 
     public void createAssoc(ActionEvent event) {
@@ -172,6 +204,84 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         SearchBlockBean searchBlockBean = getSearchBlock();
         searchBlockBean.init(getDocument());
         searchBlockBean.setExpanded(true);
+    }
+
+    public void addFollowUpHandler(ActionEvent event) {
+        NodeRef nodeRef = new NodeRef(ActionUtil.getParam(event, PARAM_NODEREF));
+        addTargetAssocAndReopen(nodeRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP);
+    }
+
+    public void addReplyHandler(ActionEvent event) {
+        NodeRef nodeRef = new NodeRef(ActionUtil.getParam(event, PARAM_NODEREF));
+        addTargetAssocAndReopen(nodeRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY);
+    }
+
+    private void addTargetAssocAndReopen(NodeRef targetRef, QName targetType) {
+        addTargetAssoc(targetRef, targetType, true);
+        updateFollowUpOrReplyProperties(targetRef);
+        openOrSwitchModeCommon(getDocument(), true);
+        getSearchBlock().setShow(false);
+        MessageUtil.addInfoMessage("document_assocAdd_success");
+    }
+
+    private void addTargetAssoc(NodeRef targetRef, QName targetType, boolean isSourceAssoc) {
+        AssocsBlockBean assocsBlockBean = (AssocsBlockBean) getBlocks().get(AssocsBlockBean.class);
+        AssociationRef assocRef = RepoUtil.addAssoc(getNode(), targetRef, targetType, true);
+        final DocAssocInfo docAssocInfo = getDocumentAssociationsService().getDocAssocInfo(assocRef, isSourceAssoc);
+        assocsBlockBean.getDocAssocInfos().add(docAssocInfo);
+    }
+
+    /**
+     * Called when a new (not yet saved) document is set to be a reply or a follow up to some base document
+     * and is filled with some properties of the base document.
+     * 
+     * @param nodeRef to the base document
+     */
+    private void updateFollowUpOrReplyProperties(NodeRef nodeRef) {
+        BeanHelper.getDocumentDynamicService().setOwner(getDocument().getNodeRef(), AuthenticationUtil.getRunAsUser(), false);
+        DocumentParentNodesVO parents = getDocumentService().getAncestorNodesByDocument(nodeRef);
+        Map<String, Object> docProps = getNode().getProperties();
+        docProps.put(DocumentCommonModel.Props.FUNCTION.toString(), parents.getFunctionNode().getNodeRef());
+        NodeRef seriesRef = parents.getSeriesNode().getNodeRef();
+        docProps.put(DocumentCommonModel.Props.SERIES.toString(), seriesRef);
+        docProps.put(DocumentCommonModel.Props.VOLUME.toString(), parents.getVolumeNode().getNodeRef());
+        updateAccessRestrictionProperties(docProps, seriesRef);
+    }
+
+    private void updateAccessRestrictionProperties(Map<String, Object> docProps, NodeRef seriesRef) {
+        final String accessRestriction = (String) docProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION.toString());
+        if (StringUtils.isBlank(accessRestriction)) {
+            // read serAccessRestriction-related values from series
+            final Series series = BeanHelper.getSeriesService().getSeriesByNodeRef(seriesRef);
+            final Map<String, Object> seriesProps = series.getNode().getProperties();
+            final String serAccessRestriction = (String) seriesProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION.toString());
+            final String serAccessRestrictionReason = (String) seriesProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON.toString());
+            final Date serAccessRestrictionBeginDate = (Date) seriesProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE.toString());
+            final Date serAccessRestrictionEndDate = (Date) seriesProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE.toString());
+            final String serAccessRestrictionEndDesc = (String) seriesProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC.toString());
+            // write them to the document
+            docProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION.toString(), serAccessRestriction);
+            docProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON.toString(), serAccessRestrictionReason);
+            docProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE.toString(), serAccessRestrictionBeginDate);
+            docProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE.toString(), serAccessRestrictionEndDate);
+            docProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC.toString(), serAccessRestrictionEndDesc);
+        }
+    }
+
+    /**
+     * Move all the files to the selected nodeRef, delete the current doc
+     * and show the nodeRef doc.
+     * 
+     * @param event
+     */
+    public void addFilesHandler(ActionEvent event) {
+        NodeRef nodeRef = new NodeRef(ActionUtil.getParam(event, PARAM_NODEREF));
+        FileBlockBean fileBlockBean = (FileBlockBean) getBlocks().get(FileBlockBean.class);
+        boolean success = fileBlockBean.moveAllFiles(nodeRef);
+        if (success) {
+            getDocumentService().deleteDocument(getNode().getNodeRef());
+            open(nodeRef, false);
+        }
     }
 
     public void hideSearchBlock(@SuppressWarnings("unused") ActionEvent event) {
@@ -454,9 +564,25 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         return getCurrentSnapshot().inEditMode && getDocument().isImapOrDvk() && !getDocument().isNotEditable();
     }
 
+    public boolean isShowFoundSimilar() {
+        SearchBlockBean searchBlockBean = (SearchBlockBean) getBlocks().get(SearchBlockBean.class);
+        return getCurrentSnapshot().inEditMode && searchBlockBean.isFoundSimilar();
+    }
+
     // =========================================================================
     // Action handlers
     // =========================================================================
+
+    public void addDocumentToFavorites(ActionEvent event) {
+        if (!(event instanceof AddToFavoritesEvent) || StringUtils.isBlank(((AddToFavoritesEvent) event).getFavoriteDirectoryName())) {
+            renderedModal = FavoritesModalComponent.ADD_TO_FAVORITES_MODAL_ID;
+            return;
+        }
+        if (event instanceof AddToFavoritesEvent) {
+            getDocumentService().addFavorite(getNode().getNodeRef(), ((AddToFavoritesEvent) event).getFavoriteDirectoryName());
+            renderedModal = null;
+        }
+    }
 
     public void deleteDocument(ActionEvent event) {
         Node node = getDocumentDialogHelperBean().getNode();
@@ -662,6 +788,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             propertySheet.setMode(getMode());
             propertySheet.setConfig(getPropertySheetConfigElement());
         }
+        BeanHelper.getVisitedDocumentsBean().getVisitedDocuments().add(getNode().getNodeRef());
         getPropertySheetStateBean().reset(getStateHolders(), provider);
         getDocumentDialogHelperBean().reset(provider);
         resetModals();
@@ -676,7 +803,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         FavoritesModalComponent favoritesModal = new FavoritesModalComponent();
         final FacesContext context = FacesContext.getCurrentInstance();
         final Application application = context.getApplication();
-        favoritesModal.setActionListener(application.createMethodBinding("#{DocumentDialog.addFavorite}", UIActions.ACTION_CLASS_ARGS));
+        favoritesModal.setActionListener(application.createMethodBinding("#{DocumentDynamicDialog.addDocumentToFavorites}", UIActions.ACTION_CLASS_ARGS));
         favoritesModal.setId("favorite-popup-" + context.getViewRoot().createUniqueId());
 
         // Access restriction change reason

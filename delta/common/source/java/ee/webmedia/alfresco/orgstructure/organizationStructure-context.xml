@@ -36,25 +36,6 @@
       </property>
    </bean>
 
-   <bean id="orgstructureParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
-      <property name="moduleId" value="common" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="parametersSpacesBootstrap" />
-         </list>
-      </property>
-      <property name="importer" ref="spacesBootstrap" />
-      <property name="bootstrapViews">
-         <list>
-            <props>
-               <prop key="path">/param:parameters</prop>
-               <prop key="location">ee/webmedia/alfresco/orgstructure/bootstrap/organizationStructure-parameters.xml</prop>
-            </props>
-         </list>
-      </property>
-   </bean>
-
    <bean id="deleteEmployeeRegReceiveStructUnitsTimeBootstrap" class="ee.webmedia.alfresco.common.bootstrap.DeleteNodeByXPathBootstrap" parent="abstractDeleteNodeByXPathBootstrap">
       <property name="moduleId" value="common" />
       <property name="nodeXPath" value="/param:parameters/param:employeeRegReceiveStructUnitsTime" />
@@ -98,7 +79,7 @@
 
    <bean class="ee.webmedia.alfresco.common.bootstrap.ModuleComponentDependsOnSetter">
       <property name="source" ref="parameterRescheduledJobsBootstrap" />
-      <property name="dependsOn" ref="orgstructureParametersBootstrap" />
+      <property name="dependsOn" ref="orgstructureParametersBootstrap2" />
    </bean>
 
    <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
@@ -114,6 +95,7 @@
       <property name="nodeService" ref="NodeService" />
       <property name="amrService" ref="AmrService" />
       <property name="authorityService" ref="AuthorityService" />
+      <property name="organizationStructureUpdateEnabled" value="${organizationStructure.updateEnabled}" />
    </bean>
 
    <bean id="OrganizationStructureService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -131,10 +113,9 @@
    </bean>
 
    <bean id="updateUsersGroupsOrganizationsListTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent">
-      <property name="enabled" value="${organizationStructure.updateEnabled}" />
+      <property name="enabled" value="${jobs.enabled}" />
       <property name="parameterName" value="syncUsersGroupsStructUnitsTime" />
       <property name="parameterFormat" value="H:mm" />
-      <!--      <property name="jobDetail" ref="updateOrganizationsListJobDetails" />-->
       <property name="jobDetail">
          <bean id="updateOrganizationsListJobDetails" class="org.springframework.scheduling.quartz.JobDetailBean">
             <property name="jobClass" value="ee.webmedia.alfresco.orgstructure.job.UpdateUsersGroupsOrganizationsListJob" />

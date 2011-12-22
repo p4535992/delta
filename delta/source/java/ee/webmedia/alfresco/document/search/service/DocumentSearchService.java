@@ -45,7 +45,10 @@ public interface DocumentSearchService {
      */
     List<Document> searchDocumentsQuick(String searchString, NodeRef containerNodeRef);
 
-    List<Document> searchDocumentsAndOrCases(String searchValue, Date regDateTimeBegin, Date regDateTimeEnd, List<String> documentTypes);
+    /**
+     * @param trySearchCases - if false, case search is not executed, if true, evaluate also other conditions to determine whether to search cases or not
+     */
+    List<Document> searchDocumentsAndOrCases(String searchValue, Date regDateTimeBegin, Date regDateTimeEnd, List<String> documentTypes, boolean trySearchCases);
 
     /**
      * Searches for documents using a search filter.
@@ -261,7 +264,8 @@ public interface DocumentSearchService {
 
     /**
      * Searches for working documents that have a discussion that involves current user
-     * @param fetchDocuments if true then document is fetched from repository. Otherwise a document object with set NodeRef is returned. 
+     * 
+     * @param fetchDocuments if true then document is fetched from repository. Otherwise a document object with set NodeRef is returned.
      * @return
      */
     List<Document> searchDiscussionDocuments(final boolean fetchDocuments);

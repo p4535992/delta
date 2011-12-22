@@ -159,7 +159,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             throw new PermissionDeniedException("node doesn't exist anymore", getDefaultCancelOutcome());
         }
         try {
-            validatePermission(docNode, "documentOpen_failed_missingPermission", DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA);
+            validatePermission(docNode, null, DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA);
         } catch (UnableToPerformException e) {
             MessageUtil.addStatusMessage(e);
             throw new PermissionDeniedException(MessageUtil.getMessage(e), null);

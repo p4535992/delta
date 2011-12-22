@@ -890,10 +890,10 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     @Override
-    public List<Document> searchDocumentsAndOrCases(String searchString, Date regDateTimeBegin, Date regDateTimeEnd, List<String> documentTypes) {
+    public List<Document> searchDocumentsAndOrCases(String searchString, Date regDateTimeBegin, Date regDateTimeEnd, List<String> documentTypes, boolean trySearchCases) {
         boolean noRegDates = regDateTimeBegin == null && regDateTimeEnd == null;
         boolean noDocTypes = documentTypes == null || documentTypes.isEmpty();
-        boolean includeCaseTitles = noRegDates && noDocTypes;
+        boolean includeCaseTitles = trySearchCases && noRegDates && noDocTypes;
         if (includeCaseTitles && StringUtils.isBlank(searchString)) {
             throw new UnableToPerformException("docSearch_error_noInput");
         }

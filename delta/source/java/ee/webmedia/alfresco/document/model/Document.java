@@ -20,6 +20,7 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.cases.model.Case;
+import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.CssStylable;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
@@ -226,6 +227,16 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
         return dueDate != null ? dateFormat.format(dueDate) : "";
     }
 
+    public String getCreatedDateStr() {
+        final Date created = getCreated();
+        return created != null ? dateFormat.format(created) : "";
+    }
+
+    public String getSenderRegDateStr() {
+        final Date senderRegDate = getSenderRegDate();
+        return senderRegDate != null ? dateFormat.format(senderRegDate) : "";
+    }
+
     public String getComplienceDateStr() {
         final Date complienceDate = getComplienceDate();
         return complienceDate != null ? dateFormat.format(complienceDate) : "";
@@ -240,6 +251,10 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
 
     public String getDocStatus() {
         return (String) getNode().getProperties().get(DocumentCommonModel.Props.DOC_STATUS);
+    }
+
+    public boolean isDocStatus(DocumentStatus status) {
+        return status.getValueName().equals(getDocStatus());
     }
 
     public Date getSenderRegDate() {

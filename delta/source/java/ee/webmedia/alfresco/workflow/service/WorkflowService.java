@@ -55,9 +55,6 @@ public interface WorkflowService {
 
     CompoundWorkflowDefinition getNewCompoundWorkflowDefinition();
 
-    // Dokumendi ekraanil terviktöövoo alustamise menüü
-    List<CompoundWorkflowDefinition> getCompoundWorkflowDefinitions(String documentTypeId, String documentStatus);
-
     // new in-memory object, based on existing compoundWorkflow definition
     CompoundWorkflow getNewCompoundWorkflow(NodeRef compoundWorkflowDefinition, NodeRef parent);
 
@@ -192,6 +189,10 @@ public interface WorkflowService {
     boolean hasTaskOfType(NodeRef docRef, QName... workflowTypes);
 
     boolean getOrderAssignmentCategoryEnabled();
+
+    boolean isOrderAssignmentWorkflowEnabled();
+
+    boolean isConfirmationWorkflowEnabled();
 
     boolean hasInProgressActiveResponsibleTasks(NodeRef document);
 

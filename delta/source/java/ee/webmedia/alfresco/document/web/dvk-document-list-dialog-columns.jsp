@@ -11,9 +11,10 @@
          <f:facet name="header">
             <a:sortLink id="col1-sort" label="#{msg.document_receivedDateTime}" value="created" styleClass="header" />
          </f:facet>
-         <h:outputText id="col1-text" value="#{r.created}" >
-            <a:convertXMLDate pattern="#{msg.date_time_pattern}" />
-         </h:outputText>
+         <a:actionLink id="col1-text" value="#{r.createdDateStr}" action="#{DocumentDialog.action}" tooltip="#{r.createdDateStr}" styleClass="no-underline"
+          actionListener="#{DocumentDialog.open}" >
+            <f:param name="nodeRef" value="#{r.node.nodeRef}" />
+          </a:actionLink>
       </a:column>
       
       <%-- Sender registration number --%>
@@ -21,7 +22,10 @@
          <f:facet name="header">
             <a:sortLink id="col2-sort" label="#{msg.document_senderRegNumber}" value="senderRegNumber" styleClass="header" />
          </f:facet>
-         <h:outputText id="col2-text-1" value="#{r.senderRegNumber}" />
+         <a:actionLink id="col2-text-1" value="#{r.senderRegNumber}" action="#{DocumentDialog.action}" tooltip="#{r.senderRegNumber}"
+            actionListener="#{DocumentDialog.open}" >
+            <f:param name="nodeRef" value="#{r.node.nodeRef}" />
+         </a:actionLink>
       </a:column>
       
       <%-- Sender registration number --%>
@@ -29,9 +33,10 @@
          <f:facet name="header">
             <a:sortLink id="col3-sort" label="#{msg.document_senderRegDate}" value="senderRegDate" styleClass="header" />
          </f:facet>
-         <h:outputText id="col3-text-1" value="#{r.senderRegDate}">
-            <a:convertXMLDate pattern="#{msg.date_pattern}" />
-         </h:outputText>
+         <a:actionLink id="col3-text-1" value="#{r.senderRegDateStr}" action="#{DocumentDialog.action}" tooltip="#{r.senderRegDateStr}" styleClass="no-underline"
+          actionListener="#{DocumentDialog.open}" >
+            <f:param name="nodeRef" value="#{r.node.nodeRef}" />
+          </a:actionLink>
       </a:column>
 
       <%-- Document type --%>
@@ -39,7 +44,10 @@
          <f:facet name="header">
             <a:sortLink id="col4-sort" label="#{msg.document_docType}" value="documentTypeName" styleClass="header" />
          </f:facet>
-         <h:outputText id="col4-text" value="#{r.documentTypeName}" />
+         <a:actionLink id="col4-text" value="#{r.documentTypeName}" action="#{DocumentDialog.action}" tooltip="#{r.documentTypeName}"
+            actionListener="#{DocumentDialog.open}" >
+            <f:param name="nodeRef" value="#{r.node.nodeRef}" />
+         </a:actionLink>
       </a:column>
       
       <%-- Sender registration number --%>
@@ -47,9 +55,14 @@
          <f:facet name="header">
             <a:sortLink id="col5-sort" label="#{msg.document_sender}" value="sender" styleClass="header" />
          </f:facet>
-         
-         <h:outputText id="col5-text-1" value="#{r.sender}" rendered="#{r.cssStyleClass eq 'incomingLetter'}" />
-         <h:outputText id="col5-text-2" value="#{r.ownerName}" rendered="#{r.cssStyleClass ne 'incomingLetter'}" />
+         <a:actionLink id="col5-text-1" value="#{r.sender}" action="#{DocumentDialog.action}" tooltip="#{r.sender}"
+            actionListener="#{DocumentDialog.open}" rendered="#{r.cssStyleClass eq 'incomingLetter'}">
+            <f:param name="nodeRef" value="#{r.node.nodeRef}" />
+         </a:actionLink>
+         <a:actionLink id="col5-text-2" value="#{r.ownerName}" action="#{DocumentDialog.action}" tooltip="#{r.ownerName}"
+            actionListener="#{DocumentDialog.open}" rendered="#{r.cssStyleClass ne 'incomingLetter'}" >
+            <f:param name="nodeRef" value="#{r.node.nodeRef}" />
+         </a:actionLink>
       </a:column>
       
       
