@@ -177,6 +177,7 @@
         <property name="cronExpression">
             <value>0 0 21 * * ?</value>
         </property>
+        <property name="enabled" value="${jobs.enabled}" />
     </bean>
 
     <bean id="indexBackupJobDetail" class="org.springframework.scheduling.quartz.JobDetailBean">
@@ -249,6 +250,7 @@
         <property name="repeatIntervalMinutes">
             <value>1</value>
         </property>
+        <property name="enabled" value="${jobs.enabled}" />
     </bean>
 
     <bean id="userUsageTrackingComponent" class="org.alfresco.repo.usage.UserUsageTrackingComponent">
@@ -319,6 +321,7 @@
             <value>5</value>
         </property>
           
+        <property name="enabled" value="${jobs.enabled}" />
     </bean>
     
     <!-- enable scheduler property to activate -->
@@ -352,6 +355,7 @@
             <value>0</value>
         </property>
           
+        <property name="enabled" value="${jobs.enabled}" />
     </bean>
     
     <!-- There is a job available to purge old deploymentattempt nodes  -->
@@ -387,6 +391,7 @@
         <property name="repeatIntervalMinutes">
             <value>10</value>
         </property>
+        <property name="enabled" value="${jobs.enabled}" />
     </bean>
     
     <bean id="feedGeneratorJobDetail" class="org.springframework.scheduling.quartz.JobDetailBean">
@@ -415,6 +420,7 @@
         <property name="repeatInterval">
             <value>30000</value> <!-- 30000 msecs = 30 seconds -->
         </property>
+        <property name="enabled" value="${jobs.enabled}" />
     </bean>
     
     <!-- Activities Post Lookup (for secondary lookup) -->
@@ -444,6 +450,7 @@
         <property name="repeatInterval">
             <value>15000</value> <!-- 15000 msecs = 15 seconds -->
         </property>
+        <property name="enabled" value="${jobs.enabled}" />
     </bean>
     
     <!-- Activities Post Cleaner -->
@@ -473,6 +480,7 @@
         <property name="repeatIntervalMinutes">
             <value>10</value>
         </property>
+        <property name="enabled" value="${jobs.enabled}" />
     </bean>
    
     <!-- enable scheduler property to activate -->
@@ -509,5 +517,6 @@
             <value>0</value>
         </property>
           
+        <property name="enabled" value="${jobs.enabled}" />
     </bean>
 </beans>

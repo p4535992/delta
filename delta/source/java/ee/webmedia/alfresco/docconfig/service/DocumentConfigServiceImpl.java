@@ -80,13 +80,12 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
     private final Map<FieldType, FieldGenerator> fieldGenerators = new HashMap<FieldType, FieldGenerator>();
     private final Map<String, FieldGenerator> originalFieldIdGenerators = new HashMap<String, FieldGenerator>();
     private final Map<String /* systematicGroupName */, FieldGroupGenerator> fieldGroupGenerators = new HashMap<String, FieldGroupGenerator>();
-
-    private final Map<Pair<String /* documentTypeId */, Integer /* documentTypeVersionNr */>, Map<String /* fieldId */, Pair<DynamicPropertyDefinition, Field>>> propertyDefinitionCache = new ConcurrentHashMap<Pair<String, Integer>, Map<String, Pair<DynamicPropertyDefinition, Field>>>();
-    private final Map<Pair<String /* documentTypeId */, Integer /* documentTypeVersionNr */>, TreeNode<QName>> childAssocTypeQNameTreeCache = new ConcurrentHashMap<Pair<String, Integer>, TreeNode<QName>>();
-
     private final Map<String /* hiddenFieldId */, String /* fieldIdAndOriginalFieldId */> hiddenFieldDependencies = new HashMap<String, String>();
 
-    // TODO in the future caching
+    // CUSTOM CACHING
+    // XXX NB! some returned objects are unfortunately mutable, thus service callers must not modify them !!!
+    private final Map<Pair<String /* documentTypeId */, Integer /* documentTypeVersionNr */>, Map<String /* fieldId */, Pair<DynamicPropertyDefinition, Field>>> propertyDefinitionCache = new ConcurrentHashMap<Pair<String, Integer>, Map<String, Pair<DynamicPropertyDefinition, Field>>>();
+    private final Map<Pair<String /* documentTypeId */, Integer /* documentTypeVersionNr */>, TreeNode<QName>> childAssocTypeQNameTreeCache = new ConcurrentHashMap<Pair<String, Integer>, TreeNode<QName>>();
 
     @Override
     public void registerFieldGeneratorByType(FieldGenerator fieldGenerator, FieldType... fieldTypes) {

@@ -54,7 +54,6 @@ public class ParameterRescheduledTriggerBean extends AbstractTriggerBean {
     private long startDelay = 0;
     private Trigger trigger;
     private boolean fireAtStartup;
-    private boolean enabled = true;
 
     public ParameterRescheduledTriggerBean() {
         super();
@@ -62,7 +61,8 @@ public class ParameterRescheduledTriggerBean extends AbstractTriggerBean {
 
     @Override
     public void afterPropertiesSet() throws ParseException {
-        if (!enabled) {
+        if (!isEnabled()) {
+            log.info("Job " + getBeanName() + " is not active");
             return;
         }
         if (parameterFormat == null || parameterName == null) {
@@ -355,10 +355,6 @@ public class ParameterRescheduledTriggerBean extends AbstractTriggerBean {
      */
     public void setFireAtStartup(boolean fireAtStartup) {
         this.fireAtStartup = fireAtStartup;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
     }
     // END: getters / setters
 

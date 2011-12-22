@@ -367,15 +367,17 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         newProps.put(DocumentCommonModel.Props.DOC_STATUS.toString(), properties.get(DocumentCommonModel.Props.DOC_STATUS));
         newProps.put(DocumentCommonModel.Props.STORAGE_TYPE.toString(), properties.get(DocumentCommonModel.Props.STORAGE_TYPE));
 
+        // remove all existing subnodes in memory
+        TreeNode<QName> oldChildAssocTypeQNamesRoot = documentConfigService.getChildAssocTypeQNameTree(document.getNode());
+        Assert.isNull(oldChildAssocTypeQNamesRoot.getData());
+        removeChildNodes(document, oldChildAssocTypeQNamesRoot);
+
         properties.clear();
         properties.putAll(newProps);
         setParentFolderProps(document);
 
         TreeNode<QName> childAssocTypeQNamesRoot = documentConfigService.getChildAssocTypeQNameTree(docVer);
         Assert.isNull(childAssocTypeQNamesRoot.getData());
-
-        // remove all existing subnodes in memory
-        removeChildNodes(document, childAssocTypeQNamesRoot);
 
         // create new subnodes in memory
         createChildNodesHierarchy(document.getNode(), childAssocTypeQNamesRoot.getChildren());
@@ -387,12 +389,29 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     private void removeChildNodes(DocumentDynamic document, TreeNode<QName> childAssocTypeQNamesRoot) {
         for (TreeNode<QName> childAssocTypeQName : childAssocTypeQNamesRoot.getChildren()) {
             QName assocTypeQName = childAssocTypeQName.getData();
-            List<Node> childNodes = document.getNode().getAllChildAssociations(assocTypeQName);
+            WmNode docNode = document.getNode();
+            List<Node> childNodes = docNode.getAllChildAssociations(assocTypeQName);
             while (childNodes != null && !childNodes.isEmpty()) {
-                document.getNode().removeChildAssociations(assocTypeQName, 0);
-                childNodes = document.getNode().getAllChildAssociations(assocTypeQName);
+                docNode.removeChildAssociations(assocTypeQName, 0);
+                childNodes = docNode.getAllChildAssociations(assocTypeQName);
             }
-            // FIXME 163447 We should remove container aspects, otherwise an error occurs
+
+            // Remove container aspects, otherwise integrity checker throws an error, because required child association multiplicity is 1
+            AssociationDefinition assocDef = dictionaryService.getAssociation(assocTypeQName);
+            Assert.isTrue(assocDef instanceof ChildAssociationDefinition);
+            ClassDefinition containerClass = assocDef.getSourceClass();
+            if (containerClass instanceof TypeDefinition) {
+                Assert.isTrue(dictionaryService.isSubClass(docNode.getType(), containerClass.getName()));
+            } else if (containerClass instanceof AspectDefinition) {
+                if (docNode.hasAspect(containerClass.getName())) {
+                    docNode.getAspects().remove(containerClass.getName());
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("node " + docNode.getType().toPrefixString(namespaceService) + " removeAspect " + containerClass.getName().toPrefixString(namespaceService));
+                    }
+                }
+            } else {
+                throw new RuntimeException("Unknown subclass of ClassDefinition: " + WmNode.toString(containerClass));
+            }
         }
     }
 

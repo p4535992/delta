@@ -25,6 +25,7 @@ import javax.faces.event.ActionEvent;
 
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.permissions.AccessDeniedException;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
@@ -487,10 +488,17 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             throw new RuntimeException("Document metadata block is not in edit mode");
         }
 
-        DocumentDynamic savedDocument = null;
+        final DocumentDynamic savedDocument;
         try {
-            // May throw UnableToPerformException or UnableToPerformMultiReasonException
-            savedDocument = getDocumentDynamicService().updateDocument(getDocument(), getConfig().getSaveListenerBeanNames());
+            // Do in new transaction, because we want to catch integrity checker exceptions now, not at the end of this method when mode is already switched
+            savedDocument = getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<DocumentDynamic>() {
+                @Override
+                public DocumentDynamic execute() throws Throwable {
+                    // May throw UnableToPerformException or UnableToPerformMultiReasonException
+                    return getDocumentDynamicService().updateDocument(getDocument(), getConfig().getSaveListenerBeanNames());
+                }
+            }, false, true);
+
         } catch (UnableToPerformMultiReasonException e) {
             if (!handleAccessRestrictionChange(e)) {
                 return null;
@@ -500,17 +508,23 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             throw e;
         }
 
-        if (savedDocument.isAccessRestrictionPropsChanged() && BeanHelper.getSendOutService().hasDocumentSendInfos(savedDocument.getNodeRef())) {
-            isFinished = false;
-            // modal has already been displayed, if displaying was necessary
-            renderedModal = null;
-            // confirmation popup shall be displayed
-            showConfirmationPopup = true;
-            return null;
-        }
-        // Switch from edit mode back to view mode
-        switchMode(false);
-        return null;
+        // Do in new transaction, because otherwise saved data from the new transaction above is not visible
+        return getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<String>() {
+            @Override
+            public String execute() throws Throwable {
+                if (savedDocument.isAccessRestrictionPropsChanged() && BeanHelper.getSendOutService().hasDocumentSendInfos(savedDocument.getNodeRef())) {
+                    isFinished = false;
+                    // modal has already been displayed, if displaying was necessary
+                    renderedModal = null;
+                    // confirmation popup shall be displayed
+                    showConfirmationPopup = true;
+                    return null;
+                }
+                // Switch from edit mode back to view mode
+                switchMode(false);
+                return null;
+            }
+        }, false, true);
     }
 
     private boolean handleAccessRestrictionChange(UnableToPerformMultiReasonException e) {
