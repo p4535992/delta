@@ -629,7 +629,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             return;
         }
         // go back
-        WebUtil.navigateTo(BeanHelper.getDialogManager().cancel());
+        WebUtil.navigateWithCancel();
         MessageUtil.addInfoMessage("document_delete_success");
     }
 

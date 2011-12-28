@@ -18,6 +18,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.web.util.HtmlUtils;
 
 import ee.webmedia.alfresco.app.AppConstants;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 
 public class WebUtil {
     /**
@@ -112,6 +113,10 @@ public class WebUtil {
 
     public static void navigateTo(String navigationOutcome) {
         navigateTo(navigationOutcome, null);
+    }
+
+    public static void navigateWithCancel() {
+        navigateTo(BeanHelper.getDialogManager().cancel());
     }
 
     public static void navigateTo(String navigationOutcome, FacesContext context) {

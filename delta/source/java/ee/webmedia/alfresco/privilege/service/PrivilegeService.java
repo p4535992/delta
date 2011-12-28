@@ -61,6 +61,16 @@ public interface PrivilegeService {
             , Map<String, UserPrivileges> privilegesByGroup, QName listenerCode);
 
     /**
+     * Set <code>privilegesToAdd</code> permissions with dependencies for those permissions for given <code>authority</code> on given node
+     * 
+     * @param manageableRef
+     * @param userName
+     * @param privilegesToAdd
+     * @return permissions with dependencies
+     */
+    public Set<String> setPermissions(NodeRef manageableRef, String authority, String... privilegesToAdd);
+
+    /**
      * adds permission <code>permission</code> to <code>nodeRef</code> and adds <code>autority</code> to {@link PrivilegeModel.Props#USER} if it didn't already contain it
      * 
      * @param nodeRef

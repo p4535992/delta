@@ -195,6 +195,17 @@ public class GetMethod extends WebDAVMethod
 
             // Build the response header
             m_response.setHeader(WebDAV.HEADER_ETAG, getDAVHelper().makeQuotedETag(pathNodeRef));
+            // Ats: FIXME VIGA, mis avaldub firefox'iga:
+            // 1) avatakse dokumendi ekraan, kasutajal on faili vaatamise õigus
+            // 2) kasutaja avab faili, fail avaneb(fail läheb brauseri cache'sse)
+            // 3) kasutajalt eemaldatakse faili vaatamise õigus
+            // 4) kasutaja avab sama faili, fail avaneb HOOLIMATA PUUDUVATEST ÕIGUSTEST (fail võetakse brauseri cache'st)
+            // 
+            // Praeguse HTTP response headerite komplekti puhul FF ei tee mingit päringut serverisse, kui tal on olemas cachetud fail.
+            // Seega pole võimalik teada saada, kas faili vaatamise õigus on alles või ei.
+            // XXX: et firefox cache'ks faili sisu aga kontrolliks ikkagi enne faili cahce'st avamist serverilt õiguseid, peaks headereid muutma.
+            // Tundub, et järgnev header paneb asja toimima firefox'i jaoks, aga pole kindel, et see mõnda uut viga mõne IE või MS Office versiooniga ei tekita!
+            // m_response.setHeader("Cache-control", "must-revalidate");
 
             Date modifiedDate = nodeInfo.getModifiedDate();
             if (modifiedDate != null)

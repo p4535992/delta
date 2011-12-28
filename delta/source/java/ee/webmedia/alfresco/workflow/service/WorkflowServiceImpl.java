@@ -7,6 +7,7 @@ import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.getExcludedNode
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isActiveResponsible;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isGeneratedByDelegation;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isInactiveResponsible;
+import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isResponsible;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isStatus;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isStatusAll;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isStatusAny;
@@ -50,11 +51,13 @@ import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
+import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MessageDataImpl;
@@ -117,6 +120,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     private DictionaryService dictionaryService;
     private GeneralService generalService;
     private UserService userService;
+    private PrivilegeService privilegeService;
     private NamespaceService namespaceService;
     private OrganizationStructureService organizationStructureService;
     private DvkService dvkService;
@@ -540,6 +544,10 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         if (assocType == null) {
             assocType = WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW;
         }
+        String previousOwnerId = null;
+        if (compoundWorkflow.isSaved()) {
+            previousOwnerId = (String) BeanHelper.getNodeService().getProperty(compoundWorkflow.getNodeRef(), WorkflowCommonModel.Props.OWNER_ID);
+        }
         boolean changed = createOrUpdate(queue, compoundWorkflow, compoundWorkflow.getParent(), assocType);
 
         // Remove workflows
@@ -575,6 +583,13 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             saveCompoundWorkflow(queue, otherCompoundWorkflow, null);
             CompoundWorkflow freshCompoundWorkflow = getCompoundWorkflow(otherCompoundWorkflow.getNodeRef());
             checkCompoundWorkflow(freshCompoundWorkflow);
+        }
+        if (CompoundWorkflow.class.equals(compoundWorkflow.getClass())) { // compound worflow tied to document (not compoundWorkflowDef)
+            if (!StringUtils.equals(compoundWorkflow.getOwnerId(), previousOwnerId)) {
+                // doesn't matter what status cWF has, just add the privileges
+                NodeRef docRef = nodeService.getPrimaryParent(compoundWorkflow.getNodeRef()).getParentRef();
+                privilegeService.setPermissions(docRef, compoundWorkflow.getOwnerId(), Privileges.VIEW_DOCUMENT_FILES);
+            }
         }
         return changed;
     }
@@ -1878,6 +1893,44 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         queueEvent(queue, WorkflowEventType.STATUS_CHANGED, object);
         addExternalReviewWorkflowData(queue, object, originalStatus);
 
+        if (object instanceof Task) {
+            Task task = (Task) object;
+            String taskOwnerId = task.getOwnerId();
+            if (!StringUtils.isBlank(taskOwnerId) && isStatus(task, Status.IN_PROGRESS) && originalStatus != Status.IN_PROGRESS) {
+                // give permissions to task owner
+
+                NodeRef docRef = task.getParent().getParent().getParent();
+                boolean isSignatureTaskWith1Digidoc = false;
+                boolean isSignatureTaskWithFiles = false;
+                if (task.isType(WorkflowSpecificModel.Types.SIGNATURE_TASK)) {
+                    List<File> allFiles = fileService.getAllActiveFiles(docRef);
+                    if (allFiles.size() == 1 && allFiles.get(0).getName().toLowerCase().endsWith(".ddoc")) {
+                        isSignatureTaskWith1Digidoc = true;
+                    } else if (!allFiles.isEmpty()) {
+                        isSignatureTaskWithFiles = true;
+                    }
+                }
+
+                boolean isResponsible = isResponsible(task);
+                if (isSignatureTaskWith1Digidoc
+                            || (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK) && !isResponsible)
+                            || (task.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK) && !isResponsible)
+                            || task.isType(WorkflowSpecificModel.Types.OPINION_TASK, WorkflowSpecificModel.Types.INFORMATION_TASK, WorkflowSpecificModel.Types.CONFIRMATION_TASK,
+                                    WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK, WorkflowSpecificModel.Types.SIGNATURE_TASK)) {
+                    privilegeService.setPermissions(docRef, taskOwnerId, Privileges.VIEW_DOCUMENT_FILES);
+                } else if (isSignatureTaskWithFiles
+                        || (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK) && WorkflowUtil.isResponsible(task))
+                        || task.isType(WorkflowSpecificModel.Types.REVIEW_TASK, WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)
+                        || (task.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK) && isResponsible)) {
+                    privilegeService.setPermissions(docRef, taskOwnerId, Privileges.EDIT_DOCUMENT);
+                } else {
+                    MessageUtil.addWarningMessage("task " + task.getType().getLocalName()
+                            + ": failed to grant permissions to the owner of task that is now in progress. Task ownerId=" + taskOwnerId);
+                }
+            }
+
+        }
+
         // status based property setting
         if (object.getStartedDateTime() == null && isStatus(object, Status.IN_PROGRESS)) {
             object.setStartedDateTime(queue.getNow());
@@ -2238,6 +2291,10 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     public void setUserService(UserService userService) {
         this.userService = userService;
+    }
+
+    public void setPrivilegeService(PrivilegeService privilegeService) {
+        this.privilegeService = privilegeService;
     }
 
     public void setNamespaceService(NamespaceService namespaceService) {

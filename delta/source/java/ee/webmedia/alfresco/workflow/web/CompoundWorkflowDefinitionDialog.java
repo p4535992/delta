@@ -766,12 +766,11 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
                     addLinkForThisWorkflow = true;
                 }
             } else if (WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW.equals(workflowType)) {
-                if (getWorkflowService().externalReviewWorkflowEnabled()) {
+                if (getWorkflowService().externalReviewWorkflowEnabled() && doc.isDocStatus(DocumentStatus.WORKING) && doc.hasPermission(Privileges.EDIT_DOCUMENT)) {
                     addLinkForThisWorkflow = true;
                 }
             } else if (WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_WORKFLOW.equals(workflowType)) {
-                // not specified in spec, but adding it
-                addLinkForThisWorkflow = true;
+                addLinkForThisWorkflow = false;
             } else {
                 throw new UnableToPerformException("unknown workflow type " + workflowType.getLocalName() + " not sure if it should be displayed or not");
             }

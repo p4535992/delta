@@ -89,6 +89,11 @@ public interface BaseService {
      */
     <T extends BaseObject> List<T> getChildren(NodeRef parentRef, Class<T> childrenClass, QNamePattern typeQNamePattern, QNamePattern qnamePattern, Effort effort);
 
+    /**
+     * Load multiple object hierarchies from repository. Additionally, input nodeRefs are checked for existence.
+     * 
+     * @see #getObject(NodeRef, Class)
+     */
     <T extends BaseObject> List<T> getObjects(List<NodeRef> resultRefs, Class<T> resultClass);
 
     /**

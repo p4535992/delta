@@ -122,6 +122,9 @@ public class BaseServiceImpl implements BaseService {
     private <T extends BaseObject> List<T> getObjects(List<NodeRef> resultRefs, Class<T> resultClass, Predicate<T> mustIncludePredicate, Effort effort) {
         ArrayList<T> results = new ArrayList<T>(resultRefs.size());
         for (NodeRef nodeRef : resultRefs) {
+            if (!nodeService.exists(nodeRef)) {
+                continue;
+            }
             T object = getObject(nodeRef, resultClass, effort);
             if (mustIncludePredicate == null || mustIncludePredicate.evaluate(object)) {
                 results.add(object);

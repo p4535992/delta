@@ -156,6 +156,7 @@
       <property name="dictionaryService" ref="DictionaryService" />
       <property name="generalService" ref="GeneralService" />
       <property name="userService" ref="UserService" />
+      <property name="privilegeService" ref="PrivilegeService" />
       <property name="namespaceService" ref="NamespaceService" />
       <property name="organizationStructureService" ref="OrganizationStructureService" />
       <property name="dvkService" ref="DvkService" />

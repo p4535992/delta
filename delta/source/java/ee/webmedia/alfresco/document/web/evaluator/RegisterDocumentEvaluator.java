@@ -31,6 +31,10 @@ public class RegisterDocumentEvaluator extends BaseActionEvaluator {
 
     @Override
     public boolean evaluate(Node docNode) {
+        return canRegister(docNode, true);
+    }
+
+    public boolean canRegister(Node docNode, boolean checkStoppedOrInprogressWorkflows) {
         final FacesContext context = FacesContext.getCurrentInstance();
         if (!new ViewStateActionEvaluator().evaluate(docNode)) {
             return false;
@@ -43,7 +47,7 @@ public class RegisterDocumentEvaluator extends BaseActionEvaluator {
         if (!getDocumentAdminService().getDocumentTypeProperty(docTypeId, DocumentAdminModel.Props.REGISTRATION_ENABLED, Boolean.class)) {
             return false;
         }
-        if (!new HasNoStoppedOrInprogressWorkflowsEvaluator().evaluate(docNode)) {
+        if (checkStoppedOrInprogressWorkflows && !new HasNoStoppedOrInprogressWorkflowsEvaluator().evaluate(docNode)) {
             return false;
         }
         DocumentService documentService = (DocumentService) FacesContextUtils.getRequiredWebApplicationContext(//

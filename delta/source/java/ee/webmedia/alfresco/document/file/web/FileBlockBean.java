@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.document.file.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 
 import java.util.List;
@@ -31,9 +32,10 @@ import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicBlock;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 import ee.webmedia.alfresco.document.service.DocumentService;
-import ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator;
 import ee.webmedia.alfresco.document.web.evaluator.IsOwnerEvaluator;
+import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
@@ -157,6 +159,21 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
         return files;
     }
 
+    public boolean isToggleActive() {
+        return isToggleActive(true);
+    }
+
+    public boolean isToggleInActive() {
+        return isToggleActive(false);
+    }
+
+    public boolean isToggleActive(boolean fileIsActive) {
+        DocumentDialogHelperBean documentDialogHelperBean = BeanHelper.getDocumentDialogHelperBean();
+        Node docNode = documentDialogHelperBean.getNode();
+        return (!fileIsActive || !documentDialogHelperBean.isNotEditable())
+                && (new IsOwnerEvaluator().evaluate(docNode) || PrivilegeUtil.isAdminOrDocmanagerWithPermission(docNode, Privileges.VIEW_DOCUMENT_META_DATA));
+    }
+
     public boolean isDeleteFileAllowed() {
         return isDeleteFileAllowed(true);
     }
@@ -168,11 +185,11 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
     private boolean isDeleteFileAllowed(boolean activeFile) {
         DocumentDialogHelperBean documentDialogHelperBean = getDocumentDialogHelperBean();
         Node docNode = documentDialogHelperBean.getNode();
-        return !documentDialogHelperBean.isNotEditable() && isAdminOrDocManagerOrOwner(docNode) && (!activeFile || !getWorkflowService().hasInprogressCompoundWorkflows(docRef));
+        return !documentDialogHelperBean.isNotEditable() && isAdminOrOwner(docNode) && (!activeFile || !getWorkflowService().hasInprogressCompoundWorkflows(docRef));
     }
 
-    private boolean isAdminOrDocManagerOrOwner(Node docNode) {
-        return new IsAdminOrDocManagerEvaluator().evaluate(docNode) || new IsOwnerEvaluator().evaluate(docNode);
+    private boolean isAdminOrOwner(Node docNode) {
+        return getUserService().isAdministrator() || new IsOwnerEvaluator().evaluate(docNode);
     }
 
     // START: getters / setters

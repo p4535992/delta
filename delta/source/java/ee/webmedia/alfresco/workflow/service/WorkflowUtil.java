@@ -485,13 +485,15 @@ public class WorkflowUtil {
     }
 
     public static boolean isActiveResponsible(Task task) {
-        return task.getNode().hasAspect(WorkflowSpecificModel.Aspects.RESPONSIBLE)
-                && Boolean.TRUE.equals(task.getNode().getProperties().get(WorkflowSpecificModel.Props.ACTIVE));
+        return isResponsible(task) && Boolean.TRUE.equals(task.getNode().getProperties().get(WorkflowSpecificModel.Props.ACTIVE));
     }
 
     public static boolean isInactiveResponsible(Task task) {
-        return task.getNode().hasAspect(WorkflowSpecificModel.Aspects.RESPONSIBLE)
-                && Boolean.FALSE.equals(task.getNode().getProperties().get(WorkflowSpecificModel.Props.ACTIVE));
+        return isResponsible(task) && Boolean.FALSE.equals(task.getNode().getProperties().get(WorkflowSpecificModel.Props.ACTIVE));
+    }
+
+    public static boolean isResponsible(Task task) {
+        return task.getNode().hasAspect(WorkflowSpecificModel.Aspects.RESPONSIBLE);
     }
 
     public static void removeEmptyTasks(CompoundWorkflow cWorkflow) {

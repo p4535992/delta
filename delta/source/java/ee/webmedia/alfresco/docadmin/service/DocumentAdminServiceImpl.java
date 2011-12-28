@@ -276,7 +276,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
     @Override
     public String getDocumentTypeName(Node document) {
-        String documentTypeId = (String) document.getProperties().get(DocumentAdminModel.Props.ID);
+        String documentTypeId = (String) document.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID);
         return getDocumentTypeName(documentTypeId);
     }
 

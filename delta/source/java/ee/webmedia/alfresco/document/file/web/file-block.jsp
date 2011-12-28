@@ -91,12 +91,10 @@
 
       <%-- Remove and Version column --%>
       <a:column id="col7" rendered="#{r.activeAndNotDigiDoc}">
-         <wm:docPermissionEvaluator id="col7-act33-eval" value="#{r.node}" allow="editDocument">
-            <a:actionLink id="col7-act33" value="#{r.name}" actionListener="#{FileBlockBean.toggleActive}" showLink="false"
-               image="/images/icons/document-convert.png" tooltip="#{msg.file_toggle_deactive} " rendered="#{!DocumentDialogHelperBean.notEditable}">
-               <f:param name="nodeRef" value="#{r.nodeRef}" />
-            </a:actionLink>
-         </wm:docPermissionEvaluator>
+         <a:actionLink id="col7-act33" value="#{r.name}" actionListener="#{FileBlockBean.toggleActive}" showLink="false"
+            image="/images/icons/document-convert.png" tooltip="#{msg.file_toggle_deactive} " rendered="#{FileBlockBean.toggleActive}">
+            <f:param name="nodeRef" value="#{r.nodeRef}" />
+         </a:actionLink>
          <wm:docPermissionEvaluator id="col7-act2-eval" value="#{r.node}" allow="viewDocumentFiles">
             <a:actionLink id="col7-act2" value="#{r.name}" actionListener="#{VersionsListDialog.select}" action="dialog:versionsListDialog" showLink="false"
                image="/images/icons/version_history.gif" rendered="#{r.versionable && !DocumentDialogHelperBean.notEditable}" tooltip="#{msg.file_version_history}">
@@ -261,12 +259,10 @@
 
       <%-- Remove and Version column --%>
       <a:column id="col27" rendered="#{r.notActiveAndNotDigiDoc}">
-         <wm:docPermissionEvaluator id="col27-act3-eval-allow" value="#{r.node}" allow="editDocument">
-            <a:actionLink id="col27-act3" value="#{r.name}" actionListener="#{FileBlockBean.toggleActive}" showLink="false"
-               image="/images/icons/document-convert.png" tooltip="#{msg.file_toggle_active}">
-               <f:param name="nodeRef" value="#{r.nodeRef}" />
-            </a:actionLink>
-         </wm:docPermissionEvaluator>
+         <a:actionLink id="col27-act3" value="#{r.name}" actionListener="#{FileBlockBean.toggleActive}" showLink="false"
+            image="/images/icons/document-convert.png" tooltip="#{msg.file_toggle_active}" rendered="#{FileBlockBean.toggleInActive}">
+            <f:param name="nodeRef" value="#{r.nodeRef}" />
+         </a:actionLink>
          <wm:docPermissionEvaluator id="col27-act2-eval-allow" value="#{r.node}" allow="viewDocumentFiles">
             <a:actionLink id="col27-act2" value="#{r.name}" actionListener="#{VersionsListDialog.select}" action="dialog:versionsListDialog" showLink="false"
                image="/images/icons/version_history.gif" rendered="#{r.versionable}" tooltip="#{msg.file_version_history}">

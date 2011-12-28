@@ -1746,7 +1746,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
 
     private Node registerDocument(Node docNode, boolean isRelocating, Node previousVolume) {
         docNode.clearPermissionsCache(); // permissions might have been lost after rendering registration button
-        if (!new RegisterDocumentEvaluator().evaluate(docNode)) {
+        if (!new RegisterDocumentEvaluator().canRegister(docNode, false)) {
             throw new UnableToPerformException("document_registerDoc_error_noPermission");
         }
         final Map<String, Object> props = docNode.getProperties();
@@ -2211,9 +2211,13 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
             public Object doWork() throws Exception {
                 long step0 = System.currentTimeMillis();
                 // Register the document, if not already registered
-                boolean didRegister = registerDocumentIfNotRegistered(document, false);
+                boolean didRegister = false;
+                String docTypeId = (String) nodeService.getProperty(document, Props.OBJECT_TYPE_ID);
+                if (getDocumentAdminService().getDocumentTypeProperty(docTypeId, DocumentAdminModel.Props.REGISTRATION_ENABLED, Boolean.class)) {
+                    didRegister = registerDocumentIfNotRegistered(document, false);
+                }
                 long step1 = System.currentTimeMillis();
-                if (!didRegister) {
+                if (didRegister) {
                     getDocumentTemplateService().updateGeneratedFiles(document, true);
                 }
                 long step2 = System.currentTimeMillis();
@@ -2325,12 +2329,13 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         Node docNode = getDocument(document);
 
         String existingRegNr = (String) docNode.getProperties().get(REG_NUMBER.toString());
-        sb.append(existingRegNr);
+        if (StringUtils.isNotBlank(existingRegNr)) {
+            sb.append(existingRegNr);
 
-        Date existingRegDate = (Date) docNode.getProperties().get(REG_DATE_TIME.toString());
-        sb.append(" ");
-        sb.append(Utils.getDateFormat(FacesContext.getCurrentInstance()).format(existingRegDate));
-
+            Date existingRegDate = (Date) docNode.getProperties().get(REG_DATE_TIME.toString());
+            sb.append(" ");
+            sb.append(Utils.getDateFormat(FacesContext.getCurrentInstance()).format(existingRegDate));
+        }
         String documentType = getDocumentAdminService().getDocumentTypeName(docNode);
         if (StringUtils.isNotBlank(documentType)) {
             sb.append(" ");

@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.privilege.model;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
+
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -7,8 +9,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
-
-import ee.webmedia.alfresco.common.web.BeanHelper;
 
 /**
  * Holds information about user privileges and user-group mappings
@@ -44,7 +44,7 @@ public class PrivilegeMappings implements Serializable {
     public UserPrivileges getOrCreateUserPrivilegesVO(String userName) {
         UserPrivileges privs = getPrivilegesByUsername().get(userName);
         if (privs == null) {
-            privs = new UserPrivileges(userName, BeanHelper.getUserService().getUserFullName(userName));
+            privs = new UserPrivileges(userName, getUserService().getUserFullNameWithUnitName(userName));
             getPrivilegesByUsername().put(userName, privs);
         }
         return privs;

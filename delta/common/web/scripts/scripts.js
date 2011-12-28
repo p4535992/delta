@@ -1611,6 +1611,7 @@ function handleHtmlLoaded(context, selects) {
               if (responseText.indexOf("NOT_LOCKED") > -1) {
                 webdavOpen(path, sharePointObject);
              } else if (confirm(getTranslation("webdav_openReadOnly").replace("#", responseText))) {
+                // TODO CL 161673: responseText might contain HTML of CAS page if session has timed out
                 webdavOpen(path, sharePointObject);
              } else {
                 return false;

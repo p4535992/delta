@@ -75,7 +75,6 @@ import flexjson.JSONSerializer;
  * 
  * @author Ats Uiboupin
  */
-@SuppressWarnings("unchecked")
 public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(ManageInheritablePrivilegesDialog.class);
@@ -281,6 +280,7 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
      * Action handler called when the Add button is pressed to process the current selection
      */
     public void addAuthorities(ActionEvent event) {
+        @SuppressWarnings("hiding")
         UIGenericPicker picker = (UIGenericPicker) event.getComponent().findComponent("picker");
         String[] results = picker.getSelectedResults();
         if (results != null) {
@@ -588,8 +588,8 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
         Map<String/* attributeName */, String/* attributeValue */> tbodyAttributes = new HashMap<String, String>();
         String groupCodeHtml = HtmlUtils.htmlEscape(groupCode).replaceAll(" ", "¤");
         tbodyAttributes.put("class", USERGROUP_MARKER_CLASS + " " + groupCodeHtml);
-        Map<String/* groupCode */, Map<String/* attributeName */, String/* attributeValue */>> tbodyAttributesByGroup = (Map<String, Map<String, String>>) ComponentUtil
-                .getAttribute(permissionsRichList, DetailsViewRenderer.ATTR_GROUP_TBODY_ATTRIBUTES);
+        Map<String/* groupCode */, Map<String/* attributeName */, String/* attributeValue */>> tbodyAttributesByGroup = (Map<String, Map<String, String>>)
+                ComponentUtil.getAttribute(permissionsRichList, DetailsViewRenderer.ATTR_GROUP_TBODY_ATTRIBUTES);
         tbodyAttributesByGroup.put(groupCode, tbodyAttributes);
         String groupDisplayName = groupNamesByCode.get(groupCode);
         UITableRow tr = (UITableRow) permissionsRichList.getFacet(groupCode);

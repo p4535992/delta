@@ -232,17 +232,27 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         boolean isWorking = DocumentStatus.WORKING.getValueName().equals(documentStatus);
         boolean isFinished = DocumentStatus.FINISHED.getValueName().equals(documentStatus);
         boolean hasPrivEditDoc = getPrivilegeService().hasPermissions(docRef, Privileges.EDIT_DOCUMENT);
-        boolean hasViewPrivsWithoutEdit = !hasPrivEditDoc && getPrivilegeService().hasPermissions(docRef, Privileges.VIEW_DOCUMENT_META_DATA, Privileges.VIEW_DOCUMENT_FILES);
+        boolean hasViewPrivs = getPrivilegeService().hasPermissions(docRef, Privileges.VIEW_DOCUMENT_META_DATA, Privileges.VIEW_DOCUMENT_FILES);
+        boolean hasViewPrivsWithoutEdit = !hasPrivEditDoc && hasViewPrivs;
         Boolean adminOrDocmanagerWithPermission = null;
         for (CompoundWorkflowDefinition cWorkflowDef : workflowDefs) {
             if (isWorking && hasPrivEditDoc) {
                 actionDefinitions.add(createActionDef(cWorkflowDef));
-            } else if (isFinished || hasViewPrivsWithoutEdit) {
+                continue;
+            } else if (isWorking && hasViewPrivsWithoutEdit) {
                 if (!hasOtherWFs(cWorkflowDef, WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW
                         , WorkflowSpecificModel.Types.INFORMATION_WORKFLOW, WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW)) {
                     actionDefinitions.add(createActionDef(cWorkflowDef));
+                    continue;
                 }
-            } else if (isFinished) {
+            } else if (isFinished && hasViewPrivs) {
+                if (!hasOtherWFs(cWorkflowDef, WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW
+                        , WorkflowSpecificModel.Types.INFORMATION_WORKFLOW, WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW)) {
+                    actionDefinitions.add(createActionDef(cWorkflowDef));
+                    continue;
+                }
+            }
+            if (isFinished) {
                 if (adminOrDocmanagerWithPermission == null) {
                     adminOrDocmanagerWithPermission = isAdminOrDocmanagerWithPermission(new Node(docRef), Privileges.VIEW_DOCUMENT_META_DATA, Privileges.VIEW_DOCUMENT_FILES);
                 }

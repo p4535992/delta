@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.privilege.service;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -188,7 +189,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
             } else {
                 UserPrivileges authPrivileges = privilegesByUsername.get(authority);
                 if (authPrivileges == null) {
-                    authPrivileges = new UserPrivileges(authority, userService.getUserFullName(authority));
+                    authPrivileges = new UserPrivileges(authority, userService.getUserFullNameWithUnitName(authority));
                     privilegesByUsername.put(authority, authPrivileges);
 
                     Set<String> curUserGroups = privMappings.getUserGroups().get(authority);
@@ -250,32 +251,51 @@ public class PrivilegeServiceImpl implements PrivilegeService {
         }
     }
 
-    private void updatePrivileges(NodeRef manageableRef, Map<String, UserPrivileges> privilegesByUsername) {
-        for (Iterator<Entry<String, UserPrivileges>> it = privilegesByUsername.entrySet().iterator(); it.hasNext();) {
+    private void updatePrivileges(NodeRef manageableRef, Map<String, UserPrivileges> privilegesByAuthority) {
+        for (Iterator<Entry<String, UserPrivileges>> it = privilegesByAuthority.entrySet().iterator(); it.hasNext();) {
             Entry<String, UserPrivileges> entry = it.next();
-            String userName = entry.getKey();
+            String authority = entry.getKey();
             UserPrivileges vo = entry.getValue();
             for (String permission : vo.getPrivilegesToDelete()) {
-                permissionService.deletePermission(manageableRef, userName, permission);
+                permissionService.deletePermission(manageableRef, authority, permission);
             }
             if (vo.isDeleted()) {
                 it.remove();
             } else {
                 if (vo.hasManageablePrivileges()) {
-                    Set<String> permissions = vo.getPrivilegesToAdd();
-                    Set<String> permissionsWithDependencies = new HashSet<String>(permissions);
-                    for (String permission : permissions) {
-                        Set<String> privilegeDependencies = DocumentCommonModel.Privileges.PRIVILEGE_DEPENDENCIES.get(permission);
-                        if (privilegeDependencies != null) {
-                            permissionsWithDependencies.addAll(privilegeDependencies);
-                        }
-                    }
-                    for (String permission : permissionsWithDependencies) {
-                        permissionService.setPermission(manageableRef, userName, permission, true);
-                    }
+                    setPermissions(manageableRef, authority, vo.getPrivilegesToAdd());
                 }
             }
         }
+    }
+
+    private Set<String> getPrivsWithDependencies(Set<String> permissions) {
+        Set<String> permissionsWithDependencies = new HashSet<String>(permissions);
+        for (String permission : permissions) {
+            Set<String> privilegeDependencies = DocumentCommonModel.Privileges.PRIVILEGE_DEPENDENCIES.get(permission);
+            if (privilegeDependencies != null) {
+                permissionsWithDependencies.addAll(privilegeDependencies);
+            }
+        }
+        return permissionsWithDependencies;
+    }
+
+    @Override
+    public Set<String> setPermissions(NodeRef manageableRef, String authority, String... privilegesToAdd) {
+        if (privilegesToAdd == null || privilegesToAdd.length == 0) {
+            throw new IllegalArgumentException("setPermissions() called without any privilegesToAdd");
+        }
+        return setPermissions(manageableRef, authority, new HashSet<String>(Arrays.asList(privilegesToAdd)));
+    }
+
+    private Set<String> setPermissions(NodeRef manageableRef, String authority, Set<String> privilegesToAdd) {
+        Assert.notNull(manageableRef, "setPermissions() called manageableRef");
+        Assert.notNull(authority, "setPermissions() called without authority");
+        Set<String> permissionsWithDependencies = getPrivsWithDependencies(privilegesToAdd);
+        for (String permission : permissionsWithDependencies) {
+            permissionService.setPermission(manageableRef, authority, permission, true);
+        }
+        return permissionsWithDependencies;
     }
 
     private void save(NodeRef manageableRef, Map<String/* userName */, UserPrivileges> privilegesByUsername, Set<String> ignoredGroups) {

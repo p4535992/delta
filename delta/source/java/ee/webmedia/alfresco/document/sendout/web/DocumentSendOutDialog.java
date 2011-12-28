@@ -125,6 +125,11 @@ public class DocumentSendOutDialog extends BaseDialogBean {
     public String init() {
         FacesContext context = FacesContext.getCurrentInstance();
         Node docNode = BeanHelper.getDocumentDialogHelperBean().getNode();
+        docNode.clearPermissionsCache();
+        if (!new SendOutActionEvaluator().evaluate(docNode)) {
+            MessageUtil.addErrorMessage("document_send_out_error_noPermission");
+            return null;
+        }
         if (!getNodeService().exists(docNode.getNodeRef())) {
             return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
         }

@@ -9,7 +9,7 @@
 
 <h:panelGroup id="assocs-panel-facets">
    <f:facet name="title">
-      <r:permissionEvaluator id="assocs-permission-evaluator" value="#{DocumentDynamicDialog.node}" allow="editDocument">
+      <r:permissionEvaluator id="assocs-permission-evaluator" value="#{DocumentDynamicDialog.node}" allow="viewDocumentMetaData">
          <a:actionLink image="/images/icons/import.gif" id="col3-text" showLink="false" tooltip="#{msg.document_assocAdd}" value="" 
             actionListener="#{DocumentDynamicDialog.searchDocsAndCases}" action="#docsearch-panel" rendered="#{not DocumentDynamicDialog.inEditMode}" >
          </a:actionLink>
