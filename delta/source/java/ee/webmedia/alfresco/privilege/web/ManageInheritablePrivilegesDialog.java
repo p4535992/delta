@@ -66,7 +66,6 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComparableTransformer;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.WebUtil;
 import flexjson.JSONSerializer;
 
@@ -81,8 +80,6 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
     public static final String BEAN_NAME = "ManageInheritablePrivilegesDialog";
 
     private static final String PARAM_CURRENT_GROUP = "currentGroup";
-
-    private static final Set<String> dynamicPrivilegesGroups = new HashSet<String>(Arrays.asList(UserService.AUTH_ADMINISTRATORS_GROUP));
 
     private static final String USERGROUP_MARKER_CLASS = "tbGroup";
 
@@ -107,6 +104,7 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
 
     public class State implements Serializable {
         private static final long serialVersionUID = 1L;
+        private PrivMappings privMappings;
 
         private NodeRef manageableRef;
         private List<UserPrivileges> userPrivileges;
@@ -122,15 +120,18 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
         public void reset() {
             manageableRef = null;
             userPrivileges = null;
+            privMappings = null;
         }
 
         public List<UserPrivileges> getUserPrivileges() {
             return userPrivileges;
         }
 
-    }
+        public PrivMappings getPrivMappings() {
+            return privMappings;
+        }
 
-    private PrivMappings privMappings;
+    }
 
     // FIXME PRIV2 Ats rename
     private boolean rebuildUserPrivilegesRows;
@@ -155,7 +156,7 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
         typeHandler.setDialogBean(this);
         typeHandler.setDialogState(state);
         MessageUtil.addStatusMessage(typeHandler.getInfoMessage());
-        privMappings = getPrivilegeService().getPrivMappings(manageableRef, typeHandler.getManageablePermissions());
+        state.privMappings = getPrivilegeService().getPrivMappings(manageableRef, typeHandler.getManageablePermissions());
         markPrivilegesBaseState = true;
     }
 
@@ -179,10 +180,10 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
             return null;
         }
         Map<String, UserPrivileges> loosingPrivileges = getVosThatLoosePrivileges();
-        if (validate(loosingPrivileges)) {
+        if (typeHandler.validate(loosingPrivileges)) {
             try {
-                getPrivilegeService().savePrivileges(state.getManageableRef(), privMappings.getPrivilegesByUsername()
-                        , privMappings.getPrivilegesByGroup(), typeHandler.getNodeType());
+                getPrivilegeService().savePrivileges(state.getManageableRef(), state.privMappings.getPrivilegesByUsername()
+                        , state.privMappings.getPrivilegesByGroup(), typeHandler.getNodeType());
                 MessageUtil.addInfoMessage("save_success");
                 init(state.getManageableRef(), true);
             } catch (RuntimeException e) {
@@ -191,19 +192,13 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
             }
             rebuildUserPrivilegesRows = true;
             picker.queueEvent(new UIGenericPicker.PickerEvent(picker, UIGenericPicker.ACTION_CLEAR, 0, null, null));
-        } else {
-            MessageUtil.addErrorMessage("save_failed");
         }
         return null;
     }
 
-    private boolean validate(Map<String, UserPrivileges> loosingPrivileges) {
-        return typeHandler.validate(loosingPrivileges);
-    }
-
     private Map<String, UserPrivileges> getVosThatLoosePrivileges() {
         Map<String /* userName */, UserPrivileges> vos = new HashMap<String, UserPrivileges>();
-        for (UserPrivileges vo : privMappings.getPrivilegesByUsername().values()) {
+        for (UserPrivileges vo : state.privMappings.getPrivilegesByUsername().values()) {
             Set<String> privilegesToDelete = vo.getPrivilegesToDelete();
             if (!privilegesToDelete.isEmpty() && !vo.getActivePrivileges().containsAll(privilegesToDelete)) {
                 vos.put(vo.getUserName(), vo); // at least one static privilege will be lost when saving
@@ -231,7 +226,6 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
         if (state != null) {
             state.reset();
         }
-        privMappings = null;
     }
 
     public UIGenericPicker getPicker() {
@@ -267,7 +261,7 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
             List<UIComponent> permissionRLChildren = ComponentUtil.getChildren(permissionsRichList);
             boolean editable = typeHandler.isEditable();
             for (String permission : typeHandler.getManageablePermissions()) {
-                if (!permission.equals(typeHandler.getImplicidPrivilege())) { // don't add implicit privilege column
+                if (!permission.equals(typeHandler.getImplicitPrivilege())) { // don't add implicit privilege column
                     permissionRLChildren.add(createPermissionColumn(permission, context, editable));
                 }
             }
@@ -303,7 +297,7 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
     /** @param event passed to MethodBinding */
     public void removeGroupWithUsers(ActionEvent event) {
         String groupName = ActionUtil.getParam(event, PARAM_CURRENT_GROUP);
-        UserPrivileges groupPrivs = privMappings.getPrivilegesByGroup().get(groupName);
+        UserPrivileges groupPrivs = state.privMappings.getPrivilegesByGroup().get(groupName);
         groupPrivs.setDeleted(true);
         finish();
     }
@@ -311,7 +305,7 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
     /** @param event passed to MethodBinding */
     public void inlineGroupUsers(ActionEvent event) {
         String groupName = ActionUtil.getParam(event, PARAM_CURRENT_GROUP);
-        UserPrivileges groupPrivs = privMappings.getPrivilegesByGroup().get(groupName);
+        UserPrivileges groupPrivs = state.privMappings.getPrivilegesByGroup().get(groupName);
         groupPrivs.setDeleted(true);
         Map<String, Boolean> privileges = groupPrivs.getPrivileges();
         Set<String> groupActivePrivs = new HashSet<String>(privileges.size());
@@ -345,7 +339,7 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
      * @param userName
      */
     private void deletePerson(String userName) {
-        UserPrivileges curUserVO = privMappings.getPrivilegesByUsername().get(userName);
+        UserPrivileges curUserVO = state.privMappings.getPrivilegesByUsername().get(userName);
         curUserVO.setDeleted(true);
         curUserVO.deletePrivileges(typeHandler.getManageablePermissions());
     }
@@ -365,6 +359,7 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
         permissionsRichList.getFacets().clear(); // remove also group rows that are actually rendered from facets
         DetailsViewRenderer.getFacetRows(permissionsRichList).clear();
         rebuildUserPrivilegesRows = false;
+        PrivMappings privMappings = state.privMappings;
         Map<String, UserPrivileges> privilegesByUsername = privMappings.getPrivilegesByUsername();
         Collection<UserPrivileges> privileges = privilegesByUsername.values();
         for (UserPrivileges userPrivs : privileges) {
@@ -373,7 +368,7 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
             }
         }
 
-        addDynamicUserPrivilegesRows();
+        addDynamicOwnerPrivileges();
 
         Map<String, UserPrivileges> privilegesByGroup = privMappings.getPrivilegesByGroup();
         addTbodyAttributesByGroup(GROUPLESS_GROUP); // this group is not in privilegesByGroup - need to call it so that groupless group header wouldn't disappear after refreshing
@@ -396,6 +391,8 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
                 }
             }
         }
+
+        typeHandler.addDynamicPrivileges();
 
         if (markPrivilegesBaseState) {
             for (UserPrivileges userPrivs : privileges) {
@@ -423,7 +420,7 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
         if (!permissionsChecked && BeanHelper.getApplicationService().isTest()) {
             final Collection<String> manageablePermissions = typeHandler.getManageablePermissions();
             final ArrayList<String> msgs = new ArrayList<String>();
-            for (final UserPrivileges row : privMappings.getPrivilegesByUsername().values()) {
+            for (final UserPrivileges row : state.privMappings.getPrivilegesByUsername().values()) {
                 final String userName = row.getUserName();
                 if (StringUtils.isBlank(userName)) {
                     continue;
@@ -486,26 +483,6 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
         return tableRowComparator;
     }
 
-    private void addDynamicUserPrivilegesRows() {
-        { // add rows for administrators group members
-            String group = UserService.AUTH_ADMINISTRATORS_GROUP;
-            Set<String> authorities = BeanHelper.getUserService().getUserNamesInGroup(group);
-            LOG.debug("authorities=" + authorities);
-            Collection<String> manageablePermissions = typeHandler.getManageablePermissions();
-            for (String authority : authorities) {
-                addAuthorityRow(authority, manageablePermissions, group, UserPrivileges.EMPTY_DYN_PRIV_REASON); // not null, because it is dynamic.
-            }
-            UserPrivileges groupPrivs = new UserPrivileges(group, getAuthorityService().getAuthorityDisplayName(group));
-            getPrivilegesByGroup().put(group, groupPrivs);
-            for (String manageablePermission : manageablePermissions) {
-                groupPrivs.addDynamicPrivilege(manageablePermission, MessageUtil.getMessage("manage_permissions_extraInfo_adminGroupHasAllPermissions"));
-            }
-        }
-
-        addDynamicOwnerPrivileges();
-        typeHandler.addDynamicPrivileges();
-    }
-
     /** add all privileges to object owner(and make row readOnly) */
     private void addDynamicOwnerPrivileges() {
         String ownerId = typeHandler.getObjectOwner();
@@ -537,16 +514,10 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
     }
 
     private UserPrivileges addAuthorityRow(String authority, Collection<String> privileges, String group, String extraPrivilegeReason) {
-        UserPrivileges vo = privMappings.getOrCreateUserPrivilegesVO(authority);
-        vo.setReadOnly(true);
+        UserPrivileges vo = state.privMappings.getOrCreateUserPrivilegesVO(authority);
         vo.addGroup(group);
-        if (extraPrivilegeReason != null) { // check against null not empty string that might still mean dyn.priv (UserPrivileges.EMPTY_DYN_PRIV_REASON)
-            for (String privilege : privileges) {
-                vo.addDynamicPrivilege(privilege, extraPrivilegeReason);
-            }
-        } else {
-            vo.addPrivileges(privileges);
-            throw new UnableToPerformException("Ats: supprize - tundub, et see kood on ikka kasutusel!"); // FIXME PRIV2 Ats
+        for (String privilege : privileges) {
+            vo.addDynamicPrivilege(privilege, extraPrivilegeReason);
         }
         addGroupRowIfNeeded(group);
         addTbodyAttributesByGroup(group);
@@ -603,6 +574,7 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
             UITableCell tableCell = new UITableCell();
             putAttribute(tableCell, "styleClass", grouplessGroup ? "expanded" : "users");
             addChildren(tr, tableCell);
+            String groupPrivsBindingPrefix = BEAN_NAME + ".privilegesByGroup['" + groupCode + "']";
             {
                 UITableCell uiTableCell = new UITableCell();
                 putAttribute(uiTableCell, "styleClass", "left");
@@ -615,6 +587,8 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
                     viewGroup.setValue(groupDisplayName);
                     viewGroup.setActionListener(application.createMethodBinding(
                             "#{" + BEAN_NAME + ".viewGroup}", new Class[] { javax.faces.event.ActionEvent.class }));
+                    String tooltipVB = "#{" + groupPrivsBindingPrefix + ".explanationByPrivilege['" + typeHandler.getImplicitPrivilege() + "']}";
+                    UIComponentTagUtils.setValueBinding(context, viewGroup, "tooltip", tooltipVB);
                     addChildren(viewGroup, ComponentUtil.createUIParam("id", groupCode, application));
                     addChildren(uiTableCell, viewGroup);
                 }
@@ -622,9 +596,8 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
             }
 
             boolean editable = typeHandler.isEditable();
-            String groupPrivsBindingPrefix = BEAN_NAME + ".privilegesByGroup['" + groupCode + "']";
             for (String permission : typeHandler.getManageablePermissions()) {
-                if (permission.equals(typeHandler.getImplicidPrivilege())) {
+                if (permission.equals(typeHandler.getImplicitPrivilege())) {
                     continue; // don't add implicit privilege column
                 }
                 tableCell = new UITableCell();
@@ -642,7 +615,7 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
             }
 
             tableCell = new UITableCell();
-            if (editable && !dynamicPrivilegesGroups.contains(groupCode)) {
+            if (editable && !UserService.AUTH_ADMINISTRATORS_GROUP.equals(groupCode)) {
                 if (!grouplessGroup) {
                     UIActionLink inlineGroupLink = createRemoveLink(context, RemoveLink.INLINE_GROUP_USERS, groupPrivsBindingPrefix);
                     addChildren(inlineGroupLink, createUIParam(PARAM_CURRENT_GROUP, groupCode, application));
@@ -660,12 +633,12 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
 
     /** Used for JSF binding */
     public Map<String, UserPrivileges> getPrivilegesByUsername() {
-        return privMappings.getPrivilegesByUsername();
+        return state.privMappings.getPrivilegesByUsername();
     }
 
     /** Used for JSF binding to modify privileges of the group */
     public Map<String, UserPrivileges> getPrivilegesByGroup() {
-        return privMappings.getPrivilegesByGroup();
+        return state.privMappings.getPrivilegesByGroup();
     }
 
     private void addAuthorityUsers(String authorityName) {
@@ -678,17 +651,17 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
         }
         UserPrivileges privs;
         if (authority.isGroup()) {
-            Map<String, UserPrivileges> privilegesByGroup = privMappings.getPrivilegesByGroup();
+            Map<String, UserPrivileges> privilegesByGroup = state.privMappings.getPrivilegesByGroup();
             privs = new UserPrivileges(authorityName, getAuthorityService().getAuthorityDisplayName(authorityName));
             privilegesByGroup.put(authorityName, privs);
         } else { // authority is user
             privs = addUser(authorityName);
         }
-        privs.addPrivilege(typeHandler.getImplicidPrivilege(), false);
+        privs.addPrivilege(typeHandler.getImplicitPrivilege(), false);
     }
 
     private UserPrivileges addUser(String userName) {
-        UserPrivileges userPrivs = privMappings.getOrCreateUserPrivilegesVO(userName);
+        UserPrivileges userPrivs = state.privMappings.getOrCreateUserPrivilegesVO(userName);
         userPrivs.setDeleted(false);// maybe existed and was deleted before saving
         userPrivs.addGroup(GROUPLESS_GROUP);
         return userPrivs;

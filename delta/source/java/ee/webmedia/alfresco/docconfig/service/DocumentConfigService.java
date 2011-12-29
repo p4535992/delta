@@ -88,4 +88,12 @@ public interface DocumentConfigService {
 
     DynamicPropertyDefinition createPropertyDefinition(Field field);
 
+    /**
+     * NB! before this method can be called, it must be guaranteed that this fieldId is actually used in DocumentDynamicModel!
+     * 
+     * @param fieldId
+     * @return
+     */
+    DynamicPropertyDefinition getPropertyDefinitionById(String fieldId);
+
 }

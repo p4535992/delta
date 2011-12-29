@@ -23,9 +23,9 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  * 
  * @author Ats Uiboupin
  */
+// FIXME PRIV2 Ats - rename to AuthPrivileges - algselt oli see ainult kasutajate jaoks, nüüd ka gruppide jaoks sama objekt
 public class UserPrivileges implements Serializable {
     private static final long serialVersionUID = 1L;
-    public static final String EMPTY_DYN_PRIV_REASON = "";
 
     /** used for grouping consecutive rows with same value into same tbody element */
     private final String authName;
@@ -47,12 +47,20 @@ public class UserPrivileges implements Serializable {
     private final Map<String/* privilege */, Boolean/* active */> privileges = new HashMap<String, Boolean>();
     protected final Map<String/* privilege */, Boolean/* inherited */> inheritanceByPrivilege = new HashMap<String, Boolean>();
     private String inheritedMsg;
+    private String staticMsg;
     protected final Map<String/* privilege */, String/* explanation */> explanationByPrivilege = new HashMap<String, String>() {
         private static final long serialVersionUID = 1L;
 
         @Override
         public String get(Object privilege) {
             String explanation = getDynamicPrivReasons().get(privilege);
+            Boolean alsoStatic = dynamicPrivileges.get(privilege);
+            if (alsoStatic != null && alsoStatic) {
+                if (staticMsg == null) {
+                    staticMsg = MessageUtil.getMessage("manage_permissions_extraInfo_static");
+                }
+                explanation = staticMsg + (StringUtils.isBlank(explanation) ? "" : "; ") + explanation;
+            }
             Boolean inherited = inheritanceByPrivilege.get(privilege);
             if (inherited != null && inherited) {
                 if (inheritedMsg == null) {
@@ -138,11 +146,16 @@ public class UserPrivileges implements Serializable {
         if (deleted) {
             return Collections.<String> emptySet();// don't add any privileges
         }
-        Set<String> privilegesToDelete = getStaticPrivileges();
+        Set<String> privilegesToAdd = getStaticPrivileges();
         if (staticPrivilegesBeforeChanges != null) {
-            privilegesToDelete.removeAll(staticPrivilegesBeforeChanges);
+            privilegesToAdd.removeAll(staticPrivilegesBeforeChanges);
         }
-        return privilegesToDelete;
+        if (!privilegesToAdd.isEmpty()) {
+            // if at least one privilege was manually added, then add statically all privileges that authority has at the moment
+            // (in case some of those dynamic privileges will be lost)
+            privilegesToAdd.addAll(dynamicPrivileges.keySet());
+        }
+        return privilegesToAdd;
     }
 
     /**
@@ -218,7 +231,6 @@ public class UserPrivileges implements Serializable {
             for (Entry<String, Set<String>> entry : entrySet) {
                 String priv = entry.getKey();
                 Set<String> reasons = new HashSet<String>(entry.getValue());
-                reasons.remove(EMPTY_DYN_PRIV_REASON);
                 dynamicPrivReasonsCached.put(priv, StringUtils.join(reasons, "; "));
             }
         }
@@ -227,11 +239,6 @@ public class UserPrivileges implements Serializable {
 
     public Map<String, String> getExplanationByPrivilege() {
         return explanationByPrivilege;
-    }
-
-    @Deprecated
-    public Map<String, Boolean> getDynamicPrivileges() {
-        return dynamicPrivileges;
     }
 
     /** used by JSF to determine if checkBox should be readRnly */
@@ -251,13 +258,9 @@ public class UserPrivileges implements Serializable {
         return userDisplayName;
     }
 
-    public boolean isReadOnly() {
-        return readOnly;
-    }
-
     /** used by JSF to determine if checkBox should be readRnly */
     public boolean isRemovable() {
-        return dynamicPrivileges.isEmpty() && inheritanceByPrivilege.isEmpty();
+        return !readOnly && groups.isEmpty() && inheritanceByPrivilege.isEmpty();
     }
 
     public void setReadOnly(boolean readOnly) {

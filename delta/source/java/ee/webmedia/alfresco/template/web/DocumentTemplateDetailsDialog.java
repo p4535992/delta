@@ -49,7 +49,7 @@ public class DocumentTemplateDetailsDialog extends BaseDialogBean {
         String fileNameBase = FilenameUtils.getBaseName(templateName);
         String fileNameExtension = FilenameUtils.getExtension(templateName);
         docTemplNode.getProperties().put(DocumentTemplateServiceImpl.TEMP_PROP_FILE_NAME_BASE.toString(), fileNameBase);
-        docTemplNode.getProperties().put(DocumentTemplateServiceImpl.TEMP_PROP_FILE_NAME_EXTENSION.toString(), fileNameExtension);
+        docTemplNode.getProperties().put(DocumentTemplateServiceImpl.TEMP_PROP_FILE_NAME_EXTENSION.toString(), "." + fileNameExtension);
     }
 
     public Node getCurrentNode() {

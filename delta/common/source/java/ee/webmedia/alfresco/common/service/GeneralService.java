@@ -288,4 +288,7 @@ public interface GeneralService {
      */
     void runOnBackground(final RunAsWork<Void> work, final String threadName);
 
+    /** Return true if storeRef is primary or additional archivals storeRef */
+    boolean isArchivalsStoreRef(StoreRef storeRef);
+
 }

@@ -78,6 +78,8 @@
       <property name="searchService" ref="SearchService" />
       <property name="dictionaryService" ref="DictionaryService" />
       <property name="adrService" ref="AdrService" />
+      <property name="documentService" ref="DocumentService" />
+      <property name="caseService" ref="CaseService" />
       <property name="archivalsStore" value="workspace://ArchivalsStore" />
    </bean>
 

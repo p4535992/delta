@@ -139,6 +139,24 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     }
 
     @Override
+    public boolean isArchivalsStoreRef(StoreRef storeRef) {
+        if (storeRef == null) {
+            return false;
+        }
+        if (storeRef.equals(archivalsStore)) {
+            return true;
+        }
+        if (archivalsStoreVOs != null) {
+            for (ArchivalsStoreVO storeVO : archivalsStoreVOs) {
+                if (storeVO.getStoreRef().equals(storeRef)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    @Override
     public NodeRef getNodeRef(String nodeRefXPath) {
         return getNodeRef(nodeRefXPath, store);
     }

@@ -7,12 +7,15 @@
 <%@ page isELIgnored="false"%>
 <%@ page import="org.alfresco.web.app.Application" %>
 <%@ page import="ee.webmedia.alfresco.document.web.BaseDocumentListDialog" %>
+<%@ page import="ee.webmedia.alfresco.utils.MessageUtil" %>
 
 <f:verbatim>
 <script type="text/javascript">
 
-$jQ(".selectAllHeader").change(function() {
-   $jQ(".headerSelectable").attr('checked',$jQ(this).attr('checked'));
+$jQ(document).ready(function(){
+   $jQ(".selectAllHeader").change(function() {
+      $jQ(".headerSelectable").attr('checked',$jQ(this).attr('checked'));
+   });
 });
 
 </script>
@@ -23,6 +26,35 @@ $jQ(".selectAllHeader").change(function() {
       <h:outputText value="#{DialogManager.bean.infoMessage}" />
    </a:panel>
 </a:booleanEvaluator>
+
+<a:booleanEvaluator id="confirmMoveAssociatedDocumentsEvaluator" value="#{DocumentListDialog.confirmMoveAssociatedDocuments}">
+   <f:verbatim>
+   <script type="text/javascript">
+      $jQ(document).ready(function () {
+         var message = '<%= MessageUtil.getMessageAndEscapeJS("documents_move_associated_documents_confirmation") %>';
+         if(confirm(message)){
+            $jQ("#documents-after-confirmation-accepted-link").eq(0).click();
+         } else {
+            $jQ("#documents-after-confirmation-rejected-link").eq(0).click();
+         }
+      });
+   </script>
+   </f:verbatim>
+   <a:actionLink id="documents-after-confirmation-accepted-link" value="confirmationAcceptedLink" actionListener="#{DocumentListDialog.massChangeDocLocationConfirmed}" styleClass="hidden" />
+   <a:actionLink id="documents-after-confirmation-rejected-link" value="confirmationRejectedLink" actionListener="#{DocumentListDialog.resetConfirmation}" styleClass="hidden" />   
+</a:booleanEvaluator>
+
+<a:booleanEvaluator id="showDocumentsLocationPopupEvaluator" value="#{DocumentListDialog.showDocumentsLocationPopup}">
+   <f:verbatim>
+      <script type="text/javascript">
+      $jQ(document).ready(function () {
+                     showModal('documentLocation_popup');
+                     return false;
+      });
+      </script>
+   </f:verbatim>
+</a:booleanEvaluator>
+
 
 <a:panel id="document-panel" styleClass="panel-100 with-pager" label="#{DialogManager.bean.listTitle}" progressive="true">
 

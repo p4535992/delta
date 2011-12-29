@@ -117,6 +117,8 @@ public interface UserService {
 
     String getUserFullNameWithUnitName(String userName);
 
+    String getUserFullNameWithOrganizationPath(String userName);
+
     String getUserFullNameAndId(String userName);
 
     /**

@@ -20,9 +20,9 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
-import ee.webmedia.alfresco.document.service.event.DocumentWorkflowStatusEventListener;
 import ee.webmedia.alfresco.document.web.evaluator.IsOwnerEvaluator;
 import ee.webmedia.alfresco.privilege.model.UserPrivileges;
+import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
 import ee.webmedia.alfresco.privilege.web.AbstractInheritingPrivilegesHandler;
 import ee.webmedia.alfresco.privilege.web.PrivilegesHandler;
 import ee.webmedia.alfresco.utils.MessageData;
@@ -30,7 +30,6 @@ import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.Predicate;
 import ee.webmedia.alfresco.workflow.model.Status;
-import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
@@ -67,6 +66,9 @@ public class DocumentTypePrivilegesHandler extends AbstractInheritingPrivilegesH
             for (UserPrivileges privs : state.getUserPrivileges()) {
                 privs.addDynamicPrivilege(Privileges.VIEW_DOCUMENT_FILES, docIsPublic);
             }
+            for (UserPrivileges groupPrivs : state.getPrivMappings().getPrivilegesByGroup().values()) {
+                groupPrivs.addDynamicPrivilege(Privileges.VIEW_DOCUMENT_FILES, docIsPublic);
+            }
         }
     }
 
@@ -84,13 +86,7 @@ public class DocumentTypePrivilegesHandler extends AbstractInheritingPrivilegesH
         Set<Task> tasks = ws.getTasks(docRef, new Predicate<Task>() {
             @Override
             public boolean eval(Task task) {
-                if (!task.isStatus(Status.IN_PROGRESS)) {
-                    return false;
-                }
-                if (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK, WorkflowSpecificModel.Types.REVIEW_TASK, WorkflowSpecificModel.Types.SIGNATURE_TASK)) {
-                    return true;
-                }
-                return false;
+                return task.isStatus(Status.IN_PROGRESS);
             }
         });
         if (tasks.isEmpty()) {
@@ -104,7 +100,7 @@ public class DocumentTypePrivilegesHandler extends AbstractInheritingPrivilegesH
             if (userPrivileges == null) {
                 continue;
             }
-            Set<String> requiredPrivileges = DocumentWorkflowStatusEventListener.getRequiredPrivsForInprogressTask(task, docRef, fileService);
+            Set<String> requiredPrivileges = PrivilegeUtil.getPrivsWithDependencies(PrivilegeUtil.getRequiredPrivsForInprogressTask(task, docRef, fileService));
             requiredPrivileges.removeAll(userPrivileges.getActivePrivileges());
             if (!requiredPrivileges.isEmpty()) {
                 Set<String> missingPrivileges = missingPrivsByUser.get(userPrivileges.getUserName());
@@ -113,7 +109,6 @@ public class DocumentTypePrivilegesHandler extends AbstractInheritingPrivilegesH
                 } else {
                     missingPrivileges.addAll(requiredPrivileges);
                 }
-                LOG.debug("User " + userPrivileges.getUserName() + " is missing required privileges '" + missingPrivileges + "' for task " + task.getNodeRef());
                 missingPrivsByUser.put(userPrivileges.getUserName(), missingPrivileges);
             }
 
@@ -130,7 +125,7 @@ public class DocumentTypePrivilegesHandler extends AbstractInheritingPrivilegesH
                     missingPrivileges.add(MessageUtil.getMessage(context, "permission_" + privilege));
                 }
                 missingUserPrivilegeMessages.add(new MessageDataImpl("document_manage_permissions_save_error_removedWfPrivileges_missingUserPrivileges"
-                        , userDisplayName, missingPrivileges));
+                        , userDisplayName, StringUtils.join(missingPrivileges, ", ")));
             }
             MessageUtil.addErrorMessage("document_manage_permissions_save_error_removedWfPrivileges", missingUserPrivilegeMessages);
         }

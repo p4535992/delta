@@ -13,8 +13,10 @@ import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SERI
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.VOLUME;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIInput;
@@ -26,7 +28,6 @@ import javax.faces.event.PhaseId;
 import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
-import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
@@ -85,6 +86,8 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
     }
 
     public static final QName CASE_LABEL_EDITABLE = RepoUtil.createTransientProp(CASE.getLocalName() + "LabelEditable");
+    public static final QName UPDATED_ASSOCIATED_DOCUMENTS = RepoUtil.createTransientProp("updatedAssociatedDocuments");
+    public static final QName DOCUMENT_TYPE_IDS = RepoUtil.createTransientProp("documentTypeIds");
 
     /*
      * In EDIT_MODE we use properties:
@@ -348,7 +351,16 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             boolean isSearchFilter = DocumentSearchModel.Types.FILTER.equals(document.getType());
 
             String documentTypeId = (String) document.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID);
-            boolean isSearchFilterOrDocTypeNull = isSearchFilter || documentTypeId == null;
+            @SuppressWarnings("unchecked")
+            Set<String> documentTypeIds = (Set<String>) document.getProperties().get(DOCUMENT_TYPE_IDS);
+            Set<String> idList;
+            if (documentTypeId != null) {
+                idList = new HashSet<String>();
+                idList.add(documentTypeId);
+            } else {
+                idList = documentTypeIds;
+            }
+            boolean isSearchFilterOrDocTypeNull = isSearchFilter || (documentTypeId == null && (documentTypeIds == null || documentTypeIds.isEmpty()));
             { // Function
                 List<Function> allFunctions;
                 if (isSearchFilter) {
@@ -364,7 +376,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                     if (isSearchFilterOrDocTypeNull) {
                         openSeries = getSeriesService().getAllSeriesByFunction(function.getNodeRef());
                     } else {
-                        openSeries = getSeriesService().getAllSeriesByFunction(function.getNodeRef(), DocListUnitStatus.OPEN, documentTypeId);
+                        openSeries = getSeriesService().getAllSeriesByFunction(function.getNodeRef(), DocListUnitStatus.OPEN, idList);
                     }
                     if (openSeries.size() == 0) {
                         continue;
@@ -399,7 +411,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 if (isSearchFilterOrDocTypeNull) {
                     allSeries = getSeriesService().getAllSeriesByFunction(functionRef);
                 } else {
-                    allSeries = getSeriesService().getAllSeriesByFunction(functionRef, DocListUnitStatus.OPEN, documentTypeId);
+                    allSeries = getSeriesService().getAllSeriesByFunction(functionRef, DocListUnitStatus.OPEN, idList);
                 }
                 series = new ArrayList<SelectItem>(allSeries.size());
                 series.add(new SelectItem("", ""));
@@ -644,6 +656,9 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
         props.put(CASE_LABEL_EDITABLE.toString(), caseLabel);
     }
 
+    /**
+     * NB! This method may change document nodeRef when moving from archive to active store
+     */
     @Override
     public void save(DocumentDynamic document) {
         NodeRef docNodeRef = document.getNodeRef();
@@ -705,40 +720,20 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 documentService.updateParentNodesContainingDocsCount(docNodeRef, false);
                 NodeRef newDocNodeRef = nodeService.moveNode(docNodeRef, targetParentRef //
                         , DocumentCommonModel.Assocs.DOCUMENT, DocumentCommonModel.Assocs.DOCUMENT).getChildRef();
-                if (!newDocNodeRef.equals(docNodeRef)) {
+                // don't compare entire nodeRef, but only nodeRef ids to allow inter-store moving
+                if (!newDocNodeRef.getId().equals(docNodeRef.getId())) {
                     throw new RuntimeException("NodeRef changed while moving");
                 }
+                document.getNode().updateNodeRef(newDocNodeRef);
+                docNodeRef = newDocNodeRef;
                 documentService.updateParentNodesContainingDocsCount(docNodeRef, true);
 
                 if (existingParentNode != null && !targetParentRef.equals(existingParentNode.getNodeRef())) {
-                    if (documentService.isReplyOrFollowupDoc(docNodeRef, null)) {
-                        throw new UnableToPerformException(MessageSeverity.ERROR, "document_errorMsg_register_movingNotEnabled_isReplyOrFollowUp");
-                    }
-                    final boolean isInitialDocWithRepliesOrFollowUps //
-                    = nodeService.getSourceAssocs(docNodeRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY).size() > 0 //
-                            || nodeService.getSourceAssocs(docNodeRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP).size() > 0;
-                    if (isInitialDocWithRepliesOrFollowUps) {
-                        throw new UnableToPerformException(MessageSeverity.ERROR, "document_errorMsg_register_movingNotEnabled_hasReplyOrFollowUp");
-                    }
                     final String existingRegNr = (String) document.getProp(REG_NUMBER);
                     if (StringUtils.isNotBlank(existingRegNr)) {
                         // reg. number is changed if function, series or volume is changed
                         if (!previousVolume.getNodeRef().equals(volumeNodeRef)) {
                             documentService.registerDocumentRelocating(document.getNode(), previousVolume);
-                        }
-                    }
-                } else {
-                    // Make sure that the node's volume is same as it's followUp's or reply's
-                    List<AssociationRef> replies = nodeService.getTargetAssocs(docNodeRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY);
-                    List<AssociationRef> followUps = nodeService.getTargetAssocs(docNodeRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP);
-                    AssociationRef assoc = replies.size() > 0 ? replies.get(0) : followUps.size() > 0 ? followUps.get(0) : null;
-                    if (assoc != null) {
-                        NodeRef baseRef = assoc.getTargetRef();
-                        Node baseCase = documentService.getCaseByDocument(baseRef);
-                        Node baseVol = documentService.getVolumeByDocument(baseRef, baseCase);
-
-                        if (!baseVol.getNodeRef().equals(volumeNodeRef)) {
-                            throw new UnableToPerformException(MessageSeverity.ERROR, "document_errorMsg_register_movingNotEnabled_isReplyOrFollowUp");
                         }
                     }
                 }

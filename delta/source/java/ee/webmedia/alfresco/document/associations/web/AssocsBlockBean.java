@@ -81,7 +81,7 @@ public class AssocsBlockBean implements DocumentDynamicBlock {
     }
 
     public String getRepliesAssocsBindingName() {
-        WmNode document = getDocumentFromDialog();// FIXME document should be provided by bean
+        WmNode document = getDocumentFromDialog();
         if (new AddReplyAssocEvaluator().evaluate(document)) {
             return REPLIES_METHOD_BINDING_NAME;
         }

@@ -342,7 +342,8 @@ public class PutMethod extends WebDAVMethod {
                 && !DocumentStatus.WORKING.getValueName().equals(doc.getProp(DocumentCommonModel.Props.DOC_STATUS))
                 || updateDisabled.contains(field.getFieldId()) || readOnlyFields.contains(field.getFieldTypeEnum())
                 || DocumentDynamicModel.Props.FIRST_KEYWORD_LEVEL.getLocalName().equals(field.getOriginalFieldId())
-                || DocumentDynamicModel.Props.SECOND_KEYWORD_LEVEL.getLocalName().equals(field.getOriginalFieldId());
+                || DocumentDynamicModel.Props.SECOND_KEYWORD_LEVEL.getLocalName().equals(field.getOriginalFieldId())
+                || FieldType.STRUCT_UNIT == field.getFieldTypeEnum();
     }
 
     private class ContractPartyField implements Serializable {

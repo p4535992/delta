@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.document.web;
 
+import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.getActionId;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -8,11 +10,12 @@ import javax.faces.component.UICommand;
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
-import javax.faces.event.ActionEvent;
 
 import org.alfresco.web.ui.common.Utils;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent;
+import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent.ModalLayerSubmitEvent;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
@@ -22,6 +25,7 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 public class DocumentLocationModalComponent extends UICommand {
 
     private static final String FIELD_VALUE_SAVE = "SAVE";
+    private static final String FIELD_VALUE_CANCEL = "CANCEL";
     public static final String MODAL_ID = "documentLocation_popup";
 
     public DocumentLocationModalComponent() {
@@ -35,7 +39,10 @@ public class DocumentLocationModalComponent extends UICommand {
         String actionValue = requestMap.get(getClientId(context));
         if (StringUtils.isNotBlank(actionValue)) {
             if (StringUtils.equals(FIELD_VALUE_SAVE, actionValue)) {
-                ActionEvent event = new ActionEvent(this);
+                ModalLayerSubmitEvent event = new ModalLayerSubmitEvent(this, ModalLayerComponent.ACTION_SUBMIT);
+                queueEvent(event);
+            } else if (StringUtils.equals(FIELD_VALUE_CANCEL, actionValue)) {
+                ModalLayerSubmitEvent event = new ModalLayerSubmitEvent(this, ModalLayerComponent.ACTION_CLEAR);
                 queueEvent(event);
             } else {
                 throw new RuntimeException("Unknown action: " + actionValue);
@@ -49,7 +56,9 @@ public class DocumentLocationModalComponent extends UICommand {
             return;
         }
         ResponseWriter out = context.getResponseWriter();
-        ComponentUtil.writeModalHeader(out, MODAL_ID, MessageUtil.getMessage("document_move"), null);
+        String onClose = ComponentUtil.generateFieldSetter(context, this, getActionId(context, this), "")
+                + Utils.generateFormSubmit(context, this, getClientId(context), FIELD_VALUE_CANCEL);
+        ComponentUtil.writeModalHeader(out, MODAL_ID, MessageUtil.getMessage("document_move"), onClose);
         out.write("<table><tbody><tr><td>");
 
     }

@@ -31,14 +31,14 @@ public class RegisterDocumentEvaluator extends BaseActionEvaluator {
 
     @Override
     public boolean evaluate(Node docNode) {
+        if (!new ViewStateActionEvaluator().evaluate(docNode)) {
+            return false;
+        }
         return canRegister(docNode, true);
     }
 
     public boolean canRegister(Node docNode, boolean checkStoppedOrInprogressWorkflows) {
         final FacesContext context = FacesContext.getCurrentInstance();
-        if (!new ViewStateActionEvaluator().evaluate(docNode)) {
-            return false;
-        }
         if (!isNotRegistered(docNode)) {
             return false;
         }

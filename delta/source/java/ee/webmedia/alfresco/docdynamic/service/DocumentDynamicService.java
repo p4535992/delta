@@ -86,4 +86,9 @@ public interface DocumentDynamicService {
 
     boolean isShowMessageIfUnregistered();
 
+    /** Same as updateDocument; return list of original nodeRefs that were updated by the method */
+    List<NodeRef> updateDocumentGetOriginalNodeRefs(DocumentDynamic documentOriginal, List<String> saveListenerBeanNames);
+
+    String getDocumentType(NodeRef documentRef);
+
 }

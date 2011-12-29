@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.template.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentTemplateService;
+
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,6 +23,7 @@ import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.collections.Closure;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
 import ee.webmedia.alfresco.classificator.enums.TemplateType;
@@ -127,7 +130,7 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
         }
 
         Map<String, Object> props = docTemplateNode.getProperties();
-        String newName = (String) props.get(DocumentTemplateServiceImpl.TEMP_PROP_FILE_NAME_BASE.toString())
+        String newName = StringUtils.strip((String) props.get(DocumentTemplateServiceImpl.TEMP_PROP_FILE_NAME_BASE.toString()))
                 + props.get(DocumentTemplateServiceImpl.TEMP_PROP_FILE_NAME_EXTENSION.toString());
         FilenameUtil.checkPlusInFileName(newName);
         try {

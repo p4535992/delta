@@ -102,12 +102,21 @@ public class CombinedPropReader {
             if (fields.length >= 2 && StringUtils.isNotEmpty(fields[1])) {
                 generatorName = fields[1].trim();
             }
+
+            Map<String, String> customAttributes = getAttributes(propDesc, fields);
+            String displayLabelIdKey = "display-label-id";
+            if (customAttributes.containsKey(displayLabelIdKey)) {
+                componentPropVO.setPropertyLabel(MessageUtil.getMessage(customAttributes.remove(displayLabelIdKey)));
+            }
+
             if (node != null) { // set label and component generator, if it was not explicitly specified
                 // get property definition
                 PropertyDefinition propDef = ComponentUtil.getPropertyDefinition(context, node, propName);
 
                 // set property label
-                componentPropVO.setPropertyLabel(ComponentUtil.resolveDisplayLabel(context, propDef, propName));
+                if (StringUtils.isBlank(componentPropVO.getPropertyLabel())) {
+                    componentPropVO.setPropertyLabel(ComponentUtil.resolveDisplayLabel(context, propDef, propName));
+                }
 
                 if (StringUtils.isBlank(generatorName)) {
                     if (propDef != null) {
@@ -129,7 +138,7 @@ public class CombinedPropReader {
             componentPropVO.setGeneratorName(generatorName);
 
             // get attributes
-            componentPropVO.setCustomAttributes(getAttributes(propDesc, fields));
+            componentPropVO.setCustomAttributes(customAttributes);
 
             componentPropVOs.add(componentPropVO);
         }

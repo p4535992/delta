@@ -97,15 +97,20 @@ public abstract class PrivilegesHandler implements Serializable {
         return null;
     }
 
-    public String getImplicidPrivilege() {
+    public String getImplicitPrivilege() {
         return DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA;
     }
 
+    /**
+     * All authorities should have been added by the time of calling this method.
+     * This method allows adding more privileges to already added authorities
+     */
     protected void addDynamicPrivileges() {
         // subclasses could add more dynamic privileges if needed
     }
 
-    protected boolean validate(@SuppressWarnings("unused") Map<String, UserPrivileges> loosingPrivileges) {
+    /** @param loosingPrivileges - privileges by authority that are removed */
+    protected boolean validate(Map<String, UserPrivileges> loosingPrivileges) {
         return true; // subclasses could override this method
     }
 

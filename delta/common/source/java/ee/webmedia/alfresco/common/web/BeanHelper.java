@@ -15,6 +15,8 @@ import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.cmr.security.PersonService;
 import org.alfresco.service.cmr.view.ExporterService;
 import org.alfresco.service.cmr.view.ImporterService;
+import org.alfresco.service.namespace.NamespacePrefixResolver;
+import org.alfresco.service.namespace.NamespacePrefixResolverProvider;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.transaction.TransactionService;
@@ -101,7 +103,6 @@ import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.parameters.web.ParametersImportDialog;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.privilege.web.ManageInheritablePrivilegesDialog;
-import ee.webmedia.alfresco.privilege.web.ManagePrivilegesDialog;
 import ee.webmedia.alfresco.register.service.RegisterService;
 import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.series.web.SeriesDetailsDialog;
@@ -124,16 +125,28 @@ import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImplFSStub;
  * 
  * @author Ats Uiboupin
  */
-public class BeanHelper {
+public class BeanHelper implements NamespacePrefixResolverProvider {
+    private static final long serialVersionUID = 1L;
+
+    private static BeanHelper self = new BeanHelper();
+
+    private BeanHelper() {
+        // private singleton constructor
+    }
+
+    public static BeanHelper getInstance() {
+        return self;
+    }
+
+    @Override
+    public NamespacePrefixResolver getNamespacePrefixResolver() {
+        return getNamespaceService();
+    }
 
     // START: web beans
 
     public static DialogManager getDialogManager() {
         return getJsfBean(DialogManager.class, DialogManager.BEAN_NAME);
-    }
-
-    public static ManagePrivilegesDialog getManagePrivilegesDialog() {
-        return getJsfBean(ManagePrivilegesDialog.class, ManagePrivilegesDialog.BEAN_NAME);
     }
 
     public static ManageInheritablePrivilegesDialog getManageInheritablePrivilegesDialog() {

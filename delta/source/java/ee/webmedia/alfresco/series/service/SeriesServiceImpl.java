@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
@@ -78,11 +79,11 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     }
 
     @Override
-    public List<Series> getAllSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status, String docTypeId) {
+    public List<Series> getAllSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status, Set<String> docTypeIds) {
         List<Series> series = getAllSeriesByFunction(functionNodeRef);
         for (Iterator<Series> i = series.iterator(); i.hasNext();) {
             Series s = i.next();
-            if (!status.getValueName().equals(s.getStatus()) || !s.getDocType().contains(docTypeId)) {
+            if (!status.getValueName().equals(s.getStatus()) || !s.getDocType().containsAll(docTypeIds)) {
                 i.remove();
             }
         }

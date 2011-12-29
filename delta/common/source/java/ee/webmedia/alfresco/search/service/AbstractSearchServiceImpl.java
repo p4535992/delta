@@ -118,7 +118,7 @@ public abstract class AbstractSearchServiceImpl {
                         continue;
                     }
                     if (log.isDebugEnabled()) {
-                        log.debug("getDocumentsQuickSearch - found date match: " + searchWord + " -> " + formatLuceneDate(date, false));
+                        log.debug("getDocumentsQuickSearch - found date match: " + searchWord + " -> " + formatLuceneDate(date));
                     }
 
                     boolean exists = false;

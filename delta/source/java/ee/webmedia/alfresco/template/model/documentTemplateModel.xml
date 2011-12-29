@@ -17,7 +17,7 @@
          <properties>
             <property name="docTempl:name">
                <type>d:text</type>
-               <mandatory enforced="false">true</mandatory>
+               <mandatory enforced="true">true</mandatory>
             </property>
             <property name="docTempl:comment">
                <type>d:text</type>

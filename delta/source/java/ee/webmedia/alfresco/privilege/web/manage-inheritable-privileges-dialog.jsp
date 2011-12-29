@@ -63,7 +63,7 @@
          <f:facet name="header">
             <h:outputText value="#{msg.manage_permissions_column_name}" />
          </f:facet>
-         <h:outputText value="#{r.userDisplayName}" />
+         <h:outputText value="#{r.userDisplayName}" title="#{r.explanationByPrivilege[ManageInheritablePrivilegesDialog.typeHandler.implicitPrivilege]}" />
       </a:column>
 
       <%-- OTHER COLUMNS ARE ADDED IN JAVA WHILE BINDING TO DIALOG --%>

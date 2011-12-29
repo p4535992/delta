@@ -409,7 +409,8 @@
 
             <cl:classificator view:childName="cl:storageType">
                <cl:name>storageType</cl:name>
-               <cl:addRemoveValues>false</cl:addRemoveValues>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+               <cl:deleteEnabled>false</cl:deleteEnabled>
                <view:associations>
                   <cl:classificatorValue>
 

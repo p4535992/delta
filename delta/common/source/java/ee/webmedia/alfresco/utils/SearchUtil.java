@@ -2,7 +2,6 @@ package ee.webmedia.alfresco.utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -22,23 +21,20 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.apache.lucene.queryParser.QueryParser;
 
-import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
-
 /**
  * @author Alar Kvell
  */
 public class SearchUtil {
 
     public static FastDateFormat luceneDateFormat = FastDateFormat.getInstance("yyyy-MM-dd'T'00:00:00.000");
-    public static FastDateFormat luceneResidualDateFormat = FastDateFormat.getInstance("yyyy-MM-dd");
 
     /**
      * @param date
      * @param residual
      * @return "yyyy-MM-dd'T'00:00:00.000" if the property is not residual, else "yyyy-MM-dd"
      */
-    public static String formatLuceneDate(Date date, boolean residual) {
-        return residual ? luceneResidualDateFormat.format(date) : luceneDateFormat.format(date);
+    public static String formatLuceneDate(Date date) {
+        return luceneDateFormat.format(date);
     }
 
     /**
@@ -234,12 +230,7 @@ public class SearchUtil {
         if (date == null) {
             return null;
         }
-        // format is like dateProp:"2010-01-08T00:00:00.000"
-        boolean isResidual = documentPropName.getNamespaceURI().equals(DocumentDynamicModel.URI);
-        if (isResidual) {
-            return generatePropertyWildcardQuery(documentPropName, formatLuceneDate(date, isResidual), false, false, true);
-        }
-        return generatePropertyExactQuery(documentPropName, formatLuceneDate(date, isResidual), false);
+        return generatePropertyExactQuery(documentPropName, formatLuceneDate(date), false);
     }
 
     // High-level generation
@@ -376,23 +367,15 @@ public class SearchUtil {
         // then we don't display an error message. generated query won't find anything
         String begin = "MIN";
         String end = "MAX";
-        String beginResidual = "MIN";
-        String endResidual = "MAX";
         if (beginDate != null) {
-            begin = formatLuceneDate(beginDate, false);
-            beginResidual = formatLuceneDate(beginDate, true);
+            begin = formatLuceneDate(beginDate);
         }
         if (endDate != null) {
-            end = formatLuceneDate(endDate, false);
-            Calendar cal = Calendar.getInstance();
-            cal.setTime(endDate);
-            cal.add(Calendar.DAY_OF_YEAR, 1); // need to add one day because end is not included in the results
-            endResidual = formatLuceneDate(cal.getTime(), true); //
+            end = formatLuceneDate(endDate);
         }
         List<String> queryParts = new ArrayList<String>(documentPropNames.length);
         for (QName documentPropName : documentPropNames) {
-            boolean isResidual = documentPropName.getNamespaceURI().equals(DocumentDynamicModel.URI);
-            String query = "@" + Repository.escapeQName(documentPropName) + ":[" + (isResidual ? beginResidual : begin) + " TO " + (isResidual ? endResidual : end) + "]";
+            String query = "@" + Repository.escapeQName(documentPropName) + ":[" + begin + " TO " + end + "]";
             queryParts.add(query);
         }
         return joinQueryPartsOr(queryParts, false);

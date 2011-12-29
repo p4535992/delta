@@ -4,11 +4,14 @@ import static ee.webmedia.alfresco.utils.SearchUtil.generateStringExactQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
 
+import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
@@ -21,14 +24,18 @@ import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.ResultSetRow;
 import org.alfresco.service.cmr.search.SearchParameters;
 import org.alfresco.service.cmr.search.SearchService;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.adr.service.AdrService;
 import ee.webmedia.alfresco.archivals.model.ArchivalsModel;
+import ee.webmedia.alfresco.cases.model.Case;
+import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
@@ -52,6 +59,8 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     private SearchService searchService;
     private DictionaryService dictionaryService;
     private AdrService adrService;
+    private DocumentService documentService;
+    private CaseService caseService;
 
     private StoreRef archivalsStore;
 
@@ -97,7 +106,31 @@ public class ArchivalsServiceImpl implements ArchivalsService {
                 VolumeModel.Associations.VOLUME, VolumeModel.Associations.VOLUME).getChildRef();
         nodeService.setProperty(archivedVolumeNodeRef, VolumeModel.Props.ARCHIVING_NOTE, archivingNote);
         seriesService.updateContainingDocsCountByVolume(archivedSeriesRef, archivedVolumeNodeRef, true);
+        updateDocumentLocation(volume, archivedFunRef, archivedSeriesRef, archivedVolumeNodeRef);
         return archivedVolumeNodeRef;
+    }
+
+    private void updateDocumentLocation(Volume originalVolume, NodeRef archivedFunRef, NodeRef archivedSeriesRef, NodeRef archivedVolumeRef) {
+        if (originalVolume.isContainsCases()) {
+            for (Case aCase : caseService.getAllCasesByVolume(archivedVolumeRef)) {
+                List<NodeRef> documents = documentService.getAllDocumentRefsByParentRef(aCase.getNode().getNodeRef());
+                updateDocumentLocationProps(archivedFunRef, archivedSeriesRef, archivedVolumeRef, aCase.getNode().getNodeRef(), documents);
+            }
+        } else {
+            List<NodeRef> documents = documentService.getAllDocumentRefsByParentRef(archivedVolumeRef);
+            updateDocumentLocationProps(archivedFunRef, archivedSeriesRef, archivedVolumeRef, null, documents);
+        }
+    }
+
+    private void updateDocumentLocationProps(NodeRef archivedFunRef, NodeRef archivedSeriesRef, NodeRef archivedVolumeRef, NodeRef archivedCaseRef, List<NodeRef> docRefs) {
+        for (NodeRef docRef : docRefs) {
+            Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+            props.put(DocumentCommonModel.Props.FUNCTION, archivedFunRef);
+            props.put(DocumentCommonModel.Props.SERIES, archivedSeriesRef);
+            props.put(DocumentCommonModel.Props.VOLUME, archivedVolumeRef);
+            props.put(DocumentCommonModel.Props.CASE, archivedCaseRef);
+            nodeService.addProperties(docRef, props);
+        }
     }
 
     @Override
@@ -227,7 +260,16 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         this.adrService = adrService;
     }
 
+    public void setDocumentService(DocumentService documentService) {
+        this.documentService = documentService;
+    }
+
+    public void setCaseService(CaseService caseService) {
+        this.caseService = caseService;
+    }
+
     public void setArchivalsStore(String archivalsStore) {
         this.archivalsStore = new StoreRef(archivalsStore);
     }
+
 }

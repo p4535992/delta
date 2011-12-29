@@ -27,6 +27,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.service.namespace.QNameMap;
 import org.alfresco.util.GUID;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.ObjectUtils;
@@ -117,7 +118,8 @@ public class RepoUtil {
     }
 
     public static Map<String, Object> toStringProperties(Map<QName, Serializable> props) {
-        Map<String, Object> results = new HashMap<String, Object>(props.size());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> results = new QNameMap<String, Object>(BeanHelper.getInstance()); // can get value by QName
         Set<Entry<QName, Serializable>> entrySet = props.entrySet();
         for (Entry<QName, Serializable> entry : entrySet) {
             results.put(entry.getKey().toString(), entry.getValue());

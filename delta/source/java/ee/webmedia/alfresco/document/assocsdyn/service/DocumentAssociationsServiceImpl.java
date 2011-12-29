@@ -340,6 +340,24 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
         return assocInfos;
     }
 
+    @Override
+    public boolean isBaseOrReplyOrFollowUpDocument(NodeRef docRef, Map<String, Map<String, AssociationRef>> addedAssociations) {
+        if (addedAssociations != null) {
+            Map<String, AssociationRef> addedAssocs = addedAssociations.get(DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP.toString());
+            if (addedAssocs != null && !addedAssocs.isEmpty()) {
+                return true;
+            }
+            addedAssocs = addedAssociations.get(DocumentCommonModel.Assocs.DOCUMENT_REPLY.toString());
+            if (addedAssocs != null && !addedAssocs.isEmpty()) {
+                return true;
+            }
+        }
+        return !nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY).isEmpty()
+                || !nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP).isEmpty()
+                || !nodeService.getSourceAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY).isEmpty()
+                || !nodeService.getSourceAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP).isEmpty();
+    }
+
     private void addDocAssocInfo(AssociationRef assocRef, boolean isSourceAssoc, ArrayList<DocAssocInfo> assocInfos) {
         DocAssocInfo assocInf = getDocAssocInfo(assocRef, isSourceAssoc);
         if (assocInf != null) {

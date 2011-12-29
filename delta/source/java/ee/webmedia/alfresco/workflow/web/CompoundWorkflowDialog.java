@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.workflow.web;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 import static ee.webmedia.alfresco.parameters.model.Parameters.MAX_ATTACHED_FILE_SIZE;
+import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.isAdminOrDocmanagerWithPermission;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.TASK_INDEX;
 import static ee.webmedia.alfresco.workflow.web.TaskListGenerator.WF_INDEX;
 
@@ -49,7 +50,9 @@ import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
+import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
@@ -1028,5 +1031,60 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         case CONTINUING:
             continueValidatedWorkflow(true);
         }
+    }
+
+    @Override
+    protected Document getParentDocument() {
+        return new Document(compoundWorkflow.getParent());
+    }
+
+    @Override
+    protected boolean isAddLinkForWorkflow(Document doc, QName workflowType) {
+        boolean addLinkForThisWorkflow = false;
+        if (WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW.equals(workflowType)) {
+            if (doc.isDocStatus(DocumentStatus.WORKING) && doc.hasPermission(Privileges.EDIT_DOCUMENT)) {
+                addLinkForThisWorkflow = true;
+            } else if (doc.isDocStatus(DocumentStatus.FINISHED) && isAdminOrDocmanagerWithPermission(doc, Privileges.VIEW_DOCUMENT_FILES, Privileges.VIEW_DOCUMENT_META_DATA)) {
+                addLinkForThisWorkflow = true;
+            }
+        } else if (WorkflowSpecificModel.Types.OPINION_WORKFLOW.equals(workflowType)) {
+            if (doc.isDocStatus(DocumentStatus.WORKING) && doc.hasPermission(Privileges.EDIT_DOCUMENT)) {
+                addLinkForThisWorkflow = true;
+            }
+        } else if (WorkflowSpecificModel.Types.CONFIRMATION_WORKFLOW.equals(workflowType)) {
+            if (doc.isDocStatus(DocumentStatus.WORKING) && doc.hasPermission(Privileges.EDIT_DOCUMENT) && getWorkflowService().isConfirmationWorkflowEnabled()) {
+                addLinkForThisWorkflow = true;
+            }
+        } else if (WorkflowSpecificModel.Types.REVIEW_WORKFLOW.equals(workflowType)) {
+            if (doc.isDocStatus(DocumentStatus.WORKING) && doc.hasPermission(Privileges.EDIT_DOCUMENT)) {
+                addLinkForThisWorkflow = true;
+            }
+        } else if (WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW.equals(workflowType)) {
+            if (doc.hasPermissions(Privileges.VIEW_DOCUMENT_FILES, Privileges.VIEW_DOCUMENT_META_DATA) && getWorkflowService().isOrderAssignmentWorkflowEnabled()) {
+                addLinkForThisWorkflow = true;
+            }
+        } else if (WorkflowSpecificModel.Types.DOC_REGISTRATION_WORKFLOW.equals(workflowType)) {
+            if (doc.isDocStatus(DocumentStatus.WORKING) && getUserService().isAdministrator()) {
+                addLinkForThisWorkflow = true;
+            }
+        } else if (WorkflowSpecificModel.Types.INFORMATION_WORKFLOW.equals(workflowType)) {
+            if (doc.hasPermissions(Privileges.VIEW_DOCUMENT_FILES, Privileges.VIEW_DOCUMENT_META_DATA)) {
+                addLinkForThisWorkflow = true;
+            }
+        } else if (WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW.equals(workflowType)) {
+            if (doc.hasPermissions(Privileges.VIEW_DOCUMENT_FILES, Privileges.VIEW_DOCUMENT_META_DATA)) {
+                addLinkForThisWorkflow = true;
+            }
+        } else if (WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW.equals(workflowType)) {
+            if (getWorkflowService().externalReviewWorkflowEnabled() && doc.isDocStatus(DocumentStatus.WORKING) && doc.hasPermission(Privileges.EDIT_DOCUMENT)) {
+                addLinkForThisWorkflow = true;
+            }
+        } else if (WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_WORKFLOW.equals(workflowType)) {
+            addLinkForThisWorkflow = false;
+        } else {
+            throw new UnableToPerformException("unknown workflow type " + workflowType.getLocalName()
+                    + " - not sure if it should be displayed or not when configuring compound workflow bound to document");
+        }
+        return addLinkForThisWorkflow;
     }
 }

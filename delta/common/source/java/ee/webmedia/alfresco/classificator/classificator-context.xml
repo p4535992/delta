@@ -435,6 +435,18 @@
             <ref bean="invoiceTypesClassificatorValueBootstrap1" />
          </list>
       </property>       
+   </bean>
+       
+   <bean id="storageTypeClassificatorUpdaterBootstrap" class="ee.webmedia.alfresco.classificator.bootstrap.StorageTypeClassificatorUpdaterBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="generalService" ref="GeneralService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="classificatorRootBootstrap" />
+         </list>
+      </property>       
    </bean>    
    
    <bean id="storageTypeClassificatorValueBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">

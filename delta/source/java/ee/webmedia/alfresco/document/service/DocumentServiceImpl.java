@@ -48,8 +48,6 @@ import javax.faces.context.FacesContext;
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.content.transform.ContentTransformer;
-import org.alfresco.repo.node.NodeServicePolicies;
-import org.alfresco.repo.policy.JavaBehaviour;
 import org.alfresco.repo.policy.PolicyComponent;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
@@ -104,7 +102,6 @@ import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
-import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
 import ee.webmedia.alfresco.document.assocsdyn.service.DocumentAssociationsService;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
@@ -130,11 +127,7 @@ import ee.webmedia.alfresco.imap.model.ImapModel;
 import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.notification.service.NotificationService;
-import ee.webmedia.alfresco.privilege.model.PrivilegeMappings;
-import ee.webmedia.alfresco.privilege.model.PrivilegeModel;
-import ee.webmedia.alfresco.privilege.model.UserPrivileges;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
-import ee.webmedia.alfresco.privilege.service.PrivilegeService.PrivilegesChangedListener;
 import ee.webmedia.alfresco.register.model.Register;
 import ee.webmedia.alfresco.register.service.RegisterService;
 import ee.webmedia.alfresco.series.model.Series;
@@ -165,7 +158,7 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
 /**
  * @author Alar Kvell
  */
-public class DocumentServiceImpl implements DocumentService, NodeServicePolicies.OnCreateAssociationPolicy, BeanFactoryAware, PrivilegesChangedListener, InitializingBean {
+public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, InitializingBean {
 
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentServiceImpl.class);
 
@@ -218,9 +211,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        privilegeService.registerListener(DocumentCommonModel.Types.DOCUMENT, this);
         PolicyComponent policyComponent = (PolicyComponent) beanFactory.getBean("policyComponent", PolicyComponent.class);
-        policyComponent.bindAssociationBehaviour(QName.createQName(NamespaceService.ALFRESCO_URI, "onCreateAssociation"), this, new JavaBehaviour(this, "onCreateAssociation"));
     }
 
     @Override
@@ -1746,8 +1737,13 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
 
     private Node registerDocument(Node docNode, boolean isRelocating, Node previousVolume) {
         docNode.clearPermissionsCache(); // permissions might have been lost after rendering registration button
-        if (!new RegisterDocumentEvaluator().canRegister(docNode, false)) {
-            throw new UnableToPerformException("document_registerDoc_error_noPermission");
+        if (!isRelocating) {
+            if (!new RegisterDocumentEvaluator().canRegister(docNode, false)) {
+                throw new UnableToPerformException("document_registerDoc_error_noPermission");
+            }
+        } else {
+            // when relocating, this is the only check from RegisterDocumentEvaluator.canRegister, that we need to perform
+            BeanHelper.getDocumentService().throwIfNotDynamicDoc(docNode);
         }
         final Map<String, Object> props = docNode.getProperties();
         if (isRegistered(docNode) && !isRelocating) {
@@ -2680,81 +2676,6 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
                 VolumeModel.Props.CONTAINING_DOCS_COUNT, documentAdded, null);
         generalService.updateParentContainingDocsCount(generalService.getAncestorNodeRefWithType(documentNodeRef, SeriesModel.Types.SERIES),
                 SeriesModel.Props.CONTAINING_DOCS_COUNT, documentAdded, null);
-    }
-
-    @Override
-    public void onSavePrivileges(NodeRef docRef, Map<String, UserPrivileges> privilegesByUsername) {
-        DocumentAssociationsService docAssocService = getDocumentAssociationsService();
-        for (UserPrivileges vo : privilegesByUsername.values()) {
-            if (!vo.isDeleted() && vo.getPrivilegesToAdd().contains(DocumentCommonModel.Privileges.EDIT_DOCUMENT)) {
-                List<DocAssocInfo> assocInfos = docAssocService.getAssocInfos(new Node(docRef));
-                for (DocAssocInfo docAssocInfo : assocInfos) {
-                    if (!docAssocInfo.isCase()) {
-                        NodeRef relatedDocRef = docAssocInfo.getNodeRef();
-                        privilegeService.addPrivilege(relatedDocRef, null, DocumentCommonModel.Types.DOCUMENT, vo.getUserName()
-                                , DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA, DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES);
-                    }
-                }
-            }
-        }
-    }
-
-    @Override
-    public void onAddPrivileges(NodeRef docRef, Set<String> permissions) {
-        Set<String> clonedPermissions = new HashSet<String>(permissions); // to avoid concurrentModificationException
-        for (String permission : clonedPermissions) {
-            Set<String> privilegeDependencies = DocumentCommonModel.Privileges.PRIVILEGE_DEPENDENCIES.get(permission);
-            if (privilegeDependencies != null) {
-                permissions.addAll(privilegeDependencies);
-            }
-        }
-    }
-
-    @Override
-    public void onCreateAssociation(AssociationRef nodeAssocRef) {
-        if (nodeAssocRef.getSourceRef().equals(nodeAssocRef.getTargetRef())) {
-            return;
-        }
-        QName assocType = nodeAssocRef.getTypeQName();
-        if (DocumentCommonModel.Assocs.DOCUMENT_REPLY.equals(assocType) || DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP.equals(assocType)
-                || DocumentCommonModel.Assocs.DOCUMENT_2_DOCUMENT.equals(assocType)) {
-            log.debug("onCreateAssoc " + nodeAssocRef.getSourceRef() + "->" + nodeAssocRef.getTargetRef());
-            NodeRef docRef = nodeAssocRef.getSourceRef();
-            NodeRef otherDocRef = nodeAssocRef.getTargetRef();
-
-            addPrivilegesBasedOnOther(otherDocRef, docRef);
-            addPrivilegesBasedOnOther(docRef, otherDocRef);
-        }
-    }
-
-    private void addPrivilegesBasedOnOther(NodeRef fromRef, NodeRef toRef) {
-        Map<QName, Serializable> nodeProps = nodeService.getProperties(toRef);
-        @SuppressWarnings("unchecked")
-        List<String> privUsers = (List<String>) nodeProps.get(PrivilegeModel.Props.USER);
-        @SuppressWarnings("unchecked")
-        List<String> privGroups = (List<String>) nodeProps.get(PrivilegeModel.Props.GROUP);
-        RepoUtil.validateSameSize(privUsers, privGroups, "users", "groups");
-        Map<String, Object> toNodeUserGroupMapping = RepoUtil.toStringProperties(nodeProps);
-
-        { // add all permissions to the user of document that is owner of other document
-            String otherDocOwner = (String) nodeService.getProperty(fromRef, DocumentCommonModel.Props.OWNER_ID);
-            if (StringUtils.isNotBlank(otherDocOwner)) {
-                privilegeService.addPrivilege(toRef, toNodeUserGroupMapping, null, otherDocOwner, Privileges.VIEW_DOCUMENT_META_DATA);
-            }
-        }
-        // FIXME PRIV2 Ats
-        PrivilegeMappings privMappingsFrom = privilegeService.getPrivilegeMappings(fromRef);
-        Collection<UserPrivileges> fromNodeUserPrivileges = privMappingsFrom.getPrivilegesByUsername().values();
-        if (!fromNodeUserPrivileges.isEmpty()) {
-            for (UserPrivileges userPrivs : fromNodeUserPrivileges) {
-                Set<String> staticPrivileges = userPrivs.getStaticPrivileges();
-                if (staticPrivileges.contains(DocumentCommonModel.Privileges.EDIT_DOCUMENT)) {
-                    privilegeService.addPrivilege(toRef, toNodeUserGroupMapping, DocumentCommonModel.Types.DOCUMENT, userPrivs.getUserName(),
-                            DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA);
-                }
-            }
-        }
-        nodeService.addProperties(toRef, RepoUtil.toQNameProperties(toNodeUserGroupMapping));
     }
 
     // START: getters / setters

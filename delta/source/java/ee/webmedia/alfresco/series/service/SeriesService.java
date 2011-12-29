@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.series.service;
 
 import java.util.List;
+import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.Node;
@@ -25,7 +26,7 @@ public interface SeriesService {
 
     List<Series> getAllSeriesByFunction(NodeRef functionNodeRef);
 
-    List<Series> getAllSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status, String docTypeId);
+    List<Series> getAllSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status, Set<String> docTypeIds);
 
     List<Series> getAllSeriesByFunctionForStructUnit(NodeRef functionNodeRef, Integer structUnitId);
 

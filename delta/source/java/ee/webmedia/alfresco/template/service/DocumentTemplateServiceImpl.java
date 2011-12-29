@@ -79,6 +79,7 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
+import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
 import ee.webmedia.alfresco.versions.service.VersionsService;
 import ee.webmedia.alfresco.volume.model.Volume;
@@ -144,8 +145,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     public void updateDocTemplate(Node docTemplNode) {
         Map<String, Object> properties = docTemplNode.getProperties();
         String oldName = (String) properties.get(DocumentTemplateModel.Prop.NAME.toString());
-        String newName = properties.get(TEMP_PROP_FILE_NAME_BASE.toString()) + "."
-                + properties.get(TEMP_PROP_FILE_NAME_EXTENSION.toString());
+        String newName = StringUtils.strip((String) properties.get(TEMP_PROP_FILE_NAME_BASE.toString())) + properties.get(TEMP_PROP_FILE_NAME_EXTENSION.toString());
         for (DocumentTemplate documentTemplate : getTemplates()) {
             String nameForCheck = documentTemplate.getName();
             if (!StringUtils.equals(nameForCheck, oldName) && StringUtils.equals(nameForCheck, newName)) {
@@ -630,6 +630,11 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             } else if (FieldType.CHECKBOX == fieldType) {
                 String msgKey = (Boolean) propValue ? "yes" : "no";
                 formulas.put(fieldId, MessageUtil.getMessage(msgKey));
+                continue;
+            } else if (FieldType.STRUCT_UNIT == fieldType) {
+                @SuppressWarnings("unchecked")
+                List<String> orgStruct = (List<String>) propValue;
+                formulas.put(fieldId, UserUtil.getDisplayUnit(orgStruct));
                 continue;
             }
 

@@ -5,6 +5,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -55,6 +56,29 @@ public class AddressbookUtil {
         return list;
     }
 
+    private static String createSelectItemDescription(Node addressBookNode) {
+        Map<String, Object> props = addressBookNode.getProperties();
+        StringBuilder description = new StringBuilder();
+        if (addressBookNode.getType().equals(Types.PRIV_PERSON)) {
+            description.append(UserUtil.getPersonFullName((String) props.get(Props.PERSON_FIRST_NAME), (String) props.get(Props.PERSON_LAST_NAME)));
+        } else if (addressBookNode.getType().equals(Types.ORGANIZATION)) {
+            description.append((String) props.get(Props.ORGANIZATION_NAME.toString()));
+        } else {
+            return null;
+        }
+        List<String> descriptionList = new ArrayList<String>();
+        for (QName propName : Arrays.asList(Props.ADDRESS1, Props.ADDRESS2, Props.POSTAL, Props.CITY)) {
+            String propValue = (String) props.get(propName.toString());
+            if (StringUtils.isNotBlank(propValue)) {
+                descriptionList.add(propValue);
+            }
+        }
+        if (!descriptionList.isEmpty()) {
+            description.append(" (" + StringUtils.join(descriptionList, ", ") + ")");
+        }
+        return description.toString();
+    }
+
     /**
      * Transforms the list of contact nodes (usually returned by the search) to SelectItems in the following form:
      * OrganizationName (organizationLabel, email) -- if it's an organization
@@ -94,8 +118,12 @@ public class AddressbookUtil {
             if (!node.getType().equals(Types.CONTACT_GROUP)) {
                 label.append(")");
             }
-
-            results[i++] = new SelectItem(value, label.toString());
+            String description = createSelectItemDescription(node);
+            if (StringUtils.isNotBlank(description)) {
+                results[i++] = new SelectItem(value, label.toString(), description);
+            } else {
+                results[i++] = new SelectItem(value, label.toString());
+            }
         }
 
         WebUtil.sort(results);

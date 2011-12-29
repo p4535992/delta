@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.document.assocsdyn.service;
 
 import java.util.List;
+import java.util.Map;
 
 import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -47,4 +48,7 @@ public interface DocumentAssociationsService {
     DocAssocInfo getDocAssocInfo(AssociationRef assocRef, boolean isSourceAssoc);
 
     void updateModifiedDateTime(NodeRef sourceNodeRef, NodeRef targetNodeRef);
+
+    /** Return true if document is source or target node in followUp or reply association */
+    boolean isBaseOrReplyOrFollowUpDocument(NodeRef docRef, Map<String, Map<String, AssociationRef>> addedAssocs);
 }

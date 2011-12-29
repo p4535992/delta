@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.docdynamic.service;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.getDocTypeIdAndVersionNr;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FILE_CONTENTS;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -30,6 +32,7 @@ import org.alfresco.service.cmr.dictionary.ChildAssociationDefinition;
 import org.alfresco.service.cmr.dictionary.ClassDefinition;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.dictionary.TypeDefinition;
+import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -37,6 +40,9 @@ import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.collections.Transformer;
+import org.apache.commons.collections.comparators.NullComparator;
+import org.apache.commons.collections.comparators.TransformingComparator;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeansException;
@@ -58,6 +64,8 @@ import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.docconfig.generator.SaveListener;
 import ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGenerator;
+import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
+import ee.webmedia.alfresco.docconfig.service.DocumentConfig;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
@@ -428,10 +436,61 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
     @Override
     public DocumentDynamic updateDocument(DocumentDynamic documentOriginal, List<String> saveListenerBeanNames) {
-        DocumentDynamic document = documentOriginal.clone();
-        NodeRef docRef = document.getNodeRef();
+        return updateDocumentGetDocAndNodeRefs(documentOriginal, saveListenerBeanNames).getFirst();
+    }
 
-        setParentFolderProps(document);
+    @Override
+    public List<NodeRef> updateDocumentGetOriginalNodeRefs(DocumentDynamic documentOriginal, List<String> saveListenerBeanNames) {
+        return updateDocumentGetDocAndNodeRefs(documentOriginal, saveListenerBeanNames).getSecond();
+    }
+
+    private static final Comparator<DocumentDynamic> DOCUMENT_BY_REG_DATE_TIME_COMPARATOR;
+    static {
+        @SuppressWarnings("unchecked")
+        Comparator<DocumentDynamic> tmp = new TransformingComparator(new Transformer() {
+            @Override
+            public Object transform(Object input) {
+                return ((DocumentDynamic) input).getRegDateTime();
+            }
+        }, new NullComparator());
+        DOCUMENT_BY_REG_DATE_TIME_COMPARATOR = tmp;
+    }
+
+    private Pair<DocumentDynamic, List<NodeRef>> updateDocumentGetDocAndNodeRefs(DocumentDynamic documentOriginal, List<String> saveListenerBeanNames) {
+        // originalDocumentNodeRef may be null, but in that case it must be the only null nodeRef among all documents saved during this operation
+        NodeRef originalDocumentNodeRef = documentOriginal.getNodeRef();
+        List<DocumentDynamic> associatedDocs = new ArrayList<DocumentDynamic>();
+        Set<NodeRef> checkedDocs = new HashSet<NodeRef>();
+        associatedDocs.add(documentOriginal);
+        NodeRef functionRef = documentOriginal.getFunction();
+        NodeRef seriesRef = documentOriginal.getSeries();
+        NodeRef volumeRef = documentOriginal.getVolume();
+        NodeRef caseRef = documentOriginal.getCase();
+        String caseLabel = documentOriginal.getProp(DocumentLocationGenerator.CASE_LABEL_EDITABLE);
+        getAssociatedDocRefs(documentOriginal, associatedDocs, checkedDocs);
+        DocumentDynamic originalDocumentUpdated = null;
+        List<NodeRef> originalNodeRefs = new ArrayList<NodeRef>();
+        Collections.sort(associatedDocs, DOCUMENT_BY_REG_DATE_TIME_COMPARATOR);
+        for (DocumentDynamic associatedDocument : associatedDocs) {
+            if (!associatedDocument.getNodeRef().getId().equals(originalDocumentNodeRef.getId())) {
+                DocumentConfig cfg = getDocumentConfigService().getConfig(associatedDocument.getNode());
+                associatedDocument.setFunction(functionRef);
+                associatedDocument.setSeries(seriesRef);
+                associatedDocument.setVolume(volumeRef);
+                associatedDocument.setCase(caseRef);
+                associatedDocument.setProp(DocumentLocationGenerator.CASE_LABEL_EDITABLE, caseLabel);
+                originalNodeRefs.add(associatedDocument.getNodeRef());
+                update(associatedDocument, cfg.getSaveListenerBeanNames());
+            } else {
+                originalDocumentUpdated = update(associatedDocument, saveListenerBeanNames);
+            }
+        }
+        return new Pair<DocumentDynamic, List<NodeRef>>(originalDocumentUpdated, originalNodeRefs);
+    }
+
+    // NB! This method may change document nodeRef when moving from archive to active store (see DocumentLocationGenerator save method)
+    private DocumentDynamic update(DocumentDynamic documentOriginal, List<String> saveListenerBeanNames) {
+        DocumentDynamic document = documentOriginal.clone();
 
         if (saveListenerBeanNames != null) {
             ValidationHelperImpl validationHelper = new ValidationHelperImpl();
@@ -448,7 +507,9 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             }
         }
 
+        setParentFolderProps(document);
         WmNode docNode = document.getNode();
+        NodeRef docRef = document.getNodeRef();
 
         // If document is updated for the first time, add SEARCHABLE aspect to document and it's children files.
         Map<String, Object> docProps = document.getNode().getProperties();
@@ -496,6 +557,73 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         }
         generalService.saveAddedAssocs(docNode);
         return document;
+    }
+
+    // NB! It is assumed that only one unsaved document may occur in the updated hierarchy (i.e. one document with nodeRef = null)
+    // Otherwise all unsaved nodes are considered as same nodeRef and only the first one is processed
+    private void getAssociatedDocRefs(DocumentDynamic document, List<DocumentDynamic> associatedDocs, Set<NodeRef> checkedDocs) {
+        NodeRef docRef = document.getNodeRef();
+        Set<DocumentDynamic> currentAssociatedDocs = new HashSet<DocumentDynamic>();
+        if (checkedDocs.contains(docRef)) {
+            return;
+        }
+        checkedDocs.add(docRef);
+
+        Collection<AssociationRef> newAssocs = new ArrayList<AssociationRef>();
+        Map<String, AssociationRef> addedAssocs = document.getNode().getAddedAssociations().get(DocumentCommonModel.Assocs.DOCUMENT_REPLY.toString());
+        if (addedAssocs != null) {
+            newAssocs.addAll(addedAssocs.values());
+        }
+        addedAssocs = document.getNode().getAddedAssociations().get(DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP.toString());
+        if (addedAssocs != null) {
+            newAssocs.addAll(addedAssocs.values());
+        }
+        if (newAssocs != null) {
+            for (AssociationRef assocRef : newAssocs) {
+                NodeRef sourceRef = assocRef.getSourceRef();
+                if (!sourceRef.equals(docRef) && !containsDocument(sourceRef, associatedDocs)) {
+                    currentAssociatedDocs.add(getDocument(sourceRef));
+                }
+                NodeRef targetRef = assocRef.getTargetRef();
+                if (!targetRef.equals(docRef) && !containsDocument(targetRef, associatedDocs)) {
+                    currentAssociatedDocs.add(getDocument(targetRef));
+                }
+            }
+        }
+        if (docRef != null) {
+            List<AssociationRef> targetAssocs = nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY);
+            targetAssocs.addAll(nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP));
+            for (AssociationRef assoc : targetAssocs) {
+                NodeRef targetRef = assoc.getTargetRef();
+                if (!containsDocument(targetRef, associatedDocs)) {
+                    currentAssociatedDocs.add(getDocument(targetRef));
+                }
+            }
+            List<AssociationRef> sourceAssocs = nodeService.getSourceAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY);
+            sourceAssocs.addAll(nodeService.getSourceAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP));
+            for (AssociationRef assoc : sourceAssocs) {
+                NodeRef sourceRef = assoc.getSourceRef();
+                if (!containsDocument(sourceRef, associatedDocs)) {
+                    currentAssociatedDocs.add(getDocument(sourceRef));
+                }
+            }
+        }
+        associatedDocs.addAll(currentAssociatedDocs);
+        for (DocumentDynamic associatedDoc : currentAssociatedDocs) {
+            getAssociatedDocRefs(associatedDoc, associatedDocs, checkedDocs);
+        }
+    }
+
+    private boolean containsDocument(NodeRef sourceRef, List<DocumentDynamic> associatedDocs) {
+        if (associatedDocs == null) {
+            return false;
+        }
+        for (DocumentDynamic document : associatedDocs) {
+            if (document.getNodeRef().equals(sourceRef)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void logChangedProp(NodeRef docRef, Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs, Pair<QName, Pair<Serializable, Serializable>> keyOldNewValuesPair) {
@@ -603,14 +731,19 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
     @Override
     public boolean isOutgoingLetter(NodeRef docRef) {
-        String docTypeId = (String) nodeService.getProperty(docRef, Props.OBJECT_TYPE_ID);
+        String docTypeId = getDocumentType(docRef);
         return SystematicDocumentType.OUTGOING_LETTER.getId().equals(docTypeId);
     }
 
     @Override
     public String getDocumentTypeName(NodeRef documentRef) {
-        String docTypeIdOfDoc = (String) nodeService.getProperty(documentRef, Props.OBJECT_TYPE_ID);
+        String docTypeIdOfDoc = getDocumentType(documentRef);
         return documentAdminService.getDocumentTypeProperty(docTypeIdOfDoc, DocumentAdminModel.Props.NAME, String.class);
+    }
+
+    @Override
+    public String getDocumentType(NodeRef documentRef) {
+        return (String) nodeService.getProperty(documentRef, Props.OBJECT_TYPE_ID);
     }
 
     /*

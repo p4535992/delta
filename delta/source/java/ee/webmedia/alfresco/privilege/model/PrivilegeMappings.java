@@ -44,7 +44,7 @@ public class PrivilegeMappings implements Serializable {
     public UserPrivileges getOrCreateUserPrivilegesVO(String userName) {
         UserPrivileges privs = getPrivilegesByUsername().get(userName);
         if (privs == null) {
-            privs = new UserPrivileges(userName, getUserService().getUserFullNameWithUnitName(userName));
+            privs = new UserPrivileges(userName, getUserService().getUserFullNameWithOrganizationPath(userName));
             getPrivilegesByUsername().put(userName, privs);
         }
         return privs;

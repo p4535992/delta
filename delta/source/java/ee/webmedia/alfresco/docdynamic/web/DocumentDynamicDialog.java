@@ -588,7 +588,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     // =========================================================================
 
     public void addDocumentToFavorites(ActionEvent event) {
-        if (!(event instanceof AddToFavoritesEvent) || StringUtils.isBlank(((AddToFavoritesEvent) event).getFavoriteDirectoryName())) {
+        if (!(event instanceof AddToFavoritesEvent)) {
             renderedModal = FavoritesModalComponent.ADD_TO_FAVORITES_MODAL_ID;
             return;
         }
@@ -610,7 +610,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             }
 
             if (!new DeleteDocumentEvaluator().evaluate(node)) {
-                throw new UnableToPerformException("action_failed_missingPermission", new MessageDataImpl("permission_" + "FIXME_KAAREL"));
+                throw new UnableToPerformException("action_failed_missingPermission", new MessageDataImpl("permission_deleteDocumentMetaData"));
             }
             getDocumentService().deleteDocument(node.getNodeRef(), ((ChangeReasonEvent) event).getReason());
         } catch (UnableToPerformException e) {

@@ -11,7 +11,6 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getUserContactGroupSear
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserListDialog;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
-import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.isAdminOrDocmanagerWithPermission;
 import static ee.webmedia.alfresco.utils.ComponentUtil.addChildren;
 import static ee.webmedia.alfresco.utils.ComponentUtil.createUIParam;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.TASK_INDEX;
@@ -57,17 +56,14 @@ import org.apache.myfaces.shared_impl.renderkit.html.HTML;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
-import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 import ee.webmedia.alfresco.document.model.Document;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
-import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
@@ -607,7 +603,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
                 }
             }
         }
-        Document document = new Document(compoundWorkflow.getParent());
+        Document document = getParentDocument();
         if (!dontShowAddActions && fullAccess && showAddActions(0)) {
             // common data add workflow actions
             UIMenu addActionsMenuC = buildAddActions(application, 0, document);
@@ -730,51 +726,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         MethodBinding actionListener = application.createMethodBinding("#{DialogManager.bean.addWorkflowBlock}", UIActions.ACTION_CLASS_ARGS);
         for (Entry<String, QName> entry : getSortedTypes().entrySet()) {
             QName workflowType = entry.getValue();
-            boolean addLinkForThisWorkflow = false;
-            if (WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW.equals(workflowType)) {
-                if (doc.isDocStatus(DocumentStatus.WORKING) && doc.hasPermission(Privileges.EDIT_DOCUMENT)) {
-                    addLinkForThisWorkflow = true;
-                } else if (doc.isDocStatus(DocumentStatus.FINISHED) && isAdminOrDocmanagerWithPermission(doc, Privileges.VIEW_DOCUMENT_FILES, Privileges.VIEW_DOCUMENT_META_DATA)) {
-                    addLinkForThisWorkflow = true;
-                }
-            } else if (WorkflowSpecificModel.Types.OPINION_WORKFLOW.equals(workflowType)) {
-                if (doc.isDocStatus(DocumentStatus.WORKING) && doc.hasPermission(Privileges.EDIT_DOCUMENT)) {
-                    addLinkForThisWorkflow = true;
-                }
-            } else if (WorkflowSpecificModel.Types.CONFIRMATION_WORKFLOW.equals(workflowType)) {
-                if (doc.isDocStatus(DocumentStatus.WORKING) && doc.hasPermission(Privileges.EDIT_DOCUMENT) && getWorkflowService().isConfirmationWorkflowEnabled()) {
-                    addLinkForThisWorkflow = true;
-                }
-            } else if (WorkflowSpecificModel.Types.REVIEW_WORKFLOW.equals(workflowType)) {
-                if (doc.isDocStatus(DocumentStatus.WORKING) && doc.hasPermission(Privileges.EDIT_DOCUMENT)) {
-                    addLinkForThisWorkflow = true;
-                }
-            } else if (WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW.equals(workflowType)) {
-                if (doc.hasPermissions(Privileges.VIEW_DOCUMENT_FILES, Privileges.VIEW_DOCUMENT_META_DATA) && getWorkflowService().isOrderAssignmentWorkflowEnabled()) {
-                    addLinkForThisWorkflow = true;
-                }
-            } else if (WorkflowSpecificModel.Types.DOC_REGISTRATION_WORKFLOW.equals(workflowType)) {
-                if (doc.isDocStatus(DocumentStatus.WORKING) && getUserService().isAdministrator()) {
-                    addLinkForThisWorkflow = true;
-                }
-            } else if (WorkflowSpecificModel.Types.INFORMATION_WORKFLOW.equals(workflowType)) {
-                if (doc.hasPermissions(Privileges.VIEW_DOCUMENT_FILES, Privileges.VIEW_DOCUMENT_META_DATA)) {
-                    addLinkForThisWorkflow = true;
-                }
-            } else if (WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW.equals(workflowType)) {
-                if (doc.hasPermissions(Privileges.VIEW_DOCUMENT_FILES, Privileges.VIEW_DOCUMENT_META_DATA)) {
-                    addLinkForThisWorkflow = true;
-                }
-            } else if (WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW.equals(workflowType)) {
-                if (getWorkflowService().externalReviewWorkflowEnabled() && doc.isDocStatus(DocumentStatus.WORKING) && doc.hasPermission(Privileges.EDIT_DOCUMENT)) {
-                    addLinkForThisWorkflow = true;
-                }
-            } else if (WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_WORKFLOW.equals(workflowType)) {
-                addLinkForThisWorkflow = false;
-            } else {
-                throw new UnableToPerformException("unknown workflow type " + workflowType.getLocalName() + " not sure if it should be displayed or not");
-            }
-            if (addLinkForThisWorkflow) {
+            if (isAddLinkForWorkflow(doc, workflowType)) {
                 UIActionLink addLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
                 addLink.setId("action-add-" + workflowType.getLocalName() + "-" + counter);
                 addLink.setRendererType(UIActions.RENDERER_ACTIONLINK);
@@ -795,6 +747,31 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         addActionsMenu.getChildren().add(addActions);
 
         return addActionsMenu;
+    }
+
+    protected Document getParentDocument() {
+        return null;
+    }
+
+    @SuppressWarnings("unused")
+    protected boolean isAddLinkForWorkflow(Document nill, QName workflowType) {
+        boolean addLinkForThisWorkflow = true;
+        if (WorkflowSpecificModel.Types.CONFIRMATION_WORKFLOW.equals(workflowType)) {
+            if (!getWorkflowService().isConfirmationWorkflowEnabled()) {
+                addLinkForThisWorkflow = false;
+            }
+        } else if (WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW.equals(workflowType)) {
+            if (!getWorkflowService().isOrderAssignmentWorkflowEnabled()) {
+                addLinkForThisWorkflow = false;
+            }
+        } else if (WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW.equals(workflowType)) {
+            if (!getWorkflowService().externalReviewWorkflowEnabled()) {
+                addLinkForThisWorkflow = false;
+            }
+        } else if (WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_WORKFLOW.equals(workflowType)) {
+            addLinkForThisWorkflow = false;
+        }
+        return addLinkForThisWorkflow;
     }
 
     private boolean showAddActions(int index) {

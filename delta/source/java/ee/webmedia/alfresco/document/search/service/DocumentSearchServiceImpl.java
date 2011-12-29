@@ -66,6 +66,7 @@ import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.adr.model.AdrModel;
+import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
@@ -136,6 +137,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     private PermissionService permissionService;
 
     private List<StoreRef> allStores = null;
+    private List<StoreRef> allStoresWithArchivalStoreVOs = null; // XXX This is currently used only for tasks. If analysis for CL 186867 is complete then this might be refactored to getAllStores()
     private QName[] notIncomingLetterTypes;
 
     @Override
@@ -740,7 +742,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         queryParts.add(generateStringExactQuery(ownerId, WorkflowCommonModel.Props.OWNER_ID));
         addSubstitutionRestriction(queryParts);
         String query = generateTaskSearchQuery(queryParts);
-        List<ResultSet> resultSets = doSearches(query, -1, "currentUsersTaskCount", getAllStores());
+        List<ResultSet> resultSets = doSearches(query, -1, "currentUsersTaskCount", getAllStoresWithArchivalStoreVOs());
         int count = countResults(resultSets);
         if (log.isDebugEnabled()) {
             log.debug("Current user's and IN_PROGRESS tasks count search total time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
@@ -1443,7 +1445,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             public Task addResult(ResultSetRow row) {
                 return workflowService.getTask(row.getNodeRef(), true);
             }
-        }, getAllStores());
+        }, getAllStoresWithArchivalStoreVOs());
     }
 
     private List<TaskInfo> searchTaskInfosImpl(String query, int limit, String queryName) {
@@ -1620,11 +1622,24 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
 
     private List<StoreRef> getAllStores() {
         if (allStores == null) {
-            allStores = new ArrayList<StoreRef>(2);
-            allStores.add(generalService.getStore());
-            allStores.add(generalService.getArchivalsStoreRef());
+            List<StoreRef> storeList = new ArrayList<StoreRef>(2);
+            storeList.add(generalService.getStore());
+            storeList.add(generalService.getArchivalsStoreRef());
+            allStores = storeList;
         }
         return allStores;
+    }
+
+    private List<StoreRef> getAllStoresWithArchivalStoreVOs() {
+        if (allStoresWithArchivalStoreVOs == null) {
+            List<StoreRef> storeList = new ArrayList<StoreRef>();
+            storeList.add(generalService.getStore());
+            for (ArchivalsStoreVO storeVO : generalService.getArchivalsStoreVOs()) {
+                storeList.add(storeVO.getStoreRef());
+            }
+            allStoresWithArchivalStoreVOs = storeList;
+        }
+        return allStoresWithArchivalStoreVOs;
     }
 
     // START: getters / setters

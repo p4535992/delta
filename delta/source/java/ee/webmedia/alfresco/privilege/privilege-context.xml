@@ -39,7 +39,6 @@
       <property name="authorityService" ref="AuthorityService" />
       <property name="permissionService" ref="PermissionService" />
       <property name="nodeService" ref="NodeService" />
-      <property name="generalService" ref="GeneralService" />
    </bean>
 
    <bean id="PrivilegeService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -56,8 +55,6 @@
       </property>
    </bean>
    <!-- START: web beans: -->
-
-   <bean id="ManagePrivilegesDialog" class="ee.webmedia.alfresco.privilege.web.ManagePrivilegesDialog" scope="session" />
 
    <bean id="ManageInheritablePrivilegesDialog" class="ee.webmedia.alfresco.privilege.web.ManageInheritablePrivilegesDialog" scope="session" />
 

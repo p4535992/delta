@@ -42,8 +42,8 @@ public class ModalLayerComponent extends UICommand implements Serializable {
     public static final String ATTR_PRESERVE_VALUES = "attrPreserveValues";
     public static final String ACTION_INDEX = "actionIndex";
 
-    private final static int ACTION_CLEAR = 1;
-    private final static int ACTION_SUBMIT = 2;
+    public final static int ACTION_CLEAR = 1;
+    public final static int ACTION_SUBMIT = 2;
 
     public ModalLayerComponent() {
         setRendererType(null);

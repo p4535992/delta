@@ -260,7 +260,7 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
                     try {
                         monthsToAdd = Integer.parseInt(valueData);
                     } catch (NumberFormatException e) {
-                        // use as String value
+                        // no need to add date
                     }
                     final Map<String, Object> docProps = dialogDataProvider.getNode().getProperties();
                     if (monthsToAdd != null) {
@@ -270,19 +270,20 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
                             Date restrictionEndDate = (Date) docProps.get(accessRestrictionEndDateProp.toString());
                             if (restrictionEndDate == null || restrictionEndDate.before(newRestrictionEndDate)) {
                                 docProps.put(accessRestrictionEndDateProp.toString(), newRestrictionEndDate);
-                                clearPropertySheet();
-                                addSelectorValueToContext(accessRestrictionReason);
-                                ;
                             }
                         }
-                    } else {
-                        String accessRestrictionEndDesc = (String) docProps.get(accessRestrictionReasonProp.toString());
-                        String newAccessRestrictionEndDesc = StringUtils.isBlank(accessRestrictionEndDesc) ? accessRestrictionReason : accessRestrictionEndDesc + ", "
-                                + accessRestrictionReason;
-                        docProps.put(accessRestrictionReasonProp.toString(), newAccessRestrictionEndDesc);
-                        clearPropertySheet();
-                        addSelectorValueToContext(accessRestrictionReason);
+                    } else if (StringUtils.isNotBlank(valueData)) {
+                        String accessRestrictionEndDesc = (String) docProps.get(accessRestrictionEndDescProp.toString());
+                        String newAccessRestrictionEndDesc = StringUtils.isBlank(accessRestrictionEndDesc) ? valueData : accessRestrictionEndDesc + ", "
+                                    + valueData;
+                        docProps.put(accessRestrictionEndDescProp.toString(), newAccessRestrictionEndDesc);
                     }
+                    String currentAccessRestrictionReason = (String) docProps.get(accessRestrictionReasonProp.toString());
+                    String newAccessRestrictionReason = StringUtils.isBlank(currentAccessRestrictionReason) ? accessRestrictionReason : currentAccessRestrictionReason + ", "
+                                + accessRestrictionReason;
+                    docProps.put(accessRestrictionReasonProp.toString(), newAccessRestrictionReason);
+                    clearPropertySheet();
+                    addSelectorValueToContext(accessRestrictionReason);
                 }
 
                 protected void addSelectorValueToContext(final String accessRestrictionReason) {

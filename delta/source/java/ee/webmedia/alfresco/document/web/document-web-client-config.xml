@@ -314,7 +314,8 @@
 
          <action id="docList_moveMass">
             <label-id>document_move</label-id>
-            <onclick>showModal('documentLocation_popup'); return false;</onclick>
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsOpenDocListUnitEvaluator</evaluator>
+            <action-listener>#{DialogManager.bean.updateLocationSelect}</action-listener>
          </action>
 
          <action-group id="docListActions">

@@ -370,6 +370,16 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public String getUserFullNameWithOrganizationPath(String userName) {
+        Map<QName, Serializable> props = getUserProperties(userName);
+        if (props == null) {
+            return userName;
+        }
+        String organizationPath = UserUtil.getUserDisplayUnit(RepoUtil.toStringProperties(props));
+        return UserUtil.getPersonFullNameWithUnitName(props, organizationPath);
+    }
+
+    @Override
     public String getUserFullNameAndId(String userName) {
         Map<QName, Serializable> props = getUserProperties(userName);
         if (props == null) {

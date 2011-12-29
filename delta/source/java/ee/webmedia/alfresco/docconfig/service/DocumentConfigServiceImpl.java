@@ -86,6 +86,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
     // XXX NB! some returned objects are unfortunately mutable, thus service callers must not modify them !!!
     private final Map<Pair<String /* documentTypeId */, Integer /* documentTypeVersionNr */>, Map<String /* fieldId */, Pair<DynamicPropertyDefinition, Field>>> propertyDefinitionCache = new ConcurrentHashMap<Pair<String, Integer>, Map<String, Pair<DynamicPropertyDefinition, Field>>>();
     private final Map<Pair<String /* documentTypeId */, Integer /* documentTypeVersionNr */>, TreeNode<QName>> childAssocTypeQNameTreeCache = new ConcurrentHashMap<Pair<String, Integer>, TreeNode<QName>>();
+    private final Map<String /* fieldId */, DynamicPropertyDefinition> propertyDefinitionForSearchCache = new ConcurrentHashMap<String, DynamicPropertyDefinition>();
 
     @Override
     public void registerFieldGeneratorByType(FieldGenerator fieldGenerator, FieldType... fieldTypes) {
@@ -822,6 +823,26 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
         }
         processFieldForSearchView(field);
         return new DynamicPropertyDefinitionImpl(field, isFieldForcedMultipleInSearch(field), null);
+    }
+
+    @Override
+    public DynamicPropertyDefinition getPropertyDefinitionById(String fieldId) {
+        if (fieldId == null) {
+            return null;
+        }
+
+        DynamicPropertyDefinition propertyDefinition = propertyDefinitionForSearchCache.get(fieldId);
+        if (propertyDefinition != null) {
+            return propertyDefinition;
+        }
+
+        propertyDefinition = getPropDefForSearch(fieldId);
+        if (propertyDefinition == null) {
+            return null;
+        }
+
+        propertyDefinitionForSearchCache.put(fieldId, propertyDefinition);
+        return propertyDefinition;
     }
 
     private static final List<String> comboboxFieldsNotMultiple = Arrays.asList("function", "series", "volume");

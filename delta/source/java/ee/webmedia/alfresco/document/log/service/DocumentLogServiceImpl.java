@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -52,14 +54,20 @@ public class DocumentLogServiceImpl implements DocumentLogService {
         addLogEntry(document, event, currentUserFullName, SeriesModel.Associations.SERIES_LOG);
     }
 
-    private void addLogEntry(NodeRef parentRef, String event, String creator, QName assocQName) {
-        Map<QName, Serializable> props = new HashMap<QName, Serializable>(3);
+    private void addLogEntry(final NodeRef parentRef, String event, String creator, final QName assocQName) {
+        final Map<QName, Serializable> props = new HashMap<QName, Serializable>(3);
         props.put(DocumentCommonModel.Props.CREATED_DATETIME, new Date());
         props.put(DocumentCommonModel.Props.CREATOR_NAME, creator);
         props.put(DocumentCommonModel.Props.EVENT_DESCRIPTION, event);
-
-        nodeService.createNode(parentRef, assocQName, assocQName,
-                DocumentCommonModel.Types.DOCUMENT_LOG, props);
+        // node might be locked by another user - creating node using sys-user
+        AuthenticationUtil.runAs(new RunAsWork<Void>() {
+            @Override
+            public Void doWork() {
+                nodeService.createNode(parentRef, assocQName, assocQName,
+                        DocumentCommonModel.Types.DOCUMENT_LOG, props);
+                return null;
+            }
+        }, AuthenticationUtil.getSystemUserName());
     }
 
     private List<DocumentLog> getLogs(NodeRef parentRef, QName assocName) {

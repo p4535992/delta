@@ -29,10 +29,10 @@ public class SeriesTypePrivilegesHandler extends PrivilegesHandler {
 
     @Override
     public Boolean getCheckboxValue() {
-        // FIXME ALSeadist Ats - unimplemented. when implemented, remove wrapper element from jsp:
+        // checkboxValue = .. // FIXME PRIV2 - unimplemented. when implemented, remove wrapper element from jsp:
         // <h:panelGroup id="removeMeWhenImplemented" ...>
-        return null;
         // return checkboxValue;
+        return null;
     }
 
     @Override
@@ -41,9 +41,9 @@ public class SeriesTypePrivilegesHandler extends PrivilegesHandler {
     }
 
     @Override
-    /** FIXME ALSeadist Ats - vaja realiseerida selle asemel hoops getCheckboxValue() ja checkboxChanged(boolean) meetodid */
+    /** FIXME PRIV2 - vaja realiseerida selle asemel hoops getCheckboxValue() ja checkboxChanged(boolean) meetodid */
     public void checkboxChanged(ValueChangeEvent e) {
-        MessageUtil.addErrorMessage("unimplemented: checkboxChanged");
+        MessageUtil.addErrorMessage("unimplemented: serise checkboxChanged");
         return;
     }
 

@@ -7,9 +7,11 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getPropertySheetStateBe
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.faces.application.Application;
 import javax.faces.component.UIComponent;
@@ -26,19 +28,26 @@ import org.alfresco.web.config.PropertySheetConfigElement;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.cases.service.CaseService;
+import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.propertysheet.component.SimUIPropertySheet;
+import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent;
+import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent.ModalLayerSubmitEvent;
+import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
 import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfig;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
+import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
@@ -73,6 +82,9 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
     private DocumentConfig config;
 
     private transient UIPropertySheet propSheet;
+
+    private boolean confirmMoveAssociatedDocuments;
+    private boolean showDocumentsLocationPopup;
 
     @Override
     public Object getActionsContext() {
@@ -117,17 +129,76 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         WebUtil.navigateTo(AlfrescoNavigationHandler.DIALOG_PREFIX + "documentListDialog");
     }
 
+    public void updateLocationSelect(ActionEvent event) {
+        Set<String> documentTypeIds = new HashSet<String>();
+        DocumentDynamicService documentDynamicService = BeanHelper.getDocumentDynamicService();
+        for (Entry<NodeRef, Boolean> entry : getListCheckboxes().entrySet()) {
+            if (entry.getValue()) {
+                documentTypeIds.add(documentDynamicService.getDocumentType(entry.getKey()));
+            }
+        }
+        getLocationNode().getProperties().put(DocumentLocationGenerator.DOCUMENT_TYPE_IDS.toString(), documentTypeIds);
+        showDocumentsLocationPopup = true;
+        getPropertySheetStateBean().reset(getConfig().getStateHolders(), this);
+    }
+
     public void massChangeDocLocation(ActionEvent event) {
+        ModalLayerSubmitEvent changeEvent = (ModalLayerSubmitEvent) event;
+        int actionIndex = changeEvent.getActionIndex();
+        showDocumentsLocationPopup = false;
+        if (actionIndex == ModalLayerComponent.ACTION_CLEAR) {
+            locationNode = null;
+            return;
+        }
         Map<String, Object> locationProps = getLocationNode().getProperties();
         NodeRef function = (NodeRef) locationProps.get(DocumentCommonModel.Props.FUNCTION.toString());
         NodeRef series = (NodeRef) locationProps.get(DocumentCommonModel.Props.SERIES.toString());
         NodeRef volume = (NodeRef) locationProps.get(DocumentCommonModel.Props.VOLUME.toString());
         String caseLabel = (String) locationProps.get(DocumentLocationGenerator.CASE_LABEL_EDITABLE);
+        if (!isValidLocation(function, series, volume, caseLabel)) {
+            return;
+        }
+        // assume that current document list contains documents from one location, check location for first document only
+        if (!getListCheckboxes().isEmpty()) {
+            DocumentDynamic document = getDocumentDynamicService().getDocument(getListCheckboxes().keySet().iterator().next());
+            if (hasSameLocation(document, function, series, volume, caseLabel)) {
+                return;
+            }
+        }
+        confirmMoveAssociatedDocuments = false;
         for (Entry<NodeRef, Boolean> entry : getListCheckboxes().entrySet()) {
             if (!entry.getValue()) {
                 continue;
             }
-            DocumentDynamic document = getDocumentDynamicService().getDocument(entry.getKey());
+            NodeRef docRef = entry.getKey();
+            if (BeanHelper.getDocumentAssociationsService().isBaseOrReplyOrFollowUpDocument(docRef, null)) {
+                confirmMoveAssociatedDocuments = true;
+            }
+        }
+        if (confirmMoveAssociatedDocuments) {
+            return;
+        }
+        massChangeDocLocationConfirmed(event);
+    }
+
+    public void massChangeDocLocationConfirmed(ActionEvent event) {
+        resetConfirmation(event);
+        Map<String, Object> locationProps = getLocationNode().getProperties();
+        NodeRef function = (NodeRef) locationProps.get(DocumentCommonModel.Props.FUNCTION.toString());
+        NodeRef series = (NodeRef) locationProps.get(DocumentCommonModel.Props.SERIES.toString());
+        NodeRef volume = (NodeRef) locationProps.get(DocumentCommonModel.Props.VOLUME.toString());
+        String caseLabel = (String) locationProps.get(DocumentLocationGenerator.CASE_LABEL_EDITABLE);
+        List<NodeRef> updatedNodeRefs = new ArrayList<NodeRef>();
+        for (Entry<NodeRef, Boolean> entry : getListCheckboxes().entrySet()) {
+            if (!entry.getValue()) {
+                continue;
+            }
+            NodeRef docRef = entry.getKey();
+            if (updatedNodeRefs.contains(docRef)) {
+                // document was already moved as followup or reply document of some selected document
+                continue;
+            }
+            DocumentDynamic document = getDocumentDynamicService().getDocument(docRef);
             DocumentConfig cfg = getDocumentConfigService().getConfig(document.getNode());
             document.setFunction(function);
             document.setSeries(series);
@@ -135,9 +206,60 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
             if (caseLabel != null) {
                 document.getNode().getProperties().put(DocumentLocationGenerator.CASE_LABEL_EDITABLE.toString(), caseLabel);
             }
-            getDocumentDynamicService().updateDocument(document, cfg.getSaveListenerBeanNames());
+            List<NodeRef> updatedRefs = getDocumentDynamicService().updateDocumentGetOriginalNodeRefs(document, cfg.getSaveListenerBeanNames());
+            updatedNodeRefs.addAll(updatedRefs);
         }
         restored();
+    }
+
+    public void resetConfirmation(ActionEvent event) {
+        confirmMoveAssociatedDocuments = false;
+    }
+
+    public boolean isConfirmMoveAssociatedDocuments() {
+        return confirmMoveAssociatedDocuments;
+    }
+
+    public boolean isShowDocumentsLocationPopup() {
+        return showDocumentsLocationPopup;
+    }
+
+    private boolean isValidLocation(NodeRef functionRef, NodeRef seriesRef, NodeRef volumeRef, String caseLabel) {
+        if (functionRef == null || seriesRef == null || volumeRef == null) {
+            return false;
+        }
+        Volume volume = BeanHelper.getVolumeService().getVolumeByNodeRef(volumeRef);
+        if (volume.isContainsCases() && StringUtils.isBlank(caseLabel)) {
+            return false;
+        }
+        return true;
+    }
+
+    private boolean hasSameLocation(DocumentDynamic document, NodeRef function, NodeRef series, NodeRef volume, String caseLabel) {
+        NodeRef docFunction = document.getFunction();
+        if (docFunction == null || !docFunction.equals(function)) {
+            return false;
+        }
+        NodeRef docSeries = document.getSeries();
+        if (docSeries == null || !docSeries.equals(series)) {
+            return false;
+        }
+        NodeRef docVolume = document.getVolume();
+        if (docVolume == null || !docVolume.equals(volume)) {
+            return false;
+        }
+        NodeRef caseRef = document.getCase();
+        boolean hasCaseLabel = !StringUtils.isBlank(caseLabel);
+        if ((caseRef == null && hasCaseLabel) || (caseRef != null && !hasCaseLabel)) {
+            return false;
+        }
+        if (caseRef != null && hasCaseLabel) {
+            Case aCase = BeanHelper.getCaseService().getCaseByNoderef(caseRef);
+            if (!caseLabel.equalsIgnoreCase(aCase.getTitle())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public DocumentConfig getConfig() {
@@ -201,7 +323,22 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
 
     @Override
     public boolean isShowCheckboxes() {
-        return true;
+        if (!new IsAdminOrDocManagerEvaluator().evaluate(getNode())) {
+            return false;
+        }
+        GeneralService generalService = BeanHelper.getGeneralService();
+        if (parentCase != null) {
+            if (generalService.isArchivalsStoreRef(parentCase.getNode().getNodeRef().getStoreRef())) {
+                return true;
+            }
+            return DocListUnitStatus.OPEN.getValueName().equals(parentCase.getStatus());
+        } else if (parentVolume != null) {
+            if (generalService.isArchivalsStoreRef(parentVolume.getNode().getNodeRef().getStoreRef())) {
+                return true;
+            }
+            return DocListUnitStatus.OPEN.getValueName().equals(parentVolume.getStatus());
+        }
+        return false;
     }
 
     public PropertySheetConfigElement getLocationNodeConfig() {

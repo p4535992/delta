@@ -77,7 +77,7 @@
         <show-property name="docTempl:templateType" display-label-id="template_templateType" read-only="true" converter="ee.webmedia.alfresco.template.web.DocumentTemplateTypeConverter" />
          <show-property name="docTempl:name" display-label-id="template_name" textId="templates_file_name"
          component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" propertiesSeparator="£" props="
-            {temp}fileNameBase¤¤
+            {temp}fileNameBase¤¤forcedMandatory=true¤display-label-id=template_name¤
             £{temp}fileNameExtension¤¤styleClass=small¤disabled=true
             "
          />
@@ -96,9 +96,9 @@
       <property-sheet>
       <!-- DialogManager.bean value is 'DocumentTemplateDetailsDialog' or 'AddDocumentTemplateDialog'  -->
          <show-property name="docTempl:reportType" display-label-id="template_reportType" editable="false" component-generator="EnumSelectorGenerator" 
-            enumClass="ee.webmedia.alfresco.classificator.enums.TemplateReportType" readOnlyIf="#{DialogManager.bean == 'DocumentTemplateDetailsDialog'}" valueChangeListener="#{AddDocumentTemplateDialog.reportTypeValueChanged}"/>
+            enumClass="ee.webmedia.alfresco.classificator.enums.TemplateReportType" readOnlyIf="#{DialogManager.bean == DocumentTemplateDetailsDialog}" valueChangeListener="#{AddDocumentTemplateDialog.reportTypeValueChanged}"/>
          <show-property name="docTempl:reportOutputType" display-label-id="template_reportOutputType" editable="false" component-generator="EnumSelectorGenerator" 
-            enumClass="ee.webmedia.alfresco.classificator.enums.TemplateReportOutputType" readOnlyIf="#{DialogManager.bean == 'DocumentTemplateDetailsDialog'}" show="#{DialogManager.bean.showReportOutputType}" forcedMandatory="#{DialogManager.bean.showReportOutputType}"/>
+            enumClass="ee.webmedia.alfresco.classificator.enums.TemplateReportOutputType" readOnlyIf="#{DialogManager.bean == DocumentTemplateDetailsDialog}" show="#{DialogManager.bean.showReportOutputType}" forcedMandatory="#{DialogManager.bean.showReportOutputType}"/>
       </property-sheet>
    </config>
 </alfresco-config>
