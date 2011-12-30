@@ -195,19 +195,11 @@ public class SearchBlockBean implements DocumentDynamicBlock {
 
     // END: snapshot logic
 
-    public void findSimilarDocuments(String senderRegNumber, QName documentType) {
+    public void findSimilarDocuments(String senderRegNumber) {
         if (StringUtils.isNotBlank(senderRegNumber)) {
-            documents = getDocumentSearchService().searchIncomingLetterRegisteredDocuments(senderRegNumber, documentType);
+            documents = getDocumentSearchService().searchIncomingLetterRegisteredDocuments(senderRegNumber);
             foundSimilar = documents.size() > 0;
         }
-    }
-
-    private DocumentService getDocumentService() {
-        if (documentService == null) {
-            documentService = (DocumentService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-                    .getBean(DocumentService.BEAN_NAME);
-        }
-        return documentService;
     }
 
     public boolean isExpanded() {

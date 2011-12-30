@@ -79,16 +79,17 @@ public class CreateGroupDialog extends BaseDialogBean
    @Override
    protected String finishImpl(FacesContext context, String outcome) throws Exception
    {
-      // create new Group using Authentication Service
-       Set<String> allGroupNames = getAuthService().getAllAuthorities(AuthorityType.GROUP);
-       for (String groupName : allGroupNames) {
-        groupName = groupName.replace(AuthorityType.GROUP.getPrefixString(), "");
-        if(StringUtils.equalsIgnoreCase(name, groupName)){
-            MessageUtil.addErrorMessage(MSG_ERR_EXISTS);
-            isFinished = false;
-            return null;
-        }
-    }
+       // create new Group using Authentication Service
+       authService = getAuthService();
+       String newAuthorityName = authService.getName(AuthorityType.GROUP, name);
+       for (String authorityName : authService.getAllAuthorities(AuthorityType.GROUP)) {
+           if (StringUtils.equalsIgnoreCase(newAuthorityName, authorityName)
+                   || StringUtils.equalsIgnoreCase(name, authService.getAuthorityDisplayName(authorityName))) {
+               MessageUtil.addErrorMessage(MSG_ERR_EXISTS);
+               isFinished = false;
+               return null;
+           }
+       }
       String groupName = this.getAuthService().getName(AuthorityType.GROUP, this.name);
          this.getAuthService().createAuthority(AuthorityType.GROUP, this.name);
          if (this.parentGroup != null)

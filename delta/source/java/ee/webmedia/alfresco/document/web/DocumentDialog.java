@@ -688,29 +688,6 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         return (String) node.getProperties().get(DocumentCommonModel.Props.DOC_STATUS.toString());
     }
 
-    public void saveAndRegisterContinue() {
-        // similar documents were found before, finish registering
-        metadataBlockBean.saveAndRegister(isDraft, newInvoiceDocuments);
-        searchBlockBean.setFoundSimilar(false);
-    }
-
-    public void saveAndRegister() {
-        // search for similar documents if it's an incoming letter
-        QName docType = metadataBlockBean.getDocumentType().getId();
-        if (docType.equals(DocumentSubtypeModel.Types.INCOMING_LETTER) || docType.equals(DocumentSubtypeModel.Types.INCOMING_LETTER_MV)) {
-            String senderRegNum = (String) metadataBlockBean.getDocument().getProperties().get(DocumentSpecificModel.Props.SENDER_REG_NUMBER.toString());
-            searchBlockBean.findSimilarDocuments(senderRegNum, docType);
-        }
-
-        // just register if not an incoming letter or no similar documents found
-        if (!searchBlockBean.isFoundSimilar()) {
-            metadataBlockBean.saveAndRegister(isDraft, newInvoiceDocuments);
-            isDraft = false;
-        }
-        logBlockBean.restore();
-        transactionsBlockBean.restore();
-    }
-
     public void registerDocument(ActionEvent event) {
         try {
             metadataBlockBean.registerDocument(event);

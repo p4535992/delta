@@ -168,7 +168,7 @@ public interface DocumentSearchService {
      * @param senderRegNumber
      * @return list of found documents
      */
-    List<Document> searchIncomingLetterRegisteredDocuments(String senderRegNumber, QName documentType);
+    List<Document> searchIncomingLetterRegisteredDocuments(String senderRegNumber);
 
     List<Document> searchAccessRestictionEndsAfterDate(Date restrictionEndDate);
 

@@ -298,6 +298,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             handleException(e, "workflow_compound_start_workflow_failed");
         }
         updatePanelGroup();
+        BeanHelper.getDocumentDynamicDialog().switchMode(false); // document metadata might have changed (for example owner)
     }
 
     private List<String> getConfirmationMessages(boolean isStartWorkflow) {
@@ -409,6 +410,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             handleException(e, "workflow_compound_continue_workflow_failed");
         }
         updatePanelGroup();
+        BeanHelper.getDocumentDynamicDialog().switchMode(false); // document metadata might have changed (for example owner)
     }
 
     /**

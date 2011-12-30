@@ -31,10 +31,7 @@ public class RegisterDocumentEvaluator extends BaseActionEvaluator {
 
     @Override
     public boolean evaluate(Node docNode) {
-        if (!new ViewStateActionEvaluator().evaluate(docNode)) {
-            return false;
-        }
-        return canRegister(docNode, true);
+        return new ViewStateActionEvaluator().evaluate(docNode) && canRegister(docNode, true);
     }
 
     public boolean canRegister(Node docNode, boolean checkStoppedOrInprogressWorkflows) {

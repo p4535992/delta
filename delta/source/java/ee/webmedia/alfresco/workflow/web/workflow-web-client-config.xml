@@ -243,7 +243,7 @@
       </property-sheet>
    </config>
 
-   <config evaluator="node-type" condition="wfs:orderAssignmentWorkflow" >
+   <config evaluator="node-type" condition="wfs:assignmentWorkflow,wfs:orderAssignmentWorkflow" >
       <property-sheet>
          <!-- Override resolution from aspect-name=wfs:commonWorkflow - different readOnlyIf and component-generator -->
          <show-property name="wfs:resolution" readOnlyIf="wfc:status=lõpetatud" component-generator="TextAreaAlwaysEditGenerator" styleClass="expand19-200 short-resolution" />

@@ -11,7 +11,10 @@
          <f:facet name="header">
             <a:sortLink id="col4-sort" label="#{msg.document_docType}" value="documentTypeName" styleClass="header" />
          </f:facet>
-         <h:outputText id="col4-text" value="#{r.documentTypeName}" />
+         <a:actionLink id="col4-text-1" value="#{r.documentTypeName}" action="#{DocumentDialog.action}" tooltip="#{r.docName}"
+            actionListener="#{DocumentDialog.open}" styleClass="no-underline" >
+            <f:param name="nodeRef" value="#{r.node.nodeRef}" />
+         </a:actionLink>
       </a:column>
       
       <%-- Sender/Recipient --%>
@@ -19,7 +22,10 @@
          <f:facet name="header">
             <a:sortLink id="col5-sort" label="#{msg.document_sender_recipient}" value="senderOrRecipients" styleClass="header" />
          </f:facet>
-         <h:outputText id="col5-text-1" value="#{r.senderOrRecipients}" styleClass="condence20- tooltip" />
+         <a:actionLink id="col5-text-1" value="#{r.senderOrRecipients}" action="#{DocumentDialog.action}" tooltip="#{r.docName}"
+            actionListener="#{DocumentDialog.open}" styleClass="condence20- tooltip no-underline" >
+            <f:param name="nodeRef" value="#{r.node.nodeRef}" />
+         </a:actionLink>
       </a:column>
 
       <%-- Title --%>
@@ -28,7 +34,7 @@
             <a:sortLink id="col6-sort" label="#{msg.document_docName}" value="docName" styleClass="header" />
          </f:facet>
          <a:actionLink id="col6-text-1" value="#{r.docName}" action="#{DocumentDialog.action}" tooltip="#{r.docName}"
-            actionListener="#{DocumentDialog.open}" rendered="#{r.cssStyleClass ne 'case'}" styleClass="tooltip condence20-" >
+            actionListener="#{DocumentDialog.open}" rendered="#{r.cssStyleClass ne 'case'}" styleClass="tooltip condence20- no-underline" >
             <f:param name="nodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>
          <!-- if row item is not document, but case, create link to documents list of case (row item is subclass of Document, to be shown as listItem in document list) -->
@@ -43,13 +49,16 @@
          <f:facet name="header">
             <a:sortLink id="col7-sort" label="#{msg.document_workflow_status}" value="workflowStatus" styleClass="header" />
          </f:facet>
-         
-         <h:outputText id="col7-text" value="#{r.workflowStatus}" />
+         <a:actionLink id="col7-text-1" value="#{r.workflowStatus}" action="#{DocumentDialog.action}" tooltip="#{r.docName}"
+            actionListener="#{DocumentDialog.open}" styleClass="no-underline" >
+            <f:param name="nodeRef" value="#{r.node.nodeRef}" />
+         </a:actionLink>
       </a:column>
 
       <%-- Files --%>
       <a:column id="col10" primary="true" styleClass="doc-list-actions">
          <f:facet name="header">
+         
             <h:outputText id="col10-header" value="#{msg.document_allFiles}" styleClass="header" />
          </f:facet>
           <f:facet name="csvExport">

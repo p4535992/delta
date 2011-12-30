@@ -14,6 +14,7 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
@@ -91,6 +92,9 @@ public class AssignmentWorkflowType extends BaseWorkflowType implements Workflow
                 if (isIncomingLetter) {
                     if (nodeService.getProperty(docRef, DocumentSpecificModel.Props.COMPLIENCE_DATE) == null) {
                         documentService.setPropertyAsSystemUser(DocumentSpecificModel.Props.COMPLIENCE_DATE, queue.getNow(), docRef);
+                    }
+                    if (StringUtils.isBlank((String) nodeService.getProperty(docRef, DocumentSpecificModel.Props.COMPLIENCE_NOTATION))) {
+                        documentService.setPropertyAsSystemUser(DocumentSpecificModel.Props.COMPLIENCE_NOTATION, task.getComment(), docRef);
                     }
                     documentService.setDocStatusFinished(docRef);
                 }

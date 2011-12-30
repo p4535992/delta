@@ -344,18 +344,36 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
     public boolean isBaseOrReplyOrFollowUpDocument(NodeRef docRef, Map<String, Map<String, AssociationRef>> addedAssociations) {
         if (addedAssociations != null) {
             Map<String, AssociationRef> addedAssocs = addedAssociations.get(DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP.toString());
-            if (addedAssocs != null && !addedAssocs.isEmpty()) {
+            if (addedAssocs != null && hasValidAssocs(addedAssocs.values(), docRef)) {
                 return true;
             }
             addedAssocs = addedAssociations.get(DocumentCommonModel.Assocs.DOCUMENT_REPLY.toString());
-            if (addedAssocs != null && !addedAssocs.isEmpty()) {
+            if (addedAssocs != null && hasValidAssocs(addedAssocs.values(), docRef)) {
                 return true;
             }
         }
-        return !nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY).isEmpty()
-                || !nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP).isEmpty()
-                || !nodeService.getSourceAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY).isEmpty()
-                || !nodeService.getSourceAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP).isEmpty();
+        return hasValidAssocs(nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY), docRef)
+                || hasValidAssocs(nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP), docRef)
+                || hasValidAssocs(nodeService.getSourceAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY), docRef)
+                || hasValidAssocs(nodeService.getSourceAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP), docRef);
+    }
+
+    private boolean hasValidAssocs(Iterable<AssociationRef> addedAssocs, NodeRef currentDocRef) {
+        for (AssociationRef assocRef : addedAssocs) {
+            NodeRef sourceRef = assocRef.getSourceRef();
+            if (isValidAssocRef(currentDocRef, sourceRef)) {
+                return true;
+            }
+            NodeRef targetRef = assocRef.getTargetRef();
+            if (isValidAssocRef(currentDocRef, targetRef)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isValidAssocRef(NodeRef currentDocRef, NodeRef sourceRef) {
+        return !sourceRef.equals(currentDocRef) && nodeService.hasAspect(sourceRef, DocumentCommonModel.Aspects.SEARCHABLE);
     }
 
     private void addDocAssocInfo(AssociationRef assocRef, boolean isSourceAssoc, ArrayList<DocAssocInfo> assocInfos) {

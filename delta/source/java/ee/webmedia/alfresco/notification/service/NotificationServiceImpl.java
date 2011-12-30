@@ -836,32 +836,36 @@ public class NotificationServiceImpl implements NotificationService {
 
         final NodeRef nodeRef = userPreferencesNode.getNodeRef();
         Map<QName, Serializable> props = nodeService.getProperties(nodeRef);
-        List<QName> notificationProps = new ArrayList<QName>();
-        notificationProps.add(NotificationModel.NotificationType.TASK_ASSIGNMENT_TASK_COMPLETED_BY_CO_RESPONSIBLE);
-        notificationProps.add(NotificationModel.NotificationType.TASK_CANCELLED_TASK_NOTIFICATION);
-        notificationProps.add(NotificationModel.NotificationType.TASK_EXTERNAL_REVIEW_TASK_COMPLETED);
-        notificationProps.add(NotificationModel.NotificationType.TASK_EXTERNAL_REVIEW_TASK_COMPLETED_NOT_ACCEPTED);
-        notificationProps.add(NotificationModel.NotificationType.TASK_INFORMATION_TASK_COMPLETED);
-        notificationProps.add(NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION);
-        notificationProps.add(NotificationModel.NotificationType.TASK_OPINION_TASK_COMPLETED);
-        notificationProps.add(NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED);
-        notificationProps.add(NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED);
-        notificationProps.add(NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_WITH_REMARKS);
-        notificationProps.add(NotificationModel.NotificationType.TASK_SIGNATURE_TASK_COMPLETED);
-        notificationProps.add(NotificationModel.NotificationType.TASK_ORDER_ASSIGNMENT_WORKFLOW_COMPLETED);
-        notificationProps.add(NotificationModel.NotificationType.TASK_ORDER_ASSIGNMENT_TASK_COMPLETED);
-        notificationProps.add(NotificationModel.NotificationType.TASK_CONFIRMATION_TASK_COMPLETED);
-        notificationProps.add(NotificationModel.NotificationType.TASK_CONFIRMATION_TASK_COMPLETED_NOT_ACCEPTED);
-        notificationProps.add(NotificationModel.NotificationType.TASK_DUE_DATE_EXTENSION_TASK_COMPLETED);
-        notificationProps.add(NotificationModel.NotificationType.TASK_DUE_DATE_EXTENSION_TASK_COMPLETED_NOT_ACCEPTED);
-        notificationProps.add(NotificationModel.NotificationType.WORKFLOW_NEW_WORKFLOW_STARTED);
-        notificationProps.add(NotificationModel.NotificationType.WORKFLOW_WORKFLOW_COMPLETED);
 
-        for (QName key : notificationProps) {
+        for (QName key : getAllNotificationProps()) {
             if (!props.containsKey(key)) {
-                nodeService.setProperty(nodeRef, key, Boolean.FALSE);
+                nodeService.setProperty(nodeRef, key, Boolean.TRUE);
             }
         }
+    }
+
+    @Override
+    public List<QName> getAllNotificationProps() {
+        return Arrays.asList(
+                NotificationModel.NotificationType.TASK_ASSIGNMENT_TASK_COMPLETED_BY_CO_RESPONSIBLE,
+                NotificationModel.NotificationType.TASK_CANCELLED_TASK_NOTIFICATION,
+                NotificationModel.NotificationType.TASK_EXTERNAL_REVIEW_TASK_COMPLETED,
+                NotificationModel.NotificationType.TASK_EXTERNAL_REVIEW_TASK_COMPLETED_NOT_ACCEPTED,
+                NotificationModel.NotificationType.TASK_INFORMATION_TASK_COMPLETED,
+                NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION,
+                NotificationModel.NotificationType.TASK_OPINION_TASK_COMPLETED,
+                NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED,
+                NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED,
+                NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_WITH_REMARKS,
+                NotificationModel.NotificationType.TASK_SIGNATURE_TASK_COMPLETED,
+                NotificationModel.NotificationType.TASK_ORDER_ASSIGNMENT_WORKFLOW_COMPLETED,
+                NotificationModel.NotificationType.TASK_ORDER_ASSIGNMENT_TASK_COMPLETED,
+                NotificationModel.NotificationType.TASK_CONFIRMATION_TASK_COMPLETED,
+                NotificationModel.NotificationType.TASK_CONFIRMATION_TASK_COMPLETED_NOT_ACCEPTED,
+                NotificationModel.NotificationType.TASK_DUE_DATE_EXTENSION_TASK_COMPLETED,
+                NotificationModel.NotificationType.TASK_DUE_DATE_EXTENSION_TASK_COMPLETED_NOT_ACCEPTED,
+                NotificationModel.NotificationType.WORKFLOW_NEW_WORKFLOW_STARTED,
+                NotificationModel.NotificationType.WORKFLOW_WORKFLOW_COMPLETED);
     }
 
     @Override
@@ -1139,7 +1143,7 @@ public class NotificationServiceImpl implements NotificationService {
             return false;
         }
         Serializable property = nodeService.getProperty(usersPreferenceRef, subscriptionType);
-        if (property != null && Boolean.valueOf(property.toString())) {
+        if (property == null || (property != null && Boolean.valueOf(property.toString()))) {
             return true;
         }
         return false;

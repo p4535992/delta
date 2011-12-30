@@ -581,11 +581,11 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         if (newAssocs != null) {
             for (AssociationRef assocRef : newAssocs) {
                 NodeRef sourceRef = assocRef.getSourceRef();
-                if (!sourceRef.equals(docRef) && !containsDocument(sourceRef, associatedDocs)) {
+                if (!sourceRef.equals(docRef) && !containsDocument(sourceRef, associatedDocs) && isSearchable(sourceRef)) {
                     currentAssociatedDocs.add(getDocument(sourceRef));
                 }
                 NodeRef targetRef = assocRef.getTargetRef();
-                if (!targetRef.equals(docRef) && !containsDocument(targetRef, associatedDocs)) {
+                if (!targetRef.equals(docRef) && !containsDocument(targetRef, associatedDocs) && isSearchable(targetRef)) {
                     currentAssociatedDocs.add(getDocument(targetRef));
                 }
             }
@@ -595,7 +595,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             targetAssocs.addAll(nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP));
             for (AssociationRef assoc : targetAssocs) {
                 NodeRef targetRef = assoc.getTargetRef();
-                if (!containsDocument(targetRef, associatedDocs)) {
+                if (!containsDocument(targetRef, associatedDocs) && isSearchable(targetRef)) {
                     currentAssociatedDocs.add(getDocument(targetRef));
                 }
             }
@@ -603,7 +603,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             sourceAssocs.addAll(nodeService.getSourceAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP));
             for (AssociationRef assoc : sourceAssocs) {
                 NodeRef sourceRef = assoc.getSourceRef();
-                if (!containsDocument(sourceRef, associatedDocs)) {
+                if (!containsDocument(sourceRef, associatedDocs) && isSearchable(sourceRef)) {
                     currentAssociatedDocs.add(getDocument(sourceRef));
                 }
             }
@@ -612,6 +612,10 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         for (DocumentDynamic associatedDoc : currentAssociatedDocs) {
             getAssociatedDocRefs(associatedDoc, associatedDocs, checkedDocs);
         }
+    }
+
+    private boolean isSearchable(NodeRef sourceRef) {
+        return nodeService.hasAspect(sourceRef, DocumentCommonModel.Aspects.SEARCHABLE);
     }
 
     private boolean containsDocument(NodeRef sourceRef, List<DocumentDynamic> associatedDocs) {

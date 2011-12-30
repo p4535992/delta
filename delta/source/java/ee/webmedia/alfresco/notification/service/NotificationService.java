@@ -73,4 +73,6 @@ public interface NotificationService {
 
     public void processAccessRestrictionChangedNotification(DocumentDynamic document, List<SendInfo> sendInfos);
 
+    List<QName> getAllNotificationProps();
+
 }

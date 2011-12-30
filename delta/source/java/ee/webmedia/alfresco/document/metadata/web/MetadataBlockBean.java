@@ -75,7 +75,6 @@ import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.service.DocLockService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.service.DocumentService.TransientProps;
-import ee.webmedia.alfresco.document.service.EventsLoggingHelper;
 import ee.webmedia.alfresco.document.service.InMemoryChildNodeHelper;
 import ee.webmedia.alfresco.document.type.model.DocumentType;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
@@ -1320,17 +1319,6 @@ public class MetadataBlockBean implements ClearStateListener {
         document = null;
         propertySheet = null;
         documentTypeName = null;
-    }
-
-    public void saveAndRegister(boolean isDraft, List<NodeRef> newInvoiceDocuments) {
-        if (save(isDraft, newInvoiceDocuments, false)) {
-            document.getProperties().put(DocumentService.TransientProps.TEMP_DOCUMENT_IS_DRAFT, isDraft);
-            EventsLoggingHelper.disableLogging(document, DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED);
-            registerDocument(null);
-            // We need to refresh the propertySheetgrid
-            clearPropertySheet();
-            afterModeChange();
-        }
     }
 
     /**

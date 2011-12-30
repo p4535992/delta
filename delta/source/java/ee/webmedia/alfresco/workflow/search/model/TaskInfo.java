@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.workflow.search.model;
 
+import static ee.webmedia.alfresco.workflow.service.Task.dateFormat;
+
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
@@ -120,6 +122,26 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
     @Override
     public Date getRegDateTime() {
         return (Date) getRegDate();
+    }
+
+    public String getRegDateStr() {
+        return getRegDateTime() != null ? dateFormat.format(getRegDateTime()) : "";
+    }
+
+    public String getStartedDateStr() {
+        return (Date) getStartedDate() != null ? dateFormat.format(getStartedDate()) : "";
+    }
+
+    public String getDueDateStr() {
+        return (Date) getDueDate() != null ? dateFormat.format(getDueDate()) : "";
+    }
+
+    public String getCompletedDateStr() {
+        return (Date) getCompletedDate() != null ? dateFormat.format(getCompletedDate()) : "";
+    }
+
+    public String getStoppedDateStr() {
+        return (Date) getStoppedDate() != null ? dateFormat.format(getStoppedDate()) : "";
     }
 
     @Override

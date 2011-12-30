@@ -5,6 +5,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getNamespaceService;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIInput;
@@ -12,6 +13,7 @@ import javax.faces.component.UISelectItem;
 import javax.faces.context.FacesContext;
 
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
@@ -22,8 +24,11 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
+import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
@@ -69,10 +74,28 @@ public class ClassificatorSelectorGenerator extends GeneralSelectorGenerator {
 
         ClassificatorSelectorValueProvider defaultOrExistingValue = null;
         String existingValue = boundValue instanceof String ? (String) boundValue : null;
-        if (!multiValued && existingValue == null) {
-            existingValue = getGeneralService().getExistingRepoValue4ComponentGenerator();
+        String repoValue = null;
+        if (!multiValued) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> requestMap = FacesContext.getCurrentInstance().getExternalContext().getRequestMap();
+            final Object[] nodeAndPropName = (Object[]) requestMap.get(WMUIProperty.REPO_NODE);
+            if (nodeAndPropName != null) {
+                Node requestNode = (Node) nodeAndPropName[0];
+                String propName = (String) nodeAndPropName[1];
+                QName qName = QName.createQName(propName, BeanHelper.getNamespaceService());
+                if (requestNode != null) {
+                    NodeRef nodeRef = requestNode.getNodeRef();
+                    if (nodeRef != null && (!(node instanceof WmNode) || ((WmNode) node).isSaved())) {
+                        repoValue = (String) BeanHelper.getNodeService().getProperty(nodeRef, qName);
+                    }
+                }
+            }
+            if (existingValue == null) {
+                existingValue = getGeneralService().getExistingRepoValue4ComponentGenerator();
+            }
         }
         boolean isSingleValued = isSingleValued(context, multiValued); //
+        boolean hasRepoValueItem = false;
         for (ClassificatorSelectorValueProvider classificator : valueProviders) {
             UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
             setOptionDescriptionAndLabel(classificator, selectItem);
@@ -84,9 +107,20 @@ public class ClassificatorSelectorGenerator extends GeneralSelectorGenerator {
                 component.setValue(selectItem.getItemValue()); // make the selection
                 defaultOrExistingValue = classificator;
             }
+            if (repoValue != null && StringUtils.equals(existingValue, classificator.getSelectorValueName())) {
+                hasRepoValueItem = true;
+            }
             results.add(selectItem);
         }
 
+        // existing value was not found among classificator values, add it manually
+        if (StringUtils.isNotBlank(repoValue) && !hasRepoValueItem) {
+            UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
+            selectItem.setItemLabel(repoValue);
+            selectItem.setItemValue(repoValue);
+            selectItem.setItemDescription(repoValue);
+            results.add(0, selectItem);
+        }
         if (isSingleValued) { // don't add default selection to multivalued component
             addDefault(context, results);
         }

@@ -10,6 +10,7 @@ import static ee.webmedia.alfresco.docdynamic.web.ChangeReasonModalComponent.ACC
 import static ee.webmedia.alfresco.docdynamic.web.ChangeReasonModalComponent.DELETE_DOCUMENT_REASON_MODAL_ID;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -32,7 +33,9 @@ import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
+import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
 import org.alfresco.web.config.PropertySheetConfigElement;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
@@ -45,8 +48,10 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
+import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
 import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
+import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfig;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.docdynamic.web.ChangeReasonModalComponent.ChangeReasonEvent;
@@ -60,9 +65,13 @@ import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.search.web.SearchBlockBean;
 import ee.webmedia.alfresco.document.sendout.web.SendOutBlockBean;
+import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.document.service.EventsLoggingHelper;
 import ee.webmedia.alfresco.document.web.FavoritesModalComponent;
 import ee.webmedia.alfresco.document.web.FavoritesModalComponent.AddToFavoritesEvent;
 import ee.webmedia.alfresco.document.web.evaluator.DeleteDocumentEvaluator;
+import ee.webmedia.alfresco.document.web.evaluator.RegisterDocumentEvaluator;
+import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.simdhs.servlet.ExternalAccessServlet;
 import ee.webmedia.alfresco.utils.ActionUtil;
@@ -212,6 +221,13 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         addTargetAssocAndReopen(nodeRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP);
     }
 
+    public void addFollowUpHandlerSimilarDocuments(ActionEvent event) {
+        NodeRef nodeRef = new NodeRef(ActionUtil.getParam(event, PARAM_NODEREF));
+        boolean isFoundSimilar = getSearchBlock().isFoundSimilar();
+        addTargetAssocAndReopen(nodeRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP);
+        getSearchBlock().setFoundSimilar(isFoundSimilar);
+    }
+
     public void addReplyHandler(ActionEvent event) {
         NodeRef nodeRef = new NodeRef(ActionUtil.getParam(event, PARAM_NODEREF));
         addTargetAssocAndReopen(nodeRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY);
@@ -246,6 +262,11 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         NodeRef seriesRef = parents.getSeriesNode().getNodeRef();
         docProps.put(DocumentCommonModel.Props.SERIES.toString(), seriesRef);
         docProps.put(DocumentCommonModel.Props.VOLUME.toString(), parents.getVolumeNode().getNodeRef());
+        Node caseNode = parents.getCaseNode();
+        if (caseNode != null) {
+            docProps.put(DocumentLocationGenerator.CASE_LABEL_EDITABLE.toString(), BeanHelper.getCaseService().getCaseByNoderef(caseNode.getNodeRef()).getTitle());
+            docProps.put(DocumentCommonModel.Props.CASE.toString(), caseNode.getNodeRef());
+        }
         updateAccessRestrictionProperties(docProps, seriesRef);
     }
 
@@ -297,6 +318,22 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         return getCurrentSnapshot().showDocsAndCasesAssocs;
     }
 
+    @Override
+    public List<DialogButtonConfig> getAdditionalButtons() {
+        List<DialogButtonConfig> buttons = new ArrayList<DialogButtonConfig>(1);
+        DocumentType documentType = BeanHelper.getDocumentConfigService().getDocumentTypeAndVersion(getNode()).getFirst();
+        if (getCurrentSnapshot().inEditMode && SystematicDocumentType.INCOMING_LETTER.isSameType(getDocument().getDocumentTypeId())
+                && documentType.isRegistrationEnabled() && RegisterDocumentEvaluator.isNotRegistered(getNode())) {
+            if (getSearchBlock().isFoundSimilar()) {
+                buttons.add(new DialogButtonConfig("documentRegisterButton", null, "document_registerDoc_continue",
+                        "#{DocumentDynamicDialog.saveAndRegisterContinue}", "false", null));
+            } else {
+                buttons.add(new DialogButtonConfig("documentRegisterButton", null, "document_registerDoc", "#{DocumentDynamicDialog.saveAndRegister}", "false", null));
+            }
+        }
+        return buttons;
+    }
+
     /**
      * Should be called only when the document was received from DVK or Outlook.
      */
@@ -327,6 +364,8 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         private boolean inEditMode;
         private boolean viewModeWasOpenedInThePast = false; // intended initial value
         private boolean showDocsAndCasesAssocs;
+        private boolean saveAndRegister;
+        private boolean saveAndRegisterContinue;
         private DocumentConfig config;
 
         @Override
@@ -387,6 +426,11 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             DocumentLockHelperBean documentLockHelperBean = BeanHelper.getDocumentLockHelperBean();
             documentLockHelperBean.lockOrUnlockIfNeeded(documentLockHelperBean.isLockingAllowed(inEditMode));
 
+            if (!currentSnapshot.inEditMode || (currentSnapshot.inEditMode && !inEditMode)) {
+                // only reset registering process if mode is actually changed from edit mode to view mode
+                setSaveAndRegister(false);
+                setSaveAndRegisterContinue(false);
+            }
             currentSnapshot.inEditMode = inEditMode;
             if (!inEditMode) {
                 if (StringUtils.isBlank(document.getRegNumber()) && document.getRegDateTime() == null && BeanHelper.getDocumentDynamicService().isShowMessageIfUnregistered()) {
@@ -476,7 +520,6 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             getDocumentDynamicService().deleteDocumentIfDraft(getDocument().getNodeRef());
             return super.cancel(); // closeDialogSnapshot
         }
-
         // Switch from edit mode back to view mode
         switchMode(false);
         return null;
@@ -487,8 +530,15 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         if (!isInEditMode()) {
             throw new RuntimeException("Document metadata block is not in edit mode");
         }
-
+        if (isSaveAndRegister()) {
+            // select followup document before saving
+            if (checkSimilarDocuments()) {
+                setSaveAndRegister(false);
+                return null;
+            }
+        }
         final DocumentDynamic savedDocument;
+        final boolean isDraft = getDocument().isDraft();
         try {
             // Do in new transaction, because we want to catch integrity checker exceptions now, not at the end of this method when mode is already switched
             savedDocument = getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<DocumentDynamic>() {
@@ -512,6 +562,11 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         return getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<String>() {
             @Override
             public String execute() throws Throwable {
+                if (isSaveAndRegister() || isSaveAndRegisterContinue()) {
+                    setSaveAndRegister(false);
+                    setSaveAndRegisterContinue(false);
+                    register(isDraft);
+                }
                 if (savedDocument.isAccessRestrictionPropsChanged() && BeanHelper.getSendOutService().hasDocumentSendInfos(savedDocument.getNodeRef())) {
                     isFinished = false;
                     // modal has already been displayed, if displaying was necessary
@@ -525,6 +580,72 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
                 return null;
             }
         }, false, true);
+
+    }
+
+    private void setSaveAndRegister(boolean saveAndRegister) {
+        getCurrentSnapshot().saveAndRegister = saveAndRegister;
+    }
+
+    private void setSaveAndRegisterContinue(boolean saveAndRegisterContinue) {
+        getCurrentSnapshot().saveAndRegisterContinue = saveAndRegisterContinue;
+    }
+
+    private boolean isSaveAndRegisterContinue() {
+        return getCurrentSnapshot().saveAndRegisterContinue;
+    }
+
+    private boolean isSaveAndRegister() {
+        return getCurrentSnapshot().saveAndRegister;
+    }
+
+    private boolean checkSimilarDocuments() {
+        SearchBlockBean searchBlock = getSearchBlock();
+        // search for similar documents if it's an incoming letter
+        if (SystematicDocumentType.INCOMING_LETTER.isSameType(getDocument().getDocumentTypeId())) {
+            String senderRegNum = getDocument().getProp(DocumentSpecificModel.Props.SENDER_REG_NUMBER);
+            searchBlock.findSimilarDocuments(senderRegNum);
+        }
+        if (searchBlock.isFoundSimilar()) {
+            return true;
+        }
+        return false;
+    }
+
+    public void saveAndRegisterContinue() {
+        // similar documents were found before, finish registering
+        setSaveAndRegister(false);
+        setSaveAndRegisterContinue(true);
+        super.finish();
+        getSearchBlock().setFoundSimilar(false);
+    }
+
+    public void saveAndRegister() {
+        setSaveAndRegister(true);
+        setSaveAndRegisterContinue(false);
+        super.finish();
+    }
+
+    private void register(boolean isDraft) {
+        getDocument().setProp(RepoUtil.createTransientProp(DocumentService.TransientProps.TEMP_DOCUMENT_IS_DRAFT), isDraft);
+        EventsLoggingHelper.disableLogging(getNode(), DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED);
+        try {
+            Node document = getDocumentDialogHelperBean().getNode();
+            DocumentParentNodesVO parentNodes = getDocumentService().getAncestorNodesByDocument(document.getNodeRef());
+            getDocumentService().setTransientProperties(document, parentNodes);
+            document = getDocumentService().registerDocument(document);
+            // Update generated files
+            BeanHelper.getDocumentTemplateService().updateGeneratedFiles(document.getNodeRef(), true);
+            ((MenuBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuBean.BEAN_NAME)).processTaskItems();
+            MessageUtil.addInfoMessage("document_registerDoc_success");
+        } catch (UnableToPerformException e) {
+            if (LOG.isDebugEnabled()) {
+                LOG.warn("failed to register: " + e.getMessage());
+            }
+            MessageUtil.addStatusMessage(FacesContext.getCurrentInstance(), e);
+        } catch (NodeLockedException e) {
+            BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_registerDoc_error_docLocked");
+        }
     }
 
     private boolean handleAccessRestrictionChange(UnableToPerformMultiReasonException e) {

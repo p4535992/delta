@@ -207,7 +207,7 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator {
             }
             relatedFields = collectAndRemoveFieldsInSpecifiedOrder(fields, field, advancePaymentInlineFieldIds);
             if (relatedFields != null) {
-                generateInline(generatorResults, items, hierarchy, relatedFields, field, "Soovin avanssi", "document_errand_advancePayment_templateText-edit");
+                generateInline(generatorResults, items, hierarchy, relatedFields, field, "Soovin ettemaksu", "document_errand_advancePayment_templateText-edit");
                 continue;
             }
 

@@ -268,7 +268,7 @@ public class DelegationBean implements Serializable {
             if (!feedback.hasErrors()) {
                 workflowBlockBean.restore();
                 MessageUtil.addInfoMessage("delegated_successfully_" + originalTask.getType().getLocalName());
-                BeanHelper.getDocumentDialog().restored(); // document metadata might have changed(for example owner)
+                BeanHelper.getDocumentDynamicDialog().switchMode(false); // document metadata might have changed (for example owner)
             }
         } catch (UnableToPerformMultiReasonException e) {
             MessageUtil.addStatusMessages(context, e.getMessageDataWrapper());

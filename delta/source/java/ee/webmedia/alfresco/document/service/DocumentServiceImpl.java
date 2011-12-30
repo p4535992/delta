@@ -100,7 +100,10 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
+import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
+import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
+import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.assocsdyn.service.DocumentAssociationsService;
 import ee.webmedia.alfresco.document.file.model.File;
@@ -190,6 +193,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
     private CaseService _caseService;
     private DocumentSearchService _documentSearchService;
     private ImapServiceExt _imapServiceExt;
+    private DocumentConfigService _documentConfigService;
     // END: properties that would cause dependency cycle when trying to inject them
     protected BeanFactory beanFactory;
 
@@ -208,6 +212,9 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
     private PropertyChangesMonitorHelper propertyChangesMonitorHelper = new PropertyChangesMonitorHelper();
 
     private static final Set<String> SERIES_GROUPMEMBERS_PRIVILEGES = new HashSet<String>(Arrays.asList(Privileges.VIEW_DOCUMENT_META_DATA, Privileges.VIEW_DOCUMENT_FILES));
+
+    // TODO: create enum for non-systematic doc types?
+    private static final String INSTRUMENT_OF_DELIVERY_AND_RECIEPT = "instrumentOfDeliveryAndReceipt";
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -1756,7 +1763,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                 .get(DocumentCommonModel.Props.SERIES));
         final NodeRef caseNodeRef = (NodeRef) (props.containsKey(TransientProps.CASE_NODEREF) ? props.get(TransientProps.CASE_NODEREF) : props.get(DocumentCommonModel.Props.CASE));
         final NodeRef docRef = docNode.getNodeRef();
-        QName documentTypeId = docNode.getType();
+        String documentTypeId = (String) props.get(Props.OBJECT_TYPE_ID);
         final List<AssociationRef> replyAssocs = nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY);
         final boolean isReplyOrFollowupDoc = isReplyOrFollowupDoc(docRef, replyAssocs);
         final Series series = seriesService.getSeriesByNodeRef(seriesNodeRef);
@@ -1796,51 +1803,60 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                         regNumber = addUniqueNumberIfNeccessary(initDocRegNr, initDocParentRef, isRelocating);
                     }
                 }
-                if (StringUtils.isNotBlank(regNumber)) {
-                    if ((documentTypeId.equals(DocumentSubtypeModel.Types.INSTRUMENT_OF_DELIVERY_AND_RECEIPT) || documentTypeId
-                            .equals(DocumentSubtypeModel.Types.INSTRUMENT_OF_DELIVERY_AND_RECEIPT_MV))) {
-                        if (replyAssocs.size() > 0) {
-                            final NodeRef contractDocRef = replyAssocs.get(0).getTargetRef();
-                            Date finalTermOfDeliveryAndReceiptDate = (Date) nodeService.getProperty(contractDocRef,
-                                    DocumentSpecificModel.Props.FINAL_TERM_OF_DELIVERY_AND_RECEIPT);
-                            if (finalTermOfDeliveryAndReceiptDate == null) {
-                                setPropertyAsSystemUser(DocumentSpecificModel.Props.FINAL_TERM_OF_DELIVERY_AND_RECEIPT, now, contractDocRef);
-                            }
-                        }
-                    }
-                    // Check if its a reply outgoing letter and update originating document info (if needed)
-                    if (documentTypeId.equals(DocumentSubtypeModel.Types.OUTGOING_LETTER)) {
-                        if (replyAssocs.size() > 0) {
-                            final NodeRef originalDocRef = replyAssocs.get(0).getTargetRef();
-                            if (nodeService.hasAspect(originalDocRef, DocumentSpecificModel.Aspects.COMPLIENCE)) {
-                                Date complienceDate = (Date) nodeService.getProperty(originalDocRef, DocumentSpecificModel.Props.COMPLIENCE_DATE);
-                                if (complienceDate == null && !workflowService.hasInProgressOtherUserOrderAssignmentTasks(originalDocRef)) {
-                                    setPropertyAsSystemUser(DocumentSpecificModel.Props.COMPLIENCE_DATE, now, originalDocRef);
-                                    setDocStatusFinished(originalDocRef);
-                                }
-                            }
-                            DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
-                            String comment = I18NUtil.getMessage("task_comment_finished_by_register_doc", regNumber, dateFormat.format(now));
-                            workflowService.finishTasksOrCompoundWorkflowsOnRegisterDoc(originalDocRef, comment);
-                        }
-                    }
-                    // Check if its a reply outgoing mv letter and update originating document info (if needed)
-                    if (documentTypeId.equals(DocumentSubtypeModel.Types.INCOMING_LETTER_MV)) {
-                        if (replyAssocs.size() > 0) {
-                            final NodeRef originalDocRef = replyAssocs.get(0).getTargetRef();
-                            if (nodeService.hasAspect(originalDocRef, DocumentSpecificModel.Aspects.OUTGOING_LETTER_MV)) {
-                                Date replyDate = (Date) nodeService.getProperty(originalDocRef, DocumentSpecificModel.Props.REPLY_DATE);
-                                if (replyDate == null) {
-                                    setPropertyAsSystemUser(DocumentSpecificModel.Props.REPLY_DATE, now, originalDocRef);
-                                }
-                            }
-                            setDocStatusFinished(originalDocRef);
+            }
+        }
+        if (StringUtils.isNotBlank(regNumber)) {
+            if (INSTRUMENT_OF_DELIVERY_AND_RECIEPT.equals(documentTypeId)) {
+                if (replyAssocs.size() > 0) {
+                    final NodeRef contractDocRef = replyAssocs.get(0).getTargetRef();
+                    if (hasProp(DocumentSpecificModel.Props.FINAL_TERM_OF_DELIVERY_AND_RECEIPT, getPropDefs(contractDocRef))) {
+                        Date finalTermOfDeliveryAndReceiptDate = (Date) nodeService.getProperty(contractDocRef,
+                                DocumentSpecificModel.Props.FINAL_TERM_OF_DELIVERY_AND_RECEIPT);
+                        if (finalTermOfDeliveryAndReceiptDate == null) {
+                            setPropertyAsSystemUser(DocumentSpecificModel.Props.FINAL_TERM_OF_DELIVERY_AND_RECEIPT, now, contractDocRef);
                         }
                     }
                 }
             }
-        }
-        if (StringUtils.isNotBlank(regNumber)) {
+            // Check if its a reply outgoing letter and update originating document info (if needed)
+            if (SystematicDocumentType.OUTGOING_LETTER.isSameType(documentTypeId)) {
+                if (replyAssocs.size() > 0) {
+                    final NodeRef originalDocRef = replyAssocs.get(0).getTargetRef();
+                    DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
+                    String comment = MessageUtil.getMessage("task_comment_finished_by_register_doc", regNumber, dateFormat.format(now));
+                    if (!workflowService.hasInProgressOtherUserOrderAssignmentTasks(originalDocRef)) {
+                        Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs = getPropDefs(originalDocRef);
+                        if (hasProp(DocumentSpecificModel.Props.COMPLIENCE_DATE, propDefs)) {
+                            Date complienceDate = (Date) nodeService.getProperty(originalDocRef, DocumentSpecificModel.Props.COMPLIENCE_DATE);
+                            if (complienceDate == null) {
+                                setPropertyAsSystemUser(DocumentSpecificModel.Props.COMPLIENCE_DATE, now, originalDocRef);
+                                setDocStatusFinished(originalDocRef);
+                            }
+                        }
+                        if (hasProp(DocumentSpecificModel.Props.COMPLIENCE_NOTATION, propDefs)) {
+                            String complienceNotation = (String) nodeService.getProperty(originalDocRef, DocumentSpecificModel.Props.COMPLIENCE_NOTATION);
+                            setPropertyAsSystemUser(DocumentSpecificModel.Props.COMPLIENCE_NOTATION, StringUtils.isBlank(complienceNotation) ? comment : complienceNotation
+                                    + " " + comment, originalDocRef);
+                        }
+                    }
+                    workflowService.finishTasksOrCompoundWorkflowsOnRegisterDoc(originalDocRef, comment);
+                }
+            }
+            // Check if its a reply outgoing mv letter and update originating document info (if needed)
+            // FIXME: this is not working, use dynamic types (should be unified with SystematicDocumentType.OUTGOING_LETTER behaviour)
+            // FIXME: repair when migrating 2.5 -> 3.*? CL task 188193
+            if (documentTypeId.equals(DocumentSubtypeModel.Types.INCOMING_LETTER_MV)) {
+                if (replyAssocs.size() > 0) {
+                    final NodeRef originalDocRef = replyAssocs.get(0).getTargetRef();
+                    if (nodeService.hasAspect(originalDocRef, DocumentSpecificModel.Aspects.OUTGOING_LETTER_MV)) {
+                        Date replyDate = (Date) nodeService.getProperty(originalDocRef, DocumentSpecificModel.Props.REPLY_DATE);
+                        if (replyDate == null) {
+                            setPropertyAsSystemUser(DocumentSpecificModel.Props.REPLY_DATE, now, originalDocRef);
+                        }
+                    }
+                    setDocStatusFinished(originalDocRef);
+                }
+            }
             String oldRegNumber = (String) nodeService.getProperty(docRef, REG_NUMBER);
             boolean adrDeletedDocumentAdded = false;
             if (oldRegNumber != null && !StringUtils.equals(oldRegNumber, regNumber)) {
@@ -1870,11 +1886,10 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             }
 
             throwIfNotDynamicDoc(docNode);
-            String objectTypeId = (String) props.get(Props.OBJECT_TYPE_ID);
-            if (SystematicDocumentType.VACATION_APPLICATION.isSameType(objectTypeId) && StringUtils.isBlank(oldRegNumber)) {
+            if (SystematicDocumentType.VACATION_APPLICATION.isSameType(documentTypeId) && StringUtils.isBlank(oldRegNumber)) {
                 createSubstitutions(props);
             }
-            if (getDocumentAdminService().getDocumentTypeProperty(objectTypeId, DocumentAdminModel.Props.FINISH_DOC_BY_REGISTRATION, Boolean.class)) {
+            if (getDocumentAdminService().getDocumentTypeProperty(documentTypeId, DocumentAdminModel.Props.FINISH_DOC_BY_REGISTRATION, Boolean.class)) {
                 props.put(DOC_STATUS.toString(), DocumentStatus.FINISHED.getValueName());
                 propertyChangesMonitorHelper.addIgnoredProps(props, DOC_STATUS);
                 documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_registered"));
@@ -1889,6 +1904,23 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             return updateDocument(docNode); // TODO XXX FIXME use documentDynamicService.update... instead of this
         }
         throw new UnableToPerformException(MessageSeverity.INFO, "document_errorMsg_register_initialDocNotRegistered");
+    }
+
+    private Map<String, Pair<DynamicPropertyDefinition, Field>> getPropDefs(final NodeRef originalDocRef) {
+        return getDocumentConfigService().getPropertyDefinitions(new Node(originalDocRef));
+    }
+
+    private boolean hasProp(QName propName, Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs) {
+        if (propName == null || propDefs == null) {
+            return false;
+        }
+        for (Pair<DynamicPropertyDefinition, Field> value : propDefs.values()) {
+            Field field = value.getSecond();
+            if (field != null && propName.equals(field.getQName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String addUniqueNumberIfNeccessary(String regNumber, NodeRef initDocParentRef, boolean isRelocating) {
@@ -2799,6 +2831,13 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             _imapServiceExt = (ImapServiceExt) beanFactory.getBean(ImapServiceExt.BEAN_NAME);
         }
         return _imapServiceExt;
+    }
+
+    private DocumentConfigService getDocumentConfigService() {
+        if (_documentConfigService == null) {
+            _documentConfigService = (DocumentConfigService) beanFactory.getBean(DocumentConfigService.BEAN_NAME);
+        }
+        return _documentConfigService;
     }
 
     // dependency cicle documentService -> documentAssociationsService -> documentAdminService -> documentSearchService -> documentService
