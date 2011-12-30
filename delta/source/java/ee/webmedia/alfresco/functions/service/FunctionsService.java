@@ -50,6 +50,8 @@ public interface FunctionsService {
      */
     void saveOrUpdate(Function fn);
 
+    void saveOrUpdate(Function function, NodeRef functionsRoot);
+
     /**
      * Created a new function.
      * 
@@ -87,6 +89,8 @@ public interface FunctionsService {
      * @return number of documents in documentList
      */
     long updateDocCounters();
+
+    long updateDocCounters(NodeRef functionsRoot);
 
     Pair<List<NodeRef>, Long> getAllDocumentAndCaseRefs();
 

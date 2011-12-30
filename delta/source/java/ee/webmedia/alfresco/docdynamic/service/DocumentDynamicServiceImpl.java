@@ -118,6 +118,20 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     }
 
     @Override
+    public void setOwner(Map<QName, Serializable> props, String ownerId, boolean retainPreviousOwnerId, Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs) {
+        Pair<DynamicPropertyDefinition, Field> pair = propDefs.get(OWNER_NAME.getLocalName());
+        String previousOwnerId = (String) props.get(OWNER_ID);
+        documentConfigService.setUserContactProps(props, ownerId, pair.getFirst(), pair.getSecond());
+
+        if (!StringUtils.equals(previousOwnerId, ownerId)) {
+            if (!retainPreviousOwnerId) {
+                previousOwnerId = null;
+            }
+            props.put(PREVIOUS_OWNER_ID, previousOwnerId);
+        }
+    }
+
+    @Override
     public void setOwner(Map<QName, Serializable> props, String ownerId, boolean retainPreviousOwnerId) {
         String previousOwnerId = (String) props.get(OWNER_ID);
         documentConfigService.setUserContactProps(props, ownerId, OWNER_NAME.getLocalName());
@@ -142,19 +156,19 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     @Override
     public Pair<DocumentDynamic, DocumentTypeVersion> createNewDocument(String documentTypeId, NodeRef parent) {
         DocumentTypeVersion docVer = getLatestDocTypeVer(documentTypeId);
-        return createNewDocument(docVer, parent);
+        return createNewDocument(docVer, parent, true);
     }
 
     @Override
-    public Pair<DocumentDynamic, DocumentTypeVersion> createNewDocument(DocumentTypeVersion docVer, NodeRef parent) {
+    public Pair<DocumentDynamic, DocumentTypeVersion> createNewDocument(DocumentTypeVersion docVer, NodeRef parent, boolean reallySetDefaultValues) {
 
         Map<QName, Serializable> props = new HashMap<QName, Serializable>();
         setTypeProps(getDocTypeIdAndVersionNr(docVer), props);
 
-        return createNewDocument(docVer, parent, props);
+        return createNewDocument(docVer, parent, props, reallySetDefaultValues);
     }
 
-    private Pair<DocumentDynamic, DocumentTypeVersion> createNewDocument(DocumentTypeVersion docVer, NodeRef parent, Map<QName, Serializable> props) {
+    private Pair<DocumentDynamic, DocumentTypeVersion> createNewDocument(DocumentTypeVersion docVer, NodeRef parent, Map<QName, Serializable> props, boolean reallySetDefaultValues) {
 
         // TODO FIXME this is handled by setDefaultPropertyValues, but currently admin can configure inappropriate values to docStatus
         props.put(DocumentCommonModel.Props.DOC_STATUS, DocumentStatus.WORKING.getValueName());
@@ -171,7 +185,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
         createChildNodesHierarchy(docNode, childAssocTypeQNamesRoot.getChildren());
 
-        documentConfigService.setDefaultPropertyValues(docNode, null, false, true, docVer);
+        documentConfigService.setDefaultPropertyValues(docNode, null, false, reallySetDefaultValues, docVer);
 
         DocumentServiceImpl.PropertyChangesMonitorHelper propertyChangesMonitorHelper = new DocumentServiceImpl.PropertyChangesMonitorHelper();
         saveThisNodeAndChildNodes(null, docNode, childAssocTypeQNamesRoot.getChildren(), null, propertyChangesMonitorHelper, null);

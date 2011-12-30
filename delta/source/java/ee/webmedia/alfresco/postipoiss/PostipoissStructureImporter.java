@@ -28,15 +28,16 @@ import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransacti
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.util.GUID;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.CharUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
+import org.springframework.util.Assert;
 
 import com.csvreader.CsvReader;
 import com.csvreader.CsvWriter;
@@ -51,6 +52,7 @@ import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.classificator.enums.SeriesType;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
@@ -78,6 +80,7 @@ public class PostipoissStructureImporter {
 
     private static final String CONTACT_GROUPS_FILENAME = "kontakt_grupid.csv";
     private static final String CONTACTS_FILENAME = "kontaktid.csv";
+    private static final String COMPLETED_CONTACTS_FILENAME = "completed_kontaktid.csv";
     private static final String CONTACTS_IN_GROUPS_FILENAME = "kontakti_kuulumine_gruppi.csv";
     private static final String FUNCTIONS_FILENAME = "struktuur.csv";
     private static final String VOLUMES_FILENAME = "toimikud.csv";
@@ -92,9 +95,6 @@ public class PostipoissStructureImporter {
     private static final char OUTPUT_SEPARATOR = ';';
     private static final String CREATOR_MODIFIER = "DELTA";
 
-    private final Map<String, NodeRef> contactCache = new LinkedHashMap<String, NodeRef>();
-    private final Map<String, NodeRef> contactGroupCache = new LinkedHashMap<String, NodeRef>();
-
     private static DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
 
     // ========= THINGS YOU MAY WANT TO CHANE =========
@@ -106,7 +106,16 @@ public class PostipoissStructureImporter {
     }
 
     private static boolean isVolumeOpen(Toimik t) {
-        return t.year() == 2010;
+        return false; // Logic for SIM/MV was: t.year() == 2010;
+    }
+
+    private static Date seriesValidFrom;
+    static {
+        try {
+            seriesValidFrom = dateFormat.parse("01.01.2010");
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static Date endOfArchive;
@@ -132,6 +141,10 @@ public class PostipoissStructureImporter {
 
     // ================================================
 
+    private File dataFolder;
+    private File workFolder;
+    private NodeRef archivalsRoot;
+
     private AddressbookService addressbookService;
     private FunctionsService functionsService;
     private SeriesService seriesService;
@@ -143,66 +156,98 @@ public class PostipoissStructureImporter {
     private NodeService nodeService;
     private CaseService caseService;
     private BehaviourFilter behaviourFilter;
-    private String inputFolderPath;
+    private PostipoissImporter postipoissImporter;
 
-    private StoreRef archivalStore;
-    private NodeRef archivalRoot;
+    private Map<String, NodeRef> contactCache;
+    private Map<String, NodeRef> contactGroupCache;
+    private Integer registerId;
+    private Map<String, Funk> funks;
+    private Map<String, NodeRef> functions;
+    private Map<String, NodeRef> archivedFunctions;
+    private Set<String> missingFunctions;
+    private Map<String, Map<String, NodeRef>> seriesByIndex;
+    private Map<String, Map<String, NodeRef>> archivedSeriesByIndex;
+    private List<Toimik> toimikud;
 
-    private boolean started = false;
+    // private Map<Integer, Map<String, Toimik>> toimikMap;
+    // private Map<String, Volume> preenteredVolumes;
+    // private Map<String, Case> preenteredCases;
+
     // private List<QName> allDocumentTypes;
 
-    private boolean enabled;
+    // TODO kontaktgruppide impordi võib sisse kommenteerida ja kontrollida et kui faili pole olemas, siis skipiks
+    // TODO funktsioonid võiks kohe arhiivi alla luua, dok.loetelu alla loomine ja liigutamine on mõttetu
 
     /**
      * Runs the contact/structure import process
      */
-    public void runImport() throws Exception {
-        try {
-            started = true;
-            if (!enabled) {
-                return;
-            }
+    public void runImport(File dataFolder, File workFolder, NodeRef archivalsRoot) throws Exception {
+        this.dataFolder = dataFolder;
+        this.workFolder = workFolder;
+        this.archivalsRoot = archivalsRoot;
+        init();
 
-            // List<DocumentType> dts = documentTypeService.getAllDocumentTypes();
-            // allDocumentTypes = new ArrayList<QName>();
-            // for (DocumentType dt : dts) {
-            // allDocumentTypes.add(dt.getId());
-            // }
+        // List<DocumentType> dts = documentTypeService.getAllDocumentTypes();
+        // allDocumentTypes = new ArrayList<QName>();
+        // for (DocumentType dt : dts) {
+        // allDocumentTypes.add(dt.getId());
+        // }
 
-            log.info("Structure import is starting to run");
+        log.info("Structure import is starting to run");
 
-            RetryingTransactionHelper helper = getTransactionHelper();
-
-            helper.doInTransaction(new RetryingTransactionCallback<Object>() {
-                @Override
-                public Object execute() throws Throwable {
-                    createContacts();
-                    return null;
+        RetryingTransactionHelper helper = getTransactionHelper();
+        if (helper.doInTransaction(new RetryingTransactionCallback<Boolean>() {
+            @Override
+            public Boolean execute() throws Throwable {
+                boolean createContacts = createContacts();
+                if (createContacts) {
+                    log.info("Commiting transaction...");
                 }
-            });
+                return createContacts;
+            }
+        })) {
+            File contactsCompletedFile = new File(dataFolder, COMPLETED_CONTACTS_FILENAME);
+            FileUtils.writeStringToFile(contactsCompletedFile, "");
+        }
+        log.info("Contacts import completed");
 
+        File outputFile = new File(workFolder, COMPLETED_VOLUMES_FILENAME);
+        if (outputFile.exists()) {
+            log.info("Structure results file '" + outputFile + "' exists, skipping structure import");
+        } else {
             helper.doInTransaction(new RetryingTransactionCallback<Object>() {
                 @Override
                 public Object execute() throws Throwable {
                     behaviourFilter.disableBehaviour(ContentModel.ASPECT_AUDITABLE);
-                    initialize();
                     readFunks();
                     createSeries();
-                    writeToimikud();
-                    log.info("Structure import is COMPLETED");
+                    log.info("Commiting transaction...");
                     return null;
                 }
             });
-        } catch (Exception e) {
-            log.error("IMPORT FAILED: STRUCTURE IMPORT FAILED", e);
-            throw e;
-        } finally {
-            reset();
-            started = false;
+            writeToimikud();
         }
+        log.info("Structure import is COMPLETED");
     }
 
-    private Integer registerId;
+    private void init() {
+        contactCache = new LinkedHashMap<String, NodeRef>();
+        contactGroupCache = new LinkedHashMap<String, NodeRef>();
+        registerId = null;
+        funks = new HashMap<String, Funk>();
+        functions = new HashMap<String, NodeRef>();
+        archivedFunctions = new HashMap<String, NodeRef>();
+        missingFunctions = new HashSet<String>();
+        seriesByIndex = new HashMap<String, Map<String, NodeRef>>();
+        archivedSeriesByIndex = new HashMap<String, Map<String, NodeRef>>();
+        toimikud = new ArrayList<Toimik>(6000);
+
+        // toimikMap = new HashMap<Integer, Map<String, Toimik>>();
+        // preenteredVolumes = new HashMap<String, Volume>();
+        // preenteredCases = new HashMap<String, Case>();
+
+        // loadPreenteredVolumes();
+    }
 
     private int getRegisterId() {
         if (registerId == null) {
@@ -214,9 +259,12 @@ public class PostipoissStructureImporter {
             }
             if (registerId == null) {
                 Node register = registerService.createRegister();
-                register.getProperties().put(RegisterModel.Prop.NAME.toString(), REGISTER_NAME);
+                Map<String, Object> props = register.getProperties();
+                props.put(RegisterModel.Prop.NAME.toString(), REGISTER_NAME);
+                props.put(RegisterModel.Prop.COUNTER.toString(), 0);
+                props.put(RegisterModel.Prop.AUTO_RESET.toString(), Boolean.FALSE);
                 registerService.updateProperties(register);
-                registerId = (Integer) register.getProperties().get(RegisterModel.Prop.ID.toString());
+                registerId = (Integer) props.get(RegisterModel.Prop.ID.toString());
             }
         }
         return registerId;
@@ -225,63 +273,86 @@ public class PostipoissStructureImporter {
     // ///////////////////////////////////////////////////////////////////////////
     // CONTACTS
     // /////////////////////////////////////////////////////////////////////////
-    protected void createContacts() throws Exception {
-        File contactFile = new File(inputFolderPath, CONTACTS_FILENAME);
-        if (!contactFile.exists()) {
-            log.info("Contacts file '" + contactFile + "' does not exist, skipping contacts and contact groups import");
-            return;
-        }
-
-        log.info("Reading Postipoiss contacts file '" + contactFile + "' with encoding " + INPUT_ENCODING);
-        CsvReader contactReader = new CsvReader(new FileInputStream(contactFile), ';', Charset.forName(INPUT_ENCODING));
-
-        try {
-            while (contactReader.readRecord()) {
-                try {
-                    createContact(contactReader);
-                } catch (Exception e) {
-                    throw new RuntimeException("Error while importing contact from row index " + contactReader.getCurrentRecord() + " in file "
-                            + contactFile, e);
-                }
+    protected boolean createContacts() throws Exception {
+        {
+            File contactsCompletedFile = new File(workFolder, COMPLETED_CONTACTS_FILENAME);
+            if (contactsCompletedFile.exists()) {
+                log.info("Contacts completed file '" + contactsCompletedFile + "' exists, skipping contacts and contact groups import");
+                return false;
             }
-        } finally {
-            contactReader.close();
-        }
 
-        final String contactgroupsFilePath = inputFolderPath + "/" + CONTACT_GROUPS_FILENAME;
-        log.info("Reading Postipoiss contact groups file '" + contactgroupsFilePath + "' with encoding " + INPUT_ENCODING);
-        CsvReader contactGroupReader = new CsvReader(contactgroupsFilePath, ';', Charset.forName(INPUT_ENCODING));
-
-        try {
-            while (contactGroupReader.readRecord()) {
-                try {
-                    createContactGroup(contactGroupReader);
-                } catch (Exception e) {
-                    throw new RuntimeException("Error while importing contactgroup from row index " + contactGroupReader.getCurrentRecord() + " in file "
-                            + contactgroupsFilePath, e);
-                }
+            File contactsFile = new File(dataFolder, CONTACTS_FILENAME);
+            if (!contactsFile.exists()) {
+                log.info("Contacts file '" + contactsFile + "' does not exist, skipping contacts and contact groups import");
+                return false;
             }
-        } finally {
-            contactGroupReader.close();
-        }
 
-        final String contactsingroupsFilePath = inputFolderPath + "/" + CONTACTS_IN_GROUPS_FILENAME;
-        log.info("Reading Postipoiss contacts-in-group file '" + contactsingroupsFilePath + "' with encoding " + INPUT_ENCODING);
-        CsvReader contactsinGroupsReader = new CsvReader(contactsingroupsFilePath, ';', Charset.forName(INPUT_ENCODING));
+            log.info("Reading Postipoiss contacts file '" + contactsFile + "' with encoding " + INPUT_ENCODING);
+            CsvReader contactReader = new CsvReader(new FileInputStream(contactsFile), ';', Charset.forName(INPUT_ENCODING));
 
-        try {
-            while (contactsinGroupsReader.readRecord()) {
-                try {
-                    addContactsToGroups(contactsinGroupsReader);
-                } catch (Exception e) {
-                    throw new RuntimeException("Error while importing contacts in groups from row index " + contactGroupReader.getCurrentRecord() + " in file "
-                            + contactsingroupsFilePath, e);
+            try {
+                while (contactReader.readRecord()) {
+                    try {
+                        checkStop();
+                        createContact(contactReader);
+                    } catch (Exception e) {
+                        throw new RuntimeException("Error while importing contact from row index " + contactReader.getCurrentRecord() + " in file "
+                                + contactsFile, e);
+                    }
                 }
+            } finally {
+                contactReader.close();
             }
-        } finally {
-            contactsinGroupsReader.close();
         }
 
+        //@formatter:off
+        /* Contact groups import is not used in PPA
+        {
+            File contactgroupsFile = new File(dataFolder, CONTACT_GROUPS_FILENAME);
+            log.info("Reading Postipoiss contact groups file '" + contactgroupsFile + "' with encoding " + INPUT_ENCODING);
+            CsvReader contactGroupReader = new CsvReader(new FileInputStream(contactgroupsFile), ';', Charset.forName(INPUT_ENCODING));
+
+            try {
+                while (contactGroupReader.readRecord()) {
+                    try {
+                        checkStop();
+                        createContactGroup(contactGroupReader);
+                    } catch (Exception e) {
+                        throw new RuntimeException("Error while importing contactgroup from row index " + contactGroupReader.getCurrentRecord() + " in file "
+                                + contactgroupsFile, e);
+                    }
+                }
+            } finally {
+                contactGroupReader.close();
+            }
+        }
+
+        {
+            File contactsingroupsFile = new File(dataFolder, CONTACTS_IN_GROUPS_FILENAME);
+            log.info("Reading Postipoiss contacts-in-group file '" + contactsingroupsFile + "' with encoding " + INPUT_ENCODING);
+            CsvReader contactsinGroupsReader = new CsvReader(new FileInputStream(contactsingroupsFile), ';', Charset.forName(INPUT_ENCODING));
+
+            try {
+                while (contactsinGroupsReader.readRecord()) {
+                    try {
+                        checkStop();
+                        addContactsToGroups(contactsinGroupsReader);
+                    } catch (Exception e) {
+                        throw new RuntimeException("Error while importing contacts in groups from row index " + contactsinGroupsReader.getCurrentRecord() + " in file "
+                                + contactsingroupsFile, e);
+                    }
+                }
+            } finally {
+                contactsinGroupsReader.close();
+            }
+        }
+        */
+        //@formatter:on
+        return true;
+    }
+
+    private void checkStop() {
+        postipoissImporter.checkStop();
     }
 
     private void createContact(CsvReader reader) throws Exception {
@@ -341,28 +412,30 @@ public class PostipoissStructureImporter {
 
     private NodeRef createContactNode(String orgId, String orgName, String registryCode, String shortname, String englishOrgName, String email,
             String phone, String fax, String address, String town, String postalCode, String country) {
-        NodeRef abRoot = addressbookService.getAddressbookRoot();
+
+        HashMap<QName, Serializable> props = new HashMap<QName, Serializable>();
+        props.put(AddressbookModel.Props.ORGANIZATION_NAME, orgName);
+        props.put(AddressbookModel.Props.ORGANIZATION_CODE, registryCode);
+        props.put(AddressbookModel.Props.ORGANIZATION_ACRONYM, shortname);
+        props.put(AddressbookModel.Props.ORGANIZATION_ALTERNATE_NAME, englishOrgName);
+        props.put(AddressbookModel.Props.EMAIL, email);
+        props.put(AddressbookModel.Props.PHONE, phone);
+        props.put(AddressbookModel.Props.FAX, fax);
+        props.put(AddressbookModel.Props.ADDRESS1, address);
+        props.put(AddressbookModel.Props.CITY, town);
+        props.put(AddressbookModel.Props.POSTAL, postalCode);
+        props.put(AddressbookModel.Props.COUNTRY, country);
+        props.put(AddressbookModel.Props.ACTIVESTATUS, Boolean.TRUE);
 
         QName randomqname = QName.createQName(AddressbookModel.URI, GUID.generate());
-        NodeRef result = nodeService.createNode(abRoot, AddressbookModel.Assocs.ORGANIZATIONS, randomqname, AddressbookModel.Types.ORGANIZATION).getChildRef();
+        NodeRef contactRef = nodeService.createNode(
+                addressbookService.getAddressbookRoot(),
+                AddressbookModel.Assocs.ORGANIZATIONS,
+                randomqname,
+                AddressbookModel.Types.ORGANIZATION,
+                props).getChildRef();
 
-        HashMap<QName, Serializable> map = new HashMap<QName, Serializable>();
-        map.put(AddressbookModel.Props.ORGANIZATION_NAME, orgName);
-        map.put(AddressbookModel.Props.ORGANIZATION_CODE, registryCode);
-        map.put(AddressbookModel.Props.ORGANIZATION_ACRONYM, shortname);
-        map.put(AddressbookModel.Props.ORGANIZATION_ALTERNATE_NAME, englishOrgName);
-        map.put(AddressbookModel.Props.EMAIL, email);
-        map.put(AddressbookModel.Props.PHONE, phone);
-        map.put(AddressbookModel.Props.FAX, fax);
-        map.put(AddressbookModel.Props.ADDRESS1, address);
-        map.put(AddressbookModel.Props.CITY, town);
-        map.put(AddressbookModel.Props.POSTAL, postalCode);
-        map.put(AddressbookModel.Props.COUNTRY, country);
-        map.put(AddressbookModel.Props.ACTIVESTATUS, Boolean.TRUE);
-
-        nodeService.setProperties(result, map);
-
-        return result;
+        return contactRef;
     }
 
     private void addContactsToGroups(CsvReader contactsinGroupsReader) throws Exception {
@@ -399,27 +472,6 @@ public class PostipoissStructureImporter {
     // ///////////////////////////////////////////////////////////////////////////
     // Funks
     // /////////////////////////////////////////////////////////////////////////
-    private Map<String, NodeRef> functions = new HashMap<String, NodeRef>();
-    private Map<String, NodeRef> archivedFunctions = new HashMap<String, NodeRef>();
-
-    // private Map<Integer, Map<String, Toimik>> toimikMap = new HashMap<Integer, Map<String, Toimik>>();
-    // private Map<String, Volume> preenteredVolumes = new HashMap<String, Volume>();
-    // private Map<String, Case> preenteredCases = new HashMap<String, Case>();
-
-    private void initialize() {
-        reset();
-        // loadPreenteredVolumes();
-    }
-
-    private void reset() {
-        funks = new HashMap<String, Funk>();
-        functions = new HashMap<String, NodeRef>();
-        archivedFunctions = new HashMap<String, NodeRef>();
-        seriesByIndex = new HashMap<String, Map<String, NodeRef>>();
-        archivedSeriesByIndex = new HashMap<String, Map<String, NodeRef>>();
-        // toimikMap = new HashMap<Integer, Map<String, Toimik>>();
-        // preenteredVolumes = new HashMap<String, Volume>();
-    }
 
     // private Date year2010;
     // {
@@ -455,8 +507,6 @@ public class PostipoissStructureImporter {
     // }
     // }
 
-    private Map<String, Funk> funks = new HashMap<String, Funk>();
-
     static class Funk {
         String id;
         String title;
@@ -478,9 +528,9 @@ public class PostipoissStructureImporter {
     }
 
     private void readFunks() throws Exception {
-        final String inputFilePath = inputFolderPath + "/" + FUNCTIONS_FILENAME;
-        log.info("Reading Postipoiss functions file '" + inputFilePath + "' with encoding " + INPUT_ENCODING);
-        CsvReader reader = new CsvReader(inputFilePath, ';', Charset.forName(INPUT_ENCODING));
+        final File inputFile = new File(dataFolder, FUNCTIONS_FILENAME);
+        log.info("Reading Postipoiss functions file '" + inputFile + "' with encoding " + INPUT_ENCODING);
+        CsvReader reader = new CsvReader(new FileInputStream(inputFile), ';', Charset.forName(INPUT_ENCODING));
         try {
             reader.readHeaders();
             while (reader.readRecord()) {
@@ -488,7 +538,7 @@ public class PostipoissStructureImporter {
                     Funk funk = new Funk(reader);
                     funks.put(funk.id, funk);
                 } catch (Exception e) {
-                    throw new RuntimeException("Error while reading function from row index " + reader.getCurrentRecord() + " in file " + inputFilePath, e);
+                    throw new RuntimeException("Error while reading function from row index " + reader.getCurrentRecord() + " in file " + inputFile, e);
                 }
             }
         } finally {
@@ -513,9 +563,10 @@ public class PostipoissStructureImporter {
     private NodeRef createFunction(Funk funk, boolean archived) {
         log.info(String.format("\n\nFUNCTION CREATION!!!!\n\n\nCreating%s function for funk: %s", (archived ? " archived" : ""), funk.toString()));
         NodeRef function = createFunction(funk);
-        if (archived) {
-            function = archiveFunction(function);
-        }
+        // XXX archivalsRoot already determines where the function is saved, so "archived" argument is not used
+        // if (archived) {
+        // function = archiveFunction(function);
+        // }
         return function;
     }
 
@@ -529,36 +580,17 @@ public class PostipoissStructureImporter {
         String functionType = ppMark.contains(".") ? "allfunktsioon" : "funktsioon";
         Function function = functionsService.createFunction();
         Map<String, Object> props = function.getNode().getProperties();
+        props.put(FunctionsModel.Props.MARK.toString(), ppMark);
         props.put(FunctionsModel.Props.TITLE.toString(), trimmedTitle);
         props.put(FunctionsModel.Props.TYPE.toString(), functionType);
-        props.put(FunctionsModel.Props.MARK.toString(), ppMark);
         props.put(FunctionsModel.Props.ORDER.toString(), funk.order);
         props.put(FunctionsModel.Props.STATUS.toString(), DocListUnitStatus.CLOSED.getValueName());
-        props.put(ContentModel.PROP_CREATOR.toString(), CREATOR_MODIFIER);
-        props.put(ContentModel.PROP_MODIFIER.toString(), CREATOR_MODIFIER);
-        functionsService.saveOrUpdate(function);
+        functionsService.saveOrUpdate(function, archivalsRoot);
 
         log.info(function.getNodeRef());
 
         logAllCreation("function '" + funk.id + "' " + funk.title, function.getNodeRef());
         return function.getNodeRef();
-    }
-
-    private NodeRef archiveFunction(NodeRef function) {
-        NodeRef changedNodeRef = nodeService.moveNode(function, getArchivalRoot(),
-                FunctionsModel.Associations.FUNCTION, FunctionsModel.Associations.FUNCTION).getChildRef();
-        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
-        props.put(ContentModel.PROP_CREATOR, CREATOR_MODIFIER);
-        props.put(ContentModel.PROP_MODIFIER, CREATOR_MODIFIER);
-        nodeService.addProperties(changedNodeRef, props);
-        return changedNodeRef;
-    }
-
-    private NodeRef getArchivalRoot() {
-        if (archivalRoot == null) {
-            archivalRoot = generalService.getPrimaryArchivalsNodeRef();
-        }
-        return archivalRoot;
     }
 
     // ///////////////////////////////////////////////////////////////////////////
@@ -653,13 +685,14 @@ public class PostipoissStructureImporter {
             volumeMark = r.get(6);
             volumeName = r.get(7);
             volumeType = toVolumeType(r.get(8));
-            validFrom = parseDate(r.get(9));
-            validTo = parseDate(r.get(10));
-            bestBefore = toBestBefore(r.get(11));
+            bestBefore = toBestBefore(r.get(9));
+            validFrom = parseDate(r.get(10));
+            Assert.notNull(validFrom, "validFrom is missing");
+            validTo = parseDate(r.get(11));
             seriesAccessRestriction = r.get(12);
             seriesAccessRestrictionReason = r.get(13);
 
-            archived = isArchived(year(), validTo);
+            archived = true; // Logic for SIM/MV was: isArchived(year(), validTo);
             prepareOrderArray();
         }
 
@@ -728,10 +761,16 @@ public class PostipoissStructureImporter {
     }
 
     private static int toBestBefore(String s) {
+        int value = 0;
         if (StringUtils.isBlank(s)) {
-            return 0;
+            return value;
         }
-        return Integer.parseInt(s);
+        try {
+            value = Integer.parseInt(s);
+        } catch (NumberFormatException e) {
+            log.warn("best before is not a number, ignoring: " + s);
+        }
+        return value;
     }
 
     private static VolumeType toVolumeType(String s) {
@@ -740,7 +779,7 @@ public class PostipoissStructureImporter {
         } else if (ATTR_SINGLE_YEAR.equals(s)) {
             return VolumeType.ANNUAL_FILE;
         } else {
-            throw new RuntimeException("Invalid value in column index 8: '" + s + "' ");
+            throw new RuntimeException("Invalid volumeType value: '" + s + "'");
         }
     }
 
@@ -755,11 +794,6 @@ public class PostipoissStructureImporter {
         }
         return date;
     }
-
-    private Map<String, Map<String, NodeRef>> seriesByIndex = new HashMap<String, Map<String, NodeRef>>();
-    private Map<String, Map<String, NodeRef>> archivedSeriesByIndex = new HashMap<String, Map<String, NodeRef>>();
-
-    private Set<String> missingFunctions = new HashSet<String>();
 
     private NodeRef getSeries(Toimik t) {
         Map<String, Map<String, NodeRef>> bigMap = t.archived ? archivedSeriesByIndex : seriesByIndex;
@@ -779,8 +813,6 @@ public class PostipoissStructureImporter {
         }
         map.put(t.seriesIndex, series);
     }
-
-    private final List<Toimik> toimikud = new ArrayList<Toimik>(6000);
 
     private void importToimik(Toimik t) {
         // Toimik theOtherOne = getToimik(t);
@@ -813,6 +845,7 @@ public class PostipoissStructureImporter {
         // if (t.year() != 2010) {
         // volume.setContainsCases(false);
         // }
+        volume.setContainsCases(false);
 
         volume.setValidFrom(t.validFrom);
         volume.setValidTo(t.validTo);
@@ -824,11 +857,6 @@ public class PostipoissStructureImporter {
 
         volumeService.saveOrUpdate(volume, false);
         t.nodeRef = volume.getNode().getNodeRef();
-
-        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
-        props.put(ContentModel.PROP_CREATOR, CREATOR_MODIFIER);
-        props.put(ContentModel.PROP_MODIFIER, CREATOR_MODIFIER);
-        nodeService.addProperties(t.nodeRef, props);
 
         // putToimik(t);
         t.add(t.volumeMark);
@@ -862,8 +890,7 @@ public class PostipoissStructureImporter {
         props.put(SeriesModel.Props.SERIES_IDENTIFIER.toString(), t.seriesIndex);
         props.put(SeriesModel.Props.TITLE.toString(), t.seriesTitle);
         props.put(SeriesModel.Props.STATUS.toString(), isSeriesOpen(t) ? DocListUnitStatus.OPEN.getValueName() : DocListUnitStatus.CLOSED.getValueName());
-        props.put(SeriesModel.Props.RETENTION_PERIOD.toString(), t.bestBefore);
-        props.put(SeriesModel.Props.DOC_TYPE.toString(), SERIES_DEFAULT_DOC_TYPE);
+        props.put(SeriesModel.Props.VALID_FROM_DATE.toString(), seriesValidFrom);
         try {
             int order = PostipoissUtil.inferLastNumber(t.seriesIndex);
             // If condition fails, the original order should be ok for insertion
@@ -872,17 +899,25 @@ public class PostipoissStructureImporter {
             }
         } catch (Exception e) {
         }
+        ArrayList<String> docType = new ArrayList<String>();
+        docType.add(SystematicDocumentType.INCOMING_LETTER.getId());
+        docType.add(SystematicDocumentType.OUTGOING_LETTER.getId());
+        props.put(SeriesModel.Props.DOC_TYPE.toString(), docType); // docType is not important on closed series anyway
         props.put(SeriesModel.Props.REGISTER.toString(), getRegisterId());
+        props.put(SeriesModel.Props.DOC_NUMBER_PATTERN.toString(), "{S}/{DN}");
+        ArrayList<String> volType = new ArrayList<String>();
+        volType.add(VolumeType.ANNUAL_FILE.name());
+        volType.add(VolumeType.SUBJECT_FILE.name());
+        props.put(SeriesModel.Props.VOL_TYPE.toString(), volType);
+        props.put(SeriesModel.Props.RETENTION_PERIOD.toString(), t.bestBefore);
         // Default access restriction value is OPEN
-        props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION.toString(), AccessRestriction.OPEN.getValueName());
+        props.put(SeriesModel.Props.ACCESS_RESTRICTION.toString(), AccessRestriction.OPEN.getValueName());
         if (StringUtils.isNotEmpty(t.seriesAccessRestriction)) {
-            props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION.toString(), t.seriesAccessRestriction);
+            props.put(SeriesModel.Props.ACCESS_RESTRICTION.toString(), t.seriesAccessRestriction);
         }
         if (StringUtils.isNotEmpty(t.seriesAccessRestrictionReason)) {
-            props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON.toString(), t.seriesAccessRestrictionReason);
+            props.put(SeriesModel.Props.ACCESS_RESTRICTION_REASON.toString(), t.seriesAccessRestrictionReason);
         }
-        props.put(ContentModel.PROP_CREATOR.toString(), CREATOR_MODIFIER);
-        props.put(ContentModel.PROP_MODIFIER.toString(), CREATOR_MODIFIER);
 
         // A specific logic for SIM
         // if (t.year() != 2010) {
@@ -898,8 +933,6 @@ public class PostipoissStructureImporter {
         for (ChildAssociationRef childRef : childAssocs) {
             Map<QName, Serializable> childProps = new HashMap<QName, Serializable>();
             childProps.put(DocumentCommonModel.Props.CREATOR_NAME, CREATOR_MODIFIER);
-            childProps.put(ContentModel.PROP_CREATOR, CREATOR_MODIFIER);
-            childProps.put(ContentModel.PROP_MODIFIER, CREATOR_MODIFIER);
             nodeService.addProperties(childRef.getChildRef(), childProps);
         }
 
@@ -918,16 +951,16 @@ public class PostipoissStructureImporter {
     // }
 
     private void createSeries() throws Exception {
-        final String inputFilePath = inputFolderPath + "/" + VOLUMES_FILENAME;
-        log.info("Reading Postipoiss volumes file '" + inputFilePath + "' with encoding " + INPUT_ENCODING);
-        CsvReader reader = new CsvReader(inputFilePath, ';', Charset.forName(INPUT_ENCODING));
+        final File inputFile = new File(dataFolder, VOLUMES_FILENAME);
+        log.info("Reading Postipoiss volumes file '" + inputFile + "' with encoding " + INPUT_ENCODING);
+        CsvReader reader = new CsvReader(new FileInputStream(inputFile), ';', Charset.forName(INPUT_ENCODING));
         try {
             reader.readHeaders();
             while (reader.readRecord()) {
                 try {
                     toimikud.add(new Toimik(reader));
                 } catch (Exception e) {
-                    throw new RuntimeException("Error while reading volume from row index " + reader.getCurrentRecord() + " in file " + inputFilePath, e);
+                    throw new RuntimeException("Error while reading volume from row index " + reader.getCurrentRecord() + " in file " + inputFile, e);
                 }
             }
 
@@ -935,6 +968,7 @@ public class PostipoissStructureImporter {
             // toimikud = toimikud.subList(0, 20);
             Collections.sort(toimikud);
             for (Toimik t : toimikud) {
+                checkStop();
                 importToimik(t);
             }
 
@@ -948,11 +982,11 @@ public class PostipoissStructureImporter {
     }
 
     private void writeToimikud() {
-        final String outputFilePath = inputFolderPath + "/" + COMPLETED_VOLUMES_FILENAME;
+        final File outputFile = new File(workFolder, COMPLETED_VOLUMES_FILENAME);
         CsvWriter writer = null;
         try {
-            log.info("Writing log file " + outputFilePath);
-            writer = getCsvWriter(outputFilePath);
+            log.info("Writing results file '" + outputFile + "' with encoding " + OUTPUT_ENCODING);
+            writer = getCsvWriter(outputFile);
             writer.writeRecord(new String[] { "year", "normedMark", "mark", "nodeRef" });
             for (Toimik t : toimikud) {
                 if (t.nodeRef != null && t.names != null) {
@@ -962,7 +996,7 @@ public class PostipoissStructureImporter {
                     }
                 }
             }
-            log.info("Finished writing log file " + outputFilePath);
+            log.info("Finished writing results file " + outputFile);
         } catch (IOException e) {
             throw new RuntimeException(e);
         } finally {
@@ -1073,8 +1107,8 @@ public class PostipoissStructureImporter {
         return helper;
     }
 
-    protected CsvWriter getCsvWriter(String filename) throws IOException {
-        OutputStream outputStream = new FileOutputStream(filename);
+    protected CsvWriter getCsvWriter(File file) throws IOException {
+        OutputStream outputStream = new FileOutputStream(file);
 
         // the Unicode value for UTF-8 BOM, is needed so that Excel would recognise the file in correct encoding
         outputStream.write("\ufeff".getBytes(OUTPUT_ENCODING));
@@ -1104,16 +1138,8 @@ public class PostipoissStructureImporter {
         this.documentTypeService = documentTypeService;
     }
 
-    public void setArchivalStore(String store) {
-        archivalStore = new StoreRef(store);
-    }
-
     public void setRegisterService(RegisterService registerService) {
         this.registerService = registerService;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
     }
 
     public void setTransactionService(TransactionService transactionService) {
@@ -1128,10 +1154,6 @@ public class PostipoissStructureImporter {
         this.nodeService = nodeService;
     }
 
-    public void setInputFolderPath(String inputFolderPath) {
-        this.inputFolderPath = inputFolderPath;
-    }
-
     public void setCaseService(CaseService caseService) {
         this.caseService = caseService;
     }
@@ -1140,21 +1162,8 @@ public class PostipoissStructureImporter {
         this.behaviourFilter = behaviourFilter;
     }
 
-    // CONFIGURATION INFORMATION
-    /**
-     * Returns true when postipoiss import functionality is enabled in an application config --
-     * this flag is used e.g. to give access to button that starts the import.
-     */
-    public boolean isEnabled() {
-        return enabled;
+    public void setPostipoissImporter(PostipoissImporter postipoissImporter) {
+        this.postipoissImporter = postipoissImporter;
     }
 
-    /**
-     * Returns true whenever {@link #runImport()} has been called at least once since
-     * last application restart/deployment -- regardless of whether it is still running
-     * or (un)successfully finished.
-     */
-    public boolean isStarted() {
-        return started;
-    }
 }

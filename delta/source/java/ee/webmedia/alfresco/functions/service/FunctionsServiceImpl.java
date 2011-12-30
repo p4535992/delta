@@ -106,10 +106,15 @@ public class FunctionsServiceImpl implements FunctionsService {
 
     @Override
     public void saveOrUpdate(Function function) {
+        saveOrUpdate(function, getFunctionsRoot());
+    }
+
+    @Override
+    public void saveOrUpdate(Function function, NodeRef functionsRoot) {
         Map<String, Object> stringQNameProperties = function.getNode().getProperties();
         if (function.getNode() instanceof TransientNode) {
             TransientNode transientNode = (TransientNode) function.getNode();
-            NodeRef functionNodeRef = nodeService.createNode(getFunctionsRoot(),
+            NodeRef functionNodeRef = nodeService.createNode(functionsRoot,
                     FunctionsModel.Associations.FUNCTION,
                     FunctionsModel.Associations.FUNCTION,
                     FunctionsModel.Types.FUNCTION,
@@ -294,9 +299,14 @@ public class FunctionsServiceImpl implements FunctionsService {
 
     @Override
     public long updateDocCounters() {
+        return updateDocCounters(getFunctionsRoot());
+    }
+
+    @Override
+    public long updateDocCounters(NodeRef functionsRoot) {
         long docCountInRepo = 0;
         log.info("Starting to update documents count in documentList");
-        for (Function function : getAllFunctions()) {
+        for (Function function : getFunctions(functionsRoot)) {
             long docCountInFunction = 0;
             final NodeRef functionRef = function.getNodeRef();
             for (NodeRef seriesRef : seriesService.getAllSeriesRefsByFunction(functionRef)) {

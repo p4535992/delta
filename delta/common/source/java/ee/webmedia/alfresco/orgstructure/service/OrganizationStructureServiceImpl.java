@@ -106,7 +106,13 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         // Fetch all groups that user has added manually
         Set<String> authorities = authorityService.getAllAuthoritiesInZone(AuthorityService.ZONE_APP_DEFAULT, AuthorityType.GROUP);
 
-        for (OrganizationStructure os : getAllOrganizationStructures()) {
+        List<OrganizationStructure> allOrganizationStructures = getAllOrganizationStructures();
+        Map<Integer, OrganizationStructure> orgStructById = new HashMap<Integer, OrganizationStructure>(allOrganizationStructures.size());
+        for (OrganizationStructure organizationStructure : allOrganizationStructures) {
+            orgStructById.put(organizationStructure.getUnitId(), organizationStructure);
+        }
+
+        for (OrganizationStructure os : allOrganizationStructures) {
             List<String> organizationPath = os.getOrganizationPath();
             String longestPath = "";
             for (String path : organizationPath) {
@@ -142,9 +148,9 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
                 }
                 OrganizationStructure orgStruct = null;
                 try {
-                    orgStruct = getOrganizationStructure(Integer.valueOf((String) orgId));
+                    orgStruct = orgStructById.get(Integer.valueOf((String) orgId));
                 } catch (NumberFormatException e) {
-
+                    // Ignore and continue
                 }
                 if (orgStruct == null) {
                     continue;

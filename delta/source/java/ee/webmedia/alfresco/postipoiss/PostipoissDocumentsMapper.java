@@ -1,11 +1,16 @@
 package ee.webmedia.alfresco.postipoiss;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getNamespaceService;
+
 import java.io.File;
 import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
@@ -19,6 +24,7 @@ import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.dom4j.Document;
@@ -27,8 +33,16 @@ import org.dom4j.io.SAXReader;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
+import ee.webmedia.alfresco.docadmin.service.DocumentType;
+import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
+import ee.webmedia.alfresco.docadmin.service.Field;
+import ee.webmedia.alfresco.docadmin.web.DocAdminUtil;
+import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
+import ee.webmedia.alfresco.utils.TreeNode;
 
 /**
  * @author Aleksei Lissitsin
@@ -47,8 +61,12 @@ public class PostipoissDocumentsMapper {
 
         @Override
         public String toString() {
-            StringBuilder s = new StringBuilder(String.format("[%s -> %s %s :\n", from, to, assoc));
+            StringBuilder s = new StringBuilder(String.format("[%s -> %s %s :\n",
+                    from,
+                    to == null ? null : to.toPrefixString(getNamespaceService()),
+                    assoc == null ? null : assoc.toPrefixString(getNamespaceService())));
             for (PropMapping m : props) {
+                s.append("  ");
                 s.append(m);
                 s.append("\n");
             }
@@ -504,6 +522,10 @@ public class PostipoissDocumentsMapper {
         String name;
         QName qname;
         Map<String, PropertyValueProvider> props = new HashMap<String, PropertyValueProvider>();
+        DocumentTypeVersion docVer;
+        Map<String, org.alfresco.util.Pair<DynamicPropertyDefinition, Field>> propDefs;
+        TreeNode<QName> childAssocTypeQNameTree;
+        QName[] hierarchy;
 
         public TypeInfo(String name, QName qname) {
             this.name = name;
@@ -512,19 +534,74 @@ public class PostipoissDocumentsMapper {
 
     }
 
-    TypeInfo createTypeInfo(String name, String prefix) {
+    TypeInfo createTypeInfo(String name, String prefix, Map<String, org.alfresco.util.Pair<DynamicPropertyDefinition, Field>> propDefs,
+            TreeNode<QName> parentChildAssocTypeQNameTree, QName[] parentHierarchy) {
+
         QName qname = QName.createQName(prefix, name, namespaceService);
         TypeInfo typeInfo = new TypeInfo(name, qname);
-        Collection<QName> aspects = generalService.getDefaultAspects(qname);
-        aspects.add(qname);
-        for (QName aspect : aspects) {
-            for (PropertyDefinition propDef : dictionaryService.getPropertyDefs(aspect).values()) {
-                QName prop = propDef.getName();
-                if (DocumentCommonModel.URI.equals(prop.getNamespaceURI()) || DocumentSpecificModel.URI.equals(prop.getNamespaceURI())) {
-                    PropertyValueProvider valueProvider = getProvider(prop.getLocalName(), propDef);
-                    typeInfo.props.put(prop.getLocalName(), valueProvider.withQName(prop));
+
+        if (propDefs == null) {
+
+            if (!"docdyn".equals(prefix)) {
+                Collection<QName> aspects = generalService.getDefaultAspects(qname);
+                aspects.add(qname);
+                for (QName aspect : aspects) {
+                    for (PropertyDefinition propDef : dictionaryService.getPropertyDefs(aspect).values()) {
+                        QName prop = propDef.getName();
+                        if (DocumentCommonModel.DOCCOM_URI.equals(prop.getNamespaceURI())) {
+                            PropertyValueProvider valueProvider = getProvider(prop.getLocalName(), propDef);
+                            if (valueProvider == null) {
+                                continue;
+                            }
+                            if ("doccom".equals(prefix) && "common".equals(name)) {
+                                prop = QName.createQName(DocumentDynamicModel.URI, prop.getLocalName());
+                            }
+                            typeInfo.props.put(prop.getLocalName(), valueProvider.withQName(prop));
+                            log.debug("valueprovider prop=" + prop.toPrefixString(namespaceService) + " type prefix+name=" + prefix + ":" + name);
+                        }
+                    }
+                }
+                return typeInfo;
+            }
+
+            DocumentType docType = getDocumentAdminService().getDocumentType(name, DocumentAdminService.DOC_TYPE_WITH_OUT_GRAND_CHILDREN_EXEPT_LATEST_DOCTYPE_VER);
+            Assert.notNull(docType, "Document type doesn't exist: " + name);
+            typeInfo.docVer = docType.getLatestDocumentTypeVersion();
+            typeInfo.propDefs = getDocumentConfigService().getPropertyDefinitions(DocAdminUtil.getDocTypeIdAndVersionNr(typeInfo.docVer));
+            typeInfo.childAssocTypeQNameTree = getDocumentConfigService().getChildAssocTypeQNameTree(typeInfo.docVer);
+            typeInfo.hierarchy = new QName[] {};
+        } else {
+            typeInfo.docVer = null;
+            typeInfo.propDefs = propDefs;
+            typeInfo.childAssocTypeQNameTree = null;
+            for (TreeNode<QName> treeNode : parentChildAssocTypeQNameTree.getChildren()) {
+                if (treeNode.getData().equals(qname)) {
+                    typeInfo.childAssocTypeQNameTree = treeNode;
+                    break;
                 }
             }
+            QName parentChildAssocTypeQName = parentChildAssocTypeQNameTree.getData();
+            Assert.notNull(typeInfo.childAssocTypeQNameTree, "Child node type " + qname.toPrefixString(namespaceService) + " not found for parent node type "
+                    + (parentChildAssocTypeQName == null ? null : parentChildAssocTypeQName.toPrefixString(namespaceService)));
+            typeInfo.hierarchy = (QName[]) ArrayUtils.add(parentHierarchy, typeInfo.childAssocTypeQNameTree.getData());
+        }
+
+        for (org.alfresco.util.Pair<DynamicPropertyDefinition, Field> pair : typeInfo.propDefs.values()) {
+            DynamicPropertyDefinition propDef = pair.getFirst();
+            QName[] hierarchy = propDef.getChildAssocTypeQNameHierarchy();
+            if (hierarchy == null) {
+                hierarchy = new QName[] {};
+            }
+            if (!Arrays.equals(hierarchy, typeInfo.hierarchy)) {
+                continue;
+            }
+
+            QName prop = propDef.getName();
+            PropertyValueProvider valueProvider = getProvider(prop.getLocalName(), propDef);
+            if (valueProvider == null) {
+                continue;
+            }
+            typeInfo.props.put(prop.getLocalName(), valueProvider.withQName(prop));
         }
         return typeInfo;
     }
@@ -538,8 +615,13 @@ public class PostipoissDocumentsMapper {
         if ("java.util.Date".equals(javaClassName)) {
             return new DatePropertyValueProvider();
         }
-        if ("java.lang.Double".equals(javaClassName) || "java.lang.Integer".equals(javaClassName)) {
+        if ("java.lang.Double".equals(javaClassName) || "java.lang.Long".equals(javaClassName)) {
             return new NumberPropertyValueProvider();
+        }
+        if (!javaClassName.equals("java.lang.String")) {
+            log.info("Data type " + javaClassName + " is not supported for property " + propDef.getName().toPrefixString(BeanHelper.getNamespaceService())
+                    + ", not allowing mapping");
+            return null;
         }
         return new StringPropertyValueProvider();
     }
@@ -581,10 +663,11 @@ public class PostipoissDocumentsMapper {
     }
 
     protected Mapping createMapping(Mapping base, Element el) {
-        return createMapping(base, el, "docsub");
+        return createMapping(base, el, "docdyn", null, null, null);
     }
 
-    protected Mapping createMapping(Mapping base, Element el, String prefix) {
+    protected Mapping createMapping(Mapping base, Element el, String prefix, Map<String, org.alfresco.util.Pair<DynamicPropertyDefinition, Field>> parentPropDefs,
+            TreeNode<QName> parentChildAssocTypeQNameTree, QName[] parentHierarchy) {
 
         String from = el.attributeValue("from");
         String to = el.attributeValue("to");
@@ -592,11 +675,12 @@ public class PostipoissDocumentsMapper {
         String defaultVolume = el.attributeValue("defaultVolume");
 
         if (to == null) {
-            to = "memo"; // doesn't matter which doctype, generalType just has to have a base mapping
+            prefix = "doccom";
+            to = "common"; // doesn't matter which doctype, generalType just has to have a base mapping
         }
         TypeInfo typeInfo = typeInfos.get(to);
         if (typeInfo == null) {
-            typeInfo = createTypeInfo(to, prefix);
+            typeInfo = createTypeInfo(to, prefix, parentPropDefs, parentChildAssocTypeQNameTree, parentHierarchy);
             typeInfos.put(to, typeInfo);
         }
 
@@ -613,11 +697,11 @@ public class PostipoissDocumentsMapper {
 
         for (Object o : el.elements("child")) {
             Element e = (Element) o;
-            String childPrefix = e.attributeValue("prefix");
-            if (childPrefix == null) {
-                childPrefix = "docspec";
-            }
-            Mapping subMapping = createMapping(null, e, childPrefix);
+            // String childPrefix = e.attributeValue("prefix");
+            // if (childPrefix == null) {
+            // childPrefix = "docspec";
+            // }
+            Mapping subMapping = createMapping(null, e, "docchild", typeInfo.propDefs, typeInfo.childAssocTypeQNameTree, typeInfo.hierarchy);
             m.subMappings.add(subMapping);
         }
 
@@ -625,6 +709,7 @@ public class PostipoissDocumentsMapper {
     }
 
     protected Map<String, Mapping> loadMetadataMappings(File mappingsFile) throws Exception {
+        log.info("Loading meta-data mappings from file " + mappingsFile);
         typeInfos = new HashMap<String, TypeInfo>();
         Map<String, Mapping> mappings = new HashMap<String, Mapping>();
         splitters.put("period", new PeriodSplitter());
@@ -637,7 +722,7 @@ public class PostipoissDocumentsMapper {
 
         Element sendInfoType = root.element("sendInfoType");
 
-        Mapping sendInfo = createMapping(null, sendInfoType, "doccom");
+        Mapping sendInfo = createMapping(null, sendInfoType, "doccom", null, null, null);
 
         mappings.put("sendInfo", sendInfo);
 

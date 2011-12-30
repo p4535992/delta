@@ -136,7 +136,6 @@ import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
  * @author Alar Kvell
  */
 public class TestDataService implements SaveListener {
-
     protected final Log log = LogFactory.getLog(getClass());
 
     private final AtomicBoolean updaterRunning = new AtomicBoolean(false);
@@ -188,7 +187,7 @@ public class TestDataService implements SaveListener {
                 @Override
                 public void run() {
                     try {
-                        log.info("Thread started");
+                        log.info("Main thread started");
                         updaterRunning.set(true);
                         stopFlag.set(false);
                         AuthenticationUtil.runAs(new RunAsWork<Void>() {
@@ -1226,7 +1225,8 @@ public class TestDataService implements SaveListener {
             assocType = AddressbookModel.Assocs.ORGANIZATIONS;
         }
         QName randomqname = QName.createQName(URI, GUID.generate());
-        NodeRef contactRef = getNodeService().createNode(getAddressbookService().getAddressbookRoot(),
+        NodeRef contactRef = getNodeService().createNode(
+                getAddressbookService().getAddressbookRoot(),
                 assocType,
                 randomqname,
                 type,
@@ -1329,7 +1329,7 @@ public class TestDataService implements SaveListener {
             docVer = docType.getLatestDocumentTypeVersion();
             docVersions.put(docTypeId, docVer);
         }
-        DocumentDynamic doc = getDocumentDynamicService().createNewDocument(docVer, docLocation.getDocumentParentRef()).getFirst();
+        DocumentDynamic doc = getDocumentDynamicService().createNewDocument(docVer, docLocation.getDocumentParentRef(), true).getFirst();
 
         doc.setProp(DocumentCommonModel.Props.FUNCTION, docLocation.getFunctionRef());
         doc.setProp(DocumentCommonModel.Props.SERIES, docLocation.getSeriesRef());

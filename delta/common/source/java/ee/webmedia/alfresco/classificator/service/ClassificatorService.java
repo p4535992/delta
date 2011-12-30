@@ -113,4 +113,5 @@ public interface ClassificatorService {
 
     String getClassificatorValuesValueData(String classificatorName, String classificatorValueName);
 
+    boolean hasClassificatorValueName(String classificatorName, String classificatorValueName);
 }

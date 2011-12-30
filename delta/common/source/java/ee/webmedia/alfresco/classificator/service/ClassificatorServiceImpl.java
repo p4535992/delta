@@ -362,6 +362,20 @@ public class ClassificatorServiceImpl implements ClassificatorService {
         }
     }
 
+    @Override
+    public boolean hasClassificatorValueName(String classificatorName, String classificatorValueName) {
+        if (StringUtils.isBlank(classificatorValueName) || StringUtils.isBlank(classificatorName)) {
+            return false;
+        }
+        List<ClassificatorValue> classificatorValues = getAllClassificatorValues(getClassificatorRefByName(classificatorName));
+        for (ClassificatorValue classificatorValue : classificatorValues) {
+            if (classificatorValueName.equals(classificatorValue.getValueName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static Boolean reOrderClassificatorValues(Classificator classificator, List<ClassificatorValue> classificatorValues) {
         Boolean alfabeticOrder = classificator.getAlfabeticOrder();
         if (alfabeticOrder == null) {

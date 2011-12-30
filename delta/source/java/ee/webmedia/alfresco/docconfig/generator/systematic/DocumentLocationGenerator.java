@@ -54,6 +54,7 @@ import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
+import ee.webmedia.alfresco.document.search.web.DocumentDynamicSearchDialog;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
@@ -362,12 +363,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             }
             boolean isSearchFilterOrDocTypeNull = isSearchFilter || (documentTypeId == null && (documentTypeIds == null || documentTypeIds.isEmpty()));
             { // Function
-                List<Function> allFunctions;
-                if (isSearchFilter) {
-                    allFunctions = getFunctionsService().getAllFunctions();
-                } else {
-                    allFunctions = getFunctionsService().getAllFunctions(DocListUnitStatus.OPEN);
-                }
+                List<Function> allFunctions = getAllFunctions(document, isSearchFilter);
                 functions = new ArrayList<SelectItem>(allFunctions.size());
                 functions.add(new SelectItem("", ""));
                 boolean functionFound = false;
@@ -387,7 +383,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                     }
                 }
                 if (!functionFound) {
-                    if (addIfMissing && functionRef != null && getNodeService().exists(functionRef)) {
+                    if (!isSearchFilter && addIfMissing && functionRef != null && getNodeService().exists(functionRef)) {
                         Function function = getFunctionsService().getFunctionByNodeRef(functionRef);
                         functions.add(1, new SelectItem(function.getNode().getNodeRef(), getFunctionLabel(function)));
                     } else {
@@ -556,6 +552,24 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             document.getProperties().put(seriesProp.toString(), seriesRef);
             document.getProperties().put(volumeProp.toString(), volumeRef);
             document.getProperties().put(caseLabelEditableProp.toString(), caseLabel);
+        }
+
+        private List<Function> getAllFunctions(Node document, boolean isSearchFilter) {
+            if (!isSearchFilter) {
+                return getFunctionsService().getAllFunctions(DocListUnitStatus.OPEN);
+            }
+
+            @SuppressWarnings("unchecked")
+            List<NodeRef> selectedStores = (List<NodeRef>) document.getProperties().get(DocumentDynamicSearchDialog.SELECTED_STORES);
+            if (selectedStores == null) {
+                return getFunctionsService().getAllFunctions();
+            }
+
+            List<Function> allFunctions = new ArrayList<Function>();
+            for (NodeRef functionsRootNodeRef : selectedStores) {
+                allFunctions.addAll(getFunctionsService().getFunctions(functionsRootNodeRef));
+            }
+            return allFunctions;
         }
 
         private void updateAccessRestrictionProperties(NodeRef seriesRef) {

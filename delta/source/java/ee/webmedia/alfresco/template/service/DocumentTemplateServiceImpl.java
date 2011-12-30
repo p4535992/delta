@@ -44,6 +44,7 @@ import org.springframework.util.Assert;
 import org.springframework.web.context.ServletContextAware;
 
 import ee.webmedia.alfresco.base.BaseObject;
+import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.common.service.GeneralService;
@@ -538,8 +539,8 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
     private Map<String, String> getDocumentFormulas(NodeRef objectRef) {
         Map<String, String> formulas = new LinkedHashMap<String, String>();
-        Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions = documentConfigService.getPropertyDefinitions(generalService.fetchObjectNode(objectRef,
-                DocumentCommonModel.Types.DOCUMENT));
+        WmNode documentNode = generalService.fetchObjectNode(objectRef, DocumentCommonModel.Types.DOCUMENT);
+        Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions = documentConfigService.getPropertyDefinitions(documentNode);
 
         Map<QName, Serializable> props = nodeService.getProperties(objectRef);
         for (Entry<String, Pair<DynamicPropertyDefinition, Field>> definition : propertyDefinitions.entrySet()) {
@@ -627,7 +628,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                 List<Serializable> listPropValue = (List<Serializable>) propValue;
                 formulas.put(fieldId, StringUtils.join(listPropValue, "; "));
                 continue;
-            } else if (FieldType.CHECKBOX == fieldType) {
+            } else if (FieldType.CHECKBOX == fieldType && propValue instanceof Boolean) {
                 String msgKey = (Boolean) propValue ? "yes" : "no";
                 formulas.put(fieldId, MessageUtil.getMessage(msgKey));
                 continue;
@@ -641,6 +642,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             formulas.put(fieldId, propValue.toString());
         }
 
+        formulas.put("docType", documentAdminService.getDocumentTypeName(documentNode));
         getDocumentListStructureFormulae(objectRef, formulas);
         getContractPartyFormulae(objectRef, formulas);
 
@@ -776,6 +778,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             formulas.put("seriesIdentifier", getAncestorProperty(objectRef, SeriesModel.Types.SERIES, SeriesModel.Props.SERIES_IDENTIFIER));
             formulas.put("volumeTitle", getAncestorProperty(objectRef, VolumeModel.Types.VOLUME, VolumeModel.Props.TITLE));
             formulas.put("volumeMark", getAncestorProperty(objectRef, VolumeModel.Types.VOLUME, VolumeModel.Props.MARK));
+            formulas.put("caseTitle", getAncestorProperty(objectRef, CaseModel.Types.CASE, CaseModel.Props.TITLE));
             String docUrl = getDocumentUrl(objectRef);
             formulas.put("docUrl", docUrl);
         }
@@ -877,7 +880,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
      */
     private String getAncestorProperty(NodeRef document, QName ancestorType, QName property) {
         Node parent = generalService.getAncestorWithType(document, ancestorType);
-        return (parent != null) ? nodeService.getProperty(parent.getNodeRef(), property).toString() : null;
+        return (parent != null) ? nodeService.getProperty(parent.getNodeRef(), property).toString() : "";
     }
 
     public DocumentTemplate getTemplateByName(String name) throws FileNotFoundException {

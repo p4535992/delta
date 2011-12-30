@@ -32,6 +32,7 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -47,6 +48,7 @@ import org.alfresco.repo.content.encoding.ContentCharsetFinder;
 import org.alfresco.repo.webdav.WebDAV;
 import org.alfresco.repo.webdav.WebDAVMethod;
 import org.alfresco.repo.webdav.WebDAVServerException;
+import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
@@ -66,6 +68,7 @@ import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.classificator.constant.FieldChangeableIf;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
+import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
@@ -256,9 +259,11 @@ public class PutMethod extends WebDAVMethod {
                 , DocumentCommonModel.Props.INDIVIDUAL_NUMBER.getLocalName());
         List<FieldType> readOnlyFields = Arrays.asList(FieldType.COMBOBOX_AND_TEXT_NOT_EDITABLE, FieldType.LISTBOX, FieldType.CHECKBOX, FieldType.INFORMATION_TEXT);
         List<ContractPartyField> partyFields = new ArrayList<ContractPartyField>();
+        ClassificatorService classificatorService = BeanHelper.getClassificatorService();
 
         for (Formula formula : formulas) {
             String formulaKey = formula.getKey();
+            String formulaValue = formula.getValue();
 
             // Check for special fields like recipients or contract parties
             int propIndex = -1;
@@ -279,7 +284,7 @@ public class PutMethod extends WebDAVMethod {
                     fieldQName = DocumentSpecificModel.Props.PARTY_CONTACT_PERSON;
                 }
                 if (fieldQName != null) {
-                    partyFields.add(new ContractPartyField(propIndex, fieldQName, formula.getValue()));
+                    partyFields.add(new ContractPartyField(propIndex, fieldQName, formulaValue));
                 }
             }
 
@@ -292,11 +297,12 @@ public class PutMethod extends WebDAVMethod {
             Field field = propDefAndField.getSecond();
 
             // If field is not changeable, then don't allow it.
-            if (isFieldUnchangeable(doc, updateDisabled, readOnlyFields, field)) {
+            if (isFieldUnchangeable(doc, updateDisabled, readOnlyFields, field, classificatorService, formulaValue)) {
                 continue;
             }
 
             BaseObject parent = field.getParent();
+            DataTypeDefinition dataType = propDef.getDataType();
             if (parent instanceof FieldGroup) {
                 FieldGroup group = (FieldGroup) parent;
                 String name = group.getName();
@@ -307,7 +313,7 @@ public class PutMethod extends WebDAVMethod {
                         @SuppressWarnings("unchecked")
                         List<Serializable> values = (List<Serializable>) propValue;
                         if (propIndex > -1 && propIndex < values.size()) {
-                            values.set(propIndex, (Serializable) DefaultTypeConverter.INSTANCE.convert(propDef.getDataType(), formula.getValue()));
+                            values.set(propIndex, (Serializable) DefaultTypeConverter.INSTANCE.convert(dataType, formulaValue));
                         }
                         propValue = (Serializable) values;
                     }
@@ -316,7 +322,13 @@ public class PutMethod extends WebDAVMethod {
                 }
             }
 
-            Serializable value = (Serializable) DefaultTypeConverter.INSTANCE.convert(propDef.getDataType(), formula.getValue());
+            Serializable value;
+            // Handle dates separately
+            if ("date".equals(dataType.getName().getLocalName())) {
+                value = new SimpleDateFormat("dd.MM.yyyy").parse(formulaValue);
+            } else {
+                value = (Serializable) DefaultTypeConverter.INSTANCE.convert(dataType, formulaValue);
+            }
             if (propDef.isMultiValued()) {
                 value = (Serializable) Collections.singletonList(value); // is this correct?
             }
@@ -336,14 +348,17 @@ public class PutMethod extends WebDAVMethod {
         documentDynamicService.updateDocument(doc, null); // This also updates generated files
     }
 
-    private boolean isFieldUnchangeable(DocumentDynamic doc, List<String> updateDisabled, List<FieldType> readOnlyFields, Field field) {
+    private boolean isFieldUnchangeable(DocumentDynamic doc, List<String> updateDisabled, List<FieldType> readOnlyFields, Field field, ClassificatorService classificatorService,
+            String formulaValue) {
         return FieldChangeableIf.ALWAYS_NOT_CHANGEABLE == field.getChangeableIfEnum()
                 || FieldChangeableIf.CHANGEABLE_IF_WORKING_DOC == field.getChangeableIfEnum()
                 && !DocumentStatus.WORKING.getValueName().equals(doc.getProp(DocumentCommonModel.Props.DOC_STATUS))
                 || updateDisabled.contains(field.getFieldId()) || readOnlyFields.contains(field.getFieldTypeEnum())
                 || DocumentDynamicModel.Props.FIRST_KEYWORD_LEVEL.getLocalName().equals(field.getOriginalFieldId())
                 || DocumentDynamicModel.Props.SECOND_KEYWORD_LEVEL.getLocalName().equals(field.getOriginalFieldId())
-                || FieldType.STRUCT_UNIT == field.getFieldTypeEnum();
+                || FieldType.STRUCT_UNIT == field.getFieldTypeEnum()
+                || FieldType.COMBOBOX == field.getFieldTypeEnum() && field.isComboboxNotRelatedToClassificator()
+                || FieldType.COMBOBOX == field.getFieldTypeEnum() && !classificatorService.hasClassificatorValueName(field.getClassificator(), formulaValue);
     }
 
     private class ContractPartyField implements Serializable {

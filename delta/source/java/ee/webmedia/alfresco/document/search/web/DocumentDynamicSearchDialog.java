@@ -16,9 +16,11 @@ import java.util.Map;
 import javax.faces.component.UIInput;
 import javax.faces.component.html.HtmlSelectManyListbox;
 import javax.faces.context.FacesContext;
+import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.repository.Node;
@@ -32,12 +34,15 @@ import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
+import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
+import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator.DocumentLocationState;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfig;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchFilterService;
 import ee.webmedia.alfresco.filter.web.AbstractSearchFilterBlockBean;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.RepoUtil;
 
 /**
  * @author Keit Tehvan
@@ -54,6 +59,7 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
             "docName",
             "dueDate",
             "complienceDate");
+    public static final QName SELECTED_STORES = RepoUtil.createTransientProp("selectedStores");
 
     private List<SelectItem> stores;
     private DocumentConfig config;
@@ -64,9 +70,9 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
 
         if (stores == null) {
             stores = new ArrayList<SelectItem>();
-            stores.add(new SelectItem(getGeneralService().getStore(), MessageUtil.getMessage("functions_title")));
+            stores.add(new SelectItem(BeanHelper.getFunctionsService().getFunctionsRoot(), MessageUtil.getMessage("functions_title")));
             for (ArchivalsStoreVO archivalsStoreVO : getGeneralService().getArchivalsStoreVOs()) {
-                stores.add(new SelectItem(archivalsStoreVO.getStoreRef(), archivalsStoreVO.getTitle()));
+                stores.add(new SelectItem(archivalsStoreVO.getNodeRef(), archivalsStoreVO.getTitle()));
             }
         }
 
@@ -117,6 +123,19 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
 
     public PropertySheetConfigElement getPropertySheetConfigElement() {
         return config.getPropertySheetConfigElement();
+    }
+
+    public void storeValueChangeListener(ValueChangeEvent event) {
+        @SuppressWarnings("unchecked")
+        List<NodeRef> selectedStores = (List<NodeRef>) event.getNewValue();
+        getNode().getProperties().put(SELECTED_STORES.toString(), selectedStores);
+
+        for (PropertySheetStateHolder stateHolder : config.getStateHolders().values()) { // State holder key varies
+            if (stateHolder instanceof DocumentLocationState) {
+                ((DocumentLocationState) stateHolder).reset(isInEditMode());
+                return;
+            }
+        }
     }
 
     @Override

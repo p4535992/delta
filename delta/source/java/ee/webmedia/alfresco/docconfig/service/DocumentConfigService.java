@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
@@ -41,6 +42,8 @@ public interface DocumentConfigService {
 
     void setUserContactProps(Map<QName, Serializable> props, String userName, String fieldId);
 
+    void setUserContactProps(Map<QName, Serializable> props, String userName, PropertyDefinition propDef, Field field);
+
     DynamicPropertyDefinition getPropertyDefinition(Node node, QName property);
 
     /**
@@ -51,6 +54,8 @@ public interface DocumentConfigService {
      * @return
      */
     Map<String, Pair<DynamicPropertyDefinition, Field>> getPropertyDefinitions(Node documentDynamicNode);
+
+    Map<String, Pair<DynamicPropertyDefinition, Field>> getPropertyDefinitions(Pair<String, Integer> docTypeIdAndVersionNr);
 
     /**
      * Set default property values on given node and all it's child and grand-child nodes.

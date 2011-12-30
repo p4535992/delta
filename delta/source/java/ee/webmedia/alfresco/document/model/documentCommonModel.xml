@@ -371,6 +371,9 @@
             <property name="doccom:shortRegNumber"><!-- Registreerimisnumber -->
                <type>d:text</type>
             </property>
+            <property name="doccom:individualNumber"><!-- Registreerimisnumber -->
+               <type>d:text</type>
+            </property>
             <property name="doccom:regDateTime"><!-- Registreerimise kuupäev -->
                <type>d:datetime</type>
             </property>
@@ -430,6 +433,7 @@
             </property>
             <property name="doccom:ownerOrgStructUnit"><!-- Koostaja osakond -->
                <type>d:text</type>
+               <multiple>true</multiple><!-- dynamic documents have multi-valued, old static documents have single-valued -->
             </property>
             <property name="doccom:ownerEmail"><!-- Koostaja e-post -->
                <type>d:text</type>

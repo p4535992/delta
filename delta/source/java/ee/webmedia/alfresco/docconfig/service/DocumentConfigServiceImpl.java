@@ -180,7 +180,8 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
             itemConfig.setDisplayLabelId("document_search_stores");
             itemConfig.setComponentGenerator("GeneralSelectorGenerator");
             itemConfig.setSelectionItems("#{DocumentDynamicSearchDialog.getStores}");
-            itemConfig.setConverter("ee.webmedia.alfresco.common.propertysheet.converter.StoreRefConverter");
+            itemConfig.setConverter("ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter");
+            itemConfig.setValueChangeListener("#{DocumentDynamicSearchDialog.storeValueChangeListener}");
             itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
             config.getPropertySheetConfigElement().addItem(itemConfig);
         }
@@ -770,7 +771,8 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
         setUserContactProps(props, userName, propDefAndField.getFirst(), propDefAndField.getSecond());
     }
 
-    private void setUserContactProps(Map<QName, Serializable> props, String userName, PropertyDefinition propDef, Field field) {
+    @Override
+    public void setUserContactProps(Map<QName, Serializable> props, String userName, PropertyDefinition propDef, Field field) {
         NodeRef userRef = userService.getPerson(userName);
         // userRef may be null, then all fields are set to null
         Map<QName, UserContactMappingCode> mapping = userContactMappingService.getFieldIdsMappingOrDefault(field);
@@ -879,7 +881,8 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
         return getPropertyDefinitions(getDocTypeIdAndVersionNr(node));
     }
 
-    private Map<String, Pair<DynamicPropertyDefinition, Field>> getPropertyDefinitions(Pair<String, Integer> docTypeIdAndVersionNr) {
+    @Override
+    public Map<String, Pair<DynamicPropertyDefinition, Field>> getPropertyDefinitions(Pair<String, Integer> docTypeIdAndVersionNr) {
         Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions = propertyDefinitionCache.get(docTypeIdAndVersionNr);
         if (propertyDefinitions == null) {
             Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = getDocumentTypeAndVersion(docTypeIdAndVersionNr);

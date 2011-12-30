@@ -10,6 +10,8 @@ import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
+import ee.webmedia.alfresco.docadmin.service.Field;
+import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 
@@ -29,7 +31,7 @@ public interface DocumentDynamicService {
      */
     Pair<DocumentDynamic, DocumentTypeVersion> createNewDocument(String documentTypeId, NodeRef parent);
 
-    Pair<DocumentDynamic, DocumentTypeVersion> createNewDocument(DocumentTypeVersion docVer, NodeRef parent);
+    Pair<DocumentDynamic, DocumentTypeVersion> createNewDocument(DocumentTypeVersion docVer, NodeRef parent, boolean reallySetDefaultValues);
 
     /**
      * Create a new document in drafts and set default property values according to fully authenticated user.
@@ -75,6 +77,8 @@ public interface DocumentDynamicService {
     String getDocumentTypeName(NodeRef documentRef);
 
     void setOwner(NodeRef docRef, String ownerId, boolean retainPreviousOwnerId);
+
+    void setOwner(Map<QName, Serializable> props, String ownerId, boolean retainPreviousOwnerId, Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs);
 
     void setOwner(Map<QName, Serializable> props, String ownerId, boolean retainPreviousOwnerId);
 

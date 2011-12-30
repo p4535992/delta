@@ -96,7 +96,9 @@
 <f:verbatim><br/></f:verbatim>
 <h:commandButton id="updateOrganisationStructureBasedGroups" value="updateOrganisationStructureBasedGroups" type="submit"
    actionListener="#{OrganizationStructureService.updateOrganisationStructureBasedGroups}" rendered="#{ApplicationService.test}" />
-<f:verbatim><br/><br/><br/></f:verbatim>
+<f:verbatim><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
 
 <h:outputText value="Testandmete genereerimine: "/>
 <f:verbatim>
@@ -116,7 +118,7 @@
 </f:verbatim>
 
 <h:outputText value="Kasutajate e-mail: "/>
-<h:inputText value="#{TestDataService.testEmail}" />
+<h:inputText value="#{TestDataService.testEmail}" size="40" />
 <f:verbatim><br/></f:verbatim>
 
 <h:outputText value="Struktuuriüksuste arv: "/>
@@ -166,6 +168,140 @@
       actionListener="#{TestDataService.stopUpdater}"
       rendered="#{TestDataService.updaterRunning == true}"
       disabled="#{TestDataService.updaterStopping == true}" />
+
+<f:verbatim><hr/></f:verbatim>
+
+<h:outputText value="Postipoiss andmete importimine: " style="font-weight: bold;" />
+<f:verbatim>
+<br/>
+<ol>
+<li>* Enne dokumentide importi peavad kõik kasutajad olema rakendusse tõmmatud.</li>
+<li>* Parema kiiruse saavutamiseks lülitada Lucene indekseerimine importimise ajaks välja, ja pärast importimise lõppu teha ühekorraga järgi (nii nagu SIM 1.10 -> 2.5 juhendis kirjeldatud juuni 2011).</li>
+<li>* Käivitamise nupp võimalusel jätkab pooleli jäänud kohast (kui workFolder-ites on csv faile kus eelnev progress on kirjas).</li>
+<li>* Peatamise nupp peatab esimesel võimalusel (konktaktide impordi keskel, struktuuri impordi keskel, iga 50 dokumendi importimise või faili importimise või faili indekseerimise vahel)</li>
+<li>* Kui ükskõik milline parameeter grupis (...DataFolder, ...WorkFolder, ...ArchivalsStore, ...MappingsFileName) on tühi, siis liigutakse järgmise parameetrite grupi juurde.</li>
+<li>* Kui ...DataFolder asukohas leidub fail kontaktid.csv, siis teostatakse kontaktide import. Kui faili ei leidu, siis liigutakse järgmisesse sammu, viga ei teki. Kui kontaktide import õnnestub, kirjutatakse ...WorkFolder asukohta fail completed_kontaktid.csv.</li>
+<li>* Struktuuri impordi jaoks loetakse sisse asukohas ...DataFolder olevad failid struktuur.csv ja toimikud.csv. Tekitatakse funktsioonid/sarjad/toimikud arhiivimoodustaja alla, mis on määratud parameetris ...ArchivalsStore. Impordi käigus kirjutatakse asukohta ...WorkFolder fail completed_toimikud.csv.</li>
+<li>* Dokumentide impordil luuakse asukohas ...DataFolder olevad dokumendid ja failid. Mappings.xml faili nimetus on parameetris ...MappingsFileName. Impordi käigus kirjutatakse asukohta ...WorkFolder järgmised failid - completed_docs.csv, completed_files.csv, indexed_files.csv, users_found.csv, users_not_found.csv, postponed_assocs.csv.</li>
+<li>* Impordi progressi, infoteateid ja veateateid saab jälgida rakenduse logist.</li>
+</ul>
+<br/>
+</f:verbatim>
+
+<h:outputText value="firstDataFolder: "/>
+<h:inputText value="#{postipoissImporter.dataFolders[0]}" size="60" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="firstWorkFolder: "/>
+<h:inputText value="#{postipoissImporter.workFolders[0]}" size="60" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="firstMappingsFileName: "/>
+<h:inputText value="#{postipoissImporter.mappingsFileNames[0]}" size="60" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="firstDefaultOwnerId: "/>
+<h:inputText value="#{postipoissImporter.defaultOwnerIds[0]}" size="12" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="firstArchivalsStore: "/>
+<h:inputText value="#{postipoissImporter.archivalsStores[0]}" size="40" />
+<f:verbatim><br/><br/></f:verbatim>
+
+<h:outputText value="secondDataFolder: "/>
+<h:inputText value="#{postipoissImporter.dataFolders[1]}" size="60" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="secondWorkFolder: "/>
+<h:inputText value="#{postipoissImporter.workFolders[1]}" size="60" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="secondMappingsFileName: "/>
+<h:inputText value="#{postipoissImporter.mappingsFileNames[1]}" size="60" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="secondDefaultOwnerId: "/>
+<h:inputText value="#{postipoissImporter.defaultOwnerIds[1]}" size="12" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="secondArchivalsStore: "/>
+<h:inputText value="#{postipoissImporter.archivalsStores[1]}" size="40" />
+<f:verbatim><br/><br/></f:verbatim>
+
+<h:outputText value="thirdDataFolder: "/>
+<h:inputText value="#{postipoissImporter.dataFolders[2]}" size="60" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="thirdWorkFolder: "/>
+<h:inputText value="#{postipoissImporter.workFolders[2]}" size="60" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="thirdMappingsFileName: "/>
+<h:inputText value="#{postipoissImporter.mappingsFileNames[2]}" size="60" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="thirdDefaultOwnerId: "/>
+<h:inputText value="#{postipoissImporter.defaultOwnerIds[2]}" size="12" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="thirdArchivalsStore: "/>
+<h:inputText value="#{postipoissImporter.archivalsStores[2]}" size="40" />
+<f:verbatim><br/><br/></f:verbatim>
+
+<h:outputText value="fourthDataFolder: "/>
+<h:inputText value="#{postipoissImporter.dataFolders[3]}" size="60" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="fourthWorkFolder: "/>
+<h:inputText value="#{postipoissImporter.workFolders[3]}" size="60" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="fourthMappingsFileName: "/>
+<h:inputText value="#{postipoissImporter.mappingsFileNames[3]}" size="60" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="fourthDefaultOwnerId: "/>
+<h:inputText value="#{postipoissImporter.defaultOwnerIds[3]}" size="12" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="fourthArchivalsStore: "/>
+<h:inputText value="#{postipoissImporter.archivalsStores[3]}" size="40" />
+<f:verbatim><br/><br/></f:verbatim>
+
+<h:outputText value="fifthDataFolder: "/>
+<h:inputText value="#{postipoissImporter.dataFolders[4]}" size="60" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="fifthWorkFolder: "/>
+<h:inputText value="#{postipoissImporter.workFolders[4]}" size="60" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="fifthMappingsFileName: "/>
+<h:inputText value="#{postipoissImporter.mappingsFileNames[4]}" size="60" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="fifthDefaultOwnerId: "/>
+<h:inputText value="#{postipoissImporter.defaultOwnerIds[4]}" size="12" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="fifthArchivalsStore: "/>
+<h:inputText value="#{postipoissImporter.archivalsStores[4]}" size="40" />
+<f:verbatim><br/><br/></f:verbatim>
+
+<h:outputText value="Mitu dokumenti / faili ühes transaktsioonis luua: "/>
+<h:inputText value="#{postipoissImporter.batchSize}" converter="javax.faces.Integer" size="4" />
+<%-- <f:verbatim><br/></f:verbatim> --%>
+<%-- <h:outputText value="Dokumentide importimiseks paralleelsete lõimede arv: "/> --%>
+<%-- <h:inputText value="#{postipoissImporter.threadsCount}" converter="javax.faces.Integer" size="4" /> --%>
+<f:verbatim><br/><br/></f:verbatim>
+
+   <h:commandButton id="startPostipoissImporter" value="Käivita PP andmete import" type="submit"
+      actionListener="#{postipoissImporter.startImporterInBackground}"
+      rendered="#{postipoissImporter.importerRunning == false}" />
+   <h:commandButton id="stopPostipoissImporter" value="Peata PP andmete import" type="submit"
+      actionListener="#{postipoissImporter.stopImporter}"
+      rendered="#{postipoissImporter.importerRunning == true}"
+      disabled="#{postipoissImporter.importerStopping == true}" />
 
 <f:verbatim><hr/></f:verbatim>
 
