@@ -1352,9 +1352,8 @@ public class PostipoissDocumentsImporter implements SaveListener {
             }
 
             String rest = toimikSari.substring(0, i);
-
-            if (rest.length() > 4 && rest.matches(".*/0\\d")) {
-                vi.year = (rest.charAt(rest.length() - 1) - '0');
+            if (rest.length() > 4 && rest.matches(".*/\\d\\d")) {
+                vi.year = Integer.parseInt(rest.substring(rest.length() - 2));
                 rest = rest.substring(0, rest.length() - 3);
             } else {
                 String regKpvElementName = m.requirePropMappingTo(DocumentCommonModel.Props.REG_DATE_TIME.getLocalName()).from;
@@ -1621,7 +1620,7 @@ public class PostipoissDocumentsImporter implements SaveListener {
     private Map<QName, Serializable> setProps(Element root, Mapping mapping, VolumeIndex volumeIndex, Toimik t) {
         // String regNumber = t.normedMark + "/" + volumeIndex.regNumber;
         // PPA needs regNumber to be original, unmodified
-        String regNumber = root.elementText(PP_ELEMENT_REG_NR);
+        String regNumber = root.elementText(PP_ELEMENT_TOIMIK_SARI);
         String individualNr = root.elementText(PP_ELEMENT_JRKNR);
         if (StringUtils.isNotBlank(individualNr)) {
             regNumber += "-" + individualNr;
