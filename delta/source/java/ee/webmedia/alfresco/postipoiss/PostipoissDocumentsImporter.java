@@ -70,10 +70,10 @@ import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.classificator.enums.SendMode;
 import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.web.DocAdminUtil;
-import ee.webmedia.alfresco.docconfig.generator.SaveListener;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
@@ -102,7 +102,7 @@ import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
  * @author Aleksei Lissitsin
  * @author Alar Kvell
  */
-public class PostipoissDocumentsImporter implements SaveListener {
+public class PostipoissDocumentsImporter {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(PostipoissDocumentsImporter.class);
 
     private static final String PP_ELEMENT_DOK_NR = "dok_nr";
@@ -157,6 +157,39 @@ public class PostipoissDocumentsImporter implements SaveListener {
     private PostipoissDocumentsMapper postipoissDocumentsMapper;
     private BehaviourFilter behaviourFilter;
     private PostipoissImporter postipoissImporter;
+
+    public PostipoissDocumentsImporter(PostipoissImporter postipoissImporter) {
+        // <bean id="postipoissDocumentsImporter" class="ee.webmedia.alfresco.postipoiss.PostipoissDocumentsImporter">
+        // <property name="documentService" ref="DocumentService" />
+        // <property name="transactionService" ref="TransactionService" />
+        // <property name="generalService" ref="GeneralService" />
+        // <property name="fileFolderService" ref="FileFolderService" />
+        // <property name="nodeService" ref="NodeService" />
+        // <property name="personService" ref="PersonService" />
+        // <property name="sendOutService" ref="SendOutService" />
+        // <property name="postipoissDocumentsMapper" ref="postipoissDocumentsMapper" />
+        // <property name="behaviourFilter" ref="policyBehaviourFilter" />
+        // </bean>
+        //
+        // <bean id="postipoissDocumentsMapper" class="ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper">
+        // <property name="namespaceService" ref="NamespaceService" />
+        // <property name="dictionaryService" ref="DictionaryService" />
+        // <property name="generalService" ref="GeneralService" />
+        // </bean>
+        setDocumentService(BeanHelper.getDocumentService());
+        setTransactionService(BeanHelper.getTransactionService());
+        setGeneralService(BeanHelper.getGeneralService());
+        setFileFolderService(BeanHelper.getFileFolderService());
+        setNodeService(BeanHelper.getNodeService());
+        setPersonService(BeanHelper.getPersonService());
+        setSendOutService(BeanHelper.getSendOutService());
+        postipoissDocumentsMapper = new PostipoissDocumentsMapper();
+        postipoissDocumentsMapper.setNamespaceService(getNamespaceService());
+        postipoissDocumentsMapper.setDictionaryService(BeanHelper.getDictionaryService());
+        postipoissDocumentsMapper.setGeneralService(BeanHelper.getGeneralService());
+        setBehaviourFilter(BeanHelper.getPolicyBehaviourFilter());
+        setPostipoissImporter(postipoissImporter);
+    }
 
     // INJECTORS
     public void setGeneralService(GeneralService generalService) {
@@ -1481,7 +1514,7 @@ public class PostipoissDocumentsImporter implements SaveListener {
 
         doc.getNode().getProperties().putAll(RepoUtil.toStringProperties(propsMap));
         doc.getNode().getProperties().put(DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED.toString(), Boolean.TRUE);
-        getDocumentDynamicService().updateDocument(doc, Arrays.asList("postipoissDocumentsImporter"));
+        getDocumentDynamicService().updateDocument(doc, Arrays.asList("postipoissImporter"));
 
         // Add sendInfo
         if (recipient != null) {
@@ -2177,24 +2210,6 @@ public class PostipoissDocumentsImporter implements SaveListener {
             userDataByUserName.put(userName, userData);
         }
         return userData;
-    }
-
-    // SaveListener that sets draft=true on document
-
-    @Override
-    public void validate(DocumentDynamic document, ValidationHelper validationHelper) {
-        // do nothing
-    }
-
-    @Override
-    public void save(DocumentDynamic document) {
-        document.setDraft(true);
-        document.setDraftOrImapOrDvk(true);
-    }
-
-    @Override
-    public String getBeanName() {
-        return null;
     }
 
 }

@@ -52,9 +52,9 @@ import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.classificator.enums.SeriesType;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
@@ -99,8 +99,6 @@ public class PostipoissStructureImporter {
 
     // ========= THINGS YOU MAY WANT TO CHANE =========
 
-    private static final QName SERIES_DEFAULT_DOC_TYPE = DocumentSubtypeModel.Types.OTHER_DOCUMENT_MV;
-
     private static boolean isSeriesOpen(Toimik t) {
         return false;
     }
@@ -140,6 +138,33 @@ public class PostipoissStructureImporter {
     }
 
     // ================================================
+
+    public PostipoissStructureImporter(PostipoissImporter postipoissImporter) {
+        // <bean id="postipoissStructureImporter" class="ee.webmedia.alfresco.postipoiss.PostipoissStructureImporter">
+        // <property name="generalService" ref="generalService" />
+        // <property name="addressbookService" ref="AddressbookService" />
+        // <property name="functionsService" ref="FunctionsService" />
+        // <property name="seriesService" ref="SeriesService" />
+        // <property name="volumeService" ref="VolumeService" />
+        // <property name="documentTypeService" ref="DocumentTypeService" />
+        // <property name="registerService" ref="RegisterService" />
+        // <property name="transactionService" ref="TransactionService" />
+        // <property name="nodeService" ref="NodeService" />
+        // <property name="caseService" ref="CaseService" />
+        // <property name="behaviourFilter" ref="policyBehaviourFilter" />
+        // </bean>
+        setGeneralService(BeanHelper.getGeneralService());
+        setAddressbookService(BeanHelper.getAddressbookService());
+        setFunctionsService(BeanHelper.getFunctionsService());
+        setSeriesService(BeanHelper.getSeriesService());
+        setVolumeService(BeanHelper.getVolumeService());
+        setDocumentTypeService(BeanHelper.getDocumentTypeService());
+        setRegisterService(BeanHelper.getRegisterService());
+        setTransactionService(BeanHelper.getTransactionService());
+        setNodeService(BeanHelper.getNodeService());
+        setCaseService(BeanHelper.getCaseService());
+        setBehaviourFilter(BeanHelper.getPolicyBehaviourFilter());
+    }
 
     private File dataFolder;
     private File workFolder;

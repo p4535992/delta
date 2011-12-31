@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.common.web;
 
 import javax.faces.context.FacesContext;
 
+import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.service.ServiceRegistry;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.model.FileFolderService;
@@ -422,6 +423,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static ContentService getContentService() {
         return getAlfrescoService(ContentService.class, ServiceRegistry.CONTENT_SERVICE);
+    }
+
+    public static BehaviourFilter getPolicyBehaviourFilter() {
+        return getSpringBean(BehaviourFilter.class, "policyBehaviourFilter");
     }
 
     // END: alfresco services

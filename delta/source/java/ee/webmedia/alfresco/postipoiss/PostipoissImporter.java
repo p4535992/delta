@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.faces.event.ActionEvent;
 
@@ -15,25 +16,26 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.docconfig.generator.SaveListener;
+import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 
 /**
  * Entry point for starting and stopping whole import. Manage input parameters and coordinate structure and document import.
  * 
  * @author Alar Kvell
  */
-public class PostipoissImporter implements InitializingBean {
+public class PostipoissImporter implements SaveListener {
     protected final Log log = LogFactory.getLog(getClass());
 
-    private final AtomicBoolean importerRunning = new AtomicBoolean(false);
+    private final AtomicInteger importerRunning = new AtomicInteger(0);
     private final AtomicBoolean stopFlag = new AtomicBoolean(false);
 
     public boolean isImporterRunning() {
-        return importerRunning.get();
+        return importerRunning.get() != 0;
     }
 
     public boolean isImporterStopping() {
@@ -62,52 +64,34 @@ public class PostipoissImporter implements InitializingBean {
     }
 
     /** @param event */
-    public synchronized void startImporterInBackground(ActionEvent event) {
-        log.info("startImporterInBackground\n  dataFolders=" + dataFolders + "\n  workFolders=" + workFolders + "\n  mappingsFileNames=" + mappingsFileNames
-                + "\n  archivalsStores=" + archivalsStores);
+    public synchronized void startImporterInBackground(ActionEvent event) throws Exception {
         if (!isImporterRunning()) {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        log.info("Main thread started");
-                        importerRunning.set(true);
-                        stopFlag.set(false);
-                        AuthenticationUtil.runAs(new RunAsWork<Void>() {
-                            @Override
-                            public Void doWork() throws Exception {
-                                try {
-                                    startImporter();
-                                    return null;
-                                } catch (StopException e) {
-                                    log.info("Stop requested");
-                                } catch (Exception e) {
-                                    log.error("Importer error", e);
-                                }
-                                return null;
-                            }
-                        }, AuthenticationUtil.getSystemUserName());
-                    } finally {
-                        importerRunning.set(false);
-                        log.info("Main thread stopped");
-                    }
-                }
-            }, "ImporterThread").start();
+            log.info("startImporterInBackground\n  dataFolders=" + dataFolders + "\n  workFolders=" + workFolders + "\n  mappingsFileNames=" + mappingsFileNames
+                    + "\n  archivalsStores=" + archivalsStores);
+            LinkedHashSet<ArchivalsStoreVO> archivalsStoreVOs = generalService.getArchivalsStoreVOs();
+            iterate(archivalsStoreVOs, false);
+            iterate(archivalsStoreVOs, true);
         } else {
             log.warn("Importer is already running");
         }
     }
 
-    private void startImporter() throws Exception {
-        LinkedHashSet<ArchivalsStoreVO> archivalsStoreVOs = generalService.getArchivalsStoreVOs();
-        iterate(archivalsStoreVOs, false);
-        iterate(archivalsStoreVOs, true);
-    }
-
     private void iterate(LinkedHashSet<ArchivalsStoreVO> archivalsStoreVOs, boolean execute) throws Exception {
+        int countTmp = count;
         int batchSizeTmp = batchSize;
         Assert.isTrue(batchSizeTmp > 0, "batchSize must be a positive integer");
-        for (int i = 0; i < count; i++) {
+        if (execute) {
+            postipoissStructureImporters = new ArrayList<PostipoissStructureImporter>();
+            postipoissDocumentsImporters = new ArrayList<PostipoissDocumentsImporter>();
+            for (int i = 0; i < countTmp; i++) {
+                PostipoissStructureImporter postipoissStructureImporter = new PostipoissStructureImporter(this);
+                postipoissStructureImporters.add(postipoissStructureImporter);
+                PostipoissDocumentsImporter postipoissDocumentsImporter = new PostipoissDocumentsImporter(this);
+                postipoissDocumentsImporters.add(postipoissDocumentsImporter);
+            }
+            stopFlag.set(false);
+        }
+        for (int i = 0; i < countTmp; i++) {
             if (i >= dataFolders.size() || i >= workFolders.size() || i >= mappingsFileNames.size() || i >= defaultOwnerIds.size() || i >= archivalsStores.size()) {
                 if (execute) {
                     log.info("Skipping input arguments group " + (i + 1));
@@ -142,8 +126,10 @@ public class PostipoissImporter implements InitializingBean {
             if (execute) {
                 log.info("Executing importer for arguments group " + (i + 1));
                 try {
-                    postipoissStructureImporter.runImport(dataFolder, workFolder, archivalsRoot);
-                    postipoissDocumentsImporter.runImport(dataFolder, workFolder, archivalsRoot, mappingsFile, batchSizeTmp, defaultOwnerIds.get(i));
+                    PostipoissStructureImporter postipoissStructureImporter = postipoissStructureImporters.get(i);
+                    PostipoissDocumentsImporter postipoissDocumentsImporter = postipoissDocumentsImporters.get(i);
+                    startImporter(i, batchSizeTmp, dataFolder, workFolder, mappingsFile, archivalsRoot, defaultOwnerIds.get(i), postipoissStructureImporter,
+                            postipoissDocumentsImporter);
                 } catch (StopException e) {
                     throw e;
                 } catch (Exception e) {
@@ -151,6 +137,38 @@ public class PostipoissImporter implements InitializingBean {
                 }
             }
         }
+    }
+
+    private void startImporter(final int i, final int batchSizeTmp, final File dataFolder, final File workFolder, final File mappingsFile, final NodeRef archivalsRoot,
+            final String defaultOwnerId, final PostipoissStructureImporter postipoissStructureImporter, final PostipoissDocumentsImporter postipoissDocumentsImporter)
+            throws Exception {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    int numThreads = importerRunning.incrementAndGet();
+                    log.info("Thread started; running threads with current one = " + numThreads);
+                    AuthenticationUtil.runAs(new RunAsWork<Void>() {
+                        @Override
+                        public Void doWork() throws Exception {
+                            try {
+                                postipoissStructureImporter.runImport(dataFolder, workFolder, archivalsRoot);
+                                postipoissDocumentsImporter.runImport(dataFolder, workFolder, archivalsRoot, mappingsFile, batchSizeTmp, defaultOwnerId);
+                                return null;
+                            } catch (StopException e) {
+                                log.info("Stop completed");
+                            } catch (Exception e) {
+                                log.error("Importer error", e);
+                            }
+                            return null;
+                        }
+                    }, AuthenticationUtil.getSystemUserName());
+                } finally {
+                    int numThreads = importerRunning.decrementAndGet();
+                    log.info("Thread stopped; remaining running threads after current one = " + numThreads);
+                }
+            }
+        }, "ImporterThread" + i).start();
     }
 
     // ========================================================================
@@ -229,25 +247,29 @@ public class PostipoissImporter implements InitializingBean {
     }
 
     private GeneralService generalService;
-    private PostipoissStructureImporter postipoissStructureImporter;
-    private PostipoissDocumentsImporter postipoissDocumentsImporter;
+    private List<PostipoissStructureImporter> postipoissStructureImporters;
+    private List<PostipoissDocumentsImporter> postipoissDocumentsImporters;
 
     public void setGeneralService(GeneralService generalService) {
         this.generalService = generalService;
     }
 
-    public void setPostipoissStructureImporter(PostipoissStructureImporter postipoissStructureImporter) {
-        this.postipoissStructureImporter = postipoissStructureImporter;
-    }
+    // SaveListener that sets draft=true on document
 
-    public void setPostipoissDocumentsImporter(PostipoissDocumentsImporter postipoissDocumentsImporter) {
-        this.postipoissDocumentsImporter = postipoissDocumentsImporter;
+    @Override
+    public void validate(DocumentDynamic document, ValidationHelper validationHelper) {
+        // do nothing
     }
 
     @Override
-    public void afterPropertiesSet() throws Exception {
-        postipoissStructureImporter.setPostipoissImporter(this);
-        postipoissDocumentsImporter.setPostipoissImporter(this);
+    public void save(DocumentDynamic document) {
+        document.setDraft(true);
+        document.setDraftOrImapOrDvk(true);
+    }
+
+    @Override
+    public String getBeanName() {
+        return null;
     }
 
 }
