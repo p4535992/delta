@@ -147,9 +147,14 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator {
         Map<String, Field> fieldsByOriginalId = group.getFieldsByOriginalId();
         Set<List<QName>> addedSubPropSheets = new HashSet<List<QName>>();
         List<Field> fields = new ArrayList<Field>(group.getFields());
+        // used to keep track of fields that are already generated as part of some related fields group (such fields are removed from this list)
+        List<Field> notProcessedFields = new ArrayList<Field>(group.getFields());
 
         for (int i = 0; i < fields.size(); i++) {
             Field field = fields.get(i);
+            if (isProcessed(field, notProcessedFields)) {
+                continue;
+            }
             DynamicPropertyDefinition propDef = documentConfigService.createPropertyDefinition(field);
             QName[] hierarchy = propDef.getChildAssocTypeQNameHierarchy();
             Assert.isTrue(hierarchy != null && hierarchy.length >= 1);
@@ -177,35 +182,35 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator {
             }
 
             // If field is related to a group of fields, then process the whole group together
-            Pair<Field, List<Field>> relatedFields2 = collectAndRemoveFieldsInOriginalOrderToFakeGroup(fields, field, fieldsByOriginalId);
+            Pair<Field, List<Field>> relatedFields2 = collectAndRemoveFieldsInOriginalOrderToFakeGroup(notProcessedFields, field, fieldsByOriginalId);
             List<Field> relatedFields = relatedFields2 == null ? null : relatedFields2.getSecond();
             if (relatedFields != null) {
                 generateFields(generatorResults, items, stateHolders, hierarchy, relatedFields.toArray(new Field[relatedFields.size()]));
                 continue;
             }
-            relatedFields = collectAndRemoveFieldsInOriginalOrder(fields, field, dailyAllowanceTableFieldIds);
+            relatedFields = collectAndRemoveFieldsInOriginalOrder(notProcessedFields, field, dailyAllowanceTableFieldIds);
             if (relatedFields != null) {
                 ItemConfigVO item = generateTable(generatorResults, items, hierarchy, relatedFields, field, "Päevaraha", "add");
                 item.setStyleClass("add-expense");
                 continue;
             }
-            relatedFields = collectAndRemoveFieldsInOriginalOrder(fields, field, expenseTableFieldIds);
+            relatedFields = collectAndRemoveFieldsInOriginalOrder(notProcessedFields, field, expenseTableFieldIds);
             if (relatedFields != null) {
                 ItemConfigVO item = generateTable(generatorResults, items, hierarchy, relatedFields, field, "Kulud", "add");
                 item.setStyleClass("add-expense");
                 continue;
             }
-            relatedFields = collectAndRemoveFieldsInSpecifiedOrder(fields, field, eventDateInlineFieldIds);
+            relatedFields = collectAndRemoveFieldsInSpecifiedOrder(notProcessedFields, field, eventDateInlineFieldIds);
             if (relatedFields != null) {
                 generateInline(generatorResults, items, hierarchy, relatedFields, field, "Ürituse toimumise aeg", "document_eventDates_templateText");
                 continue;
             }
-            relatedFields = collectAndRemoveFieldsInSpecifiedOrder(fields, field, errandDateInlineFieldIds);
+            relatedFields = collectAndRemoveFieldsInSpecifiedOrder(notProcessedFields, field, errandDateInlineFieldIds);
             if (relatedFields != null) {
                 generateInline(generatorResults, items, hierarchy, relatedFields, field, "Lähetus", "document_eventDates_templateText");
                 continue;
             }
-            relatedFields = collectAndRemoveFieldsInSpecifiedOrder(fields, field, advancePaymentInlineFieldIds);
+            relatedFields = collectAndRemoveFieldsInSpecifiedOrder(notProcessedFields, field, advancePaymentInlineFieldIds);
             if (relatedFields != null) {
                 generateInline(generatorResults, items, hierarchy, relatedFields, field, "Soovin ettemaksu", "document_errand_advancePayment_templateText-edit");
                 continue;
@@ -221,6 +226,15 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator {
         for (Entry<String, PropertySheetStateHolder> entry : stateHolders.entrySet()) {
             generatorResults.addStateHolder(entry.getKey(), entry.getValue());
         }
+    }
+
+    private boolean isProcessed(Field field, List<Field> notProcessedFields) {
+        for (Field notProcessedField : notProcessedFields) {
+            if (notProcessedField.getOriginalFieldId().equals(field.getOriginalFieldId())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private ItemConfigVO generateTable(FieldGroupGeneratorResults generatorResults, Map<String, ItemConfigVO> items, QName[] hierarchy, List<Field> relatedFields,

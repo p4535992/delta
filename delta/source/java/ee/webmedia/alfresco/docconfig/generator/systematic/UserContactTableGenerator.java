@@ -332,6 +332,10 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
                                 value = dateFormat.format((Date) value);
                             } else if (value instanceof Long) {
                                 value = ((Long) value).toString();
+                            } else if (value instanceof Double) {
+                                value = ((Double) value).toString();
+                            } else if (value instanceof Integer) {
+                                value = ((Integer) value).toString();
                             }
                             String stringValue = StringUtils.trim((String) value);
                             if (StringUtils.isNotBlank(stringValue)) {

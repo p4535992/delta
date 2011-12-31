@@ -195,7 +195,7 @@
       
       <table>
       <tr>
-         <td><b>Inherit:</b></td><td><h:outputText id="inheritPermissions" value="#{AdminNodeBrowseBean.inheritPermissions}"/></td>
+         <td><b>Inherit from parent nodes:</b></td><td><h:outputText id="inheritPermissions" value="#{AdminNodeBrowseBean.inheritPermissions}"/></td>
       </tr>
       </table>
       

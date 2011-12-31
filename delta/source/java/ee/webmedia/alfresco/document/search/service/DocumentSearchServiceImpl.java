@@ -40,9 +40,7 @@ import java.util.Set;
 import javax.faces.context.FacesContext;
 
 import org.alfresco.model.ContentModel;
-import org.alfresco.model.ForumModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
-import org.alfresco.repo.security.permissions.impl.AccessPermissionImpl;
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -50,10 +48,8 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.ResultSetRow;
-import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.cmr.security.AuthorityType;
-import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
@@ -82,7 +78,6 @@ import ee.webmedia.alfresco.docconfig.generator.fieldtype.DateGenerator;
 import ee.webmedia.alfresco.docconfig.generator.fieldtype.DoubleGenerator;
 import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
-import ee.webmedia.alfresco.document.forum.web.evaluator.DiscussNodeEvaluator;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
@@ -135,34 +130,23 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     private NamespaceService namespaceService;
     private AuthorityService authorityService;
     private UserService userService;
-    private PermissionService permissionService;
 
     private List<StoreRef> allStores = null;
     private List<StoreRef> allStoresWithArchivalStoreVOs = null; // XXX This is currently used only for tasks. If analysis for CL 186867 is complete then this might be refactored to getAllStores()
     private QName[] notIncomingLetterTypes;
 
     @Override
-    public List<Document> searchDiscussionDocuments(final boolean fetchDocuments) {
+    public List<Document> searchDiscussionDocuments() {
         long startTime = System.currentTimeMillis();
-        String query = generateTypeQuery(ForumModel.TYPE_FORUM);
-        final AccessPermissionImpl requiredPermission = new AccessPermissionImpl(DiscussNodeEvaluator.PARTICIPATE_AT_FORUM, AccessStatus.ALLOWED,
-                AuthenticationUtil.getRunAsUser(), 0);
+
+        String query = generateDiscussionDocumentsQuery();
         List<Document> results = searchGeneralImpl(query, -1, /* queryName */"discussionDocuments", new SearchCallback<Document>() {
 
             @Override
             public Document addResult(ResultSetRow row) {
-                NodeRef nodeRef = row.getNodeRef();
-                // XXX hasPermision doesn't work as expected with direct static permissions (permissionService.hasPermission(x))
-                if (!permissionService.getAllSetPermissions(nodeRef).contains(requiredPermission)) {
-                    return null;
-                }
-                NodeRef docRef = row.getChildAssocRef().getParentRef();
-                if (!DocumentStatus.WORKING.getValueName().equals(nodeService.getProperty(docRef, DocumentCommonModel.Props.DOC_STATUS))) {
-                    return null;
-                }
-
-                return fetchDocuments ? documentService.getDocumentByNodeRef(docRef) : new Document(docRef);
+                return documentService.getDocumentByNodeRef(row.getNodeRef());
             }
+
         });
 
         if (log.isDebugEnabled()) {
@@ -170,6 +154,37 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                     + ", query: " + query);
         }
         return results;
+    }
+
+    @Override
+    public int getDiscussionDocumentsCount() {
+        long startTime = System.currentTimeMillis();
+
+        String query = generateDiscussionDocumentsQuery();
+        int count = searchGeneralImpl(query, -1, /* queryName */"discussionDocumentsCount", new SearchCallback<Integer>() {
+
+            @Override
+            public Integer addResult(ResultSetRow row) {
+                return row.getIndex();
+            }
+
+        }).size();
+
+        if (log.isDebugEnabled()) {
+            log.debug("Discussion documents count search total time " + (System.currentTimeMillis() - startTime) + " ms, results " + count//
+                    + ", query: " + query);
+        }
+        return count;
+    }
+
+    private String generateDiscussionDocumentsQuery() {
+        String runAsUser = AuthenticationUtil.getRunAsUser();
+        Set<String> authorities = new HashSet<String>(Arrays.asList(runAsUser));
+        authorities.addAll(userService.getUsersGroups(runAsUser));
+
+        return SearchUtil.joinQueryPartsAnd(generateAspectQuery(DocumentCommonModel.Aspects.FORUM_PARTICIPANTS)
+                , generateStringExactQuery(DocumentStatus.WORKING.getValueName(), DocumentCommonModel.Props.DOC_STATUS)
+                , SearchUtil.generatePropertyExactQuery(DocumentCommonModel.Props.FORUM_PARTICIPANTS, authorities, false));
     }
 
     @Override
@@ -832,7 +847,11 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     public List<Document> searchDocuments(Node filter) {
         long startTime = System.currentTimeMillis();
         @SuppressWarnings("unchecked")
-        final List<StoreRef> storeRefs = (List<StoreRef>) filter.getProperties().get(DocumentSearchModel.Props.STORE);
+        List<NodeRef> storeFunctionRootNodeRefs = (List<NodeRef>) filter.getProperties().get(DocumentSearchModel.Props.STORE);
+        List<StoreRef> storeRefs = new ArrayList<StoreRef>(storeFunctionRootNodeRefs.size());
+        for (NodeRef nodeRef : storeFunctionRootNodeRefs) {
+            storeRefs.add(nodeRef.getStoreRef());
+        }
         String query = generateDocumentSearchQuery(filter);
         if (StringUtils.isBlank(query)) {
             throw new UnableToPerformException(UnableToPerformException.MessageSeverity.INFO, "docSearch_error_noInput");
@@ -1679,10 +1698,6 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
 
     public void setAuthorityService(AuthorityService authorityService) {
         this.authorityService = authorityService;
-    }
-
-    public void setPermissionService(PermissionService permissionService) {
-        this.permissionService = permissionService;
     }
 
     // END: getters / setters

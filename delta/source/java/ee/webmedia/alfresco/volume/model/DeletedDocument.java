@@ -63,6 +63,6 @@ public class DeletedDocument implements Serializable, Comparable<DeletedDocument
 
     @Override
     public int compareTo(DeletedDocument o) {
-        return getDeletedDateTime().compareTo(o.getDeletedDateTime());
+        return o.getDeletedDateTime().compareTo(getDeletedDateTime());
     }
 }

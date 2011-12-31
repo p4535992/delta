@@ -197,4 +197,6 @@ public interface UserService {
 
     Set<String> getUserNamesInGroup(String group);
 
+    Set<String> getUsersGroups(String userName);
+
 }

@@ -377,7 +377,7 @@ public class WorkflowUtil {
     }
 
     public static boolean isStatusChanged(BaseWorkflowObject object) {
-        if (object.getNodeRef() != null && object.isChangedProperty(WorkflowCommonModel.Props.STATUS)) {
+        if (RepoUtil.isSaved(object.getNode()) && object.isChangedProperty(WorkflowCommonModel.Props.STATUS)) {
             return true;
         }
         if (object instanceof CompoundWorkflow) {

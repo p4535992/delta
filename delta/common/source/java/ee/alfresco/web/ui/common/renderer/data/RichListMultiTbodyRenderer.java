@@ -2,7 +2,6 @@ package ee.alfresco.web.ui.common.renderer.data;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -218,13 +217,13 @@ public class RichListMultiTbodyRenderer extends RichListRenderer {
             ComponentUtil.putAttribute(richList, ATTR_GROUP_PREVIOUS, NULL);
         }
 
+        public static void setFacetRows(UIRichList richList, Collection<String> facetRows) {
+            ComponentUtil.putAttribute(richList, ATTR_FACET_ROWS, facetRows);
+        }
+
         public static Collection<String> getFacetRows(UIRichList richList) {
             @SuppressWarnings("unchecked")
             Collection<String> facetRows = (Collection<String>) ComponentUtil.getAttribute(richList, ATTR_FACET_ROWS);
-            if (facetRows == null) {
-                facetRows = new HashSet<String>(5);
-                ComponentUtil.putAttribute(richList, ATTR_FACET_ROWS, facetRows);
-            }
             return facetRows;
         }
 

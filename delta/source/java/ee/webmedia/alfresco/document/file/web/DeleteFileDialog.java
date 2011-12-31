@@ -36,8 +36,8 @@ public class DeleteFileDialog extends DeleteContentDialog {
         if (file != null && file.getType().equals(ContentModel.TYPE_CONTENT)) {
             document = getNodeService().getPrimaryParent(file.getNodeRef()).getParentRef();
         }
-        super.finishImpl(context, outcome);
         try {
+            super.finishImpl(context, outcome);
 
             String fileName = file != null ? file.getName() : "";
             if (document != null && getDictionaryService().isSubClass(getNodeService().getType(document), DocumentCommonModel.Types.DOCUMENT)) {

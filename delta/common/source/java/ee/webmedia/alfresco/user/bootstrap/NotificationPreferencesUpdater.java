@@ -43,8 +43,13 @@ public class NotificationPreferencesUpdater extends AbstractModuleComponent {
             updatedProps.put(notificationProp, Boolean.TRUE);
         }
         for (Node user : users) {
-            NodeRef usersPreferenceNodeRef = userService.getUsersPreferenceNodeRef((String) user.getProperties().get(ContentModel.PROP_USERNAME));
-            nodeService.addProperties(usersPreferenceNodeRef, updatedProps);
+            String userName = (String) user.getProperties().get(ContentModel.PROP_USERNAME);
+            NodeRef usersPreferenceNodeRef = userService.getUsersPreferenceNodeRef(userName);
+            if (usersPreferenceNodeRef != null) {
+                nodeService.addProperties(usersPreferenceNodeRef, updatedProps);
+            } else {
+                LOG.warn("Didn't find preference node for user " + userName);
+            }
         }
     }
 

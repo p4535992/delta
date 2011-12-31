@@ -14,6 +14,7 @@ import javax.faces.context.FacesContext;
 
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
@@ -85,8 +86,9 @@ public class ClassificatorSelectorGenerator extends GeneralSelectorGenerator {
                 QName qName = QName.createQName(propName, BeanHelper.getNamespaceService());
                 if (requestNode != null) {
                     NodeRef nodeRef = requestNode.getNodeRef();
-                    if (nodeRef != null && (!(node instanceof WmNode) || ((WmNode) node).isSaved())) {
-                        repoValue = (String) BeanHelper.getNodeService().getProperty(nodeRef, qName);
+                    NodeService nodeService = BeanHelper.getNodeService();
+                    if (nodeRef != null && (!(node instanceof WmNode) || ((WmNode) node).isSaved()) && nodeService.exists(nodeRef)) {
+                        repoValue = (String) nodeService.getProperty(nodeRef, qName);
                     }
                 }
             }

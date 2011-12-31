@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.privilege.service;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -11,6 +13,7 @@ import java.util.Set;
 
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
+import org.alfresco.repo.security.permissions.impl.AccessPermissionImpl;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.security.AccessPermission;
@@ -22,6 +25,7 @@ import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.privilege.model.PrivMappings;
 import ee.webmedia.alfresco.privilege.model.UserPrivileges;
@@ -32,11 +36,18 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  * @author Ats Uiboupin
  */
 public class PrivilegeServiceImpl implements PrivilegeService {
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(PrivilegeServiceImpl.class);
+
     private PermissionService permissionService;
     private NodeService nodeService;
     private UserService userService;
     private AuthorityService authorityService;
     public static final String GROUPLESS_GROUP = "<groupless>";
+    private ApplicationService applicationService;
+
+    // cache some values that shouldn't change during application runtime
+    private Boolean isTest;
+    private Set<String> defaultAdmins;
 
     @Override
     public boolean hasPermissions(NodeRef nodeRef, String... permissions) {
@@ -55,45 +66,27 @@ public class PrivilegeServiceImpl implements PrivilegeService {
         PrivMappings privMappings = new PrivMappings(manageableRef);// fillMembersByGroup(manageableRef);
         Map<String/* userName */, UserPrivileges> privilegesByUsername = new HashMap<String, UserPrivileges>();
         Map<String/* groupName */, UserPrivileges> privilegesByGroup = new HashMap<String, UserPrivileges>();
-        NodeRef parentRef = nodeService.getPrimaryParent(manageableRef).getParentRef();
 
+        ThoroughInheritanceChecker inheritanceChecker;
         { // regular admin group
             String adminGroup = UserService.AUTH_ADMINISTRATORS_GROUP;
+            inheritanceChecker = new ThoroughInheritanceChecker(manageableRef, adminGroup);
             UserPrivileges adminPrivs = new UserPrivileges(adminGroup, authorityService.getAuthorityDisplayName(adminGroup));
             privilegesByGroup.put(adminGroup, adminPrivs);
             adminPrivs.setReadOnly(true);
             for (String permission : manageablePermissions) {
-                adminPrivs.addDynamicPrivilege(permission, MessageUtil.getMessage("manage_permissions_extraInfo_adminGroupHasAllPermissions"));
+                adminPrivs.addPrivilegeDynamic(permission, MessageUtil.getMessage("manage_permissions_extraInfo_adminGroupHasAllPermissions"));
             }
         }
 
-        Set<String> defaultAdmins = BeanHelper.getAuthenticationService().getDefaultAdministratorUserNames();
-
-        boolean inheritParentPermissions = BeanHelper.getPermissionService().getInheritParentPermissions(manageableRef);
-
-        for (AccessPermission accessPermission : permissionService.getAllSetPermissions(privMappings.getManageableRef())) {
+        for (AccessPermission accessPermission : permissionService.getAllSetPermissions(manageableRef)) {
             String authority = accessPermission.getAuthority();
             String permission = accessPermission.getPermission();
             if (StringUtils.startsWith(authority, AuthorityType.ROLE.getPrefixString()) || !manageablePermissions.contains(permission)) {
                 continue; // not interested in roles added directly to the manageableRef nor permissions that are not requested
             }
-            boolean inherited = accessPermission.isInherited();
-            if (!inherited && inheritParentPermissions) {
-                // permission is assigned directly, but we need to know if it is also given dynamically
-                boolean hasPermissionForParentRef = hasPermission(parentRef, permission, authority);
-//@formatter:off
-/*
-                if (inherited != hasPermissionForParentRef && !defaultAdmins.contains(authority)) {
-                    // hasPermissionForParentRef doesn't mean that this permission is set directly to parentRef
-                    // - it might be granted dynamically as well as inherited from parent of parent
-                    // - for example to users listed by external.authentication.defaultAdministratorUserNames
-                    // FIXME PRIV2 Ats - teadet võidakse kuvada, kui sama permission on antud ka parent-nodele (kasutajale või mõnele kasutaja grupile)
-                    MessageUtil.addWarningMessage(authority + " has permission " + permission + " - it is not inherited, but it is still somehow granted");
-                }
-*/
-//@formatter:on
-                inherited = hasPermissionForParentRef;
-            }
+            boolean setDirectly = accessPermission.isSetDirectly();
+            boolean inherited = inheritanceChecker.checkInheritance(accessPermission);
             if (StringUtils.startsWith(authority, AuthorityType.GROUP.getPrefixString())) {
                 UserPrivileges authPrivileges = privilegesByGroup.get(authority);
                 if (authPrivileges == null) {
@@ -101,8 +94,8 @@ public class PrivilegeServiceImpl implements PrivilegeService {
                     privilegesByGroup.put(authority, authPrivileges);
                 }
                 boolean allowed = AccessStatus.ALLOWED.equals(accessPermission.getAccessStatus());
-                Assert.isTrue(allowed, "Expected to see only allowed permissions. accessPermission=" + accessPermission + "\nmanageableRef=" + privMappings.getManageableRef());
-                authPrivileges.addPrivilege(permission, inherited);
+                Assert.isTrue(allowed, "Expected to see only allowed permissions. accessPermission=" + accessPermission + "\nmanageableRef=" + manageableRef);
+                addPrivilege(authPrivileges, permission, setDirectly, inherited);
             } else {
                 UserPrivileges authPrivileges = privilegesByUsername.get(authority);
                 if (authPrivileges == null) {
@@ -115,11 +108,11 @@ public class PrivilegeServiceImpl implements PrivilegeService {
                     }
                 }
                 boolean allowed = AccessStatus.ALLOWED.equals(accessPermission.getAccessStatus());
-                Assert.isTrue(allowed, "Expected to see only allowed permissions. accessPermission=" + accessPermission + "\nmanageableRef=" + privMappings.getManageableRef());
+                Assert.isTrue(allowed, "Expected to see only allowed permissions. accessPermission=" + accessPermission + "\nmanageableRef=" + manageableRef);
                 if (defaultAdmins.contains(authority)) {
-                    authPrivileges.addDynamicPrivilege(permission, MessageUtil.getMessage("manage_permissions_extraInfo_defaultAdmin"));
+                    authPrivileges.addPrivilegeDynamic(permission, MessageUtil.getMessage("manage_permissions_extraInfo_defaultAdmin"));
                 } else {
-                    authPrivileges.addPrivilege(permission, inherited);
+                    addPrivilege(authPrivileges, permission, setDirectly, inherited);
                 }
             }
         }
@@ -131,26 +124,24 @@ public class PrivilegeServiceImpl implements PrivilegeService {
             UserPrivileges authPrivileges = privMappings.getOrCreateUserPrivilegesVO(defaultAdmin);
             authPrivileges.setReadOnly(true);
             for (String permission : manageablePermissions) {
-                authPrivileges.addDynamicPrivilege(permission, MessageUtil.getMessage("manage_permissions_extraInfo_defaultAdmin"));
+                authPrivileges.addPrivilegeDynamic(permission, MessageUtil.getMessage("manage_permissions_extraInfo_defaultAdmin"));
             }
         }
         return privMappings;
     }
 
-    private boolean hasPermission(final NodeRef targetRef, final String permission, String userName) {
-        return AuthenticationUtil.runAs(new RunAsWork<Boolean>() {
-            @Override
-            public Boolean doWork() throws Exception {
-                AccessStatus hasPermission = permissionService.hasPermission(targetRef, permission);
-                return AccessStatus.ALLOWED.equals(hasPermission);
-            }
-        }, userName);
+    private void addPrivilege(UserPrivileges authPrivileges, String permission, boolean setDirectly, boolean inherited) {
+        if (setDirectly) {
+            authPrivileges.addPrivilegeStatic(permission);
+        }
+        // inherited and setDirectly is here non-exclusive
+        if (inherited) {
+            authPrivileges.addPrivilegeInherited(permission);
+        }
     }
 
     @Override
     public void savePrivileges(NodeRef manageableRef, Map<String, UserPrivileges> privilegesByUsername, Map<String, UserPrivileges> privilegesByGroup, QName listenerCode) {
-        // FIXME PRIV2 Ats - at the moment (at least for documents) there is no need for listeners
-        // notifyListeners(manageableRef, privilegesByUsername, listenerCode);
         updatePrivileges(manageableRef, privilegesByUsername);
         updatePrivileges(manageableRef, privilegesByGroup);
     }
@@ -166,8 +157,9 @@ public class PrivilegeServiceImpl implements PrivilegeService {
             if (vo.isDeleted()) {
                 it.remove();
             } else {
-                if (vo.hasManageablePrivileges()) {
-                    setPermissions(manageableRef, authority, vo.getPrivilegesToAdd());
+                Set<String> privilegesToAdd = vo.getPrivilegesToAdd();
+                if (!privilegesToAdd.isEmpty()) {
+                    setPermissions(manageableRef, authority, privilegesToAdd);
                 }
             }
         }
@@ -209,6 +201,146 @@ public class PrivilegeServiceImpl implements PrivilegeService {
         this.nodeService = nodeService;
     }
 
-    // END: getters / setters
+    public void setApplicationService(ApplicationService applicationService) {
+        this.applicationService = applicationService;
+    }
 
+    /**
+     * {@link AccessPermission#isInherited()} == false does not mean, that the same permission is not also inherited - it just says that this permission is set directly as well
+     * 
+     * @author Ats Uiboupin
+     */
+    class ThoroughInheritanceChecker {
+        private final Set<String> userNamesInAdminsGroup;
+        private final NodeRef parentRef;
+        private final boolean inheritParentPermissions;
+        private final Map<String, Set<String>> groupsByUser = new HashMap<String, Set<String>>();
+        private Map<String, AccessPermission> ancestorAccessPermissionsMap;
+
+        ThoroughInheritanceChecker(NodeRef manageableRef, String adminGroup) {
+            parentRef = nodeService.getPrimaryParent(manageableRef).getParentRef();
+            userNamesInAdminsGroup = getUserService().getUserNamesInGroup(adminGroup);
+            inheritParentPermissions = BeanHelper.getPermissionService().getInheritParentPermissions(manageableRef);
+            if (isTest == null) {
+                isTest = applicationService.isTest();
+            }
+            if (defaultAdmins == null) {
+                defaultAdmins = BeanHelper.getAuthenticationService().getDefaultAdministratorUserNames();
+            }
+        }
+
+        private void lazyInit() {
+            if (ancestorAccessPermissionsMap == null) {
+                Set<AccessPermission> ancestorAccessPermissions = permissionService.getAllSetPermissions(parentRef);
+                ancestorAccessPermissionsMap = new HashMap<String, AccessPermission>();
+                Set<String> visitedGroups = new HashSet<String>();
+                for (AccessPermission accessPermission : ancestorAccessPermissions) {
+                    String key = customHash(accessPermission);
+                    AccessPermission previousValue = ancestorAccessPermissionsMap.put(key, accessPermission);
+                    if (previousValue != null && isTest) {
+                        // I assume that there are not two AccessPermissions with same customHash, but if I'm wrong, then maybe I'm missing something
+                        MessageUtil.addErrorMessage("Weird, several AccessPermissions on parent node with same hash - check code");
+                    }
+                    // for debugging
+                    if (isTest && accessPermission.getAuthorityType() == AuthorityType.GROUP) {
+                        String authority = accessPermission.getAuthority();
+                        if (!visitedGroups.contains(authority)) {
+                            for (String userName : getUserService().getUserNamesInGroup(authority)) {
+                                Set<String> userGroups = groupsByUser.get(userName);
+                                if (userGroups == null) {
+                                    userGroups = visitedGroups;
+                                    groupsByUser.put(userName, userGroups);
+                                }
+                                userGroups.add(authority);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        /**
+         * @param accessPermission
+         * @return true if the same permission is granted to parent node(either directly or inherited from any other ancestor)
+         */
+        boolean checkInheritance(AccessPermission accessPermission) {
+            boolean inherited = accessPermission.isInherited();
+            if (inherited || !inheritParentPermissions) {
+                return inherited;
+            }
+            Assert.isTrue(accessPermission.isSetDirectly(), "expected that set directly");
+            /**
+             * AccessPermission it is set directly(and based on this AccessPermission not inherited)
+             * THIS DOES NOT MEAN THAT SAME PERMISSION IS NOT INHERITED,
+             * because if permission is set directly then you don't see another record saying that it is also inherited (in case ancestor node has the same permission set directly
+             * or inherited).
+             * THEREFORE WE NEED TO CHECK FIRST PARENT NODE ACCESSPERMISSIONS AS WELL
+             */
+            String authority = accessPermission.getAuthority();
+            String permission = accessPermission.getPermission();
+            // permission is set directly, but we need to know if it is also inherited from ancestor nodes
+            boolean hasPermissionForParentRef = hasPermission(parentRef, permission, authority);
+            if (hasPermissionForParentRef) {
+                Boolean inheritedFromParent = isInherited(accessPermission);
+                if (inheritedFromParent != null) {
+                    inherited = inheritedFromParent;
+                }
+            }
+            return inherited;
+        }
+
+        private boolean hasPermission(final NodeRef targetRef, final String permission, String userName) {
+            return AuthenticationUtil.runAs(new RunAsWork<Boolean>() {
+                @Override
+                public Boolean doWork() throws Exception {
+                    AccessStatus hasPermission = permissionService.hasPermission(targetRef, permission);
+                    return AccessStatus.ALLOWED.equals(hasPermission);
+                }
+            }, userName);
+        }
+
+        private Boolean isInherited(AccessPermission origAccessPermission) {
+            String authority = origAccessPermission.getAuthority();
+            lazyInit();
+            String permission = origAccessPermission.getPermission();
+            if (hasAccessPermission(authority, permission)) {
+                return true;
+            }
+            // check being admin after inspecting AccessPermissions
+            if (origAccessPermission.getAuthorityType() == AuthorityType.ADMIN || userNamesInAdminsGroup.contains(authority) || defaultAdmins.contains(authority)) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("NOT inherited isAdmin: " + authority + " " + permission);
+                }
+                return false;
+            }
+            if (isTest) {
+                // doing check through group only in test environments - in other environments expecting that this permission is not inherited
+                if (origAccessPermission.getAuthorityType() == AuthorityType.USER) {
+                    Set<String> userGroups = groupsByUser.get(authority);
+                    if (userGroups != null) {
+                        for (String group : userGroups) {
+                            if (hasAccessPermission(group, permission)) {
+                                if (LOG.isDebugEnabled()) {
+                                    LOG.debug("this permission " + permission + " it self is not inherited,"
+                                            + " but it is granted to " + origAccessPermission.getAuthority() + " through parent node and user group " + group);
+                                }
+                                return false; // this permission it self is not inherited, but it is granted through parent node and user group
+                            }
+                        }
+                    }
+                }
+                MessageUtil.addErrorMessage(authority + " has permission " + permission + " on parentNode, however it is NOT INHERITED, but it is still somehow granted");
+            }
+            return null;
+        }
+
+        private boolean hasAccessPermission(String authority, String permission) {
+            String key = customHash(new AccessPermissionImpl(permission, AccessStatus.ALLOWED, authority, /* position doesn't matter */0));
+            return ancestorAccessPermissionsMap.get(key) != null;
+        }
+
+        private String customHash(AccessPermission accessPermission) {
+            return accessPermission.getPermission() + " ¤ " + accessPermission.getAccessStatus().name() + " ¤ " + accessPermission.getAuthority();
+        }
+    }
 }

@@ -265,9 +265,10 @@ public interface DocumentSearchService {
     /**
      * Searches for working documents that have a discussion that involves current user
      * 
-     * @param fetchDocuments if true then document is fetched from repository. Otherwise a document object with set NodeRef is returned.
      * @return
      */
-    List<Document> searchDiscussionDocuments(final boolean fetchDocuments);
+    List<Document> searchDiscussionDocuments();
+
+    int getDiscussionDocumentsCount();
 
 }

@@ -24,7 +24,7 @@ public class DiscussionsMenuItemProcessor extends CountAddingMenuItemProcessor i
 
     @Override
     public int getCount(MenuItem menuItem) {
-        return documentSearchService.searchDiscussionDocuments(false).size();
+        return documentSearchService.getDiscussionDocumentsCount();
     }
 
     // START: getters / setters

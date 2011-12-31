@@ -36,6 +36,7 @@ public abstract class PrivilegesHandler implements Serializable {
     private final QName nodeType;
 
     protected Boolean checkboxValue;
+    protected boolean checkboxValueBeforeSave;
     private Boolean editable;
     protected ManageInheritablePrivilegesDialog dialogBean;
     protected State state;
@@ -49,8 +50,18 @@ public abstract class PrivilegesHandler implements Serializable {
         return true;
     }
 
+    /** @param loosingPrivileges - privileges by authority that are removed */
+    protected boolean validate(Map<String, UserPrivileges> loosingPrivileges) {
+        return true; // subclasses could override this method
+    }
+
+    public void save() {
+        // subclasses could override this method
+    }
+
     public void reset() {
         checkboxValue = null;
+        checkboxValueBeforeSave = false;
         editable = null;
         dialogBean = null;
         state = null;
@@ -65,7 +76,6 @@ public abstract class PrivilegesHandler implements Serializable {
         if (ObjectUtils.equals(e.getOldValue(), newValue)) {
             throw new RuntimeException("FIXME value not really changed checkboxValue=" + checkboxValue + ", newValue=" + newValue + " oldValue=" + e.getOldValue());
         }
-        checkboxChanged(newValue);
     }
 
     /** Called by JSF after {@link #checkboxChanged(ValueChangeEvent)} */
@@ -73,9 +83,19 @@ public abstract class PrivilegesHandler implements Serializable {
         this.checkboxValue = checkboxValue;
     }
 
-    public abstract Boolean getCheckboxValue();
+    public Boolean getCheckboxValue() {
+        initCheckboxValuesIfNeeded();
+        return checkboxValue;
+    }
 
-    protected abstract void checkboxChanged(boolean newValue);
+    private void initCheckboxValuesIfNeeded() {
+        if (checkboxValue == null) {
+            checkboxValueBeforeSave = initCheckboxValue();
+            checkboxValue = checkboxValueBeforeSave;
+        }
+    }
+
+    protected abstract boolean initCheckboxValue();
 
     public String getCheckboxLabel() {
         return MessageUtil.getMessage(nodeType.getLocalName() + "_manage_inheritable_permissions_checkbox_label");
@@ -107,11 +127,6 @@ public abstract class PrivilegesHandler implements Serializable {
      */
     protected void addDynamicPrivileges() {
         // subclasses could add more dynamic privileges if needed
-    }
-
-    /** @param loosingPrivileges - privileges by authority that are removed */
-    protected boolean validate(Map<String, UserPrivileges> loosingPrivileges) {
-        return true; // subclasses could override this method
     }
 
     public String getConfirmInlineGroupUsersMsg() {

@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.module.AbstractModuleComponent;
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
@@ -24,6 +25,7 @@ public class ArchivalsStoresBootstrap extends AbstractModuleComponent {
 
     private GeneralService generalService;
     private String additionalArchivals;
+    private boolean deleteArchivalsExistingContents;
 
     private final LinkedHashSet<ArchivalsStoreVO> archivalsStoreVOs = new LinkedHashSet<ArchivalsStoreVO>();
 
@@ -50,6 +52,16 @@ public class ArchivalsStoresBootstrap extends AbstractModuleComponent {
             if (nodeRef != null) {
                 QName type = nodeService.getType(nodeRef);
                 Assert.isTrue(FunctionsModel.Types.FUNCTIONS_ROOT.equals(type));
+
+                if (deleteArchivalsExistingContents) {
+                    LOG.info("Deleting existing contents under " + nodeRef);
+                    for (ChildAssociationRef childAssociationRef : nodeService.getChildAssocs(nodeRef)) {
+                        nodeService.deleteNode(childAssociationRef.getChildRef());
+                    }
+                    LOG.info("Deleting completed");
+                    // workspace://ArchivalsStore... stores don't have corresponding archive stores (for recycle bin) defined in storeArchiveMap,
+                    // so we don't have to worry that deleted nodes transerring to recycle bin and recycle bin getting huge
+                }
             } else {
                 QName assocQName = QName.createQName(archivalsStoreVO.getPrimaryPath().substring(1), serviceRegistry.getNamespaceService());
                 nodeRef = nodeService.createNode(
@@ -74,6 +86,10 @@ public class ArchivalsStoresBootstrap extends AbstractModuleComponent {
 
     public void setAdditionalArchivals(String additionalArchivals) {
         this.additionalArchivals = additionalArchivals;
+    }
+
+    public void setDeleteArchivalsExistingContents(boolean deleteArchivalsExistingContents) {
+        this.deleteArchivalsExistingContents = deleteArchivalsExistingContents;
     }
 
 }

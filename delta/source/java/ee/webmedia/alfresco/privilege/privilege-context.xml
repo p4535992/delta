@@ -39,6 +39,7 @@
       <property name="authorityService" ref="AuthorityService" />
       <property name="permissionService" ref="PermissionService" />
       <property name="nodeService" ref="NodeService" />
+      <property name="applicationService" ref="ApplicationService" />
    </bean>
 
    <bean id="PrivilegeService" class="org.springframework.aop.framework.ProxyFactoryBean">

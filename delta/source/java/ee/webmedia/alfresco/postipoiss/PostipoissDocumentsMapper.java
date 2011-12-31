@@ -607,8 +607,8 @@ public class PostipoissDocumentsMapper {
     }
 
     static PropertyValueProvider getProvider(String name, PropertyDefinition propDef) {
-        // SIM "errandComment".equals(name) || "sendDesc".equals(name)
-        if ("comment".equals(name) || "content".equals(name) || "price".equals(name)) {
+        // SIM "sendDesc".equals(name)
+        if ("comment".equals(name) || "errandComment".equals(name) || "content".equals(name) || "price".equals(name) || "expenseType".equals(name)) {
             return new CommentPropertyValueProvider();
         }
         String javaClassName = propDef.getDataType().getJavaClassName();

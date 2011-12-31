@@ -24,7 +24,7 @@
 --%>
 <%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a" %>
 
-<jsp:include page="/WEB-INF/jsp/dialog/deleteConfirmMessage.jsp" />
+<jsp:include page="/jsp/dialog/deleteConfirmMessage.jsp" />
 
 <a:booleanEvaluator value="#{DocumentDialogHelperBean.inEditMode}" id="deletefile-metaInEditMode2">
    <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/docdynamic/web/metadata-block-lockRefresh.jsp" />

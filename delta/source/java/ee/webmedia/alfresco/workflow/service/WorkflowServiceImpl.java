@@ -1493,12 +1493,13 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     private void requireValue(BaseWorkflowObject object, String objectValue, QName repoPropertyName, String... requiredValues) {
         String repoValue = null;
         NodeRef nodeRef = object.getNodeRef();
-        if (nodeRef != null) {
+        boolean saved = RepoUtil.isSaved(nodeRef);
+        if (saved) {
             repoValue = (String) nodeService.getProperty(nodeRef, repoPropertyName);
         }
         boolean matches = false;
         for (String requiredValue : requiredValues) {
-            if (!requiredValue.equals(objectValue) || (nodeRef != null && !requiredValue.equals(repoValue))) {
+            if (!requiredValue.equals(objectValue) || (saved && !requiredValue.equals(repoValue))) {
                 continue;
             }
             matches = true;
@@ -2115,7 +2116,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         object.preSave();
 
         Map<QName, Serializable> props = getSaveProperties(object.getChangedProperties());
-        if (node.getNodeRef() == null) {
+        if (RepoUtil.isUnsaved(node)) {
             // Create workflow
             if (log.isDebugEnabled()) {
                 log.debug("Creating node (type '" + node.getType().toPrefixString(namespaceService) + "') with properties " //

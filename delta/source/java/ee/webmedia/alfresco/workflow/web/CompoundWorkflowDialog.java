@@ -283,7 +283,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     /**
      * This method assumes that workflows has been validated
      */
-    public void startValidatedWorkflow(ActionEvent event) {
+    public void startValidatedWorkflow(@SuppressWarnings("unused") ActionEvent event) {
         try {
             preprocessWorkflow();
             if (isUnsavedWorkFlow) {
@@ -351,7 +351,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     /**
      * Action listener for JSP.
      */
-    public void stopWorkflow(ActionEvent event) {
+    public void stopWorkflow(@SuppressWarnings("unused") ActionEvent event) {
         log.debug("stopWorkflow");
         try {
             preprocessWorkflow();
@@ -368,7 +368,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     /**
      * Action listener for JSP.
      */
-    public void continueWorkflow(ActionEvent event) {
+    public void continueWorkflow(@SuppressWarnings("unused") ActionEvent event) {
         log.debug("continueWorkflow");
         try {
             preprocessWorkflow();
@@ -394,7 +394,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     /**
      * This method assumes that compound workflow has been validated
      */
-    public void continueValidatedWorkflow(ActionEvent event) {
+    public void continueValidatedWorkflow(@SuppressWarnings("unused") ActionEvent event) {
         continueValidatedWorkflow(false);
     }
 
@@ -576,16 +576,18 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
 
             sortedTypes = new TreeMap<String, QName>();
             Map<QName, WorkflowType> workflowTypes = workflowService.getWorkflowTypes();
-            String docStatus = (String) BeanHelper.getNodeService().getProperty(docRef, DocumentCommonModel.Props.DOC_STATUS);
+            Document doc = getParentDocument();
+            String docStatus = doc.getDocStatus();
             boolean isDocStatusWorking = DocumentStatus.WORKING.getValueName().equals(docStatus);
             for (QName wfType : workflowTypes.keySet()) {
                 if (wfType.equals(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_WORKFLOW)) {
                     continue;
                 }
-                if ((wfType.equals(WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW)
-                            || wfType.equals(WorkflowSpecificModel.Types.OPINION_WORKFLOW)
-                            || wfType.equals(WorkflowSpecificModel.Types.REVIEW_WORKFLOW))
-                            && !isDocStatusWorking) {
+                if (!isDocStatusWorking
+                        && ((wfType.equals(WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW)
+                                && !isAdminOrDocmanagerWithPermission(doc, Privileges.VIEW_DOCUMENT_FILES, Privileges.VIEW_DOCUMENT_META_DATA))
+                                || wfType.equals(WorkflowSpecificModel.Types.OPINION_WORKFLOW)
+                        || wfType.equals(WorkflowSpecificModel.Types.REVIEW_WORKFLOW))) {
                     continue;
                 }
                 if ((wfType.equals(WorkflowSpecificModel.Types.OPINION_WORKFLOW)
@@ -737,6 +739,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         boolean hasForbiddenFlowsForFinished = false;
         DueDateRegressionHelper regressionTest = new DueDateRegressionHelper();
         boolean isCategoryEnabled = BeanHelper.getWorkflowService().getOrderAssignmentCategoryEnabled();
+        Document doc = getParentDocument();
         for (Workflow block : compoundWorkflow.getWorkflows()) {
             boolean foundOwner = false;
             QName blockType = block.getNode().getType();
@@ -744,8 +747,9 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                     && !activeResponsibleAssignTaskInSomeWorkFlow && !isActiveResponsibleAssignedForDocument(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW, false);
             boolean activeResponsibleAssigneeAssigned = !activeResponsibleAssigneeNeeded;
 
-            if (WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW.equals(blockType) ||
-                    WorkflowSpecificModel.Types.REVIEW_WORKFLOW.equals(blockType) ||
+            if ((WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW.equals(blockType)
+                    && !isAdminOrDocmanagerWithPermission(doc, Privileges.VIEW_DOCUMENT_FILES, Privileges.VIEW_DOCUMENT_META_DATA))
+                    || WorkflowSpecificModel.Types.REVIEW_WORKFLOW.equals(blockType) ||
                     WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW.equals(blockType) ||
                     WorkflowSpecificModel.Types.OPINION_WORKFLOW.equals(blockType)) {
                 if (WorkflowUtil.isStatus(block, Status.NEW, Status.STOPPED)) {
@@ -860,12 +864,9 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             MessageUtil.addErrorMessage("workflow_save_error_missing_orderAssigmnentResponsibleTask");
         }
 
-        if (checkFinished && hasForbiddenFlowsForFinished) {
-            String docStatus = (String) BeanHelper.getDocumentDialogHelperBean().getProps().get(DocumentCommonModel.Props.DOC_STATUS);
-            if (DocumentStatus.FINISHED.getValueName().equals(docStatus)) {
-                valid = false;
-                MessageUtil.addErrorMessage(context, "workflow_start_failed_docFinished");
-            }
+        if (checkFinished && hasForbiddenFlowsForFinished && DocumentStatus.FINISHED.getValueName().equals(doc.getDocStatus())) {
+            valid = false;
+            MessageUtil.addErrorMessage(context, "workflow_start_failed_docFinished");
         }
 
         if (checkInvoice) {

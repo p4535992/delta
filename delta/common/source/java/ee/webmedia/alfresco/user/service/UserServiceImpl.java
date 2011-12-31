@@ -448,6 +448,18 @@ public class UserServiceImpl implements UserService {
         return authorityService.getContainedAuthorities(AuthorityType.USER, group, true);
     }
 
+    @Override
+    public Set<String> getUsersGroups(String userName) {
+        Set<String> authoritiesForUser = authorityService.getAuthoritiesForUser(userName);
+        Set<String> groupNames = new HashSet<String>(authoritiesForUser.size());
+        for (String authority : authoritiesForUser) {
+            if (authority.startsWith(PermissionService.GROUP_PREFIX)) {
+                groupNames.add(authority);
+            }
+        }
+        return groupNames;
+    }
+
     private Authority getAuthority(String authority, boolean returnNull) {
         AuthorityType authorityType = AuthorityType.getAuthorityType(authority);
         return getAuthority(authority, authorityType, returnNull);

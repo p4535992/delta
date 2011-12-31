@@ -28,22 +28,21 @@ public class SeriesTypePrivilegesHandler extends PrivilegesHandler {
     }
 
     @Override
-    public Boolean getCheckboxValue() {
-        // checkboxValue = .. // FIXME PRIV2 - unimplemented. when implemented, remove wrapper element from jsp:
+    protected boolean initCheckboxValue() {
+        /**
+         * „Lugemisõiguseta kasutajad näevad dokumentide olemasolu“ – documentsVisibleForUsersWithoutAccess ;
+         * vaikimisi true (sarja property)
+         */
+        // FIXME PRIV2 - unimplemented. when implemented, remove wrapper element from jsp:
         // <h:panelGroup id="removeMeWhenImplemented" ...>
-        // return checkboxValue;
-        return null;
-    }
-
-    @Override
-    protected void checkboxChanged(boolean newValue) {
-        MessageUtil.addErrorMessage("unimplmented checkboxChanged"); // FIXME PRIV2 Ats
+        return true;
     }
 
     @Override
     /** FIXME PRIV2 - vaja realiseerida selle asemel hoops getCheckboxValue() ja checkboxChanged(boolean) meetodid */
     public void checkboxChanged(ValueChangeEvent e) {
-        MessageUtil.addErrorMessage("unimplemented: serise checkboxChanged");
+        super.checkboxChanged(e);
+        MessageUtil.addErrorMessage("unimplemented: series checkboxChanged");
         return;
     }
 

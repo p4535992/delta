@@ -8,7 +8,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 import ee.webmedia.alfresco.privilege.web.AbstractInheritingPrivilegesHandler;
 import ee.webmedia.alfresco.privilege.web.PrivilegesHandler;
-import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
 /**
@@ -49,8 +48,6 @@ public class VolumeTypePrivilegesHandler extends AbstractInheritingPrivilegesHan
     }
 
     private boolean isOwner() {
-        // FIXME PRIV2 Ats - is owner of volume
-        MessageUtil.addErrorMessage("TODO: unimplemented - isOwner");
-        return false;
+        return false; // regular volume doesn't have owner
     }
 }

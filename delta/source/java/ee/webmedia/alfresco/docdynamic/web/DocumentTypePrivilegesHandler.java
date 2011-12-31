@@ -64,10 +64,10 @@ public class DocumentTypePrivilegesHandler extends AbstractInheritingPrivilegesH
         if (StringUtils.equals(accessRestriction, AccessRestriction.OPEN.getValueName())) {
             String docIsPublic = MessageUtil.getMessage("document_manage_permissions_extraInfo_documentIsPublic");
             for (UserPrivileges privs : state.getUserPrivileges()) {
-                privs.addDynamicPrivilege(Privileges.VIEW_DOCUMENT_FILES, docIsPublic);
+                privs.addPrivilegeDynamic(Privileges.VIEW_DOCUMENT_FILES, docIsPublic);
             }
             for (UserPrivileges groupPrivs : state.getPrivMappings().getPrivilegesByGroup().values()) {
-                groupPrivs.addDynamicPrivilege(Privileges.VIEW_DOCUMENT_FILES, docIsPublic);
+                groupPrivs.addPrivilegeDynamic(Privileges.VIEW_DOCUMENT_FILES, docIsPublic);
             }
         }
     }

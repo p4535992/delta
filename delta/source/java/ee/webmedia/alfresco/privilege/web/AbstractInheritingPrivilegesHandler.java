@@ -5,6 +5,7 @@ import java.util.Collection;
 import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.privilege.model.UserPrivileges;
 
 /**
  * Base class for PrivilegesHandler that allow users to change inheriting permissions from parent nodes
@@ -19,16 +20,22 @@ public abstract class AbstractInheritingPrivilegesHandler extends PrivilegesHand
     }
 
     @Override
-    public Boolean getCheckboxValue() {
-        if (checkboxValue == null) {
-            checkboxValue = BeanHelper.getPermissionService().getInheritParentPermissions(state.getManageableRef());
-        }
-        return checkboxValue;
+    protected boolean initCheckboxValue() {
+        return BeanHelper.getPermissionService().getInheritParentPermissions(state.getManageableRef());
     }
 
     @Override
-    protected void checkboxChanged(boolean newValue) {
-        BeanHelper.getPermissionService().setInheritParentPermissions(state.getManageableRef(), newValue);
+    public void save() {
+        if (checkboxValueBeforeSave != checkboxValue) {
+            BeanHelper.getPermissionService().setInheritParentPermissions(state.getManageableRef(), checkboxValue);
+            if (!checkboxValue) {
+                for (UserPrivileges authPrivs : state.getPrivMappings().getPrivilegesByUsername().values()) {
+                    authPrivs.makeInheritedPrivilegesAsStatic();
+                }
+                for (UserPrivileges authPrivs : state.getPrivMappings().getPrivilegesByGroup().values()) {
+                    authPrivs.makeInheritedPrivilegesAsStatic();
+                }
+            }
+        }
     }
-
 }

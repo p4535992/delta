@@ -72,6 +72,7 @@ import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.service.Field;
+import ee.webmedia.alfresco.docadmin.web.DocAdminUtil;
 import ee.webmedia.alfresco.docconfig.generator.SaveListener;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
@@ -126,14 +127,7 @@ public class PostipoissDocumentsImporter implements SaveListener {
      * trükib 2 korda
      */
 
-    private Date openDocsDate;
-    {
-        try {
-            openDocsDate = dateFormat.parse("01.07.2010");
-        } catch (Exception e) {
-        }
-    }
-    protected static final String OPEN_VOLUME_YEAR = "10";
+    protected static final int LAST_VOLUME_YEAR = 11;
 
     protected static final char CSV_SEPARATOR = ';';
     final private static String CREATOR_MODIFIER = "DELTA";
@@ -1378,17 +1372,17 @@ public class PostipoissDocumentsImporter implements SaveListener {
 
     private int inferYearFromRegKpv(String regKpv) {
         if (regKpv == null) {
-            return 10;
+            return LAST_VOLUME_YEAR;
         }
         try {
             Date regDate = dateFormat.parse(regKpv);
             int year = PostipoissUtil.getYear(regDate) - 2000;
-            if (year < 0 || year > 10) {
-                return 10;
+            if (year < 0 || year > LAST_VOLUME_YEAR) {
+                return LAST_VOLUME_YEAR;
             }
             return year;
         } catch (ParseException e) {
-            return 10;
+            return LAST_VOLUME_YEAR;
         }
     }
 
@@ -1482,7 +1476,7 @@ public class PostipoissDocumentsImporter implements SaveListener {
 
         checkProps(propsMap, null, mapping.typeInfo.propDefs);
 
-        mapChildren(root, mapping, doc, new QName[] {}, mapping.typeInfo.propDefs);
+        mapChildren(root, mapping, doc.getNode(), new QName[] {}, mapping.typeInfo.propDefs);
 
         addHistoryItems(documentRef, root, propsMap, mapping);
 
@@ -1592,20 +1586,25 @@ public class PostipoissDocumentsImporter implements SaveListener {
         }
     }
 
-    private void mapChildren(Element root, Mapping mapping, DocumentDynamic doc, QName[] parentHierarchy,
+    private void mapChildren(Element root, Mapping mapping, Node node, QName[] parentHierarchy,
             Map<String, org.alfresco.util.Pair<DynamicPropertyDefinition, Field>> propDefs) {
         Map<QName, Integer> childNodesProcessed = new HashMap<QName, Integer>();
         for (Mapping subMapping : mapping.subMappings) {
             QName childAssocType = subMapping.to;
-            List<Node> childNodes = doc.getNode().getAllChildAssociations(childAssocType);
-            Assert.isTrue(childNodes != null && !childNodes.isEmpty(), "No child nodes exist of type " + childAssocType.toPrefixString(getNamespaceService()));
+            List<Node> childNodes = node.getAllChildAssociations(childAssocType);
+            QName[] hierarchy = (QName[]) ArrayUtils.add(parentHierarchy, childAssocType);
+            if (childNodes == null || childNodes.isEmpty()) {
+                throw new RuntimeException("No child nodes exist of type " + childAssocType.toPrefixString(getNamespaceService())
+                        + " on node " + node.getType().toPrefixString(getNamespaceService())
+                        + ", hierarchy=" + Arrays.asList(hierarchy)
+                        + ", objectTypeIdAndVersion=" + DocAdminUtil.getDocTypeIdAndVersionNr(node));
+            }
             Integer index = childNodesProcessed.get(childAssocType);
             if (index == null) {
                 index = 0;
             }
-            QName[] hierarchy = (QName[]) ArrayUtils.add(parentHierarchy, childAssocType);
             if (index >= childNodes.size()) {
-                getDocumentDynamicService().createChildNodesHierarchyAndSetDefaultPropertyValues(doc.getNode(), hierarchy, mapping.typeInfo.docVer);
+                getDocumentDynamicService().createChildNodesHierarchyAndSetDefaultPropertyValues(node, hierarchy, mapping.typeInfo.docVer);
             }
             Node childNode = childNodes.get(index);
             childNodesProcessed.put(childAssocType, index + 1);
@@ -1615,12 +1614,14 @@ public class PostipoissDocumentsImporter implements SaveListener {
 
             childNode.getProperties().putAll(RepoUtil.toStringProperties(propsMap));
 
-            mapChildren(root, subMapping, doc, hierarchy, propDefs);
+            mapChildren(root, subMapping, childNode, hierarchy, propDefs);
         }
     }
 
     private Map<QName, Serializable> setProps(Element root, Mapping mapping, VolumeIndex volumeIndex, Toimik t) {
-        String regNumber = t.normedMark + "/" + volumeIndex.regNumber;
+        // String regNumber = t.normedMark + "/" + volumeIndex.regNumber;
+        // PPA needs regNumber to be original, unmodified
+        String regNumber = root.elementText(PP_ELEMENT_REG_NR);
         String individualNr = root.elementText(PP_ELEMENT_JRKNR);
         if (StringUtils.isNotBlank(individualNr)) {
             regNumber += "-" + individualNr;

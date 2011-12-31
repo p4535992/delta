@@ -52,6 +52,7 @@ import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.versions.model.VersionsModel;
 
 /**
@@ -74,6 +75,9 @@ public class FileServiceImpl implements FileService {
     @Override
     public boolean toggleActive(NodeRef nodeRef) {
         boolean active = true; // If file doesn't have the flag set, then it hasn't been toggled yet, thus active
+        if (!nodeService.exists(nodeRef)) {
+            throw new UnableToPerformException("file_toggle_failed");
+        }
         if (nodeService.getProperty(nodeRef, FileModel.Props.ACTIVE) != null) {
             active = Boolean.parseBoolean(nodeService.getProperty(nodeRef, FileModel.Props.ACTIVE).toString());
         }

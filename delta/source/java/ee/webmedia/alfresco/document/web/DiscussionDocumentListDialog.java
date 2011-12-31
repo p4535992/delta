@@ -21,7 +21,7 @@ public class DiscussionDocumentListDialog extends BaseDocumentListDialog {
 
     @Override
     public void restored() {
-        documents = getDocumentSearchService().searchDiscussionDocuments(true);
+        documents = getDocumentSearchService().searchDiscussionDocuments();
     }
 
     @Override

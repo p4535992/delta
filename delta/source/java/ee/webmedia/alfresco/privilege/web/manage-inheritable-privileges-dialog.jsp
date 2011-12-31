@@ -16,20 +16,26 @@
 
       function saveIfNeeded(cb) {
          var submitWhenCheckboxUnchecked = <%= BeanHelper.getManageInheritablePrivilegesDialog().getTypeHandler().isSubmitWhenCheckboxUnchecked() %>;
-         if (submitWhenCheckboxUnchecked && !$jQ(cb).is(":checked")) {
-            clickFinishButton();
+         if (submitWhenCheckboxUnchecked ) {
+            var jQCB = $jQ(cb);
+            var checked = jQCB.is(":checked");
+            var confirmRemoveInheritance = '<%= MessageUtil.getMessageAndEscapeJS("manage_permissions_confirm_removeInheritance") %>';
+            var confirmSetInheritance = '<%= MessageUtil.getMessageAndEscapeJS("manage_permissions_confirm_setInheritance") %>';
+            var msg = checked ? confirmSetInheritance : confirmRemoveInheritance;
+            if(confirm(msg)){
+	           clickFinishButton();
+            } else {
+               jQCB.attr('checked', !checked);
+            }
          }
       }
    </script>
-<%-- FIXME PRIV2 Ats - test
    <script type="text/javascript" src="<%=request.getContextPath()%>/scripts/manage-inheritable-privileges-dialog.js?r=<%=PageTag.urlSuffix%>"> </script>
- --%>
-   <script type="text/javascript" src="<%=request.getContextPath()%>/scripts/manage-inheritable-privileges-dialog.js?r=<%=System.currentTimeMillis()%>"> </script>
 </f:verbatim>
 
-<%-- FIXME PRIV2 Ats - test
- --%>
+<%-- FIXME PRIV2 - jätan selle Kaareli soovil alles, et õiguseid lihtsam debugida oleks
 <h:outputText value="#{ManageInheritablePrivilegesDialog.state.manageableRef}" />
+ --%>
 
 <a:panel id="permissions-search-panel" label="#{msg.users_usergroups_search_title}" progressive="true">
    <a:genericPicker id="picker" filters="#{UserContactGroupSearchBean.usersGroupsFilters}" queryCallback="#{UserContactGroupSearchBean.searchAllWithAdminsAndDocManagers}"
@@ -38,8 +44,8 @@
 </a:panel>
 
 <a:panel id="permissions-panel" label="#{msg.manage_permissions_panel}">
-<h:panelGroup id="removeMeWhenImplemented" rendered="#{ManageInheritablePrivilegesDialog.typeHandler.checkboxValue != null}">
-   <%-- FIXME PRIV2 Ats - wrapper is temp hack for removing checkbox from series permissions management view where it means different thing.
+<h:panelGroup id="removeMeWhenImplemented" rendered="#{ManageInheritablePrivilegesDialog.typeHandler.class.simpleName != 'SeriesTypePrivilegesHandler'}">
+   <%-- FIXME PRIV2 - wrapper is temp hack for removing checkbox from series permissions management view where it means different thing.
    Wrapper should be removed when this is resolved
     --%>
 

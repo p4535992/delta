@@ -57,7 +57,6 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
 
     public void toggleActive(ActionEvent event) {
         NodeRef fileNodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
-
         try {
             BaseDialogBean.validatePermission(docRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT);
             final boolean active = getFileService().toggleActive(fileNodeRef);
@@ -67,6 +66,7 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "file_inactive_toggleFailed");
         } catch (UnableToPerformException e) {
             MessageUtil.addStatusMessage(e);
+            refresh(); // file might have been deleted
         }
     }
 

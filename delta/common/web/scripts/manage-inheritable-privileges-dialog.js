@@ -33,7 +33,13 @@ $jQ(document).ready(function() {
    var group = $jQ(".tbGroup", privilegesTable);
    var updateHeaderCheckboxStateDisabled = false;
 
-   // FIXME PRIV2 Ats - üle vaadata JS
+   // FIXME PRIV2 Grupi checkbox'ide sõltuvused ei toimi hetkel
+   // (grupi kasutajaid linnutama ei pea, aga sama rea peal võiksid sõltuvad checkbox'id ka linnutatud saama).
+   // pole kriitiline viga, kuna salvestamisel nagunii salvestatakse ka õiguse sõltuvused
+
+   // FIXME PRIV2 optimeerimine - üle vaadata JS - võib-olla annab midagi optimeerida, kuna osa koodi on võetud vanast õiguse halduse ekraanilt,
+   // kus oli vaja rohkem checkbox'e sünkida(kuna iga grupi all kuvati kasutajad ja sama kasutaja võis olla mitmes grupis)
+
 
    function headerCheckBoxChanged() {
       if (updateHeaderCheckboxStateDisabled) {
