@@ -32,11 +32,13 @@ import ee.webmedia.alfresco.docadmin.web.ListReorderHelper;
 import ee.webmedia.alfresco.docadmin.web.NodeOrderModifier;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
+import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
@@ -251,6 +253,26 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         saveOrUpdate(series);
         logService.addSeriesLog(seriesRef, I18NUtil.getMessage("series_log_status_closed"));
         return true;
+    }
+
+    private boolean isInClosedFunction(Series series) {
+        Serializable functionStatus = nodeService.getProperty(series.getFunctionNodeRef(), FunctionsModel.Props.STATUS);
+        return DocListUnitStatus.CLOSED.getValueName().equals(functionStatus);
+    }
+
+    @Override
+    public void openSeries(Series series) {
+        final Node seriesNode = series.getNode();
+        if (!isClosed(seriesNode)) {
+            return;
+        }
+        if (isInClosedFunction(series)) {
+            throw new UnableToPerformException("series_open_error_inClosedFunction");
+        }
+        Map<String, Object> props = seriesNode.getProperties();
+        props.put(SeriesModel.Props.STATUS.toString(), DocListUnitStatus.OPEN.getValueName());
+        saveOrUpdate(series);
+        logService.addSeriesLog(seriesNode.getNodeRef(), I18NUtil.getMessage("series_log_status_opened"));
     }
 
     @Override

@@ -95,7 +95,7 @@ public class PostipoissStructureImporter {
     private static final char OUTPUT_SEPARATOR = ';';
     private static final String CREATOR_MODIFIER = "DELTA";
 
-    private static DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
+    private final DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
 
     // ========= THINGS YOU MAY WANT TO CHANE =========
 
@@ -107,23 +107,8 @@ public class PostipoissStructureImporter {
         return false; // Logic for SIM/MV was: t.year() == 2010;
     }
 
-    private static Date seriesValidFrom;
-    static {
-        try {
-            seriesValidFrom = dateFormat.parse("01.01.2010");
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
+    private Date seriesValidFrom;
     private static Date endOfArchive;
-    static {
-        try {
-            endOfArchive = dateFormat.parse("01.01.2010");
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     private static boolean isArchived(int year, Date validTo) {
         if (year < 2009) {
@@ -164,6 +149,19 @@ public class PostipoissStructureImporter {
         setNodeService(BeanHelper.getNodeService());
         setCaseService(BeanHelper.getCaseService());
         setBehaviourFilter(BeanHelper.getPolicyBehaviourFilter());
+        setPostipoissImporter(postipoissImporter);
+
+        dateFormat.setLenient(false);
+        try {
+            seriesValidFrom = dateFormat.parse("01.01.2010");
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
+        try {
+            endOfArchive = dateFormat.parse("01.01.2010");
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private File dataFolder;
@@ -231,7 +229,7 @@ public class PostipoissStructureImporter {
                 return createContacts;
             }
         })) {
-            File contactsCompletedFile = new File(dataFolder, COMPLETED_CONTACTS_FILENAME);
+            File contactsCompletedFile = new File(workFolder, COMPLETED_CONTACTS_FILENAME);
             FileUtils.writeStringToFile(contactsCompletedFile, "");
         }
         log.info("Contacts import completed");
@@ -322,7 +320,7 @@ public class PostipoissStructureImporter {
                         createContact(contactReader);
                     } catch (Exception e) {
                         throw new RuntimeException("Error while importing contact from row index " + contactReader.getCurrentRecord() + " in file "
-                                + contactsFile, e);
+                                + contactsFile + ": " + e.getMessage(), e);
                     }
                 }
             } finally {
@@ -344,7 +342,7 @@ public class PostipoissStructureImporter {
                         createContactGroup(contactGroupReader);
                     } catch (Exception e) {
                         throw new RuntimeException("Error while importing contactgroup from row index " + contactGroupReader.getCurrentRecord() + " in file "
-                                + contactgroupsFile, e);
+                                + contactgroupsFile + ": " + e.getMessage(), e);
                     }
                 }
             } finally {
@@ -364,7 +362,7 @@ public class PostipoissStructureImporter {
                         addContactsToGroups(contactsinGroupsReader);
                     } catch (Exception e) {
                         throw new RuntimeException("Error while importing contacts in groups from row index " + contactsinGroupsReader.getCurrentRecord() + " in file "
-                                + contactsingroupsFile, e);
+                                + contactsingroupsFile + ": " + e.getMessage(), e);
                     }
                 }
             } finally {
@@ -563,7 +561,7 @@ public class PostipoissStructureImporter {
                     Funk funk = new Funk(reader);
                     funks.put(funk.id, funk);
                 } catch (Exception e) {
-                    throw new RuntimeException("Error while reading function from row index " + reader.getCurrentRecord() + " in file " + inputFile, e);
+                    throw new RuntimeException("Error while reading function from row index " + reader.getCurrentRecord() + " in file " + inputFile + ": " + e.getMessage(), e);
                 }
             }
         } finally {
@@ -677,7 +675,7 @@ public class PostipoissStructureImporter {
     // map.put(t.volumeMarkNormed, t);
     // }
 
-    static class Toimik implements Comparable<Toimik> {
+    class Toimik implements Comparable<Toimik> {
         String rowId;
         String functionId;
         String seriesIndex;
@@ -771,7 +769,7 @@ public class PostipoissStructureImporter {
             }
         }
 
-        private static int compare(Integer[] longArray, Integer[] shortArray) {
+        private int compare(Integer[] longArray, Integer[] shortArray) {
             int length = shortArray.length;
             for (int i = 0; i < length; i++) {
                 if (longArray[i] != shortArray[i]) {
@@ -808,7 +806,7 @@ public class PostipoissStructureImporter {
         }
     }
 
-    private static Date parseDate(String s) {
+    private Date parseDate(String s) {
         Date date = null;
         if (s == null) {
             return null;
@@ -985,7 +983,7 @@ public class PostipoissStructureImporter {
                 try {
                     toimikud.add(new Toimik(reader));
                 } catch (Exception e) {
-                    throw new RuntimeException("Error while reading volume from row index " + reader.getCurrentRecord() + " in file " + inputFile, e);
+                    throw new RuntimeException("Error while reading volume from row index " + reader.getCurrentRecord() + " in file " + inputFile + ": " + e.getMessage(), e);
                 }
             }
 

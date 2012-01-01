@@ -16,6 +16,13 @@
             </params>
          </action>
 
+         <action id="series_open">
+            <evaluator>ee.webmedia.alfresco.series.web.SeriesIsClosedEvaluator</evaluator>
+            <label-id>series_open</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{SeriesDetailsDialog.open}</action-listener>
+         </action>
+
          <action id="series_permissions">
             <label-id>manage_invited_users</label-id>
             <image>/images/icons/users.gif</image>
@@ -31,6 +38,7 @@
          </action-group>
 
          <action-group id="browse_actions_series_details">
+            <action idref="series_open"/>
             <action idref="series_permissions" />
          </action-group>
 

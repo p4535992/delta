@@ -50,6 +50,16 @@ import ee.webmedia.alfresco.utils.TreeNode;
 public class PostipoissDocumentsMapper {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(PostipoissDocumentsMapper.class);
 
+    private final DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
+    private final DateFormat dateFormatWithoutYear = new SimpleDateFormat("dd.MM");
+    private final DateFormat dateFormatOnlyDay = new SimpleDateFormat("dd");
+
+    public PostipoissDocumentsMapper() {
+        dateFormat.setLenient(false);
+        dateFormatWithoutYear.setLenient(false);
+        dateFormatOnlyDay.setLenient(false);
+    }
+
     static class Mapping {
         String from;
         QName to;
@@ -163,15 +173,6 @@ public class PostipoissDocumentsMapper {
 
     }
 
-    private static DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
-    private static DateFormat dateFormatWithoutYear = new SimpleDateFormat("dd.MM");
-    private static DateFormat dateFormatOnlyDay = new SimpleDateFormat("dd");
-    static {
-        dateFormat.setLenient(false);
-        dateFormatWithoutYear.setLenient(false);
-        dateFormatOnlyDay.setLenient(false);
-    }
-
     @SuppressWarnings("serial")
     static class ConvertException extends Exception {
     }
@@ -180,7 +181,7 @@ public class PostipoissDocumentsMapper {
         Pair split(String s) throws ConvertException;
     }
 
-    static class PeriodSplitter implements Splitter {
+    class PeriodSplitter implements Splitter {
         @Override
         public Pair split(String s) throws ConvertException {
             Date first = null;
@@ -322,7 +323,7 @@ public class PostipoissDocumentsMapper {
 
     }
 
-    static class DatePropertyValueProvider extends PropertyValueProvider {
+    class DatePropertyValueProvider extends PropertyValueProvider {
 
         @Override
         public PropertyValue provide() {
@@ -458,7 +459,7 @@ public class PostipoissDocumentsMapper {
         }
     }
 
-    static class DatePropertyValue extends PropertyValue {
+    class DatePropertyValue extends PropertyValue {
         Date value;
 
         @Override
@@ -606,7 +607,7 @@ public class PostipoissDocumentsMapper {
         return typeInfo;
     }
 
-    static PropertyValueProvider getProvider(String name, PropertyDefinition propDef) {
+    PropertyValueProvider getProvider(String name, PropertyDefinition propDef) {
         // SIM "sendDesc".equals(name)
         if ("comment".equals(name) || "errandComment".equals(name) || "content".equals(name) || "price".equals(name) || "expenseType".equals(name)) {
             return new CommentPropertyValueProvider();

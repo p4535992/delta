@@ -50,6 +50,8 @@ public interface SeriesService {
 
     boolean isClosed(Node currentNode);
 
+    void openSeries(Series series);
+
     void updateContainingDocsCountByVolume(NodeRef seriesNodeRef, NodeRef volumeNodeRef, boolean volumeAdded);
 
     List<NodeRef> getAllSeriesRefsByFunction(NodeRef functionRef);

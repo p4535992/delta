@@ -57,6 +57,7 @@ import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.FastDateFormat;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
@@ -130,13 +131,11 @@ public class PostipoissDocumentsImporter {
     protected static final int LAST_VOLUME_YEAR = 11;
 
     protected static final char CSV_SEPARATOR = ';';
-    final private static String CREATOR_MODIFIER = "DELTA";
-    final private static DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
-    final private static DateFormat dateTimeFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
-    static {
-        dateFormat.setLenient(false);
-        dateTimeFormat.setLenient(false);
-    }
+    private static final String CREATOR_MODIFIER = "DELTA";
+    private static final FastDateFormat staticDateTimeFormat = FastDateFormat.getInstance("dd.MM.yyyy HH:mm:ss");
+
+    private final DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
+    private final DateFormat dateTimeFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
 
     protected SAXReader xmlReader = new SAXReader();
 
@@ -189,6 +188,9 @@ public class PostipoissDocumentsImporter {
         postipoissDocumentsMapper.setGeneralService(BeanHelper.getGeneralService());
         setBehaviourFilter(BeanHelper.getPolicyBehaviourFilter());
         setPostipoissImporter(postipoissImporter);
+
+        dateFormat.setLenient(false);
+        dateTimeFormat.setLenient(false);
     }
 
     // INJECTORS
@@ -1178,15 +1180,22 @@ public class PostipoissDocumentsImporter {
         String ownerName;
         String accessRestriction;
         String accessRestrictionReason;
+        String dokLiik;
+        String suund;
+        String documentTypeId;
 
-        public ImportedDocument(Integer documentId, NodeRef nodeRef, String toimik, String registreerimisNr, Map<QName, Serializable> props) {
+        public ImportedDocument(Integer documentId, NodeRef nodeRef, String toimik, String registreerimisNr, String dokLiik, String suund, String documentTypeId,
+                                Map<QName, Serializable> props) {
             this.documentId = documentId;
             this.nodeRef = nodeRef;
             this.toimik = toimik;
             this.registreerimisNr = registreerimisNr;
+            this.dokLiik = dokLiik;
+            this.suund = suund;
+            this.documentTypeId = documentTypeId;
             if (props != null) {
                 regNumber = (String) props.get(DocumentCommonModel.Props.REG_NUMBER);
-                regDateTime = dateTimeFormat.format((Date) props.get(DocumentCommonModel.Props.REG_DATE_TIME));
+                regDateTime = staticDateTimeFormat.format((Date) props.get(DocumentCommonModel.Props.REG_DATE_TIME));
                 docName = (String) props.get(DocumentCommonModel.Props.DOC_NAME);
                 ownerId = (String) props.get(DocumentCommonModel.Props.OWNER_ID);
                 ownerName = (String) props.get(DocumentCommonModel.Props.OWNER_NAME);
@@ -1251,7 +1260,10 @@ public class PostipoissDocumentsImporter {
                         "ownerId",
                         "ownerName",
                         "accessRestriction",
-                        "accessRestrictionReason"
+                        "accessRestrictionReason",
+                        "ppDokLiik",
+                        "ppSuund",
+                        "documentTypeId"
                 };
             }
 
@@ -1270,7 +1282,10 @@ public class PostipoissDocumentsImporter {
                             doc.ownerId == null ? "" : doc.ownerId,
                             doc.ownerName == null ? "" : doc.ownerName,
                             doc.accessRestriction == null ? "" : doc.accessRestriction,
-                            doc.accessRestrictionReason == null ? "" : doc.accessRestrictionReason
+                            doc.accessRestrictionReason == null ? "" : doc.accessRestrictionReason,
+                            doc.dokLiik == null ? "" : doc.dokLiik,
+                            doc.suund == null ? "" : doc.suund,
+                            doc.documentTypeId == null ? "" : doc.documentTypeId
                     });
                 }
             }
@@ -1459,7 +1474,8 @@ public class PostipoissDocumentsImporter {
         }
         if (mapping == null) {
             // Skip document for which mapping doesn't exist
-            return new ImportedDocument(documentId, null, root.elementText(PP_ELEMENT_TOIMIK_SARI), root.elementText(PP_ELEMENT_REG_NR), null);
+            return new ImportedDocument(documentId, null, root.elementText(PP_ELEMENT_TOIMIK_SARI), root.elementText(PP_ELEMENT_REG_NR), root.elementText(PP_ELEMENT_DOKLIIK),
+                    root.elementText("suund"), "documentType mapping not found", null);
         }
         VolumeIndex volumeIndex = inferVolumeIndex(root, mapping);
         if (volumeIndex == null) {
@@ -1534,7 +1550,8 @@ public class PostipoissDocumentsImporter {
 
         addAssociations(documentRef, documentId, root);
 
-        return new ImportedDocument(documentId, documentRef, root.elementText(PP_ELEMENT_TOIMIK_SARI), root.elementText(PP_ELEMENT_REG_NR), nodeService.getProperties(documentRef));
+        return new ImportedDocument(documentId, documentRef, root.elementText(PP_ELEMENT_TOIMIK_SARI), root.elementText(PP_ELEMENT_REG_NR), root.elementText(PP_ELEMENT_DOKLIIK),
+                root.elementText("suund"), mapping.typeInfo.docVer.getParent().getId(), nodeService.getProperties(documentRef));
     }
 
     private void checkProps(Map<QName, Serializable> propsMap, QName[] hierarchy, Map<String, org.alfresco.util.Pair<DynamicPropertyDefinition, Field>> propDefs) {
@@ -1778,7 +1795,7 @@ public class PostipoissDocumentsImporter {
                 try {
                     kpv = dateTimeFormat.parse(dateString);
                 } catch (ParseException e) {
-                    throw new RuntimeException(e);
+                    throw new RuntimeException("Unable to parse kuupaev kellaaeg: " + e.getMessage(), e);
                 }
             }
             String nimetus = tegevus.elementText("nimetus");
@@ -1884,7 +1901,7 @@ public class PostipoissDocumentsImporter {
                 try {
                     dueDate = dateTimeFormat.parse(kelleleTahtaeg + " 23:59:59");
                 } catch (ParseException e) {
-                    throw new RuntimeException("Unable to parse kelleleTahtaeg", e);
+                    throw new RuntimeException("Unable to parse kelleleTahtaeg: " + e.getMessage(), e);
                 }
                 props.put(WorkflowSpecificModel.Props.DUE_DATE, dueDate);
                 props.put(WorkflowSpecificModel.Props.DUE_DATE_DAYS, null);

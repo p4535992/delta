@@ -67,7 +67,7 @@ public class PostipoissImporter implements SaveListener {
     public synchronized void startImporterInBackground(ActionEvent event) throws Exception {
         if (!isImporterRunning()) {
             log.info("startImporterInBackground\n  dataFolders=" + dataFolders + "\n  workFolders=" + workFolders + "\n  mappingsFileNames=" + mappingsFileNames
-                    + "\n  archivalsStores=" + archivalsStores);
+                    + "\n  defaultOwnerIds=" + defaultOwnerIds + "\n  archivalsStores=" + archivalsStores);
             LinkedHashSet<ArchivalsStoreVO> archivalsStoreVOs = generalService.getArchivalsStoreVOs();
             iterate(archivalsStoreVOs, false);
             iterate(archivalsStoreVOs, true);

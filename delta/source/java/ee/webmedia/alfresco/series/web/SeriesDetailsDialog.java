@@ -18,6 +18,7 @@ import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.series.numberpattern.NumberPatternParser;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
 
 /**
  * Form backing bean for Series details
@@ -159,6 +160,22 @@ public class SeriesDetailsDialog extends BaseDialogBean {
 
     public Node getCurrentNode() {
         return series.getNode();
+    }
+
+    public void open(@SuppressWarnings("unused") ActionEvent event) {
+        Node currentSeriesNode = series.getNode();
+        if (currentSeriesNode instanceof TransientNode || currentSeriesNode == null) {
+            return;
+        }
+        if (isClosed()) {
+            try {
+                BeanHelper.getSeriesService().openSeries(series);
+            } catch (UnableToPerformException e) {
+                MessageUtil.addErrorMessage(e.getMessage());
+                return;
+            }
+            MessageUtil.addInfoMessage("series_open_success");
+        }
     }
 
     public String close() {
