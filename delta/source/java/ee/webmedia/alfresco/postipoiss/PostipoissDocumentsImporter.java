@@ -1463,9 +1463,9 @@ public class PostipoissDocumentsImporter {
         }
         VolumeIndex volumeIndex = inferVolumeIndex(root, mapping);
         if (volumeIndex == null) {
-            throw new RuntimeException("Could not parse toimik_sari nor infer by exception for doc " + documentId);
-            // return null;
+            throw new RuntimeException("Could not parse volume for document, volume='" + root.elementText(PP_ELEMENT_TOIMIK_SARI) + "'");
         }
+        String volumeIndexMarkOrig = volumeIndex.mark;
 
         Toimik t = getToimik(volumeIndex.year, volumeIndex.mark, false);
         if (t == null) {
@@ -1483,10 +1483,7 @@ public class PostipoissDocumentsImporter {
             t = getToimik(volumeIndex.year, volumeIndex.mark, true);
         }
         if (t == null) {
-            log.debug("Could not load toimik by normed mark for " + volumeIndex);
-            // throw new RuntimeException("Could not load toimik by normed mark for " + volumeIndex);
-            // return null;
-            return new ImportedDocument(documentId, null, root.elementText(PP_ELEMENT_TOIMIK_SARI), root.elementText(PP_ELEMENT_REG_NR), null);
+            throw new RuntimeException("Could not find volume for document, searched based on calculated year=" + volumeIndex.year + " and mark='" + volumeIndexMarkOrig + "'");
         }
 
         Map<QName, Serializable> propsMap = setProps(root, mapping, volumeIndex, t);
