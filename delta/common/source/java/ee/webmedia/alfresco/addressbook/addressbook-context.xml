@@ -141,6 +141,18 @@
          </list>
       </property>
    </bean>
+   
+   <bean id="removeIdenticalContacts2" class="ee.webmedia.alfresco.addressbook.bootstrap.RemoveIdenticalContacts" parent="module.baseComponent" >
+      <property name="addressbookService" ref="AddressbookService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="addressbookRootBootstrap" />
+         </list>
+      </property>
+   </bean>   
 
    <!-- START: web beans: -->
 

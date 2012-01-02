@@ -21,14 +21,18 @@ public class RenameOldPrimaryArchivalsRootBootstrap extends AbstractModuleCompon
 
     @Override
     protected void executeInternal() throws Throwable {
+        NodeService nodeService = serviceRegistry.getNodeService();
         StoreRef archivalsStoreRef = generalService.getArchivalsStoreRef();
-        if (!serviceRegistry.getNodeService().exists(archivalsStoreRef)) {
+        if (!nodeService.exists(archivalsStoreRef)) {
             LOG.info("Skipping renaming /fn:archivals to /fn:documentList, store does not exist: " + archivalsStoreRef);
             return;
         }
-        LOG.info("Renaming /fn:archivals to /fn:documentList in " + archivalsStoreRef);
         NodeRef nodeRef = generalService.getNodeRef("/fn:archivals", archivalsStoreRef);
-        NodeService nodeService = serviceRegistry.getNodeService();
+        if (nodeRef == null) {
+            LOG.info("Skipping renaming /fn:archivals to /fn:documentList, node does not exist: /fn:archivals");
+            return;
+        }
+        LOG.info("Renaming /fn:archivals to /fn:documentList in " + archivalsStoreRef);
         NodeRef parentRef = nodeService.getPrimaryParent(nodeRef).getParentRef();
         ChildAssociationRef oldAssocRef = nodeService.getPrimaryParent(nodeRef);
         ChildAssociationRef newAssocRef = nodeService.moveNode(nodeRef, parentRef, ContentModel.ASSOC_CHILDREN, QName.createQName(FunctionsModel.URI, "documentList"));

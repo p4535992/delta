@@ -4,6 +4,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDvkService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -27,31 +28,49 @@ public class ArrivedDocumentsPermissionsUpdateBootstrap extends AbstractModuleCo
 
     @Override
     protected void executeInternal() throws Throwable {
-        GeneralService generalService = getGeneralService();
+        addPermissions(getAllFolderRefs());
+    }
+
+    protected void addPermissions(List<NodeRef> folderRefs) {
+        for (NodeRef folderRef : folderRefs) {
+            BeanHelper.getPermissionService().setPermission(folderRef, UserService.AUTH_DOCUMENT_MANAGERS_GROUP, Privileges.EDIT_DOCUMENT, true);
+        }
+    }
+
+    protected List<NodeRef> getAllFolderRefs() {
         DvkService dvkService = getDvkService();
-        List<NodeRef> folderRefs = Arrays.asList(
+        ArrayList<NodeRef> folderRefs = new ArrayList<NodeRef>();
+        folderRefs.addAll(getImapChildrenRefs());
+        folderRefs.addAll(getOtherFolderRefs(dvkService));
+        return folderRefs;
+    }
+
+    protected List<NodeRef> getImapChildrenRefs() {
+        GeneralService generalService = getGeneralService();
+        return Arrays.asList(
                 // 1) Sissetulevad e-kirjad
                 generalService.getNodeRef(ImapModel.Repo.INCOMING_SPACE)
                 // 2) E-kirja manused
                 , generalService.getNodeRef(ImapModel.Repo.ATTACHMENT_SPACE)
                 // 3) Väljasaadetud e-kirjad
                 , generalService.getNodeRef(ImapModel.Repo.SENT_SPACE)
-                // 4) Praak DVK'st
-                , generalService.getNodeRef(dvkService.getCorruptDvkDocumentsPath())
-                // 5) Skanneeritud dokumendid
-                , generalService.getNodeRef(ScannedModel.Repo.SCANNED_SPACE)
-                // 6) Ebaõnnestunud saatmised
+                // 4) Ebaõnnestunud saatmised
                 , generalService.getNodeRef(ImapModel.Repo.SEND_FAILURE_NOTICE_SPACE)
+                );
+    }
+
+    private List<NodeRef> getOtherFolderRefs(DvkService dvkService) {
+        GeneralService generalService = getGeneralService();
+        return Arrays.asList(
+                // 5) Praak DVK'st
+                generalService.getNodeRef(dvkService.getCorruptDvkDocumentsPath())
+                // 6) Skanneeritud dokumendid
+                , generalService.getNodeRef(ScannedModel.Repo.SCANNED_SPACE)
                 // 7) DVK dokumendid
                 , generalService.getNodeRef(dvkService.getReceivedDvkDocumentsPath())
                 // 8) einvoice
                 , generalService.getNodeRef(getDocumentService().getReceivedInvoicePath())
                 );
-
-        for (NodeRef folderRef : folderRefs) {
-            for (String permission : Arrays.asList(Privileges.VIEW_DOCUMENT_META_DATA, Privileges.EDIT_DOCUMENT, Privileges.VIEW_DOCUMENT_FILES)) {
-                BeanHelper.getPermissionService().setPermission(folderRef, UserService.AUTH_DOCUMENT_MANAGERS_GROUP, permission, true);
-            }
-        }
     }
+
 }

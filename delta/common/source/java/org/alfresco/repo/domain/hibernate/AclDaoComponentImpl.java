@@ -2507,7 +2507,20 @@ public class AclDaoComponentImpl extends HibernateDaoSupport implements AclDaoCo
                 return query.uniqueResult();
             }
         };
-        DbAccessControlEntry entry = (DbAccessControlEntry) getHibernateTemplate().execute(callback);
+        DbAccessControlEntry entry;
+        try
+        {
+            entry = (DbAccessControlEntry) getHibernateTemplate().execute(callback);
+        }
+        catch (RuntimeException e)
+        {
+            logger.error("Failed to execute hibernate query: " + QUERY_GET_ACE_WITH_NO_CONTEXT
+                    + "\n  permissionId=" + permission.getId()
+                    + "\n  authorityId=" + authority.getId()
+                    + "\n  allowed=" + ((ace.getAccessStatus() == AccessStatus.ALLOWED) ? true : false)
+                    + "\n  applies=" + ace.getAceType().getId(), e);
+            throw e;
+        }
         if (create && (entry == null))
         {
             DbAccessControlEntryImpl newEntry = new DbAccessControlEntryImpl();

@@ -263,5 +263,8 @@
 
    <bean id="UserConfirmHelper" class="ee.webmedia.alfresco.common.web.UserConfirmHelper" scope="session" />
 
+   <!-- temp bean - might help to fix problems related to permission inheritance in PPA live environment -->
+   <bean id="ArrivedDocumentsPermissionsModifier" class="ee.webmedia.alfresco.document.bootstrap.ArrivedDocumentsPermissionsModifier" scope="session" />
+
    <!-- END: web beans: -->
 </beans>

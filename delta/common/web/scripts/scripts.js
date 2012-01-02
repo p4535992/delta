@@ -722,6 +722,17 @@ function propSheetValidateOnDocumentReady() {
    }
 }
 
+function propSheetValidateRegisterOnDocumentReady() {
+   if (propSheetValidateSubmitFn.length > 0) {
+      document.getElementById(propSheetValidateFormId).onsubmit = propSheetValidateSubmit;
+      var registerBtn = document.getElementById(propSheetValidateFormId + ':documentRegisterButton');
+      if(registerBtn){
+         registerBtn.onclick = function() { propSheetFinishBtnPressed = true; };
+      }
+      processButtonState();
+   }
+}
+
 function togglePanel(divId) {
     $jQ(divId).toggle();
 }
@@ -1751,6 +1762,7 @@ function handleHtmlLoaded(context, selects) {
    });
 
 	propSheetValidateOnDocumentReady();
+	propSheetValidateRegisterOnDocumentReady();
 
    // this method should be called after critical activities have been done in handleHtmlLoaded as it displays alerts and possibly submits page
    confirmWorkflow();

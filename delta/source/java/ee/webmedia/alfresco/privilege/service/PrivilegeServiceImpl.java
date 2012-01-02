@@ -62,6 +62,17 @@ public class PrivilegeServiceImpl implements PrivilegeService {
     }
 
     @Override
+    public boolean hasPermission(final NodeRef targetRef, final String permission, String userName) {
+        return AuthenticationUtil.runAs(new RunAsWork<Boolean>() {
+            @Override
+            public Boolean doWork() throws Exception {
+                AccessStatus hasPermission = permissionService.hasPermission(targetRef, permission);
+                return AccessStatus.ALLOWED.equals(hasPermission);
+            }
+        }, userName);
+    }
+
+    @Override
     public PrivMappings getPrivMappings(NodeRef manageableRef, Collection<String> manageablePermissions) {
         PrivMappings privMappings = new PrivMappings(manageableRef);// fillMembersByGroup(manageableRef);
         Map<String/* userName */, UserPrivileges> privilegesByUsername = new HashMap<String, UserPrivileges>();
@@ -179,7 +190,11 @@ public class PrivilegeServiceImpl implements PrivilegeService {
         Assert.notNull(authority, "setPermissions() called without authority");
         Set<String> permissionsWithDependencies = PrivilegeUtil.getPrivsWithDependencies(privilegesToAdd);
         for (String permission : permissionsWithDependencies) {
-            permissionService.setPermission(manageableRef, authority, permission, true);
+            try {
+                permissionService.setPermission(manageableRef, authority, permission, true);
+            } catch (Exception e) {
+                throw new RuntimeException("failed to set permission " + permission + " to authority " + authority + " on node " + manageableRef, e);
+            }
         }
         return permissionsWithDependencies;
     }
@@ -287,16 +302,6 @@ public class PrivilegeServiceImpl implements PrivilegeService {
                 }
             }
             return inherited;
-        }
-
-        private boolean hasPermission(final NodeRef targetRef, final String permission, String userName) {
-            return AuthenticationUtil.runAs(new RunAsWork<Boolean>() {
-                @Override
-                public Boolean doWork() throws Exception {
-                    AccessStatus hasPermission = permissionService.hasPermission(targetRef, permission);
-                    return AccessStatus.ALLOWED.equals(hasPermission);
-                }
-            }, userName);
         }
 
         private Boolean isInherited(AccessPermission origAccessPermission) {
