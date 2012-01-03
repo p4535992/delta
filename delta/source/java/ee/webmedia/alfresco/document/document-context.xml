@@ -370,6 +370,9 @@
       </property>
    </bean>
 
+   <!-- temp bean - might help to fix problems related to permission inheritance in PPA live environment -->
+   <bean id="ArrivedDocumentsPermissionsModifier" class="ee.webmedia.alfresco.document.bootstrap.ArrivedDocumentsPermissionsModifier" />
+
    <!-- START: web beans: -->
 
    <bean id="AssocsBlockBean" class="ee.webmedia.alfresco.document.associations.web.AssocsBlockBean" scope="session" />
