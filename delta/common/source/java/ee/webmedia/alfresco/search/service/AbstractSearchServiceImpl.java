@@ -27,6 +27,7 @@ import org.alfresco.repo.search.impl.lucene.LuceneConfig;
 import org.alfresco.repo.search.impl.lucene.analysis.MLTokenDuplicator;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchParameters;
@@ -47,6 +48,7 @@ public abstract class AbstractSearchServiceImpl {
     protected static final int RESULTS_LIMIT = 100;
 
     protected DictionaryService dictionaryService;
+    protected NodeService nodeService;
     protected GeneralService generalService;
     protected SearchService searchService;
     protected LuceneConfig config;
@@ -174,7 +176,8 @@ public abstract class AbstractSearchServiceImpl {
     protected List<NodeRef> searchNodes(String query, int limit, String queryName, StoreRef storeRef) {
         ResultSet resultSet = doSearch(query, limit, queryName, storeRef);
         try {
-            return limitResults(resultSet.getNodeRefs(), limit);
+            List<NodeRef> limitResults = limitResults(resultSet.getNodeRefs(), limit);
+            return removeNonExistingNodeRefs(limitResults);
         } finally {
             try {
                 resultSet.close();
@@ -182,6 +185,16 @@ public abstract class AbstractSearchServiceImpl {
                 // Do nothing
             }
         }
+    }
+
+    protected List<NodeRef> removeNonExistingNodeRefs(List<NodeRef> nodeRefs) {
+        List<NodeRef> results = new ArrayList<NodeRef>(nodeRefs.size());
+        for (NodeRef nodeRef : nodeRefs) {
+            if (nodeService.exists(nodeRef)) {
+                results.add(nodeRef);
+            }
+        }
+        return results;
     }
 
     protected <E> List<E> limitResults(List<E> allResults, int limit) {
@@ -201,10 +214,6 @@ public abstract class AbstractSearchServiceImpl {
     protected ResultSet doSearch(String query, int limit, String queryName, StoreRef storeRef) {
         SearchParameters sp = generateLuceneSearchParams(query, storeRef == null ? generalService.getStore() : storeRef, limit);
         return doSearchQuery(sp, queryName);
-    }
-
-    protected List<ResultSet> doSearches(String query, String queryName, Collection<StoreRef> storeRefs) {
-        return doSearches(query, -1, queryName, storeRefs);
     }
 
     protected List<ResultSet> doSearches(String query, int limit, String queryName, Collection<StoreRef> storeRefs) {
@@ -245,6 +254,10 @@ public abstract class AbstractSearchServiceImpl {
 
     public void setGeneralService(GeneralService generalService) {
         this.generalService = generalService;
+    }
+
+    public void setNodeService(NodeService nodeService) {
+        this.nodeService = nodeService;
     }
 
     public void setSearchService(SearchService searchService) {

@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.common.ajax;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collections;
@@ -61,6 +63,11 @@ public class AjaxBean implements Serializable {
         String id = parts[parts.length - 2];
         String filename = parts[parts.length - 1];
         NodeRef docRef = new NodeRef(StoreRef.STORE_REF_WORKSPACE_SPACESSTORE, id);
+        ResponseWriter out = context.getResponseWriter();
+        if (!getNodeService().exists(docRef)) {
+            out.write("DOCUMENT_DELETED");
+            return;
+        }
         NodeRef fileRef = BeanHelper.getFileFolderService().searchSimple(docRef, filename);
         String lockOwner = null;
         DocLockService docLockService = BeanHelper.getDocLockService();
@@ -70,7 +77,6 @@ public class AjaxBean implements Serializable {
             lockOwner = docLockService.getLockOwnerIfLocked(generated ? docRef : fileRef);
         }
 
-        ResponseWriter out = context.getResponseWriter();
         if (lockOwner != null) {
             out.write(BeanHelper.getUserService().getUserFullName(lockOwner));
             return;

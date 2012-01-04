@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.common.service;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomConstants.VALUE_INDEX_IN_MULTIVALUED_PROPERTY;
 
 import java.io.BufferedInputStream;
@@ -51,9 +52,6 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
-import org.alfresco.service.cmr.search.LimitBy;
-import org.alfresco.service.cmr.search.ResultSet;
-import org.alfresco.service.cmr.search.SearchParameters;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
@@ -80,6 +78,7 @@ import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.upload.UploadFileInput.FileWithContentType;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
 
@@ -483,28 +482,7 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
         String query = SearchUtil.generateQuery(parsedInput, type, props);
         log.debug("Query: " + query);
 
-        SearchParameters sp = new SearchParameters();
-        sp.addStore(store);
-        sp.setLanguage(SearchService.LANGUAGE_LUCENE);
-        // sp.addSort("@" + OrganizationStructureModel.Props.NAME, true); // XXX why doesn't lucene sorting work?
-        sp.setQuery(query);
-
-        // This limit does not work when ACLEntryAfterInvocationProvider has been disabled
-        // So we perform our own limiting in this method also
-        sp.setLimit(limit);
-        sp.setLimitBy(LimitBy.FINAL_SIZE);
-
-        ResultSet resultSet = searchService.query(sp);
-        try {
-            log.debug("Found " + resultSet.length() + " nodes");
-            List<NodeRef> nodeRefs = resultSet.getNodeRefs();
-            if (nodeRefs.size() > limit) {
-                return nodeRefs.subList(0, limit);
-            }
-            return nodeRefs;
-        } finally {
-            resultSet.close();
-        }
+        return getDocumentSearchService().searchNodes(query, limit, "searchNodesByTypeAndProps");
     }
 
     @Override
@@ -796,12 +774,15 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
                                 }
                             }, false, true);
                             long stopTime = System.nanoTime();
-                            log.info("Finished transaction and background thread: " + Thread.currentThread().getName() + " total time = " + duration(startTime, stopTime)
-                                    + "ms, last transaction work time = " + duration(workTime.getFirst(), workTime.getSecond()) + " ms, last transaction commit time = "
-                                    + duration(workTime.getSecond(), stopTime) + " ms");
+                            log.info("Finished transaction and background thread: " + Thread.currentThread().getName() + " total time = "
+                                    + CalendarUtil.duration(startTime, stopTime)
+                                    + "ms, last transaction work time = " + CalendarUtil.duration(workTime.getFirst(), workTime.getSecond())
+                                    + " ms, last transaction commit time = "
+                                    + CalendarUtil.duration(workTime.getSecond(), stopTime) + " ms");
                         } catch (Exception e) {
                             long stopTime = System.nanoTime();
-                            log.error("Exception in background thread: " + Thread.currentThread().getName() + " total time = " + duration(startTime, stopTime) + "ms", e);
+                            log.error("Exception in background thread: " + Thread.currentThread().getName() + " total time = " + CalendarUtil.duration(startTime, stopTime) + "ms",
+                                    e);
                         }
                     }
 
@@ -811,10 +792,6 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
                 thread.start();
             }
         });
-    }
-
-    private static long duration(long startTime, long stopTime) {
-        return (stopTime - startTime) / 1000000L;
     }
 
     // START: getters / setters

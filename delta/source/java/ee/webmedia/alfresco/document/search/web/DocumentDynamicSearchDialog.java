@@ -78,7 +78,9 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
 
         config = getDocumentConfigService().getSearchConfig();
         getPropertySheetStateBean().reset(config.getStateHolders(), this);
-        LOG.info("config=" + config);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("config=" + config);
+        }
 
         loadAllFilters();
     }

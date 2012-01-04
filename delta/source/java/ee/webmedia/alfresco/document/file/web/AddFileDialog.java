@@ -408,7 +408,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         }
         Object[] names = ArrayUtils.addAll(
                 uploaded,
-                selectedFileName.toArray());
+                selectedFileName == null ? null : selectedFileName.toArray());
         String namesStr = "";
         if (names.length > 2) {
             namesStr = StringUtils.join(names, ", ", 0, names.length - 1);

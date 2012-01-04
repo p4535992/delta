@@ -81,4 +81,8 @@ public class CalendarUtil {
         }
         return holidays;
     }
+
+    public static long duration(long startTime, long stopTime) {
+        return (stopTime - startTime) / 1000000L;
+    }
 }

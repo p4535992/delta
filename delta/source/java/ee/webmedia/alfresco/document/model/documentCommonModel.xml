@@ -9,6 +9,7 @@
       <import uri="http://alfresco.webmedia.ee/model/workflow/common/1.0" prefix="wfc" />
       <import uri="http://alfresco.webmedia.ee/model/privilege/1.0" prefix="priv" />
       <import uri="http://alfresco.webmedia.ee/model/document/admin/1.0" prefix="docadmin" />
+      <import uri="http://alfresco.webmedia.ee/model/document/dynamic/1.0" prefix="docdyn" />
    </imports>
 
    <namespaces>
@@ -20,6 +21,17 @@
 
       <type name="doccom:document">
          <parent>cm:folder</parent>
+         <!-- TODO FIXME Temporary properties for CL 188299 -->
+         <properties>
+            <property name="docdyn:regDateTime">
+               <type>d:datetime</type>
+            </property>
+            <property name="docdyn:accessRestrictionBeginDate">
+               <type>d:date</type>
+            </property><property name="docdyn:accessRestrictionEndDate">
+               <type>d:date</type>
+            </property>
+         </properties>
          <associations>
             <association name="doccom:reply">
                <source>

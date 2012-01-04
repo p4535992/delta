@@ -21,7 +21,6 @@ import java.util.Set;
 import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.cmr.security.AuthorityService;
@@ -57,7 +56,6 @@ import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
  */
 public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements AddressbookService {
 
-    private NodeService nodeService;
     private NamespaceService namespaceService;
     private AuthorityService authorityService;
     private PermissionService permissionService;
@@ -551,10 +549,6 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
     }
 
     // ---------- service getters and setters
-
-    public void setNodeService(NodeService nodeService) {
-        this.nodeService = nodeService;
-    }
 
     public void setNamespaceService(NamespaceService namespaceService) {
         this.namespaceService = namespaceService;

@@ -16,7 +16,7 @@
    <import resource="classpath:ee/webmedia/alfresco/document/einvoice/einvoice-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/document/assignresponsibility/assignresponsibility-context.xml" />
 
-   <bean id="documentModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap,workflowModelBootstrap,privilegeModelBootstrap,transactionModelBootstrap,documentAdminModelBootstrap">
+   <bean id="documentModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap,workflowModelBootstrap,privilegeModelBootstrap,transactionModelBootstrap,documentAdminModelBootstrap,documentDynamicModelBootstrap">
       <property name="models">
          <list>
             <value>ee/webmedia/alfresco/document/model/documentCommonModel.xml</value>

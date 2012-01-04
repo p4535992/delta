@@ -24,8 +24,6 @@
  */
 package org.alfresco.repo.search.impl.lucene;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigService;
-
 import java.io.IOException;
 import java.io.StringReader;
 import java.text.SimpleDateFormat;
@@ -3416,6 +3414,13 @@ public class LuceneQueryParser extends QueryParser
     public LuceneAnalyser getAnalyzer()
     {
         return luceneAnalyser;
+    }
+
+    public DocumentConfigService getDocumentConfigService() {
+        if (documentConfigService == null) {
+            documentConfigService = BeanHelper.getDocumentConfigService();
+        }
+        return documentConfigService;
     }
 
 }

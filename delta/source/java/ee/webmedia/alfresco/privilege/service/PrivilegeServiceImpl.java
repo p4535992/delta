@@ -112,10 +112,12 @@ public class PrivilegeServiceImpl implements PrivilegeService {
                 if (authPrivileges == null) {
                     authPrivileges = new UserPrivileges(authority, userService.getUserFullNameWithOrganizationPath(authority));
                     privilegesByUsername.put(authority, authPrivileges);
-
                     Set<String> curUserGroups = privMappings.getUserGroups().get(authority);
                     if (curUserGroups != null) {
                         authPrivileges.getGroups().addAll(curUserGroups);
+                    }
+                    if (curUserGroups == null || curUserGroups.isEmpty()) {
+                        authPrivileges.getGroups().add(GROUPLESS_GROUP);
                     }
                 }
                 boolean allowed = AccessStatus.ALLOWED.equals(accessPermission.getAccessStatus());

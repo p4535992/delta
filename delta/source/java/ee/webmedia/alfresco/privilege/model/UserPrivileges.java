@@ -45,7 +45,11 @@ public class UserPrivileges implements Serializable {
     private String staticMsg;
     private final Map<String /* privilege */, PrivPosition> positionByPrivilege = new HashMap<String, PrivPosition>();
 
-    private final Map<String/* privilege */, Boolean/* active */> privileges = new AbstractMap<String, Boolean>() {
+    private final Map<String/* privilege */, Boolean/* active */> privileges = new PrivilegesMap();
+
+    class PrivilegesMap extends AbstractMap<String, Boolean> implements Serializable {
+        private static final long serialVersionUID = 1L;
+
         @Override
         public Set<Entry<String, Boolean>> entrySet() {
             LinkedHashSet<Entry<String, Boolean>> entrySet = new LinkedHashSet<Entry<String, Boolean>>();
@@ -69,7 +73,7 @@ public class UserPrivileges implements Serializable {
         public Boolean remove(Object privilege) {
             throw new RuntimeException("Don't touch it! Use positionByPrivilege to remove privileges! " + privilege + " " + UserPrivileges.this.toString());
         }
-    };
+    }
 
     protected final Map<String/* privilege */, String/* explanation */> explanationByPrivilege = new HashMap<String, String>() {
         private static final long serialVersionUID = 1L;
@@ -346,7 +350,9 @@ public class UserPrivileges implements Serializable {
      * 
      * @author Ats Uiboupin
      */
-    static class PrivPosition {
+    static class PrivPosition implements Serializable {
+        private static final long serialVersionUID = 1L;
+
         private Boolean isStatic;
         private Boolean dynamic;
         private Boolean inherited;
@@ -413,7 +419,9 @@ public class UserPrivileges implements Serializable {
      * 
      * @author Ats Uiboupin
      */
-    class StaticPermissionModifyingEntry implements Entry<String, Boolean> {
+    class StaticPermissionModifyingEntry implements Entry<String, Boolean>, Serializable {
+        private static final long serialVersionUID = 1L;
+
         private final Entry<String, PrivPosition> wrappedEntry;
 
         public StaticPermissionModifyingEntry(Entry<String, PrivPosition> wrappedEntry) {

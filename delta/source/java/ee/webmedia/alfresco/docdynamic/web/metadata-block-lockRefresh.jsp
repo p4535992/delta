@@ -36,7 +36,7 @@ function requestForLockRefreshSuccess(xml) {
    setTimeout(requestForLockRefresh, nextReqInMs/2); // start new request based on suggested timeout (take page loading and request times into account, divide by two)
    if(!success){
       var errMsg = xml.getAttribute('errMsg');
-      alert("failed to refresh lock on document: "+errMsg);
+      alert("Dokumendi lukustamise uuendamine ebaõnnestus: " + errMsg);
    }
 }
 function requestForLockRefreshFailure() {

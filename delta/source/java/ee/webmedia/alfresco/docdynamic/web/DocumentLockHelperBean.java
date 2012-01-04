@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.docdynamic.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocLockService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -59,6 +60,9 @@ public class DocumentLockHelperBean implements Serializable {
         final DocLockService lockService = getDocLockService();
         final NodeRef docRef = docNode.getNodeRef();
         synchronized (docNode) { // to avoid extending lock after unlock(save/cancel)
+            if (!getNodeService().exists(docRef)) {
+                throw new UnableToPerformException("document_delete_success"); // XXX: Alar
+            }
             if (mustLock4Edit) {
                 if (lockService.setLockIfFree(docRef) == LockStatus.LOCK_OWNER) {
                     return true;
@@ -108,7 +112,15 @@ public class DocumentLockHelperBean implements Serializable {
             synchronized (node) { // to avoid extending lock after unlock(save/cancel)
                 boolean lockingAllowed = isLockingAllowed(getDocumentDialogHelperBean().isInEditMode());
                 if (lockingAllowed) {
-                    lockSuccessfullyRefreshed = lockOrUnlockIfNeeded(lockingAllowed);
+                    try {
+                        lockSuccessfullyRefreshed = lockOrUnlockIfNeeded(lockingAllowed);
+                    } catch (UnableToPerformException e) {
+                        // lockSuccessfullyRefreshed stays false
+                        errMsg = MessageUtil.getMessage(e);
+                    } catch (NodeLockedException e) {
+                        // lockSuccessfullyRefreshed stays false
+                        errMsg = "Dokument on lukustatud kellegi teise poolt";
+                    }
                 } else {
                     errMsg = "Can't refresh lock - page not in editMode";
                     LOG.warn(errMsg);

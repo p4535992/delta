@@ -24,6 +24,9 @@ import org.apache.commons.lang.SerializationUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.InitializingBean;
 
+import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
+import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
+
 /**
  * Serializes all session attributes. This filter helps to be aware of serializing issues during development. If the session does not serialize, exception is
  * thrown. In production configuration, this filter should never be enabled, thus it is disabled by default.
@@ -65,17 +68,21 @@ public class SerializingFilter implements DependencyInjectedFilter, Initializing
         HttpSessionWrapper1 session = (HttpSessionWrapper1) wrappedRequest.getSession();
         try {
             byte[] serialized = SerializationUtils.serialize(session.getAttributes());
+            SerializationUtils.deserialize(serialized);
             // FIXME Alfresco starts behaving very weird... two separate instances of NavigationBean are used in differenct places...
             // session.setAttributes((HashMap<String, Object>) SerializationUtils.deserialize(serialized));
             if (log.isDebugEnabled()) {
                 log.debug("HTTP session id=" + session.getId() + " attributes=" + session.getAttributes().size() + " size="
                         + decimalFormat.format(serialized.length) + " bytes (serializing took " + (System.currentTimeMillis() - startTime) + " ms)");
             }
+            StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.SESSION_SIZE, Integer.toString(serialized.length / 1024) + " KiB");
         } catch (SerializationException ex) {
-            log.warn("session id=" + session.getId() + "\n" + ex.getMessage());
+            StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.SESSION_SIZE, "ERROR");
+            log.error("session id=" + session.getId() + "\n" + ex.getMessage());
             throw ex;
         } catch (Exception ex) {
-            log.warn("session id=" + session.getId(), ex);
+            StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.SESSION_SIZE, "ERROR");
+            log.error("session id=" + session.getId(), ex);
         } finally {
             session.setAttributesInOriginal();
         }

@@ -1618,8 +1618,11 @@ function handleHtmlLoaded(context, selects) {
            data: $jQ.param({'path' : path}),
            mode: 'queue',
            success: function (responseText) {
-              $jQ(".submit-protection-layer").hide();
-              if (responseText.indexOf("NOT_LOCKED") > -1) {
+             $jQ(".submit-protection-layer").hide();
+             if (responseText.indexOf("DOCUMENT_DELETED") > -1) {
+                alert("Faili ei saa avada, dokument on kustutatud");
+                return false;
+             } else if (responseText.indexOf("NOT_LOCKED") > -1) {
                 webdavOpen(path, sharePointObject);
              } else if (confirm(getTranslation("webdav_openReadOnly").replace("#", responseText))) {
                 // TODO CL 161673: responseText might contain HTML of CAS page if session has timed out

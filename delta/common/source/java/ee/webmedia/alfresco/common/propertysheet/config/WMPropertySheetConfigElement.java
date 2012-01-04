@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.common.propertysheet.config;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -64,12 +63,16 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
     /**
      * @author Ats Uiboupin
      */
-    public static class ItemConfigVO extends ItemConfig implements CustomAttributes, ReadOnlyCopiableItemConfig, Serializable {
+    public static class ItemConfigVO extends ItemConfig implements CustomAttributes, ReadOnlyCopiableItemConfig {
         private static final long serialVersionUID = 1L;
 
         // additional fields not present in parent class
         protected Map<String, String> customAttributes = new HashMap<String, String>();
         private ConfigItemType configItemType;
+
+        protected ItemConfigVO() {
+            // For deserialization
+        }
 
         public ItemConfigVO(String name) {
             super(name);

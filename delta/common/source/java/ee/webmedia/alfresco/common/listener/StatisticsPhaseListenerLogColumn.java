@@ -18,4 +18,5 @@ public enum StatisticsPhaseListenerLogColumn {
     OUTCOME,
     VIEWID,
     EVENT,
+    SESSION_SIZE,
 }

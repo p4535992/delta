@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.substitute.service;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateDatePropertyRangeQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateStringExactQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
@@ -19,10 +20,6 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.cmr.search.LimitBy;
-import org.alfresco.service.cmr.search.ResultSet;
-import org.alfresco.service.cmr.search.ResultSetRow;
-import org.alfresco.service.cmr.search.SearchParameters;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
@@ -140,13 +137,10 @@ public class SubstituteServiceImpl implements SubstituteService {
         queryParts.add(generateDatePropertyRangeQuery(today, null, SubstituteModel.Props.SUBSTITUTION_END_DATE));
         String query = joinQueryPartsAnd(queryParts);
         List<Substitute> substitutes = new ArrayList<Substitute>();
-        ResultSet resultSet = doSearch(query);
-        try {
-            for (ResultSetRow row : resultSet) {
-                substitutes.add(getSubstitute(row.getNodeRef()));
-            }
-        } finally {
-            resultSet.close();
+
+        List<NodeRef> nodeRefs = getDocumentSearchService().searchNodes(query, -1, "activeSubstitutionDuties");
+        for (NodeRef nodeRef : nodeRefs) {
+            substitutes.add(getSubstitute(nodeRef));
         }
         return substitutes;
     }
@@ -174,10 +168,10 @@ public class SubstituteServiceImpl implements SubstituteService {
                 generateTypeQuery(SubstituteModel.Types.SUBSTITUTE),
                 generateStringExactQuery(userName, SubstituteModel.Props.SUBSTITUTE_ID),
                 joinQueryPartsOr(Arrays.asList(
-                joinQueryPartsOr(Arrays.asList(
-                        generateDatePropertyRangeQuery(startDate, endDate, SubstituteModel.Props.SUBSTITUTION_START_DATE),
-                        generateDatePropertyRangeQuery(startDate, endDate, SubstituteModel.Props.SUBSTITUTION_END_DATE)
-                        ), true),
+                        joinQueryPartsOr(Arrays.asList(
+                                generateDatePropertyRangeQuery(startDate, endDate, SubstituteModel.Props.SUBSTITUTION_START_DATE),
+                                generateDatePropertyRangeQuery(startDate, endDate, SubstituteModel.Props.SUBSTITUTION_END_DATE)
+                                ), true),
                         joinQueryPartsAnd(Arrays.asList(
                                 generateDatePropertyRangeQuery(null, startDate, SubstituteModel.Props.SUBSTITUTION_START_DATE),
                                 generateDatePropertyRangeQuery(endDate, null, SubstituteModel.Props.SUBSTITUTION_END_DATE)
@@ -186,24 +180,11 @@ public class SubstituteServiceImpl implements SubstituteService {
                 ), true)
                 ));
 
-        ResultSet resultSet = doSearch(query);
-        try {
-            for (ResultSetRow row : resultSet) {
-                substitutes.add(getSubstitute(row.getNodeRef()));
-            }
-        } finally {
-            resultSet.close();
+        List<NodeRef> nodeRefs = getDocumentSearchService().searchNodes(query, -1, "substitutionDutiesInPeriod");
+        for (NodeRef nodeRef : nodeRefs) {
+            substitutes.add(getSubstitute(nodeRef));
         }
         return substitutes;
-    }
-
-    private ResultSet doSearch(String query) {
-        SearchParameters sp = new SearchParameters();
-        sp.setLanguage(SearchService.LANGUAGE_LUCENE);
-        sp.setQuery(query);
-        sp.addStore(generalService.getStore());
-        sp.setLimitBy(LimitBy.UNLIMITED);
-        return searchService.query(sp);
     }
 
     private NodeRef getSubstitutesNode(NodeRef userNodeRef, boolean createIfNotExist) {

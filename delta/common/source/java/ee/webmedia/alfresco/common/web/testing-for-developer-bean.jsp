@@ -343,6 +343,10 @@
 <h:outputText styleClass="mainTitle" value="Arendajale testimiseks"/>
 <f:verbatim><br/></f:verbatim>
 
+<a:actionLink value="Lisa sessiooni mitteserialiseeruv objekt" actionListener="#{TestingForDeveloperBean.addNonSerializableObjectToSession}" rendered="#{ApplicationService.test}" />
+
+<f:verbatim><br/></f:verbatim>
+
 <a:actionLink value="TestingForDeveloper" actionListener="#{TestingForDeveloperBean.handleTestEvent}" rendered="#{ApplicationService.test}">
      <f:param name="testP" value="11" />
 </a:actionLink>

@@ -12,6 +12,7 @@ import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.PREV
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_DATE_TIME;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_NUMBER;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SHORT_REG_NUMBER;
+import static ee.webmedia.alfresco.utils.CalendarUtil.duration;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -481,7 +482,11 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         NodeRef volumeRef = documentOriginal.getVolume();
         NodeRef caseRef = documentOriginal.getCase();
         String caseLabel = documentOriginal.getProp(DocumentLocationGenerator.CASE_LABEL_EDITABLE);
+        long startTime = System.nanoTime();
         getAssociatedDocRefs(documentOriginal, associatedDocs, checkedDocs);
+        if (associatedDocs.size() > 1) {
+            LOG.info("Saving original document and " + (associatedDocs.size() - 1) + " associated documents...");
+        }
         DocumentDynamic originalDocumentUpdated = null;
         List<NodeRef> originalNodeRefs = new ArrayList<NodeRef>();
         Collections.sort(associatedDocs, DOCUMENT_BY_REG_DATE_TIME_COMPARATOR);
@@ -498,6 +503,10 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             } else {
                 originalDocumentUpdated = update(associatedDocument, saveListenerBeanNames);
             }
+        }
+        long stopTime = System.nanoTime();
+        if (associatedDocs.size() > 1) {
+            LOG.info("Saving original document and " + (associatedDocs.size() - 1) + " associated documents took " + duration(startTime, stopTime) + " ms");
         }
         return new Pair<DocumentDynamic, List<NodeRef>>(originalDocumentUpdated, originalNodeRefs);
     }

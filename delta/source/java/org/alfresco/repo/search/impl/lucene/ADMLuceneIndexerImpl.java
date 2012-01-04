@@ -97,6 +97,10 @@ import org.apache.lucene.search.Searcher;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.BooleanClause.Occur;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
+
 /**
  * The implementation of the lucene based indexer. Supports basic transactional behaviour if used on its own.
  * 
@@ -121,6 +125,8 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
      * Content service to get content for indexing.
      */
     ContentService contentService;
+
+    private DocumentConfigService documentConfigService;
 
     /**
      * Call back to make after doing non atomic indexing
@@ -758,7 +764,7 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
             return inboundValue;
         }
         
-        PropertyDefinition propertyDef = getDictionaryService().getProperty(propertyName);
+        PropertyDefinition propertyDef = getPropertyDefinition(propertyName);
         if ((propertyDef != null) && ((propertyDef.getDataType().getName().equals(DataTypeDefinition.NODE_REF)) || (propertyDef.getDataType().getName().equals(DataTypeDefinition.CATEGORY))))
         {
             if (inboundValue instanceof Collection)
@@ -798,7 +804,7 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
         boolean isText = false;
         boolean isDateTime = false;
 
-        PropertyDefinition propertyDef = getDictionaryService().getProperty(propertyName);
+        PropertyDefinition propertyDef = getPropertyDefinition(propertyName);
         if (propertyDef != null)
         {
             index = propertyDef.isIndexed();
@@ -1674,6 +1680,26 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
     protected void doSetRollbackOnly() throws IOException
     {
 
+    }
+    
+    private PropertyDefinition getPropertyDefinition(QName qname) {
+        if (qname == null) {
+            return null;
+        }
+
+        PropertyDefinition property = getDictionaryService().getProperty(qname);
+        if (property == null && DocumentDynamicModel.URI.equals(qname.getNamespaceURI())) {
+            property = getDocumentConfigService().getPropertyDefinitionById(qname.getLocalName());
+        }
+
+        return property;
+    }
+
+    public DocumentConfigService getDocumentConfigService() {
+        if (documentConfigService == null) {
+            documentConfigService = BeanHelper.getDocumentConfigService();
+        }
+        return documentConfigService;
     }
 
 }

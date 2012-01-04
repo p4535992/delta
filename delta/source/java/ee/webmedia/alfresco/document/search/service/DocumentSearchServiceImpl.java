@@ -44,7 +44,6 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.ResultSetRow;
@@ -122,7 +121,6 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentSearchServiceImpl.class);
 
     private DocumentService documentService;
-    private NodeService nodeService;
     private SeriesService seriesService;
     private VolumeService volumeService;
     private WorkflowService workflowService;
@@ -132,7 +130,8 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     private UserService userService;
 
     private List<StoreRef> allStores = null;
-    private List<StoreRef> allStoresWithArchivalStoreVOs = null; // XXX This is currently used only for tasks. If analysis for CL 186867 is complete then this might be refactored to getAllStores()
+    private List<StoreRef> allStoresWithArchivalStoreVOs = null; // XXX This is currently used only for tasks. If analysis for CL 186867 is complete then this might be refactored
+                                                                 // to getAllStores()
     private QName[] notIncomingLetterTypes;
 
     @Override
@@ -966,7 +965,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     public List<NodeRef> searchWorkingDocumentsByOwnerId(String ownerId, boolean isPreviousOwnerId) {
         long startTime = System.currentTimeMillis();
         String query = getWorkingDocumentsOwnerQuery(ownerId, isPreviousOwnerId);
-        List<NodeRef> results = searchNodesFromAllStores(query, -1, /* queryName */"workingDocumentsByOwnerId");
+        List<NodeRef> results = searchNodesFromAllStores(query, /* queryName */"workingDocumentsByOwnerId");
         if (log.isDebugEnabled()) {
             log.debug("User's " + ownerId + " working documents search total time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
         }
@@ -977,7 +976,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     public List<NodeRef> searchNewTasksByOwnerId(String ownerId, boolean isPreviousOwnerId) {
         long startTime = System.currentTimeMillis();
         String query = generateTaskSearchQuery(getTaskQuery(null, ownerId, Status.NEW, isPreviousOwnerId));
-        List<NodeRef> results = searchNodesFromAllStores(query, -1, /* queryName */"newTasksByOwnerId");
+        List<NodeRef> results = searchNodesFromAllStores(query, /* queryName */"newTasksByOwnerId");
         if (log.isDebugEnabled()) {
             log.debug("User's " + ownerId + " new tasks search total time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
         }
@@ -1552,14 +1551,14 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         return searchNodes(query, limit, queryName, null);
     }
 
-    private List<NodeRef> searchNodesFromAllStores(String query, int limit, String queryName) {
-        List<ResultSet> resultSets = doSearches(query, limit, queryName, getAllStores());
+    private List<NodeRef> searchNodesFromAllStores(String query, String queryName) {
+        List<ResultSet> resultSets = doSearches(query, -1, queryName, getAllStores());
         try {
             List<NodeRef> nodeRefs = new ArrayList<NodeRef>();
             for (ResultSet resultSet : resultSets) {
-                nodeRefs.addAll(limitResults(resultSet.getNodeRefs(), limit));
+                nodeRefs.addAll(resultSet.getNodeRefs());
             }
-            return nodeRefs;
+            return removeNonExistingNodeRefs(nodeRefs);
         } finally {
             try {
                 for (ResultSet resultSet : resultSets) {
@@ -1612,6 +1611,9 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
 
             for (ResultSet resultSet : resultSets) {
                 for (ResultSetRow row : resultSet) {
+                    if (!nodeService.exists(row.getNodeRef())) {
+                        continue;
+                    }
                     E item = callback.addResult(row);
                     if (item != null) {
                         result.add(item);
@@ -1666,10 +1668,6 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
 
     public void setDocumentService(DocumentService documentService) {
         this.documentService = documentService;
-    }
-
-    public void setNodeService(NodeService nodeService) {
-        this.nodeService = nodeService;
     }
 
     public void setSeriesService(SeriesService seriesService) {

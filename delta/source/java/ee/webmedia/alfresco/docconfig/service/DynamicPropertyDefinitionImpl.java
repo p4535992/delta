@@ -20,6 +20,7 @@ import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 /**
  * @author Alar Kvell
@@ -107,7 +108,7 @@ public class DynamicPropertyDefinitionImpl implements DynamicPropertyDefinition 
 
     @Override
     public ClassDefinition getContainerClass() {
-        return null;
+        return getDictionaryService().getClass(DocumentCommonModel.Types.DOCUMENT);
     }
 
     @Override

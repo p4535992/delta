@@ -25,6 +25,7 @@
  */
 package org.alfresco.web.config;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -282,7 +283,7 @@ public class PropertySheetConfigElement extends ConfigElementAdapter
    /**
     * Inner class to represent a configured property sheet item
     */
-   public static abstract class ItemConfig
+   public static abstract class ItemConfig implements Serializable
    {
       protected String name;
       protected String displayLabel;
@@ -294,7 +295,11 @@ public class PropertySheetConfigElement extends ConfigElementAdapter
       protected boolean showInEditMode = true;
       protected boolean ignoreIfMissing = true;
       protected boolean rendered = true;
-      
+
+      protected ItemConfig() {
+          // For deserialization
+      }
+
         public ItemConfig(String name) {//
             if (name == null || name.length() == 0) {
                 throw new ConfigException("You must specify a name for a proprty sheet item");

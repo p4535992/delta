@@ -794,11 +794,11 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
         if (DocumentSearchModel.Types.FILTER.equals(documentDynamicNode.getType())) {
             if (hiddenFieldDependencies.containsKey(property.getLocalName())) {
                 String originalFieldId = hiddenFieldDependencies.get(property.getLocalName());
-                DynamicPropertyDefinition originalPropDef = getPropDefForSearch(originalFieldId);
+                DynamicPropertyDefinition originalPropDef = getPropDefForSearch(originalFieldId, true);
                 DynamicPropertyDefinition propDef = createPropertyDefinitionForHiddenField(property.getLocalName(), originalPropDef);
                 return propDef;
             }
-            return getPropDefForSearch(property.getLocalName());
+            return getPropDefForSearch(property.getLocalName(), true);
         }
         Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions = getPropertyDefinitions(documentDynamicNode);
         if (propertyDefinitions == null) {
@@ -812,7 +812,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
         return propertyDefinition.getFirst();
     }
 
-    private DynamicPropertyDefinition getPropDefForSearch(String fieldId) {
+    private DynamicPropertyDefinition getPropDefForSearch(String fieldId, boolean processForSearch) {
         FieldDefinition field;
         if (fieldId.contains("_")) {
             field = documentAdminService.getFieldDefinition(fieldId.substring(0, fieldId.indexOf("_")));
@@ -823,8 +823,12 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
         if (field == null) {
             return null;
         }
-        processFieldForSearchView(field);
-        return new DynamicPropertyDefinitionImpl(field, isFieldForcedMultipleInSearch(field), null);
+        if (processForSearch) {
+            processFieldForSearchView(field);
+            return new DynamicPropertyDefinitionImpl(field, isFieldForcedMultipleInSearch(field), null);
+        }
+
+        return new DynamicPropertyDefinitionImpl(field, null, null);
     }
 
     @Override
@@ -838,7 +842,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
             return propertyDefinition;
         }
 
-        propertyDefinition = getPropDefForSearch(fieldId);
+        propertyDefinition = getPropDefForSearch(fieldId, false);
         if (propertyDefinition == null) {
             return null;
         }

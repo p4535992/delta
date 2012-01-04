@@ -169,7 +169,11 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         try {
             List<NodeRef> volumesForDestruction = new ArrayList<NodeRef>();
             for (ResultSetRow resultSetRow : resultSet) {
-                volumesForDestruction.add(resultSetRow.getNodeRef());
+                NodeRef nodeRef = resultSetRow.getNodeRef();
+                if (!nodeService.exists(nodeRef)) {
+                    continue;
+                }
+                volumesForDestruction.add(nodeRef);
             }
             return volumesForDestruction;
         } finally {

@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.common.web;
 import java.io.Serializable;
 import java.util.Collection;
 
+import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
@@ -39,6 +40,10 @@ public class TestingForDeveloperBean implements Serializable {
 
     public void setFileName(String fileName) {
         this.fileName = fileName;
+    }
+
+    public void addNonSerializableObjectToSession(@SuppressWarnings("unused") ActionEvent event) {
+        FacesContext.getCurrentInstance().getExternalContext().getSessionMap().put("NonSerializableObject", new Object());
     }
 
     public void receiveDocStub(@SuppressWarnings("unused") ActionEvent event) {
