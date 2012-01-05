@@ -83,6 +83,10 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "file_transform_pdf_error_docLocked",
                     BeanHelper.getUserService().getUserFullName((String) BeanHelper.getNodeService().getProperty(docRef, ContentModel.PROP_LOCK_OWNER)));
             return;
+        } catch (UnableToPerformException e) {
+            MessageUtil.addStatusMessage(e);
+            refresh(); // file might have been deleted
+            return;
         }
         restore(); // refresh the files list
         if (pdfFileInfo != null) {
@@ -94,6 +98,12 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
 
     public void viewPdf(ActionEvent event) {
         NodeRef nodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
+        if (!BeanHelper.getNodeService().exists(nodeRef)) {
+            MessageUtil.addErrorMessage("file_toggle_failed");
+            pdfUrl = null;
+            refresh(); // file might have been deleted
+            return;
+        }
         pdfUrl = DownloadContentServlet.generateBrowserURL(nodeRef, getFileName(nodeRef));
     }
 

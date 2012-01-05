@@ -794,6 +794,25 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
         });
     }
 
+    @Override
+    public NodeRef getExistingNodeRefAllStores(String id) {
+        if (id == null) {
+            return null;
+        }
+        List<StoreRef> allStoreRefs = new ArrayList<StoreRef>();
+        allStoreRefs.add(getStore());
+        for (ArchivalsStoreVO storeVo : getArchivalsStoreVOs()) {
+            allStoreRefs.add(storeVo.getStoreRef());
+        }
+        for (StoreRef storeRef : allStoreRefs) {
+            NodeRef nodeRef = new NodeRef(storeRef, id);
+            if (nodeService.exists(nodeRef)) {
+                return nodeRef;
+            }
+        }
+        return null;
+    }
+
     // START: getters / setters
     public void setDefaultStore(String store) {
         this.store = new StoreRef(store);

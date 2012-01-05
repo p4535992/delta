@@ -141,7 +141,8 @@ public class PutMethod extends WebDAVMethod {
             // create not allowed
             throw new WebDAVServerException(HttpServletResponse.SC_FORBIDDEN);
         }
-        WebDAVCustomHelper.checkDocumentFileWritePermission(contentNodeInfo);
+        NodeRef fileRef = contentNodeInfo.getNodeRef();
+        WebDAVCustomHelper.checkDocumentFileWritePermission(fileRef);
 
         if (m_request.getContentLength() <= 0) {
             StringBuilder s = new StringBuilder("Client is trying to save zero-length content, ignoring and returning success; request headers:");
@@ -170,7 +171,6 @@ public class PutMethod extends WebDAVMethod {
         }
 
         // Update the version if the node is unlocked
-        NodeRef fileRef = contentNodeInfo.getNodeRef();
         boolean createdNewVersion = ((WebDAVCustomHelper) getDAVHelper()).getVersionsService().updateVersion(fileRef, contentNodeInfo.getName(), true);
 
         // Access the content

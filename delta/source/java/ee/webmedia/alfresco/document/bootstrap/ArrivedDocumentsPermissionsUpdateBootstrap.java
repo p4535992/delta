@@ -17,6 +17,7 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 import ee.webmedia.alfresco.document.scanned.model.ScannedModel;
 import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.imap.model.ImapModel;
+import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.user.service.UserService;
 
 /**
@@ -32,8 +33,9 @@ public class ArrivedDocumentsPermissionsUpdateBootstrap extends AbstractModuleCo
     }
 
     protected void addPermissions(List<NodeRef> folderRefs) {
+        PrivilegeService privilegeService = BeanHelper.getPrivilegeService();
         for (NodeRef folderRef : folderRefs) {
-            BeanHelper.getPermissionService().setPermission(folderRef, UserService.AUTH_DOCUMENT_MANAGERS_GROUP, Privileges.EDIT_DOCUMENT, true);
+            privilegeService.setPermissions(folderRef, UserService.AUTH_DOCUMENT_MANAGERS_GROUP, Privileges.EDIT_DOCUMENT);
         }
     }
 

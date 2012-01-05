@@ -106,7 +106,7 @@
 
             <a:panel id="actions">
             <%--<f:subview id="extra-actions" rendered="#{DialogManager.filterListVisible or DialogManager.moreActionsId != null}"> --%>
-            <f:subview id="extra-actions" rendered="#{DialogManager.filterListVisible and DialogManager.currentDialog.name ne 'manageGroups' or (DialogManager.currentDialog.name eq 'document' or DialogManager.currentDialog.name eq 'documentDynamicDialog') and WorkflowBlockBean.workflowMethodBindingName != null and DocumentDialogHelperBean.inEditMode == false}">
+            <f:subview id="extra-actions" rendered="#{DialogManager.filterListVisible and DialogManager.currentDialog.name ne 'manageGroups' or (DialogManager.currentDialog.name eq 'document' or DialogManager.currentDialog.name eq 'documentDynamicDialog') and (WorkflowBlockBean.workflowMethodBindingName != null or AssocsBlockBean.repliesAssocsBindingName != null or AssocsBlockBean.followupAssocsBindingName != null) and DocumentDialogHelperBean.inEditMode == false}">
                <f:verbatim>
                <ul class="actions-menu extra-actions">
                </f:verbatim>

@@ -174,26 +174,27 @@ public class LockMethod extends WebDAVMethod {
             // create not allowed
             throw new WebDAVServerException(HttpServletResponse.SC_FORBIDDEN);
         }
-        WebDAVCustomHelper.checkDocumentFileWritePermission(lockNodeInfo);
-        Map<QName, Serializable> originalProps = getNodeService().getProperties(lockNodeInfo.getNodeRef());
+        NodeRef fileRef = lockNodeInfo.getNodeRef();
+        WebDAVCustomHelper.checkDocumentFileWritePermission(fileRef);
+        Map<QName, Serializable> originalProps = getNodeService().getProperties(fileRef);
 
         // Check if this is a new lock or a refresh
         if (hasLockToken()) {
             // Refresh an existing lock
-            refreshLock(lockNodeInfo.getNodeRef(), userName);
+            refreshLock(fileRef, userName);
         } else {
             // Create a new lock
-            createLock(lockNodeInfo.getNodeRef(), userName);
+            createLock(fileRef, userName);
         }
         // Set modifier and modified properties to original, so that locking doesn't appear to change the file
         Map<QName, Serializable> props = new HashMap<QName, Serializable>();
         props.put(ContentModel.PROP_MODIFIER, originalProps.get(ContentModel.PROP_MODIFIER));
         props.put(ContentModel.PROP_MODIFIED, originalProps.get(ContentModel.PROP_MODIFIED));
         getBehaviourFilter().disableBehaviour(ContentModel.ASPECT_AUDITABLE);
-        getNodeService().addProperties(lockNodeInfo.getNodeRef(), props);
+        getNodeService().addProperties(fileRef, props);
 
         // We either created a new lock or refreshed an existing lock, send back the lock details
-        generateResponse(lockNodeInfo.getNodeRef(), userName);
+        generateResponse(fileRef, userName);
     }
 
     protected BehaviourFilter getBehaviourFilter() {

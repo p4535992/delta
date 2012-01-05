@@ -1615,12 +1615,15 @@ function handleHtmlLoaded(context, selects) {
          $jQ.ajax({
            type: 'POST',
            url: uri,
-           data: $jQ.param({'path' : path}),
+           data: 'path=' + path, // path is already escaped, so disable jquery escaping by giving it a string directly
            mode: 'queue',
            success: function (responseText) {
              $jQ(".submit-protection-layer").hide();
              if (responseText.indexOf("DOCUMENT_DELETED") > -1) {
                 alert("Faili ei saa avada, dokument on kustutatud");
+                return false;
+             } else if (responseText.indexOf("FILE_DELETED") > -1) {
+                alert("Faili ei saa avada, fail on kustutatud");
                 return false;
              } else if (responseText.indexOf("NOT_LOCKED") > -1) {
                 webdavOpen(path, sharePointObject);

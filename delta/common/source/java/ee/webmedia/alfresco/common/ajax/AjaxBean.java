@@ -1,7 +1,5 @@
 package ee.webmedia.alfresco.common.ajax;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
-
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collections;
@@ -23,7 +21,6 @@ import javax.faces.event.PhaseId;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.webdav.WebDAVHelper;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.web.app.servlet.ajax.InvokeCommand.ResponseMimetype;
 import org.alfresco.web.ui.common.Utils;
 import org.apache.myfaces.shared_impl.renderkit.html.HtmlFormRendererBase;
@@ -62,13 +59,17 @@ public class AjaxBean implements Serializable {
         String[] parts = path.split(WebDAVHelper.PathSeperator);
         String id = parts[parts.length - 2];
         String filename = parts[parts.length - 1];
-        NodeRef docRef = new NodeRef(StoreRef.STORE_REF_WORKSPACE_SPACESSTORE, id);
+        NodeRef docRef = BeanHelper.getGeneralService().getExistingNodeRefAllStores(id);
         ResponseWriter out = context.getResponseWriter();
-        if (!getNodeService().exists(docRef)) {
+        if (docRef == null) {
             out.write("DOCUMENT_DELETED");
             return;
         }
         NodeRef fileRef = BeanHelper.getFileFolderService().searchSimple(docRef, filename);
+        if (fileRef == null) {
+            out.write("FILE_DELETED");
+            return;
+        }
         String lockOwner = null;
         DocLockService docLockService = BeanHelper.getDocLockService();
         boolean generated = false;

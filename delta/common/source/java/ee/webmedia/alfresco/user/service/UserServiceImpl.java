@@ -440,7 +440,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void updateUser(Node user) {
-        nodeService.addProperties(user.getNodeRef(), RepoUtil.toQNameProperties(user.getProperties()));
+        // Remove protected properties
+        Map<QName, Serializable> props = RepoUtil.toQNameProperties(user.getProperties());
+        props.remove(ContentModel.PROP_SIZE_CURRENT);
+        props.remove(ContentModel.PROP_SIZE_QUOTA);
+
+        // Update user node
+        nodeService.addProperties(user.getNodeRef(), props);
     }
 
     @Override

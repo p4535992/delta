@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.repo.security.permissions.AccessDeniedException;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.ServiceRegistry;
@@ -20,8 +21,6 @@ import org.alfresco.service.cmr.repository.ContentIOException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
-import org.alfresco.service.cmr.security.AccessStatus;
-import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.util.URLDecoder;
 import org.alfresco.util.URLEncoder;
@@ -33,13 +32,12 @@ import org.springframework.util.FileCopyUtils;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
+import ee.webmedia.alfresco.webdav.WebDAVCustomHelper;
 
 /**
  * Servlet that can read and return selected files from the DigiDoc container.
@@ -156,13 +154,13 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
 
         ServiceRegistry serviceRegistry = getServiceRegistry(getServletContext());
         NodeService nodeService = serviceRegistry.getNodeService();
-        PermissionService permissionService = serviceRegistry.getPermissionService();
         // check that the user has at least READ_CONTENT access - else redirect to the login
         // page
-        NodeRef docRef = BeanHelper.getGeneralService().getAncestorNodeRefWithType(dDocRef, DocumentCommonModel.Types.DOCUMENT, true, false);
-        if (permissionService.hasPermission(docRef, DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES) == AccessStatus.DENIED) {
+        try {
+            WebDAVCustomHelper.checkDocumentFileReadPermission(dDocRef);
+        } catch (AccessDeniedException e) {
             if (logger.isDebugEnabled()) {
-                logger.debug("User does not have permissions to read content for NodeRef: " + dDocRef.toString());
+                logger.debug("User does not have permissions to read content for NodeRef: " + dDocRef.toString() + " - " + e.getMessage());
             }
 
             if (redirectToLogin) {

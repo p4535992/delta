@@ -1936,7 +1936,7 @@ public class PostipoissDocumentsImporter {
                 docProps.put(DocumentCommonModel.Props.SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS, Boolean.TRUE);
             }
         }
-        if (responsibleActiveSet && firstTaskRef != null) {
+        if (!responsibleActiveSet && firstTaskRef != null) {
             Map<QName, Serializable> props = new HashMap<QName, Serializable>();
             props.put(WorkflowSpecificModel.Props.ACTIVE, Boolean.TRUE);
             getNodeService().addAspect(firstTaskRef, WorkflowSpecificModel.Aspects.RESPONSIBLE, props);

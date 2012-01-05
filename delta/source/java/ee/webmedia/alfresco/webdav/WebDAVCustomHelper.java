@@ -1,6 +1,8 @@
 package ee.webmedia.alfresco.webdav;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPrivilegeService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 
 import java.util.List;
 
@@ -13,8 +15,8 @@ import org.alfresco.service.cmr.model.FileNotFoundException;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.cmr.security.AuthenticationService;
-import org.alfresco.web.bean.repository.Repository;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
@@ -56,7 +58,11 @@ public class WebDAVCustomHelper extends WebDAVHelper {
         }
 
         try {
-            NodeRef nodeRef = new NodeRef(Repository.getStoreRef(), pathElements.get(2));
+            String id = pathElements.get(2);
+            NodeRef nodeRef = BeanHelper.getGeneralService().getExistingNodeRefAllStores(id);
+            if (nodeRef == null) {
+                throw new FileNotFoundException(path);
+            }
             boolean subContent = false;
             if (pathElements.size() > 3) {
                 nodeRef = getNodeService().getChildByName(nodeRef, ContentModel.ASSOC_CONTAINS, pathElements.get(3));
@@ -86,13 +92,36 @@ public class WebDAVCustomHelper extends WebDAVHelper {
         return documentService;
     }
 
-    public static void checkDocumentFileWritePermission(FileInfo nodeInfo) {
+    public static void checkDocumentFileReadPermission(NodeRef fileRef) {
+        NodeRef docRef = BeanHelper.getGeneralService().getAncestorNodeRefWithType(fileRef, DocumentCommonModel.Types.DOCUMENT, true);
+        if (docRef == null) {
+            if (!getUserService().isAdministrator() && !hasViewDocFilesPermission(fileRef)) {
+                throw new AccessDeniedException("Not allowing reading - file is not under document and user has no permission to view files. File=" + fileRef);
+            }
+        } else if (!hasViewDocFilesPermission(docRef)) {
+            throw new AccessDeniedException("permission " + DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES + " denied for file of document " + docRef);
+        }
+    }
+
+    /**
+     * @param docOrFileRef - docRef when file is under document (then dynamic permissions can be evaluated)
+     *            or fileRef when file is not under document (for example under email attachments)
+     * @return
+     */
+    private static boolean hasViewDocFilesPermission(NodeRef docOrFileRef) {
+        return AccessStatus.ALLOWED == BeanHelper.getPermissionService().hasPermission(docOrFileRef, DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES);
+    }
+
+    public static void checkDocumentFileWritePermission(NodeRef fileRef) {
+        if (getGeneralService().getArchivalsStoreRef().equals(fileRef.getStoreRef())) {
+            throw new AccessDeniedException("not allowing writing - document is under primary archivals store");
+        }
+
         // check for special cases
-        NodeRef fileRef = nodeInfo.getNodeRef();
         NodeService nodeService = BeanHelper.getNodeService();
         NodeRef parentRef = nodeService.getPrimaryParent(fileRef).getParentRef();
         DocumentFileWriteDynamicAuthority documentFileWriteDynamicAuthority = BeanHelper.getDocumentFileWriteDynamicAuthority();
-        NodeRef docRef = BeanHelper.getGeneralService().getAncestorNodeRefWithType(fileRef, DocumentCommonModel.Types.DOCUMENT, true);
+        NodeRef docRef = getGeneralService().getAncestorNodeRefWithType(fileRef, DocumentCommonModel.Types.DOCUMENT, true);
         if (docRef != null) {
             Boolean additionalCheck = documentFileWriteDynamicAuthority.additional(docRef);
             if (additionalCheck != null) {
@@ -107,4 +136,5 @@ public class WebDAVCustomHelper extends WebDAVHelper {
             throw new AccessDeniedException("permission editDocument denied for file under " + parentRef);
         }
     }
+
 }

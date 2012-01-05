@@ -34,7 +34,6 @@ import org.alfresco.service.cmr.security.AuthenticationService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.URLEncoder;
-import org.alfresco.web.app.servlet.DownloadContentServlet;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
@@ -192,6 +191,9 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public FileInfo transformToPdf(NodeRef file) {
+        if (!nodeService.exists(file)) {
+            throw new UnableToPerformException("file_generate_pdf_error_deleted");
+        }
         return generatePdf(nodeService.getPrimaryParent(file).getParentRef(), file);
     }
 
@@ -395,11 +397,6 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public String generateURL(NodeRef nodeRef) {
-        if (!generalService.getStore().equals(nodeRef.getStoreRef())) {
-            String name = fileFolderService.getFileInfo(nodeRef).getName();
-            return DownloadContentServlet.generateDownloadURL(nodeRef, name);
-        }
-
         // calculate a WebDAV URL for the given node
         StringBuilder path = new StringBuilder("/").append(WebDAVServlet.WEBDAV_PREFIX);
 

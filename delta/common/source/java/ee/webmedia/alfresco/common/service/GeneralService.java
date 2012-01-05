@@ -291,4 +291,6 @@ public interface GeneralService {
     /** Return true if storeRef is primary or additional archivals storeRef */
     boolean isArchivalsStoreRef(StoreRef storeRef);
 
+    NodeRef getExistingNodeRefAllStores(String id);
+
 }
