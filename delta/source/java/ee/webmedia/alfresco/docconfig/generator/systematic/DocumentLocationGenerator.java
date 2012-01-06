@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.docconfig.generator.systematic;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getCaseService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFunctionsService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPropertySheetStateBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getSeriesService;
@@ -76,10 +77,10 @@ import ee.webmedia.alfresco.volume.service.VolumeService;
 public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentLocationGenerator.class);
     public static final String[] NODE_REF_FIELD_IDS = new String[] {
-            FUNCTION.getLocalName(),
-            SERIES.getLocalName(),
-            VOLUME.getLocalName(),
-            CASE.getLocalName() };
+        FUNCTION.getLocalName(),
+        SERIES.getLocalName(),
+        VOLUME.getLocalName(),
+        CASE.getLocalName() };
 
     @Override
     protected String[] getOriginalFieldIds() {
@@ -231,7 +232,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
         private List<String> cases;
 
         public DocumentLocationState(QName functionProp, QName seriesProp, QName caseProp, QName volumeProp, QName functionLabelProp, QName seriesLabelProp, QName volumeLabelProp,
-                                     QName caseLabelProp, QName caseLabelEditableProp) {
+                QName caseLabelProp, QName caseLabelEditableProp) {
             this.functionProp = functionProp;
             this.seriesProp = seriesProp;
             this.caseProp = caseProp;
@@ -377,15 +378,16 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                     if (openSeries.size() == 0) {
                         continue;
                     }
-                    functions.add(new SelectItem(function.getNode().getNodeRef(), getFunctionLabel(function)));
-                    if (functionRef != null && functionRef.equals(function.getNode().getNodeRef())) {
+                    functions.add(new SelectItem(function.getNodeRef(), getFunctionLabel(function)));
+                    if (functionRef != null && functionRef.equals(function.getNodeRef())) {
                         functionFound = true;
                     }
                 }
                 if (!functionFound) {
-                    if (!isSearchFilter && addIfMissing && functionRef != null && getNodeService().exists(functionRef)) {
+                    // Allow only the active documentList node for default function
+                    if (!isSearchFilter && addIfMissing && functionRef != null && getGeneralService().getStore().equals(functionRef) && getNodeService().exists(functionRef)) {
                         Function function = getFunctionsService().getFunctionByNodeRef(functionRef);
-                        functions.add(1, new SelectItem(function.getNode().getNodeRef(), getFunctionLabel(function)));
+                        functions.add(1, new SelectItem(function.getNodeRef(), getFunctionLabel(function)));
                     } else {
                         functionRef = null;
                     }
@@ -770,12 +772,12 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
     private boolean isClosedUnitCheckNeeded(DocumentDynamic document, DocumentParentNodesVO parents, NodeRef volumeRef, Case docCase) {
         return document.isDraftOrImapOrDvk()
                 || !(volumeRef.equals(parents.getVolumeNode().getNodeRef())
-                     && (parents.getCaseNode() == null ? docCase == null
-                             : (docCase == null ? false
-                                     : parents.getCaseNode().getNodeRef().equals(docCase.getNode().getNodeRef())
-                              )
-                         )
-                     );
+                        && (parents.getCaseNode() == null ? docCase == null
+                        : (docCase == null ? false
+                                : parents.getCaseNode().getNodeRef().equals(docCase.getNode().getNodeRef())
+                                )
+                                )
+                        );
     }
 
     private NodeRef getCaseNodeRef(final DocumentDynamic document, final NodeRef volumeNodeRef) {
