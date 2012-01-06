@@ -86,7 +86,7 @@ public class VersionsServiceImpl implements VersionsService {
                     }
                 }
 
-                if (updateOnlyIfNeeded) {
+                if (updateOnlyIfNeeded && !Boolean.TRUE.equals(nodeService.getProperty(nodeRef, FileModel.Props.NEW_VERSION_ON_NEXT_SAVE))) {
                     org.alfresco.service.cmr.version.Version previousLatestVer = versionServiceExt.getCurrentVersion(nodeRef);
                     if (previousLatestVer != null) {
                         Date frozenModifiedTime = previousLatestVer.getFrozenModifiedDate();

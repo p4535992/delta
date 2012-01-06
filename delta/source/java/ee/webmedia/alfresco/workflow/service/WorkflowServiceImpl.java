@@ -26,6 +26,7 @@ import java.util.Set;
 
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
@@ -126,6 +127,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     private ParametersService parametersService;
     private FileService fileService;
     private VersionsService versionsService;
+    private BehaviourFilter behaviourFilter;
 
     private final Map<QName, WorkflowType> workflowTypesByWorkflow = new HashMap<QName, WorkflowType>();
     private final Map<QName, WorkflowType> workflowTypesByTask = new HashMap<QName, WorkflowType>();
@@ -1971,15 +1973,17 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         if (isStoppingNeeded(task, outcomeIndex)) {
             stopIfNeeded(task, queue);
         }
-        if (outcomeIndex == REVIEW_TASK_OUTCOME_ACCEPTED || outcomeIndex == REVIEW_TASK_OUTCOME_ACCEPTED_WITH_COMMENT) {
+        if (task.isType(WorkflowSpecificModel.Types.REVIEW_TASK) && (outcomeIndex == REVIEW_TASK_OUTCOME_ACCEPTED || outcomeIndex == REVIEW_TASK_OUTCOME_ACCEPTED_WITH_COMMENT)) {
             List<File> files = fileService.getAllFilesExcludingDigidocSubitems(task.getParent().getParent().getParent());
             List<String> filesWithVersions = new ArrayList<String>();
+            behaviourFilter.disableBehaviour(ContentModel.ASPECT_AUDITABLE);
             for (File file : files) {
                 NodeRef fileRef = file.getNodeRef();
                 String nextVersionLabel = versionsService.calculateNextVersionLabel(fileRef);
                 filesWithVersions.add(file.getDisplayName() + " " + nextVersionLabel);
                 nodeService.setProperty(fileRef, FileModel.Props.NEW_VERSION_ON_NEXT_SAVE, Boolean.TRUE);
             }
+            behaviourFilter.enableBehaviour(ContentModel.ASPECT_AUDITABLE);
             task.setProp(WorkflowSpecificModel.Props.FILE_VERSIONS, StringUtils.join(filesWithVersions, ", "));
         }
     }
@@ -2281,6 +2285,10 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     public void setFileService(FileService fileService) {
         this.fileService = fileService;
+    }
+
+    public void setBehaviourFilter(BehaviourFilter behaviourFilter) {
+        this.behaviourFilter = behaviourFilter;
     }
 
     @Override

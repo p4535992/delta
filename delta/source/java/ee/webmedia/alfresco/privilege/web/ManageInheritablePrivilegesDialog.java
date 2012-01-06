@@ -467,6 +467,7 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private Comparator<? super UserPrivileges> getTableRowComparator() {
         if (tableRowComparator == null) {
             tableRowComparator = new TransformingComparator(new ComparableTransformer<UserPrivileges>() {
