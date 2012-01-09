@@ -101,4 +101,6 @@ public interface DocumentConfigService {
      */
     DynamicPropertyDefinition getPropertyDefinitionById(String fieldId);
 
+    PropertyDefinition getStaticOrDynamicPropertyDefinition(QName propName);
+
 }

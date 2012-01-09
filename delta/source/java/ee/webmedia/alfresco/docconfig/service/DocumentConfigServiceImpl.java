@@ -787,6 +787,20 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
     }
 
     @Override
+    public PropertyDefinition getStaticOrDynamicPropertyDefinition(QName propName) {
+        if (propName == null) {
+            return null;
+        }
+
+        PropertyDefinition property = dictionaryService.getProperty(propName);
+        if (property == null && DocumentDynamicModel.URI.equals(propName.getNamespaceURI())) {
+            property = getPropertyDefinitionById(propName.getLocalName());
+        }
+
+        return property;
+    }
+
+    @Override
     public DynamicPropertyDefinition getPropertyDefinition(Node documentDynamicNode, QName property) {
         if (!DocumentDynamicModel.URI.equals(property.getNamespaceURI())) {
             return null;

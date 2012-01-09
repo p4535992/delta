@@ -3367,18 +3367,9 @@ public class LuceneQueryParser extends QueryParser
         }
     }
 
-    // FIXME TODO XXX - This is a temporary workaround for LIVE. Should be fixed properly! CL 188070
+    // FIXME TODO XXX - This is a temporary workaround for LIVE. Should be fixed properly! See also LuceneAnalyser for same fix. CL 188070
     private PropertyDefinition getPropertyDefinition(QName qname) {
-        if (qname == null) {
-            return null;
-        }
-
-        PropertyDefinition property = dictionaryService.getProperty(qname);
-        if (property == null && DocumentDynamicModel.URI.equals(qname.getNamespaceURI())) {
-            property = getDocumentConfigService().getPropertyDefinitionById(qname.getLocalName());
-        }
-
-        return property;
+        return getDocumentConfigService().getStaticOrDynamicPropertyDefinition(qname);
     }
 
     public static void main(String[] args) throws ParseException, java.text.ParseException

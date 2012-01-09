@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.document.file.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
+import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.getDocTypeIdAndVersionNr;
 import static ee.webmedia.alfresco.utils.ComponentUtil.addChildren;
 import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
 import static ee.webmedia.alfresco.utils.FilenameUtil.getFilenameFromDisplayname;
@@ -37,7 +39,6 @@ import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.FileUploadBean;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
-import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.UIActionLink;
@@ -50,6 +51,7 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.document.einvoice.generated.EInvoice;
 import ee.webmedia.alfresco.document.einvoice.generated.Invoice;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
@@ -157,7 +159,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
     protected String finishImpl(FacesContext context, String outcome) throws Exception {
         try {
             try {
-                NodeRef documentNodeRef = new NodeRef(Repository.getStoreRef(), navigator.getCurrentNodeId());
+                NodeRef documentNodeRef = getDocumentDialogHelperBean().getNodeRef();
                 validatePermission(documentNodeRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT);
                 List<String> existingDisplayNames = getFileService().getDocumentFileDisplayNames(documentNodeRef);
                 Map<Integer, EInvoice> attachmentInvoices = new HashMap<Integer, EInvoice>();
@@ -308,7 +310,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         if (!getEInvoiceService().isEinvoiceEnabled()) {
             return false;
         }
-        if (!DocumentSubtypeModel.Types.INVOICE.equals(getNodeService().getType(new NodeRef(Repository.getStoreRef(), navigator.getCurrentNodeId())))) {
+        if (SystematicDocumentType.INVOICE.getId().equals(getDocTypeIdAndVersionNr(getDocumentDialogHelperBean().getNode()).getFirst())) {
             return false;
         }
         boolean hasEinvoice = false;

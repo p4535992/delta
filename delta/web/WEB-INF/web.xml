@@ -125,14 +125,6 @@
          <param-value>workspace://SpacesStore</param-value>
    </context-param>
    
-   <!-- ExternalAccessServlet uses these values to search for existing document.
-         In case of duplicate node-id-s in several stores first match is returned. -->
-   <context-param>
-         <param-name>documentStores</param-name>
-         <param-value>workspace://SpacesStore
-                     ,workspace://ArchivalsStore
-         </param-value>
-   </context-param>   
    <context-param>
          <param-name>rootPath</param-name>
          <param-value>/app:company_home</param-value>

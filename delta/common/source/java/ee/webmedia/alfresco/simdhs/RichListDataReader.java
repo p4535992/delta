@@ -129,7 +129,8 @@ public class RichListDataReader implements DataReader {
             return value != null ? value.toString() : "";
         } else if (component instanceof UICommand) { // handle links
             UICommand command = (UICommand) component;
-            return command.getValue().toString();
+            Object value = command.getValue();
+            return value != null ? value.toString() : "";
         } else { // unsupported component type
             String componentClass = component.getClass().getName();
             if (log.isDebugEnabled()) {

@@ -1,22 +1,18 @@
 package ee.webmedia.alfresco.common.listener;
 
-import java.util.ArrayList;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
+
 import java.util.Arrays;
-import java.util.List;
-import java.util.StringTokenizer;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.PhaseEvent;
 import javax.faces.event.PhaseId;
 import javax.faces.event.PhaseListener;
-import javax.servlet.ServletContext;
 
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -90,42 +86,11 @@ public class ExternalAccessPhaseListener implements PhaseListener {
         }
     }
 
-    private static final String STORE_PARAMETER_LABEL = "documentStores";
-    private List<String> storeNames;
-
-    private List<String> getStoreNames() {
-        if (storeNames == null) {
-            ServletContext servletContext = BeanHelper.getDocumentTemplateService().getServletContext();
-            String storeName = servletContext.getInitParameter(STORE_PARAMETER_LABEL);
-            Assert.hasText(storeName, "At least one store name must be provided");
-            StringTokenizer tokenizer = new StringTokenizer(storeName, ",");
-            List<String> storeNamesTmp = new ArrayList<String>();
-            while (tokenizer.hasMoreTokens()) {
-                storeNamesTmp.add(StringUtils.trimToEmpty(tokenizer.nextToken()));
-            }
-            storeNames = storeNamesTmp;
-        }
-        return storeNames;
-    }
-
     private NodeRef getNodeRefFromNodeId(String currentNodeId) {
         Assert.notNull(currentNodeId);
-
-        boolean nodeExists = false;
-        String nodeRefsStr = "";
-        NodeRef nodeRef = null;
-        for (String storeName : getStoreNames()) {
-            StoreRef storeRef = new StoreRef(storeName);
-            nodeRef = new NodeRef(storeRef, currentNodeId);
-            nodeRefsStr += (nodeRefsStr.isEmpty() ? "" : "; ") + nodeRef.toString();
-            if (BeanHelper.getNodeService().exists(nodeRef)) {
-                nodeExists = true;
-                break;
-            }
-        }
-
-        if (!nodeExists) {
-            throw new InvalidNodeRefException("Invalid URI provided (" + nodeRefsStr + ")", nodeRef);
+        NodeRef nodeRef = getGeneralService().getExistingNodeRefAllStores(currentNodeId);
+        if (nodeRef == null) {
+            throw new InvalidNodeRefException("Invalid URI provided (" + currentNodeId + ")", nodeRef);
         }
         return nodeRef;
     }
