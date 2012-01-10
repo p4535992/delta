@@ -85,6 +85,7 @@ import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue.WorkflowQueueParameter;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventType;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowModifications;
+import ee.webmedia.alfresco.workflow.service.event.WorkflowMultiEventListener;
 import ee.webmedia.alfresco.workflow.service.type.AssignmentWorkflowType;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
@@ -132,6 +133,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     private final Map<QName, WorkflowType> workflowTypesByWorkflow = new HashMap<QName, WorkflowType>();
     private final Map<QName, WorkflowType> workflowTypesByTask = new HashMap<QName, WorkflowType>();
     private final List<WorkflowEventListener> eventListeners = new ArrayList<WorkflowEventListener>();
+    private final List<WorkflowMultiEventListener> multiEventListeners = new ArrayList<WorkflowMultiEventListener>();
     private final List<WorkflowEventListenerWithModifications> immediateEventListeners = new ArrayList<WorkflowEventListenerWithModifications>();
 
     /**
@@ -1650,6 +1652,15 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         }
     }
 
+    @Override
+    public void registerMultiEventListener(WorkflowMultiEventListener listener) {
+        Assert.notNull(listener);
+        multiEventListeners.add(listener);
+        if (log.isDebugEnabled()) {
+            log.debug("Registered multi-event listener: " + listener);
+        }
+    }
+
     private void handleEvents(WorkflowEventQueue queue) {
         for (WorkflowEvent event : queue.getEvents()) {
             if (log.isDebugEnabled()) {
@@ -1660,6 +1671,9 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             for (WorkflowEventListener listener : eventListeners) {
                 listener.handle(event, queue);
             }
+        }
+        for (WorkflowMultiEventListener listener : multiEventListeners) {
+            listener.handleMultipleEvents(queue);
         }
         queue.getEvents().clear();
     }

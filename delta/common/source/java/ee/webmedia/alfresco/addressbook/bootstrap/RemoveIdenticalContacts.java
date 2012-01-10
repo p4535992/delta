@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.alfresco.repo.module.AbstractModuleComponent;
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -24,7 +25,6 @@ import org.apache.commons.logging.LogFactory;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.RepoUtil;
 
 /**
@@ -45,6 +45,35 @@ public class RemoveIdenticalContacts extends AbstractModuleComponent {
     @Override
     protected void executeInternal() throws Throwable {
         LOG.info("Starting RemoveIdenticalContacts updater.");
+        RetryingTransactionHelper txHelper = serviceRegistry.getTransactionService().getRetryingTransactionHelper();
+        final Set<NodeRef> nodesToRemove = txHelper.doInTransaction(new RetryingTransactionCallback<Set<NodeRef>>() {
+            @Override
+            public Set<NodeRef> execute() throws Throwable {
+                return findContactsToRemove();
+            }
+        }, false, true);
+
+        LOG.info("Starting to remove " + nodesToRemove.size() + " duplicate contacts.");
+        final Iterator<NodeRef> it = nodesToRemove.iterator();
+        while (it.hasNext()) {
+            txHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
+                @Override
+                public Void execute() throws Throwable {
+                    int j = 0;
+                    while (it.hasNext() && j++ < 25) {
+                        NodeRef nodeToRemove = it.next();
+                        nodeService.deleteNode(nodeToRemove);
+                        it.remove();
+                    }
+                    LOG.info("Removed " + j + " contacts, " + nodesToRemove.size() + " left to delete");
+                    return null;
+                }
+            }, false, true);
+        }
+        LOG.info("Removing duplicate contacts completed.");
+    }
+
+    private Set<NodeRef> findContactsToRemove() {
         @SuppressWarnings("unchecked")
         Comparator<Node> comparator = new TransformingComparator(new Transformer() {
             @Override
@@ -107,25 +136,7 @@ public class RemoveIdenticalContacts extends AbstractModuleComponent {
                 }
             }
         }
-
-        LOG.info("Starting to remove " + nodesToRemove.size() + " duplicate contacts.");
-        final Iterator<NodeRef> it = nodesToRemove.iterator();
-        while (it.hasNext()) {
-            BeanHelper.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
-                @Override
-                public Void execute() throws Throwable {
-                    int j = 0;
-                    while (it.hasNext() && j++ < 25) {
-                        NodeRef nodeToRemove = it.next();
-                        nodeService.deleteNode(nodeToRemove);
-                        it.remove();
-                    }
-                    LOG.info("Removed " + j + " contacts, " + nodesToRemove.size() + " left to delete");
-                    return null;
-                }
-            }, false, true);
-        }
-        LOG.info("Removing duplicate contacts completed.");
+        return nodesToRemove;
     }
 
     // somehow some organization/contact nodes have non-model residual properties, ignore them

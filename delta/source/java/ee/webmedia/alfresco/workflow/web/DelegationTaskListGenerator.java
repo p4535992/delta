@@ -3,6 +3,8 @@ package ee.webmedia.alfresco.workflow.web;
 import static ee.webmedia.alfresco.utils.ComponentUtil.addChildren;
 import static ee.webmedia.alfresco.utils.ComponentUtil.createUIParam;
 import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
+import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.getActionId;
+import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.getDialogId;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -156,6 +158,9 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
             UIGenericPicker picker = createOwnerPickerComponent(application, listId, dTaskType, delegatableTaskIndex);
             addChildren(pickerPanel, picker);
 
+            String pickerActionId = getActionId(context, picker);
+            String pickerModalOnclickJsCall = "return showModal('" + getDialogId(context, picker) + "');";
+
             // This disables doing AJAX submit when picker finish button is pressed
             // Currently, picker finish reconstructs entire panelgroup, which is some levels above propertysheet
             // If AJAX submit is desired, something needs to be reworked
@@ -209,7 +214,7 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
                     taskGridChildren.add(columnActions);
 
                     final List<UIComponent> actionChildren = addChildren(columnActions);
-                    UIActionLink taskSearchLink = createOwnerSearchLink(context, application, listId, picker, counter);
+                    UIActionLink taskSearchLink = createOwnerSearchLink(context, application, listId, picker, counter, pickerActionId, pickerModalOnclickJsCall);
                     actionChildren.add(taskSearchLink);
                     { // taskDeleteLink // taskResetLink
                         final UIActionLink taskDeleteLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");

@@ -65,6 +65,7 @@
    <bean id="workflowStatusEventListener" class="ee.webmedia.alfresco.notification.service.event.WorkflowStatusEventListener">
       <property name="notificationService" ref="NotificationService" />
       <property name="workflowService" ref="WmWorkflowService" />
+      <property name="generalService" ref="GeneralService" />
    </bean>
    
    <bean id="notificationImportBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent" abstract="true">

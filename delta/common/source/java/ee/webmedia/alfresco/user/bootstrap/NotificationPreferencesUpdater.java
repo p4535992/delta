@@ -7,10 +7,13 @@ import java.util.Map;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.module.AbstractModuleComponent;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -24,10 +27,21 @@ import ee.webmedia.alfresco.user.service.UserService;
  * @author Riina Tens
  */
 public class NotificationPreferencesUpdater extends AbstractModuleComponent {
-    private static org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(NotificationPreferencesUpdater.class);
+    protected final Log LOG = LogFactory.getLog(getClass());
 
     @Override
     protected void executeInternal() throws Throwable {
+        LOG.info("Executing " + getName());
+        serviceRegistry.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
+            @Override
+            public Void execute() throws Throwable {
+                executeInTransaction();
+                return null;
+            }
+        }, false, true);
+    }
+
+    private void executeInTransaction() {
         GeneralService generalService = BeanHelper.getGeneralService();
         if (!pathExists(generalService, "/sys:system") || !pathExists(generalService, "/sys:system/sys:people")) {
             LOG.debug("Users parent folder /sys:system/sys:people does not exist, skipping user preferences update.");

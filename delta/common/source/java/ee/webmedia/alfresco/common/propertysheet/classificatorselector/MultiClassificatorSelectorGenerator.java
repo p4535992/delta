@@ -26,38 +26,42 @@ public class MultiClassificatorSelectorGenerator extends ClassificatorSelectorGe
     public static final String ATTR_CLASSIFICATOR_SPECIFIERS = "attrClassificatorSpecifiers";
     public static final String ATTR_CLASSIFICATOR_SPECIFIER_LABELS = "attrClassificatorSpecifierLabels";
     public static final String ATTR_FILTER_NUMERIC = "attrFilterNumeric";
+    List<ClassificatorSelectorValueProvider> valueProviders = null;
 
     @SuppressWarnings("unchecked")
     @Override
     protected List<ClassificatorSelectorValueProvider> getSelectorValueProviders(String classificatorNameStr, UIComponent component, FacesContext context) {
-        List<String> classificatorNames = Arrays.asList(StringUtils.split(classificatorNameStr, CLASSIFICATOR_NAME_SEPARATOR));
-        final List<String> specifiers = getClassificatorSpecifiers();
-        final List<String> specifierLabels = getClassificatorSpecifierLabels();
-        List<ClassificatorSelectorValueProvider> valueProviders = new ArrayList<ClassificatorSelectorValueProvider>();
-        int specifiersSize = specifiers == null ? 0 : specifiers.size();
-        int specifierLabelsSize = specifierLabels == null ? 0 : specifierLabels.size();
-        int specifierIndex = 0;
-        for (String classificatorName : classificatorNames) {
-            List<ClassificatorValue> classificatorValues //
-            = getClassificatorService().getActiveClassificatorValues(getClassificatorService().getClassificatorByName(classificatorName));
-            Collections.sort(classificatorValues);
-            final String specifier = specifierIndex < specifiersSize ? specifiers.get(specifierIndex) : "";
-            final String specifierLabel = specifierIndex < specifierLabelsSize ? specifierLabels.get(specifierIndex) : "";
-            if (isFilterNumericOnly()) {
-                filterNumeric(classificatorValues);
-            }
-            valueProviders.addAll(CollectionUtils.collect(classificatorValues, new Transformer() {
-
-                @Override
-                public Object transform(Object arg0) {
-                    return new ClassificatorValueProviderWithSpecifier((ClassificatorValue) arg0, specifier, specifierLabel);
+        if (valueProviders == null) {
+            List<String> classificatorNames = Arrays.asList(StringUtils.split(classificatorNameStr, CLASSIFICATOR_NAME_SEPARATOR));
+            final List<String> specifiers = getClassificatorSpecifiers();
+            final List<String> specifierLabels = getClassificatorSpecifierLabels();
+            valueProviders = new ArrayList<ClassificatorSelectorValueProvider>();
+            int specifiersSize = specifiers == null ? 0 : specifiers.size();
+            int specifierLabelsSize = specifierLabels == null ? 0 : specifierLabels.size();
+            int specifierIndex = 0;
+            for (String classificatorName : classificatorNames) {
+                List<ClassificatorValue> classificatorValues //
+                = getClassificatorService().getActiveClassificatorValues(getClassificatorService().getClassificatorByName(classificatorName));
+                Collections.sort(classificatorValues);
+                final String specifier = specifierIndex < specifiersSize ? specifiers.get(specifierIndex) : "";
+                final String specifierLabel = specifierIndex < specifierLabelsSize ? specifierLabels.get(specifierIndex) : "";
+                if (isFilterNumericOnly()) {
+                    filterNumeric(classificatorValues);
                 }
+                valueProviders.addAll(CollectionUtils.collect(classificatorValues, new Transformer() {
 
-            }));
-            specifierIndex++;
+                    @Override
+                    public Object transform(Object arg0) {
+                        return new ClassificatorValueProviderWithSpecifier((ClassificatorValue) arg0, specifier, specifierLabel);
+                    }
+
+                }));
+                specifierIndex++;
+            }
         }
-        addSelectedValueIfNeeded(valueProviders, component, context);
-        return valueProviders;
+        List<ClassificatorSelectorValueProvider> componentValueProviders = new ArrayList<ClassificatorSelectorValueProvider>(valueProviders);
+        addSelectedValueIfNeeded(componentValueProviders, component, context);
+        return componentValueProviders;
     }
 
     private void filterNumeric(List<ClassificatorValue> classificatorValues) {

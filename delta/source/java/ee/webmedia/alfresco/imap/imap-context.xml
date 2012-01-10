@@ -76,7 +76,7 @@
       </property>
    </bean>
    
-   <bean id="removeImapSubfolderContainerAspect" class="ee.webmedia.alfresco.imap.bootstrap.RemoveImapSubfolderContainerAspect" parent="module.baseComponent" >
+   <bean id="removeImapSubfolderContainerAspect" class="ee.webmedia.alfresco.imap.bootstrap.RemoveImapSubfolderContainerAspect" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">

@@ -9,7 +9,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.alfresco.repo.module.AbstractModuleComponent;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -26,9 +29,21 @@ import ee.webmedia.alfresco.user.service.UserService;
  * @author Ats Uiboupin
  */
 public class ArrivedDocumentsPermissionsUpdateBootstrap extends AbstractModuleComponent {
+    protected final Log LOG = LogFactory.getLog(getClass());
 
     @Override
     protected void executeInternal() throws Throwable {
+        LOG.info("Executing " + getName());
+        serviceRegistry.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
+            @Override
+            public Void execute() throws Throwable {
+                executeInTransaction();
+                return null;
+            }
+        }, false, true);
+    }
+
+    private void executeInTransaction() {
         addPermissions(getAllFolderRefs());
     }
 
