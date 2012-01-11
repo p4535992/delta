@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -38,10 +39,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.FieldSelector;
-import org.apache.lucene.document.FieldSelectorResult;
 import org.apache.lucene.document.Field.Index;
 import org.apache.lucene.document.Field.Store;
+import org.apache.lucene.document.FieldSelector;
+import org.apache.lucene.document.FieldSelectorResult;
 import org.apache.lucene.index.FilterIndexReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
@@ -53,7 +54,7 @@ public class ReferenceCountingReadOnlyIndexReaderFactory
 {
     private static Log s_logger = LogFactory.getLog(ReferenceCountingReadOnlyIndexReaderFactory.class);
 
-    private static HashMap<String, ReferenceCountingReadOnlyIndexReader> log = new HashMap<String, ReferenceCountingReadOnlyIndexReader>();
+    private static WeakHashMap<String, ReferenceCountingReadOnlyIndexReader> log = new WeakHashMap<String, ReferenceCountingReadOnlyIndexReader>();
 
     public static IndexReader createReader(String id, IndexReader indexReader, boolean enableCaching, LuceneConfig config)
     {
@@ -65,7 +66,7 @@ public class ReferenceCountingReadOnlyIndexReaderFactory
                 s_logger.debug("Replacing ref counting reader for " + id);
             }
             s_logger.debug("Created ref counting reader for " + id + " " + rc.toString());
-            log.put(id, rc);
+            log.put(new String(id), rc);            // Copy the key because the RCROIR references the ID
         }
         return rc;
     }

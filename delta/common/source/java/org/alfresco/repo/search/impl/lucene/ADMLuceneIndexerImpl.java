@@ -231,6 +231,7 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
                     NodeRef ref = new NodeRef(id);
                     deleteImpl(ref.toString(), false, true, mainReader);
                 }
+                td.close();
             }
             catch (IOException e)
             {
@@ -795,7 +796,7 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
     {
         String attributeName = "@" + QName.createQName(propertyName.getNamespaceURI(), ISO9075.encode(propertyName.getLocalName()));
 
-        boolean store = true;
+        boolean store = false;
         boolean index = true;
         IndexTokenisationMode tokenise = IndexTokenisationMode.TRUE;
         boolean atomic = true;
@@ -1070,7 +1071,7 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
                                             doc.add(new Field(attributeName + "." + localeText + ".sort", t.termText(), Field.Store.NO, Field.Index.NO_NORMS, Field.TermVector.NO));
                                         }
 
-                                        doc.add(new Field(attributeName, t.termText(), Field.Store.NO, Field.Index.NO_NORMS, Field.TermVector.NO));
+                                        doc.add(new Field(attributeName, t.termText(), fieldStore, Field.Index.NO_NORMS, Field.TermVector.NO));
 
                                     }
                                 }
@@ -1177,7 +1178,7 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
                                         doc.add(new Field(attributeName + "." + localeText + ".sort", t.termText(), Field.Store.NO, Field.Index.NO_NORMS, Field.TermVector.NO));
                                     }
                                     
-                                    doc.add(new Field(attributeName, t.termText(), Field.Store.NO, Field.Index.NO_NORMS, Field.TermVector.NO));
+                                    doc.add(new Field(attributeName, t.termText(), fieldStore, Field.Index.NO_NORMS, Field.TermVector.NO));
                                 }
                             }
                             catch (IOException e)
@@ -1241,7 +1242,7 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
                             try
                             {
                                 date = df.parse(strValue);
-                                doc.add(new Field(attributeName, df.format(date), Field.Store.NO, Field.Index.NO_NORMS, Field.TermVector.NO));
+                                doc.add(new Field(attributeName, df.format(date), fieldStore, Field.Index.NO_NORMS, Field.TermVector.NO));
                             }
                             catch (ParseException e)
                             {

@@ -91,6 +91,7 @@ public class FilterIndexReaderByStringId extends FilterIndexReader
                     {
                         deletedDocuments.set(td.doc());
                     }
+                    td.close();
                 }
             }
             else
@@ -114,8 +115,8 @@ public class FilterIndexReaderByStringId extends FilterIndexReader
                             }
                         }
                     }
-
                 }
+                // searcher does not need to be closed, the reader is live 
             }
         }
         catch (IOException e)
@@ -250,20 +251,19 @@ public class FilterIndexReaderByStringId extends FilterIndexReader
 
         public boolean skipTo(int i) throws IOException
         {
-            boolean result = in.skipTo(i);
-            if (result == false)
+            if (!in.skipTo(i))
             {
                 return false;
             }
 
-            if (deletedDocuments.get(in.doc()))
+            while (deletedDocuments.get(in.doc()))
             {
-                return skipTo(i);
+                if (!in.next())
+                {
+                    return false;
+                }
             }
-            else
-            {
-                return true;
-            }
+            return true;
         }
 
         public void close() throws IOException
