@@ -109,7 +109,7 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
         for (FieldMapping fieldMapping : assocModel.getFieldMappings()) {
             String fromFieldId = fieldMapping.getFromField();
             String toFieldId = fieldMapping.getToField();
-            Pair<DynamicPropertyDefinition, Field> baseDocPropDefAndField = baseDocPropDefinitions.get(toFieldId);
+            Pair<DynamicPropertyDefinition, Field> baseDocPropDefAndField = baseDocPropDefinitions.get(fromFieldId);
             Pair<DynamicPropertyDefinition, Field> newDocPropDefAndField = newDocPropDefinitions.get(toFieldId);
             if (baseDocPropDefAndField == null || baseDocPropDefAndField.getSecond() == null) {
                 LOG.warn("Creating assoc to " + newDocTypeId + ". Found mapping " + fromFieldId + "->" + toFieldId + " but " + baseDocTypeId + " ver " + baseDocTypeVersionNr

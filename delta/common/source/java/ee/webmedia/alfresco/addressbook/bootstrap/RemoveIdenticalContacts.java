@@ -1,7 +1,7 @@
 package ee.webmedia.alfresco.addressbook.bootstrap;
 
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -9,22 +9,19 @@ import java.util.Map;
 import java.util.Set;
 
 import org.alfresco.repo.module.AbstractModuleComponent;
-import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
-import org.apache.commons.collections.Transformer;
-import org.apache.commons.collections.comparators.NullComparator;
-import org.apache.commons.collections.comparators.TransformingComparator;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.RepoUtil;
 
 /**
@@ -45,18 +42,56 @@ public class RemoveIdenticalContacts extends AbstractModuleComponent {
     @Override
     protected void executeInternal() throws Throwable {
         LOG.info("Starting RemoveIdenticalContacts updater.");
-        RetryingTransactionHelper txHelper = serviceRegistry.getTransactionService().getRetryingTransactionHelper();
-        final Set<NodeRef> nodesToRemove = txHelper.doInTransaction(new RetryingTransactionCallback<Set<NodeRef>>() {
-            @Override
-            public Set<NodeRef> execute() throws Throwable {
-                return findContactsToRemove();
+
+        LOG.info("Starting to load organizations.");
+        List<Node> organizations = addressbookService.listOrganization();
+        LOG.info("Found " + organizations.size() + " organization contacts, sorting list.");
+        removeNodeRefProps(organizations);
+
+        Map<String, List<Node>> organizationsWithOrgCode = new HashMap<String, List<Node>>();
+        List<Node> organizationsWithoutOrgCode = new ArrayList<Node>();
+        for (Node organization : organizations) {
+            String orgCode = (String) organization.getProperties().get(AddressbookModel.Props.ORGANIZATION_CODE);
+            if (StringUtils.isNotBlank(orgCode)) {
+                if (!organizationsWithOrgCode.containsKey(orgCode)) {
+                    organizationsWithOrgCode.put(orgCode, new ArrayList<Node>());
+                }
+                List<Node> sameOrgCodeOrgs = organizationsWithOrgCode.get(orgCode);
+                sameOrgCodeOrgs.add(organization);
+            } else {
+                organizationsWithoutOrgCode.add(organization);
             }
-        }, false, true);
+        }
+
+        final Set<NodeRef> nodesToRemove = new HashSet<NodeRef>();
+
+        LOG.info("Identifying duplicate organizations.");
+        for (List<Node> sameOrgCodeOrgs : organizationsWithOrgCode.values()) {
+            collectDuplicateValues(nodesToRemove, sameOrgCodeOrgs);
+        }
+
+        collectDuplicateValues(nodesToRemove, organizationsWithoutOrgCode);
+
+        LOG.info("Starting to load persons.");
+        List<Node> persons = addressbookService.listPerson();
+        LOG.info("Found " + persons.size() + " person contacts, searching for duplicate entries.");
+        removeNodeRefProps(persons);
+        LOG.info("Identifying duplicate persons.");
+        for (Node person : persons) {
+            Map<String, Object> orgProps = person.getProperties();
+            NodeRef personNodeRef = person.getNodeRef();
+            for (Node comparePerson : persons) {
+                if (!personNodeRef.equals(comparePerson.getNodeRef()) && !nodesToRemove.contains(personNodeRef)
+                        && RepoUtil.propsEqual(orgProps, comparePerson.getProperties())) {
+                    nodesToRemove.add(personNodeRef);
+                }
+            }
+        }
 
         LOG.info("Starting to remove " + nodesToRemove.size() + " duplicate contacts.");
         final Iterator<NodeRef> it = nodesToRemove.iterator();
         while (it.hasNext()) {
-            txHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
+            BeanHelper.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
                 @Override
                 public Void execute() throws Throwable {
                     int j = 0;
@@ -73,70 +108,16 @@ public class RemoveIdenticalContacts extends AbstractModuleComponent {
         LOG.info("Removing duplicate contacts completed.");
     }
 
-    private Set<NodeRef> findContactsToRemove() {
-        @SuppressWarnings("unchecked")
-        Comparator<Node> comparator = new TransformingComparator(new Transformer() {
-            @Override
-            public Object transform(Object arg0) {
-                return ((Node) arg0).getProperties().get(AddressbookModel.Props.ORGANIZATION_CODE);
-            }
-
-        }, new NullComparator());
-        LOG.info("Starting to load organizations.");
-        List<Node> organizations = addressbookService.listOrganization();
-        LOG.info("Found " + organizations.size() + " organization contacts, sorting list.");
-        Collections.sort(organizations, comparator);
-        removeNodeRefProps(organizations);
-
-        final Set<NodeRef> nodesToRemove = new HashSet<NodeRef>();
-        Node previousOrg = null;
-
-        LOG.info("Identifying duplicate organizations.");
-        for (Node organization : organizations) {
-            if (previousOrg == null) {
-                previousOrg = organization;
-                continue;
-            }
-            Map<String, Object> orgProps = organization.getProperties();
-            QName compareProp = AddressbookModel.Props.ORGANIZATION_CODE;
-            Map<String, Object> previousOrgProps = previousOrg.getProperties();
-            if (StringUtils.isNotBlank((String) previousOrgProps.get(compareProp))
-                    && StringUtils.isNotBlank((String) orgProps.get(compareProp))) {
-                // organizations in sorted list with non-null organization code are compared only to previous node
-                if (!organization.getNodeRef().equals(previousOrg.getNodeRef()) && !nodesToRemove.contains(organization.getNodeRef())
-                        && RepoUtil.propsEqual(orgProps, previousOrgProps)) {
-                    nodesToRemove.add(organization.getNodeRef());
-                    continue;
-                }
-            } else {
-                // nodes with null organization code are compared to all other nodes
-                for (Node compareOrg : organizations) {
-                    if (!organization.getNodeRef().equals(compareOrg.getNodeRef()) && !nodesToRemove.contains(compareOrg.getNodeRef())
-                            && RepoUtil.propsEqual(orgProps, compareOrg.getProperties())) {
-                        nodesToRemove.add(organization.getNodeRef());
-                        continue;
-                    }
-                }
-            }
-            previousOrg = organization;
-        }
-
-        LOG.info("Starting to load persons.");
-        List<Node> persons = addressbookService.listPerson();
-        LOG.info("Found " + persons.size() + " person contacts, searching for duplicate entries.");
-        removeNodeRefProps(persons);
-        LOG.info("Identifying duplicate persons.");
-        for (Node person : persons) {
-            Map<String, Object> orgProps = person.getProperties();
-            NodeRef personNodeRef = person.getNodeRef();
-            for (Node comparePerson : persons) {
-                if (!personNodeRef.equals(comparePerson.getNodeRef()) && !nodesToRemove.contains(comparePerson.getNodeRef())
-                        && RepoUtil.propsEqual(orgProps, comparePerson.getProperties())) {
-                    nodesToRemove.add(personNodeRef);
+    private void collectDuplicateValues(final Set<NodeRef> nodesToRemove, List<Node> sameOrgCodeOrgs) {
+        for (Node organization : sameOrgCodeOrgs) {
+            for (Node compareOrg : sameOrgCodeOrgs) {
+                NodeRef orgNodeRef = organization.getNodeRef();
+                if (!orgNodeRef.equals(compareOrg.getNodeRef()) && !nodesToRemove.contains(orgNodeRef)
+                        && RepoUtil.propsEqual(organization.getProperties(), compareOrg.getProperties())) {
+                    nodesToRemove.add(compareOrg.getNodeRef());
                 }
             }
         }
-        return nodesToRemove;
     }
 
     // somehow some organization/contact nodes have non-model residual properties, ignore them
