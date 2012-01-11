@@ -9,13 +9,15 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.module.ModuleService;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.io.Resource;
 
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.parameters.service.ParametersService.ParameterChangedCallback;
 
-public class ApplicationServiceImpl implements ApplicationService, InitializingBean {
+public class ApplicationServiceImpl implements ApplicationService, InitializingBean, ApplicationContextAware {
 
     public static final String versionPropertyKey = "currentVersion";
 
@@ -166,6 +168,18 @@ public class ApplicationServiceImpl implements ApplicationService, InitializingB
 
     private static String getVersionProperty(Properties properties) {
         return properties.getProperty(versionPropertyKey);
+    }
+
+    private ApplicationContext applicationContext;
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
+    }
+
+    @Override
+    public ApplicationContext getApplicationContext() {
+        return applicationContext;
     }
 
 }

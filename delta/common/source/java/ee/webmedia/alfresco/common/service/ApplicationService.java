@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.common.service;
 
+import org.springframework.context.ApplicationContext;
+
 /**
  * Information about specific project and common project.
  * 
@@ -47,5 +49,7 @@ public interface ApplicationService {
      * Text to display at the bottom part of web page. Text can contain HTML, should not be escaped.
      */
     String getFooterText();
+
+    ApplicationContext getApplicationContext();
 
 }

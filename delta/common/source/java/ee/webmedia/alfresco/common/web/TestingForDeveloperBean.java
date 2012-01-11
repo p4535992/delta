@@ -6,6 +6,7 @@ import java.util.Collection;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.repo.search.impl.lucene.ADMLuceneTest;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -57,11 +58,20 @@ public class TestingForDeveloperBean implements Serializable {
     }
 
     /** Event handler for link "TestingForDeveloper" in /simdhs/faces/jsp/admin/store-browser.jsp */
-    public void handleTestEvent(ActionEvent event) {
+    public void handleTestEvent(ActionEvent event) throws Exception {
         int testParamValue = ActionUtil.getParam(event, "testP", Integer.class);
         LOG.debug("Received event with testP=" + testParamValue);
         // Developers can use this method for testing, but shouldn't commit changes
         atsTestib(event);
+    }
+
+    public void runADMLuceneTestTestMaskDeletes(ActionEvent event) throws Exception {
+        LOG.info("Starting to run ADMLuceneTest.testMaskDeletes");
+        ADMLuceneTest test = new ADMLuceneTest("admLuceneTest");
+        test.setUp(BeanHelper.getApplicationService().getApplicationContext());
+        test.testMaskDeletes();
+        test.tearDown();
+        LOG.info("Completed running ADMLuceneTest.testMaskDeletes");
     }
 
     public void deleteFieldAndFieldGroupsAndBootstrapInfo(@SuppressWarnings("unused") ActionEvent event) {
