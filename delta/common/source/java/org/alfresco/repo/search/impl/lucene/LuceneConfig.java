@@ -151,6 +151,15 @@ public interface LuceneConfig
     public int getMergerTargetOverlayCount();
     
     /**
+     * The factor by which the target overlay count is multiplied to determine the allowable number of overlays before
+     * blocking.
+     * 
+     * @return the factor by which the target overlay count is multiplied to determine the allowable number of overlays
+     *         before blocking
+     */
+    public int getMergerTargetOverlaysBlockingFactor();
+    
+    /**
      * Target index count. Over this indexes will be merged together.
      * @return
      */

@@ -177,6 +177,8 @@ public abstract class AbstractLuceneIndexerAndSearcherFactory implements LuceneI
 
     private int mergerTargetOverlayCount = 5;
 
+    private int mergerTargetOverlaysBlockingFactor = 1;
+
     private int termIndexInterval =IndexWriter.DEFAULT_TERM_INDEX_INTERVAL;
 
     private boolean useNioMemoryMapping = true;
@@ -1712,6 +1714,16 @@ public abstract class AbstractLuceneIndexerAndSearcherFactory implements LuceneI
     public void setMergerTargetOverlayCount(int mergerTargetOverlayCount)
     {
         this.mergerTargetOverlayCount = mergerTargetOverlayCount;
+    }
+
+    public int getMergerTargetOverlaysBlockingFactor()
+    {
+        return mergerTargetOverlaysBlockingFactor;
+    }
+
+    public void setMergerTargetOverlaysBlockingFactor(int mergerTargetOverlaysBlockingFactor)
+    {
+        this.mergerTargetOverlaysBlockingFactor = mergerTargetOverlaysBlockingFactor;
     }
 
     public int getTermIndexInterval()

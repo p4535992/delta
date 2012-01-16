@@ -5,6 +5,21 @@
         path="java.io.tmpdir"
     />
 
+	<!-- Cache discovery with multicast
+	     It only affects cache discovery,
+	     so data replication is performed with unicast either way.
+	-->
+    <cacheManagerPeerProviderFactory
+        class="net.sf.ehcache.distribution.RMICacheManagerPeerProviderFactory"
+        properties="peerDiscovery=automatic,
+                    multicastGroupAddress=230.0.0.1,
+                    multicastGroupPort=40001"
+    />
+    <!-- Default timeToLive=1, which propagates multicast packets to the same subnet -->
+    <!-- See http://ehcache.org/documentation/replication/rmi-replicated-caching#multicast-not-propagating-far-enough-or-propagating-too-far -->
+
+	<!-- Cache discovery manually - DO NOT USE -->
+<!--
     <cacheManagerPeerProviderFactory
         class="net.sf.ehcache.distribution.RMICacheManagerPeerProviderFactory"
         properties="peerDiscovery=manual,
@@ -71,6 +86,7 @@
                                 //otherserver:40001/org.alfresco.cache.webScriptsRegistryCache|
                                 //otherserver:40001/org.alfresco.cache.routingContentStoreSharedCache"
     />
+-->
 
     <cacheManagerPeerListenerFactory
         class="net.sf.ehcache.distribution.RMICacheManagerPeerListenerFactory"

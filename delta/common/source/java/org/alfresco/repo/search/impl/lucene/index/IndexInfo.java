@@ -320,6 +320,14 @@ public class IndexInfo implements IndexMonitor
     private boolean mergerUseCompoundFile = true;
 
     private int mergerTargetOverlays = 5;
+    
+    private int mergerTargetOverlaysBlockingFactor = 1;
+
+    private Object mergerTargetLock = new Object();
+    
+    // To avoid deadlock (a thread with multiple deltas never proceeding to commit) we track whether each thread is
+    // already in the prepare phase.
+    private static ThreadLocal<IndexInfo> thisThreadPreparing = new ThreadLocal<IndexInfo>();
 
     // Common properties for indexers
 
@@ -407,6 +415,7 @@ public class IndexInfo implements IndexMonitor
             this.mergerMaxMergeDocs = config.getMergerMaxMergeDocs();
             this.termIndexInterval = config.getTermIndexInterval();
             this.mergerTargetOverlays = config.getMergerTargetOverlayCount();
+            this.mergerTargetOverlaysBlockingFactor = config.getMergerTargetOverlaysBlockingFactor();
             // Work out the relative path of the index
             try
             {
@@ -1250,6 +1259,28 @@ public class IndexInfo implements IndexMonitor
         }
     }
 
+    private boolean shouldBlock()
+    {
+        int pendingDeltas = 0;
+        int maxDeltas = mergerTargetOverlaysBlockingFactor * mergerTargetOverlays;
+        for (IndexEntry entry : indexEntries.values())
+        {
+            if (entry.getType() == IndexType.DELTA)
+            {
+                TransactionStatus status = entry.getStatus();
+                if (status == TransactionStatus.PREPARED || status == TransactionStatus.COMMITTING
+                        || status.isCommitted())
+                {
+                    if (++pendingDeltas > maxDeltas)
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     public void setStatus(final String id, final TransactionStatus state, final Set<Term> toDelete, final Set<Term> read) throws IOException
     {
         if (id == null)
@@ -1266,6 +1297,52 @@ public class IndexInfo implements IndexMonitor
             getWriteLock();
             try
             {
+                // we may need to block for some deltas to be merged / rolled back
+                IndexInfo alreadyPreparing = thisThreadPreparing.get(); 
+                if (state == TransactionStatus.PREPARED)
+                {
+                    // To avoid deadlock (a thread with multiple deltas never proceeding to commit) we don't block if
+                    // this thread is already in the prepare phase
+                    if (alreadyPreparing != null)
+                    {
+                        if (s_logger.isDebugEnabled())
+                        {
+                            s_logger.debug("Can't throttle - " + Thread.currentThread().getName() + " already preparing");
+                        }                                                
+                    }
+                    else
+                    {
+                        while (shouldBlock())
+                        {
+                            synchronized (mergerTargetLock)
+                            {
+                                if (s_logger.isDebugEnabled())
+                                {
+                                    s_logger.debug("THROTTLING: " + Thread.currentThread().getName() + " " + indexEntries.size());
+                                }
+                                releaseWriteLock();
+                                try
+                                {
+                                    mergerTargetLock.wait();
+                                }
+                                catch (InterruptedException e)
+                                {
+                                }
+                            }
+                            getWriteLock();
+                        }
+                        thisThreadPreparing.set(this);
+                    }
+                }
+                else
+                {
+                    // Only clear the flag when the outermost thread exits prepare
+                    if (alreadyPreparing == this)
+                    {
+                        thisThreadPreparing.set(null);
+                    }
+                }
+
                 if (transition.requiresFileLock())
                 {
                     doWithFileLock(new LockWork<Object>()
@@ -2161,6 +2238,14 @@ public class IndexInfo implements IndexMonitor
         version++;
         writeStatusToFile(indexInfoChannel);
         writeStatusToFile(indexInfoBackupChannel);
+        // We have a state that allows more transactions. Notify waiting threads
+        if (!shouldBlock())
+        {
+            synchronized (mergerTargetLock)
+            {
+                mergerTargetLock.notifyAll();
+            }            
+        }
     }
 
     private void writeStatusToFile(FileChannel channel) throws IOException
@@ -3004,13 +3089,25 @@ public class IndexInfo implements IndexMonitor
                         break;
                     }
                 case SCHEDULED:
+                    if (s_logger.isDebugEnabled())
+                    {
+                        s_logger.debug(getLogName() + " running ... ");
+                    }
                     reschedule = runImpl();
                     if (reschedule == ExitState.RESCHEDULE)
                     {
+                        if (s_logger.isDebugEnabled())
+                        {
+                            s_logger.debug(getLogName() + " rescheduling ... ");
+                        }
                         reschedule();
                     }
                     else
                     {
+                        if (s_logger.isDebugEnabled())
+                        {
+                            s_logger.debug(getLogName() + " done ");
+                        }
                         done();
                     }
                     break;
@@ -3173,10 +3270,20 @@ public class IndexInfo implements IndexMonitor
 
             if (action == MergeAction.NONE)
             {
+                if (s_logger.isDebugEnabled())
+                {
+                    s_logger.debug(getLogName() + " Merger exiting with MergeAction.NONE. DONE. ");
+                    dumpInfo();
+                }                
                 return ExitState.DONE;
             }
             else
             {
+                if (s_logger.isDebugEnabled())
+                {
+                    s_logger.debug(getLogName() + " Merger exiting with MergeAction." + action.toString() + ". RESCHEDULE. ");
+                    dumpInfo();
+                }                
                 return ExitState.RESCHEDULE;
             }
         }
