@@ -48,6 +48,10 @@ public class DocumentConfig implements Serializable {
         return docType != null ? docType.getName() : null;
     }
 
+    public boolean isDocumentTypeRegistrationEnabled() {
+        return docType != null ? docType.isRegistrationEnabled() : null;
+    }
+
     public DocumentType getDocType() {
         return docType;
     }

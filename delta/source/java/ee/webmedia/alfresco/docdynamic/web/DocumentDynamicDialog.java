@@ -320,10 +320,17 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
 
     @Override
     public List<DialogButtonConfig> getAdditionalButtons() {
+        DocDialogSnapshot snapshot = getCurrentSnapshot();
+        if (snapshot == null) { // XXX Why is this method called when snapshot is null? (CL 189462)
+            return null;
+        }
+        DocumentConfig config = snapshot.config;
+        DocumentDynamic document = snapshot.document;
+        WmNode node = document.getNode();
+
         List<DialogButtonConfig> buttons = new ArrayList<DialogButtonConfig>(1);
-        DocumentType documentType = BeanHelper.getDocumentConfigService().getDocumentTypeAndVersion(getNode()).getFirst();
-        if (getCurrentSnapshot().inEditMode && SystematicDocumentType.INCOMING_LETTER.isSameType(getDocument().getDocumentTypeId())
-                && documentType.isRegistrationEnabled() && RegisterDocumentEvaluator.isNotRegistered(getNode())) {
+        if (snapshot.inEditMode && SystematicDocumentType.INCOMING_LETTER.isSameType(document.getDocumentTypeId()) && config.getDocType().isRegistrationEnabled()
+                && RegisterDocumentEvaluator.isNotRegistered(node)) {
             if (getSearchBlock().isFoundSimilar()) {
                 buttons.add(new DialogButtonConfig("documentRegisterButton", null, "document_registerDoc_continue",
                         "#{DocumentDynamicDialog.saveAndRegisterContinue}", "false", null));
@@ -498,13 +505,13 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         switchMode(true);
     }
 
-    public void sendAccessRestrictionChangedEmails(ActionEvent event) {
+    public void sendAccessRestrictionChangedEmails(@SuppressWarnings("unused") ActionEvent event) {
         DocumentDynamic document = getDocument();
         BeanHelper.getNotificationService().processAccessRestrictionChangedNotification(document, BeanHelper.getSendOutService().getDocumentSendInfos(document.getNodeRef()));
         cancel();
     }
 
-    public String cancel(ActionEvent event) {
+    public String cancel(@SuppressWarnings("unused") ActionEvent event) {
         return cancel();
     }
 
@@ -930,7 +937,6 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         super.resetOrInit(provider); // reset blocks
     }
 
-    @SuppressWarnings("deprecation")
     private void resetModals() {
         renderedModal = null;
         showConfirmationPopup = false;
