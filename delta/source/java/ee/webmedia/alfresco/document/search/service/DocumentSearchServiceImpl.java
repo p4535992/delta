@@ -1,12 +1,12 @@
 package ee.webmedia.alfresco.document.search.service;
 
+import static ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType.INCOMING_LETTER;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateAndNotQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateAspectQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateDatePropertyRangeQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateLuceneSearchParams;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateMultiStringExactQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateNodeRefQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generateNotTypeQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateNumberPropertyRangeQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyBooleanQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyDateQuery;
@@ -77,6 +77,8 @@ import ee.webmedia.alfresco.docconfig.generator.fieldtype.DateGenerator;
 import ee.webmedia.alfresco.docconfig.generator.fieldtype.DoubleGenerator;
 import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
+import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
+import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
@@ -121,6 +123,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentSearchServiceImpl.class);
 
     private DocumentService documentService;
+    private DocumentDynamicService _documentDynamicService;
     private SeriesService seriesService;
     private VolumeService volumeService;
     private WorkflowService workflowService;
@@ -187,7 +190,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     @Override
-    public List<Document> searchAdrDocuments(Date regDateBegin, Date regDateEnd, QName docType, String searchString, Set<QName> documentTypes) {
+    public List<DocumentDynamic> searchAdrDocuments(Date regDateBegin, Date regDateEnd, String docTypeId, String searchString, Set<String> documentTypeIds) {
         long startTime = System.currentTimeMillis();
         List<String> queryParts = new ArrayList<String>(5);
         if (regDateBegin != null || regDateEnd != null) {
@@ -195,11 +198,11 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                     , DocumentCommonModel.Props.REG_DATE_TIME, DocumentSpecificModel.Props.SENDER_REG_DATE));
         }
         queryParts.add(generateQuickSearchQuery(searchString));
-        if (docType != null) {
-            if (!documentTypes.contains(docType)) {
+        if (docTypeId != null) {
+            if (!documentTypeIds.contains(docTypeId)) {
                 return Collections.emptyList();
             }
-            queryParts.add(generateTypeQuery(docType));
+            queryParts.add(generateStringExactQuery(docTypeId, DocumentAdminModel.Props.OBJECT_TYPE_ID));
         }
         // If parameters generate no search query, then return nothing
         // Note: you can still get ALL documents very easily if you specify a very broad date range for example
@@ -207,9 +210,10 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             return Collections.emptyList();
         }
 
-        String query = generateAdrDocumentSearchQuery(queryParts, documentTypes);
-        List<Document> results = searchDocumentsImpl(query, -1, /* queryName */"adrDocuments1");
-        results.addAll(searchDocumentsImpl(query, -1, /* queryName */"adrDocuments2", Arrays.asList(generalService.getArchivalsStoreRef())));
+        String query = generateAdrDocumentSearchQuery(queryParts, documentTypeIds);
+        // Only search from SpacesStore and ArchivalsStore to get correct document set (PPA).
+        List<DocumentDynamic> results = searchDocumentDynamicsImpl(query, -1, /* queryName */"adrDocuments1");
+        results.addAll(searchDocumentDynamicsImpl(query, -1, /* queryName */"adrDocuments2", Arrays.asList(generalService.getArchivalsStoreRef())));
         if (log.isDebugEnabled()) {
             log.debug("ADR documents search total time " + (System.currentTimeMillis() - startTime) + " ms, results " + results.size() + ", query: " + query);
         }
@@ -217,15 +221,16 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     @Override
-    public List<Document> searchAdrDocuments(String regNumber, Date regDate, Set<QName> documentTypes) {
+    public List<DocumentDynamic> searchAdrDocuments(String regNumber, Date regDate, Set<String> documentTypeIds) {
         long startTime = System.currentTimeMillis();
         List<String> queryParts = new ArrayList<String>(4);
         queryParts.add(generatePropertyDateQuery(DocumentCommonModel.Props.REG_DATE_TIME, regDate));
         queryParts.add(generateStringExactQuery(regNumber, DocumentCommonModel.Props.REG_NUMBER));
 
-        String query = generateAdrDocumentSearchQuery(queryParts, documentTypes);
-        List<Document> results = searchDocumentsImpl(query, -1, /* queryName */"adrDocumentByReg1");
-        results.addAll(searchDocumentsImpl(query, -1, /* queryName */"adrDocumentByReg2", Arrays.asList(generalService.getArchivalsStoreRef())));
+        String query = generateAdrDocumentSearchQuery(queryParts, documentTypeIds);
+        // Only search from SpacesStore and ArchivalsStore to get correct document set (PPA).
+        List<DocumentDynamic> results = searchDocumentDynamicsImpl(query, -1, /* queryName */"adrDocumentByReg1");
+        results.addAll(searchDocumentDynamicsImpl(query, -1, /* queryName */"adrDocumentByReg2", Arrays.asList(generalService.getArchivalsStoreRef())));
         if (log.isDebugEnabled()) {
             log.debug("ADR document details search total time " + (System.currentTimeMillis() - startTime) + " ms, results " + results.size() //
                     + ", query: " + query);
@@ -234,14 +239,15 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     @Override
-    public List<NodeRef> searchAdrDocuments(Date modifiedDateBegin, Date modifiedDateEnd, Set<QName> documentTypes) {
+    public List<NodeRef> searchAdrDocuments(Date modifiedDateBegin, Date modifiedDateEnd, Set<String> documentTypeIds) {
         long startTime = System.currentTimeMillis();
         List<String> queryParts = new ArrayList<String>(3);
         if (modifiedDateBegin != null && modifiedDateEnd != null) {
             queryParts.add(generateDatePropertyRangeQuery(modifiedDateBegin, modifiedDateEnd, ContentModel.PROP_MODIFIED));
         }
 
-        String query = generateAdrDocumentSearchQuery(queryParts, documentTypes);
+        String query = generateAdrDocumentSearchQuery(queryParts, documentTypeIds);
+        // Only search from SpacesStore and ArchivalsStore to get correct document set (PPA).
         List<NodeRef> results = searchNodes(query, -1, /* queryName */"adrDocumentByModified1");
         results.addAll(searchNodes(query, -1, /* queryName */"adrDocumentByModified2", generalService.getArchivalsStoreRef()));
         if (log.isDebugEnabled()) {
@@ -285,14 +291,14 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     @Override
-    public List<QName> searchAdrDeletedDocumentTypes(Date deletedDateBegin, Date deletedDateEnd) {
+    public List<String> searchAdrDeletedDocumentTypes(Date deletedDateBegin, Date deletedDateEnd) {
         long startTime = System.currentTimeMillis();
         List<String> queryParts = new ArrayList<String>(2);
         queryParts.add(generateTypeQuery(AdrModel.Types.ADR_DELETED_DOCUMENT_TYPE));
         queryParts.add(generateDatePropertyRangeQuery(deletedDateBegin, deletedDateEnd, AdrModel.Props.DELETED_DATE_TIME));
 
         String query = joinQueryPartsAnd(queryParts);
-        List<QName> results = searchAdrDocumentTypesImpl(query, -1, /* queryName */"adrDeletedDocumentTypes");
+        List<String> results = searchAdrDocumentTypesImpl(query, -1, /* queryName */"adrDeletedDocumentTypes");
         if (log.isDebugEnabled()) {
             log.debug("ADR deleted document types search total time " + (System.currentTimeMillis() - startTime) + " ms, results " + results.size()
                     + ", query: " + query);
@@ -301,14 +307,14 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     @Override
-    public List<QName> searchAdrAddedDocumentTypes(Date addedDateBegin, Date addedDateEnd) {
+    public List<String> searchAdrAddedDocumentTypes(Date addedDateBegin, Date addedDateEnd) {
         long startTime = System.currentTimeMillis();
         List<String> queryParts = new ArrayList<String>(2);
         queryParts.add(generateTypeQuery(AdrModel.Types.ADR_ADDED_DOCUMENT_TYPE));
         queryParts.add(generateDatePropertyRangeQuery(addedDateBegin, addedDateEnd, AdrModel.Props.DELETED_DATE_TIME));
 
         String query = joinQueryPartsAnd(queryParts);
-        List<QName> results = searchAdrDocumentTypesImpl(query, -1, /* queryName */"adrAddedDocumentTypes");
+        List<String> results = searchAdrDocumentTypesImpl(query, -1, /* queryName */"adrAddedDocumentTypes");
         if (log.isDebugEnabled()) {
             log.debug("ADR added document types search total time " + (System.currentTimeMillis() - startTime) + " ms, results " + results.size() //
                     + ", query: " + query);
@@ -316,21 +322,20 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         return results;
     }
 
-    private static String generateAdrDocumentSearchQuery(List<String> queryParts, Set<QName> documentTypes) {
-        if (documentTypes.size() == 0) {
+    private static String generateAdrDocumentSearchQuery(List<String> queryParts, Set<String> documentTypeIds) {
+        if (documentTypeIds.size() == 0) {
             return null;
         }
-        queryParts.add(generateTypeQuery(documentTypes));
+        queryParts.add(generateTypeQuery(DocumentCommonModel.Types.DOCUMENT));
+        queryParts.add(generateMultiStringExactQuery(new ArrayList<String>(documentTypeIds), DocumentAdminModel.Props.OBJECT_TYPE_ID));
 
-        // If document is of type incomingLetter or incomingLetterMv, then it must be registered. All other documents must be finished
+        // If document is of type incomingLetter, then it must be registered. All other documents must be finished
         queryParts.add(joinQueryPartsOr(Arrays.asList(
-                joinQueryPartsAnd(Arrays.asList(
-                                generateStringExactQuery(DocumentStatus.FINISHED.getValueName(), DocumentCommonModel.Props.DOC_STATUS),
-                                generateNotTypeQuery(DocumentTypeHelper.INCOMING_LETTER_TYPES)
-                                ), false),
+                generateAndNotQuery(generateStringExactQuery(DocumentStatus.FINISHED.getValueName(), DocumentCommonModel.Props.DOC_STATUS),
+                        generateStringExactQuery(INCOMING_LETTER.getId(), DocumentAdminModel.Props.OBJECT_TYPE_ID))
 
-                joinQueryPartsAnd(Arrays.asList(
-                                generateTypeQuery(DocumentTypeHelper.INCOMING_LETTER_TYPES),
+                        , joinQueryPartsAnd(Arrays.asList(
+                                generateStringExactQuery(INCOMING_LETTER.getId(), DocumentAdminModel.Props.OBJECT_TYPE_ID),
                                 generatePropertyNotNullQuery(DocumentCommonModel.Props.REG_NUMBER)
                                 ))
                 )));
@@ -410,9 +415,9 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                     status.append("; ");
                 }
                 status.append(MessageUtil.getMessage(entry.getKey().getType().getLocalName()))
-                        .append(" (")
-                        .append(StringUtils.join(entry.getValue(), ", "))
-                        .append(")");
+                .append(" (")
+                .append(StringUtils.join(entry.getValue(), ", "))
+                .append(")");
             }
             document.setWorkflowStatus(status.toString());
         }
@@ -491,7 +496,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         queryParts.add(generateStringNotEmptyQuery(DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME,
                 DocumentSpecificModel.Props.SECOND_PARTY_NAME, DocumentSpecificModel.Props.THIRD_PARTY_NAME,
                 DocumentSpecificModel.Props.PARTY_NAME /* on document node, duplicates partyName property values from all contractParty child-nodes */
-        ));
+                ));
         queryParts.add(generateStringExactQuery(DocumentStatus.FINISHED.getValueName(), DocumentCommonModel.Props.DOC_STATUS));
         queryParts.add(generateStringNullQuery(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE));
         String query = generateDocumentSearchQuery(queryParts);
@@ -808,14 +813,14 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         long startTime = System.currentTimeMillis();
         List<Document> results = searchGeneralImpl(DOCUMENTS_FOR_REGISTERING_QUERY, -1, /* queryName */"documentsForRegistering",
                 new SearchCallback<Document>() {
-                    @Override
-                    public Document addResult(ResultSetRow row) {
-                        if (workflowService.hasAllFinishedCompoundWorkflows(row.getNodeRef())) {
-                            return documentService.getDocumentByNodeRef(row.getNodeRef());
-                        }
-                        return null;
-                    }
-                });
+            @Override
+            public Document addResult(ResultSetRow row) {
+                if (workflowService.hasAllFinishedCompoundWorkflows(row.getNodeRef())) {
+                    return documentService.getDocumentByNodeRef(row.getNodeRef());
+                }
+                return null;
+            }
+        });
         if (log.isDebugEnabled()) {
             log.debug(String.format("Documents for registering search total time %d ms, query: %s" //
                     , (System.currentTimeMillis() - startTime), DOCUMENTS_FOR_REGISTERING_QUERY));
@@ -831,7 +836,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             public String addResult(ResultSetRow row) {
                 return workflowService.hasAllFinishedCompoundWorkflows(row.getNodeRef())
                         ? row.getNodeRef().toString()
-                        : null;
+                                : null;
             }
         }).size();
 
@@ -1122,8 +1127,8 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
 
         queryParts.add(joinQueryPartsOr(
                 Arrays.asList(
-                         joinQueryPartsAnd(Arrays.asList(incomingLetterTypesQuery, hasNoStartedCompoundWorkflowsQuery))
-                         , notIncomingLetterTypesQuery
+                        joinQueryPartsAnd(Arrays.asList(incomingLetterTypesQuery, hasNoStartedCompoundWorkflowsQuery))
+                        , notIncomingLetterTypesQuery
                         )
                 ));
         return generateDocumentSearchQuery(queryParts);
@@ -1232,7 +1237,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                     queryParts.add(generateStringWordsWildcardQuery((String) value, propQName));
                 } else if (value instanceof List) {
                     DocumentAdminService ser = BeanHelper.getDocumentAdminService(); // including docAdminService in context.xml creates an exception because docAdminService
-                                                                                     // includes DocSearchService
+                    // includes DocSearchService
                     FieldDefinition def = ser.getFieldDefinition(propQName.getLocalName());
                     @SuppressWarnings("unchecked")
                     List<String> list = (List<String>) value;
@@ -1287,7 +1292,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             query = joinQueryPartsAnd(
                     generateNodeRefQuery(containerNodeRef, DocumentCommonModel.Props.FUNCTION, DocumentCommonModel.Props.SERIES, DocumentCommonModel.Props.VOLUME,
                             DocumentCommonModel.Props.CASE),
-                    query);
+                            query);
         }
         if (log.isDebugEnabled()) {
             log.debug("Quick search query construction time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
@@ -1500,6 +1505,20 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         }, storeRefs);
     }
 
+    private List<DocumentDynamic> searchDocumentDynamicsImpl(String query, int limit, String queryName) {
+        return searchDocumentDynamicsImpl(query, limit, queryName, null);
+    }
+
+    private List<DocumentDynamic> searchDocumentDynamicsImpl(String query, int limit, String queryName, Collection<StoreRef> storeRefs) {
+        return searchGeneralImpl(query, limit, queryName, new SearchCallback<DocumentDynamic>() {
+
+            @Override
+            public DocumentDynamic addResult(ResultSetRow row) {
+                return getDocumentDynamicService().getDocument(row.getNodeRef());
+            }
+        }, storeRefs);
+    }
+
     private List<Document> searchDocumentsAndCaseTitlesImpl(String query, int limit, String queryName) {
         return searchGeneralImpl(query, limit, queryName, new SearchCallback<Document>() {
 
@@ -1537,11 +1556,11 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         });
     }
 
-    private List<QName> searchAdrDocumentTypesImpl(String query, int limit, String queryName) {
-        return searchGeneralImpl(query, limit, queryName, new SearchCallback<QName>() {
+    private List<String> searchAdrDocumentTypesImpl(String query, int limit, String queryName) {
+        return searchGeneralImpl(query, limit, queryName, new SearchCallback<String>() {
             @Override
-            public QName addResult(ResultSetRow row) {
-                return (QName) nodeService.getProperty(row.getNodeRef(), AdrModel.Props.DOCUMENT_TYPE);
+            public String addResult(ResultSetRow row) {
+                return ((QName) nodeService.getProperty(row.getNodeRef(), AdrModel.Props.DOCUMENT_TYPE)).getLocalName();
             }
         });
     }
@@ -1665,6 +1684,12 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     // START: getters / setters
+    public DocumentDynamicService getDocumentDynamicService() {
+        if (_documentDynamicService == null) {
+            _documentDynamicService = BeanHelper.getDocumentDynamicService();
+        }
+        return _documentDynamicService;
+    }
 
     public void setDocumentService(DocumentService documentService) {
         this.documentService = documentService;

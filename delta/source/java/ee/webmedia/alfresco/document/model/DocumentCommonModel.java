@@ -101,6 +101,7 @@ public interface DocumentCommonModel {
 
         QName SIGNER_NAME = QName.createQName(URI, "signerName");
         QName SIGNER_JOB_TITLE = QName.createQName(URI, "signerJobTitle");
+        QName SIGNER_ORG_STRUCT_UNIT = QName.createQName(URI, "signerOrgStructUnit");
 
         QName ACCESS_RESTRICTION = QName.createQName(URI, "accessRestriction");
         QName ACCESS_RESTRICTION_REASON = QName.createQName(URI, "accessRestrictionReason");

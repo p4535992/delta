@@ -27,6 +27,20 @@ import ee.webmedia.alfresco.substitute.model.Substitute;
 
 public class UserUtil {
 
+    public static String getInitials(String fullName) {
+        if (StringUtils.isBlank(fullName)) {
+            return "";
+        }
+        List<String> initials = new ArrayList<String>();
+        for (String part : fullName.split("\\s")) {
+            if (part.length() > 0) {
+                initials.add(part.substring(0, 1));
+            }
+        }
+
+        return StringUtils.join(initials, " ");
+    }
+
     public static String getPersonFullName1(Map<QName, Serializable> props) {
         String userName = (String) props.get(ContentModel.PROP_USERNAME);
         String firstName = (String) props.get(ContentModel.PROP_FIRSTNAME);

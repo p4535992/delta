@@ -3,11 +3,15 @@ package ee.webmedia.alfresco.utils;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
+import org.alfresco.service.namespace.QName;
 import org.alfresco.web.ui.common.converter.MultiValueConverter;
 import org.apache.commons.lang.StringUtils;
 
 public class TextUtil {
+
+    public static final String LIST_SEPARATOR = ", ";
 
     public static String joinNonBlankStringsWithComma(Collection<String> values) {
         return joinNonBlankStrings(values, ", ");
@@ -116,4 +120,31 @@ public class TextUtil {
         return true;
     }
 
+    public static String join(Map<String, Object> propertiesMap, QName... props) {
+        StringBuilder result = new StringBuilder();
+        for (QName prop : props) {
+            Object item = propertiesMap.get(prop);
+            if (item instanceof Collection<?>) {
+                @SuppressWarnings("unchecked")
+                Collection<String> list = (Collection<String>) item;
+                for (String textItem : list) {
+                    if (StringUtils.isNotBlank(textItem)) {
+                        if (result.length() > 0) {
+                            result.append(LIST_SEPARATOR);
+                        }
+                        result.append(textItem);
+                    }
+                }
+            } else {
+                String textItem = (String) item;
+                if (StringUtils.isNotBlank(textItem)) {
+                    if (result.length() > 0) {
+                        result.append(LIST_SEPARATOR);
+                    }
+                    result.append(textItem);
+                }
+            }
+        }
+        return result.toString();
+    }
 }

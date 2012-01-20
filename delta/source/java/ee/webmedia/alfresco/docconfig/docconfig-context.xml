@@ -282,6 +282,26 @@
             </props>
          </list>
       </property>
+   </bean>
+
+   <bean id="systematicFieldDefinitionsBootstrap11" class="ee.webmedia.alfresco.common.bootstrap.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="systematicFieldDefinitionsBootstrap10" />
+         </list>
+      </property>
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/docadmin:fieldDefinitions</prop>
+               <prop key="location">ee/webmedia/alfresco/docconfig/bootstrap/systematicFieldDefinitions11.xml</prop>
+            </props>
+         </list>
+      </property>
    </bean>   
 
    <bean id="systematicFieldGroupDefinitionsBootstrap1" class="ee.webmedia.alfresco.common.bootstrap.ImporterModuleComponent" parent="module.baseComponent">
@@ -466,6 +486,7 @@
             <ref bean="systematicFieldDefinitionsBootstrap8" />
             <ref bean="systematicFieldDefinitionsBootstrap9" />
             <ref bean="systematicFieldDefinitionsBootstrap10" />
+            <ref bean="systematicFieldDefinitionsBootstrap11" />
             <ref bean="systematicFieldGroupDefinitionsBootstrap1" />
             <ref bean="systematicFieldGroupDefinitionsBootstrap2" />
             <ref bean="systematicFieldGroupDefinitionsBootstrap3" />
@@ -522,6 +543,19 @@
          <list>
             <ref bean="systematicFieldDefinitionsBootstrap9" />
             <ref bean="systematicFieldGroupDefinitionsBootstrap8" />
+         </list>
+      </property>
+      <property name="generalService" ref="GeneralService" />
+      <property name="nodeService" ref="NodeService" />
+   </bean>
+        
+   <bean id="senderNameAndEmailGroupAddFieldsUpdater" class="ee.webmedia.alfresco.docconfig.bootstrap.SenderNameAndEmailGroupAddFieldsUpdater" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="systematicFieldDefinitionsBootstrap11" />
+            <ref bean="systematicFieldGroupDefinitionsBootstrap1" />
          </list>
       </property>
       <property name="generalService" ref="GeneralService" />

@@ -226,6 +226,7 @@
          <docadmin:fieldDefinitionIds>
             <view:values>
                <view:value>senderName</view:value>
+               <view:value>senderInitialsToAdr</view:value>
                <view:value>senderPersonName</view:value>
                <view:value>senderEmail</view:value>
                <view:value>senderStreetHouse</view:value>

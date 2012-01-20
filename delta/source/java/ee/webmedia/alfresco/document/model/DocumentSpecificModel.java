@@ -230,6 +230,7 @@ public interface DocumentSpecificModel {
         QName COMPLIENCE_NOTATION = QName.createQName(URI, "complienceNotation");
         QName COMPLIENCE_DATE = QName.createQName(URI, "complienceDate");
         QName DUE_DATE = QName.createQName(URI, "dueDate");
+        QName DUE_DATE_DESC = QName.createQName(URI, "dueDateDesc");
 
         QName DELIVERER_NAME = QName.createQName(URI, "delivererName");
         QName DELIVERER_JOB_TITLE = QName.createQName(URI, "delivererJobTitle");
@@ -338,7 +339,7 @@ public interface DocumentSpecificModel {
         QName MANAGEMENTS_ORDER_DUE_DATE = QName.createQName(URI, "managementsOrderDueDate");
 
         QName PROCUREMENT_TYPE = QName.createQName(URI, "procurementType"); // TODO not in data model yet, because docsub:tenderingApplication is not yet
-                                                                            // implemented
+        // implemented
         QName PROCUREMENT_LEGAL_BASIS = QName.createQName(URI, "procurementLegalBasis");
         QName PROCUREMENT_DESC = QName.createQName(URI, "procurementDesc");
         QName PROCUREMENT_SUM_ESTIMATED = QName.createQName(URI, "procurementSumEstimated");

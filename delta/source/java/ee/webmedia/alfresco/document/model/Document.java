@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.document.model;
 
+import static ee.webmedia.alfresco.utils.TextUtil.LIST_SEPARATOR;
+
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Date;
@@ -32,13 +34,13 @@ import ee.webmedia.alfresco.document.type.service.DocumentTypeHelper;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.series.model.Series;
+import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 
 public class Document extends Node implements Comparable<Document>, CssStylable, CreatedAndRegistered {
     private static final long serialVersionUID = 1L;
 
-    public static final String LIST_SEPARATOR = ", ";
     public static final int SHORT_PROP_LENGTH = 20;
     public static FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
 
@@ -142,11 +144,13 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     }
 
     public String getRecipients() {
-        return join(DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME);
+        lazyInit();
+        return TextUtil.join(getProperties(), DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME);
     }
 
     public String getAllRecipients() {
-        return join(DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME,
+        lazyInit();
+        return TextUtil.join(getProperties(), DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME,
                 DocumentSpecificModel.Props.SECOND_PARTY_NAME, DocumentSpecificModel.Props.THIRD_PARTY_NAME, DocumentSpecificModel.Props.PARTY_NAME);
     }
 
@@ -352,7 +356,8 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
 
     public String getContactPerson() {
         // Only docsub:contractSim and docsub:contractSmit have these properties
-        return join(DocumentSpecificModel.Props.FIRST_PARTY_CONTACT_PERSON,
+        lazyInit();
+        return TextUtil.join(getProperties(), DocumentSpecificModel.Props.FIRST_PARTY_CONTACT_PERSON,
                 DocumentSpecificModel.Props.SECOND_PARTY_CONTACT_PERSON,
                 DocumentSpecificModel.Props.THIRD_PARTY_CONTACT_PERSON);
     }
@@ -430,35 +435,6 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
                 .append("\n\tregNumber = " + getRegNumber())
                 .append("\n\tdocName = " + getDocName())
                 .toString();
-    }
-
-    private String join(QName... props) {
-        lazyInit();
-        StringBuilder result = new StringBuilder();
-        for (QName prop : props) {
-            Object item = getProperties().get(prop);
-            if (item instanceof Collection<?>) {
-                @SuppressWarnings("unchecked")
-                Collection<String> list = (Collection<String>) item;
-                for (String textItem : list) {
-                    if (StringUtils.isNotBlank(textItem)) {
-                        if (result.length() > 0) {
-                            result.append(LIST_SEPARATOR);
-                        }
-                        result.append(textItem);
-                    }
-                }
-            } else {
-                String textItem = (String) item;
-                if (StringUtils.isNotBlank(textItem)) {
-                    if (result.length() > 0) {
-                        result.append(LIST_SEPARATOR);
-                    }
-                    result.append(textItem);
-                }
-            }
-        }
-        return result.toString();
     }
 
     public static String join(Serializable propValue) {

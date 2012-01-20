@@ -1525,4 +1525,14 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         return groupNamesLimitSingle.contains(group.getName());
     }
 
+    @Override
+    public Set<String> getAdrDocumentTypeIds() {
+        List<DocumentType> documentTypes = getDocumentTypes(DONT_INCLUDE_CHILDREN, true);
+        Set<String> typeIds = new HashSet<String>(documentTypes.size());
+        for (DocumentType documentType : documentTypes) {
+            typeIds.add(documentType.getId());
+        }
+        return typeIds;
+    }
+
 }

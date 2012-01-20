@@ -7,22 +7,27 @@ import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SERI
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.VOLUME;
 
 import java.util.Date;
+import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.app.AppConstants;
+import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.model.NodeBaseVO;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.utils.TextUtil;
+import ee.webmedia.alfresco.utils.UserUtil;
 
 /**
  * @author Alar Kvell
  */
-public class DocumentDynamic extends NodeBaseVO implements Cloneable {
+public class DocumentDynamic extends NodeBaseVO implements Cloneable, Comparable<DocumentDynamic> {
     private static final long serialVersionUID = 1L;
 
     protected DocumentDynamic(WmNode node) {
@@ -152,5 +157,41 @@ public class DocumentDynamic extends NodeBaseVO implements Cloneable {
 
     public String getOwnerName() {
         return getProp(DocumentCommonModel.Props.OWNER_NAME);
+    }
+
+    @SuppressWarnings("unchecked")
+    public String getOwnerOrgStructUnit() {
+        return UserUtil.getDisplayUnit((List<String>) getProp(DocumentCommonModel.Props.OWNER_ORG_STRUCT_UNIT));
+    }
+
+    public String getDocStatus() {
+        return (String) getProp(DocumentCommonModel.Props.DOC_STATUS);
+    }
+
+    public boolean isDocStatus(DocumentStatus status) {
+        return status.getValueName().equals(getDocStatus());
+    }
+
+    public String getRecipients() {
+        return TextUtil.join(getNode().getProperties(), DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME);
+    }
+
+    @Override
+    public int compareTo(DocumentDynamic other) {
+        if (StringUtils.equals(getRegNumber(), other.getRegNumber())) {
+            if (getRegDateTime() != null) {
+                if (other.getRegDateTime() == null) {
+                    return 1;
+                }
+                return getRegDateTime().compareTo(other.getRegDateTime());
+            }
+            return 0;
+        }
+        if (getRegNumber() == null) {
+            return -1;
+        } else if (other.getRegNumber() == null) {
+            return 1;
+        }
+        return AppConstants.DEFAULT_COLLATOR.compare(getRegNumber(), other.getRegNumber());
     }
 }

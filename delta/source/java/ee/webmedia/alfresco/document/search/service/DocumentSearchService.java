@@ -10,6 +10,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 
+import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.user.model.Authority;
@@ -185,7 +186,7 @@ public interface DocumentSearchService {
      * @param searchString
      * @return
      */
-    List<Document> searchAdrDocuments(Date regDateBegin, Date regDateEnd, QName docType, String searchString, Set<QName> documentTypes);
+    List<DocumentDynamic> searchAdrDocuments(Date regDateBegin, Date regDateEnd, String docTypeId, String searchString, Set<String> documentTypeIds);
 
     /**
      * Used by ADR web service to search document details.
@@ -194,15 +195,15 @@ public interface DocumentSearchService {
      * @param regDate
      * @return
      */
-    List<Document> searchAdrDocuments(String regNumber, Date regDate, Set<QName> documentTypes);
+    List<DocumentDynamic> searchAdrDocuments(String regNumber, Date regDate, Set<String> documentTypeIds);
 
-    List<NodeRef> searchAdrDocuments(Date modifiedDateBegin, Date modifiedDateEnd, Set<QName> documentTypes);
+    List<NodeRef> searchAdrDocuments(Date modifiedDateBegin, Date modifiedDateEnd, Set<String> documentTypeIds);
 
     List<NodeRef> searchAdrDeletedDocuments(Date deletedDateBegin, Date deletedDateEnd);
 
-    List<QName> searchAdrDeletedDocumentTypes(Date deletedDateBegin, Date deletedDateEnd);
+    List<String> searchAdrDeletedDocumentTypes(Date deletedDateBegin, Date deletedDateEnd);
 
-    List<QName> searchAdrAddedDocumentTypes(Date addedDateBegin, Date addedDateEnd);
+    List<String> searchAdrAddedDocumentTypes(Date addedDateBegin, Date addedDateEnd);
 
     Map<NodeRef, Pair<String, String>> searchTaskBySendStatusQuery(QName taskType);
 

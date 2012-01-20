@@ -1,5 +1,10 @@
 package ee.webmedia.alfresco.adr.service;
 
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ACCESS_RESTRICTION;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON;
 import static ee.webmedia.alfresco.utils.TextUtil.joinStringAndStringWithParentheses;
 import static ee.webmedia.alfresco.utils.XmlUtil.getDate;
 
@@ -7,7 +12,6 @@ import java.io.Serializable;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -53,24 +57,28 @@ import ee.webmedia.alfresco.adr.ws.SeotudDokument;
 import ee.webmedia.alfresco.adr.ws.Toimik;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
+import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
+import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
+import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
+import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
+import ee.webmedia.alfresco.docdynamic.model.DocumentChildModel;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
+import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
+import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
-import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
-import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.service.DocumentService.AssocType;
-import ee.webmedia.alfresco.document.type.model.DocumentType;
-import ee.webmedia.alfresco.document.type.service.DocumentTypeHelper;
-import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
+import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
 /**
@@ -85,8 +93,10 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
 
     private DocumentSearchService documentSearchService;
     private FileService fileService;
-    private DocumentTypeService documentTypeService;
+    private ClassificatorService classificatorService;
+    private DocumentAdminService documentAdminService;
     private DocumentService documentService;
+    private DocumentDynamicService documentDynamicService;
     private NamespaceService namespaceService;
     private SimpleJdbcTemplate jdbcTemplate;
 
@@ -95,68 +105,22 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
     // ========================================================================
 
     @Override
+    @Deprecated
     public List<Dokument> otsiDokumendid(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev, String dokumendiLiik,
             String otsingusona) {
-        long startTime = System.currentTimeMillis();
-
-        Date regDateBegin = getDate(perioodiAlgusKuupaev);
-        Date regDateEnd = getDate(perioodiLoppKuupaev);
-        QName docType = getTypeQName(dokumendiLiik);
-
-        List<Document> docs = documentSearchService.searchAdrDocuments(regDateBegin, regDateEnd, docType, otsingusona, documentTypeService.getPublicAdrDocumentTypeQNames());
-        List<Dokument> list = new ArrayList<Dokument>(docs.size());
-        for (Document doc : docs) {
-            Dokument dokument = new Dokument();
-            setDokumentProperties(dokument, doc, true);
-            list.add(dokument);
-        }
-
-        if (log.isDebugEnabled()) {
-            log.debug("ADR otsiDokumendid finished, time " + (System.currentTimeMillis() - startTime) + " ms, results " + list.size()
-                    + ", arguments:\n    perioodiAlgusKuupaev=" + perioodiAlgusKuupaev + "\n    perioodiLoppKuupaev=" + perioodiLoppKuupaev
-                    + "\n    dokumendiLiik=" + dokumendiLiik + "\n    otsingusona=" + otsingusona);
-        }
-        return list;
+        throw new RuntimeException("Old queries are not supported! Please use newer V2 queries!");
     }
 
     @Override
+    @Deprecated
     public DokumentDetailidega dokumentDetailidega(String viit, XMLGregorianCalendar registreerimiseAeg) {
-        long startTime = System.currentTimeMillis();
-
-        Set<QName> documentTypes = documentTypeService.getPublicAdrDocumentTypeQNames();
-        Document doc = searchDocument(viit, registreerimiseAeg, documentTypes);
-        DokumentDetailidega dokumentDetailidega;
-        if (doc == null) {
-            dokumentDetailidega = null;
-        } else {
-            dokumentDetailidega = buildDokumentDetailidega(doc, true, false, documentTypes);
-        }
-
-        if (log.isDebugEnabled()) {
-            log.debug("ADR dokumentDetailidega finished, time " + (System.currentTimeMillis() - startTime) + " ms, arguments:\n    viit=" + viit
-                    + "\n    registreerimiseAeg=" + registreerimiseAeg);
-        }
-        return dokumentDetailidega;
+        throw new RuntimeException("Old queries are not supported! Please use newer V2 queries!");
     }
 
     @Override
+    @Deprecated
     public Fail failSisuga(String viit, XMLGregorianCalendar registreerimiseAeg, String filename) {
-        long startTime = System.currentTimeMillis();
-
-        Fail failSisuga;
-        File file = searchFile(viit, registreerimiseAeg, filename);
-        if (file == null) {
-            failSisuga = null;
-        } else {
-            failSisuga = new Fail();
-            setFailProperties(failSisuga, file, true);
-        }
-
-        if (log.isDebugEnabled()) {
-            log.debug("ADR failSisuga finished, time " + (System.currentTimeMillis() - startTime) + " ms, arguments:\n    viit=" + viit
-                    + "\n    registreerimiseAeg=" + registreerimiseAeg + "\n    filename=" + filename);
-        }
-        return failSisuga;
+        throw new RuntimeException("Old queries are not supported! Please use newer V2 queries!");
     }
 
     @Override
@@ -170,16 +134,16 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         if (!nodeService.exists(documentRef)) {
             return null;
         }
-        Document doc = documentService.getDocumentByNodeRef(documentRef);
+        DocumentDynamic doc = documentDynamicService.getDocument(documentRef);
 
-        if (!documentTypeService.getPublicAdrDocumentTypeQNames().contains(doc.getType())) {
+        if (!documentAdminService.getAdrDocumentTypeIds().contains(doc.getDocumentTypeId())) {
             return null;
         }
 
         // failiga seotud dokumendi docStatus = lõpetatud või incomingLetter & registreeritud
         boolean isFinished = doc.isDocStatus(DocumentStatus.FINISHED);
-        boolean isRegisteredIncomingLetter = DocumentTypeHelper.isIncomingLetter(doc.getType())
-                && StringUtils.isNotBlank((String) doc.getProperties().get(DocumentCommonModel.Props.REG_NUMBER));
+        boolean isRegisteredIncomingLetter = SystematicDocumentType.INCOMING_LETTER.isSameType(doc.getDocumentTypeId())
+                && StringUtils.isNotBlank((String) doc.getProp(DocumentCommonModel.Props.REG_NUMBER));
         if (!isFinished && !isRegisteredIncomingLetter) {
             return null;
         }
@@ -197,89 +161,39 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
 
         if (log.isDebugEnabled()) {
             log.debug("ADR failSisugaV2 finished, time " + (System.currentTimeMillis() - startTime) + " ms, arguments:\n    documentRef=" + documentRef
-                    + "\n    filename=" + filename);
+                    + "\n    filename=" + filename
+                    + "\n    failSisuga.suurus=" + (failSisuga == null ? -1 : failSisuga.getSuurus()));
         }
         return failSisuga;
     }
 
     @Override
+    @Deprecated
     public List<Dokumendiliik> dokumendiliigid() {
-        long startTime = System.currentTimeMillis();
-        List<DocumentType> docTypes = documentTypeService.getPublicAdrDocumentTypes();
-        List<Dokumendiliik> list = new ArrayList<Dokumendiliik>(docTypes.size());
-        for (DocumentType docType : docTypes) {
-            Dokumendiliik dokumendiliik = new Dokumendiliik();
-            dokumendiliik.setNimi(docType.getName());
-            list.add(dokumendiliik);
-        }
-        if (log.isDebugEnabled()) {
-            log.debug("ADR dokumendiliigid finished, time " + (System.currentTimeMillis() - startTime) + " ms, results " + list.size());
-        }
-        return list;
+        throw new RuntimeException("Old queries are not supported! Please use newer V2 queries!");
     }
 
-    private Document searchDocument(String viit, XMLGregorianCalendar registreerimiseAeg, Set<QName> documentTypes) {
-        Date regDateTime = getDate(registreerimiseAeg);
-        if (StringUtils.isBlank(viit) || regDateTime == null) {
-            return null;
-        }
-
-        List<Document> docs = documentSearchService.searchAdrDocuments(viit, regDateTime, documentTypes);
-
-        // loop üle docs'i ja võrrelda kas viit ja registreerimiseAeg vastavad TÄPSELT, kui mitte siis eemaldada
-        for (Iterator<Document> i = docs.iterator(); i.hasNext();) {
-            Document doc = i.next();
-            if (!viit.equals(doc.getRegNumber()) || !regDateTime.equals(doc.getRegDateTime())) { // viit comparison is case sensitive - is it OK?
-                i.remove();
-            }
-        }
-        if (docs.size() == 0) {
-            return null;
-        }
-        if (docs.size() > 1) {
-            StringBuilder s = new StringBuilder("Multiple documents have same regNumber+regDateTime combination value, returning only the first, total=");
-            s.append(docs.size());
-            s.append(", regNr='").append(viit);
-            s.append("', regDateTime=").append(regDateTime);
-            for (Document doc : docs) {
-                s.append("\n    nodeRef=" + doc.getNodeRef());
-            }
-            log.warn(s.toString());
-        }
-        return docs.get(0);
-    }
-
-    private File searchFile(String viit, XMLGregorianCalendar registreerimiseAeg, String filename) {
-        if (StringUtils.isBlank(filename)) {
-            return null;
-        }
-
-        // 5.1.2.1. failiga seotud dokumendi regDateTime = failRequest.registreerimiseAeg
-        // 5.1.2.2. failiga seotud dokumendi regNumber = failRequest.viit
-        // 5.1.2.4. failiga seotud dokumendi docStatus = lõpetatud
-        Document doc = searchDocument(viit, registreerimiseAeg, documentTypeService.getPublicAdrDocumentTypeQNames());
-        if (doc == null) {
-            return null;
-        }
-        return searchFile(doc, filename);
-    }
-
-    private File searchFile(Document doc, String filename) {
-
+    private File searchFile(DocumentDynamic doc, String filename) {
+        log.debug("Searching for " + filename + " under " + doc.getDocName() + "(" + doc.getNodeRef() + ")");
         // Only include file list when document accessRestriction = Avalik
-        if (!AccessRestriction.OPEN.equals(doc.getAccessRestriction())) {
+        if (!AccessRestriction.OPEN.getValueName().equals(doc.getProp(ACCESS_RESTRICTION))) {
+            log.debug("Access restriction mismatch: " + doc.getProp(ACCESS_RESTRICTION));
             return null;
         }
 
         List<File> files = fileService.getAllActiveFiles(doc.getNodeRef());
+        log.debug("Found " + files.size() + " active file(s)");
         for (Iterator<File> i = files.iterator(); i.hasNext();) {
             File file = i.next();
             // 5.1.2.5. faili pealkiri = failRequest.failinimi
-            if (!file.getName().equals(filename)) { // this should be the real file name, because ADR interface requires it to be unique under document
+            String name = file.getName();
+            if (!name.equals(filename)) { // this should be the real file name, because ADR interface requires it to be unique under document
+                log.debug(name + " doesn't match. Removing file.");
                 i.remove();
             }
         }
         if (files.size() == 0) {
+            log.debug("All files were removed, returning null.");
             return null;
         }
         if (files.size() > 1) {
@@ -290,53 +204,29 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             for (File file : files) {
                 s.append("\n    nodeRef=" + file.getNodeRef());
             }
-            log.warn(s.toString());
+            log.debug(s.toString());
         }
-        return files.get(0);
+
+        File file = files.get(0);
+        log.debug("Returning file: " + file.getNodeRef());
+        return file;
     }
 
-    private QName getTypeQName(String dokumendiLiik) {
-        if (StringUtils.isBlank(dokumendiLiik)) {
-            return null;
-        }
-        List<DocumentType> allDocumentTypes = documentTypeService.getAllDocumentTypes();
-        for (DocumentType type : allDocumentTypes) {
-            if (type.getName().equals(dokumendiLiik)) {
-                return type.getId();
-            }
-        }
-        return null;
-    }
-
-    private static void setDokumentProperties(Dokument dokument, Document doc, boolean includeAdditionalProperties) {
-        boolean isIncomingLetter = DocumentTypeHelper.isIncomingLetter(doc.getDocumentType().getId());
-
-        dokument.setViit(getNullIfEmpty(doc.getRegNumber()));
-        dokument.setRegistreerimiseAeg(convertToXMLGergorianCalendar(doc.getRegDateTime()));
-        if (includeAdditionalProperties) {
-            dokument.setDokumendiLiik(getNullIfEmpty(doc.getDocumentTypeName()));
-            if (isIncomingLetter) {
-                dokument.setSaatja(getNullIfEmpty(doc.getSender()));
-                dokument.setSaaja(getNullIfEmpty(joinStringAndStringWithParentheses(doc.getOwnerName(), doc.getOwnerOrgStructUnit())));
-            }
-            dokument.setPealkiri(getNullIfEmpty(getDocNameAdr(doc)));
-        }
-    }
-
-    private static String getDocNameAdr(Document doc) {
-        String docName = (String) doc.getProperties().get(DocumentDynamicModel.Props.DOC_NAME_ADR);
+    private static String getDocNameAdr(DocumentDynamic doc) {
+        String docName = (String) doc.getProp(DocumentDynamicModel.Props.DOC_NAME_ADR);
         if (StringUtils.isBlank(docName)) {
             docName = doc.getDocName();
         }
         return docName;
     }
 
-    private DokumentDetailidegaV2 buildDokumentDetailidegaV2(Document doc, boolean includeFileContent, Set<QName> documentTypes,
+    private DokumentDetailidegaV2 buildDokumentDetailidegaV2(DocumentDynamic doc, boolean includeFileContent, Set<String> documentTypeIds,
             Map<NodeRef, Map<QName, Serializable>> functionsCache, Map<NodeRef, Map<QName, Serializable>> seriesCache,
             Map<NodeRef, Map<QName, Serializable>> volumesCache) {
 
         DokumentDetailidegaV2 dokument = new DokumentDetailidegaV2();
-        boolean isIncomingLetter = DocumentTypeHelper.isIncomingLetter(doc.getDocumentType().getId());
+        String documentTypeId = doc.getDocumentTypeId();
+        boolean isIncomingLetter = SystematicDocumentType.INCOMING_LETTER.isSameType(documentTypeId);
 
         // =======================================================
         // Copied from setDokumentProperties
@@ -344,38 +234,41 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         dokument.setViit(getNullIfEmpty(doc.getRegNumber()));
         dokument.setRegistreerimiseAeg(convertToXMLGergorianCalendar(doc.getRegDateTime()));
         if (isIncomingLetter) {
-            dokument.setSaatja(getNullIfEmpty(doc.getSender()));
-            dokument.setSaaja(getNullIfEmpty(joinStringAndStringWithParentheses(doc.getOwnerName(), doc.getOwnerOrgStructUnit())));
+            dokument.setSaatja(getNullIfEmpty(getInitialsIfNeeded((String) doc.getProp(DocumentSpecificModel.Props.SENDER_DETAILS_NAME))));
+            dokument.setSaaja(getNullIfEmpty(getClassifiedOrgStructValueIfNeeded(doc.getOwnerName(), doc.getOwnerOrgStructUnit())));
         }
         dokument.setPealkiri(getNullIfEmpty(getDocNameAdr(doc)));
 
         // =======================================================
         // Copied from setDokumentDetailidegaProperties
 
-        dokument.setJuurdepaasuPiirang(getNullIfEmpty(doc.getAccessRestriction()));
-        dokument.setJuurdepaasuPiiranguAlus(getNullIfEmpty(doc.getAccessRestrictionReason()));
-        dokument.setJuurdepaasuPiiranguKehtivuseAlgusKuupaev(convertToXMLGergorianCalendar(doc.getAccessRestrictionBeginDate()));
-        dokument.setJuurdepaasuPiiranguKehtivuseLoppKuupaev(convertToXMLGergorianCalendar(doc.getAccessRestrictionEndDate()));
-        dokument.setJuurdepaasuPiiranguLopp(getNullIfEmpty(doc.getAccessRestrictionEndDesc()));
+        dokument.setJuurdepaasuPiirang(getNullIfEmpty((String) doc.getProp(ACCESS_RESTRICTION)));
+        dokument.setJuurdepaasuPiiranguAlus(getNullIfEmpty((String) doc.getProp(ACCESS_RESTRICTION_REASON)));
+        dokument.setJuurdepaasuPiiranguKehtivuseAlgusKuupaev(convertToXMLGergorianCalendar((Date) doc.getProp(ACCESS_RESTRICTION_BEGIN_DATE)));
+        dokument.setJuurdepaasuPiiranguKehtivuseLoppKuupaev(convertToXMLGergorianCalendar((Date) doc.getProp(ACCESS_RESTRICTION_END_DATE)));
+        dokument.setJuurdepaasuPiiranguLopp(getNullIfEmpty((String) doc.getProp(ACCESS_RESTRICTION_END_DESC)));
         if (isIncomingLetter) {
-            dokument.setVastamiseKuupaev(convertToXMLGergorianCalendar(doc.getComplienceDate()));
-        } else if (DocumentSubtypeModel.Types.OUTGOING_LETTER_MV.equals(doc.getType())) {
-            dokument.setVastamiseKuupaev(convertToXMLGergorianCalendar((Date) doc.getProperties().get(DocumentSpecificModel.Props.REPLY_DATE)));
+            dokument.setVastamiseKuupaev(convertToXMLGergorianCalendar((Date) doc.getProp(DocumentSpecificModel.Props.COMPLIENCE_DATE)));
+        } else if (SystematicDocumentType.OUTGOING_LETTER.isSameType(documentTypeId)) {
+            dokument.setVastamiseKuupaev(convertToXMLGergorianCalendar((Date) doc.getProp(DocumentSpecificModel.Props.REPLY_DATE)));
         }
-        dokument.setTahtaeg(convertToXMLGergorianCalendar(doc.getDueDate2()));
+        dokument.setTahtaeg(convertToXMLGergorianCalendar((Date) doc.getProp(DocumentSpecificModel.Props.DUE_DATE)));
         if (!isIncomingLetter) {
-            dokument.setKoostaja(getNullIfEmpty(joinStringAndStringWithParentheses(doc.getOwnerName(), doc.getOwnerOrgStructUnit())));
+            dokument.setKoostaja(getNullIfEmpty(getClassifiedOrgStructValueIfNeeded(doc.getOwnerName(), doc.getOwnerOrgStructUnit())));
         }
-        dokument.setAllkirjastaja(getNullIfEmpty(doc.getSignerName()));
+        @SuppressWarnings("unchecked")
+        List<String> signerStructUnit = (List<String>) doc.getProp(DocumentCommonModel.Props.SIGNER_ORG_STRUCT_UNIT);
+        dokument.setAllkirjastaja(getNullIfEmpty(getClassifiedOrgStructValueIfNeeded((String) doc.getProp(DocumentCommonModel.Props.SIGNER_NAME)
+                , UserUtil.getDisplayUnit(signerStructUnit))));
 
         // =======================================================
 
         // Associated documents
-        List<SeotudDokument> assocDocs = getSeotudDokumentList(doc.getNodeRef(), documentTypes);
+        List<SeotudDokument> assocDocs = getSeotudDokumentList(doc.getNodeRef(), documentTypeIds);
         dokument.getSeotudDokument().addAll(assocDocs);
 
         // Only include file list when document accessRestriction = Avalik
-        if (AccessRestriction.OPEN.equals(doc.getAccessRestriction())) {
+        if (AccessRestriction.OPEN.getValueName().equals(doc.getProp(ACCESS_RESTRICTION))) {
             List<File> allActiveFiles = fileService.getAllActiveFiles(doc.getNodeRef());
             for (File file : allActiveFiles) {
                 FailV2 fail = new FailV2();
@@ -388,46 +281,31 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         // =======================================================
         // New V2 specific fields
 
-        dokument.setId(getNullIfEmpty(doc.getNodeRefAsString()));
+        dokument.setId(getNullIfEmpty(doc.getNodeRef().toString()));
 
-        dokument.setLisad(getNullIfEmpty((String) doc.getProperties().get(DocumentSpecificModel.Props.ANNEX)));
+        dokument.setLisad(getNullIfEmpty((String) doc.getProp(DocumentSpecificModel.Props.ANNEX)));
 
-        dokument.setSaatjaViit(getNullIfEmpty(doc.getSenderRegNumber()));
+        dokument.setSaatjaViit(getNullIfEmpty((String) doc.getProp(DocumentSpecificModel.Props.SENDER_REG_NUMBER)));
 
         String transmittalMode;
         if (isIncomingLetter) {
-            transmittalMode = (String) doc.getProperties().get(DocumentSpecificModel.Props.TRANSMITTAL_MODE);
+            transmittalMode = (String) doc.getProp(DocumentSpecificModel.Props.TRANSMITTAL_MODE);
         } else {
             @SuppressWarnings("unchecked")
-            List<String> sendModes = (List<String>) doc.getProperties().get(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE);
+            List<String> sendModes = (List<String>) doc.getProp(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE);
             transmittalMode = TextUtil.joinUniqueStringsWithComma(sendModes);
         }
         dokument.setSaatmisviis(getNullIfEmpty(transmittalMode));
 
         // Tähtaja kirjeldus
-        if (DocumentSubtypeModel.Types.CONTRACT_SIM.equals(doc.getType())) {
-            dokument.setTahtaegKirjeldus(getNullIfEmpty((String) doc.getProperties().get(DocumentSpecificModel.Props.CONTRACT_SIM_END_DATE_DESC)));
-        } else if (DocumentSubtypeModel.Types.CONTRACT_SMIT.equals(doc.getType())) {
-            dokument.setTahtaegKirjeldus(getNullIfEmpty((String) doc.getProperties().get(DocumentSpecificModel.Props.CONTRACT_SMIT_END_DATE_DESC)));
-        }
+        dokument.setTahtaegKirjeldus(getNullIfEmpty((String) doc.getProp(DocumentSpecificModel.Props.DUE_DATE_DESC)));
 
         // Osapooled
-        if (DocumentTypeHelper.isContract(doc.getType())) {
-            List<Node> parties = null;
-            String osapool = "";
-            if (doc.hasAspect(DocumentSpecificModel.Aspects.CONTRACT_DETAILS_V1)) {
-                osapool = TextUtil.joinNonBlankStringsWithComma(
-                        Arrays.<String> asList((String) doc.getProperties().get(DocumentSpecificModel.Props.FIRST_PARTY_NAME),
-                                (String) doc.getProperties().get(DocumentSpecificModel.Props.SECOND_PARTY_NAME),
-                                (String) doc.getProperties().get(DocumentSpecificModel.Props.THIRD_PARTY_NAME)));
-
-            } else if (doc.hasAspect(DocumentSpecificModel.Aspects.CONTRACT_DETAILS_V2)) {
-                parties = doc.getAllChildAssociations(DocumentSpecificModel.Assocs.CONTRACT_PARTIES);
-
-            } else if (doc.hasAspect(DocumentSpecificModel.Aspects.CONTRACT_MV_DETAILS)) {
-                parties = doc.getAllChildAssociations(DocumentSpecificModel.Assocs.CONTRACT_MV_PARTIES);
-            }
-
+        String osapool = "";
+        if (SystematicDocumentType.OUTGOING_LETTER.isSameType(documentTypeId)) {
+            osapool = doc.getRecipients();
+        } else {
+            List<Node> parties = doc.getNode().getAllChildAssociations(DocumentChildModel.Assocs.CONTRACT_PARTY);
             if (parties != null) {
                 List<String> names = new ArrayList<String>(parties.size());
                 for (Node node : parties) {
@@ -435,18 +313,16 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
                 }
                 osapool = TextUtil.joinNonBlankStringsWithComma(names);
             }
-
-            dokument.setOsapool(getNullIfEmpty(osapool));
-        } else if (DocumentTypeHelper.isOutgoingLetter(doc.getType())) {
-            dokument.setOsapool(getNullIfEmpty(doc.getRecipients()));
         }
+
+        dokument.setOsapool(getNullIfEmpty(osapool));
 
         // =======================================================
 
         // Document type
         DokumendiliikV2 wsDocumentType = new DokumendiliikV2();
-        wsDocumentType.setId(doc.getDocumentType().getId().getLocalName());
-        wsDocumentType.setNimi(getNullIfEmpty(doc.getDocumentTypeName()));
+        wsDocumentType.setId(documentTypeId);
+        wsDocumentType.setNimi(getNullIfEmpty(documentAdminService.getDocumentTypeName(documentTypeId)));
         dokument.setDokumendiLiik(wsDocumentType);
 
         // Volume
@@ -454,10 +330,10 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         NodeRef volumeRef = (NodeRef) doc.getNode().getProperties().get(DocumentCommonModel.Props.VOLUME);
         Map<QName, Serializable> volumeProps = volumesCache.get(volumeRef);
         if (volumeProps == null) {
-            if (volumeRef == null) {
-                log.warn("Document property volume=null\n  nodeRef=" + doc.getNodeRefAsString() + "\n  props="
-                        + WmNode.toString(RepoUtil.toQNameProperties(doc.getProperties()), namespaceService) + "\n  aspects="
-                        + WmNode.toString(doc.getAspects(), namespaceService));
+            if (volumeRef == null || !nodeService.exists(volumeRef)) {
+                log.warn("Document property volume=null\n  nodeRef=" + doc.getNodeRef().toString() + "\n  props="
+                        + WmNode.toString(RepoUtil.toQNameProperties(doc.getNode().getProperties()), namespaceService) + "\n  aspects="
+                        + WmNode.toString(doc.getNode().getAspects(), namespaceService));
                 docParents = documentService.getDocumentParents(doc.getNodeRef());
                 volumeRef = docParents.get(DocumentCommonModel.Props.VOLUME);
             }
@@ -476,10 +352,10 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         NodeRef seriesRef = (NodeRef) doc.getNode().getProperties().get(DocumentCommonModel.Props.SERIES);
         Map<QName, Serializable> seriesProps = seriesCache.get(seriesRef);
         if (seriesProps == null) {
-            if (seriesRef == null) {
-                log.warn("Document property series=null\n  nodeRef=" + doc.getNodeRefAsString() + "\n  props="
-                        + WmNode.toString(RepoUtil.toQNameProperties(doc.getProperties()), namespaceService) + "\n  aspects="
-                        + WmNode.toString(doc.getAspects(), namespaceService));
+            if (seriesRef == null || !nodeService.exists(seriesRef)) {
+                log.warn("Document property series=null\n  nodeRef=" + doc.getNodeRef().toString() + "\n  props="
+                        + WmNode.toString(RepoUtil.toQNameProperties(doc.getNode().getProperties()), namespaceService) + "\n  aspects="
+                        + WmNode.toString(doc.getNode().getAspects(), namespaceService));
                 if (docParents == null) {
                     docParents = documentService.getDocumentParents(doc.getNodeRef());
                 }
@@ -499,10 +375,10 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         NodeRef functionRef = (NodeRef) doc.getNode().getProperties().get(DocumentCommonModel.Props.FUNCTION);
         Map<QName, Serializable> functionProps = functionsCache.get(functionRef);
         if (functionProps == null) {
-            if (functionRef == null) {
-                log.warn("Document property function=null\n  nodeRef=" + doc.getNodeRefAsString() + "\n  props="
-                        + WmNode.toString(RepoUtil.toQNameProperties(doc.getProperties()), namespaceService) + "\n  aspects="
-                        + WmNode.toString(doc.getAspects(), namespaceService));
+            if (functionRef == null || !nodeService.exists(functionRef)) {
+                log.warn("Document property function=null\n  nodeRef=" + doc.getNodeRef().toString() + "\n  props="
+                        + WmNode.toString(RepoUtil.toQNameProperties(doc.getNode().getProperties()), namespaceService) + "\n  aspects="
+                        + WmNode.toString(doc.getNode().getAspects(), namespaceService));
                 if (docParents == null) {
                     docParents = documentService.getDocumentParents(doc.getNodeRef());
                 }
@@ -521,46 +397,6 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         return dokument;
     }
 
-    private DokumentDetailidega buildDokumentDetailidega(Document doc, boolean includeSeotudDokumentAdditionalProperties, boolean includeFileContent, Set<QName> documentTypes) {
-        DokumentDetailidega dokumentDetailidega = new DokumentDetailidega();
-        setDokumentDetailidegaProperties(dokumentDetailidega, doc, includeSeotudDokumentAdditionalProperties, includeFileContent, documentTypes);
-        return dokumentDetailidega;
-    }
-
-    private void setDokumentDetailidegaProperties(DokumentDetailidega dokumentDetailidega, Document doc
-            , boolean includeSeotudDokumentAdditionalProperties, boolean includeFileContent, Set<QName> documentTypes) {
-        setDokumentProperties(dokumentDetailidega, doc, true);
-        boolean isIncomingLetter = DocumentTypeHelper.isIncomingLetter(doc.getDocumentType().getId());
-
-        dokumentDetailidega.setJuurdepaasuPiirang(getNullIfEmpty(doc.getAccessRestriction()));
-        dokumentDetailidega.setJuurdepaasuPiiranguAlus(getNullIfEmpty(doc.getAccessRestrictionReason()));
-        dokumentDetailidega.setJuurdepaasuPiiranguKehtivuseAlgusKuupaev(convertToXMLGergorianCalendar(doc.getAccessRestrictionBeginDate()));
-        dokumentDetailidega.setJuurdepaasuPiiranguKehtivuseLoppKuupaev(convertToXMLGergorianCalendar(doc.getAccessRestrictionEndDate()));
-        dokumentDetailidega.setJuurdepaasuPiiranguLopp(getNullIfEmpty(doc.getAccessRestrictionEndDesc()));
-        if (isIncomingLetter) {
-            dokumentDetailidega.setVastamiseKuupaev(convertToXMLGergorianCalendar(doc.getComplienceDate()));
-        } else if (DocumentSubtypeModel.Types.OUTGOING_LETTER_MV.equals(doc.getType())) {
-            dokumentDetailidega.setVastamiseKuupaev(convertToXMLGergorianCalendar((Date) doc.getProperties().get(DocumentSpecificModel.Props.REPLY_DATE)));
-        }
-        dokumentDetailidega.setTahtaeg(convertToXMLGergorianCalendar(doc.getDueDate2()));
-        if (!isIncomingLetter) {
-            dokumentDetailidega.setKoostaja(getNullIfEmpty(joinStringAndStringWithParentheses(doc.getOwnerName(), doc.getOwnerOrgStructUnit())));
-        }
-        dokumentDetailidega.setAllkirjastaja(getNullIfEmpty(doc.getSignerName()));
-
-        dokumentDetailidega.getSeotudDokument().addAll(otsiDokumendidSamasTeemas(doc.getNodeRef(), includeSeotudDokumentAdditionalProperties, documentTypes));
-
-        // Only include file list when document accessRestriction = Avalik
-        if (AccessRestriction.OPEN.equals(doc.getAccessRestriction())) {
-            List<File> allActiveFiles = fileService.getAllActiveFiles(doc.getNodeRef());
-            for (File file : allActiveFiles) {
-                Fail fail = new Fail();
-                setFailProperties(fail, file, includeFileContent);
-                dokumentDetailidega.getFail().add(fail);
-            }
-        }
-    }
-
     private void setFailProperties(Fail fail, File file, boolean includeContent) {
         fail.setFailinimi(getNullIfEmpty(file.getName())); // this should be the real file name, because ADR interface requires it to be unique under document
         fail.setSuurus((int) file.getSize());
@@ -576,32 +412,16 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         failSisuga.setMuutmiseAeg(convertToXMLGergorianCalendar(file.getModified()));
     }
 
-    private List<Dokument> otsiDokumendidSamasTeemas(NodeRef document, boolean includeAdditionalProperties, Set<QName> documentTypes) {
-        List<Document> docs = documentService.getReplyOrFollowUpDocuments(document);
-        List<Dokument> list = new ArrayList<Dokument>(docs.size());
-        for (Document doc : docs) {
-            if ((doc.isDocStatus(DocumentStatus.FINISHED) || DocumentTypeHelper.isIncomingLetter(doc.getType()))
-                    && (AccessRestriction.OPEN.equals(doc.getAccessRestriction()) || AccessRestriction.AK.equals(doc.getAccessRestriction()))
-                    && StringUtils.isNotEmpty(doc.getRegNumber()) && doc.getRegDateTime() != null && documentTypes.contains(doc.getType())) {
-
-                Dokument dokument = new Dokument();
-                setDokumentProperties(dokument, doc, includeAdditionalProperties);
-                list.add(dokument);
-            }
-        }
-        return list;
-    }
-
-    private List<SeotudDokument> getSeotudDokumentList(NodeRef document, Set<QName> documentTypes) {
+    private List<SeotudDokument> getSeotudDokumentList(NodeRef document, Set<String> documentTypeIds) {
         List<SeotudDokument> list = new ArrayList<SeotudDokument>();
         for (AssociationRef targetAssocRef : nodeService.getTargetAssocs(document, RegexQNamePattern.MATCH_ALL)) {
-            SeotudDokument seotudDokument = getSeotudDokument(targetAssocRef, false, documentTypes);
+            SeotudDokument seotudDokument = getSeotudDokument(targetAssocRef, false, documentTypeIds);
             if (seotudDokument != null) {
                 list.add(seotudDokument);
             }
         }
         for (AssociationRef sourceAssocRef : nodeService.getSourceAssocs(document, RegexQNamePattern.MATCH_ALL)) {
-            SeotudDokument seotudDokument = getSeotudDokument(sourceAssocRef, true, documentTypes);
+            SeotudDokument seotudDokument = getSeotudDokument(sourceAssocRef, true, documentTypeIds);
             if (seotudDokument != null) {
                 list.add(seotudDokument);
             }
@@ -609,7 +429,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         return list;
     }
 
-    public SeotudDokument getSeotudDokument(AssociationRef assocRef, boolean isSourceAssoc, Set<QName> documentTypes) {
+    public SeotudDokument getSeotudDokument(AssociationRef assocRef, boolean isSourceAssoc, Set<String> documentTypeIds) {
         NodeRef otherDocument = isSourceAssoc ? assocRef.getSourceRef() : assocRef.getTargetRef();
         if (!nodeService.hasAspect(otherDocument, DocumentCommonModel.Aspects.SEARCHABLE)) {
             return null;
@@ -634,8 +454,8 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             return null;
         }
 
-        QName type = nodeService.getType(otherDocument);
-        if (!documentTypes.contains(type)) {
+        String docTypeId = (String) nodeService.getProperty(otherDocument, DocumentAdminModel.Props.OBJECT_TYPE_ID);
+        if (!documentTypeIds.contains(docTypeId)) {
             return null;
         }
 
@@ -644,8 +464,8 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         String accessRestriction = (String) props.get(DocumentCommonModel.Props.ACCESS_RESTRICTION);
         String regNumber = (String) props.get(DocumentCommonModel.Props.REG_NUMBER);
         Date regDateTime = (Date) props.get(DocumentCommonModel.Props.REG_DATE_TIME);
-        if ((DocumentStatus.FINISHED.getValueName().equals(docStatus) || DocumentTypeHelper.isIncomingLetter(type))
-                && (AccessRestriction.OPEN.equals(accessRestriction) || AccessRestriction.AK.equals(accessRestriction))
+        if ((DocumentStatus.FINISHED.getValueName().equals(docStatus) || SystematicDocumentType.INCOMING_LETTER.isSameType(docTypeId))
+                && (AccessRestriction.OPEN.getValueName().equals(accessRestriction) || AccessRestriction.AK.getValueName().equals(accessRestriction))
                 && StringUtils.isNotEmpty(regNumber) && regDateTime != null) {
 
             seotudDokument.setId(otherDocument.toString());
@@ -659,13 +479,9 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
     // ========================================================================
 
     @Override
+    @Deprecated
     public List<DokumentDetailidega> koikDokumendidLisatudMuudetud(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev) {
-        return koikDokumendidLisatudMuudetud(perioodiAlgusKuupaev, perioodiLoppKuupaev, new BuildDocumentCallback<DokumentDetailidega>() {
-            @Override
-            public DokumentDetailidega buildDocument(Document doc, Set<QName> documentTypes) {
-                return buildDokumentDetailidega(doc, false, true, documentTypes);
-            }
-        }, 0, 0, false);
+        throw new RuntimeException("Old queries are not supported! Please use newer V2 queries!");
     }
 
     @Override
@@ -677,14 +493,14 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
 
         return koikDokumendidLisatudMuudetud(perioodiAlgusKuupaev, perioodiLoppKuupaev, new BuildDocumentCallback<DokumentDetailidegaV2>() {
             @Override
-            public DokumentDetailidegaV2 buildDocument(Document doc, Set<QName> documentTypes) {
-                return buildDokumentDetailidegaV2(doc, false, documentTypes, functionsCache, seriesCache, volumesCache);
+            public DokumentDetailidegaV2 buildDocument(DocumentDynamic doc, Set<String> documentTypeIds) {
+                return buildDokumentDetailidegaV2(doc, false, documentTypeIds, functionsCache, seriesCache, volumesCache);
             }
         }, jataAlgusestVahele, tulemustePiirang, true);
     }
 
     private static interface BuildDocumentCallback<T> {
-        T buildDocument(Document doc, Set<QName> documentTypes);
+        T buildDocument(DocumentDynamic doc, Set<String> documentTypeIds);
     }
 
     private <T> List<T> koikDokumendidLisatudMuudetud(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev,
@@ -711,23 +527,23 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
 
             // ============= Search for documents that were modified during specified period
 
-            Set<QName> publicAdrDocumentTypes = Collections.unmodifiableSet(documentTypeService.getPublicAdrDocumentTypeQNames());
+            Set<String> publicAdrDocumentTypeIds = Collections.unmodifiableSet(documentAdminService.getAdrDocumentTypeIds());
 
             log.info("Executing lucene query to find all public ADR documents, modified between " + dateFormat.format(modifiedDateBegin) + " and "
                     + dateFormat.format(modifiedDateEnd) + " (inclusive)");
-            List<NodeRef> docs1 = documentSearchService.searchAdrDocuments(modifiedDateBegin, modifiedDateEnd, publicAdrDocumentTypes);
+            List<NodeRef> docs1 = documentSearchService.searchAdrDocuments(modifiedDateBegin, modifiedDateEnd, publicAdrDocumentTypeIds);
             log.info("Found " + docs1.size() + " documents that were modified during specified period");
             Set<NodeRef> docs = new HashSet<NodeRef>(docs1);
 
             // ============= Search for document types that were changed to publicAdr=true during specified period
             // ============= and add ALL documents that belong to these types to results
 
-            List<QName> addedDocumentTypes = documentSearchService.searchAdrAddedDocumentTypes(modifiedDateBegin, modifiedDateEnd);
-            Set<QName> documentTypes = new HashSet<QName>(publicAdrDocumentTypes); // Currently allowed docTypes
+            List<String> addedDocumentTypes = documentSearchService.searchAdrAddedDocumentTypes(modifiedDateBegin, modifiedDateEnd);
+            Set<String> documentTypes = new HashSet<String>(publicAdrDocumentTypeIds); // Currently allowed docTypes
             documentTypes.retainAll(addedDocumentTypes); // Result: docTypes that were added during this period AND are currently allowed
             if (documentTypes.size() > 0) {
                 log.info("Executing lucene query to find all documents of the following document types whose publicAdr was changed during specified period: "
-                        + WmNode.toString(documentTypes, namespaceService));
+                        + WmNode.toString(documentTypes));
                 List<NodeRef> docs2 = documentSearchService.searchAdrDocuments((Date) null, (Date) null, documentTypes);
                 log.info("Found " + docs2.size() + " documents that belong to " + documentTypes.size()
                         + " document types whose publicAdr was changed during specified period");
@@ -749,10 +565,10 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
                         continue;
                     }
                 }
-                Document doc = documentService.getDocumentByNodeRef(nodeRef);
+                DocumentDynamic doc = documentDynamicService.getDocument(nodeRef);
                 if (StringUtils.isEmpty(doc.getRegNumber()) || doc.getRegDateTime() == null) {
-                    log.warn("ADR document regNumber or regDateTime is missing: nodeRef=" + doc.getNodeRefAsString() + "\nproperties="
-                            + WmNode.toString(RepoUtil.toQNameProperties(doc.getProperties()), namespaceService));
+                    log.warn("ADR document regNumber or regDateTime is missing: nodeRef=" + doc.getNodeRef().toString() + "\nproperties="
+                            + WmNode.toString(RepoUtil.toQNameProperties(doc.getNode().getProperties()), namespaceService));
                     continue; // should not happen!
                     // this may move the results according to skip, and the next request has some overlapping results;
                     // this should not be a problem, as long as there are less of these warning documents than limit
@@ -760,7 +576,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
                 AdrDocument adrDocument = new AdrDocument(doc.getNodeRef(), doc.getRegNumber(), doc.getRegDateTime(), compareByNodeRef);
                 if (compareByNodeRef || !results.containsKey(adrDocument)) {
                     log.debug("Constructing document " + (results.size() + 1));
-                    results.put(adrDocument, buildDocumentCallback.buildDocument(doc, publicAdrDocumentTypes));
+                    results.put(adrDocument, buildDocumentCallback.buildDocument(doc, publicAdrDocumentTypeIds));
                     if (limit > 0 && results.size() >= limit) {
                         log.info("Limit reached, breaking");
                         break;
@@ -830,111 +646,10 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
 
     }
 
-    private static interface BuildDeletedDocumentCallback<T> {
-        T buildDocument(AdrDocument doc);
-    }
-
     @Override
+    @Deprecated
     public List<Dokument> koikDokumendidKustutatud(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev) {
-        return koikDokumendidKustutatud(perioodiAlgusKuupaev, perioodiLoppKuupaev, new BuildDeletedDocumentCallback<Dokument>() {
-            @Override
-            public Dokument buildDocument(AdrDocument doc) {
-                Dokument dokument = new Dokument();
-                dokument.setViit(doc.regNumber);
-                dokument.setRegistreerimiseAeg(convertToXMLGergorianCalendar(doc.regDateTime));
-                return dokument;
-            }
-        }, false);
-    }
-
-    private <T> List<T> koikDokumendidKustutatud(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev,
-            BuildDeletedDocumentCallback<T> buildDeletedDocumentCallback, boolean compareByNodeRef) {
-
-        long startTime = System.currentTimeMillis();
-
-        Date deletedDateBegin = getDate(perioodiAlgusKuupaev);
-        Date deletedDateEnd = getDate(perioodiLoppKuupaev);
-
-        List<T> list;
-
-        if (deletedDateBegin == null || deletedDateEnd == null) {
-            list = Collections.emptyList();
-        } else {
-
-            // ============= Search for documents that were deleted during specified period
-
-            List<NodeRef> existingDocs = documentSearchService.searchAdrDocuments(deletedDateBegin, deletedDateEnd, documentTypeService.getPublicAdrDocumentTypeQNames());
-            Set<AdrDocument> existingDocsSet = new HashSet<AdrDocument>(existingDocs.size());
-            for (NodeRef documentRef : existingDocs) {
-                Document document = documentService.getDocumentByNodeRef(documentRef);
-                if (StringUtils.isEmpty(document.getRegNumber()) || document.getRegDateTime() == null) {
-                    log.warn("ADR document regNumber or regDateTime is missing: nodeRef=" + document.getNodeRefAsString() + "\nproperties="
-                            + WmNode.toString(RepoUtil.toQNameProperties(document.getProperties()), namespaceService));
-                    continue; // should not happen!
-                }
-                existingDocsSet.add(new AdrDocument(document.getNodeRef(), document.getRegNumber(), document.getRegDateTime(), compareByNodeRef));
-            }
-
-            List<NodeRef> deletedDocs = documentSearchService.searchAdrDeletedDocuments(deletedDateBegin, deletedDateEnd);
-            Set<AdrDocument> deletedDocsSet = new HashSet<AdrDocument>(deletedDocs.size());
-            for (NodeRef deletedDoc : deletedDocs) {
-                Map<QName, Serializable> props = nodeService.getProperties(deletedDoc);
-                String regNumber = (String) props.get(AdrModel.Props.REG_NUMBER);
-                Date regDateTime = (Date) props.get(AdrModel.Props.REG_DATE_TIME);
-                if (StringUtils.isEmpty(regNumber) || regDateTime == null) {
-                    log.warn("ADR document regNumber or regDateTime is missing: nodeRef=" + deletedDoc + "\nproperties="
-                            + WmNode.toString(props, namespaceService));
-                    continue; // should not happen!
-                }
-                NodeRef nodeRef = (NodeRef) props.get(AdrModel.Props.NODEREF);
-                if (compareByNodeRef && nodeRef == null) {
-                    // Older data doesn't have nodeRef property
-                    continue;
-                }
-                deletedDocsSet.add(new AdrDocument(nodeRef, regNumber, regDateTime, compareByNodeRef));
-            }
-
-            deletedDocsSet.removeAll(existingDocsSet);
-            if (log.isDebugEnabled()) {
-                log.debug("Found " + deletedDocsSet.size() + " documents that were deleted during specified period");
-            }
-
-            // ============= Search for document types that were changed to publicAdr=false during specified period
-            // ============= and add ALL documents that belong to these types to results
-
-            Set<QName> deletedDocumentTypes = new HashSet<QName>(documentSearchService.searchAdrDeletedDocumentTypes(deletedDateBegin, deletedDateEnd));
-            // Result: docTypes that were deleted during this period AND are not currently allowed
-            deletedDocumentTypes.removeAll(documentTypeService.getPublicAdrDocumentTypeQNames());
-
-            List<NodeRef> docs = documentSearchService.searchAdrDocuments((Date) null, (Date) null, deletedDocumentTypes);
-            if (log.isDebugEnabled()) {
-                log.debug("Found " + docs.size() + " documents that belong to " + deletedDocumentTypes.size()
-                        + " document types that were changed to publicAdr=FALSE during specified period");
-            }
-            for (NodeRef docRef : docs) {
-                Document doc = documentService.getDocumentByNodeRef(docRef);
-                if (StringUtils.isEmpty(doc.getRegNumber()) || doc.getRegDateTime() == null) {
-                    log.warn("ADR document regNumber or regDateTime is missing: nodeRef=" + doc.getNodeRefAsString() + "\nproperties="
-                            + WmNode.toString(RepoUtil.toQNameProperties(doc.getProperties()), namespaceService));
-                    continue; // should not happen!
-                }
-                deletedDocsSet.add(new AdrDocument(doc.getNodeRef(), doc.getRegNumber(), doc.getRegDateTime(), compareByNodeRef));
-            }
-
-            // ============= Build results
-
-            list = new ArrayList<T>(deletedDocsSet.size());
-            for (AdrDocument doc : deletedDocsSet) {
-                list.add(buildDeletedDocumentCallback.buildDocument(doc));
-            }
-        }
-
-        if (log.isDebugEnabled()) {
-            log.debug("ADR koikDokumendidKustutatud finished, time " + (System.currentTimeMillis() - startTime)
-                    + " ms, results " + list.size() + ", arguments:\n    perioodiAlgusKuupaev=" + perioodiAlgusKuupaev + "\n    perioodiLoppKuupaev="
-                    + perioodiLoppKuupaev);
-        }
-        return list;
+        throw new RuntimeException("Old queries are not supported! Please use newer V2 queries!");
     }
 
     @Override
@@ -980,7 +695,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             // ============= Search for documents that exist (were modified) during specified period
 
             log.info("Executing lucene query to find documents that were modified during specified period");
-            List<NodeRef> existingDocRefs = documentSearchService.searchAdrDocuments(deletedDateBegin, deletedDateEnd, documentTypeService.getPublicAdrDocumentTypeQNames());
+            List<NodeRef> existingDocRefs = documentSearchService.searchAdrDocuments(deletedDateBegin, deletedDateEnd, documentAdminService.getAdrDocumentTypeIds());
             log.info("Found " + existingDocRefs.size() + " documents that were modified during specified period");
             for (Iterator<AdrDocument> i = deletedDocs.iterator(); i.hasNext();) {
                 AdrDocument deletedDoc = i.next();
@@ -999,11 +714,11 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             // ============= Search for document types that were changed to publicAdr=false during specified period
             // ============= and add ALL documents that belong to these types to results
 
-            Set<QName> deletedDocumentTypes = new HashSet<QName>(documentSearchService.searchAdrDeletedDocumentTypes(deletedDateBegin, deletedDateEnd));
+            Set<String> deletedDocumentTypes = new HashSet<String>(documentSearchService.searchAdrDeletedDocumentTypes(deletedDateBegin, deletedDateEnd));
             // Result: docTypes that were deleted during this period AND are not currently allowed
-            deletedDocumentTypes.removeAll(documentTypeService.getPublicAdrDocumentTypeQNames());
+            deletedDocumentTypes.removeAll(documentAdminService.getAdrDocumentTypeIds());
             log.info("Found " + deletedDocumentTypes.size() + " document types, which were changed to publicAdr=false during specified period: "
-                    + WmNode.toString(deletedDocumentTypes, namespaceService));
+                    + WmNode.toString(deletedDocumentTypes));
             if (deletedDocumentTypes.size() > 0) {
                 log.info("Executing lucene query to find all documents that belong to " + deletedDocumentTypes.size()
                         + " document types which were changed to publicAdr=false during specified period");
@@ -1043,8 +758,8 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         }
 
         log.info("Finished koikDokumendidKustutatudV2"
-                    + ", time " + (System.currentTimeMillis() - startTime) + " ms"
-                    + ", results " + list.size());
+                + ", time " + (System.currentTimeMillis() - startTime) + " ms"
+                + ", results " + list.size());
         return list;
     }
 
@@ -1080,6 +795,28 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         addDeletedDocument(document, regNumber, regDateTime);
     }
 
+    private String getInitialsIfNeeded(String name) {
+        NodeRef documentTypeRef = documentAdminService.getDocumentTypeRef(SystematicDocumentType.INCOMING_LETTER.getId());
+        Boolean initialsToAdr = (Boolean) nodeService.getProperty(documentTypeRef, DocumentDynamicModel.Props.SENDER_INITIALS_TO_ADR);
+
+        return Boolean.TRUE.equals(initialsToAdr) ? UserUtil.getInitials(name) : name;
+    }
+
+    private String getClassifiedOrgStructValueIfNeeded(String ownerName, String ownerOrgStructUnit) {
+        if (StringUtils.isBlank(ownerOrgStructUnit)) {
+            return ownerName;
+        }
+
+        List<ClassificatorValue> allClassificatorValues = classificatorService.getAllClassificatorValues("classifiedOrgStructUnitsToAdr");
+        for (ClassificatorValue classificatorValue : allClassificatorValues) {
+            if (classificatorValue.getValueName().equals(ownerOrgStructUnit)) {
+                return classificatorValue.getValueData();
+            }
+        }
+
+        return joinStringAndStringWithParentheses(ownerName, ownerOrgStructUnit);
+    }
+
     // START: getters / setters
 
     public void setDocumentSearchService(DocumentSearchService documentSearchService) {
@@ -1090,12 +827,20 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         this.fileService = fileService;
     }
 
-    public void setDocumentTypeService(DocumentTypeService documentTypeService) {
-        this.documentTypeService = documentTypeService;
+    public void setClassificatorService(ClassificatorService classificatorService) {
+        this.classificatorService = classificatorService;
+    }
+
+    public void setDocumentAdminService(DocumentAdminService documentAdminService) {
+        this.documentAdminService = documentAdminService;
     }
 
     public void setDocumentService(DocumentService documentService) {
         this.documentService = documentService;
+    }
+
+    public void setDocumentDynamicService(DocumentDynamicService documentDynamicService) {
+        this.documentDynamicService = documentDynamicService;
     }
 
     public void setNamespaceService(NamespaceService namespaceService) {
