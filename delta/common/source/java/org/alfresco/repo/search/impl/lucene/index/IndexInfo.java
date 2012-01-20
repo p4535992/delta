@@ -151,6 +151,7 @@ public class IndexInfo implements IndexMonitor
      * The logger.
      */
     private static Log s_logger = LogFactory.getLog(IndexInfo.class);
+    private static Log l_logger = LogFactory.getLog("org.alfresco.repo.search.impl.lucene.index.IndexInfo.Locking");
 
     /**
      * Use NIO memory mapping to wite the index control file.
@@ -377,9 +378,9 @@ public class IndexInfo implements IndexMonitor
                 }
             }
 
-            if (s_logger.isDebugEnabled())
+            if (l_logger.isDebugEnabled())
             {
-                s_logger.debug("Got " + indexInfo + " for " + file.getAbsolutePath());
+                l_logger.debug("Got " + indexInfo + " for " + file.getAbsolutePath());
             }
             return indexInfo;
         }
@@ -1128,9 +1129,9 @@ public class IndexInfo implements IndexMonitor
             }
             // Manage reference counting
             mainIndexReader.incRef();
-            if (s_logger.isDebugEnabled())
+            if (l_logger.isDebugEnabled())
             {
-                s_logger.debug("Main index reader references = " + ((ReferenceCounting)mainIndexReader).getReferenceCount());
+                l_logger.debug("Main index reader references = " + ((ReferenceCounting)mainIndexReader).getReferenceCount());
             }
             
             // Prevent close calls from really closing the main reader
@@ -1243,9 +1244,9 @@ public class IndexInfo implements IndexMonitor
 
             // The reference count would have been incremented automatically by MultiReader / FilterIndexReaderByStringId
             deltaReader.decRef();
-            if (s_logger.isDebugEnabled())
+            if (l_logger.isDebugEnabled())
             {
-                s_logger.debug("Main index reader references = " + ((ReferenceCounting)mainIndexReader).getReferenceCount());
+                l_logger.debug("Main index reader references = " + ((ReferenceCounting)mainIndexReader).getReferenceCount());
             }
             reader = ReferenceCountingReadOnlyIndexReaderFactory.createReader(MAIN_READER + id, reader, false, config);
             ReferenceCounting refCounting = (ReferenceCounting) reader;
@@ -4031,25 +4032,25 @@ public class IndexInfo implements IndexMonitor
     {
         String threadName = null;
         long start = 0l;
-        if (s_logger.isDebugEnabled())
+        if (l_logger.isDebugEnabled())
         {
             threadName = Thread.currentThread().getName();
-            s_logger.debug("Waiting for WRITE lock  - " + threadName);
+            l_logger.debug("Waiting for WRITE lock  - " + threadName);
             start = System.nanoTime();
         }
         readWriteLock.writeLock().lock();
-        if (s_logger.isDebugEnabled())
+        if (l_logger.isDebugEnabled())
         {
             long end = System.nanoTime();
-            s_logger.debug("...GOT WRITE LOCK  - " + threadName + " -  in " + ((end - start) / 10e6f) + " ms");
+            l_logger.debug("...GOT WRITE LOCK  - " + threadName + " -  in " + ((end - start) / 10e6f) + " ms");
         }
     }
 
     private void releaseWriteLock()
     {
-        if (s_logger.isDebugEnabled())
+        if (l_logger.isDebugEnabled())
         {
-            s_logger.debug("RELEASED WRITE LOCK  - " + Thread.currentThread().getName());
+            l_logger.debug("RELEASED WRITE LOCK  - " + Thread.currentThread().getName());
         }
         readWriteLock.writeLock().unlock();
     }
@@ -4058,25 +4059,25 @@ public class IndexInfo implements IndexMonitor
     {
         String threadName = null;
         long start = 0l;
-        if (s_logger.isDebugEnabled())
+        if (l_logger.isDebugEnabled())
         {
             threadName = Thread.currentThread().getName();
-            s_logger.debug("Waiting for READ lock  - " + threadName);
+            l_logger.debug("Waiting for READ lock  - " + threadName);
             start = System.nanoTime();
         }
         readWriteLock.readLock().lock();
-        if (s_logger.isDebugEnabled())
+        if (l_logger.isDebugEnabled())
         {
             long end = System.nanoTime();
-            s_logger.debug("...GOT READ LOCK  - " + threadName + " -  in " + ((end - start) / 10e6f) + " ms");
+            l_logger.debug("...GOT READ LOCK  - " + threadName + " -  in " + ((end - start) / 10e6f) + " ms");
         }
     }
 
     private void releaseReadLock()
     {
-        if (s_logger.isDebugEnabled())
+        if (l_logger.isDebugEnabled())
         {
-            s_logger.debug("RELEASED READ LOCK  - " + Thread.currentThread().getName());
+            l_logger.debug("RELEASED READ LOCK  - " + Thread.currentThread().getName());
         }
         readWriteLock.readLock().unlock();
     }
