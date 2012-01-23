@@ -1007,7 +1007,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     private int sendAccessRestrictionEndDateNotifications(List<Document> documents, Map<String, List<Document>> documentsByUser) {
-
+        int sentNotificationCount = 0;
         Notification notification = setupNotification(new Notification(), NotificationModel.NotificationType.ACCESS_RESTRICTION_END_DATE);
 
         NodeRef notificationTemplateByName = templateService.getNotificationTemplateByName(notification.getTemplateName());
@@ -1016,7 +1016,7 @@ public class NotificationServiceImpl implements NotificationService {
                 log.debug("Access restriction end date notification email template '" + notification.getTemplateName()
                         + "' not found, no notification email is sent");
             }
-            return 0; // if the admins are lazy and we don't have a template, we don't have to send out notifications... :)
+            return sentNotificationCount; // if the admins are lazy and we don't have a template, we don't have to send out notifications... :)
         }
 
         DocumentAccessRestrictionEndDateComparator endDateComparator = new DocumentAccessRestrictionEndDateComparator();
@@ -1034,7 +1034,9 @@ public class NotificationServiceImpl implements NotificationService {
             String content = templateService.getProcessedAccessRestrictionEndDateTemplate(userDocuments, notificationTemplateByName);
 
             try {
-                sendEmail(notification, content, null);
+                if (sendEmail(notification, content, null)) {
+                    sentNotificationCount++;
+                }
             } catch (EmailException e) {
                 log.error("Access restriction due date notification e-mail sending to " + userFullName + " (" + userName + ") <"
                         + userEmail + "> failed, ignoring and continuing", e);
@@ -1051,7 +1053,7 @@ public class NotificationServiceImpl implements NotificationService {
                 log.debug("Access restriction end date notification email template '" + notification.getTemplateName()
                         + "' not found, no notification email is sent");
             }
-            return 0; // if the admins are lazy and we don't have a template, we don't have to send out notifications... :)
+            return sentNotificationCount; // if the admins are lazy and we don't have a template, we don't have to send out notifications... :)
         }
 
         notification = addDocumentManagersAsRecipients(notification);
@@ -1060,12 +1062,14 @@ public class NotificationServiceImpl implements NotificationService {
         String content = templateService.getProcessedAccessRestrictionEndDateTemplate(documents, notificationTemplateByName);
 
         try {
-            sendEmail(notification, content, null);
+            if (sendEmail(notification, content, null)) {
+                sentNotificationCount++;
+            }
         } catch (EmailException e) {
             log.error("Access restriction due date notification e-mail sending to document managers failed, ignoring and continuing", e);
         }
 
-        return 0;
+        return sentNotificationCount;
     }
 
     @Override
@@ -1172,17 +1176,12 @@ public class NotificationServiceImpl implements NotificationService {
         return (message != null) ? message : messageKey;
     }
 
-    private void sendEmail(Notification notification, String content, NodeRef docRef) throws EmailException {
-        sendEmail(notification, content, docRef, null, false, null);
+    private boolean sendEmail(Notification notification, String content, NodeRef docRef) throws EmailException {
+        return sendEmail(notification, content, docRef, null, false, null);
     }
 
-    private void sendEmail(Notification notification, String content, NodeRef docRef, List<String> fileRefs, boolean zipIt, String zipName)
+    private boolean sendEmail(Notification notification, String content, NodeRef docRef, List<String> fileRefs, boolean zipIt, String zipName)
             throws EmailException {
-        if (log.isDebugEnabled()) {
-            log.debug("Sending notification e-mail\nnotification=" + notification + "\ncontent=" + WmNode.toString(content) + "\ndocRef=" + docRef
-                    + "\nfileRefs=" + WmNode.toString(fileRefs) + "\nzipIt=" + zipIt + "\nzipName=" + zipName);
-        }
-
         // Remove recipients with blank e-mail address
         // So that, if there is at least one recipient with non-blank e-mail address, e-mail sending doesn't fail
         List<String> toEmails = new ArrayList<String>(notification.getToEmails());
@@ -1202,8 +1201,21 @@ public class NotificationServiceImpl implements NotificationService {
             }
         }
 
+        if (toEmails.isEmpty()) {
+            if (log.isDebugEnabled()) {
+                log.debug("Skipping sending notification e-mail, no recipient addresses\nnotification=" + notification + "\ncontent=" + WmNode.toString(content) + "\ndocRef="
+                        + docRef + "\nfileRefs=" + WmNode.toString(fileRefs) + "\nzipIt=" + zipIt + "\nzipName=" + zipName);
+            }
+            return false;
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("Sending notification e-mail\nnotification=" + notification + "\ntoEmails=" + toEmails + "\ntoNames=" + toNames + "\ncontent=" + WmNode.toString(content)
+                    + "\ndocRef=" + docRef + "\nfileRefs=" + WmNode.toString(fileRefs) + "\nzipIt=" + zipIt + "\nzipName=" + zipName);
+        }
+
         emailService.sendEmail(toEmails, toNames, notification.getSenderEmail() //
                 , notification.getSubject(), content, true, docRef, fileRefs, zipIt, zipName);
+        return true;
     }
 
     // START: setters/getters

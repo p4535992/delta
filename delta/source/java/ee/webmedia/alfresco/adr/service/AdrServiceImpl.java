@@ -234,7 +234,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         dokument.setViit(getNullIfEmpty(doc.getRegNumber()));
         dokument.setRegistreerimiseAeg(convertToXMLGergorianCalendar(doc.getRegDateTime()));
         if (isIncomingLetter) {
-            dokument.setSaatja(getNullIfEmpty(getInitialsIfNeeded((String) doc.getProp(DocumentSpecificModel.Props.SENDER_DETAILS_NAME))));
+            dokument.setSaatja(getNullIfEmpty(getInitialsIfNeeded((String) doc.getProp(DocumentSpecificModel.Props.SENDER_DETAILS_NAME), doc.getNodeRef())));
             dokument.setSaaja(getNullIfEmpty(getClassifiedOrgStructValueIfNeeded(doc.getOwnerName(), doc.getOwnerOrgStructUnit())));
         }
         dokument.setPealkiri(getNullIfEmpty(getDocNameAdr(doc)));
@@ -795,10 +795,8 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         addDeletedDocument(document, regNumber, regDateTime);
     }
 
-    private String getInitialsIfNeeded(String name) {
-        NodeRef documentTypeRef = documentAdminService.getDocumentTypeRef(SystematicDocumentType.INCOMING_LETTER.getId());
-        Boolean initialsToAdr = (Boolean) nodeService.getProperty(documentTypeRef, DocumentDynamicModel.Props.SENDER_INITIALS_TO_ADR);
-
+    private String getInitialsIfNeeded(String name, NodeRef documentRef) {
+        Boolean initialsToAdr = (Boolean) nodeService.getProperty(documentRef, DocumentDynamicModel.Props.SENDER_INITIALS_TO_ADR);
         return Boolean.TRUE.equals(initialsToAdr) ? UserUtil.getInitials(name) : name;
     }
 

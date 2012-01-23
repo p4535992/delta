@@ -270,7 +270,7 @@ public class UserContactRelatedGroupGenerator extends BaseSystematicFieldGenerat
 
     public static Pair<Field, Integer> getPrimaryFieldAndIndex(FieldGroup group) {
         // Ensure that exactly one USER/CONTACT/USER_CONTACT field is in this group;
-        // and all other fields /*that have mapping*/ are TEXT_FIELD or STRUCT_UNIT
+        // and all other fields /*that have mapping*/ are TEXT_FIELD or STRUCT_UNIT or CHECKBOX
         Field primaryField = null;
         int primaryFieldIndex = -1;
         int i = 0;
@@ -281,7 +281,9 @@ public class UserContactRelatedGroupGenerator extends BaseSystematicFieldGenerat
                 primaryFieldIndex = i;
             } else {
                 // if (mapping.get(child.getQName()) != null) {
-                Assert.isTrue(child.getFieldTypeEnum() == FieldType.TEXT_FIELD || child.getFieldTypeEnum() == FieldType.STRUCT_UNIT);
+                Assert.isTrue(child.getFieldTypeEnum() == FieldType.TEXT_FIELD 
+                        || child.getFieldTypeEnum() == FieldType.STRUCT_UNIT 
+                        || child.getFieldTypeEnum() == FieldType.CHECKBOX);
                 // }
             }
             i++;

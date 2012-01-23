@@ -88,6 +88,12 @@ public class CSVExporter {
 
             HttpServletResponse response = (HttpServletResponse) facesContext.getExternalContext().getResponse();
             response.setCharacterEncoding(CHARSET);
+            response.setContentType("text/csv; charset=" + CHARSET);
+            response.setHeader("Expires", "0");
+            response.setHeader("Cache-Control", "must-revalidate, post-check=0, pre-check=0");
+            response.setHeader("Pragma", "public");
+            response.setHeader("Content-disposition", "attachment;filename=export.csv");
+
             OutputStream outputStream = response.getOutputStream();
             OutputStreamWriter writer = new OutputStreamWriter(outputStream, CHARSET);
             // the Unicode value for UTF-8 BOM, is needed so that Excel would recognise the file in correct encoding
@@ -99,12 +105,6 @@ public class CSVExporter {
                 orderRows(dataRows);
             }
             writeData(writer, dataRows);
-
-            response.setContentType("text/csv; charset=" + CHARSET);
-            response.setHeader("Expires", "0");
-            response.setHeader("Cache-Control", "must-revalidate, post-check=0, pre-check=0");
-            response.setHeader("Pragma", "public");
-            response.setHeader("Content-disposition", "attachment;filename=export.csv");
 
             writer.flush();
             writer.close();

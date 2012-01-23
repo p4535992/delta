@@ -477,10 +477,10 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         if (docType != null) {
             checkFieldMappings(docType);
         }
-        baseService.saveObject(dynType);
         if (docType != null) {
             updatePublicAdr(docType, wasUnsaved);
         }
+        baseService.saveObject(dynType);
         if (wasUnsaved || dynTypeOriginal.isPropertyChanged(DocumentAdminModel.Props.USED, DocumentAdminModel.Props.NAME, DocumentAdminModel.Props.MENU_GROUP_NAME)) {
             menuService.menuUpdated();
         }
@@ -746,8 +746,8 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                         joinQueryPartsAnd(
                                 generateTypeQuery(DocumentCommonModel.Types.DOCUMENT)
                                 , generateAspectQuery(DocumentCommonModel.Aspects.SEARCHABLE)
-                        )
-                        , generatePropertyExactQuery(Props.OBJECT_TYPE_ID, documentTypeId, false))
+                                )
+                                , generatePropertyExactQuery(Props.OBJECT_TYPE_ID, documentTypeId, false))
                 );
     }
 
@@ -1280,7 +1280,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         }
 
         private <D> void processDocTypeAssocs(Map<String, DocumentType> docTypesCache, Map<String, Pair<List<FollowupAssociation>
-                , List<ReplyAssociation>>> imporableDocTypesById, int totalDocTypes) {
+        , List<ReplyAssociation>>> imporableDocTypesById, int totalDocTypes) {
             Map<String /* docTypeId */, Set<String> /* docTypeFields */> docTypeFieldsCache = new HashMap<String, Set<String>>();
             int i = 0;
             LOG.info("Starting to import associations of " + totalDocTypes + " document types");
@@ -1530,7 +1530,9 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         List<DocumentType> documentTypes = getDocumentTypes(DONT_INCLUDE_CHILDREN, true);
         Set<String> typeIds = new HashSet<String>(documentTypes.size());
         for (DocumentType documentType : documentTypes) {
-            typeIds.add(documentType.getId());
+            if (documentType.isPublicAdr()) {
+                typeIds.add(documentType.getId());
+            }
         }
         return typeIds;
     }
