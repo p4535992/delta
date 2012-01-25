@@ -3,7 +3,7 @@
       <actions>
 
          <action id="document_manage_inheritable_permissions">
-            <evaluator>ee.webmedia.alfresco.privilege.web.ManagePrivilegesEvaluator</evaluator>
+            <evaluator>ee.webmedia.alfresco.docdynamic.web.ManageDocumentPrivilegesEvaluator</evaluator>
             <label-id>manage_invited_users</label-id>
             <image>/images/icons/users.gif</image>
             <action>dialog:manageInheritablePrivilegesDialog</action>

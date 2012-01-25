@@ -262,17 +262,10 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
    
    public Object getActionsContext()
    {
-      // return the current node as the context for actions be default
       // dialog implementations can override this method to return the
       // appropriate object for their use case
       
-      if (navigator == null)
-      {
-         throw new AlfrescoRuntimeException("To use actions in the dialog the 'navigator' " +
-                  "property must be injected with an instance of NavigationBean!");
-      }
-      
-      return navigator.getCurrentNode();
+      return null;
    }
 
    public String getActionsConfigId()

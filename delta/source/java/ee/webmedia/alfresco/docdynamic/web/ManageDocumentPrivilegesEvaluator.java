@@ -1,4 +1,4 @@
-package ee.webmedia.alfresco.privilege.web;
+package ee.webmedia.alfresco.docdynamic.web;
 
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
@@ -11,7 +11,7 @@ import ee.webmedia.alfresco.document.web.evaluator.ViewStateActionEvaluator;
  * 
  * @author Ats Uiboupin
  */
-public class ManagePrivilegesEvaluator extends BaseActionEvaluator {
+public class ManageDocumentPrivilegesEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 1L;
 
     @Override

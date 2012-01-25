@@ -39,7 +39,7 @@
           </action>
 
          <action id="volume_manage_permissions">
-            <evaluator>ee.webmedia.alfresco.privilege.web.ManagePrivilegesEvaluator</evaluator>
+            <evaluator>ee.webmedia.alfresco.volume.web.evaluator.ManageVolumePrivilegesEvaluator</evaluator>
             <label-id>manage_invited_users</label-id>
             <image>/images/icons/users.gif</image>
             <action>dialog:manageInheritablePrivilegesDialog</action>

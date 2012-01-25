@@ -3,6 +3,8 @@ package ee.webmedia.alfresco.document.bootstrap;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDvkService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getNamespaceService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,6 +52,7 @@ public class ArrivedDocumentsPermissionsUpdateBootstrap extends AbstractModuleCo
     protected void addPermissions(List<NodeRef> folderRefs) {
         PrivilegeService privilegeService = BeanHelper.getPrivilegeService();
         for (NodeRef folderRef : folderRefs) {
+            LOG.info("Adding permissions to " + folderRef + " - " + getNodeService().getPath(folderRef).toPrefixString(getNamespaceService()));
             privilegeService.setPermissions(folderRef, UserService.AUTH_DOCUMENT_MANAGERS_GROUP, Privileges.EDIT_DOCUMENT);
         }
     }

@@ -25,8 +25,6 @@
 package org.alfresco.web.ui.repo.tag;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ResourceBundle;
 import java.util.regex.Matcher;
@@ -43,7 +41,7 @@ import javax.servlet.jsp.tagext.TagSupport;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.app.servlet.BaseServlet;
 import org.alfresco.web.bean.ErrorBean;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -70,6 +68,7 @@ public class SystemErrorTag extends TagSupport
    private String detailsStyleClass;
    private boolean showDetails = false;
    
+   public static FastDateFormat dateTimeFormat = FastDateFormat.getInstance("dd.MM.yyyy HH:mm:ss.SSS Z");
    
    /**
     * @return Returns the showDetails.
@@ -172,6 +171,8 @@ public class SystemErrorTag extends TagSupport
          
          ResourceBundle bundle = Application.getBundle(pageContext.getSession());
          String appVersion = "Rakenduse versioon: " + BeanHelper.getApplicationService().getProjectVersion() + "\n";
+         String server = "Server: " + ((HttpServletRequest) pageContext.getRequest()).getHeader("host") + "\n";
+         String time = "Aeg: " + dateTimeFormat.format(System.currentTimeMillis()) + "\n";
          
          out.write("<div style='margin: 20px;'");
          
@@ -184,6 +185,8 @@ public class SystemErrorTag extends TagSupport
          
          out.write(">");
          out.write(appVersion + "<br>");
+         out.write(server + "<br>");
+         out.write(time + "<br>");
          out.write(errorMessage);
          out.write("</div>");
          
@@ -236,6 +239,8 @@ public class SystemErrorTag extends TagSupport
          
          out.write("><pre>");
          out.write(appVersion);
+         out.write(server);
+         out.write(time);
          out.write(highLightEE(errorDetails).replaceAll("<br>Caused by:", "\n\n<b>Caused by</b>:").replaceAll("<br>", "\n")); 
          out.write("<pre></div>");
          
