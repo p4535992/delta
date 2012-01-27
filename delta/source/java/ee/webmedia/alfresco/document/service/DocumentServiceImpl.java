@@ -111,6 +111,7 @@ import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.file.web.Subfolder;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
+import ee.webmedia.alfresco.document.log.service.DocumentPropertiesChangeHolder;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
@@ -2094,6 +2095,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
      */
     public static class PropertyChangesMonitorHelper {
         private final QName TEMP_PROPERTY_CHANGES_IGNORED_PROPS = QName.createQName("{temp}propertyChanges_ignoredProps");
+        private DocumentPropertiesChangeHolder propsChangedLogger;
 
         /**
          * Add given property names to ignore list when checking changes in property values
@@ -2127,7 +2129,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
          *         <li>added to <code>propsToSave</code> using {@link #addIgnoredProps(Map, QName...)}</li>
          *         </ul>
          */
-        public List<Pair<QName, Pair<Serializable, Serializable>>> setPropertiesIgnoringSystemAndReturnNewValues(final NodeRef nodeRef, final Map<String, Object> propsToSave,
+        public DocumentPropertiesChangeHolder setPropertiesIgnoringSystemAndReturnNewValues(final NodeRef nodeRef, final Map<String, Object> propsToSave,
                 QName... ignoredProps) {
             final List<QName> ignored = ignoredProps == null ? Collections.<QName> emptyList() : Arrays.asList(ignoredProps);
             final Map<QName, Serializable> oldProps = BeanHelper.getGeneralService().getPropertiesIgnoringSys(BeanHelper.getNodeService().getProperties(nodeRef));
@@ -2138,7 +2140,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             if (propertyChangesIgnoredProps != null) {
                 oldProps.put(TEMP_PROPERTY_CHANGES_IGNORED_PROPS, propertyChangesIgnoredProps);
             }
-            return checkPropertyChanges(oldProps, propsIgnoringSystem, ignored);
+            return checkPropertyChanges(oldProps, propsIgnoringSystem, ignored, nodeRef);
         }
 
         public boolean setPropertiesIgnoringSystemAndReturnIfChanged(final NodeRef nodeRef, final Map<String, Object> propsToSave, QName... ignoredProps) {
@@ -2146,24 +2148,24 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
 
         }
 
-        private List<Pair<QName, Pair<Serializable, Serializable>>> checkPropertyChanges(final Map<QName, Serializable> oldProps, final Map<QName, Serializable> newProps,
-                final List<QName> ignoredProps) {
+        private DocumentPropertiesChangeHolder checkPropertyChanges(final Map<QName, Serializable> oldProps, final Map<QName, Serializable> newProps,
+                final List<QName> ignoredProps, NodeRef nodeRef) {
             if (oldProps.size() != newProps.size()) {
-                isPropNamesDifferent(oldProps, newProps, ignoredProps, "removed ignored props: ");
-                isPropNamesDifferent(newProps, oldProps, ignoredProps, "added ignored props: ");
+                isPropNamesDifferent(oldProps, newProps, ignoredProps, "removed ignored props: ", nodeRef);
+                isPropNamesDifferent(newProps, oldProps, ignoredProps, "added ignored props: ", nodeRef);
             }
-            return isChanges(oldProps, newProps, ignoredProps);
+            return isChanges(oldProps, newProps, ignoredProps, nodeRef);
         }
 
         private boolean isPropNamesDifferent(final Map<QName, Serializable> oldProps, final Map<QName, Serializable> newProps, final List<QName> ignoredProps,
-                String debugPrefix) {
+                String debugPrefix, NodeRef nodeRef) {
             boolean differentPropNames = false;
             HashSet<QName> oldKeys = new HashSet<QName>(oldProps.keySet());
             final HashSet<QName> newKeys = new HashSet<QName>(newProps.keySet());
             oldKeys.removeAll(newKeys);
             if (oldKeys.size() > 0) {
                 if (!ignoredProps.containsAll(oldKeys)) {
-                    differentPropNames = !isChanges(oldProps, newProps, ignoredProps).isEmpty();
+                    differentPropNames = !isChanges(oldProps, newProps, ignoredProps, nodeRef).isEmpty();
                     if (differentPropNames && log.isDebugEnabled()) {
                         log.debug(debugPrefix + oldKeys);
                     }
@@ -2172,19 +2174,21 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             return differentPropNames;
         }
 
-        private List<Pair<QName, Pair<Serializable, Serializable>>> isChanges(final Map<QName, Serializable> oldProps, final Map<QName, Serializable> newProps,
-                final List<QName> ignoredProps) {
+        private DocumentPropertiesChangeHolder isChanges(final Map<QName, Serializable> oldProps, final Map<QName, Serializable> newProps,
+                final List<QName> ignoredProps, NodeRef nodeRef) {
             Collection<QName> extraIgnoredProps = null;
-            List<Pair<QName, Pair<Serializable, Serializable>>> changedPropsNameNewValue = new ArrayList<Pair<QName, Pair<Serializable, Serializable>>>();
+            propsChangedLogger = new DocumentPropertiesChangeHolder();
+            String emptyValue = MessageUtil.getMessage("document_log_status_empty");
+            Map<QName, Serializable> oldPropsClone = new HashMap<QName, Serializable>(oldProps);
             for (Entry<QName, Serializable> entry : newProps.entrySet()) {
                 final QName key = entry.getKey();
-                final Serializable newValue = entry.getValue();
-                final Serializable oldValue = oldProps.get(key);
+                Serializable newValue = entry.getValue();
+                Serializable oldValue = oldPropsClone.remove(key);
                 if (!EqualsHelper.nullSafeEquals(oldValue, newValue) && !key.getNamespaceURI().equals(NamespaceService.CONTENT_MODEL_1_0_URI)
                         && !ignoredProps.contains(key) && !TEMP_PROPERTY_CHANGES_IGNORED_PROPS.equals(key)) {
                     if (extraIgnoredProps == null) {
                         @SuppressWarnings("unchecked")
-                        final Collection<QName> ignoreCollection = (Collection<QName>) oldProps.get(TEMP_PROPERTY_CHANGES_IGNORED_PROPS);
+                        final Collection<QName> ignoreCollection = (Collection<QName>) oldPropsClone.get(TEMP_PROPERTY_CHANGES_IGNORED_PROPS);
                         extraIgnoredProps = ignoreCollection;
                     }
                     if (extraIgnoredProps != null) {
@@ -2192,11 +2196,34 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                             continue;
                         }
                     }
-
-                    changedPropsNameNewValue.add(new Pair<QName, Pair<Serializable, Serializable>>(key, new Pair<Serializable, Serializable>(oldValue, newValue)));
+                    if (newValue == null || newValue instanceof String && StringUtils.isBlank((String) newValue)) {
+                        newValue = emptyValue;
+                    }
+                    if (oldValue == null || oldValue instanceof String && StringUtils.isBlank((String) oldValue)) {
+                        oldValue = emptyValue;
+                    }
+                    propsChangedLogger.addLog(nodeRef, key, oldValue, newValue);
                 }
             }
-            return changedPropsNameNewValue;
+            if (!oldPropsClone.isEmpty()) {
+                for (QName key : oldPropsClone.keySet()) {
+                    if (!key.getNamespaceURI().equals(NamespaceService.CONTENT_MODEL_1_0_URI)
+                            && !ignoredProps.contains(key) && !TEMP_PROPERTY_CHANGES_IGNORED_PROPS.equals(key)) {
+                        if (extraIgnoredProps == null) {
+                            @SuppressWarnings("unchecked")
+                            final Collection<QName> ignoreCollection = (Collection<QName>) oldPropsClone.get(TEMP_PROPERTY_CHANGES_IGNORED_PROPS);
+                            extraIgnoredProps = ignoreCollection;
+                        }
+                        if (extraIgnoredProps != null) {
+                            if (extraIgnoredProps.contains(key)) {
+                                continue;
+                            }
+                        }
+                        propsChangedLogger.addLog(nodeRef, key, oldPropsClone.get(key), emptyValue);
+                    }
+                }
+            }
+            return propsChangedLogger;
         }
     }
 

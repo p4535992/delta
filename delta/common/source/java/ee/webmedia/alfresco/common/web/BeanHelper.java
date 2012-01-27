@@ -93,6 +93,7 @@ import ee.webmedia.alfresco.email.service.EmailService;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.functions.web.FunctionsDetailsDialog;
 import ee.webmedia.alfresco.imap.service.ImapServiceExt;
+import ee.webmedia.alfresco.log.web.ApplicationLogListDialog;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.mso.service.MsoService;
@@ -220,11 +221,14 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static AssociationModelDetailsDialog getAssociationModelDetailsDialog() {
         return getJsfBean(AssociationModelDetailsDialog.class, AssociationModelDetailsDialog.BEAN_NAME);
-
     }
 
     public static DocTypeDetailsDialog getDocTypeDetailsDialog() {
         return getJsfBean(DocTypeDetailsDialog.class, DocTypeDetailsDialog.BEAN_NAME);
+    }
+
+    public static ApplicationLogListDialog getAppLogListDialog() {
+        return getJsfBean(ApplicationLogListDialog.class, ApplicationLogListDialog.BEAN_NAME);
     }
 
     @SuppressWarnings({ "cast", "rawtypes", "unchecked" })

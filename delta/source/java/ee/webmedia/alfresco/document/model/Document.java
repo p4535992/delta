@@ -341,7 +341,8 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     }
 
     public String getSendMode() {
-        return (String) getSearchableProperties().get(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE);
+        String transmittalMode = (String) getProperties().get(DocumentSpecificModel.Props.TRANSMITTAL_MODE);
+        return TextUtil.joinStringAndStringWithComma(transmittalMode, (String) getSearchableProperties().get(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE));
     }
 
     public String getResponsibleName() {
@@ -521,20 +522,17 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     public class UnitStrucPropsConvertedMap extends HashMap<String, Object> {
         private static final long serialVersionUID = 1L;
 
+        @SuppressWarnings("unchecked")
         @Override
         public Object get(Object propKey) {
             Object propValue = getProperties().get(propKey);
             if (propValue == null) {
-                return null;
+                return "";
             }
-            StringBuilder buffer = new StringBuilder();
-            for (Object obj : (Collection) propValue) {
-                if (buffer.length() != 0) {
-                    buffer.append(", ");
-                }
-                buffer.append(obj.toString());
+            if (!(propValue instanceof Iterable)) {
+                return propValue;
             }
-            return buffer.toString();
+            return UserUtil.getDisplayUnit((Iterable<String>) propValue);
         }
     }
 

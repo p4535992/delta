@@ -33,6 +33,7 @@
             <aspect>docTempl:template</aspect>
          </mandatory-aspects>
       </aspect>
+
       <aspect name="docTempl:notificationTemplate">
          <mandatory-aspects>
             <aspect>docTempl:template</aspect>

@@ -28,11 +28,6 @@
 
          <action id="forum_permissions">
             <evaluator>ee.webmedia.alfresco.document.forum.web.evaluator.ManageDiscussionEvaluator</evaluator>
-            <!-- FIXME: Kaarel, Alar: bug CL 122928 siin on õiguste süsteemiga midagi tegemata ja üsna tõenäoliselt ka valesti tehtud.
-             -->
-<!--            <permissions>-->
-<!--               <permission allow="true">ReadPermissions</permission>-->
-<!--            </permissions>-->
             <label-id>forum_invite_users</label-id>
             <image>/images/icons/invite.gif</image>
             <action-listener>#{PermissionsListDialog.setup}</action-listener>

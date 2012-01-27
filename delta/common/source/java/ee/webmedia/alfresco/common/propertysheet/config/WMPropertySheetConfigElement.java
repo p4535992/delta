@@ -22,6 +22,7 @@ import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
 import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader;
 import ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditor;
+import ee.webmedia.alfresco.common.propertysheet.parameter.ParameterInputAttributeGenerator;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.propertysheet.search.UserSearchGenerator;
 import ee.webmedia.alfresco.common.propertysheet.suggester.SuggesterGenerator;
@@ -127,6 +128,10 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
 
         public void setRendered(String rendered) {
             setCustomAttribute(BaseComponentGenerator.RENDERED, rendered);
+        }
+
+        public void setParameterName(String parameterName) {
+            setCustomAttribute(ParameterInputAttributeGenerator.PARAMETER_NAME, parameterName);
         }
 
         public boolean isShowInViewMode() {
@@ -247,6 +252,10 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
 
         public void setStyleClass(String styleClass) {
             setCustomAttribute(BaseComponentGenerator.CustomAttributeNames.STYLE_CLASS, styleClass);
+        }
+
+        public String getStyleClass() {
+            return getCustomAttributes().get(BaseComponentGenerator.CustomAttributeNames.STYLE_CLASS);
         }
 
         public void setDontRenderIfDisabled(Boolean dontRenderIfDisabled) {

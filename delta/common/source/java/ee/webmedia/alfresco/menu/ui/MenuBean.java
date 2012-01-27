@@ -52,6 +52,7 @@ import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.menu.ui.component.MenuItemWrapper;
 import ee.webmedia.alfresco.menu.ui.component.MenuRenderer;
 import ee.webmedia.alfresco.menu.ui.component.UIMenuComponent;
+import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -835,6 +836,10 @@ public class MenuBean implements Serializable {
 
     public String getDeltaUrl() {
         return BeanHelper.getRSService().getDeltaUrl();
+    }
+
+    public String getWorkingDocumentsAddress() {
+        return BeanHelper.getParametersService().getStringParameter(Parameters.WORKING_DOCUMENTS_ADDRESS);
     }
 
     // START: getters / setters

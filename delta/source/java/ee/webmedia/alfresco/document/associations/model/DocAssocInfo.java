@@ -15,6 +15,7 @@ public class DocAssocInfo implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String type;
+    private String typeId;
     private String title;
     private AssocType assocType;
     private boolean source;
@@ -31,6 +32,14 @@ public class DocAssocInfo implements Serializable {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public String getTypeId() {
+        return typeId;
+    }
+
+    public void setTypeId(String typeId) {
+        this.typeId = typeId;
     }
 
     public String getTitle() {
@@ -97,6 +106,10 @@ public class DocAssocInfo implements Serializable {
 
     public Date getRegDateTime() {
         return regDateTime;
+    }
+
+    public NodeRef getEffectiveNodeRef() {
+        return nodeRef == null ? caseNodeRef : nodeRef;
     }
 
 }

@@ -1,26 +1,34 @@
 package ee.webmedia.alfresco.document.forum.web.evaluator;
 
-import javax.faces.context.FacesContext;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
+import static org.alfresco.repo.security.authentication.AuthenticationUtil.getRunAsUser;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.model.ForumModel;
-import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
-import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
 
-import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
+/**
+ * @author Kaarel Jõgeva
+ */
 public class DeleteTopicOrForumEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 1L;
 
     @Override
     public boolean evaluate(Node node) {
-        boolean documentManager = ((UserService) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), UserService.BEAN_NAME)).isDocumentManager();
-        // For topics owner also qualifies
-        if (node.getType().equals(ForumModel.TYPE_TOPIC)) {
-            return documentManager || AuthenticationUtil.getRunAsUser().equals(node.getProperties().get(ContentModel.PROP_CREATOR).toString());
+        boolean admin = getUserService().isAdministrator();
+        String ownerId = (String) getGeneralService().getAncestorWithType(node.getNodeRef(), DocumentCommonModel.Types.DOCUMENT).getProperties()
+                .get(DocumentCommonModel.Props.OWNER_ID);
+        boolean documentOwner = getRunAsUser().equals(ownerId);
+
+        // Creator also qualifies for topics
+        if (ForumModel.TYPE_TOPIC.equals(node.getType())) {
+            return admin || documentOwner || getRunAsUser().equals(node.getProperties().get(ContentModel.PROP_CREATOR).toString());
         }
-        return documentManager;
+
+        return admin || documentOwner; // Is administrator or parent document owner
     }
 }

@@ -123,7 +123,8 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
             if (!task.isStatus(Status.UNFINISHED)) {
                 notificationService.notifyTaskEvent(task);
             } else {
-                notificationService.notifyTaskUnfinishedEvent(task);
+                boolean cancelledManually = event.getExtras() != null && event.getExtras().contains(WorkflowQueueParameter.WORKFLOW_CANCELLED_MANUALLY);
+                notificationService.notifyTaskUnfinishedEvent(task, cancelledManually);
             }
         }
 

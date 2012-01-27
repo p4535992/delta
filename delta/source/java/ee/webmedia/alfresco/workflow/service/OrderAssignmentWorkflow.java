@@ -24,7 +24,7 @@ public class OrderAssignmentWorkflow extends Workflow {
     @Override
     protected void preSave() {
         super.preSave();
-        WorkflowUtil.setWorkflowResolution(getTasks(), getProp(WorkflowSpecificModel.Props.RESOLUTION), Status.NEW);
+        WorkflowUtil.setWorkflowResolution(getTasks(), getProp(WorkflowSpecificModel.Props.RESOLUTION), Status.NEW, Status.IN_PROGRESS);
     }
 
     public Task addResponsibleTask() {

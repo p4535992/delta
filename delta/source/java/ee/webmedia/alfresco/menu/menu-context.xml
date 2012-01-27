@@ -32,6 +32,7 @@
       <property name="generalService" ref="GeneralService" />
       <property name="nodeService" ref="NodeService" />
       <property name="userService" ref="UserService" />
+      <property name="parametersService" ref="ParametersService" />
       <property name="updateCount" value="0" />
       <property name="menuItemFilters">
          <map>
@@ -86,6 +87,32 @@
       <property name="userService" ref="UserService" />
       <property name="menuService" ref="MenuService" />
       <property name="einvoiceService" ref="EInvoiceService" />       
+   </bean>
+
+   <bean class="ee.webmedia.alfresco.menu.service.HiddenMenuItemProcessor">
+      <property name="menuService" ref="MenuService" />
+      <property name="volumeService" ref="VolumeService" />       
+      <property name="parametersService" ref="ParametersService" />       
+   </bean>
+
+   <bean id="menuParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/menu/bootstrap/menu-parameters.xml</prop>
+            </props>
+         </list>
+      </property>
    </bean>
 
 </beans>

@@ -98,10 +98,12 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
                 || node.getType().equals(Types.ORGPERSON)) {
             output = createPerson(parent, toQNameProperties(node.getProperties()));
         } else if (node.getType().equals(Types.CONTACT_GROUP)) {
+            String newContactGroupName = (String) node.getProperties().get(Props.GROUP_NAME);
+            newContactGroupName = StringUtils.strip(newContactGroupName);
+            node.getProperties().put(Props.GROUP_NAME.toString(), newContactGroupName);
             List<Node> contactGroups = listContactGroups();
             for (Node contactGroup : contactGroups) {
                 String contactGroupName = (String) contactGroup.getProperties().get(Props.GROUP_NAME);
-                String newContactGroupName = (String) node.getProperties().get(Props.GROUP_NAME);
                 if (StringUtils.equalsIgnoreCase(contactGroupName, newContactGroupName)) {
                     throw new UnableToPerformException("addressbook_group_name_exists");
                 }

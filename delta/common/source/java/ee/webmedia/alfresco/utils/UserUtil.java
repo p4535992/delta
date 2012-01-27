@@ -196,12 +196,12 @@ public class UserUtil {
         return (String) properties.get(OrganizationStructureService.UNIT_NAME_PROP);
     }
 
-    public static String getDisplayUnit(List<String> organizationPaths) {
-        if (organizationPaths == null) {
-            return null;
+    public static String getDisplayUnit(Iterable<String> propValue) {
+        if (propValue == null) {
+            return "";
         }
         String organizationPath = "";
-        for (String path : organizationPaths) {
+        for (String path : propValue) {
             if (StringUtils.isNotBlank(path)) {
                 String notEmptyPath = path.trim();
                 if (organizationPath.length() < notEmptyPath.length()) {

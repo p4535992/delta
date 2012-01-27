@@ -194,6 +194,10 @@ public class VolumeDetailsDialog extends BaseDialogBean {
                             || getDocumentService().getDocumentsCountByVolumeOrCase(currentEntry.getNode().getNodeRef()) > 0);
     }
 
+    public Boolean disableCasesCreatableByUser() {
+        return !Boolean.TRUE.equals(currentEntry.getNode().getProperties().get(VolumeModel.Props.CONTAINS_CASES));
+    }
+
     // TODO Vladimir: should be with is prefix
     public Boolean volumeMarkFieldReadOnly() {
         Map<String, Object> properties = currentEntry.getNode().getProperties();
@@ -211,6 +215,21 @@ public class VolumeDetailsDialog extends BaseDialogBean {
                     getCurrentNode().getProperties().put(VolumeModel.Props.VOLUME_MARK.toString(),
                             seriesMark);
                 }
+                if (propertySheet != null) {
+                    propertySheet.getChildren().clear();
+                    propertySheet.getClientValidations().clear();
+                    propertySheet.setMode(null);
+                    propertySheet.setNode(null);
+                }
+            }
+        });
+    }
+
+    public void containsCasesValueChanged(final ValueChangeEvent event) {
+        ComponentUtil.executeLater(PhaseId.INVOKE_APPLICATION, getPropertySheet(), new Closure() {
+            @Override
+            public void execute(Object input) {
+                getCurrentNode().getProperties().put(VolumeModel.Props.CASES_CREATABLE_BY_USER.toString(), event.getNewValue().equals(Boolean.TRUE));
                 if (propertySheet != null) {
                     propertySheet.getChildren().clear();
                     propertySheet.getClientValidations().clear();

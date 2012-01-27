@@ -34,6 +34,7 @@ public interface VolumeModel {
         QName SEND_TO_DESTRUCTION = QName.createQName(URI, "sendToDestruction");
         QName CONTAINING_DOCS_COUNT = QName.createQName(URI, "containingDocsCount");
         QName CONTAINS_CASES = QName.createQName(URI, "containsCases");
+        QName CASES_CREATABLE_BY_USER = QName.createQName(URI, "casesCreatableByUser");
 
         QName ACTOR = QName.createQName(URI, "actor");
         QName DELETED_DATE_TIME = QName.createQName(URI, "deletedDateTime");

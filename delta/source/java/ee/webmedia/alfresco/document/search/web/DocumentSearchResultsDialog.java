@@ -205,6 +205,7 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
             }
             String fieldTitle = fieldDefinition.getName();
             String valueBinding;
+            boolean isStructUnit = fieldDefinition.getFieldTypeEnum().equals(FieldType.STRUCT_UNIT);
             if (primaryQName.equals(DocumentCommonModel.Props.CASE)) {
                 valueBinding = "#{r.caseLabel}";
             } else if (primaryQName.equals(DocumentCommonModel.Props.FUNCTION)) {
@@ -213,7 +214,7 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
                 valueBinding = "#{r.seriesLabel}";
             } else if (primaryQName.equals(DocumentCommonModel.Props.VOLUME)) {
                 valueBinding = "#{r.volumeLabel}";
-            } else if (fieldDefinition.getType().equals(FieldType.STRUCT_UNIT)) {
+            } else if (isStructUnit) {
                 valueBinding = "#{r.unitStrucPropsConvertedMap['" + primaryQName.toPrefixString(getNamespaceService()) + "']}";
             } else {
                 valueBinding = "#{r.convertedPropsMap['" + primaryQName.toPrefixString(getNamespaceService()) + "']}";
@@ -229,8 +230,8 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
                 volumeLinkParams.put("volumeNodeRef", "#{r.properties['" + primaryQName.toPrefixString(getNamespaceService()) + "']}");
                 valueComponent.add(createActionLink(context, valueBinding, null, null, "#{VolumeListDialog.showVolumeContents}", null, volumeLinkParams));
             } else {
-                createActionLink(context, valueBinding, "#{DocumentDialog.action}", null, "#{DocumentDialog.open}", null,
-                        titleLinkParams);
+                valueComponent.add(createActionLink(context, valueBinding, "#{DocumentDialog.action}", null, "#{DocumentDialog.open}", null,
+                        titleLinkParams, !isStructUnit));
             }
             createAndAddColumn(context, richList, fieldTitle, primaryQName.getLocalName(), false, valueComponent.toArray(new UIComponent[valueComponent.size()]));
         }
@@ -276,6 +277,11 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
 
     private static UIComponent createActionLink(FacesContext context, String valueBinding, String actionBinding, String action, String actionListenerBinding,
             String renderedBinding, Map<String, String> params) {
+        return createActionLink(context, valueBinding, actionBinding, action, actionListenerBinding, renderedBinding, params, true);
+    }
+
+    private static UIComponent createActionLink(FacesContext context, String valueBinding, String actionBinding, String action, String actionListenerBinding,
+            String renderedBinding, Map<String, String> params, boolean condence) {
         Application application = context.getApplication();
         UIActionLink link = (UIActionLink) application.createComponent(UIActions.COMPONENT_ACTIONLINK);
         link.setRendererType(UIActions.RENDERER_ACTIONLINK);
@@ -289,7 +295,7 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
         if (renderedBinding != null) {
             UIComponentTagUtils.setValueBinding(context, link, "rendered", renderedBinding);
         }
-        UIComponentTagUtils.setStringProperty(context, link, "styleClass", "tooltip condence20-");
+        UIComponentTagUtils.setStringProperty(context, link, "styleClass", "tooltip" + (condence ? "condence20-" : ""));
         UIComponentTagUtils.setValueProperty(context, link, valueBinding);
         for (Entry<String, String> entry : params.entrySet()) {
             ComponentUtil.addChildren(link, ComponentUtil.createUIParam(entry.getKey(), entry.getValue(), application));

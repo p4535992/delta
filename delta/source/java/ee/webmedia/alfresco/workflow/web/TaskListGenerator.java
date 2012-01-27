@@ -15,7 +15,6 @@ import static ee.webmedia.alfresco.utils.ComponentUtil.generateFieldSetter;
 import static ee.webmedia.alfresco.utils.ComponentUtil.getAttributes;
 import static ee.webmedia.alfresco.utils.ComponentUtil.getChildren;
 import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
-import static ee.webmedia.alfresco.utils.ComponentUtil.setReadonlyAttributeRecursively;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.TASK_INDEX;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.getActionId;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.getDialogId;
@@ -523,13 +522,16 @@ public class TaskListGenerator extends BaseComponentGenerator {
 
     private void addResolutionInput(FacesContext context, Application application, int wfIndex, final List<UIComponent> taskGridChildren, int counter, String taskRowId, Task task,
             TextAreaGenerator textAreaGenerator) {
-        UIComponent resolutionInput = textAreaGenerator.generate(context, "task-resolution-" + taskRowId);
+        UIComponent resolutionInput;
+        if (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK, WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK) || !task.isStatus(Status.NEW)) {
+            resolutionInput = application.createComponent(UIOutput.COMPONENT_TYPE);
+            putAttribute(resolutionInput, "styleClass", "condence50");
+        } else {
+            resolutionInput = textAreaGenerator.generate(context, "task-resolution-" + taskRowId);
+            putAttribute(resolutionInput, "styleClass", "expand19-200 width190");
+        }
         String reolutionValueBinding = createPropValueBinding(wfIndex, counter, WorkflowSpecificModel.Props.RESOLUTION);
         resolutionInput.setValueBinding("value", application.createValueBinding(reolutionValueBinding));
-        putAttribute(resolutionInput, "styleClass", "expand19-200 width190");
-        if (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK, WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK) || !task.isStatus(Status.NEW)) {
-            setReadonlyAttributeRecursively(resolutionInput);
-        }
         taskGridChildren.add(resolutionInput);
     }
 

@@ -1,0 +1,66 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <!-- REPOSITORY -->
+
+   <bean parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap,workflowModelBootstrap">
+      <property name="models">
+         <list>
+            <value>ee/webmedia/alfresco/log/model/logSearchModel.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="ee.webmedia.alfresco.log.bootstrap.LogTableBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="dataSource" ref="dataSource" />
+   </bean>
+
+   <!-- SERVICE -->
+
+   <bean id="logService" class="ee.webmedia.alfresco.log.service.LogServiceImpl">
+      <property name="jdbcTemplate">
+         <bean class="org.springframework.jdbc.core.JdbcTemplate">
+            <constructor-arg ref="dataSource" />
+         </bean>
+      </property>
+   </bean>
+
+   <bean id="LogService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.log.service.LogService</value>
+         </list>
+      </property>
+      <property name="target" ref="logService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+
+   <!-- WEB/JSF -->
+
+   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
+      <property name="resourceBundles">
+         <list>
+            <value>ee/webmedia/alfresco/log/web/log-webclient</value>
+         </list>
+      </property>
+   </bean>
+ 
+   <bean id="logWebClientConfigBootstrap" class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init">
+      <property name="configs">
+         <list>
+            <value>classpath:ee/webmedia/alfresco/log/web/log-web-client-config.xml</value>
+         </list>
+      </property>
+   </bean>
+ 
+   <bean id="ApplicationLogDialog" class="ee.webmedia.alfresco.log.web.ApplicationLogDialog" scope="session" />
+ 
+   <bean id="ApplicationLogListDialog" class="ee.webmedia.alfresco.log.web.ApplicationLogListDialog" scope="session" />
+
+</beans>

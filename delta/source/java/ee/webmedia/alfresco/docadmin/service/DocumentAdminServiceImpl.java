@@ -281,6 +281,12 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
+    public Pair<String, String> getDocumentTypeNameAndId(Node document) {
+        String documentTypeId = (String) document.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID);
+        return new Pair<String, String>(getDocumentTypeName(documentTypeId), documentTypeId);
+    }
+
+    @Override
     public Map<String/* docTypeId */, String/* docTypeName */> getDocumentTypeNames(Boolean used) {
         Map<String, String> docTypesByDocTypeId = new HashMap<String, String>();
         for (ChildAssociationRef childAssoc : nodeService.getChildAssocs(getDocumentTypesRoot())) {

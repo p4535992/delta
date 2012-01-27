@@ -81,6 +81,12 @@
                   <f:param name="source" value="#{r.source}" />
             </a:actionLink>
          </r:permissionEvaluator>
+
+         <r:permissionEvaluator id="assocs-list-compare-permission-evaluator" value="#{r.effectiveNodeRef}" allow="viewDocumentMetaData">
+            <a:actionLink id="compare-documents-link" value="#{msg.document_assocsBlockBean_compare}" rendered="#{DocumentDynamicDialog.document.documentTypeId == r.typeId}"
+            image="/images/icons/search_results.gif" target="_blank" showLink="false"
+            href="/printTable?tableMode=DOCUMENT_FIELD_COMPARE&doc1=#{DocumentDynamicDialog.node.nodeRef}&doc2=#{r.effectiveNodeRef}" />
+         </r:permissionEvaluator>
       </a:column>
 
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />

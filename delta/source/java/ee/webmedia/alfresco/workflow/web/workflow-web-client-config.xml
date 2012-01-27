@@ -129,13 +129,6 @@
       </property-sheet>
    </config>
    
-   <!-- All nodes with aspect wfs:commonTask except wfs:assignmentTask and wfs:orderAssignmentTask(that shows the same information in delegation history) -->
-   <config evaluator="node-type" condition="wfs:signatureTask,wfs:opinionTask,wfs:reviewTask,wfs:externalReviewTask,wfs:informationTask,wfs:confirmationTask,wfs:dueDateExtensionTask">
-      <property-sheet>            
-         <show-property name="wfc:creatorName" outputText="true" />
-      </property-sheet>
-   </config>
-   
    <!-- Override for  -->
    <config evaluator="node-type" condition="wfs:dueDateExtensionTask">
       <property-sheet>            
@@ -250,7 +243,7 @@
       </property-sheet>
    </config>
 
-   <config evaluator="node-type" condition="wfs:reviewWorkflow,wfs:externalReviewWorkflow" >
+   <config evaluator="node-type" condition="wfs:reviewWorkflow,wfs:externalReviewWorkflow,wfs:confirmationWorkflow" >
       <property-sheet>
          <!-- Override resolution from aspect-name=wfs:commonWorkflow: resolution display="inline" so that following property(stopOnFinish) is shown on the same line for reviewWorkflow  -->
          <show-property name="wfs:resolution" readOnlyIf="wfc:status=teostamisel||peatatud||lõpetatud" component-generator="TextAreaGenerator" styleClass="expand19-200 short-resolution" display="inline" />
@@ -260,7 +253,7 @@
    
    <config evaluator="node-type" condition="wfs:orderAssignmentWorkflow">
       <property-sheet>
-         <show-property name="wfs:category" component-generator="ClassificatorSelectorGenerator" classificatorName="orderAssignmentTaskCategory" rendered="#{WorkflowBlockBean.showOrderAssignmentCategory}" />
+         <show-property name="wfs:category" readOnlyIf="wfc:status=teostamisel||peatatud||lõpetatud" component-generator="ClassificatorSelectorGenerator" classificatorName="orderAssignmentTaskCategory" rendered="#{WorkflowBlockBean.showOrderAssignmentCategory}" />
       </property-sheet>
    </config>    
 

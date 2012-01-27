@@ -42,6 +42,9 @@ public class Notification implements Serializable {
     }
 
     public List<String> getToEmails() {
+        if (toEmails == null) {
+            toEmails = new ArrayList<String>();
+        }
         return toEmails;
     }
 
@@ -50,6 +53,9 @@ public class Notification implements Serializable {
     }
 
     public List<String> getToNames() {
+        if (toNames == null) {
+            toNames = new ArrayList<String>();
+        }
         return toNames;
     }
 

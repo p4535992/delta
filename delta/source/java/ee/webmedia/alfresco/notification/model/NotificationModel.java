@@ -61,6 +61,10 @@ public interface NotificationModel {
         QName VOLUME_DISPOSITION_DATE = QName.createQName(URI, "volumeDispositionDate");
         QName ACCESS_RESTRICTION_END_DATE = QName.createQName(URI, "accessRestrictionEndDate");
         QName ACCESS_RESTRICTION_REASON_CHANGED = QName.createQName(URI, "accessRestrictionReasonChanged");
+
+        QName DELEGATED_TASK_COMPLETED = QName.createQName(URI, "delegatedTaskCompleted");
+        QName REVIEW_DOCUMENT_SIGNED = QName.createQName(URI, "reviewDocumentSigned");
+        QName TASK_CANCELLED = QName.createQName(URI, "taskCancelled");
     }
 
 }

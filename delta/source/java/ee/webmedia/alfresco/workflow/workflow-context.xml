@@ -88,6 +88,27 @@
       </property>
    </bean>
    
+   <bean id="testWorkflowTemplatesBootstrap2" class="ee.webmedia.alfresco.common.bootstrap.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="enabled" value="${project.test}" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="documentTemplatesRootBootstrap" />
+         </list>
+      </property>
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/cm:templates</prop>
+               <prop key="location">ee/webmedia/alfresco/workflow/bootstrap/testWorkflowTemplates2.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+   
    <bean id="workflowParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="true" />

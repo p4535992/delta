@@ -22,14 +22,14 @@
       </property-sheet>
    </config>
 
-   <config evaluator="node-type" condition="wfs:reviewWorkflow,wfs:externalReviewWorkflow" >
+   <config evaluator="node-type" condition="wfs:reviewWorkflow,wfs:externalReviewWorkflow,wfs:confirmationWorkflow" >
       <property-sheet>
          <!-- Override description from aspect-name=wfs:commonWorkflow: description display="inline" so that following property(stopOnFinish) is shown on the same line for reviewWorkflow  -->
          <show-property name="wfs:description" component-generator="TextAreaGenerator" styleClass="expand19-200" display="inline" />
          <show-property name="wfc:stopOnFinish" />
       </property-sheet>
    </config>
-   
+            
    <config evaluator="aspect-name" condition="wfs:commonWorkflow" >
       <property-sheet>
          <show-property name="wfs:resolution" component-generator="TextAreaGenerator" styleClass="expand19-200" />

@@ -78,6 +78,7 @@ import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.upload.UploadFileInput.FileWithContentType;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.document.log.service.DocumentPropertiesChangeHolder;
 import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
@@ -283,18 +284,17 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     }
 
     @Override
-    public int saveRemovedChildAssocs(Node node) {
+    public void saveRemovedChildAssocs(Node node, DocumentPropertiesChangeHolder docPropsChangeHolder) {
         Map<String, Map<String, ChildAssociationRef>> removedChildAssocs = node.getRemovedChildAssociations();
-        int removedAssocs = 0;
         for (Map<String, ChildAssociationRef> typedAssoc : removedChildAssocs.values()) {
             for (ChildAssociationRef assoc : typedAssoc.values()) {
                 final NodeRef childRef = assoc.getChildRef();
+                docPropsChangeHolder.addLog(childRef, assoc.getTypeQName(), assoc.getChildRef(), null);
                 if (RepoUtil.isSaved(childRef) && nodeService.exists(childRef)) {
                     nodeService.removeChild(assoc.getParentRef(), childRef);
                 }
             }
         }
-        return removedAssocs;
     }
 
     /**

@@ -553,9 +553,18 @@ a.action {
 th,
 td span.th {
 	font-weight: bold;
-	border-bottom: 1px dotted #cacfd3;
 	padding: 0 2px;
 	padding-bottom: 5px;
+}
+
+thead th {
+   border-bottom: 1px dotted #cacfd3;
+}
+
+tfoot th {
+   border-top: 1px dotted #cacfd3;
+   padding-bottom: 0;
+   padding-top: 5px;
 }
 
 tr.th td {
@@ -573,6 +582,10 @@ tr.recordSetRow td, tr.recordSetRow td span, tr.recordSetRow td a,
 tr.recordSetRowAlt td, tr.recordSetRowAlt span, tr.recordSetRowAlt td a,
 td.more-actions-column a {
 	font-size: 12px;
+}
+
+.recordSetRow a, .recordSetRowAlt a {
+	color: black;
 }
 
 tr.recordSetRowAlt,.odd {

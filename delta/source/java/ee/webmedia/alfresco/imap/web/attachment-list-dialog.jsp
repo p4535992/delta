@@ -70,7 +70,7 @@
 
       <%-- Remove column --%>
       <a:column id="col7">
-         <r:permissionEvaluator value="#{r.node}" allow="DeleteNode">
+         <r:permissionEvaluator value="#{r.node}" allow="editDocument">
             <a:actionLink id="col7-act" value="#{r.name}" actionListener="#{DeleteDialog.setupDeleteDialog}" action="dialog:deleteDialog" showLink="false"
                image="/images/icons/delete.gif" tooltip="#{msg.file_remove}">
                <f:param name="nodeRef" value="#{r.nodeRef}"/>

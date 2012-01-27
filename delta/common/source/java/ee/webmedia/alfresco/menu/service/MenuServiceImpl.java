@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.menu.service;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -15,6 +16,7 @@ import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.apache.log4j.Logger;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
@@ -27,12 +29,15 @@ import ee.webmedia.alfresco.menu.model.Menu;
 import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.model.MenuModel;
 import ee.webmedia.alfresco.menu.ui.component.UIMenuComponent;
+import ee.webmedia.alfresco.parameters.model.Parameters;
+import ee.webmedia.alfresco.parameters.service.ParametersService;
+import ee.webmedia.alfresco.parameters.service.ParametersService.ParameterChangedCallback;
 import ee.webmedia.alfresco.user.service.UserService;
 
 /**
  * @author Kaarel Jõgeva
  */
-public class MenuServiceImpl implements MenuService {
+public class MenuServiceImpl implements MenuService, InitializingBean {
     private static Logger log = Logger.getLogger(MenuServiceImpl.class);
 
     private String menuConfigLocation;
@@ -40,6 +45,7 @@ public class MenuServiceImpl implements MenuService {
     private GeneralService generalService;
     private NodeService nodeService;
     private UserService userService;
+    private ParametersService parametersService;
 
     private int updateCount;
 
@@ -66,6 +72,16 @@ public class MenuServiceImpl implements MenuService {
             this.isSessionScoped = isSessionScoped;
 
         }
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        parametersService.addParameterChangeListener(Parameters.WORKING_DOCUMENTS_ADDRESS.getParameterName(), new ParameterChangedCallback() {
+            @Override
+            public void doWithParameter(Serializable value) {
+                menuUpdated();
+            }
+        });
     }
 
     @Override
@@ -277,6 +293,10 @@ public class MenuServiceImpl implements MenuService {
 
     public void setMenuItemFilters(Map<String, MenuItemFilter> menuItemFilters) {
         this.menuItemFilters = menuItemFilters;
+    }
+
+    public void setParametersService(ParametersService parametersService) {
+        this.parametersService = parametersService;
     }
 
     // END: getters / setters

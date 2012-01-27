@@ -33,6 +33,7 @@ public class Field extends FieldAndGroupBase {
     /** this temp. property is added to Field that is created based on fieldDefinition */
     private static final QName COPY_OF_FIELD_DEF_NODE_REF = RepoUtil.createTransientProp("copyOfFieldDefNodeRef");
     private static final QName FOR_SEARCH = RepoUtil.createTransientProp("forSearch");
+    private static final QName DATAFIELD_PARAM_NAME = RepoUtil.createTransientProp("datafieldParamName");
 
     /** used only by subclass */
     protected Field(BaseObject parent, QName type) {
@@ -325,6 +326,14 @@ public class Field extends FieldAndGroupBase {
 
     public boolean isForSearch() {
         return getProp(FOR_SEARCH) != null;
+    }
+
+    public void setDatafieldParamName(String paramName) {
+        setProp(DATAFIELD_PARAM_NAME, paramName);
+    }
+
+    public String getDatafieldParamName() {
+        return getProp(DATAFIELD_PARAM_NAME);
     }
 
     public static List<String> getLocalNames(Collection<QName> qNameFieldDefinitionIds) {

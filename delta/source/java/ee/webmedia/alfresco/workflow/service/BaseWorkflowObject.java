@@ -29,7 +29,7 @@ public abstract class BaseWorkflowObject extends NodeBaseVO {
     protected BaseWorkflowObject(WmNode node) {
         Assert.notNull(node);
         this.node = node;
-        if (node.getNodeRef() == null) {
+        if (node.isUnsaved()) {
             originalProperties = new HashMap<QName, Serializable>();
         } else {
             originalProperties = getProperties(true);
@@ -77,6 +77,14 @@ public abstract class BaseWorkflowObject extends NodeBaseVO {
 
     protected void setStoppedDateTime(Date stoppedDateTime) {
         setProp(WorkflowCommonModel.Props.STOPPED_DATE_TIME, stoppedDateTime);
+    }
+
+    public String getOwnerId() {
+        return getProp(WorkflowCommonModel.Props.OWNER_ID);
+    }
+
+    public void setOwnerId(String ownerId) {
+        setProp(WorkflowCommonModel.Props.OWNER_ID, ownerId);
     }
 
     // -----------------

@@ -62,6 +62,15 @@
       <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}taskDueDateExtensionTaskCompletedNotAccepted']}" />
       <h:outputText value="#{msg.notification_taskDueDateExtensionTaskCompletedNotAccepted_label}" /> 
 
+      <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}delegatedTaskCompleted']}" />
+      <h:outputText value="#{msg.notification_delegatedTaskCompleted_label}" /> 
+
+      <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}reviewDocumentSigned']}" />
+      <h:outputText value="#{msg.notification_reviewedDocumentSigned_label}" /> 
+
+      <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}taskCancelled']}" />
+      <h:outputText value="#{msg.notification_taskCancelled_label}" /> 
+
    </h:panelGrid>
 
 </r:propertySheetGrid>

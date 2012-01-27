@@ -392,35 +392,35 @@
 
    <filter-mapping>
       <filter-name>RequestControlFilter</filter-name>
-      <url-pattern>/printReviewNotes/*</url-pattern>
+      <url-pattern>/printTable/*</url-pattern>
    </filter-mapping>
    <filter-mapping>
       <filter-name>SerializingFilter</filter-name>
-      <url-pattern>/printReviewNotes/*</url-pattern>
+      <url-pattern>/printTable/*</url-pattern>
    </filter-mapping>
    <filter-mapping>
       <filter-name>CAS Authentication Filter</filter-name>
-      <url-pattern>/printReviewNotes/*</url-pattern>
+      <url-pattern>/printTable/*</url-pattern>
    </filter-mapping>
    <filter-mapping>
       <filter-name>CAS Ticket Validation Filter</filter-name>
-      <url-pattern>/printReviewNotes/*</url-pattern>
+      <url-pattern>/printTable/*</url-pattern>
    </filter-mapping>
    <filter-mapping>
       <filter-name>CAS HttpServletRequest Wrapper Filter</filter-name>
-      <url-pattern>/printReviewNotes/*</url-pattern>
+      <url-pattern>/printTable/*</url-pattern>
    </filter-mapping>
    <filter-mapping>
       <filter-name>RequestContext Filter</filter-name>
-      <url-pattern>/printReviewNotes/*</url-pattern>
+      <url-pattern>/printTable/*</url-pattern>
    </filter-mapping>
    <filter-mapping>
       <filter-name>Authentication Filter</filter-name>
-      <url-pattern>/printReviewNotes/*</url-pattern>
+      <url-pattern>/printTable/*</url-pattern>
    </filter-mapping>
    <filter-mapping>
       <filter-name>SubstitutionFilter</filter-name>
-      <url-pattern>/printReviewNotes/*</url-pattern>
+      <url-pattern>/printTable/*</url-pattern>
    </filter-mapping>
       
    <filter-mapping>
@@ -663,8 +663,8 @@
    </servlet>
 
    <servlet>
-      <servlet-name>ReviewNotesPrintServlet</servlet-name>
-      <servlet-class>ee.webmedia.alfresco.workflow.web.ReviewNotesPrintServlet</servlet-class>
+      <servlet-name>PrintTableServlet</servlet-name>
+      <servlet-class>ee.webmedia.alfresco.workflow.web.PrintTableServlet</servlet-class>
    </servlet>
 
    <!-- ========== Servlet mappings ========== -->
@@ -700,8 +700,8 @@
    </servlet-mapping>
 
    <servlet-mapping>
-      <servlet-name>ReviewNotesPrintServlet</servlet-name>
-      <url-pattern>/printReviewNotes/*</url-pattern>
+      <servlet-name>PrintTableServlet</servlet-name>
+      <url-pattern>/printTable/*</url-pattern>
    </servlet-mapping>
 
    <servlet-mapping>

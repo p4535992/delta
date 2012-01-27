@@ -134,7 +134,7 @@ public class CreateGroupDialog extends BaseDialogBean
 
    public void setName(String name)
    {
-      this.name = name;
+       this.name = StringUtils.strip(name);
    }
    
    public void setAuthService(AuthorityService authService)

@@ -154,6 +154,7 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         NodeRef function = (NodeRef) locationProps.get(DocumentCommonModel.Props.FUNCTION.toString());
         NodeRef series = (NodeRef) locationProps.get(DocumentCommonModel.Props.SERIES.toString());
         NodeRef volume = (NodeRef) locationProps.get(DocumentCommonModel.Props.VOLUME.toString());
+        // caseRef is not checked here, because admins and docmanagers always have the suggest component for case property
         String caseLabel = (String) locationProps.get(DocumentLocationGenerator.CASE_LABEL_EDITABLE);
         if (!isValidLocation(function, series, volume, caseLabel)) {
             return;
@@ -203,9 +204,8 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
             document.setFunction(function);
             document.setSeries(series);
             document.setVolume(volume);
-            if (caseLabel != null) {
-                document.getNode().getProperties().put(DocumentLocationGenerator.CASE_LABEL_EDITABLE.toString(), caseLabel);
-            }
+            document.setCase(null);
+            document.getNode().getProperties().put(DocumentLocationGenerator.CASE_LABEL_EDITABLE.toString(), caseLabel);
             List<NodeRef> updatedRefs = getDocumentDynamicService().updateDocumentGetOriginalNodeRefs(document, cfg.getSaveListenerBeanNames());
             updatedNodeRefs.addAll(updatedRefs);
         }

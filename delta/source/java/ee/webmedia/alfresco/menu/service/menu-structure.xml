@@ -130,9 +130,9 @@
                </item>
             </subitems>
          </dropdown>
-         <!-- TODO
-         <item id="departmentDocuments" title-id="menu_department_documents" />
-         -->
+         <item id="departmentDocuments" title-id="menu_department_documents">
+            <href>#{MenuBean.workingDocumentsAddress}</href>
+         </item>
          <dropdown title-id="menu_my_documents" browse="true">
             <xpath>/{http://alfresco.webmedia.ee/model/functions/1.0}documentList</xpath>
             <submenu-id>my-documents</submenu-id>
@@ -270,7 +270,9 @@
          <item id="importantNotifications" title-id="menu_important_notifications" admin="true">
             <outcome>dialog:notificationListDialog</outcome>
          </item>
-         <item id="applicationLog" title-id="menu_application_log" supervisor="true" />
+         <item id="applicationLog" title-id="menu_application_log" admin="true" supervisor="true">
+            <outcome>dialog:applicationLog</outcome>
+         </item>
          <item id="thesauri" title-id="menu_thesauri" admin="true">
             <outcome>dialog:thesaurusListDialog</outcome>
          </item>

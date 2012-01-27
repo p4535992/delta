@@ -46,6 +46,7 @@
       <property name="substituteService" ref="SubstituteService" />
       <property name="addressbookService" ref="AddressbookService" />
       <property name="classificatorService" ref="ClassificatorService" />
+      <property name="workflowService" ref="wmWorkflowService" />
    </bean>
 
    <bean id="NotificationService" class="org.springframework.aop.framework.ProxyFactoryBean">

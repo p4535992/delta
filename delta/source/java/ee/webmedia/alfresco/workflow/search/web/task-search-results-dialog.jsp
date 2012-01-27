@@ -9,7 +9,7 @@
 <a:panel id="task-panel" styleClass="panel-100" label="#{msg.task_search_results}" progressive="true" styleClass="with-pager">
    <a:panel id="task-panel-search-results" styleClass="overflow-wrapper">   
 
-   <a:richList id="taskList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
+   <a:richList id="taskList" styleClass="duplicate-header" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
       value="#{TaskSearchResultsDialog.tasks}" var="r" >
 
       <a:column id="col1" primary="true" styleClass="#{r.cssStyleClass}" >

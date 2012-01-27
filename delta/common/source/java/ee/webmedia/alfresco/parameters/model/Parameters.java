@@ -109,7 +109,9 @@ public enum Parameters {
     DIMENSION_CODE_INVOICE_HOUSE_BANK_CODES("dimensionCodeInvoiceHouseBankCodes"),
 
     DIMENSION_DELETION_PERIOD("dimensionDeletionPeriod"),
-    DIMENSION_DELETION_TIME("dimensionDeletionTime");
+    DIMENSION_DELETION_TIME("dimensionDeletionTime"), 
+
+    WORKING_DOCUMENTS_ADDRESS("workingDocumentsAddress");
 
     private String xPath;
     private String parameterName;

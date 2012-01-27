@@ -13,7 +13,8 @@ public class WorkflowSavedEvaluator extends AbstractFullAccessEvaluator {
 
     @Override
     public boolean evaluate(Object obj) {
-        return obj != null && ((CompoundWorkflow) obj).getNodeRef() != null && hasFullAccess();
+        CompoundWorkflow compoundWorkflow = (CompoundWorkflow) obj;
+        return compoundWorkflow != null && compoundWorkflow.isSaved() && hasFullAccess();
     }
 
 }

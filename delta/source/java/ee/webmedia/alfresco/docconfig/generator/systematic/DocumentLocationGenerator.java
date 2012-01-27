@@ -6,6 +6,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPropertySheetStateBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getSeriesService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getVolumeService;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.CASE;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FUNCTION;
@@ -32,15 +33,19 @@ import javax.faces.model.SelectItem;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.web.bean.generator.BaseComponentGenerator;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 import org.hibernate.StaleObjectStateException;
+import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.cases.model.Case;
+import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
+import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO.ConfigItemType;
 import ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter;
 import ee.webmedia.alfresco.common.propertysheet.suggester.SuggesterGenerator;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
@@ -64,11 +69,11 @@ import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.utils.ComponentUtil;
-import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 import ee.webmedia.alfresco.volume.model.Volume;
+import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 
 /**
@@ -77,10 +82,10 @@ import ee.webmedia.alfresco.volume.service.VolumeService;
 public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentLocationGenerator.class);
     public static final String[] NODE_REF_FIELD_IDS = new String[] {
-        FUNCTION.getLocalName(),
-        SERIES.getLocalName(),
-        VOLUME.getLocalName(),
-        CASE.getLocalName() };
+            FUNCTION.getLocalName(),
+            SERIES.getLocalName(),
+            VOLUME.getLocalName(),
+            CASE.getLocalName() };
 
     @Override
     protected String[] getOriginalFieldIds() {
@@ -182,17 +187,37 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             volumeLabelItem.setActionListenerParams("volumeNodeRef=" + getBindingName("volume", stateHolderKey));
             return;
         } else if (field.getQName().equals(caseProp)) {
-            item.setName(caseLabelEditableProp.toString());
+            // Edit mode: non-editable select item
+            item.setComponentGenerator("GeneralSelectorGenerator");
+            item.setConverter(NodeRefConverter.class.getName());
+            item.setSelectionItems(getBindingName("getCases", stateHolderKey));
+            item.setShowInViewMode(false);
             if (field.getParent() != null) {
                 item.setForcedMandatory(true);
                 item.setDontRenderIfDisabled(true);
             }
-            item.setComponentGenerator("SuggesterGenerator");
-            item.setSuggesterValues(getBindingName("getCases", stateHolderKey));
-            item.setValueChangeListener(getBindingName("volumeValueChanged", stateHolderKey));
-            item.setStyleClass("long");
-            item.setShowInViewMode(false);
 
+            // Edit mode: editable select item
+            ItemConfigVO caseLabelEditableItem = new ItemConfigVO(caseLabelEditableProp.toString());
+            caseLabelEditableItem.setConfigItemType(ConfigItemType.PROPERTY);
+            caseLabelEditableItem.setIgnoreIfMissing(false);
+            caseLabelEditableItem.setDisplayLabel(item.getDisplayLabel());
+            caseLabelEditableItem.setReadOnly(item.isReadOnly());
+            String readOnlyIf = item.getCustomAttributes().get(BaseComponentGenerator.READONLY_IF);
+            if (readOnlyIf != null) {
+                caseLabelEditableItem.setReadOnlyIf(readOnlyIf);
+            }
+            if (field.getParent() != null) {
+                caseLabelEditableItem.setForcedMandatory(true);
+                caseLabelEditableItem.setDontRenderIfDisabled(true);
+            }
+            caseLabelEditableItem.setComponentGenerator("SuggesterGenerator");
+            caseLabelEditableItem.setSuggesterValues(getBindingName("getCasesEditable", stateHolderKey));
+            caseLabelEditableItem.setStyleClass("long");
+            caseLabelEditableItem.setShowInViewMode(false);
+            generatorResults.addItem(caseLabelEditableItem);
+
+            // View mode: text item
             ItemConfigVO caseLabelItem = generatorResults.generateAndAddViewModeText(caseLabelProp.toString(), field.getName());
             caseLabelItem.setComponentGenerator("ActionLinkGenerator");
             caseLabelItem.setAction("dialog:documentListDialog");
@@ -229,10 +254,11 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
         private List<SelectItem> functions;
         private List<SelectItem> series;
         private List<SelectItem> volumes;
-        private List<String> cases;
+        private List<SelectItem> cases;
+        private List<String> casesEditable;
 
         public DocumentLocationState(QName functionProp, QName seriesProp, QName caseProp, QName volumeProp, QName functionLabelProp, QName seriesLabelProp, QName volumeLabelProp,
-                QName caseLabelProp, QName caseLabelEditableProp) {
+                                     QName caseLabelProp, QName caseLabelEditableProp) {
             this.functionProp = functionProp;
             this.seriesProp = seriesProp;
             this.caseProp = caseProp;
@@ -259,16 +285,13 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 }
                 DocumentDynamic documentDynamic = dialogDataProvider.getDocument();
                 boolean updateAccessRestrictionProps = documentDynamic != null ? !documentDynamic.isDisableUpdateInitialAccessRestrictionProps() : false;
-                updateFnSerVol(functionRef, seriesRef, volumeRef, caseLabel, true, updateAccessRestrictionProps);
+                updateFnSerVol(functionRef, seriesRef, volumeRef, caseRef, caseLabel, true, updateAccessRestrictionProps);
             } else {
-                String functionLbl = functionRef == null ? null : getFunctionLabel(getFunctionsService().getFunctionByNodeRef(functionRef));
-                String seriesLbl = seriesRef == null ? null : getSeriesLabel(getSeriesService().getSeriesByNodeRef(seriesRef));
-                String volumeLbl = volumeRef == null ? null : getVolumeLabel(getVolumeService().getVolumeByNodeRef(volumeRef));
-                String caseLbl = caseRef == null ? null : getCaseLabel(getCaseService().getCaseByNoderef(caseRef));
+                document.getProperties().put(functionLabelProp.toString(), getDocumentListUnitLabel(functionRef));
+                document.getProperties().put(seriesLabelProp.toString(), getDocumentListUnitLabel(seriesRef));
+                document.getProperties().put(volumeLabelProp.toString(), getDocumentListUnitLabel(volumeRef));
 
-                document.getProperties().put(functionLabelProp.toString(), functionLbl);
-                document.getProperties().put(seriesLabelProp.toString(), seriesLbl);
-                document.getProperties().put(volumeLabelProp.toString(), volumeLbl);
+                String caseLbl = getDocumentListUnitLabel(caseRef);
                 if (caseLbl != null) {
                     document.getProperties().put(caseLabelProp.toString(), caseLbl);
                 }
@@ -323,20 +346,24 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
          * @param selectComponent
          * @return dropdown items for JSP
          */
-        public List<String> getCases(FacesContext context, UIInput selectComponent) {
+        public List<SelectItem> getCases(FacesContext context, UIInput selectComponent) {
             return cases;
+        }
+
+        public List<String> getCasesEditable(FacesContext context, UIInput selectComponent) {
+            return casesEditable;
         }
 
         public void functionValueChanged(ValueChangeEvent event) {
             NodeRef functionRef = (NodeRef) event.getNewValue();
-            updateFnSerVol(functionRef, null, null, null, false, true);
+            updateFnSerVol(functionRef, null, null, null, null, false, true);
         }
 
         public void seriesValueChanged(ValueChangeEvent event) {
             Node document = dialogDataProvider.getNode();
             NodeRef functionRef = (NodeRef) document.getProperties().get(functionProp);
             NodeRef seriesRef = (NodeRef) event.getNewValue();
-            updateFnSerVol(functionRef, seriesRef, null, null, false, true);
+            updateFnSerVol(functionRef, seriesRef, null, null, null, false, true);
         }
 
         public void volumeValueChanged(ValueChangeEvent event) {
@@ -344,10 +371,11 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             NodeRef functionRef = (NodeRef) document.getProperties().get(functionProp);
             NodeRef seriesRef = (NodeRef) document.getProperties().get(seriesProp);
             NodeRef volumeRef = (NodeRef) event.getNewValue();
-            updateFnSerVol(functionRef, seriesRef, volumeRef, null, false, true);
+            updateFnSerVol(functionRef, seriesRef, volumeRef, null, null, false, true);
         }
 
-        private void updateFnSerVol(NodeRef functionRef, NodeRef seriesRef, NodeRef volumeRef, String caseLabel, boolean addIfMissing, boolean updateAccessRestrictionProperties) {
+        private void updateFnSerVol(NodeRef functionRef, NodeRef seriesRef, NodeRef volumeRef, NodeRef caseRef, String caseLabel, boolean addIfMissing,
+                boolean updateAccessRestrictionProperties) {
             Node document = dialogDataProvider.getNode();
             UIPropertySheet ps = dialogDataProvider.getPropertySheet();
             boolean isSearchFilter = DocumentSearchModel.Types.FILTER.equals(document.getType());
@@ -499,28 +527,66 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 }
             }
 
+            boolean casesCreatableByUser = false;
             if (volumeRef == null) {
                 cases = null;
+                casesEditable = null;
+                caseRef = null;
                 caseLabel = null;
             } else {
-                if (getVolumeService().getVolumeByNodeRef(volumeRef).isContainsCases()) {
+                Volume volume = getVolumeService().getVolumeByNodeRef(volumeRef);
+                if (volume.isContainsCases()) {
+                    if (volume.isCasesCreatableByUser() || getUserService().isDocumentManager()) {
+                        casesCreatableByUser = true;
+                    }
                     List<Case> allCases;
                     if (isSearchFilterOrDocTypeNull) {
                         allCases = getCaseService().getAllCasesByVolume(volumeRef);
                     } else {
                         allCases = getCaseService().getAllCasesByVolume(volumeRef, DocListUnitStatus.OPEN);
                     }
-                    cases = new ArrayList<String>(allCases.size());
+                    cases = new ArrayList<SelectItem>(allCases.size());
+                    casesEditable = new ArrayList<String>(allCases.size());
+                    cases.add(new SelectItem("", ""));
+                    boolean caseFound = false;
                     for (Case tmpCase : allCases) {
-                        cases.add(getCaseLabel(tmpCase));
+                        String tmpCaseLabel = getCaseLabel(tmpCase);
+                        cases.add(new SelectItem(tmpCase.getNode().getNodeRef(), tmpCaseLabel));
+                        casesEditable.add(tmpCaseLabel);
+                        if (caseRef != null && caseRef.equals(tmpCase.getNode().getNodeRef())) {
+                            caseFound = true;
+                        }
                     }
-                    if (StringUtils.isBlank(caseLabel) && cases.size() == 1) {
-                        caseLabel = StringUtils.trim(cases.get(0));
+                    if (!caseFound) {
+                        if (addIfMissing && caseRef != null && getNodeService().exists(caseRef)) {
+                            Case tmpCase = getCaseService().getCaseByNoderef(caseRef);
+                            cases.add(1, new SelectItem(tmpCase.getNode().getNodeRef(), getCaseLabel(tmpCase)));
+                        } else {
+                            caseRef = null;
+                        }
+                    }
+                    // If list contains only one value, then select it right away
+                    if (StringUtils.isBlank(caseLabel) && casesEditable.size() == 1) {
+                        caseLabel = StringUtils.trim(casesEditable.get(0));
+                    }
+                    if (cases.size() == 2) {
+                        cases.remove(0);
+                        if (caseRef == null) {
+                            caseRef = (NodeRef) cases.get(0).getValue();
+                        }
                     }
                 } else {
                     cases = null;
+                    casesEditable = null;
                     caseLabel = null;
                 }
+            }
+            if (isSearchFilter || casesCreatableByUser) {
+                cases = null;
+                caseRef = null;
+            } else {
+                casesEditable = null;
+                caseLabel = null;
             }
 
             if (ps != null) {
@@ -539,11 +605,16 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                         HtmlSelectOneMenu volumeList = (HtmlSelectOneMenu) component.getChildren().get(1);
                         ComponentUtil.setSelectItems(FacesContext.getCurrentInstance(), volumeList, volumes);
                         volumeList.setValue(volumeRef);
+                    } else if (component.getId().endsWith("_" + caseProp.getLocalName())) {
+                        HtmlSelectOneMenu caseList = (HtmlSelectOneMenu) component.getChildren().get(1);
+                        ComponentUtil.setSelectItems(FacesContext.getCurrentInstance(), caseList, cases);
+                        caseList.setValue(caseRef);
+                        component.setRendered(cases != null && !isSearchFilter);
                     } else if (component.getId().endsWith("_" + caseLabelEditableProp.getLocalName())) {
                         UIInput caseList = (UIInput) component.getChildren().get(1);
-                        SuggesterGenerator.setValue(caseList, cases);
+                        SuggesterGenerator.setValue(caseList, casesEditable);
                         caseList.setValue(caseLabel);
-                        component.setRendered(cases != null || isSearchFilter);
+                        component.setRendered(casesEditable != null || isSearchFilter);
                     }
                 }
             }
@@ -553,6 +624,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             document.getProperties().put(functionProp.toString(), functionRef);
             document.getProperties().put(seriesProp.toString(), seriesRef);
             document.getProperties().put(volumeProp.toString(), volumeRef);
+            document.getProperties().put(caseProp.toString(), caseRef);
             document.getProperties().put(caseLabelEditableProp.toString(), caseLabel);
         }
 
@@ -582,6 +654,27 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             }
         }
 
+    }
+
+    public static String getDocumentListUnitLabel(NodeRef nodeRef) {
+        if (nodeRef == null || !getNodeService().exists(nodeRef)) {
+            return null;
+        }
+        QName type = getNodeService().getType(nodeRef);
+        if (FunctionsModel.Types.FUNCTION.equals(type)) {
+            return getFunctionLabel(getFunctionsService().getFunctionByNodeRef(nodeRef));
+        }
+        if (SeriesModel.Types.SERIES.equals(type)) {
+            return getSeriesLabel(getSeriesService().getSeriesByNodeRef(nodeRef));
+        }
+        if (VolumeModel.Types.VOLUME.equals(type)) {
+            return getVolumeLabel(getVolumeService().getVolumeByNodeRef(nodeRef));
+        }
+        if (CaseModel.Types.CASE.equals(type)) {
+            return getCaseLabel(getCaseService().getCaseByNoderef(nodeRef));
+        }
+
+        return null;
     }
 
     public static String getFunctionLabel(Function function) {
@@ -617,59 +710,58 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
         NodeRef seriesRef = (NodeRef) props.get(SERIES);
         NodeRef volumeRef = (NodeRef) props.get(VOLUME);
         if (functionRef == null || seriesRef == null || volumeRef == null) {
-            if (log.isDebugEnabled()) {
-                log.warn("validation failed: document_validationMsg_mandatory_functionSeriesVolume");
-            }
             validationHelper.addErrorMessage("document_validationMsg_mandatory_functionSeriesVolume");
             return;
         }
 
-        final List<String> messages = new ArrayList<String>(4);
         Volume volume = volumeService.getVolumeByNodeRef(volumeRef);
-
         String caseLabel = StringUtils.trimToNull((String) props.get(CASE_LABEL_EDITABLE));
-        if (volume.isContainsCases() && StringUtils.isBlank(caseLabel)) {
-            // client-side validation prevents it; but it reaches here if in-between rendering and submitting, someone else changes volume's containsCases=true
-            if (log.isDebugEnabled()) {
-                log.warn("validation failed: document_validationMsg_mandatory_case");
-            }
-            messages.add("document_validationMsg_mandatory_case");
-        } else if (!volume.isContainsCases() && StringUtils.isNotBlank(caseLabel)) {
-            caseLabel = null;
-        }
-        Case docCase = null;
-        if (volume.isContainsCases() && StringUtils.isNotBlank(caseLabel)) {
-            List<Case> allCases = caseService.getAllCasesByVolume(volumeRef);
-            NodeRef caseRef = null;
-            for (Case tmpCase : allCases) {
-                if (StringUtils.equalsIgnoreCase(caseLabel, getCaseLabel(tmpCase))) {
-                    caseRef = tmpCase.getNode().getNodeRef();
-                    docCase = tmpCase;
-                    break;
+        NodeRef caseRef = document.getCase();
+
+        if (volume.isContainsCases()) {
+            boolean casesCreatableByUser = volume.isCasesCreatableByUser() || getUserService().isDocumentManager();
+            if (casesCreatableByUser) {
+                caseRef = null;
+                if (StringUtils.isBlank(caseLabel)) {
+                    validationHelper.addErrorMessage("document_validationMsg_mandatory_case");
+                } else {
+                    List<Case> allCases = caseService.getAllCasesByVolume(volumeRef);
+                    for (Case tmpCase : allCases) {
+                        if (StringUtils.equalsIgnoreCase(caseLabel, getCaseLabel(tmpCase))) {
+                            caseRef = tmpCase.getNode().getNodeRef();
+                            caseLabel = null;
+                            break;
+                        }
+                    }
+                    // If case not found, then create it in the save method
+                }
+            } else {
+                caseLabel = null;
+                if (caseRef == null) {
+                    validationHelper.addErrorMessage("document_validationMsg_mandatory_case");
                 }
             }
-            props.put(CASE.toString(), caseRef);
+        } else {
+            caseLabel = null;
+            caseRef = null;
         }
+        props.put(CASE.toString(), caseRef);
+        props.put(CASE_LABEL_EDITABLE.toString(), caseLabel);
 
-        boolean isClosedUnitCheckNeeded = isClosedUnitCheckNeeded(document, documentService.getAncestorNodesByDocument(document.getNodeRef()), volumeRef, docCase);
+        boolean isClosedUnitCheckNeeded = isClosedUnitCheckNeeded(document, documentService.getAncestorNodesByDocument(document.getNodeRef()), volumeRef, caseRef);
 
         if (isClosedUnitCheckNeeded && DocListUnitStatus.CLOSED.equals(functionsService.getFunctionByNodeRef(functionRef).getStatus())) {
-            messages.add("document_validationMsg_closed_function");
+            validationHelper.addErrorMessage("document_validationMsg_closed_function");
         }
         if (isClosedUnitCheckNeeded && DocListUnitStatus.CLOSED.equals(seriesService.getSeriesByNodeRef(seriesRef).getStatus())) {
-            messages.add("document_validationMsg_closed_series");
+            validationHelper.addErrorMessage("document_validationMsg_closed_series");
         }
         if (isClosedUnitCheckNeeded && DocListUnitStatus.CLOSED.equals(volume.getStatus())) {
-            messages.add("document_validationMsg_closed_volume");
+            validationHelper.addErrorMessage("document_validationMsg_closed_volume");
         }
-        if (isClosedUnitCheckNeeded && docCase != null && docCase.isClosed()) {
-            if (log.isDebugEnabled()) {
-                log.warn("validation failed: document_validationMsg_closed_case");
-            }
-            messages.add("document_validationMsg_closed_case");
+        if (isClosedUnitCheckNeeded && caseRef != null && DocListUnitStatus.CLOSED.equals(caseService.getCaseByNoderef(caseRef).getStatus())) {
+            validationHelper.addErrorMessage("document_validationMsg_closed_case");
         }
-
-        props.put(CASE_LABEL_EDITABLE.toString(), caseLabel);
     }
 
     /**
@@ -678,26 +770,36 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
     @Override
     public void save(DocumentDynamic document) {
         NodeRef docNodeRef = document.getNodeRef();
-        // Prepare caseNodeRef
         final NodeRef volumeNodeRef = document.getVolume();
-        NodeRef caseNodeRef = getCaseNodeRef(document, volumeNodeRef);
+        Volume volume = volumeService.getVolumeByNodeRef(volumeNodeRef);
+
+        NodeRef caseNodeRef = document.getCase(); // getCaseNodeRef(document, volumeNodeRef);
+        String caseLabel = document.getProp(CASE_LABEL_EDITABLE);
+        if (StringUtils.isNotBlank(caseLabel)) {
+            Assert.isTrue(caseNodeRef == null && volume.isContainsCases() && (volume.isCasesCreatableByUser() || getUserService().isDocumentManager()));
+            // create case
+            Case tmpCase = caseService.createCase(volumeNodeRef);
+            tmpCase.setTitle(caseLabel);
+            caseService.saveOrUpdate(tmpCase, false);
+            caseNodeRef = tmpCase.getNode().getNodeRef();
+            caseLabel = null;
+            document.setCase(caseNodeRef);
+            document.setProp(CASE_LABEL_EDITABLE, caseLabel);
+        }
 
         // Prepare existingParentNode and targetParentRef properties
         final NodeRef targetParentRef;
         Node existingParentNode = null;
         if (caseNodeRef != null) {
+            Assert.isTrue(volume.isContainsCases());
             targetParentRef = caseNodeRef;
             existingParentNode = documentService.getCaseByDocument(docNodeRef);
             if (existingParentNode == null) { // moving from volume to case?
                 existingParentNode = documentService.getVolumeByDocument(docNodeRef);
             }
         } else {
+            Assert.isTrue(!volume.isContainsCases());
             targetParentRef = volumeNodeRef;
-            final Volume volume = volumeService.getVolumeByNodeRef(targetParentRef);
-            if (volume.isContainsCases()) {
-                throw new RuntimeException("Selected volume '" + volume.getTitle() + "' must contain cases, not directly documents. Invalid caseNodeRef: '"
-                        + caseNodeRef + "'");
-            }
             existingParentNode = documentService.getVolumeByDocument(docNodeRef);
             if (existingParentNode == null) { // moving from case to volume?
                 existingParentNode = documentService.getCaseByDocument(docNodeRef);
@@ -762,52 +864,18 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 log.error("Failed to move document to volumes folder", e);
                 throw new UnableToPerformException(MessageSeverity.ERROR, "document_errorMsg_register_movingNotEnabled_isReplyOrFollowUp", e);
             }
-
-            if (!document.isDraftOrImapOrDvk()) {
-                documentLogService.addDocumentLog(docNodeRef, MessageUtil.getMessage("document_log_location_changed"));
-            }
         }
     }
 
-    private boolean isClosedUnitCheckNeeded(DocumentDynamic document, DocumentParentNodesVO parents, NodeRef volumeRef, Case docCase) {
+    private boolean isClosedUnitCheckNeeded(DocumentDynamic document, DocumentParentNodesVO parents, NodeRef volumeRef, NodeRef caseRef) {
         return document.isDraftOrImapOrDvk()
                 || !(volumeRef.equals(parents.getVolumeNode().getNodeRef())
-                        && (parents.getCaseNode() == null ? docCase == null
-                        : (docCase == null ? false
-                                : parents.getCaseNode().getNodeRef().equals(docCase.getNode().getNodeRef())
+                        && (parents.getCaseNode() == null ? caseRef == null
+                                : (caseRef == null ? false
+                                        : parents.getCaseNode().getNodeRef().equals(caseRef)
                                 )
                                 )
                         );
-    }
-
-    private NodeRef getCaseNodeRef(final DocumentDynamic document, final NodeRef volumeNodeRef) {
-        NodeRef caseNodeRef = document.getCase();
-        String caseLabel = document.getProp(CASE_LABEL_EDITABLE);
-        if (StringUtils.isBlank(caseLabel)) {
-            caseNodeRef = null;
-        }
-        if (caseNodeRef != null) {
-            return caseNodeRef;
-        }
-        if (StringUtils.isNotBlank(caseLabel)) {
-            // find case by casLabel
-            List<Case> allCases = caseService.getAllCasesByVolume(volumeNodeRef);
-            for (Case tmpCase : allCases) {
-                if (caseLabel.equalsIgnoreCase(getCaseLabel(tmpCase))) {
-                    caseNodeRef = tmpCase.getNode().getNodeRef();
-                    break;
-                }
-            }
-            if (caseNodeRef == null) {
-                // create case
-                Case tmpCase = caseService.createCase(volumeNodeRef);
-                tmpCase.setTitle(caseLabel);
-                caseService.saveOrUpdate(tmpCase, false);
-                caseNodeRef = tmpCase.getNode().getNodeRef();
-            }
-        }
-        document.setCase(caseNodeRef);
-        return caseNodeRef;
     }
 
     // START: setters

@@ -15,7 +15,7 @@
 <a:panel id="document-panel" styleClass="panel-100 with-pager" label="#{DocumentSearchResultsDialog.listTitle}" progressive="true">
 
    <%-- Main List --%>
-   <a:richList id="documentList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
+   <a:richList id="documentList" styleClass="duplicate-header" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
       width="100%" binding="#{DocumentSearchResultsDialog.richList}" refreshOnBind="true" value="#{DocumentSearchResultsDialog.documents}" var="r" >
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
       <a:dataPager id="pager1" styleClass="pager" />

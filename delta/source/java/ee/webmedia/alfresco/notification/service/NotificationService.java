@@ -63,7 +63,7 @@ public interface NotificationService {
 
     public int getUpdateCount();
 
-    public void notifyTaskUnfinishedEvent(Task task);
+    public void notifyTaskUnfinishedEvent(Task task, boolean manuallyCancelled);
 
     String generateTemplateContent(QName notificationType, Task task);
 

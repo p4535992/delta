@@ -110,14 +110,6 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
         return outcomes;
     }
 
-    public String getOwnerId() {
-        return getProp(WorkflowCommonModel.Props.OWNER_ID);
-    }
-
-    public void setOwnerId(String ownerId) {
-        setProp(WorkflowCommonModel.Props.OWNER_ID, ownerId);
-    }
-
     public String getOwnerName() {
         return getProp(WorkflowCommonModel.Props.OWNER_NAME);
     }
@@ -398,12 +390,12 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
         setProp(WorkflowSpecificModel.Props.COMPLETED_OVERDUE, completedOverdue);
 
         // Set workflowResolution value which is used in task search
-        if (getNodeRef() == null) {
+        if (isUnsaved()) {
             setProp(WorkflowSpecificModel.Props.WORKFLOW_RESOLUTION, parent.getProp(WorkflowSpecificModel.Props.RESOLUTION));
         }
 
         // Check if the new task is under CompoundWorkflow (not Definition) then add Searchable aspect
-        if (getNodeRef() == null && !(getParent().getParent() instanceof CompoundWorkflowDefinition)) {
+        if (isUnsaved() && !(getParent().getParent() instanceof CompoundWorkflowDefinition)) {
             getNode().getAspects().add(WorkflowSpecificModel.Aspects.SEARCHABLE);
         }
     }

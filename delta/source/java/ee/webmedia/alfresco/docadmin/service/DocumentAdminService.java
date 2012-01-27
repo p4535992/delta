@@ -59,6 +59,8 @@ public interface DocumentAdminService {
 
     String getDocumentTypeName(Node document);
 
+    Pair<String, String> getDocumentTypeNameAndId(Node document);
+
     Map<String/* docTypeId */, String/* docTypeName */> getDocumentTypeNames(Boolean used);
 
     /**
@@ -229,6 +231,5 @@ public interface DocumentAdminService {
         }
 
     }
-
 
 }

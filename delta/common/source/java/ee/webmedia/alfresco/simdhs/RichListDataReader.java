@@ -15,6 +15,8 @@ import org.alfresco.web.ui.common.component.data.UISortLink;
 import org.apache.log4j.Logger;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.utils.ComponentUtil;
+
 /**
  * Reads data directly from rich list data model.
  * <p/>
@@ -110,13 +112,21 @@ public class RichListDataReader implements DataReader {
     private List<String> getDataRow(FacesContext facesContext, List<UIColumn> columns) {
         List<String> row = new ArrayList<String>();
         for (UIColumn column : columns) {
-            UIComponent component = (UIComponent) column.getChildren().get(0);
-            row.add(getRowValue(facesContext, component));
+            List<UIComponent> children = ComponentUtil.getChildren(column);
+            if (children != null && !children.isEmpty()) {
+                UIComponent component = children.get(0);
+                row.add(getRowValue(facesContext, component));
+            } else {
+                row.add("");
+            }
         }
         return row;
     }
 
     private static String getRowValue(FacesContext facesContext, UIComponent component) {
+        if (component == null) {
+            return "";
+        }
         if (component instanceof ValueHolder) { // handle texts
             ValueHolder valueHolder = (ValueHolder) component;
             Object value = valueHolder.getValue();

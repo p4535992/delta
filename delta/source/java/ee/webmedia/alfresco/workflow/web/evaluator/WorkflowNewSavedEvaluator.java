@@ -1,8 +1,9 @@
 package ee.webmedia.alfresco.workflow.web.evaluator;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
+import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isStatus;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
-import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 
 /**
  * Evaluates to true if given workflow has status "uus" and it has been saved into the repository.
@@ -16,7 +17,8 @@ public class WorkflowNewSavedEvaluator extends AbstractFullAccessEvaluator {
     @Override
     public boolean evaluate(Object obj) {
         CompoundWorkflow workflow = (CompoundWorkflow) obj;
-        return workflow != null && workflow.getNodeRef() != null && WorkflowUtil.isStatus(workflow, Status.NEW) && hasFullAccess();
+        return workflow != null && workflow.isSaved() && (isStatus(workflow, Status.NEW) || isStatus(workflow, Status.FINISHED) && getUserService().isAdministrator())
+                && hasFullAccess();
     }
 
 }

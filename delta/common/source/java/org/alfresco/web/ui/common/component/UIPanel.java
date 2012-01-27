@@ -36,6 +36,8 @@ import javax.faces.el.ValueBinding;
 
 import org.alfresco.web.ui.common.PanelGenerator;
 import org.alfresco.web.ui.common.Utils;
+import org.alfresco.web.ui.repo.component.UIActions;
+import org.alfresco.web.ui.repo.component.evaluator.PermissionEvaluator;
 
 /**
  * @author kevinr
@@ -127,7 +129,13 @@ public class UIPanel extends UICommand
 
       // determine if we have a component on the header
       UIComponent titleComponent = getTitleComponent();
-
+      
+      boolean isIconAction = false;
+      if (titleComponent instanceof PermissionEvaluator || titleComponent instanceof UIActions) 
+      {
+          isIconAction = true;
+      }
+ 
       // determine the panel id
       String panelId = this.getId();
       if(panelId == null)
@@ -237,9 +245,16 @@ public class UIPanel extends UICommand
       {
          out.write(label);    // already encoded above
       }
-
+      
       if (isProgressive() == true) {
          out.write("</a>&nbsp;&nbsp;");
+      }
+      
+      if (titleComponent != null && isIconAction)
+      {
+          out.write("<span class='title-component-nonfloating'>");
+          Utils.encodeRecursive(context, titleComponent);
+          out.write("</span>");
       }
 
       if(label != null)
@@ -253,7 +268,7 @@ public class UIPanel extends UICommand
       }
 
       // render the title component if supplied
-      if (titleComponent != null)
+      if (titleComponent != null && !isIconAction)
       {
          out.write("<span class='title-component'>");
          Utils.encodeRecursive(context, titleComponent);

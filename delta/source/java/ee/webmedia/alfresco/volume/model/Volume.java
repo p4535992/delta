@@ -32,6 +32,7 @@ public class Volume implements Serializable, Comparable<Volume> {
     // FIXME: Alar, milleks see väli? On see üldse kuskil kasutusel?
     private Date seriesIdentifier;
     private boolean containsCases;
+    private boolean casesCreatableByUser;
     private int containingDocsCount;
     // non-mappable fields
     @AlfrescoModelProperty(isMappable = false)
@@ -102,6 +103,14 @@ public class Volume implements Serializable, Comparable<Volume> {
 
     public void setContainsCases(boolean containsCases) {
         this.containsCases = containsCases;
+    }
+
+    public boolean isCasesCreatableByUser() {
+        return casesCreatableByUser;
+    }
+
+    public void setCasesCreatableByUser(boolean casesCreatableByUser) {
+        this.casesCreatableByUser = casesCreatableByUser;
     }
 
     public int getContainingDocsCount() {

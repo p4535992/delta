@@ -51,7 +51,6 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.util.Assert;
 
-import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.WmNode;
@@ -64,21 +63,18 @@ import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.docconfig.generator.SaveListener;
-import ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGenerator;
 import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfig;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
-import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
+import ee.webmedia.alfresco.document.log.service.DocumentPropertiesChangeHolder;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.service.DocumentServiceImpl;
 import ee.webmedia.alfresco.document.service.EventsLoggingHelper;
-import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.imap.model.ImapModel;
-import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.utils.MessageData;
 import ee.webmedia.alfresco.utils.MessageDataImpl;
@@ -87,7 +83,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TreeNode;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
-import ee.webmedia.alfresco.volume.model.VolumeModel;
 
 /**
  * @author Alar Kvell
@@ -514,7 +509,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     // NB! This method may change document nodeRef when moving from archive to active store (see DocumentLocationGenerator save method)
     private DocumentDynamic update(DocumentDynamic documentOriginal, List<String> saveListenerBeanNames) {
         DocumentDynamic document = documentOriginal.clone();
-
+        boolean isDraft = document.isDraft();
         if (saveListenerBeanNames != null) {
             ValidationHelperImpl validationHelper = new ValidationHelperImpl();
             for (String saveListenerBeanName : saveListenerBeanNames) {
@@ -559,23 +554,18 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             propertyChangesMonitorHelper.addIgnoredProps(docProps //
                     , REG_NUMBER, SHORT_REG_NUMBER, INDIVIDUAL_NUMBER, REG_DATE_TIME // registration changes
                     );
-            // TODO refactor, so that accessRestriction changes would be logged here, not in AccessRestrictionGenerator
-            propertyChangesMonitorHelper.addIgnoredProps(docProps //
-                    , AccessRestrictionGenerator.ACCESS_RESTRICTION_PROPS // access restriction changed
-                    );
-            List<Pair<QName, Pair<Serializable, Serializable>>> changedPropsNewValues = saveThisNodeAndChildNodes(null, docNode,
+            DocumentPropertiesChangeHolder changedPropsNewValues = saveThisNodeAndChildNodes(null, docNode,
                     childAssocTypeQNamesRoot.getChildren(), null, propertyChangesMonitorHelper, propDefs);
             boolean propsChanged = !changedPropsNewValues.isEmpty();
             if (!EventsLoggingHelper.isLoggingDisabled(docNode, DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED)) {
-                if (document.isDraft()) {
+                if (isDraft) {
                     documentLogService.addDocumentLog(docRef, MessageUtil.getMessage("document_log_status_created"));
-                } else if (propsChanged) {
-                    for (Pair<QName, Pair<Serializable, Serializable>> keyOldNewValuesPair : changedPropsNewValues) {
-                        logChangedProp(docRef, propDefs, keyOldNewValuesPair);
+                } else if (propsChanged && !changedPropsNewValues.isOnlyAccessRestrictionPropsChanged() && !changedPropsNewValues.isOnlyLocationPropsChanged()) {
+                    for (Serializable msg : changedPropsNewValues.generateLogMessages(propDefs, docRef)) {
+                        documentLogService.addDocumentLog(docRef, (String) msg);
                     }
                 }
             }
-
             documentTemplateService.updateGeneratedFiles(docRef, false);
         }
         generalService.saveAddedAssocs(docNode);
@@ -651,57 +641,6 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             }
         }
         return false;
-    }
-
-    private void logChangedProp(NodeRef docRef, Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs, Pair<QName, Pair<Serializable, Serializable>> keyOldNewValuesPair) {
-        if (!DocumentDynamicModel.URI.equals(keyOldNewValuesPair.getFirst().getNamespaceURI())) {
-            return;
-        }
-        Pair<DynamicPropertyDefinition, Field> pair = propDefs.get(keyOldNewValuesPair.getFirst().getLocalName());
-        Field field = pair.getSecond();
-        if (field == null) {
-            return;
-        }
-        String originalFieldId = field.getOriginalFieldId();
-        Serializable oldValue = keyOldNewValuesPair.getSecond().getFirst();
-        Serializable newValue = keyOldNewValuesPair.getSecond().getSecond();
-        String messageKey = "document_log_location_changed";
-        if (DocumentCommonModel.Props.FUNCTION.getLocalName().equals(originalFieldId)) {
-            NodeRef functionRef = (NodeRef) oldValue;
-            if (functionRef != null) {
-                oldValue = nodeService.getProperty(functionRef, FunctionsModel.Props.MARK) + " "
-                        + nodeService.getProperty(functionRef, FunctionsModel.Props.TITLE);
-            }
-            newValue = nodeService.getProperty((NodeRef) newValue, FunctionsModel.Props.MARK) + " "
-                    + nodeService.getProperty((NodeRef) newValue, FunctionsModel.Props.TITLE);
-        } else if (DocumentCommonModel.Props.SERIES.getLocalName().equals(originalFieldId)) {
-            NodeRef seriesRef = (NodeRef) oldValue;
-            if (seriesRef != null) {
-                oldValue = nodeService.getProperty(seriesRef, SeriesModel.Props.SERIES_IDENTIFIER) + " "
-                        + nodeService.getProperty(seriesRef, SeriesModel.Props.TITLE);
-            }
-            newValue = nodeService.getProperty((NodeRef) newValue, SeriesModel.Props.SERIES_IDENTIFIER) + " "
-                    + nodeService.getProperty((NodeRef) newValue, SeriesModel.Props.TITLE);
-        } else if (DocumentCommonModel.Props.VOLUME.getLocalName().equals(originalFieldId)) {
-            NodeRef volumeRef = (NodeRef) oldValue;
-            if (volumeRef != null) {
-                oldValue = nodeService.getProperty(volumeRef, VolumeModel.Props.MARK) + " "
-                        + nodeService.getProperty(volumeRef, VolumeModel.Props.TITLE);
-            }
-            newValue = nodeService.getProperty((NodeRef) newValue, VolumeModel.Props.MARK) + " "
-                    + nodeService.getProperty((NodeRef) newValue, VolumeModel.Props.TITLE);
-        } else if (DocumentCommonModel.Props.CASE.getLocalName().equals(originalFieldId)) {
-            if (oldValue != null) {
-                oldValue = nodeService.getProperty((NodeRef) oldValue, CaseModel.Props.TITLE);
-            }
-            if (newValue != null) {
-                newValue = nodeService.getProperty((NodeRef) newValue, CaseModel.Props.TITLE);
-            }
-        } else {
-            messageKey = "document_log_status_changed";
-        }
-        String message = MessageUtil.getMessage(messageKey, field.getName(), oldValue, newValue);
-        documentLogService.addDocumentLog(docRef, message);
     }
 
     private void setParentFolderProps(DocumentDynamic document) {
@@ -895,19 +834,21 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         }
     }
 
-    private List<Pair<QName, Pair<Serializable, Serializable>>> saveThisNodeAndChildNodes(NodeRef parentRef, Node node, List<TreeNode<QName>> childAssocTypeQNames,
+    private DocumentPropertiesChangeHolder saveThisNodeAndChildNodes(NodeRef parentRef, Node node, List<TreeNode<QName>> childAssocTypeQNames,
             QName[] currentHierarchy, DocumentServiceImpl.PropertyChangesMonitorHelper propertyChangesMonitorHelper, Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs) {
         boolean propsChanged = false;
         NodeRef nodeRef;
         if (currentHierarchy == null) {
             currentHierarchy = new QName[] {};
         }
-        List<Pair<QName, Pair<Serializable, Serializable>>> changedPropsNewValues = new ArrayList<Pair<QName, Pair<Serializable, Serializable>>>();
+        DocumentPropertiesChangeHolder docPropsChangeHolder = new DocumentPropertiesChangeHolder();
         if (RepoUtil.isUnsaved(node)) {
             propsChanged = true;
             Map<QName, Serializable> props = RepoUtil.toQNameProperties(node.getProperties(), false, true);
-            nodeRef = nodeService.createNode(parentRef, node.getType(), node.getType(), node.getType(), props).getChildRef();
+            QName typeQName = node.getType();
+            nodeRef = nodeService.createNode(parentRef, typeQName, typeQName, typeQName, props).getChildRef();
             generalService.setAspectsIgnoringSystem(nodeRef, node.getAspects());
+            docPropsChangeHolder.addLog(nodeRef, typeQName, null, node.getNodeRef());
         } else {
             generalService.setAspectsIgnoringSystem(node);
 
@@ -924,11 +865,11 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
                     }
                 }
             }
-
             QName[] ignoredPropsArray = ignoredProps.toArray(new QName[ignoredProps.size()]);
-            changedPropsNewValues = propertyChangesMonitorHelper.setPropertiesIgnoringSystemAndReturnNewValues(node.getNodeRef(), node.getProperties(), ignoredPropsArray);
-            propsChanged |= !changedPropsNewValues.isEmpty();
-            propsChanged |= generalService.saveRemovedChildAssocs(node) > 0;
+            docPropsChangeHolder = propertyChangesMonitorHelper.setPropertiesIgnoringSystemAndReturnNewValues(node.getNodeRef(), node.getProperties(), ignoredPropsArray);
+            propsChanged |= !docPropsChangeHolder.isEmpty();
+            generalService.saveRemovedChildAssocs(node, docPropsChangeHolder);
+            propsChanged |= docPropsChangeHolder.isStructureChanged();
             nodeRef = node.getNodeRef();
         }
 
@@ -938,13 +879,13 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             if (childNodes != null) {
                 for (Node childNode : childNodes) {
                     QName[] childHierarchy = (QName[]) ArrayUtils.add(currentHierarchy, assocTypeQName);
-                    List<Pair<QName, Pair<Serializable, Serializable>>> changedChildNodePropsNewValues = saveThisNodeAndChildNodes(nodeRef, childNode,
+                    DocumentPropertiesChangeHolder changedChildNodePropsNewValues = saveThisNodeAndChildNodes(nodeRef, childNode,
                             childAssocTypeQName.getChildren(), childHierarchy, propertyChangesMonitorHelper, propDefs);
-                    changedPropsNewValues.addAll(changedChildNodePropsNewValues);
+                    docPropsChangeHolder.joinAnotherHolder(changedChildNodePropsNewValues);
                 }
             }
         }
-        return changedPropsNewValues;
+        return docPropsChangeHolder;
     }
 
     // START: setters

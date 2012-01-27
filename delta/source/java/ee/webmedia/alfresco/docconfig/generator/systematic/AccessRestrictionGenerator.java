@@ -40,7 +40,6 @@ import ee.webmedia.alfresco.common.propertysheet.multivalueeditor.PropsBuilder;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.Field;
-import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.generator.BasePropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.generator.BaseSystematicFieldGenerator;
@@ -356,29 +355,9 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
                 }
             }
         }
-
-        // Log changes
         if (!document.isDraftOrImapOrDvk()) {
-            // TODO refactor, so that accessRestriction changes would be logged in DocumentDynamicServiceImpl.logChangedProp, not here
-            final List<String> changedAccessRestrictionFieldIds = getChangedAccessRestrictionFieldIds(document, oldProps);
-            if (changedAccessRestrictionFieldIds.isEmpty()) {
-                return;
-            }
-            document.setAccessRestrictionPropsChanged(true);
-            final List<FieldDefinition> fields = documentAdminService.getFieldDefinitions(changedAccessRestrictionFieldIds);
-            final String reason = document.getProp(DocumentCommonModel.Props.ACCESS_RESTRICTION_CHANGE_REASON);
-            String emptyValue = MessageUtil.getMessage("document_log_status_empty");
-            for (FieldDefinition field : fields) {
-                Serializable oldPropValue = oldProps.get(field.getQName());
-                if (oldPropValue == null || oldPropValue instanceof String && StringUtils.isBlank((String) oldPropValue)) {
-                    oldPropValue = emptyValue;
-                }
-                Object newPropValue = newProps.get(field.getQName());
-                if (newPropValue == null || newPropValue instanceof String && StringUtils.isBlank((String) newPropValue)) {
-                    newPropValue = emptyValue;
-                }
-                documentLogService.addDocumentLog(docRef, MessageUtil.getMessage("document_log_status_accessRestrictionChanged"
-                        , field.getName(), oldPropValue, newPropValue, reason));
+            if (!getChangedAccessRestrictionFieldIds(document, oldProps).isEmpty()) {
+                document.setAccessRestrictionPropsChanged(true);
             }
         }
     }

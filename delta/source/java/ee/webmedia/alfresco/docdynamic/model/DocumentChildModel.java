@@ -20,6 +20,7 @@ public interface DocumentChildModel {
         QName ERRAND_ABROAD = QName.createQName(URI, "errandAbroad");
         QName APPLICANT_DOMESTIC = QName.createQName(URI, "applicantDomestic");
         QName ERRAND_DOMESTIC = QName.createQName(URI, "errandDomestic");
+        QName[] ALL_ASSOCS = new QName[] { CONTRACT_PARTY, APPLICANT_ABROAD, ERRAND_ABROAD, APPLICANT_DOMESTIC, ERRAND_DOMESTIC };
         // QName APPLICANT_TRAINING = QName.createQName(URI, "applicantTraining"); Uncomment when implemented
     }
 

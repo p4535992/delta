@@ -34,7 +34,7 @@ public class StorageTypeClassificatorUpdaterBootstrap extends AbstractModuleComp
         serviceRegistry.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
             @Override
             public Void execute() throws Throwable {
-                executeInTransaction();
+                // executeInTransaction();
                 return null;
             }
         }, false, true);

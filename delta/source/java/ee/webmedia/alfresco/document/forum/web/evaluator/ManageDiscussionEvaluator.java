@@ -57,7 +57,7 @@ public class ManageDiscussionEvaluator extends BaseActionEvaluator {
         final List<CompoundWorkflow> compoundWorkflows = getWorkflowService().getCompoundWorkflows(node.getNodeRef());
         // Check if owner is compoundWorkflow owner
         for (CompoundWorkflow compoundWorkflow : compoundWorkflows) {
-            if (AuthenticationUtil.getRunAsUser().equals(compoundWorkflow.getOwnerName())) {
+            if (AuthenticationUtil.getRunAsUser().equals(compoundWorkflow.getOwnerId())) {
                 return true;
             }
         }

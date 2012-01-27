@@ -72,11 +72,6 @@ return true;
       </h:panelGroup>
       <h:inputText id="name" value="#{DialogManager.bean.name}" size="35" maxlength="1024" styleClass="focus" />   
       
-      <h:outputText value="#{msg.icon}:&nbsp;&nbsp;&nbsp;" escape="false" />
-      <a:imagePickerRadioPanel id="space-icon" columns="6" spacing="4" value="#{DialogManager.bean.icon}" panelBorder="greyround" panelBgcolor="#F5F5F5">
-         <a:listItems value="#{DialogManager.bean.icons}" />
-      </a:imagePickerRadioPanel>
-   
    </h:panelGrid>
 
 </a:panel>

@@ -157,6 +157,7 @@ public class MenuItem implements Serializable {
                 }
             }
             link.setHref(href);
+            link.setTarget("_blank");
         } else {
             final MethodBinding mb;
             if (StringUtils.startsWith(outcome2, "#{")) {

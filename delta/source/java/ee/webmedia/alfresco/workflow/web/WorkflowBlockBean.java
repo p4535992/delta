@@ -100,6 +100,7 @@ import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 import ee.webmedia.alfresco.workflow.service.type.DueDateExtensionWorkflowType;
+import ee.webmedia.alfresco.workflow.web.PrintTableServlet.TableMode;
 
 /**
  * @author Dmitri Melnikov
@@ -469,6 +470,10 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             if (StringUtils.isBlank(task.getComment())) {
                 return Arrays.asList(new Pair<String, String>("task_validation_assignmentTask_comment", null));
             }
+        } else if (outcomeIndex == 1 && task.isType(WorkflowSpecificModel.Types.CONFIRMATION_TASK)) {
+            if (StringUtils.isBlank(task.getComment())) {
+                return Arrays.asList(new Pair<String, String>("task_validation_confirmationTask_comment", null));
+            }
         } else if (WorkflowSpecificModel.Types.OPINION_TASK.equals(taskType)) {
             if (StringUtils.isBlank(task.getComment()) && (task.getFiles() == null || task.getFiles().isEmpty())) {
                 return Arrays.asList(new Pair<String, String>("task_validation_opinionTask_comment", null));
@@ -555,7 +560,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         if (!StringUtils.endsWith(requestContextPath, "/")) {
             requestContextPath += "/";
         }
-        return requestContextPath + "printReviewNotes/?param1=param1Val2";
+        return requestContextPath + "printTable?" + PrintTableServlet.TABLE_MODE + "=" + TableMode.REVIEW_NOTES;
     }
 
     public boolean getOpinionNoteBlockRendered() {
@@ -693,6 +698,9 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 int delegatableTaskIndex = delegatableTask.getFirst();
                 putAttribute(sheet, DelegationBean.ATTRIB_DELEGATABLE_TASK_INDEX, delegatableTaskIndex);
                 myTask = delegatableTask.getSecond();// first copy of myTask - stored in delegationBean and used in propertySheet
+                if (WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK.equals(taskType) && myTask.getProp(WorkflowSpecificModel.Props.SEND_ORDER_ASSIGNMENT_COMPLETED_EMAIL) == null) {
+                    myTask.setProp(WorkflowSpecificModel.Props.SEND_ORDER_ASSIGNMENT_COMPLETED_EMAIL, Boolean.TRUE);
+                }
                 getMyTasks().set(index, myTask);
                 node = myTask.getNode();
             } else if (myTask.isType(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK) && myTask.getConfirmedDueDate() == null) {

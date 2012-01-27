@@ -159,7 +159,6 @@
          <properties>
             <property name="wfs:sendOrderAssignmentCompletedEmail">
                <type>d:boolean</type>
-               <default>true</default>
             </property>
          </properties>         
          <mandatory-aspects>

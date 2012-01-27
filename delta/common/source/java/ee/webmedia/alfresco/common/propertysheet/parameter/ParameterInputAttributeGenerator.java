@@ -21,7 +21,7 @@ import ee.webmedia.alfresco.parameters.service.ParametersService;
  */
 public class ParameterInputAttributeGenerator extends TextFieldGenerator {
 
-    private static final String PARAMETER_NAME = "parameterName";
+    public static final String PARAMETER_NAME = "parameterName";
     private ParametersService parametersService;
 
     @Override

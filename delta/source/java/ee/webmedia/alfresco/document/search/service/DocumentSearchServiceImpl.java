@@ -1205,7 +1205,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         // Saatmisviis
         @SuppressWarnings("unchecked")
         List<String> sendMode = (List<String>) props.get(DocumentSearchModel.Props.SEND_MODE);
-        queryParts.add(generateMultiStringExactQuery(sendMode, DocumentCommonModel.Props.SEARCHABLE_SEND_MODE));
+        queryParts.add(generateMultiStringExactQuery(sendMode, DocumentCommonModel.Props.SEARCHABLE_SEND_MODE, DocumentSpecificModel.Props.TRANSMITTAL_MODE));
         // Dokumendi reg. number
         queryParts.add(generateStringExactQuery((String) props.get(DocumentCommonModel.Props.SHORT_REG_NUMBER), DocumentCommonModel.Props.SHORT_REG_NUMBER));
         // Projekt

@@ -412,7 +412,9 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
             if (!assocInf.isCase()) {// document association, not case
                 final Node otherDocNode = new Node(sourceRef);
                 assocInf.setTitle((String) nodeService.getProperty(sourceRef, DOC_NAME));
-                assocInf.setType(getDocumentAdminService().getDocumentTypeName(otherDocNode));
+                Pair<String, String> documentTypeNameAndId = getDocumentAdminService().getDocumentTypeNameAndId(otherDocNode);
+                assocInf.setType(documentTypeNameAndId.getFirst());
+                assocInf.setTypeId(documentTypeNameAndId.getSecond());
                 assocInf.setRegNumber((String) nodeService.getProperty(sourceRef, REG_NUMBER));
                 assocInf.setRegDateTime((Date) nodeService.getProperty(sourceRef, REG_DATE_TIME));
             }
@@ -432,7 +434,9 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
             assocInf.setTitle((String) otherDocProps.get(DOC_NAME));
             assocInf.setRegNumber((String) otherDocProps.get(REG_NUMBER));
             assocInf.setRegDateTime((Date) otherDocProps.get(REG_DATE_TIME));
-            assocInf.setType(getDocumentAdminService().getDocumentTypeName(otherDocNode));
+            Pair<String, String> documentTypeNameAndId = getDocumentAdminService().getDocumentTypeNameAndId(otherDocNode);
+            assocInf.setType(documentTypeNameAndId.getFirst());
+            assocInf.setTypeId(documentTypeNameAndId.getSecond());
             assocInf.setNodeRef(assocRef.getTargetRef());
         }
         assocInf.setSource(isSourceAssoc);

@@ -469,6 +469,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
             FieldGroupGenerator fieldGroupGenerator = fieldGroupGenerators.get(fieldGroup.getName());
             if (fieldGroupGenerator != null) {
                 fieldGroupGenerator.generateFieldGroup(fieldGroup, new FieldGroupGeneratorResultsImpl(config));
+                addSaveListener(config, fieldGroupGenerator);
                 return;
             }
         }
@@ -578,11 +579,22 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
     private void addSaveListener(DocumentConfig config, FieldGenerator fieldGenerator) {
         if (fieldGenerator instanceof SaveListener) {
             SaveListener saveListener = (SaveListener) fieldGenerator;
-            List<String> saveListenerBeanNames = config.getSaveListenerBeanNames();
-            String beanName = saveListener.getBeanName();
-            if (!saveListenerBeanNames.contains(beanName)) {
-                saveListenerBeanNames.add(beanName);
-            }
+            addSaveListener(config, saveListener);
+        }
+    }
+
+    private void addSaveListener(DocumentConfig config, FieldGroupGenerator fieldGroupGenerator) {
+        if (fieldGroupGenerator instanceof SaveListener) {
+            SaveListener saveListener = (SaveListener) fieldGroupGenerator;
+            addSaveListener(config, saveListener);
+        }
+    }
+
+    private void addSaveListener(DocumentConfig config, SaveListener saveListener) {
+        List<String> saveListenerBeanNames = config.getSaveListenerBeanNames();
+        String beanName = saveListener.getBeanName();
+        if (!saveListenerBeanNames.contains(beanName)) {
+            saveListenerBeanNames.add(beanName);
         }
     }
 

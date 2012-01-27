@@ -478,6 +478,20 @@ function showFooterTitlebar() {
    }
 }
 
+function showDuplicatedTableHeader(context) {
+   var table = $jQ("table.duplicate-header", context);
+
+   if (table.length > 0) {
+      if($jQ(window).height() < table.offset().top + table.outerHeight()) {
+         table.append("<tfoot></tfoot>");
+         
+         var footer = table.children("tfoot");
+         var row = table.children("thead").children("tr");
+         row.clone().appendTo(footer);
+      }
+   }
+}
+
 function setPageScrollY() {
    var scrollTop = $jQ(window).scrollTop();
    $jQ('#wrapper form').append('<input type="hidden" name="scrollToY" value="'+ scrollTop +'" />');
@@ -1032,7 +1046,7 @@ $jQ(document).ready(function() {
 function initWithScreenProtected() {
    showFooterTitlebar();
    allowMultiplePageSizeChangers();
-   $jQ(".admin-user-search-input").keyup(function(event) {
+   $jQ(".admin-user-search-input").live('keyup', function(event) {
       if (event.keyCode == 13) {
            $jQ(this).next().click();
            return false;
@@ -1565,6 +1579,8 @@ function extendCondencePlugin() {
 // 1) once after full page load
 // *) each time an area is replaced inside the page
 function handleHtmlLoaded(context, selects) {
+   
+   showDuplicatedTableHeader(context);
 
    $jQ(".tooltip", context).tooltip({
       track: true

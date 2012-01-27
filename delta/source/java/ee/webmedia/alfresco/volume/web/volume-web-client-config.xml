@@ -75,22 +75,25 @@
    <config evaluator="node-type" condition="vol:volume">
       <property-sheet>
          <show-property name="docdyn:volumeMark" display-label-id="volume_volumeMark" readOnlyIf="#{VolumeDetailsDialog.volumeMarkFieldReadOnly}" />
-         <show-property name="docdyn:title" display-label-id="volume_title" readOnlyIf="docdyn:status=suletud||hävitatud" styleClass="expand19-200" component-generator="TextAreaGenerator" />
-         <show-property name="docdyn:volumeType" display-label-id="volume_volumeType" component-generator="GeneralSelectorGenerator"
-           selectionItems="#{VolumeDetailsDialog.findVolumeTypesAllowed}" readOnlyIf="docdyn:status=suletud||hävitatud" valueChangeListener="#{VolumeDetailsDialog.volumeTypeValueChanged}" />
-         <show-property name="docdyn:containsCases" display-label-id="volume_containsCases" component-generator="CheckboxGenerator" readOnlyIf="#{VolumeDetailsDialog.disableContainsCases}" />
-         <show-property name="docdyn:description" display-label-id="volume_description" readOnlyIf="docdyn:status=suletud||hävitatud" styleClass="expand19-200" component-generator="TextAreaGenerator"/>
-         <show-property name="docdyn:validFrom" display-label-id="volume_valid" textId="document_eventDates_templateText"
-         component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" props="
+         <show-property name="docdyn:title" display-label-id="volume_title" readOnlyIf="docdyn:status=suletud||hävitatud" styleClass="expand19-200"
+            component-generator="TextAreaGenerator" />
+         <show-property name="docdyn:volumeType" display-label-id="volume_volumeType" component-generator="GeneralSelectorGenerator" selectionItems="#{VolumeDetailsDialog.findVolumeTypesAllowed}"
+            readOnlyIf="docdyn:status=suletud||hävitatud" valueChangeListener="#{VolumeDetailsDialog.volumeTypeValueChanged}" />
+         <show-property name="docdyn:containsCases" display-label-id="volume_containsCases" component-generator="CheckboxGenerator" readOnlyIf="#{VolumeDetailsDialog.disableContainsCases}"
+            valueChangeListener="#{VolumeDetailsDialog.containsCasesValueChanged}" />
+         <show-property name="docdyn:casesCreatableByUser" display-label-id="volume_casesCreatableByUser" component-generator="CheckboxGenerator"
+            readOnlyIf="#{VolumeDetailsDialog.disableCasesCreatableByUser}" />
+         <show-property name="docdyn:description" display-label-id="volume_description" readOnlyIf="docdyn:status=suletud||hävitatud" styleClass="expand19-200"
+            component-generator="TextAreaGenerator" />
+         <show-property name="docdyn:validFrom" display-label-id="volume_valid" textId="document_eventDates_templateText" component-generator="InlinePropertyGroupGenerator"
+            optionsSeparator="¤" props="
              docdyn:validFrom¤¤styleClass=date inline¤readOnlyIf=docdyn:status=suletud||hävitatud
             ,docdyn:validTo¤¤styleClass=date inline¤readOnlyIf=docdyn:status=suletud||hävitatud
-            "
-         />
+            " />
          <show-property name="docdyn:status" display-label-id="series_status" read-only="true" classificatorName="docListUnitStatus" component-generator="ClassificatorSelectorGenerator" />
-         <show-property name="docdyn:dispositionDate" display-label-id="volume_dispositionDate" readOnlyIf="docdyn:status=hävitatud"/>
-         <show-property name="docdyn:archivingNote" display-label-id="volume_archive_note" readOnlyIf="docdyn:status=hävitatud"/>
-         <show-property name="docdyn:sendToDestruction" display-label-id="volume_sendToDestruction" component-generator="SendToDestructionGenerator"/>
+         <show-property name="docdyn:dispositionDate" display-label-id="volume_dispositionDate" readOnlyIf="docdyn:status=hävitatud" />
+         <show-property name="docdyn:archivingNote" display-label-id="volume_archive_note" readOnlyIf="docdyn:status=hävitatud" />
+         <show-property name="docdyn:sendToDestruction" display-label-id="volume_sendToDestruction" component-generator="SendToDestructionGenerator" />
       </property-sheet>
    </config>
 </alfresco-config>
-

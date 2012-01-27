@@ -745,6 +745,11 @@ td .dropdown-menu {
 		margin: -22px 5px 0 0;
 	}
 	
+	.panel-wrapper .title-component-nonfloating {
+		float: none;
+		margin: -22px 5px 0 0;
+	}
+	
 		.panel-wrapper .title-component a,
 		.panel-wrapper .title-component a img {
 			margin-left: 4px;

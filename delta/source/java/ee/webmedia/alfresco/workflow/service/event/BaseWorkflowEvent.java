@@ -1,5 +1,9 @@
 package ee.webmedia.alfresco.workflow.service.event;
 
+import static java.util.Arrays.asList;
+
+import java.util.List;
+
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.web.WmNode;
@@ -12,14 +16,14 @@ public class BaseWorkflowEvent implements WorkflowEvent {
 
     private final WorkflowEventType type;
     private final BaseWorkflowObject object;
-    private final Object[] extras;
+    private final List<Object> extras;
 
     public BaseWorkflowEvent(WorkflowEventType type, BaseWorkflowObject object, Object... extras) {
         Assert.notNull(type);
         Assert.notNull(object);
         this.type = type;
         this.object = object;
-        this.extras = extras;
+        this.extras = asList(extras);
     }
 
     @Override
@@ -33,7 +37,7 @@ public class BaseWorkflowEvent implements WorkflowEvent {
     }
 
     @Override
-    public Object[] getExtras() {
+    public List<Object> getExtras() {
         return extras;
     }
 

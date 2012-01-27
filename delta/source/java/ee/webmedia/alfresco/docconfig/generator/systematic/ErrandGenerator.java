@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.docconfig.generator.systematic;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -15,9 +16,11 @@ import java.util.Set;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
+import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.classificator.constant.FieldType;
@@ -29,21 +32,29 @@ import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicFieldGroupNames;
+import ee.webmedia.alfresco.docconfig.generator.BasePropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.generator.BaseSystematicGroupGenerator;
 import ee.webmedia.alfresco.docconfig.generator.FieldGroupGeneratorResults;
 import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
+import ee.webmedia.alfresco.docconfig.generator.SaveListener;
 import ee.webmedia.alfresco.docconfig.generator.systematic.UserContactTableGenerator.UserContactTableState;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentChildModel;
+import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
+import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
+import ee.webmedia.alfresco.parameters.model.Parameters;
+import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.utils.RepoUtil;
 
 /**
  * @author Alar Kvell
  */
-public class ErrandGenerator extends BaseSystematicGroupGenerator {
+public class ErrandGenerator extends BaseSystematicGroupGenerator implements SaveListener, BeanNameAware {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(ErrandGenerator.class);
 
     private NamespaceService namespaceService;
+    private ParametersService parametersService;
+    private String beanName;
 
     // UserContactRelatedGroupGenerator
     private final List<String> applicantRelatedFieldIds = Arrays.asList(
@@ -150,6 +161,8 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator {
         // used to keep track of fields that are already generated as part of some related fields group (such fields are removed from this list)
         List<Field> notProcessedFields = new ArrayList<Field>(group.getFields());
 
+        generatorResults.addStateHolder("errandGroup", new ErrandState(geDailyAllowanceSumParamValue()));
+
         for (int i = 0; i < fields.size(); i++) {
             Field field = fields.get(i);
             if (isProcessed(field, notProcessedFields)) {
@@ -185,18 +198,21 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator {
             Pair<Field, List<Field>> relatedFields2 = collectAndRemoveFieldsInOriginalOrderToFakeGroup(notProcessedFields, field, fieldsByOriginalId);
             List<Field> relatedFields = relatedFields2 == null ? null : relatedFields2.getSecond();
             if (relatedFields != null) {
-                generateFields(generatorResults, items, stateHolders, hierarchy, relatedFields.toArray(new Field[relatedFields.size()]));
+                generateFields(generatorResults, items, stateHolders, hierarchy, namespaceService, relatedFields.toArray(new Field[relatedFields.size()]));
                 continue;
             }
             relatedFields = collectAndRemoveFieldsInOriginalOrder(notProcessedFields, field, dailyAllowanceTableFieldIds);
             if (relatedFields != null) {
-                ItemConfigVO item = generateTable(generatorResults, items, hierarchy, relatedFields, field, "Päevaraha", "add");
+                List<String> columnStyleClasses = Arrays.asList("dailyAllowanceDaysField", "dailyAllowanceRateField", "dailyAllowanceSumField");
+                setDailyAllowanceSumParameter(relatedFields);
+                ItemConfigVO item = generateTable(generatorResults, items, hierarchy, relatedFields, field, "Päevaraha", "add", columnStyleClasses);
                 item.setStyleClass("add-expense");
                 continue;
             }
             relatedFields = collectAndRemoveFieldsInOriginalOrder(notProcessedFields, field, expenseTableFieldIds);
             if (relatedFields != null) {
-                ItemConfigVO item = generateTable(generatorResults, items, hierarchy, relatedFields, field, "Kulud", "add");
+                List<String> columnStyleClasses = Arrays.asList("", "expectedExpenseSumField");
+                ItemConfigVO item = generateTable(generatorResults, items, hierarchy, relatedFields, field, "Kulud", "add", columnStyleClasses);
                 item.setStyleClass("add-expense");
                 continue;
             }
@@ -217,7 +233,7 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator {
             }
 
             // If field is not related to a group of fields, then process it separately
-            generateFields(generatorResults, items, stateHolders, hierarchy, field);
+            generateFields(generatorResults, items, stateHolders, hierarchy, namespaceService, field);
         }
 
         for (ItemConfigVO item : items.values()) {
@@ -225,6 +241,19 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator {
         }
         for (Entry<String, PropertySheetStateHolder> entry : stateHolders.entrySet()) {
             generatorResults.addStateHolder(entry.getKey(), entry.getValue());
+        }
+    }
+
+    private Double geDailyAllowanceSumParamValue() {
+        return parametersService.getDoubleParameter(Parameters.ERRAND_ORDER_ABROAD_DAILY_ALLOWANCE_SUM);
+    }
+
+    private void setDailyAllowanceSumParameter(List<Field> relatedFields) {
+        for (Field relatedField : relatedFields) {
+            if (DocumentSpecificModel.Props.DAILY_ALLOWANCE_SUM.getLocalName().equals(relatedField.getOriginalFieldId())) {
+                relatedField.setDatafieldParamName(Parameters.ERRAND_ORDER_ABROAD_DAILY_ALLOWANCE_SUM.getParameterName());
+                break;
+            }
         }
     }
 
@@ -239,8 +268,13 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator {
 
     private ItemConfigVO generateTable(FieldGroupGeneratorResults generatorResults, Map<String, ItemConfigVO> items, QName[] hierarchy, List<Field> relatedFields,
             Field primaryField, String displayLabel, String addLabelId) {
+        return generateTable(generatorResults, items, hierarchy, relatedFields, primaryField, displayLabel, addLabelId, null);
+    }
 
-        Pair<ItemConfigVO, Pair<String, List<QName>>> result = generateBasePropsItem(generatorResults, items, hierarchy, relatedFields, primaryField, displayLabel);
+    private ItemConfigVO generateTable(FieldGroupGeneratorResults generatorResults, Map<String, ItemConfigVO> items, QName[] hierarchy, List<Field> relatedFields,
+            Field primaryField, String displayLabel, String addLabelId, List<String> columnStyleClasses) {
+        Pair<ItemConfigVO, Pair<String, List<QName>>> result = generateBasePropsItem(generatorResults, items, hierarchy, relatedFields, primaryField, displayLabel,
+                columnStyleClasses);
 
         ItemConfigVO item = result.getFirst();
         item.setComponentGenerator("MultiValueEditorGenerator");
@@ -277,11 +311,17 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator {
 
     private Pair<ItemConfigVO, Pair<String, List<QName>>> generateBasePropsItem(FieldGroupGeneratorResults generatorResults, Map<String, ItemConfigVO> items, QName[] hierarchy,
             List<Field> relatedFields, Field primaryField, String displayLabel) {
+        return generateBasePropsItem(generatorResults, items, hierarchy, relatedFields, primaryField, displayLabel, null);
+    }
+
+    private Pair<ItemConfigVO, Pair<String, List<QName>>> generateBasePropsItem(FieldGroupGeneratorResults generatorResults, Map<String, ItemConfigVO> items, QName[] hierarchy,
+            List<Field> relatedFields, Field primaryField, String displayLabel, List<String> columnStyleClasses) {
         List<String> props = new ArrayList<String>();
         List<QName> propNames = new ArrayList<QName>();
         Pair<Map<String, ItemConfigVO>, Map<String, PropertySheetStateHolder>> columnItemsAndStateHolders = generatorResults.generateItems(relatedFields
                 .toArray(new Field[relatedFields.size()]));
         Map<String, ItemConfigVO> columnItems = columnItemsAndStateHolders.getFirst();
+        int columnCounter = 0;
         for (ItemConfigVO columnItem : columnItems.values()) {
 
             for (Field field : relatedFields) {
@@ -294,14 +334,17 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator {
                     } else if (field.getFieldTypeEnum() == FieldType.TEXT_FIELD) {
                         styleClass += " medium";
                     }
+                    if (columnStyleClasses != null && columnStyleClasses.size() > columnCounter) {
+                        styleClass += " " + columnStyleClasses.get(columnCounter);
+                    }
                     columnItem.setStyleClass(styleClass);
                 }
             }
-
             String prop = columnItem.toPropString(PropsBuilder.DEFAULT_OPTIONS_SEPARATOR);
             Assert.isTrue(!StringUtils.contains(prop, CombinedPropReader.AttributeNames.DEFAULT_PROPERTIES_SEPARATOR));
             props.add(prop);
             propNames.add(QName.resolveToQName(namespaceService, columnItem.getName()));
+            columnCounter++;
         }
         String propsString = StringUtils.join(props, CombinedPropReader.AttributeNames.DEFAULT_PROPERTIES_SEPARATOR);
 
@@ -346,15 +389,37 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator {
     }
 
     private static void generateFields(FieldGroupGeneratorResults generatorResults, Map<String, ItemConfigVO> items, Map<String, PropertySheetStateHolder> stateHolders,
-            QName[] hierarchy, Field... fields) {
+            QName[] hierarchy, NamespaceService namespaceService, Field... fields) {
         Pair<Map<String, ItemConfigVO>, Map<String, PropertySheetStateHolder>> result = generatorResults.generateItems(fields);
         Map<String, ItemConfigVO> generatedItems = result.getFirst();
         Map<String, PropertySheetStateHolder> generatedStateHolders = result.getSecond();
         Assert.isTrue(!CollectionUtils.containsAny(items.keySet(), generatedItems.keySet()));
         Assert.isTrue(!CollectionUtils.containsAny(stateHolders.keySet(), generatedStateHolders.keySet()));
+        addStyleClassIfNeeded(generatedItems.values(), namespaceService);
         setBelongsToSubPropertySheet(generatedItems.values(), hierarchy);
         items.putAll(generatedItems);
         stateHolders.putAll(generatedStateHolders);
+    }
+
+    private static void addStyleClassIfNeeded(Collection<ItemConfigVO> values, NamespaceService namespaceService) {
+        if (values != null) {
+            String dailyAllowanceTotalSumPrefixString = DocumentSpecificModel.Props.DAILY_ALLOWANCE_TOTAL_SUM.toPrefixString(namespaceService);
+            String expensesTotalSumPrefixString = DocumentSpecificModel.Props.EXPENSES_TOTAL_SUM.toPrefixString(namespaceService);
+            for (ItemConfigVO item : values) {
+                if (dailyAllowanceTotalSumPrefixString.equals(item.getName())) {
+                    addStyleClass(item, "dailyAllowanceTotalSumField");
+                }
+                if (expensesTotalSumPrefixString.equals(item.getName())) {
+                    addStyleClass(item, "expensesTotalSumField");
+                }
+            }
+        }
+    }
+
+    private static void addStyleClass(ItemConfigVO item, String dailyAllowanceTotalSumClass) {
+        String itemStyleClass = item.getStyleClass();
+        itemStyleClass = StringUtils.isBlank(itemStyleClass) ? dailyAllowanceTotalSumClass : itemStyleClass + " " + dailyAllowanceTotalSumClass;
+        item.setStyleClass(itemStyleClass);
     }
 
     private static void setBelongsToSubPropertySheet(Collection<ItemConfigVO> generatedItemValues, QName[] hierarchy) {
@@ -410,8 +475,112 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator {
         return relatedFields;
     }
 
+    public static class ErrandState extends BasePropertySheetStateHolder {
+        private static final long serialVersionUID = 1L;
+        private final Double dailyAllowanceSumParamValue;
+
+        public ErrandState(Double dailyAllowanceSumParamValue) {
+            this.dailyAllowanceSumParamValue = dailyAllowanceSumParamValue;
+        }
+
+        @Override
+        public void reset(boolean inEditMode) {
+            if (inEditMode) {
+                calculateValues(dialogDataProvider.getNode(), dailyAllowanceSumParamValue);
+            }
+        }
+    }
+
     public void setNamespaceService(NamespaceService namespaceService) {
         this.namespaceService = namespaceService;
+    }
+
+    @Override
+    public void setBeanName(String name) {
+        beanName = name;
+    }
+
+    @Override
+    public String getBeanName() {
+        return beanName;
+    }
+
+    @Override
+    public void validate(DocumentDynamic document, ValidationHelper validationHelper) {
+
+    }
+
+    @Override
+    public void save(DocumentDynamic document) {
+        calculateValues(document.getNode(), geDailyAllowanceSumParamValue());
+    }
+
+    private static void calculateValues(Node document, Double dailyAllowanceSumParam) {
+        List<Node> applicants = document.getAllChildAssociations(DocumentChildModel.Assocs.APPLICANT_ABROAD);
+        if (applicants != null) {
+            BigDecimal dailyAllowanceSum = dailyAllowanceSumParam != null ? new BigDecimal(dailyAllowanceSumParam) : BigDecimal.ZERO;
+            for (Node applicant : applicants) {
+                List<Node> errands = applicant.getAllChildAssociations(DocumentChildModel.Assocs.ERRAND_ABROAD);
+                if (errands != null) {
+                    for (Node errand : errands) {
+                        calculateDailyAllowanceSums(dailyAllowanceSum, errand);
+                        calculateExpensesSum(errand);
+                    }
+                }
+            }
+        }
+    }
+
+    private static void calculateExpensesSum(Node errand) {
+        Map<String, Object> properties = errand.getProperties();
+        @SuppressWarnings("unchecked")
+        List<Double> expensesSums = (List<Double>) properties.get(DocumentSpecificModel.Props.EXPECTED_EXPENSE_SUM);
+        BigDecimal expensesTotalSum = BigDecimal.ZERO;
+        if (expensesSums != null) {
+            for (Double expensesSum : expensesSums) {
+                if (expensesSum != null) {
+                    expensesTotalSum = expensesTotalSum.add(BigDecimal.valueOf(expensesSum));
+                }
+            }
+        }
+        properties.put(DocumentSpecificModel.Props.EXPENSES_TOTAL_SUM.toString(), expensesTotalSum.doubleValue());
+    }
+
+    private static void calculateDailyAllowanceSums(BigDecimal dailyAllowanceSum, Node errand) {
+        Map<String, Object> properties = errand.getProperties();
+        @SuppressWarnings("unchecked")
+        List<Long> dailyAllowanceDays = (List<Long>) properties.get(DocumentSpecificModel.Props.DAILY_ALLOWANCE_DAYS);
+        @SuppressWarnings("unchecked")
+        List<String> dailyAllowanceRates = (List<String>) properties.get(DocumentSpecificModel.Props.DAILY_ALLOWANCE_RATE);
+        List<Double> dailyAllowanceSums = new ArrayList<Double>();
+        BigDecimal dailyAllowanceTotalSum = BigDecimal.ZERO;
+        if (dailyAllowanceDays != null && dailyAllowanceRates != null) {
+            for (int i = 0; i < dailyAllowanceDays.size(); i++) {
+                Long dailyAllowanceDay = dailyAllowanceDays.get(i);
+                BigDecimal days = dailyAllowanceDay != null ? new BigDecimal(dailyAllowanceDay) : BigDecimal.ZERO;
+                BigDecimal rate = BigDecimal.ZERO;
+                if (i < dailyAllowanceRates.size()) {
+                    try {
+                        String dailyAllowanceRate = dailyAllowanceRates.get(i);
+                        rate = dailyAllowanceRate != null ? new BigDecimal(Double.parseDouble(dailyAllowanceRate)) : BigDecimal.ZERO;
+                    } catch (NumberFormatException e) {
+
+                    }
+
+                }
+                if (days != null && rate != null) {
+                    BigDecimal rowSum = days.multiply((rate.divide(new BigDecimal(100)))).multiply(dailyAllowanceSum);
+                    dailyAllowanceSums.add(rowSum.doubleValue());
+                    dailyAllowanceTotalSum = dailyAllowanceTotalSum.add(rowSum);
+                }
+            }
+        }
+        properties.put(DocumentSpecificModel.Props.DAILY_ALLOWANCE_SUM.toString(), dailyAllowanceSums);
+        properties.put(DocumentSpecificModel.Props.DAILY_ALLOWANCE_TOTAL_SUM.toString(), dailyAllowanceTotalSum.doubleValue());
+    }
+
+    public void setParametersService(ParametersService parametersService) {
+        this.parametersService = parametersService;
     }
 
 }

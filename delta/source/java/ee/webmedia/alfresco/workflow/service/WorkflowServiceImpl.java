@@ -413,7 +413,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         return getNewCompoundWorkflow(compoundWorkflowDefinition, parent, type, props, aspects);
     }
 
-    public CompoundWorkflow getNewCompoundWorkflow(NodeRef compoundWorkflowDefinition, NodeRef parent, QName type, Map<QName, Serializable> props, Set<QName> aspects) {
+    private CompoundWorkflow getNewCompoundWorkflow(NodeRef compoundWorkflowDefinition, NodeRef parent, QName type, Map<QName, Serializable> props, Set<QName> aspects) {
         if (!type.equals(WorkflowCommonModel.Types.COMPOUND_WORKFLOW_DEFINITION)) {
             throw new RuntimeException("Node is not a compoundWorkflowDefinition, type '" + type.toPrefixString(namespaceService) + "', nodeRef="
                     + compoundWorkflowDefinition);
@@ -430,7 +430,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         QName compoundWorkflowType = WorkflowCommonModel.Types.COMPOUND_WORKFLOW;
         WmNode compoundWorkflowNode = new WmNode(null, compoundWorkflowType.getPrefixedQName(namespaceService), aspects, props);
         CompoundWorkflow compoundWorkflow = new CompoundWorkflow(compoundWorkflowNode, parent);
-        if (compoundWorkflowDefinition != null && nodeService.exists(compoundWorkflowDefinition)) {
+        if (RepoUtil.isSaved(compoundWorkflowDefinition) && nodeService.exists(compoundWorkflowDefinition)) {
             getAndAddWorkflows(compoundWorkflowDefinition, compoundWorkflow, true);
         }
 
@@ -534,6 +534,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                 } else if (task.getAction() == Task.Action.UNFINISH) {
                     // Unfinish task
                     requireStatus(task, Status.IN_PROGRESS, Status.STOPPED);
+                    queue.setParameter(WorkflowQueueParameter.WORKFLOW_CANCELLED_MANUALLY, Boolean.TRUE);
                     setTaskUnfinished(queue, task);
                 }
             }
@@ -555,8 +556,8 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
         // Remove workflows
         for (Workflow removedWorkflow : compoundWorkflow.getRemovedWorkflows()) {
-            NodeRef removedWorkflowNodeRef = removedWorkflow.getNodeRef();
-            if (removedWorkflowNodeRef != null) {
+            if (removedWorkflow.isSaved()) {
+                NodeRef removedWorkflowNodeRef = removedWorkflow.getNodeRef();
                 checkWorkflow(getWorkflow(removedWorkflowNodeRef, compoundWorkflow, false), Status.NEW);
                 nodeService.deleteNode(removedWorkflowNodeRef);
                 changed = true;
@@ -603,7 +604,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         // Remove tasks
         for (Task removedTask : workflow.getRemovedTasks()) {
             NodeRef removedTaskNodeRef = removedTask.getNodeRef();
-            if (removedTaskNodeRef != null) {
+            if (removedTask.isSaved()) {
                 checkTask(getTask(removedTaskNodeRef, workflow, false), Status.NEW);
                 nodeService.deleteNode(removedTaskNodeRef);
                 changed = true;
@@ -955,7 +956,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     @Override
     public void deleteCompoundWorkflow(NodeRef nodeRef) {
         CompoundWorkflow compoundWorkflow = getCompoundWorkflow(nodeRef);
-        checkCompoundWorkflow(compoundWorkflow, Status.NEW);
+        checkCompoundWorkflow(compoundWorkflow, Status.NEW, Status.FINISHED);
         if (log.isDebugEnabled()) {
             log.debug("Deleting " + compoundWorkflow);
         }
@@ -1000,6 +1001,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     public CompoundWorkflow saveAndFinishCompoundWorkflow(CompoundWorkflow compoundWorkflowOriginal) {
         CompoundWorkflow compoundWorkflow = compoundWorkflowOriginal.copy();
         WorkflowEventQueue queue = getNewEventQueue();
+        queue.setParameter(WorkflowQueueParameter.WORKFLOW_CANCELLED_MANUALLY, Boolean.TRUE);
         saveCompoundWorkflow(queue, compoundWorkflow);
         CompoundWorkflow freshCompoundWorkflow = finishCompoundWorkflow(queue, compoundWorkflow.getNodeRef(),
                 "task_outcome_finished_manually", null, false, null);
@@ -1496,10 +1498,9 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     private void requireValue(BaseWorkflowObject object, String objectValue, QName repoPropertyName, String... requiredValues) {
         String repoValue = null;
-        NodeRef nodeRef = object.getNodeRef();
-        boolean saved = RepoUtil.isSaved(nodeRef);
+        boolean saved = object.isSaved();
         if (saved) {
-            repoValue = (String) nodeService.getProperty(nodeRef, repoPropertyName);
+            repoValue = (String) nodeService.getProperty(object.getNodeRef(), repoPropertyName);
         }
         boolean matches = false;
         for (String requiredValue : requiredValues) {
@@ -1906,7 +1907,13 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         }
         Status originalStatus = Status.of(object.getStatus());
         object.setStatus(status.getName());
-        queueEvent(queue, WorkflowEventType.STATUS_CHANGED, object);
+
+        List<Object> extras = new ArrayList<Object>();
+        if (Boolean.TRUE.equals(queue.getParameter(WorkflowQueueParameter.WORKFLOW_CANCELLED_MANUALLY))) {
+            extras.add(WorkflowQueueParameter.WORKFLOW_CANCELLED_MANUALLY);
+        }
+
+        queueEvent(queue, WorkflowEventType.STATUS_CHANGED, object, extras.toArray());
         addExternalReviewWorkflowData(queue, object, originalStatus);
 
         // status based property setting
@@ -1968,7 +1975,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     private void fireCreatedEvent(WorkflowEventQueue queue, BaseWorkflowObject object) {
-        if (object.getNodeRef() == null) {
+        if (object.isUnsaved()) {
             queueEvent(queue, WorkflowEventType.CREATED, object);
         }
     }
@@ -2117,7 +2124,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     private boolean createOrUpdate(WorkflowEventQueue queue, BaseWorkflowObject object, NodeRef parent, QName assocType) {
         boolean changed = false;
         WmNode node = object.getNode();
-        if (node.getNodeRef() == null) {
+        if (object.isUnsaved()) {
             // If saving a new node, then set creator to current user
             object.setCreatorName(userService.getUserFullName());
             if (object instanceof Task) {
@@ -2134,7 +2141,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         object.preSave();
 
         Map<QName, Serializable> props = getSaveProperties(object.getChangedProperties());
-        if (RepoUtil.isUnsaved(node)) {
+        if (object.isUnsaved()) {
             // Create workflow
             if (log.isDebugEnabled()) {
                 log.debug("Creating node (type '" + node.getType().toPrefixString(namespaceService) + "') with properties " //

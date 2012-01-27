@@ -686,6 +686,7 @@
 
    <bean id="errandGenerator" class="ee.webmedia.alfresco.docconfig.generator.systematic.ErrandGenerator">
       <property name="documentConfigService" ref="DocumentConfigService" />
+      <property name="parametersService" ref="ParametersService" />
       <property name="namespaceService" ref="NamespaceService" />
    </bean>
 

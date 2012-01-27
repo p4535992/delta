@@ -26,6 +26,7 @@ import org.alfresco.web.bean.repository.Node;
 import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.document.log.service.DocumentPropertiesChangeHolder;
 
 /**
  * @author Ats Uiboupin
@@ -187,7 +188,7 @@ public interface GeneralService {
      * @param node - node that previously had some childAssociations in repository that should be removed
      * @return number of associations that were deleted from repository
      */
-    public int saveRemovedChildAssocs(Node node);
+    public void saveRemovedChildAssocs(Node node, DocumentPropertiesChangeHolder docPropsChangeHolder);
 
     /**
      * @param nodeRef
