@@ -64,7 +64,7 @@
          <action id="docList_exportConsolidatedList">
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
             <label-id>docList_consolidatedList</label-id>
-            <action-listener>#{FunctionsListDialog.exportConsolidatedList}</action-listener>
+            <action-listener>#{FunctionsListDialog.exportDocumentConsolidatedList}</action-listener>
             <style-class>docList_exportConsolidatedList</style-class>
             <target>no_wait_workaround</target>
          </action>

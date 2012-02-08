@@ -1,27 +1,22 @@
 package ee.webmedia.alfresco.archivals.web;
 
-import static ee.webmedia.alfresco.app.AppConstants.CHARSET;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentListService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFunctionsService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getMenuBean;
 
-import java.io.OutputStream;
 import java.util.Collections;
 import java.util.List;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
-import javax.servlet.http.HttpServletResponse;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
-import org.apache.myfaces.application.jsp.JspStateManagerImpl;
 
 import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
-import ee.webmedia.alfresco.common.web.WMAdminNodeBrowseBean;
 import ee.webmedia.alfresco.functions.model.Function;
+import ee.webmedia.alfresco.functions.web.FunctionsListDialog;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 
@@ -53,23 +48,7 @@ public class ArchivedFunctionsListDialog extends BaseDialogBean {
     }
 
     public void exportArchivalsConsolidatedList(@SuppressWarnings("unused") ActionEvent event) {
-        log.info("archivals consolidated docList started");
-        HttpServletResponse response = (HttpServletResponse) FacesContext.getCurrentInstance().getExternalContext().getResponse();
-        response.setCharacterEncoding(CHARSET);
-        OutputStream outputStream = null;
-        try {
-            outputStream = WMAdminNodeBrowseBean.getExportOutStream(response, "archivals-consolidated-list.csv");
-            getDocumentListService().getExportArchivalsCsv(outputStream);
-            outputStream.flush();
-        } catch (Exception e) {
-            final String msg = "Failed to export archivals consolidated docList";
-            log.error(msg, e);
-            throw new RuntimeException(msg, e);
-        } finally {
-            FacesContext.getCurrentInstance().responseComplete();
-            JspStateManagerImpl.ignoreCurrentViewSequenceHack();
-            log.info("archivals consolidated docList export completed");
-        }
+        FunctionsListDialog.exportConsolidatedList(nodeRef);
     }
 
     @Override

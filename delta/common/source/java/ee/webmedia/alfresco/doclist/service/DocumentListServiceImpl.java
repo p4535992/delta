@@ -16,7 +16,6 @@ import org.apache.commons.lang.time.FastDateFormat;
 
 import com.csvreader.CsvWriter;
 
-import ee.webmedia.alfresco.archivals.service.ArchivalsService;
 import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.cases.service.CaseService;
@@ -52,26 +51,16 @@ public class DocumentListServiceImpl implements DocumentListService {
     private DocumentDynamicService documentDynamicService;
     private DocumentService documentService;
     private NodeService nodeService;
-    private ArchivalsService archivalsService;
 
     private final FastDateFormat fastDateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
 
     @Override
-    public void getExportCsv(OutputStream outputStream) {
-        exportCsv(outputStream, functionsService.getAllFunctions());
-    }
-
-    @Override
-    public void getExportArchivalsCsv(OutputStream outputStream) {
-        exportCsv(outputStream, archivalsService.getArchivedFunctions());
-    }
-
-    private void exportCsv(OutputStream outputStream, List<Function> functions) {
+    public void getExportCsv(OutputStream outputStream, NodeRef rootRef) {
         CsvWriter csvWriter = new CsvWriter(outputStream, ';', Charset.forName("UTF-8"));
         try {
             // the Unicode value for UTF-8 BOM, is needed so that Excel would recognize the file in correct encoding
             outputStream.write("\ufeff".getBytes("UTF-8"));
-            printFunctions(csvWriter, functions);
+            printFunctions(csvWriter, functionsService.getFunctions(rootRef));
         } catch (IOException e) {
             final String msg = "Outputstream exception while exporting consolidated docList row to CSV-stream";
             throw new RuntimeException(msg, e);
@@ -310,10 +299,6 @@ public class DocumentListServiceImpl implements DocumentListService {
 
     public void setFunctionsService(FunctionsService functionsService) {
         this.functionsService = functionsService;
-    }
-
-    public void setArchivalsService(ArchivalsService archivalsService) {
-        this.archivalsService = archivalsService;
     }
 
     // END GETTERS_SETTERS

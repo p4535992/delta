@@ -164,14 +164,18 @@ public class FunctionsListDialog extends BaseDialogBean {
         }
     }
 
-    public void exportConsolidatedList(@SuppressWarnings("unused") ActionEvent event) {
+    public void exportDocumentConsolidatedList(@SuppressWarnings("unused") ActionEvent event) {
+        exportConsolidatedList(functionsService.getFunctionsRoot());
+    }
+
+    public static void exportConsolidatedList(NodeRef nodeRef) {
         log.info("consolidated docList started");
         HttpServletResponse response = (HttpServletResponse) FacesContext.getCurrentInstance().getExternalContext().getResponse();
         response.setCharacterEncoding(CHARSET);
         OutputStream outputStream = null;
         try {
             outputStream = WMAdminNodeBrowseBean.getExportOutStream(response, "consolidated-list.csv");
-            getDocumentListService().getExportCsv(outputStream);
+            getDocumentListService().getExportCsv(outputStream, nodeRef);
             outputStream.flush();
         } catch (Exception e) {
             final String msg = "Failed to export consolidated docList";

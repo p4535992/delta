@@ -54,6 +54,9 @@ public class AddressbookOrgDetailsDialog extends AddressbookPersonDetailsDialog 
 
     @Override
     public Node getCurrentNode() {
+        if (currentNode == null) {
+            currentNode = groupNodeValues(getCurrentNodeRef());
+        }
         return currentNode;
     }
 

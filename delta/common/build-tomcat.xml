@@ -18,7 +18,7 @@
 
    <target name="tomcat-start" depends="setup-tomcat" description="Start Tomcat server">
       <condition property="tomcat.start.done">
-         <http url="https://${server.host}:${server.domain.port}/" />
+         <http url="${server.domain.protocol}://${server.host}:${server.domain.port}/" />
       </condition>
       <fail if="tomcat.start.done" message="Tomcat server is already started, please stop it first" />
 
@@ -26,13 +26,13 @@
       <exec executable="${dir.tomcat}/tomcat${executable.tomcat.extension}" failonerror="true">
          <arg value="start" />
       </exec>
-      <echo message="Wait for the server start (see ${dir.tomcat}/logs/catalina.out) - https://${server.host}:${server.domain.port}/" />
+      <echo message="Wait for the server start (see ${dir.tomcat}/logs/catalina.out) - ${server.domain.protocol}://${server.host}:${server.domain.port}/" />
       <waitfor maxwait="1800" maxwaitunit="second" checkevery="2" checkeveryunit="second" timeoutproperty="wait.timeout">
-         <http url="https://${server.host}:${server.domain.port}/" />
+         <http url="${server.domain.protocol}://${server.host}:${server.domain.port}/" />
       </waitfor>
       <fail if="wait.timeout"
-            message="Didn't get response from url: https://${server.host}:${server.domain.port}." />
-      <echo message="Server started - see https://${server.host}:${server.domain.port}" />
+            message="Didn't get response from url: ${server.domain.protocol}://${server.host}:${server.domain.port}." />
+      <echo message="Server started - see ${server.domain.protocol}://${server.host}:${server.domain.port}" />
    </target>
 
    <target name="tomcat-stop" depends="load-conf" description="Stop tomcat server domain">

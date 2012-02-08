@@ -60,7 +60,7 @@
       </property>
    </bean>
 
-   <bean id="logWebClientConfigBootstrap" class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init">
+   <bean id="logWebClientConfigBootstrap" class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
       <property name="configs">
          <list>
             <value>classpath:ee/webmedia/alfresco/log/web/log-web-client-config.xml</value>

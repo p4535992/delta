@@ -16,9 +16,7 @@ public interface DocumentListService {
 
     String BEAN_NAME = "DocumentListService";
 
-    void getExportCsv(OutputStream outputStream);
-
-    void getExportArchivalsCsv(OutputStream outputStream);
+    void getExportCsv(OutputStream outputStream, NodeRef rootRef);
 
     long createNewYearBasedVolumes();
 

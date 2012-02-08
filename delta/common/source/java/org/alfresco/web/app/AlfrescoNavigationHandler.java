@@ -727,26 +727,27 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
                 // KAAREL: Since we need to preserve back button (application, not browser) functionality, we can't just clear the stack anymore.
                 // When override is provided, we are opening a wizard or dialog (browse is obsolete) ie we won't make it to else statement.
                 // String previousViewId = getViewIdFromStackObject(context, getViewStack(context).peek());
-                //  getViewStack(context).clear();
+                // getViewStack(context).clear();
                 
-                // We need to close this dialog, restore second state from stack
-                // XXX - this may break something, thorough testing needed
-                // YES, this broke something, if an outcome is: "dialog:close:dialog:someNewDialog" then the current dialog will be closed,
-                // after that the restored() method will be called from the previous dialog, which is not necessary and may break some things if, for example, the closed dialog set some vital fields in the navigationBean but the restored dialog resets them and when the someNewDialog is opened and it reads information from the navigationBean, it gets wrong data
+                // KEIT: Fix described in CL 192351:
+                // Old behavior was: if viewStack contained "dialog1, dialog2, dialog3" and dialog4 is currently open and finish outcome is "dialog:close:dialog:dialog5", then
+                // dialog4 is thrown away, dialog3 is restored and put back into viewStack and dialog5 is opened.
+                // New behavior is: dialog4 is thrown away and dialog5 is opened -- that means dialog4 is replaced with dialog5. Importand change is that dialog3 restored method is
+                // no longer called.
                 boolean isDialogOrWizard = isDialog(overriddenOutcome) || isWizard(overriddenOutcome);
                 Object topOfStack = viewStack.peek();
                 String previousViewId;
-                if(isDialogOrWizard && topOfStack instanceof DialogState){
+                if (isDialogOrWizard && topOfStack instanceof DialogState) {
                     previousViewId = getDialogContainer(context);
                     fromAction = DO_NOT_SAVE_VIEW;
-                } else if(isDialogOrWizard && topOfStack instanceof WizardState){
+                } else if (isDialogOrWizard && topOfStack instanceof WizardState) {
                     previousViewId = getWizardContainer(context);
                     fromAction = DO_NOT_SAVE_VIEW;
-                }else {
+                } else {
                     viewStack.pop();
                     previousViewId = getViewIdFromStackObject(context, topOfStack);
                 }
-                if(explicitCancel) {
+                if (explicitCancel) {
                     dialogManager.cancel();
                 }
                 

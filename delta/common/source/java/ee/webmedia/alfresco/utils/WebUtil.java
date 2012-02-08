@@ -85,6 +85,9 @@ public class WebUtil {
 
         // Escape text surrounding links and weave text back together
         String[] parts = text.split(HTML_A_REGEX);
+        if (parts.length == 0) {
+            return text;
+        }
         StringBuffer b = new StringBuffer();
         final int linkCount = links.size();
         for (int i = 0; i < parts.length; i++) {

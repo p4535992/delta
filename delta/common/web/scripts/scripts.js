@@ -1601,8 +1601,8 @@ function extendCondencePlugin() {
          ellipsis: "",
          condensedLength: condenceAtChar,
          minTrail: moreTxt.length,
-         strictTrim: false  // assume that condense content is text (i.e. doesn't contain html elements)
-                           // and don't search for word breaks for triming text
+         strictTrim: false  // assume that condense content is not text (html, except links, is escaped)
+                           // and does search for word breaks for triming text
          }
        );
    });
