@@ -56,6 +56,15 @@
       </managed-property>
    </managed-bean>
 
+   <managed-bean>
+      <description>
+         Bean that generates a date picker component with due date selector
+      </description>
+      <managed-bean-name>DatePickerWithDueDateGenerator</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerWithDueDateGenerator</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
     <managed-bean>
         <managed-bean-name>ClearStateNotificationHandler</managed-bean-name>
         <managed-bean-class>ee.webmedia.alfresco.common.web.ClearStateNotificationHandler</managed-bean-class>

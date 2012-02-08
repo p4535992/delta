@@ -22,6 +22,10 @@ import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.log.model.LogObject;
+import ee.webmedia.alfresco.log.service.LogService;
+import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
@@ -39,6 +43,8 @@ public class CaseServiceImpl implements CaseService {
     private DictionaryService dictionaryService;
     private NodeService nodeService;
     private GeneralService generalService;
+    private UserService userService;
+    private LogService logService;
 
     @Override
     public List<Case> getAllCasesByVolume(NodeRef volumeRef) {
@@ -143,6 +149,7 @@ public class CaseServiceImpl implements CaseService {
             NodeRef caseRef = nodeService.createNode(theCase.getVolumeNodeRef(),
                     CaseModel.Associations.CASE, CaseModel.Associations.CASE, CaseModel.Types.CASE, props).getChildRef();
             theCase.setNode(generalService.fetchNode(caseRef));
+            logService.addLogEntry(LogEntry.create(LogObject.CASE, userService, caseRef, "applog_space_add", "", title));
         } else { // update
             @SuppressWarnings("null")
             Map<String, Object> stringQNameProperties = node.getProperties();
@@ -236,6 +243,13 @@ public class CaseServiceImpl implements CaseService {
         this.generalService = generalService;
     }
 
+    public void setLogService(LogService logService) {
+        this.logService = logService;
+    }
+
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
     // END: getters / setters
 
 }

@@ -1,13 +1,23 @@
 package ee.webmedia.alfresco.common.web;
 
 import java.io.Serializable;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.repo.search.Indexer;
 import org.alfresco.repo.search.impl.lucene.ADMLuceneTest;
+import org.alfresco.repo.search.impl.lucene.AbstractLuceneBase;
+import org.alfresco.repo.search.impl.lucene.AbstractLuceneIndexerAndSearcherFactory.LuceneIndexBackupComponent;
+import org.alfresco.repo.search.impl.lucene.AbstractLuceneIndexerAndSearcherFactory.LuceneIndexBackupJob;
+import org.alfresco.repo.search.impl.lucene.LuceneIndexerAndSearcher;
+import org.alfresco.repo.search.impl.lucene.index.IndexInfo;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -122,10 +132,51 @@ public class TestingForDeveloperBean implements Serializable {
         return "/sys:system-registry/module:modules/module:" + moduleName + "/module:components/module:" + bootstrapName;
     }
 
+    private List<String> storeRefs = null;
+
+    public List<String> getStoreRefs() {
+        if (storeRefs == null) {
+            List<StoreRef> stores = getNodeService().getStores();
+            storeRefs = new ArrayList<String>(stores.size());
+            for (StoreRef storeRef : stores) {
+                storeRefs.add(storeRef.toString());
+            }
+        }
+        return storeRefs;
+    }
+
+    public void runMergeNowOnAllIndexesAndPerformIndexBackup(ActionEvent event) {
+        LuceneIndexBackupComponent luceneIndexBackupComponent = BeanHelper.getSpringBean(LuceneIndexBackupComponent.class, "luceneIndexBackupComponent");
+        new LuceneIndexBackupJob().executeInternal(luceneIndexBackupComponent);
+    }
+
+    public void runMergeNow(ActionEvent event) {
+        final StoreRef storeRef = new StoreRef(ActionUtil.getParam(event, "storeRef"));
+        final LuceneIndexerAndSearcher indexerAndSearcher = BeanHelper.getSpringBean(LuceneIndexerAndSearcher.class, "admLuceneIndexerAndSearcherFactory");
+        getTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
+            @Override
+            public Void execute() throws Throwable {
+                Indexer indexer = indexerAndSearcher.getIndexer(storeRef);
+                runMergeNow(indexer);
+                return null;
+            }
+        });
+    }
+
+    private void runMergeNow(Indexer indexer) throws Exception {
+        Field indexInfoField = AbstractLuceneBase.class.getDeclaredField("indexInfo");
+        indexInfoField.setAccessible(true);
+        IndexInfo indexInfo = (IndexInfo) indexInfoField.get(indexer);
+        LOG.info("Scheduling special merge to run on indexInfo: " + indexInfo);
+        indexInfo.runMergeNow();
+
+        // XXX sõltuvalt mis selgub öise indekseerimisaktiivsuse kohta võib olla vajalik ka protsessi jooksmise ajal määrata mergerTargetOverlaysBlockingFactor väärtus suuremaks et
+        // kasutajaid mitte blokeerida ja võibolla lubada Lucenel rohkem mälu kasutada et indeksite ümber kirjutamise effektiivust tõsta.
+    }
+
     protected RetryingTransactionHelper getTransactionHelper() {
-        RetryingTransactionHelper helper = new RetryingTransactionHelper();
+        RetryingTransactionHelper helper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
         helper.setMaxRetries(1);
-        helper.setTransactionService(getTransactionService());
         return helper;
     }
 
@@ -160,4 +211,5 @@ public class TestingForDeveloperBean implements Serializable {
     private void atsTestib(@SuppressWarnings("unused") ActionEvent e) {
         // ära puutu seda meetodit!
     }
+
 }

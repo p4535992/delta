@@ -46,7 +46,7 @@
 
          <h:panelGroup styleClass="review-note-comment">
             <h:outputText value="#{r.outcome}: " />
-            <h:outputText value="#{r.comment} " styleClass="condence150"/>
+            <h:outputText value="#{r.commentAndLinks} " styleClass="condence150" escape="false"/>
          </h:panelGroup>
 
       </a:column>

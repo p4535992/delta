@@ -138,6 +138,20 @@
             <action idref="subPropSheet_applicantAbroad_errandAbroad_remove" />
          </action-group>         
 
+         <action id="document_createFollowUpReport">
+            <evaluator>ee.webmedia.alfresco.document.assocsdyn.web.AddFollowUpReportAssocEvaluator</evaluator>
+            <label-id>document_createFollowUpReport</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{DocumentDynamicDialog.createFollowUpReport}</action-listener>
+         </action>
+
+         <action id="document_createFollowUpErrandOrderAbroad">
+            <evaluator>ee.webmedia.alfresco.document.assocsdyn.web.AddFollowUpErrandOrderAbroadAssocEvaluator</evaluator>
+            <label-id>document_createFollowUpErrandOrderAbroad</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{DocumentDynamicDialog.createFollowUpErrandOrderAbroad}</action-listener>
+         </action>
+
          <action-group id="document_dynamic_actions">
             <action idref="document_copy" />
             <action idref="word_file_from_document" />
@@ -153,6 +167,8 @@
             <action idref="document_manage_inheritable_permissions" />
 <!--             <action idref="document_sendToSap" /> -->
 <!--             <action idref="document_sendToSapManually" /> -->
+            <action idref="document_createFollowUpReport" />
+            <action idref="document_createFollowUpErrandOrderAbroad" />
             <action idref="document_changeByNewDocument" />
          </action-group>
 

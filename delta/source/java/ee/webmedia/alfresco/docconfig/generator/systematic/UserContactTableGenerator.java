@@ -1,7 +1,7 @@
 package ee.webmedia.alfresco.docconfig.generator.systematic;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getClassificatorService;
-import static org.alfresco.web.ui.common.StringUtils.encode;
+import static ee.webmedia.alfresco.utils.RepoUtil.getListElement;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -14,18 +14,24 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.faces.convert.LongConverter;
+import javax.faces.event.PhaseId;
+import javax.faces.event.ValueChangeEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.repo.RepoConstants;
+import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
+import org.apache.commons.collections.Closure;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.time.FastDateFormat;
+import org.joda.time.LocalDate;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.classificator.constant.FieldType;
+import ee.webmedia.alfresco.classificator.enums.LeaveType;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
+import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.Field;
@@ -38,9 +44,8 @@ import ee.webmedia.alfresco.docconfig.service.UserContactMappingService;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
-import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.utils.RepoUtil;
-import ee.webmedia.alfresco.utils.UserUtil;
+import ee.webmedia.alfresco.utils.CalendarUtil;
+import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
  * @author Alar Kvell
@@ -49,6 +54,7 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
 
     private NamespaceService namespaceService;
     private UserContactMappingService userContactMappingService;
+    private ClassificatorService classificatorService;
 
     private String[] originalFieldIds;
 
@@ -174,7 +180,13 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
             return;
         }
 
-        Map<QName, String> transformClassificatorsValues = new HashMap<QName, String>();
+        QName leaveTypeProp = null;
+        QName beginDateProp = null;
+        QName endDateProp = null;
+        QName calculatedDaysProp = null;
+        Set<String> leaveStudyClassificatorValueNames = new HashSet<String>();
+        String stateHolderKey = field.getFieldId();
+        String leaveValueChanged = "¤valueChangeListener=" + getBindingName("leaveTypeOrDateValueChanged", stateHolderKey);
         List<String> props = new ArrayList<String>();
         List<QName> propNames = new ArrayList<QName>();
         for (Field child : group.getFields()) {
@@ -202,6 +214,34 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
                 Field substituteNameField = group.getFieldsByOriginalId().get(DocumentSpecificModel.Props.SUBSTITUTE_NAME.getLocalName());
                 componentGeneratorAndProps += "¤mandatoryIf=" + substituteNameField.getQName().toPrefixString(namespaceService) + "!=null";
             }
+            if (DocumentSpecificModel.Props.LEAVE_TYPE.getLocalName().equals(child.getOriginalFieldId())) {
+                componentGeneratorAndProps += leaveValueChanged;
+                leaveTypeProp = fieldId;
+                String leaveTypeClassificator = child.getClassificator();
+                if (StringUtils.isNotBlank(leaveTypeClassificator)) {
+                    List<ClassificatorValue> classificatorValues = classificatorService.getActiveClassificatorValues(
+                            getClassificatorService().getClassificatorByName(leaveTypeClassificator));
+                    for (ClassificatorValue classificatorValue : classificatorValues) {
+                        if (LeaveType.LEAVE_STUDY.getValueName().equals(classificatorValue.getValueData())) {
+                            leaveStudyClassificatorValueNames.add(classificatorValue.getValueName());
+                        }
+                    }
+                }
+            } else if (DocumentDynamicModel.Props.LEAVE_BEGIN_DATE.getLocalName().equals(child.getOriginalFieldId())
+                    || DocumentSpecificModel.Props.LEAVE_NEW_BEGIN_DATE.getLocalName().equals(child.getOriginalFieldId())
+                    || DocumentSpecificModel.Props.LEAVE_CANCEL_BEGIN_DATE.getLocalName().equals(child.getOriginalFieldId())) {
+                componentGeneratorAndProps += leaveValueChanged;
+                beginDateProp = fieldId;
+            } else if (DocumentDynamicModel.Props.LEAVE_END_DATE.getLocalName().equals(child.getOriginalFieldId())
+                    || DocumentSpecificModel.Props.LEAVE_NEW_END_DATE.getLocalName().equals(child.getOriginalFieldId())
+                    || DocumentSpecificModel.Props.LEAVE_CANCEL_END_DATE.getLocalName().equals(child.getOriginalFieldId())) {
+                componentGeneratorAndProps += leaveValueChanged;
+                endDateProp = fieldId;
+            } else if (DocumentSpecificModel.Props.LEAVE_DAYS.getLocalName().equals(child.getOriginalFieldId())
+                    || DocumentDynamicModel.Props.LEAVE_CHANGED_DAYS.getLocalName().equals(child.getOriginalFieldId())
+                    || DocumentSpecificModel.Props.LEAVE_CANCELLED_DAYS.getLocalName().equals(child.getOriginalFieldId())) {
+                calculatedDaysProp = fieldId;
+            }
             props.add(fieldId.toPrefixString(namespaceService) + "¤" + componentGeneratorAndProps);
             propNames.add(fieldId);
         }
@@ -222,11 +262,8 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
         }
 
         // And we set our own attributes
-        item.setShowInViewMode(false);
         item.setPropsGeneration(StringUtils.join(props, ","));
-        String stateHolderKey = field.getFieldId();
 
-        QName substituteIdsPropName = null;
         if (mapping != null) {
             item.setPreprocessCallback("#{UserContactGroupSearchBean.preprocessResultsToNodeRefs}");
             item.setSetterCallback(getBindingName("getContactData", stateHolderKey));
@@ -238,18 +275,14 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
                 String propNameString = propName.toPrefixString(namespaceService);
                 hiddenPropNames.add(propNameString);
                 if (mapping.get(propName) == UserContactMappingCode.CODE) {
-                    substituteIdsPropName = propName;
+                    // TODO show substitute info based on substitute id
                 }
             }
             item.setHiddenPropNames(StringUtils.join(hiddenPropNames, ','));
         }
 
-        // And generate a separate view mode component
-        String viewModePropName = RepoUtil.createTransientProp(field.getFieldId() + "Label").toString();
-        ItemConfigVO viewModeItem = generatorResults.generateAndAddViewModeText(viewModePropName, group.getReadonlyFieldsName());
-        viewModeItem.setComponentGenerator("UnescapedOutputTextGenerator");
-
-        generatorResults.addStateHolder(stateHolderKey, new UserContactTableState(propNames, mapping, viewModePropName, substituteIdsPropName, transformClassificatorsValues));
+        generatorResults.addStateHolder(stateHolderKey, new UserContactTableState(mapping, leaveTypeProp, beginDateProp, endDateProp, calculatedDaysProp,
+                leaveStudyClassificatorValueNames));
     }
 
     // ===============================================================================================================================
@@ -257,21 +290,21 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
     public static class UserContactTableState extends BasePropertySheetStateHolder {
         private static final long serialVersionUID = 1L;
 
-        private final List<QName> propNames;
         private final Map<QName, UserContactMappingCode> mapping;
-        private final String viewModePropName;
-        private final QName substituteIdsPropName;
-        private final Map<QName /* propName */, String /* classificatorName */> transformClassificatorsValues;
-        private final FastDateFormat dateFormat;
+        private final QName leaveTypeProp;
+        private final QName beginDateProp;
+        private final QName endDateProp;
+        private final QName calculatedDaysProp;
+        private final Set<String> leaveStudyClassificatorValueNames;
 
-        public UserContactTableState(List<QName> propNames, Map<QName, UserContactMappingCode> mapping, String viewModePropName, QName substituteIdsPropName,
-                                     Map<QName, String> transformClassificatorsValues) {
-            this.propNames = propNames;
+        public UserContactTableState(Map<QName, UserContactMappingCode> mapping, QName leaveTypeProp, QName beginDateProp, QName endDateProp, QName calculatedDaysProp,
+                                     Set<String> leaveStudyClassificatorValueNames) {
             this.mapping = mapping;
-            this.viewModePropName = viewModePropName;
-            this.substituteIdsPropName = substituteIdsPropName;
-            this.transformClassificatorsValues = transformClassificatorsValues;
-            dateFormat = FastDateFormat.getInstance(MessageUtil.getMessage("date_pattern"));
+            this.leaveTypeProp = leaveTypeProp;
+            this.beginDateProp = beginDateProp;
+            this.endDateProp = endDateProp;
+            this.calculatedDaysProp = calculatedDaysProp;
+            this.leaveStudyClassificatorValueNames = leaveStudyClassificatorValueNames;
         }
 
         public Map<QName, Serializable> getContactData(String result) {
@@ -280,84 +313,52 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
             return values;
         }
 
-        // XXX Only supports String and Date values at the moment
-        @Override
-        protected void reset(boolean inEditMode) {
-            // TODO add substitution info based on substituteId
-            final Node document = dialogDataProvider.getNode();
-            if (!inEditMode) {
-                int size = 0;
-                List<List<Serializable>> all = new ArrayList<List<Serializable>>();
-                for (QName propName : propNames) {
+        public void leaveTypeOrDateValueChanged(ValueChangeEvent event) {
+            String vb = event.getComponent().getValueBinding("value").getExpressionString();
+            final Integer index = ComponentUtil.getIndexFromValueBinding(vb);
+
+            // Execute at the end of UPDATE_MODEL_VALUES phase, because during this phase node properties are set from user submitted data.
+            // Queue executeLater event on propertySheet, because it supports handling ActionEvents.
+            // Find propertySheet from component's hierarchy, do NOT use dialogDataProvider#getPropertySheet,
+            // because this AJAX submit is executed only on MultiValueEditor and thus PropertySheet binding to DocumentDynamicDialog has not been updated.
+            UIPropertySheet propertySheet = ComponentUtil.getAncestorComponent(event.getComponent(), UIPropertySheet.class, true);
+            ComponentUtil.executeLater(PhaseId.UPDATE_MODEL_VALUES, propertySheet, new Closure() {
+                @Override
+                public void execute(Object input) {
+                    Node document = dialogDataProvider.getNode();
+
+                    boolean subtractNationalHolidays = false;
+                    if (leaveTypeProp != null) {
+                        String leaveType = getListElement(document, leaveTypeProp, index);
+                        getClassificatorService().getAllClassificatorValues("leaveType");
+                        if (!leaveStudyClassificatorValueNames.contains(leaveType)) {
+                            subtractNationalHolidays = true;
+                        }
+                    }
+
+                    Date beginDate = getListElement(document, beginDateProp, index);
+                    Date endDate = getListElement(document, endDateProp, index);
+                    Integer calculatedDays = null;
+                    if (beginDate != null && endDate != null) {
+                        calculatedDays = CalendarUtil.getDaysBetween(new LocalDate(beginDate.getTime()), new LocalDate(endDate.getTime()), subtractNationalHolidays,
+                                getClassificatorService());
+                    }
+                    final Long calculatedDaysLong = calculatedDays == null ? null : new Long(calculatedDays.longValue());
+
                     @SuppressWarnings("unchecked")
-                    List<Serializable> columnValues = (List<Serializable>) document.getProperties().get(propName);
-                    if (columnValues == null) {
-                        columnValues = new ArrayList<Serializable>();
+                    List<Long> calculatedDaysList = (List<Long>) document.getProperties().get(calculatedDaysProp.toString());
+                    if (calculatedDaysList == null) {
+                        calculatedDaysList = new ArrayList<Long>();
+                        document.getProperties().put(calculatedDaysProp.toString(), calculatedDaysList);
                     }
-                    size = Math.max(columnValues.size(), size);
-
-                    String classificatorName = transformClassificatorsValues.get(propName);
-                    if (StringUtils.isNotBlank(classificatorName)) {
-                        List<ClassificatorValue> classificatorValues = getClassificatorService().getAllClassificatorValues(classificatorName);
-                        List<Serializable> transformedValues = new ArrayList<Serializable>(columnValues.size());
-                        for (Serializable columnValue : columnValues) {
-                            if (columnValue instanceof String) {
-                                for (ClassificatorValue classificatorValue : classificatorValues) {
-                                    if (classificatorValue.getValueName().equals(columnValue) && StringUtils.isNotBlank(classificatorValue.getClassificatorDescription())) {
-                                        transformedValues.add(classificatorValue.getClassificatorDescription());
-                                        continue;
-                                    }
-                                }
-                            }
-                            transformedValues.add(columnValue);
-                        }
-                        all.add(transformedValues);
-                    } else {
-                        all.add(columnValues);
+                    while (calculatedDaysList.size() <= index) {
+                        calculatedDaysList.add(null);
                     }
+                    calculatedDaysList.set(index, calculatedDaysLong);
                 }
-
-                List<String> substituteIds = null;
-                if (substituteIdsPropName != null) {
-                    substituteIds = (List<String>) document.getProperties().get(substituteIdsPropName);
-                }
-
-                List<String> rows = new ArrayList<String>(size);
-                for (int i = 0; i < size; i++) {
-                    List<String> rowValues = new ArrayList<String>();
-                    for (List<Serializable> columnValues : all) {
-                        if (i < columnValues.size()) {
-                            Serializable value = columnValues.get(i);
-                            if (value instanceof Date) {
-                                value = dateFormat.format((Date) value);
-                            } else if (value instanceof Long) {
-                                value = ((Long) value).toString();
-                            } else if (value instanceof Double) {
-                                value = ((Double) value).toString();
-                            } else if (value instanceof Integer) {
-                                value = ((Integer) value).toString();
-                            }
-                            String stringValue = StringUtils.trim((String) value);
-                            if (StringUtils.isNotBlank(stringValue)) {
-                                rowValues.add(encode(stringValue));
-                            }
-                            // TODO email link??
-                        }
-                    }
-                    if (!rowValues.isEmpty()) {
-                        String row = StringUtils.join(rowValues, ", ");
-                        if (substituteIds != null && i < substituteIds.size()) {
-                            String substInfo = UserUtil.getSubstitute(substituteIds.get(i));
-                            if (!StringUtils.isBlank(substInfo)) {
-                                row += "<span class=\"fieldExtraInfo\">" + encode(substInfo) + "</span>";
-                            }
-                        }
-                        rows.add(row);
-                    }
-                }
-                document.getProperties().put(viewModePropName, StringUtils.join(rows, "<br/>"));
-            }
+            });
         }
+
     }
 
     // ===============================================================================================================================
@@ -369,6 +370,10 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
 
     public void setUserContactMappingService(UserContactMappingService userContactMappingService) {
         this.userContactMappingService = userContactMappingService;
+    }
+
+    public void setClassificatorService(ClassificatorService classificatorService) {
+        this.classificatorService = classificatorService;
     }
     // END: setters
 

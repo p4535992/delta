@@ -58,6 +58,7 @@ import ee.webmedia.alfresco.menu.ui.MenuBean;
  * @author gavinc
  */
 public class AlfrescoNavigationHandler extends NavigationHandler {
+    private static final String DO_NOT_SAVE_VIEW = "doNotSaveView";
     public final static String OUTCOME_SEPARATOR = ":";
     public final static String DIALOG_PREFIX = "dialog" + OUTCOME_SEPARATOR;
     public final static String WIZARD_PREFIX = "wizard" + OUTCOME_SEPARATOR;
@@ -141,7 +142,7 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
                 handleDialogOrWizardClose(context, fromAction, outcome, isDialog);
             } else {
                 if (isDialog) {
-                    handleDialogOpen(context, fromAction, outcome);
+                    handleDialogOpen(context, fromAction, outcome, !DO_NOT_SAVE_VIEW.equals(fromAction));
                 } else {
                     handleWizardOpen(context, fromAction, outcome);
                 }
@@ -564,12 +565,14 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
      * @param fromAction The fromAction
      * @param name The name of the dialog to open
      */
-    protected void handleDialogOpen(FacesContext context, String fromAction, String name) {
+    protected void handleDialogOpen(FacesContext context, String fromAction, String name, boolean saveCurrentView) {
         if (logger.isDebugEnabled())
             logger.debug("Opening dialog '" + name + "'");
 
         // firstly add the current view to the stack so we know where to go back to
-        addCurrentViewToStack(context);
+        if(saveCurrentView){
+            addCurrentViewToStack(context);
+        }
 
         DialogConfig config = getDialogConfig(context, name, getDispatchContextNode(context));
         if (config != null) {
@@ -728,7 +731,21 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
                 
                 // We need to close this dialog, restore second state from stack
                 // XXX - this may break something, thorough testing needed
-                String previousViewId = getViewIdFromStackObject(context, viewStack.pop());
+                // YES, this broke something, if an outcome is: "dialog:close:dialog:someNewDialog" then the current dialog will be closed,
+                // after that the restored() method will be called from the previous dialog, which is not necessary and may break some things if, for example, the closed dialog set some vital fields in the navigationBean but the restored dialog resets them and when the someNewDialog is opened and it reads information from the navigationBean, it gets wrong data
+                boolean isDialogOrWizard = isDialog(overriddenOutcome) || isWizard(overriddenOutcome);
+                Object topOfStack = viewStack.peek();
+                String previousViewId;
+                if(isDialogOrWizard && topOfStack instanceof DialogState){
+                    previousViewId = getDialogContainer(context);
+                    fromAction = DO_NOT_SAVE_VIEW;
+                } else if(isDialogOrWizard && topOfStack instanceof WizardState){
+                    previousViewId = getWizardContainer(context);
+                    fromAction = DO_NOT_SAVE_VIEW;
+                }else {
+                    viewStack.pop();
+                    previousViewId = getViewIdFromStackObject(context, topOfStack);
+                }
                 if(explicitCancel) {
                     dialogManager.cancel();
                 }
@@ -743,7 +760,7 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
 
                 // if the override is calling another dialog or wizard come back through
                 // the navigation handler from the beginning
-                if (isDialog(overriddenOutcome) || isWizard(overriddenOutcome)) {
+                if (isDialogOrWizard) {
                     // set the view id to the page at the top of the stack so when
                     // the new dialog or wizard closes it goes back to the correct page
                     context.getViewRoot().setViewId(previousViewId);

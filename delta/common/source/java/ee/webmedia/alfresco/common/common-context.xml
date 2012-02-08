@@ -255,6 +255,12 @@
       <property name="dataSource" ref="dataSource" />
    </bean>
 
+   <bean id="createAccessControlEntryUniqueIndexBootstrap" class="ee.webmedia.alfresco.common.bootstrap.CreateAccessControlEntryUniqueIndexBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dataSource" ref="dataSource" />
+   </bean>
+
    <!-- START: web beans: -->
 
    <bean id="TestingForDeveloperBean" class="ee.webmedia.alfresco.common.web.TestingForDeveloperBean" scope="session" />

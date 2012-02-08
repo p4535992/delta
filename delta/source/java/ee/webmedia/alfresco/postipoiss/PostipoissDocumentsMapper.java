@@ -84,20 +84,6 @@ public class PostipoissDocumentsMapper {
             return s.toString();
         }
 
-        public Mapping() {
-            props = new ArrayList<PropMapping>();
-        }
-
-        public Mapping(Mapping m) {
-            props = new ArrayList<PropMapping>(m.props);
-        }
-
-        public Mapping(String from, TypeInfo typeInfo) {
-            this.from = from;
-            this.typeInfo = typeInfo;
-            to = typeInfo.qname;
-        }
-
         public Mapping(Mapping m, String from, TypeInfo typeInfo) {
             if (m != null) {
                 props = new ArrayList<PropMapping>(m.props);
@@ -106,7 +92,7 @@ public class PostipoissDocumentsMapper {
             }
             this.from = from;
             this.typeInfo = typeInfo;
-            to = typeInfo.qname;
+            to = typeInfo == null ? null : typeInfo.qname;
         }
 
         public void add(PropMapping pm) {
@@ -640,9 +626,13 @@ public class PostipoissDocumentsMapper {
         String prefix = null;
         if (to != null) {
             PropertyValueProvider propertyValueProvider = typeInfo.props.get(to);
-            Assert.notNull(propertyValueProvider, "Property " + to + " is not registered for the type " + typeInfo.name + "\n Registered properties are: "
-                    + typeInfo.props.keySet());
-            prefix = el.attributeValue("prefix");
+            if (to.startsWith("_")) {
+                Assert.isNull(propertyValueProvider);
+            } else {
+                Assert.notNull(propertyValueProvider, "Property " + to + " is not registered for the type " + typeInfo.name + "\n Registered properties are: "
+                        + typeInfo.props.keySet());
+                prefix = el.attributeValue("prefix");
+            }
         }
         String splitterName = el.attributeValue("splitter");
         if (splitterName != null) {
@@ -655,12 +645,11 @@ public class PostipoissDocumentsMapper {
             PropertyValueProvider toSecondProvider = typeInfo.props.get(toSecond);
             Assert.notNull(toSecondProvider, "Property " + toSecond + " is not registered for the type " + typeInfo.name);
             return new PropMapping(from, to, prefix, toFirst, toSecond, splitter, expression);
-        } else {
-            if (to == null) {
-                throw new RuntimeException("Neither to nor splitter are specified for mapping " + from);
-            }
-            return new PropMapping(from, to, prefix, expression);
         }
+        if (to == null) {
+            throw new RuntimeException("Neither to nor splitter are specified for mapping " + from);
+        }
+        return new PropMapping(from, to, prefix, expression);
     }
 
     protected Mapping createMapping(Mapping base, Element el) {
@@ -718,17 +707,32 @@ public class PostipoissDocumentsMapper {
         Element root = document.getRootElement();
 
         Element generalType = root.element("generalType");
-
         Mapping base = createMapping(null, generalType);
+        mappings.put("general", base);
 
         Element sendInfoType = root.element("sendInfoType");
-
         Mapping sendInfo = createMapping(null, sendInfoType, "doccom", null, null, null);
-
         mappings.put("sendInfo", sendInfo);
+
+        Element accessRestrictionElement = root.element("propValues");
+        if (accessRestrictionElement != null) {
+            Assert.isTrue("accessRestriction".equals(accessRestrictionElement.attributeValue("to")));
+            Mapping accessRestrictionMapping = new Mapping(null, null, null);
+            for (Object o : accessRestrictionElement.elements("value")) {
+                Element el = (Element) o;
+                String from = el.attributeValue("from");
+                Assert.notNull(from);
+                String to = el.attributeValue("to");
+                Assert.notNull(to);
+                accessRestrictionMapping.add(new PropMapping(from, to, null, null));
+            }
+            mappings.put("accessRestrictionValues", accessRestrictionMapping);
+        }
 
         for (Object o : root.elements("documentType")) {
             Mapping m = createMapping(base, (Element) o);
+            Assert.isTrue(!("accessRestriction".equals(m.from)) && !mappings.containsKey(m.from),
+                    "Cannot have multiple documentType mappings from '" + m.from + "'");
             mappings.put(m.from, m);
         }
 

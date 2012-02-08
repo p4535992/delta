@@ -16,26 +16,21 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.view.Location;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
-import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.TransientNode;
 
-import ee.webmedia.alfresco.cases.model.Case;
-import ee.webmedia.alfresco.cases.model.CaseModel;
-import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
-import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
+import ee.webmedia.alfresco.log.PropDiffHelper;
+import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.log.model.LogObject;
+import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.series.model.Series;
-import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.series.service.SeriesService;
+import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
-import ee.webmedia.alfresco.volume.model.Volume;
-import ee.webmedia.alfresco.volume.model.VolumeModel;
-import ee.webmedia.alfresco.volume.service.VolumeService;
 
 public class FunctionsServiceImpl implements FunctionsService {
 
@@ -50,9 +45,8 @@ public class FunctionsServiceImpl implements FunctionsService {
     private NodeService nodeService;
     private DictionaryService dictionaryService;
     private SeriesService seriesService;
-    private VolumeService volumeService;
-    private CaseService caseService;
-    private DocumentService documentService;
+    private UserService userService;
+    private LogService logService;
 
     @Override
     public List<Function> getAllFunctions() {
@@ -73,7 +67,8 @@ public class FunctionsServiceImpl implements FunctionsService {
         return functions;
     }
 
-    private List<ChildAssociationRef> getFunctionAssocs(NodeRef functionsRoot) {
+    @Override
+    public List<ChildAssociationRef> getFunctionAssocs(NodeRef functionsRoot) {
         return nodeService.getChildAssocs(functionsRoot, RegexQNamePattern.MATCH_ALL, FunctionsModel.Associations.FUNCTION);
     }
 
@@ -111,7 +106,6 @@ public class FunctionsServiceImpl implements FunctionsService {
 
     @Override
     public void saveOrUpdate(Function function, NodeRef functionsRoot) {
-        Map<String, Object> stringQNameProperties = function.getNode().getProperties();
         if (function.getNode() instanceof TransientNode) {
             TransientNode transientNode = (TransientNode) function.getNode();
             NodeRef functionNodeRef = nodeService.createNode(functionsRoot,
@@ -120,7 +114,27 @@ public class FunctionsServiceImpl implements FunctionsService {
                     FunctionsModel.Types.FUNCTION,
                     RepoUtil.toQNameProperties(transientNode.getProperties())).getChildRef();
             function.setNode(generalService.fetchNode(functionNodeRef));
+
+            Map<String, Object> props = function.getNode().getProperties();
+            logService.addLogEntry(LogEntry.create(LogObject.FUNCTION, userService, functionNodeRef, "applog_space_add",
+                    props.get(FunctionsModel.Props.MARK.toString()), props.get(FunctionsModel.Props.TITLE.toString())));
         } else {
+            Map<String, Object> stringQNameProperties = function.getNode().getProperties();
+
+            String propDiff = new PropDiffHelper()
+                    .label(FunctionsModel.Props.STATUS, "function_status")
+                    .label(FunctionsModel.Props.ORDER, "function_status")
+                    .label(FunctionsModel.Props.MARK, "function_mark")
+                    .label(FunctionsModel.Props.TITLE, "function_title")
+                    .label(FunctionsModel.Props.DESCRIPTION, "function_description")
+                    .label(FunctionsModel.Props.TYPE, "function_type")
+                    .diff(nodeService.getProperties(function.getNodeRef()), RepoUtil.toQNameProperties(stringQNameProperties));
+
+            if (propDiff != null) {
+                logService.addLogEntry(LogEntry.create(LogObject.FUNCTION, userService, function.getNodeRef(), "applog_space_edit",
+                        function.getMark(), function.getTitle(), propDiff));
+            }
+
             generalService.setPropertiesIgnoringSystem(function.getNode().getNodeRef(), stringQNameProperties);
         }
         if (log.isDebugEnabled()) {
@@ -240,143 +254,14 @@ public class FunctionsServiceImpl implements FunctionsService {
         this.seriesService = seriesService;
     }
 
-    public void setVolumeService(VolumeService volumeService) {
-        this.volumeService = volumeService;
+    public void setLogService(LogService logService) {
+        this.logService = logService;
     }
 
-    public void setCaseService(CaseService caseService) {
-        this.caseService = caseService;
-    }
-
-    public void setDocumentService(DocumentService documentService) {
-        this.documentService = documentService;
+    public void setUserService(UserService userService) {
+        this.userService = userService;
     }
 
     // END: getters / setters
-
-    @Override
-    public long createNewYearBasedVolumes() {
-        log.info("creating copy of year-based volumes that are opened.");
-        long counter = 0;
-        for (Function function : getAllFunctions()) {
-            for (Series series : seriesService.getAllSeriesByFunction(function.getNodeRef())) {
-                for (Volume volume : volumeService.getAllValidVolumesBySeries(series.getNode().getNodeRef())) {
-                    if (DocListUnitStatus.OPEN.equals(volume.getStatus()) && VolumeType.ANNUAL_FILE.equals(volume.getVolumeTypeEnum())) {
-                        volumeService.copyVolume(volume);
-                        counter++;
-                        log.info("created copy of " + counter + " volume: [" + function.getMark() + "]" + function.getTitle()
-                                + "/[" + series.getSeriesIdentifier() + "]" + series.getTitle() + "/[" + volume.getVolumeMark() + "]" + volume.getTitle());
-                    } else {
-                        if (log.isDebugEnabled()) {
-                            log.debug("skipping volume: [" + function.getMark() + "]" + function.getTitle()
-                                    + "/[" + series.getSeriesIdentifier() + "]" + series.getTitle() + "/[" + volume.getVolumeMark() + "]" + volume.getTitle());
-                        }
-                    }
-                }
-            }
-        }
-        log.info("created copy of " + counter + " year-based volumes that were opened.");
-        return counter;
-    }
-
-    @Override
-    public long closeAllOpenExpiredVolumes() {
-        log.info("Closing all expired volumes that are opened");
-        long counter = 0;
-        for (Function function : getAllFunctions()) {
-            for (Series series : seriesService.getAllSeriesByFunction(function.getNodeRef())) {
-                for (Volume volume : volumeService.getAllOpenExpiredVolumesBySeries(series.getNode().getNodeRef())) {
-                    volumeService.closeVolume(volume);
-                    counter++;
-                    log.info("Closed volume: [" + function.getMark() + "]" + function.getTitle() + "/[" + series.getSeriesIdentifier() + "]"
-                            + series.getTitle() + "/[" + volume.getVolumeMark() + "]" + volume.getTitle() + ", validTo=" + volume.getValidTo());
-                }
-            }
-        }
-        log.info("Closed " + counter + " expired volumes that were opened");
-        return counter;
-    }
-
-    @Override
-    public long updateDocCounters() {
-        return updateDocCounters(getFunctionsRoot());
-    }
-
-    @Override
-    public long updateDocCounters(NodeRef functionsRoot) {
-        long docCountInRepo = 0;
-        log.info("Starting to update documents count in documentList");
-        for (Function function : getFunctions(functionsRoot)) {
-            long docCountInFunction = 0;
-            final NodeRef functionRef = function.getNodeRef();
-            for (NodeRef seriesRef : seriesService.getAllSeriesRefsByFunction(functionRef)) {
-                long docCountInSeries = 0;
-                for (Volume volume : volumeService.getAllVolumesBySeries(seriesRef)) {
-                    long docCountInVolume = 0;
-                    final NodeRef volumeRef = volume.getNode().getNodeRef();
-                    if (volume.isContainsCases()) {
-                        for (Case aCase : caseService.getAllCasesByVolume(volumeRef)) {
-                            final NodeRef caseRef = aCase.getNode().getNodeRef();
-                            final List<NodeRef> allDocumentsByCase = documentService.getAllDocumentRefsByParentRef(caseRef);
-                            final int documentsCountByCase = allDocumentsByCase.size();
-                            nodeService.setProperty(caseRef, CaseModel.Props.CONTAINING_DOCS_COUNT, documentsCountByCase);
-                            docCountInVolume += documentsCountByCase;
-                        }
-                    } else {
-                        final List<NodeRef> allDocumentsByVolume = documentService.getAllDocumentRefsByParentRef(volumeRef);
-                        final int documentsCountByVolume = allDocumentsByVolume.size();
-                        docCountInVolume += documentsCountByVolume;
-                    }
-                    nodeService.setProperty(volumeRef, VolumeModel.Props.CONTAINING_DOCS_COUNT, docCountInVolume);
-                    docCountInSeries += docCountInVolume;
-                }
-                nodeService.setProperty(seriesRef, SeriesModel.Props.CONTAINING_DOCS_COUNT, docCountInSeries);
-                docCountInFunction += docCountInSeries;
-            }
-            docCountInRepo += docCountInFunction;
-        }
-        log.info("Updated documents count in documentList. Found " + docCountInRepo + " documents.");
-        return docCountInRepo;
-    }
-
-    @Override
-    public Pair<List<NodeRef>, Long> getAllDocumentAndCaseRefs() {
-        long deletedDocCount = 0;
-        log.info("Starting to gather all noderefs of documents and cases to be removed");
-        final ArrayList<NodeRef> c = new ArrayList<NodeRef>(4000);
-        for (ChildAssociationRef function : getFunctionAssocs(getFunctionsRoot())) {
-            long docCountInFunction = 0;
-            final NodeRef functionRef = function.getChildRef();
-            for (NodeRef seriesRef : seriesService.getAllSeriesRefsByFunction(functionRef)) {
-                long docCountInSeries = 0;
-                for (ChildAssociationRef volume : volumeService.getAllVolumeRefsBySeries(seriesRef)) {
-                    long docCountInVolume = 0;
-                    final NodeRef volumeRef = volume.getChildRef();
-                    Boolean containsCases = (Boolean) nodeService.getProperty(volumeRef, VolumeModel.Props.CONTAINS_CASES);
-                    if (containsCases != null && containsCases) {
-                        for (ChildAssociationRef aCase : caseService.getCaseRefsByVolume(volumeRef)) {
-                            final NodeRef caseRef = aCase.getChildRef();
-                            Integer docsUnderCase = (Integer) nodeService.getProperty(caseRef, CaseModel.Props.CONTAINING_DOCS_COUNT);
-                            c.add(caseRef);
-                            docCountInVolume += docsUnderCase != null ? docsUnderCase : 0;
-                        }
-                    } else {
-                        List<ChildAssociationRef> docsOfVolumeAssocs = nodeService.getChildAssocs(volumeRef, RegexQNamePattern.MATCH_ALL,
-                                RegexQNamePattern.MATCH_ALL);
-                        final int documentsCountByVolume = docsOfVolumeAssocs.size();
-                        for (ChildAssociationRef childAssociationRef : docsOfVolumeAssocs) {
-                            c.add(childAssociationRef.getChildRef());
-                        }
-                        docCountInVolume += documentsCountByVolume;
-                    }
-                    docCountInSeries += docCountInVolume;
-                }
-                docCountInFunction += docCountInSeries;
-            }
-            deletedDocCount += docCountInFunction;
-        }
-        log.info("found " + deletedDocCount + " documents from documentList to delete.");
-        return new Pair<List<NodeRef>, Long>(c, deletedDocCount);
-    }
 
 }

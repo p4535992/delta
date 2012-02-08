@@ -3,10 +3,16 @@ package ee.webmedia.alfresco.log.web;
 import java.util.List;
 
 import javax.faces.context.FacesContext;
+import javax.faces.event.ActionEvent;
 
 import org.alfresco.web.bean.dialog.BaseDialogBean;
+import org.apache.myfaces.application.jsp.JspStateManagerImpl;
 
-import ee.webmedia.alfresco.log.model.SystemLog;
+import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.simdhs.CSVExporter;
+import ee.webmedia.alfresco.simdhs.DataReader;
+import ee.webmedia.alfresco.simdhs.EscapingCSVExporter;
+import ee.webmedia.alfresco.simdhs.RichListDataReader;
 
 /**
  * Dialog for performing log entries search and displaying results.
@@ -19,14 +25,21 @@ public class ApplicationLogListDialog extends BaseDialogBean {
 
     public static final String BEAN_NAME = "ApplicationLogListDialog";
 
-    private List<SystemLog> logEntries;
+    private List<LogEntry> logEntries;
 
-    public void search(List<SystemLog> entries) {
+    public void search(List<LogEntry> entries) {
         logEntries = entries;
     }
 
-    public List<SystemLog> getLogEntries() {
+    public List<LogEntry> getLogEntries() {
         return logEntries;
+    }
+
+    public void exportCsv(@SuppressWarnings("unused") ActionEvent event) {
+        DataReader dataReader = new RichListDataReader();
+        CSVExporter exporter = new EscapingCSVExporter(dataReader);
+        exporter.export("applogList");
+        JspStateManagerImpl.ignoreCurrentViewSequenceHack();
     }
 
     @Override

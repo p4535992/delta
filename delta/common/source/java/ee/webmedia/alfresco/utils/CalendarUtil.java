@@ -1,10 +1,13 @@
 package ee.webmedia.alfresco.utils;
 
-import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeConstants;
+import org.joda.time.Days;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -25,7 +28,7 @@ public class CalendarUtil {
     public static LocalDate addWorkingDaysToDate(LocalDate date, int workingDaysToAdd, ClassificatorService classificatorService) {
         Assert.notNull(date);
         int i = 0;
-        List<LocalDate> nationalHolidays = getNationalHolidays(classificatorService);
+        Set<LocalDate> nationalHolidays = getNationalHolidays(classificatorService);
         while (i < workingDaysToAdd) {
             date = addDaysIfNotWorkingDay(date, nationalHolidays);
             date = date.plusDays(1);
@@ -36,7 +39,7 @@ public class CalendarUtil {
         return date;
     }
 
-    public static LocalDate addDaysIfNotWorkingDay(LocalDate date, List<LocalDate> nationalHolidays) {
+    public static LocalDate addDaysIfNotWorkingDay(LocalDate date, Collection<LocalDate> nationalHolidays) {
         while (!isWorkingDay(date, nationalHolidays)) {
             date = date.plusDays(1);
         }
@@ -47,14 +50,14 @@ public class CalendarUtil {
         return isWorkingDay(date, getNationalHolidays(classificatorService));
     }
 
-    private static boolean isWorkingDay(LocalDate date, List<LocalDate> holidays) {
+    private static boolean isWorkingDay(LocalDate date, Collection<LocalDate> holidays) {
         if (date.getDayOfWeek() == DateTimeConstants.SATURDAY || date.getDayOfWeek() == DateTimeConstants.SUNDAY) {
             return false;
         }
         return !isHoliday(date, holidays);
     }
 
-    private static boolean isHoliday(LocalDate date, List<LocalDate> holidays) {
+    private static boolean isHoliday(LocalDate date, Collection<LocalDate> holidays) {
         if (holidays == null) {
             return false;
         }
@@ -66,9 +69,9 @@ public class CalendarUtil {
         return false;
     }
 
-    private static List<LocalDate> getNationalHolidays(ClassificatorService classificatorService) {
+    private static Set<LocalDate> getNationalHolidays(ClassificatorService classificatorService) {
         List<ClassificatorValue> classificatorValues = classificatorService.getActiveClassificatorValues(classificatorService.getClassificatorByName("nationalHolidays"));
-        List<LocalDate> holidays = new ArrayList<LocalDate>();
+        Set<LocalDate> holidays = new HashSet<LocalDate>();
         DateTimeFormatter parser = DateTimeFormat.forPattern("dd.MM.yyyy");
         for (ClassificatorValue classificatorValue : classificatorValues) {
             String dateStr = classificatorValue.getValueName();
@@ -80,6 +83,29 @@ public class CalendarUtil {
             }
         }
         return holidays;
+    }
+
+    public static int getDaysBetween(LocalDate beginDate, LocalDate endDate) {
+        return Math.abs(Days.daysBetween(beginDate, endDate).getDays()) + 1;
+    }
+
+    public static int getNationalHolidaysBetween(LocalDate beginDate, LocalDate endDate, ClassificatorService classificatorService) {
+        int days = 0;
+        Set<LocalDate> nationalHolidays = getNationalHolidays(classificatorService);
+        for (LocalDate nationalHoliday : nationalHolidays) {
+            if (!nationalHoliday.isBefore(beginDate) && !nationalHoliday.isAfter(endDate)) {
+                days++;
+            }
+        }
+        return days;
+    }
+
+    public static int getDaysBetween(LocalDate beginDate, LocalDate endDate, boolean subtractNationalHolidays, ClassificatorService classificatorService) {
+        int days = getDaysBetween(beginDate, endDate);
+        if (subtractNationalHolidays) {
+            days -= getNationalHolidaysBetween(beginDate, endDate, classificatorService);
+        }
+        return days;
     }
 
     public static long duration(long startTime, long stopTime) {

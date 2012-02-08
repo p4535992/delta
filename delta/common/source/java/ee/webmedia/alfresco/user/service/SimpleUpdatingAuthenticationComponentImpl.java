@@ -38,25 +38,25 @@ public class SimpleUpdatingAuthenticationComponentImpl extends AbstractAuthentic
     public Authentication setCurrentUser(String idCodeOrUsername) throws AuthenticationException {
         if (isSystemUserName(idCodeOrUsername)) {
             throw new AuthenticationException("System user not allowed");
-        } else {
-            SetCurrentUserCallback callback = new SetCurrentUserCallback(idCodeOrUsername);
-            Authentication auth;
-            // If the repository is read only, we have to settle for a read only transaction. Auto user creation will
-            // not be possible.
-            if (getTransactionService().isReadOnly()) {
-                auth = getTransactionService().getRetryingTransactionHelper().doInTransaction(callback, true, false);
-            }
-            // Otherwise, we want a writeable transaction, so if the current transaction is read only we set the
-            // requiresNew flag to true
-            else {
-                auth = getTransactionService().getRetryingTransactionHelper().doInTransaction(callback, false,
-                        AlfrescoTransactionSupport.getTransactionReadState() == TxnReadState.TXN_READ_ONLY);
-            }
-            if ((auth == null) || (callback.ae != null)) {
-                throw callback.ae;
-            }
-            return auth;
         }
+
+        SetCurrentUserCallback callback = new SetCurrentUserCallback(idCodeOrUsername);
+        Authentication auth;
+        // If the repository is read only, we have to settle for a read only transaction. Auto user creation will
+        // not be possible.
+        if (getTransactionService().isReadOnly()) {
+            auth = getTransactionService().getRetryingTransactionHelper().doInTransaction(callback, true, false);
+        }
+        // Otherwise, we want a writeable transaction, so if the current transaction is read only we set the
+        // requiresNew flag to true
+        else {
+            auth = getTransactionService().getRetryingTransactionHelper().doInTransaction(callback, false,
+                    AlfrescoTransactionSupport.getTransactionReadState() == TxnReadState.TXN_READ_ONLY);
+        }
+        if ((auth == null) || (callback.ae != null)) {
+            throw callback.ae;
+        }
+        return auth;
     }
 
     class SetCurrentUserCallback implements RetryingTransactionHelper.RetryingTransactionCallback<Authentication> {

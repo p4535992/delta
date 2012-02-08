@@ -8,8 +8,8 @@
 <%@ page isELIgnored="false"%>
 
 <a:panel id="thesaurus-keyword-search" styleClass="panel-100" label="#{msg.thesaurus_search}" progressive="true" rendered="#{!ThesaurusDetailsDialog.new}">
-   <h:inputText id="search-text" styleClass="admin-user-search-input width250 focus" value="#{ThesaurusDetailsDialog.keywordFilter}" size="35" maxlength="1024" />
-   <h:commandButton id="search-btn" value="#{msg.search}" action="#{ThesaurusDetailsDialog.filterKeywords}" style="margin-left: 5px;"/>
+   <h:inputText id="search-text" styleClass="width250 focus" value="#{ThesaurusDetailsDialog.keywordFilter}" size="35" maxlength="1024" />
+   <h:commandButton id="search-btn" value="#{msg.search}" action="#{ThesaurusDetailsDialog.filterKeywords}" style="margin-left: 5px;" styleClass="specificAction" />
    <h:commandButton value="#{msg.show_all}" action="#{ThesaurusDetailsDialog.showAll}" style="margin-left: 5px;"/>
 </a:panel>
 <a:panel id="thesaurus-details-panel" styleClass="panel-100 with-pager" label="#{msg.thesaurus_data}" progressive="true">

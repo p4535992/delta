@@ -17,6 +17,7 @@ import org.alfresco.model.ContentModel;
 import org.alfresco.repo.configuration.ConfigurableService;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
+import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -39,6 +40,10 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.log.PropDiffHelper;
+import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.log.model.LogObject;
+import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.model.UserModel;
@@ -53,12 +58,14 @@ public class UserServiceImpl implements UserService {
     private AuthorityService authorityService;
     private GeneralService generalService;
     private NodeService nodeService;
+    private DictionaryService dictionaryService;
     private SearchService searchService;
     private PersonService personService;
     private PermissionService permissionService;
     private OrganizationStructureService organizationStructureService;
     private ConfigurableService configurableService;
     private NamespaceService namespaceService;
+    private LogService logService;
     private boolean groupsEditingAllowed;
     private List<String> systematicGroups;
 
@@ -431,8 +438,14 @@ public class UserServiceImpl implements UserService {
             properties.put(UserModel.Props.LEAVING_DATE_TIME, new Date());
             properties.put(UserModel.Props.LIABILITY_GIVEN_TO_PERSON_ID, replacementUserId);
             nodeService.addAspect(leavingUser.getNodeRef(), UserModel.Aspects.LEAVING, properties);
+
+            logService.addLogEntry(LogEntry.create(LogObject.USER, this, leavingUser.getNodeRef(), "applog_user_rights_transfer",
+                    getUserFullNameAndId(leavingUserId), getUserFullNameAndId(replacementUserId)));
         } else {
             nodeService.removeAspect(leavingUser.getNodeRef(), UserModel.Aspects.LEAVING);
+
+            logService.addLogEntry(LogEntry.create(LogObject.USER, this, leavingUser.getNodeRef(), "applog_user_rights_return",
+                    getUserFullNameAndId(leavingUserId)));
         }
 
         return true;
@@ -444,6 +457,23 @@ public class UserServiceImpl implements UserService {
         Map<QName, Serializable> props = RepoUtil.toQNameProperties(user.getProperties());
         props.remove(ContentModel.PROP_SIZE_CURRENT);
         props.remove(ContentModel.PROP_SIZE_QUOTA);
+
+        String diff = new PropDiffHelper()
+                .label(ContentModel.PROP_FIRSTNAME, "cm_contentmodel.property.cm_firstName.title")
+                .label(ContentModel.PROP_LASTNAME, "cm_contentmodel.property.cm_lastName.title")
+                .label(ContentModel.PROP_USERNAME, "user_username")
+                .label(ContentModel.PROP_JOBTITLE, "jobtitle")
+                .label(ContentModel.PROP_SERVICE_RANK, "user_serviceRank")
+                .label(ContentModel.PROP_TELEPHONE, "telephone")
+                .label(ContentModel.PROP_EMAIL, "user_email")
+                .label(ContentModel.PROP_HOMEFOLDER, "homeFolder")
+                .label(ContentModel.PROP_HOMEFOLDER, "user_home_folder")
+                .label(ContentModel.SHOW_EMPTY_TASK_MENU, "user_showEmptyTaskMenu")
+                .label(ContentModel.PROP_RELATED_FUNDS_CENTER, "user_relatedFundsCenter")
+                .diff(RepoUtil.getPropertiesIgnoringSystem(nodeService.getProperties(user.getNodeRef()), dictionaryService), props);
+        if (diff != null) {
+            logService.addLogEntry(LogEntry.create(LogObject.USER, this, user.getNodeRef(), "applog_user_edit", UserUtil.getUserFullNameAndId(props), diff));
+        }
 
         // Update user node
         nodeService.addProperties(user.getNodeRef(), props);
@@ -551,6 +581,10 @@ public class UserServiceImpl implements UserService {
         this.nodeService = nodeService;
     }
 
+    public void setDictionaryService(DictionaryService dictionaryService) {
+        this.dictionaryService = dictionaryService;
+    }
+
     public void setSearchService(SearchService searchService) {
         this.searchService = searchService;
     }
@@ -573,6 +607,10 @@ public class UserServiceImpl implements UserService {
 
     public void setNamespaceService(NamespaceService namespaceService) {
         this.namespaceService = namespaceService;
+    }
+
+    public void setLogService(LogService logService) {
+        this.logService = logService;
     }
 
     public void setGroupsEditingAllowed(boolean groupsEditingAllowed) {

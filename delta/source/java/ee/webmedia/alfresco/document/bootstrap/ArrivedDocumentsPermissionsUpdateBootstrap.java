@@ -52,6 +52,9 @@ public class ArrivedDocumentsPermissionsUpdateBootstrap extends AbstractModuleCo
     protected void addPermissions(List<NodeRef> folderRefs) {
         PrivilegeService privilegeService = BeanHelper.getPrivilegeService();
         for (NodeRef folderRef : folderRefs) {
+            if (folderRef == null) {
+                continue;
+            }
             LOG.info("Adding permissions to " + folderRef + " - " + getNodeService().getPath(folderRef).toPrefixString(getNamespaceService()));
             privilegeService.setPermissions(folderRef, UserService.AUTH_DOCUMENT_MANAGERS_GROUP, Privileges.EDIT_DOCUMENT);
         }

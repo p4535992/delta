@@ -1028,6 +1028,51 @@ function allowMultiplePageSizeChangers(){ // otherwise the last pageSizeChanger 
    });
 }
 
+/**
+ * Returns true if event was handled. 
+ */
+function handleEnterKey(event) {
+   var target = $jQ(event.target);
+   var targetTag = event.target.tagName.toLowerCase();
+   
+   // Allow normal behaviour for textareas
+   if ("textarea" == targetTag) {
+      return false;
+   }
+   
+   // Submit search for (constrained)quickSearch by clicking the next button
+   var targetId = target.attr('id');
+   if (targetId && endsWith(targetId.toLowerCase(), "quicksearch")) {
+      target.next().click();
+      return true;
+   }
+   
+   // Are there any specific actions (modal search, dialog search)?
+   var specificActions = $jQ('.specificAction').filter(":visible");
+   if (specificActions.length == 1) { // Do nothing if multiple actions match
+      // Special case for generic pickers. If we have selected something and press enter, we should select instead of searching
+      if ("select" == targetTag) {
+         var picker = target.parents(".generic-picker");
+         if (picker.length > 0) {
+            picker.first().find(".picker-add").click();
+            return true;
+         }
+      }
+      
+      specificActions.click();
+      return true;
+   }
+   
+   // Default actions are usually dialog finishImpl buttons
+   var defaultActions = $jQ('.defaultAction').filter(":visible");
+   if (defaultActions.length == 1) { // Do nothing if multiple actions match
+      defaultActions.click();
+      return true;
+   }
+   
+   return false;
+}
+
 //-----------------------------------------------------------------------------
 // DOCUMENT-READY FUNCTIONS
 //-----------------------------------------------------------------------------
@@ -1046,23 +1091,11 @@ $jQ(document).ready(function() {
 function initWithScreenProtected() {
    showFooterTitlebar();
    allowMultiplePageSizeChangers();
-   $jQ(".admin-user-search-input").live('keyup', function(event) {
-      if (event.keyCode == 13) {
-           $jQ(this).next().click();
-           return false;
-      }
-   });
 
-   $jQ(".quickSearch-input").live('keydown', function(event) {
-      if (event.keyCode == 13) {
-          $jQ(this).next().click();
-          return false;
-      }
-   });
-
-   $jQ(".genericpicker-input").live('keydown', function (event) {
-      if (event.keyCode == 13) {
-         $jQ(this).next().click();
+   // Collect all enter presses at document root (NB! live() doesn't work!)
+   $jQ(document).keypress(function (event) {
+      if (event.keyCode == 13 && handleEnterKey(event)) {
+         event.stopPropagation(); // You shall not PASS!
          return false;
       }
    });
@@ -1568,7 +1601,7 @@ function extendCondencePlugin() {
          ellipsis: "",
          condensedLength: condenceAtChar,
          minTrail: moreTxt.length,
-         strictTrim: true  // assume that condense content is text (i.e. doesn't contain html elements)
+         strictTrim: false  // assume that condense content is text (i.e. doesn't contain html elements)
                            // and don't search for word breaks for triming text
          }
        );
@@ -1808,13 +1841,6 @@ function handleHtmlLoaded(context, selects) {
    $jQ(".modalwrap select option", context).tooltip();
    initSelectTooltips((selects==undefined) ? $jQ("select") : selects);
 
-   // XXX: kasutusel addressbook.jsp, users.jsp lehtedel
-   $jQ(".admin-user-search-input", context).keyup(function(event) {
-      if (event.keyCode == '13') {
-         $jQ(this).next().click();
-      }
-   });
-
    var forms = $jQ(document.forms);
    if(forms.length > 2){
       forms.each(function(){
@@ -1981,4 +2007,8 @@ function setDateFromEnum(beginDate,endDate,selectedEnum){
 
 function clickNextLink(currElId){
    $jQ("#" + escapeId4JQ(currElId)).nextAll("a").eq(0).click();
+}
+
+function endsWith(str, suffix) {
+   return str && suffix && str.indexOf(suffix, str.length - suffix.length) !== -1;
 }

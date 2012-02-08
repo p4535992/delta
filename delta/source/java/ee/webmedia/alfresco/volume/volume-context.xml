@@ -33,6 +33,8 @@
       <property name="seriesService" ref="SeriesService" />
       <property name="caseService" ref="CaseService" />
       <property name="documentService" ref="documentService" />
+      <property name="logService" ref="LogService" />
+      <property name="userService" ref="UserService" />
       <property name="caseVolumeEnabled" value="${conf.casefile.enabled}" />
    </bean>
 
@@ -83,7 +85,7 @@
             <property name="jobClass" value="ee.webmedia.alfresco.volume.job.VolumeAutomaticClosingJob" />
             <property name="jobDataAsMap">
                <map>
-                  <entry key="functionsService" value-ref="FunctionsService" />
+                  <entry key="documentListService" value-ref="DocumentListService" />
                </map>
             </property>
          </bean>

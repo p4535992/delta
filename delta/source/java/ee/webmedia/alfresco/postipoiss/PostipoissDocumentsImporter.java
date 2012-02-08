@@ -1,7 +1,7 @@
 package ee.webmedia.alfresco.postipoiss;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getFunctionsService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentListService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNamespaceService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPrivilegeService;
@@ -104,12 +104,30 @@ import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
  * @author Alar Kvell
  */
 public class PostipoissDocumentsImporter {
+
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(PostipoissDocumentsImporter.class);
 
     private static final String PP_ELEMENT_DOK_NR = "dok_nr";
     private static final String PP_ELEMENT_ALUS_DOK_NR = "alus_dok_nr";
-    private static final String PP_ELEMENT_TOIMIK_SARI = "volume"; // SIM "toimik_sari", MV "toimik"
-    private static final String PP_ELEMENT_REG_NR = "regNumber"; // SIM "reg_nr", MV "registreerimis_nr"
+    /**
+     * SIM "toimik_sari", MV "toimik", PPA "volume", now comes from mappings.xml {@code <prop from="..." to="_regNumberWithoutIndividual"/>}.
+     * For example
+     * 
+     * <pre>
+     * &lt;volume&gt;10.1-01/11/33070&lt;/volume&gt;
+     * &lt;regNumber&gt;33070&lt;/regNumber&gt;
+     * &lt;jrknr&gt;2&lt;/jrknr&gt;
+     * 
+     * docdyn:regNumber = 10.1-01/11/33070-2
+     * docdyn:shortRegNumber = 33070
+     * docdyn:individualNumber = 2
+     * </pre>
+     */
+    private static final String MAPPINGS_PROP_TO_REG_NUMBER_WITHOUT_INDIVIDUAL = "_regNumberWithoutIndividual";
+    /**
+     * SIM "reg_nr", MV "registreerimis_nr", PPA "regNumber", now comes from mappings.xml {@code <prop from="..." to="_shortRegNumber" />}
+     */
+    private static final String MAPPINGS_PROP_TO_SHORT_REG_NUMBER = "_shortRegNumber";
     private static final String PP_ELEMENT_PARITOLU = "paritolu"; // SIM "paritolu"
     private static final String PP_ELEMENT_PARITOLU2 = "parituolu";
     private static final String PP_VALUE_PARITOLU_ALGATUSDOKUMENT = "Algatusdokument";
@@ -118,8 +136,15 @@ public class PostipoissDocumentsImporter {
     private static final String PP_VALUE_PARITOLU_JARELEPARIMINE = "Järelepärimine";
     private static final String PP_ELEMENT_FAIL = "fail"; // SIM "fail", MV "viide"
     private static final String PP_ELEMENT_SEOSED = "seosed";
-    private static final String PP_ELEMENT_DOKLIIK = "dokliik"; // MV "dok_liik"
-    private static final String PP_ELEMENT_JRKNR = "jrknr";
+    private static final String PP_ELEMENT_SUUND = "suund";
+    /**
+     * MV "dok_liik", SIM, PPA "dokliik", now comes from mappings.xml {@code <prop from="..." to="_documentTypeFrom" />}
+     */
+    private static final String MAPPINGS_PROP_TO_DOCUMENT_TYPE_FROM = "_documentTypeFrom";
+    /**
+     * MV, SIM, PPA "jrknr", now comes from mappings.xml {@code <prop from="..." to="_individualNumber" />}
+     */
+    private static final String MAPPINGS_PROP_TO_INDIVIDUAL_NUMBER = "_individualNumber";
 
     /*
      * TODO lisada kellaaeg csv'sse
@@ -788,17 +813,18 @@ public class PostipoissDocumentsImporter {
 
     private void setAccessRestriction(Map<QName, Serializable> props) {
         String accessRestriction = (String) props.get(ACCESS_RESTRICTION);
+        Mapping accessRestrictionMapping = mappings.get("accessRestrictionValues");
+        if (accessRestrictionMapping != null) {
+            for (PropMapping propMapping : accessRestrictionMapping.props) {
+                if (propMapping.from.equals(accessRestriction)) {
+                    accessRestriction = propMapping.to;
+                    break;
+                }
+            }
+        }
         if (AccessRestriction.OPEN.getValueName().equals(accessRestriction) || AccessRestriction.AK.getValueName().equals(accessRestriction)
                 || AccessRestriction.INTERNAL.getValueName().equals(accessRestriction) || AccessRestriction.LIMITED.getValueName().equals(accessRestriction)) {
             // OK
-        } else if ("Asutusesiseseks kasutamiseks".equals(accessRestriction) || "AKEA".equals(accessRestriction)) {
-            accessRestriction = AccessRestriction.AK.getValueName();
-            // } else if ("Juurdepääsupiirang eraelulistele isikuandmetele".equals(accessRestriction)) {
-            // // SIM had also || "JuurdepÃ¤Ã¤supiirang eraelulistele isikuandmetele".equals(accessRestriction)
-            // accessRestriction = AccessRestriction.AK.getValueName());
-            // props.put(ACCESS_RESTRICTION_REASON, "AvTS § 35, lg 1 p 12");
-        } else if ("Salajane".equals(accessRestriction)) {
-            accessRestriction = AccessRestriction.LIMITED.getValueName();
         } else {
             throw new RuntimeException("Invalid accessRestriction value '" + accessRestriction + "'");
         }
@@ -1163,7 +1189,7 @@ public class PostipoissDocumentsImporter {
         try {
             batchProgress.run();
         } finally {
-            getFunctionsService().updateDocCounters(archivalsRoot);
+            getDocumentListService().updateDocCounters(archivalsRoot);
         }
         log.info("Documents IMPORT COMPLETE :)");
     }
@@ -1314,6 +1340,9 @@ public class PostipoissDocumentsImporter {
 
         for (PropMapping pm : mapping.props) {
             try {
+                if (pm.to.startsWith("_")) {
+                    continue;
+                }
                 String value = null;
                 if (pm.expression == null) {
                     Element el = root.element(pm.from);
@@ -1372,8 +1401,8 @@ public class PostipoissDocumentsImporter {
 
     private VolumeIndex inferVolumeIndex(Element root, Mapping m) {
         VolumeIndex vi = new VolumeIndex();
-        String toimikSari = root.elementText(PP_ELEMENT_TOIMIK_SARI);
-        vi.regNumber = root.elementText(PP_ELEMENT_REG_NR);
+        String toimikSari = root.elementText(m.requirePropMappingTo(MAPPINGS_PROP_TO_REG_NUMBER_WITHOUT_INDIVIDUAL).from);
+        vi.regNumber = root.elementText(m.requirePropMappingTo(MAPPINGS_PROP_TO_SHORT_REG_NUMBER).from);
 
         if (toimikSari != null) {
             toimikSari = toimikSari.trim();
@@ -1455,9 +1484,14 @@ public class PostipoissDocumentsImporter {
 
         Element root = xmlReader.read(xml).getRootElement();
 
-        String type = root.elementText(PP_ELEMENT_DOKLIIK);
-        String suund = root.elementText("suund");
-        String toimikSari = root.elementText(PP_ELEMENT_TOIMIK_SARI);
+        Mapping generalMapping = mappings.get("general");
+        String ppDocumentTypeFrom = generalMapping.requirePropMappingTo(MAPPINGS_PROP_TO_DOCUMENT_TYPE_FROM).from;
+        String ppRegNumberWithoutIndividual = generalMapping.requirePropMappingTo(MAPPINGS_PROP_TO_REG_NUMBER_WITHOUT_INDIVIDUAL).from;
+        String ppShortRegNumber = generalMapping.requirePropMappingTo(MAPPINGS_PROP_TO_SHORT_REG_NUMBER).from;
+
+        String type = root.elementText(ppDocumentTypeFrom);
+        String suund = root.elementText(PP_ELEMENT_SUUND);
+        String toimikSari = root.elementText(ppRegNumberWithoutIndividual);
         Mapping mapping = null;
         if (StringUtils.isNotBlank(suund)) {
             mapping = mappings.get(type + "-" + suund);
@@ -1474,12 +1508,15 @@ public class PostipoissDocumentsImporter {
         }
         if (mapping == null) {
             // Skip document for which mapping doesn't exist
-            return new ImportedDocument(documentId, null, root.elementText(PP_ELEMENT_TOIMIK_SARI), root.elementText(PP_ELEMENT_REG_NR), root.elementText(PP_ELEMENT_DOKLIIK),
-                    root.elementText("suund"), "documentType mapping not found", null);
+            return new ImportedDocument(documentId, null, root.elementText(ppRegNumberWithoutIndividual),
+                    root.elementText(ppShortRegNumber),
+                    root.elementText(ppDocumentTypeFrom),
+                    root.elementText(PP_ELEMENT_SUUND), "documentType mapping not found", null);
         }
         VolumeIndex volumeIndex = inferVolumeIndex(root, mapping);
         if (volumeIndex == null) {
-            throw new RuntimeException("Could not parse volume for document, volume='" + root.elementText(PP_ELEMENT_TOIMIK_SARI) + "'");
+            throw new RuntimeException("Could not parse volume for document, volume='"
+                    + root.elementText(ppRegNumberWithoutIndividual) + "'");
         }
         String volumeIndexMarkOrig = volumeIndex.mark;
 
@@ -1550,8 +1587,9 @@ public class PostipoissDocumentsImporter {
 
         addAssociations(documentRef, documentId, root);
 
-        return new ImportedDocument(documentId, documentRef, root.elementText(PP_ELEMENT_TOIMIK_SARI), root.elementText(PP_ELEMENT_REG_NR), root.elementText(PP_ELEMENT_DOKLIIK),
-                root.elementText("suund"), mapping.typeInfo.docVer.getParent().getId(), nodeService.getProperties(documentRef));
+        return new ImportedDocument(documentId, documentRef, root.elementText(ppRegNumberWithoutIndividual),
+                root.elementText(ppShortRegNumber), root.elementText(ppDocumentTypeFrom),
+                root.elementText(PP_ELEMENT_SUUND), mapping.typeInfo.docVer.getParent().getId(), nodeService.getProperties(documentRef));
     }
 
     private void checkProps(Map<QName, Serializable> propsMap, QName[] hierarchy, Map<String, org.alfresco.util.Pair<DynamicPropertyDefinition, Field>> propDefs) {
@@ -1665,10 +1703,10 @@ public class PostipoissDocumentsImporter {
     }
 
     private Map<QName, Serializable> setProps(Element root, Mapping mapping, VolumeIndex volumeIndex, Toimik t) {
-        // String regNumber = t.normedMark + "/" + volumeIndex.regNumber;
+        // SIM, MV constructed regNumber like this: String regNumber = t.normedMark + "/" + volumeIndex.regNumber;
         // PPA needs regNumber to be original, unmodified
-        String regNumber = root.elementText(PP_ELEMENT_TOIMIK_SARI);
-        String individualNr = root.elementText(PP_ELEMENT_JRKNR);
+        String regNumber = root.elementText(mapping.requirePropMappingTo(MAPPINGS_PROP_TO_REG_NUMBER_WITHOUT_INDIVIDUAL).from);
+        String individualNr = root.elementText(mapping.requirePropMappingTo(MAPPINGS_PROP_TO_INDIVIDUAL_NUMBER).from);
         if (StringUtils.isNotBlank(individualNr)) {
             regNumber += "-" + individualNr;
         }
@@ -1676,7 +1714,7 @@ public class PostipoissDocumentsImporter {
         Map<QName, Serializable> propsMap = mapProperties(root, mapping);
 
         boolean open;
-        if (StringUtils.isNotBlank(root.elementText(PP_ELEMENT_REG_NR))) {
+        if (StringUtils.isNotBlank(root.elementText(mapping.requirePropMappingTo(MAPPINGS_PROP_TO_SHORT_REG_NUMBER).from))) {
             propsMap.put(DocumentCommonModel.Props.REG_NUMBER, regNumber);
             RegNrHolder regNrHolder = new RegNrHolder(regNumber);
             propsMap.put(DocumentCommonModel.Props.SHORT_REG_NUMBER, regNrHolder.getShortRegNrWithoutIndividualizingNr());
@@ -1717,7 +1755,7 @@ public class PostipoissDocumentsImporter {
         // log.info("ownerId=" + (String) propsMap.get(OWNER_NAME));
 
         if (!propsMap.containsKey(DocumentCommonModel.Props.DOC_NAME)) {
-            String docName = root.elementText(PP_ELEMENT_DOKLIIK);
+            String docName = root.elementText(mapping.requirePropMappingTo(MAPPINGS_PROP_TO_DOCUMENT_TYPE_FROM).from);
             if (StringUtils.isNotBlank(docName)) {
                 propsMap.put(DocumentCommonModel.Props.DOC_NAME, docName);
             }

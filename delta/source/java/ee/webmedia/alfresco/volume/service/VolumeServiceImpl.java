@@ -23,9 +23,14 @@ import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.log.PropDiffHelper;
+import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.log.model.LogObject;
+import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.series.service.SeriesService;
+import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
@@ -47,6 +52,8 @@ public class VolumeServiceImpl implements VolumeService {
     private SeriesService seriesService;
     private CaseService caseService;
     private DocumentService documentService;
+    private UserService userService;
+    private LogService logService;
     private boolean caseVolumeEnabled;
 
     @Override
@@ -135,7 +142,7 @@ public class VolumeServiceImpl implements VolumeService {
             validTo.set(Calendar.SECOND, 59);
             if (!cal.after(validTo)) {
                 log.debug("Skipping volume '" + volume.getTitle() + "', current date " + cal.getTime() + " is not later than volume valid to date "
-                            + validTo.getTime());
+                        + validTo.getTime());
                 i.remove();
                 continue;
             }
@@ -165,16 +172,38 @@ public class VolumeServiceImpl implements VolumeService {
             Map<QName, Serializable> qNameProperties = fromNodeProps ? RepoUtil.toQNameProperties(volumeNode.getProperties())
                     : volumeBeanPropertyMapper.toProperties(volume);
             volume.setNode(createVolumeNode(volume.getSeriesNodeRef(), qNameProperties));
+
+            Map<String, Object> props = volume.getNode().getProperties();
+            logService.addLogEntry(LogEntry.create(LogObject.VOLUME, userService, volume.getNode().getNodeRef(), "applog_space_add",
+                    props.get(VolumeModel.Props.VOLUME_MARK.toString()), props.get(VolumeModel.Props.TITLE.toString())));
         } else { // update
-            if (checkContainsCasesValue(volume)) {
-                if (fromNodeProps) {
-                    generalService.setPropertiesIgnoringSystem(volumeNode.getNodeRef(), volumeNode.getProperties());
-                } else {
-                    generalService.setPropertiesIgnoringSystem(volumeNode.getNodeRef(), RepoUtil.toStringProperties(volumeBeanPropertyMapper
-                            .toProperties(volume)));
-                }
-            } else {
+            if (!checkContainsCasesValue(volume)) {
                 throw new UnableToPerformException("volume_contains_docs_or_cases");
+            }
+
+            String propDiff = new PropDiffHelper()
+                    .label(VolumeModel.Props.STATUS, "volume_status")
+                    .label(VolumeModel.Props.VOLUME_TYPE, "volume_volumeType")
+                    .label(VolumeModel.Props.VOLUME_MARK, "volume_volumeMark")
+                    .label(VolumeModel.Props.TITLE, "volume_title")
+                    .label(VolumeModel.Props.DESCRIPTION, "volume_description")
+                    .label(VolumeModel.Props.VALID_FROM, "volume_validFrom")
+                    .label(VolumeModel.Props.VALID_TO, "volume_validTo")
+                    .label(VolumeModel.Props.ARCHIVING_NOTE, "volume_archive_note")
+                    .label(VolumeModel.Props.SEND_TO_DESTRUCTION, "volume_sendToDestruction")
+                    .label(VolumeModel.Props.CASES_CREATABLE_BY_USER, "volume_casesCreatableByUser")
+                    .diff(nodeService.getProperties(volumeNode.getNodeRef()), RepoUtil.toQNameProperties(volumeNode.getProperties()));
+
+            if (propDiff != null) {
+                logService.addLogEntry(LogEntry.create(LogObject.VOLUME, userService, volumeNode.getNodeRef(), "applog_space_edit",
+                        volume.getVolumeMark(), volume.getTitle(), propDiff));
+            }
+
+            if (fromNodeProps) {
+                generalService.setPropertiesIgnoringSystem(volumeNode.getNodeRef(), volumeNode.getProperties());
+            } else {
+                generalService.setPropertiesIgnoringSystem(volumeNode.getNodeRef(), RepoUtil.toStringProperties(volumeBeanPropertyMapper
+                        .toProperties(volume)));
             }
 
         }
@@ -418,6 +447,14 @@ public class VolumeServiceImpl implements VolumeService {
 
     public void setDocumentService(DocumentService documentService) {
         this.documentService = documentService;
+    }
+
+    public void setLogService(LogService logService) {
+        this.logService = logService;
+    }
+
+    public void setUserService(UserService userService) {
+        this.userService = userService;
     }
 
     public void setCaseVolumeEnabled(boolean caseVolumeEnabled) {

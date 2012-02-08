@@ -1,20 +1,21 @@
 package ee.webmedia.alfresco.document.associations.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.config.ActionsConfigElement.ActionDefinition;
 
 import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
-import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.service.AssociationModel;
-import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
+import ee.webmedia.alfresco.docadmin.service.DocumentType;
+import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicBlock;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog;
@@ -89,33 +90,29 @@ public class AssocsBlockBean implements DocumentDynamicBlock {
     }
 
     public List<ActionDefinition> createAddFollowupsMenu(@SuppressWarnings("unused") String nodeTypeId) {
-        WmNode document = getDocumentFromDialog();
-        if (document == null) {
-            return Collections.emptyList();
-        }
-        return initCreateAddAssocMenu(document, DocTypeAssocType.FOLLOWUP);
+        return initCreateAddAssocMenu(DocTypeAssocType.FOLLOWUP);
     }
 
     public List<ActionDefinition> createAddRepliesMenu(@SuppressWarnings("unused") String nodeTypeId) {
-        WmNode document = getDocumentFromDialog();
-        if (document == null) {
-            return Collections.emptyList();
-        }
-        return initCreateAddAssocMenu(document, DocTypeAssocType.REPLY);
+        return initCreateAddAssocMenu(DocTypeAssocType.REPLY);
     }
 
-    private List<ActionDefinition> initCreateAddAssocMenu(WmNode document, DocTypeAssocType docTypeAssocType) {
-        String documentTypeId = (String) document.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID);
-
-        QName assocType = docTypeAssocType.getAssocBetweenDocTypeAndAssocModel();
-        List<AssociationModel> assocs = BeanHelper.getDocumentAssociationsService().getAssocs(documentTypeId, assocType);
+    private List<ActionDefinition> initCreateAddAssocMenu(DocTypeAssocType docTypeAssocType) {
+        DocumentType documentType = BeanHelper.getDocumentDynamicDialog().getDocumentType();
+        if (documentType == null) {
+            return Collections.emptyList();
+        }
+        List<? extends AssociationModel> assocs = documentType.getAssociationModels(docTypeAssocType);
         List<ActionDefinition> actionDefinitions = new ArrayList<ActionDefinition>(assocs.size());
-        DocumentAdminService documentAdminService = BeanHelper.getDocumentAdminService();
-        Map<String, String> documentTypeNames = documentAdminService.getDocumentTypeNames(null);
+        Map<String, String> documentTypeNames = getDocumentAdminService().getDocumentTypeNames(null);
         for (AssociationModel assocModel : assocs) {
+            String docTypeId = assocModel.getDocType();
+            if (docTypeAssocType == DocTypeAssocType.FOLLOWUP
+                    && (SystematicDocumentType.REPORT.isSameType(docTypeId) || SystematicDocumentType.ERRAND_ORDER_ABROAD.isSameType(docTypeId))) {
+                continue;
+            }
             ActionDefinition actionDefinition = new ActionDefinition("compoundWorkflowDefinitionAction");
             actionDefinition.Image = DROPDOWN_MENU_ITEM_ICON;
-            String docTypeId = assocModel.getDocType();
             actionDefinition.Label = documentTypeNames.get(docTypeId);
             actionDefinition.ActionListener = "#{" + DocumentDynamicDialog.BEAN_NAME + ".createAssoc}";
             actionDefinition.addParam(PARAM_ASSOC_MODEL_REF, assocModel.getNodeRef().toString());

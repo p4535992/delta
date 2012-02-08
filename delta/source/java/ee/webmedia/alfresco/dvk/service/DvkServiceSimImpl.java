@@ -693,7 +693,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
 
         Map<QName, Serializable> docProps = nodeService.getProperties(documentNodeRef);
         @SuppressWarnings("unchecked")
-        List<String> fileNodeRefs = (List<String>) CollectionUtils.collect(fileService.getAllFiles(documentNodeRef), new Transformer() {
+        List<String> fileNodeRefs = (List<String>) CollectionUtils.collect(fileService.getAllFilesExcludingDigidocSubitems(documentNodeRef), new Transformer() {
             @Override
             public Object transform(Object compWorkflow) {
                 return ((File) compWorkflow).getNode().getNodeRef().toString();

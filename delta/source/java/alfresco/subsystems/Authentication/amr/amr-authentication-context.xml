@@ -31,6 +31,7 @@
       <property name="defaultAdministratorUserNameList" value="${external.authentication.defaultAdministratorUserNames}" />
       <property name="allowGuestLogin" value="false" />
       <property name="userRegistry" ref="userRegistry" />
+      <property name="logService" ref="LogService" />
    </bean>
    
    <!-- @Override classpath:alfresco/subsystems/Authentication/common-ldap-context.xml -->

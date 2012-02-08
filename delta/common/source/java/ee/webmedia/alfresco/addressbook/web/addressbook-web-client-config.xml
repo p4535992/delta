@@ -44,8 +44,8 @@
   
    <config evaluator="aspect-name" condition="ab:organizationProperties">
       <property-sheet>
-         <show-property name="ab:firstAdditionalEmail" />
-         <show-property name="ab:secondAdditionalEmail" />
+         <show-property name="ab:firstAdditionalEmail" show-in-view-mode="false"/>
+         <show-property name="ab:secondAdditionalEmail" show-in-view-mode="false"/>
       </property-sheet>
    </config>  
   
@@ -57,8 +57,8 @@
    
    <config evaluator="aspect-name" condition="ab:organizationProperties">
       <property-sheet>
-         <show-property name="ab:firstAdditionalPhone" />
-         <show-property name="ab:secondAdditionalPhone" />
+         <show-property name="ab:firstAdditionalPhone" show-in-view-mode="false"/>
+         <show-property name="ab:secondAdditionalPhone" show-in-view-mode="false"/>
       </property-sheet>
    </config>     
 

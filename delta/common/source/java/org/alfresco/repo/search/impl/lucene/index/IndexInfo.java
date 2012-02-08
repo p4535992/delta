@@ -38,8 +38,8 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
 import java.nio.channels.FileChannel.MapMode;
+import java.nio.channels.FileLock;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -80,14 +80,14 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.FilterIndexReader;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.IndexReader.FieldOption;
 import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriter.MaxFieldLength;
 import org.apache.lucene.index.LogDocMergePolicy;
 import org.apache.lucene.index.MultiReader;
 import org.apache.lucene.index.SerialMergeScheduler;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermEnum;
-import org.apache.lucene.index.IndexReader.FieldOption;
-import org.apache.lucene.index.IndexWriter.MaxFieldLength;
 import org.apache.lucene.search.Hits;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -152,6 +152,7 @@ public class IndexInfo implements IndexMonitor
      */
     private static Log s_logger = LogFactory.getLog(IndexInfo.class);
     private static Log l_logger = LogFactory.getLog("org.alfresco.repo.search.impl.lucene.index.IndexInfo.Locking");
+    private static Log g_logger = LogFactory.getLog("org.alfresco.repo.search.impl.lucene.index.IndexInfo.General");
 
     /**
      * Use NIO memory mapping to wite the index control file.
@@ -1313,8 +1314,14 @@ public class IndexInfo implements IndexMonitor
                     }
                     else
                     {
+                        boolean timedOut = false;
                         while (shouldBlock())
                         {
+                            if (timedOut)
+                            {
+                                g_logger.warn("Timed out while throttling for merges. IndexInfo: " + toString() + dumpInfoAsString());
+                                break;
+                            }
                             synchronized (mergerTargetLock)
                             {
                                 if (s_logger.isDebugEnabled())
@@ -1324,7 +1331,11 @@ public class IndexInfo implements IndexMonitor
                                 releaseWriteLock();
                                 try
                                 {
-                                    mergerTargetLock.wait();
+                                    // If no progress is made for 3 seconds, error out to untangle deadlocks.
+                                    // Mustn't sleep longer than index recovery job reschedule rate to avoid
+                                    // all recovery needing to sleep.
+                                    mergerTargetLock.wait(3000);
+                                    timedOut = true;
                                 }
                                 catch (InterruptedException e)
                                 {
@@ -2992,6 +3003,48 @@ public class IndexInfo implements IndexMonitor
     private abstract class AbstractSchedulable implements Schedulable, Runnable
     {
         ScheduledState scheduledState = ScheduledState.UN_SCHEDULED;
+        boolean special = false;
+
+        public void runNow()
+        {
+            while (true)
+            {
+                synchronized (this)
+                {
+                    if (scheduledState == ScheduledState.FAILED || scheduledState == ScheduledState.UN_SCHEDULED)
+                    {
+                        g_logger.info("Current scheduledState = " + scheduledState + " - scheduling merger now");
+                        special = true;
+                        switch (scheduledState)
+                        {
+                        case FAILED:
+                            scheduledState = ScheduledState.RECOVERY_SCHEDULED;
+                            run();
+                            break;
+                        case UN_SCHEDULED:
+                            scheduledState = ScheduledState.SCHEDULED;
+                            run();
+                            break;
+                        case RECOVERY_SCHEDULED:
+                        case SCHEDULED:
+                        default:
+                            // Nothing to do
+                            break;
+                        }
+                        return;
+                    }
+                }
+                g_logger.info("Current scheduledState = " + scheduledState + " - sleeping 1 sec and trying again");
+                try
+                {
+                    Thread.sleep(1000);
+                }
+                catch (InterruptedException e)
+                {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
 
         public synchronized void schedule()
         {
@@ -3162,6 +3215,13 @@ public class IndexInfo implements IndexMonitor
             // Single JVM to start with
             MergeAction action = MergeAction.NONE;
 
+            if (special)
+            {
+                action = MergeAction.MERGE_INDEX;
+            }
+            else
+            {
+
             getReadLock();
             try
             {
@@ -3258,6 +3318,7 @@ public class IndexInfo implements IndexMonitor
             finally
             {
                 releaseReadLock();
+            }
             }
 
             if (action == MergeAction.APPLY_DELTA_DELETION)
@@ -3463,6 +3524,10 @@ public class IndexInfo implements IndexMonitor
                     }
 
                 });
+                if (toDelete.size() == 0)
+                {
+                    g_logger.warn("Cannot apply deletions. Sleeping 100 milliseconds to throttle retries. IndexInfo: " + toString() + dumpInfoAsString());
+                }
             }
             finally
             {
@@ -3489,6 +3554,14 @@ public class IndexInfo implements IndexMonitor
 
             if (toDelete.size() == 0)
             {
+                try
+                {
+                    Thread.sleep(100);
+                }
+                catch (InterruptedException e)
+                {
+                    throw new RuntimeException(e);
+                }
                 return;
             }
             // Build readers
@@ -3749,7 +3822,33 @@ public class IndexInfo implements IndexMonitor
                             }
                         }
 
-                        int position = findMergeIndex(1, mergerMaxMergeDocs, mergerMergeFactor, mergeList);
+                        int position;
+                        if (special)
+                        {
+                            special = false;
+                            StringBuilder s = new StringBuilder("Special merge - using position=0; mergeList:");
+                            int sum = 0;
+                            for (int i = 0; i < mergeList.size(); i++)
+                            {
+                                IndexEntry indexEntry = mergeList.get(i);
+                                if (i > 0)
+                                {
+                                    sum += indexEntry.getDocumentCount();
+                                }
+                                s.append("\n  ").append(indexEntry.toString());
+                            }
+                            g_logger.info(s.toString());
+                            if (sum <= 10000)
+                            {
+                                g_logger.info("Sum of documentCount of indexEntry[1.." + (mergeList.size() - 1) + "] is "  + sum + ", skipping special merge");
+                                return set;
+                            }
+                            position = 0;
+                        }
+                        else
+                        {
+                            position = findMergeIndex(1, mergerMaxMergeDocs, mergerMergeFactor, mergeList);
+                        }
                         String firstMergeId = mergeList.get(position).getName();
 
                         long count = 0;
@@ -4007,6 +4106,12 @@ public class IndexInfo implements IndexMonitor
     {
         if (s_logger.isDebugEnabled())
         {
+            s_logger.debug(dumpInfoAsString());
+        }
+    }
+
+    private String dumpInfoAsString()
+    {
             int count = 0;
             StringBuilder builder = new StringBuilder();
             readWriteLock.writeLock().lock();
@@ -4018,14 +4123,12 @@ public class IndexInfo implements IndexMonitor
                 {
                     builder.append(++count + "        " + entry.toString()).append("\n");
                 }
-                s_logger.debug(builder.toString());
+                return builder.toString();
             }
             finally
             {
                 readWriteLock.writeLock().unlock();
             }
-        }
-
     }
 
     private void getWriteLock()
@@ -4320,4 +4423,10 @@ public class IndexInfo implements IndexMonitor
     {
         void schedule();
     }
+
+    public void runMergeNow()
+    {
+        merger.runNow();
+    }
+
 }

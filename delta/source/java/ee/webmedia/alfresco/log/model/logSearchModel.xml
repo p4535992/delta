@@ -21,7 +21,7 @@
             <property name="log:dateCreatedStart">
               <type>d:date</type>
             </property>
-            <property name="log:dateCreatedEnd">
+            <property name="log:dateCreatedStart_EndDate">
               <type>d:date</type>
             </property>
             <property name="log:creatorName">

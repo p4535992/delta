@@ -4,6 +4,7 @@
 
    <bean id="postipoissImporter" class="ee.webmedia.alfresco.postipoiss.PostipoissImporter">
       <property name="generalService" ref="GeneralService" />
+      <property name="functionsService" ref="FunctionsService" />
    </bean>
 
 </beans>

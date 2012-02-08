@@ -6,6 +6,8 @@
       <property name="fileFolderService" ref="FileFolderService" />
       <property name="nodeService" ref="NodeService" />
       <property name="mimetypeService" ref="MimetypeService" />
+      <property name="userService" ref="UserService" />
+      <property name="logService" ref="LogService" />
       <property name="test" value="${jdigidoc.test}" />
       <property name="jDigiDocCfg" value="ee/webmedia/alfresco/signature/service/jdigidoc.cfg" />
       <property name="jDigiDocCfgTest" value="ee/webmedia/alfresco/signature/service/jdigidoc-test.cfg" />

@@ -1,15 +1,12 @@
 package ee.webmedia.alfresco.user.web;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.namespace.QName;
+import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.web.bean.repository.Node;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -34,11 +31,10 @@ public class MyFavoritesMenuItemProcessor implements MenuItemProcessor, Initiali
             return;
         }
         NodeRef user = userNode.getNodeRef();
-        Set<QName> types = new HashSet<QName>(Arrays.asList(DocumentCommonModel.Assocs.FAVORITE_DIRECTORY));
         NodeService nodeService = BeanHelper.getNodeService();
         List<MenuItem> subItems = menuItem.getSubItems();
         subItems.clear();
-        for (ChildAssociationRef favDir : nodeService.getChildAssocs(user, types)) {
+        for (ChildAssociationRef favDir : nodeService.getChildAssocs(user, DocumentCommonModel.Assocs.FAVORITE_DIRECTORY, RegexQNamePattern.MATCH_ALL)) {
             MenuItem item = new MenuItem();
             item.setOutcome("dialog:favoritesDocumentListDialog");
             item.getParams().put("nodeRef", favDir.getChildRef().toString());

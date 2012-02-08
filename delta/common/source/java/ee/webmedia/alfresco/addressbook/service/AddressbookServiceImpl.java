@@ -76,12 +76,12 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
 
     @Override
     public List<Node> listOrganization() {
-        return listAddressbookChildren(Types.ORGANIZATION);
+        return listAddressbookChildren(AddressbookModel.Assocs.ORGANIZATIONS);
     }
 
     @Override
     public List<Node> listContactGroups() {
-        return listAddressbookChildren(Types.CONTACT_GROUP);
+        return listAddressbookChildren(AddressbookModel.Assocs.CONTACT_GROUPS);
     }
 
     @Override
@@ -215,12 +215,12 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
 
     @Override
     public List<Node> listPerson() {
-        return listAddressbookChildren(Types.PRIV_PERSON);
+        return listAddressbookChildren(AddressbookModel.Assocs.ABPEOPLE);
     }
 
     @Override
     public List<Node> listPerson(NodeRef org) {
-        return listNodeChildren(Types.ORGPERSON, org);
+        return listNodeChildren(AddressbookModel.Assocs.ORGPEOPLE, org);
     }
 
     @Override
@@ -510,7 +510,7 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
     }
 
     private List<Node> listNodeChildren(QName type, NodeRef parent) {
-        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(parent, Collections.singleton(type));
+        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(parent, type, RegexQNamePattern.MATCH_ALL);
         List<Node> entryNodes = new ArrayList<Node>(childRefs.size());
         for (ChildAssociationRef ref : childRefs) {
             entryNodes.add(getNode(ref.getChildRef()));

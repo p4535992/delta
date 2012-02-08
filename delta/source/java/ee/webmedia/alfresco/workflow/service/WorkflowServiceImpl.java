@@ -54,6 +54,9 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.dvk.service.DvkService;
+import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.log.model.LogObject;
+import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
@@ -129,6 +132,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     private FileService fileService;
     private VersionsService versionsService;
     private BehaviourFilter behaviourFilter;
+    private LogService logService;
 
     private final Map<QName, WorkflowType> workflowTypesByWorkflow = new HashMap<QName, WorkflowType>();
     private final Map<QName, WorkflowType> workflowTypesByTask = new HashMap<QName, WorkflowType>();
@@ -360,7 +364,6 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                                 (Date) nodeService.getProperty(historyRef, WorkflowCommonModel.Props.PREVIOUS_DUE_DATE)));
             }
         }
-        task.getFiles().addAll(fileService.getAllFiles(nodeRef));
         return task;
     }
 
@@ -678,7 +681,6 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             boolean hasAtLeastOneDelegationTask = false;
             { // validate that tasks added during delegation have all mandatory fields filled and at least one task equivalent to delegatable task is also added
                 for (Workflow workflow : cWorkflowWorkflowsCopy) {
-                    int taskIndex = 0;
                     if (isGeneratedByDelegation(workflow)) {
                         setStatus(queue, workflow, Status.IN_PROGRESS);
                     }
@@ -699,7 +701,6 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                                 }
                             }
                         }
-                        taskIndex++;
                     }
                 }
             }
@@ -803,26 +804,23 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     private boolean saveTask(WorkflowEventQueue queue, Task task) {
         @SuppressWarnings("unchecked")
-        List<Object> files = (List<Object>) task.getNode().getProperties().get(Task.PROP_TEMP_FILES);
         boolean changed = createOrUpdate(queue, task, task.getParent().getNodeRef(), WorkflowCommonModel.Assocs.TASK);
         for (NodeRef removedFileRef : task.getRemovedFiles()) {
             nodeService.deleteNode(removedFileRef);
         }
-        if (files != null) {
-            List<String> existingDisplayNames = new ArrayList<String>();
-            for (Object fileObj : files) {
-                if (!(fileObj instanceof FileWithContentType)) {
-                    // existing file, no update needed
-                    continue;
-                }
-                FileWithContentType file = (FileWithContentType) fileObj;
-                String originalDisplayName = FilenameUtil.getDiplayNameFromName(file.fileName);
-                NodeRef taskNodeRef = task.getNodeRef();
-                Pair<String, String> filenames = FilenameUtil.getFilenameFromDisplayname(taskNodeRef, existingDisplayNames, originalDisplayName, generalService);
-                String fileDisplayName = filenames.getSecond();
-                fileService.addFile(filenames.getFirst(), fileDisplayName, taskNodeRef, file.file, file.contentType);
-                existingDisplayNames.add(fileDisplayName);
+        List<String> existingDisplayNames = new ArrayList<String>();
+        for (Object fileObj : task.getFiles()) {
+            if (!(fileObj instanceof FileWithContentType)) {
+                // existing file, no update needed
+                continue;
             }
+            FileWithContentType file = (FileWithContentType) fileObj;
+            String originalDisplayName = FilenameUtil.getDiplayNameFromName(file.fileName);
+            NodeRef taskNodeRef = task.getNodeRef();
+            Pair<String, String> filenames = FilenameUtil.getFilenameFromDisplayname(taskNodeRef, existingDisplayNames, originalDisplayName, generalService);
+            String fileDisplayName = filenames.getSecond();
+            fileService.addFile(filenames.getFirst(), fileDisplayName, taskNodeRef, file.file, file.contentType);
+            existingDisplayNames.add(fileDisplayName);
         }
         return changed;
     }
@@ -882,7 +880,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         return task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)
                 && ((isInternalTesting() && !Boolean.TRUE.equals(nodeService.getProperty(task.getParent().getParent().getParent(),
                         DocumentSpecificModel.Props.NOT_EDITABLE)))
-                        || (!isInternalTesting() && !isResponsibleCurrenInstitution(task)));
+                || (!isInternalTesting() && !isResponsibleCurrenInstitution(task)));
     }
 
     private boolean isResponsibleCurrenInstitution(Task task) {
@@ -1458,8 +1456,13 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         if (log.isDebugEnabled()) {
             log.debug("Setting task owner from " + existingOwnerId + " to " + ownerId + " - " + task);
         }
+
         Map<QName, Serializable> personProps = userService.getUserProperties(ownerId);
         Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+
+        logService.addLogEntry(LogEntry.create(LogObject.TASK, userService, task, "applog_task_assigned",
+                UserUtil.getPersonFullName1(personProps), I18NUtil.getMessage("task_title_" + nodeService.getType(task).getLocalName())));
+
         props.put(WorkflowCommonModel.Props.OWNER_ID, personProps.get(ContentModel.PROP_USERNAME));
         props.put(WorkflowCommonModel.Props.OWNER_NAME, UserUtil.getPersonFullName1(personProps));
         props.put(WorkflowCommonModel.Props.OWNER_EMAIL, personProps.get(ContentModel.PROP_EMAIL));
@@ -2007,6 +2010,9 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             behaviourFilter.enableBehaviour(ContentModel.ASPECT_AUDITABLE);
             task.setProp(WorkflowSpecificModel.Props.FILE_VERSIONS, StringUtils.join(filesWithVersions, ", "));
         }
+
+        logService.addLogEntry(LogEntry.create(LogObject.TASK, userService, task.getNodeRef(), "applog_task_done",
+                I18NUtil.getMessage("task_title_" + task.getType().getLocalName()), task.getOutcome()));
     }
 
     private boolean isStoppingNeeded(Task task, int outcomeIndex) {
@@ -2310,6 +2316,10 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     public void setBehaviourFilter(BehaviourFilter behaviourFilter) {
         this.behaviourFilter = behaviourFilter;
+    }
+
+    public void setLogService(LogService logService) {
+        this.logService = logService;
     }
 
     @Override

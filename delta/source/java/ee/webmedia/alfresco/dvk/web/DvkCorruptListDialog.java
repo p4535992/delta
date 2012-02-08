@@ -49,7 +49,7 @@ public class DvkCorruptListDialog extends BaseDialogBean {
     private void readFiles() {
         String corruptDvkDocumentsPath = getDvkService().getCorruptDvkDocumentsPath();
         NodeRef corruptFolder = getGeneralService().getNodeRef(corruptDvkDocumentsPath);
-        files = getFileService().getAllFiles(corruptFolder);
+        files = getFileService().getAllFilesExcludingDigidocSubitems(corruptFolder);
     }
 
     public List<File> getFiles() {

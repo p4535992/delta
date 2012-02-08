@@ -1,7 +1,9 @@
 package ee.webmedia.alfresco.document.search.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getSendOutService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getVisitedDocumentsBean;
 
 import java.io.Serializable;
@@ -46,6 +48,9 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.document.web.BaseDocumentListDialog;
+import ee.webmedia.alfresco.log.PropDiffHelper;
+import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.privilege.web.DocPermissionEvaluator;
 import ee.webmedia.alfresco.simdhs.CSVExporter;
 import ee.webmedia.alfresco.simdhs.DataReader;
@@ -107,6 +112,13 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
             originalDocuments = Collections.emptyList();
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_search_toolongquery");
         }
+
+        String params = new PropDiffHelper()
+                .label(DocumentSearchModel.Props.DOCUMENT_TYPE, "document_search_stores")
+                .label(DocumentSearchModel.Props.SEND_MODE, "document_search_stores")
+                .label(DocumentSearchModel.Props.STORE, "document_search_stores")
+                .toString(RepoUtil.toQNameProperties(searchFilter.getProperties()));
+        getLogService().addLogEntry(LogEntry.create(LogObject.SEARCH_DOC, getUserService(), "applog_search_docs", params));
     }
 
     protected void doPostSearch() {

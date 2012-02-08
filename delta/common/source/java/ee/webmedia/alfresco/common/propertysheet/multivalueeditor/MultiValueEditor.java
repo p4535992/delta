@@ -37,6 +37,7 @@ import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.ajax.AjaxUpdateable;
+import ee.webmedia.alfresco.common.propertysheet.component.HandlesShowUnvalued;
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.ComponentPropVO;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.utils.ComponentUtil;
@@ -49,7 +50,7 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * 
  * @author Alar Kvell
  */
-public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable, NamingContainer {
+public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable, NamingContainer, HandlesShowUnvalued {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(MultiValueEditor.class);
 
     protected static final String PROPERTY_SHEET_VAR = "propertySheetVar";
@@ -275,6 +276,20 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
         } else {
             super.broadcast(event);
         }
+    }
+
+    @Override
+    public boolean isShow() {
+        FacesContext context = FacesContext.getCurrentInstance();
+        for (ComponentPropVO componentPropVO : getPropertyGeneratorDescriptors()) {
+            List<Object> list = getList(context, componentPropVO.getPropertyName());
+            for (Object object : list) {
+                if ((object instanceof String && StringUtils.isNotBlank((String) object)) || (!(object instanceof String) && object != null)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private void createExistingComponents(FacesContext context, UIPropertySheet propertySheet) {

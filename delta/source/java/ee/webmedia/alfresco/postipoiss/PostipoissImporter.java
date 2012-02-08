@@ -2,9 +2,11 @@ package ee.webmedia.alfresco.postipoiss;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -22,9 +24,10 @@ import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.docconfig.generator.SaveListener;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
+import ee.webmedia.alfresco.functions.service.FunctionsService;
 
 /**
- * Entry point for starting and stopping whole import. Manage input parameters and coordinate structure and document import.
+ * Entry point for starting and stopping whole import. Manages input parameters and coordinates structure and document import.
  * 
  * @author Alar Kvell
  */
@@ -67,7 +70,7 @@ public class PostipoissImporter implements SaveListener {
     public synchronized void startImporterInBackground(ActionEvent event) throws Exception {
         if (!isImporterRunning()) {
             log.info("startImporterInBackground\n  dataFolders=" + dataFolders + "\n  workFolders=" + workFolders + "\n  mappingsFileNames=" + mappingsFileNames
-                    + "\n  defaultOwnerIds=" + defaultOwnerIds + "\n  archivalsStores=" + archivalsStores);
+                    + "\n  defaultOwnerIds=" + defaultOwnerIds + "\n  archivalsStores=" + archivalsStores + "\n  openUnits=" + openUnits);
             LinkedHashSet<ArchivalsStoreVO> archivalsStoreVOs = generalService.getArchivalsStoreVOs();
             iterate(archivalsStoreVOs, false);
             iterate(archivalsStoreVOs, true);
@@ -91,8 +94,10 @@ public class PostipoissImporter implements SaveListener {
             }
             stopFlag.set(false);
         }
+        Set<NodeRef> archivalsRoots = new HashSet<NodeRef>();
         for (int i = 0; i < countTmp; i++) {
-            if (i >= dataFolders.size() || i >= workFolders.size() || i >= mappingsFileNames.size() || i >= defaultOwnerIds.size() || i >= archivalsStores.size()) {
+            if (i >= dataFolders.size() || i >= workFolders.size() || i >= mappingsFileNames.size() || i >= defaultOwnerIds.size() || i >= archivalsStores.size()
+                    || i >= openUnits.size()) {
                 if (execute) {
                     log.info("Skipping input arguments group " + (i + 1));
                 }
@@ -121,14 +126,20 @@ public class PostipoissImporter implements SaveListener {
                     break;
                 }
             }
+            if (archivalsRoot == null && generalService.getStore().toString().equals(archivalsStore)) {
+                archivalsRoot = functionsService.getFunctionsRoot();
+            }
             Assert.notNull(archivalsRoot, "archivalsStore " + (i + 1) + " does not exist");
+            Assert.isTrue(!archivalsRoots.contains(archivalsRoot), "archivalsStore " + (i + 1) + " documentList root nodeRef is already used: " + archivalsRoot);
+            archivalsRoots.add(archivalsRoot);
 
             if (execute) {
                 log.info("Executing importer for arguments group " + (i + 1));
                 try {
                     PostipoissStructureImporter postipoissStructureImporter = postipoissStructureImporters.get(i);
                     PostipoissDocumentsImporter postipoissDocumentsImporter = postipoissDocumentsImporters.get(i);
-                    startImporter(i, batchSizeTmp, dataFolder, workFolder, mappingsFile, archivalsRoot, defaultOwnerIds.get(i), postipoissStructureImporter,
+                    startImporter(i, batchSizeTmp, dataFolder, workFolder, mappingsFile, archivalsRoot, defaultOwnerIds.get(i), Boolean.TRUE.equals(openUnits.get(i)),
+                            postipoissStructureImporter,
                             postipoissDocumentsImporter);
                 } catch (StopException e) {
                     throw e;
@@ -140,7 +151,8 @@ public class PostipoissImporter implements SaveListener {
     }
 
     private void startImporter(final int i, final int batchSizeTmp, final File dataFolder, final File workFolder, final File mappingsFile, final NodeRef archivalsRoot,
-            final String defaultOwnerId, final PostipoissStructureImporter postipoissStructureImporter, final PostipoissDocumentsImporter postipoissDocumentsImporter)
+            final String defaultOwnerId, final boolean openUnit, final PostipoissStructureImporter postipoissStructureImporter,
+            final PostipoissDocumentsImporter postipoissDocumentsImporter)
             throws Exception {
         new Thread(new Runnable() {
             @Override
@@ -152,7 +164,7 @@ public class PostipoissImporter implements SaveListener {
                         @Override
                         public Void doWork() throws Exception {
                             try {
-                                postipoissStructureImporter.runImport(dataFolder, workFolder, archivalsRoot);
+                                postipoissStructureImporter.runImport(dataFolder, workFolder, archivalsRoot, openUnit);
                                 postipoissDocumentsImporter.runImport(dataFolder, workFolder, archivalsRoot, mappingsFile, batchSizeTmp, defaultOwnerId);
                                 return null;
                             } catch (StopException e) {
@@ -179,15 +191,18 @@ public class PostipoissImporter implements SaveListener {
     private List<String> mappingsFileNames;
     private List<String> defaultOwnerIds;
     private List<String> archivalsStores;
+    private List<Boolean> openUnits;
     private int batchSize = 50;
+    private boolean seriesComparisonIncludesTitle = false;
 
     private void init() {
-        if (dataFolders == null || workFolders == null || mappingsFileNames == null || defaultOwnerIds == null || archivalsStores == null) {
+        if (dataFolders == null || workFolders == null || mappingsFileNames == null || defaultOwnerIds == null || archivalsStores == null || openUnits == null) {
             List<String> dataFoldersTmp = new ArrayList<String>();
             List<String> workFoldersTmp = new ArrayList<String>();
             List<String> mappingsFileNamesTmp = new ArrayList<String>();
             List<String> defaultOwnerIdsTmp = new ArrayList<String>();
             List<String> archivalsStoresTmp = new ArrayList<String>();
+            List<Boolean> openUnitsTmp = new ArrayList<Boolean>();
 
             LinkedHashSet<ArchivalsStoreVO> archivalsStoreVOs = generalService.getArchivalsStoreVOs();
             Iterator<ArchivalsStoreVO> it = archivalsStoreVOs.iterator();
@@ -204,6 +219,7 @@ public class PostipoissImporter implements SaveListener {
                 mappingsFileNamesTmp.add("");
                 defaultOwnerIdsTmp.add("");
                 archivalsStoresTmp.add(archivalsStore);
+                openUnitsTmp.add(Boolean.FALSE);
             }
 
             dataFolders = dataFoldersTmp;
@@ -211,6 +227,7 @@ public class PostipoissImporter implements SaveListener {
             mappingsFileNames = mappingsFileNamesTmp;
             defaultOwnerIds = defaultOwnerIdsTmp;
             archivalsStores = archivalsStoresTmp;
+            openUnits = openUnitsTmp;
         }
     }
 
@@ -238,6 +255,11 @@ public class PostipoissImporter implements SaveListener {
         return archivalsStores;
     }
 
+    public List<Boolean> getOpenUnits() {
+        init();
+        return openUnits;
+    }
+
     public int getBatchSize() {
         return batchSize;
     }
@@ -246,12 +268,25 @@ public class PostipoissImporter implements SaveListener {
         this.batchSize = batchSize;
     }
 
+    public boolean isSeriesComparisonIncludesTitle() {
+        return seriesComparisonIncludesTitle;
+    }
+
+    public void setSeriesComparisonIncludesTitle(boolean seriesComparisonIncludesTitle) {
+        this.seriesComparisonIncludesTitle = seriesComparisonIncludesTitle;
+    }
+
     private GeneralService generalService;
+    private FunctionsService functionsService;
     private List<PostipoissStructureImporter> postipoissStructureImporters;
     private List<PostipoissDocumentsImporter> postipoissDocumentsImporters;
 
     public void setGeneralService(GeneralService generalService) {
         this.generalService = generalService;
+    }
+
+    public void setFunctionsService(FunctionsService functionsService) {
+        this.functionsService = functionsService;
     }
 
     // SaveListener that sets draft=true on document

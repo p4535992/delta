@@ -27,6 +27,7 @@ import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections.comparators.NullComparator;
 import org.apache.commons.lang.StringUtils;
@@ -72,10 +73,8 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         for (YksusExt yksus : yksusArray) {
             orgStructures.add(yksusToOrganizationStructure(yksus));
         }
-        Set<QName> childNodeTypeQnames = new HashSet<QName>();
-        childNodeTypeQnames.add(OrganizationStructureModel.Assocs.ORGSTRUCT);
         // save old organization structures, that will be removed if everything goes right
-        List<ChildAssociationRef> oldOrganizations = nodeService.getChildAssocs(getOrgStructsRoot(), childNodeTypeQnames);
+        List<ChildAssociationRef> oldOrganizations = nodeService.getChildAssocs(getOrgStructsRoot(), OrganizationStructureModel.Assocs.ORGSTRUCT, RegexQNamePattern.MATCH_ALL);
         for (OrganizationStructure org : orgStructures) {
             createOrganisationStructure(org);
         }

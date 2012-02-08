@@ -656,6 +656,7 @@
       <property name="documentConfigService" ref="DocumentConfigService" />
       <property name="namespaceService" ref="NamespaceService" />
       <property name="userContactMappingService" ref="UserContactMappingService" />
+      <property name="classificatorService" ref="ClassificatorService" />
    </bean>
 
    <bean id="keywordsGenerator" class="ee.webmedia.alfresco.docconfig.generator.systematic.KeywordsGenerator">

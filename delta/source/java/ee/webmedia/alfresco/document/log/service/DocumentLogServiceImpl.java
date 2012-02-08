@@ -18,6 +18,9 @@ import org.alfresco.service.namespace.RegexQNamePattern;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.log.model.DocumentLog;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.log.model.LogObject;
+import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.user.service.UserService;
 
@@ -26,6 +29,7 @@ public class DocumentLogServiceImpl implements DocumentLogService {
     private NodeService nodeService;
     private GeneralService generalService;
     private UserService userService;
+    private LogService logService;
 
     @Override
     public List<DocumentLog> getDocumentLogs(NodeRef docRef) {
@@ -46,6 +50,7 @@ public class DocumentLogServiceImpl implements DocumentLogService {
     @Override
     public void addDocumentLog(NodeRef document, String event, String creator) {
         addLogEntry(document, event, creator, DocumentCommonModel.Assocs.DOCUMENT_LOG);
+        addAppLogEntry(document, creator, event);
     }
 
     @Override
@@ -70,6 +75,11 @@ public class DocumentLogServiceImpl implements DocumentLogService {
         }, AuthenticationUtil.getSystemUserName());
     }
 
+    private void addAppLogEntry(NodeRef nodeRef, String creator, String description) {
+        String creatorId = userService.getCurrentUserName();
+        logService.addLogEntry(LogEntry.createLoc(LogObject.DOCUMENT, creatorId, creator, nodeRef, description));
+    }
+
     private List<DocumentLog> getLogs(NodeRef parentRef, QName assocName) {
         List<ChildAssociationRef> assocs = nodeService.getChildAssocs(parentRef, RegexQNamePattern.MATCH_ALL, assocName);
         List<DocumentLog> result = new ArrayList<DocumentLog>(assocs.size());
@@ -90,6 +100,10 @@ public class DocumentLogServiceImpl implements DocumentLogService {
 
     public void setUserService(UserService userService) {
         this.userService = userService;
+    }
+
+    public void setLogService(LogService logService) {
+        this.logService = logService;
     }
     // END: getters / setters
 }

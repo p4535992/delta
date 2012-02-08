@@ -42,6 +42,7 @@ import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
 import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.SelfRenderingComponent;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -132,9 +133,12 @@ public class UIDialogButtons extends SelfRenderingComponent
          okButton.setAction(methodBinding);
          
          // setup CSS class for button
-         String styleClass = (String)this.getAttributes().get("styleClass");
-         styleClass = (styleClass == null) ? "dialog-button primary" : styleClass + " dialog-button primary";
-         okButton.getAttributes().put("styleClass", styleClass);
+         StringBuilder sb = new StringBuilder(StringUtils.defaultIfEmpty((String) this.getAttributes().get("styleClass"), ""));
+         sb.append(" dialog-button primary");
+         if (!secondRendering) {
+             sb.append(" defaultAction");
+         }
+         okButton.getAttributes().put("styleClass", sb.toString());
          
          // add the OK button
          this.getChildren().add(okButton);

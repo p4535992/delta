@@ -42,6 +42,7 @@ import org.joda.time.LocalTime;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
+import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerWithDueDateGenerator;
 import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent.ModalLayerSubmitEvent;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.Confirmable;
@@ -62,7 +63,6 @@ import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
-import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.MessageData;
 import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -515,7 +515,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         Task task = block.getTasks().get(taskIndex);
         Integer dueDateDays = task.getDueDateDays();
         if (dueDateDays != null) {
-            LocalDate newDueDate = calculateDueDate(task, dueDateDays);
+            LocalDate newDueDate = DatePickerWithDueDateGenerator.calculateDueDate(task.getPropBoolean(WorkflowSpecificModel.Props.IS_DUE_DATE_WORKING_DAYS), dueDateDays);
             LocalTime newTime;
             Date existingDueDate = task.getDueDate();
             if (existingDueDate != null) {
@@ -538,23 +538,15 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         for (Workflow workflow : compoundWorkflow.getWorkflows()) {
             for (Task task : workflow.getTasks()) {
                 if (task.isStatus(Status.NEW) && task.getDueDate() != null && task.getDueDateDays() != null) {
-                    if (!DateUtils.isSameDay(task.getDueDate(), calculateDueDate(task, task.getDueDateDays()).toDateMidnight().toDate())) {
+                    if (!DateUtils.isSameDay(task.getDueDate(),
+                            DatePickerWithDueDateGenerator.calculateDueDate(task.getPropBoolean(WorkflowSpecificModel.Props.IS_DUE_DATE_WORKING_DAYS), task.getDueDateDays())
+                            .toDateMidnight().toDate())) {
                         task.setProp(WorkflowSpecificModel.Props.DUE_DATE_DAYS, null);
                         task.setProp(WorkflowSpecificModel.Props.IS_DUE_DATE_WORKING_DAYS, Boolean.FALSE); // reset to default value
                     }
                 }
             }
         }
-    }
-
-    private LocalDate calculateDueDate(Task task, Integer dueDateDays) {
-        LocalDate newDueDate = new LocalDate();
-        if (task.getPropBoolean(WorkflowSpecificModel.Props.IS_DUE_DATE_WORKING_DAYS)) {
-            newDueDate = CalendarUtil.addWorkingDaysToDate(newDueDate, dueDateDays, BeanHelper.getClassificatorService());
-        } else {
-            newDueDate = newDueDate.plusDays(dueDateDays);
-        }
-        return newDueDate;
     }
 
     // /// PROTECTED & PRIVATE METHODS /////

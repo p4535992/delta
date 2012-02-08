@@ -267,20 +267,14 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
     }
 
     private ItemConfigVO generateTable(FieldGroupGeneratorResults generatorResults, Map<String, ItemConfigVO> items, QName[] hierarchy, List<Field> relatedFields,
-            Field primaryField, String displayLabel, String addLabelId) {
-        return generateTable(generatorResults, items, hierarchy, relatedFields, primaryField, displayLabel, addLabelId, null);
-    }
-
-    private ItemConfigVO generateTable(FieldGroupGeneratorResults generatorResults, Map<String, ItemConfigVO> items, QName[] hierarchy, List<Field> relatedFields,
             Field primaryField, String displayLabel, String addLabelId, List<String> columnStyleClasses) {
-        Pair<ItemConfigVO, Pair<String, List<QName>>> result = generateBasePropsItem(generatorResults, items, hierarchy, relatedFields, primaryField, displayLabel,
-                columnStyleClasses);
+        Pair<ItemConfigVO, String> result = generateBasePropsItem(generatorResults, items, hierarchy, relatedFields, primaryField, displayLabel, columnStyleClasses);
 
         ItemConfigVO item = result.getFirst();
         item.setComponentGenerator("MultiValueEditorGenerator");
         item.setAddLabelId(addLabelId);
         item.setShowInViewMode(false);
-        item.setPropsGeneration(result.getSecond().getFirst());
+        item.setPropsGeneration(result.getSecond());
 
         String stateHolderKey = primaryField.getFieldId();
 
@@ -289,7 +283,7 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
         ItemConfigVO viewModeItem = generatorResults.generateAndAddViewModeText(viewModePropName, displayLabel);
         viewModeItem.setComponentGenerator("UnescapedOutputTextGenerator");
 
-        generatorResults.addStateHolder(stateHolderKey, new UserContactTableState(result.getSecond().getSecond(), null, viewModePropName, null, new HashMap<QName, String>()));
+        generatorResults.addStateHolder(stateHolderKey, new UserContactTableState(null, null, null, null, null, null));
 
         setBelongsToSubPropertySheet(Collections.singletonList(item), hierarchy);
         items.put(item.getName(), item);
@@ -299,25 +293,24 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
     private ItemConfigVO generateInline(FieldGroupGeneratorResults generatorResults, Map<String, ItemConfigVO> items, QName[] hierarchy, List<Field> relatedFields,
             Field primaryField, String displayLabel, String textId) {
 
-        Pair<ItemConfigVO, Pair<String, List<QName>>> result = generateBasePropsItem(generatorResults, items, hierarchy, relatedFields, primaryField, displayLabel);
+        Pair<ItemConfigVO, String> result = generateBasePropsItem(generatorResults, items, hierarchy, relatedFields, primaryField, displayLabel);
 
         ItemConfigVO item = result.getFirst();
         item.setComponentGenerator("InlinePropertyGroupGenerator");
         item.setTextId(textId);
-        item.setProps(result.getSecond().getFirst());
+        item.setProps(result.getSecond());
 
         return item;
     }
 
-    private Pair<ItemConfigVO, Pair<String, List<QName>>> generateBasePropsItem(FieldGroupGeneratorResults generatorResults, Map<String, ItemConfigVO> items, QName[] hierarchy,
+    private Pair<ItemConfigVO, String> generateBasePropsItem(FieldGroupGeneratorResults generatorResults, Map<String, ItemConfigVO> items, QName[] hierarchy,
             List<Field> relatedFields, Field primaryField, String displayLabel) {
         return generateBasePropsItem(generatorResults, items, hierarchy, relatedFields, primaryField, displayLabel, null);
     }
 
-    private Pair<ItemConfigVO, Pair<String, List<QName>>> generateBasePropsItem(FieldGroupGeneratorResults generatorResults, Map<String, ItemConfigVO> items, QName[] hierarchy,
+    private Pair<ItemConfigVO, String> generateBasePropsItem(FieldGroupGeneratorResults generatorResults, Map<String, ItemConfigVO> items, QName[] hierarchy,
             List<Field> relatedFields, Field primaryField, String displayLabel, List<String> columnStyleClasses) {
         List<String> props = new ArrayList<String>();
-        List<QName> propNames = new ArrayList<QName>();
         Pair<Map<String, ItemConfigVO>, Map<String, PropertySheetStateHolder>> columnItemsAndStateHolders = generatorResults.generateItems(relatedFields
                 .toArray(new Field[relatedFields.size()]));
         Map<String, ItemConfigVO> columnItems = columnItemsAndStateHolders.getFirst();
@@ -343,7 +336,6 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
             String prop = columnItem.toPropString(PropsBuilder.DEFAULT_OPTIONS_SEPARATOR);
             Assert.isTrue(!StringUtils.contains(prop, CombinedPropReader.AttributeNames.DEFAULT_PROPERTIES_SEPARATOR));
             props.add(prop);
-            propNames.add(QName.resolveToQName(namespaceService, columnItem.getName()));
             columnCounter++;
         }
         String propsString = StringUtils.join(props, CombinedPropReader.AttributeNames.DEFAULT_PROPERTIES_SEPARATOR);
@@ -354,7 +346,7 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
         item.setOptionsSeparator(PropsBuilder.DEFAULT_OPTIONS_SEPARATOR);
         setBelongsToSubPropertySheet(Collections.singletonList(item), hierarchy);
         items.put(item.getName(), item);
-        return Pair.newInstance(item, Pair.newInstance(propsString, propNames));
+        return Pair.newInstance(item, propsString);
     }
 
     @Override

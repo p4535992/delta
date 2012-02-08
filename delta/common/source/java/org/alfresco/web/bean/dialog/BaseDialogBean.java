@@ -54,6 +54,7 @@ import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
 import org.alfresco.web.ui.common.ReportedException;
 import org.alfresco.web.ui.common.Utils;
+import org.alfresco.web.ui.common.component.data.UIRichList;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.MessageData;
@@ -113,6 +114,9 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
       
       // reset the isFinished flag
       isFinished = false;
+      
+      // Restore default richlist ordering when we initialize the list
+      customAttributes.remove(UIRichList.RICH_LIST_PAGE_BOOKMARKS);
    }
    
    public void restored()

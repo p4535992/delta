@@ -65,16 +65,22 @@ public class WMUIProperty extends UIProperty {
                 WMUIPropertySheet parent = (WMUIPropertySheet) getParent();
                 if (!parent.inEditMode() && !parent.isShowUnvalued()) {
                     ValueBinding vb = child.getValueBinding("value");
-                    if (vb == null) {
-                        return false;
-                    }
-                    Object value = vb.getValue(getFacesContext());
-                    if (value == null) {
-                        return false;
-                    } else if (value instanceof String && StringUtils.isBlank((String) value)) {
-                        return false;
-                    } else if (value instanceof List && ((List) value).isEmpty()) {
-                        return false;
+                    if (child instanceof HandlesShowUnvalued) {
+                        if (!((HandlesShowUnvalued) child).isShow()) {
+                            return false;
+                        }
+                    } else {
+                        if (vb == null) {
+                            return false;
+                        }
+                        Object value = vb.getValue(getFacesContext());
+                        if (value == null) {
+                            return false;
+                        } else if (value instanceof String && StringUtils.isBlank((String) value)) {
+                            return false;
+                        } else if (value instanceof List && ((List) value).isEmpty()) {
+                            return false;
+                        }
                     }
                 }
             }

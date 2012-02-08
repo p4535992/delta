@@ -206,6 +206,10 @@
 
 <h:outputText value="firstArchivalsStore: "/>
 <h:inputText value="#{postipoissImporter.archivalsStores[0]}" size="40" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="firstOpenUnit: "/>
+<h:selectBooleanCheckbox value="#{postipoissImporter.openUnits[0]}" />
 <f:verbatim><br/><br/></f:verbatim>
 
 <h:outputText value="secondDataFolder: "/>
@@ -226,6 +230,10 @@
 
 <h:outputText value="secondArchivalsStore: "/>
 <h:inputText value="#{postipoissImporter.archivalsStores[1]}" size="40" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="secondOpenUnit: "/>
+<h:selectBooleanCheckbox value="#{postipoissImporter.openUnits[1]}" />
 <f:verbatim><br/><br/></f:verbatim>
 
 <h:outputText value="thirdDataFolder: "/>
@@ -246,6 +254,10 @@
 
 <h:outputText value="thirdArchivalsStore: "/>
 <h:inputText value="#{postipoissImporter.archivalsStores[2]}" size="40" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="thirdOpenUnit: "/>
+<h:selectBooleanCheckbox value="#{postipoissImporter.openUnits[2]}" />
 <f:verbatim><br/><br/></f:verbatim>
 
 <h:outputText value="fourthDataFolder: "/>
@@ -266,6 +278,10 @@
 
 <h:outputText value="fourthArchivalsStore: "/>
 <h:inputText value="#{postipoissImporter.archivalsStores[3]}" size="40" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="fourthOpenUnit: "/>
+<h:selectBooleanCheckbox value="#{postipoissImporter.openUnits[3]}" />
 <f:verbatim><br/><br/></f:verbatim>
 
 <h:outputText value="fifthDataFolder: "/>
@@ -286,6 +302,10 @@
 
 <h:outputText value="fifthArchivalsStore: "/>
 <h:inputText value="#{postipoissImporter.archivalsStores[4]}" size="40" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="fifthOpenUnit: "/>
+<h:selectBooleanCheckbox value="#{postipoissImporter.openUnits[4]}" />
 <f:verbatim><br/><br/></f:verbatim>
 
 <h:outputText value="Mitu dokumenti / faili ühes transaktsioonis luua: "/>
@@ -293,6 +313,10 @@
 <%-- <f:verbatim><br/></f:verbatim> --%>
 <%-- <h:outputText value="Dokumentide importimiseks paralleelsete lõimede arv: "/> --%>
 <%-- <h:inputText value="#{postipoissImporter.threadsCount}" converter="javax.faces.Integer" size="4" /> --%>
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText value="Sarjade võrdlemisel kasutatakse lisaks viidale ka pealkirja: "/>
+<h:selectBooleanCheckbox value="#{postipoissImporter.seriesComparisonIncludesTitle}" />
 <f:verbatim><br/><br/></f:verbatim>
 
    <h:commandButton id="startPostipoissImporter" value="Käivita PP andmete import" type="submit"
@@ -337,6 +361,23 @@
    <h:commandButton id="test3Undo" value="võimalus 3 undo: eemalda õigused imap-root kataloogi otseste alamkataloogide alamkataloogidelt" type="submit" actionListener="#{ArrivedDocumentsPermissionsModifier.test3Undo}" />
 
    <f:verbatim><br/><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
+
+<h:outputText styleClass="mainTitle" value="Indeksite mergemine"/>
+   <h:dataTable value="#{TestingForDeveloperBean.storeRefs}" var="row" rowClasses="selectedItemsRow,selectedItemsRowAlt" headerClass="selectedItemsHeader">
+      <h:column>
+         <h:outputText value="#{row}" />
+      </h:column>
+      <h:column>
+         <h:commandButton id="runMergeNow" value="runMergeNow" type="submit" actionListener="#{TestingForDeveloperBean.runMergeNow}">
+           <f:param name="storeRef" value="#{row}" />
+         </h:commandButton>
+      </h:column>
+   </h:dataTable>
+
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="runMergeNowOnAllIndexesAndPerformIndexBackup" value="runMergeNowOnAllIndexesAndPerformIndexBackup" type="submit" actionListener="#{TestingForDeveloperBean.runMergeNowOnAllIndexesAndPerformIndexBackup}" />
 
 <f:verbatim><hr/></f:verbatim>
 

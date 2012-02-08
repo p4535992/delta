@@ -28,6 +28,7 @@ import org.apache.log4j.Logger;
 
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
+import ee.webmedia.alfresco.log.LogHelper;
 
 /**
  * NOTE by Erko Hansar
@@ -131,9 +132,13 @@ public class RequestControlFilter implements Filter {
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpSession session = httpRequest.getSession();
+
+        LogHelper.gatherUserInfo(httpRequest);
+
         // if this request is excluded from the filter, then just process it
         if (!isFilteredRequest(httpRequest)) {
             chain.doFilter(request, response);
+            LogHelper.resetUserInfo();
             return;
         }
         StatisticsPhaseListener.clear();
@@ -177,6 +182,7 @@ public class RequestControlFilter implements Filter {
             long stopWorkTime = System.currentTimeMillis();
             log(logPrefix, "check 8");
             releaseQueuedRequest(httpRequest, syncObject);
+            LogHelper.resetUserInfo();
             StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.REQUEST_END, (stopWorkTime - startWorkTime) + "," + (stopWaitTime - startWaitTime));
             StatisticsPhaseListener.log();
         }

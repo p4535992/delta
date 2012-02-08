@@ -45,12 +45,16 @@ import ee.sk.digidoc.SignedProperties;
 import ee.sk.digidoc.factory.SAXDigiDocFactory;
 import ee.sk.utils.ConfigManager;
 import ee.webmedia.alfresco.app.AppConstants;
+import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.log.model.LogObject;
+import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.exception.SignatureRuntimeException;
 import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
 import ee.webmedia.alfresco.signature.model.SignatureItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
+import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.Timer;
 import ee.webmedia.alfresco.utils.UserUtil;
 
@@ -61,6 +65,8 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
     private FileFolderService fileFolderService;
     private NodeService nodeService;
     private MimetypeService mimetypeService;
+    private UserService userService;
+    private LogService logService;
     private boolean test = false;
 
     private String jDigiDocCfg;
@@ -79,6 +85,14 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
 
     public void setMimetypeService(MimetypeService mimetypeService) {
         this.mimetypeService = mimetypeService;
+    }
+
+    public void setLogService(LogService logService) {
+        this.logService = logService;
+    }
+
+    public void setUserService(UserService userService) {
+        this.userService = userService;
     }
 
     public void setjDigiDocCfg(String jDigiDocCfg) {
@@ -192,12 +206,12 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
 
     @Override
     public NodeRef createContainer(NodeRef parent, List<NodeRef> contents, String filename, SignatureDigest signatureDigest, String signatureHex) {
-        SignedDoc signedDoc = null;
         try {
-            signedDoc = createSignedDoc(contents);
+            SignedDoc signedDoc = createSignedDoc(contents);
             addSignature(signedDoc, signatureDigest, signatureHex);
             NodeRef newNodeRef = createContentNode(parent, filename);
             writeSignedDoc(newNodeRef, signedDoc);
+            logService.addLogEntry(LogEntry.create(LogObject.DOCUMENT, userService, newNodeRef, "applog_doc_file_generated", filename));
             return newNodeRef;
         } catch (Exception e) {
             throw new SignatureRuntimeException("Failed to add signature and write ddoc to file " + filename + ", parent = " + parent + ", contents = "

@@ -31,6 +31,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -48,6 +49,7 @@ import javax.transaction.xa.Xid;
 
 import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.repo.domain.hibernate.BulkLoader;
+import org.alfresco.repo.search.Indexer;
 import org.alfresco.repo.search.IndexerException;
 import org.alfresco.repo.search.MLAnalysisMode;
 import org.alfresco.repo.search.QueryRegisterComponent;
@@ -57,6 +59,7 @@ import org.alfresco.repo.search.transaction.SimpleTransaction;
 import org.alfresco.repo.search.transaction.SimpleTransactionManager;
 import org.alfresco.repo.tenant.TenantService;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
@@ -68,15 +71,17 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.store.Lock;
-import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import org.quartz.StatefulJob;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ConfigurableApplicationContext;
+
+import ee.webmedia.alfresco.common.web.BeanHelper;
 
 /**
  * This class is resource manager LuceneIndexers and LuceneSearchers. It supports two phase commit inside XA
@@ -1531,7 +1536,7 @@ public abstract class AbstractLuceneIndexerAndSearcherFactory implements LuceneI
      * 
      * @author Derek Hulley
      */
-    public static class LuceneIndexBackupJob implements Job
+    public static class LuceneIndexBackupJob implements StatefulJob
     {
 
         /** KEY_LUCENE_INDEX_BACKUP_COMPONENT = 'luceneIndexBackupComponent' */
@@ -1548,8 +1553,36 @@ public abstract class AbstractLuceneIndexerAndSearcherFactory implements LuceneI
             {
                 throw new JobExecutionException("Missing job data: " + KEY_LUCENE_INDEX_BACKUP_COMPONENT);
             }
+            executeInternal(backupComponent);
+        }
+
+        public void executeInternal(LuceneIndexBackupComponent backupComponent) {
+            final LuceneIndexerAndSearcher indexerAndSearcher = BeanHelper.getSpringBean(LuceneIndexerAndSearcher.class, "admLuceneIndexerAndSearcherFactory");
+            RetryingTransactionHelper txHelper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
+            List<StoreRef> stores = BeanHelper.getNodeService().getStores();
+            for (final StoreRef storeRef : stores) {
+                try {
+                    txHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
+                        @Override
+                        public Void execute() throws Throwable {
+                            Indexer indexer = indexerAndSearcher.getIndexer(storeRef);
+                            Field indexInfoField = AbstractLuceneBase.class.getDeclaredField("indexInfo");
+                            indexInfoField.setAccessible(true);
+                            IndexInfo indexInfo = (IndexInfo) indexInfoField.get(indexer);
+                            logger.info("Starting special merge on indexInfo: " + indexInfo);
+                            indexInfo.runMergeNow();
+                            logger.info("Completed special merge on indexInfo: " + indexInfo);
+                            return null;
+                        }
+                    });
+                } catch (Exception e) {
+                    logger.error("Error running special merge on store " + storeRef + ", continuing with next store (if available)", e);
+                }
+            }
             // perform the backup
+            logger.info("Starting lucene index backup");
             backupComponent.backup();
+            logger.info("Completed lucene index backup");
         }
     }
 

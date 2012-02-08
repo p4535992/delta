@@ -17,9 +17,7 @@ import org.alfresco.web.bean.generator.BaseComponentGenerator;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.config.PropertySheetElementReader;
 import org.apache.commons.lang.StringUtils;
-import org.joda.time.Period;
-import org.joda.time.PeriodType;
-import org.joda.time.YearMonthDay;
+import org.joda.time.LocalDate;
 
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.docadmin.service.Field;
@@ -27,6 +25,7 @@ import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.generator.BasePropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.generator.BaseSystematicFieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
+import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 
 /**
@@ -162,10 +161,10 @@ public class DurationGenerator extends BaseSystematicFieldGenerator {
             Node document = dialogDataProvider.getNode();
             Integer calculatedDays = null;
             if (beginDate != null && endDate != null) {
-                YearMonthDay begin = new YearMonthDay(beginDate.getTime());
-                YearMonthDay end = new YearMonthDay(endDate.getTime());
-                calculatedDays = Math.abs(new Period(begin, end, PeriodType.days()).getDays()) + 1;
+                calculatedDays = CalendarUtil.getDaysBetween(new LocalDate(beginDate.getTime()), new LocalDate(endDate.getTime()));
             }
+            // calculatedDays field is always read-only to user, thus APPLY_REQUEST_VALUES does not overwrite its value
+            // and we can set the value here (don't have to do it at the end of APPLY_REQUEST_VALUES)
             document.getProperties().put(calculatedDaysProp.toString(), calculatedDays);
         }
 

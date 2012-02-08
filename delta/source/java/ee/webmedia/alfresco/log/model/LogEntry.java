@@ -3,12 +3,19 @@ package ee.webmedia.alfresco.log.model;
 import java.io.Serializable;
 import java.util.Date;
 
+import org.alfresco.i18n.I18NUtil;
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.apache.commons.lang.StringUtils;
+
+import ee.webmedia.alfresco.log.LogHelper;
+import ee.webmedia.alfresco.user.service.UserService;
+
 /**
  * Entity object for storing log table data.
  * 
  * @author Martti Tamm
  */
-public class SystemLog implements Serializable {
+public class LogEntry implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -30,7 +37,10 @@ public class SystemLog implements Serializable {
 
     private String objectName;
 
-    private String eventDescription;
+    private String description;
+
+    public LogEntry() {
+    }
 
     public String getLogEntryId() {
         return logEntryId;
@@ -105,10 +115,41 @@ public class SystemLog implements Serializable {
     }
 
     public String getEventDescription() {
-        return eventDescription;
+        return description;
     }
 
     public void setEventDescription(String eventDescription) {
-        this.eventDescription = eventDescription;
+        description = eventDescription;
+    }
+
+    public static LogEntry create(LogObject object, UserService service, String msgCode, Object... params) {
+        return create(object, service, null, msgCode, params);
+    }
+
+    public static LogEntry create(LogObject object, UserService service, NodeRef nodeRef, String msgCode, Object... params) {
+        String userId = service.getCurrentUserName();
+        String userName = service.getUserFullName();
+        return create(object, userId, userName, nodeRef, msgCode, params);
+    }
+
+    public static LogEntry create(LogObject object, String userId, String msgCode, Object... params) {
+        return create(object, userId, null, null, msgCode, params);
+    }
+
+    public static LogEntry create(LogObject object, String userId, String userName, NodeRef nodeRef, String msgCode, Object... params) {
+        String desc = I18NUtil.getMessage(msgCode, params);
+        return createLoc(object, userId, userName, nodeRef, desc);
+    }
+
+    public static LogEntry createLoc(LogObject object, String userId, String userName, NodeRef nodeRef, String desc) {
+        LogEntry result = new LogEntry();
+        result.creatorId = StringUtils.defaultString(userId, "DHS");
+        result.creatorName = StringUtils.defaultString(userName, userId);
+        result.level = object.getLevel();
+        result.objectName = object.getObjectName();
+        result.objectId = nodeRef != null ? nodeRef.toString() : null;
+        result.description = desc;
+        LogHelper.update(result);
+        return result;
     }
 }

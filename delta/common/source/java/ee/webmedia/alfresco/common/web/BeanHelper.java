@@ -60,6 +60,7 @@ import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog;
 import ee.webmedia.alfresco.docdynamic.web.DocumentLockHelperBean;
+import ee.webmedia.alfresco.doclist.service.DocumentListService;
 import ee.webmedia.alfresco.document.assignresponsibility.service.AssignResponsibilityService;
 import ee.webmedia.alfresco.document.assignresponsibility.web.AssignResponsibilityBean;
 import ee.webmedia.alfresco.document.associations.web.AssocsBlockBean;
@@ -93,6 +94,7 @@ import ee.webmedia.alfresco.email.service.EmailService;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.functions.web.FunctionsDetailsDialog;
 import ee.webmedia.alfresco.imap.service.ImapServiceExt;
+import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.log.web.ApplicationLogListDialog;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
@@ -611,6 +613,14 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static RSService getRSService() {
         return getService(RSService.class, RSService.BEAN_NAME);
+    }
+
+    public static DocumentListService getDocumentListService() {
+        return getService(DocumentListService.class, DocumentListService.BEAN_NAME);
+    }
+
+    public static LogService getLogService() {
+        return getService(LogService.class, LogService.BEAN_NAME);
     }
 
     // END: delta services

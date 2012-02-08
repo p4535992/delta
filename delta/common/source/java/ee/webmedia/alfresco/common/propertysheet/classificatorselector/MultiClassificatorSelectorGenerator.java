@@ -9,6 +9,7 @@ import javax.faces.component.UIComponent;
 import javax.faces.component.UIOutput;
 import javax.faces.context.FacesContext;
 import javax.faces.convert.Converter;
+import javax.faces.el.ValueBinding;
 
 import org.alfresco.util.Pair;
 import org.apache.commons.collections.CollectionUtils;
@@ -110,8 +111,13 @@ public class MultiClassificatorSelectorGenerator extends ClassificatorSelectorGe
     @SuppressWarnings("unchecked")
     private void addSelectedValueIfNeeded(List<ClassificatorSelectorValueProvider> valueProviders, UIComponent component, FacesContext context) {
         Converter converter = RendererUtils.findUIOutputConverter(context, (UIOutput) component);
-        Object valueObj = component.getValueBinding("value").getValue(context);
-        if (converter == null || valueObj == null || !(valueObj instanceof List)) {
+        ValueBinding valueBinding = component.getValueBinding("value");
+        if (converter == null || valueBinding == null) {
+            return;
+        }
+
+        Object valueObj = valueBinding.getValue(context);
+        if (!(valueObj instanceof List)) {
             return;
         }
         List<Object> value = (List<Object>) valueObj;

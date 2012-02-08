@@ -8,6 +8,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getContentService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentListService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFileFolderService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFunctionsService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
@@ -1284,7 +1285,7 @@ public class TestDataService implements SaveListener {
             log.info("All document generator threads completed.");
             log.info("There are " + docs.size() + " documents; goal was " + count + " documents");
             log.info("Now updating document counters...");
-            getFunctionsService().updateDocCounters();
+            getDocumentListService().updateDocCounters();
             log.info("Completed updating document counters");
         }
     }

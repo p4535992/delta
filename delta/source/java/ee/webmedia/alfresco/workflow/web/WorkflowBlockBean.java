@@ -1,8 +1,17 @@
 package ee.webmedia.alfresco.workflow.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getClassificatorService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDvkService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getEInvoiceService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getFileService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPrivilegeService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.isAdminOrDocmanagerWithPermission;
 import static ee.webmedia.alfresco.utils.ComponentUtil.getAttributes;
 import static ee.webmedia.alfresco.utils.ComponentUtil.getChildren;
@@ -48,7 +57,6 @@ import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
-import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIPropertySheet;
@@ -59,7 +67,6 @@ import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent;
 import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent.ModalLayerSubmitEvent;
 import ee.webmedia.alfresco.common.propertysheet.renderer.HtmlButtonRenderer;
 import ee.webmedia.alfresco.common.propertysheet.renderkit.PropertySheetGridRenderer;
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicBlock;
@@ -67,21 +74,18 @@ import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil;
 import ee.webmedia.alfresco.document.einvoice.web.TransactionsBlockBean;
 import ee.webmedia.alfresco.document.file.model.File;
-import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.file.web.FileBlockBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
-import ee.webmedia.alfresco.document.service.DocumentService;
-import ee.webmedia.alfresco.dvk.service.DvkService;
+import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.exception.SignatureRuntimeException;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
-import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.signature.web.SignatureAppletModalComponent;
 import ee.webmedia.alfresco.signature.web.SignatureBlockBean;
-import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -125,13 +129,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     private FileBlockBean fileBlockBean;
     private DelegationBean delegationBean;
     private TransactionsBlockBean transactionsBlockBean;
-
-    private transient DocumentService documentService;
-    private transient WorkflowService workflowService;
-    private transient UserService userService;
-    private transient FileService fileService;
-    private transient SignatureService signatureService;
-    private transient DvkService dvkService;
 
     private transient HtmlPanelGroup dataTableGroup;
     private transient UIRichList reviewNotesRichList;
@@ -183,12 +180,31 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         myTasks = getWorkflowService().getMyTasksInProgress(compoundWorkflows);
         finishedReviewTasks = WorkflowUtil.getFinishedTasks(compoundWorkflows, WorkflowSpecificModel.Types.REVIEW_TASK);
         finishedOpinionTasks = WorkflowUtil.getFinishedTasks(compoundWorkflows, WorkflowSpecificModel.Types.OPINION_TASK);
+        for (Task task : finishedOpinionTasks) {
+            task.getFiles().addAll(getFileService().getAllFilesExcludingDigidocSubitems(task.getNodeRef()));
+        }
         finishedOrderAssignmentTasks = WorkflowUtil.getFinishedTasks(compoundWorkflows, WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK);
+        for (Task task : finishedOrderAssignmentTasks) {
+            task.getFiles().addAll(getFileService().getAllFilesExcludingDigidocSubitems(task.getNodeRef()));
+        }
         signatureTask = null;
         removedFiles = null;
         delegationBean.reset();
         // rebuild the whole task panel
         constructTaskPanelGroup();
+
+        if (!myTasks.isEmpty()) {
+            List<String> taskTypes = new ArrayList<String>(5);
+
+            for (Task task : myTasks) {
+                String type = "task_title_" + task.getType().getLocalName();
+
+                if (!taskTypes.contains(type)) {
+                    getLogService().addLogEntry(LogEntry.create(LogObject.WORKFLOW, getUserService(), docRef, "applog_task_view", MessageUtil.getMessage(type)));
+                    taskTypes.add(type);
+                }
+            }
+        }
     }
 
     public boolean isCompoundWorkflowOwner() {
@@ -407,8 +423,8 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     }
 
     private void addRemovedFiles(Task task) {
-        for (File file : getRemovedFiles()) {
-            for (File taskFile : BeanHelper.getFileService().getAllFiles(task.getNodeRef())) {
+        for (File taskFile : getFileService().getAllFilesExcludingDigidocSubitems(task.getNodeRef())) {
+            for (File file : getRemovedFiles()) {
                 if (taskFile.getNodeRef().equals(file.getNodeRef())) {
                     task.getRemovedFiles().add(taskFile.getNodeRef());
                 }
@@ -418,7 +434,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     }
 
     public boolean showOrderAssignmentCategory() {
-        return BeanHelper.getWorkflowService().getOrderAssignmentCategoryEnabled();
+        return getWorkflowService().getOrderAssignmentCategoryEnabled();
     }
 
     public void sendTaskDueDateExtensionRequest(ActionEvent event) {
@@ -430,7 +446,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         if (StringUtils.isBlank(reason) || newDate == null || dueDate == null || taskIndex == null || taskIndex < 0) {
             return;
         }
-        CompoundWorkflow compoundWorkflow = workflowService.getNewCompoundWorkflow(workflowService.getNewCompoundWorkflowDefinition().getNode(), docRef);
+        CompoundWorkflow compoundWorkflow = getWorkflowService().getNewCompoundWorkflow(getWorkflowService().getNewCompoundWorkflowDefinition().getNode(), docRef);
         Workflow workflow = getWorkflowService().addNewWorkflow(compoundWorkflow, WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_WORKFLOW, compoundWorkflow.getWorkflows().size(),
                 true);
         Task initiatingTask = myTasks.get(taskIndex);
@@ -492,11 +508,11 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             return null;
         }
         @SuppressWarnings("unchecked")
-        List<String> relatedFundsCenters = (List<String>) BeanHelper.getNodeService().getProperty(userService.getCurrentUser(), ContentModel.PROP_RELATED_FUNDS_CENTER);
+        List<String> relatedFundsCenters = (List<String>) getNodeService().getProperty(getUserService().getCurrentUser(), ContentModel.PROP_RELATED_FUNDS_CENTER);
         if (relatedFundsCenters == null || relatedFundsCenters.isEmpty()) {
             return null;
         }
-        List<String> mandatoryForCostManager = BeanHelper.getEInvoiceService().getCostManagerMandatoryFields();
+        List<String> mandatoryForCostManager = getEInvoiceService().getCostManagerMandatoryFields();
         if (mandatoryForCostManager.isEmpty()) {
             return null;
         }
@@ -818,7 +834,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         layerChildren.add(reasonInput);
 
         UIInput dueDateInput = addDateInput(context, layerChildren, "workflow_dueDateExtension_dueDate", MODAL_KEY_DUE_DATE);
-        dueDateInput.setValue(CalendarUtil.addWorkingDaysToDate(new LocalDate(), 2, BeanHelper.getClassificatorService()).toDateTimeAtCurrentTime().toDate());
+        dueDateInput.setValue(CalendarUtil.addWorkingDaysToDate(new LocalDate(), 2, getClassificatorService()).toDateTimeAtCurrentTime().toDate());
         ComponentUtil.putAttribute(dueDateInput, ModalLayerComponent.ATTR_PRESERVE_VALUES, Boolean.TRUE);
 
         dueDateExtensionLayer.setActionListener(app.createMethodBinding("#{WorkflowBlockBean.sendTaskDueDateExtensionRequest}", UIActions.ACTION_CLASS_ARGS));
@@ -942,54 +958,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
 
     public void setReviewNotesRichList(UIRichList reviewNotesRichList) {
         this.reviewNotesRichList = reviewNotesRichList;
-    }
-
-    protected UserService getUserService() {
-        if (userService == null) {
-            userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-                    .getBean(UserService.BEAN_NAME);
-        }
-        return userService;
-    }
-
-    protected DocumentService getDocumentService() {
-        if (documentService == null) {
-            documentService = (DocumentService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-                    .getBean(DocumentService.BEAN_NAME);
-        }
-        return documentService;
-    }
-
-    protected WorkflowService getWorkflowService() {
-        if (workflowService == null) {
-            workflowService = (WorkflowService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(
-                    WorkflowService.BEAN_NAME);
-        }
-        return workflowService;
-    }
-
-    protected FileService getFileService() {
-        if (fileService == null) {
-            fileService = (FileService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-                    .getBean(FileService.BEAN_NAME);
-        }
-        return fileService;
-    }
-
-    protected SignatureService getSignatureService() {
-        if (signatureService == null) {
-            signatureService = (SignatureService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(
-                    SignatureService.BEAN_NAME);
-        }
-        return signatureService;
-    }
-
-    protected DvkService getDvkService() {
-        if (dvkService == null) {
-            dvkService = (DvkService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(
-                    DvkService.BEAN_NAME);
-        }
-        return dvkService;
     }
 
     public List<WorkflowBlockItem> getWorkflowBlockItems() {

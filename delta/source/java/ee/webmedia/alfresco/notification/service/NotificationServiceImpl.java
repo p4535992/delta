@@ -47,6 +47,9 @@ import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.email.service.EmailException;
 import ee.webmedia.alfresco.email.service.EmailService;
+import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.log.model.LogObject;
+import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.notification.exception.EmailAttachmentSizeLimitException;
 import ee.webmedia.alfresco.notification.model.GeneralNotification;
 import ee.webmedia.alfresco.notification.model.Notification;
@@ -92,6 +95,7 @@ public class NotificationServiceImpl implements NotificationService {
     private AddressbookService addressbookService;
     private ClassificatorService classificatorService;
     private WorkflowService workflowService;
+    private LogService logService;
     private int updateCount = 0;
 
     private static BeanPropertyMapper<GeneralNotification> generalNotificationBeanPropertyMapper;
@@ -695,8 +699,8 @@ public class NotificationServiceImpl implements NotificationService {
         if (StringUtils.isNotEmpty(task.getOwnerId()) && !task.getNode().hasAspect(WorkflowSpecificModel.Aspects.RESPONSIBLE)) {
             for (Task workflowTask : workflow.getTasks()) {
                 // responsible aspect
-                final Serializable active = nodeService.getProperty(workflowTask.getNodeRef(), WorkflowSpecificModel.Props.ACTIVE);
-                if (active != null && Boolean.valueOf(active.toString())) {
+                final Boolean active = (Boolean) nodeService.getProperty(workflowTask.getNodeRef(), WorkflowSpecificModel.Props.ACTIVE);
+                if (Boolean.TRUE.equals(active)) {
                     if (isSubscribed(workflowTask.getOwnerId(), NotificationModel.NotificationType.TASK_ASSIGNMENT_TASK_COMPLETED_BY_CO_RESPONSIBLE)) {
                         Notification notification = setupNotification(NotificationModel.NotificationType.TASK_ASSIGNMENT_TASK_COMPLETED_BY_CO_RESPONSIBLE);
                         notification.addRecipient(workflowTask.getOwnerName(), workflowTask.getOwnerEmail());
@@ -717,24 +721,12 @@ public class NotificationServiceImpl implements NotificationService {
         return notifications;
     }
 
-    private List<Notification> processOrderAssignmentWorkflow(Task task, List<Notification> notifications) {
-        CompoundWorkflow compoundWorkflow = task.getParent().getParent();
-        String ownerId = compoundWorkflow.getOwnerId();
-        if (isSubscribed(ownerId, NotificationModel.NotificationType.TASK_ORDER_ASSIGNMENT_WORKFLOW_COMPLETED)) {
-            Notification notification = setupNotification(NotificationModel.NotificationType.TASK_ORDER_ASSIGNMENT_WORKFLOW_COMPLETED);
-            notification.addRecipient(compoundWorkflow.getOwnerName(), userService.getUserEmail(ownerId));
-            notifications.add(notification);
-        }
-
-        return notifications;
-    }
-
     private List<Notification> processOrderAssignmentTask(Task task, List<Notification> notifications) {
         if (!Boolean.TRUE.equals(task.getProp(WorkflowSpecificModel.Props.SEND_ORDER_ASSIGNMENT_COMPLETED_EMAIL))) {
             return notifications;
         }
         Notification notification = setupNotification(NotificationModel.NotificationType.TASK_ORDER_ASSIGNMENT_TASK_COMPLETED);
-        notification.addRecipient(task.getCreatorName(), task.getCreatorEmail());
+        notification.addRecipient(task.getOwnerName(), task.getOwnerEmail());
         notifications.add(notification);
 
         return notifications;
@@ -1251,6 +1243,9 @@ public class NotificationServiceImpl implements NotificationService {
 
         emailService.sendEmail(toEmails, toNames, notification.getSenderEmail() //
                 , notification.getSubject(), content, true, docRef, fileRefs, zipIt, zipName);
+
+        Object[] descParams = { notification.getSubject(), StringUtils.join(toEmails, ", ") };
+        logService.addLogEntry(LogEntry.create(LogObject.NOTICE, userService, docRef, "applog_email_notice", descParams));
         return true;
     }
 
@@ -1302,6 +1297,10 @@ public class NotificationServiceImpl implements NotificationService {
 
     public void setWorkflowService(WorkflowService workflowService) {
         this.workflowService = workflowService;
+    }
+
+    public void setLogService(LogService logService) {
+        this.logService = logService;
     }
 
     // END: setters/getters

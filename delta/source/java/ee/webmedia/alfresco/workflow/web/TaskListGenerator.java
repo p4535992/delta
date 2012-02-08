@@ -1,11 +1,6 @@
 package ee.webmedia.alfresco.workflow.web;
 
-import static ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorGenerator.ATTR_CLASSIFICATOR_NAME;
-import static ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorGenerator.ATTR_DESCRIPTION_AS_LABEL;
-import static ee.webmedia.alfresco.common.propertysheet.classificatorselector.MultiClassificatorSelectorGenerator.ATTR_CLASSIFICATOR_SPECIFIERS;
-import static ee.webmedia.alfresco.common.propertysheet.classificatorselector.MultiClassificatorSelectorGenerator.ATTR_CLASSIFICATOR_SPECIFIER_LABELS;
-import static ee.webmedia.alfresco.common.propertysheet.classificatorselector.MultiClassificatorSelectorGenerator.ATTR_FILTER_NUMERIC;
-import static ee.webmedia.alfresco.common.propertysheet.classificatorselector.MultiClassificatorSelectorGenerator.CLASSIFICATOR_NAME_SEPARATOR;
+import static ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerWithDueDateGenerator.createDueDateDaysSelector;
 import static ee.webmedia.alfresco.utils.ComponentUtil.addAttributes;
 import static ee.webmedia.alfresco.utils.ComponentUtil.addChildren;
 import static ee.webmedia.alfresco.utils.ComponentUtil.addOnchangeClickLink;
@@ -20,6 +15,7 @@ import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.getActionId;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.getDialogId;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,8 +48,6 @@ import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 
-import ee.webmedia.alfresco.common.propertysheet.classificatorselector.LabelAndValueSelectorRenderer;
-import ee.webmedia.alfresco.common.propertysheet.classificatorselector.MultiClassificatorSelectorGenerator;
 import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ValueBindingsWrapper;
 import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter;
 import ee.webmedia.alfresco.common.propertysheet.datepicker.DateTimePicker;
@@ -254,19 +248,6 @@ public class TaskListGenerator extends BaseComponentGenerator {
                     }
                 }
             }
-            MultiClassificatorSelectorGenerator classificatorSelectorGenerator = new MultiClassificatorSelectorGenerator();
-            Map<String, String> selectorGeneratorAttributes = classificatorSelectorGenerator.getCustomAttributes();
-            selectorGeneratorAttributes.put(ATTR_FILTER_NUMERIC, "true");
-            selectorGeneratorAttributes.put(ATTR_DESCRIPTION_AS_LABEL, "true");
-            selectorGeneratorAttributes.put(ATTR_CLASSIFICATOR_NAME, "dueDateCalendarDays" + CLASSIFICATOR_NAME_SEPARATOR + "dueDateWorkDays");
-            selectorGeneratorAttributes.put(ATTR_CLASSIFICATOR_SPECIFIER_LABELS,
-                    MessageUtil.getMessage(CALENDAR_DAYS) + CLASSIFICATOR_NAME_SEPARATOR + MessageUtil.getMessage(WORKING_DAYS));
-            selectorGeneratorAttributes.put(ATTR_CLASSIFICATOR_SPECIFIERS, "false" + CLASSIFICATOR_NAME_SEPARATOR + "true");
-
-            Map<String, Object> classificatorSelectorComponentAttributes = new HashMap<String, Object>();
-            classificatorSelectorComponentAttributes.put(CustomAttributeNames.STYLE_CLASS, "width120 task-due-date-days");
-            classificatorSelectorComponentAttributes.put("displayMandatoryMark", true);
-            classificatorSelectorComponentAttributes.put("styleClass", "task-due-date-days margin-left-4 width130");
 
             Map<String, Object> dueDateTimeAttr = new HashMap<String, Object>();
             dueDateTimeAttr.put("styleClass", "margin-left-4");
@@ -349,21 +330,12 @@ public class TaskListGenerator extends BaseComponentGenerator {
                         addAttributes(dueDateTimeInput, dueDateTimeAttr);
 
                         if (!isDueDateExtension) {
-                            UIComponent classificatorSelector = classificatorSelectorGenerator.generateSelectComponent(context, null, false);
-                            classificatorSelector.setId("task-dueDateDays-" + taskRowId);
+                            ValueBindingsWrapper vb = new ValueBindingsWrapper(Arrays.asList(
+                                    application.createValueBinding(createPropValueBinding(wfIndex, counter, WorkflowSpecificModel.Props.DUE_DATE_DAYS))
+                                    , application.createValueBinding(createPropValueBinding(wfIndex, counter, WorkflowSpecificModel.Props.IS_DUE_DATE_WORKING_DAYS)))
+                                    );
+                            UIComponent classificatorSelector = createDueDateDaysSelector(context, taskRowId, isTaskRowEditable, vb);
 
-                            createAndSetConverter(context, DueDateDaysConverter.CONVERTER_ID, classificatorSelector);
-                            List<ValueBinding> valueBindings = new ArrayList<ValueBinding>();
-                            valueBindings.add(application.createValueBinding(createPropValueBinding(wfIndex, counter, WorkflowSpecificModel.Props.DUE_DATE_DAYS)));
-                            valueBindings.add(application.createValueBinding(createPropValueBinding(wfIndex, counter, WorkflowSpecificModel.Props.IS_DUE_DATE_WORKING_DAYS)));
-                            classificatorSelector.setValueBinding("value", new ValueBindingsWrapper(valueBindings));
-                            classificatorSelectorGenerator.setupSelectComponent(context, null, null, null, classificatorSelector, false);
-                            classificatorSelector.setRendererType(LabelAndValueSelectorRenderer.LABEL_AND_VALUE_SELECTOR_RENDERER_TYPE);
-
-                            addAttributes(classificatorSelector, classificatorSelectorComponentAttributes);
-                            if (!isTaskRowEditable) {
-                                putAttribute(classificatorSelector, "readonly", true);
-                            }
                             if (!isTaskRowEditable) {
                                 taskGridChildren.add(classificatorSelector);
                             } else {

@@ -37,15 +37,18 @@ import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
 import org.alfresco.web.config.PropertySheetConfigElement;
+import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
 import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.docadmin.service.AssociationModel;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
@@ -153,13 +156,17 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     }
 
     public void changeByNewDocument(@SuppressWarnings("unused") ActionEvent event) {
-        DocumentDynamic baseDoc = getCurrentSnapshot().document;
-
-        Date regDateTime = baseDoc.getProp(DocumentCommonModel.Props.REG_DATE_TIME);
-        String docName = MessageUtil.getMessage("docdyn_changeByNewDocument_name"//
-                , BeanHelper.getDocumentAdminService().getDocumentTypeName(baseDoc.getDocumentTypeId())
-                , StringUtils.defaultIfEmpty((String) baseDoc.getProp(DocumentCommonModel.Props.REG_NUMBER), "")
-                , regDateTime == null ? "" : regDateTime);
+        DocumentDynamic baseDoc = getDocument();
+        String docName;
+        if (baseDoc.getRegDateTime() != null) {
+            docName = MessageUtil.getMessage("docdyn_changeByNewDocument_docName_registered"//
+                    , getDocumentType().getName()
+                    , baseDoc.getRegNumber()
+                    , Utils.getDateFormat(FacesContext.getCurrentInstance()).format(baseDoc.getRegDateTime()));
+        } else {
+            docName = MessageUtil.getMessage("docdyn_changeByNewDocument_docName"//
+                    , getDocumentType().getName());
+        }
 
         Map<QName, Serializable> overrides = new HashMap<QName, Serializable>(1);
         overrides.put(DocumentCommonModel.Props.DOC_NAME, docName);
@@ -194,6 +201,11 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     }
 
     public void createAssoc(ActionEvent event) {
+        NodeRef assocModelRef = ActionUtil.getParam(event, AssocsBlockBean.PARAM_ASSOC_MODEL_REF, NodeRef.class);
+        createAssoc(assocModelRef);
+    }
+
+    private void createAssoc(NodeRef assocModelRef) {
         DocDialogSnapshot snapshot = getCurrentSnapshot();
         if (snapshot == null) {
             throw new RuntimeException("No current document");
@@ -204,9 +216,39 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             String lockOwnerName = BeanHelper.getUserService().getUserFullName(lockOwner);
             throw new UnableToPerformException("docdyn_createAssoc_error_docLocked", lockOwnerName);
         }
-        NodeRef assocModelRef = ActionUtil.getParam(event, AssocsBlockBean.PARAM_ASSOC_MODEL_REF, NodeRef.class);
         DocumentDynamic newDocument = BeanHelper.getDocumentAssociationsService().createAssociatedDocFromModel(baseDocRef, assocModelRef);
         open(newDocument.getNodeRef(), newDocument, true);
+    }
+
+    public void createFollowUpReport(@SuppressWarnings("unused") ActionEvent event) {
+        DocumentDynamic baseDoc = getDocument();
+        String docName;
+        if (baseDoc.getRegDateTime() != null) {
+            docName = MessageUtil.getMessage("docdyn_createFollowUpReport_docName_registered"//
+                    , getDocumentType().getName()
+                    , baseDoc.getRegNumber()
+                    , Utils.getDateFormat(FacesContext.getCurrentInstance()).format(baseDoc.getRegDateTime()));
+        } else {
+            docName = MessageUtil.getMessage("docdyn_createFollowUpReport_docName"//
+                    , getDocumentType().getName());
+        }
+
+        createAssoc(DocTypeAssocType.FOLLOWUP, SystematicDocumentType.REPORT.getId());
+        getDocument().setDocName(docName);
+    }
+
+    public void createFollowUpErrandOrderAbroad(@SuppressWarnings("unused") ActionEvent event) {
+        createAssoc(DocTypeAssocType.FOLLOWUP, SystematicDocumentType.ERRAND_ORDER_ABROAD.getId());
+    }
+
+    private void createAssoc(DocTypeAssocType assocType, String targetDocTypeId) {
+        List<? extends AssociationModel> associationModels = getDocumentType().getAssociationModels(assocType);
+        for (AssociationModel associationModel : associationModels) {
+            if (targetDocTypeId.equals(associationModel.getDocType())) {
+                createAssoc(associationModel.getNodeRef());
+                break;
+            }
+        }
     }
 
     public void searchDocsAndCases(@SuppressWarnings("unused") ActionEvent event) {

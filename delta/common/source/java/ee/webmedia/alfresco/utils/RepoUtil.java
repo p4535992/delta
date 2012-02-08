@@ -382,4 +382,11 @@ public class RepoUtil {
         return assocRef;
     }
 
+    public static <T extends Serializable> T getListElement(Node document, QName propName, int index) {
+        @SuppressWarnings("unchecked")
+        List<T> list = (List<T>) document.getProperties().get(propName);
+        T element = list != null && list.size() > index ? list.get(index) : null;
+        return element;
+    }
+
 }

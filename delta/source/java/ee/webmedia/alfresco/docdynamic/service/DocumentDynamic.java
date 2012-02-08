@@ -147,6 +147,10 @@ public class DocumentDynamic extends NodeBaseVO implements Cloneable, Comparable
         return getProp(DocumentCommonModel.Props.DOC_NAME);
     }
 
+    public void setDocName(String docName) {
+        setProp(DocumentCommonModel.Props.DOC_NAME, docName);
+    }
+
     public String getRegNumber() {
         return getProp(DocumentCommonModel.Props.REG_NUMBER);
     }

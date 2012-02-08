@@ -129,6 +129,9 @@ import ee.webmedia.alfresco.document.web.evaluator.RegisterDocumentEvaluator;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.imap.model.ImapModel;
 import ee.webmedia.alfresco.imap.service.ImapServiceExt;
+import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.log.model.LogObject;
+import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.notification.service.NotificationService;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
@@ -186,6 +189,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
     protected SendOutService sendOutService;
     private UserService userService;
     private SubstituteService substituteService;
+    private LogService logService;
     // START: properties that would cause dependency cycle when trying to inject them
     // private DocumentAdminService documentAdminService; // dependency cycle: DocumentAdminService -> DocumentSearchService -> DocumentService
     private DocumentTemplateService _documentTemplateService;
@@ -219,7 +223,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        PolicyComponent policyComponent = (PolicyComponent) beanFactory.getBean("policyComponent", PolicyComponent.class);
+        beanFactory.getBean("policyComponent", PolicyComponent.class);
     }
 
     @Override
@@ -1106,7 +1110,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
 
         if (DocumentSubtypeModel.Types.CONTRACT_SMIT.equals(baseDocType) && DocumentSubtypeModel.Types.CONTRACT_SMIT.equals(followupType)) {
             propsToCopy.addAll(Arrays.asList(
-                     DocumentCommonModel.Props.SIGNER_NAME.toString()
+                    DocumentCommonModel.Props.SIGNER_NAME.toString()
                     , DocumentSpecificModel.Props.FIRST_PARTY_CONTACT_PERSON.toString()
                     , DocumentSpecificModel.Props.INCLUSIVE_PRICE_INCL_VAT.toString()
                     , DocumentSpecificModel.Props.COST_MANAGER.toString()
@@ -1387,6 +1391,9 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         }
 
         nodeService.deleteNode(nodeRef);
+
+        logService.addLogEntry(LogEntry.create(LogObject.DOCUMENT, userService, nodeRef, "document_log_status_deleted"));
+
         if (favDirRemoved) {
             menuService.process(BeanHelper.getMenuBean().getMenu(), false, true);
         }
@@ -1484,7 +1491,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
 
     private int countDocumentsInFolder(NodeRef parentRef, boolean countFilesInSubfolders) {
         int count = 0;
-        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parentRef, Collections.singleton(DocumentCommonModel.Types.DOCUMENT));
+        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parentRef, DocumentCommonModel.Assocs.DOCUMENT, DocumentCommonModel.Assocs.DOCUMENT);
         count = childAssocs != null ? childAssocs.size() : 0;
         if (countFilesInSubfolders) {
             for (Subfolder subfolder : getImapServiceExt().getImapSubfolders(parentRef, DocumentCommonModel.Types.DOCUMENT)) {
@@ -2430,7 +2437,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
     @Override
     public List<String> getFavoriteDirectoryNames() {
         NodeRef user = userService.getUser(AuthenticationUtil.getRunAsUser()).getNodeRef();
-        List<ChildAssociationRef> dirs = nodeService.getChildAssocs(user, new HashSet<QName>(Arrays.asList(DocumentCommonModel.Assocs.FAVORITE_DIRECTORY)));
+        List<ChildAssociationRef> dirs = nodeService.getChildAssocs(user, DocumentCommonModel.Assocs.FAVORITE_DIRECTORY, RegexQNamePattern.MATCH_ALL);
         List<String> names = new ArrayList<String>(dirs.size());
         for (ChildAssociationRef dirAssoc : dirs) {
             names.add(dirAssoc.getQName().getLocalName());
@@ -2455,7 +2462,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                 return assoc.getSourceRef();
             }
         }
-        for (ChildAssociationRef dirAssoc : nodeService.getChildAssocs(user, new HashSet<QName>(Arrays.asList(DocumentCommonModel.Assocs.FAVORITE_DIRECTORY)))) {
+        for (ChildAssociationRef dirAssoc : nodeService.getChildAssocs(user, DocumentCommonModel.Assocs.FAVORITE_DIRECTORY, RegexQNamePattern.MATCH_ALL)) {
             for (AssociationRef docAssoc : nodeService.getTargetAssocs(dirAssoc.getChildRef(), DocumentCommonModel.Assocs.FAVORITE)) {
                 if (docAssoc.getTargetRef().equals(docRef)) {
                     return docAssoc.getSourceRef();
@@ -2809,6 +2816,10 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
 
     public void setSubstituteService(SubstituteService substituteService) {
         this.substituteService = substituteService;
+    }
+
+    public void setLogService(LogService logService) {
+        this.logService = logService;
     }
 
     public void setSendOutService(SendOutService sendOutService) {

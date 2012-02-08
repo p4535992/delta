@@ -1,26 +1,25 @@
 package ee.webmedia.alfresco.log.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getAppLogListDialog;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
+import static ee.webmedia.alfresco.utils.MessageUtil.addInfoMessage;
+
 import java.io.Serializable;
 import java.util.Date;
 import java.util.Map;
 
-import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.namespace.QName;
-import org.alfresco.web.app.AlfrescoNavigationHandler;
-import org.alfresco.web.app.Application;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
-import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.filter.web.AbstractSearchFilterBlockBean;
 import ee.webmedia.alfresco.log.model.LogFilter;
 import ee.webmedia.alfresco.log.model.LogSearchModel;
+import ee.webmedia.alfresco.log.model.LogSetup;
 import ee.webmedia.alfresco.log.service.LogService;
-import ee.webmedia.alfresco.log.service.LogSetup;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 
@@ -33,17 +32,7 @@ public class ApplicationLogDialog extends AbstractSearchFilterBlockBean<LogServi
 
     private static final long serialVersionUID = 1L;
 
-    private transient LogService logService;
-
     private LogSetup logSetup;
-
-    public LogService getLogService() {
-        if (logService == null) {
-            logService = (LogService) FacesContextUtils.getRequiredWebApplicationContext( //
-                    FacesContext.getCurrentInstance()).getBean(LogService.BEAN_NAME);
-        }
-        return logService;
-    }
 
     @Override
     public void init(Map<String, String> params) {
@@ -53,7 +42,7 @@ public class ApplicationLogDialog extends AbstractSearchFilterBlockBean<LogServi
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
-        return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
+        return null;
     }
 
     public void processCreatorSearchResults(String username) {
@@ -63,14 +52,12 @@ public class ApplicationLogDialog extends AbstractSearchFilterBlockBean<LogServi
 
     public void save(@SuppressWarnings("unused") ActionEvent event) {
         getLogService().saveLogSetup(logSetup);
-
-        String msg = Application.getMessage(FacesContext.getCurrentInstance(), "applog_setup_saved");
-        FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(msg));
+        addInfoMessage("applog_setup_saved");
     }
 
     public void search(@SuppressWarnings("unused") ActionEvent event) {
-        WebUtil.navigateTo("dialog:applicationLogList");
-        BeanHelper.getAppLogListDialog().search(getLogService().getLogEntries(getLogFilter()));
+        getAppLogListDialog().search(getLogService().getLogEntries(getLogFilter()));
+        WebUtil.navigateTo("dialog:applicationLogListDialog");
     }
 
     @Override
@@ -90,11 +77,11 @@ public class ApplicationLogDialog extends AbstractSearchFilterBlockBean<LogServi
     private LogFilter getLogFilter() {
         Map<String, Object> props = ((TransientNode) getFilter()).getProperties();
         LogFilter result = new LogFilter();
-        result.setLogEntryId((String) props.get(LogSearchModel.Props.ENTRY_ID));
+        result.setLogEntryId((String) props.get(LogSearchModel.Props.LOG_ENTRY_ID));
         result.setDateCreatedStart((Date) props.get(LogSearchModel.Props.DATE_CREATED_START));
         result.setDateCreatedEnd((Date) props.get(LogSearchModel.Props.DATE_CREATED_END));
         result.setCreatorName((String) props.get(LogSearchModel.Props.CREATOR_NAME));
-        result.setComputerId((String) props.get(LogSearchModel.Props.COMPUTER_ID));
+        result.setComputerId((String) props.get(LogSearchModel.Props.COMPUTER_IP));
         result.setDescription((String) props.get(LogSearchModel.Props.DESCRIPTION));
         result.setObjectName((String) props.get(LogSearchModel.Props.OBJECT_NAME));
         result.setObjectId((String) props.get(LogSearchModel.Props.OBJECT_ID));

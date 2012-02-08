@@ -14,8 +14,8 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.service.transaction.TransactionService;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
+import ee.webmedia.alfresco.doclist.service.DocumentListService;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
-import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
@@ -29,7 +29,7 @@ public class DeleteSubtypedDocuments extends AbstractNodeUpdater {
 
     private TransactionService transactionService;
     private DictionaryService dictionaryService;
-    private FunctionsService functionsService;
+    private DocumentListService documentListService;
 
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
@@ -47,7 +47,7 @@ public class DeleteSubtypedDocuments extends AbstractNodeUpdater {
 
             @Override
             public Integer execute() throws Throwable {
-                functionsService.updateDocCounters();
+                documentListService.updateDocCounters();
                 return null;
             }
         });
@@ -73,8 +73,8 @@ public class DeleteSubtypedDocuments extends AbstractNodeUpdater {
         this.transactionService = transactionService;
     }
 
-    public void setFunctionsService(FunctionsService functionsService) {
-        this.functionsService = functionsService;
+    public void setDocumentListService(DocumentListService documentListService) {
+        this.documentListService = documentListService;
     }
 
 }

@@ -1,11 +1,10 @@
-package ee.webmedia.alfresco.log.service;
+package ee.webmedia.alfresco.log.model;
 
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import ee.webmedia.alfresco.log.model.Level;
 
 /**
  * Wrapper object for maintaining logging setup.
@@ -32,31 +31,31 @@ public class LogSetup implements Serializable {
 
     private boolean deletedObjects;
 
-    public Set<Level> toLogLevels() {
-        Set<Level> levels = new HashSet<Level>();
+    public Set<LogLevel> toLogLevels() {
+        Set<LogLevel> levels = new HashSet<LogLevel>();
         if (documents) {
-            levels.add(Level.DOCUMENT);
+            levels.add(LogLevel.DOCUMENT);
         }
         if (workflows) {
-            levels.add(Level.WORKFLOW);
+            levels.add(LogLevel.WORKFLOW);
         }
         if (logInOuts) {
-            levels.add(Level.LOG_IN_OUT);
+            levels.add(LogLevel.LOG_IN_OUT);
         }
         if (userUsergroups) {
-            levels.add(Level.USER_USERGROUP);
+            levels.add(LogLevel.USER_USERGROUP);
         }
         if (spaces) {
-            levels.add(Level.SPACES);
+            levels.add(LogLevel.SPACES);
         }
         if (notices) {
-            levels.add(Level.EMAIL_NOTICES);
+            levels.add(LogLevel.EMAIL_NOTICES);
         }
         if (searches) {
-            levels.add(Level.SEARCHES);
+            levels.add(LogLevel.SEARCHES);
         }
         if (deletedObjects) {
-            levels.add(Level.DELETED_OBJECTS);
+            levels.add(LogLevel.DELETED_OBJECTS);
         }
         return levels;
     }
@@ -67,14 +66,14 @@ public class LogSetup implements Serializable {
             setup.documents = true;
             setup.workflows = true;
         } else {
-            setup.documents = levels.contains(Level.DOCUMENT);
-            setup.workflows = levels.contains(Level.WORKFLOW);
-            setup.logInOuts = levels.contains(Level.LOG_IN_OUT);
-            setup.userUsergroups = levels.contains(Level.USER_USERGROUP);
-            setup.spaces = levels.contains(Level.SPACES);
-            setup.notices = levels.contains(Level.EMAIL_NOTICES);
-            setup.searches = levels.contains(Level.SEARCHES);
-            setup.deletedObjects = levels.contains(Level.DELETED_OBJECTS);
+            setup.documents = levels.contains(LogLevel.DOCUMENT);
+            setup.workflows = levels.contains(LogLevel.WORKFLOW);
+            setup.logInOuts = levels.contains(LogLevel.LOG_IN_OUT);
+            setup.userUsergroups = levels.contains(LogLevel.USER_USERGROUP);
+            setup.spaces = levels.contains(LogLevel.SPACES);
+            setup.notices = levels.contains(LogLevel.EMAIL_NOTICES);
+            setup.searches = levels.contains(LogLevel.SEARCHES);
+            setup.deletedObjects = levels.contains(LogLevel.DELETED_OBJECTS);
         }
         return setup;
     }

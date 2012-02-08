@@ -59,6 +59,7 @@
       <property name="parametersService" ref="ParametersService" />
       <property name="namespaceService" ref="NamespaceService" />
       <property name="userService" ref="UserService" />
+      <property name="logService" ref="LogService" />
       <property name="authorityService" ref="AuthorityService" />
       <property name="luceneConfig" ref="admLuceneIndexerAndSearcherFactory" />
    </bean>

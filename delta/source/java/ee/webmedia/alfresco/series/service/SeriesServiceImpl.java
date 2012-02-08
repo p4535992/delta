@@ -34,6 +34,10 @@ import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
+import ee.webmedia.alfresco.log.PropDiffHelper;
+import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.log.model.LogObject;
+import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.user.service.UserService;
@@ -52,7 +56,9 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     private NodeService nodeService;
     private PermissionService permissionService;
     private GeneralService generalService;
-    private DocumentLogService logService;
+    private UserService userService;
+    private DocumentLogService docLogService;
+    private LogService appLogService;
     private BeanFactory beanFactory;
     /** NB! not injected - use getter to obtain instance of volumeService */
     private VolumeService _volumeService;
@@ -130,7 +136,6 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
 
     private void saveOrUpdate(Series series, boolean performReorder) {
         Map<String, Object> stringQNameProperties = series.getNode().getProperties();
-        final NodeRef seriesRef = series.getNode().getNodeRef();
         Integer previousOrder = null;
         if (series.getNode() instanceof TransientNode) { // save
             NodeRef seriesNodeRef = nodeService.createNode(series.getFunctionNodeRef(),
@@ -138,15 +143,46 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
                     RepoUtil.toQNameProperties(stringQNameProperties, false, true)).getChildRef();
             setSeriesDefaultPermissionsOnCreate(seriesNodeRef);
             series.setNode(generalService.fetchNode(seriesNodeRef));
-            logService.addSeriesLog(seriesNodeRef, I18NUtil.getMessage("series_log_status_created"));
+            docLogService.addSeriesLog(seriesNodeRef, I18NUtil.getMessage("series_log_status_created"));
+
+            Map<String, Object> props = series.getNode().getProperties();
+            appLogService.addLogEntry(LogEntry.create(LogObject.SERIES, userService, seriesNodeRef, "applog_space_add",
+                    props.get(SeriesModel.Props.SERIES_IDENTIFIER.toString()), props.get(SeriesModel.Props.TITLE.toString())));
         } else { // update
+            final NodeRef seriesRef = series.getNode().getNodeRef();
             previousOrder = (Integer) nodeService.getProperty(seriesRef, SeriesModel.Props.ORDER);
             final String previousAccessrestriction = (String) nodeService.getProperty(seriesRef, SeriesModel.Props.ACCESS_RESTRICTION);
+
+            String propDiff = new PropDiffHelper()
+                    .label(SeriesModel.Props.STATUS, "series_status")
+                    .label(SeriesModel.Props.ORDER, "series_order")
+                    .label(SeriesModel.Props.SERIES_IDENTIFIER, "series_seriesIdentifier")
+                    .label(SeriesModel.Props.TITLE, "series_title")
+                    .label(SeriesModel.Props.REGISTER, "series_register")
+                    .label(SeriesModel.Props.INDIVIDUALIZING_NUMBERS, "series_individualizingNumbers")
+                    .label(SeriesModel.Props.STRUCT_UNIT, "series_structUnit")
+                    .label(SeriesModel.Props.TYPE, "series_type")
+                    .label(SeriesModel.Props.DOC_TYPE, "series_docType")
+                    .label(SeriesModel.Props.RETENTION_PERIOD, "series_retentionPeriod")
+                    .label(SeriesModel.Props.DOC_NUMBER_PATTERN, "series_docNumberPattern")
+                    .label(SeriesModel.Props.NEW_NUMBER_FOR_EVERY_DOC, "series_newNumberForEveryDoc")
+                    .label(SeriesModel.Props.VALID_FROM_DATE, "series_validFromDate")
+                    .label(SeriesModel.Props.VALID_TO_DATE, "series_validToDate")
+                    .label(SeriesModel.Props.VOL_TYPE, "series_volType")
+                    .label(SeriesModel.Props.VOL_REGISTER, "series_volRegister")
+                    .label(SeriesModel.Props.VOL_NUMBER_PATTERN, "series_volNumberPattern")
+                    .diff(nodeService.getProperties(seriesRef), RepoUtil.toQNameProperties(stringQNameProperties));
+
+            if (propDiff != null) {
+                appLogService.addLogEntry(LogEntry.create(LogObject.SERIES, userService, seriesRef, "applog_space_edit",
+                        series.getSeriesIdentifier(), series.getTitle(), propDiff));
+            }
+
             generalService.setPropertiesIgnoringSystem(seriesRef, stringQNameProperties);
-            logService.addSeriesLog(seriesRef, I18NUtil.getMessage("series_log_status_changed"));
+            docLogService.addSeriesLog(seriesRef, I18NUtil.getMessage("series_log_status_changed"));
             final String newAccessrestriction = (String) stringQNameProperties.get(SeriesModel.Props.ACCESS_RESTRICTION.toString());
             if (!StringUtils.equals(previousAccessrestriction, newAccessrestriction)) {
-                logService.addSeriesLog(seriesRef, I18NUtil.getMessage("series_log_status_accessRestrictionChanged"));
+                docLogService.addSeriesLog(seriesRef, I18NUtil.getMessage("series_log_status_accessRestrictionChanged"));
             }
         }
         if (performReorder) {
@@ -251,7 +287,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         }
         props.put(SeriesModel.Props.STATUS.toString(), DocListUnitStatus.CLOSED.getValueName());
         saveOrUpdate(series);
-        logService.addSeriesLog(seriesRef, I18NUtil.getMessage("series_log_status_closed"));
+        docLogService.addSeriesLog(seriesRef, I18NUtil.getMessage("series_log_status_closed"));
         return true;
     }
 
@@ -272,7 +308,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         Map<String, Object> props = seriesNode.getProperties();
         props.put(SeriesModel.Props.STATUS.toString(), DocListUnitStatus.OPEN.getValueName());
         saveOrUpdate(series);
-        logService.addSeriesLog(seriesNode.getNodeRef(), I18NUtil.getMessage("series_log_status_opened"));
+        docLogService.addSeriesLog(seriesNode.getNodeRef(), I18NUtil.getMessage("series_log_status_opened"));
     }
 
     @Override
@@ -340,8 +376,16 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         this.generalService = generalService;
     }
 
-    public void setLogService(DocumentLogService logService) {
-        this.logService = logService;
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
+
+    public void setDocLogService(DocumentLogService docLogService) {
+        this.docLogService = docLogService;
+    }
+
+    public void setAppLogService(LogService appLogService) {
+        this.appLogService = appLogService;
     }
 
     @Override

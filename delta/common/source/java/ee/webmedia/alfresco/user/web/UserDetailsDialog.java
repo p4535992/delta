@@ -1,7 +1,9 @@
 package ee.webmedia.alfresco.user.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getAuthorityService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getOrganizationStructureService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.utils.UserUtil.getUserDisplayUnit;
 
 import java.util.ArrayList;
@@ -32,10 +34,13 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.einvoice.model.DimensionValue;
 import ee.webmedia.alfresco.document.einvoice.model.Dimensions;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
+import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.substitute.web.SubstituteListDialog;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 
@@ -201,7 +206,7 @@ public class UserDetailsDialog extends BaseDialogBean {
                 DimensionValue dimensionValue = eInvoiceService.getDimensionValue(dimensionRef, dimensionName);
                 sb.append("<span title=\"");
                 sb.append(org.alfresco.web.ui.common.StringUtils.encode(TextUtil.joinStringAndStringWithSeparator(dimensionValue.getValue(),
-                            dimensionValue.getValueComment(), ";")));
+                        dimensionValue.getValueComment(), ";")));
                 sb.append("\" class=\"tooltip\">");
                 sb.append(org.alfresco.web.ui.common.StringUtils.encode(dimensionValue.getValueName())).append("</span>");
                 dimensionIndex++;
@@ -224,6 +229,10 @@ public class UserDetailsDialog extends BaseDialogBean {
             return;
         }
         getAuthorityService().removeAuthority(group, (String) user.getProperties().get(ContentModel.PROP_USERNAME));
+
+        String userFullInfo = UserUtil.getUserFullNameAndId(RepoUtil.toQNameProperties(user.getProperties()));
+        getLogService().addLogEntry(LogEntry.create(LogObject.USER_GROUP, getUserService(), user.getNodeRef(), "applog_group_user_rem", group, userFullInfo));
+
         setupGroups();
         MessageUtil.addInfoMessage("user_removed_from_group");
     }
@@ -234,6 +243,10 @@ public class UserDetailsDialog extends BaseDialogBean {
         }
 
         getAuthorityService().addAuthority(group, (String) user.getProperties().get(ContentModel.PROP_USERNAME));
+
+        String userFullInfo = UserUtil.getUserFullNameAndId(RepoUtil.toQNameProperties(user.getProperties()));
+        getLogService().addLogEntry(LogEntry.create(LogObject.USER_GROUP, getUserService(), user.getNodeRef(), "applog_group_user_add", group, userFullInfo));
+
         setupGroups();
         MessageUtil.addInfoMessage("user_added_to_group");
     }

@@ -2,10 +2,8 @@ package ee.webmedia.alfresco.template.service;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -67,6 +65,9 @@ import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
+import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.log.model.LogObject;
+import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.mso.service.MsoService;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.template.exception.ExistingFileFromTemplateException;
@@ -118,6 +119,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     private DocumentConfigService documentConfigService;
     private DocumentAdminService documentAdminService;
     private VersionsService versionsService;
+    private LogService appLogService;
 
     private static BeanPropertyMapper<DocumentTemplate> templateBeanPropertyMapper;
     static {
@@ -252,7 +254,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         NodeRef existingGeneratedFile = null;
         String displayName = null;
         { // Check if we already have a file that is generated using this template and overwrite
-            for (ChildAssociationRef caRef : nodeService.getChildAssocs(documentNodeRef, new HashSet<QName>(Arrays.asList(ContentModel.TYPE_CONTENT)))) {
+            for (ChildAssociationRef caRef : nodeService.getChildAssocs(documentNodeRef, ContentModel.ASSOC_CONTAINS, RegexQNamePattern.MATCH_ALL)) {
                 NodeRef fileRef = caRef.getChildRef();
                 String genTemplName = (String) nodeService.getProperty(fileRef, FileModel.Props.GENERATED_FROM_TEMPLATE);
                 if (!StringUtils.equals(genTemplName, templateFilename)) {
@@ -294,6 +296,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             nodeService.addProperties(existingGeneratedFile, templateProps);
 
             documentLogService.addDocumentLog(documentNodeRef, I18NUtil.getMessage("document_log_status_fileAdded", displayName));
+            appLogService.addLogEntry(LogEntry.create(LogObject.DOCUMENT, userService, existingGeneratedFile, "applog_doc_file_generated", displayName));
             log.debug("Created new node: " + existingGeneratedFile + "\nwith name: " + name + "; displayName: " + displayName);
         }
 
@@ -525,7 +528,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
              * dokumendimallide korral toimub eemaldamine dokumendi registreerimisel.
              */
             if (formulaValue == null && (DocumentCommonModel.Props.REG_NUMBER.getLocalName().equals(formulaKey)
-                            || DocumentCommonModel.Props.REG_DATE_TIME.getLocalName().equals(formulaKey) || !removeUnmatchedFormulas)) {
+                    || DocumentCommonModel.Props.REG_DATE_TIME.getLocalName().equals(formulaKey) || !removeUnmatchedFormulas)) {
                 formulaValue = matcher.group();
             } else if (formulaValue == null && removeUnmatchedFormulas) {
                 formulaValue = "";
@@ -1033,6 +1036,10 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
     public void setVersionsService(VersionsService versionsService) {
         this.versionsService = versionsService;
+    }
+
+    public void setAppLogService(LogService appLogService) {
+        this.appLogService = appLogService;
     }
 
     // END: getters / setters

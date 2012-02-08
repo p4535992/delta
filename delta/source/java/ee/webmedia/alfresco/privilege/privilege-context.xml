@@ -40,6 +40,7 @@
       <property name="permissionService" ref="PermissionService" />
       <property name="nodeService" ref="NodeService" />
       <property name="applicationService" ref="ApplicationService" />
+      <property name="logService" ref="LogService" />
    </bean>
 
    <bean id="PrivilegeService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -55,7 +56,7 @@
          </list>
       </property>
    </bean>
-   
+
    <bean id="alterAltAuthorityTable" class="ee.webmedia.alfresco.privilege.bootstrap.AlterAltAuthorityTable" parent="module.baseComponent">
       <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="true" />

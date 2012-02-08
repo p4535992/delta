@@ -50,7 +50,7 @@
          <f:facet name="header">
             <a:outputText value="#{msg.document_type_comment}" />
          </f:facet>
-         <h:inputTextarea rows="1" cols="45" value="#{type.comment}" styleClass="expand19-200 borderless" readonly="true" />
+         <h:outputText value="#{type.comment}" />
       </a:column>
 
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />

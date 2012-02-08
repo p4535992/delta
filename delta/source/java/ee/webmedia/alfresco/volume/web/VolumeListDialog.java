@@ -2,6 +2,8 @@ package ee.webmedia.alfresco.volume.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getCaseListDialog;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentListDialog;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 
 import java.util.List;
 
@@ -13,6 +15,8 @@ import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
+import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.utils.ActionUtil;
@@ -50,6 +54,7 @@ public class VolumeListDialog extends BaseDialogBean {
 
     public void showAll(NodeRef nodeRef) {
         parent = getSeriesService().getSeriesByNodeRef(nodeRef.toString());
+        getLogService().addLogEntry(LogEntry.create(LogObject.SERIES, getUserService(), nodeRef, "applog_space_open", parent.getSeriesIdentifier(), parent.getTitle()));
     }
 
     public List<Volume> getEntries() {

@@ -13,6 +13,7 @@ import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigEle
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docconfig.generator.BaseTypeFieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
+import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 
 /**
  * @author Alar Kvell
@@ -31,7 +32,8 @@ public class DateGenerator extends BaseTypeFieldGenerator {
     public void generateField(Field field, GeneratorResults generatorResults) {
         final ItemConfigVO item = generatorResults.getAndAddPreGeneratedItem();
         if (!field.isForSearch()) {
-            item.setComponentGenerator(RepoConstants.GENERATOR_DATE_PICKER);
+            String generator = DocumentSpecificModel.Props.DUE_DATE.getLocalName().equals(field.getOriginalFieldId()) ? "DatePickerWithDueDateGenerator" : RepoConstants.GENERATOR_DATE_PICKER;
+            item.setComponentGenerator(generator);
             return;
         }
         /**
@@ -46,7 +48,7 @@ public class DateGenerator extends BaseTypeFieldGenerator {
         NamespaceService namespaceService = getNamespaceService();
         item.setProps(qnameBegin.toPrefixString(namespaceService) + "|DatePickerGenerator|styleClass=date,"
                 + qnameEnd.toPrefixString(namespaceService) + "|DatePickerGenerator|styleClass=date,"
-                 + qnamePicker.toPrefixString(namespaceService) + "|EnumSelectorGenerator|" + EnumSelectorGenerator.ATTR_DISABLE_SORTING
+                + qnamePicker.toPrefixString(namespaceService) + "|EnumSelectorGenerator|" + EnumSelectorGenerator.ATTR_DISABLE_SORTING
                 + "=true|styleClass=quickDateRangePicker|enumClass="
                 + DatePeriods.class.getCanonicalName()
                 );

@@ -584,10 +584,6 @@ td.more-actions-column a {
 	font-size: 12px;
 }
 
-.recordSetRow a, .recordSetRowAlt a {
-	color: black;
-}
-
 tr.recordSetRowAlt,.odd {
 	background: #efefef;/*#f9f9f9;*/
 }
@@ -701,7 +697,7 @@ textarea[readonly="readonly"],
 textarea[readonly],
 select[disabled="disabled"],
 select[disabled] {
-	background: #ddd;
+	background: #ddd !important;
 	border: 1px solid #888;
 }
 
@@ -1984,6 +1980,12 @@ DIV.modalpopup-footer P.action {
 .outgoingLetter a {
 	color: #1A8922;	
 }
+
+.genericDocument span,
+.genericDocument a {
+	color: black;	
+}
+
 /* FORUMS */
 
 .new-post-bubble {

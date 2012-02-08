@@ -131,7 +131,7 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
             }
         }
         // remove all files
-        List<File> files = fileService.getAllFiles(existingDocumentRef);
+        List<File> files = fileService.getAllFilesExcludingDigidocSubitems(existingDocumentRef);
         for (File file : files) {
             if (nodeService.exists(file.getNodeRef())) {
                 nodeService.deleteNode(file.getNodeRef());

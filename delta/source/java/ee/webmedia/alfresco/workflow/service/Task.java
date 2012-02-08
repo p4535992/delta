@@ -1,12 +1,12 @@
 package ee.webmedia.alfresco.workflow.service;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.NodePropertyResolver;
@@ -18,13 +18,15 @@ import org.springframework.util.Assert;
 import ee.webmedia.alfresco.common.web.CssStylable;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.utils.WebUtil;
+import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
 /**
  * @author Alar Kvell
  */
-public class Task extends BaseWorkflowObject implements Serializable, Comparable<Task>, CssStylable {
+public class Task extends BaseWorkflowObject implements Comparable<Task>, CssStylable {
     private static final long serialVersionUID = 1L;
 
     public static FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
@@ -35,9 +37,9 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
         UNFINISH
     }
 
-    public static String PROP_RESOLUTION = "{temp}resolution";
-    public static final String PROP_WORKFLOW_CATEGORY = "{temp}category";
-    public static final String PROP_TEMP_FILES = "{temp}files";
+    private static final QName PROP_RESOLUTION = RepoUtil.createTransientProp("resolution");
+    private static final QName PROP_WORKFLOW_CATEGORY = RepoUtil.createTransientProp("category");
+    private static final QName PROP_TEMP_FILES = RepoUtil.createTransientProp("files");
 
     private final Workflow parent;
     private final int outcomes;
@@ -71,8 +73,8 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
         this.parent = parent;
         this.outcomes = outcomes;
 
-        node.addPropertyResolver(PROP_RESOLUTION, resolutionPropertyResolver);
-        node.addPropertyResolver(PROP_WORKFLOW_CATEGORY, categoryPropertyResolver);
+        node.addPropertyResolver(PROP_RESOLUTION.toString(), resolutionPropertyResolver);
+        node.addPropertyResolver(PROP_WORKFLOW_CATEGORY.toString(), categoryPropertyResolver);
     }
 
     protected Task copy(Workflow copyParent) {
@@ -289,7 +291,7 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
      */
     public String getResolution() {
         // Cannot use getProp(QName) because we need to use resolutionPropertyResolver
-        Object resolution = getNode().getProperties().get(PROP_RESOLUTION);
+        Object resolution = getNode().getProperties().get(PROP_RESOLUTION.toString());
         return (resolution != null) ? resolution.toString() : "";
     }
 
@@ -311,7 +313,7 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
      */
     public String getCategory() {
         // Cannot use getProp(QName) because we need to use categoryPropertyResolver
-        return (String) getNode().getProperties().get(PROP_WORKFLOW_CATEGORY);
+        return (String) getNode().getProperties().get(PROP_WORKFLOW_CATEGORY.toString());
     }
 
     public void setComment(String comment) {
@@ -327,6 +329,10 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
             return getProp(WorkflowSpecificModel.Props.COMMENT).toString();
         }
         return "";
+    }
+
+    public String getCommentAndLinks() {
+        return WebUtil.escapeHtmlExceptLinks(WebUtil.processLinks(getComment()));
     }
 
     @Override
@@ -426,10 +432,10 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
     /** Return list of FileWithContentType or File objects */
     @SuppressWarnings("unchecked")
     public List<Object> getFiles() {
-        if (getNode().getProperties().get(PROP_TEMP_FILES) == null) {
-            getNode().getProperties().put(PROP_TEMP_FILES, new ArrayList<File>());
+        if (getNode().getProperties().get(PROP_TEMP_FILES.toString()) == null) {
+            getNode().getProperties().put(PROP_TEMP_FILES.toString(), new ArrayList<File>());
         }
-        return (ArrayList<Object>) getNode().getProperties().get(PROP_TEMP_FILES);
+        return (ArrayList<Object>) getNode().getProperties().get(PROP_TEMP_FILES.toString());
     }
 
     public List<NodeRef> getRemovedFiles() {

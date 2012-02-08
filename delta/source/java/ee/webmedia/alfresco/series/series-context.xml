@@ -43,7 +43,9 @@
       <property name="dictionaryService" ref="DictionaryService" />
       <property name="nodeService" ref="NodeService" />
       <property name="generalService" ref="GeneralService" />
-      <property name="logService" ref="DocumentLogService" />
+      <property name="docLogService" ref="DocumentLogService" />
+      <property name="appLogService" ref="LogService" />
+      <property name="userService" ref="UserService" />
       <property name="permissionService" ref="PermissionService" />
       <!--  XXX: property:volumeService - retrieved from applicationContext to avoid circular dependency between VolumeService and SeriesService      -->
    </bean>

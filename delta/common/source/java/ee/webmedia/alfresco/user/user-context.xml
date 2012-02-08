@@ -21,6 +21,7 @@
       <property name="organizationStructureService" ref="OrganizationStructureService" />
       <property name="configurableService" ref="ConfigurableService" />
       <property name="namespaceService" ref="NamespaceService" />
+      <property name="logService" ref="LogService" />
       <property name="groupsEditingAllowed" value="${groups.editingAllowed}" />
    </bean>
 

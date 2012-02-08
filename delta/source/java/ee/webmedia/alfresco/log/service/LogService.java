@@ -4,7 +4,8 @@ import java.util.List;
 
 import ee.webmedia.alfresco.filter.service.FilterService;
 import ee.webmedia.alfresco.log.model.LogFilter;
-import ee.webmedia.alfresco.log.model.SystemLog;
+import ee.webmedia.alfresco.log.model.LogSetup;
+import ee.webmedia.alfresco.log.model.LogEntry;
 
 /**
  * Delta business logic specific logging service.
@@ -34,7 +35,7 @@ public interface LogService extends FilterService {
      * 
      * @param log New log entry.
      */
-    void addLogEntry(SystemLog log);
+    void addLogEntry(LogEntry log);
 
     /**
      * Provides current log entries from table. Filter can be provided to pre-filter the data.
@@ -42,5 +43,5 @@ public interface LogService extends FilterService {
      * @param filter Optional log entries filter.
      * @return Current log entries.
      */
-    List<SystemLog> getLogEntries(LogFilter filter);
+    List<LogEntry> getLogEntries(LogFilter filter);
 }

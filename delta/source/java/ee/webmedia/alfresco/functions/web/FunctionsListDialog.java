@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.functions.web;
 
 import static ee.webmedia.alfresco.app.AppConstants.CHARSET;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentListService;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,6 +30,7 @@ import org.apache.myfaces.application.jsp.JspStateManagerImpl;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WMAdminNodeBrowseBean;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
@@ -80,7 +82,7 @@ public class FunctionsListDialog extends BaseDialogBean {
     }
 
     public void updateDocCounters(@SuppressWarnings("unused") ActionEvent event) {
-        final long docCount = getFunctionsService().updateDocCounters();
+        final long docCount = BeanHelper.getDocumentListService().updateDocCounters();
         MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "docList_updateDocCounters_success", docCount);
     }
 
@@ -92,7 +94,7 @@ public class FunctionsListDialog extends BaseDialogBean {
      * @param event
      */
     public void deleteAllDocuments(@SuppressWarnings("unused") ActionEvent event) {
-        final Pair<List<NodeRef>, Long> allDocumentAndCaseRefs = getFunctionsService().getAllDocumentAndCaseRefs();
+        final Pair<List<NodeRef>, Long> allDocumentAndCaseRefs = BeanHelper.getDocumentListService().getAllDocumentAndCaseRefs();
         final List<NodeRef> refsToDelete = allDocumentAndCaseRefs.getFirst();
         final int batchMaxSize = 30;
         ArrayList<NodeRef> nodeRefsBatch = new ArrayList<NodeRef>(batchMaxSize);
@@ -146,7 +148,7 @@ public class FunctionsListDialog extends BaseDialogBean {
     }
 
     public void createNewYearBasedVolumes(@SuppressWarnings("unused") ActionEvent event) {
-        final long createdVolumesCount = getFunctionsService().createNewYearBasedVolumes();
+        final long createdVolumesCount = BeanHelper.getDocumentListService().createNewYearBasedVolumes();
         MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "docList_createNewYearBasedVolumes_success", createdVolumesCount);
     }
 
@@ -159,6 +161,26 @@ public class FunctionsListDialog extends BaseDialogBean {
             final String msg = "failed to import:";
             log.debug(msg, e);
             throw new RuntimeException(msg, e);
+        }
+    }
+
+    public void exportConsolidatedList(@SuppressWarnings("unused") ActionEvent event) {
+        log.info("consolidated docList started");
+        HttpServletResponse response = (HttpServletResponse) FacesContext.getCurrentInstance().getExternalContext().getResponse();
+        response.setCharacterEncoding(CHARSET);
+        OutputStream outputStream = null;
+        try {
+            outputStream = WMAdminNodeBrowseBean.getExportOutStream(response, "consolidated-list.csv");
+            getDocumentListService().getExportCsv(outputStream);
+            outputStream.flush();
+        } catch (Exception e) {
+            final String msg = "Failed to export consolidated docList";
+            log.error(msg, e);
+            throw new RuntimeException(msg, e);
+        } finally {
+            FacesContext.getCurrentInstance().responseComplete();
+            JspStateManagerImpl.ignoreCurrentViewSequenceHack();
+            log.info("consolidated docList export completed");
         }
     }
 

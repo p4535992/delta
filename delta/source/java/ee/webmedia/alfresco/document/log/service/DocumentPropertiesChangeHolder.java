@@ -81,7 +81,7 @@ public class DocumentPropertiesChangeHolder {
     public boolean isOnlyLocationPropsChanged() {
         Set<QName> keys = getAllKeys();
         keys.removeAll(Arrays.asList(DocumentCommonModel.Props.SERIES, DocumentCommonModel.Props.FUNCTION, DocumentCommonModel.Props.VOLUME,
-                 DocumentCommonModel.Props.CASE));
+                DocumentCommonModel.Props.CASE));
         return keys.isEmpty();
 
     }
@@ -201,7 +201,7 @@ public class DocumentPropertiesChangeHolder {
 
     private Pair<Serializable, Serializable> getConvertedValues(Field field, Pair<Serializable, Serializable> values) {
         // Convert special cases
-        List<Serializable> convertedValues = new ArrayList<Serializable>();
+        List<Serializable> convertedValues = new ArrayList<Serializable>(2);
         if (field == null) {
             for (Serializable propValue : Arrays.asList(values.getFirst(), values.getSecond())) {
                 if (propValue == null || propValue instanceof String && StringUtils.isBlank((String) propValue)) {
@@ -216,6 +216,7 @@ public class DocumentPropertiesChangeHolder {
             for (Serializable propValue : Arrays.asList(values.getFirst(), values.getSecond())) {
                 if (propValue.equals(MessageUtil.getMessage("document_log_status_empty"))) {
                     convertedValues.add(propValue);
+                    continue;
                 } else if (FieldType.DATE == fieldType) {
                     if (propValue instanceof List && ((List<?>) propValue).size() == 1) {
                         propValue = (Serializable) ((List<?>) propValue).get(0);

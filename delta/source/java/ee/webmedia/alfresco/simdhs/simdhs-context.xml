@@ -42,6 +42,7 @@
    <import resource="classpath:ee/webmedia/alfresco/relvastus/relvastus-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/ikt/ikt-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/testdata/testdata-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/doclist/doclist-context.xml"/>
 
    <bean class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
       <property name="configs">

@@ -25,6 +25,7 @@ public interface VolumeModel {
         QName STATUS = QName.createQName(URI, "status");
         QName DISPOSITION_DATE = QName.createQName(URI, "dispositionDate");
         QName TITLE = QName.createQName(URI, "title");
+        QName DESCRIPTION = QName.createQName(URI, "description");
         QName VOLUME_TYPE = QName.createQName(URI, "volumeType");
         QName VOLUME_MARK = QName.createQName(URI, "volumeMark");
         QName MARK = QName.createQName(URI, "volumeMark");

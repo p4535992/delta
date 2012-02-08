@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.privilege.model;
 
+import static ee.webmedia.alfresco.privilege.service.PrivilegeServiceImpl.GROUPLESS_GROUP;
+
 import java.io.Serializable;
 import java.util.AbstractMap;
 import java.util.Collection;
@@ -126,6 +128,10 @@ public class UserPrivileges implements Serializable {
 
     public void markBaseState() {
         staticPrivilegesBeforeChanges = Collections.unmodifiableSet(getStaticPrivileges());
+    }
+
+    public boolean isNew() {
+        return staticPrivilegesBeforeChanges == null;
     }
 
     public void addPrivilegeDynamic(String privilege, String reason) {
@@ -289,7 +295,7 @@ public class UserPrivileges implements Serializable {
 
     /** used by JSF to determine if checkBox should be readRnly */
     public boolean isRemovable() {
-        return !readOnly && groups.isEmpty() && filterInheritedPrivileges().isEmpty();
+        return !readOnly && (groups.isEmpty() || groups.size() == 1 && groups.contains(GROUPLESS_GROUP)) && filterInheritedPrivileges().isEmpty();
     }
 
     public void setReadOnly(boolean readOnly) {

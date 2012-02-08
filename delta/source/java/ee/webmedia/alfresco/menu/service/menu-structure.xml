@@ -271,7 +271,7 @@
             <outcome>dialog:notificationListDialog</outcome>
          </item>
          <item id="applicationLog" title-id="menu_application_log" admin="true" supervisor="true">
-            <outcome>dialog:applicationLog</outcome>
+            <outcome>dialog:applicationLogDialog</outcome>
          </item>
          <item id="thesauri" title-id="menu_thesauri" admin="true">
             <outcome>dialog:thesaurusListDialog</outcome>

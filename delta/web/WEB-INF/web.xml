@@ -149,6 +149,16 @@
    </filter>   
 
    <filter>
+      <filter-name>LogInOutAuditFilter</filter-name>
+      <description>User authentication attempts logging filter</description>
+      <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+      <init-param>
+         <param-name>targetBeanName</param-name>
+         <param-value>logInOutAuditFilter</param-value>
+      </init-param>
+   </filter>
+
+   <filter>
       <filter-name>CAS Authentication Filter</filter-name>
       <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
       <init-param>
@@ -233,6 +243,12 @@
       <filter-name>SerializingFilter</filter-name>
       <url-pattern>/uploadFileServlet</url-pattern>
    </filter-mapping>
+<!--
+   <filter-mapping>
+      <filter-name>LogInOutAuditFilter</filter-name>
+      <url-pattern>/*</url-pattern>
+   </filter-mapping>
+-->
    <filter-mapping>
       <filter-name>CAS Authentication Filter</filter-name>
       <url-pattern>/uploadFileServlet</url-pattern>
@@ -253,6 +269,10 @@
       <filter-name>Authentication Filter</filter-name>
       <url-pattern>/uploadFileServlet</url-pattern>
    </filter-mapping>
+   <filter-mapping>
+      <filter-name>FacesContextFilter</filter-name>
+      <url-pattern>/uploadFileServlet/*</url-pattern>
+   </filter-mapping>     
    <filter-mapping>
       <filter-name>SubstitutionFilter</filter-name>
       <url-pattern>/uploadFileServlet/*</url-pattern>
@@ -287,6 +307,10 @@
       <url-pattern>/download/*</url-pattern>
    </filter-mapping>
    <filter-mapping>
+      <filter-name>FacesContextFilter</filter-name>
+      <url-pattern>/download/*</url-pattern>
+   </filter-mapping>     
+   <filter-mapping>
       <filter-name>SubstitutionFilter</filter-name>
       <url-pattern>/download/*</url-pattern>
    </filter-mapping> 
@@ -320,6 +344,10 @@
       <url-pattern>/d/*</url-pattern>
    </filter-mapping>
    <filter-mapping>
+      <filter-name>FacesContextFilter</filter-name>
+      <url-pattern>/d/*</url-pattern>
+   </filter-mapping>     
+   <filter-mapping>
       <filter-name>SubstitutionFilter</filter-name>
       <url-pattern>/d/*</url-pattern>
    </filter-mapping> 
@@ -353,6 +381,10 @@
       <url-pattern>/ddc/*</url-pattern>
    </filter-mapping>
    <filter-mapping>
+      <filter-name>FacesContextFilter</filter-name>
+      <url-pattern>/ddc/*</url-pattern>
+   </filter-mapping>     
+   <filter-mapping>
       <filter-name>SubstitutionFilter</filter-name>
       <url-pattern>/ddc/*</url-pattern>
    </filter-mapping> 
@@ -385,6 +417,10 @@
       <filter-name>Authentication Filter</filter-name>
       <url-pattern>/navigate/*</url-pattern>
    </filter-mapping>
+   <filter-mapping>
+      <filter-name>FacesContextFilter</filter-name>
+      <url-pattern>/navigate/*</url-pattern>
+   </filter-mapping>     
    <filter-mapping>
       <filter-name>SubstitutionFilter</filter-name>
       <url-pattern>/navigate/*</url-pattern>
@@ -419,6 +455,10 @@
       <url-pattern>/printTable/*</url-pattern>
    </filter-mapping>
    <filter-mapping>
+      <filter-name>FacesContextFilter</filter-name>
+      <url-pattern>/printTable/*</url-pattern>
+   </filter-mapping>     
+   <filter-mapping>
       <filter-name>SubstitutionFilter</filter-name>
       <url-pattern>/printTable/*</url-pattern>
    </filter-mapping>
@@ -452,6 +492,10 @@
       <url-pattern>/n/*</url-pattern>
    </filter-mapping>
    <filter-mapping>
+      <filter-name>FacesContextFilter</filter-name>
+      <url-pattern>/n/*</url-pattern>
+   </filter-mapping>     
+   <filter-mapping>
       <filter-name>SubstitutionFilter</filter-name>
       <url-pattern>/n/*</url-pattern>
    </filter-mapping>    
@@ -484,6 +528,10 @@
       <filter-name>Authentication Filter</filter-name>
       <url-pattern>/ajax/*</url-pattern>
    </filter-mapping>
+   <filter-mapping>
+      <filter-name>FacesContextFilter</filter-name>
+      <url-pattern>/ajax/*</url-pattern>
+   </filter-mapping>     
    <filter-mapping>
       <filter-name>SubstitutionFilter</filter-name>
       <url-pattern>/ajax/*</url-pattern>
@@ -568,6 +616,10 @@
       <filter-name>WebDAV Authentication Filter</filter-name>
       <url-pattern>/webdav/*</url-pattern>
    </filter-mapping>
+   <filter-mapping>
+      <filter-name>FacesContextFilter</filter-name>
+      <url-pattern>/webdav/*</url-pattern>
+   </filter-mapping>     
    <filter-mapping>
       <filter-name>SubstitutionFilter</filter-name>
       <url-pattern>/webdav/*</url-pattern>

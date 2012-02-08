@@ -30,72 +30,79 @@ public class LogTableBootstrap extends AbstractModuleComponent {
 
     @Override
     protected void executeInternal() {
-
         Connection con = null;
+        Statement stmt = null;
+
         try {
             con = dataSource.getConnection();
-        } catch (SQLException e) {
-            LOG.error("Failed to get DB connection. Skipping LOG table test", e);
-            return;
-        }
 
-        if (!isLogTablePresent(con)) {
-            LOG.info("Delta LOG tables do NOT exist. Creating...");
+            if (isLogTablePresent(con)) {
+                LOG.info("Delta LOG tables exist.");
+            } else {
+                LOG.info("Delta LOG tables do NOT exist. Creating...");
 
-            String stmts;
-            try {
-                stmts = IOUtils.toString(getClass().getResourceAsStream("delta_log_tables.sql"));
-            } catch (IOException e1) {
-                LOG.error(e1);
-                return;
-            }
-
-            Statement stmt = null;
-            try {
-                stmt = con.createStatement();
-
-                for (String stmtSql : stmts.split(";")) {
-                    stmt.executeUpdate(stmtSql);
-                }
-                con.commit();
-            } catch (SQLException e) {
-                LOG.error(e);
-            } finally {
-                if (stmt != null) {
-                    try {
-                        stmt.close();
-                    } catch (SQLException e) {
-                        LOG.error(e);
+                try {
+                    stmt = con.createStatement();
+                    for (String stmtSql : getDbStatements()) {
+                        stmt.executeUpdate(stmtSql);
                     }
+                    stmt.close();
+                    con.commit();
+                } catch (SQLException e) {
+                    LOG.error(e);
+                    throw new RuntimeException(e);
+                }
+
+                LOG.info("Delta LOG tables were created successfully.");
+            }
+
+        } catch (SQLException e) {
+            LOG.error("Creating DELTA log tables failed.", e);
+        } catch (IOException e) {
+            LOG.error("Reading DELTA log tables creation script failed.", e);
+        } finally {
+            if (con != null) {
+                try {
+                    con.close();
+                } catch (SQLException e1) {
+                    LOG.error(e1);
                 }
             }
-
-            LOG.info("Delta LOG tables were created successfully.");
-        } else {
-            LOG.info("Delta LOG tables exist.");
         }
-
-        if (con != null) {
-            try {
-                con.close();
-            } catch (SQLException e1) {
-                LOG.error(e1);
-            }
-        }
-
     }
 
-    private boolean isLogTablePresent(Connection con) {
+    private boolean isLogTablePresent(Connection con) throws SQLException {
         boolean logTableExists = true;
 
+        DatabaseMetaData dbMetaData = con.getMetaData();
         ResultSet tables = null;
 
         try {
-            DatabaseMetaData dbMetaData = con.getMetaData();
             tables = dbMetaData.getTables("", "", "delta_log", null);
             logTableExists = tables.next();
-        } catch (SQLException e) {
-            LOG.error(e);
+        } finally {
+            if (tables != null) {
+                try {
+                    tables.close();
+                } catch (SQLException e1) {
+                    LOG.error(e1);
+                }
+            }
+        }
+
+        try {
+            tables = dbMetaData.getColumns("", "", "delta_log", "object_id");
+
+            // Check column "object_id" exists and it must be nullable (ResultSet column 18 = IS_NULLABLE):
+            if (!tables.next() || "NO".equals(tables.getString(18))) {
+                LOG.info("Log tables exist but are out-of-date. Dropping...");
+                Statement stmt = con.createStatement();
+                stmt.executeUpdate("DROP TABLE delta_log_level");
+                stmt.executeUpdate("DROP TABLE delta_log");
+                stmt.close();
+                con.commit();
+                logTableExists = false;
+            }
         } finally {
             if (tables != null) {
                 try {
@@ -107,6 +114,10 @@ public class LogTableBootstrap extends AbstractModuleComponent {
         }
 
         return logTableExists;
+    }
+
+    private String[] getDbStatements() throws IOException {
+        return IOUtils.toString(getClass().getResourceAsStream("delta_log_tables.sql")).split(";");
     }
 
     public void setDataSource(DataSource dataSource) {

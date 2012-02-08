@@ -99,28 +99,7 @@ public class PostipoissStructureImporter {
 
     // ========= THINGS YOU MAY WANT TO CHANE =========
 
-    private static boolean isSeriesOpen(Toimik t) {
-        return false;
-    }
-
-    private static boolean isVolumeOpen(Toimik t) {
-        return false; // Logic for SIM/MV was: t.year() == 2010;
-    }
-
     private Date seriesValidFrom;
-    private static Date endOfArchive;
-
-    private static boolean isArchived(int year, Date validTo) {
-        if (year < 2009) {
-            return true;
-        }
-        if (year == 2009) {
-            if (validTo != null && validTo.before(endOfArchive)) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     // ================================================
 
@@ -150,15 +129,11 @@ public class PostipoissStructureImporter {
         setCaseService(BeanHelper.getCaseService());
         setBehaviourFilter(BeanHelper.getPolicyBehaviourFilter());
         setPostipoissImporter(postipoissImporter);
+        seriesComparisonIncludesTitle = postipoissImporter.isSeriesComparisonIncludesTitle();
 
         dateFormat.setLenient(false);
         try {
             seriesValidFrom = dateFormat.parse("01.01.2010");
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
-        try {
-            endOfArchive = dateFormat.parse("01.01.2010");
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }
@@ -167,6 +142,7 @@ public class PostipoissStructureImporter {
     private File dataFolder;
     private File workFolder;
     private NodeRef archivalsRoot;
+    private boolean openUnit;
 
     private AddressbookService addressbookService;
     private FunctionsService functionsService;
@@ -181,6 +157,7 @@ public class PostipoissStructureImporter {
     private BehaviourFilter behaviourFilter;
     private PostipoissImporter postipoissImporter;
 
+    private final boolean seriesComparisonIncludesTitle;
     private Map<String, NodeRef> contactCache;
     private Map<String, NodeRef> contactGroupCache;
     private Integer registerId;
@@ -204,10 +181,11 @@ public class PostipoissStructureImporter {
     /**
      * Runs the contact/structure import process
      */
-    public void runImport(File dataFolder, File workFolder, NodeRef archivalsRoot) throws Exception {
+    public void runImport(File dataFolder, File workFolder, NodeRef archivalsRoot, boolean openUnit) throws Exception {
         this.dataFolder = dataFolder;
         this.workFolder = workFolder;
         this.archivalsRoot = archivalsRoot;
+        this.openUnit = openUnit;
         init();
 
         // List<DocumentType> dts = documentTypeService.getAllDocumentTypes();
@@ -607,7 +585,7 @@ public class PostipoissStructureImporter {
         props.put(FunctionsModel.Props.TITLE.toString(), trimmedTitle);
         props.put(FunctionsModel.Props.TYPE.toString(), functionType);
         props.put(FunctionsModel.Props.ORDER.toString(), funk.order);
-        props.put(FunctionsModel.Props.STATUS.toString(), DocListUnitStatus.CLOSED.getValueName());
+        props.put(FunctionsModel.Props.STATUS.toString(), openUnit ? DocListUnitStatus.OPEN.getValueName() : DocListUnitStatus.CLOSED.getValueName());
         functionsService.saveOrUpdate(function, archivalsRoot);
 
         log.info(function.getNodeRef());
@@ -822,9 +800,17 @@ public class PostipoissStructureImporter {
         Map<String, Map<String, NodeRef>> bigMap = t.archived ? archivedSeriesByIndex : seriesByIndex;
         Map<String, NodeRef> map = bigMap.get(t.functionId);
         if (map != null) {
-            return map.get(t.seriesIndex);
+            return map.get(getSeriesMapKey(t));
         }
         return null;
+    }
+
+    private String getSeriesMapKey(Toimik t) {
+        String key = t.seriesIndex;
+        if (seriesComparisonIncludesTitle) {
+            key += " " + StringUtils.deleteWhitespace(t.seriesTitle).toLowerCase();
+        }
+        return key;
     }
 
     private void putSeries(Toimik t, NodeRef series) {
@@ -834,7 +820,7 @@ public class PostipoissStructureImporter {
             map = new HashMap<String, NodeRef>();
             bigMap.put(t.functionId, map);
         }
-        map.put(t.seriesIndex, series);
+        map.put(getSeriesMapKey(t), series);
     }
 
     private void importToimik(Toimik t) {
@@ -872,7 +858,7 @@ public class PostipoissStructureImporter {
 
         volume.setValidFrom(t.validFrom);
         volume.setValidTo(t.validTo);
-        volume.setStatus(isVolumeOpen(t) ? DocListUnitStatus.OPEN.getValueName() : DocListUnitStatus.CLOSED.getValueName());
+        volume.setStatus(openUnit ? DocListUnitStatus.OPEN.getValueName() : DocListUnitStatus.CLOSED.getValueName());
 
         if (t.validTo != null) {
             volume.setDispositionDate(DateUtils.addYears(t.validTo, t.bestBefore));
@@ -912,7 +898,7 @@ public class PostipoissStructureImporter {
         props.put(SeriesModel.Props.TYPE.toString(), SeriesType.SERIES.getValueName() /* toSeriesType(t) */);
         props.put(SeriesModel.Props.SERIES_IDENTIFIER.toString(), t.seriesIndex);
         props.put(SeriesModel.Props.TITLE.toString(), t.seriesTitle);
-        props.put(SeriesModel.Props.STATUS.toString(), isSeriesOpen(t) ? DocListUnitStatus.OPEN.getValueName() : DocListUnitStatus.CLOSED.getValueName());
+        props.put(SeriesModel.Props.STATUS.toString(), openUnit ? DocListUnitStatus.OPEN.getValueName() : DocListUnitStatus.CLOSED.getValueName());
         props.put(SeriesModel.Props.VALID_FROM_DATE.toString(), seriesValidFrom);
         try {
             int order = PostipoissUtil.inferLastNumber(t.seriesIndex);

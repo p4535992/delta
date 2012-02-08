@@ -34,9 +34,9 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 public class DatePickerGenerator extends BaseComponentGenerator {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DatePickerGenerator.class);
     /** predefined property names, that should be considered as beginDates despite how they are named */
-    private List<String> addBeginDateClassByPropName;
+    private List<String> addBeginDateClassByPropName = new ArrayList<String>();
     /** predefined property names, that should be considered as endDates despite how they are named */
-    private List<String> addEndDateClassByPropName;
+    private List<String> addEndDateClassByPropName = new ArrayList<String>();
     public static final String DATE_FIELD_LABEL = "dateFieldLabel";
 
     @Override

@@ -26,11 +26,10 @@ import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.CssStylable;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
+import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
-import ee.webmedia.alfresco.document.type.model.DocumentType;
-import ee.webmedia.alfresco.document.type.service.DocumentTypeHelper;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.series.model.Series;
@@ -50,7 +49,6 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     private boolean initialized;
 
     /** To be only accessed using {@link #getDocumentType()} */
-    private DocumentType _documentType;
     private transient DocumentTypeService documentTypeService;
 
     /**
@@ -65,7 +63,6 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
         files = source.getFiles();
         searchableProperties = new HashMap<QName, Serializable>(source.getSearchableProperties());
         initialized = source.initialized;
-        _documentType = source.getDocumentType();
     }
 
     public Document(NodeRef nodeRef) {
@@ -96,14 +93,6 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
         return this;
     }
 
-    public DocumentType getDocumentType() {
-        lazyInit();
-        if (_documentType == null) {
-            _documentType = getDocumentTypeService().getDocumentType(getType());
-        }
-        return _documentType;
-    }
-
     public String getDocumentTypeName() {
         String documentTypeId = objectTypeId();
         return BeanHelper.getDocumentAdminService().getDocumentTypeName(documentTypeId);
@@ -115,7 +104,12 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
 
     @Override
     public String getCssStyleClass() {
-        return objectTypeId();
+        String cssStyleClass = objectTypeId();
+        if (SystematicDocumentType.INCOMING_LETTER.isSameType(cssStyleClass)
+                || SystematicDocumentType.OUTGOING_LETTER.isSameType(cssStyleClass)) {
+            return cssStyleClass;
+        }
+        return "genericDocument";
     }
 
     // Basic properties that are used in document-list-dialog.jsp
@@ -134,10 +128,10 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     }
 
     public String getSender() {
-        QName docType = getType();
-        if (DocumentTypeHelper.isIncomingLetter(docType)) {
+        String docDynType = objectTypeId();
+        if (SystematicDocumentType.INCOMING_LETTER.isSameType(docDynType)) {
             return (String) getProperties().get(DocumentSpecificModel.Props.SENDER_DETAILS_NAME);
-        } else if (DocumentSubtypeModel.Types.INVOICE.equals(docType)) {
+        } else if (SystematicDocumentType.INVOICE.isSameType(docDynType)) {
             return (String) getProperties().get(DocumentSpecificModel.Props.SELLER_PARTY_NAME);
         }
         return (String) getProperties().get(DocumentCommonModel.Props.OWNER_NAME);
@@ -155,13 +149,12 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     }
 
     public String getSenderOrRecipients() {
-        QName docType = getType();
-        if (DocumentTypeHelper.isIncomingLetter(docType)) {
+        String docDynType = objectTypeId();
+        if (SystematicDocumentType.INCOMING_LETTER.isSameType(docDynType)) {
             return (String) getProperties().get(DocumentSpecificModel.Props.SENDER_DETAILS_NAME);
-        } else if (DocumentSubtypeModel.Types.INVOICE.equals(docType)) {
+        } else if (SystematicDocumentType.INVOICE.isSameType(docDynType)) {
             return (String) getProperties().get(DocumentSpecificModel.Props.SELLER_PARTY_NAME);
         }
-
         return getAllRecipients();
     }
 
@@ -269,22 +262,6 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     public String getSenderRegNumber() {
         // Only docsub:incomingLetter and docsub:outgoingLetter have this property
         return (String) getNode().getProperties().get(DocumentSpecificModel.Props.SENDER_REG_NUMBER);
-    }
-
-    public Date getDueDate2() {
-        lazyInit();
-        if (DocumentTypeHelper.isIncomingLetter(getType())) {
-            return (Date) getProperties().get(DocumentSpecificModel.Props.DUE_DATE);
-        } else if (getType().equals(DocumentSubtypeModel.Types.MANAGEMENTS_ORDER)) {
-            return (Date) getProperties().get(DocumentSpecificModel.Props.MANAGEMENTS_ORDER_DUE_DATE);
-        } else if (getType().equals(DocumentSubtypeModel.Types.CONTRACT_SIM)) {
-            return (Date) getProperties().get(DocumentSpecificModel.Props.CONTRACT_SIM_END_DATE);
-        } else if (getType().equals(DocumentSubtypeModel.Types.CONTRACT_SMIT)) {
-            return (Date) getProperties().get(DocumentSpecificModel.Props.CONTRACT_SMIT_END_DATE);
-        } else if (getType().equals(DocumentSubtypeModel.Types.CONTRACT_MV)) {
-            return (Date) getProperties().get(DocumentSpecificModel.Props.CONTRACT_MV_END_DATE);
-        }
-        return null;
     }
 
     public String getAccessRestriction() {

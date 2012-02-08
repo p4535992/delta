@@ -78,6 +78,7 @@
       <property name="sendOutService" ref="SendOutService" />
       <property name="privilegeService" ref="PrivilegeService" />
       <property name="permissionService" ref="PermissionService" />
+      <property name="logService" ref="LogService" />
       <property name="fromDvkXPath" value="${dvk.received.parent.folder.xpath}${dvk.received.folder.name}" />
       <property name="incomingEmailPath" value="${imap.config.home.rootPath}/imap-ext:incoming"/>
       <property name="receivedInvoicePath" value="/imap-ext:imap-root/imap-ext:receivedInvoices" />
@@ -335,7 +336,7 @@
       </property>
       <property name="dictionaryService" ref="DictionaryService" />
       <property name="transactionService" ref="TransactionService" />
-      <property name="functionsService" ref="FunctionsService" />
+      <property name="documentListService" ref="DocumentListService" />
    </bean>   
 
    <bean id="registrationNumberReinventedUpdater" class="ee.webmedia.alfresco.document.bootstrap.RegistrationNumberReinventedUpdater" parent="abstractNodeUpdater">

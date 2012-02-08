@@ -348,7 +348,7 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
         }
 
         // Search button
-        out.write("<button type=\"button\" onclick=\"");
+        out.write("<button class=\"specificAction\" type=\"button\" onclick=\"");
         out.write(generateFormSubmit(context, ACTION_SEARCH, 0));
         out.write("\">");
         out.write(Utils.encode(bundle.getString(MSG_SEARCH)));
@@ -414,7 +414,7 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
                 out.write(" class='hidden'");
             }
             out.write("><td>");
-            out.write("<input type='submit' value='");
+            out.write("<input class=\"picker-add\" type='submit' value='");
             String msg = getAddButtonLabel();
             if (msg == null || msg.length() == 0) {
                 msg = bundle.getString(MSG_ADD);

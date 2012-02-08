@@ -15,14 +15,15 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.simple.ParameterizedRowMapper;
+import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.util.StringUtils;
 
 import ee.webmedia.alfresco.filter.model.FilterVO;
-import ee.webmedia.alfresco.log.model.Level;
+import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogFilter;
-import ee.webmedia.alfresco.log.model.SystemLog;
+import ee.webmedia.alfresco.log.model.LogLevel;
+import ee.webmedia.alfresco.log.model.LogSetup;
 
 /**
  * Main implementation of {@link LogService}. This class does not rely on Alfresco, and exchanges data with the database using JDBC(Template) directly.
@@ -31,35 +32,37 @@ import ee.webmedia.alfresco.log.model.SystemLog;
  */
 public class LogServiceImpl implements LogService {
 
-    private JdbcTemplate jdbcTemplate;
+    private SimpleJdbcTemplate jdbcTemplate;
 
     @Override
     public void saveLogSetup(LogSetup logSetup) {
         jdbcTemplate.update("TRUNCATE delta_log_level");
-        jdbcTemplate.batchUpdate("INSERT INTO delta_log_level VALUES (?)", new LogSetupSqlParamSetter(logSetup.toLogLevels()));
+        jdbcTemplate.getJdbcOperations().batchUpdate("INSERT INTO delta_log_level VALUES (?)", new LogSetupSqlParamSetter(logSetup.toLogLevels()));
     }
 
     @Override
     @SuppressWarnings("rawtypes")
     public LogSetup getCurrentLogSetup() {
         List result = jdbcTemplate.query("SELECT * FROM delta_log_level", new LogLevelRowMapper());
-        Set<Level> levels = new HashSet<Level>(result.size());
+        Set<LogLevel> levels = new HashSet<LogLevel>(result.size());
         for (Object level : result) {
-            levels.add((Level) level);
+            levels.add((LogLevel) level);
         }
         return LogSetup.fromLogLevels(levels);
     }
 
     @Override
-    public void addLogEntry(SystemLog log) {
-        jdbcTemplate.update("INSERT INTO delta_log (log_entry_id,level,creator_id,creator_name,computer_ip,computer_name,object_id,object_name,description) "
-                + "VALUES (to_char(CURRENT_DATE,'YYYYMMDD') || (SELECT COUNT(*) + 1 FROM delta_log WHERE date(created_date_time) = CURRENT_DATE),?,?,?,?,?,?,?,?)",
-                new Object[] { log.getLevel(), log.getCreatorId(), log.getCreatorName(), log.getComputerIp(), log.getComputerName(), log.getObjectId(), log.getObjectName(),
-                        log.getEventDescription() });
+    public void addLogEntry(LogEntry log) {
+        if (jdbcTemplate.queryForInt("SELECT COUNT(*) FROM delta_log_level WHERE level=?", log.getLevel()) != 0) {
+            jdbcTemplate.update("INSERT INTO delta_log (log_entry_id,level,creator_id,creator_name,computer_ip,computer_name,object_id,object_name,description) "
+                    + "VALUES (to_char(CURRENT_DATE,'YYYYMMDD') || (SELECT COUNT(*) + 1 FROM delta_log WHERE date(created_date_time) = CURRENT_DATE),?,?,?,?,?,?,?,?)",
+                    new Object[] { log.getLevel(), log.getCreatorId(), log.getCreatorName(), log.getComputerIp(), log.getComputerName(), log.getObjectId(), log.getObjectName(),
+                            log.getEventDescription() });
+        }
     }
 
     @Override
-    public List<SystemLog> getLogEntries(LogFilter filter) {
+    public List<LogEntry> getLogEntries(LogFilter filter) {
         StringBuilder q = new StringBuilder("SELECT log_entry_id, level, created_date_time, creator_id, creator_name, computer_ip, computer_name, " +
                 "object_id, object_name, description FROM delta_log");
 
@@ -71,10 +74,10 @@ public class LogServiceImpl implements LogService {
                 filterMap.put("log_entry_id = ?", filter.getLogEntryId());
             }
             if (filter.getDateCreatedStart() != null) {
-                filterMap.put("created_date_time >= ?", filter.getDateCreatedStart());
+                filterMap.put("date(created_date_time) >= ?", filter.getDateCreatedStart());
             }
             if (filter.getDateCreatedEnd() != null) {
-                filterMap.put("created_date_time <= ?", filter.getDateCreatedEnd());
+                filterMap.put("date(created_date_time) <= ?", filter.getDateCreatedEnd());
             }
             if (StringUtils.hasLength(filter.getCreatorName())) {
                 filterMap.put("lower(creator_name) LIKE ?", "%" + filter.getCreatorName().toLowerCase() + "%");
@@ -109,7 +112,7 @@ public class LogServiceImpl implements LogService {
 
         q.append(" ORDER BY created_date_time ASC");
 
-        return jdbcTemplate.query(q.toString(), values, new LogRowMapper());
+        return jdbcTemplate.query(q.toString(), new LogRowMapper(), values);
     }
 
     @Override
@@ -141,15 +144,15 @@ public class LogServiceImpl implements LogService {
         return Collections.emptyList();
     }
 
-    public void setJdbcTemplate(JdbcTemplate jdbcTemplate) {
+    public void setJdbcTemplate(SimpleJdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 
     private class LogSetupSqlParamSetter implements BatchPreparedStatementSetter {
 
-        private final Set<Level> levels;
+        private final Set<LogLevel> levels;
 
-        public LogSetupSqlParamSetter(Set<Level> levels) {
+        public LogSetupSqlParamSetter(Set<LogLevel> levels) {
             this.levels = levels;
         }
 
@@ -160,28 +163,28 @@ public class LogServiceImpl implements LogService {
 
         @Override
         public void setValues(PreparedStatement stmt, int i) throws SQLException {
-            Iterator<Level> iterator = levels.iterator();
+            Iterator<LogLevel> iterator = levels.iterator();
             stmt.setString(1, iterator.next().name());
             iterator.remove();
         }
     }
 
-    private class LogLevelRowMapper implements RowMapper {
+    private class LogLevelRowMapper implements ParameterizedRowMapper<LogLevel> {
 
         @Override
-        public Object mapRow(ResultSet rs, int i) throws SQLException {
-            return Level.valueOf(rs.getString(1));
+        public LogLevel mapRow(ResultSet rs, int i) throws SQLException {
+            return LogLevel.valueOf(rs.getString(1));
         }
     }
 
-    private class LogRowMapper implements RowMapper {
+    private class LogRowMapper implements ParameterizedRowMapper<LogEntry> {
 
         @Override
-        public Object mapRow(ResultSet rs, int i) throws SQLException {
-            SystemLog log = new SystemLog();
+        public LogEntry mapRow(ResultSet rs, int i) throws SQLException {
+            LogEntry log = new LogEntry();
             log.setLogEntryId(rs.getString(1));
             log.setLevel(rs.getString(2));
-            log.setCreatedDateTime(rs.getDate(3));
+            log.setCreatedDateTime(rs.getTimestamp(3));
             log.setCreatorId(rs.getString(4));
             log.setCreatorName(rs.getString(5));
             log.setComputerIp(rs.getString(6));

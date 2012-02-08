@@ -7,10 +7,10 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:panel id="applog-results-panel" styleClass="panel-100 with-pager" label="#{msg.applog}" progressive="true">
+<a:panel id="applog-results-panel" styleClass="panel-100 with-pager" label="#{msg.applog_results}" progressive="true">
 
-   <a:richList id="applogList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      width="100%" value="#{ApplicationLogListDialog.logEntries}" var="r" initialSortColumn="createdDateTime" refreshOnBind="true">
+   <a:richList id="applogList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%"
+      value="#{ApplicationLogListDialog.logEntries}" var="r" initialSortColumn="createdDateTime" refreshOnBind="true">
 
       <a:column id="col1" primary="true">
          <f:facet name="header">
@@ -24,7 +24,7 @@
             <a:sortLink id="col2-sort" label="#{msg.applog_item_datetime}" value="createdDateTime" styleClass="header" />
          </f:facet>
          <h:outputText id="col2-text" value="#{r.createdDateTime}">
-           <f:convertDateTime pattern="dd.MM.yyyy HH:mm" />
+            <a:convertXMLDate type="both" pattern="#{msg.date_time_pattern}" />
          </h:outputText>
       </a:column>
 
@@ -66,6 +66,7 @@
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
       <a:dataPager id="pager1" styleClass="pager" />
 
-    </a:richList>
+   </a:richList>
 
+   <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp" />
 </a:panel>

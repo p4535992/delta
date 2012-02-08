@@ -27,10 +27,15 @@ import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.log.model.LogObject;
+import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.privilege.model.PrivMappings;
 import ee.webmedia.alfresco.privilege.model.UserPrivileges;
+import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.volume.model.VolumeModel;
 
 /**
  * @author Ats Uiboupin
@@ -44,6 +49,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
     private AuthorityService authorityService;
     public static final String GROUPLESS_GROUP = "<groupless>";
     private ApplicationService applicationService;
+    private LogService logService;
 
     // cache some values that shouldn't change during application runtime
     private Boolean isTest;
@@ -155,22 +161,36 @@ public class PrivilegeServiceImpl implements PrivilegeService {
 
     @Override
     public void savePrivileges(NodeRef manageableRef, Map<String, UserPrivileges> privilegesByUsername, Map<String, UserPrivileges> privilegesByGroup, QName listenerCode) {
-        updatePrivileges(manageableRef, privilegesByUsername);
-        updatePrivileges(manageableRef, privilegesByGroup);
+        updatePrivileges(manageableRef, privilegesByUsername, false);
+        updatePrivileges(manageableRef, privilegesByGroup, true);
     }
 
-    private void updatePrivileges(NodeRef manageableRef, Map<String, UserPrivileges> privilegesByAuthority) {
+    private void updatePrivileges(NodeRef manageableRef, Map<String, UserPrivileges> privilegesByAuthority, boolean group) {
         for (Iterator<Entry<String, UserPrivileges>> it = privilegesByAuthority.entrySet().iterator(); it.hasNext();) {
             Entry<String, UserPrivileges> entry = it.next();
             String authority = entry.getKey();
             UserPrivileges vo = entry.getValue();
-            for (String permission : vo.getPrivilegesToDelete()) {
+
+            Set<String> privilegesToDelete = vo.getPrivilegesToDelete();
+            for (String permission : privilegesToDelete) {
                 permissionService.deletePermission(manageableRef, authority, permission);
             }
+            if (!vo.isDeleted() && !privilegesToDelete.isEmpty()) {
+                logMemberPrivRem(manageableRef, authority, group, privilegesToDelete);
+            }
+
             if (vo.isDeleted()) {
                 it.remove();
+                logMemberRemove(manageableRef, authority, group);
             } else {
                 Set<String> privilegesToAdd = vo.getPrivilegesToAdd();
+
+                if (vo.isNew()) {
+                    logMemberAdd(manageableRef, authority, group);
+                } else if (!privilegesToAdd.isEmpty()) {
+                    logMemberPrivAdd(manageableRef, authority, group, privilegesToAdd);
+                }
+
                 if (!privilegesToAdd.isEmpty()) {
                     setPermissions(manageableRef, authority, privilegesToAdd);
                 }
@@ -201,6 +221,53 @@ public class PrivilegeServiceImpl implements PrivilegeService {
         return permissionsWithDependencies;
     }
 
+    private void log(NodeRef manageableRef, String messageCode, Object... params) {
+        LogObject obj = LogObject.DOCUMENT;
+        QName nodeType = nodeService.getType(manageableRef);
+        if (SeriesModel.Types.SERIES.equals(nodeType)) {
+            obj = LogObject.RIGHTS_SERIES;
+        } else if (VolumeModel.Types.VOLUME.equals(nodeType)) {
+            obj = LogObject.RIGHTS_VOLUME;
+        }
+        logService.addLogEntry(LogEntry.create(obj, userService, manageableRef, messageCode, params));
+    }
+
+    private String getAuthorityName(String authority, boolean group) {
+        return group ? authorityService.getAuthorityDisplayName(authority) : userService.getUserFullNameAndId(authority);
+    }
+
+    private void logMemberRemove(NodeRef manageableRef, String authority, boolean group) {
+        if (group) {
+            log(manageableRef, "applog_rights_rem_group", getAuthorityName(authority, group));
+        } else {
+            log(manageableRef, "applog_rights_rem_user", getAuthorityName(authority, group));
+        }
+    }
+
+    private void logMemberAdd(NodeRef manageableRef, String authority, boolean group) {
+        if (group) {
+            log(manageableRef, "applog_rights_add_group", getAuthorityName(authority, group));
+        } else {
+            log(manageableRef, "applog_rights_add_user", getAuthorityName(authority, group));
+        }
+    }
+
+    private void logMemberPrivAdd(NodeRef manageableRef, String authority, boolean group, Set<String> privs) {
+        if (group) {
+            log(manageableRef, "applog_priv_add_group", getAuthorityName(authority, group), StringUtils.join(privs, ", "));
+        } else {
+            log(manageableRef, "applog_priv_add_user", getAuthorityName(authority, group), StringUtils.join(privs, ", "));
+        }
+    }
+
+    private void logMemberPrivRem(NodeRef manageableRef, String authority, boolean group, Set<String> privs) {
+        if (group) {
+            log(manageableRef, "applog_priv_rem_group", getAuthorityName(authority, group), StringUtils.join(privs, ", "));
+        } else {
+            log(manageableRef, "applog_priv_rem_user", getAuthorityName(authority, group), StringUtils.join(privs, ", "));
+        }
+    }
+
     // START: getters / setters
     public void setUserService(UserService userService) {
         this.userService = userService;
@@ -220,6 +287,10 @@ public class PrivilegeServiceImpl implements PrivilegeService {
 
     public void setApplicationService(ApplicationService applicationService) {
         this.applicationService = applicationService;
+    }
+
+    public void setLogService(LogService logService) {
+        this.logService = logService;
     }
 
     /**

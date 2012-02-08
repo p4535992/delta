@@ -1310,4 +1310,17 @@ public class ComponentUtil {
         putAttribute(uiComponent, STYLE_CLASS, styleClass);
     }
 
+    public static Integer getIndexFromValueBinding(String vb) {
+        Integer index = null;
+        if (vb.endsWith("]}")) {
+            String indexStr = vb.substring(vb.lastIndexOf('[') + 1, vb.length() - 2);
+            try {
+                index = Integer.parseInt(indexStr);
+            } catch (NumberFormatException e) {
+                // Do nothing
+            }
+        }
+        return index;
+    }
+
 }
