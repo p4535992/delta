@@ -3,7 +3,7 @@ CREATE TABLE delta_log_level (
 );
 
 CREATE TABLE delta_log (
-  log_entry_id text NOT NULL UNIQUE,
+  log_entry_id text PRIMARY KEY,
   created_date_time timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
   level text NOT NULL,
   creator_id text NOT NULL,

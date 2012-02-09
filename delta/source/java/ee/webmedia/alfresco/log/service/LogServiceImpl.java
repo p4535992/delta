@@ -14,12 +14,14 @@ import java.util.Set;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.simple.ParameterizedRowMapper;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.util.StringUtils;
 
 import ee.webmedia.alfresco.filter.model.FilterVO;
+import ee.webmedia.alfresco.log.LogHelper;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogFilter;
 import ee.webmedia.alfresco.log.model.LogLevel;
@@ -30,9 +32,16 @@ import ee.webmedia.alfresco.log.model.LogSetup;
  * 
  * @author Martti Tamm
  */
-public class LogServiceImpl implements LogService {
+public class LogServiceImpl implements LogService, InitializingBean {
 
     private SimpleJdbcTemplate jdbcTemplate;
+
+    private boolean useClientIpFromXForwardedForHttpHeader;
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        LogHelper.setUseClientIpFromXForwardedForHttpHeader(useClientIpFromXForwardedForHttpHeader);
+    }
 
     @Override
     public void saveLogSetup(LogSetup logSetup) {
@@ -195,4 +204,9 @@ public class LogServiceImpl implements LogService {
             return log;
         }
     }
+
+    public void setUseClientIpFromXForwardedForHttpHeader(boolean useClientIpFromXForwardedForHttpHeader) {
+        this.useClientIpFromXForwardedForHttpHeader = useClientIpFromXForwardedForHttpHeader;
+    }
+
 }

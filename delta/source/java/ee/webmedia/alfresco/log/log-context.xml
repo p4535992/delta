@@ -12,7 +12,7 @@
       </property>
    </bean>
 
-   <bean class="ee.webmedia.alfresco.log.bootstrap.LogTableBootstrap" parent="module.baseComponent" name="LogTableBootstrap">
+   <bean id="logTableBootstrap2" class="ee.webmedia.alfresco.log.bootstrap.LogTableBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="true" />
       <property name="dataSource" ref="dataSource" />
@@ -26,6 +26,7 @@
             <constructor-arg ref="dataSource" />
          </bean>
       </property>
+      <property name="useClientIpFromXForwardedForHttpHeader" value="${useClientIpFromXForwardedForHttpHeader}" />
    </bean>
 
    <bean id="LogService" class="org.springframework.aop.framework.ProxyFactoryBean">
