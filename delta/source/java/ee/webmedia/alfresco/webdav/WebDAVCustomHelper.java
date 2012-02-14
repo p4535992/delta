@@ -128,7 +128,7 @@ public class WebDAVCustomHelper extends WebDAVHelper {
                 if (additionalCheck) {
                     return; // allow writing based on additional logic
                 }
-                throw new AccessDeniedException("not allowing writing - document is finished or has in-progress workflows");
+                throw new AccessDeniedException("not allowing writing - document is finished or has in-progress workflows or is incoming letter");
             }
         }
 

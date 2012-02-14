@@ -1141,6 +1141,37 @@ public class NotificationServiceImpl implements NotificationService {
         }
     }
 
+    @Override
+    public int processContractDueDateNotifications() {
+        int sentNotificationCount = 0;
+        Notification notification = setupNotification(new Notification(), NotificationModel.NotificationType.CONTRACT_DUE_DATE);
+
+        NodeRef notificationTemplateByName = templateService.getNotificationTemplateByName(notification.getTemplateName());
+        if (notificationTemplateByName == null) {
+            if (log.isDebugEnabled()) {
+                log.debug("Contract due date notification email template '" + notification.getTemplateName()
+                        + "' not found, no notification email is sent");
+            }
+            return sentNotificationCount;
+        }
+
+        List<Document> contracts = documentSearchService.searchDueContracts();
+        for (Document contract : contracts) {
+            notification.addRecipient(contract.getOwnerName(), userService.getUserEmail(contract.getOwnerId()));
+            LinkedHashMap<String, NodeRef> data = new LinkedHashMap<String, NodeRef>(1);
+            data.put(null, contract.getNodeRef());
+            try {
+                sendNotification(notification, contract.getNodeRef(), data);
+                sentNotificationCount++;
+            } catch (EmailException e) {
+                log.error("Failed to send email notification " + notification, e);
+            }
+            notification.clearRecipients();
+        }
+
+        return sentNotificationCount;
+    }
+
     private LinkedHashMap<String, NodeRef> setupTemplateData(Task task) {
         LinkedHashMap<String, NodeRef> templateDataNodeRefs = new LinkedHashMap<String, NodeRef>();
         Workflow workflow = task.getParent();
@@ -1371,7 +1402,6 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public void processVolumeDispositionDateNotifications(ActionEvent event) {
-
         AuthenticationUtil.runAs(new RunAsWork<Integer>() {
             @Override
             public Integer doWork() throws Exception {
@@ -1379,6 +1409,16 @@ public class NotificationServiceImpl implements NotificationService {
             }
         }, AuthenticationUtil.getSystemUserName());
 
+    }
+
+    @Override
+    public void processContractDueDateNotifications(ActionEvent event) {
+        AuthenticationUtil.runAs(new RunAsWork<Integer>() {
+            @Override
+            public Integer doWork() throws Exception {
+                return processContractDueDateNotifications();
+            }
+        }, AuthenticationUtil.getSystemUserName());
     }
 
     @Override

@@ -549,6 +549,19 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         }
     }
 
+    public void addDateForAllTasks(ActionEvent event) {
+        Workflow block = compoundWorkflow.getWorkflows().get(ActionUtil.getParam(event, WF_INDEX, Integer.class));
+        if (block.isStatus(Status.NEW)) {
+            Task selectedTask = block.getTasks().get(ActionUtil.getParam(event, TASK_INDEX, Integer.class));
+            Date originDate = selectedTask.getDueDate();
+            for (Task task : block.getTasks()) {
+                if (task != selectedTask) {
+                    task.setDueDate(originDate);
+                }
+            }
+        }
+    }
+
     // /// PROTECTED & PRIVATE METHODS /////
 
     @Override

@@ -570,8 +570,8 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
     }
 
     public void confirmSelectedFiles() {
-        String[] attachments = (String[]) getAttachmentSelect().getValue();
-        String[] scanned = (String[]) getScannedSelect().getValue();
+        String[] attachments = getAttachmentSelect() == null ? new String[0] : (String[]) getAttachmentSelect().getValue();
+        String[] scanned = getScannedSelect() == null ? new String[0] : (String[]) getScannedSelect().getValue();
 
         String[] selected = (String[]) ArrayUtils.addAll(attachments, scanned);
 

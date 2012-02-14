@@ -89,7 +89,8 @@
           	now.setMilliseconds(0);
           	var action = null;
           	$jQ('input[name$="substitutionStartDateInput"]').each(function () {
-          	   if ($jQ(this).datepicker('getDate') < now) {
+          	   var startDate = $jQ(this).datepicker('getDate');
+          	   if (startDate != null && startDate < now) {
                   action = confirm('<%= MessageUtil.getMessageAndEscapeJS("substitute_start_before_now")%>');
           	   }
           	   if (action != null) {

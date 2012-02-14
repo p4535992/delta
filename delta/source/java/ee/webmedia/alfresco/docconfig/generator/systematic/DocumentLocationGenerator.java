@@ -625,7 +625,9 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             document.getProperties().put(seriesProp.toString(), seriesRef);
             document.getProperties().put(volumeProp.toString(), volumeRef);
             document.getProperties().put(caseProp.toString(), caseRef);
-            document.getProperties().put(caseLabelEditableProp.toString(), caseLabel);
+            if (!isSearchFilter) { // do not clear caseLabelEditable prop if this is a search filter node
+                document.getProperties().put(caseLabelEditableProp.toString(), caseLabel);
+            }
         }
 
         private List<Function> getAllFunctions(Node document, boolean isSearchFilter) {

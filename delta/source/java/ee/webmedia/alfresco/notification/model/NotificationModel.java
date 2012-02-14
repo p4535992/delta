@@ -59,6 +59,7 @@ public interface NotificationModel {
         QName TASK_DUE_DATE_APPROACHING = QName.createQName(URI, "dueDateApproaching");
         QName TASK_DUE_DATE_EXCEEDED = QName.createQName(URI, "dueDateExceeded");
         QName VOLUME_DISPOSITION_DATE = QName.createQName(URI, "volumeDispositionDate");
+        QName CONTRACT_DUE_DATE = QName.createQName(URI, "contractDueDate");
         QName ACCESS_RESTRICTION_END_DATE = QName.createQName(URI, "accessRestrictionEndDate");
         QName ACCESS_RESTRICTION_REASON_CHANGED = QName.createQName(URI, "accessRestrictionReasonChanged");
 

@@ -78,7 +78,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateFormatUtils;
-import org.apache.commons.lang.time.FastDateFormat;
 import org.hibernate.StaleObjectStateException;
 import org.joda.time.Days;
 import org.joda.time.Instant;
@@ -114,7 +113,6 @@ import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.log.service.DocumentPropertiesChangeHolder;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
@@ -134,7 +132,6 @@ import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.notification.service.NotificationService;
-import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.register.model.Register;
 import ee.webmedia.alfresco.register.service.RegisterService;
 import ee.webmedia.alfresco.series.model.Series;
@@ -184,7 +181,6 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
     private MenuService menuService;
     private WorkflowService workflowService;
     private DocumentLogService documentLogService;
-    private PrivilegeService privilegeService;
     private PermissionService permissionService;
     protected SendOutService sendOutService;
     private UserService userService;
@@ -212,14 +208,8 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
     private final Map<QName/* nodeType/nodeAspect */, PropertiesModifierCallback> creationPropertiesModifierCallbacks = new LinkedHashMap<QName, PropertiesModifierCallback>();
 
     private static final String REGISTRATION_INDIVIDUALIZING_NUM_SUFFIX = "-1";
-    private static final FastDateFormat userDateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
     private static final String TEMP_LOGGING_DISABLED_REGISTERED_BY_USER = "{temp}logging_registeredByUser";
     private PropertyChangesMonitorHelper propertyChangesMonitorHelper = new PropertyChangesMonitorHelper();
-
-    private static final Set<String> SERIES_GROUPMEMBERS_PRIVILEGES = new HashSet<String>(Arrays.asList(Privileges.VIEW_DOCUMENT_META_DATA, Privileges.VIEW_DOCUMENT_FILES));
-
-    // TODO: create enum for non-systematic doc types?
-    private static final String INSTRUMENT_OF_DELIVERY_AND_RECIEPT = "instrumentOfDeliveryAndReceipt";
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -623,10 +613,6 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             } catch (RuntimeException e) {
                 log.error("Failed to move document to volumes folder", e);
                 throw new UnableToPerformException(MessageSeverity.ERROR, "document_errorMsg_register_movingNotEnabled_isReplyOrFollowUp", e);
-            }
-
-            if (!isDraft) {
-                documentLogService.addDocumentLog(docNodeRef, MessageUtil.getMessage("document_log_location_changed"));
             }
         }
         return getDocument(docNodeRef);
@@ -1814,7 +1800,8 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             }
         }
         if (StringUtils.isNotBlank(regNumber)) {
-            if (INSTRUMENT_OF_DELIVERY_AND_RECIEPT.equals(documentTypeId)) {
+
+            if (DocumentSubtypeModel.Types.INSTRUMENT_OF_DELIVERY_AND_RECEIPT.getLocalName().equals(documentTypeId)) {
                 if (replyAssocs.size() > 0) {
                     final NodeRef contractDocRef = replyAssocs.get(0).getTargetRef();
                     if (hasProp(DocumentSpecificModel.Props.FINAL_TERM_OF_DELIVERY_AND_RECEIPT, getPropDefs(contractDocRef))) {
@@ -2185,7 +2172,6 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                 final List<QName> ignoredProps, NodeRef nodeRef) {
             Collection<QName> extraIgnoredProps = null;
             propsChangedLogger = new DocumentPropertiesChangeHolder();
-            String emptyValue = MessageUtil.getMessage("document_log_status_empty");
             Map<QName, Serializable> oldPropsClone = new HashMap<QName, Serializable>(oldProps);
             for (Entry<QName, Serializable> entry : newProps.entrySet()) {
                 final QName key = entry.getKey();
@@ -2203,13 +2189,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                             continue;
                         }
                     }
-                    if (newValue == null || newValue instanceof String && StringUtils.isBlank((String) newValue)) {
-                        newValue = emptyValue;
-                    }
-                    if (oldValue == null || oldValue instanceof String && StringUtils.isBlank((String) oldValue)) {
-                        oldValue = emptyValue;
-                    }
-                    propsChangedLogger.addLog(nodeRef, key, oldValue, newValue);
+                    propsChangedLogger.addChange(nodeRef, key, oldValue, newValue);
                 }
             }
             if (!oldPropsClone.isEmpty()) {
@@ -2226,7 +2206,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                                 continue;
                             }
                         }
-                        propsChangedLogger.addLog(nodeRef, key, oldPropsClone.get(key), emptyValue);
+                        propsChangedLogger.addChange(nodeRef, key, oldPropsClone.get(key), null);
                     }
                 }
             }
@@ -2756,10 +2736,6 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
 
     public void setSeriesService(SeriesService seriesService) {
         this.seriesService = seriesService;
-    }
-
-    public void setPrivilegeService(PrivilegeService privilegeService) {
-        this.privilegeService = privilegeService;
     }
 
     public void setPermissionService(PermissionService permissionService) {

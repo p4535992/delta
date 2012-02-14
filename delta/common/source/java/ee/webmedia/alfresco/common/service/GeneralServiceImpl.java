@@ -289,7 +289,7 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
         for (Map<String, ChildAssociationRef> typedAssoc : removedChildAssocs.values()) {
             for (ChildAssociationRef assoc : typedAssoc.values()) {
                 final NodeRef childRef = assoc.getChildRef();
-                docPropsChangeHolder.addLog(childRef, assoc.getTypeQName(), assoc.getChildRef(), null);
+                docPropsChangeHolder.addChange(childRef, assoc.getTypeQName(), assoc.getChildRef(), null);
                 if (RepoUtil.isSaved(childRef) && nodeService.exists(childRef)) {
                     nodeService.removeChild(assoc.getParentRef(), childRef);
                 }

@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.privilege.service;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getPrivilegeService;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isResponsible;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isStatus;
 
@@ -36,7 +37,8 @@ public class PrivilegeUtil {
             throw new IllegalArgumentException("no permissions given for permissions check");
         }
         UserService userService = BeanHelper.getUserService();
-        return userService.isAdministrator() || (userService.isDocumentManager() && docNode.hasPermissions(permissions));
+        return userService.isAdministrator() || (userService.isDocumentManager()
+                && getPrivilegeService().hasPermissionOnAuthority(docNode.getNodeRef(), UserService.AUTH_DOCUMENT_MANAGERS_GROUP, permissions));
     }
 
     public static Set<String> getPrivsWithDependencies(Set<String> permissions) {

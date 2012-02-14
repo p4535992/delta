@@ -89,6 +89,9 @@
 <f:verbatim><br/></f:verbatim>
 <h:commandButton id="processVolumeDispositionDateNotifications" value="processVolumeDispositionDateNotifications" type="submit"
    actionListener="#{NotificationService.processVolumeDispositionDateNotifications}" rendered="#{ApplicationService.test}" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="processContractDueDateNotifications" value="processContractDueDateNotifications" type="submit"
+   actionListener="#{NotificationService.processContractDueDateNotifications}" rendered="#{ApplicationService.test}" />
 
 <f:verbatim><hr/></f:verbatim>
 

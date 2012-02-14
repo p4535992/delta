@@ -5,13 +5,11 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.getDocTypeIdAndVersionNr;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FILE_CONTENTS;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FILE_NAMES;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.INDIVIDUAL_NUMBER;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_ID;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_NAME;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.PREVIOUS_OWNER_ID;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_DATE_TIME;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_NUMBER;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SHORT_REG_NUMBER;
 import static ee.webmedia.alfresco.utils.CalendarUtil.duration;
 
 import java.io.Serializable;
@@ -552,15 +550,14 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         { // update properties and log changes made in properties
             DocumentServiceImpl.PropertyChangesMonitorHelper propertyChangesMonitorHelper = new DocumentServiceImpl.PropertyChangesMonitorHelper();
             propertyChangesMonitorHelper.addIgnoredProps(docProps //
-                    , REG_NUMBER, SHORT_REG_NUMBER, INDIVIDUAL_NUMBER, REG_DATE_TIME // registration changes
+                    , REG_NUMBER, REG_DATE_TIME // registration changes
                     );
             DocumentPropertiesChangeHolder changedPropsNewValues = saveThisNodeAndChildNodes(null, docNode,
                     childAssocTypeQNamesRoot.getChildren(), null, propertyChangesMonitorHelper, propDefs);
-            boolean propsChanged = !changedPropsNewValues.isEmpty();
             if (!EventsLoggingHelper.isLoggingDisabled(docNode, DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED)) {
                 if (isDraft) {
                     documentLogService.addDocumentLog(docRef, MessageUtil.getMessage("document_log_status_created"));
-                } else if (propsChanged && !changedPropsNewValues.isOnlyAccessRestrictionPropsChanged() && !changedPropsNewValues.isOnlyLocationPropsChanged()) {
+                } else {
                     for (Serializable msg : changedPropsNewValues.generateLogMessages(propDefs, docRef)) {
                         documentLogService.addDocumentLog(docRef, (String) msg);
                     }
@@ -848,7 +845,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             QName typeQName = node.getType();
             nodeRef = nodeService.createNode(parentRef, typeQName, typeQName, typeQName, props).getChildRef();
             generalService.setAspectsIgnoringSystem(nodeRef, node.getAspects());
-            docPropsChangeHolder.addLog(nodeRef, typeQName, null, node.getNodeRef());
+            docPropsChangeHolder.addChange(nodeRef, typeQName, null, node.getNodeRef());
         } else {
             generalService.setAspectsIgnoringSystem(node);
 
@@ -881,7 +878,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
                     QName[] childHierarchy = (QName[]) ArrayUtils.add(currentHierarchy, assocTypeQName);
                     DocumentPropertiesChangeHolder changedChildNodePropsNewValues = saveThisNodeAndChildNodes(nodeRef, childNode,
                             childAssocTypeQName.getChildren(), childHierarchy, propertyChangesMonitorHelper, propDefs);
-                    docPropsChangeHolder.joinAnotherHolder(changedChildNodePropsNewValues);
+                    docPropsChangeHolder.addChanges(changedChildNodePropsNewValues);
                 }
             }
         }

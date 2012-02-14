@@ -76,7 +76,6 @@
       <property name="userService" ref="UserService" />
       <property name="substituteService" ref="SubstituteService" />
       <property name="sendOutService" ref="SendOutService" />
-      <property name="privilegeService" ref="PrivilegeService" />
       <property name="permissionService" ref="PermissionService" />
       <property name="logService" ref="LogService" />
       <property name="fromDvkXPath" value="${dvk.received.parent.folder.xpath}${dvk.received.folder.name}" />

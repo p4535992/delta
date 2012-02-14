@@ -27,6 +27,8 @@ public interface PrivilegeService {
 
     boolean hasPermission(final NodeRef targetRef, final String permission, String userName);
 
+    boolean hasPermissionOnAuthority(NodeRef targetRef, String authority, String... permissions);
+
     /**
      * @param manageableRef
      * @param manageablePermissions - only ACL entries with given permissions are used to fill {@link PrivMappings} that is returned

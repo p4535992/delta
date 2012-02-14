@@ -15,6 +15,7 @@
       <property name="authorityService" ref="AuthorityService" />
       <property name="generalService" ref="GeneralService" />
       <property name="nodeService" ref="NodeService" />
+      <property name="dictionaryService" ref="DictionaryService" />
       <property name="searchService" ref="SearchService" />
       <property name="personService" ref="PersonService" />
       <property name="permissionService" ref="PermissionService" />

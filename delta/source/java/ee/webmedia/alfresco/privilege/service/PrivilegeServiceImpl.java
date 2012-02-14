@@ -79,6 +79,21 @@ public class PrivilegeServiceImpl implements PrivilegeService {
     }
 
     @Override
+    public boolean hasPermissionOnAuthority(NodeRef targetRef, String authority, String... permissions) {
+        Set<AccessPermission> accessPermissions = permissionService.getAllSetPermissions(targetRef);
+        int matches = 0;
+        for (String permission : permissions) {
+            for (AccessPermission accessPermission : accessPermissions) {
+                if (accessPermission.getAuthority().equals(authority) && accessPermission.getPermission().equals(permission)
+                        && accessPermission.getAccessStatus() == AccessStatus.ALLOWED) {
+                    matches++;
+                }
+            }
+        }
+        return matches >= permissions.length;
+    }
+
+    @Override
     public PrivMappings getPrivMappings(NodeRef manageableRef, Collection<String> manageablePermissions) {
         PrivMappings privMappings = new PrivMappings(manageableRef);// fillMembersByGroup(manageableRef);
         Map<String/* userName */, UserPrivileges> privilegesByUsername = new HashMap<String, UserPrivileges>();

@@ -272,4 +272,6 @@ public interface DocumentSearchService {
 
     int getDiscussionDocumentsCount();
 
+    List<Document> searchDueContracts();
+
 }

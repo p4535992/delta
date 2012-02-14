@@ -5,9 +5,11 @@ import static ee.webmedia.alfresco.utils.SearchUtil.generateAndNotQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateAspectQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateDatePropertyRangeQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateLuceneSearchParams;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateMultiNodeRefQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateMultiStringExactQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateNodeRefQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateNumberPropertyRangeQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateParentQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyBooleanQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyDateQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyNotNullQuery;
@@ -62,7 +64,6 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.adr.model.AdrModel;
 import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
-import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
@@ -141,6 +142,32 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     private List<StoreRef> allStoresWithArchivalStoreVOs = null; // XXX This is currently used only for tasks. If analysis for CL 186867 is complete then this might be refactored
                                                                  // to getAllStores()
     private QName[] notIncomingLetterTypes;
+
+    @Override
+    public List<Document> searchDueContracts() {
+        long startTime = System.currentTimeMillis();
+        int contractDueDays = parametersService.getLongParameter(Parameters.CONTRACT_DUE_DATE_NOTIFICATION_DAYS).intValue();
+        Calendar cal = Calendar.getInstance();
+        Date now = cal.getTime();
+        cal.add(Calendar.DATE, contractDueDays);
+        Date dueDateLimit = cal.getTime();
+
+        String query = joinQueryPartsAnd(
+                generateTypeQuery(DocumentCommonModel.Types.DOCUMENT)
+                , generateStringExactQuery(SystematicDocumentType.CONTRACT.getId(), DocumentAdminModel.Props.OBJECT_TYPE_ID)
+                , joinQueryPartsOr(
+                        generatePropertyNullQuery(DocumentSpecificModel.Props.DUE_DATE)
+                        , generateDatePropertyRangeQuery(now, dueDateLimit, DocumentSpecificModel.Props.DUE_DATE)
+                )
+                );
+
+        List<Document> contracts = searchDocumentsImpl(query, -1, /* queryName */"contractDueDate");
+
+        if (log.isDebugEnabled()) {
+            log.debug("Search for contracts with due date took " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
+        }
+        return contracts;
+    }
 
     @Override
     public List<Document> searchDiscussionDocuments() {
@@ -841,7 +868,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             public String addResult(ResultSetRow row) {
                 return workflowService.hasAllFinishedCompoundWorkflows(row.getNodeRef())
                         ? row.getNodeRef().toString()
-                        : null;
+                                : null;
             }
         }).size();
 
@@ -861,18 +888,6 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         List<StoreRef> storeRefs = new ArrayList<StoreRef>(storeFunctionRootNodeRefs.size());
         for (NodeRef nodeRef : storeFunctionRootNodeRefs) {
             storeRefs.add(nodeRef.getStoreRef());
-        }
-        String caseLabel = (String) properties.get(DocumentLocationGenerator.CASE_LABEL_EDITABLE.toString());
-        NodeRef volumeRef = (NodeRef) properties.get(DocumentCommonModel.Props.VOLUME.toString());
-        if (!StringUtils.isBlank(caseLabel) && volumeRef != null) {
-            List<Case> cases = BeanHelper.getCaseService().getAllCasesByVolume(volumeRef);
-            String trimmedLabel = caseLabel.trim();
-            for (Case case1 : cases) {
-                if (trimmedLabel.equalsIgnoreCase(case1.getTitle().trim())) {
-                    properties.put(DocumentCommonModel.Props.CASE.toString(), case1.getNode().getNodeRef());
-                    break;
-                }
-            }
         }
         String query = generateDocumentSearchQuery(filter);
         if (StringUtils.isBlank(query)) {
@@ -1214,7 +1229,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     private String generateDocumentSearchQuery(Node filter) {
         long startTime = System.currentTimeMillis();
         List<String> queryParts = new ArrayList<String>(50);
-        Map<String, Object> props = filter.getProperties();
+        Map<QName, Serializable> props = RepoUtil.toQNameProperties(filter.getProperties());
 
         // START: special cases
         // Dok liik
@@ -1243,11 +1258,29 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         // END: special cases
 
         // dynamic generation
-        for (Entry<String, Object> entry : props.entrySet()) {
-            QName propQName = QName.createQName(entry.getKey());
+        for (Entry<QName, Serializable> entry : props.entrySet()) {
+            QName propQName = entry.getKey();
             if (DocumentLocationGenerator.CASE_LABEL_EDITABLE.equals(propQName)) { // caseLabelEditable value is the title of the case, but the property is a NodeRef
+                String caseLabel = (String) entry.getValue();
+                if (StringUtils.isBlank(caseLabel)) {
+                    continue;
+                }
+                NodeRef volumeRef = (NodeRef) props.get(DocumentCommonModel.Props.VOLUME);
+                String query = joinQueryPartsAnd(generatePropertyWildcardQuery(CaseModel.Props.TITLE, caseLabel.trim(), true, false, true),
+                        generateParentQuery(volumeRef, volumeRef.getStoreRef()));
+                ResultSet result = null;
+                try {
+                    result = doSearch(query, -1, "searchCaseByLabelForDocumentSearch", volumeRef.getStoreRef());
+                    queryParts.add(generateMultiNodeRefQuery(result.getNodeRefs(), DocumentCommonModel.Props.CASE));
+                } finally {
+                    if (result != null) {
+                        result.close();
+                    }
+                }
                 continue;
             } else if (propQName.getLocalName().contains("_")) {
+                continue;
+            } else if (DocumentCommonModel.Props.CASE.equals(propQName)) {
                 continue;
             }
             if (propQName.equals(DocumentCommonModel.Props.SHORT_REG_NUMBER) || !propQName.getNamespaceURI().equals(DocumentDynamicModel.URI)) {
@@ -1274,13 +1307,13 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                 Number maxValue = (Number) props.get(DoubleGenerator.getEndNumberQName(propQName));
                 generateNumberPropertyRangeQuery((Number) value, maxValue, propQName);
             } else if (value instanceof Boolean) {
-                queryParts.add(SearchUtil.generatePropertyBooleanQuery(propQName, (Boolean) value));
+                queryParts.add(generatePropertyBooleanQuery(propQName, (Boolean) value));
             } else if (value instanceof NodeRef) {
                 queryParts.add(generateNodeRefQuery((NodeRef) value, propQName));
             }
         }
 
-        String searchFilter = WmNode.toString(RepoUtil.getNotEmptyProperties(RepoUtil.toQNameProperties(props)), namespaceService);
+        String searchFilter = WmNode.toString(RepoUtil.getNotEmptyProperties(props), namespaceService);
         log.info("Documents search filter: " + searchFilter);
         logService.addLogEntry(LogEntry.create(LogObject.SEARCH_DOC, userService, "applog_search_docs", searchFilter));
 
@@ -1314,7 +1347,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             query = joinQueryPartsAnd(
                     generateNodeRefQuery(containerNodeRef, DocumentCommonModel.Props.FUNCTION, DocumentCommonModel.Props.SERIES, DocumentCommonModel.Props.VOLUME,
                             DocumentCommonModel.Props.CASE),
-                    query);
+                            query);
         }
         if (log.isDebugEnabled()) {
             log.debug("Quick search query construction time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);

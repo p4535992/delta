@@ -111,7 +111,7 @@
 
    </a:panel>
 
-   <a:panel styleClass="column panel-50" id="attachment-upload" label="#{msg.file_add_attachment}">
+   <a:panel styleClass="column panel-50" id="attachment-upload" label="#{msg.file_add_attachment}" rendered="#{UserService.documentManager}">
       <a:panel id="attachment-folder-panel" rendered="#{AddFileDialog.showAttachmentFolderSelect}">
          <h:panelGrid id="attachment-folder-select-panel" columns="2" columnClasses="vertical-align-middle,vertical-align-middle" >
             <h:outputText id="attachment-folder-label" value="#{msg.file_add_folder_label}" />
@@ -129,7 +129,7 @@
       </h:selectManyMenu>
    </a:panel>
 
-    <a:panel styleClass="column panel-50-f" id="scanned-file-upload" label="#{msg.file_add_scanned}">
+    <a:panel styleClass="column panel-50-f" id="scanned-file-upload" label="#{msg.file_add_scanned}" rendered="#{UserService.documentManager}">
       <a:panel id="scanned-folder-panel" rendered="#{AddFileDialog.showScannedFolderSelect}">
          <h:panelGrid id="scanned-folder-select-panel" columns="2" columnClasses="vertical-align-middle,vertical-align-middle" >
             <h:outputText id="scanned-folder-label" value="#{msg.file_add_folder_label}" />

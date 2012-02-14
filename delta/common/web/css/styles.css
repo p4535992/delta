@@ -1174,6 +1174,11 @@ textarea.inline {
 .xls {
 	background: url(../images/filetypes/xls.gif) no-repeat;
 }
+
+.add_date {
+	background: url(../images/icons/add_date.png) no-repeat;
+	line-height: 20px;
+}
 /*
 table.recipient th {
 	line-height: 20px;

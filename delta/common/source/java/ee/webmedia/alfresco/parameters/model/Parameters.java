@@ -61,6 +61,7 @@ public enum Parameters {
     TASK_DUE_DATE_NOTIFICATION_DAYS("taskDueDateNotificationDays"),
     VOLUME_DISPOSITION_DATE_NOTIFICATION_DAYS("volumeDispositionDateNotificationDays"),
     ACCESS_RESTRICTION_END_DATE_NOTIFICATION_DAYS("accessRestrictionEndDateNotificationDays"),
+    CONTRACT_DUE_DATE_NOTIFICATION_DAYS("contractDueDateNotificationDays"),
     ASSIGN_RESPONSIBILITY_INSTRUCTION("assignResponsibilityInstruction"),
     DAYS_FOR_SUBSTITUTION_TASKS_CALC("daysForSubstitutionTasksCalc"),
     DOC_PROP_LICENCE_DOC_NAME("docPropLicenceDocName"),
@@ -109,7 +110,7 @@ public enum Parameters {
     DIMENSION_CODE_INVOICE_HOUSE_BANK_CODES("dimensionCodeInvoiceHouseBankCodes"),
 
     DIMENSION_DELETION_PERIOD("dimensionDeletionPeriod"),
-    DIMENSION_DELETION_TIME("dimensionDeletionTime"), 
+    DIMENSION_DELETION_TIME("dimensionDeletionTime"),
 
     WORKING_DOCUMENTS_ADDRESS("workingDocumentsAddress");
 

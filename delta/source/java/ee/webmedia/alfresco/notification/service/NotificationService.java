@@ -45,11 +45,15 @@ public interface NotificationService {
 
     public int processAccessRestrictionEndDateNotifications();
 
+    public int processContractDueDateNotifications();
+
     public void processTaskDueDateNotifications(ActionEvent event);
 
     public void processVolumeDispositionDateNotifications(ActionEvent event);
 
     public void processAccessRestrictionEndDateNotifications(ActionEvent event);
+
+    public void processContractDueDateNotifications(ActionEvent event);
 
     public GeneralNotification getGeneralNotificationByNodeRef(NodeRef nodeRef);
 
@@ -74,5 +78,6 @@ public interface NotificationService {
     public void processAccessRestrictionChangedNotification(DocumentDynamic document, List<SendInfo> sendInfos);
 
     List<QName> getAllNotificationProps();
+
 
 }
