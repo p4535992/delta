@@ -14,6 +14,10 @@
       <property name="pkcs12Container" value="${jdigidoc.pkcs12.container}" />
       <property name="pkcs12Password" value="${jdigidoc.pkcs12.passwd}" />
       <property name="pkcs12CertSerial" value="${jdigidoc.pkcs12.cert_serial}" />
+      <property name="mobileIdServiceName" value="${mobile-id.service-name}" />
+      <property name="testMobileIdServiceName" value="Testimine" />
+      <property name="digiDocServiceUrl" value="https://digidocservice.sk.ee/DigiDocService" />
+      <property name="testDigiDocServiceUrl" value="https://www.openxades.org:8443/DigiDocService" />
    </bean>
 
    <bean id="SignatureService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -41,6 +45,30 @@
       <property name="resourceBundles">
          <list>
             <value>ee.webmedia.alfresco.signature.web.webclient-signature</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="skLdapService" class="ee.webmedia.alfresco.signature.service.SkLdapServiceImpl">
+      <property name="ldapContextSource">
+         <bean class="org.springframework.ldap.core.support.LdapContextSource">
+            <property name="url" value="ldap://ldap.sk.ee:389" />
+            <property name="base" value="c=EE" />
+            <property name="anonymousReadOnly" value="true" />
+         </bean>
+      </property>
+   </bean>
+
+   <bean id="SkLdapService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.signature.service.SkLdapService</value>
+         </list>
+      </property>
+      <property name="target" ref="skLdapService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
          </list>
       </property>
    </bean>

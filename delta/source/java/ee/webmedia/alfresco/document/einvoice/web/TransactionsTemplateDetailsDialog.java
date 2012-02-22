@@ -52,6 +52,7 @@ import ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConvert
 import ee.webmedia.alfresco.common.propertysheet.dimensionselector.DimensionSelectorGenerator;
 import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
 import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent;
+import ee.webmedia.alfresco.common.propertysheet.modalLayer.ValidatingModalLayerComponent;
 import ee.webmedia.alfresco.common.propertysheet.renderkit.HtmlGridCustomChildAttrRenderer;
 import ee.webmedia.alfresco.common.propertysheet.renderkit.HtmlGroupCustomRenderer;
 import ee.webmedia.alfresco.common.propertysheet.suggester.SuggesterGenerator;
@@ -432,14 +433,14 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
         }
 
         // popup to manually enter sap entry number
-        ModalLayerComponent entrySapNumber = (ModalLayerComponent) application.createComponent(ModalLayerComponent.class.getCanonicalName());
+        ValidatingModalLayerComponent entrySapNumber = (ValidatingModalLayerComponent) application.createComponent(ValidatingModalLayerComponent.class.getCanonicalName());
         entrySapNumber.setId("entrySapNumber");
         entrySapNumber.getAttributes().put(ModalLayerComponent.ATTR_HEADER_KEY, "document_invoiceEntrySapNumber_insert");
         UIInput entryNumberInput = (UIInput) application.createComponent(HtmlInputText.COMPONENT_TYPE);
         entryNumberInput.setId(MODAL_KEY_ENTRY_SAP_NUMBER);
         Map attributes = entryNumberInput.getAttributes();
-        attributes.put(ModalLayerComponent.ATTR_LABEL_KEY, "document_invoiceEntrySapNumber");
-        attributes.put(ModalLayerComponent.ATTR_MANDATORY, Boolean.TRUE);
+        attributes.put(ValidatingModalLayerComponent.ATTR_LABEL_KEY, "document_invoiceEntrySapNumber");
+        attributes.put(ValidatingModalLayerComponent.ATTR_MANDATORY, Boolean.TRUE);
         entrySapNumber.getChildren().add(entryNumberInput);
         entrySapNumber.setActionListener(application.createMethodBinding("#{DialogManager.bean.sendToSapManually}", UIActions.ACTION_CLASS_ARGS));
         transactionPanel.getChildren().add(entrySapNumber);

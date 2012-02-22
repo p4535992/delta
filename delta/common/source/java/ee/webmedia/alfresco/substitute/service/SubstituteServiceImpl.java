@@ -31,6 +31,7 @@ import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.log.PropDiffHelper;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
@@ -50,8 +51,6 @@ public class SubstituteServiceImpl implements SubstituteService, BeanFactoryAwar
     private GeneralService generalService;
     private SearchService searchService;
     private BeanFactory beanFactory;
-    private UserService userService;
-    private LogService logService;
 
     private static BeanPropertyMapper<Substitute> substituteBeanPropertyMapper;
 
@@ -262,12 +261,8 @@ public class SubstituteServiceImpl implements SubstituteService, BeanFactoryAwar
     }
 
     private void addLogEntry(NodeRef userRef, Substitute substitute, String msgCode) {
-        if (logService == null) {
-            logService = (LogService) beanFactory.getBean(LogService.BEAN_NAME, LogService.class);
-        }
-        if (userService == null) {
-            userService = (UserService) beanFactory.getBean(UserService.BEAN_NAME, UserService.class);
-        }
+        LogService logService = BeanHelper.getLogService();
+        UserService userService = BeanHelper.getUserService();
 
         String username = (String) nodeService.getProperty(userRef, ContentModel.PROP_USERNAME);
 

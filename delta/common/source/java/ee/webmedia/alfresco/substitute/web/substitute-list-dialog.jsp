@@ -89,12 +89,16 @@
           	now.setMilliseconds(0);
           	var action = null;
           	$jQ('input[name$="substitutionStartDateInput"]').each(function () {
-          	   var startDate = $jQ(this).datepicker('getDate');
-          	   if (startDate != null && startDate < now) {
-                  action = confirm('<%= MessageUtil.getMessageAndEscapeJS("substitute_start_before_now")%>');
+          	   var beginDate = $jQ(this).datepicker('getDate');
+          	   var endDate = getEndDate($jQ(this), $jQ(this).parent().parent()).datepicker('getDate');
+          	   if (endDate != null && endDate < now) {
+          	      alert('<%= MessageUtil.getMessageAndEscapeJS("substitute_end_before_now")%>');
+          	      action = false;
+          	      return false;
           	   }
-          	   if (action != null) {
-          	      return false; // break out of each
+          	   if (beginDate != null && beginDate < now && endDate != null && endDate >= now) {
+                  action = confirm('<%= MessageUtil.getMessageAndEscapeJS("substitute_start_before_now")%>');
+                  return false; // break out of each
           	   }
           	});
           	return (action == null) ? true : action;

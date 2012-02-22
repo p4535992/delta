@@ -35,17 +35,12 @@ public class LogTableBootstrap extends AbstractModuleComponent {
             dropLogTables(con);
 
             LOG.info("Creating log tables...");
-            try {
-                stmt = con.createStatement();
-                for (String stmtSql : getDbStatements()) {
-                    stmt.executeUpdate(stmtSql);
-                }
-                stmt.close();
-                con.commit();
-            } catch (SQLException e) {
-                LOG.error(e);
-                throw new RuntimeException(e);
+            stmt = con.createStatement();
+            for (String stmtSql : getDbStatements()) {
+                stmt.executeUpdate(stmtSql);
             }
+            stmt.close();
+            con.commit();
             LOG.info("Log tables were created successfully");
 
         } finally {

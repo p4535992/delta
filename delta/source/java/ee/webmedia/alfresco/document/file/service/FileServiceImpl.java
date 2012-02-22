@@ -249,6 +249,11 @@ public class FileServiceImpl implements FileService {
     public void moveAllFiles(NodeRef fromRef, NodeRef toRef) throws FileNotFoundException {
         List<FileInfo> fileInfos = fileFolderService.listFiles(fromRef);
         for (FileInfo fileInfo : fileInfos) {
+            if (FilenameUtil.isEncryptedFile(fileInfo.getName())) {
+                throw new UnableToPerformException("file_encrypted_forbidden");
+            }
+        }
+        for (FileInfo fileInfo : fileInfos) {
             try {
                 fileFolderService.move(fileInfo.getNodeRef(), toRef, null);
 

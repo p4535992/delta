@@ -98,7 +98,7 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
         return BeanHelper.getDocumentAdminService().getDocumentTypeName(documentTypeId);
     }
 
-    private String objectTypeId() {
+    public String objectTypeId() {
         return (String) getProperties().get(Props.OBJECT_TYPE_ID);
     }
 

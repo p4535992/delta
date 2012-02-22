@@ -8,7 +8,7 @@ CREATE TABLE delta_log (
   level text NOT NULL,
   creator_id text NOT NULL,
   creator_name text NOT NULL,
-  computer_ip text NOT NULL,
+  computer_ip text,
   computer_name text,
   object_id text,
   object_name text,

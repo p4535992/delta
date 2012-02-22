@@ -17,6 +17,7 @@ public class DocumentTemplate implements Serializable {
     private String name;
     private String comment;
     private String docTypeId;
+    private String reportType;
 
     @AlfrescoModelProperty(isMappable = false)
     private NodeRef nodeRef;
@@ -71,5 +72,13 @@ public class DocumentTemplate implements Serializable {
 
     public void setDocTypeName(String docTypeName) {
         this.docTypeName = docTypeName;
+    }
+
+    public void setReportType(String reportType) {
+        this.reportType = reportType;
+    }
+
+    public String getReportType() {
+        return reportType;
     }
 }

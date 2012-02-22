@@ -34,6 +34,7 @@ import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.cmr.security.PersonService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.web.bean.repository.MapNode;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
@@ -45,6 +46,7 @@ import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
+import ee.webmedia.alfresco.report.model.ReportModel;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.model.UserModel;
 import ee.webmedia.alfresco.utils.RepoUtil;
@@ -52,7 +54,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 
 public class UserServiceImpl implements UserService {
-    private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(UserServiceImpl.class);
 
     private AuthenticationService authenticationService;
     private AuthorityService authorityService;
@@ -105,6 +106,29 @@ public class UserServiceImpl implements UserService {
 
         }
         return prefRef;
+    }
+
+    @Override
+    public NodeRef retrieveUserReportsFolderRef(String username) {
+        Assert.isTrue(StringUtils.isNotBlank(username));
+        NodeRef personRef = getPerson(username);
+        if (personRef == null) {
+            return null;
+        }
+        if (!nodeService.hasAspect(personRef, ReportModel.Aspects.REPORTS_QUEUE_CONTAINER)) {
+            nodeService.addAspect(personRef, ReportModel.Aspects.REPORTS_QUEUE_CONTAINER, null);
+            nodeService.createNode(personRef, ReportModel.Assocs.REPORTS_QUEUE, ReportModel.Assocs.REPORTS_QUEUE, ReportModel.Types.REPORTS_QUEUE_ROOT);
+        }
+        return getReportsFolder(personRef);
+    }
+
+    private NodeRef getReportsFolder(NodeRef userRef) {
+        NodeRef reportsFolderRef = null;
+        List<ChildAssociationRef> assocs = nodeService.getChildAssocs(userRef, RegexQNamePattern.MATCH_ALL, ReportModel.Types.REPORTS_QUEUE_ROOT);
+        if (assocs != null && !assocs.isEmpty()) {
+            reportsFolderRef = assocs.get(0).getChildRef();
+        }
+        return reportsFolderRef;
     }
 
     @Override
@@ -459,17 +483,7 @@ public class UserServiceImpl implements UserService {
         props.remove(ContentModel.PROP_SIZE_QUOTA);
 
         String diff = new PropDiffHelper()
-                .label(ContentModel.PROP_FIRSTNAME, "cm_contentmodel.property.cm_firstName.title")
-                .label(ContentModel.PROP_LASTNAME, "cm_contentmodel.property.cm_lastName.title")
-                .label(ContentModel.PROP_USERNAME, "user_username")
-                .label(ContentModel.PROP_JOBTITLE, "jobtitle")
-                .label(ContentModel.PROP_SERVICE_RANK, "user_serviceRank")
-                .label(ContentModel.PROP_TELEPHONE, "telephone")
-                .label(ContentModel.PROP_EMAIL, "user_email")
-                .label(ContentModel.PROP_HOMEFOLDER, "homeFolder")
-                .label(ContentModel.PROP_HOMEFOLDER, "user_home_folder")
-                .label(ContentModel.SHOW_EMPTY_TASK_MENU, "user_showEmptyTaskMenu")
-                .label(ContentModel.PROP_RELATED_FUNDS_CENTER, "user_relatedFundsCenter")
+                .watchUser()
                 .diff(RepoUtil.getPropertiesIgnoringSystem(nodeService.getProperties(user.getNodeRef()), dictionaryService), props);
         if (diff != null) {
             logService.addLogEntry(LogEntry.create(LogObject.USER, this, user.getNodeRef(), "applog_user_edit", UserUtil.getUserFullNameAndId(props), diff));

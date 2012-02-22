@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.template.service;
 import java.util.List;
 import java.util.Map;
 
+import javax.faces.model.SelectItem;
 import javax.servlet.ServletContext;
 
 import org.alfresco.service.cmr.model.FileNotFoundException;
@@ -10,6 +11,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.document.model.Document;
+import ee.webmedia.alfresco.report.model.ReportType;
 import ee.webmedia.alfresco.template.exception.ExistingFileFromTemplateException;
 import ee.webmedia.alfresco.template.model.DocumentTemplate;
 import ee.webmedia.alfresco.volume.model.Volume;
@@ -116,5 +118,9 @@ public interface DocumentTemplateService {
     ServletContext getServletContext();
 
     void updateDocTemplate(Node docTemplNode);
+
+    List<SelectItem> getReportTemplates(ReportType typeId);
+
+    NodeRef getReportTemplateByName(String templateName, ReportType reportType);
 
 }

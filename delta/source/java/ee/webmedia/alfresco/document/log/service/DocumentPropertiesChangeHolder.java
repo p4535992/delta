@@ -20,15 +20,20 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.alfresco.i18n.I18NUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
+import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentChildModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
@@ -58,6 +63,92 @@ public class DocumentPropertiesChangeHolder {
             nodeChangeMapsMap.put(docNodeRef, new ArrayList<PropertyChange>());
         }
         nodeChangeMapsMap.get(docNodeRef).add(new PropertyChange(itemQName, oldValue, newValue));
+    }
+
+    /**
+     * Includes a document child node add/remove change in this changes holder.
+     * 
+     * @param docNodeRef Reference to document where a property value change was detected.
+     * @param itemQName The type of child node that was added or removed.
+     * @param oldChild References the node that was removed. May be <code>null</code>.
+     * @param newChild References the node that was added. May be <code>null</code>.
+     */
+    public void addChange(NodeRef docNodeRef, QName itemQName, Node oldChild, Node newChild) {
+        Serializable oldValue = oldChild;
+        Serializable newValue = newChild;
+
+        Node node = oldChild != null ? oldChild : newChild;
+        QName type = node != null ? node.getType() : null;
+        if (node == null || type == null) {
+            return;
+        }
+
+        if (type.equals(DocumentChildModel.Assocs.APPLICANT_ABROAD) || type.equals(DocumentChildModel.Assocs.APPLICANT_DOMESTIC)) {
+            String applicant = (String) node.getProperties().get(DocumentSpecificModel.Props.APPLICANT_NAME);
+
+            if (applicant != null && oldChild != null) {
+                oldValue = applicant;
+            } else if (applicant != null && newChild != null) {
+                newValue = applicant;
+            }
+
+        } else if (type.equals(DocumentChildModel.Assocs.CONTRACT_PARTY)) {
+            String party = (String) node.getProperties().get(DocumentSpecificModel.Props.PARTY_NAME);
+
+            if (party != null && oldChild != null) {
+                oldValue = party;
+            } else if (party != null && newChild != null) {
+                newValue = party;
+            }
+        }
+
+        addChange(docNodeRef, itemQName, oldValue, newValue);
+    }
+
+    /**
+     * Includes a document child node add/remove change in this changes holder.
+     * 
+     * @param docNodeRef Reference to document where a property value change was detected.
+     * @param itemQName The type of child node that was added or removed.
+     * @param oldChild References the node that was removed. May be <code>null</code>.
+     * @param newChild References the node that was added. May be <code>null</code>.
+     */
+    public void addChange(NodeRef docNodeRef, QName itemQName, NodeRef oldChild, NodeRef newChild) {
+        NodeService nodeService = BeanHelper.getNodeService();
+
+        Serializable oldValue = oldChild;
+        Serializable newValue = newChild;
+
+        NodeRef node = oldChild != null ? oldChild : newChild;
+        QName type = null;
+
+        if (node != null && nodeService.exists(node)) {
+            type = nodeService.getType(node);
+        }
+        if (node == null || type == null) {
+            return;
+        }
+
+        if (type.equals(DocumentChildModel.Assocs.APPLICANT_ABROAD) || type.equals(DocumentChildModel.Assocs.APPLICANT_DOMESTIC)) {
+            String applicant = (String) nodeService.getProperty(node, DocumentSpecificModel.Props.APPLICANT_NAME);
+
+            if (applicant != null && oldChild != null) {
+                oldValue = applicant;
+            } else if (applicant != null && newChild != null) {
+                newValue = applicant;
+            }
+
+        } else if (type.equals(DocumentChildModel.Assocs.CONTRACT_PARTY)) {
+            String party = (String) nodeService.getProperty(node, DocumentSpecificModel.Props.PARTY_NAME);
+
+            if (party != null && oldChild != null) {
+                oldValue = party;
+            } else if (party != null && newChild != null) {
+                newValue = party;
+            }
+        }
+
+        addChange(docNodeRef, itemQName, oldValue, newValue);
     }
 
     /**
@@ -106,22 +197,36 @@ public class DocumentPropertiesChangeHolder {
         return keys;
     }
 
-    public List<Serializable> generateLogMessages(Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs, NodeRef docRef) {
-
+    public List<String> generateLogMessages(Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs, NodeRef docRef) {
         String emptyValue = MessageUtil.getMessage("document_log_status_empty");
+        ArrayList<String> messages = new ArrayList<String>();
 
-        ArrayList<Serializable> messages = new ArrayList<Serializable>();
+        messages.addAll(generate(propDefs, docRef, emptyValue));
+        nodeChangeMapsMap.remove(docRef);
+
+        for (Iterator<NodeRef> i = nodeChangeMapsMap.keySet().iterator(); i.hasNext();) {
+            messages.addAll(generate(propDefs, i.next(), emptyValue));
+            i.remove();
+        }
+
+        return messages;
+    }
+
+    private List<String> generate(Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs, NodeRef docRef, String emptyValue) {
+        ArrayList<String> messages = new ArrayList<String>();
         messages.addAll(generateLocationMessages(propDefs, docRef, emptyValue));
         messages.addAll(generateAccessRestrictionMessages(propDefs, docRef, emptyValue));
+        messages.addAll(generateChildNodeMessages(docRef, emptyValue));
 
         for (Field field : getDocumentTypeProps(docRef).values()) {
-            for (List<PropertyChange> list : nodeChangeMapsMap.values()) {
-                for (PropertyChange propertyChange : list) {
-                    if (propertyChange.getProperty().equals(field.getQName())) {
-                        String[] valuePair = format(field, propertyChange, emptyValue);
-                        messages.add(MessageUtil.getMessage(MSG_DOC_PROP_CHANGED, field.getName(), valuePair[0], valuePair[1]));
-                        continue;
-                    }
+            if (!nodeChangeMapsMap.containsKey(docRef)) {
+                continue;
+            }
+            for (PropertyChange propertyChange : nodeChangeMapsMap.get(docRef)) {
+                if (propertyChange.getProperty().equals(field.getQName())) {
+                    String[] valuePair = format(field, propertyChange, emptyValue);
+                    messages.add(MessageUtil.getMessage(MSG_DOC_PROP_CHANGED, field.getName(), valuePair[0], valuePair[1]));
+                    continue;
                 }
             }
         }
@@ -213,5 +318,45 @@ public class DocumentPropertiesChangeHolder {
             }
         }
         return result;
+    }
+
+    private List<String> generateChildNodeMessages(NodeRef docRef, String emptyValue) {
+        List<PropertyChange> list = nodeChangeMapsMap.get(docRef);
+        if (list == null) {
+            return Collections.emptyList();
+        }
+
+        List<String> result = new ArrayList<String>();
+        for (PropertyChange propChange : list) {
+            QName prop = propChange.getProperty();
+
+            if (prop.equals(DocumentChildModel.Assocs.APPLICANT_ABROAD) || prop.equals(DocumentChildModel.Assocs.APPLICANT_DOMESTIC)) {
+                if (propChange.getOldValue() == null && propChange.getNewValue() != null) {
+                    result.add(I18NUtil.getMessage("document_log_applicant_add", requireString(propChange.getNewValue(), emptyValue)));
+                } else if (propChange.getOldValue() != null && propChange.getNewValue() == null) {
+                    result.add(I18NUtil.getMessage("document_log_applicant_rem", requireString(propChange.getOldValue(), emptyValue)));
+                }
+
+            } else if (prop.equals(DocumentChildModel.Assocs.ERRAND_ABROAD) || prop.equals(DocumentChildModel.Assocs.ERRAND_DOMESTIC)) {
+                if (propChange.getOldValue() == null && propChange.getNewValue() != null) {
+                    result.add(I18NUtil.getMessage("document_log_errand_add"));
+                } else if (propChange.getOldValue() != null && propChange.getNewValue() == null) {
+                    result.add(I18NUtil.getMessage("document_log_errand_rem"));
+                }
+
+            } else if (prop.equals(DocumentChildModel.Assocs.CONTRACT_PARTY)) {
+                if (propChange.getOldValue() == null && propChange.getNewValue() != null) {
+                    result.add(I18NUtil.getMessage("document_log_party_add", requireString(propChange.getNewValue(), emptyValue)));
+                } else if (propChange.getOldValue() != null && propChange.getNewValue() == null) {
+                    result.add(I18NUtil.getMessage("document_log_party_rem", requireString(propChange.getOldValue(), emptyValue)));
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private static String requireString(Serializable value, String emptyValue) {
+        return value instanceof String ? (String) value : emptyValue;
     }
 }

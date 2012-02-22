@@ -70,6 +70,7 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
 
 /**
  * @author Dmitri Melnikov
@@ -169,6 +170,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
                 boolean invoiceAdded = false;
                 if (isFileSelected) {
                     for (int i = 0; i < selectedFileNodeRef.size(); i++) {
+                        checkEncryptedFile(selectedFileName.get(i));
                         Pair<String, String> filenames = getAttachmentFilenames(documentNodeRef, existingDisplayNames, i);
                         NodeRef fileRef = selectedFileNodeRef.get(i);
                         if (isParseInvoice) {
@@ -193,6 +195,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
                     List<String> fileNames = getFileUploadBean().getFileNames();
                     List<String> fileNameWithoutExtension = getFileUploadBean().getFileNameWithoutExtension();
                     for (int i = 0; i < files.size(); i++) {
+                        checkEncryptedFile(fileNames.get(i));
                         Pair<String, String> filenames = getFileFilenames(documentNodeRef, existingDisplayNames, fileNames, fileNameWithoutExtension, i);
                         java.io.File file = files.get(i);
                         String mimeType = getFileUploadBean().getContentTypes().get(i);
@@ -232,6 +235,12 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         } catch (FileExistsException e) {
             isFinished = false;
             throw new RuntimeException(MessageUtil.getMessage(context, ERR_EXISTING_FILE, e.getName()));
+        }
+    }
+
+    private void checkEncryptedFile(String fileName) {
+        if (FilenameUtil.isEncryptedFile(fileName)) {
+            throw new UnableToPerformException("file_encrypted_forbidden");
         }
     }
 

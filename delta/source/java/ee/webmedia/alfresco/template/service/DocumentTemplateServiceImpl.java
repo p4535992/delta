@@ -14,6 +14,7 @@ import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.faces.model.SelectItem;
 import javax.servlet.ServletContext;
 import javax.xml.ws.soap.SOAPFaultException;
 
@@ -69,6 +70,7 @@ import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.mso.service.MsoService;
+import ee.webmedia.alfresco.report.model.ReportType;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.template.exception.ExistingFileFromTemplateException;
 import ee.webmedia.alfresco.template.model.DocumentTemplate;
@@ -943,6 +945,19 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         return result;
     }
 
+    @Override
+    public List<SelectItem> getReportTemplates(ReportType typeId) {
+        Assert.notNull(typeId, "Parameter typeId is mandatory.");
+        List<SelectItem> result = new ArrayList<SelectItem>();
+        String typeStr = typeId.toString();
+        for (DocumentTemplate template : getTemplates()) {
+            if (nodeService.hasAspect(template.getNodeRef(), DocumentTemplateModel.Aspects.TEMPLATE_REPORT) && typeStr.equals(template.getReportType())) {
+                result.add(new SelectItem(template.getName()));
+            }
+        }
+        return result;
+    }
+
     private String escapeXml(String replaceString) {
         if (replaceString == null) {
             return "";
@@ -967,6 +982,20 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                 templateName = templateName.substring(0, templateName.length() - 1);
                 return getNotificationTemplateByName(templateName);
             }
+        }
+        return null;
+    }
+
+    @Override
+    public NodeRef getReportTemplateByName(String templateName, ReportType reportType) {
+        Assert.notNull(reportType);
+        if (StringUtils.isBlank(templateName)) {
+            return null;
+        }
+        NodeRef template = fileFolderService.searchSimple(getRoot(), templateName);
+        if (template != null && nodeService.hasAspect(template, DocumentTemplateModel.Aspects.TEMPLATE_REPORT)
+                && reportType.toString().equals(nodeService.getProperty(template, DocumentTemplateModel.Prop.REPORT_TYPE))) {
+            return template;
         }
         return null;
     }

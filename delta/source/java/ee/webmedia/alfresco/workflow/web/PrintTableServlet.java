@@ -1,6 +1,10 @@
 package ee.webmedia.alfresco.workflow.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPermissionService;
+import static ee.webmedia.alfresco.docadmin.service.MetadataItemCompareUtil.cast;
+import static java.util.Arrays.asList;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -22,8 +26,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.jsp.JspException;
 
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.QName;
@@ -31,6 +35,8 @@ import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.alfresco.web.ui.repo.tag.PageTag;
+import org.apache.commons.collections.comparators.ComparatorChain;
+import org.apache.commons.collections.comparators.TransformingComparator;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
@@ -38,10 +44,12 @@ import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.Field;
+import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
-import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
+import ee.webmedia.alfresco.docdynamic.model.DocumentChildModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.utils.ComparableTransformer;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.workflow.service.Task;
@@ -53,9 +61,38 @@ import ee.webmedia.alfresco.workflow.service.Task;
  * @author Ats Uiboupin
  * @author Kaarel Jõgeva
  */
+@SuppressWarnings("deprecation")
 public class PrintTableServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     public static final String TABLE_MODE = "tableMode";
+
+    public static final ComparatorChain ROW_COMPARATOR = new ComparatorChain();
+    static {
+        ROW_COMPARATOR.addComparator(new TransformingComparator(new ComparableTransformer<Row>() {
+            @Override
+            public Comparable<Integer> tr(Row input) {
+                return input.groupNr;
+            }
+        }));
+        ROW_COMPARATOR.addComparator(new TransformingComparator(new ComparableTransformer<Row>() {
+            @Override
+            public Comparable<Integer> tr(Row input) {
+                return input.childNodeNr;
+            }
+        }));
+        ROW_COMPARATOR.addComparator(new TransformingComparator(new ComparableTransformer<Row>() {
+            @Override
+            public Comparable<Integer> tr(Row input) {
+                return input.grandChildNodeNr;
+            }
+        }));
+        ROW_COMPARATOR.addComparator(new TransformingComparator(new ComparableTransformer<Row>() {
+            @Override
+            public Comparable<Integer> tr(Row input) {
+                return input.fieldNr;
+            }
+        }));
+    }
 
     public enum TableMode {
         REVIEW_NOTES,
@@ -77,14 +114,14 @@ public class PrintTableServlet extends HttpServlet {
             pageTag.doStartTag(request, out, request.getSession());
             renderTableStart(out, mode);
 
-            List<List<Cell>> data = null;
+            List<Row> rows = null;
             if (TableMode.REVIEW_NOTES == mode) {
-                data = getReviewNotesData();
+                rows = getReviewNotesData();
             } else if (TableMode.DOCUMENT_FIELD_COMPARE == mode) {
-                data = getDocumentFieldsData(request);
+                rows = getDocumentFieldsData(request);
             }
 
-            renderRows(out, data);
+            renderRows(out, rows);
 
             renderTableEnd(out);
             pageTag.doEndTag(out);
@@ -131,13 +168,13 @@ public class PrintTableServlet extends HttpServlet {
         return Collections.<String> emptyList();
     }
 
-    private void renderRows(PrintWriter out, List<List<Cell>> data) {
+    private void renderRows(PrintWriter out, List<Row> rows) {
         int zebra = 0;
         StringBuilder sb = new StringBuilder();
-        for (List<Cell> row : data) {
-            sb.append("<tr class='").append(zebra % 2 == 0 ? "recordSetRow" : "recordSetRowAlt").append("'>");
-            for (Cell cell : row) {
-                sb.append(cell.toString());
+        for (Row row : rows) {
+            sb.append("<tr class='").append(zebra % 2 == 0 ? "recordSetRow" : "recordSetRowAlt").append(" ").append(row.styleClass).append("'>");
+            for (String cell : row.getCells()) {
+                sb.append("<td>").append(cell).append("</td>");
             }
             sb.append("</tr>");
             zebra++;
@@ -150,7 +187,7 @@ public class PrintTableServlet extends HttpServlet {
         out.println("</tbody></table>");
     }
 
-    private List<List<Cell>> getReviewNotesData() {
+    private List<Row> getReviewNotesData() {
         UIRichList richList = BeanHelper.getWorkflowBlockBean().getReviewNotesRichList();
         if (richList != null) {
             int origPageSize;
@@ -171,14 +208,14 @@ public class PrintTableServlet extends HttpServlet {
             }
             richList.bind();// prepare the component current row against the current page settings
 
-            List<List<Cell>> data = new ArrayList<List<Cell>>();
+            List<Row> data = new ArrayList<Row>();
             { // Fetch data
                 if (richList.isDataAvailable()) {
                     while (richList.isDataAvailable()) {
                         Task task = (Task) richList.nextRow();
                         Date completedDateTime = task.getCompletedDateTime();
                         String completedDTStr = completedDateTime != null ? Task.dateFormat.format(completedDateTime) : "";
-                        data.add(Arrays.asList(new Cell(task.getOwnerName()), new Cell(completedDTStr), new Cell(task.getOutcome() + ": " + task.getComment())));
+                        data.add(new Row(asList(task.getOwnerName(), completedDTStr, task.getOutcome() + ": " + task.getComment())));
                     }
                 }
             }
@@ -196,7 +233,7 @@ public class PrintTableServlet extends HttpServlet {
         return Collections.emptyList();
     }
 
-    private List<List<Cell>> getDocumentFieldsData(HttpServletRequest request) {
+    private List<Row> getDocumentFieldsData(HttpServletRequest request) {
         PermissionService permissionService = getPermissionService();
         String docRef1Str = request.getParameter("doc1");
         Assert.notNull(docRef1Str, "Document 1 NodeRef must be supplied!");
@@ -210,44 +247,155 @@ public class PrintTableServlet extends HttpServlet {
         Assert.isTrue(permissionService.hasPermission(docRef2, DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA) == AccessStatus.ALLOWED, "Missing "
                 + DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA + " privilege for " + docRef1 + "!");
 
-        DocumentConfigService documentConfigService = BeanHelper.getDocumentConfigService();
-        NodeService nodeService = BeanHelper.getNodeService();
-        Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs1 = documentConfigService.getPropertyDefinitions(new Node(docRef1));
-        Map<QName, Serializable> props1 = nodeService.getProperties(docRef1);
-        Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs2 = documentConfigService.getPropertyDefinitions(new Node(docRef2));
-        Map<QName, Serializable> props2 = nodeService.getProperties(docRef2);
+        List<Row> data = new ArrayList<Row>();
+        Map<String, Row> result = new HashMap<String, Row>();
+        getAdjacentProperties(docRef1, docRef2, result, getDocumentConfigService().getPropertyDefinitions(new Node(docRef1)), 0, -1, -1);
+        getAdjacentProperties(docRef1, docRef2, result, getDocumentConfigService().getPropertyDefinitions(new Node(docRef2)), 0, -1, -1);
 
-        List<List<Cell>> data = new ArrayList<List<Cell>>();
-        Map<String, List<Cell>> result = new HashMap<String, List<Cell>>();
-        getAdjacentProperties(propDefs1, props1, props2, result);
-        getAdjacentProperties(propDefs2, props1, props2, result);
-
-        for (List<Cell> list : result.values()) {
-            data.add(list);
+        for (Row row : result.values()) {
+            data.add(row);
         }
 
+        Collections.sort(data, cast(ROW_COMPARATOR, Row.class));
         return data;
     }
 
-    private void getAdjacentProperties(Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions, Map<QName, Serializable> props1, Map<QName, Serializable> props2,
-            Map<String, List<Cell>> result) {
-        for (Entry<String, Pair<DynamicPropertyDefinition, Field>> entry : propertyDefinitions.entrySet()) {
+    private void getAdjacentProperties(NodeRef nodeRef1, NodeRef nodeRef2, Map<String, Row> result, Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs, int nodeLevel,
+            int childIndex, int grandChildIndex) {
+        Map<QName, Serializable> props1 = nodeRef1 != null ? getNodeService().getProperties(nodeRef1) : Collections.<QName, Serializable> emptyMap();
+        Map<QName, Serializable> props2 = nodeRef2 != null ? getNodeService().getProperties(nodeRef2) : Collections.<QName, Serializable> emptyMap();
+
+        for (Entry<String, Pair<DynamicPropertyDefinition, Field>> entry : propDefs.entrySet()) {
             String key = entry.getKey();
             if (result.get(key) != null) {
                 continue;
             }
+            QName[] level = entry.getValue().getFirst().getChildAssocTypeQNameHierarchy();
             Field field = entry.getValue().getSecond();
-            if (field == null) {
-                continue; // hidden field
+            if (field == null || level == null && nodeLevel != 0 || (level != null && level.length != nodeLevel)) {
+                continue; // hidden field or wrong level
             }
-            QName qName = field.getQName();
+            Row row = new Row();
+            row.fieldNr = field.getOrder();
+            FieldGroup fieldGroup = null;
+            if (field.getParent() instanceof FieldGroup) {
+                fieldGroup = (FieldGroup) field.getParent();
+                row.groupNr = fieldGroup.getOrder();
+            } else {
+                row.groupNr = row.fieldNr;
 
+            }
+
+            QName qName = field.getQName();
             Serializable prop1 = props1.get(qName);
             Serializable prop2 = props2.get(qName);
-            boolean highlight = !ObjectUtils.equals(prop1, prop2);
-            result.put(key, Arrays.asList(new Cell(field.getName(), highlight), new Cell(getFieldTypeSpecificValue(field, prop1), highlight),
-                    new Cell(getFieldTypeSpecificValue(field, prop2), highlight)));
+            row.styleClass = !ObjectUtils.equals(prop1, prop2) ? "red" : "";
+
+            row.childNodeNr = childIndex;
+            row.grandChildNodeNr = grandChildIndex;
+            row.setCells(asList(field.getName(), getFieldTypeSpecificValue(field, prop1), getFieldTypeSpecificValue(field, prop2)));
+            result.put(key + childIndex + grandChildIndex, row);
         }
+
+        if (nodeLevel < 3) {
+            fetchChildNodeData(nodeRef1, nodeRef2, propDefs, result);
+        }
+    }
+
+    private void fetchChildNodeData(NodeRef docRef1, NodeRef docRef2, Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs, Map<String, Row> result) {
+        // Domestic applications
+        getApplicationsData(docRef1, docRef2, propDefs, result, DocumentChildModel.Assocs.APPLICANT_DOMESTIC, DocumentChildModel.Assocs.ERRAND_DOMESTIC);
+        // Abroad applications
+        getApplicationsData(docRef1, docRef2, propDefs, result, DocumentChildModel.Assocs.APPLICANT_ABROAD, DocumentChildModel.Assocs.ERRAND_ABROAD);
+
+        // Contract parties
+        List<ChildAssociationRef> doc1Parties = getChildAssocs(docRef1, DocumentChildModel.Assocs.CONTRACT_PARTY);
+        List<ChildAssociationRef> doc2Parties = getChildAssocs(docRef2, DocumentChildModel.Assocs.CONTRACT_PARTY);
+        int partyCount = Math.max(doc1Parties.size(), doc2Parties.size());
+
+        if (partyCount == 0) {
+            return;
+        }
+
+        String party = MessageUtil.getMessage("subPropSheet_contractParty_plain");
+        Map<String, Row> tempResult = new HashMap<String, Row>();
+        for (int i = 0; i < partyCount; i++) {
+            Row row = new Row(asList(party, "", ""));
+            row.childNodeNr = i;
+            row.grandChildNodeNr = -1;
+            row.groupNr = 0;
+            row.styleClass = "bold";
+            result.put("applicant" + i, row);
+            NodeRef subNodeRef1 = getChildRefOrNull(doc1Parties, i);
+            NodeRef subNodeRef2 = getChildRefOrNull(doc2Parties, i);
+            getAdjacentProperties(subNodeRef1, subNodeRef2, tempResult, propDefs, 1, i, -1);
+            row.groupNr = getGroupNrAndAdd(tempResult, result);
+        }
+
+    }
+
+    private void getApplicationsData(NodeRef docRef1, NodeRef docRef2, Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs, Map<String, Row> result, QName childNodeAssoc,
+            QName grandChildNodeAssoc) {
+        String applicant = MessageUtil.getMessage("document_applicantInstitutionPerson");
+        String application = MessageUtil.getMessage("document_errand_errandDates_title");
+        List<ChildAssociationRef> applicant1 = getChildAssocs(docRef1, childNodeAssoc);
+        List<ChildAssociationRef> applicant2 = getChildAssocs(docRef2, childNodeAssoc);
+        int applicantCount = Math.max(applicant1.size(), applicant2.size());
+
+        if (applicantCount == 0) {
+            return;
+        }
+
+        Map<String, Row> tempResult = new HashMap<String, Row>();
+        for (int i = 0; i < applicantCount; i++) {
+            Row row = new Row(asList(applicant, "", ""));
+            row.childNodeNr = i;
+            row.grandChildNodeNr = -1;
+            row.styleClass = "bold";
+            result.put("applicant" + i, row);
+            NodeRef subNodeRef1 = getChildRefOrNull(applicant1, i);
+            NodeRef subNodeRef2 = getChildRefOrNull(applicant2, i);
+            getAdjacentProperties(subNodeRef1, subNodeRef2, tempResult, propDefs, 1, i, -1);
+            row.groupNr = getGroupNrAndAdd(tempResult, result);
+
+            // applications
+            List<ChildAssociationRef> application1 = getChildAssocs(subNodeRef1, grandChildNodeAssoc);
+            List<ChildAssociationRef> application2 = getChildAssocs(subNodeRef2, grandChildNodeAssoc);
+            int applicationCount = Math.max(application1.size(), application2.size());
+            for (int j = 0; j < applicationCount; j++) {
+                Row row2 = new Row(asList(application, "", ""));
+                row2.childNodeNr = i;
+                row2.grandChildNodeNr = j;
+                row2.styleClass = "bold";
+                result.put("application" + i + "-" + j, row2);
+                NodeRef subNodeRef21 = getChildRefOrNull(application1, j);
+                NodeRef subNodeRef22 = getChildRefOrNull(application2, j);
+                getAdjacentProperties(subNodeRef21, subNodeRef22, tempResult, propDefs, 2, i, j);
+                row2.groupNr = getGroupNrAndAdd(tempResult, result);
+            }
+        }
+    }
+
+    private int getGroupNrAndAdd(Map<String, Row> tempResult, Map<String, Row> result) {
+        int groupNr = 0;
+        for (Row row : tempResult.values()) {
+            groupNr = row.groupNr;
+            break;
+        }
+
+        // Add and clear
+        result.putAll(tempResult);
+        tempResult.clear();
+
+        return groupNr;
+    }
+
+    private NodeRef getChildRefOrNull(List<ChildAssociationRef> childAssocRefs, int i) {
+        return childAssocRefs.size() > i ? childAssocRefs.get(i).getChildRef() : null;
+    }
+
+    private List<ChildAssociationRef> getChildAssocs(NodeRef parentRef, QName assocQName) {
+        return parentRef != null ? getNodeService().getChildAssocs(parentRef, assocQName, assocQName) : Collections.<ChildAssociationRef> emptyList();
     }
 
     private String getFieldTypeSpecificValue(Field field, Serializable prop) {
@@ -263,8 +411,19 @@ public class PrintTableServlet extends HttpServlet {
         case CHECKBOX:
             return MessageUtil.getMessage(Boolean.TRUE.equals(prop) ? "yes" : "no");
         case STRUCT_UNIT:
-            return UserUtil.getDisplayUnit((List<String>) prop);
+            @SuppressWarnings("unchecked")
+            List<String> orgStructs = (List<String>) prop;
+            return UserUtil.getDisplayUnit(orgStructs);
         case DATE:
+            if (prop instanceof List) {
+                @SuppressWarnings("unchecked")
+                List<Date> propDates = (List<Date>) prop;
+                List<String> dates = new ArrayList<String>(propDates.size());
+                for (Date date : propDates) {
+                    dates.add(date == null ? "" : FastDateFormat.getInstance("dd.MM.yyyy").format(date));
+                }
+                return StringUtils.join((List<?>) prop, ", ");
+            }
             return FastDateFormat.getInstance("dd.MM.yyyy").format(prop);
         case USERS:
         case CONTACTS:
@@ -278,34 +437,28 @@ public class PrintTableServlet extends HttpServlet {
         }
     }
 
-    private class Cell {
-        private final String value;
-        private boolean highlight;
+    private class Row {
+        private int groupNr = 0;
+        private int fieldNr = 0;
+        private int childNodeNr = 0;
+        private int grandChildNodeNr = 0;
+        private String styleClass = "";
+        private List<String> cells = new ArrayList<String>();
 
-        public Cell(String value, boolean highlight) {
-            this.value = value;
-            this.highlight = highlight;
+        public Row() {
+            // Default constructor
         }
 
-        public Cell(String value) {
-            this.value = value;
+        public Row(List<String> list) {
+            cells = list;
         }
 
-        public String getValue() {
-            return StringUtils.defaultIfEmpty(value, "");
+        public List<String> getCells() {
+            return cells;
         }
 
-        public String getStyleClass() {
-            if (highlight) {
-                return " class='red'";
-            }
-            return "";
-        }
-
-        @Override
-        public String toString() {
-            return new StringBuilder("<td").append(getStyleClass()).append(">").append(getValue()).append("</td>").toString();
+        public void setCells(List<String> cells) {
+            this.cells = cells;
         }
     }
-
 }

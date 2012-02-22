@@ -167,3 +167,15 @@ ocr.url=
 
 # SOAP request URL of MSO web service; if empty then MSO is not used
 mso.url=
+
+#
+# Digital Signing (EstEID) configuration 
+#-------------
+
+# Service name that is used whem making Mobile-ID requests to DigiDocService.
+# According to http://www.sk.ee/upload/files/DigiDocService_spec_eng.pdf
+# ServiceName = name of the service that is displayed on user's phone. Must be
+# previously agreed with Application Provider and DigiDocService operator.
+# Maximum length 20 chars.
+# If empty, then Mobile-ID is disabled.
+mobile-id.service-name=

@@ -37,6 +37,16 @@ public class DocumentLockHelperBean implements Serializable {
     /** timeOut in seconds how often lock should be refreshed to avoid expiring */
     private Integer lockRefreshTimeout;
 
+    public boolean isLockable(NodeRef docRef) {
+        try {
+            getDocLockService().checkForLock(docRef);
+            return true;
+        } catch (NodeLockedException e) {
+            handleLockedNode("document_validation_alreadyLocked", docRef);
+        }
+        return false;
+    }
+
     /**
      * @return how often (in seconds) clients should call {@link #refreshLockClientHandler()} to refresh lock
      */

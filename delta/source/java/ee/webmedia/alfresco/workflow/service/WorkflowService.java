@@ -48,7 +48,7 @@ public interface WorkflowService {
 
     // Eelseadistatud terviktöövoogude majandamine administraatori all
 
-    List<CompoundWorkflowDefinition> getCompoundWorkflowDefinitions();
+    List<CompoundWorkflowDefinition> getCompoundWorkflowDefinitions(boolean getUserFullName);
 
     CompoundWorkflowDefinition getCompoundWorkflowDefinition(NodeRef compoundWorkflowDefinition);
 
@@ -204,5 +204,19 @@ public interface WorkflowService {
     void createDueDateExtension(CompoundWorkflow compoundWorkflow, NodeRef nodeRef);
 
     void registerMultiEventListener(WorkflowMultiEventListener listener);
+
+    Task getTaskWithoutParentAndChildren(NodeRef nodeRef, Workflow workflow, boolean copy);
+
+    Map<QName, WorkflowType> getWorkflowTypesByTask();
+
+    NodeRef getCompoundWorkflowDefinitionByName(String newCompWorkflowDefinitionName, String runAsUser, boolean checkGlobalDefinitions);
+
+    NodeRef createCompoundWorkflowDefinition(CompoundWorkflow compoundWorkflow, String userId, String newCompWorkflowDefinitionName);
+
+    NodeRef overwriteExistingCompoundWorkflowDefinition(CompoundWorkflow compoundWorkflow, String userId, String existingCompWorkflowDefinitionName);
+
+    void deleteCompoundWorkflowDefinition(String existingCompWorkflowDefinitionName, String runAsUser);
+
+    List<CompoundWorkflowDefinition> getUserCompoundWorkflowDefinitions(String userId);
 
 }

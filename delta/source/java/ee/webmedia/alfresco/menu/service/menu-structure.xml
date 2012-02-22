@@ -199,24 +199,28 @@
       </subitems>
    </item>
 
-   <!-- TODO
-   <item title-id="menu_reports">
-      <subitems>
-         <item id="documentReports" title-id="menu_document_reports" />
-         <item id="taskReports" title-id="menu_task_reports" />
-      </subitems>
-   </item>
-   -->
-   
    <item title-id="menu_search">
       <outcome>dialog:documentDynamicSearchDialog</outcome>
       <subitems>
-         <item id="documentSearch" title-id="menu_documents">
-            <outcome>dialog:documentDynamicSearchDialog</outcome>
-         </item>
-         <item id="taskSearch" title-id="menu_tasks">
-            <outcome>dialog:taskSearchDialog</outcome>
-         </item>
+         <dropdown title-id="menu_searches" expanded="true">
+            <submenu-id>searches-submenu</submenu-id>
+            <subitems>
+               <item id="documentSearch" title-id="menu_documents">
+                  <outcome>dialog:documentDynamicSearchDialog</outcome>
+               </item>
+               <item id="taskSearch" title-id="menu_tasks">
+                  <outcome>dialog:taskSearchDialog</outcome>
+               </item>
+            </subitems>
+         </dropdown>
+         <dropdown title-id="menu_reports" expanded="true">
+            <submenu-id>reports-submenu</submenu-id>
+            <subitems>
+               <item id="taskReports" title-id="menu_task_reports">
+                  <outcome>dialog:taskReportDialog</outcome>
+               </item>
+            </subitems>
+         </dropdown>
       </subitems>
    </item>
 

@@ -4,6 +4,9 @@
          <mimetype display="DigiDoc" mimetype="application/digidoc">
             <extension>ddoc</extension>
          </mimetype>
+         <mimetype mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.template" display="Microsoft Excel 2007 template">
+            <extension>xltx</extension>
+         </mimetype>         
       </mimetypes>
    </config>
 </alfresco-config>

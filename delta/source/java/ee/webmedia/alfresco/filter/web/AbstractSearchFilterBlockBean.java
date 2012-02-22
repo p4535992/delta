@@ -186,7 +186,10 @@ public abstract class AbstractSearchFilterBlockBean<T extends FilterService> ext
             filter = getFilterService().getFilter(newValue);
         }
         originalFilterName = (String) filter.getProperties().get(getFilterNameProperty());
-        searchTitleInput.setValue(originalFilterName);
+        // may be null if filter saving block is not displayed
+        if (searchTitleInput != null) {
+            searchTitleInput.setValue(originalFilterName);
+        }
         propertySheet.getChildren().clear();
         setPublicFilter(newValue);
     }

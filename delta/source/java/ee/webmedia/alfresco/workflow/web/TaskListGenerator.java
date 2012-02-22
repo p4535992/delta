@@ -54,6 +54,7 @@ import ee.webmedia.alfresco.common.propertysheet.datepicker.DateTimePicker;
 import ee.webmedia.alfresco.common.propertysheet.datepicker.DateTimePickerGenerator;
 import ee.webmedia.alfresco.common.propertysheet.datepicker.DateTimePickerRenderer;
 import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent;
+import ee.webmedia.alfresco.common.propertysheet.modalLayer.ValidatingModalLayerComponent;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.propertysheet.search.SearchRenderer;
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -166,7 +167,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
             // If AJAX submit is desired, something needs to be reworked
             putAttribute(pickerPanel, Search.AJAX_PARENT_LEVEL_KEY, Integer.valueOf(100));
 
-            ModalLayerComponent commentPopup = null;
+            ValidatingModalLayerComponent commentPopup = null;
             String commentPopupActionId = null;
             String commentPopupModalJsCall = null;
             boolean addCommentPopup = blockType.equals(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW) || blockType.equals(WorkflowSpecificModel.Types.OPINION_WORKFLOW)
@@ -536,15 +537,15 @@ public class TaskListGenerator extends BaseComponentGenerator {
         taskGridChildren.add(dueDateDaysHeading);
     }
 
-    private ModalLayerComponent createCommentPopup(Application application, String listId) {
-        ModalLayerComponent commentPopup = (ModalLayerComponent) application.createComponent(ModalLayerComponent.class.getCanonicalName());
+    private ValidatingModalLayerComponent createCommentPopup(Application application, String listId) {
+        ValidatingModalLayerComponent commentPopup = (ValidatingModalLayerComponent) application.createComponent(ValidatingModalLayerComponent.class.getCanonicalName());
         commentPopup.setId("task-comment-popup-" + listId);
         getAttributes(commentPopup).put(ModalLayerComponent.ATTR_HEADER_KEY, "task_finish_popup");
         UIInput commentInput = (UIInput) application.createComponent(HtmlInputText.COMPONENT_TYPE);
         commentInput.setId(CompoundWorkflowDialog.MODAL_KEY_ENTRY_COMMENT);
         Map<String, Object> attributes = getAttributes(commentInput);
-        attributes.put(ModalLayerComponent.ATTR_LABEL_KEY, "task_finish_comment");
-        attributes.put(ModalLayerComponent.ATTR_MANDATORY, Boolean.TRUE);
+        attributes.put(ValidatingModalLayerComponent.ATTR_LABEL_KEY, "task_finish_comment");
+        attributes.put(ValidatingModalLayerComponent.ATTR_MANDATORY, Boolean.TRUE);
         attributes.put("styleClass", "expand19-200");
         attributes.put("style", "height: 50px;");
         getChildren(commentPopup).add(commentInput);

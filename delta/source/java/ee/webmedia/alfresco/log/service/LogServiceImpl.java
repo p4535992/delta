@@ -92,7 +92,7 @@ public class LogServiceImpl implements LogService, InitializingBean {
                 filterMap.put("lower(creator_name) LIKE ?", "%" + filter.getCreatorName().toLowerCase() + "%");
             }
             if (StringUtils.hasLength(filter.getComputerId())) {
-                filterMap.put("computer_ip = ?", filter.getComputerId());
+                filterMap.put("computer_ip||computer_name LIKE ?", "%" + filter.getComputerId() + "%");
             }
             if (StringUtils.hasLength(filter.getDescription())) {
                 filterMap.put("lower(description) LIKE ?", "%" + filter.getDescription().toLowerCase() + "%");

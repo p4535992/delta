@@ -338,6 +338,13 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
 
                     Date beginDate = getListElement(document, beginDateProp, index);
                     Date endDate = getListElement(document, endDateProp, index);
+
+                    @SuppressWarnings("unchecked")
+                    List<Date> endDateList = (List<Date>) document.getProperties().get(endDateProp.toString());
+                    if (endDateList != null && beginDate != null && endDate != null && endDate.before(beginDate)) {
+                        endDate = beginDate;
+                        endDateList.set(index, endDate);
+                    }
                     Integer calculatedDays = null;
                     if (beginDate != null && endDate != null) {
                         calculatedDays = CalendarUtil.getDaysBetween(new LocalDate(beginDate.getTime()), new LocalDate(endDate.getTime()), subtractNationalHolidays,

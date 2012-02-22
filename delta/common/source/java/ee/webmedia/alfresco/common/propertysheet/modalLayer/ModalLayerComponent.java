@@ -4,8 +4,6 @@ import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.getActionId;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import javax.faces.component.UICommand;
@@ -24,22 +22,17 @@ import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 import flexjson.JSONSerializer;
 
 /**
- * Modal popup to display input fields and submit data.
- * If needed, can be extended to use propertysheet to display input fields.
+ * Modal popup to display child components and one submit button.
  * 
- * @author Riina Tens (refactored and generalized from TaskListCommentComponent and SendManuallyToSapModalComponent)
+ * @author Riina Tens
+ * @author Alar Kvell
  */
 public class ModalLayerComponent extends UICommand implements Serializable {
-
     private static final long serialVersionUID = 1L;
-    public static final String ATTR_LABEL_KEY = "labelKey";
+
     public static final String ATTR_HEADER_KEY = "headerKey";
-    public static final String ATTR_IS_DATE = "isDate";
-    /** Submit button is not activated until all mandatory fields (marked by this attribute) are filled */
-    public static final String ATTR_MANDATORY = "mandatory";
-    public static final String ATTR_IS_HIDDEN = "isHidden";
     public static final String ATTR_SUBMIT_BUTTON_MSG_KEY = "submitButtonMsgKey";
-    public static final String ATTR_PRESERVE_VALUES = "attrPreserveValues";
+    public static final String ATTR_SET_RENDERED_FALSE_ON_CLOSE = "setRenderedFalseOnClose";
     public static final String ACTION_INDEX = "actionIndex";
 
     public final static int ACTION_CLEAR = 1;
@@ -57,7 +50,9 @@ public class ModalLayerComponent extends UICommand implements Serializable {
         if (StringUtils.isNotBlank(actionValue)) {
             int action = Integer.parseInt(actionValue);
             if (action == ACTION_CLEAR) {
-                // do nothing;
+                if (Boolean.TRUE.equals(ComponentUtil.getAttributes(this).get(ATTR_SET_RENDERED_FALSE_ON_CLOSE))) {
+                    setRendered(false);
+                }
             } else if (action == ACTION_SUBMIT) {
                 String actionIndexStr = requestMap.get(getActionId(context, this));
                 Integer actionIndex = null;
@@ -81,8 +76,8 @@ public class ModalLayerComponent extends UICommand implements Serializable {
         }
 
         ResponseWriter out = context.getResponseWriter();
+        JSONSerializer serializer = new JSONSerializer();
 
-        // modal popup code
         ComponentUtil.writeModalHeader(
                 out,
                 WorkflowUtil.getDialogId(context, this),
@@ -90,84 +85,33 @@ public class ModalLayerComponent extends UICommand implements Serializable {
                 ComponentUtil.generateFieldSetter(context, this, getActionId(context, this), "")
                         + Utils.generateFormSubmit(context, this, getClientId(context), Integer.toString(ACTION_CLEAR)));
 
-        // popup content
-        out.write("<table><tbody>");
-        JSONSerializer serializer = new JSONSerializer();
-        List<UIComponent> checkedChildren = new ArrayList<UIComponent>();
-        for (UIComponent child : ComponentUtil.getChildren(this)) {
-            Map<String, Object> attributes = ComponentUtil.getAttributes(child);
-            if (!attrIsTrue(attributes, ATTR_IS_HIDDEN) && isValidatedControl(attributes)) {
-                checkedChildren.add(child);
-            }
-        }
-        boolean addValidation = !checkedChildren.isEmpty();
-        StringBuilder validationJs = new StringBuilder("");
-        if (addValidation) {
-            validationJs.append("document.getElementById(" + serializer.serialize(getSubmitButtonId(context)) + ").disabled = ");
-            int childCounter = 0;
-            for (UIComponent validatedChild : checkedChildren) {
-                Map<String, Object> attributes = ComponentUtil.getAttributes(validatedChild);
-                boolean mandatory = attrIsTrue(attributes, ATTR_MANDATORY);
-                if (mandatory) {
-                    validationJs.append("isEmptyInput(" + serializer.serialize(validatedChild.getClientId(context)) + ")");
-                }
-                if (attrIsTrue(attributes, ATTR_IS_DATE)) {
-                    if (mandatory) {
-                        validationJs.append(" || ");
-                    }
-                    validationJs.append("!validateDateInput(" + serializer.serialize(validatedChild.getClientId(context)) + ")");
-                }
-                if (childCounter < checkedChildren.size() - 1) {
-                    validationJs.append(" || ");
-                }
-                childCounter++;
-            }
-        }
-        for (UIComponent child : ComponentUtil.getChildren(this)) {
-            Map<String, Object> attributes = ComponentUtil.getAttributes(child);
-            boolean isHidden = attrIsTrue(attributes, ATTR_IS_HIDDEN);
-            out.write("<tr><td class=\"propertiesLabel" + (isHidden ? " hidden" : "") + "\">");
-            out.write(MessageUtil.getMessage((String) attributes.get(ATTR_LABEL_KEY)) + ":</td>");
-            out.write("<td>");
-            if (child instanceof UIInput && !isHidden && !attrIsTrue(attributes, ATTR_PRESERVE_VALUES)) {
-                ((UIInput) child).setValue(null);
-            }
-            Utils.encodeRecursive(context, child);
-            out.write("</td></tr>");
-            if (addValidation && !isHidden && isValidatedControl(attributes)) {
-                out.write("<script type=\"text/javascript\">$jQ(document).ready(function(){");
-                out.write("$jQ('#' + escapeId4JQ(" + serializer.serialize(child.getClientId(context)) + ") ).keyup(function(){" + validationJs + "});");
-                out.write("$jQ('#' + escapeId4JQ(" + serializer.serialize(child.getClientId(context)) + ") ).change(function(){" + validationJs + "});");
-                out.write("});</script>");
-            }
-        }
-
-        String submitButtonMessageKey = (String) getAttributes().get(ATTR_SUBMIT_BUTTON_MSG_KEY);
-        if (StringUtils.isBlank(submitButtonMessageKey)) {
-            submitButtonMessageKey = "save";
-        }
-        out.write("<tr><td colspan='2'>");
-        out.write("<input id=" + serializer.serialize(getSubmitButtonId(context))
-                + " type=\"submit\" value=" + serializer.serialize(MessageUtil.getMessage(submitButtonMessageKey))
-                + " disabled=" + serializer.serialize(addValidation ? "true" : "false")
-                + " onclick="
-                + serializer.serialize(Utils.generateFormSubmit(context, this, getClientId(context), Integer.toString(ACTION_SUBMIT))) + " />");
-        out.write("</td></tr>");
-        out.write("</tbody></table>");
+        writeModalContent(context, out, serializer);
 
         ComponentUtil.writeModalFooter(out);
     }
 
-    public boolean isValidatedControl(Map<String, Object> attributes) {
-        return (attrIsTrue(attributes, ATTR_MANDATORY) || attrIsTrue(attributes, ATTR_IS_DATE));
+    protected void writeModalContent(FacesContext context, ResponseWriter out, JSONSerializer serializer) throws IOException {
+        for (UIComponent child : ComponentUtil.getChildren(this)) {
+            Utils.encodeRecursive(context, child);
+        }
+        out.write("<br />");
+        writeSubmitButton(context, out, serializer, "");
     }
 
-    private String getSubmitButtonId(FacesContext context) {
+    protected void writeSubmitButton(FacesContext context, ResponseWriter out, JSONSerializer serializer, String extraAttrs) throws IOException {
+        String submitButtonMessageKey = (String) getAttributes().get(ATTR_SUBMIT_BUTTON_MSG_KEY);
+        if (StringUtils.isBlank(submitButtonMessageKey)) {
+            submitButtonMessageKey = "save";
+        }
+        out.write("<input id=" + serializer.serialize(getSubmitButtonId(context))
+                + " type=\"submit\" value=" + serializer.serialize(MessageUtil.getMessage(submitButtonMessageKey))
+                + " onclick="
+                + serializer.serialize(Utils.generateFormSubmit(context, this, getClientId(context), Integer.toString(ACTION_SUBMIT)))
+                + extraAttrs + " />");
+    }
+
+    protected String getSubmitButtonId(FacesContext context) {
         return getClientId(context) + "_submit_btn";
-    }
-
-    private boolean attrIsTrue(Map<String, Object> attributes, String attrIsHidden) {
-        return Boolean.TRUE.equals(attributes.get(attrIsHidden));
     }
 
     public static class ModalLayerSubmitEvent extends ActionEvent {

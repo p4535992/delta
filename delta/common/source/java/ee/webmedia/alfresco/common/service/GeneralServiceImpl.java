@@ -4,12 +4,12 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchServic
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomConstants.VALUE_INDEX_IN_MULTIVALUED_PROPERTY;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -663,28 +663,28 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     }
 
     @Override
-    public ByteArrayOutputStream getZipFileFromFiles(NodeRef document, List<String> fileNodeRefs) {
-        ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-        ZipArchiveOutputStream out = new ZipArchiveOutputStream(byteStream);
-        InputStream in = null;
+    public void writeZipFileFromFiles(OutputStream output, List<NodeRef> fileRefs) {
+        ZipArchiveOutputStream out = new ZipArchiveOutputStream(output);
         try {
             out.setLevel(Deflater.DEFAULT_COMPRESSION);
             out.setEncoding("Cp437");
             out.setCreateUnicodeExtraFields(UnicodeExtraFieldPolicy.NOT_ENCODEABLE);
             byte[] buffer = new byte[10240];
-            for (FileInfo fileInfo : fileFolderService.listFiles(document)) {
-                if (fileNodeRefs.contains(fileInfo.getNodeRef().toString())) {
-                    ZipArchiveEntry entry = new ZipArchiveEntry(fileInfo.getName());
-                    entry.setSize(fileInfo.getContentData().getSize());
-                    out.putArchiveEntry(entry);
-                    in = fileFolderService.getReader(fileInfo.getNodeRef()).getContentInputStream();
+            for (NodeRef fileRef : fileRefs) {
+                FileInfo fileInfo = fileFolderService.getFileInfo(fileRef);
+                ZipArchiveEntry entry = new ZipArchiveEntry(fileInfo.getName());
+                entry.setSize(fileInfo.getContentData().getSize());
+                out.putArchiveEntry(entry);
+                InputStream in = fileFolderService.getReader(fileInfo.getNodeRef()).getContentInputStream();
+                try {
                     int length = 0;
                     while ((length = in.read(buffer)) > 0) {
                         out.write(buffer, 0, length);
                     }
-                    out.closeArchiveEntry();
+                } finally {
                     in.close();
                 }
+                out.closeArchiveEntry();
             }
             out.finish();
         } catch (IOException e) {
@@ -692,9 +692,7 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
             throw new RuntimeException("Failed to zip up files.", e);
         } finally {
             IOUtils.closeQuietly(out);
-            IOUtils.closeQuietly(in);
         }
-        return byteStream;
     }
 
     @Override

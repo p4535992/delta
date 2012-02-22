@@ -65,6 +65,7 @@ import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter;
 import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerGenerator;
 import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent;
 import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent.ModalLayerSubmitEvent;
+import ee.webmedia.alfresco.common.propertysheet.modalLayer.ValidatingModalLayerComponent;
 import ee.webmedia.alfresco.common.propertysheet.renderer.HtmlButtonRenderer;
 import ee.webmedia.alfresco.common.propertysheet.renderkit.PropertySheetGridRenderer;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
@@ -228,7 +229,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         String documentStatus = (String) document.getProperties().get(DocumentCommonModel.Props.DOC_STATUS);
 
         WorkflowService wfService = getWorkflowService();
-        List<CompoundWorkflowDefinition> workflowDefs = wfService.getCompoundWorkflowDefinitions();
+        List<CompoundWorkflowDefinition> workflowDefs = wfService.getCompoundWorkflowDefinitions(false);
         List<ActionDefinition> actionDefinitions = new ArrayList<ActionDefinition>(workflowDefs.size());
         String userId = AuthenticationUtil.getRunAsUser();
         // remove CompoundWorkflowDefinitions that shouldn't be visible the user viewing this document regardless permissions
@@ -694,7 +695,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         panelGroupChildren.add(generateLinkWithParam(app, "signDocument", "#{" + BEAN_NAME + ".signDocument}", "signature"));
         panelGroupChildren.add(generateLinkWithParam(app, "cancelSign", "#{" + BEAN_NAME + ".cancelSign}", null));
 
-        ModalLayerComponent dueDateExtensionLayer = null;
+        ValidatingModalLayerComponent dueDateExtensionLayer = null;
         for (Task task : getMyTasks()) {
             if (task.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK, WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
                 dueDateExtensionLayer = addDueDateExtensionLayer(panelGroupChildren, context, app);
@@ -810,9 +811,9 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         }
     }
 
-    private ModalLayerComponent addDueDateExtensionLayer(List<UIComponent> panelGroupChildren, FacesContext context, Application app) {
+    private ValidatingModalLayerComponent addDueDateExtensionLayer(List<UIComponent> panelGroupChildren, FacesContext context, Application app) {
 
-        ModalLayerComponent dueDateExtensionLayer = (ModalLayerComponent) app.createComponent(ModalLayerComponent.class.getCanonicalName());
+        ValidatingModalLayerComponent dueDateExtensionLayer = (ValidatingModalLayerComponent) app.createComponent(ValidatingModalLayerComponent.class.getCanonicalName());
         dueDateExtensionLayer.setId(TASK_DUE_DATE_EXTENSION_ID);
         Map<String, Object> layerAttributes = ComponentUtil.getAttributes(dueDateExtensionLayer);
         layerAttributes.put(ModalLayerComponent.ATTR_HEADER_KEY, "workflow_dueDateExtensionRequest");
@@ -826,8 +827,8 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         UIInput reasonInput = (UIInput) textAreaGenerator.generate(context, "task-due-date-extension-reason");
         reasonInput.setId(MODAL_KEY_REASON);
         Map<String, Object> reasonAttributes = ComponentUtil.getAttributes(reasonInput);
-        reasonAttributes.put(ModalLayerComponent.ATTR_LABEL_KEY, "workflow_dueDateExtension_Reason");
-        reasonAttributes.put(ModalLayerComponent.ATTR_MANDATORY, Boolean.TRUE);
+        reasonAttributes.put(ValidatingModalLayerComponent.ATTR_LABEL_KEY, "workflow_dueDateExtension_Reason");
+        reasonAttributes.put(ValidatingModalLayerComponent.ATTR_MANDATORY, Boolean.TRUE);
         reasonAttributes.put("styleClass", "expand19-200");
         reasonAttributes.put("style", "height: 50px;");
         reasonInput.setValue(null);
@@ -835,7 +836,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
 
         UIInput dueDateInput = addDateInput(context, layerChildren, "workflow_dueDateExtension_dueDate", MODAL_KEY_DUE_DATE);
         dueDateInput.setValue(CalendarUtil.addWorkingDaysToDate(new LocalDate(), 2, getClassificatorService()).toDateTimeAtCurrentTime().toDate());
-        ComponentUtil.putAttribute(dueDateInput, ModalLayerComponent.ATTR_PRESERVE_VALUES, Boolean.TRUE);
+        ComponentUtil.putAttribute(dueDateInput, ValidatingModalLayerComponent.ATTR_PRESERVE_VALUES, Boolean.TRUE);
 
         dueDateExtensionLayer.setActionListener(app.createMethodBinding("#{WorkflowBlockBean.sendTaskDueDateExtensionRequest}", UIActions.ACTION_CLASS_ARGS));
         panelGroupChildren.add(dueDateExtensionLayer);
@@ -847,9 +848,9 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         UIInput dateInput = (UIInput) (new DatePickerGenerator()).generate(context, inputId);
         ComponentUtil.createAndSetConverter(context, DatePickerConverter.CONVERTER_ID, dateInput);
         Map<String, Object> attributes = ComponentUtil.getAttributes(dateInput);
-        attributes.put(ModalLayerComponent.ATTR_LABEL_KEY, labelKey);
-        attributes.put(ModalLayerComponent.ATTR_MANDATORY, Boolean.TRUE);
-        attributes.put(ModalLayerComponent.ATTR_IS_DATE, Boolean.TRUE);
+        attributes.put(ValidatingModalLayerComponent.ATTR_LABEL_KEY, labelKey);
+        attributes.put(ValidatingModalLayerComponent.ATTR_MANDATORY, Boolean.TRUE);
+        attributes.put(ValidatingModalLayerComponent.ATTR_IS_DATE, Boolean.TRUE);
         attributes.put("styleClass", "date");
         layerChildren.add(dateInput);
         return dateInput;

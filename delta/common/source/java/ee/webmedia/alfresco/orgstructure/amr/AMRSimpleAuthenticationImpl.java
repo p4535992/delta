@@ -1,5 +1,13 @@
 package ee.webmedia.alfresco.orgstructure.amr;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getApplicationService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDictionaryService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getRsAccessStatusBean;
+import static ee.webmedia.alfresco.utils.RepoUtil.getPropertiesIgnoringSystem;
+import static ee.webmedia.alfresco.utils.UserUtil.getPersonFullName1;
+import static ee.webmedia.alfresco.utils.UserUtil.getUserFullNameAndId;
+
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +29,7 @@ import org.springframework.ws.client.core.WebServiceTemplate;
 import org.springframework.ws.soap.client.SoapFaultClientException;
 
 import smit.ametnik.services.AmetnikExt;
-import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.log.PropDiffHelper;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
@@ -73,7 +81,7 @@ public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenti
             AmetnikExt user = amrService.getAmetnikByIsikukood(userName);
             if (user == null) {
                 String msg = "Didn't manage to get user with id '" + userName + "' from AMRService.";
-                if (BeanHelper.getApplicationService().isTest()) {
+                if (getApplicationService().isTest()) {
                     log.warn(msg + ". Ignoring, as project.test=true");
                     return;
                 }
@@ -91,11 +99,19 @@ public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenti
             if (rsService.isRestrictedDelta() && !hasRsAccess) {
                 throw new AuthenticationException("User " + userName + " has been granted no access to this instance of restricted Delta.");
             }
-            BeanHelper.getRsAccessStatusBean().setCanUserAccessRestrictedDelta(hasRsAccess);
+            getRsAccessStatusBean().setCanUserAccessRestrictedDelta(hasRsAccess);
             NodeRef person = getPersonService().getPerson(userName);
             Map<QName, Serializable> personProperties = getNodeService().getProperties(person);
+            Map<QName, Serializable> personOldProperties = getPropertiesIgnoringSystem(personProperties, getDictionaryService());
             userRegistry.fillPropertiesFromAmetnik(user, personProperties);
             getPersonService().setPersonProperties(userName, personProperties);
+
+            String diff = new PropDiffHelper().watchUser().diff(personOldProperties, getPropertiesIgnoringSystem(personProperties, getDictionaryService()));
+            if (diff != null) {
+                getLogService().addLogEntry(LogEntry.create(LogObject.USER, userName, getPersonFullName1(personOldProperties), "applog_user_edit",
+                        getUserFullNameAndId(personProperties), diff));
+            }
+
             addToAuthorityZone(person, userName, "AUTH.EXT.amr1");
         } catch (WebServiceTransportException e) {
             if (StringUtils.equals(e.getMessage(), "Not Found [404]")) {
@@ -109,7 +125,7 @@ public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenti
             log.warn("AMRService is not available", e);
         } catch (SoapFaultClientException e) {
             String msg = "Didn't get response from AMR to get user with id '" + userName + "'";
-            if (BeanHelper.getApplicationService().isTest()) {
+            if (getApplicationService().isTest()) {
                 log.warn(msg + ". Ignoring, as project.test=true"); // Web service is down - Just log in and ignore failure
             } else {
                 log.error(msg, e);

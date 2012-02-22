@@ -141,8 +141,16 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
         setProp(WorkflowCommonModel.Props.MANDATORY, mandatory);
     }
 
+    public Boolean getMandatory() {
+        return getProp(WorkflowCommonModel.Props.MANDATORY);
+    }
+
     public void setParallelTasks(boolean parallelTasks) {
         setProp(WorkflowCommonModel.Props.PARALLEL_TASKS, parallelTasks);
+    }
+
+    public Boolean getParallelTasks() {
+        return getProp(WorkflowCommonModel.Props.PARALLEL_TASKS);
     }
 
     public boolean isStopOnFinish() {
@@ -152,6 +160,34 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
 
     public void setStopOnFinish(boolean stopOnFinish) {
         setProp(WorkflowCommonModel.Props.STOP_ON_FINISH, stopOnFinish);
+    }
+
+    public Boolean getStopOnFinish() {
+        return getProp(WorkflowCommonModel.Props.STOP_ON_FINISH);
+    }
+
+    public void setDescription(String description) {
+        setProp(WorkflowSpecificModel.Props.DESCRIPTION, description);
+    }
+
+    public String getDescription() {
+        return getProp(WorkflowSpecificModel.Props.DESCRIPTION);
+    }
+
+    public void setResolution(String resolution) {
+        setProp(WorkflowSpecificModel.Props.RESOLUTION, resolution);
+    }
+
+    public String getResolution() {
+        return getProp(WorkflowSpecificModel.Props.RESOLUTION);
+    }
+
+    public void setCategory(String category) {
+        setProp(WorkflowSpecificModel.Props.CATEGORY, category);
+    }
+
+    public String getCategory() {
+        return getProp(WorkflowSpecificModel.Props.CATEGORY);
     }
 
     @Override

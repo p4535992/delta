@@ -14,6 +14,7 @@ import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.requireStatusUn
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -196,27 +197,131 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     @Override
-    public List<CompoundWorkflowDefinition> getCompoundWorkflowDefinitions() {
+    public List<CompoundWorkflowDefinition> getCompoundWorkflowDefinitions(boolean getUserFullName) {
         NodeRef root = getRoot();
         List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(root);
         List<CompoundWorkflowDefinition> compoundWorkflowDefinitions = new ArrayList<CompoundWorkflowDefinition>(childAssocs.size());
         for (ChildAssociationRef childAssoc : childAssocs) {
             NodeRef nodeRef = childAssoc.getChildRef();
-            compoundWorkflowDefinitions.add(getCompoundWorkflowDefinition(nodeRef, root));
+            compoundWorkflowDefinitions.add(getCompoundWorkflowDefinition(nodeRef, root, getUserFullName));
         }
         return compoundWorkflowDefinitions;
     }
 
     @Override
     public CompoundWorkflowDefinition getCompoundWorkflowDefinition(NodeRef nodeRef) {
-        return getCompoundWorkflowDefinition(nodeRef, nodeService.getPrimaryParent(nodeRef).getParentRef());
+        return getCompoundWorkflowDefinition(nodeRef, nodeService.getPrimaryParent(nodeRef).getParentRef(), false);
     }
 
-    private CompoundWorkflowDefinition getCompoundWorkflowDefinition(NodeRef nodeRef, NodeRef parent) {
+    private CompoundWorkflowDefinition getCompoundWorkflowDefinition(NodeRef nodeRef, NodeRef parent, boolean getUserFullName) {
         WmNode node = getNode(nodeRef, WorkflowCommonModel.Types.COMPOUND_WORKFLOW_DEFINITION, false, false);
         CompoundWorkflowDefinition compoundWorkflowDefinition = new CompoundWorkflowDefinition(node, parent);
+        String userId = compoundWorkflowDefinition.getUserId();
+        if (StringUtils.isNotBlank(userId) && getUserFullName) {
+            compoundWorkflowDefinition.setUserFullName(userService.getUserFullName(userId));
+        }
         getAndAddWorkflows(nodeRef, compoundWorkflowDefinition, false);
         return compoundWorkflowDefinition;
+    }
+
+    @Override
+    public NodeRef getCompoundWorkflowDefinitionByName(String newCompWorkflowDefinitionName, String userId, boolean checkGlobalDefinitions) {
+        for (CompoundWorkflowDefinition compWorkflowDefinition : getCompoundWorkflowDefinitions(false)) {
+            String existingUserId = compWorkflowDefinition.getUserId();
+            if (StringUtils.equalsIgnoreCase(newCompWorkflowDefinitionName, compWorkflowDefinition.getName())
+                    && ((checkGlobalDefinitions && StringUtils.isBlank(existingUserId)) || (StringUtils.isNotBlank(existingUserId) && StringUtils.equals(userId, existingUserId)))) {
+                return compWorkflowDefinition.getNodeRef();
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public List<CompoundWorkflowDefinition> getUserCompoundWorkflowDefinitions(String userId) {
+        Assert.isTrue(StringUtils.isNotBlank(userId));
+        List<CompoundWorkflowDefinition> compoundWorkflowDefinitions = new ArrayList<CompoundWorkflowDefinition>();
+        for (CompoundWorkflowDefinition compWorkflowDefinition : getCompoundWorkflowDefinitions(false)) {
+            if (StringUtils.equals(userId, compWorkflowDefinition.getUserId())) {
+                compoundWorkflowDefinitions.add(compWorkflowDefinition);
+            }
+        }
+        return compoundWorkflowDefinitions;
+    }
+
+    @Override
+    public NodeRef createCompoundWorkflowDefinition(CompoundWorkflow compoundWorkflow, String userId, String newCompWorkflowDefinitionName) {
+        CompoundWorkflowDefinition compWorkflowDefinition = getNewCompoundWorkflowDefinition();
+        compWorkflowDefinition.setUserId(userId);
+        compWorkflowDefinition.setName(newCompWorkflowDefinitionName);
+        NodeRef docRef = compoundWorkflow.getParent();
+        if (docRef != null) {
+            String docTypeId = (String) nodeService.getProperty(docRef, DocumentAdminModel.Props.OBJECT_TYPE_ID);
+            if (docTypeId != null) {
+                compWorkflowDefinition.setDocumentTypes(Arrays.asList(docTypeId));
+            }
+        }
+        copyDefinitionDataFromCompoundWorkflow(compWorkflowDefinition, compoundWorkflow);
+        compWorkflowDefinition = saveCompoundWorkflowDefinition(compWorkflowDefinition);
+        return compWorkflowDefinition.getNodeRef();
+    }
+
+    private void copyDefinitionDataFromCompoundWorkflow(CompoundWorkflowDefinition compWorkflowDefinition, CompoundWorkflow compoundWorkflow) {
+        String statusNew = Status.NEW.getName();
+        for (int wfIndex = 0; wfIndex < compoundWorkflow.getWorkflows().size(); wfIndex++) {
+            Workflow existingWorkflow = compoundWorkflow.getWorkflows().get(wfIndex);
+            Workflow newWorkflow = addNewWorkflow(compWorkflowDefinition, existingWorkflow.getType(), wfIndex, true);
+            newWorkflow.setStatus(statusNew);
+            newWorkflow.setParallelTasks(existingWorkflow.getParallelTasks());
+            newWorkflow.setDescription(existingWorkflow.getDescription());
+            newWorkflow.setStopOnFinish(existingWorkflow.getStopOnFinish());
+            newWorkflow.setResolution(existingWorkflow.getResolution());
+            if (existingWorkflow.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW)) {
+                newWorkflow.setCategory(existingWorkflow.getCategory());
+            }
+            newWorkflow.setMandatory(existingWorkflow.getMandatory());
+            for (int taskIndex = 0; taskIndex < existingWorkflow.getTasks().size(); taskIndex++) {
+                Task existingTask = existingWorkflow.getTasks().get(taskIndex);
+                Task newTask = null;
+                if (existingTask.isResponsible()) {
+                    if (existingTask.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
+                        if (!WorkflowUtil.isActiveResponsible(existingTask)) {
+                            continue;
+                        }
+                        newTask = ((AssignmentWorkflow) newWorkflow).addResponsibleTask();
+                    } else {
+                        newTask = ((OrderAssignmentWorkflow) newWorkflow).addResponsibleTask();
+                    }
+
+                } else {
+                    newTask = newWorkflow.addTask();
+                }
+                newTask.setOwnerId(existingTask.getOwnerId());
+                newTask.setOwnerEmail(existingTask.getOwnerEmail());
+                newTask.setOwnerName(existingTask.getOwnerName());
+                newTask.setOwnerJobTitle(existingTask.getOwnerJobTitle());
+                newTask.setOwnerOrgStructUnitProp(existingTask.getOwnerOrgStructUnitProp());
+                if (existingTask.isType(WorkflowSpecificModel.Types.CONFIRMATION_TASK)) {
+                    newTask.setResolution(existingTask.getResolution());
+                }
+            }
+        }
+    }
+
+    @Override
+    public void deleteCompoundWorkflowDefinition(String existingCompWorkflowDefinitionName, String userId) {
+        NodeRef nodeRef = getCompoundWorkflowDefinitionByName(existingCompWorkflowDefinitionName, userId, false);
+        if (nodeRef != null) {
+            nodeService.deleteNode(nodeRef);
+        }
+    }
+
+    @Override
+    public NodeRef overwriteExistingCompoundWorkflowDefinition(CompoundWorkflow compoundWorkflow, String userId, String existingCompWorkflowDefinitionName) {
+        NodeRef existingCompWorkflowRef = getCompoundWorkflowDefinitionByName(existingCompWorkflowDefinitionName, userId, false);
+        if (existingCompWorkflowRef != null) {
+            nodeService.deleteNode(existingCompWorkflowRef);
+        }
+        return createCompoundWorkflowDefinition(compoundWorkflow, userId, existingCompWorkflowDefinitionName);
     }
 
     @Override
@@ -344,15 +449,8 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     private Task getTask(NodeRef nodeRef, Workflow workflow, boolean copy) {
-        WmNode taskNode = getNode(nodeRef, WorkflowCommonModel.Types.TASK, true, copy);
-
-        WorkflowType workflowType = workflowTypesByTask.get(taskNode.getType());
-        if (workflowType == null) {
-            throw new RuntimeException("Task type '" + taskNode.getType() + "' not registered in service, but existing node has it: " + nodeRef);
-        }
-        // If workflowType exists, then getTaskClass() cannot return null
-        Task task = Task.create(workflowType.getTaskClass(), taskNode, workflow, workflowType.getTaskOutcomes());
-        if (taskNode.hasAspect(WorkflowSpecificModel.Aspects.TASK_DUE_DATE_EXTENSION_CONTAINER)) {
+        Task task = getTaskWithoutParentAndChildren(nodeRef, workflow, copy);
+        if (task.getNode().hasAspect(WorkflowSpecificModel.Aspects.TASK_DUE_DATE_EXTENSION_CONTAINER)) {
             List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(nodeRef, WorkflowSpecificModel.Assocs.TASK_DUE_DATE_EXTENSION_HISTORY,
                     WorkflowSpecificModel.Assocs.TASK_DUE_DATE_EXTENSION_HISTORY);
             List<Pair<String, Date>> historyRecords = task.getDueDateHistoryRecords();
@@ -364,6 +462,19 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                                 (Date) nodeService.getProperty(historyRef, WorkflowCommonModel.Props.PREVIOUS_DUE_DATE)));
             }
         }
+        return task;
+    }
+
+    @Override
+    public Task getTaskWithoutParentAndChildren(NodeRef nodeRef, Workflow workflow, boolean copy) {
+        WmNode taskNode = getNode(nodeRef, WorkflowCommonModel.Types.TASK, true, copy);
+
+        WorkflowType workflowType = workflowTypesByTask.get(taskNode.getType());
+        if (workflowType == null) {
+            throw new RuntimeException("Task type '" + taskNode.getType() + "' not registered in service, but existing node has it: " + nodeRef);
+        }
+        // If workflowType exists, then getTaskClass() cannot return null
+        Task task = Task.create(workflowType.getTaskClass(), taskNode, workflow, workflowType.getTaskOutcomes());
         return task;
     }
 
@@ -2261,6 +2372,11 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             }
         }
         return false;
+    }
+
+    @Override
+    public Map<QName, WorkflowType> getWorkflowTypesByTask() {
+        return workflowTypesByTask;
     }
 
     @Override

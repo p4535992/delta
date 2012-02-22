@@ -149,16 +149,6 @@
    </filter>   
 
    <filter>
-      <filter-name>LogInOutAuditFilter</filter-name>
-      <description>User authentication attempts logging filter</description>
-      <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
-      <init-param>
-         <param-name>targetBeanName</param-name>
-         <param-value>logInOutAuditFilter</param-value>
-      </init-param>
-   </filter>
-
-   <filter>
       <filter-name>CAS Authentication Filter</filter-name>
       <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
       <init-param>

@@ -28,6 +28,7 @@ import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.service.namespace.QNamePattern;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.GUID;
 import org.alfresco.util.Pair;
@@ -72,6 +73,11 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
     public boolean hasManagePermission() {
         Set<String> auths = authorityService.getAuthorities();
         return auths.contains(PermissionService.ADMINISTRATOR_AUTHORITY) || auths.contains(authorityService.getName(AuthorityType.GROUP, ADDRESSBOOK_GROUP));
+    }
+
+    @Override
+    public List<Node> listOrganizationAndPerson() {
+        return listAddressbookChildren(RegexQNamePattern.MATCH_ALL);
     }
 
     @Override
@@ -509,7 +515,7 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
         return dvkCapableOrgs;
     }
 
-    private List<Node> listNodeChildren(QName type, NodeRef parent) {
+    private List<Node> listNodeChildren(QNamePattern type, NodeRef parent) {
         List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(parent, type, RegexQNamePattern.MATCH_ALL);
         List<Node> entryNodes = new ArrayList<Node>(childRefs.size());
         for (ChildAssociationRef ref : childRefs) {
@@ -518,7 +524,7 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
         return entryNodes;
     }
 
-    private List<Node> listAddressbookChildren(QName type) {
+    private List<Node> listAddressbookChildren(QNamePattern type) {
         return listNodeChildren(type, getAddressbookRoot());
     }
 

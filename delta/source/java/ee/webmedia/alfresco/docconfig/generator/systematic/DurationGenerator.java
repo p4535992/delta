@@ -146,15 +146,23 @@ public class DurationGenerator extends BaseSystematicFieldGenerator {
         public void beginDateValueChanged(ValueChangeEvent event) {
             Node document = dialogDataProvider.getNode();
             Date beginDate = (Date) event.getNewValue();
-            Date endDate = (Date) document.getProperties().get(endDateProp);
+            Date endDate = getCheckedEndDate(beginDate, (Date) document.getProperties().get(endDateProp));
             updateCalculatedDays(beginDate, endDate);
         }
 
         public void endDateValueChanged(ValueChangeEvent event) {
             Node document = dialogDataProvider.getNode();
             Date beginDate = (Date) document.getProperties().get(beginDateProp);
-            Date endDate = (Date) event.getNewValue();
+            Date endDate = getCheckedEndDate(beginDate, (Date) event.getNewValue());
             updateCalculatedDays(beginDate, endDate);
+        }
+
+        private Date getCheckedEndDate(Date beginDate, Date endDate) {
+            if (endDate != null && beginDate != null && endDate.before(beginDate)) {
+                endDate = beginDate;
+                dialogDataProvider.getNode().getProperties().put(endDateProp.toString(), endDate);
+            }
+            return endDate;
         }
 
         private void updateCalculatedDays(Date beginDate, Date endDate) {

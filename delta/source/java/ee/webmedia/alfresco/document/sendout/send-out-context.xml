@@ -47,8 +47,8 @@
       <property name="addressbookService" ref="AddressbookService" />
       <property name="dvkService" ref="DvkService" />
       <property name="parametersService" ref="ParametersService" />
-      <property name="fileFolderService" ref="FileFolderService" />
-      <property name="workflowService" ref="WmWorkflowService" />
+      <property name="signatureService" ref="SignatureService" />
+      <property name="skLdapService" ref="SkLdapService" />
    </bean>
 
    <bean id="SendOutService" class="org.springframework.aop.framework.ProxyFactoryBean">

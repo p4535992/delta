@@ -43,7 +43,13 @@ public class DatePickerConverter implements Converter {
             }
         } catch (ParseException e) {
             log.warn("Formatting date failed! Input was:" + value, e);
-            final String propertyLabel = ComponentUtil.getPropertyLabel(ComponentUtil.getAncestorComponent(component, UIProperty.class), "");
+            UIProperty property = ComponentUtil.getAncestorComponent(component, UIProperty.class);
+            final String propertyLabel;
+            if (property == null) {
+                propertyLabel = ComponentUtil.getColumnLabel(component);
+            } else {
+                propertyLabel = ComponentUtil.getPropertyLabel(property, "");
+            }
             final String msg = MessageUtil.getMessage(context, "validation_date_failed", propertyLabel);
             throw new ConverterException(new FacesMessage(FacesMessage.SEVERITY_ERROR, msg, msg));
         }

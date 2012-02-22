@@ -199,4 +199,6 @@ public interface UserService {
 
     Set<String> getUsersGroups(String userName);
 
+    NodeRef retrieveUserReportsFolderRef(String username);
+
 }

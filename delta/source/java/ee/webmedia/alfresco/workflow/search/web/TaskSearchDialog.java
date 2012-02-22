@@ -83,7 +83,6 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
             ownerSearchFilters = new SelectItem[] { new SelectItem(0, MessageUtil.getMessage("task_owner_users")),
                     new SelectItem(1, MessageUtil.getMessage("task_owner_contacts")), };
         }
-
         loadAllFilters();
     }
 
@@ -95,9 +94,13 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
         return AlfrescoNavigationHandler.DIALOG_PREFIX + "taskSearchResultsDialog";
     }
 
+    public String getManageSavedBlockTitle() {
+        return MessageUtil.getMessage("task_search_saved_manage");
+    }
+
     @Override
     public String getFinishButtonLabel() {
-        return MessageUtil.getMessage(FacesContext.getCurrentInstance(), "search");
+        return MessageUtil.getMessage("search");
     }
 
     @Override
@@ -123,16 +126,21 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
     @Override
     protected Node getNewFilter() {
         // New empty filter
-        Node node = new TransientNode(TaskSearchModel.Types.FILTER, null, null);
+        Node node = new TransientNode(getFilterType(), null, null);
         // UISelectMany components don't want null as initial value
-        node.getProperties().put(TaskSearchModel.Props.TASK_TYPE.toString(), new ArrayList<QName>());
-        node.getProperties().put(TaskSearchModel.Props.STATUS.toString(), new ArrayList<String>());
-        node.getProperties().put(TaskSearchModel.Props.DOC_TYPE.toString(), new ArrayList<String>());
+        Map<String, Object> properties = node.getProperties();
+        properties.put(TaskSearchModel.Props.TASK_TYPE.toString(), new ArrayList<QName>());
+        properties.put(TaskSearchModel.Props.STATUS.toString(), new ArrayList<String>());
+        properties.put(TaskSearchModel.Props.DOC_TYPE.toString(), new ArrayList<String>());
         List<String> ownerNames = new ArrayList<String>();
         ownerNames.add("");
-        node.getProperties().put(TaskSearchModel.Props.OWNER_NAME.toString(), ownerNames);
-        node.getProperties().put(TaskSearchModel.Props.OUTCOME.toString(), new ArrayList<String>());
+        properties.put(TaskSearchModel.Props.OWNER_NAME.toString(), ownerNames);
+        properties.put(TaskSearchModel.Props.OUTCOME.toString(), new ArrayList<String>());
         return node;
+    }
+
+    protected QName getFilterType() {
+        return TaskSearchModel.Types.FILTER;
     }
 
     /**
@@ -208,6 +216,14 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
     public List<SelectItem> getTaskStatuses(FacesContext context, UIInput selectComponent) {
         ((HtmlSelectManyListbox) selectComponent).setSize(5);
         return taskStatuses;
+    }
+
+    public boolean isReportSearch() {
+        return false;
+    }
+
+    public boolean isShowManageSavedDialog() {
+        return true;
     }
 
     // START: getters / setters

@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.docdynamic.web;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAssociationsService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentLockHelperBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPropertySheetStateBean;
 import static ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGenerator.ACCESS_RESTRICTION_CHANGE_REASON_ERROR;
@@ -134,18 +135,6 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             boolean inEditMode = getDocumentDynamicService().isImapOrDvk(docRef);
             open(docRef, inEditMode);
         }
-    }
-
-    /** @param event */
-    public void openView(ActionEvent event) {
-        NodeRef docRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
-        open(docRef, false);
-    }
-
-    /** @param event */
-    public void openEdit(ActionEvent event) {
-        NodeRef docRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
-        open(docRef, true);
     }
 
     /** @param event */
@@ -498,6 +487,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             }
         } catch (NodeLockedException e) {
             BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_validation_alreadyLocked");
+            throw e;
         } catch (UnableToPerformException e) {
             throw e;
         } catch (UnableToPerformMultiReasonException e) {
@@ -808,7 +798,8 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     // =========================================================================
 
     private static boolean validateOpen(NodeRef docRef, boolean inEditMode) {
-        if (!validateExists(docRef) || !validateViewMetaDataPermission(docRef) || (inEditMode && !validateEditMetaDataPermission(docRef))) {
+        if (!validateExists(docRef) || !validateViewMetaDataPermission(docRef) || (inEditMode && !validateEditMetaDataPermission(docRef))
+                || (inEditMode && !getDocumentLockHelperBean().isLockable(docRef))) {
             return false;
         }
         return true;

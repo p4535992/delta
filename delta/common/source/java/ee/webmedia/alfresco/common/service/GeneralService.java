@@ -1,7 +1,7 @@
 package ee.webmedia.alfresco.common.service;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -222,13 +222,12 @@ public interface GeneralService {
     Node getAncestorWithType(NodeRef childRef, QName ancestorType);
 
     /**
-     * Zip-s up those files which are attached to given document, and where the id is in fileIds list.
+     * Zip-s up given files.
      * 
-     * @param document document node ref
-     * @param fileNodeRefs selected file nodeRefs as strings (from all the files assosiated to this given document).
-     * @return ByteArrayOutputStream with zip file bytes
+     * @param output
+     * @param fileRefs selected file nodeRefs.
      */
-    ByteArrayOutputStream getZipFileFromFiles(NodeRef document, List<String> fileNodeRefs);
+    void writeZipFileFromFiles(OutputStream output, List<NodeRef> fileRefs);
 
     String getUniqueFileName(NodeRef folder, String fileName);
 

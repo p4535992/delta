@@ -61,6 +61,11 @@
    </component>
    
    <component>
+      <component-type>ee.webmedia.alfresco.common.propertysheet.modalLayer.ValidatingModalLayerComponent</component-type>
+      <component-class>ee.webmedia.alfresco.common.propertysheet.modalLayer.ValidatingModalLayerComponent</component-class>
+   </component>
+   
+   <component>
       <component-type>ee.webmedia.alfresco.common.propertysheet.customchildrencontainer.CustomChildrenContainer</component-type>
       <component-class>ee.webmedia.alfresco.common.propertysheet.customchildrencontainer.CustomChildrenContainer</component-class>
    </component>

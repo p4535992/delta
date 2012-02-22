@@ -24,6 +24,7 @@
  */
 package org.alfresco.repo.security.sync;
 
+import java.io.Serializable;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.HashSet;
@@ -46,6 +47,7 @@ import org.alfresco.service.cmr.attributes.AttributeService;
 import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.cmr.security.PersonService;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.util.PropertyMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -53,7 +55,13 @@ import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 
 import ee.webmedia.alfresco.common.service.ApplicationService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.log.PropDiffHelper;
+import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.UserUtil;
 
 /**
  * A <code>ChainingUserRegistrySynchronizer</code> is responsible for synchronizing Alfresco's local user (person) and
@@ -406,7 +414,18 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
             {
                 // The person already existed in this zone: update the person
                 ChainingUserRegistrySynchronizer.logger.info("Updating user '" + personName + "'");
-                this.personService.setPersonProperties(personName, personProperties);
+
+                Map<QName, Serializable> personOldProperties = BeanHelper.getNodeService().getProperties(personService.getPerson(personName));
+
+                String diff = new PropDiffHelper()
+                        .watchUser()
+                        .diff(RepoUtil.getPropertiesIgnoringSystem(personOldProperties, BeanHelper.getDictionaryService()), personProperties);
+
+                if (diff != null) {
+                    BeanHelper.getLogService().addLogEntry(LogEntry.create(LogObject.USER, personName, UserUtil.getPersonFullName1(personOldProperties), "applog_user_edit",
+                            UserUtil.getUserFullNameAndId(personProperties), diff));
+                }
+                personService.setPersonProperties(personName, personProperties);
             }
             else
             {

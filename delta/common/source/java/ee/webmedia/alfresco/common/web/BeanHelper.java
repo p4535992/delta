@@ -108,8 +108,11 @@ import ee.webmedia.alfresco.parameters.web.ParametersImportDialog;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.privilege.web.ManageInheritablePrivilegesDialog;
 import ee.webmedia.alfresco.register.service.RegisterService;
+import ee.webmedia.alfresco.report.service.ReportService;
 import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.series.web.SeriesDetailsDialog;
+import ee.webmedia.alfresco.signature.service.SignatureService;
+import ee.webmedia.alfresco.signature.service.SkLdapService;
 import ee.webmedia.alfresco.substitute.service.SubstituteService;
 import ee.webmedia.alfresco.substitute.web.SubstitutionBean;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
@@ -120,6 +123,7 @@ import ee.webmedia.alfresco.user.web.UserDetailsDialog;
 import ee.webmedia.alfresco.user.web.UserListDialog;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 import ee.webmedia.alfresco.volume.web.VolumeDetailsDialog;
+import ee.webmedia.alfresco.workflow.search.service.TaskReportFilterService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImplFSStub;
@@ -621,6 +625,22 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static LogService getLogService() {
         return getService(LogService.class, LogService.BEAN_NAME);
+    }
+
+    public static SkLdapService getSkLdapService() {
+        return getService(SkLdapService.class, SkLdapService.BEAN_NAME);
+    }
+
+    public static SignatureService getSignatureService() {
+        return getService(SignatureService.class, SignatureService.BEAN_NAME);
+    }
+
+    public static ReportService getReportService() {
+        return getService(ReportService.class, ReportService.BEAN_NAME);
+    }
+
+    public static TaskReportFilterService getTaskReportFilterService() {
+        return getService(TaskReportFilterService.class, TaskReportFilterService.BEAN_NAME);
     }
 
     // END: delta services

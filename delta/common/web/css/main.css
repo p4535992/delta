@@ -783,7 +783,7 @@ td .dropdown-menu {
 	.message .error-message,
 	.message .info-message {
 		line-height: 16px;
-		margin: 4px 0 4px 40px;
+		margin: 4px 0 4px 4px;
 		padding-left: 15px;
 	}
 	

@@ -691,17 +691,16 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         List<CompoundWorkflow> compoundWorkflows = workflowService.getCompoundWorkflows(documentNodeRef);
         List<String> recipients = getAllRecipients(documentNodeRef, compoundWorkflowRef, compoundWorkflows, additionalRecipients);
 
-        Map<QName, Serializable> docProps = nodeService.getProperties(documentNodeRef);
         @SuppressWarnings("unchecked")
-        List<String> fileNodeRefs = (List<String>) CollectionUtils.collect(fileService.getAllFilesExcludingDigidocSubitems(documentNodeRef), new Transformer() {
+        List<NodeRef> fileNodeRefs = (List<NodeRef>) CollectionUtils.collect(fileService.getAllFilesExcludingDigidocSubitems(documentNodeRef), new Transformer() {
             @Override
-            public Object transform(Object compWorkflow) {
-                return ((File) compWorkflow).getNode().getNodeRef().toString();
+            public Object transform(Object file) {
+                return ((File) file).getNode().getNodeRef();
             }
         });
 
         boolean zipIt = false; // fileNodeRefs.size() > 0;
-        Collection<ContentToSend> content = sendOutService.prepareContents(documentNodeRef, fileNodeRefs, zipIt, sendOutService.buildZipFileName(docProps));
+        Collection<ContentToSend> content = sendOutService.prepareContents(documentNodeRef, fileNodeRefs, zipIt);
 
         DvkSendWorkflowDocuments sd = new DvkSendWorkflowDocumentsImpl();
         // collect compoundWorkflows and workflows to send for each taskCapable and dvkCapable recipient

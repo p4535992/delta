@@ -171,18 +171,15 @@ public class SearchRenderer extends BaseRenderer {
             setInputStyleClass(child, search);
             Utils.encodeRecursive(context, child);
             renderExtraInfo(search, out);
-            out.write("</td>");
+            out.write("</td><td>");
+            renderPicker(context, out, search, picker, i);
             if (isRemoveLinkRendered(search)) {
-                out.write("<td>");
                 renderRemoveLink(context, out, search, i);
-                out.write("</td>");
             }
-            out.write("</tr>");
-
+            out.write("</td></tr>");
         }
         out.write("</tbody></table>");
 
-        renderPicker(context, out, search, picker);
         renderAddLink(context, search, out);
     }
 
@@ -214,7 +211,7 @@ public class SearchRenderer extends BaseRenderer {
             }
         }
         out.write("<td>");
-        renderPicker(context, out, search, picker);
+        renderPicker(context, out, search, picker, -1);
         out.write("</td></tr></tbody></table>");
     }
 
@@ -284,12 +281,17 @@ public class SearchRenderer extends BaseRenderer {
         }
     }
 
-    private void renderPicker(FacesContext context, ResponseWriter out, Search search, UIGenericPicker picker) throws IOException {
+    private void renderPicker(FacesContext context, ResponseWriter out, Search search, UIGenericPicker picker, int index) throws IOException {
         if (search.isDisabled()) {
             return;
         }
+        int rowIndex = getRowIndex(search);
+        if (rowIndex < 0) {
+            rowIndex = index;
+        }
+
         out.write("<a class=\"icon-link margin-left-4 search\" onclick=\"");
-        out.write(ComponentUtil.generateFieldSetter(context, search, getActionId(context, search), OPEN_DIALOG_ACTION + ACTION_SEPARATOR + getRowIndex(search)));
+        out.write(ComponentUtil.generateFieldSetter(context, search, getActionId(context, search), OPEN_DIALOG_ACTION + ACTION_SEPARATOR + rowIndex));
         out.write("return showModal('");
         out.write(getDialogId(context, search));
         String toolTip = search.getSearchLinkTooltip();

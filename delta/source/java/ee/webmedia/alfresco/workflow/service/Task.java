@@ -18,8 +18,9 @@ import org.springframework.util.Assert;
 import ee.webmedia.alfresco.common.web.CssStylable;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.file.model.File;
-import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.UserUtil;
+import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
@@ -126,6 +127,28 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
 
     public void setOwnerEmail(String ownerEmail) {
         setProp(WorkflowCommonModel.Props.OWNER_EMAIL, ownerEmail);
+    }
+
+    @SuppressWarnings("unchecked")
+    public String getOwnerOrgStructUnit() {
+        return UserUtil.getDisplayUnit((List<String>) getNode().getProperties().get(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME));
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<String> getOwnerOrgStructUnitProp() {
+        return (List<String>) getNode().getProperties().get(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME);
+    }
+
+    public void setOwnerOrgStructUnitProp(List<String> ownerOrgStructUnitProp) {
+        getNode().getProperties().put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME.toString(), ownerOrgStructUnitProp);
+    }
+
+    public String getOwnerJobTitle() {
+        return getProp(WorkflowCommonModel.Props.OWNER_JOB_TITLE);
+    }
+
+    public void setOwnerJobTitle(String ownerJobTitle) {
+        setProp(WorkflowCommonModel.Props.OWNER_JOB_TITLE, ownerJobTitle);
     }
 
     public Date getCompletedDateTime() {
@@ -264,6 +287,10 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
 
     public Integer getDueDateDays() {
         return getProp(WorkflowSpecificModel.Props.DUE_DATE_DAYS);
+    }
+
+    public void setDueDateDays(Integer dueDateDays) {
+        setProp(WorkflowSpecificModel.Props.DUE_DATE_DAYS, dueDateDays);
     }
 
     public String getDueDateStr() {
@@ -444,4 +471,5 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         }
         return removedFiles;
     }
+
 }

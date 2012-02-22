@@ -153,6 +153,14 @@ public interface DocumentSearchService {
     List<TaskInfo> searchTasks(Node filter);
 
     /**
+     * Searches for tasks using a search filter.
+     * Query must be exactly same as in searchTasks,
+     * but returns all tasks (no limit for returned result rows)
+     * and for performance reasons only nodeRefs are returned.
+     */
+    List<NodeRef> searchTasksForReport(Node filter);
+
+    /**
      * If due date is null, then list with due tasks is returned (dueDate < sysDate)
      * 
      * @param dueDate

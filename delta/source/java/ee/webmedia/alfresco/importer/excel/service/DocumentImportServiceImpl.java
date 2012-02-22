@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.importer.excel.service;
 
+import static ee.webmedia.alfresco.report.service.ExcelUtil.setCellValueTruncateIfNeeded;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -314,7 +316,7 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
                 if (StringUtils.isBlank(docRef)) {
                     throw new RuntimeException("Document has still no nodeRef: doc=\n" + doc);
                 }
-                setCellValueTruncateIfNeeded(cell, docRef.toString());
+                setCellValueTruncateIfNeeded(cell, docRef.toString(), log);
                 final Map<String, String> fileLocationsMissing = doc.getFileLocationsMissing();
                 String filesMissing = "";
                 String debugInformation = "";
@@ -327,8 +329,8 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
                 }
                 final Cell missingFilesCell = row.createCell(/* col X */23);
                 final Cell debugInformationCell = row.createCell(/* col Y */24);
-                setCellValueTruncateIfNeeded(missingFilesCell, filesMissing);
-                setCellValueTruncateIfNeeded(debugInformationCell, debugInformation);
+                setCellValueTruncateIfNeeded(missingFilesCell, filesMissing, log);
+                setCellValueTruncateIfNeeded(debugInformationCell, debugInformation, log);
             }
             final boolean canWrite = rowSourceFile.canWrite();
             if (!canWrite) {
@@ -346,21 +348,6 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
             IOUtils.closeQuietly(inp);
             IOUtils.closeQuietly(fileOut);
         }
-    }
-
-    private final static int EXCEL_CELL_MAX_SIZE = 32767;
-    private final static String EXCEL_CELL_MAX_SIZE_NOTIFICATION_SUFFIX = "\n\n\nNB! end of the input was removed, as it exceeded maximum length that excel cell can hold("
-            + EXCEL_CELL_MAX_SIZE + " characters)";
-
-    private void setCellValueTruncateIfNeeded(final Cell debugInformationCell, String textToWrite) {
-        if (textToWrite == null || textToWrite.length() == 0) {
-            return;
-        }
-        if (textToWrite.length() >= EXCEL_CELL_MAX_SIZE) {
-            log.warn("Following text is too long to fit into excel cell(trunkating it):\n" + textToWrite);
-            textToWrite = textToWrite.substring(0, (EXCEL_CELL_MAX_SIZE - EXCEL_CELL_MAX_SIZE_NOTIFICATION_SUFFIX.length() - 1));
-        }
-        debugInformationCell.setCellValue(textToWrite);
     }
 
     @Override

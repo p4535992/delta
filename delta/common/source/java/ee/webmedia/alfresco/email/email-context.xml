@@ -6,6 +6,8 @@
       <property name="mailService" ref="mailService" />
       <property name="fileFolderService" ref="FileFolderService" />      
       <property name="generalService" ref="GeneralService" />
+      <property name="signatureService" ref="SignatureService" />
+      <property name="mimetypeService" ref="MimetypeService" />
    </bean>
 
    <bean id="CommonEmailService" class="org.springframework.aop.framework.ProxyFactoryBean">

@@ -152,33 +152,35 @@ public class UserContactGroupSearchBean implements Serializable {
      */
     public String[] preprocessResultsToNodeRefs(int filterIndex, String[] results) {
         List<String> processedResult = new ArrayList<String>();
-        for (String result : results) {
-            if (filterIndex == USERS_FILTER) {
-                // Replace user name with reference to the person node
-                NodeRef nodeRef = getUserService().getPerson(result);
-                if (nodeRef != null) {
-                    processedResult.add(nodeRef.toString());
-                }
-            } else if (filterIndex == USER_GROUPS_FILTER) {
-                // Add all users contained in user group and replace user names with reference to the person node
-                Set<String> auths = getUserService().getUserNamesInGroup(result);
-                for (String auth : auths) {
-                    NodeRef nodeRef = getUserService().getPerson(auth);
+        if (results != null) {
+            for (String result : results) {
+                if (filterIndex == USERS_FILTER) {
+                    // Replace user name with reference to the person node
+                    NodeRef nodeRef = getUserService().getPerson(result);
                     if (nodeRef != null) {
                         processedResult.add(nodeRef.toString());
                     }
+                } else if (filterIndex == USER_GROUPS_FILTER) {
+                    // Add all users contained in user group and replace user names with reference to the person node
+                    Set<String> auths = getUserService().getUserNamesInGroup(result);
+                    for (String auth : auths) {
+                        NodeRef nodeRef = getUserService().getPerson(auth);
+                        if (nodeRef != null) {
+                            processedResult.add(nodeRef.toString());
+                        }
+                    }
+                } else if (filterIndex == CONTACTS_FILTER) {
+                    // Add contact
+                    processedResult.add(result);
+                } else if (filterIndex == CONTACT_GROUPS_FILTER) {
+                    // Add all contacts contained in contact group
+                    List<NodeRef> contacts = getAddressbookService().getContactGroupContents(new NodeRef(result));
+                    for (NodeRef contact : contacts) {
+                        processedResult.add(contact.toString());
+                    }
+                } else {
+                    throw new RuntimeException("filterIndex out of range: " + filterIndex);
                 }
-            } else if (filterIndex == CONTACTS_FILTER) {
-                // Add contact
-                processedResult.add(result);
-            } else if (filterIndex == CONTACT_GROUPS_FILTER) {
-                // Add all contacts contained in contact group
-                List<NodeRef> contacts = getAddressbookService().getContactGroupContents(new NodeRef(result));
-                for (NodeRef contact : contacts) {
-                    processedResult.add(contact.toString());
-                }
-            } else {
-                throw new RuntimeException("filterIndex out of range: " + filterIndex);
             }
         }
         return processedResult.toArray(new String[processedResult.size()]);

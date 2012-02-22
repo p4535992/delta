@@ -28,6 +28,11 @@ public interface AddressbookService {
     boolean hasManagePermission();
 
     /**
+     * @return list of nodes of type ab:organization and ab:privPerson
+     */
+    List<Node> listOrganizationAndPerson();
+
+    /**
      * @return list of nodes of type ab:organization
      */
     List<Node> listOrganization();

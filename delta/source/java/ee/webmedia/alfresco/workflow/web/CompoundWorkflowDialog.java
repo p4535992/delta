@@ -19,8 +19,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import javax.faces.component.UIInput;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
+import javax.faces.model.SelectItem;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
@@ -35,6 +37,9 @@ import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
+import org.apache.commons.collections.Transformer;
+import org.apache.commons.collections.comparators.NullComparator;
+import org.apache.commons.collections.comparators.TransformingComparator;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.joda.time.LocalDate;
@@ -74,6 +79,7 @@ import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
+import ee.webmedia.alfresco.workflow.service.CompoundWorkflowDefinition;
 import ee.webmedia.alfresco.workflow.service.OrderAssignmentWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Task.Action;
@@ -103,6 +109,8 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     private transient DocumentService documentService;
     private transient DocumentLogService documentLogService;
     private transient ParametersService parametersService;
+    private String existingUserCompoundWorkflowDefinition;
+    private String newUserCompoundWorkflowDefinition;
 
     private static final List<QName> knownWorkflowTypes = Arrays.asList(//
             WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW
@@ -508,6 +516,78 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         updatePanelGroup();
     }
 
+    /** @param event */
+    public void saveasCompoundWorkflowDefinition(ActionEvent event) {
+        String userId = AuthenticationUtil.getRunAsUser();
+        if (validateSaveasData()) {
+            if (StringUtils.isNotBlank(newUserCompoundWorkflowDefinition)) {
+                getWorkflowService().createCompoundWorkflowDefinition(compoundWorkflow, userId, newUserCompoundWorkflowDefinition);
+            } else {
+                getWorkflowService().overwriteExistingCompoundWorkflowDefinition(compoundWorkflow, userId, existingUserCompoundWorkflowDefinition);
+            }
+        }
+        updatePanelGroup();
+    }
+
+    private boolean validateSaveasData() {
+        if (StringUtils.isBlank(newUserCompoundWorkflowDefinition) && StringUtils.isBlank(existingUserCompoundWorkflowDefinition)) {
+            MessageUtil.addErrorMessage("compoundWorkflow_definition_saveas_error_fields_empty");
+            return false;
+        }
+        if (StringUtils.isNotBlank(newUserCompoundWorkflowDefinition) && StringUtils.isNotBlank(existingUserCompoundWorkflowDefinition)) {
+            MessageUtil.addErrorMessage("compoundWorkflow_definition_saveas_error_both_fields_filled");
+            return false;
+        }
+        if (StringUtils.isNotBlank(newUserCompoundWorkflowDefinition)) {
+            if (getWorkflowService().getCompoundWorkflowDefinitionByName(newUserCompoundWorkflowDefinition, AuthenticationUtil.getRunAsUser(), true) != null) {
+                MessageUtil.addErrorMessage("compoundWorkflow_definition_saveas_error_definition_exists");
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public void deleteCompoundWorkflowDefinition(ActionEvent event) {
+        if (StringUtils.isBlank(existingUserCompoundWorkflowDefinition)) {
+            MessageUtil.addErrorMessage("compoundWorkflow_definition_delete_error_definition_not_selected");
+            return;
+        }
+        getWorkflowService().deleteCompoundWorkflowDefinition(existingUserCompoundWorkflowDefinition, AuthenticationUtil.getRunAsUser());
+        updatePanelGroup();
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<SelectItem> getUserCompoundWorkflowDefinitions(FacesContext context, UIInput component) {
+        List<SelectItem> userCompoundWorkflowDefinitions = new ArrayList<SelectItem>();
+        for (CompoundWorkflowDefinition compoundWorkflowDefinition : getWorkflowService().getUserCompoundWorkflowDefinitions(AuthenticationUtil.getRunAsUser())) {
+            userCompoundWorkflowDefinitions.add(new SelectItem(compoundWorkflowDefinition.getName()));
+        }
+        Collections.sort(userCompoundWorkflowDefinitions, new TransformingComparator(new Transformer() {
+            @Override
+            public Object transform(Object input) {
+                return ((SelectItem) input).getValue();
+            }
+        }, new NullComparator()));
+        userCompoundWorkflowDefinitions.add(0, new SelectItem("", MessageUtil.getMessage("workflow_choose")));
+        return userCompoundWorkflowDefinitions;
+    }
+
+    public String getExistingUserCompoundWorkflowDefinition() {
+        return existingUserCompoundWorkflowDefinition;
+    }
+
+    public void setExistingUserCompoundWorkflowDefinition(String existingUserCompoundWorkflowDefinition) {
+        this.existingUserCompoundWorkflowDefinition = existingUserCompoundWorkflowDefinition;
+    }
+
+    public String getNewUserCompoundWorkflowDefinition() {
+        return newUserCompoundWorkflowDefinition;
+    }
+
+    public void setNewUserCompoundWorkflowDefinition(String newUserCompoundWorkflowDefinition) {
+        this.newUserCompoundWorkflowDefinition = newUserCompoundWorkflowDefinition;
+    }
+
     public void calculateDueDate(ActionEvent event) {
         int wfIndex = ActionUtil.getParam(event, WF_INDEX, Integer.class);
         int taskIndex = ActionUtil.getParam(event, TASK_INDEX, Integer.class);
@@ -540,7 +620,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                 if (task.isStatus(Status.NEW) && task.getDueDate() != null && task.getDueDateDays() != null) {
                     if (!DateUtils.isSameDay(task.getDueDate(),
                             DatePickerWithDueDateGenerator.calculateDueDate(task.getPropBoolean(WorkflowSpecificModel.Props.IS_DUE_DATE_WORKING_DAYS), task.getDueDateDays())
-                            .toDateMidnight().toDate())) {
+                                    .toDateMidnight().toDate())) {
                         task.setProp(WorkflowSpecificModel.Props.DUE_DATE_DAYS, null);
                         task.setProp(WorkflowSpecificModel.Props.IS_DUE_DATE_WORKING_DAYS, Boolean.FALSE); // reset to default value
                     }

@@ -35,7 +35,7 @@ public interface SendOutService {
      * 
      * @param document document NodeRef
      */
-    public void updateSearchableSendMode(NodeRef document);
+    void updateSearchableSendMode(NodeRef document);
 
     /**
      * Build searchableSendMode list from document's sendInfo.sendMode values
@@ -43,7 +43,7 @@ public interface SendOutService {
      * @param document document NodeRef
      * @return List of document's sendInfo.sendMode values
      */
-    public ArrayList<String> buildSearchableSendMode(NodeRef document);
+    ArrayList<String> buildSearchableSendMode(NodeRef document);
 
     /**
      * Sends out document.
@@ -61,14 +61,12 @@ public interface SendOutService {
      * @param zipIt if attachments should be zipped into single file, or sent as separate files
      * @return true
      */
-    boolean sendOut(NodeRef document, List<String> names, List<String> emails, List<String> modes
-            , String fromEmail, String subject, String content, List<String> fileNodeRefs, boolean zipIt);
+    boolean sendOut(NodeRef document, List<String> names, List<String> emails, List<String> modes, List<String> encryptionIdCodes, String fromEmail, String subject,
+            String content, List<NodeRef> fileRefs, boolean zipIt);
 
     NodeRef addSendinfo(NodeRef document, Map<QName, Serializable> props);
 
-    public List<ContentToSend> prepareContents(NodeRef document, List<String> fileNodeRefs, boolean zipIt, String zipFileName);
-
-    public String buildZipFileName(Map<QName, Serializable> docProperties);
+    List<ContentToSend> prepareContents(NodeRef document, List<NodeRef> fileRefs, boolean zipIt);
 
     List<SendInfo> getDocumentAndTaskSendInfos(NodeRef document, List<CompoundWorkflow> compoundWorkflows);
 

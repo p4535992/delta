@@ -87,6 +87,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
                 if (accessPermission.getAuthority().equals(authority) && accessPermission.getPermission().equals(permission)
                         && accessPermission.getAccessStatus() == AccessStatus.ALLOWED) {
                     matches++;
+                    break;
                 }
             }
         }

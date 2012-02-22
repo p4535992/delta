@@ -33,6 +33,17 @@
 </script>
 </f:verbatim>
 
+<h:panelGroup rendered="#{DocumentSendOutDialog.modalId != null}">
+   <h:panelGroup id="dialog-modal-container" binding="#{DocumentSendOutDialog.modalContainer}" />
+   <f:verbatim>
+      <script type="text/javascript">
+         $jQ(document).ready(function () {
+            showModal("</f:verbatim><a:outputText value="#{DocumentSendOutDialog.modalId}" /><f:verbatim>");
+         });
+      </script>
+   </f:verbatim>
+</h:panelGroup>
+
 <a:panel id="send-out-panel" label="#{DocumentSendOutDialog.panelTitle}" styleClass="panel-100" progressive="true">
 
    <a:booleanEvaluator value="#{not empty DocumentSendOutDialog.model.sendDesc}">
@@ -89,6 +100,11 @@
          <f:verbatim><span></f:verbatim><h:outputText value="#{msg.document_zip}" /><f:verbatim></span></f:verbatim>
       </h:panelGroup>
       <h:selectBooleanCheckbox value="#{DocumentSendOutDialog.model.zip}" />
+      
+      <h:panelGroup>
+         <f:verbatim><span></f:verbatim><h:outputText value="#{msg.document_encrypt}" /><f:verbatim></span></f:verbatim>
+      </h:panelGroup>
+      <h:selectBooleanCheckbox value="#{DocumentSendOutDialog.model.encrypt}" />
       
       <h:panelGroup>
          <f:verbatim><span></f:verbatim><h:outputText value="#{msg.document_send_subject}" /><f:verbatim></span></f:verbatim>

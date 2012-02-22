@@ -53,6 +53,7 @@
       <property name="sendOutService" ref="SendOutService" />
       <property name="documentLogService" ref="DocumentLogService" />
       <property name="documentTemplateService" ref="DocumentTemplateService" />
+      <property name="fileService" ref="FileService" />
       <property name="showMessageIfUnregistered" value="${conf.document-regnumber.showMessageIfUnregistered}" />
    </bean>
 

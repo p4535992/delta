@@ -1,7 +1,11 @@
 package ee.webmedia.alfresco.utils;
 
 import static ee.webmedia.alfresco.utils.ISOLatin1Util.removeAccents;
+import static org.apache.commons.io.FileUtils.ONE_GB;
+import static org.apache.commons.io.FileUtils.ONE_KB;
+import static org.apache.commons.io.FileUtils.ONE_MB;
 
+import java.text.DecimalFormat;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -174,4 +178,25 @@ public class FilenameUtil {
     public static String getFilenameWithoutExtension(String fileName) {
         return fileName.substring(0, fileName.lastIndexOf("."));
     }
+
+    public static String byteCountToDisplaySize(long size) {
+        DecimalFormat df = new DecimalFormat("#.##");
+
+        String displaySize;
+        if (size / ONE_GB > 0) {
+            displaySize = df.format((double) size / ONE_GB) + " GB";
+        } else if (size / ONE_MB > 0) {
+            displaySize = df.format((double) size / ONE_MB) + " MB";
+        } else if (size / ONE_KB > 0) {
+            displaySize = df.format((double) size / ONE_KB) + " KB";
+        } else {
+            displaySize = String.valueOf(size) + " B";
+        }
+        return displaySize;
+    }
+
+    public static boolean isEncryptedFile(String fileName) {
+        return fileName.toLowerCase().endsWith(".cdoc");
+    }
+
 }

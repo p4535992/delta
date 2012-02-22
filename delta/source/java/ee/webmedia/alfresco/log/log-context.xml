@@ -18,6 +18,17 @@
       <property name="dataSource" ref="dataSource" />
    </bean>
 
+   <bean id="logTableBootstrapFix" class="ee.webmedia.alfresco.log.bootstrap.LogTableBootstrapFix" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="logTableBootstrap2" />
+         </list>
+      </property>
+      <property name="dataSource" ref="dataSource" />
+   </bean>
+
    <!-- SERVICE -->
 
    <bean id="logService" class="ee.webmedia.alfresco.log.service.LogServiceImpl">
@@ -73,7 +84,4 @@
  
    <bean id="ApplicationLogListDialog" class="ee.webmedia.alfresco.log.web.ApplicationLogListDialog" scope="session" />
 
-  <bean id="logInOutAuditFilter" class="ee.webmedia.alfresco.log.web.LogInOutAuditFilter">
-    <property name="logService" ref="LogService" />
-  </bean>
 </beans>

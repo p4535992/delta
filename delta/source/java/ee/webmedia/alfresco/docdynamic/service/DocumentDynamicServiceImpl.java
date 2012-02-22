@@ -1,7 +1,5 @@
 package ee.webmedia.alfresco.docdynamic.service;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.getDocTypeIdAndVersionNr;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FILE_CONTENTS;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FILE_NAMES;
@@ -65,6 +63,8 @@ import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGener
 import ee.webmedia.alfresco.docconfig.service.DocumentConfig;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
+import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.log.service.DocumentPropertiesChangeHolder;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
@@ -74,12 +74,14 @@ import ee.webmedia.alfresco.document.service.DocumentServiceImpl;
 import ee.webmedia.alfresco.document.service.EventsLoggingHelper;
 import ee.webmedia.alfresco.imap.model.ImapModel;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
+import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MessageData;
 import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageDataWrapper;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TreeNode;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 
 /**
@@ -100,6 +102,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     private SendOutService sendOutService;
     private DocumentLogService documentLogService;
     private DocumentTemplateService documentTemplateService;
+    private FileService fileService;
     private boolean showMessageIfUnregistered;
 
     private BeanFactory beanFactory;
@@ -224,7 +227,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             // objectTypeId and objectTypeVersion are set on every child node, because if
             // documentConfigService.getPropertyDefinition is called, then we don't have to find parent document
             setTypeProps(getDocTypeIdAndVersionNr(parentNode), props);
-            WmNode childNode = getGeneralService().createNewUnSaved(assocTypeQName, props);
+            WmNode childNode = generalService.createNewUnSaved(assocTypeQName, props);
             parentNode.addChildAssociations(assocTypeQName, childNode);
             childNodes.add(Pair.newInstance(assocTypeQName, childNode));
             createChildNodesHierarchy(childNode, childAssocTypeQName.getChildren());
@@ -292,7 +295,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
                     // objectTypeId and objectTypeVersion are set on every child node, because if
                     // documentConfigService.getPropertyDefinition is called, then we don't have to find parent document
                     setTypeProps(getDocTypeIdAndVersionNr(targetParentNode), props);
-                    WmNode targetChildNode = getGeneralService().createNewUnSaved(assocTypeQName, props);
+                    WmNode targetChildNode = generalService.createNewUnSaved(assocTypeQName, props);
                     targetParentNode.addChildAssociations(assocTypeQName, targetChildNode);
                     childNodes.add(Pair.newInstance(assocTypeQName, targetChildNode));
                     QName[] childRequiredHierarchy = (QName[]) ArrayUtils.add(requiredHierarchy, assocTypeQName);
@@ -485,7 +488,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         Collections.sort(associatedDocs, DOCUMENT_BY_REG_DATE_TIME_COMPARATOR);
         for (DocumentDynamic associatedDocument : associatedDocs) {
             if (!associatedDocument.getNodeRef().getId().equals(originalDocumentNodeRef.getId())) {
-                DocumentConfig cfg = getDocumentConfigService().getConfig(associatedDocument.getNode());
+                DocumentConfig cfg = documentConfigService.getConfig(associatedDocument.getNode());
                 associatedDocument.setFunction(functionRef);
                 associatedDocument.setSeries(seriesRef);
                 associatedDocument.setVolume(volumeRef);
@@ -508,6 +511,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     private DocumentDynamic update(DocumentDynamic documentOriginal, List<String> saveListenerBeanNames) {
         DocumentDynamic document = documentOriginal.clone();
         boolean isDraft = document.isDraft();
+        boolean isImapOrDvk = document.isImapOrDvk();
         if (saveListenerBeanNames != null) {
             ValidationHelperImpl validationHelper = new ValidationHelperImpl();
             for (String saveListenerBeanName : saveListenerBeanNames) {
@@ -534,6 +538,15 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             docProps.put(FILE_NAMES.toString(), documentService.getSearchableFileNames(docRef));
             docProps.put(FILE_CONTENTS.toString(), documentService.getSearchableFileContents(docRef));
             docProps.put(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE.toString(), sendOutService.buildSearchableSendMode(docRef));
+        }
+
+        if (isImapOrDvk) {
+            List<File> files = fileService.getAllFilesExcludingDigidocSubitems(docRef);
+            for (File file : files) {
+                if (FilenameUtil.isEncryptedFile(file.getName())) {
+                    throw new UnableToPerformException("docdyn_save_encryptedFilesForbidden");
+                }
+            }
         }
 
         if (LOG.isDebugEnabled()) {
@@ -803,7 +816,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("Setting on " + node.getType().toPrefixString(namespaceService) + " prop " + propName.toPrefixString(namespaceService)
-                                                + " to " + list);
+                                + " to " + list);
                     }
                     node.getProperties().put(propName.toString(), list);
                 }
@@ -833,19 +846,17 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
     private DocumentPropertiesChangeHolder saveThisNodeAndChildNodes(NodeRef parentRef, Node node, List<TreeNode<QName>> childAssocTypeQNames,
             QName[] currentHierarchy, DocumentServiceImpl.PropertyChangesMonitorHelper propertyChangesMonitorHelper, Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs) {
-        boolean propsChanged = false;
         NodeRef nodeRef;
         if (currentHierarchy == null) {
             currentHierarchy = new QName[] {};
         }
         DocumentPropertiesChangeHolder docPropsChangeHolder = new DocumentPropertiesChangeHolder();
         if (RepoUtil.isUnsaved(node)) {
-            propsChanged = true;
             Map<QName, Serializable> props = RepoUtil.toQNameProperties(node.getProperties(), false, true);
             QName typeQName = node.getType();
             nodeRef = nodeService.createNode(parentRef, typeQName, typeQName, typeQName, props).getChildRef();
             generalService.setAspectsIgnoringSystem(nodeRef, node.getAspects());
-            docPropsChangeHolder.addChange(nodeRef, typeQName, null, node.getNodeRef());
+            docPropsChangeHolder.addChange(nodeRef, typeQName, null, node);
         } else {
             generalService.setAspectsIgnoringSystem(node);
 
@@ -864,9 +875,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             }
             QName[] ignoredPropsArray = ignoredProps.toArray(new QName[ignoredProps.size()]);
             docPropsChangeHolder = propertyChangesMonitorHelper.setPropertiesIgnoringSystemAndReturnNewValues(node.getNodeRef(), node.getProperties(), ignoredPropsArray);
-            propsChanged |= !docPropsChangeHolder.isEmpty();
             generalService.saveRemovedChildAssocs(node, docPropsChangeHolder);
-            propsChanged |= docPropsChangeHolder.isStructureChanged();
             nodeRef = node.getNodeRef();
         }
 
@@ -929,6 +938,10 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
     public void setDocumentTemplateService(DocumentTemplateService documentTemplateService) {
         this.documentTemplateService = documentTemplateService;
+    }
+
+    public void setFileService(FileService fileService) {
+        this.fileService = fileService;
     }
 
     public void setShowMessageIfUnregistered(boolean showMessageIfUnregistered) {

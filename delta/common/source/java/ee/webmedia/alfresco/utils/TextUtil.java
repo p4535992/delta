@@ -2,12 +2,14 @@ package ee.webmedia.alfresco.utils;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.ui.common.converter.MultiValueConverter;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.FastDateFormat;
 
 public class TextUtil {
 
@@ -147,4 +149,12 @@ public class TextUtil {
         }
         return result.toString();
     }
+
+    public static String formatDateOrEmpty(FastDateFormat dateFormat, Date date) {
+        if (date == null) {
+            return "";
+        }
+        return dateFormat.format(date);
+    }
+
 }

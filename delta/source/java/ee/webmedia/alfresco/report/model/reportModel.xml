@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="report:reportModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+      <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
+      <import uri="http://alfresco.webmedia.ee/model/task/report/1.0" prefix="taskreport" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/report/1.0" prefix="report" />
+   </namespaces>
+   
+   <constraints>
+
+      <constraint name="report:reportType" type="ee.webmedia.alfresco.common.constraint.EnumConstraint">
+         <parameter name="enumClass"><value>ee.webmedia.alfresco.report.model.ReportType</value></parameter>
+      </constraint>
+      
+      <constraint name="report:reportStatus" type="ee.webmedia.alfresco.common.constraint.EnumConstraint">
+         <parameter name="enumClass"><value>ee.webmedia.alfresco.report.model.ReportStatus</value></parameter>
+      </constraint>      
+
+   </constraints>   
+
+   <types>
+   
+      <type name="report:reportsQueue">
+         <parent>sys:base</parent>
+         <mandatory-aspects>
+            <aspect>report:reportResultContainer</aspect>
+            <aspect>sys:aspect_root</aspect>
+         </mandatory-aspects>      
+      </type>
+      
+      <type name="report:reportResult">
+         <parent>cm:folder</parent>
+         <properties>
+            <property name="report:userName">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="report:reportName">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="report:reportType">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+               <constraints>
+                  <constraint ref="report:reportType" />
+               </constraints>               
+            </property>
+            <property name="report:reportOutputType">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property> 
+            <property name="report:userStartDateTime">
+               <type>d:date</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="report:runStartDateTime">
+               <type>d:date</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="report:runFinishDateTime">
+               <type>d:date</type>
+               <mandatory>true</mandatory>
+            </property>    
+            <property name="report:cancelDateTime">
+               <type>d:date</type>
+               <mandatory>true</mandatory>
+            </property>    
+            <property name="report:firstDownloadDateTime">
+               <type>d:date</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="report:status">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+               <constraints>
+                  <constraint ref="report:reportStatus" />
+               </constraints>               
+            </property>
+         </properties>
+         <mandatory-aspects>
+            <aspect>taskreport:taskReportFilterContainer</aspect>
+         </mandatory-aspects>
+      </type>      
+   
+   </types>
+   
+   <aspects>
+      <aspect name="report:reportResultContainer">
+         <associations>
+            <child-association name="report:reportResult">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>report:reportResult</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
+      
+      <aspect name="report:reportsQueueContainer">
+         <associations>
+            <child-association name="report:reportsQueue">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>report:reportsQueue</class>
+                  <mandatory>false</mandatory>
+                  <many>false</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
+   </aspects>   
+   
+</model>

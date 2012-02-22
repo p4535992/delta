@@ -165,7 +165,7 @@ public class InviteUsersDialog extends PermissionsAddDialog {
         }
 
         try {
-            emailService.sendEmail(toEmails, toNames, fromEmail, subject, content, true, null, null, false, null);
+            emailService.sendEmail(toEmails, toNames, fromEmail, subject, content, true, null, null);
         } catch (EmailException e) {
             log.error("Discussion invitation notification e-mail sending failed, ignoring and continuing", e);
             return;

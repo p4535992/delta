@@ -164,7 +164,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         return isMultiValued();
     }
 
-    protected void pickerFinish(UIGenericPicker picker) {
+    protected void pickerFinish(UIGenericPicker picker, int index) {
         String[] results = picker.getSelectedResults();
         FacesContext context = FacesContext.getCurrentInstance();
 
@@ -179,7 +179,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         }
 
         if (isMultiValued()) {
-            multiValuedPickerFinish(results, context);
+            multiValuedPickerFinish(results, context, index);
         } else {
             if (results.length > 1) {
                 throw new RuntimeException("Single-valued property does not support multiple values");
@@ -192,9 +192,32 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         picker.queueEvent(new UIGenericPicker.PickerEvent(picker, UIGenericPicker.ACTION_CLEAR, 0, null, null));
     }
 
-    protected void multiValuedPickerFinish(String[] results, FacesContext context) {
+    /**
+     * Multi-value picker will try to add the new value to the row where the search icon was clicked. When the row is filled, it continues until the end of the list to find an
+     * empty row. When all rows are filled
+     * 
+     * @param results
+     * @param context
+     * @param index
+     */
+    protected void multiValuedPickerFinish(String[] results, FacesContext context, int index) {
+        @SuppressWarnings("unchecked")
+        List<Object> list = (List<Object>) getList(context);
+        boolean firstItem = true;
+
         for (String result : results) {
-            appendRow(context, result);
+            if (!isAllowDuplicates() && list.contains(result)) {
+                break;
+            }
+            if (index == -1) {
+                appendRow(context, result);
+            } else if (firstItem) {
+                list.set(index++, result);
+                firstItem = false;
+            } else {
+                list.add(index++, result);
+                appendRow(context, result);
+            }
         }
     }
 
@@ -237,7 +260,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
             argValues.add(node);
         }
         MethodBinding b = getFacesContext().getApplication()
-                    .createMethodBinding(setterCallback, paramsTypes.toArray(new Class[paramsTypes.size()]));
+                .createMethodBinding(setterCallback, paramsTypes.toArray(new Class[paramsTypes.size()]));
         b.invoke(context, argValues.toArray());
     }
 
@@ -438,7 +461,11 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         public void processAction(ActionEvent actionEvent) throws AbortProcessingException {
             UIComponent parent = actionEvent.getComponent().getParent();
             if (parent instanceof Search) {
-                ((Search) parent).pickerFinish((UIGenericPicker) actionEvent.getComponent());
+                FacesContext context = FacesContext.getCurrentInstance();
+                Map params = context.getExternalContext().getRequestParameterMap();
+                String indexStr = StringUtils.substringAfter((String) params.get(parent.getClientId(context) + "_action"), ";");
+                int index = StringUtils.isNumeric(indexStr) ? Integer.parseInt(indexStr) : -1;
+                ((Search) parent).pickerFinish((UIGenericPicker) actionEvent.getComponent(), index);
             } else {
                 throw new RuntimeException();
             }

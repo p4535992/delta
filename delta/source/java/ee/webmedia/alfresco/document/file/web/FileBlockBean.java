@@ -1,8 +1,8 @@
 package ee.webmedia.alfresco.document.file.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
+import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.isAdminOrDocmanagerWithViewDocPermission;
 
 import java.util.List;
 
@@ -150,6 +150,8 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
         try {
             getFileService().moveAllFiles(docRef, toRef);
             return true;
+        } catch (UnableToPerformException e) {
+            MessageUtil.addStatusMessage(e);
         } catch (DuplicateChildNodeNameException e) {
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "add_file_existing_file", e.getName());
         } catch (FileExistsException e) {
@@ -195,11 +197,9 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
     private boolean isDeleteFileAllowed(boolean activeFile) {
         DocumentDialogHelperBean documentDialogHelperBean = getDocumentDialogHelperBean();
         Node docNode = documentDialogHelperBean.getNode();
-        return !documentDialogHelperBean.isNotEditable() && isAdminOrOwner(docNode) && (!activeFile || !getWorkflowService().hasInprogressCompoundWorkflows(docRef));
-    }
-
-    private boolean isAdminOrOwner(Node docNode) {
-        return getUserService().isAdministrator() || new IsOwnerEvaluator().evaluate(docNode);
+        return !documentDialogHelperBean.isNotEditable()
+                && (new IsOwnerEvaluator().evaluate(docNode) || isAdminOrDocmanagerWithViewDocPermission(docNode))
+                && (!activeFile || !getWorkflowService().hasInprogressCompoundWorkflows(docRef));
     }
 
     // START: getters / setters

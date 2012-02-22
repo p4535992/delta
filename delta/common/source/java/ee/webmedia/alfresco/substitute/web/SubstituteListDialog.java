@@ -129,8 +129,8 @@ public class SubstituteListDialog extends BaseDialogBean {
     private boolean validate() {
         boolean isValid = true;
         for (Substitute substitute : substitutes) {
-            if (substitute.isReadOnly()) {
-                continue; // Only validate substitutes that user can change
+            if (substitute.equals(originalSubstitutes.get(substitute.getNodeRef().toString())) && substitute.isReadOnly()) {
+                continue; // Only validate substitutes that user can change or is changed
             }
             // check mandatory fields
             if (StringUtils.isEmpty(substitute.getSubstituteName())) {
@@ -163,7 +163,7 @@ public class SubstituteListDialog extends BaseDialogBean {
                 isValid = false;
                 MessageUtil.addErrorMessage("substitute_substitution_while_substituting");
             }
-
+            substitute.setValid(isValid);
         }
         return isValid;
     }

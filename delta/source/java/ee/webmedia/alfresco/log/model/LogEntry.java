@@ -122,29 +122,78 @@ public class LogEntry implements Serializable {
         description = eventDescription;
     }
 
+    /**
+     * Log entry factory method.
+     * 
+     * @param object Category for object being logged.
+     * @param service User service for retrieving current user data.
+     * @param msgCode Resource bundle key for localizing the event message.
+     * @param params Optional parameters for the localized message.
+     * @return A new log entry based on given data.
+     */
     public static LogEntry create(LogObject object, UserService service, String msgCode, Object... params) {
         return create(object, service, null, msgCode, params);
     }
 
+    /**
+     * Log entry factory method.
+     * 
+     * @param object Category for object being logged.
+     * @param service User service for retrieving current user data.
+     * @param nodeRef Reference to the node being logged about (optional).
+     * @param msgCode Resource bundle key for localizing the event message.
+     * @param params Optional parameters for the localized message.
+     * @return A new log entry based on given data.
+     */
     public static LogEntry create(LogObject object, UserService service, NodeRef nodeRef, String msgCode, Object... params) {
         String userId = service.getCurrentUserName();
         String userName = service.getUserFullName();
         return create(object, userId, userName, nodeRef, msgCode, params);
     }
 
+    /**
+     * Log entry factory method.
+     * 
+     * @param object Category for object being logged.
+     * @param userId Identification of the user performing the action. Defaults to "DHS".
+     * @param msgCode Resource bundle key for localizing the event message.
+     * @param params Optional parameters for the localized message.
+     * @return A new log entry based on given data.
+     */
     public static LogEntry create(LogObject object, String userId, String msgCode, Object... params) {
         return create(object, userId, null, null, msgCode, params);
     }
 
+    /**
+     * Log entry factory method.
+     * 
+     * @param object Category for object being logged.
+     * @param userId Identification of the user performing the action. Defaults to "DHS".
+     * @param userName Actual name of the user performing the action. Defaults to <code>userId</code> or "DHS".
+     * @param nodeRef Reference to the node being logged about (optional).
+     * @param msgCode Resource bundle key for localizing the event message.
+     * @param params Optional parameters for the localized message.
+     * @return A new log entry based on given data.
+     */
     public static LogEntry create(LogObject object, String userId, String userName, NodeRef nodeRef, String msgCode, Object... params) {
         String desc = I18NUtil.getMessage(msgCode, params);
         return createLoc(object, userId, userName, nodeRef, desc);
     }
 
+    /**
+     * Log entry factory method for already localized descriptions.
+     * 
+     * @param object Category for object being logged.
+     * @param userId Identification of the user performing the action. Defaults to "DHS".
+     * @param userName Actual name of the user performing the action. Defaults to <code>userId</code> or "DHS".
+     * @param nodeRef Reference to the node being logged about (optional).
+     * @param desc Localized log entry description.
+     * @return A new log entry based on given data.
+     */
     public static LogEntry createLoc(LogObject object, String userId, String userName, NodeRef nodeRef, String desc) {
         LogEntry result = new LogEntry();
         result.creatorId = StringUtils.defaultString(userId, "DHS");
-        result.creatorName = StringUtils.defaultString(userName, userId);
+        result.creatorName = StringUtils.defaultString(userName, result.creatorId);
         result.level = object.getLevel();
         result.objectName = object.getObjectName();
         result.objectId = nodeRef != null ? nodeRef.toString() : null;

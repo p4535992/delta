@@ -1608,6 +1608,21 @@ function extendCondencePlugin() {
    });
 }
 
+function setMinEndDate(owner, dateElem){
+   if (dateElem.attr("class").indexOf("beginDate") < 0) return;
+   var beginDate = dateElem.attr("value");
+   if (beginDate == null || beginDate.trim().length == 0) return;
+   var row = dateElem.closest("tr");
+   if (row == null) return;
+   var endDate = getEndDate(owner, row);
+   if (endDate == null) return;
+   var endDatePicker = endDate.data("datepicker");
+   if (endDatePicker == null) return;
+   var date = jQuery.datepicker.parseDate(endDatePicker.settings.dateFormat, beginDate, endDatePicker.settings);
+   if (date == null) return;         
+   endDate.datepicker("option", "minDate", date);
+}
+
 // These things need to be performed
 // 1) once after full page load
 // *) each time an area is replaced inside the page
@@ -1746,18 +1761,15 @@ function handleHtmlLoaded(context, selects) {
          dateElem.trigger("change");
          var date_all = jQuery.datepicker.parseDate(dateElem.data("datepicker").settings.dateFormat,selectedDate,dateElem.data("datepicker").settings);
          dp_dates.datepicker("option","defaultDate",date_all);
-         if(dateElem.attr("class").indexOf("beginDate")<0) return;
-         var row = dateElem.closest("tr");
-         if(row==null) return;
-         var endDate = getEndDate(this, row);
-         if(endDate==null) return;
-         var endDatePicker = endDate.data("datepicker");
-         if(endDatePicker==null) return;
-         var date = jQuery.datepicker.parseDate(endDatePicker.settings.dateFormat,selectedDate,endDatePicker.settings);
-         if(date==null) return;
-         endDate.datepicker("option","minDate",date);
+         setMinEndDate(this, dateElem);
       }
    });
+   
+   activeDatePickers.each(function()
+         {
+            var dateElem = jQuery(this);
+            setMinEndDate(this, dateElem);
+         });
 
    jQuery(".quickDateRangePicker", context).each(function (intIndex)
          {

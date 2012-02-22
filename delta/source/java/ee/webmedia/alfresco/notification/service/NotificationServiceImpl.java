@@ -45,6 +45,7 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
+import ee.webmedia.alfresco.email.model.EmailAttachment;
 import ee.webmedia.alfresco.email.service.EmailException;
 import ee.webmedia.alfresco.email.service.EmailService;
 import ee.webmedia.alfresco.log.model.LogEntry;
@@ -367,7 +368,7 @@ public class NotificationServiceImpl implements NotificationService {
             long zipSize = 0;
 
             List<File> files = fileService.getAllActiveFiles(docRef);
-            List<String> fileRefs = new ArrayList<String>(files.size());
+            List<NodeRef> fileRefs = new ArrayList<NodeRef>(files.size());
 
             for (File file : files) {
                 zipSize += file.getSize();
@@ -376,11 +377,11 @@ public class NotificationServiceImpl implements NotificationService {
                     log.debug(msg);
                     throw new EmailAttachmentSizeLimitException(msg);
                 }
-                fileRefs.add(file.getNodeRef().toString());
+                fileRefs.add(file.getNodeRef());
             }
 
-            String zipName = I18NUtil.getMessage("notification_zip_filename") + ".zip";
-            sendEmail(notification, content, docRef, fileRefs, true, zipName);
+            String zipTitle = I18NUtil.getMessage("notification_zip_filename");
+            sendEmail(notification, content, docRef, fileRefs, true, zipTitle);
         } else {
             sendEmail(notification, content, docRef);
         }
@@ -444,29 +445,21 @@ public class NotificationServiceImpl implements NotificationService {
 
             if (taskType.equals(WorkflowSpecificModel.Types.SIGNATURE_TASK)) {
                 processSignatureTask(task, notifications);
-            }
-            else if (taskType.equals(WorkflowSpecificModel.Types.OPINION_TASK)) {
+            } else if (taskType.equals(WorkflowSpecificModel.Types.OPINION_TASK)) {
                 processOpinionTask(task, notifications);
-            }
-            else if (taskType.equals(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
+            } else if (taskType.equals(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
                 processAssignmentTask(task, notifications);
-            }
-            else if (taskType.equals(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK)) {
+            } else if (taskType.equals(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK)) {
                 processOrderAssignmentTask(task, notifications);
-            }
-            else if (taskType.equals(WorkflowSpecificModel.Types.REVIEW_TASK)) {
+            } else if (taskType.equals(WorkflowSpecificModel.Types.REVIEW_TASK)) {
                 processReviewTask(task, notifications);
-            }
-            else if (taskType.equals(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)) {
+            } else if (taskType.equals(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)) {
                 processExternalReviewTask(task, notifications);
-            }
-            else if (taskType.equals(WorkflowSpecificModel.Types.INFORMATION_TASK)) {
+            } else if (taskType.equals(WorkflowSpecificModel.Types.INFORMATION_TASK)) {
                 processInformationTask(task, notifications);
-            }
-            else if (taskType.equals(WorkflowSpecificModel.Types.CONFIRMATION_TASK)) {
+            } else if (taskType.equals(WorkflowSpecificModel.Types.CONFIRMATION_TASK)) {
                 processConfirmationTask(task, notifications);
-            }
-            else if (taskType.equals(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK)) {
+            } else if (taskType.equals(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK)) {
                 processDueDateExtensionTask(task, notifications);
             }
         }
@@ -820,8 +813,7 @@ public class NotificationServiceImpl implements NotificationService {
                 notifications.add(notification);
             }
 
-        }
-        else if (WorkflowSpecificModel.SignatureTaskOutcome.NOT_SIGNED.equals(task.getOutcomeIndex())) {
+        } else if (WorkflowSpecificModel.SignatureTaskOutcome.NOT_SIGNED.equals(task.getOutcomeIndex())) {
             Notification notification = setupNotification(NotificationModel.NotificationType.TASK_SIGNATURE_TASK_COMPLETED, 1);
             notification.addRecipient(compoundWorkflow.getOwnerName(), userService.getUserEmail(compoundWorkflow.getOwnerId()));
             notifications.add(notification);
@@ -1239,7 +1231,7 @@ public class NotificationServiceImpl implements NotificationService {
         return sendEmail(notification, content, docRef, null, false, null);
     }
 
-    private boolean sendEmail(Notification notification, String content, NodeRef docRef, List<String> fileRefs, boolean zipIt, String zipName)
+    private boolean sendEmail(Notification notification, String content, NodeRef docRef, List<NodeRef> fileRefs, boolean zipIt, String zipTitle)
             throws EmailException {
         // Remove recipients with blank e-mail address
         // So that, if there is at least one recipient with non-blank e-mail address, e-mail sending doesn't fail
@@ -1263,17 +1255,17 @@ public class NotificationServiceImpl implements NotificationService {
         if (toEmails.isEmpty()) {
             if (log.isDebugEnabled()) {
                 log.debug("Skipping sending notification e-mail, no recipient addresses\nnotification=" + notification + "\ncontent=" + WmNode.toString(content) + "\ndocRef="
-                        + docRef + "\nfileRefs=" + WmNode.toString(fileRefs) + "\nzipIt=" + zipIt + "\nzipName=" + zipName);
+                        + docRef + "\nfileRefs=" + WmNode.toString(fileRefs) + "\nzipIt=" + zipIt + "\nzipName=" + zipTitle);
             }
             return false;
         }
         if (log.isDebugEnabled()) {
             log.debug("Sending notification e-mail\nnotification=" + notification + "\ntoEmails=" + toEmails + "\ntoNames=" + toNames + "\ncontent=" + WmNode.toString(content)
-                    + "\ndocRef=" + docRef + "\nfileRefs=" + WmNode.toString(fileRefs) + "\nzipIt=" + zipIt + "\nzipName=" + zipName);
+                    + "\ndocRef=" + docRef + "\nfileRefs=" + WmNode.toString(fileRefs) + "\nzipIt=" + zipIt + "\nzipName=" + zipTitle);
         }
 
-        emailService.sendEmail(toEmails, toNames, notification.getSenderEmail() //
-                , notification.getSubject(), content, true, docRef, fileRefs, zipIt, zipName);
+        List<EmailAttachment> attachments = emailService.getAttachments(fileRefs, zipIt, null, zipTitle);
+        emailService.sendEmail(toEmails, toNames, notification.getSenderEmail(), notification.getSubject(), content, true, docRef, attachments);
 
         Object[] descParams = { notification.getSubject(), StringUtils.join(toEmails, ", ") };
         logService.addLogEntry(LogEntry.create(LogObject.NOTICE, userService, docRef, "applog_email_notice", descParams));

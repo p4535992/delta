@@ -12,7 +12,9 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getUserListDialog;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 import static ee.webmedia.alfresco.utils.ComponentUtil.addChildren;
+import static ee.webmedia.alfresco.utils.ComponentUtil.addFacet;
 import static ee.webmedia.alfresco.utils.ComponentUtil.createUIParam;
+import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.TASK_INDEX;
 import static ee.webmedia.alfresco.workflow.web.TaskListGenerator.ATTR_RESPONSIBLE;
 import static ee.webmedia.alfresco.workflow.web.TaskListGenerator.WF_INDEX;
@@ -28,8 +30,12 @@ import java.util.TreeMap;
 
 import javax.faces.application.Application;
 import javax.faces.component.UIInput;
+import javax.faces.component.UIOutput;
 import javax.faces.component.UISelectItem;
+import javax.faces.component.html.HtmlCommandButton;
 import javax.faces.component.html.HtmlCommandLink;
+import javax.faces.component.html.HtmlInputText;
+import javax.faces.component.html.HtmlPanelGrid;
 import javax.faces.component.html.HtmlPanelGroup;
 import javax.faces.component.html.HtmlSelectOneMenu;
 import javax.faces.context.FacesContext;
@@ -56,6 +62,7 @@ import org.apache.myfaces.shared_impl.renderkit.html.HTML;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
+import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 import ee.webmedia.alfresco.document.model.Document;
@@ -88,6 +95,9 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(CompoundWorkflowDefinitionDialog.class);
+
+    protected static final String COMP_WORKFLOW_DEFINITION_SELECTOR_ID = "comp-workflow-definition-selector";
+    protected static final String COMP_WORKFLOW_DEFINITION_INPUT_ID = "comp-workflow-definition-input";
 
     private transient HtmlPanelGroup panelGroup;
     protected transient TreeMap<String, QName> sortedTypes;
@@ -538,6 +548,10 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         return fullAccess;
     }
 
+    public boolean isShowUserFullName() {
+        return compoundWorkflow instanceof CompoundWorkflowDefinition && StringUtils.isNotBlank(((CompoundWorkflowDefinition) compoundWorkflow).getUserId());
+    }
+
     // /// PROTECTED & PRIVATE METHODS /////
 
     protected void resetState() {
@@ -571,9 +585,9 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         updatePanelGroup(null, null);
     }
 
-    @SuppressWarnings("unchecked")
     protected void updatePanelGroup(List<String> confirmationMessages, String validatedAction) {
-        Application application = FacesContext.getCurrentInstance().getApplication();
+        FacesContext context = FacesContext.getCurrentInstance();
+        Application application = context.getApplication();
 
         panelGroup.getChildren().clear();
 
@@ -587,11 +601,11 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         // common data panel
         UIPanel panelC = (UIPanel) application.createComponent("org.alfresco.faces.Panel");
         panelC.setId("compound-workflow-panel");
-        panelC.getAttributes().put("styleClass", "panel-100 ie7-workflow");
+        putAttribute(panelC, "styleClass", "panel-100 ie7-workflow");
         panelC.setLabel(MessageUtil.getMessage("workflow_compound_data"));
         panelC.setProgressive(true);
         panelC.setFacetsId("dialog:dialog-body:compound-workflow-panel");
-        panelGroup.getChildren().add(panelC);
+        addChildren(panelGroup, panelC);
 
         boolean dontShowAddActions = false;
         if (this instanceof CompoundWorkflowDialog) {
@@ -607,7 +621,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         if (!dontShowAddActions && fullAccess && showAddActions(0)) {
             // common data add workflow actions
             UIMenu addActionsMenuC = buildAddActions(application, 0, document);
-            panelC.getFacets().put("title", addActionsMenuC);
+            addFacet(panelC, "title", addActionsMenuC);
         }
 
         // common data properties
@@ -615,16 +629,16 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         sheetC.setId("compound");
         sheetC.setVar("nodeC");
         sheetC.setNode(compoundWorkflow.getNode());
-        sheetC.getAttributes().put("labelStyleClass", "propertiesLabel");
-        sheetC.getAttributes().put("styleClass", "panel-100");
-        sheetC.getAttributes().put("externalConfig", Boolean.TRUE);
-        sheetC.getAttributes().put("columns", 1);
+        putAttribute(sheetC, "labelStyleClass", "propertiesLabel");
+        putAttribute(sheetC, "styleClass", "panel-100");
+        putAttribute(sheetC, "externalConfig", Boolean.TRUE);
+        putAttribute(sheetC, "columns", 1);
         // sheetC.getAttributes().put(HTML.WIDTH_ATTR, "100%");
         sheetC.setConfigArea(getConfigArea());
         if (!fullAccess) {
             sheetC.setMode(UIPropertySheet.VIEW_MODE);
         }
-        panelC.getChildren().add(sheetC);
+        addChildren(panelC, sheetC);
 
         // render every workflow block
         int wfCounter = 1;
@@ -636,7 +650,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             if (!dontShowAddActions && fullAccess && showAddActions(wfCounter)) {
                 // block add workflow actions
                 UIMenu addActionsMenu = buildAddActions(application, wfCounter, document);
-                facetGroup.getChildren().add(addActionsMenu);
+                addChildren(facetGroup, addActionsMenu);
             }
 
             String blockStatus = block.getStatus();
@@ -645,7 +659,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
                 // block remove workflow actions
                 HtmlPanelGroup deleteActions = (HtmlPanelGroup) application.createComponent(HtmlPanelGroup.COMPONENT_TYPE);
                 deleteActions.setId("action-remove-" + wfCounter);
-                facetGroup.getChildren().add(deleteActions);
+                addChildren(facetGroup, deleteActions);
 
                 UIActionLink deleteLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
                 deleteLink.setId("action-remove-link-" + wfCounter);
@@ -654,7 +668,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
                 deleteLink.setValue(MessageUtil.getMessage("workflow_compound_remove_block"));
                 deleteLink.setActionListener(application.createMethodBinding("#{DialogManager.bean.removeWorkflowBlock}", UIActions.ACTION_CLASS_ARGS));
                 deleteLink.setShowLink(false);
-                deleteActions.getChildren().add(deleteLink);
+                addChildren(deleteActions, deleteLink);
 
                 addChildren(deleteLink, createUIParam(WF_INDEX, wfCounter - 1, application));
             }
@@ -662,7 +676,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             // block data panel
             UIPanel panelW = (UIPanel) application.createComponent("org.alfresco.faces.Panel");
             panelW.setId("workflow-panel-" + wfCounter);
-            panelW.getAttributes().put("styleClass", "panel-100 ie7-workflow workflow-panel");
+            putAttribute(panelW, "styleClass", "panel-100 ie7-workflow workflow-panel");
             String panelLabel = MessageUtil.getMessage(block.getNode().getType().getLocalName() + "_title");
             if (StringUtils.isBlank(getConfigArea())) {
                 String workflowDescription = (String) block.getNode().getProperties().get(WorkflowSpecificModel.Props.DESCRIPTION);
@@ -672,26 +686,26 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             panelW.setProgressive(true);
             panelW.setFacetsId("dialog:dialog-body:workflow-panel-" + wfCounter);
             if (facetGroup.getChildCount() > 0) {
-                panelW.getFacets().put("title", facetGroup);
+                addFacet(panelW, "title", facetGroup);
             }
-            panelGroup.getChildren().add(panelW);
+            addChildren(panelGroup, panelW);
 
             // block data properties
             UIPropertySheet sheetW = (UIPropertySheet) application.createComponent("org.alfresco.faces.PropertySheet");
             sheetW.setId("workflow-" + wfCounter);
             sheetW.setVar("nodeW" + wfCounter);
-            sheetW.getAttributes().put("workFlowIndex", wfCounter - 1);
+            putAttribute(sheetW, "workFlowIndex", wfCounter - 1);
             sheetW.setNode(block.getNode());
-            sheetW.getAttributes().put("labelStyleClass", "propertiesLabel");
-            sheetW.getAttributes().put("externalConfig", Boolean.TRUE);
-            sheetW.getAttributes().put("columns", 1);
-            sheetW.getAttributes().put(HTML.WIDTH_ATTR, "100%");
+            putAttribute(sheetW, "labelStyleClass", "propertiesLabel");
+            putAttribute(sheetW, "externalConfig", Boolean.TRUE);
+            putAttribute(sheetW, "columns", 1);
+            putAttribute(sheetW, HTML.WIDTH_ATTR, "100%");
             sheetW.setConfigArea(getConfigArea());
-            sheetW.getAttributes().put(TaskListGenerator.ATTR_WORKFLOW_INDEX, wfCounter - 1);
+            putAttribute(sheetW, TaskListGenerator.ATTR_WORKFLOW_INDEX, wfCounter - 1);
             if (!fullAccess) {
                 sheetW.setMode(UIPropertySheet.VIEW_MODE);
             }
-            panelW.getChildren().add(sheetW);
+            addChildren(panelW, sheetW);
 
             wfCounter++;
         }
@@ -701,11 +715,11 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             messageInput.setStyleClass("workflow-confirmation-messages");
             for (String message : confirmationMessages) {
                 UISelectItem selectItem = (UISelectItem) application.createComponent(UISelectItem.COMPONENT_TYPE);
-                selectItem.setItemValue(RendererUtils.getConvertedUIOutputValue(FacesContext.getCurrentInstance(), messageInput, message));
-                messageInput.getChildren().add(selectItem);
+                selectItem.setItemValue(RendererUtils.getConvertedUIOutputValue(context, messageInput, message));
+                addChildren(messageInput, selectItem);
             }
             messageInput.setStyle("display: none;");
-            panelC.getChildren().add(messageInput);
+            addChildren(panelC, messageInput);
 
             // hidden link for submitting form when OK is clicked in js confirmation alert
             HtmlCommandLink workflowConfirmationLink = new HtmlCommandLink();
@@ -713,9 +727,82 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             workflowConfirmationLink.setStyleClass("workflow-after-confirmation-link");
             workflowConfirmationLink.setActionListener(application.createMethodBinding("#{CompoundWorkflowDialog." + validatedAction + "}", UIActions.ACTION_CLASS_ARGS));
             workflowConfirmationLink.setStyle("display: none;");
-            panelC.getChildren().add(workflowConfirmationLink);
-
+            addChildren(panelC, workflowConfirmationLink);
         }
+
+        if (this instanceof CompoundWorkflowDialog) {
+            addCompoundWorkflowDefinitionSaveasPanel(context);
+        }
+    }
+
+    private void addCompoundWorkflowDefinitionSaveasPanel(FacesContext context) {
+        Application application = context.getApplication();
+        final UIPanel panelSaveas = (UIPanel) application.createComponent("org.alfresco.faces.Panel");
+        panelSaveas.setId("compound-workflow-saveas-panel");
+        putAttribute(panelSaveas, "styleClass", "panel-100");
+        panelSaveas.setLabel(MessageUtil.getMessage("workflow_compound_saveas"));
+        panelSaveas.setProgressive(true);
+        panelSaveas.setExpanded(false);
+        panelSaveas.setFacetsId("dialog:dialog-body:compound-workflow-saveas-panel");
+
+        final HtmlPanelGrid saveasGrid = (HtmlPanelGrid) application.createComponent(HtmlPanelGrid.COMPONENT_TYPE);
+        saveasGrid.setId("compound-workflow-saveas-grid");
+        saveasGrid.setWidth("100%");
+        saveasGrid.setColumns(2);
+        saveasGrid.setCellpadding("3");
+        saveasGrid.setCellspacing("3");
+        saveasGrid.setBorder(0);
+        saveasGrid.setColumnClasses("propertiesLabel,");
+        saveasGrid.setWidth("100%");
+
+        UIOutput compWorkflowDefinitionLabel = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
+        compWorkflowDefinitionLabel.setValue(MessageUtil.getMessage("compoundWorkflow_definition_change") + ": ");
+        addChildren(saveasGrid, compWorkflowDefinitionLabel);
+
+        GeneralSelectorGenerator selectorGenerator = new GeneralSelectorGenerator();
+        HtmlSelectOneMenu compoundWorkflowDefinitionSelector = (HtmlSelectOneMenu) selectorGenerator.generateSelectComponent(context, COMP_WORKFLOW_DEFINITION_SELECTOR_ID, false);
+        selectorGenerator.getCustomAttributes().put("selectionItems", "#{CompoundWorkflowDialog.getUserCompoundWorkflowDefinitions}");
+        selectorGenerator.setupSelectComponent(context, null, null, null, compoundWorkflowDefinitionSelector, false);
+        compoundWorkflowDefinitionSelector.setValueBinding("value", application.createValueBinding("#{CompoundWorkflowDialog.existingUserCompoundWorkflowDefinition}"));
+        addChildren(saveasGrid, compoundWorkflowDefinitionSelector);
+
+        UIOutput newCompWorkflowDefinitionLabel = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
+        newCompWorkflowDefinitionLabel.setValue(MessageUtil.getMessage("compoundWorkflow_definition_add") + ": ");
+        addChildren(saveasGrid, newCompWorkflowDefinitionLabel);
+
+        HtmlInputText compoundWorkflowDefinitionInput = new HtmlInputText();
+        compoundWorkflowDefinitionInput.setId(COMP_WORKFLOW_DEFINITION_INPUT_ID);
+        compoundWorkflowDefinitionInput.setValueBinding("value", application.createValueBinding("#{CompoundWorkflowDialog.newUserCompoundWorkflowDefinition}"));
+        addChildren(saveasGrid, compoundWorkflowDefinitionInput);
+
+        UIOutput dummy = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
+        dummy.setValue("");
+        addChildren(saveasGrid, dummy);
+
+        final HtmlPanelGrid saveasButtonGrid = (HtmlPanelGrid) application.createComponent(HtmlPanelGrid.COMPONENT_TYPE);
+        saveasButtonGrid.setId("compound-workflow-saveas-button-grid");
+        saveasButtonGrid.setWidth("30%");
+        saveasButtonGrid.setColumns(3);
+
+        HtmlCommandButton saveAsButton = new HtmlCommandButton();
+        saveAsButton.setId("comp-workflow-def-saveas-button");
+        saveAsButton.setActionListener(application.createMethodBinding("#{CompoundWorkflowDialog.saveasCompoundWorkflowDefinition}", new Class[] { ActionEvent.class }));
+        saveAsButton.setValue(MessageUtil.getMessage("compoundWorkflow_definition_saveas_button"));
+        saveAsButton.setOnclick("setPageScrollY();");
+        addChildren(saveasButtonGrid, saveAsButton);
+
+        HtmlCommandButton deleteButton = new HtmlCommandButton();
+        deleteButton.setId("comp-workflow-def-delete-button");
+        deleteButton.setActionListener(application.createMethodBinding("#{CompoundWorkflowDialog.deleteCompoundWorkflowDefinition}", new Class[] { ActionEvent.class }));
+        deleteButton.setValue(MessageUtil.getMessage("compoundWorkflow_definition_delete_button"));
+        deleteButton.setOnclick("setPageScrollY();");
+        addChildren(saveasButtonGrid, deleteButton);
+
+        addChildren(saveasGrid, saveasButtonGrid);
+
+        addChildren(panelSaveas, saveasGrid);
+
+        addChildren(panelGroup, panelSaveas);
     }
 
     @SuppressWarnings("unchecked")
