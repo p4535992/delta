@@ -15,6 +15,7 @@ import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.exception.SignatureRuntimeException;
+import ee.webmedia.alfresco.signature.model.SignatureChallenge;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
@@ -348,6 +349,8 @@ public interface DocumentService {
     void finishDocumentSigning(SignatureTask task, String signatureHex);
 
     SignatureDigest prepareDocumentDigest(NodeRef document, String certHex) throws SignatureException;
+
+    SignatureChallenge prepareDocumentChallenge(NodeRef document, String phoneNo) throws SignatureException;
 
     /**
      * Returns a List with favorite documents, associated with favorite directory or with user directly(if parameter is null).

@@ -33,6 +33,8 @@ public class PropDiffHelper {
 
     private final Map<QName, String> propLabels = new HashMap<QName, String>();
 
+    private static final FastDateFormat DATE_FORMAT = FastDateFormat.getInstance("dd.MM.yyyy");
+
     public PropDiffHelper label(QName prop, String label) {
         propLabels.put(prop, label);
         return this;
@@ -130,7 +132,7 @@ public class PropDiffHelper {
 
     private static String value(Object value, String defaultStr) {
         if (value instanceof Date) {
-            return FastDateFormat.getInstance("dd.MM.yyyy").format((Date) value);
+            return DATE_FORMAT.format((Date) value);
         }
         return value == null ? defaultStr : value.toString();
     }

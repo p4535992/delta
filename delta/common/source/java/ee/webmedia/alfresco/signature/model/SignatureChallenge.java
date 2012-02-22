@@ -13,19 +13,23 @@ import java.util.List;
 public class SignatureChallenge implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private final String sesscode;
+    private final int sesscode;
     private final String challengeId;
-    private final String signatureId;
     private final List<String> digestHexs;
+    private final String signatureId;
+    private final String format;
+    private final String version;
 
-    public SignatureChallenge(String sesscode, String challengeId, String signatureId, List<String> digestHexs) {
+    public SignatureChallenge(int sesscode, String challengeId, List<String> digestHexs, String signatureId, String format, String version) {
         this.sesscode = sesscode;
         this.challengeId = challengeId;
-        this.signatureId = signatureId;
         this.digestHexs = Collections.unmodifiableList(new ArrayList<String>(digestHexs));
+        this.signatureId = signatureId;
+        this.format = format;
+        this.version = version;
     }
 
-    public String getSesscode() {
+    public int getSesscode() {
         return sesscode;
     }
 
@@ -33,12 +37,20 @@ public class SignatureChallenge implements Serializable {
         return challengeId;
     }
 
+    public List<String> getDigestHexs() {
+        return digestHexs;
+    }
+
     public String getSignatureId() {
         return signatureId;
     }
 
-    public List<String> getDigestHexs() {
-        return digestHexs;
+    public String getFormat() {
+        return format;
+    }
+
+    public String getVersion() {
+        return version;
     }
 
     @Override
@@ -46,8 +58,10 @@ public class SignatureChallenge implements Serializable {
         StringBuilder sb = new StringBuilder("SignatureChallenge[");
         sb.append("sesscode=").append(sesscode);
         sb.append(", challengeId=").append(challengeId);
-        sb.append(", signatureId=").append(signatureId);
         sb.append(", digestHexs=").append(digestHexs);
+        sb.append(", signatureId=").append(signatureId);
+        sb.append(", format=").append(format);
+        sb.append(", version=").append(version);
         sb.append("]");
         return sb.toString();
     }

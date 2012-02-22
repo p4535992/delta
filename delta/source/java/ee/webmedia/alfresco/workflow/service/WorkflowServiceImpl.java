@@ -210,7 +210,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     @Override
     public CompoundWorkflowDefinition getCompoundWorkflowDefinition(NodeRef nodeRef) {
-        return getCompoundWorkflowDefinition(nodeRef, nodeService.getPrimaryParent(nodeRef).getParentRef(), false);
+        return getCompoundWorkflowDefinition(nodeRef, nodeService.getPrimaryParent(nodeRef).getParentRef(), true);
     }
 
     private CompoundWorkflowDefinition getCompoundWorkflowDefinition(NodeRef nodeRef, NodeRef parent, boolean getUserFullName) {

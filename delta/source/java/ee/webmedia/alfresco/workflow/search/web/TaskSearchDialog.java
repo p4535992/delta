@@ -98,6 +98,10 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
         return MessageUtil.getMessage("task_search_saved_manage");
     }
 
+    public String getSavedFilterSelectTitle() {
+        return MessageUtil.getMessage("task_search_saved");
+    }
+
     @Override
     public String getFinishButtonLabel() {
         return MessageUtil.getMessage("search");

@@ -18,7 +18,7 @@
       <property name="dataSource" ref="dataSource" />
    </bean>
 
-   <bean id="logTableBootstrapFix" class="ee.webmedia.alfresco.log.bootstrap.LogTableBootstrapFix" parent="module.baseComponent">
+   <bean id="logTableBootstrapFix" class="ee.webmedia.alfresco.log.bootstrap.LogTableBootstrapFix" parent="module.baseComponent" depends-on="logTableBootstrap2">
       <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">

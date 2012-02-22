@@ -8,16 +8,17 @@
       <property name="mimetypeService" ref="MimetypeService" />
       <property name="userService" ref="UserService" />
       <property name="logService" ref="LogService" />
+      <property name="digiDocServiceFactory" ref="digiDocServiceFactory" />
       <property name="test" value="${jdigidoc.test}" />
       <property name="jDigiDocCfg" value="ee/webmedia/alfresco/signature/service/jdigidoc.cfg" />
       <property name="jDigiDocCfgTest" value="ee/webmedia/alfresco/signature/service/jdigidoc-test.cfg" />
       <property name="pkcs12Container" value="${jdigidoc.pkcs12.container}" />
       <property name="pkcs12Password" value="${jdigidoc.pkcs12.passwd}" />
       <property name="pkcs12CertSerial" value="${jdigidoc.pkcs12.cert_serial}" />
-      <property name="mobileIdServiceName" value="${mobile-id.service-name}" />
-      <property name="testMobileIdServiceName" value="Testimine" />
       <property name="digiDocServiceUrl" value="https://digidocservice.sk.ee/DigiDocService" />
       <property name="testDigiDocServiceUrl" value="https://www.openxades.org:8443/DigiDocService" />
+      <property name="mobileIdServiceName" value="${mobile-id.service-name}" />
+      <property name="testMobileIdServiceName" value="Testimine" />
    </bean>
 
    <bean id="SignatureService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -71,6 +72,11 @@
             <idref bean="commonTransactionInterceptor" />
          </list>
       </property>
+   </bean>
+
+   <bean id="digiDocServiceFactory" class="org.apache.cxf.jaxws.JaxWsProxyFactoryBean">
+      <property name="serviceClass" value="ee.sk.digidocservice.DigiDocServicePortType" />
+      <property name="wsdlLocation" value="classpath:ee/sk/digidocservice/DigiDocService_2_3.wsdl" />
    </bean>
 
 </beans>

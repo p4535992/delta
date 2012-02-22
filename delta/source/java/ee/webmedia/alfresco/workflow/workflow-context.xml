@@ -222,7 +222,7 @@
       <property name="workflowTypeString" value="wfs:signatureWorkflow" />
       <property name="taskTypeString" value="wfs:signatureTask" />
       <property name="taskClass" value="ee.webmedia.alfresco.workflow.service.SignatureTask" />
-      <property name="taskOutcomes" value="2" />
+      <property name="taskOutcomes" value="3" />
    </bean>
 
    <bean parent="workflowType">

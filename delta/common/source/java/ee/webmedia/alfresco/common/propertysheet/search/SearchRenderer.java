@@ -180,6 +180,9 @@ public class SearchRenderer extends BaseRenderer {
         }
         out.write("</tbody></table>");
 
+        if (children.isEmpty()) {
+            renderPicker(context, out, search, picker, -1);
+        }
         renderAddLink(context, search, out);
     }
 

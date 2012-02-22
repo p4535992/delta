@@ -139,6 +139,7 @@ import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.series.numberpattern.NumberPatternParser.RegisterNumberPatternParams;
 import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
+import ee.webmedia.alfresco.signature.model.SignatureChallenge;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
 import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.substitute.model.Substitute;
@@ -2301,6 +2302,32 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         return signatureDigest;
     }
 
+    @Override
+    public SignatureChallenge prepareDocumentChallenge(NodeRef document, String phoneNo) throws SignatureException {
+        long step0 = System.currentTimeMillis();
+        SignatureChallenge signatureDigest = null;
+        NodeRef existingDdoc = checkExistingDdoc(document);
+        long step1 = System.currentTimeMillis();
+        String debug = "";
+        if (existingDdoc != null) {
+            signatureDigest = signatureService.getSignatureChallenge(existingDdoc, phoneNo);
+            long step2 = System.currentTimeMillis();
+            debug += "\n    calculate digest for existing ddoc - " + (step2 - step1) + " ms";
+        } else {
+            List<NodeRef> files = getSignatureTaskActiveNodeRefs(document);
+            long step2 = System.currentTimeMillis();
+            signatureDigest = signatureService.getSignatureChallenge(files, phoneNo);
+            long step3 = System.currentTimeMillis();
+            debug += "\n    load file list - " + (step2 - step1) + " ms";
+            debug += "\n    calculate digest for " + files.size() + " files - " + (step3 - step2) + " ms";
+        }
+        long step4 = System.currentTimeMillis();
+        if (log.isInfoEnabled()) {
+            log.info("prepareDocumentChallenge service call took " + (step4 - step0) + " ms\n    check for existing ddoc - " + (step1 - step0) + " ms" + debug);
+        }
+        return signatureDigest;
+    }
+
     private List<NodeRef> getSignatureTaskActiveNodeRefs(NodeRef document) {
         List<NodeRef> nodeRefs = new ArrayList<NodeRef>();
         List<File> files = fileService.getAllActiveFiles(document);
@@ -2311,7 +2338,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
     }
 
     @Override
-    public void finishDocumentSigning(final SignatureTask task, final String signatureHex) {
+    public void finishDocumentSigning(final SignatureTask task, final String signature) {
         long step0 = System.currentTimeMillis();
         final NodeRef document = task.getParent().getParent().getParent();
         final String filename = generateDdocFilename(document);
@@ -2323,14 +2350,23 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                 long step2 = System.currentTimeMillis();
                 String debug1 = "\n    check for existing ddoc - " + (step2 - step1) + " ms";
                 if (existingDdoc != null) {
-                    signatureService.addSignature(existingDdoc, task.getSignatureDigest(), signatureHex);
+                    if (task.getSignatureDigest() != null) {
+                        signatureService.addSignature(existingDdoc, task.getSignatureDigest(), signature);
+                    } else {
+                        signatureService.addSignature(existingDdoc, task.getSignatureChallenge(), signature);
+                    }
                     long step3 = System.currentTimeMillis();
                     debug1 += "\n    add signature to existing ddoc - " + (step3 - step2) + " ms";
                 } else {
                     List<NodeRef> files = fileService.getAllActiveFilesNodeRefs(document);
                     long step3 = System.currentTimeMillis();
                     String uniqueFilename = generalService.getUniqueFileName(document, filename);
-                    NodeRef ddoc = signatureService.createContainer(document, files, uniqueFilename, task.getSignatureDigest(), signatureHex);
+                    NodeRef ddoc;
+                    if (task.getSignatureDigest() != null) {
+                        ddoc = signatureService.createContainer(document, files, uniqueFilename, task.getSignatureDigest(), signature);
+                    } else {
+                        ddoc = signatureService.createContainer(document, files, uniqueFilename, task.getSignatureChallenge(), signature);
+                    }
                     long step4 = System.currentTimeMillis();
                     documentLogService.addDocumentLog(document, I18NUtil.getMessage("document_log_status_fileAdded", uniqueFilename));
                     long step5 = System.currentTimeMillis();
@@ -2350,8 +2386,8 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         workflowService.finishInProgressTask(task, 1);
         long step8 = System.currentTimeMillis();
         if (log.isInfoEnabled()) {
-            log.info("finishDocumentSigning service call took " + (step8 - step0) + " ms\n    generate ddoc filename - " + (step1 - step0) + " ms" + debug
-                    + "\n    finish workflow task - " + (step8 - step7) + " ms");
+            log.info("finishDocumentSigning service call (" + (task.getSignatureDigest() != null ? "id-card" : "mobile-id") + ") took " + (step8 - step0)
+                    + " ms\n    generate ddoc filename - " + (step1 - step0) + " ms" + debug + "\n    finish workflow task - " + (step8 - step7) + " ms");
         }
     }
 

@@ -49,11 +49,11 @@ public class DocumentLogHelper {
      * @return Function name (mark + name) or the empty value text.
      */
     public static String getFunctionName(NodeRef functionRef, String emptyValueText) {
-        if (functionRef == null) {
+        NodeService nodeService = BeanHelper.getNodeService();
+        if (functionRef == null || !nodeService.exists(functionRef)) {
             return emptyValueText;
         }
 
-        NodeService nodeService = BeanHelper.getNodeService();
         String mark = (String) nodeService.getProperty(functionRef, FunctionsModel.Props.MARK);
         String title = (String) nodeService.getProperty(functionRef, FunctionsModel.Props.TITLE);
         return new StringBuilder(mark).append(' ').append(title).toString();
@@ -67,11 +67,11 @@ public class DocumentLogHelper {
      * @return Series name (seriesIdentifier + name) or the empty value text.
      */
     public static String getSeriesName(NodeRef seriesRef, String emptyValueText) {
-        if (seriesRef == null) {
+        NodeService nodeService = BeanHelper.getNodeService();
+        if (seriesRef == null || !nodeService.exists(seriesRef)) {
             return emptyValueText;
         }
 
-        NodeService nodeService = BeanHelper.getNodeService();
         String identifier = (String) nodeService.getProperty(seriesRef, SeriesModel.Props.SERIES_IDENTIFIER);
         String title = (String) nodeService.getProperty(seriesRef, SeriesModel.Props.TITLE);
         return new StringBuilder(identifier).append(' ').append(title).toString();
@@ -85,11 +85,11 @@ public class DocumentLogHelper {
      * @return Volume (mark + name) or the empty value text.
      */
     public static String getVolumeName(NodeRef volumeRef, String emptyValueText) {
-        if (volumeRef == null) {
+        NodeService nodeService = BeanHelper.getNodeService();
+        if (volumeRef == null || !nodeService.exists(volumeRef)) {
             return emptyValueText;
         }
 
-        NodeService nodeService = BeanHelper.getNodeService();
         String mark = (String) nodeService.getProperty(volumeRef, VolumeModel.Props.MARK);
         String title = (String) nodeService.getProperty(volumeRef, VolumeModel.Props.TITLE);
         return new StringBuilder(mark).append(' ').append(title).toString();
@@ -195,16 +195,16 @@ public class DocumentLogHelper {
             String[] listItems = new String[((List<?>) value).size()];
             int pos = 0;
             for (Serializable valueItem : (List<Serializable>) value) {
-                listItems[pos++] = formatSingleValue(valueItem, fieldType, emptyValue);
+                listItems[pos++] = formatSingleValue(valueItem, emptyValue);
             }
             result = StringUtils.join(listItems, ", ");
         } else {
-            result = formatSingleValue(value, fieldType, emptyValue);
+            result = formatSingleValue(value, emptyValue);
         }
         return StringUtils.defaultIfEmpty(result, emptyValue);
     }
 
-    private static String formatSingleValue(Serializable value, FieldType fieldType, String emptyValue) {
+    private static String formatSingleValue(Serializable value, String emptyValue) {
         String result = null;
 
         if (isEmpty(value)) {

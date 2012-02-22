@@ -10,6 +10,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getFileService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPrivilegeService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getSignatureService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.isAdminOrDocmanagerWithPermission;
@@ -17,6 +18,7 @@ import static ee.webmedia.alfresco.utils.ComponentUtil.getAttributes;
 import static ee.webmedia.alfresco.utils.ComponentUtil.getChildren;
 import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -28,15 +30,18 @@ import java.util.Map;
 import javax.faces.application.Application;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIInput;
+import javax.faces.component.UIOutput;
 import javax.faces.component.UIParameter;
 import javax.faces.component.html.HtmlCommandButton;
 import javax.faces.component.html.HtmlCommandLink;
 import javax.faces.component.html.HtmlPanelGroup;
 import javax.faces.context.FacesContext;
+import javax.faces.context.ResponseWriter;
 import javax.faces.event.ActionEvent;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.model.FileExistsException;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
@@ -45,6 +50,7 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
+import org.alfresco.web.app.servlet.ajax.InvokeCommand.ResponseMimetype;
 import org.alfresco.web.bean.generator.TextAreaGenerator;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
@@ -55,6 +61,7 @@ import org.alfresco.web.ui.common.component.UIPanel;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
 
@@ -84,11 +91,13 @@ import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.exception.SignatureRuntimeException;
+import ee.webmedia.alfresco.signature.model.SignatureChallenge;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
 import ee.webmedia.alfresco.signature.web.SignatureAppletModalComponent;
 import ee.webmedia.alfresco.signature.web.SignatureBlockBean;
 import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
+import ee.webmedia.alfresco.utils.MessageData;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.WebUtil;
@@ -144,6 +153,10 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     private List<Task> finishedOrderAssignmentTasks;
     private SignatureTask signatureTask;
     private List<File> removedFiles;
+    private String phoneNr;
+    private String challengeId;
+    private String signature;
+    private MessageData signatureError;
 
     @Override
     public void resetOrInit(DialogDataProvider provider) {
@@ -359,7 +372,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 || WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK.equals(taskType)) {
             outcomeIndex = (Integer) task.getNode().getProperties().get(WorkflowSpecificModel.Props.TEMP_OUTCOME.toString());
         } else if (WorkflowSpecificModel.Types.SIGNATURE_TASK.equals(taskType)) {
-            if (outcomeIndex == 1) {
+            if (outcomeIndex > 0) {
 
                 // signing requires that at least 1 active file exists within this document
                 long step0 = System.currentTimeMillis();
@@ -369,24 +382,26 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                     return;
                 }
 
-                signatureTask = (SignatureTask) task;
+                signatureTask = ((SignatureTask) task).clone();
                 try {
                     long step1 = System.currentTimeMillis();
                     getDocumentService().prepareDocumentSigning(docRef);
                     long step2 = System.currentTimeMillis();
                     fileBlockBean.restore();
-                    showModal();
                     long step3 = System.currentTimeMillis();
                     if (log.isInfoEnabled()) {
                         log.info("prepareDocumentSigning took total time " + (step3 - step0) + " ms\n    load file list - " + (step1 - step0)
                                 + " ms\n    service call - " + (step2 - step1) + " ms\n    reload file list - " + (step3 - step2) + " ms");
                     }
                 } catch (UnableToPerformException e) {
-                    if (MessageUtil.addStatusMessage(e)) {
-                        return;
-                    }
+                    MessageUtil.addStatusMessage(e);
+                    return;
                 }
-                MessageUtil.addInfoMessage("task_finish_success_defaultMsg");
+                if (outcomeIndex == 1) {
+                    showModal();
+                } else {
+                    getMobileIdPhoneNrModal().setRendered(true);
+                }
                 return;
             }
         } else if (task.isType(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK) && outcomeIndex == DueDateExtensionWorkflowType.DUE_DATE_EXTENSION_OUTCOME_NOT_ACCEPTED) {
@@ -618,6 +633,15 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         String signatureHex = (String) facesContext.getExternalContext().getRequestParameterMap().get("signatureHex");
 
         try {
+            signDocumentImpl(signatureHex);
+        } finally {
+            closeModal();
+            signatureTask = null;
+        }
+    }
+
+    private void signDocumentImpl(String signatureHex) {
+        try {
             long step0 = System.currentTimeMillis();
             getDocumentService().finishDocumentSigning(signatureTask, signatureHex);
             long step1 = System.currentTimeMillis();
@@ -628,6 +652,8 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                         + (step2 - step1) + " ms");
             }
             MessageUtil.addInfoMessage("task_finish_success_defaultMsg");
+        } catch (UnableToPerformException e) {
+            MessageUtil.addStatusMessage(e);
         } catch (WorkflowChangedException e) {
             log.debug("Finishing signature task failed", e);
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "workflow_task_save_failed");
@@ -638,9 +664,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 log.debug("Failed to create ddoc, file with same name already exists, parentRef = " + docRef, e);
             }
             Utils.addErrorMessage(MessageUtil.getMessage("ddoc_file_exists"));
-        } finally {
-            closeModal();
-            signatureTask = null;
         }
     }
 
@@ -648,6 +671,67 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         closeModal();
         signatureTask = null;
         getDocumentDialogHelperBean().switchMode(false);
+    }
+
+    public void startMobileIdSigning(@SuppressWarnings("unused") ActionEvent event) {
+        phoneNr = StringUtils.stripToEmpty(phoneNr);
+        if (!phoneNr.startsWith("+")) {
+            phoneNr = "+372" + phoneNr;
+        }
+        try {
+            long step0 = System.currentTimeMillis();
+            SignatureChallenge signatureChallenge = getDocumentService().prepareDocumentChallenge(docRef, phoneNr);
+            long step1 = System.currentTimeMillis();
+            getMobileIdChallengeModal().setRendered(true);
+            challengeId = "<div id=\"mobileIdChallengeMessage\" style=\"text-align: center;\"><p>Sõnumit saadetakse, palun oodake...</p><p>Kontrollkood:</p><p style=\"padding-top: 10px; font-size: 28px; vertical-align: middle;\">"
+                    + StringEscapeUtils.escapeXml(signatureChallenge.getChallengeId()) + "</p></div><script type=\"text/javascript\">$jQ(document).ready(function(){ "
+                    + "window.setTimeout(getMobileIdSignature, 2000); "
+                    + "});</script>";
+            signatureTask.setSignatureChallenge(signatureChallenge);
+            signature = null;
+            signatureError = null;
+            if (log.isInfoEnabled()) {
+                log.info("startMobileIdSigning took total time " + (step1 - step0) + " ms\n    service call - " + (step1 - step0) + " ms");
+            }
+        } catch (UnableToPerformException e) {
+            MessageUtil.addStatusMessage(e);
+            signatureTask = null;
+        } catch (SignatureException e) {
+            SignatureBlockBean.addSignatureError(e);
+            signatureTask = null;
+        } finally {
+            getMobileIdPhoneNrModal().setRendered(false);
+        }
+    }
+
+    @ResponseMimetype(MimetypeMap.MIMETYPE_HTML)
+    public void getMobileIdSignature() throws IOException {
+        ResponseWriter out = FacesContext.getCurrentInstance().getResponseWriter();
+        signature = null;
+        try {
+            signature = getSignatureService().getMobileIdSignature(signatureTask.getSignatureChallenge());
+            if (signature == null) {
+                out.write("REPEAT");
+            } else {
+                out.write("FINISH");
+            }
+        } catch (UnableToPerformException e) {
+            out.write("FINISH");
+            signatureError = e;
+        }
+    }
+
+    public void finishMobileIdSigning(@SuppressWarnings("unused") ActionEvent event) {
+        try {
+            if (signatureError == null) {
+                signDocumentImpl(signature);
+            } else {
+                MessageUtil.addStatusMessage(signatureError);
+            }
+        } finally {
+            getMobileIdChallengeModal().setRendered(false);
+            signatureTask = null;
+        }
     }
 
     /**
@@ -689,8 +773,51 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         FacesContext context = FacesContext.getCurrentInstance();
         Application app = context.getApplication();
 
-        // add 2 hidden links and a modal applet so signing
+        // 1st child must always be SignatureAppletModalComponent
         panelGroupChildren.add(new SignatureAppletModalComponent());
+
+        if (getSignatureService().isMobileIdEnabled()) {
+            ValidatingModalLayerComponent mobileIdPhoneNrComponent = (ValidatingModalLayerComponent) app.createComponent(ValidatingModalLayerComponent.class.getCanonicalName());
+            mobileIdPhoneNrComponent.setId("mobileIdPhoneNrModal");
+            mobileIdPhoneNrComponent.setRendered(false);
+            mobileIdPhoneNrComponent.setActionListener(app.createMethodBinding("#{WorkflowBlockBean.startMobileIdSigning}", UIActions.ACTION_CLASS_ARGS));
+            Map<String, Object> mobileIdPhoneNrAttributes = getAttributes(mobileIdPhoneNrComponent);
+            mobileIdPhoneNrAttributes.put(ModalLayerComponent.ATTR_HEADER_KEY, "task_title_signatureTask");
+            mobileIdPhoneNrAttributes.put(ModalLayerComponent.ATTR_SUBMIT_BUTTON_MSG_KEY, "task_outcome_signatureTask2");
+            mobileIdPhoneNrAttributes.put(ModalLayerComponent.ATTR_AUTO_SHOW, Boolean.TRUE);
+            mobileIdPhoneNrAttributes.put(ModalLayerComponent.ATTR_SET_RENDERED_FALSE_ON_CLOSE, Boolean.TRUE);
+
+            // 2nd child must always be mobileIdPhoneNrComponent
+            panelGroupChildren.add(mobileIdPhoneNrComponent);
+
+            UIInput phoneNrInput = (UIInput) app.createComponent(UIInput.COMPONENT_TYPE);
+            phoneNrInput.setId("phoneNr");
+            phoneNrInput.setValueBinding("value", app.createValueBinding("#{WorkflowBlockBean.phoneNr}"));
+            Map<String, Object> attributes = getAttributes(phoneNrInput);
+            attributes.put(ValidatingModalLayerComponent.ATTR_LABEL_KEY, "signatureTask_phoneNr");
+            attributes.put(ValidatingModalLayerComponent.ATTR_MANDATORY, Boolean.TRUE);
+            getChildren(mobileIdPhoneNrComponent).add(phoneNrInput);
+
+            ModalLayerComponent mobileIdChallengeComponent = (ModalLayerComponent) app.createComponent(ModalLayerComponent.class.getCanonicalName());
+            mobileIdChallengeComponent.setId("mobileIdChallengeModal");
+            mobileIdChallengeComponent.setRendered(false);
+            mobileIdChallengeComponent.setActionListener(app.createMethodBinding("#{WorkflowBlockBean.finishMobileIdSigning}", UIActions.ACTION_CLASS_ARGS));
+            Map<String, Object> mobileIdChallengeAttributes = getAttributes(mobileIdChallengeComponent);
+            mobileIdChallengeAttributes.put(ModalLayerComponent.ATTR_HEADER_KEY, "task_title_signatureTask");
+            mobileIdChallengeAttributes.put(ModalLayerComponent.ATTR_SUBMIT_BUTTON_MSG_KEY, "task_outcome_signatureTask2");
+            mobileIdChallengeAttributes.put(ModalLayerComponent.ATTR_SUBMIT_BUTTON_HIDDEN, Boolean.TRUE);
+            mobileIdChallengeAttributes.put(ModalLayerComponent.ATTR_AUTO_SHOW, Boolean.TRUE);
+            mobileIdChallengeAttributes.put(ModalLayerComponent.ATTR_SET_RENDERED_FALSE_ON_CLOSE, Boolean.TRUE);
+
+            // 3rd child must always be mobileIdChallengeComponent
+            panelGroupChildren.add(mobileIdChallengeComponent);
+
+            UIOutput challengeOutput = (UIOutput) app.createComponent(UIOutput.COMPONENT_TYPE);
+            challengeOutput.setValueBinding("value", app.createValueBinding("#{WorkflowBlockBean.challengeId}"));
+            getAttributes(challengeOutput).put("escape", Boolean.FALSE);
+            getChildren(mobileIdChallengeComponent).add(challengeOutput);
+        }
+
         panelGroupChildren.add(generateLinkWithParam(app, "processCert", "#{" + BEAN_NAME + ".processCert}", "cert"));
         panelGroupChildren.add(generateLinkWithParam(app, "signDocument", "#{" + BEAN_NAME + ".signDocument}", "signature"));
         panelGroupChildren.add(generateLinkWithParam(app, "cancelSign", "#{" + BEAN_NAME + ".cancelSign}", null));
@@ -876,19 +1003,27 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     }
 
     private void showModal() {
-        getModalApplet().showModal();
+        getIdCardModalApplet().showModal();
     }
 
     private void showModal(String digestHex, String certId) {
-        getModalApplet().showModal(digestHex, certId);
+        getIdCardModalApplet().showModal(digestHex, certId);
     }
 
     private void closeModal() {
-        getModalApplet().closeModal();
+        getIdCardModalApplet().closeModal();
     }
 
-    private SignatureAppletModalComponent getModalApplet() {
+    private SignatureAppletModalComponent getIdCardModalApplet() {
         return (SignatureAppletModalComponent) getDataTableGroupInner().getChildren().get(0);
+    }
+
+    private ValidatingModalLayerComponent getMobileIdPhoneNrModal() {
+        return (ValidatingModalLayerComponent) getDataTableGroupInner().getChildren().get(1);
+    }
+
+    private ModalLayerComponent getMobileIdChallengeModal() {
+        return (ModalLayerComponent) getDataTableGroupInner().getChildren().get(2);
     }
 
     private boolean checkRights(Workflow workflow) {
@@ -1039,6 +1174,26 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
 
     public void setRemovedFiles(List<File> removedFiles) {
         this.removedFiles = removedFiles;
+    }
+
+    public SignatureTask getSignatureTask() {
+        return signatureTask;
+    }
+
+    public String getPhoneNr() {
+        return phoneNr;
+    }
+
+    public void setPhoneNr(String phoneNr) {
+        this.phoneNr = phoneNr;
+    }
+
+    public String getChallengeId() {
+        return challengeId;
+    }
+
+    public void setSignature(String signature) {
+        this.signature = signature;
     }
 
     // END: getters / setters

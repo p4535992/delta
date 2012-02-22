@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.signature.service;
 
+import static ee.webmedia.alfresco.utils.CalendarUtil.duration;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
@@ -13,6 +15,7 @@ import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -20,6 +23,9 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
+
+import javax.xml.ws.Holder;
+import javax.xml.ws.soap.SOAPFaultException;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
@@ -39,6 +45,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.cxf.jaxws.JaxWsProxyFactoryBean;
 import org.apache.log4j.Logger;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.DERObject;
@@ -60,6 +67,10 @@ import ee.sk.digidoc.SignatureProductionPlace;
 import ee.sk.digidoc.SignedDoc;
 import ee.sk.digidoc.SignedProperties;
 import ee.sk.digidoc.factory.SAXDigiDocFactory;
+import ee.sk.digidocservice.DataFileDigest;
+import ee.sk.digidocservice.DataFileDigestList;
+import ee.sk.digidocservice.DigiDocServicePortType;
+import ee.sk.digidocservice.ObjectFactory;
 import ee.sk.utils.ConfigManager;
 import ee.sk.xmlenc.EncryptedData;
 import ee.sk.xmlenc.EncryptedKey;
@@ -78,7 +89,7 @@ import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 import ee.webmedia.alfresco.signature.model.SkLdapCertificate;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
-import ee.webmedia.alfresco.utils.Timer;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UserUtil;
 
 /**
@@ -93,6 +104,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
     private MimetypeService mimetypeService;
     private UserService userService;
     private LogService logService;
+    private JaxWsProxyFactoryBean digiDocServiceFactory;
     private boolean test = false;
 
     private String jDigiDocCfg;
@@ -100,10 +112,12 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
     private String pkcs12Container;
     private String pkcs12Password;
     private String pkcs12CertSerial;
-    private String mobileIdServiceName;
-    private String testMobileIdServiceName;
     private String digiDocServiceUrl;
     private String testDigiDocServiceUrl;
+    private String mobileIdServiceName;
+    private String testMobileIdServiceName;
+
+    private DigiDocServicePortType digiDocService;
 
     public void setFileFolderService(FileFolderService fileFolderService) {
         this.fileFolderService = fileFolderService;
@@ -119,6 +133,10 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
 
     public void setLogService(LogService logService) {
         this.logService = logService;
+    }
+
+    public void setDigiDocServiceFactory(JaxWsProxyFactoryBean digiDocServiceFactory) {
+        this.digiDocServiceFactory = digiDocServiceFactory;
     }
 
     public void setUserService(UserService userService) {
@@ -145,20 +163,20 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         this.pkcs12CertSerial = pkcs12CertSerial;
     }
 
-    public void setMobileIdServiceName(String mobileIdServiceName) {
-        this.mobileIdServiceName = mobileIdServiceName;
-    }
-
-    public void setTestMobileIdServiceName(String testMobileIdServiceName) {
-        this.testMobileIdServiceName = testMobileIdServiceName;
-    }
-
     public void setDigiDocServiceUrl(String digiDocServiceUrl) {
         this.digiDocServiceUrl = digiDocServiceUrl;
     }
 
     public void setTestDigiDocServiceUrl(String testDigiDocServiceUrl) {
         this.testDigiDocServiceUrl = testDigiDocServiceUrl;
+    }
+
+    public void setMobileIdServiceName(String mobileIdServiceName) {
+        this.mobileIdServiceName = mobileIdServiceName;
+    }
+
+    public void setTestMobileIdServiceName(String testMobileIdServiceName) {
+        this.testMobileIdServiceName = testMobileIdServiceName;
     }
 
     @Override
@@ -190,6 +208,10 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         if (!ConfigManager.init("jar://" + (isTest() ? jDigiDocCfgTest : jDigiDocCfg))) {
             throw new RuntimeException("JDigiDoc initialization failed");
         }
+        digiDocServiceFactory.setAddress(isTest() ? testDigiDocServiceUrl : digiDocServiceUrl);
+        digiDocServiceFactory.setServiceName(new javax.xml.namespace.QName("http://www.sk.ee/DigiDocService/DigiDocService_2_3.wsdl", "DigiDocService"));
+        digiDocServiceFactory.setEndpointName(new javax.xml.namespace.QName("http://www.sk.ee/DigiDocService/DigiDocService_2_3.wsdl", "DigiDocServicePortType"));
+        digiDocService = (DigiDocServicePortType) digiDocServiceFactory.create();
     }
 
     @Override
@@ -250,6 +272,8 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
             signedDoc = getSignedDoc(nodeRef, true);
             SignatureChallenge signatureChallenge = getSignatureChallenge(signedDoc, phoneNo);
             return signatureChallenge;
+        } catch (UnableToPerformException e) {
+            throw e;
         } catch (Exception e) {
             throw new SignatureException("Failed to create Mobile-ID signing request of ddoc file, nodeRef = " + nodeRef + ", phoneNo = " + phoneNo, e);
         }
@@ -274,6 +298,8 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
             signedDoc = createSignedDoc(contents);
             SignatureChallenge signatureDigest = getSignatureChallenge(signedDoc, phoneNo);
             return signatureDigest;
+        } catch (UnableToPerformException e) {
+            throw e;
         } catch (Exception e) {
             throw new SignatureException("Failed to create Mobile-ID signing request from contents = " + contents + ", phoneNo = " + phoneNo, e);
         }
@@ -295,10 +321,10 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
     }
 
     @Override
-    public NodeRef createContainer(NodeRef parent, List<NodeRef> contents, String filename, SignatureChallenge signatureChallenge) {
+    public NodeRef createContainer(NodeRef parent, List<NodeRef> contents, String filename, SignatureChallenge signatureChallenge, String signature) {
         try {
             SignedDoc signedDoc = createSignedDoc(contents);
-            addSignature(signedDoc, signatureChallenge);
+            addSignature(signedDoc, signatureChallenge, signature);
             NodeRef newNodeRef = createContentNode(parent, filename);
             writeSignedDoc(newNodeRef, signedDoc);
             logService.addLogEntry(LogEntry.create(LogObject.DOCUMENT, userService, newNodeRef, "applog_doc_file_generated", filename));
@@ -323,11 +349,11 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
     }
 
     @Override
-    public void addSignature(NodeRef nodeRef, SignatureChallenge signatureChallenge) {
+    public void addSignature(NodeRef nodeRef, SignatureChallenge signatureChallenge, String signature) {
         SignedDoc signedDoc = null;
         try {
             signedDoc = getSignedDoc(nodeRef, true);
-            addSignature(signedDoc, signatureChallenge);
+            addSignature(signedDoc, signatureChallenge, signature);
             writeSignedDoc(nodeRef, signedDoc);
         } catch (Exception e) {
             throw new SignatureRuntimeException("Failed to add signature to ddoc file, nodeRef = " + nodeRef + ", signatureChallenge = " + signatureChallenge, e);
@@ -376,10 +402,12 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         }
 
         sig.setSignatureValue(signatureBytes);
-        Timer timer = new Timer("signatureConfirmation");
 
         // If OCSP response is successful, then no exception is thrown
+        long startTime = System.nanoTime();
         sig.getConfirmation();
+        long stopTime = System.nanoTime();
+        log.info("PERFORMANCE: query skOcspSignatureConfirmation - " + duration(startTime, stopTime) + " ms");
 
         // If certificate has been revoked, then the following error is logged:
         // ERROR [ee.sk.digidoc.factory.BouncyCastleNotaryFactory] - <Certificate has been revoked!>
@@ -413,8 +441,6 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         // DigiDocException.code: 65
         // DigiDocException.message: ERROR: 65java.net.ConnectException; nested exception is:
         // java.net.ConnectException: Connection timed out
-
-        log.debug(timer);
     }
 
     private SignatureDigest getSignatureDigest(SignedDoc sd, String certHex) throws DigiDocException {
@@ -605,19 +631,26 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
     }
 
     private SignatureChallenge getSignatureChallenge(SignedDoc signedDoc, String phoneNo) throws DigiDocException {
+        phoneNo = StringUtils.stripToEmpty(phoneNo);
+
+        ObjectFactory objectFactory = new ObjectFactory();
 
         List<String> digestHexs = new ArrayList<String>();
+        DataFileDigestList dataFileDigestList = objectFactory.createDataFileDigestList();
         for (int i = 0; i < signedDoc.countDataFiles(); i++) {
             DataFile df = signedDoc.getDataFile(i);
             String digestHex = Base64Util.encode(df.getDigest());
-            System.out.println("DataFile Id=" + df.getId() + " DigestType=" + DataFile.DIGEST_TYPE_SHA1 + " DigestValue=" + digestHex);
             digestHexs.add(digestHex);
+
+            DataFileDigest dataFileDigest = objectFactory.createDataFileDigest();
+            dataFileDigest.setId(objectFactory.createDataFileDigestId(df.getId()));
+            dataFileDigest.setDigestType(objectFactory.createDataFileDigestDigestType(DataFile.DIGEST_TYPE_SHA1));
+            dataFileDigest.setDigestValue(objectFactory.createDataFileDigestDigestValue(digestHex));
+            dataFileDigestList.getDataFileDigest().add(dataFileDigest);
         }
         String signatureId = signedDoc.getNewSignatureId();
         String format = signedDoc.getFormat();
         String version = signedDoc.getVersion();
-        String serviceName = getMobileIdServiceName();
-        String _digiDocServiceUrl = getDigiDocServiceUrl();
 
         // REQUEST
         // @formatter:off
@@ -640,7 +673,43 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         // </dig:MobileCreateSignature>
         // @formatter:on
 
-        // TODO log.info web service request time
+        Holder<Integer> sesscode = new Holder<Integer>();
+        Holder<String> challengeId = new Holder<String>();
+        Holder<String> status = new Holder<String>();
+        long startTime = System.nanoTime();
+        try {
+            digiDocService.mobileCreateSignature(
+                    "",
+                    "",
+                    phoneNo,
+                    "EST",
+                    getMobileIdServiceName(),
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    dataFileDigestList,
+                    format,
+                    version,
+                    signatureId,
+                    "asynchClientServer",
+                    0,
+                    sesscode,
+                    challengeId,
+                    status);
+            long stopTime = System.nanoTime();
+            if (!"OK".equals(status.value)) {
+                log.error("Error performing query skDigiDocServiceMobileCreateSignature - " + duration(startTime, stopTime) + " ms: status='" + status.value + "'");
+                throw new UnableToPerformException("sk_digidocservice_error");
+            }
+            log.info("PERFORMANCE: query skDigiDocServiceMobileCreateSignature - " + duration(startTime, stopTime) + " ms, status=OK");
+        } catch (SOAPFaultException e) {
+            long stopTime = System.nanoTime();
+            handleDigiDocServiceSoapFault(e, startTime, stopTime, "skDigiDocServiceMobileCreateSignature");
+        }
 
         // RESPONSE
         // @formatter:off
@@ -651,36 +720,45 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         // </d:MobileCreateSignatureResponse>
         // @formatter:on
 
-        // TODO check status from response
-        String sesscode = "1756908565";
-        String challengeId = "1712";
-
-        return new SignatureChallenge(sesscode, challengeId, signatureId, digestHexs);
+        return new SignatureChallenge(sesscode.value, challengeId.value, digestHexs, signatureId, format, version);
     }
 
-    private void addSignature(SignedDoc signedDoc, SignatureChallenge signatureChallenge) throws DigiDocException, SignatureException, UnsupportedEncodingException {
-
-        List<String> digestHexs = new ArrayList<String>();
-        for (int i = 0; i < signedDoc.countDataFiles(); i++) {
-            DataFile df = signedDoc.getDataFile(i);
-            String digestHex = Base64Util.encode(df.getDigest());
-            digestHexs.add(digestHex);
-        }
-        if (!digestHexs.equals(signatureChallenge.getDigestHexs()) || signedDoc.getNewSignatureId().equals(signatureChallenge.getSignatureId())) {
-            throw new SignatureException("Signed info digest does not match, files were modified in the meantime");
-        }
-
-        String _digiDocServiceUrl = getDigiDocServiceUrl();
+    @Override
+    public String getMobileIdSignature(SignatureChallenge signatureChallenge) {
 
         // REQUEST
         // @formatter:off
         // <dig:GetMobileCreateSignatureStatus soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
         //    <Sesscode xsi:type="xsd:int">1756908565</Sesscode>
-        //    <WaitSignature xsi:type="xsd:boolean">true</WaitSignature>
+        //    <WaitSignature xsi:type="xsd:boolean">false</WaitSignature>
         // </dig:GetMobileCreateSignatureStatus>
         // @formatter:on
 
-        // TODO log.info web service request time
+        Holder<Integer> sesscode = new Holder<Integer>(signatureChallenge.getSesscode());
+        Holder<String> status = new Holder<String>();
+        Holder<String> signature = new Holder<String>();
+        long startTime = System.nanoTime();
+        try {
+            digiDocService.getMobileCreateSignatureStatus(sesscode, false, status, signature);
+            long stopTime = System.nanoTime();
+            if (!Arrays.asList("SIGNATURE", "OUTSTANDING_TRANSACTION", "EXPIRED_TRANSACTION", "USER_CANCEL", "MID_NOT_READY", "PHONE_ABSENT", "SIM_ERROR", "SENDING_ERROR",
+                    "INTERNAL_ERROR").contains(status.value)) {
+                log.error("Error performing query skDigiDocServiceGetMobileCreateSignatureStatus - " + duration(startTime, stopTime) + " ms: status=" + status.value);
+                throw new UnableToPerformException("sk_digidocservice_error");
+            }
+            log.info("PERFORMANCE: query skDigiDocServiceGetMobileCreateSignatureStatus - " + duration(startTime, stopTime) + " ms, status=" + status.value);
+            if ("SIGNATURE".equals(status.value)) {
+                return signature.value;
+            } else if ("OUTSTANDING_TRANSACTION".equals(status.value)) {
+                return null;
+            }
+            throw new UnableToPerformException("ddoc_signature_failed_" + status.value);
+        } catch (SOAPFaultException e) {
+            long stopTime = System.nanoTime();
+            handleDigiDocServiceSoapFault(e, startTime, stopTime, "skDigiDocServiceGetMobileCreateSignatureStatus");
+        }
+        Assert.isTrue(false); // unreachable code
+        return null;
 
         // RESPONSE:
         // @formatter:off
@@ -690,9 +768,38 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         //    <Signature xsi:type="xsd:string"><![CDATA[<Signature Id="S0" xmlns="http://www.w3.org/2000/09/xmldsig#">...</Signature>]]></Signature>
         // </d:GetMobileCreateSignatureStatusResponse>
         // @formatter:on
+    }
 
-        // TODO check status from response
-        String signature = "<Signature Id=\"S0\" xmlns=\"http://www.w3.org/2000/09/xmldsig#\">...</Signature>";
+    private void handleDigiDocServiceSoapFault(SOAPFaultException e, long startTime, long stopTime, String queryName) {
+        try {
+            int faultCode = Integer.parseInt(e.getMessage());
+            if (faultCode >= 200 && faultCode < 300) {
+                log.info("PERFORMANCE: query " + queryName + " - " + duration(startTime, stopTime) + " ms, faultCode=" + faultCode);
+                throw new UnableToPerformException("ddoc_signature_failed_INTERNAL_ERROR");
+            } else if (faultCode == 101 || (faultCode >= 300 && faultCode <= 303)) {
+                log.info("PERFORMANCE: query " + queryName + " - " + duration(startTime, stopTime) + " ms, faultCode=" + faultCode);
+                throw new UnableToPerformException("ddoc_signature_failed_" + faultCode);
+            }
+        } catch (NumberFormatException e2) {
+            // do nothing
+        }
+        log.error("Error performing query " + queryName + " - " + duration(startTime, stopTime) + " ms: " + e.getMessage(), e);
+        throw new UnableToPerformException("sk_digidocservice_error");
+    }
+
+    private void addSignature(SignedDoc signedDoc, SignatureChallenge signatureChallenge, String signature) throws DigiDocException, SignatureException,
+            UnsupportedEncodingException {
+
+        List<String> digestHexs = new ArrayList<String>();
+        for (int i = 0; i < signedDoc.countDataFiles(); i++) {
+            DataFile df = signedDoc.getDataFile(i);
+            String digestHex = Base64Util.encode(df.getDigest());
+            digestHexs.add(digestHex);
+        }
+        if (!digestHexs.equals(signatureChallenge.getDigestHexs()) || !signedDoc.getNewSignatureId().equals(signatureChallenge.getSignatureId())
+                || !signedDoc.getFormat().equals(signatureChallenge.getFormat()) || !signedDoc.getVersion().equals(signatureChallenge.getVersion())) {
+            throw new SignatureException("Signed info digest does not match, files were modified in the meantime");
+        }
 
         SAXDigiDocFactory digiDocFactory = new SAXDigiDocFactory();
         digiDocFactory.init();
@@ -763,10 +870,6 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
 
     private String getMobileIdServiceName() {
         return isTest() ? testMobileIdServiceName : mobileIdServiceName;
-    }
-
-    private String getDigiDocServiceUrl() {
-        return isTest() ? testDigiDocServiceUrl : digiDocServiceUrl;
     }
 
     @Override

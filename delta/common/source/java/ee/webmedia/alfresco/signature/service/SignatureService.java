@@ -110,6 +110,8 @@ public interface SignatureService {
      */
     SignatureItemsAndDataItems getDataItemsAndSignatureItems(InputStream inputStream, boolean includeData) throws SignatureException;
 
+    String getMobileIdSignature(SignatureChallenge signatureChallenge);
+
     /**
      * Add the signature to the document pointed to by nodeRef.
      * 
@@ -127,7 +129,7 @@ public interface SignatureService {
      * @param signatureChallenge
      * @throws SignatureRuntimeException
      */
-    void addSignature(NodeRef nodeRef, SignatureChallenge signatureChallenge);
+    void addSignature(NodeRef nodeRef, SignatureChallenge signatureChallenge, String signature);
 
     /**
      * Create a ddoc file from the file(s) pointed to by contents with the given filename
@@ -154,7 +156,7 @@ public interface SignatureService {
      * @return
      * @throws SignatureRuntimeException
      */
-    NodeRef createContainer(NodeRef parent, List<NodeRef> contents, String filename, SignatureChallenge signatureChallenge);
+    NodeRef createContainer(NodeRef parent, List<NodeRef> contents, String filename, SignatureChallenge signatureChallenge, String signature);
 
     /**
      * Changes an existing document to ddoc and signs it

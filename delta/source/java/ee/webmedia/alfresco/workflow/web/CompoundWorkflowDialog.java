@@ -154,6 +154,13 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         return null;
     }
 
+    @Override
+    protected void resetState() {
+        super.resetState();
+        existingUserCompoundWorkflowDefinition = null;
+        newUserCompoundWorkflowDefinition = null;
+    }
+
     private boolean hasOwnerWithNoEmail(String messageKey) {
         List<String> ownersWithNoEmail = WorkflowUtil.getOwnersWithNoEmail(compoundWorkflow);
         if (!ownersWithNoEmail.isEmpty()) {

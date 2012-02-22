@@ -218,6 +218,11 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
                 list.add(index++, result);
                 appendRow(context, result);
             }
+
+            // When not editable, only one row can be added.
+            if (!isEditable()) {
+                break;
+            }
         }
     }
 

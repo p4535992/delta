@@ -1925,6 +1925,24 @@ function performSigningPluginOperation(operation, hashHex, certId, path) {
    }
 }
 
+function getMobileIdSignature() {
+   var uri = getContextPath() + "/ajax/invoke/WorkflowBlockBean.getMobileIdSignature";
+   $jQ.ajax({
+      type: 'POST',
+      mode: 'queue',
+      url: uri,
+      dataType: 'html',
+      success: function( responseText, status, xhr ) {
+         if (responseText == 'FINISH') {
+            $jQ('#mobileIdChallengeMessage').html('<p>Vastus saadud...</p>');
+            $jQ('#' + escapeId4JQ('dialog:dialog-body:mobileIdChallengeModal_submit_btn')).click();
+         } else if (responseText == 'REPEAT') {
+            window.setTimeout(getMobileIdSignature, 2000);
+         }
+      }
+   });
+}
+
 function sendToSapManually(){
    return showModal('entrySapNumber_popup');
 }

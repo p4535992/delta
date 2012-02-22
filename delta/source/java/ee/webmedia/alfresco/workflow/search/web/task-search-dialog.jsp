@@ -9,7 +9,7 @@
 <h:panelGroup id="task-search-panel-facets">
    <f:facet name="title">
       <h:panelGroup>
-         <h:outputText value="#{msg.task_search_saved}" />
+         <h:outputText value="#{DialogManager.bean.savedFilterSelectTitle}" />
          <f:verbatim>&nbsp;</f:verbatim>
          <h:selectOneMenu id="filters" value="#{DialogManager.bean.selectedFilter}" converter="ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter"
             valueChangeListener="#{DialogManager.bean.selectedFilterValueChanged}" binding="#{DialogManager.bean.selectedFilterMenu}">

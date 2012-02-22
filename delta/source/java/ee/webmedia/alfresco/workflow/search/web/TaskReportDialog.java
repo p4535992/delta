@@ -70,6 +70,11 @@ public class TaskReportDialog extends TaskSearchDialog {
     }
 
     @Override
+    public String getSavedFilterSelectTitle() {
+        return MessageUtil.getMessage("task_report_saved");
+    }
+
+    @Override
     public String getFinishButtonLabel() {
         return MessageUtil.getMessage("task_search_execute_report");
     }

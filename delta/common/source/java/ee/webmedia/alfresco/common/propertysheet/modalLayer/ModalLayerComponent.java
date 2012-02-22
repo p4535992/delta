@@ -32,7 +32,9 @@ public class ModalLayerComponent extends UICommand implements Serializable {
 
     public static final String ATTR_HEADER_KEY = "headerKey";
     public static final String ATTR_SUBMIT_BUTTON_MSG_KEY = "submitButtonMsgKey";
+    public static final String ATTR_SUBMIT_BUTTON_HIDDEN = "submitButtonHidden";
     public static final String ATTR_SET_RENDERED_FALSE_ON_CLOSE = "setRenderedFalseOnClose";
+    public static final String ATTR_AUTO_SHOW = "autoShow";
     public static final String ACTION_INDEX = "actionIndex";
 
     public final static int ACTION_CLEAR = 1;
@@ -88,6 +90,14 @@ public class ModalLayerComponent extends UICommand implements Serializable {
         writeModalContent(context, out, serializer);
 
         ComponentUtil.writeModalFooter(out);
+
+        if (Boolean.TRUE.equals(ComponentUtil.getAttributes(this).get(ATTR_AUTO_SHOW))) {
+            out.write("<script type=\"text/javascript\">$jQ(document).ready(function(){");
+            out.write("showModal('");
+            out.write(getClientId(context) + "_popup");
+            out.write("');");
+            out.write("});</script>");
+        }
     }
 
     protected void writeModalContent(FacesContext context, ResponseWriter out, JSONSerializer serializer) throws IOException {
@@ -107,6 +117,7 @@ public class ModalLayerComponent extends UICommand implements Serializable {
                 + " type=\"submit\" value=" + serializer.serialize(MessageUtil.getMessage(submitButtonMessageKey))
                 + " onclick="
                 + serializer.serialize(Utils.generateFormSubmit(context, this, getClientId(context), Integer.toString(ACTION_SUBMIT)))
+                + (Boolean.TRUE.equals(ComponentUtil.getAttributes(this).get(ATTR_SUBMIT_BUTTON_HIDDEN)) ? " style=\"display: none;\"" : "")
                 + extraAttrs + " />");
     }
 
