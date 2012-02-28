@@ -5,6 +5,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getNamespaceService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.ui.repo.RepoConstants;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
@@ -28,7 +29,13 @@ public class DoubleGenerator extends BaseTypeFieldGenerator {
     public void generateField(Field field, GeneratorResults generatorResults) {
         final ItemConfigVO item = generatorResults.getAndAddPreGeneratedItem();
         if (!field.isForSearch()) {
-            item.setComponentGenerator(RepoConstants.GENERATOR_TEXT_FIELD);
+            String datafieldParamName = field.getDatafieldParamName();
+            if (StringUtils.isNotBlank(datafieldParamName)) {
+                item.setComponentGenerator("ParameterInputAttributeGenerator");
+                item.setParameterName(datafieldParamName);
+            } else {
+                item.setComponentGenerator(RepoConstants.GENERATOR_TEXT_FIELD);
+            }
             item.setStyleClass("medium");
             item.setConverter(DoubleCurrencyConverter_ET_EN.class.getName());
             item.setAllowCommaAsDecimalSeparator(true);

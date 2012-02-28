@@ -45,6 +45,7 @@ import org.springframework.web.context.ServletContextAware;
 import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
+import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
 import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.service.OpenOfficeService;
@@ -70,7 +71,6 @@ import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.mso.service.MsoService;
-import ee.webmedia.alfresco.report.model.ReportType;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.template.exception.ExistingFileFromTemplateException;
 import ee.webmedia.alfresco.template.model.DocumentTemplate;
@@ -946,7 +946,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     }
 
     @Override
-    public List<SelectItem> getReportTemplates(ReportType typeId) {
+    public List<SelectItem> getReportTemplates(TemplateReportType typeId) {
         Assert.notNull(typeId, "Parameter typeId is mandatory.");
         List<SelectItem> result = new ArrayList<SelectItem>();
         String typeStr = typeId.toString();
@@ -987,7 +987,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     }
 
     @Override
-    public NodeRef getReportTemplateByName(String templateName, ReportType reportType) {
+    public NodeRef getReportTemplateByName(String templateName, TemplateReportType reportType) {
         Assert.notNull(reportType);
         if (StringUtils.isBlank(templateName)) {
             return null;

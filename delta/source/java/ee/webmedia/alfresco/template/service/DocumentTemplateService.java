@@ -10,8 +10,8 @@ import org.alfresco.service.cmr.model.FileNotFoundException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.Node;
 
+import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
 import ee.webmedia.alfresco.document.model.Document;
-import ee.webmedia.alfresco.report.model.ReportType;
 import ee.webmedia.alfresco.template.exception.ExistingFileFromTemplateException;
 import ee.webmedia.alfresco.template.model.DocumentTemplate;
 import ee.webmedia.alfresco.volume.model.Volume;
@@ -119,8 +119,8 @@ public interface DocumentTemplateService {
 
     void updateDocTemplate(Node docTemplNode);
 
-    List<SelectItem> getReportTemplates(ReportType typeId);
+    List<SelectItem> getReportTemplates(TemplateReportType typeId);
 
-    NodeRef getReportTemplateByName(String templateName, ReportType reportType);
+    NodeRef getReportTemplateByName(String templateName, TemplateReportType reportType);
 
 }

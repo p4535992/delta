@@ -5,6 +5,8 @@ import java.util.List;
 
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
+import javax.faces.event.AbortProcessingException;
+import javax.faces.event.FacesEvent;
 
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.ui.common.ComponentConstants;
@@ -31,6 +33,15 @@ public class StructUnitSearch extends Search {
     }
 
     @Override
+    public void broadcast(FacesEvent event) throws AbortProcessingException {
+        FacesContext context = FacesContext.getCurrentInstance();
+        if (event instanceof SearchRemoveEvent) {
+            invokeSetterCallbackIfNeeded(context, null);
+        }
+        super.broadcast(event);
+    }
+
+    @Override
     protected void createExistingComponents(FacesContext context) {
         @SuppressWarnings("unchecked")
         List<UIComponent> children = getChildren();
@@ -53,6 +64,8 @@ public class StructUnitSearch extends Search {
         List<String> resultList = Arrays.asList(results);
         list.addAll(resultList);
         appendRowComponent(context, UserUtil.getLongestValueIndex(resultList));
+
+        invokeSetterCallbackIfNeeded(context, UserUtil.getDisplayUnit(resultList));
     }
 
     /** Only one row can be displayed, deleting it means deleting all rows */

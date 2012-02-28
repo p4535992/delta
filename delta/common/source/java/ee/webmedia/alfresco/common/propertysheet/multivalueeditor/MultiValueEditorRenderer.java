@@ -204,7 +204,7 @@ public class MultiValueEditorRenderer extends BaseRenderer {
                 }
 
                 out.write("<td>");
-                if (!ComponentUtil.isComponentDisabledOrReadOnly(multiValueEditor)) { // don't render removing link
+                if (!ComponentUtil.isComponentDisabledOrReadOnly(multiValueEditor) && (!((MultiValueEditor) multiValueEditor).isForcedMandatory_() || renderedRowCount > 1)) {
 
                     out.write("<a class=\"icon-link margin-left-4 delete\" onclick=\"");
                     out.write(ComponentUtil //

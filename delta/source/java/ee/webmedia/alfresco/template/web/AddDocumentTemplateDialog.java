@@ -1,7 +1,5 @@
 package ee.webmedia.alfresco.template.web;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentTemplateService;
-
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -174,7 +172,7 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
     public boolean validateFileExtension() {
         String name = getFileName();
         return TemplateType.DOCUMENT_TEMPLATE.name().equals(templateType) && isFileNameHasValidExtension(name, "dotx", "dot")
-                || TemplateType.REPORT_TEMPLATE.name().equals(templateType) && isFileNameHasValidExtension(name, "xltx", "xlt")
+                || TemplateType.REPORT_TEMPLATE.name().equals(templateType) && isFileNameHasValidExtension(name, "xltx")
                 || (TemplateType.NOTIFICATION_TEMPLATE.name().equals(templateType) || TemplateType.EMAIL_TEMPLATE.name().equals(templateType))
                 && isFileNameHasValidExtension(name, "htm", "html");
     }

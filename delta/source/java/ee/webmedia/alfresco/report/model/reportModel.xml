@@ -16,7 +16,7 @@
    <constraints>
 
       <constraint name="report:reportType" type="ee.webmedia.alfresco.common.constraint.EnumConstraint">
-         <parameter name="enumClass"><value>ee.webmedia.alfresco.report.model.ReportType</value></parameter>
+         <parameter name="enumClass"><value>ee.webmedia.alfresco.classificator.enums.TemplateReportType</value></parameter>
       </constraint>
       
       <constraint name="report:reportStatus" type="ee.webmedia.alfresco.common.constraint.EnumConstraint">

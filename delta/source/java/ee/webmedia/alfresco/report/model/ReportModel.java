@@ -29,9 +29,6 @@ public interface ReportModel {
     }
 
     interface Props {
-        /**
-         * All values for this property are defined in Enum {@link ReportStatus}
-         */
         QName USERNAME = QName.createQName(URI, "userName");
         QName REPORT_NAME = QName.createQName(URI, "reportName");
         QName REPORT_TYPE = QName.createQName(URI, "reportType");
@@ -41,6 +38,9 @@ public interface ReportModel {
         QName RUN_FINISH_START_TIME = QName.createQName(URI, "runFinishDateTime");
         QName CANCEL_DATE_TIME = QName.createQName(URI, "cancelDateTime");
         QName FIRST_DOWNLOAD_DATE_TIME = QName.createQName(URI, "firstDownloadDateTime");
+        /**
+         * All values for this property are defined in Enum {@link ReportStatus}
+         */
         QName STATUS = QName.createQName(URI, "status");
     }
 

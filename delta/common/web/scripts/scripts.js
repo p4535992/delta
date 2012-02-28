@@ -525,7 +525,7 @@ function webdavOpen(url, sharePointObject) {
  * @return false
  */
 function webdavOpenReadOnly(url) {
-   // TODO: at the moment it just alwais provides a download link even for office documents
+   // TODO: at the moment it just always provides a download link even for office documents
 //   // if the link represents an Office document and we are in IE try and
 //   // open the file directly to get WebDAV editing capabilities
 //   var agent = navigator.userAgent.toLowerCase();
@@ -1194,11 +1194,14 @@ function initWithScreenProtected() {
       if (elem != null) {
          // Find the report due date
          var errandEnd = elem.datepicker('getDate');
-         var reportDue = new Date(errandEnd.getFullYear(), errandEnd.getMonth(), errandEnd.getDate() + 5);
-         if (reportDue.getDay() == 6) { // Saturday
-            reportDue = new Date(reportDue.getFullYear(), reportDue.getMonth(), reportDue.getDate() + 2);
-         } else if (reportDue.getDay() == 0) { // Sunday
-            reportDue = new Date(reportDue.getFullYear(), reportDue.getMonth(), reportDue.getDate() + 1);
+         var reportDue = "";
+         if (errandEnd) {
+            reportDue = new Date(errandEnd.getFullYear(), errandEnd.getMonth(), errandEnd.getDate() + 5);
+            if (reportDue.getDay() == 6) { // Saturday
+               reportDue = new Date(reportDue.getFullYear(), reportDue.getMonth(), reportDue.getDate() + 2);
+            } else if (reportDue.getDay() == 0) { // Sunday
+               reportDue = new Date(reportDue.getFullYear(), reportDue.getMonth(), reportDue.getDate() + 1);
+            }
          }
          // Set date
          elem.closest(".panel-border").find(".reportDueDate").datepicker('setDate',  reportDue);
@@ -1262,6 +1265,7 @@ function initWithScreenProtected() {
       }
       if (dateField != null) {
          dateField.datepicker('setDate', elem.datepicker('getDate'));
+         dateField.change();
       }
    });
 
@@ -1622,6 +1626,7 @@ function setMinEndDate(owner, dateElem){
    var date = jQuery.datepicker.parseDate(endDatePicker.settings.dateFormat, beginDate, endDatePicker.settings);
    if (date == null) return;         
    endDate.datepicker("option", "minDate", date);
+   endDate.change();
 }
 
 // These things need to be performed
@@ -1711,6 +1716,8 @@ function handleHtmlLoaded(context, selects) {
       webdavOpenReadOnly(this.href);
       return false;
    });
+   jQuery(".dailyAllowanceDaysField, .dailyAllowanceRateField, .errandReportDateBase, .eventBeginDate, .eventEndDate", context).change();
+   jQuery(".expectedExpenseSumField", context).keyup();
    $jQ('.triggerPropSheetValidation', context).each(function () {
       prependOnclick($jQ(this), triggerPropSheetValidation);
    });

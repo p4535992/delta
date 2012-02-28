@@ -60,9 +60,11 @@ import ee.webmedia.alfresco.docconfig.generator.SaveListener;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.TreeNode;
+import ee.webmedia.alfresco.utils.UserUtil;
 
 /**
  * @author Alar Kvell
@@ -444,6 +446,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
     private static ItemConfigVO generateAndAddViewModeTextInternal(String name, String label, DocumentConfig config) {
         ItemConfigVO viewModeTextItem = new ItemConfigVO(name);
         viewModeTextItem.setConfigItemType(ConfigItemType.PROPERTY);
+        viewModeTextItem.setIgnoreIfMissing(false);
         viewModeTextItem.setShowInEditMode(false);
         viewModeTextItem.setDisplayLabel(label);
         WMPropertySheetConfigElement propSheet = config.getPropertySheetConfigElement();
@@ -713,7 +716,8 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
                     if (StringUtils.isNotBlank(field.getClassificatorDefaultValue())) {
                         defaultValue = field.getClassificatorDefaultValue();
                     } else {
-                        List<ClassificatorValue> classificatorValues = classificatorService.getAllClassificatorValues(field.getClassificator());
+                        List<ClassificatorValue> classificatorValues = classificatorService.getActiveClassificatorValues(classificatorService.getClassificatorByName(field
+                                .getClassificator()));
                         for (ClassificatorValue classificatorValue : classificatorValues) {
                             if (classificatorValue.isByDefault()) {
                                 defaultValue = classificatorValue.getValueName();
@@ -739,6 +743,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
                         Assert.isTrue(fieldAndPropDef != null
                                 && Arrays.equals(fieldAndPropDef.getFirst().getChildAssocTypeQNameHierarchy(), propDef.getChildAssocTypeQNameHierarchy()));
                         node.getProperties().put(propName.toString(), entry.getValue());
+                        setSpecialDependentValues(node, fieldAndPropDef.getSecond(), entry.getValue());
                     }
                     return;
                 }
@@ -773,6 +778,42 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
 
         if (defaultValue != null) {
             node.getProperties().put(field.getQName().toString(), defaultValue);
+            setSpecialDependentValues(node, field, defaultValue);
+        }
+    }
+
+    // Same rules as in ErrandGenerator#applicantOrgStructUnitChanged
+    private void setSpecialDependentValues(Node node, Field field, Serializable value) {
+        if (field != null
+                && DocumentDynamicModel.Props.APPLICANT_ORG_STRUCT_UNIT.getLocalName().equals(field.getOriginalFieldId())
+                && field.getParent() instanceof FieldGroup
+                && ((FieldGroup) field.getParent()).isSystematic()) {
+
+            @SuppressWarnings("unchecked")
+            String displayUnit = UserUtil.getDisplayUnit((List<String>) value);
+
+            // If applicantOrgStructUnit is in a systematic group, then that group may also contain costManager and costCenter
+            Map<String, Field> fieldsByOriginalId = ((FieldGroup) field.getParent()).getFieldsByOriginalId();
+            setValueFromClassificatorValueName(node, fieldsByOriginalId, DocumentSpecificModel.Props.COST_MANAGER.getLocalName(), displayUnit);
+            setValueFromClassificatorValueName(node, fieldsByOriginalId, DocumentDynamicModel.Props.COST_CENTER.getLocalName(), displayUnit);
+        }
+    }
+
+    private void setValueFromClassificatorValueName(Node node, Map<String, Field> fieldsByOriginalId, String originalFieldId, String classificatorValueDescription) {
+        Field field = fieldsByOriginalId.get(originalFieldId);
+        if (field == null) {
+            return; // costManager and costCenter could be removed from group
+        }
+        String classificatorName = field.getClassificator();
+        if (StringUtils.isBlank(classificatorName)) {
+            return;
+        }
+        List<ClassificatorValue> classificatorValues = classificatorService.getActiveClassificatorValues(classificatorService.getClassificatorByName(classificatorName));
+        for (ClassificatorValue classificatorValue : classificatorValues) {
+            if (classificatorValue.getClassificatorDescription().equals(classificatorValueDescription)) {
+                node.getProperties().put(field.getQName().toString(), classificatorValue.getValueName());
+                break;
+            }
         }
     }
 

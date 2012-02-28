@@ -240,7 +240,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         }
     }
 
-    private void invokeSetterCallbackIfNeeded(FacesContext context, String value) {
+    protected void invokeSetterCallbackIfNeeded(FacesContext context, String value) {
         // Invoke setter callback if needed
         String setterCallback = getSetterCallback();
         if (StringUtils.isBlank(setterCallback)) {

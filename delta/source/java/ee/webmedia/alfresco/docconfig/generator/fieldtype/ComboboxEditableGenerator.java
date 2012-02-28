@@ -33,7 +33,7 @@ public class ComboboxEditableGenerator extends BaseTypeFieldGenerator {
             // Only "case" field should have this special case
             values = Collections.emptyList();
         } else {
-            values = classificatorService.getAllClassificatorValues(field.getClassificator());
+            values = classificatorService.getActiveClassificatorValues(classificatorService.getClassificatorByName(field.getClassificator()));
         }
         if (values.isEmpty()) {
             item.setComponentGenerator(RepoConstants.GENERATOR_TEXT_AREA);

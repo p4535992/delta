@@ -330,7 +330,6 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
                     boolean subtractNationalHolidays = false;
                     if (leaveTypeProp != null) {
                         String leaveType = getListElement(document, leaveTypeProp, index);
-                        getClassificatorService().getAllClassificatorValues("leaveType");
                         if (!leaveStudyClassificatorValueNames.contains(leaveType)) {
                             subtractNationalHolidays = true;
                         }

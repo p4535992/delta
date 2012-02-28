@@ -16,6 +16,7 @@ import java.util.Map;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
@@ -26,6 +27,8 @@ import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.service.transaction.TransactionService;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -37,15 +40,18 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.classificator.enums.TemplateReportOutputType;
+import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
+import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.report.model.ReportDataCollector;
 import ee.webmedia.alfresco.report.model.ReportModel;
 import ee.webmedia.alfresco.report.model.ReportStatus;
-import ee.webmedia.alfresco.report.model.ReportType;
 import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.user.service.UserService;
@@ -66,7 +72,8 @@ public class ReportServiceImpl implements ReportService {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(ReportServiceImpl.class);
     private static final int EXCEL_SHEET_MAX_ROWS = 1048576;
     private static final FastDateFormat DATE_FORMAT = FastDateFormat.getInstance("dd.MM.yyyy");
-    private static Map<ReportType, List<String>> reportHeaderMsgKeys = new HashMap<ReportType, List<String>>();
+    private static Map<TemplateReportType, List<String>> reportHeaderMsgKeys = new HashMap<TemplateReportType, List<String>>();
+    private static Map<TemplateReportType, Pair<QName, QName>> reportFilterTypeAndProp = new HashMap<TemplateReportType, Pair<QName, QName>>();
 
     private DocumentSearchService documentSearchService;
     private DocumentTemplateService documentTemplateService;
@@ -77,9 +84,11 @@ public class ReportServiceImpl implements ReportService {
     private WorkflowService workflowService;
     private DocumentAdminService documentAdminService;
     private MimetypeService mimetypeService;
+    private FileService fileService;
+    private TransactionService transactionService;
 
     static {
-        reportHeaderMsgKeys.put(ReportType.TASKS_REPORT,
+        reportHeaderMsgKeys.put(TemplateReportType.TASKS_REPORT,
                 Arrays.asList("task_search_result_regNum", "task_search_result_regDate", "task_search_result_createdDate", "task_search_result_docType",
                         "task_search_result_docName", "task_search_result_creatorName", "task_search_result_startedDate", "task_search_result_ownerName",
                         "task_search_result_ownerOrganizationName", "task_search_result_ownerJobTitle", "task_search_result_taskType", "task_search_result_dueDate",
@@ -87,10 +96,11 @@ public class ReportServiceImpl implements ReportService {
                         "task_search_result_resolution", "task_search_result_overdue", "task_search_result_status", "task_search_result_function", "task_search_result_series",
                         "task_search_result_volume", "task_search_result_case"));
 
+        reportFilterTypeAndProp.put(TemplateReportType.TASKS_REPORT, new Pair<QName, QName>(TaskReportModel.Types.FILTER, TaskReportModel.Props.REPORT_TEMPLATE));
     }
 
     @Override
-    public NodeRef createReportResult(Node filter, ReportType reportType, QName parentToChildAssoc) {
+    public NodeRef createReportResult(Node filter, TemplateReportType reportType, QName parentToChildAssoc) {
         Assert.isTrue(reportType != null && parentToChildAssoc != null, "reportType and parentToChildAssoc cannot be null.");
         Map<QName, Serializable> reportResultProps = new HashMap<QName, Serializable>();
         reportResultProps.put(ReportModel.Props.USERNAME, userService.getCurrentUserName());
@@ -124,40 +134,47 @@ public class ReportServiceImpl implements ReportService {
     @Override
     public ReportDataCollector getReportFileInMemory(ReportDataCollector reportDataCollector) {
         NodeRef reportResultRef = reportDataCollector.getReportResultNodeRef();
-        Map<QName, Serializable> reportResultProps = nodeService.getProperties(reportResultRef);
-        reportDataCollector.setReportResultProps(reportResultProps);
+        Map<QName, Serializable> reportResultProps = reportDataCollector.getReportResultProps();
         List<ChildAssociationRef> filters = nodeService.getChildAssocs(reportResultRef, Collections.singleton(TaskReportModel.Assocs.FILTER));
         Assert.isTrue(filters != null && filters.size() == 1, "reportResult must have exactly one taskReportFilter child node!");
         Node filter = new Node(filters.get(0).getChildRef());
 
-        List<FileInfo> fileInfos = fileFolderService.listFiles(reportResultRef);
-        NodeRef templateRef = null;
         String reportTypeStr = (String) reportResultProps.get(ReportModel.Props.REPORT_TYPE);
-        for (FileInfo fileInfo : fileInfos) {
-            NodeRef fileRef = fileInfo.getNodeRef();
-            if (nodeService.hasAspect(fileRef, DocumentTemplateModel.Aspects.TEMPLATE_REPORT)
-                    && StringUtils.equals(reportTypeStr, (String) nodeService.getProperty(fileRef, DocumentTemplateModel.Prop.REPORT_TYPE))) {
-                templateRef = fileRef;
-                break;
-            }
-        }
+        NodeRef templateRef = getReportResultTemplate(reportResultRef, reportTypeStr);
         if (templateRef == null) {
             throw new UnableToPerformException("report_error_cannot_find_template");
         }
         ContentReader templateReader = fileFolderService.getReader(templateRef);
+        // TODO: add cancelling or deleting request check between searches in different stores
         List<NodeRef> tasks = documentSearchService.searchTasksForReport(filter);
-        return createReportFileInMemory(tasks, templateReader, ReportType.valueOf(reportTypeStr), reportDataCollector);
+        return createReportFileInMemory(tasks, templateReader, TemplateReportType.valueOf(reportTypeStr), reportDataCollector);
+    }
+
+    private NodeRef getReportResultTemplate(NodeRef reportResultRef, String reportTypeStr) {
+        List<FileInfo> fileInfos = fileFolderService.listFiles(reportResultRef);
+        for (FileInfo fileInfo : fileInfos) {
+            NodeRef fileRef = fileInfo.getNodeRef();
+            if (nodeService.hasAspect(fileRef, DocumentTemplateModel.Aspects.TEMPLATE_REPORT)
+                    && StringUtils.equals(reportTypeStr, (String) nodeService.getProperty(fileRef, DocumentTemplateModel.Prop.REPORT_TYPE))) {
+                return fileRef;
+            }
+        }
+        return null;
     }
 
     private NodeRef getReportsSpaceRef() {
         return generalService.getNodeRef(ReportModel.Repo.REPORTS_SPACE);
     }
 
-    private ReportDataCollector createReportFileInMemory(List<NodeRef> taskRefs, ContentReader templateReader, ReportType reportType, ReportDataCollector reportDataCollector) {
+    private ReportDataCollector createReportFileInMemory(List<NodeRef> taskRefs, ContentReader templateReader, TemplateReportType reportType,
+            ReportDataCollector reportDataCollector) {
         if (taskRefs == null || taskRefs.isEmpty()) {
             return null;
         }
         InputStream templateInputStream = null;
+        NodeRef reportResultNodeRef = reportDataCollector.getReportResultNodeRef();
+        long lastStatusCheckTime = System.currentTimeMillis();
+        int statusCheckInterval = 30000; // check after half minute
         try {
             templateInputStream = templateReader.getContentInputStream();
             XSSFWorkbook xssfWorkbook = new XSSFWorkbook(templateInputStream);
@@ -177,6 +194,19 @@ public class ReportServiceImpl implements ReportService {
             Map<QName, String> taskNames = getTaskNames();
             ReportStatus resultStatus = ReportStatus.FINISHED;
             for (NodeRef taskRef : taskRefs) {
+                long currentTime = System.currentTimeMillis();
+                if (currentTime - lastStatusCheckTime > statusCheckInterval) {
+                    ReportStatus repoStatus = ReportStatus.valueOf((String) nodeService.getProperty(reportResultNodeRef, ReportModel.Props.STATUS));
+                    if (ReportStatus.CANCELLING_REQUESTED == repoStatus) {
+                        reportDataCollector.setResultStatus(ReportStatus.CANCELLED);
+                        return reportDataCollector;
+                    }
+                    if (ReportStatus.DELETING_REQUESTED == repoStatus) {
+                        reportDataCollector.setResultStatus(ReportStatus.DELETED);
+                        return reportDataCollector;
+                    }
+                    lastStatusCheckTime = currentTime;
+                }
                 if (rowNr >= EXCEL_SHEET_MAX_ROWS) {
                     resultStatus = ReportStatus.EXCEL_FULL;
                     break;
@@ -243,7 +273,7 @@ public class ReportServiceImpl implements ReportService {
         return taskNamesByType;
     }
 
-    private void createHeadings(Row row, ReportType reportType) {
+    private void createHeadings(Row row, TemplateReportType reportType) {
         List<String> msgKeys = reportHeaderMsgKeys.get(reportType);
         if (msgKeys == null) {
             return;
@@ -258,8 +288,16 @@ public class ReportServiceImpl implements ReportService {
     @Override
     public NodeRef completeReportResult(ReportDataCollector reportDataProvider) {
         NodeRef reportResultNodeRef = reportDataProvider.getReportResultNodeRef();
+        ReportStatus resultStatus = reportDataProvider.getResultStatus();
+        if (ReportStatus.DELETED == resultStatus) {
+            deleteReportResult(reportResultNodeRef);
+            LOG.info("Deleted report nodeRef=" + reportResultNodeRef);
+            return null;
+        }
+        Map<QName, Serializable> reportResultProps = new HashMap<QName, Serializable>();
         Workbook workbook = reportDataProvider.getWorkbook();
         // workbook may be null if creating report failed or was cancelled by user. Status check is performed in ExecuteReportsJob.
+        Date completeDate = new Date();
         if (workbook != null) {
             String reportName = (String) nodeService.getProperty(reportResultNodeRef, ReportModel.Props.REPORT_NAME);
             if (StringUtils.isBlank(reportName)) {
@@ -276,10 +314,12 @@ public class ReportServiceImpl implements ReportService {
             } catch (IOException e) {
                 throw new RuntimeException("Failed to write to result file.", e);
             }
+            reportResultProps.put(ReportModel.Props.RUN_FINISH_START_TIME, completeDate);
         }
-        Map<QName, Serializable> reportResultProps = new HashMap<QName, Serializable>();
-        reportResultProps.put(ReportModel.Props.STATUS, reportDataProvider.getResultStatus().toString());
-        reportResultProps.put(ReportModel.Props.RUN_FINISH_START_TIME, new Date());
+        reportResultProps.put(ReportModel.Props.STATUS, resultStatus.toString());
+        if (ReportStatus.CANCELLED.equals(resultStatus)) {
+            reportResultProps.put(ReportModel.Props.CANCEL_DATE_TIME, completeDate);
+        }
         nodeService.addProperties(reportResultNodeRef, reportResultProps);
         NodeRef userReportFolderRef = userService.retrieveUserReportsFolderRef((String) reportDataProvider.getReportResultProps().get(ReportModel.Props.USERNAME));
         if (userReportFolderRef != null) {
@@ -304,7 +344,7 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public List<Node> getAllInQueueReports() {
-        List<NodeRef> reportRefs = getReportsInStatus(ReportStatus.IN_QUEUE);
+        List<NodeRef> reportRefs = getReportsInStatus(ReportStatus.IN_QUEUE, ReportStatus.CANCELLING_REQUESTED, ReportStatus.DELETING_REQUESTED);
         List<Node> reports = new ArrayList<Node>();
         for (NodeRef reportRef : reportRefs) {
             Node report = new Node(reportRef);
@@ -314,18 +354,82 @@ public class ReportServiceImpl implements ReportService {
         return reports;
     }
 
-    private List<NodeRef> getReportsInStatus(ReportStatus requiredStatus) {
-        Assert.notNull(requiredStatus, "Status cannot be null.");
-        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(getReportsSpaceRef(), Collections.singleton(ReportModel.Types.REPORT_RESULT));
+    private List<NodeRef> getReportsInStatus(ReportStatus... requiredStatuses) {
+        Assert.notNull(requiredStatuses, "requiredStatuses cannot be null.");
+        List<ChildAssociationRef> childAssocs = getReportResultsFromFolder(getReportsSpaceRef());
         List<NodeRef> reportRefs = new ArrayList<NodeRef>();
         for (ChildAssociationRef childAssoc : childAssocs) {
             NodeRef reportRef = childAssoc.getChildRef();
             String statusStr = (String) nodeService.getProperty(reportRef, ReportModel.Props.STATUS);
-            if (StringUtils.isNotBlank(statusStr) && requiredStatus.equals(ReportStatus.valueOf(statusStr))) {
-                reportRefs.add(reportRef);
+            if (StringUtils.isNotBlank(statusStr)) {
+                ReportStatus reportStatus = ReportStatus.valueOf(statusStr);
+                for (ReportStatus requiredStatus : requiredStatuses) {
+                    if (requiredStatus == reportStatus) {
+                        reportRefs.add(reportRef);
+                        break;
+                    }
+                }
             }
         }
         return reportRefs;
+    }
+
+    @Override
+    public List<ReportResult> getReportResultsForUser(String username) {
+        Assert.isTrue(StringUtils.isNotBlank(username));
+        List<ChildAssociationRef> childAssocs = getReportResultsFromFolder(getReportsSpaceRef());
+        List<ReportResult> userReports = new ArrayList<ReportResult>();
+        for (ChildAssociationRef childAssoc : childAssocs) {
+            WmNode reportNode = new WmNode(childAssoc.getChildRef(), ReportModel.Types.REPORT_RESULT);
+            Map<String, Object> reportProps = reportNode.getProperties();
+            if (StringUtils.equals((String) reportProps.get(ReportModel.Props.USERNAME), username)) {
+                userReports.add(populateReportResult(reportNode, reportProps));
+            }
+        }
+        childAssocs = getReportResultsFromFolder(userService.retrieveUserReportsFolderRef(username));
+        for (ChildAssociationRef childAssoc : childAssocs) {
+            WmNode reportNode = new WmNode(childAssoc.getChildRef(), ReportModel.Types.REPORT_RESULT);
+            userReports.add(populateReportResult(reportNode, reportNode.getProperties()));
+        }
+        return userReports;
+    }
+
+    private ReportResult populateReportResult(WmNode reportNode, Map<String, Object> reportProps) {
+        ReportResult reportResult = new ReportResult(reportNode);
+        NodeRef reportResultRef = reportNode.getNodeRef();
+        String reportTypeStr = (String) reportProps.get(ReportModel.Props.REPORT_TYPE);
+        NodeRef templateRef = getReportResultTemplate(reportResultRef, reportTypeStr);
+        if (templateRef != null) {
+            String reportOutputTypeStr = (String) nodeService.getProperty(templateRef, DocumentTemplateModel.Prop.REPORT_OUTPUT_TYPE);
+            if (StringUtils.isNotBlank(reportOutputTypeStr)) {
+                reportResult.setReportOutputType(TemplateReportOutputType.valueOf(reportOutputTypeStr));
+            }
+        }
+        Pair<QName, QName> filterTypeAndProp = reportFilterTypeAndProp.get(TemplateReportType.valueOf(reportTypeStr));
+        List<ChildAssociationRef> filters = nodeService.getChildAssocs(reportResultRef, Collections.singleton(filterTypeAndProp.getFirst()));
+        if (filters != null && !filters.isEmpty()) {
+            reportResult.setTemplateName((String) nodeService.getProperty(filters.get(0).getChildRef(), filterTypeAndProp.getSecond()));
+        }
+        NodeRef reportResultFileRef = getReportResultFile(reportResultRef);
+        if (reportResultFileRef != null) {
+            reportResult.setDownloadUrl(fileService.generateURL(reportResultFileRef));
+        }
+        return reportResult;
+    }
+
+    private NodeRef getReportResultFile(NodeRef reportResultRef) {
+        List<FileInfo> fileInfos = fileFolderService.listFiles(reportResultRef);
+        for (FileInfo fileInfo : fileInfos) {
+            NodeRef fileRef = fileInfo.getNodeRef();
+            if (!nodeService.hasAspect(fileRef, DocumentTemplateModel.Aspects.TEMPLATE_REPORT)) {
+                return fileRef;
+            }
+        }
+        return null;
+    }
+
+    private List<ChildAssociationRef> getReportResultsFromFolder(NodeRef folderRef) {
+        return nodeService.getChildAssocs(folderRef, Collections.singleton(ReportModel.Types.REPORT_RESULT));
     }
 
     @Override
@@ -334,6 +438,70 @@ public class ReportServiceImpl implements ReportService {
         props.put(ReportModel.Props.RUN_START_DATE_TIME, new Date());
         props.put(ReportModel.Props.STATUS, ReportStatus.RUNNING.toString());
         nodeService.addProperties(reportRef, props);
+    }
+
+    @Override
+    public void enqueueReportForCancelling(final NodeRef reportRef) {
+        if (!nodeService.exists(reportRef)) {
+            // this functionality is called from report list; executeReportsJob may have deleted the node meanwhile
+            return;
+        }
+        Node parent = generalService.getAncestorWithType(reportRef, ContentModel.TYPE_PERSON);
+        if (parent != null) {
+            if (ReportStatus.CANCELLING_REQUESTED == ReportStatus.valueOf((String) nodeService.getProperty(reportRef, ReportModel.Props.STATUS))) {
+                nodeService.setProperty(reportRef, ReportModel.Props.STATUS, ReportStatus.CANCELLED.toString());
+            }
+        } else {
+            transactionService.getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
+
+                @Override
+                public Void execute() throws Throwable {
+                    nodeService.setProperty(reportRef, ReportModel.Props.STATUS, ReportStatus.CANCELLING_REQUESTED.toString());
+                    return null;
+                }
+            }, false, true);
+        }
+    }
+
+    @Override
+    public void enqueueReportForDeleting(final NodeRef reportRef) {
+        if (!nodeService.exists(reportRef)) {
+            // this functionality is called from report list; executeReportsJob may have deleted the node meanwhile
+            return;
+        }
+        Node parent = generalService.getAncestorWithType(reportRef, ContentModel.TYPE_PERSON);
+        if (parent != null) {
+            deleteReportResult(reportRef);
+        } else {
+            transactionService.getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
+
+                @Override
+                public Void execute() throws Throwable {
+                    nodeService.setProperty(reportRef, ReportModel.Props.STATUS, ReportStatus.DELETING_REQUESTED.toString());
+                    return null;
+                }
+            }, false, true);
+        }
+    }
+
+    @Override
+    public void deleteReportResult(NodeRef reportResultRef) {
+        if (nodeService.exists(reportResultRef)) {
+            nodeService.deleteNode(reportResultRef);
+        }
+    }
+
+    @Override
+    public void markReportDownloaded(NodeRef reportRef) {
+        if (reportRef == null || !nodeService.exists(reportRef)) {
+            return;
+        }
+        ReportStatus currentStatus = ReportStatus.valueOf((String) nodeService.getProperty(reportRef, ReportModel.Props.STATUS));
+        if (ReportStatus.EXCEL_FULL == currentStatus) {
+            nodeService.setProperty(reportRef, ReportModel.Props.STATUS, ReportStatus.EXCEL_FULL_DOWNLOADED.toString());
+        } else if (ReportStatus.FINISHED == currentStatus) {
+            nodeService.setProperty(reportRef, ReportModel.Props.STATUS, ReportStatus.FINISHED_DOWNLOADED.toString());
+        }
     }
 
     public void setDocumentSearchService(DocumentSearchService documentSearchService) {
@@ -370,6 +538,14 @@ public class ReportServiceImpl implements ReportService {
 
     public void setMimetypeService(MimetypeService mimetypeService) {
         this.mimetypeService = mimetypeService;
+    }
+
+    public void setFileService(FileService fileService) {
+        this.fileService = fileService;
+    }
+
+    public void setTransactionService(TransactionService transactionService) {
+        this.transactionService = transactionService;
     }
 
 }

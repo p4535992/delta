@@ -61,6 +61,9 @@ public interface DocumentDynamicModel {
         QName APPLICANT_WORK_ADDRESS = QName.createQName(URI, "applicantWorkAddress");
         QName APPLICANT_EMAIL = QName.createQName(URI, "applicantEmail");
         QName APPLICANT_PHONE = QName.createQName(URI, "applicantPhone");
+        QName COST_CENTER = QName.createQName(URI, "costCenter");
+        QName EXPENSE_TYPE = QName.createQName(URI, "expenseType");
+        QName REPORT_DUE_DATE = QName.createQName(URI, "reportDueDate");
 
         QName FIRST_PARTY_CONTACT_PERSON_NAME = QName.createQName(URI, "firstPartyContactPersonName");
         QName FIRST_PARTY_CONTACT_PERSON_SERVICE_RANK = QName.createQName(URI, "firstPartyContactPersonServiceRank");
@@ -96,7 +99,6 @@ public interface DocumentDynamicModel {
         QName LEAVE_WORK_YEAR = QName.createQName(URI, "leaveWorkYear");
         QName LEAVE_CHANGED_DAYS = QName.createQName(URI, "leaveChangedDays");
         QName LEAVE_NEW_WORK_YEAR = QName.createQName(URI, "leaveNewWorkYear");
-
     }
 
 }

@@ -1,7 +1,6 @@
 package ee.webmedia.alfresco.docconfig.generator.fieldtype;
 
 import org.alfresco.web.ui.repo.RepoConstants;
-import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
@@ -22,13 +21,7 @@ public class TextFieldGenerator extends BaseTypeFieldGenerator {
     @Override
     public void generateField(Field field, GeneratorResults generatorResults) {
         final ItemConfigVO item = generatorResults.getAndAddPreGeneratedItem();
-        String datafieldParamName = field.getDatafieldParamName();
-        if (StringUtils.isNotBlank(datafieldParamName)) {
-            item.setComponentGenerator("ParameterInputAttributeGenerator");
-            item.setParameterName(datafieldParamName);
-        } else {
-            item.setComponentGenerator(RepoConstants.GENERATOR_TEXT_AREA);
-        }
+        item.setComponentGenerator(RepoConstants.GENERATOR_TEXT_AREA);
         item.setStyleClass("expand19-200");
     }
 

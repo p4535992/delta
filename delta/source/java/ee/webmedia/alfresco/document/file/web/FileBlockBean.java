@@ -52,6 +52,8 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
     private transient DocumentService documentService;
     private NavigationBean navigationBean;
     private List<File> files;
+    private int activeFilesCount;
+    private int notActiveFilesCount;
     private NodeRef docRef;
     private String pdfUrl;
 
@@ -135,6 +137,8 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
         docRef = null;
         navigationBean.setCurrentNodeId(getDocumentService().getDrafts().getId());
         pdfUrl = null;
+        activeFilesCount = 0;
+        notActiveFilesCount = 0;
     }
 
     @Override
@@ -144,6 +148,7 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
 
     public void restore() {
         files = getFileService().getAllFiles(docRef);
+        countFiles();
     }
 
     public boolean moveAllFiles(NodeRef toRef) {
@@ -162,6 +167,18 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
         return false;
     }
 
+    private void countFiles() {
+        activeFilesCount = 0;
+        notActiveFilesCount = 0;
+        for (File file : files) {
+            if (file.isActiveAndNotDigiDoc()) {
+                activeFilesCount++;
+            } else if (file.isNotActiveAndNotDigiDoc()) {
+                notActiveFilesCount++;
+            }
+        }
+    }
+
     /**
      * Used in JSP page.
      * 
@@ -169,6 +186,14 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
      */
     public List<File> getFiles() {
         return files;
+    }
+
+    public int getActiveFilesCount() {
+        return activeFilesCount;
+    }
+
+    public int getNotActiveFilesCount() {
+        return notActiveFilesCount;
     }
 
     public boolean isToggleActive() {

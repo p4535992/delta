@@ -115,6 +115,7 @@ public class ModalLayerComponent extends UICommand implements Serializable {
         }
         out.write("<input id=" + serializer.serialize(getSubmitButtonId(context))
                 + " type=\"submit\" value=" + serializer.serialize(MessageUtil.getMessage(submitButtonMessageKey))
+                + " class=\"specificAction\""
                 + " onclick="
                 + serializer.serialize(Utils.generateFormSubmit(context, this, getClientId(context), Integer.toString(ACTION_SUBMIT)))
                 + (Boolean.TRUE.equals(ComponentUtil.getAttributes(this).get(ATTR_SUBMIT_BUTTON_HIDDEN)) ? " style=\"display: none;\"" : "")

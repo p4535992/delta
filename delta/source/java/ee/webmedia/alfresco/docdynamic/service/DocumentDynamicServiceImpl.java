@@ -180,7 +180,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         TreeNode<QName> childAssocTypeQNamesRoot = documentConfigService.getChildAssocTypeQNameTree(docVer);
         Assert.isNull(childAssocTypeQNamesRoot.getData());
 
-        createChildNodesHierarchy(docNode, childAssocTypeQNamesRoot.getChildren());
+        createChildNodesHierarchy(docNode, childAssocTypeQNamesRoot.getChildren(), null);
 
         documentConfigService.setDefaultPropertyValues(docNode, null, false, reallySetDefaultValues, docVer);
 
@@ -212,25 +212,36 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         }
         Assert.notNull(current.getData());
 
-        List<Pair<QName, WmNode>> childNodes = createChildNodesHierarchy(parentNode, Collections.singletonList(current));
+        List<Pair<QName, WmNode>> childNodes = createChildNodesHierarchy(parentNode, Collections.singletonList(current), null);
         Assert.isTrue(childNodes.size() == 1);
 
         documentConfigService.setDefaultPropertyValues(childNodes.get(0).getSecond(), hierarchy, false, false, docVer);
     }
 
-    private List<Pair<QName, WmNode>> createChildNodesHierarchy(Node parentNode, List<TreeNode<QName>> childAssocTypeQNames) {
+    private List<Pair<QName, WmNode>> createChildNodesHierarchy(Node parentNode, List<TreeNode<QName>> childAssocTypeQNames, Node firstChild) {
         List<Pair<QName, WmNode>> childNodes = new ArrayList<Pair<QName, WmNode>>();
         for (TreeNode<QName> childAssocTypeQName : childAssocTypeQNames) {
             QName assocTypeQName = childAssocTypeQName.getData();
             addContainerAspectIfNecessary(parentNode, assocTypeQName);
             Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+
+            Node newFirstChild = null;
+            List<Node> list = (firstChild == null ? parentNode : firstChild).getAllChildAssociations(assocTypeQName);
+            if (list != null && !list.isEmpty()) {
+                newFirstChild = list.get(0);
+                if (firstChild != null) {
+                    props.putAll(RepoUtil.toQNameProperties(newFirstChild.getProperties(), true, true));
+                }
+            }
+            firstChild = newFirstChild;
+
             // objectTypeId and objectTypeVersion are set on every child node, because if
             // documentConfigService.getPropertyDefinition is called, then we don't have to find parent document
             setTypeProps(getDocTypeIdAndVersionNr(parentNode), props);
             WmNode childNode = generalService.createNewUnSaved(assocTypeQName, props);
             parentNode.addChildAssociations(assocTypeQName, childNode);
             childNodes.add(Pair.newInstance(assocTypeQName, childNode));
-            createChildNodesHierarchy(childNode, childAssocTypeQName.getChildren());
+            createChildNodesHierarchy(childNode, childAssocTypeQName.getChildren(), firstChild);
         }
         return childNodes;
     }
@@ -399,7 +410,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         Assert.isNull(childAssocTypeQNamesRoot.getData());
 
         // create new subnodes in memory
-        createChildNodesHierarchy(document.getNode(), childAssocTypeQNamesRoot.getChildren());
+        createChildNodesHierarchy(document.getNode(), childAssocTypeQNamesRoot.getChildren(), null);
 
         // set default values in memory - does not overwrite existing values
         documentConfigService.setDefaultPropertyValues(document.getNode(), null, false, true, docVer);

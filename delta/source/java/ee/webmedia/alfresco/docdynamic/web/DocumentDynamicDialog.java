@@ -200,10 +200,11 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             throw new RuntimeException("No current document");
         }
         NodeRef baseDocRef = snapshot.document.getNodeRef();
-        String lockOwner = BeanHelper.getDocLockService().getLockOwnerIfLocked(baseDocRef);
-        if (lockOwner != null) {
-            String lockOwnerName = BeanHelper.getUserService().getUserFullName(lockOwner);
-            throw new UnableToPerformException("docdyn_createAssoc_error_docLocked", lockOwnerName);
+        try {
+            BeanHelper.getDocLockService().checkForLock(baseDocRef);
+        } catch (NodeLockedException e) {
+            BeanHelper.getDocumentLockHelperBean().handleLockedNode("docdyn_createAssoc_error_docLocked");
+            return;
         }
         DocumentDynamic newDocument = BeanHelper.getDocumentAssociationsService().createAssociatedDocFromModel(baseDocRef, assocModelRef);
         open(newDocument.getNodeRef(), newDocument, true);
@@ -221,8 +222,10 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             docName = MessageUtil.getMessage("docdyn_createFollowUpReport_docName"//
                     , getDocumentType().getName());
         }
-
         createAssoc(DocTypeAssocType.FOLLOWUP, SystematicDocumentType.REPORT.getId());
+        if (baseDoc.equals(getDocument())) {
+            return;
+        }
         getDocument().setDocName(docName);
     }
 
@@ -487,7 +490,6 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             }
         } catch (NodeLockedException e) {
             BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_validation_alreadyLocked");
-            throw e;
         } catch (UnableToPerformException e) {
             throw e;
         } catch (UnableToPerformMultiReasonException e) {

@@ -10,12 +10,15 @@ import javax.faces.component.html.HtmlPanelGrid;
 import javax.faces.context.FacesContext;
 import javax.faces.el.ValueBinding;
 
+import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.servlet.FacesHelper;
+import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.repo.component.property.UIProperty;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.InlinePropertyGroupGenerator;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.utils.ComponentUtil;
@@ -64,21 +67,30 @@ public class WMUIProperty extends UIProperty {
             if (getParent() instanceof WMUIPropertySheet) {
                 WMUIPropertySheet parent = (WMUIPropertySheet) getParent();
                 if (!parent.inEditMode() && !parent.isShowUnvalued()) {
-                    ValueBinding vb = child.getValueBinding("value");
                     if (child instanceof HandlesShowUnvalued) {
                         if (!((HandlesShowUnvalued) child).isShow()) {
                             return false;
                         }
                     } else {
+                        @SuppressWarnings("unchecked")
+                        List<QName> inlinePropertyGroupPropNames = (List<QName>) ComponentUtil.getAttributes(child).get(
+                                InlinePropertyGroupGenerator.INLINE_PROPERTY_GROUP_PROP_NAMES_ATTR);
+                        if (inlinePropertyGroupPropNames != null) {
+                            Node node = parent.getNode();
+                            for (QName propName : inlinePropertyGroupPropNames) {
+                                Object value = node.getProperties().get(propName.toString());
+                                if (isValueOrListNotBlank(value)) {
+                                    return super.isRendered();
+                                }
+                            }
+                            return false;
+                        }
+                        ValueBinding vb = child.getValueBinding("value");
                         if (vb == null) {
                             return false;
                         }
                         Object value = vb.getValue(getFacesContext());
-                        if (value == null) {
-                            return false;
-                        } else if (value instanceof String && StringUtils.isBlank((String) value)) {
-                            return false;
-                        } else if (value instanceof List && ((List) value).isEmpty()) {
+                        if (!isValueOrListNotBlank(value)) {
                             return false;
                         }
                     }
@@ -86,6 +98,33 @@ public class WMUIProperty extends UIProperty {
             }
         }
         return super.isRendered();
+    }
+
+    private boolean isValueOrListNotBlank(Object value) {
+        if (value instanceof String) {
+            if (StringUtils.isNotBlank((String) value)) {
+                return true;
+            }
+        } else if (value instanceof List) {
+            @SuppressWarnings("unchecked")
+            List<Object> list = (List<Object>) value;
+            for (Object listValue : list) {
+                if (listValue instanceof String) {
+                    if (StringUtils.isNotBlank((String) listValue)) {
+                        return true;
+                    }
+                } else {
+                    if (listValue != null) {
+                        return true;
+                    }
+                }
+            }
+        } else {
+            if (value != null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

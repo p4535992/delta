@@ -28,6 +28,7 @@ import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.servlet.FacesHelper;
+import org.alfresco.web.bean.generator.BaseComponentGenerator;
 import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
 import org.alfresco.web.ui.common.tag.GenericPickerTag;
@@ -449,6 +450,10 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
 
     public boolean isAutomaticallyAddRows() {
         return Boolean.TRUE.equals(getAttributes().get(IS_AUTOMATICALLY_ADD_ROWS));
+    }
+
+    public boolean isForcedMandatory_() {
+        return Boolean.TRUE.equals(getAttributes().get(BaseComponentGenerator.CustomAttributeNames.ATTR_FORCED_MANDATORY));
     }
 
 }

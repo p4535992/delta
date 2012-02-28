@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.document.assocsdyn.service;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getClassificatorService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.DOC_NAME;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_DATE_TIME;
@@ -37,7 +38,6 @@ import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.service.AssociationModel;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
@@ -250,7 +250,7 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
         if (classificator == null && newDocTypeField.isSystematic()) {
             return new ArrayList<Object>(col); // some systematic fields don't have classificator - values are dynamically generated
         }
-        List<ClassificatorValue> classificatorValues = BeanHelper.getClassificatorService().getAllClassificatorValues(classificator);
+        List<ClassificatorValue> classificatorValues = getClassificatorService().getActiveClassificatorValues(getClassificatorService().getClassificatorByName(classificator));
         Set<String> classificatorValueNames = new HashSet<String>(classificatorValues.size());
         for (ClassificatorValue classificatorValue : classificatorValues) {
             classificatorValueNames.add(classificatorValue.getValueName());

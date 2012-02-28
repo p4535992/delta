@@ -14,7 +14,7 @@
    </f:facet>
 </h:panelGroup>
 
-<a:panel label="#{msg.file_title}" id="files-panel" facetsId="dialog:dialog-body:files-panel-facets" styleClass="panel-100" progressive="true">
+<a:panel label="#{msg.file_title} (#{FileBlockBean.activeFilesCount})" id="files-panel" facetsId="dialog:dialog-body:files-panel-facets" styleClass="panel-100" progressive="true">
 
    <a:richList id="filelistList" viewMode="details" value="#{FileBlockBean.files}" var="r" rowStyleClass="recordSetRow"
       altRowStyleClass="recordSetRowAlt" width="100%" refreshOnBind="true">
@@ -182,7 +182,7 @@
 
 
 
-<a:panel label="#{msg.file_inactive_title}" id="inactive-files-panel" styleClass="panel-100" progressive="true" expanded="false">
+<a:panel label="#{msg.file_inactive_title} (#{FileBlockBean.notActiveFilesCount})" id="inactive-files-panel" styleClass="panel-100" progressive="true" expanded="false">
 
    <a:richList id="inactiveFilelistList" viewMode="details" value="#{FileBlockBean.files}" var="r" rowStyleClass="recordSetRow"
       altRowStyleClass="recordSetRowAlt" width="100%" refreshOnBind="true">

@@ -18,6 +18,7 @@ import javax.faces.component.UIOutput;
 import javax.faces.context.FacesContext;
 
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.generator.BaseComponentGenerator;
@@ -26,6 +27,7 @@ import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
@@ -46,6 +48,7 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  */
 public class InlinePropertyGroupGenerator extends BaseComponentGenerator implements HandlesViewMode {
 
+    public static final String INLINE_PROPERTY_GROUP_PROP_NAMES_ATTR = "inlinePropertyGroupPropNames";
     private static final String ESCAPE_TEXT = "escapeText";
     private static final String PLACEHOLDER = "#";
     private int propIndex = 0;
@@ -71,6 +74,11 @@ public class InlinePropertyGroupGenerator extends BaseComponentGenerator impleme
         String optionsSeparator = getCustomAttributes().get(OPTIONS_SEPARATOR);
         String propertiesSeparator = getCustomAttributes().get(PROPERTIES_SEPARATOR);
         final List<ComponentPropVO> propVOs = CombinedPropReader.readProperties(propertyDescriptions, propertiesSeparator, optionsSeparator, propertySheet.getNode(), context);
+        List<QName> propNames = new ArrayList<QName>();
+        for (ComponentPropVO componentPropVO : propVOs) {
+            propNames.add(QName.createQName(componentPropVO.getPropertyName(), BeanHelper.getNamespaceService()));
+        }
+        ComponentUtil.getAttributes(component).put(INLINE_PROPERTY_GROUP_PROP_NAMES_ATTR, propNames);
 
         String text = Application.getMessage(FacesContext.getCurrentInstance(), getCustomAttributes().get(TEXT_ID));
         @SuppressWarnings("unchecked")

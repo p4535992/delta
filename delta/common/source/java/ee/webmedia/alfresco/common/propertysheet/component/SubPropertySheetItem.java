@@ -402,6 +402,7 @@ public class SubPropertySheetItem extends PropertySheetItem {
         childProperySheet.setAssociationIndex(assocIndex);
         childProperySheet.setAssociationBrand(associationBrand);
         childProperySheet.setVar(outerPropSheet.getVar() + getPropSheetVarSuffix(assocIndex));
+        childProperySheet.setValueBinding(WMUIPropertySheet.ATTR_SHOW_UNVALUED, outerPropSheet.getValueBinding(WMUIPropertySheet.ATTR_SHOW_UNVALUED));
         // defaults can be overridden from config element
         @SuppressWarnings("unchecked")
         final Map<String, Object> attr = childProperySheet.getAttributes();

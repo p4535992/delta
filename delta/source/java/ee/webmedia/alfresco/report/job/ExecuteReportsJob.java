@@ -7,6 +7,7 @@ import java.util.List;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections.comparators.NullComparator;
@@ -34,6 +35,7 @@ public class ExecuteReportsJob implements StatefulJob {
 
     private ReportService reportService;
     private TransactionService transactionService;
+    private NodeService nodeService;
 
     @SuppressWarnings("unchecked")
     @Override
@@ -41,7 +43,7 @@ public class ExecuteReportsJob implements StatefulJob {
         LOG.debug("Starting ExecuteReportsJob");
         setServices(context);
         RetryingTransactionHelper retryingTransactionHelper = transactionService.getRetryingTransactionHelper();
-        RetryingTransactionCallback<List<Node>> getAllRunningReportsCallback = new GetAllRunningReportsCallback();
+        RetryingTransactionCallback<List<Node>> getAllExecutableReportsCallback = new GetAllExecutableReportsCallback();
         ReportDataCollector reportDataProvider = new ReportDataCollector();
         RetryingTransactionCallback<Object> markReportRunningCallback = new MarkReportRunningCallback(reportDataProvider);
         RetryingTransactionCallback<Object> createReportInMemoryCallback = new CreateReportInMemoryCallback(reportDataProvider);
@@ -56,7 +58,7 @@ public class ExecuteReportsJob implements StatefulJob {
             // TODO: Riina - add check if report generation has been globally paused (CL task 178352)
 
             // retrieve all reports with status IN_QUEUE (read-only transaction)
-            List<Node> reports = retryingTransactionHelper.doInTransaction(getAllRunningReportsCallback, true, true);
+            List<Node> reports = retryingTransactionHelper.doInTransaction(getAllExecutableReportsCallback, true, true);
             if (reports.isEmpty()) {
                 // if there are no reports in queue, quit current execution cycle.
                 // The job will be executed again after time stated in bean config (currently one minute)
@@ -64,21 +66,30 @@ public class ExecuteReportsJob implements StatefulJob {
             }
             Collections.sort(reports, comparator);
             for (Node report : reports) {
-                // TODO: Riina - add check if current report has been marked for cancelling (CL task 178352)
                 reportDataProvider.reset();
                 NodeRef reportResultRef = report.getNodeRef();
                 reportDataProvider.setReportResultNodeRef(reportResultRef);
-                try {
-                    // mark report as running (new rw transaction)
-                    retryingTransactionHelper.doInTransaction(markReportRunningCallback, false, true);
-                    // retrieve results in memory (new ro transaction)
-                    retryingTransactionHelper.doInTransaction(createReportInMemoryCallback, true, true);
-                    LOG.info("Successfully created file in memory for reportResult nodeRef=" + reportResultRef);
-                } catch (UnableToPerformException e) {
-                    LOG.error("Unable to execute reportResult nodeRef=" + reportResultRef + ", setting status to FAILED.", e);
-                    reportDataProvider.setResultStatus(ReportStatus.FAILED);
+                reportDataProvider.setReportResultProps(nodeService.getProperties(reportResultRef));
+                // check if user has marked current report for deleting or cancelling
+                ReportStatus currentStatus = ReportStatus.valueOf((String) reportDataProvider.getReportResultProps().get(ReportModel.Props.STATUS));
+                if (ReportStatus.DELETING_REQUESTED == currentStatus) {
+                    reportDataProvider.setResultStatus(ReportStatus.DELETED);
+                } else if (ReportStatus.CANCELLING_REQUESTED == currentStatus) {
+                    reportDataProvider.setResultStatus(ReportStatus.CANCELLED);
+                } else {
+                    try {
+                        // mark report as running (new rw transaction)
+                        retryingTransactionHelper.doInTransaction(markReportRunningCallback, false, true);
+                        // retrieve results in memory (new ro transaction)
+                        retryingTransactionHelper.doInTransaction(createReportInMemoryCallback, true, true);
+                        LOG.info("Successfully created file in memory for reportResult nodeRef=" + reportResultRef);
+                    } catch (UnableToPerformException e) {
+                        LOG.error("Unable to execute reportResult nodeRef=" + reportResultRef + ", setting status to FAILED.", e);
+                        reportDataProvider.setResultStatus(ReportStatus.FAILED);
+                    }
                 }
-                // write results to repo, move node to appropriate location and set reportResult status (new rw transaction)
+                // if deleting is requested, delete repostResult,
+                // otherwise write results to repo, move node to appropriate location and set required reportResult status (new rw transaction)
                 retryingTransactionHelper.doInTransaction(addReportResultFileCallback, false, true);
             }
         }
@@ -87,9 +98,10 @@ public class ExecuteReportsJob implements StatefulJob {
     private void setServices(JobExecutionContext context) {
         reportService = BeanHelper.getReportService();
         transactionService = BeanHelper.getTransactionService();
+        nodeService = BeanHelper.getNodeService();
     }
 
-    private class GetAllRunningReportsCallback implements RetryingTransactionCallback<List<Node>> {
+    private class GetAllExecutableReportsCallback implements RetryingTransactionCallback<List<Node>> {
 
         @Override
         public List<Node> execute() throws Throwable {
@@ -137,7 +149,6 @@ public class ExecuteReportsJob implements StatefulJob {
 
         @Override
         public Object processNodeRef(ReportDataCollector reportDataProvider) {
-            // TODO: Riina - in following call, add check for cancelling (pass global list of cancelled reports?) (CL task 178352)
             return reportService.getReportFileInMemory(reportDataProvider);
         }
     }
@@ -152,7 +163,7 @@ public class ExecuteReportsJob implements StatefulJob {
         public Object processNodeRef(ReportDataCollector reportDataProvider) {
             ReportStatus resultStatus = reportDataProvider.getResultStatus();
             Assert.notNull(resultStatus);
-            boolean resultCancelled = ReportStatus.CANCELLED.equals(resultStatus) || ReportStatus.FAILED.equals(resultStatus);
+            boolean resultCancelled = ReportStatus.CANCELLED == resultStatus || ReportStatus.FAILED == resultStatus || ReportStatus.DELETED == resultStatus;
             Assert.isTrue(resultCancelled || reportDataProvider.getWorkbook() != null);
             Assert.isTrue(resultCancelled || reportDataProvider.getEncoding() != null);
             return reportService.completeReportResult(reportDataProvider);

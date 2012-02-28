@@ -10,8 +10,8 @@ import javax.faces.model.SelectItem;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.report.model.ReportType;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.workflow.search.model.TaskReportModel;
@@ -37,7 +37,7 @@ public class TaskReportDialog extends TaskSearchDialog {
     @Override
     public void init(Map<String, String> params) {
         super.init(params);
-        reportTemplates = BeanHelper.getDocumentTemplateService().getReportTemplates(ReportType.TASKS_REPORT);
+        reportTemplates = BeanHelper.getDocumentTemplateService().getReportTemplates(TemplateReportType.TASKS_REPORT);
         reportTemplates.add(0, new SelectItem("", MessageUtil.getMessage("select_default_label")));
     }
 
@@ -45,7 +45,7 @@ public class TaskReportDialog extends TaskSearchDialog {
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         if (isValidFilter()) {
             try {
-                BeanHelper.getReportService().createReportResult(filter, ReportType.TASKS_REPORT, TaskReportModel.Assocs.FILTER);
+                BeanHelper.getReportService().createReportResult(filter, TemplateReportType.TASKS_REPORT, TaskReportModel.Assocs.FILTER);
                 MessageUtil.addInfoMessage("report_created_success");
             } catch (UnableToPerformException e) {
                 MessageUtil.addErrorMessage(e.getMessageKey());

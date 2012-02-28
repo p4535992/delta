@@ -19,5 +19,11 @@ public enum ReportStatus {
     /** Execution was cancelled by user */
     CANCELLED,
     /** Execution failed due to technical reasons (invalid template etc) */
-    FAILED
+    FAILED,
+    /** User marked report for cancelling, waiting for cancel command to execute */
+    CANCELLING_REQUESTED,
+    /** User marked report for deleting, waiting for delete command to execute */
+    DELETING_REQUESTED,
+    /** Indicates that this report should be deleted as result of execution. This status is never written to repo. */
+    DELETED
 }

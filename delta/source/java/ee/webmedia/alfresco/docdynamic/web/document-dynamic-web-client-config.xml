@@ -66,7 +66,7 @@
          <action id="subPropSheet_applicantDomestic_errandDomestic_add">
             <label-id>subPropSheet_applicantDomestic_errandDomestic_add</label-id>
             <tooltip-id>subPropSheet_applicantDomestic_errandDomestic_add_tooltip</tooltip-id>
-            <image>/images/icons/add_user.gif</image>
+            <image>/images/icons/add_item.gif</image>
             <action-listener>#{DocumentDynamicDialog.addChildNode}</action-listener>
             <params>
                <param name="childAssocTypeQNameHierarchy">docchild:applicantDomestic/docchild:errandDomestic</param>
@@ -76,7 +76,7 @@
          <action id="subPropSheet_applicantDomestic_errandDomestic_remove">
             <label-id>subPropSheet_applicantDomestic_errandDomestic_remove</label-id>
             <tooltip-id>subPropSheet_applicantDomestic_errandDomestic_remove_tooltip</tooltip-id>
-            <image>/images/icons/remove_user.gif</image>
+            <image>/images/icons/remove_item.gif</image>
             <action-listener>#{DocumentDynamicDialog.removeChildNode}</action-listener>
             <params>
                <param name="childAssocTypeQNameHierarchy">docchild:applicantDomestic/docchild:errandDomestic</param>
@@ -116,7 +116,7 @@
          <action id="subPropSheet_applicantAbroad_errandAbroad_add">
             <label-id>subPropSheet_applicantAbroad_errandAbroad_add</label-id>
             <tooltip-id>subPropSheet_applicantAbroad_errandAbroad_add_tooltip</tooltip-id>
-            <image>/images/icons/add_user.gif</image>
+            <image>/images/icons/add_item.gif</image>
             <action-listener>#{DocumentDynamicDialog.addChildNode}</action-listener>
             <params>
                <param name="childAssocTypeQNameHierarchy">docchild:applicantAbroad/docchild:errandAbroad</param>
@@ -126,7 +126,7 @@
          <action id="subPropSheet_applicantAbroad_errandAbroad_remove">
             <label-id>subPropSheet_applicantAbroad_errandAbroad_remove</label-id>
             <tooltip-id>subPropSheet_applicantAbroad_errandAbroad_remove_tooltip</tooltip-id>
-            <image>/images/icons/remove_user.gif</image>
+            <image>/images/icons/remove_item.gif</image>
             <action-listener>#{DocumentDynamicDialog.removeChildNode}</action-listener>
             <params>
                <param name="childAssocTypeQNameHierarchy">docchild:applicantAbroad/docchild:errandAbroad</param>
