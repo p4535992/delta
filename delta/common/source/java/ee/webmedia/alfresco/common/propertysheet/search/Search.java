@@ -202,39 +202,42 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
      */
     protected void multiValuedPickerFinish(String[] results, FacesContext context, int index) {
         @SuppressWarnings("unchecked")
-        List<Object> list = (List<Object>) getList(context);
+        List<String> list = (List<String>) getList(context);
+        // collect new values
         boolean firstItem = true;
-
         for (String result : results) {
             if (!isAllowDuplicates() && list.contains(result)) {
-                break;
+                continue;
             }
             if (index == -1) {
-                appendRow(context, result);
+                list.add(result);
             } else if (firstItem) {
                 list.set(index++, result);
                 firstItem = false;
             } else {
                 list.add(index++, result);
-                appendRow(context, result);
             }
-
-            // When not editable, only one row can be added.
-            if (!isEditable()) {
-                break;
-            }
+        }
+        // clear old components
+        clearChildren();
+        // create components for new values
+        for (int rowIndex = 0; rowIndex < list.size(); rowIndex++) {
+            appendRowComponent(context, rowIndex);
         }
     }
 
     public void singleValuedPickerFinish(FacesContext context, String value) {
-        @SuppressWarnings("unchecked")
-        List<UIComponent> children = ((UIComponent) getChildren().get(0)).getChildren();
-        if (!children.isEmpty()) {
-            children.remove(0);
-        }
+        clearChildren();
         appendRow(context, value);
 
         invokeSetterCallbackIfNeeded(context, value);
+    }
+
+    public void clearChildren() {
+        List<UIComponent> children = ComponentUtil.getChildren(((UIComponent) getChildren().get(0)));
+        if (!children.isEmpty()) {
+            children.clear();
+        }
     }
 
     private void invokeSetterCallbackIfNeeded(FacesContext context, String value) {

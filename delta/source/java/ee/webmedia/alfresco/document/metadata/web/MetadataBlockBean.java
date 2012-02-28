@@ -931,8 +931,12 @@ public class MetadataBlockBean implements ClearStateListener {
         if (similarDocuments != null) {
             for (Document document : similarDocuments) {
                 if (!document.getNodeRef().equals(nodeRef)) {
+                    String documentRegNr = (String) document.getProperties().get(DocumentCommonModel.Props.REG_NUMBER);
+                    if (documentRegNr == null) {
+                        documentRegNr = MessageUtil.getMessage("document_invoice_reg_nr_missing");
+                    }
                     MessageUtil.addInfoMessage("document_invoice_similar_document", invoiceNumber, formatDateOrEmpty(invoiceDate),
-                            document.getProperties().get(DocumentSpecificModel.Props.SELLER_PARTY_NAME), regNumber);
+                            document.getProperties().get(DocumentSpecificModel.Props.SELLER_PARTY_NAME), documentRegNr);
                 }
             }
         }

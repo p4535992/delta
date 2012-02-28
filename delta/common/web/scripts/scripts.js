@@ -338,6 +338,7 @@ function addUIAutocompleter(input, valuesArray, dimensionName, dimensionQueryDat
                   request.entryDate = entryDate.getDate() + "." + entryDate.getMonth() + "." + entryDate.getFullYear();
                }
                $jQ.ajax({
+                  type: 'POST',
                   mode: 'queue',
                   data: request,
                   url: uri,
