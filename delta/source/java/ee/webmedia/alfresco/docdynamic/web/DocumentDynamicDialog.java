@@ -33,6 +33,7 @@ import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
@@ -348,6 +349,16 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         return (SearchBlockBean) getBlocks().get(SearchBlockBean.class);
     }
 
+    public void addFile(ActionEvent event) {
+        BeanHelper.getAddFileDialog().start(event);
+        WebUtil.navigateTo("dialog:addFile");
+    }
+
+    public void addInactiveFile(ActionEvent event) {
+        BeanHelper.getAddFileDialog().startInactive(event);
+        WebUtil.navigateTo("dialog:addInactiveFile");
+    }
+
     public boolean isShowDocsAndCasesAssocs() {
         return getCurrentSnapshot().showDocsAndCasesAssocs;
     }
@@ -582,13 +593,26 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         final boolean isDraft = getDocument().isDraft();
         try {
             // Do in new transaction, because we want to catch integrity checker exceptions now, not at the end of this method when mode is already switched
-            savedDocument = getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<DocumentDynamic>() {
-                @Override
-                public DocumentDynamic execute() throws Throwable {
-                    // May throw UnableToPerformException or UnableToPerformMultiReasonException
-                    return getDocumentDynamicService().updateDocument(getDocument(), getConfig().getSaveListenerBeanNames());
+            Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> result = getTransactionService().getRetryingTransactionHelper().doInTransaction(
+                    new RetryingTransactionCallback<Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>>>() {
+                        @Override
+                        public Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> execute() throws Throwable {
+                            // May throw UnableToPerformException or UnableToPerformMultiReasonException
+                            return getDocumentDynamicService().updateDocumentGetDocAndNodeRefs(getDocument(), getConfig().getSaveListenerBeanNames());
+                        }
+                    }, false, true);
+            savedDocument = result.getFirst();
+            for (Pair<NodeRef, NodeRef> pair : result.getSecond()) {
+                if (pair.getFirst().equals(pair.getSecond())) {
+                    continue;
                 }
-            }, false, true);
+                for (DocDialogSnapshot snapshot : getSnapshots()) {
+                    if (!pair.getFirst().equals(snapshot.document.getNodeRef())) {
+                        continue;
+                    }
+                    snapshot.document.getNode().updateNodeRef(pair.getSecond());
+                }
+            }
 
         } catch (UnableToPerformMultiReasonException e) {
             if (!handleAccessRestrictionChange(e)) {

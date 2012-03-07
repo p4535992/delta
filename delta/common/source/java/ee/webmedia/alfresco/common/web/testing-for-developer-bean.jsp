@@ -160,6 +160,10 @@
 <h:inputText value="#{TestDataService.documentsCount}" converter="javax.faces.Integer" size="7" />
 <f:verbatim><br/></f:verbatim>
 
+<h:outputText value="Failid: "/>
+<h:selectBooleanCheckbox value="#{TestDataService.filesEnabled}" />
+<f:verbatim><br/></f:verbatim>
+
 <h:outputText value="Dokumentide genereerimiseks paralleelsete lõimede arv: "/>
 <h:inputText value="#{TestDataService.documentGeneratorThreads}" converter="javax.faces.Integer" size="4" />
 <f:verbatim><br/><br/></f:verbatim>

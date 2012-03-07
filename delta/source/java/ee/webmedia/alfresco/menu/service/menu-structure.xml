@@ -214,6 +214,9 @@
          <dropdown title-id="menu_reports" expanded="true">
             <submenu-id>reports-submenu</submenu-id>
             <subitems>
+               <item id="documentReports" title-id="menu_document_reports">
+                  <outcome>dialog:documentDynamicReportDialog</outcome>
+               </item>            
                <item id="taskReports" title-id="menu_task_reports">
                   <outcome>dialog:taskReportDialog</outcome>
                </item>
@@ -277,6 +280,9 @@
          </item>
          <item id="applicationLog" title-id="menu_application_log" admin="true" supervisor="true">
             <outcome>dialog:applicationLogDialog</outcome>
+         </item>
+         <item id="helpText" title-id="menu_help_texts" admin="true">
+            <outcome>dialog:helpTextListDialog</outcome>
          </item>
          <item id="thesauri" title-id="menu_thesauri" admin="true">
             <outcome>dialog:thesaurusListDialog</outcome>

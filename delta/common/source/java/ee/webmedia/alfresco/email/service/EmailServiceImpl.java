@@ -98,9 +98,8 @@ public class EmailServiceImpl implements EmailService {
             throw new EmailException(e);
         }
         MimeMessageHelper helper;
-        boolean hasFiles = attachments != null && !attachments.isEmpty();
         try {
-            helper = new MimeMessageHelper(message, hasFiles, AppConstants.CHARSET);
+            helper = new MimeMessageHelper(message, attachments != null && !attachments.isEmpty(), AppConstants.CHARSET);
             helper.setValidateAddresses(true);
             helper.setFrom(fromEmail);
         } catch (Exception e) {

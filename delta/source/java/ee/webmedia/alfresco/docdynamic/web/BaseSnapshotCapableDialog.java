@@ -23,7 +23,6 @@ import ee.webmedia.alfresco.utils.WebUtil;
 public abstract class BaseSnapshotCapableDialog<S extends BaseSnapshotCapableDialog.Snapshot, D extends Object> extends BaseDialogBean
         implements ClearStateListener {
     private static final long serialVersionUID = 1L;
-    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(BaseSnapshotCapableDialog.class);
 
     // =========================================================================
     /**
@@ -48,6 +47,10 @@ public abstract class BaseSnapshotCapableDialog<S extends BaseSnapshotCapableDia
         return newSnapshot;
     }
 
+    public Deque<S> getSnapshots() {
+        return snapshots;
+    }
+
     @Override
     public void clearState() {
         snapshots.clear();
@@ -62,14 +65,12 @@ public abstract class BaseSnapshotCapableDialog<S extends BaseSnapshotCapableDia
 
     @Override
     public void init(Map<String, String> params) {
-        LOG.info("init");
         getClearStateNotificationHandler().addClearStateListener(this);
         super.init(params);
     }
 
     @Override
     public void restored() {
-        LOG.info("restored");
         resetOrInit(getDataProvider());
         // Siin ei ole plaanis midagi teha; kui mingi teine dialoog suletakse ja seetõttu pöördutakse tagasi varemavatud dok.dialoogile,
         // siis nimelt ei tee õiguste ega kustutamise kontrolli

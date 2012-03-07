@@ -461,11 +461,6 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         return updateDocumentGetDocAndNodeRefs(documentOriginal, saveListenerBeanNames).getFirst();
     }
 
-    @Override
-    public List<NodeRef> updateDocumentGetOriginalNodeRefs(DocumentDynamic documentOriginal, List<String> saveListenerBeanNames) {
-        return updateDocumentGetDocAndNodeRefs(documentOriginal, saveListenerBeanNames).getSecond();
-    }
-
     private static final Comparator<DocumentDynamic> DOCUMENT_BY_REG_DATE_TIME_COMPARATOR;
     static {
         @SuppressWarnings("unchecked")
@@ -478,7 +473,8 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         DOCUMENT_BY_REG_DATE_TIME_COMPARATOR = tmp;
     }
 
-    private Pair<DocumentDynamic, List<NodeRef>> updateDocumentGetDocAndNodeRefs(DocumentDynamic documentOriginal, List<String> saveListenerBeanNames) {
+    @Override
+    public Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> updateDocumentGetDocAndNodeRefs(DocumentDynamic documentOriginal, List<String> saveListenerBeanNames) {
         // originalDocumentNodeRef may be null, but in that case it must be the only null nodeRef among all documents saved during this operation
         NodeRef originalDocumentNodeRef = documentOriginal.getNodeRef();
         List<DocumentDynamic> associatedDocs = new ArrayList<DocumentDynamic>();
@@ -495,7 +491,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             LOG.info("Saving original document and " + (associatedDocs.size() - 1) + " associated documents...");
         }
         DocumentDynamic originalDocumentUpdated = null;
-        List<NodeRef> originalNodeRefs = new ArrayList<NodeRef>();
+        List<Pair<NodeRef, NodeRef>> originalNodeRefs = new ArrayList<Pair<NodeRef, NodeRef>>();
         Collections.sort(associatedDocs, DOCUMENT_BY_REG_DATE_TIME_COMPARATOR);
         for (DocumentDynamic associatedDocument : associatedDocs) {
             if (!associatedDocument.getNodeRef().getId().equals(originalDocumentNodeRef.getId())) {
@@ -505,8 +501,9 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
                 associatedDocument.setVolume(volumeRef);
                 associatedDocument.setCase(caseRef);
                 associatedDocument.setProp(DocumentLocationGenerator.CASE_LABEL_EDITABLE, caseLabel);
-                originalNodeRefs.add(associatedDocument.getNodeRef());
-                update(associatedDocument, cfg.getSaveListenerBeanNames());
+                NodeRef oldNodeRef = associatedDocument.getNodeRef();
+                NodeRef newNodeRef = update(associatedDocument, cfg.getSaveListenerBeanNames()).getNodeRef();
+                originalNodeRefs.add(Pair.newInstance(oldNodeRef, newNodeRef));
             } else {
                 originalDocumentUpdated = update(associatedDocument, saveListenerBeanNames);
             }
@@ -515,7 +512,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         if (associatedDocs.size() > 1) {
             LOG.info("Saving original document and " + (associatedDocs.size() - 1) + " associated documents took " + duration(startTime, stopTime) + " ms");
         }
-        return new Pair<DocumentDynamic, List<NodeRef>>(originalDocumentUpdated, originalNodeRefs);
+        return Pair.newInstance(originalDocumentUpdated, originalNodeRefs);
     }
 
     // NB! This method may change document nodeRef when moving from archive to active store (see DocumentLocationGenerator save method)

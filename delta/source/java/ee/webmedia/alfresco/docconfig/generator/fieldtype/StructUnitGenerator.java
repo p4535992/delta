@@ -43,7 +43,6 @@ public class StructUnitGenerator extends BaseTypeFieldGenerator {
             QName orgStructProp = field.getQName();
             QName orgStructLabelProp = RepoUtil.createTransientProp(orgStructProp.getLocalName() + "Label");
             ItemConfigVO viewModeItem = generatorResults.generateAndAddViewModeText(orgStructLabelProp.toString(), field.getName());
-            viewModeItem.setShowInEditMode(false);
 
             generatorResults.addStateHolder(orgStructProp.getLocalName(), new StructUnitState(orgStructProp, orgStructLabelProp));
         } else {

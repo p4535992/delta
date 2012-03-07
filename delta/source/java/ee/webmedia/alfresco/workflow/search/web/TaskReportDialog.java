@@ -80,6 +80,11 @@ public class TaskReportDialog extends TaskSearchDialog {
     }
 
     @Override
+    public String getFilterPanelTitle() {
+        return MessageUtil.getMessage("task_report");
+    }
+
+    @Override
     protected QName getFilterType() {
         return TaskReportModel.Types.FILTER;
     }

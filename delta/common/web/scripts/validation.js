@@ -12,7 +12,11 @@ function informUser(control, message, showMessage)
 	if (showMessage)
    {
       alert(message);
-      control.focus();
+      try{
+         control.focus();
+      } catch (er){
+         // just don't focus if control cannot accept focus - happens (at least) in IE for hidden or disabled controls
+      }
    }
 }
 

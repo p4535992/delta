@@ -28,7 +28,6 @@ public interface DocumentSearchModel {
 
     interface Props {
         QName NAME = QName.createQName(URI, "name");
-
         QName STORE = QName.createQName(URI, "store");
         QName INPUT = QName.createQName(URI, "input");
         QName DOCUMENT_TYPE = QName.createQName(URI, "documentType");
@@ -36,6 +35,8 @@ public interface DocumentSearchModel {
         QName FUND = QName.createQName(URI, "fund");
         QName FUNDS_CENTER = QName.createQName(URI, "fundsCenter");
         QName EA_COMMITMENT_ITEM = QName.createQName(URI, "eaCommitmentItem");
+        QName DOCUMENT_CREATED = QName.createQName(URI, "documentCreated");
+        QName DOCUMENT_CREATED_END_DATE = QName.createQName(URI, "documentCreated_EndDate");
     }
 
 }

@@ -269,6 +269,7 @@ public class TestDataService implements SaveListener {
     private int volumesCount = 5000;
     private int casesCount = 500;
     private int documentsCount = 1714500;
+    private boolean filesEnabled = true;
     private int documentGeneratorThreads = 1;
 
     private void executeUpdater() throws Exception {
@@ -317,6 +318,9 @@ public class TestDataService implements SaveListener {
     }
 
     private void filterFiles() {
+        if (!isFilesEnabled()) {
+            return;
+        }
         File contentStore = new File(dataFolder, "contentstore");
         File testfiles = new File(contentStore, "testfiles");
         Set<String> existingFiles = new HashSet<String>();
@@ -1300,13 +1304,16 @@ public class TestDataService implements SaveListener {
                         final DocumentLocationVO docLocation = getRandomGaussian3(docLocations, docLocationsRandom);
                         String userName = getRandomGaussian3(userNamesList, usersRandom);
                         AuthenticationUtil.setFullyAuthenticatedUser(userName); // also sets runAsUser
-                        getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
-                            @Override
-                            public Void execute() throws Throwable {
-                                createDocument(docLocation);
-                                return null;
-                            }
-                        }, false);
+                        Pair<NodeRef, String> pair = getTransactionService().getRetryingTransactionHelper().doInTransaction(
+                                new RetryingTransactionCallback<Pair<NodeRef, String>>() {
+                                    @Override
+                                    public Pair<NodeRef, String> execute() throws Throwable {
+                                        return createDocument(docLocation);
+                                    }
+                                }, false);
+                        NodeRef docRef = pair.getFirst();
+                        docs.add(docRef);
+                        log.info("Created document " + docs.size() + " of " + documentsCount + " - " + docRef + " " + pair.getSecond());
                     } catch (Exception e) {
                         log.error("Documents generator thread error", e);
                         Thread.sleep(Math.max(documentGeneratorThreads * 1000, 1000));
@@ -1322,7 +1329,7 @@ public class TestDataService implements SaveListener {
         }
     }
 
-    private void createDocument(DocumentLocationVO docLocation) throws Exception {
+    private Pair<NodeRef, String> createDocument(DocumentLocationVO docLocation) throws Exception {
         String docTypeId = getRandom(docLocation.getSeriesDocType());
         DocumentTypeVersion docVer = docVersions.get(docTypeId);
         if (docVer == null) {
@@ -1462,32 +1469,35 @@ public class TestDataService implements SaveListener {
         NodeRef docRef = doc.getNodeRef();
 
         // FILES
-        int filesCount = 0;
-        int r = (int) (Math.random() * 12);
-        if (r > 10) {
-            filesCount = (int) ((Math.random() * 30) + 10);
-            if (filesCount > 35) {
-                filesCount = (int) ((Math.random() * 30) + 36);
-            }
-        } else if (r > 1) {
-            filesCount = r - 1;
-        }
         ArrayList<String> fileTitles = new ArrayList<String>();
-        Map<QName, Serializable> userProps = getUserData(getUserService().getCurrentUserName()).getSecond();
-        ContentWriter allWriter = BeanHelper.getContentService().getWriter(docRef, FILE_CONTENTS, false);
-        allWriter.setMimetype(MimetypeMap.MIMETYPE_TEXT_PLAIN);
-        allWriter.setEncoding("UTF-8");
-        OutputStream allOutput = allWriter.getContentOutputStream();
-        try {
-            for (int i = 0; i < filesCount; i++) {
-                createFile(docRef, fileTitles, userProps, allOutput, i);
+        ContentWriter allWriter = null;
+        int filesCount = 0;
+        if (isFilesEnabled()) {
+            int r = (int) (Math.random() * 12);
+            if (r > 10) {
+                filesCount = (int) ((Math.random() * 30) + 10);
+                if (filesCount > 35) {
+                    filesCount = (int) ((Math.random() * 30) + 36);
+                }
+            } else if (r > 1) {
+                filesCount = r - 1;
             }
-        } finally {
-            allOutput.close();
+            Map<QName, Serializable> userProps = getUserData(getUserService().getCurrentUserName()).getSecond();
+            allWriter = BeanHelper.getContentService().getWriter(docRef, FILE_CONTENTS, false);
+            allWriter.setMimetype(MimetypeMap.MIMETYPE_TEXT_PLAIN);
+            allWriter.setEncoding("UTF-8");
+            OutputStream allOutput = allWriter.getContentOutputStream();
+            try {
+                for (int i = 0; i < filesCount; i++) {
+                    createFile(docRef, fileTitles, userProps, allOutput, i);
+                }
+            } finally {
+                allOutput.close();
+            }
         }
         getNodeService().addAspect(docRef, DocumentCommonModel.Aspects.SEARCHABLE, null);
         doc.setProp(DocumentCommonModel.Props.FILE_NAMES, fileTitles);
-        doc.setProp(DocumentCommonModel.Props.FILE_CONTENTS, allWriter.getContentData());
+        doc.setProp(DocumentCommonModel.Props.FILE_CONTENTS, allWriter == null ? null : allWriter.getContentData());
         doc.setProp(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE, new ArrayList<String>());
         getDocumentDynamicService().updateDocument(doc, Arrays.asList("TestDataService"));
 
@@ -1514,12 +1524,9 @@ public class TestDataService implements SaveListener {
 
         createWorkflows(docRef, !isRegistered, docTypeId);
 
-        docs.add(docRef);
-        log.info("Created document " + docs.size() + " of " + documentsCount + " - " + docRef + " " + docTypeId + ", " + regNumber + ", " + filesCount + " files, "
-                + assocOtherDocRefs.size() + " assocs");
-
         // FUTURE: õiguseid (nii dokumendi kui sarja omad) praegu ei tee
 
+        return Pair.newInstance(docRef, docTypeId + ", " + regNumber + ", " + filesCount + " files, " + assocOtherDocRefs.size() + " assocs");
     }
 
     private void createWorkflows(NodeRef docRef, boolean inProgress, String docTypeId) {
@@ -1737,8 +1744,8 @@ public class TestDataService implements SaveListener {
                 boolean readerReady = true;
                 ContentReader reader = getFileFolderService().getReader(fileRef);
                 if (reader != null && reader.exists()) {
-                    if (!EqualsHelper.nullSafeEquals(reader.getMimetype(), MimetypeMap.MIMETYPE_TEXT_PLAIN)
-                            || !EqualsHelper.nullSafeEquals(reader.getEncoding(), "UTF-8")) {
+                    if (!EqualsHelper.nullSafeEquals(reader.getMimetype(), MimetypeMap.MIMETYPE_TEXT_PLAIN, true)
+                            || !EqualsHelper.nullSafeEquals(reader.getEncoding(), "UTF-8", true)) {
                         final ContentTransformer transformer = getContentService().getTransformer(reader.getMimetype(), MimetypeMap.MIMETYPE_TEXT_PLAIN);
                         if (transformer == null) {
                             log.debug("No transformer found for " + reader.getMimetype());
@@ -1930,6 +1937,14 @@ public class TestDataService implements SaveListener {
 
     public void setDocumentsCount(int documentsCount) {
         this.documentsCount = documentsCount;
+    }
+
+    public boolean isFilesEnabled() {
+        return filesEnabled;
+    }
+
+    public void setFilesEnabled(boolean filesEnabled) {
+        this.filesEnabled = filesEnabled;
     }
 
     public int getDocumentGeneratorThreads() {

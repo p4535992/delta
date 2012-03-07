@@ -66,6 +66,11 @@
    </component>
    
    <component>
+      <component-type>ee.webmedia.alfresco.common.propertysheet.patternoutput.PatternOutput</component-type>
+      <component-class>ee.webmedia.alfresco.common.propertysheet.patternoutput.PatternOutput</component-class>
+   </component>
+   
+   <component>
       <component-type>ee.webmedia.alfresco.common.propertysheet.customchildrencontainer.CustomChildrenContainer</component-type>
       <component-class>ee.webmedia.alfresco.common.propertysheet.customchildrencontainer.CustomChildrenContainer</component-class>
    </component>
@@ -118,6 +123,11 @@
    <converter>
       <converter-id>ee.webmedia.alfresco.common.propertysheet.converter.ListToLongestStringConverter</converter-id>
       <converter-class>ee.webmedia.alfresco.common.propertysheet.converter.ListToLongestStringConverter</converter-class>
+   </converter>
+   
+   <converter>
+      <converter-id>ee.webmedia.alfresco.common.propertysheet.converter.ListNonBlankStringsWithCommaConverter</converter-id>
+      <converter-class>ee.webmedia.alfresco.common.propertysheet.converter.ListNonBlankStringsWithCommaConverter</converter-class>
    </converter>
 
    <validator>

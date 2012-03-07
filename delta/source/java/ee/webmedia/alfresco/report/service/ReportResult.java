@@ -19,7 +19,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 public class ReportResult extends NodeBaseVO {
 
     private static final long serialVersionUID = 1L;
-    private TemplateReportOutputType reportOutputType;
     private String templateName;
     private String downloadUrl;
 
@@ -45,11 +44,8 @@ public class ReportResult extends NodeBaseVO {
     }
 
     public String getReportOutputTypeText() {
-        return reportOutputType != null ? MessageUtil.getMessage(reportOutputType) : "";
-    }
-
-    public void setReportOutputType(TemplateReportOutputType reportOutputType) {
-        this.reportOutputType = reportOutputType;
+        String reportOutputStr = (String) getProp(ReportModel.Props.REPORT_OUTPUT_TYPE);
+        return reportOutputStr != null ? MessageUtil.getMessage(TemplateReportOutputType.valueOf(reportOutputStr)) : "";
     }
 
     public void setTemplateName(String templateName) {

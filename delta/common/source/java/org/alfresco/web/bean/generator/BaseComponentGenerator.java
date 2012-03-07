@@ -83,6 +83,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
+import ee.webmedia.alfresco.common.propertysheet.converter.ListNonBlankStringsWithCommaConverter;
 import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.HandlesViewMode;
 import ee.webmedia.alfresco.common.propertysheet.validator.ForcedMandatoryValidator;
@@ -1130,7 +1131,7 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
       {
          // if there isn't a custom converter and the property is
          // multi-valued add the multi value converter as a default
-         createAndSetConverter(context, RepoConstants.ALFRESCO_FACES_MULTIVALUE_CONVERTER,
+         createAndSetConverter(context, ListNonBlankStringsWithCommaConverter.CONVERTER_ID,
                component);
       }
    }

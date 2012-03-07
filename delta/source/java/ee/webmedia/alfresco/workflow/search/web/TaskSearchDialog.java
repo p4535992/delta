@@ -94,12 +94,19 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
         return AlfrescoNavigationHandler.DIALOG_PREFIX + "taskSearchResultsDialog";
     }
 
+    @Override
     public String getManageSavedBlockTitle() {
         return MessageUtil.getMessage("task_search_saved_manage");
     }
 
+    @Override
     public String getSavedFilterSelectTitle() {
         return MessageUtil.getMessage("task_search_saved");
+    }
+
+    @Override
+    public String getFilterPanelTitle() {
+        return MessageUtil.getMessage("task_search");
     }
 
     @Override
@@ -143,6 +150,7 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
         return node;
     }
 
+    @Override
     protected QName getFilterType() {
         return TaskSearchModel.Types.FILTER;
     }
@@ -220,14 +228,6 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
     public List<SelectItem> getTaskStatuses(FacesContext context, UIInput selectComponent) {
         ((HtmlSelectManyListbox) selectComponent).setSize(5);
         return taskStatuses;
-    }
-
-    public boolean isReportSearch() {
-        return false;
-    }
-
-    public boolean isShowManageSavedDialog() {
-        return true;
     }
 
     // START: getters / setters

@@ -23,6 +23,7 @@ import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenera
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader;
 import ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditor;
 import ee.webmedia.alfresco.common.propertysheet.parameter.ParameterInputAttributeGenerator;
+import ee.webmedia.alfresco.common.propertysheet.patternoutput.PatternOutput;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.propertysheet.search.UserSearchGenerator;
 import ee.webmedia.alfresco.common.propertysheet.suggester.SuggesterGenerator;
@@ -154,6 +155,8 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
 
         private void setRendered(boolean rendered) {
             this.rendered = rendered;
+            // XXX ALAR: boolean rendered and customAttributes.get(BaseComponentGenerator.RENDERED) have different purposes, TODO fix it
+            // setCustomAttribute(BaseComponentGenerator.RENDERED, Boolean.toString(rendered));
         }
 
         public boolean isIgnoreIfMissing() {
@@ -176,6 +179,7 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
         @Override
         public ItemConfigVO copyAsReadOnly() {
             ItemConfigVO copy = new ItemConfigVO(name);
+            copy.setCustomAttributes(new HashMap<String, String>(customAttributes));
             copy.setDisplayLabel(displayLabel);
             copy.setDisplayLabelId(displayLabelId);
             copy.setConverter(converter);
@@ -186,7 +190,6 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
             copy.setRendered(rendered);
             copy.setIgnoreIfMissing(ignoreIfMissing);
             copy.setConfigItemType(configItemType);
-            copy.setCustomAttributes(new HashMap<String, String>(customAttributes));
             return copy;
         }
 
@@ -225,6 +228,37 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
             Assert.isTrue(!propertySheetItemAttributes.containsKey(null), "Attribute with null key not allowed");
             for (Entry<String, String> entry : propertySheetItemAttributes.entrySet()) {
                 Assert.notNull(entry.getValue(), "Attribute key '" + entry.getKey() + "' has null value");
+            }
+            if (propertySheetItemAttributes.containsKey(PropertySheetElementReader.ATTR_NAME)) {
+                name = propertySheetItemAttributes.get(PropertySheetElementReader.ATTR_NAME);
+            }
+            if (propertySheetItemAttributes.containsKey(PropertySheetElementReader.ATTR_DISPLAY_LABEL)) {
+                displayLabel = propertySheetItemAttributes.get(PropertySheetElementReader.ATTR_DISPLAY_LABEL);
+            }
+            if (propertySheetItemAttributes.containsKey(PropertySheetElementReader.ATTR_DISPLAY_LABEL_ID)) {
+                displayLabelId = propertySheetItemAttributes.get(PropertySheetElementReader.ATTR_DISPLAY_LABEL_ID);
+            }
+            if (propertySheetItemAttributes.containsKey(PropertySheetElementReader.ATTR_CONVERTER)) {
+                converter = propertySheetItemAttributes.get(PropertySheetElementReader.ATTR_CONVERTER);
+            }
+            if (propertySheetItemAttributes.containsKey(PropertySheetElementReader.ATTR_COMPONENT_GENERATOR)) {
+                componentGenerator = propertySheetItemAttributes.get(PropertySheetElementReader.ATTR_COMPONENT_GENERATOR);
+            }
+            if (propertySheetItemAttributes.containsKey(PropertySheetElementReader.ATTR_READ_ONLY)) {
+                readOnly = Boolean.parseBoolean(propertySheetItemAttributes.get(PropertySheetElementReader.ATTR_READ_ONLY));
+            }
+            if (propertySheetItemAttributes.containsKey(PropertySheetElementReader.ATTR_SHOW_IN_VIEW_MODE)) {
+                showInViewMode = Boolean.parseBoolean(propertySheetItemAttributes.get(PropertySheetElementReader.ATTR_SHOW_IN_VIEW_MODE));
+            }
+            if (propertySheetItemAttributes.containsKey(PropertySheetElementReader.ATTR_SHOW_IN_EDIT_MODE)) {
+                showInEditMode = Boolean.parseBoolean(propertySheetItemAttributes.get(PropertySheetElementReader.ATTR_SHOW_IN_EDIT_MODE));
+            }
+            // XXX ALAR: boolean rendered and customAttributes.get(BaseComponentGenerator.RENDERED) have different purposes, TODO fix it
+            // if (propertySheetItemAttributes.containsKey(BaseComponentGenerator.RENDERED)) {
+            // rendered = Boolean.parseBoolean(propertySheetItemAttributes.get(BaseComponentGenerator.RENDERED));
+            // }
+            if (propertySheetItemAttributes.containsKey(PropertySheetElementReader.ATTR_IGNORE_IF_MISSING)) {
+                ignoreIfMissing = Boolean.parseBoolean(propertySheetItemAttributes.get(PropertySheetElementReader.ATTR_IGNORE_IF_MISSING));
             }
             customAttributes = propertySheetItemAttributes;
         }
@@ -436,6 +470,10 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
 
         public void setDescriptionAsLabel(Boolean descriptionAsLabel) {
             setCustomAttribute(ClassificatorSelectorGenerator.ATTR_DESCRIPTION_AS_LABEL, descriptionAsLabel == null ? null : descriptionAsLabel.toString());
+        }
+
+        public void setPattern(String rule) {
+            setCustomAttribute(PatternOutput.PATTERN_ATTR, rule);
         }
 
     }

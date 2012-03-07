@@ -17,7 +17,7 @@ import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
 /**
  * @author Alar Kvell
  */
-public class IntGenerator extends BaseTypeFieldGenerator {
+public class LongGenerator extends BaseTypeFieldGenerator {
 
     @Override
     protected FieldType[] getFieldTypes() {

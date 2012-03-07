@@ -81,6 +81,7 @@ import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.ISOLatin1Util;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 import ee.webmedia.alfresco.utils.UserUtil;
@@ -566,7 +567,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                 FieldGroup group = (FieldGroup) parent;
                 String name = group.getName();
 
-                if (isIgnoredFieldGroup(name)) {
+                if (!group.isSystematic() || isIgnoredFieldGroup(name)) {
                     continue;
                 }
 
@@ -597,16 +598,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                         continue;
                     }
 
-                    List<String> keywordList = new ArrayList<String>(firstLevelKeywords.size());
-                    for (int i = 0; i < firstLevelKeywords.size(); i++) {
-                        StringBuilder sb = new StringBuilder(firstLevelKeywords.get(i));
-                        if (StringUtils.isNotBlank(secondLevelKeywords.get(i))) {
-                            sb.append(" - ").append(secondLevelKeywords.get(i));
-                        }
-                        keywordList.add(sb.toString());
-                    }
-
-                    String keywords = StringUtils.join(keywordList, "; ");
+                    String keywords = TextUtil.joinStringLists(firstLevelKeywords, secondLevelKeywords);
                     formulas.put(fieldId1, keywords);
                     formulas.put(fieldId2, keywords);
                     continue;

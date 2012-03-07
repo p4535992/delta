@@ -71,7 +71,12 @@ public class ApplicationLogDialog extends AbstractSearchFilterBlockBean<LogServi
 
     @Override
     protected Node getNewFilter() {
-        return new TransientNode(LogSearchModel.Types.LOG_FILTER, null, null);
+        return new TransientNode(getFilterType(), null, null);
+    }
+
+    @Override
+    public QName getFilterType() {
+        return LogSearchModel.Types.LOG_FILTER;
     }
 
     private LogFilter getLogFilter() {
@@ -107,4 +112,5 @@ public class ApplicationLogDialog extends AbstractSearchFilterBlockBean<LogServi
     protected String getNewFilterSelectItemMessageKey() {
         return null;
     }
+
 }

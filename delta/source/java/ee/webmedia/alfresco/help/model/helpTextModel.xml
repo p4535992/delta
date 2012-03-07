@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="hlt:helpTextModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/helpText/1.0" prefix="hlt" />
+   </namespaces>
+
+   <types>
+      <type name="hlt:helpText">
+         <parent>sys:base</parent>
+         <properties>
+            <property name="hlt:type">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="hlt:code">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="hlt:codeDialog">
+               <type>d:text</type>
+            </property>
+            <property name="hlt:codeDocumentType">
+               <type>d:text</type>
+            </property>
+            <property name="hlt:codeField">
+               <type>d:text</type>
+            </property>
+            <property name="hlt:content">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+         </properties>
+      </type>
+   </types>
+
+</model>

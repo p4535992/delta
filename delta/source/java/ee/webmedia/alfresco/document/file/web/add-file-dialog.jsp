@@ -38,6 +38,9 @@
 %>
 
 </f:verbatim>
+
+   <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/file/web/file-block.jsp" />
+
 <%
     if (fileUploaded == false) {
 %>

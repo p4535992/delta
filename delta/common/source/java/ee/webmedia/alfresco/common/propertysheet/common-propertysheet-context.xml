@@ -30,5 +30,7 @@
    <!-- Same as ClassificatorSelectorGenerator, adds renderer id LabelAndValueSelectorRenderer.LABEL_AND_VALUE_SELECTOR_RENDERER_TYPE -->
    <bean id="ClassificatorSelectorWithTitleGenerator" class="ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorWithTitleGenerator" scope="request" />
 
+   <bean id="PatternOutputGenerator" class="ee.webmedia.alfresco.common.propertysheet.patternoutput.PatternOutputGenerator" scope="request" />
+
    <!-- END: web beans: -->
 </beans>

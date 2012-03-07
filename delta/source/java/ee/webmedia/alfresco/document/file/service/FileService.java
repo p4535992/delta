@@ -73,9 +73,15 @@ public interface FileService {
      */
     NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, NodeRef fileNodeRef);
 
+    NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, NodeRef fileNodeRef, boolean active);
+
     NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType);
 
+    NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType, boolean active);
+
     NodeRef addFile(String name, String displayName, NodeRef taskNodeRef, java.io.File file, String mimeType);
+
+    NodeRef addFile(String name, String displayName, NodeRef taskNodeRef, java.io.File file, String mimeType, boolean active);
 
     NodeRef addFile(String name, String displayName, NodeRef taskNodeRef, ContentReader reader);
 

@@ -19,7 +19,7 @@
    </f:facet>
 </h:panelGroup>
 
-<a:panel id="task-search-panel" facetsId="dialog:dialog-body:task-search-panel-facets" styleClass="panel-100" label="#{msg.task_search}">
+<a:panel id="task-search-panel" facetsId="dialog:dialog-body:task-search-panel-facets" styleClass="panel-100" label="#{DialogManager.bean.filterPanelTitle}">
    <r:propertySheetGrid id="task-search-filter" value="#{DialogManager.bean.filter}" columns="1" mode="edit" externalConfig="true"
       labelStyleClass="propertiesLabel" binding="#{DialogManager.bean.propertySheet}" />
 </a:panel>

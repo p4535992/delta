@@ -22,6 +22,7 @@ import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
+import org.alfresco.util.Pair;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.config.PropertySheetConfigElement;
@@ -35,6 +36,7 @@ import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.propertysheet.component.SimUIPropertySheet;
+import ee.webmedia.alfresco.common.propertysheet.customchildrencontainer.CustomChildrenCreator;
 import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent;
 import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent.ModalLayerSubmitEvent;
 import ee.webmedia.alfresco.common.service.GeneralService;
@@ -189,7 +191,7 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         NodeRef series = (NodeRef) locationProps.get(DocumentCommonModel.Props.SERIES.toString());
         NodeRef volume = (NodeRef) locationProps.get(DocumentCommonModel.Props.VOLUME.toString());
         String caseLabel = (String) locationProps.get(DocumentLocationGenerator.CASE_LABEL_EDITABLE);
-        List<NodeRef> updatedNodeRefs = new ArrayList<NodeRef>();
+        Set<NodeRef> updatedNodeRefs = new HashSet<NodeRef>();
         for (Entry<NodeRef, Boolean> entry : getListCheckboxes().entrySet()) {
             if (!entry.getValue()) {
                 continue;
@@ -206,8 +208,11 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
             document.setVolume(volume);
             document.setCase(null);
             document.getNode().getProperties().put(DocumentLocationGenerator.CASE_LABEL_EDITABLE.toString(), caseLabel);
-            List<NodeRef> updatedRefs = getDocumentDynamicService().updateDocumentGetOriginalNodeRefs(document, cfg.getSaveListenerBeanNames());
-            updatedNodeRefs.addAll(updatedRefs);
+            List<Pair<NodeRef, NodeRef>> updatedRefs = getDocumentDynamicService().updateDocumentGetDocAndNodeRefs(document, cfg.getSaveListenerBeanNames()).getSecond();
+            for (Pair<NodeRef, NodeRef> pair : updatedRefs) {
+                updatedNodeRefs.add(pair.getFirst());
+                updatedNodeRefs.add(pair.getSecond());
+            }
         }
         restored();
     }
@@ -319,6 +324,10 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         } else {
             return "";
         }
+    }
+
+    public CustomChildrenCreator getDocumentRowFileGenerator() {
+        return ComponentUtil.getDocumentRowFileGenerator(FacesContext.getCurrentInstance().getApplication());
     }
 
     @Override

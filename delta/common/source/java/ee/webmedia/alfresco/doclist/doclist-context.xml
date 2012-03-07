@@ -33,6 +33,20 @@
          </list>
       </property>
    </bean>
-   
+
+   <bean id="updateDocumentListCountersBootstrap" class="ee.webmedia.alfresco.doclist.bootstrap.UpdateDocumentListCountersBootstrap" parent="module.baseComponent" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="functionsRootBootstrap" />
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+      <property name="generalService" ref="GeneralService" />
+      <property name="functionsService" ref="FunctionsService" />
+      <property name="transactionService" ref="TransactionService" />
+      <property name="documentListService" ref="DocumentListService" />
+   </bean>
 
 </beans>

@@ -46,6 +46,8 @@ import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
+import org.joda.time.Days;
+import org.joda.time.LocalDate;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import com.ibm.icu.util.GregorianCalendar;
@@ -1707,7 +1709,7 @@ public class MetadataBlockBean implements ClearStateListener {
         if (checkDays) {
             Date errandBegin = (Date) props.get(DocumentSpecificModel.Props.ERRAND_BEGIN_DATE.toString());
             Date errandEnd = (Date) props.get(DocumentSpecificModel.Props.ERRAND_END_DATE.toString());
-            int errandDurationInDays = (int) ((errandEnd.getTime() - errandBegin.getTime()) / (1000 * 60 * 60 * 24) + 1);
+            long errandDurationInDays = daysBetween(errandBegin, errandEnd);
             if (allowanceDays == null || allowanceDays.isEmpty()) {
                 messages.add("document_errandOrderAbroad_applicant_errand_validation_mandatory_cateringExists");
                 return;
@@ -1743,6 +1745,14 @@ public class MetadataBlockBean implements ClearStateListener {
         props.put(DocumentSpecificModel.Props.DAILY_ALLOWANCE_TOTAL_SUM.toString(), totalDailySum.doubleValue());
     }
 
+    // In 3.* branch, use CalendarUtil.getDaysBetween instead
+    private long daysBetween(Date startDate, Date endDate) {
+        if (startDate == null || endDate == null) {
+            return 0;
+        }
+        return Math.abs(Days.daysBetween(new LocalDate(startDate.getTime()), new LocalDate(endDate.getTime())).getDays()) + 1;
+    }
+
     private void validateErrandAbroadDailyCatering(List<String> messages) {
         if (DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD.equals(document.getType()) && document.hasAspect(DocumentSpecificModel.Aspects.DAILY_ALLOWANCE)) {
             QName applicantAssoc = DocumentSpecificModel.Assocs.ERRAND_ORDER_APPLICANTS_ABROAD;
@@ -1764,15 +1774,20 @@ public class MetadataBlockBean implements ClearStateListener {
 
     private List<Integer> getIntegerList(List<Serializable> list) {
         List<Integer> intList = new ArrayList<Integer>(list.size());
+        Integer zero = Integer.valueOf(0);
         for (Serializable item : list) {
             if (item instanceof Integer) {
                 intList.add((Integer) item);
-            } else if (item instanceof String && StringUtils.isNotBlank((String) item)) {
-                intList.add(Integer.parseInt((String) item));
+            } else if (item instanceof String) {
+                if (StringUtils.isNotBlank((String) item)) {
+                    intList.add(Integer.parseInt((String) item));
+                } else {
+                    intList.add(zero);
+                }
             } else if (item == null) {
-                intList.add(Integer.valueOf(0));
+                intList.add(zero);
             } else {
-                throw new NumberFormatException("Cannot parse number form value: " + item.toString());
+                throw new NumberFormatException("Cannot parse number form value: " + item.toString() + ", class=" + item.getClass());
             }
         }
 

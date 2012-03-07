@@ -1613,7 +1613,7 @@ function extendCondencePlugin() {
    });
 }
 
-function setMinEndDate(owner, dateElem){
+function setMinEndDate(owner, dateElem, triggerEndDateChange){
    if (dateElem.attr("class").indexOf("beginDate") < 0) return;
    var beginDate = dateElem.attr("value");
    if (beginDate == null || beginDate.trim().length == 0) return;
@@ -1626,7 +1626,9 @@ function setMinEndDate(owner, dateElem){
    var date = jQuery.datepicker.parseDate(endDatePicker.settings.dateFormat, beginDate, endDatePicker.settings);
    if (date == null) return;         
    endDate.datepicker("option", "minDate", date);
-   endDate.change();
+   if (triggerEndDateChange) {
+      endDate.change();
+   }
 }
 
 // These things need to be performed
@@ -1767,16 +1769,20 @@ function handleHtmlLoaded(context, selects) {
       onSelect: function( selectedDate ) {
          var dateElem = jQuery(this);
          dateElem.trigger("change");
-         var date_all = jQuery.datepicker.parseDate(dateElem.data("datepicker").settings.dateFormat,selectedDate,dateElem.data("datepicker").settings);
-         dp_dates.datepicker("option","defaultDate",date_all);
-         setMinEndDate(this, dateElem);
+         var onchange = '' + dateElem.attr("onchange");
+         if (onchange.indexOf('ajaxSubmit(') == -1) {
+            var date_all = jQuery.datepicker.parseDate(dateElem.data("datepicker").settings.dateFormat,selectedDate,dateElem.data("datepicker").settings);
+            dp_dates.datepicker("option","defaultDate",date_all);
+            setMinEndDate(this, dateElem, true);
+         }
       }
    });
    
    activeDatePickers.each(function()
          {
             var dateElem = jQuery(this);
-            setMinEndDate(this, dateElem);
+            var onchange = '' + dateElem.attr("onchange");
+            setMinEndDate(this, dateElem, onchange.indexOf('ajaxSubmit(') == -1);
          });
 
    jQuery(".quickDateRangePicker", context).each(function (intIndex)
@@ -2049,4 +2055,17 @@ function clickNextLink(currElId){
 
 function endsWith(str, suffix) {
    return str && suffix && str.indexOf(suffix, str.length - suffix.length) !== -1;
+}
+function popup(url) {
+   var settings=
+      "toolbar=no,location=no,directories=no,"+
+      "status=no,menubar=no,scrollbars=yes,"+
+      "resizable=yes,width=800px,height=600px";
+
+   var win = window.open(url,"Abiinfo",settings);
+
+   if (window.focus) {
+      win.focus();
+   }
+   return false;
 }

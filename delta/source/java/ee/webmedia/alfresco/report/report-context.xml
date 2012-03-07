@@ -53,6 +53,7 @@
       <property name="mimetypeService" ref="MimetypeService" />
       <property name="fileService" ref="FileService" />
       <property name="transactionService" ref="TransactionService" />
+      <property name="sendOutService" ref="SendOutService" />
    </bean>
 
    <bean id="ReportService" class="org.springframework.aop.framework.ProxyFactoryBean">

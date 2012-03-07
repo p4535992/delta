@@ -733,13 +733,17 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
 
         int value = Integer.parseInt(valueProperty.toString());
         count = (count == null) ? 1 : count;
-        final int newValue = (added) ? value + count : value - count;
+        int newValue = (added) ? value + count : value - count;
+        if (newValue < 0) {
+            newValue = 0;
+        }
+        final int finalNewValue = newValue;
 
         // Update property with elevated rights
         AuthenticationUtil.runAs(new RunAsWork<Object>() {
             @Override
             public Object doWork() throws Exception {
-                nodeService.setProperty(parentNodeRef, propertyName, newValue);
+                nodeService.setProperty(parentNodeRef, propertyName, finalNewValue);
                 return null;
             }
         }, AuthenticationUtil.getSystemUserName());

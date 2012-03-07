@@ -28,6 +28,7 @@ import ee.webmedia.alfresco.common.web.CssStylable;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
@@ -137,6 +138,15 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
         return (String) getProperties().get(DocumentCommonModel.Props.OWNER_NAME);
     }
 
+    public String getSenderNameOrEmail() {
+        String senderDetails = (String) getProperties().get(DocumentSpecificModel.Props.SENDER_DETAILS_NAME);
+        if (StringUtils.isBlank(senderDetails)) {
+            String senderEmail = (String) getProperties().get(DocumentSpecificModel.Props.SENDER_DETAILS_EMAIL);
+            senderDetails = senderEmail != null ? senderEmail : "";
+        }
+        return senderDetails;
+    }
+
     public String getRecipients() {
         lazyInit();
         return TextUtil.join(getProperties(), DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME);
@@ -156,6 +166,68 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
             return (String) getProperties().get(DocumentSpecificModel.Props.SELLER_PARTY_NAME);
         }
         return getAllRecipients();
+    }
+
+    // BEGIN properties collected from child nodes
+    @SuppressWarnings("unchecked")
+    public List<String> getPartyNames() {
+        return getListOrNull(DocumentSpecificModel.Props.PARTY_NAME);
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<String> getPartyContactPersons() {
+        return getListOrNull(DocumentSpecificModel.Props.PARTY_CONTACT_PERSON);
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<String> getApplicantNames() {
+        return getListOrNull(DocumentSpecificModel.Props.APPLICANT_NAME);
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<String> getCostManagers() {
+        return getListOrNull(DocumentSpecificModel.Props.COST_MANAGER);
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<Date> getErrandBeginDates() {
+        return getListOrNull(DocumentSpecificModel.Props.ERRAND_BEGIN_DATE);
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<Date> getErrandEndDates() {
+        return getListOrNull(DocumentSpecificModel.Props.ERRAND_END_DATE);
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<String> getCountries() {
+        return getListOrNull(DocumentSpecificModel.Props.ERRAND_COUNTRY);
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<String> getCounties() {
+        return getListOrNull(DocumentSpecificModel.Props.ERRAND_COUNTY);
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<String> getCities() {
+        return getListOrNull(DocumentSpecificModel.Props.ERRAND_CITY);
+    }
+
+    @SuppressWarnings("rawtypes")
+    private List getListOrNull(QName propName) {
+        Object value = getProperties().get(propName);
+        return value instanceof List ? (List) value : null;
+    }
+
+    // END properties collected from child nodes
+
+    public String getFirstPartyContactPerson() {
+        return (String) getProperties().get(DocumentDynamicModel.Props.FIRST_PARTY_CONTACT_PERSON_NAME);
+    }
+
+    public String getDelivererName() {
+        return (String) getProperties().get(DocumentSpecificModel.Props.DELIVERER_NAME);
     }
 
     public String getWorkflowStatus() {
@@ -313,13 +385,32 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
         return (String) getNode().getProperties().get(DocumentCommonModel.Props.KEYWORDS);
     }
 
+    @SuppressWarnings("unchecked")
+    public String getHierarchicalKeywords() {
+        return TextUtil.joinStringLists((List<String>) getProperties().get(DocumentDynamicModel.Props.FIRST_KEYWORD_LEVEL),
+                (List<String>) getProperties().get(DocumentDynamicModel.Props.SECOND_KEYWORD_LEVEL));
+    }
+
     public String getStorageType() {
         return (String) getNode().getProperties().get(DocumentCommonModel.Props.STORAGE_TYPE);
     }
 
     public String getSendMode() {
-        String transmittalMode = (String) getProperties().get(DocumentSpecificModel.Props.TRANSMITTAL_MODE);
-        return TextUtil.joinStringAndStringWithComma(transmittalMode, (String) getSearchableProperties().get(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE));
+        return TextUtil.joinStringAndStringWithComma(getTransmittalMode(), (String) getSearchableProperties().get(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE));
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<String> getSearchableSendMode() {
+        return (List<String>) getSearchableProperties().get(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE);
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<String> getSearchableSendModeFromGeneralProps() {
+        return (List<String>) getProperties().get(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE);
+    }
+
+    public String getTransmittalMode() {
+        return (String) getProperties().get(DocumentSpecificModel.Props.TRANSMITTAL_MODE);
     }
 
     public String getResponsibleName() {
@@ -349,8 +440,16 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
         return (String) getNode().getProperties().get(DocumentSpecificModel.Props.SELLER_PARTY_REG_NUMBER);
     }
 
+    public String getSellerPartyName() {
+        return (String) getNode().getProperties().get(DocumentSpecificModel.Props.SELLER_PARTY_NAME);
+    }
+
     public String getInvoiceNumber() {
         return (String) getNode().getProperties().get(DocumentSpecificModel.Props.INVOICE_NUMBER);
+    }
+
+    public String getTotalSum() {
+        return (String) getNode().getProperties().get(DocumentSpecificModel.Props.TOTAL_SUM);
     }
 
     public Date getInvoiceDate() {

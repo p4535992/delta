@@ -102,6 +102,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
 
     private NodeRef attachmentParentRef;
     private NodeRef scannedParentRef;
+    private boolean inactiveFileDialog;
 
     @Override
     public String cancel() {
@@ -132,6 +133,11 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         reset();
     }
 
+    public void startInactive(ActionEvent event) {
+        start(event);
+        setInactiveFileDialog(true);
+    }
+
     public String reset() {
         isFileSelected = false;
         selectedFileNodeRef = null;
@@ -142,6 +148,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         scannedSelect = null;
         attachmentParentRef = null;
         scannedParentRef = null;
+        inactiveFileDialog = false;
         clearUpload();
         return null;
     }
@@ -171,6 +178,8 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
                 if (isFileSelected) {
                     for (int i = 0; i < selectedFileNodeRef.size(); i++) {
                         checkEncryptedFile(selectedFileName.get(i));
+                    }
+                    for (int i = 0; i < selectedFileNodeRef.size(); i++) {
                         Pair<String, String> filenames = getAttachmentFilenames(documentNodeRef, existingDisplayNames, i);
                         NodeRef fileRef = selectedFileNodeRef.get(i);
                         if (isParseInvoice) {
@@ -196,6 +205,8 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
                     List<String> fileNameWithoutExtension = getFileUploadBean().getFileNameWithoutExtension();
                     for (int i = 0; i < files.size(); i++) {
                         checkEncryptedFile(fileNames.get(i));
+                    }
+                    for (int i = 0; i < files.size(); i++) {
                         Pair<String, String> filenames = getFileFilenames(documentNodeRef, existingDisplayNames, fileNames, fileNameWithoutExtension, i);
                         java.io.File file = files.get(i);
                         String mimeType = getFileUploadBean().getContentTypes().get(i);
@@ -256,12 +267,12 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
     }
 
     public void addFileAndFilename(String name, String displayName, NodeRef documentNodeRef, NodeRef fileRef, List<String> existingFilenames) {
-        getFileService().addFileToDocument(name, displayName, documentNodeRef, fileRef);
+        getFileService().addFileToDocument(name, displayName, documentNodeRef, fileRef, isActiveFileDialog());
         existingFilenames.add(name);
     }
 
     public void addFileAndFilename(String name, String displayName, NodeRef documentNodeRef, List<String> existingFilenames, java.io.File file, String mimeType) {
-        getFileService().addFileToDocument(name, displayName, documentNodeRef, file, mimeType);
+        getFileService().addFileToDocument(name, displayName, documentNodeRef, file, mimeType, isActiveFileDialog());
         existingFilenames.add(name);
     }
 
@@ -783,6 +794,14 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
 
     public void setDocumentDialog(DocumentDialog documentDialog) {
         this.documentDialog = documentDialog;
+    }
+
+    public void setInactiveFileDialog(boolean active) {
+        inactiveFileDialog = active;
+    }
+
+    public boolean isActiveFileDialog() {
+        return !inactiveFileDialog;
     }
     // END: getters / setters
 

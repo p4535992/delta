@@ -651,6 +651,10 @@
       <listener-class>com.sun.xml.ws.transport.http.servlet.WSServletContextListener</listener-class>
    </listener>
 
+   <listener>
+      <listener-class>ee.webmedia.alfresco.help.web.HelpTextInitListener</listener-class>
+   </listener>
+
    <!-- ========== Servlets ========== -->
 
    <servlet>
@@ -707,6 +711,11 @@
    <servlet>
       <servlet-name>PrintTableServlet</servlet-name>
       <servlet-class>ee.webmedia.alfresco.workflow.web.PrintTableServlet</servlet-class>
+   </servlet>
+
+   <servlet>
+      <servlet-name>HelpTextServlet</servlet-name>
+      <servlet-class>ee.webmedia.alfresco.help.web.HelpTextServlet</servlet-class>
    </servlet>
 
    <!-- ========== Servlet mappings ========== -->
@@ -769,6 +778,11 @@
    <servlet-mapping>
       <servlet-name>spring-ws</servlet-name>
       <url-pattern>/service2/*</url-pattern>
+   </servlet-mapping>
+
+   <servlet-mapping>
+      <servlet-name>HelpTextServlet</servlet-name>
+      <url-pattern>/help/*</url-pattern>
    </servlet-mapping>
 
    <!-- ========== Other ========== -->

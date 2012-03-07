@@ -231,6 +231,28 @@ public abstract class AbstractSearchFilterBlockBean<T extends FilterService> ext
 
     abstract protected String getNewFilterSelectItemMessageKey();
 
+    abstract protected QName getFilterType();
+
+    public String getManageSavedBlockTitle() {
+        return "";
+    }
+
+    public String getSavedFilterSelectTitle() {
+        return "";
+    }
+
+    public String getFilterPanelTitle() {
+        return "";
+    }
+
+    public boolean isReportSearch() {
+        return false;
+    }
+
+    public boolean isShowManageSavedDialog() {
+        return true;
+    }
+
     private void setPublicFilter(NodeRef newValue) {
         final boolean isPublic = newValue == null ? false : publicFilterRefs.contains(newValue.toString());
         getPublicCheckBox().setValue(isPublic);
@@ -278,6 +300,7 @@ public abstract class AbstractSearchFilterBlockBean<T extends FilterService> ext
         }
         return userService;
     }
+
     // END: getters / setters
 
 }

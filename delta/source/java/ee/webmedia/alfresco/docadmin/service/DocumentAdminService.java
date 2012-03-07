@@ -33,7 +33,7 @@ public interface DocumentAdminService {
      * @return all document type objects from repository
      */
     List<DocumentType> getDocumentTypes(DynTypeLoadEffort effort);
-    
+
     Set<String> getAdrDocumentTypeIds();
 
     <T extends DynamicType> List<T> getTypes(Class<T> typeClass, DynTypeLoadEffort effort);
@@ -231,5 +231,8 @@ public interface DocumentAdminService {
         }
 
     }
+
+    /** Return true if fieldDefinition is used in some docType where used=true */
+    boolean isFieldDefintionUsed(String fieldId);
 
 }

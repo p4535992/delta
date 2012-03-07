@@ -7,6 +7,12 @@
          <mimetype mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.template" display="Microsoft Excel 2007 template">
             <extension>xltx</extension>
          </mimetype>         
+         <mimetype mimetype="application/dot" display="Microsoft Word 2003 template">
+            <extension>dot</extension>
+         </mimetype>         
+         <mimetype mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.template" display="Microsoft Word 2007 template">
+            <extension>dotx</extension>
+         </mimetype>         
       </mimetypes>
    </config>
 </alfresco-config>

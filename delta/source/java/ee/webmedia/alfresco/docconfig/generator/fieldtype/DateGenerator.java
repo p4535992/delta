@@ -32,7 +32,8 @@ public class DateGenerator extends BaseTypeFieldGenerator {
     public void generateField(Field field, GeneratorResults generatorResults) {
         final ItemConfigVO item = generatorResults.getAndAddPreGeneratedItem();
         if (!field.isForSearch()) {
-            String generator = DocumentSpecificModel.Props.DUE_DATE.getLocalName().equals(field.getOriginalFieldId()) ? "DatePickerWithDueDateGenerator" : RepoConstants.GENERATOR_DATE_PICKER;
+            String generator = DocumentSpecificModel.Props.DUE_DATE.getLocalName().equals(field.getOriginalFieldId()) ? "DatePickerWithDueDateGenerator"
+                    : RepoConstants.GENERATOR_DATE_PICKER;
             item.setComponentGenerator(generator);
             return;
         }
@@ -42,6 +43,10 @@ public class DateGenerator extends BaseTypeFieldGenerator {
          * props="docsearch:invoiceDateBegin||styleClass=date,docsearch:invoiceDateEnd||styleClass=date" textId="document_search_from_to" />
          */
         QName qnameBegin = field.getQName();
+        setupDateFilterItemConfig(item, qnameBegin);
+    }
+
+    public static void setupDateFilterItemConfig(final ItemConfigVO item, QName qnameBegin) {
         QName qnameEnd = getEndDateQName(qnameBegin);
         QName qnamePicker = getDatePickerQName(qnameBegin);
         item.setComponentGenerator("InlinePropertyGroupGenerator");

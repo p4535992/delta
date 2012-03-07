@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.common.propertysheet.search;
 import java.util.Map;
 
 import javax.faces.component.UIComponent;
+import javax.faces.component.ValueHolder;
 import javax.faces.context.FacesContext;
 import javax.faces.convert.Converter;
 import javax.faces.el.MethodBinding;
@@ -14,6 +15,7 @@ import org.alfresco.web.bean.groups.AddUsersDialog;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 
+import ee.webmedia.alfresco.common.propertysheet.converter.ListNonBlankStringsWithCommaConverter;
 import ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditor;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
@@ -126,6 +128,12 @@ public class SearchGenerator extends BaseComponentGenerator {
             } else {
                 ComponentUtil.createAndSetConverter(context, property.getConverter(), component);
             }
+        }
+        if (!(component instanceof Search) && propertyDef != null && propertyDef.isMultiValued() && component instanceof ValueHolder) {
+            ValueHolder vh = (ValueHolder) component;
+            Converter singleValueConverter = vh.getConverter();
+            ComponentUtil.createAndSetConverter(context, ListNonBlankStringsWithCommaConverter.CONVERTER_ID, component);
+            ((ListNonBlankStringsWithCommaConverter) vh.getConverter()).setSingleValueConverter(singleValueConverter);
         }
     }
 

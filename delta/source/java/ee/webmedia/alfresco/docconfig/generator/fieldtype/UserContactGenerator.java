@@ -66,5 +66,4 @@ public class UserContactGenerator extends BaseTypeFieldGenerator {
             throw new RuntimeException("Unsupported field: " + field);
         }
     }
-
 }

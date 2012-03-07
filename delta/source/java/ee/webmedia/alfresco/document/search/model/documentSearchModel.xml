@@ -56,6 +56,12 @@
             <property name="docsearch:eaCommitmentItem">
                <type>d:text</type>
                <multiple>true</multiple>
+            </property> 
+            <property name="docsearch:documentCreated">
+               <type>d:date</type>
+            </property>
+            <property name="docsearch:documentCreated_EndDate">
+               <type>d:date</type>
             </property>            
          </properties>
       </type>

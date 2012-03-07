@@ -1,6 +1,8 @@
 package ee.webmedia.alfresco.document.type.web;
 
+import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
+import javax.faces.convert.ConverterException;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.apache.commons.lang.StringUtils;
@@ -12,6 +14,11 @@ import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 
 public class DocumentTypeConverter extends MultiSelectConverterBase {
     private transient DocumentAdminService documentAdminService;
+
+    @Override
+    public Object getAsObject(FacesContext context, UIComponent component, String value) throws ConverterException {
+        return null;
+    }
 
     @Override
     public String convertSelectedValueToString(Object value) {

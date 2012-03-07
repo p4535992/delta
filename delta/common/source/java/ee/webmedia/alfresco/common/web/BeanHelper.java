@@ -75,6 +75,7 @@ import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.log.web.LogBlockBean;
 import ee.webmedia.alfresco.document.metadata.web.MetadataBlockBean;
 import ee.webmedia.alfresco.document.permissions.DocumentFileWriteDynamicAuthority;
+import ee.webmedia.alfresco.document.search.service.DocumentReportFilterService;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchFilterService;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.search.web.DocumentSearchBean;
@@ -93,6 +94,8 @@ import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.email.service.EmailService;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.functions.web.FunctionsDetailsDialog;
+import ee.webmedia.alfresco.help.service.HelpTextService;
+import ee.webmedia.alfresco.help.web.HelpTextEditDialog;
 import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.log.web.ApplicationLogListDialog;
@@ -235,6 +238,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static ApplicationLogListDialog getAppLogListDialog() {
         return getJsfBean(ApplicationLogListDialog.class, ApplicationLogListDialog.BEAN_NAME);
+    }
+
+    public static HelpTextEditDialog getHelpTextEditDialog(String type) {
+        return getJsfBean(HelpTextEditDialog.class, type + HelpTextEditDialog.BEAN_NAME_SUFFIX);
     }
 
     @SuppressWarnings({ "cast", "rawtypes", "unchecked" })
@@ -627,6 +634,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
         return getService(LogService.class, LogService.BEAN_NAME);
     }
 
+    public static HelpTextService getHelpTextService() {
+        return getService(HelpTextService.class, HelpTextService.BEAN_NAME);
+    }
+
     public static SkLdapService getSkLdapService() {
         return getService(SkLdapService.class, SkLdapService.BEAN_NAME);
     }
@@ -641,6 +652,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static TaskReportFilterService getTaskReportFilterService() {
         return getService(TaskReportFilterService.class, TaskReportFilterService.BEAN_NAME);
+    }
+
+    public static DocumentReportFilterService getDocumentReportFilterService() {
+        return getService(DocumentReportFilterService.class, DocumentReportFilterService.BEAN_NAME);
     }
 
     // END: delta services

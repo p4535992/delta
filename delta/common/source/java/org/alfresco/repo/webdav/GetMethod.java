@@ -46,6 +46,8 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.cmr.repository.datatype.TypeConverter;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
+
 /**
  * Implements the WebDAV GET method
  * 
@@ -222,7 +224,8 @@ public class GetMethod extends WebDAVMethod
                     nodeInfo.getNodeRef(), reader);
             // there is content associated with the node
             m_response.setHeader(WebDAV.HEADER_CONTENT_LENGTH, Long.toString(reader.getSize()));
-            m_response.setContentType(reader.getMimetype());
+            String guessedMimetype = BeanHelper.getMimetypeService().guessMimetype(nodeInfo.getName());
+            m_response.setContentType(guessedMimetype);
             m_response.setCharacterEncoding(reader.getEncoding());
 
             if (m_returnContent)

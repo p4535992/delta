@@ -105,6 +105,8 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
         }
 
         ItemConfigVO item = generatorResults.getAndAddPreGeneratedItem();
+        // TODO when allowing multiple occurences of this group (183445), then enable this
+        // item.setName(RepoUtil.createTransientProp(field.getFieldId()).toString());
         item.setComponentGenerator("MultiValueEditorGenerator");
         item.setStyleClass("add-item");
 

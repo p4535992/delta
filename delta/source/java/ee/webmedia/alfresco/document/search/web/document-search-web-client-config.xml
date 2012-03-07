@@ -25,7 +25,10 @@
       <dialogs>
          <dialog name="documentDynamicSearchDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/search/web/document-dynamic-search-dialog.jsp" managed-bean="DocumentDynamicSearchDialog"
             icon="/images/icons/versioned_properties_large.gif" title-id="document_search" />
-
+         
+         <dialog name="documentDynamicReportDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/search/web/document-dynamic-search-dialog.jsp" managed-bean="DocumentDynamicReportDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="document_report" />
+            
          <dialog name="documentSearchResultsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/search/web/document-search-results-dialog.jsp" managed-bean="DocumentSearchResultsDialog"
             icon="/images/icons/versioned_properties_large.gif" title-id="document_search" actions-config-id="document_search_actions"/>
 

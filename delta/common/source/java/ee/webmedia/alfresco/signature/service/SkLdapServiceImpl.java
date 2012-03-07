@@ -13,7 +13,6 @@ import org.springframework.ldap.core.simple.SimpleLdapTemplate;
 import org.springframework.ldap.core.support.LdapContextSource;
 import org.springframework.util.Assert;
 
-import ee.webmedia.alfresco.docadmin.service.DocumentAdminServiceImpl;
 import ee.webmedia.alfresco.signature.model.SkLdapCertificate;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
@@ -21,7 +20,7 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
  * @author Alar Kvell
  */
 public class SkLdapServiceImpl implements SkLdapService {
-    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentAdminServiceImpl.class);
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(SkLdapServiceImpl.class);
 
     private SimpleLdapTemplate ldapTemplate;
 

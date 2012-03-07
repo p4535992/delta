@@ -9,39 +9,39 @@
 <h:panelGroup id="document-search-panel-facets">
    <f:facet name="title">
       <h:panelGroup>
-         <h:outputText value="#{msg.document_search_saved}" />
+         <h:outputText value="#{DialogManager.bean.savedFilterSelectTitle}" />
          <f:verbatim>&nbsp;</f:verbatim>
-         <h:selectOneMenu id="filters" value="#{DocumentDynamicSearchDialog.selectedFilter}" converter="ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter"
-            valueChangeListener="#{DocumentDynamicSearchDialog.selectedFilterValueChanged}" binding="#{DocumentDynamicSearchDialog.selectedFilterMenu}">
-            <f:selectItems value="#{DocumentDynamicSearchDialog.allFilters}" />
+         <h:selectOneMenu id="filters" value="#{DialogManager.bean.selectedFilter}" converter="ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter"
+            valueChangeListener="#{DialogManager.bean.selectedFilterValueChanged}" binding="#{DialogManager.bean.selectedFilterMenu}">
+            <f:selectItems value="#{DialogManager.bean.allFilters}" />
          </h:selectOneMenu>
       </h:panelGroup>
    </f:facet>
 </h:panelGroup>
 
-<a:panel id="document-search-panel" facetsId="dialog:dialog-body:document-search-panel-facets" styleClass="panel-100" label="#{msg.document_search}">
-   <r:propertySheetGrid id="document-search-filter" value="#{DocumentDynamicSearchDialog.filter}" columns="1" mode="edit" externalConfig="true"
-      labelStyleClass="propertiesLabel" binding="#{DocumentDynamicSearchDialog.propertySheet}" config="#{DocumentDynamicSearchDialog.propertySheetConfigElement}" />
+<a:panel id="document-search-panel" facetsId="dialog:dialog-body:document-search-panel-facets" styleClass="panel-100" label="#{DialogManager.bean.filterPanelTitle}">
+   <r:propertySheetGrid id="document-search-filter" value="#{DialogManager.bean.filter}" columns="1" mode="edit" externalConfig="true"
+      labelStyleClass="propertiesLabel" binding="#{DialogManager.bean.propertySheet}" config="#{DialogManager.bean.propertySheetConfigElement}" />
 </a:panel>
 
-<a:panel id="document-search-filters-panel" styleClass="panel-100" label="#{msg.document_search_saved_manage}">
+<a:panel id="document-search-filters-panel" styleClass="panel-100" label="#{DialogManager.bean.manageSavedBlockTitle}" rendered="#{DialogManager.bean.showManageSavedDialog}">
    <h:panelGrid columns="2" cellpadding="3" cellspacing="3" border="0" columnClasses="propertiesLabel," width="100%">
       <h:outputText value="#{msg.document_search_name}" styleClass="no-wrap" />
-      <h:inputText id="searchTitle" binding="#{DocumentDynamicSearchDialog.searchTitleInput}" size="35" />
+      <h:inputText id="searchTitle" binding="#{DialogManager.bean.searchTitleInput}" size="35" />
       <%-- empty placeholder to allign checkbox to the right with the lable --%>
       <f:verbatim />
       <a:booleanEvaluator id="foundSimilarEvaluator" value="#{UserService.administrator}" >
-         <h:panelGroup>
-            <h:selectBooleanCheckbox id="toAllUsers" binding="#{DocumentDynamicSearchDialog.publicCheckBox}" />
+         <h:panelGroup rendered="#{!DialogManager.bean.reportSearch}">
+            <h:selectBooleanCheckbox id="toAllUsers" binding="#{DialogManager.bean.publicCheckBox}" />
             <h:outputLabel value="#{msg.document_search_save_toAllUsers}" for="toAllUsers" />
          </h:panelGroup>
       </a:booleanEvaluator>
    </h:panelGrid>
 
    <f:verbatim><span class="task-sheet-buttons"></f:verbatim>
-   <h:commandButton id="save" actionListener="#{DocumentDynamicSearchDialog.saveFilter}" value="#{msg.save}" />
+   <h:commandButton id="save" actionListener="#{DialogManager.bean.saveFilter}" value="#{msg.save}" />
    <f:verbatim>&nbsp;</f:verbatim>
-   <h:commandButton id="delete" actionListener="#{DocumentDynamicSearchDialog.deleteFilter}" value="#{msg.delete}" />
+   <h:commandButton id="delete" actionListener="#{DialogManager.bean.deleteFilter}" value="#{msg.delete}" />
    <f:verbatim></span></f:verbatim>
 </a:panel>
 

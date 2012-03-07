@@ -162,7 +162,7 @@
       <view:properties>
          <docadmin:fieldId>leaveCancelEndDate</docadmin:fieldId>
          <docadmin:originalFieldId>leaveCancelEndDate</docadmin:originalFieldId>
-         <docadmin:name>Puhkuse tühistamine alates</docadmin:name>
+         <docadmin:name>Puhkuse tühistamine kuni</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:fieldType>DATE</docadmin:fieldType>
          <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>

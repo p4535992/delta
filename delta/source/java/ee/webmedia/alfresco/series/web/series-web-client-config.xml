@@ -83,8 +83,7 @@
          <show-property name="ser:volType" display-label-id="series_volType" component-generator="EnumSelectorGenerator" 
             enumClass="ee.webmedia.alfresco.classificator.enums.VolumeType" readOnlyIf="ser:status=suletud" /> 
          <show-property name="ser:volRegister" display-label-id="series_volRegister" readOnlyIf="ser:status=suletud" show="#{VolumeService.caseVolumeEnabled}" 
-            component-generator="GeneralSelectorGenerator" converter="javax.faces.Integer" selectionItems="#{RegisterListDialog.findActiveRegisters}"
-            mandatoryIfAllMandatory="false" mandatoryIf="ser:newNumberForEveryDoc" />
+            component-generator="GeneralSelectorGenerator" converter="javax.faces.Integer" selectionItems="#{RegisterListDialog.findActiveRegisters}"/>
          <show-property name="ser:volNumberPattern" display-label-id="series_volNumberPattern"  readOnlyIf="ser:status=suletud" show="#{VolumeService.caseVolumeEnabled}" />
          <show-property name="doccom:accessRestriction" component-generator="ClassificatorSelectorGenerator" classificatorName="accessRestriction"
             readOnlyIf="ser:status=suletud" />

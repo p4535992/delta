@@ -26,7 +26,7 @@
 
    <types>
        <type name="imap-ext:imapFolder">
-           <title>General Imap folder</title>
+           <title>kaust</title>
            <parent>cm:folder</parent>
            <mandatory-aspects>
             <aspect>imap-ext:behaviours</aspect>

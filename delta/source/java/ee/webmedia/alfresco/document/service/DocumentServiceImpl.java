@@ -40,8 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.faces.context.FacesContext;
 
@@ -149,6 +147,8 @@ import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.TextPatternUtil;
+import ee.webmedia.alfresco.utils.Transformer;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 import ee.webmedia.alfresco.volume.model.DeletedDocument;
@@ -721,8 +721,8 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             ContentReader reader = fileFolderService.getReader(file.getNodeRef());
             if (reader != null && reader.exists()) {
                 boolean readerReady = true;
-                if (!EqualsHelper.nullSafeEquals(reader.getMimetype(), MimetypeMap.MIMETYPE_TEXT_PLAIN)
-                        || !EqualsHelper.nullSafeEquals(reader.getEncoding(), "UTF-8")) {
+                if (!EqualsHelper.nullSafeEquals(reader.getMimetype(), MimetypeMap.MIMETYPE_TEXT_PLAIN, true)
+                        || !EqualsHelper.nullSafeEquals(reader.getEncoding(), "UTF-8", true)) {
                     ContentTransformer transformer = contentService.getTransformer(reader.getMimetype(), MimetypeMap.MIMETYPE_TEXT_PLAIN);
                     if (transformer == null) {
                         log.debug("No transformer found for " + reader.getMimetype());
@@ -1646,90 +1646,57 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
     /**
      * NB! This method can be called only once per registration. Otherwise register sequence is increased without a reason.
      */
-    private String parseRegNrPattern(Series series, NodeRef volumeNodeRef, Register register, String existingRegNr, Date regDateTime) {
+    private String parseRegNrPattern(final Series series, NodeRef volumeNodeRef, final Register register, final String existingRegNumber, final Date regDateTime) {
         String pattern = series.getDocNumberPattern();
-        Volume volume = null;
-        if (pattern.indexOf("{T") >= 0) {
-            volume = volumeService.getVolumeByNodeRef(volumeNodeRef);
-        }
-        StringBuffer groupRegNr = new StringBuffer();
-        int registerCounter = register.getCounter();
+        final Volume volume = pattern.indexOf("{T") >= 0 ? volumeService.getVolumeByNodeRef(volumeNodeRef) : null;
+        final int registerCounter = register.getCounter();
 
-        Matcher groupMatcher = Pattern.compile("/\\*(.*?)\\*/").matcher(pattern);
-        List<String> failedMatches = new ArrayList<String>();
-        while (groupMatcher.find()) {
-            String group = groupMatcher.group(1);
-            String replacedParams = replaceParams(group, series, volume, register, registerCounter, existingRegNr, regDateTime);
-            String noMatch = group.replaceAll("\\{(.*?)\\}", "");
-            if (replacedParams.equals(noMatch)) { // if last match isn't replaced we need to remove this part later.
-                failedMatches.add(groupMatcher.group());
-            } else {
-                groupMatcher.appendReplacement(groupRegNr, replacedParams);
+        Transformer<String, String> paramValueLookup = new Transformer<String, String>() {
+            @Override
+            public String tr(String input) {
+                RegisterNumberPatternParams param = RegisterNumberPatternParams.getValidParam(input);
+                if (param == null) {
+                    return "";
+                }
+                switch (param) {
+                case S:
+                    return series.getSeriesIdentifier();
+                case T:
+                    return volume.getVolumeMark();
+                case TA:
+                    return DateFormatUtils.format(volume.getValidFrom(), "yy");
+                case DA:
+                    return DateFormatUtils.format(regDateTime, "yy");
+                case TN:
+                    return ""; // FIXME DLSeadist kui asjatoimik saab tehtud, peaks ka sellele asendus tekkima.
+                case DN:
+                    if (existingRegNumber != null && !generateNewRegNumberInReregistration) {
+                        RegNrHolder holder = new RegNrHolder(existingRegNumber);
+                        return holder.getShortRegNrWithoutIndividualizingNr();
+                    }
+                    if (registerCounter == register.getCounter()) { // Increase if first time
+                        register.setCounter(registerService.increaseCount(register.getId()));
+                    }
+                    String counter = Integer.toString(register.getCounter());
+                    if (RegisterNumberPatternParams.getValidDigitParam(input) == null) {
+                        return counter;
+                    }
+                    int numberOfDigits;
+                    try {
+                        numberOfDigits = Integer.valueOf(input.split("[A-Z]")[0]);
+                    } catch (NumberFormatException nfe) {
+                        return "";
+                    }
+                    if (numberOfDigits > counter.length()) {
+                        return StringUtils.leftPad(counter, numberOfDigits, '0');
+                    }
+                    return StringUtils.right(counter, numberOfDigits); // trim left if needed
+                default:
+                    return "";
+                }
             }
-        }
-
-        String groupsReplacedRegNr = groupMatcher.appendTail(groupRegNr).toString();
-        for (String failedMatch : failedMatches) {
-            groupsReplacedRegNr = StringUtils.replaceOnce(groupsReplacedRegNr, failedMatch, "");
-        }
-        return replaceParams(groupsReplacedRegNr, series, volume, register, registerCounter, existingRegNr, regDateTime);// regNr.toString();
-    }
-
-    private String replaceParams(String string, Series series, Volume volume, Register register, int registerCounter, String existingRegNumber, Date regDateTime) {
-        Pattern paramPattern = Pattern.compile("\\{(.*?)\\}");
-        StringBuffer result = new StringBuffer();
-
-        // Replace parameters
-        Matcher paramMatcher = paramPattern.matcher(string);
-        while (paramMatcher.find()) {
-            paramMatcher.appendReplacement(result, lookupParamValue(paramMatcher.group(1), series, volume, register, registerCounter, existingRegNumber, regDateTime));
-        }
-        paramMatcher.appendTail(result);
-
-        return result.toString();
-    }
-
-    private String lookupParamValue(String parameter, Series series, Volume volume, Register register, int registerCounter, String existingRegNumber, Date regDateTime) {
-        RegisterNumberPatternParams param = RegisterNumberPatternParams.getValidParam(parameter);
-        if (param == null) {
-            return "";
-        }
-        switch (param) {
-        case S:
-            return series.getSeriesIdentifier();
-        case T:
-            return volume.getVolumeMark();
-        case TA:
-            return DateFormatUtils.format(volume.getValidFrom(), "yy");
-        case DA:
-            return DateFormatUtils.format(regDateTime, "yy");
-        case TN:
-            return ""; // FIXME DLSeadist kui asjatoimik saab tehtud, peaks ka sellele asendus tekkima.
-        case DN:
-            if (existingRegNumber != null && !generateNewRegNumberInReregistration) {
-                RegNrHolder holder = new RegNrHolder(existingRegNumber);
-                return holder.getShortRegNrWithoutIndividualizingNr();
-            }
-            if (registerCounter == register.getCounter()) { // Increase if first time
-                register.setCounter(registerService.increaseCount(register.getId()));
-            }
-            String counter = Integer.toString(register.getCounter());
-            if (RegisterNumberPatternParams.getValidDigitParam(parameter) == null) {
-                return counter;
-            }
-            int numberOfDigits;
-            try {
-                numberOfDigits = Integer.valueOf(parameter.split("[A-Z]")[0]);
-            } catch (NumberFormatException nfe) {
-                return "";
-            }
-            if (numberOfDigits > counter.length()) {
-                return StringUtils.leftPad(counter, numberOfDigits, '0');
-            }
-            return StringUtils.right(counter, numberOfDigits); // trim left if needed
-        default:
-            return "";
-        }
+        };
+        return TextPatternUtil.getResult(pattern, paramValueLookup);
     }
 
     @Override

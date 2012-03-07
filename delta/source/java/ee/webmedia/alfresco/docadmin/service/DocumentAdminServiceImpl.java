@@ -758,6 +758,24 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
+    public boolean isFieldDefintionUsed(String fieldId) {
+        FieldDefinition fieldDefinition = getFieldDefinition(fieldId);
+        if (fieldDefinition == null) {
+            return false;
+        }
+        List<String> docTypes = fieldDefinition.getDocTypes();
+        if (docTypes != null) {
+            for (String docTypeId : docTypes) {
+                if (getDocumentTypeProperty(docTypeId, DocumentAdminModel.Props.USED, Boolean.class)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    @Override
     public boolean isCaseFileTypeUsed(String caseFileTypeId) {
         return false; // TODO CL_TASK 183635
     }
@@ -1286,7 +1304,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         }
 
         private <D> void processDocTypeAssocs(Map<String, DocumentType> docTypesCache, Map<String, Pair<List<FollowupAssociation>
-        , List<ReplyAssociation>>> imporableDocTypesById, int totalDocTypes) {
+                , List<ReplyAssociation>>> imporableDocTypesById, int totalDocTypes) {
             Map<String /* docTypeId */, Set<String> /* docTypeFields */> docTypeFieldsCache = new HashMap<String, Set<String>>();
             int i = 0;
             LOG.info("Starting to import associations of " + totalDocTypes + " document types");

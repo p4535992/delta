@@ -96,6 +96,9 @@
                   <h:graphicImage id="dialog-logo" url="#{DialogManager.icon}"
                      rendered="#{DialogManager.currentDialog.name ne 'showDocDetails'}" />
                   <h:outputText value="#{DialogManager.title}" />
+                  <a:actionLink value="Abiinfo" onclick="return popup('../../../help/dialog/#{DialogManager.currentDialog.name}')" image="/images/office/help.gif" showLink="false"
+                    style="position:relative;top:-4px;left:5px;width:16px;height:16px;background-size: 100% 100%;"
+                    rendered="#{applicationScope.helpText.dialog[DialogManager.currentDialog.name] != null}" />
                </h2>
             
             <a:panel id="description" rendered="#{DialogManager.currentDialog.name eq 'aboutDialog'}">
@@ -277,6 +280,9 @@
                   <h:graphicImage id="footer-dialog-logo" url="#{DialogManager.icon}"
                      rendered="#{DialogManager.currentDialog.name ne 'showDocDetails'}" />
                   <h:outputText value="#{DialogManager.title}" />
+                  <a:actionLink value="Abiinfo" onclick="return popup('../../../help/dialog/#{DialogManager.currentDialog.name}')" image="/images/office/help.gif" showLink="false"
+                    style="position:relative;top:-4px;left:5px;width:16px;height:16px;background-size: 100% 100%;"
+                    rendered="#{applicationScope.helpText.dialog[DialogManager.currentDialog.name] != null}" />
                </h2>
             
             <a:panel id="footer-description" rendered="#{DialogManager.currentDialog.name eq 'aboutDialog'}">

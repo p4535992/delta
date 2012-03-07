@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
@@ -61,6 +62,17 @@ public interface DocumentSearchService {
      * @return list of matching documents (max 100 entries)
      */
     List<Document> searchDocuments(Node filter);
+
+    /**
+     * Searches for documents using a search filter.
+     * Query must be exactly the same as in searchDocuments,
+     * but returns all documents (no limit for returned result rows)
+     * and for performance reasons only nodeRefs are returned.
+     * Ignore filter storeRefs and use parameter storeRef
+     * as we want to add checkpoints between queries to different stores
+     * outside this service.
+     */
+    List<NodeRef> searchDocumentsForReport(Node filter, StoreRef storeRef);
 
     /**
      * @return documents being sent but not delivered to ALL recipients
@@ -154,7 +166,7 @@ public interface DocumentSearchService {
 
     /**
      * Searches for tasks using a search filter.
-     * Query must be exactly same as in searchTasks,
+     * Query must be exactly the same as in searchTasks,
      * but returns all tasks (no limit for returned result rows)
      * and for performance reasons only nodeRefs are returned.
      */
@@ -281,5 +293,7 @@ public interface DocumentSearchService {
     int getDiscussionDocumentsCount();
 
     List<Document> searchDueContracts();
+
+    List<StoreRef> getStoresFromDocumentReportFilter(Map<String, Object> properties);
 
 }

@@ -77,7 +77,7 @@
         <show-property name="docTempl:templateType" display-label-id="template_templateType" read-only="true" converter="ee.webmedia.alfresco.template.web.DocumentTemplateTypeConverter" />
          <show-property name="docTempl:name" display-label-id="template_name" textId="templates_file_name"
          component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" propertiesSeparator="£" props="
-            {temp}fileNameBase¤¤forcedMandatory=true¤display-label-id=template_name¤
+            {temp}fileNameBase¤¤styleClass=focus¤forcedMandatory=true¤display-label-id=template_name¤
             £{temp}fileNameExtension¤¤styleClass=small¤disabled=true
             "
          />

@@ -7,18 +7,30 @@
 
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
+<%@ page import="ee.webmedia.alfresco.document.file.web.AddFileDialog"%>
+<%@ page import="org.alfresco.web.app.Application" %>
+
+<%
+   String webdavOpenMode = "webdav-" + (Application.getDialogManager().getBean() instanceof AddFileDialog? "readOnly": "open");
+%>
 
 <h:panelGroup id="files-panel-facets">
    <f:facet name="title">
-      <r:actions id="acts_add_content" value="addFileMenu" context="#{DocumentDialogHelperBean.node}" showLink="false"/>
+      <r:actions id="acts_add_content" value="addFileMenu" context="#{DocumentDialogHelperBean.node}" showLink="false" rendered="#{DialogManager.bean != AddFileDialog}" />
+   </f:facet>
+</h:panelGroup>
+<h:panelGroup id="inactive-files-panel-facets">
+   <f:facet name="title">
+      <r:actions id="acts_add_inactive_content" value="addInactiveFileMenu" context="#{DocumentDialogHelperBean.node}" showLink="false" rendered="#{DialogManager.bean != AddFileDialog}"/>
    </f:facet>
 </h:panelGroup>
 
-<a:panel label="#{msg.file_title} (#{FileBlockBean.activeFilesCount})" id="files-panel" facetsId="dialog:dialog-body:files-panel-facets" styleClass="panel-100" progressive="true">
+<a:panel label="#{msg.file_title} (#{FileBlockBean.activeFilesCount})" id="files-panel" facetsId="dialog:dialog-body:files-panel-facets" styleClass="panel-100" progressive="true"
+   expanded="<%=new Boolean(!(Application.getDialogManager().getBean() instanceof AddFileDialog)).toString() %>">
 
    <a:richList id="filelistList" viewMode="details" value="#{FileBlockBean.files}" var="r" rowStyleClass="recordSetRow"
       altRowStyleClass="recordSetRowAlt" width="100%" refreshOnBind="true">
-      
+
       <%-- Name with URL link column --%>
       <a:column id="col1" primary="true" rendered="#{r.activeAndNotDigiDoc}">
          <f:facet name="header">
@@ -28,7 +40,7 @@
             <h:panelGroup>
                <wm:docPermissionEvaluator id="col1-act1-eval-allow" value="#{r.node}" allow="viewDocumentFiles">
                   <a:actionLink id="col1-act1" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" image="#{r.fileType16}" showLink="false"
-                     styleClass="inlineAction webdav-open" />
+                     styleClass='<%="inlineAction " + webdavOpenMode %>' />
                </wm:docPermissionEvaluator>
                <wm:docPermissionEvaluator id="col1-act1-eval-deny" value="#{r.node}" deny="viewDocumentFiles">
                   <h:graphicImage id="col1-act1-deny" value="#{r.fileType16}" />
@@ -36,13 +48,13 @@
             </h:panelGroup>
          </f:facet>
          <wm:docPermissionEvaluator id="col1-act2-eval-allow" value="#{r.node}" allow="viewDocumentFiles">
-            <a:actionLink id="col1-act2" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" styleClass="webdav-open" />
+            <a:actionLink id="col1-act2" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" styleClass="<%=webdavOpenMode %>" />
          </wm:docPermissionEvaluator>
          <wm:docPermissionEvaluator id="col1-act2a-eval-deny" value="#{r.node}" deny="viewDocumentFiles">
             <h:outputText value="#{r.displayName}" />
          </wm:docPermissionEvaluator>
       </a:column>
-      
+
       <%-- Created By column --%>
       <a:column id="col2" rendered="#{r.activeAndNotDigiDoc}">
          <f:facet name="header">
@@ -50,7 +62,7 @@
          </f:facet>
          <h:outputText id="col2-txt" value="#{r.creator}" />
       </a:column>
-      
+
       <%-- Created Date column --%>
       <a:column id="col3" rendered="#{r.activeAndNotDigiDoc}">
          <f:facet name="header">
@@ -90,7 +102,7 @@
       </a:column>
 
       <%-- Remove and Version column --%>
-      <a:column id="col7" rendered="#{r.activeAndNotDigiDoc}">
+      <a:column id="col7" rendered="#{r.activeAndNotDigiDoc and DialogManager.bean != AddFileDialog}">
          <a:actionLink id="col7-act33" value="#{r.name}" actionListener="#{FileBlockBean.toggleActive}" showLink="false"
             image="/images/icons/document-convert.png" tooltip="#{msg.file_toggle_deactive} " rendered="#{FileBlockBean.toggleActive}">
             <f:param name="nodeRef" value="#{r.nodeRef}" />
@@ -120,7 +132,7 @@
             </a:actionLink>
          </wm:docPermissionEvaluator>         
       </a:column>
-      
+
       <a:column id="col1-ddoc" primary="true" rendered="#{r.activeDigiDoc}">
          <a:panel id="ddoc-inner-panel" styleClass="digidoc-panel">
             <h:dataTable id="ddocList" value="#{r.dataItems}" var="v">
@@ -182,7 +194,7 @@
 
 
 
-<a:panel label="#{msg.file_inactive_title} (#{FileBlockBean.notActiveFilesCount})" id="inactive-files-panel" styleClass="panel-100" progressive="true" expanded="false">
+<a:panel label="#{msg.file_inactive_title} (#{FileBlockBean.notActiveFilesCount})" id="inactive-files-panel" facetsId="dialog:dialog-body:inactive-files-panel-facets" styleClass="panel-100" progressive="true" expanded="false">
 
    <a:richList id="inactiveFilelistList" viewMode="details" value="#{FileBlockBean.files}" var="r" rowStyleClass="recordSetRow"
       altRowStyleClass="recordSetRowAlt" width="100%" refreshOnBind="true">
@@ -196,7 +208,7 @@
             <h:panelGroup>
                <wm:docPermissionEvaluator id="col21-act1-eval-allow" value="#{r.node}" allow="viewDocumentFiles">
                   <a:actionLink id="col21-act1" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" image="#{r.fileType16}" showLink="false"
-                     styleClass="inlineAction webdav-open" />
+                     styleClass='<%="inlineAction " + webdavOpenMode %>' />
                </wm:docPermissionEvaluator>
                <wm:docPermissionEvaluator id="col21-act1-eval-deny" value="#{r.node}" deny="viewDocumentFiles">
                   <h:graphicImage id="col21-act1-deny" value="#{r.fileType16}" />
@@ -204,7 +216,7 @@
             </h:panelGroup>
          </f:facet>
          <wm:docPermissionEvaluator id="col21-act2-eval-allow" value="#{r.node}" allow="viewDocumentFiles">
-            <a:actionLink id="col21-act2" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" styleClass="webdav-open" />
+            <a:actionLink id="col21-act2" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" styleClass="<%=webdavOpenMode %>" />
          </wm:docPermissionEvaluator>
          <wm:docPermissionEvaluator id="col21-act2-eval-deny" value="#{r.node}" deny="viewDocumentFiles">
             <h:outputText value="#{r.displayName}" />
@@ -218,7 +230,7 @@
          </f:facet>
          <h:outputText id="col22-txt" value="#{r.creator}" />
       </a:column>
-      
+
       <%-- Created Date column --%>
       <a:column id="col23" rendered="#{r.notActiveAndNotDigiDoc}">
          <f:facet name="header">
@@ -258,7 +270,7 @@
       </a:column>
 
       <%-- Remove and Version column --%>
-      <a:column id="col27" rendered="#{r.notActiveAndNotDigiDoc}">
+      <a:column id="col27" rendered="#{r.notActiveAndNotDigiDoc and DialogManager.bean != AddFileDialog}">
          <a:actionLink id="col27-act3" value="#{r.name}" actionListener="#{FileBlockBean.toggleActive}" showLink="false"
             image="/images/icons/document-convert.png" tooltip="#{msg.file_toggle_active}" rendered="#{FileBlockBean.toggleInActive}">
             <f:param name="nodeRef" value="#{r.nodeRef}" />
@@ -282,7 +294,7 @@
             </a:actionLink>
          </wm:docPermissionEvaluator>         
       </a:column>
-      
+
       <a:column id="col21-ddoc" primary="true" rendered="#{r.notActiveAndDigiDoc}">
          <a:panel id="ddoc-inner-panel" styleClass="digidoc-panel">
             <h:dataTable id="ddocList" value="#{r.dataItems}" var="v">

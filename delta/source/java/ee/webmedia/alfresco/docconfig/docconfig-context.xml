@@ -562,6 +562,7 @@
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
+            <ref bean="letterFieldsRemovableFromSystematicDocTypeFixBootstrap2" />
             <ref bean="systematicFieldDefinitionsBootstrap9" />
             <ref bean="systematicFieldGroupDefinitionsBootstrap8" />
          </list>
@@ -575,12 +576,33 @@
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
+            <ref bean="contactSystematicGroupAddFieldsUpdater" />
             <ref bean="systematicFieldDefinitionsBootstrap11" />
             <ref bean="systematicFieldGroupDefinitionsBootstrap1" />
          </list>
       </property>
       <property name="generalService" ref="GeneralService" />
       <property name="nodeService" ref="NodeService" />
+   </bean>     
+
+   <bean id="readonlyFieldsFixBootstrap" class="ee.webmedia.alfresco.docconfig.bootstrap.ReadonlyFieldsFixBootstrap" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="senderNameAndEmailGroupAddFieldsUpdater" />
+         </list>
+      </property>
+   </bean>     
+
+   <bean id="leaveCancelEndDateNameFixBootstrap" class="ee.webmedia.alfresco.docconfig.bootstrap.LeaveCancelEndDateNameFixBootstrap" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="readonlyFieldsFixBootstrap" />
+         </list>
+      </property>
    </bean>     
 
    <!-- fieldtype generators -->
@@ -602,7 +624,7 @@
       <property name="documentConfigService" ref="DocumentConfigService" />
    </bean>
 
-   <bean id="intGenerator" class="ee.webmedia.alfresco.docconfig.generator.fieldtype.IntGenerator">
+   <bean id="longGenerator" class="ee.webmedia.alfresco.docconfig.generator.fieldtype.LongGenerator">
       <property name="documentConfigService" ref="DocumentConfigService" />
    </bean>
 

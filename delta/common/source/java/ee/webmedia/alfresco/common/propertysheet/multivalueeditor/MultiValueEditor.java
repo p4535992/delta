@@ -15,8 +15,10 @@ import javax.faces.application.Application;
 import javax.faces.component.NamingContainer;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIComponentBase;
+import javax.faces.component.ValueHolder;
 import javax.faces.component.html.HtmlPanelGroup;
 import javax.faces.context.FacesContext;
+import javax.faces.convert.Converter;
 import javax.faces.el.MethodBinding;
 import javax.faces.el.ValueBinding;
 import javax.faces.event.AbortProcessingException;
@@ -29,6 +31,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.generator.BaseComponentGenerator;
+import org.alfresco.web.config.PropertySheetElementReader;
 import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
 import org.alfresco.web.ui.common.tag.GenericPickerTag;
@@ -39,6 +42,7 @@ import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.ajax.AjaxUpdateable;
 import ee.webmedia.alfresco.common.propertysheet.component.HandlesShowUnvalued;
+import ee.webmedia.alfresco.common.propertysheet.converter.ListNonBlankStringsWithCommaConverter;
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.ComponentPropVO;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.utils.ComponentUtil;
@@ -335,6 +339,16 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
             requestMap.put(VALUE_INDEX_IN_MULTIVALUED_PROPERTY, rowIndex);
             componentPropVO.getCustomAttributes().put(VALUE_INDEX_IN_MULTIVALUED_PROPERTY, rowIndex.toString());
             final UIComponent component = ComponentUtil.generateAndAddComponent(context, componentPropVO, propertySheet, rowContainerChildren);
+            if (StringUtils.isBlank(componentPropVO.getCustomAttributes().get(PropertySheetElementReader.ATTR_CONVERTER))
+                    && component instanceof ValueHolder) {
+                Converter converter = ((ValueHolder) component).getConverter();
+                // Retract only MultiValueConverter that was set in BaseComponentGenerator#setupConverter
+                if (converter instanceof ListNonBlankStringsWithCommaConverter) {
+                    Converter singleValueConverter = ((ListNonBlankStringsWithCommaConverter) converter).getSingleValueConverter();
+                    ((ValueHolder) component).setConverter(singleValueConverter);
+                }
+                // Some other converters that are not in componentPropVO#converter, are totally OK (like DatePickerConverter)
+            }
             // save valueIndex also to component, as it can be used in MandatoryIfValidator,
             // to find other UIInputs based on given property name and valueIndex(if component is multiValued)
             ComponentUtil.putAttribute(component, VALUE_INDEX_IN_MULTIVALUED_PROPERTY, rowIndex);

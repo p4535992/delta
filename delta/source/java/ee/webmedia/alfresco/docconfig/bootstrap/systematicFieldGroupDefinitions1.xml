@@ -26,6 +26,8 @@
          <docadmin:name>Dokumendi asukoht</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
+         <docadmin:readonlyFieldsNameChangeable>false</docadmin:readonlyFieldsNameChangeable>
+         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:removableFromSystematicDocType>false</docadmin:removableFromSystematicDocType>
          <docadmin:order>4</docadmin:order>
@@ -46,8 +48,6 @@
          <docadmin:name>Juurdepääsupiirang</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
-         <docadmin:readonlyFieldsNameChangeable>false</docadmin:readonlyFieldsNameChangeable>
-         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
          <docadmin:removableFromSystematicDocType>false</docadmin:removableFromSystematicDocType>
@@ -69,8 +69,6 @@
          <docadmin:name>Dokumendi/asjatoimiku vastutaja</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
-         <docadmin:readonlyFieldsName>Vastutaja</docadmin:readonlyFieldsName>
-         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:removableFromSystematicDocType>false</docadmin:removableFromSystematicDocType>
          <docadmin:order>2</docadmin:order>
@@ -198,8 +196,6 @@
       <view:properties>
          <docadmin:name>Allkirjastaja</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:readonlyFieldsName>Allkirjastaja</docadmin:readonlyFieldsName>
-         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:fieldDefinitionIds>
             <view:values>
@@ -219,8 +215,6 @@
       <view:properties>
          <docadmin:name>Saatja nimi ja e-post</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:readonlyFieldsName>Saatja</docadmin:readonlyFieldsName>
-         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
          <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
          <docadmin:fieldDefinitionIds>

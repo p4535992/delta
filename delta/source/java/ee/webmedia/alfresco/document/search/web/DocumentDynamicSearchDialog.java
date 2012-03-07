@@ -10,8 +10,11 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.faces.component.UIInput;
 import javax.faces.component.html.HtmlSelectManyListbox;
@@ -61,8 +64,8 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
             "complienceDate");
     public static final QName SELECTED_STORES = RepoUtil.createTransientProp("selectedStores");
 
-    private List<SelectItem> stores;
-    private DocumentConfig config;
+    protected List<SelectItem> stores;
+    protected DocumentConfig config;
 
     @Override
     public void init(Map<String, String> params) {
@@ -75,14 +78,17 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
                 stores.add(new SelectItem(archivalsStoreVO.getNodeRef(), archivalsStoreVO.getTitle()));
             }
         }
-
-        config = getDocumentConfigService().getSearchConfig();
+        loadConfig();
         getPropertySheetStateBean().reset(config.getStateHolders(), this);
         if (LOG.isDebugEnabled()) {
             LOG.debug("config=" + config);
         }
 
         loadAllFilters();
+    }
+
+    protected void loadConfig() {
+        config = getDocumentConfigService().getSearchConfig();
     }
 
     @Override
@@ -96,6 +102,32 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
     @Override
     public void restored() {
         getPropertySheetStateBean().reset(config.getStateHolders(), this);
+    }
+
+    @Override
+    public void selectedFilterValueChanged(ValueChangeEvent event) {
+        super.selectedFilterValueChanged(event);
+        NodeRef newValue = (NodeRef) event.getNewValue();
+        if (newValue != null) {
+            // remove saved filter properties that are not defined in config any more
+            Set<String> currentFilterPropNames = config.getPropertySheetConfigElement().getItems().keySet();
+            List<QName> removedProps = new ArrayList<QName>();
+            for (Iterator<Entry<String, Object>> i = filter.getProperties().entrySet().iterator(); i.hasNext();) {
+                Map.Entry<String, Object> entry = i.next();
+                QName savedProp = QName.createQName(entry.getKey());
+                if (RepoUtil.isSystemProperty(savedProp) || savedProp.getLocalName().contains("_")) {
+                    continue;
+                }
+                if (!currentFilterPropNames.contains(savedProp.toPrefixString(getNamespaceService()))) {
+                    removedProps.add(savedProp);
+                    i.remove();
+                }
+            }
+            // for removed properties, also remove checkbox properties
+            for (QName removedProp : removedProps) {
+                filter.getProperties().remove(removedProp.toString() + WMUIProperty.AFTER_LABEL_BOOLEAN);
+            }
+        }
     }
 
     @Override
@@ -144,20 +176,11 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
     protected Node getNewFilter() {
         long start = System.currentTimeMillis();
         try {
-            Map<QName, Serializable> data = new HashMap<QName, Serializable>();
-            data.put(DocumentSearchModel.Props.STORE, new ArrayList<Object>());
-            data.put(DocumentSearchModel.Props.DOCUMENT_TYPE, new ArrayList<Object>());
-            Map<QName, PropertyDefinition> propDefs = BeanHelper.getDictionaryService().getPropertyDefs(DocumentSearchModel.Types.FILTER);
-            for (Map.Entry<QName, PropertyDefinition> entry : propDefs.entrySet()) {
-                PropertyDefinition propDef = entry.getValue();
-                if (propDef.isMultiValued()) {
-                    data.put(entry.getKey(), new ArrayList<Object>());
-                }
-            }
-
-            TransientNode transientNode = new TransientNode(DocumentSearchModel.Types.FILTER, null, data);
+            Map<QName, Serializable> data = getMandatoryProps();
+            TransientNode transientNode = new TransientNode(getFilterType(), null, data);
             transientNode.getProperties().put(DocumentSearchModel.Props.DOCUMENT_TYPE.toString() + WMUIProperty.AFTER_LABEL_BOOLEAN, Boolean.TRUE);
             transientNode.getProperties().put(DocumentSearchModel.Props.SEND_MODE.toString() + WMUIProperty.AFTER_LABEL_BOOLEAN, Boolean.TRUE);
+            transientNode.getProperties().put(DocumentSearchModel.Props.DOCUMENT_CREATED.toString() + WMUIProperty.AFTER_LABEL_BOOLEAN, Boolean.TRUE);
             List<FieldDefinition> searchableFields = BeanHelper.getDocumentAdminService().getSearchableFieldDefinitions();
             for (FieldDefinition fieldDefinition : searchableFields) {
                 PropertyDefinition def = getDocumentConfigService().getPropertyDefinition(transientNode, fieldDefinition.getQName());
@@ -174,12 +197,46 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
         }
     }
 
+    protected Map<QName, Serializable> getMandatoryProps() {
+        Map<QName, Serializable> data = new HashMap<QName, Serializable>();
+        data.put(DocumentSearchModel.Props.STORE, new ArrayList<Object>());
+        data.put(DocumentSearchModel.Props.DOCUMENT_TYPE, new ArrayList<Object>());
+        Map<QName, PropertyDefinition> propDefs = BeanHelper.getDictionaryService().getPropertyDefs(getFilterType());
+        for (Map.Entry<QName, PropertyDefinition> entry : propDefs.entrySet()) {
+            PropertyDefinition propDef = entry.getValue();
+            if (propDef.isMultiValued()) {
+                data.put(entry.getKey(), new ArrayList<Object>());
+            }
+        }
+        return data;
+    }
+
+    @Override
+    public QName getFilterType() {
+        return DocumentSearchModel.Types.FILTER;
+    }
+
     @Override
     protected void reset() {
         super.reset();
         // searchOutput, stores doesn't need to be set to null, they never change
         getDocumentSearchBean().reset();
         getPropertySheetStateBean().reset(null, null);
+    }
+
+    @Override
+    public String getManageSavedBlockTitle() {
+        return MessageUtil.getMessage("document_search_saved_manage");
+    }
+
+    @Override
+    public String getSavedFilterSelectTitle() {
+        return MessageUtil.getMessage("document_search_saved");
+    }
+
+    @Override
+    public String getFilterPanelTitle() {
+        return MessageUtil.getMessage("document_search");
     }
 
     // GeneralSelectorGenerator 'selectionItems' method bindings

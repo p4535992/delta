@@ -103,4 +103,6 @@ public interface DocumentConfigService {
 
     PropertyDefinition getStaticOrDynamicPropertyDefinition(QName propName);
 
+    DocumentConfig getReportConfig();
+
 }

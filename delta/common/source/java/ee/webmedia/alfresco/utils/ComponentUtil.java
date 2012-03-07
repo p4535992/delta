@@ -27,6 +27,7 @@ import javax.faces.component.UISelectItem;
 import javax.faces.component.UIViewRoot;
 import javax.faces.component.ValueHolder;
 import javax.faces.component.html.HtmlCommandLink;
+import javax.faces.component.html.HtmlGraphicImage;
 import javax.faces.component.html.HtmlSelectManyListbox;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
@@ -50,6 +51,7 @@ import org.alfresco.web.bean.generator.BaseComponentGenerator;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.config.ActionsConfigElement.ActionDefinition;
+import org.alfresco.web.config.PropertySheetElementReader;
 import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.UIActionLink;
@@ -78,6 +80,7 @@ import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem;
 import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem.AddRemoveActionListener;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIPropertySheet;
+import ee.webmedia.alfresco.common.propertysheet.customchildrencontainer.CustomChildrenCreator;
 import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter;
 import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
 import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
@@ -86,6 +89,8 @@ import ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEdit
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.privilege.web.DocPermissionEvaluator;
 
 /**
  * Util methods for JSF components/component trees
@@ -893,9 +898,10 @@ public class ComponentUtil {
             children.add(component);
             return component;
         }
+        final Map<String, String> customAttributes = componentPropVO.getCustomAttributes();
         final String propName = componentPropVO.getPropertyName();
-
         final String label = componentPropVO.getPropertyLabel();
+
         PropertySheetItem fakeItem = new WMUIProperty() {
             @Override
             public String getName() {
@@ -911,9 +917,33 @@ public class ComponentUtil {
             public List<UIComponent> getChildren() {
                 return children;
             }
-        };
 
-        Map<String, String> customAttributes = componentPropVO.getCustomAttributes();
+            @Override
+            public String getComponentGenerator() {
+                return customAttributes.get(PropertySheetElementReader.ATTR_COMPONENT_GENERATOR);
+            }
+
+            @Override
+            public String getDisplayLabel() {
+                return customAttributes.get(PropertySheetElementReader.ATTR_DISPLAY_LABEL);
+            }
+
+            @Override
+            public String getConverter() {
+                return customAttributes.get(PropertySheetElementReader.ATTR_CONVERTER);
+            }
+
+            @Override
+            public boolean getIgnoreIfMissing() {
+                return Boolean.parseBoolean(customAttributes.get(PropertySheetElementReader.ATTR_IGNORE_IF_MISSING));
+            }
+
+            @Override
+            public boolean isReadOnly() {
+                return Boolean.parseBoolean(customAttributes.get(PropertySheetElementReader.ATTR_READ_ONLY));
+            }
+
+        };
         ((CustomAttributes) fakeItem).setCustomAttributes(customAttributes);
 
         UIComponent component = componentPropVO.getComponentGenerator(context).generateAndAdd(context, propertySheet, fakeItem);
@@ -1321,6 +1351,61 @@ public class ComponentUtil {
             }
         }
         return index;
+    }
+
+    public static CustomChildrenCreator getDocumentRowFileGenerator(final Application application) {
+        return new CustomChildrenCreator() {
+
+            @Override
+            public List<UIComponent> createChildren(List<Object> params) {
+                List<UIComponent> components = new ArrayList<UIComponent>();
+                if (params != null) {
+                    int fileCounter = 0;
+                    for (Object obj : params) {
+                        File file = (File) obj;
+                        final DocPermissionEvaluator evaluatorAllow = createEvaluator(application, fileCounter, "evalAllow-");
+                        evaluatorAllow.setAllow("viewDocumentFiles");
+
+                        String fileName = file.getDisplayName();
+                        String imageText = file.isDigiDocContainer() ? "/images/icons/ddoc_sign_small.gif" : "/images/icons/attachment.gif";
+
+                        final UIActionLink fileAllowLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
+                        fileAllowLink.setValue("");
+                        fileAllowLink.setTooltip(fileName);
+                        fileAllowLink.setShowLink(false);
+                        fileAllowLink.setHref(file.getDownloadUrl());
+                        fileAllowLink.setImage(imageText);
+                        fileAllowLink.setTarget("_blank");
+                        ComponentUtil.getAttributes(fileAllowLink).put("styleClass", "inlineAction webdav-readOnly");
+                        ComponentUtil.addChildren(evaluatorAllow, fileAllowLink);
+                        components.add(evaluatorAllow);
+
+                        final DocPermissionEvaluator evaluatorDeny = createEvaluator(application, fileCounter, "evalDeny-");
+                        evaluatorDeny.setDeny("viewDocumentFiles");
+
+                        final HtmlGraphicImage image = (HtmlGraphicImage) application.createComponent(HtmlGraphicImage.COMPONENT_TYPE);
+                        image.setValue(imageText);
+                        image.setId("doc-file-img-" + fileCounter);
+                        image.setTitle(fileName);
+                        image.setRendered(file != null);
+                        image.setAlt(fileName);
+
+                        ComponentUtil.addChildren(evaluatorDeny, image);
+                        components.add(evaluatorDeny);
+                        fileCounter++;
+                    }
+                }
+                return components;
+            }
+
+            private DocPermissionEvaluator createEvaluator(Application application, int fileCounter, String evalNamePrefix) {
+                final DocPermissionEvaluator evaluatorAllow = (DocPermissionEvaluator) application
+                        .createComponent("ee.webmedia.alfresco.privilege.web.DocPermissionEvaluator");
+                evaluatorAllow.setId(evalNamePrefix + fileCounter);
+                evaluatorAllow.setValueBinding("value", application.createValueBinding("#{r.files[" + fileCounter + "].node}"));
+                return evaluatorAllow;
+            }
+        };
     }
 
 }

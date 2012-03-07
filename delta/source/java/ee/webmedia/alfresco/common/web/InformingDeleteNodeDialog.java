@@ -76,4 +76,9 @@ public class InformingDeleteNodeDialog extends DeleteContentDialog {
     public String getContainerTitleMsgKey() {
         return containerTitleMsgKey;
     }
+
+    @Override
+    public String getContainerTitle() {
+        return MessageUtil.getMessage(getContainerTitleMsgKey());
+    }
 }

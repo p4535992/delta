@@ -166,8 +166,8 @@ public class MenuRenderer extends BaseRenderer {
                 UIComponent menuItem = item.createComponent(context, id + i, getUserService(), getWorkflowService(), getEinvoiceService(), getRsService());
                 if (menuItem != null) {
                     children.add(menuItem);
-                    i++;
                 }
+                i++;
             }
 
             for (Object o : children) {

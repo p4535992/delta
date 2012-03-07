@@ -4,6 +4,9 @@
 
          <dialog name="addFile" page="/WEB-INF/classes/ee/webmedia/alfresco/document/file/web/add-file-dialog.jsp" managed-bean="AddFileDialog" icon="/images/icons/add_content_large.gif"
             title-id="add_file_dialog_title" description-id="add_content_dialog_desc" />
+            
+         <dialog name="addInactiveFile" page="/WEB-INF/classes/ee/webmedia/alfresco/document/file/web/add-file-dialog.jsp" managed-bean="AddFileDialog" icon="/images/icons/add_content_large.gif"
+            title-id="add_inactive_file_dialog_title" description-id="add_content_dialog_desc" />
 
          <dialog name="deleteFile" page="/jsp/dialog/deleteConfirmMessage.jsp" managed-bean="DeleteFileDialog" icon="/images/icons/delete_large.gif" title-id="delete_file"
             description-id="delete_file_info" />
@@ -21,12 +24,25 @@
             </permissions>
             <label-id>file_add_file</label-id>
             <image>/images/icons/add_item.gif</image>
-            <action>dialog:addFile</action>
-            <action-listener>#{DocumentDialog.addFile}</action-listener>
+            <action-listener>#{DocumentDynamicDialog.addFile}</action-listener>
+         </action>
+         
+         <action id="addInactiveFile">
+            <evaluator>ee.webmedia.alfresco.document.file.web.AddFilesEvaluator</evaluator>
+            <permissions>
+               <permission allow="true">editDocument</permission>
+            </permissions>
+            <label-id>file_add_inactive_file</label-id>
+            <image>/images/icons/add_item.gif</image>
+            <action-listener>#{DocumentDynamicDialog.addInactiveFile}</action-listener>
          </action>
 
          <action-group id="addFileMenu">
             <action idref="addFile" />
+         </action-group>
+         
+         <action-group id="addInactiveFileMenu">
+            <action idref="addInactiveFile" />
          </action-group>
 
       </actions>

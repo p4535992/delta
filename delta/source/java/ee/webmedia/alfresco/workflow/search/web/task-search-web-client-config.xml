@@ -36,7 +36,7 @@
          <show-property name="tasksearch:ownerName" display-label-id="task_search_owner" component-generator="MultiValueEditorGenerator"
             pickerCallback="#{DialogManager.bean.executeOwnerSearch}" setterCallback="#{DialogManager.bean.processOwnerSearchResults}" dialogTitleId="task_search_owner_title"
             filters="#{DialogManager.bean.ownerSearchFilters}" showFilter="true" showHeaders="false" styleClass="task-search-with-filter add-person" editable="true" addLabelId="add" 
-            propsGeneration="tasksearch:ownerName¤¤styleClass=expand19-200" />
+            propsGeneration="tasksearch:ownerName¤¤styleClass=expand19-200 focus" />
          <show-property name="tasksearch:creatorName" display-label-id="task_search_creator" component-generator="SearchGenerator"
             pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{DialogManager.bean.processCreatorSearchResults}" dialogTitleId="users_search_title" />
          <show-property name="tasksearch:organizationName" display-label-id="task_search_organization" component-generator="SearchGenerator" editable="false" 

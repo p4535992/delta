@@ -209,8 +209,10 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
     @Override
     public String cancel() {
         resetState(false);
-        typeHandler.reset();
-        typeHandler = null;
+        if (typeHandler != null) {
+            typeHandler.reset();
+            typeHandler = null;
+        }
         return super.cancel();
     }
 

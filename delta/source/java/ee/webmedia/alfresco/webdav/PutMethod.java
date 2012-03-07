@@ -307,7 +307,7 @@ public class PutMethod extends WebDAVMethod {
                 FieldGroup group = (FieldGroup) parent;
                 String name = group.getName();
 
-                if (SystematicFieldGroupNames.RECIPIENTS.equals(name) || SystematicFieldGroupNames.ADDITIONAL_RECIPIENTS.equals(name)) {
+                if (group.isSystematic() && (SystematicFieldGroupNames.RECIPIENTS.equals(name) || SystematicFieldGroupNames.ADDITIONAL_RECIPIENTS.equals(name))) {
                     Serializable propValue = doc.getProp(field.getQName());
                     if (propDef.isMultiValued()) {
                         @SuppressWarnings("unchecked")

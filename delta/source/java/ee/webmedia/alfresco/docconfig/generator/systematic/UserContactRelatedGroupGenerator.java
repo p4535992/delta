@@ -241,11 +241,6 @@ public class UserContactRelatedGroupGenerator extends BaseSystematicFieldGenerat
         item.setSetterCallbackTakesNode(true);
         item.setAjaxParentLevel(1);
 
-        // And generate a separate view mode component
-        String viewModePropName = RepoUtil.createTransientProp(field.getFieldId() + "Label").toString();
-        ItemConfigVO viewModeItem = generatorResults.generateAndAddViewModeText(viewModePropName, group.getReadonlyFieldsName());
-        viewModeItem.setComponentGenerator("UnescapedOutputTextGenerator");
-
         Map<QName, UserContactMappingCode> mapping = userContactMappingService.getFieldIdsMappingOrNull(field);
         Assert.notNull(mapping);
         generatorResults.addStateHolder(stateHolderKey, new UserContactRelatedGroupState(mapping));
@@ -281,8 +276,8 @@ public class UserContactRelatedGroupGenerator extends BaseSystematicFieldGenerat
                 primaryFieldIndex = i;
             } else {
                 // if (mapping.get(child.getQName()) != null) {
-                Assert.isTrue(child.getFieldTypeEnum() == FieldType.TEXT_FIELD 
-                        || child.getFieldTypeEnum() == FieldType.STRUCT_UNIT 
+                Assert.isTrue(child.getFieldTypeEnum() == FieldType.TEXT_FIELD
+                        || child.getFieldTypeEnum() == FieldType.STRUCT_UNIT
                         || child.getFieldTypeEnum() == FieldType.CHECKBOX);
                 // }
             }

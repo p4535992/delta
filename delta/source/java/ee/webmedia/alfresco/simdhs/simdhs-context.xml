@@ -5,6 +5,7 @@
    <!-- Entry point to include other components -->
    <!-- Be sure to also include necessary JSF configuration files in web/WEB-INF/web.xml -->
    <import resource="classpath:ee/webmedia/alfresco/log/log-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/help/help-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/signature/signature-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/dvk/dvk-sim-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/addressbook/addressbook-context.xml" />

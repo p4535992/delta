@@ -25,5 +25,4 @@ public class ComboboxGenerator extends BaseTypeFieldGenerator {
             item.setClassificatorName(field.getClassificator());
         }
     }
-
 }

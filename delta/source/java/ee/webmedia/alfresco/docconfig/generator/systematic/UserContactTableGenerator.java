@@ -46,6 +46,7 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
+import ee.webmedia.alfresco.utils.RepoUtil;
 
 /**
  * @author Alar Kvell
@@ -247,6 +248,7 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
         }
 
         ItemConfigVO item = generatorResults.getAndAddPreGeneratedItem();
+        item.setName(RepoUtil.createTransientProp(field.getFieldId()).toString());
         // pickerCallback, showFilter, filters, dialogTitleId are set by UserContactGenerator
 
         // And we overwrite some other attributes set by UserContactGenerator

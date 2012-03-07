@@ -278,6 +278,11 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public NodeRef addFileToDocument(final String name, final String displayName, final NodeRef documentNodeRef, final NodeRef fileNodeRef) {
+        return addFileToDocument(name, displayName, documentNodeRef, fileNodeRef, true);
+    }
+
+    @Override
+    public NodeRef addFileToDocument(final String name, final String displayName, final NodeRef documentNodeRef, final NodeRef fileNodeRef, boolean active) {
         // Moving is executed with System user rights, because this is not appropriate to implement in permissions model
         NodeRef movedFileNodeRef = AuthenticationUtil.runAs(new RunAsWork<NodeRef>() {
             @Override
@@ -289,19 +294,30 @@ public class FileServiceImpl implements FileService {
                         ContentModel.ASSOC_CONTAINS, ContentModel.ASSOC_CONTAINS).getChildRef();
             }
         }, AuthenticationUtil.getSystemUserName());
+        nodeService.setProperty(fileNodeRef, FileModel.Props.ACTIVE, active);
         addFileToDocument(displayName, documentNodeRef, movedFileNodeRef);
         return movedFileNodeRef;
     }
 
     @Override
     public NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType) {
-        NodeRef fileNodeRef = addFile(name, displayName, documentNodeRef, file, mimeType);
+        return addFileToDocument(name, displayName, documentNodeRef, file, mimeType, true);
+    }
+
+    @Override
+    public NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType, boolean active) {
+        NodeRef fileNodeRef = addFile(name, displayName, documentNodeRef, file, mimeType, active);
         addFileToDocument(displayName, documentNodeRef, fileNodeRef);
         return fileNodeRef;
     }
 
     @Override
     public NodeRef addFile(String name, String displayName, NodeRef nodeRef, java.io.File file, String mimeType) {
+        return addFile(name, displayName, nodeRef, file, mimeType, true);
+    }
+
+    @Override
+    public NodeRef addFile(String name, String displayName, NodeRef nodeRef, java.io.File file, String mimeType, boolean active) {
         FileInfo fileInfo = fileFolderService.create(
                 nodeRef,
                 name,
@@ -310,6 +326,7 @@ public class FileServiceImpl implements FileService {
         ContentWriter writer = fileFolderService.getWriter(fileNodeRef);
         generalService.writeFile(writer, file, name, mimeType);
         nodeService.setProperty(fileNodeRef, FileModel.Props.DISPLAY_NAME, displayName);
+        nodeService.setProperty(fileNodeRef, FileModel.Props.ACTIVE, active);
 
         return fileNodeRef;
     }

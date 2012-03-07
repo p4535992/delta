@@ -23,7 +23,7 @@
 
    <config evaluator="node-type" condition="log:logFilter">
       <property-sheet>
-         <show-property name="log:logEntryId" display-label-id="applog_item_id" />
+         <show-property name="log:logEntryId" display-label-id="applog_item_id" styleClass="focus"/>
          <show-property name="log:dateCreatedStart" display-label-id="task_search_dueDateTime" component-generator="InlinePropertyGroupGenerator"
             props="log:dateCreatedStart||styleClass=date,log:dateCreatedStart_EndDate||styleClass=date,log:dateCreatedStart_DateRangePicker|EnumSelectorGenerator|disableSorting=true|styleClass=quickDateRangePicker|enumClass=ee.webmedia.alfresco.classificator.enums.DatePeriods" 
             textId="task_search_from_to_with_picker" />

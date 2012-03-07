@@ -16,12 +16,12 @@ import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.repo.component.property.UIProperty;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
-import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.InlinePropertyGroupGenerator;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.utils.ComponentUtil;
+import ee.webmedia.alfresco.utils.TextUtil;
 
 /**
  * Class that supports having custom attributes on property-sheet/show-property element, <br>
@@ -79,7 +79,7 @@ public class WMUIProperty extends UIProperty {
                             Node node = parent.getNode();
                             for (QName propName : inlinePropertyGroupPropNames) {
                                 Object value = node.getProperties().get(propName.toString());
-                                if (isValueOrListNotBlank(value)) {
+                                if (TextUtil.isValueOrListNotBlank(value)) {
                                     return super.isRendered();
                                 }
                             }
@@ -90,7 +90,7 @@ public class WMUIProperty extends UIProperty {
                             return false;
                         }
                         Object value = vb.getValue(getFacesContext());
-                        if (!isValueOrListNotBlank(value)) {
+                        if (!TextUtil.isValueOrListNotBlank(value)) {
                             return false;
                         }
                     }
@@ -98,33 +98,6 @@ public class WMUIProperty extends UIProperty {
             }
         }
         return super.isRendered();
-    }
-
-    private boolean isValueOrListNotBlank(Object value) {
-        if (value instanceof String) {
-            if (StringUtils.isNotBlank((String) value)) {
-                return true;
-            }
-        } else if (value instanceof List) {
-            @SuppressWarnings("unchecked")
-            List<Object> list = (List<Object>) value;
-            for (Object listValue : list) {
-                if (listValue instanceof String) {
-                    if (StringUtils.isNotBlank((String) listValue)) {
-                        return true;
-                    }
-                } else {
-                    if (listValue != null) {
-                        return true;
-                    }
-                }
-            }
-        } else {
-            if (value != null) {
-                return true;
-            }
-        }
-        return false;
     }
 
     @Override

@@ -167,7 +167,7 @@ public class FieldsListBean implements DialogBlockBean<Void> {
 
         Class<? extends DynamicType> dynTypeClass = getDynTypeClass();
         for (FieldDefinition fieldDef : fieldDefinitions) {
-            if (isDocTypeDetailsViewOrNonSystematicFielsGroup
+            if (dynTypeClass != null && isDocTypeDetailsViewOrNonSystematicFielsGroup
                     && (fieldDef.isOnlyInGroup() || fieldDef.isMandatoryForDynType(dynTypeClass) || fieldDef.isInapplicableForDynType(dynTypeClass))) {
                 continue;
             }
@@ -200,8 +200,7 @@ public class FieldsListBean implements DialogBlockBean<Void> {
         } else {
             dynTypeVer = (DocumentTypeVersion) metadataContainer;
         }
-        Class<? extends DynamicType> dynTypeClass = dynTypeVer.getParent().getClass();
-        return dynTypeClass;
+        return dynTypeVer != null && dynTypeVer.getParent() != null ? dynTypeVer.getParent().getClass() : null;
     }
 
     private Pair<List<String>, Boolean> getMissingFieldsOfSystematicFieldGroup() {

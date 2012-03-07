@@ -2,15 +2,18 @@ package ee.webmedia.alfresco.imap.web;
 
 import java.util.List;
 
+import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 
+import ee.webmedia.alfresco.common.propertysheet.customchildrencontainer.CustomChildrenCreator;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.file.web.Subfolder;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.web.BaseDocumentListDialog;
 import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
@@ -65,4 +68,7 @@ public abstract class AbstractEmailListDialog extends BaseDocumentListDialog imp
         return (documents != null && !documents.isEmpty()) || !isShowFolderList();
     }
 
+    public CustomChildrenCreator getDocumentRowFileGenerator() {
+        return ComponentUtil.getDocumentRowFileGenerator(FacesContext.getCurrentInstance().getApplication());
+    }
 }

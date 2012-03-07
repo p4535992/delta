@@ -58,7 +58,7 @@ import ee.webmedia.alfresco.utils.RepoUtil;
  */
 public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
 
-    private static final String VIEW_MODE_PROP_SUFFIX = "_view_mode";
+    private static final String VIEW_MODE_PROP_SUFFIX = "View";
     public static final String ACCESS_RESTRICTION_CHANGE_REASON_ERROR = "accessRestrictionChangeReasonError";
 
     public static final QName[] ACCESS_RESTRICTION_PROPS = {
@@ -140,12 +140,12 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
                 item.setShowInViewMode(false);
 
                 // same as edit mode item, only difference is template format text and validation not needed in view mode
-                ItemConfigVO viewModeItem = generatorResults.generateAndAddViewModeText(accessRestrictionBeginDateProp.getLocalName() + VIEW_MODE_PROP_SUFFIX, itemLabel);
+                ItemConfigVO viewModeItem = generatorResults.generateAndAddViewModeText(
+                        RepoUtil.createTransientProp(accessRestrictionBeginDateProp.getLocalName() + VIEW_MODE_PROP_SUFFIX).toString(), itemLabel);
                 viewModeItem.setRendered(getBindingName("renderAllAccessRestrictionFields", stateHolderKey));
                 components = DurationGenerator.generateDurationFields(field, viewModeItem, accessRestrictionBeginDateProp, accessRestrictionEndDateProp,
                         itemLabel,
                         namespaceService);
-                viewModeItem.setName(accessRestrictionBeginDateProp.getLocalName() + VIEW_MODE_PROP_SUFFIX);
                 viewModeItem.setOptionsSeparator(PropsBuilder.DEFAULT_OPTIONS_SEPARATOR);
                 viewModeItem.setProps(StringUtils.join(components, ','));
                 viewModeItem.setTextId("document_accessRestrictionDates_templateText");
@@ -189,7 +189,8 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
         public void reset(boolean inEditMode) {
             if (!inEditMode) {
                 final Node document = dialogDataProvider.getNode();
-                document.getProperties().put(accessRestrictionBeginDateProp.getLocalName() + VIEW_MODE_PROP_SUFFIX, document.getProperties().get(accessRestrictionBeginDateProp));
+                document.getProperties().put(RepoUtil.createTransientProp(accessRestrictionBeginDateProp.getLocalName() + VIEW_MODE_PROP_SUFFIX).toString(),
+                        document.getProperties().get(accessRestrictionBeginDateProp));
             }
         }
 
