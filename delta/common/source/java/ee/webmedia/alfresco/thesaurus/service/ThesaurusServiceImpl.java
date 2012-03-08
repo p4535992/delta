@@ -34,6 +34,7 @@ import ee.webmedia.alfresco.thesaurus.model.Thesaurus;
 import ee.webmedia.alfresco.thesaurus.model.ThesaurusModel;
 import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
 /**
@@ -58,7 +59,7 @@ public class ThesaurusServiceImpl implements ThesaurusService {
                                 , generateTypeQuery(DocumentAdminModel.Types.FIELD_DEFINITION)
                         )
                         , generatePropertyExactQuery(DocumentAdminModel.Props.THESAURUS, thesaurusName, false))
-        );
+                );
         return used;
     }
 
@@ -70,7 +71,7 @@ public class ThesaurusServiceImpl implements ThesaurusService {
 
         // If thesaurus is new, create the node first
         NodeRef thesaurusRef = thesaurus.getNodeRef();
-        if (thesaurusRef == null) {
+        if (RepoUtil.isUnsaved(thesaurusRef)) {
             thesaurusRef = createThesaurus(thesaurus);
         } else {
             nodeService.setProperty(thesaurusRef, ThesaurusModel.Prop.DESCRIPTION, StringUtils.trim(thesaurus.getDescription()));
@@ -102,7 +103,7 @@ public class ThesaurusServiceImpl implements ThesaurusService {
             props.put(ThesaurusModel.Prop.KEYWORD_LEVEL_2, StringUtils.trim(keyword.getKeywordLevel2()));
 
             NodeRef keywordRef = keyword.getNodeRef();
-            if (keywordRef == null) {
+            if (RepoUtil.isUnsaved(keywordRef)) {
                 nodeService.createNode(thesaurusRef, ThesaurusModel.Assoc.HIERARCHICAL_KEYWORD, ThesaurusModel.Assoc.HIERARCHICAL_KEYWORD,
                         ThesaurusModel.Types.HIERARCHICAL_KEYWORD, props);
                 keywordAdded = true;
@@ -166,7 +167,7 @@ public class ThesaurusServiceImpl implements ThesaurusService {
 
     @Override
     public List<HierarchicalKeyword> getThesaurusKeywords(NodeRef thesaurusNodeRef) {
-        if (thesaurusNodeRef == null) {
+        if (RepoUtil.isUnsaved(thesaurusNodeRef)) {
             return Collections.emptyList();
         }
 

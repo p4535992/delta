@@ -28,7 +28,7 @@
             <a:sortLink id="col2-sort" label="#{msg.report_userStartDateTime}" value="userStartDateTime" />
          </f:facet>
          <h:outputText id="col2-txt" value="#{r.userStartDateTime}" >
-            <a:convertXMLDate type="both" pattern="dd.MM.yyyy" />
+            <a:convertXMLDate type="both" pattern="dd.MM.yyyy HH:mm" />
          </h:outputText>
       </a:column>
       

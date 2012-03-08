@@ -20,14 +20,13 @@ import javax.faces.model.SelectItem;
 
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
-import ee.webmedia.alfresco.common.ajax.AjaxUpdateable;
-import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
-import ee.webmedia.alfresco.common.propertysheet.component.WMUIPropertySheet;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
+import ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditor;
 import ee.webmedia.alfresco.common.propertysheet.multivalueeditor.PropsBuilder;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.Field;
@@ -84,6 +83,8 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
 
         List<String> props = new ArrayList<String>();
         List<QName> propNames = new ArrayList<QName>();
+        QName firstKeywordLevelProp = null;
+        QName secondKeywordLevelProp = null;
         String stateHolderKey = field.getFieldId();
         String generatorName = GeneralSelectorGenerator.class.getSimpleName();
         for (Field child : group.getFields()) {
@@ -91,11 +92,12 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
             PropsBuilder generalSelectorGeneratorBuilder = new PropsBuilder(fieldId, generatorName);
             String originalFieldId = child.getOriginalFieldId();
             if (DocumentDynamicModel.Props.FIRST_KEYWORD_LEVEL.getLocalName().equals(originalFieldId)) {
+                firstKeywordLevelProp = fieldId;
                 generalSelectorGeneratorBuilder
                         .addProp(GeneralSelectorGenerator.ATTR_SELECTION_ITEMS, getBindingName("getFirstKeywordLevelSelectItems", stateHolderKey))
-                        .addProp(GeneralSelectorGenerator.ATTR_VALUE_CHANGE_LISTENER, getBindingName("firstKeywordLevelChanged", stateHolderKey))
-                        .addProp(AjaxUpdateable.AJAX_DISABLED_ATTR, "true");
+                        .addProp(GeneralSelectorGenerator.ATTR_VALUE_CHANGE_LISTENER, getBindingName("firstKeywordLevelChanged", stateHolderKey));
             } else if (DocumentDynamicModel.Props.SECOND_KEYWORD_LEVEL.getLocalName().equals(originalFieldId)) {
+                secondKeywordLevelProp = fieldId;
                 generalSelectorGeneratorBuilder.addProp(GeneralSelectorGenerator.ATTR_SELECTION_ITEMS, getBindingName("getSecondKeywordLevelSelectItems", stateHolderKey));
             } else {
                 throw new RuntimeException("Unknown field in keywords group: " + originalFieldId);
@@ -105,14 +107,12 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
         }
 
         ItemConfigVO item = generatorResults.getAndAddPreGeneratedItem();
-        // TODO when allowing multiple occurences of this group (183445), then enable this
-        // item.setName(RepoUtil.createTransientProp(field.getFieldId()).toString());
+        item.setName(RepoUtil.createTransientProp(field.getFieldId()).toString());
         item.setComponentGenerator("MultiValueEditorGenerator");
         item.setStyleClass("add-item");
 
         item.setDisplayLabel(group.getReadonlyFieldsName());
         item.setAddLabelId("keywords_add_keyword");
-        item.setInitialRows(1);
 
         item.setShowInViewMode(false);
         item.setPropsGeneration(StringUtils.join(props, ","));
@@ -122,7 +122,7 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
         ItemConfigVO viewModeItem = generatorResults.generateAndAddViewModeText(viewModePropName, group.getReadonlyFieldsName());
         viewModeItem.setComponentGenerator("UnescapedOutputTextGenerator");
 
-        generatorResults.addStateHolder(stateHolderKey, new KeywordsTableState(propNames, viewModePropName, group.getThesaurus()));
+        generatorResults.addStateHolder(stateHolderKey, new KeywordsTableState(propNames, firstKeywordLevelProp, secondKeywordLevelProp, viewModePropName, group.getThesaurus()));
     }
 
     // ===============================================================================================================================
@@ -131,12 +131,16 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
         private static final long serialVersionUID = 1L;
 
         private final List<QName> propNames;
+        private final QName firstKeywordLevelProp;
+        private final QName secondKeywordLevelProp;
         private final String viewModePropName;
         private final String thesaurusName;
-        private Map<String/* level1Keywords */, List<String>/* level3Keywords */> hirearchy;
+        private Map<String/* level1Keywords */, List<String>/* level2Keywords */> hirearchy;
 
-        public KeywordsTableState(List<QName> propNames, String viewModePropName, String thesaurusName) {
+        public KeywordsTableState(List<QName> propNames, QName firstKeywordLevelProp, QName secondKeywordLevelProp, String viewModePropName, String thesaurusName) {
             this.propNames = propNames;
+            this.firstKeywordLevelProp = firstKeywordLevelProp;
+            this.secondKeywordLevelProp = secondKeywordLevelProp;
             this.viewModePropName = viewModePropName;
             this.thesaurusName = thesaurusName;
             Assert.notNull(thesaurusName, "thesaurusName shouldn't bee null for systematic fields group keywords");
@@ -190,25 +194,50 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
 
         private String getFirstLevelKeyword(FacesContext context, UIInput selectComponent) {
             ValueBinding secondLevelVB = selectComponent.getValueBinding("value");
-            String firstLevelVBExpr = StringUtils.replace(secondLevelVB.getExpressionString(), DocumentDynamicModel.Props.SECOND_KEYWORD_LEVEL.toString(),
-                    DocumentDynamicModel.Props.FIRST_KEYWORD_LEVEL.toString());
+            String firstLevelVBExpr = StringUtils.replace(secondLevelVB.getExpressionString(), secondKeywordLevelProp.toString(),
+                    firstKeywordLevelProp.toString());
             ValueBinding vb = context.getApplication().createValueBinding(firstLevelVBExpr);
             String firstLevelKeyword = (String) vb.getValue(context);
             return firstLevelKeyword;
         }
 
-        public void firstKeywordLevelChanged(ValueChangeEvent e) {
-            UIComponent firstLevelComponent = e.getComponent();
-            WMUIPropertySheet comp = ComponentUtil.getAncestorComponent(firstLevelComponent, WMUIPropertySheet.class, true);
-            // clear children of keywordsGroupProperty so that component for SECOND_KEYWORD_LEVEL would be re-rendered with new selectItems,
-            // but do clearing child components after model values are updated, so that changes in secondKeywordLevel column wouldn't be lost -
-            // for example if you had at least two rows, and before changing FIRST_KEYWORD_LEVEL of first row you changed SECOND_KEYWORD_LEVEL of other row
-            ComponentUtil.executeLater(PhaseId.UPDATE_MODEL_VALUES, comp, new Closure<UIComponent>() {
+        private ValueBinding getSecondLevelKeywordVb(FacesContext context, UIInput selectComponent) {
+            ValueBinding firstLevelVB = selectComponent.getValueBinding("value");
+            String secondLevelVBExpr = StringUtils.replace(firstLevelVB.getExpressionString(), firstKeywordLevelProp.toString(),
+                    secondKeywordLevelProp.toString());
+            ValueBinding vb = context.getApplication().createValueBinding(secondLevelVBExpr);
+            return vb;
+        }
+
+        public void firstKeywordLevelChanged(ValueChangeEvent event) {
+            // For information: if one or more rows are added to MultiValueEditor via add button
+            // and then a value is changed on a row that was _previously existing_ (not added),
+            // then this changed event is called on:
+            // 1) the component whose value was changed
+            // 2) on every added row's component also
+            if (event.getOldValue() == null) {
+                // We don't need to handle 2) events
+                // And these 2) events would also produce errors if add + remove on the just added row are clicked,
+                // because vb.setValue below would try to access list index that was already removed by MultiValueEditor
+                return;
+            }
+
+            final UIInput firstLevelComponent = (UIInput) event.getComponent();
+            final MultiValueEditor multiValueEditor = ComponentUtil.getAncestorComponent(firstLevelComponent, MultiValueEditor.class, true);
+
+            // Execute at the end of UPDATE_MODEL_VALUES phase, because during this phase node properties are set from user submitted data.
+            // Queue executeLater event on propertySheet, because it supports handling ActionEvents.
+            // Find propertySheet from component's hierarchy, do NOT use dialogDataProvider#getPropertySheet,
+            // because this AJAX submit is executed only on MultiValueEditor and thus PropertySheet binding to DocumentDynamicDialog has not been updated.
+            UIPropertySheet propertySheet = ComponentUtil.getAncestorComponent(multiValueEditor, UIPropertySheet.class, true);
+            ComponentUtil.executeLater(PhaseId.UPDATE_MODEL_VALUES, propertySheet, new Closure<UIComponent>() {
                 @Override
                 public void exec(UIComponent nill) {
-                    WMUIProperty keywordsGroupProperty = ComponentUtil.getPropSheetItem(dialogDataProvider.getPropertySheet()
-                            , WMUIProperty.class, DocumentDynamicModel.Props.FIRST_KEYWORD_LEVEL);
-                    keywordsGroupProperty.getChildren().clear();
+                    multiValueEditor.getChildren().clear();
+
+                    FacesContext context = FacesContext.getCurrentInstance();
+                    ValueBinding vb = getSecondLevelKeywordVb(context, firstLevelComponent);
+                    vb.setValue(context, null);
                 }
             });
         }

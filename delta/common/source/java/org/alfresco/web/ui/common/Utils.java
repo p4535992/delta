@@ -827,12 +827,7 @@ public final class Utils extends StringUtils
       context.addMessage(null, facesMsg);
       if (err != null)
       {
-         if ((err instanceof InvalidNodeRefException == false &&
-              err instanceof AccessDeniedException == false &&
-              err instanceof NoTransformerException == false) || logger.isDebugEnabled())
-         {
-            logger.error(msg, err);
-         }
+         logger.error(msg, err);
       }
    }
    

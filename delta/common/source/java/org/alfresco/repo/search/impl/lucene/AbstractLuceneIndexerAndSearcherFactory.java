@@ -1557,7 +1557,7 @@ public abstract class AbstractLuceneIndexerAndSearcherFactory implements LuceneI
         }
 
         public void executeInternal(LuceneIndexBackupComponent backupComponent) {
-            final LuceneIndexerAndSearcher indexerAndSearcher = BeanHelper.getSpringBean(LuceneIndexerAndSearcher.class, "admLuceneIndexerAndSearcherFactory");
+/*            final LuceneIndexerAndSearcher indexerAndSearcher = BeanHelper.getSpringBean(LuceneIndexerAndSearcher.class, "admLuceneIndexerAndSearcherFactory");
             RetryingTransactionHelper txHelper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
             List<StoreRef> stores = BeanHelper.getNodeService().getStores();
             for (final StoreRef storeRef : stores) {
@@ -1578,7 +1578,7 @@ public abstract class AbstractLuceneIndexerAndSearcherFactory implements LuceneI
                 } catch (Exception e) {
                     logger.error("Error running special merge on store " + storeRef + ", continuing with next store (if available)", e);
                 }
-            }
+            }*/
             // perform the backup
             logger.info("Starting lucene index backup");
             backupComponent.backup();

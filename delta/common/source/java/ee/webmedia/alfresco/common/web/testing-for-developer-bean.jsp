@@ -100,6 +100,13 @@
 <h:commandButton id="updateOrganisationStructureBasedGroups" value="updateOrganisationStructureBasedGroups" type="submit"
    actionListener="#{OrganizationStructureService.updateOrganisationStructureBasedGroups}" rendered="#{ApplicationService.test}" />
 <f:verbatim><br/></f:verbatim>
+<h:outputText id="reportGenerationTitle" value="Aruannete genereerimine: " />
+<h:outputText id="reportGenerationStatus" value=" Selles klastri õlas aruannete genereerimine ei jookse." rendered="#{!ReportListDialog.reportGenerationEnabled}" />
+<h:commandButton id="pauseReportGeneration" value="Peata aruannete genereerimine" type="submit"
+   actionListener="#{ReportListDialog.pauseReportGeneration}" rendered="#{ReportListDialog.showPauseReportGeneration}" />
+<h:commandButton id="continueReportGeneration" value="Jätka aruannete genereerimist" type="submit"
+   actionListener="#{ReportListDialog.continueReportGeneration}" rendered="#{ReportListDialog.showContinueReportGeneration}" />
+<f:verbatim><br/></f:verbatim>
 
 <f:verbatim><hr/></f:verbatim>
 

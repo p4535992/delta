@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.report.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getReportService;
+
 import java.util.List;
 import java.util.Map;
 
@@ -64,6 +66,29 @@ public class ReportListDialog extends BaseDialogBean {
         BeanHelper.getReportService().markReportDownloaded(reportResultNodeRef);
         reload();
     }
+
+    // BEGIN Methods for generally pausing/continuing report generation from nodeBrowser
+    public boolean isReportGenerationEnabled() {
+        return getReportService().isReportGenerationEnabled();
+    }
+
+    public boolean isShowPauseReportGeneration() {
+        return isReportGenerationEnabled() && !getReportService().isReportGenerationPaused();
+    }
+
+    public boolean isShowContinueReportGeneration() {
+        return isReportGenerationEnabled() && getReportService().isReportGenerationPaused();
+    }
+
+    public void pauseReportGeneration(ActionEvent event) {
+        getReportService().setReportGenerationPaused(true);
+    }
+
+    public void continueReportGeneration(ActionEvent event) {
+        getReportService().setReportGenerationPaused(false);
+    }
+
+    // END Methods for generally pausing/continuing report generation from nodeBrowser
 
     @Override
     public String cancel() {

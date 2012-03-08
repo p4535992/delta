@@ -53,4 +53,15 @@ public interface ReportService {
 
     void deleteReportResult(NodeRef reportResultRef);
 
+    boolean isReportGenerationEnabled();
+
+    boolean isReportGenerationPaused();
+
+    void setReportGenerationPaused(boolean reportGenerationPaused);
+
+    /**
+     * Calls Thread.sleep while reportGenerationPaused=true.
+     */
+    void doPauseReportGeneration();
+
 }

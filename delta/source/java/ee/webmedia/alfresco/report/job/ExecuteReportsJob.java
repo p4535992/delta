@@ -55,8 +55,7 @@ public class ExecuteReportsJob implements StatefulJob {
             }
         }, new NullComparator());
         while (true) {
-            // TODO: Riina - add check if report generation has been globally paused (CL task 178352)
-
+            reportService.doPauseReportGeneration();
             // retrieve all reports with status IN_QUEUE (read-only transaction)
             List<Node> reports = retryingTransactionHelper.doInTransaction(getAllExecutableReportsCallback, true, true);
             if (reports.isEmpty()) {

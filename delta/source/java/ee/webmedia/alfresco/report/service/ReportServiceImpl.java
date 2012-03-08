@@ -88,6 +88,12 @@ public class ReportServiceImpl implements ReportService {
     private FileService fileService;
     private TransactionService transactionService;
     private SendOutService sendOutService;
+    /**
+     * NB! Kui rakendus jookseb klastris, siis praegu eeldatakse, et aruannete genereerimine jookseb ainult ühes klastri õlas
+     * ja ka genereerimise peatamine on võimalik ainult selles õlas.
+     */
+    private boolean reportGenerationEnabled;
+    private boolean reportGenerationPaused;
 
     @Override
     public NodeRef createReportResult(Node filter, TemplateReportType reportType, QName parentToChildAssoc) {
@@ -146,6 +152,7 @@ public class ReportServiceImpl implements ReportService {
             List<NodeRef> documentRefs = new ArrayList<NodeRef>();
             long lastStatusCheckTime = System.currentTimeMillis();
             for (StoreRef storeRef : documentSearchService.getStoresFromDocumentReportFilter(filter.getProperties())) {
+                doPauseReportGeneration();
                 long currentTime = System.currentTimeMillis();
                 if (currentTime - lastStatusCheckTime > STATUS_CHECK_INTERVAL) {
                     if (isReportStopped(reportDataCollector, reportResultRef)) {
@@ -180,6 +187,17 @@ public class ReportServiceImpl implements ReportService {
             // report of unknown type or creating report file not implemented
             reportDataCollector.setResultStatus(ReportStatus.FAILED);
             return reportDataCollector;
+        }
+    }
+
+    @Override
+    public void doPauseReportGeneration() {
+        while (reportGenerationPaused) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+
+            }
         }
     }
 
@@ -225,6 +243,7 @@ public class ReportServiceImpl implements ReportService {
             RowProvider rowProvider = new RowProvider(sheet, rowNr);
             ReportStatus resultStatus = ReportStatus.FINISHED;
             for (NodeRef nodeRef : nodeRefs) {
+                doPauseReportGeneration();
                 long currentTime = System.currentTimeMillis();
                 if (currentTime - lastStatusCheckTime > STATUS_CHECK_INTERVAL) {
                     if (isReportStopped(reportDataCollector, reportResultNodeRef)) {
@@ -863,6 +882,21 @@ public class ReportServiceImpl implements ReportService {
         return new Pair<Integer, Integer>(cellIndex, notMandatoryCellIndex);
     }
 
+    @Override
+    public boolean isReportGenerationEnabled() {
+        return reportGenerationEnabled;
+    }
+
+    @Override
+    public boolean isReportGenerationPaused() {
+        return reportGenerationPaused;
+    }
+
+    @Override
+    public void setReportGenerationPaused(boolean reportGenerationPaused) {
+        this.reportGenerationPaused = reportGenerationPaused;
+    }
+
     public void setDocumentSearchService(DocumentSearchService documentSearchService) {
         this.documentSearchService = documentSearchService;
     }
@@ -909,6 +943,10 @@ public class ReportServiceImpl implements ReportService {
 
     public void setSendOutService(SendOutService sendOutService) {
         this.sendOutService = sendOutService;
+    }
+
+    public void setReportGenerationEnabled(boolean reportGenerationEnabled) {
+        this.reportGenerationEnabled = reportGenerationEnabled;
     }
 
 }

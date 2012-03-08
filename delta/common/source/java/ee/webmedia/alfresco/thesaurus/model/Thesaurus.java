@@ -37,6 +37,7 @@ public class Thesaurus implements Serializable, Comparable<Thesaurus> {
 
     public Thesaurus() {
         // Default constructor
+        nodeRef = RepoUtil.createNewUnsavedNodeRef();
     }
 
     public Thesaurus(NodeRef nodeRef, String name, String description) {
