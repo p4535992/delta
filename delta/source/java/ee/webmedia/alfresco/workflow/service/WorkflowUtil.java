@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 import javax.faces.component.UIComponent;
@@ -20,6 +21,7 @@ import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
+import ee.webmedia.alfresco.workflow.web.TaskGroup;
 
 /**
  * @author Alar Kvell
@@ -621,4 +623,18 @@ public class WorkflowUtil {
         return component.getParent().getClientId(context) + "_action";
     }
 
+    public static boolean isTaskRowEditable(boolean responsible, boolean fullAccess, Task task, String taskStatus) {
+        return fullAccess && Status.NEW.equals(taskStatus)
+                && (!responsible || Boolean.TRUE.equals(task.getNode().getProperties().get(WorkflowSpecificModel.Props.ACTIVE)));
+    }
+
+    public static void setGroupTasksDueDates(TaskGroup taskGroup, List<Task> tasks) {
+        Date dueDate = taskGroup.getDueDate();
+        for (Integer taskId : taskGroup.getTaskIds()) {
+            Task task = tasks.get(taskId);
+            if (isTaskRowEditable(taskGroup.isResponsible(), taskGroup.isFullAccess(), task, task.getStatus())) {
+                task.setDueDate(dueDate);
+            }
+        }
+    }
 }

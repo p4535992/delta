@@ -47,7 +47,6 @@ public class SearchRenderer extends BaseRenderer {
 
     @Override
     public void decode(FacesContext context, UIComponent component) {
-        @SuppressWarnings("unchecked")
         Map<String, String> requestMap = context.getExternalContext().getRequestParameterMap();
         String value = requestMap.get(getActionId(context, component));
 
@@ -66,7 +65,6 @@ public class SearchRenderer extends BaseRenderer {
             action = value;
         }
 
-        @SuppressWarnings("unchecked")
         Map<String, Object> attributes = component.getAttributes();
         if (action.equals(REMOVE_ROW_ACTION)) {
             component.queueEvent(new SearchRemoveEvent(component, index));
@@ -104,7 +102,6 @@ public class SearchRenderer extends BaseRenderer {
         HtmlPanelGroup list = null;
         UIGenericPicker picker = null;
 
-        @SuppressWarnings("unchecked")
         List<UIComponent> children = component.getChildren();
         for (int i = 0; i < children.size(); i++) {
             UIComponent child = children.get(i);
@@ -159,7 +156,6 @@ public class SearchRenderer extends BaseRenderer {
         }
         out.write("\" cellpadding=\"0\" cellspacing=\"0\"><tbody>");
 
-        @SuppressWarnings("unchecked")
         List<UIComponent> children = list.getChildren();
         for (int i = 0; i < children.size(); i++) {
             UIComponent child = children.get(i);
@@ -172,7 +168,9 @@ public class SearchRenderer extends BaseRenderer {
             Utils.encodeRecursive(context, child);
             renderExtraInfo(search, out);
             out.write("</td><td>");
-            renderPicker(context, out, search, picker, i);
+            if (search.isEditable()) {
+                renderPicker(context, out, search, picker, i);
+            }
             if (isRemoveLinkRendered(search)) {
                 renderRemoveLink(context, out, search, i);
             }
@@ -180,7 +178,7 @@ public class SearchRenderer extends BaseRenderer {
         }
         out.write("</tbody></table>");
 
-        if (children.isEmpty()) {
+        if (children.isEmpty() || !search.isEditable()) {
             renderPicker(context, out, search, picker, -1);
         }
         renderAddLink(context, search, out);
@@ -189,7 +187,6 @@ public class SearchRenderer extends BaseRenderer {
     private void renderSingleValued(FacesContext context, ResponseWriter out, Search search, HtmlPanelGroup list, UIGenericPicker picker) throws IOException {
         out.write("<table class=\"recipient inline\" cellpadding=\"0\" cellspacing=\"0\"><tbody><tr>");
 
-        @SuppressWarnings("unchecked")
         List<UIComponent> children = list.getChildren();
         for (int i = 0; i < children.size(); i++) {
             UIComponent child = children.get(i);
@@ -201,7 +198,7 @@ public class SearchRenderer extends BaseRenderer {
             setInputStyleClass(child, search);
             Utils.encodeRecursive(context, child);
             if (hasSearchSuggest(search)) {
-                ComponentUtil.generateSuggestScript(context, child, (String) search.getAttributes().get(Search.PICKER_CALLBACK_KEY), out);
+                out.write(ComponentUtil.generateSuggestScript(context, child, (String) search.getAttributes().get(Search.PICKER_CALLBACK_KEY)));
             }
             renderExtraInfo(search, out);
             out.write("</td>");
@@ -228,10 +225,8 @@ public class SearchRenderer extends BaseRenderer {
     }
 
     private void setInputStyleClass(UIComponent child, Search search) {
-        @SuppressWarnings("unchecked")
         Map<String, Object> searchAttributes = search.getAttributes();
         if (child instanceof UIInput && searchAttributes.containsKey(Search.STYLE_CLASS_KEY)) {
-            @SuppressWarnings("unchecked")
             Map<String, Object> childAttributes = child.getAttributes();
             childAttributes.put(Search.STYLE_CLASS_KEY, searchAttributes.get(Search.STYLE_CLASS_KEY));
         }
@@ -261,7 +256,6 @@ public class SearchRenderer extends BaseRenderer {
             return;
         }
 
-        @SuppressWarnings("unchecked")
         final Map<String, Object> attributes = search.getAttributes();
         String addLabelId = (String) attributes.get(MultiValueEditor.ADD_LABEL_ID);
         if (StringUtils.isBlank(addLabelId)) {
@@ -332,7 +326,6 @@ public class SearchRenderer extends BaseRenderer {
         out.write("\">");
         out.write(Application.getMessage(context, CLOSE_WINDOW_MSG));
         out.write("</a></p></div><div class=\"modalpopup-content\"><div class=\"modalpopup-content-inner");
-        @SuppressWarnings("unchecked")
         Map<String, Object> searchAttributes = search.getAttributes();
         if (searchAttributes.containsKey(Search.STYLE_CLASS_KEY)) {
             out.write(" ");
@@ -340,8 +333,7 @@ public class SearchRenderer extends BaseRenderer {
         }
         out.write("\">");
 
-        @SuppressWarnings("unchecked")
-        Map<Object, Object> attributes = picker.getAttributes();
+        Map<String, Object> attributes = picker.getAttributes();
         attributes.put(Search.PICKER_CALLBACK_KEY, search.getAttributes().get(Search.PICKER_CALLBACK_KEY));
         Utils.encodeRecursive(context, picker);
 

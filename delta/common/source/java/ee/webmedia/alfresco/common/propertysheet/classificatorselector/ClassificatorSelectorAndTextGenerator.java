@@ -131,8 +131,7 @@ public class ClassificatorSelectorAndTextGenerator extends TextAreaGenerator {
             ComponentUtil.putAttribute(selectComponent, LabelAndValueSelectorRenderer.ATTR_DESCRIPTION_AS_TOOLTIP, Boolean.TRUE);
         }
 
-        @SuppressWarnings("unchecked")
-        List<UISelectItem> selectOptions = selectComponent.getChildren();
+        List<UIComponent> selectOptions = selectComponent.getChildren();
 
         String classificatorName = getClassificatorName();
         if (StringUtils.isBlank(classificatorName)) {

@@ -559,7 +559,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
             Comparator<FieldDefinition> byNameComparator = new TransformingComparator(new ComparableTransformer<FieldDefinition>() {
                 @Override
                 public Comparable<?> tr(FieldDefinition input) {
-                    return input.getName();
+                    return input.getName().toLowerCase();
                 }
             });
             Collections.sort(fd, byNameComparator);
@@ -752,8 +752,8 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                         joinQueryPartsAnd(
                                 generateTypeQuery(DocumentCommonModel.Types.DOCUMENT)
                                 , generateAspectQuery(DocumentCommonModel.Aspects.SEARCHABLE)
-                                )
-                                , generatePropertyExactQuery(Props.OBJECT_TYPE_ID, documentTypeId, false))
+                        )
+                        , generatePropertyExactQuery(Props.OBJECT_TYPE_ID, documentTypeId, false))
                 );
     }
 

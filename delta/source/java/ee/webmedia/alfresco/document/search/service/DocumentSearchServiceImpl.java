@@ -118,6 +118,7 @@ import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
+import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
 /**
@@ -817,11 +818,27 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     public List<NodeRef> searchTasksForReport(Node filter) {
         long startTime = System.currentTimeMillis();
         String query = generateTaskSearchQuery(filter);
+        if (query == null) {
+            query = generateAllTaskTypesQuery();
+        }
         List<NodeRef> results = searchNodes(query, -1, /* queryName */"searchTasksForReport");
         if (log.isDebugEnabled()) {
             log.debug("Tasks search total time " + (System.currentTimeMillis() - startTime) + " ms");
         }
         return results;
+    }
+
+    private String generateAllTaskTypesQuery() {
+        Map<QName, WorkflowType> workflowTypes = workflowService.getWorkflowTypes();
+        List<QName> taskTypes = new ArrayList<QName>(workflowTypes.size());
+        for (WorkflowType workflowType : workflowTypes.values()) {
+            QName taskType = workflowType.getTaskType();
+            if (taskType != null) {
+                taskTypes.add(taskType);
+            }
+
+        }
+        return generateTypeQuery(taskTypes);
     }
 
     private void addSubstitutionRestriction(List<String> queryParts) {

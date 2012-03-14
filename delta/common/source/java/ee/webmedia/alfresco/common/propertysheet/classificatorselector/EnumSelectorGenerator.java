@@ -78,7 +78,7 @@ public class EnumSelectorGenerator extends GeneralSelectorGenerator implements H
     }
 
     @Override
-    protected List<UISelectItem> initializeSelectionItems(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item,
+    protected List<UIComponent> initializeSelectionItems(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item,
             PropertyDefinition propertyDef, UIInput component, Object boundValue, boolean multiValued) {
         ValueBinding vb = component.getValueBinding("value");
         if (boundValue == null && multiValued) {
@@ -90,7 +90,7 @@ public class EnumSelectorGenerator extends GeneralSelectorGenerator implements H
             return null;
         }
         Class<? extends Enum<?>> en = EnumConverter.getEnumClass(enumClassName);
-        List<UISelectItem> selectOptions = new ArrayList<UISelectItem>();
+        List<UIComponent> selectOptions = new ArrayList<UIComponent>();
         for (Enum<?> c : en.getEnumConstants()) {
             UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
             selectItem.setItemLabel(MessageUtil.getMessage(c));

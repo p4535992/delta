@@ -10,7 +10,7 @@
 <a:panel id="report-list-panel" styleClass="panel-100 with-pager" label="#{msg.report_executed_reports}" progressive="true">
 
    <a:richList id="reportsList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      width="100%" value="#{ReportListDialog.reportResults}" refreshOnBind="true" var="r" initialSortColumn="userStartDateTime" styleClass="with-pager">
+      width="100%" value="#{ReportListDialog.reportResults}" refreshOnBind="true" var="r" initialSortColumn="userStartDateTime" initialSortDescending="true" styleClass="with-pager">
       
       <a:column id="col1" >
          <f:facet name="header">
@@ -23,7 +23,7 @@
          <h:outputText id="col1-txt1" value="#{r.reportName}" rendered="#{!r.showDownloadLink}" />
       </a:column>
 
-      <a:column id="col2" primary="true">
+      <a:column id="col2">
          <f:facet name="header">
             <a:sortLink id="col2-sort" label="#{msg.report_userStartDateTime}" value="userStartDateTime" />
          </f:facet>

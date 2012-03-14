@@ -21,9 +21,6 @@ public class UserContactGenerator extends BaseTypeFieldGenerator {
 
     // TODO fix autocomplete!
 
-    // TODO in view mode, display as "value1, value2, ...", currently displayed as "[value1, value2, ...]" - use converter?
-    // -- implement in 3.3, because adding GeneratorsWrapper interface to Search component could break things
-
     @Override
     public void generateField(Field field, GeneratorResults generatorResults) {
         final ItemConfigVO item = generatorResults.getAndAddPreGeneratedItem();

@@ -2,16 +2,18 @@ package ee.webmedia.alfresco.document.type.model;
 
 import org.alfresco.service.namespace.QName;
 
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
+
 /**
  * @author Alar Kvell
  */
 public interface DocumentTypeModel {
-    String URI = "http://alfresco.webmedia.ee/model/documenttype/1.0";
+    String URI = DocumentAdminModel.URI;
     String PREFIX = "doctype:";
 
     public interface Repo {
         String DOCUMENT_TYPES_PARENT = "/";
-        String DOCUMENT_TYPES_SPACE = DOCUMENT_TYPES_PARENT + PREFIX + "documentTypes";
+        String DOCUMENT_TYPES_SPACE = DOCUMENT_TYPES_PARENT + DocumentAdminModel.PREFIX + "documentTypes";
     }
 
     // TODO DLSeadist remove this model and package and use docadmin instead

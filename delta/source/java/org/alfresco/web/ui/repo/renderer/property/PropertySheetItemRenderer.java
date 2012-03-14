@@ -26,17 +26,17 @@ package org.alfresco.web.ui.repo.renderer.property;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
-import javax.servlet.ServletContext;
 
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.renderer.BaseRenderer;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.apache.commons.lang.StringUtils;
+
+import ee.webmedia.alfresco.help.web.HelpTextUtil;
 
 /**
  * Renderer for a PropertySheetItem component
@@ -71,7 +71,7 @@ public void encodeBegin(FacesContext context, UIComponent component) throws IOEx
       }
       
       ResponseWriter out = context.getResponseWriter();
-      
+
       // make sure there are 2 or 3 child components
       int count = component.getChildCount();
       
@@ -90,17 +90,12 @@ public void encodeBegin(FacesContext context, UIComponent component) throws IOEx
          // encode the label
          Utils.encodeRecursive(context, label);
 
-         ServletContext servletContext = (ServletContext) FacesContext.getCurrentInstance().getExternalContext().getContext();
-         Map<String, Map<String, Boolean>> helpTexts = (Map<String, Map<String, Boolean>>) servletContext.getAttribute("helpText");
+         // Field help:
          String property = StringUtils.substringAfter(((PropertySheetItem) component).getName(), ":");
-         if (helpTexts != null && helpTexts.get("field") != null && Boolean.TRUE.equals(helpTexts.get("field").get(property))) {
-           out.write("<span>&nbsp;&nbsp;&nbsp;&nbsp;<img src=\"");
-           out.write(context.getExternalContext().getRequestContextPath());
-           out.write("/images/icons/Help.gif\" alt=\"Abiinfo\" title=\"Abiinfo\" onclick=\"popup('");
-           out.write(servletContext.getContextPath());
-           out.write("/help/field/");
-           out.write(property);
-           out.write("')\" style=\"cursor:pointer\"/></span>");
+         if (HelpTextUtil.hasHelpText(context, HelpTextUtil.TYPE_FIELD, property)) {
+             out.write("<span>&nbsp;&nbsp;&nbsp;&nbsp;");
+             HelpTextUtil.writeHelpTextLink(out, context, HelpTextUtil.TYPE_FIELD, property);
+             out.write("</span>");
          }
 
          // encode the control

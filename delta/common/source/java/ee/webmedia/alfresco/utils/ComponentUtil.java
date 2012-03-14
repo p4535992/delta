@@ -17,7 +17,6 @@ import java.util.Set;
 
 import javax.faces.FacesException;
 import javax.faces.application.Application;
-import javax.faces.component.NamingContainer;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIForm;
 import javax.faces.component.UIInput;
@@ -105,19 +104,22 @@ public class ComponentUtil {
     private static GeneralService generalService;
     public static final String DEFAULT_SELECT_VALUE = "";
 
-    private static final Comparator<UISelectItem> BY_LABEL_COMPARATOR;
+    private static final Comparator<UIComponent> BY_LABEL_COMPARATOR;
     static {
         @SuppressWarnings("unchecked")
-        Comparator<UISelectItem> byLabelComparator = new TransformingComparator(new ComparableTransformer<UISelectItem>() {
+        Comparator<UIComponent> byLabelComparator = new TransformingComparator(new ComparableTransformer<UIComponent>() {
             @Override
-            public Comparable<?> tr(UISelectItem input) {
-                return input.getItemLabel();
+            public Comparable<?> tr(UIComponent input) {
+                if (input instanceof UISelectItem) {
+                    return ((UISelectItem) input).getItemLabel();
+                }
+                return null;
             }
         }, new NullComparator());
         BY_LABEL_COMPARATOR = byLabelComparator;
     }
 
-    public static void sortByLabel(List<UISelectItem> selectOptions) {
+    public static void sortByLabel(List<UIComponent> selectOptions) {
         Collections.sort(selectOptions, BY_LABEL_COMPARATOR);
     }
 
@@ -285,13 +287,11 @@ public class ComponentUtil {
         return componentChildren;
     }
 
-    @SuppressWarnings("unchecked")
     public static List<UIComponent> getChildren(UIComponent component) {
         return component.getChildren();
     }
 
     public static Map<String, UIComponent> addFacet(UIComponent component, String facetName, UIComponent facet) {
-        @SuppressWarnings("unchecked")
         final Map<String, UIComponent> facets = component.getFacets();
         facets.put(facetName, facet);
         return facets;
@@ -821,9 +821,9 @@ public class ComponentUtil {
      * @param out
      * @throws IOException
      */
-    public static void generateSuggestScript(FacesContext context, UIComponent child, String pickerCallback, ResponseWriter out) throws IOException {
+    public static String generateSuggestScript(FacesContext context, UIComponent child, String pickerCallback) {
         if (!(child instanceof UIInput) || StringUtils.isBlank(pickerCallback) || isComponentDisabledOrReadOnly(child)) {
-            return;
+            return "";
         }
 
         String clientId = child.getClientId(context);
@@ -866,7 +866,7 @@ public class ComponentUtil {
                 .append(pickerCallback).append(sep)
                 .append(submitUri).append("\");");
         sb.append("</script>");
-        out.write(sb.toString());
+        return sb.toString();
     }
 
     public static void setAjaxDisabled(UIComponent component) {
@@ -1076,9 +1076,11 @@ public class ComponentUtil {
     public static UIComponent findComponentById(FacesContext context, UIComponent root, String id) {
         UIComponent component = null;
 
-        for (int i = 0; i < root.getChildCount() && component == null; i++) {
-            UIComponent child = (UIComponent) root.getChildren().get(i);
+        for (UIComponent child : getChildren(root)) {
             component = findComponentById(context, child, id);
+            if (component != null) {
+                break;
+            }
         }
 
         if (root.getId() != null) {
@@ -1100,17 +1102,13 @@ public class ComponentUtil {
         if (clientId.equals(component.getClientId(context))) {
             return component;
         }
-        // dialog:dialog-body:testSearchFieldDef:picker_testSearchFieldDef
-        String[] namedPath = clientId.split(String.valueOf(NamingContainer.SEPARATOR_CHAR));
-        for (int i = 0; i < component.getChildCount(); i++) {
-            UIComponent child = (UIComponent) component.getChildren().get(i);
+        for (UIComponent child : getChildren(component)) {
             UIComponent result = findChildComponentById(context, child, clientId, includeFacets);
             if (result != null) {
                 return result;
             }
         }
         if (includeFacets) {
-            @SuppressWarnings("unchecked")
             Collection<UIComponent> facetComponents = component.getFacets().values();
             for (UIComponent facet : facetComponents) {
                 UIComponent result = findChildComponentById(context, facet, clientId, true);
@@ -1127,8 +1125,7 @@ public class ComponentUtil {
         if (component == null) {
             return null;
         }
-        for (int i = 0; i < component.getChildCount(); i++) {
-            UIComponent child = (UIComponent) component.getChildren().get(i);
+        for (UIComponent child : getChildren(component)) {
             List<T> results2 = findChildComponentsByClass(context, child, clazz);
             if (results2 != null) {
                 if (results == null) {

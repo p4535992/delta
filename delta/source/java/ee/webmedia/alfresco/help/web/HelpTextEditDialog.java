@@ -1,6 +1,12 @@
 package ee.webmedia.alfresco.help.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentTypeService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getHelpTextService;
+import static ee.webmedia.alfresco.help.web.HelpTextUtil.TYPE_DIALOG;
+import static ee.webmedia.alfresco.help.web.HelpTextUtil.TYPE_DOCUMENT_TYPE;
+import static ee.webmedia.alfresco.help.web.HelpTextUtil.TYPE_FIELD;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,9 +28,12 @@ import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
 import org.alfresco.web.config.DialogsConfigElement;
 import org.alfresco.web.config.DialogsConfigElement.DialogConfig;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.BeanNameAware;
 
-import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
+import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
+import ee.webmedia.alfresco.document.type.model.DocumentType;
 import ee.webmedia.alfresco.help.model.HelpTextModel;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
@@ -40,13 +49,11 @@ public class HelpTextEditDialog extends BaseDialogBean implements BeanNameAware 
 
     private static final long serialVersionUID = 1L;
 
-    public static final String TYPE_DIALOG = "Dialog";
-
-    public static final String TYPE_DOC_TYPE = "DocumentType";
-
-    public static final String TYPE_FIELD = "Field";
-
     public static final String BEAN_NAME_SUFFIX = "HelpTextEditDialog";
+
+    private static final String PROP_CODE = HelpTextModel.Props.CODE.toString();
+
+    private static final String PROP_NAME = HelpTextModel.Props.NAME.toString();
 
     private String dialogMode;
 
@@ -54,9 +61,9 @@ public class HelpTextEditDialog extends BaseDialogBean implements BeanNameAware 
 
     @Override
     public void setBeanName(String beanName) {
-        dialogMode = beanName.substring(0, beanName.length() - BEAN_NAME_SUFFIX.length());
+        dialogMode = StringUtils.uncapitalize(beanName.substring(0, beanName.length() - BEAN_NAME_SUFFIX.length()));
 
-        if (!TYPE_DIALOG.equals(dialogMode) && !TYPE_DOC_TYPE.equals(dialogMode) && !TYPE_FIELD.equals(dialogMode)) {
+        if (!TYPE_DIALOG.equals(dialogMode) && !TYPE_DOCUMENT_TYPE.equals(dialogMode) && !TYPE_FIELD.equals(dialogMode)) {
             throw new IllegalStateException("Invalid dialog mode: " + dialogMode);
         }
     }
@@ -67,9 +74,15 @@ public class HelpTextEditDialog extends BaseDialogBean implements BeanNameAware 
     }
 
     public void init(NodeRef helpTextRef) {
-        helpText = BeanHelper.getGeneralService().fetchNode(helpTextRef);
-        helpText.getProperties().put(getCodeEditProp().toString(), helpText.getProperties().get(HelpTextModel.Props.CODE));
-        WebUtil.navigateTo("dialog:" + dialogMode + HelpTextEditDialog.BEAN_NAME_SUFFIX);
+        helpText = getGeneralService().fetchNode(helpTextRef);
+
+        if (TYPE_DIALOG.equals(dialogMode)) {
+            helpText.getProperties().put(getCodeEditProp().toString(), helpText.getProperties().get(PROP_CODE) + ";" + helpText.getProperties().get(PROP_NAME));
+        } else {
+            helpText.getProperties().put(getCodeEditProp().toString(), helpText.getProperties().get(PROP_NAME));
+        }
+
+        WebUtil.navigateTo("dialog:" + dialogMode + BEAN_NAME_SUFFIX);
     }
 
     @SuppressWarnings({ "unused", "unchecked" })
@@ -88,7 +101,7 @@ public class HelpTextEditDialog extends BaseDialogBean implements BeanNameAware 
                 String title = dialogConf.getTitleId() != null ? MessageUtil.getMessage(dialogConf.getTitleId()) : dialogConf.getTitle();
                 if (title != null) {
                     String label = new StringBuilder(title).append(" (").append(dialogConf.getManagedBean()).append(')').toString();
-                    result.add(new SelectItem(dialogConf.getName(), label));
+                    result.add(new SelectItem(dialogConf.getName() + ";" + title, label));
                 }
             }
         }
@@ -97,23 +110,50 @@ public class HelpTextEditDialog extends BaseDialogBean implements BeanNameAware 
         return result;
     }
 
+    public void processFieldSearchResults(String fieldCode) {
+        FieldDefinition fieldDefinition = getDocumentAdminService().getFieldDefinition(fieldCode);
+        String fieldName = fieldDefinition != null ? fieldDefinition.getName() : fieldCode;
+        helpText.getProperties().put(PROP_CODE, fieldCode);
+        helpText.getProperties().put(PROP_NAME, fieldName);
+        helpText.getProperties().put(getCodeEditProp().toString(), fieldName);
+    }
+
+    public void processDocumentTypeSearchResults(String docTypeCode) {
+        DocumentType docType = getDocumentTypeService().getDocumentType(QName.createQName(DocumentAdminModel.URI, docTypeCode));
+        String docTypeName = docType != null ? docType.getName() : docTypeCode;
+        helpText.getProperties().put(PROP_CODE, docTypeCode);
+        helpText.getProperties().put(PROP_NAME, docTypeName);
+        helpText.getProperties().put(getCodeEditProp().toString(), docTypeName);
+    }
+
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
-        String code = (String) helpText.getProperties().get(getCodeEditProp());
+        String code = (String) helpText.getProperties().get(PROP_CODE.toString());
+        String name = (String) helpText.getProperties().get(PROP_NAME.toString());
+
+        if (TYPE_DIALOG.equals(dialogMode)) {
+            code = (String) helpText.getProperties().get(getCodeEditProp());
+            name = StringUtils.substringAfter(code, ";");
+            code = StringUtils.substringBefore(code, ";");
+            helpText.getProperties().put(PROP_CODE, code);
+            helpText.getProperties().put(PROP_NAME, name);
+        }
 
         if (helpText instanceof TransientNode) {
             String content = (String) helpText.getProperties().get(HelpTextModel.Props.CONTENT.toString());
+            NodeRef helpRef = null;
 
             if (TYPE_DIALOG.equals(dialogMode)) {
-                getHelpTextService().addDialogHelp(code, content);
-            } else if (TYPE_DOC_TYPE.equals(dialogMode)) {
-                getHelpTextService().addDocumentTypeHelp(code, content);
+                helpRef = getHelpTextService().addDialogHelp(code, content).getNodeRef();
+            } else if (TYPE_DOCUMENT_TYPE.equals(dialogMode)) {
+                helpRef = getHelpTextService().addDocumentTypeHelp(code, content).getNodeRef();
             } else if (TYPE_FIELD.equals(dialogMode)) {
-                getHelpTextService().addFieldHelp(code, content);
+                helpRef = getHelpTextService().addFieldHelp(code, content).getNodeRef();
             }
+
+            getNodeService().setProperty(helpRef, HelpTextModel.Props.NAME, name);
             MessageUtil.addInfoMessage("help_text_info_added");
         } else {
-            helpText.getProperties().put(HelpTextModel.Props.CODE.toString(), code);
             getHelpTextService().editHelp(helpText);
             MessageUtil.addInfoMessage("help_text_info_saved");
         }
@@ -133,7 +173,7 @@ public class HelpTextEditDialog extends BaseDialogBean implements BeanNameAware 
     }
 
     private QName getCodeEditProp() {
-        return QName.createQName(HelpTextModel.URI, HelpTextModel.Props.CODE.getLocalName() + dialogMode);
+        return QName.createQName(HelpTextModel.URI, HelpTextModel.Props.CODE.getLocalName() + StringUtils.capitalize(dialogMode));
     }
 
     private static class SelectItemComparator implements Comparator<SelectItem> {

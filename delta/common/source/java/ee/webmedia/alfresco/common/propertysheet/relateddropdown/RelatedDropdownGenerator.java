@@ -5,7 +5,6 @@ import java.util.Map;
 
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIInput;
-import javax.faces.component.UISelectItem;
 import javax.faces.component.html.HtmlSelectManyListbox;
 import javax.faces.component.html.HtmlSelectOneMenu;
 import javax.faces.context.FacesContext;
@@ -49,7 +48,7 @@ public class RelatedDropdownGenerator extends GeneralSelectorGenerator {
     }
 
     @Override
-    protected List<UISelectItem> initializeSelectionItems(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item,
+    protected List<UIComponent> initializeSelectionItems(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item,
             PropertyDefinition propertyDef, UIInput selectComponent, Object boundValue, boolean multiValued) {
 
         String initMethodBindingName = getInitialSelectionItems();

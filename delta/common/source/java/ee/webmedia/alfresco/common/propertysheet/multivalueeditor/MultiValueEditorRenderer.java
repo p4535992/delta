@@ -28,6 +28,7 @@ import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.propertysheet.search.SearchRenderer;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
+import ee.webmedia.alfresco.help.web.HelpTextUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
@@ -117,6 +118,13 @@ public class MultiValueEditorRenderer extends BaseRenderer {
             for (ComponentPropVO propVO : propVOs) {
                 out.write("<th>");
                 out.writeText(propVO.getPropertyLabel(), null);
+
+                // Field help:
+                String property = StringUtils.substringAfter(propVO.getPropertyName(), ":");
+                if (HelpTextUtil.hasHelpText(context, HelpTextUtil.TYPE_FIELD, property)) {
+                    out.write("&nbsp;");
+                    HelpTextUtil.writeHelpTextLink(out, context, HelpTextUtil.TYPE_FIELD, property);
+                }
                 out.write("</th>");
             }
             out.write("</tr></thead>");
@@ -197,7 +205,7 @@ public class MultiValueEditorRenderer extends BaseRenderer {
                     }
                     Utils.encodeRecursive(context, column);
                     if (hasSearchSuggest(multiValueEditor, column)) {
-                        ComponentUtil.generateSuggestScript(context, column, (String) multiValueEditor.getAttributes().get(Search.PICKER_CALLBACK_KEY), out);
+                        out.write(ComponentUtil.generateSuggestScript(context, column, (String) multiValueEditor.getAttributes().get(Search.PICKER_CALLBACK_KEY)));
                     }
                     out.write("</td>");
                     columnCount++;

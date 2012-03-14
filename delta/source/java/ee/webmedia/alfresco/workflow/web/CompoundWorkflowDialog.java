@@ -19,7 +19,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import javax.faces.component.UIComponent;
 import javax.faces.component.UIInput;
+import javax.faces.component.html.HtmlSelectOneMenu;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 import javax.faces.model.SelectItem;
@@ -68,6 +70,7 @@ import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageData;
 import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -602,17 +605,35 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         Task task = block.getTasks().get(taskIndex);
         Integer dueDateDays = task.getDueDateDays();
         if (dueDateDays != null) {
-            LocalDate newDueDate = DatePickerWithDueDateGenerator.calculateDueDate(task.getPropBoolean(WorkflowSpecificModel.Props.IS_DUE_DATE_WORKING_DAYS), dueDateDays);
-            LocalTime newTime;
-            Date existingDueDate = task.getDueDate();
-            if (existingDueDate != null) {
-                newTime = new LocalTime(existingDueDate.getHours(), existingDueDate.getMinutes());
-            } else {
-                newTime = new LocalTime(23, 59);
-            }
-            task.setDueDate(newDueDate.toDateTime(newTime).toDate());
+            task.setDueDate(getNewDueDate(task.getPropBoolean(WorkflowSpecificModel.Props.IS_DUE_DATE_WORKING_DAYS), dueDateDays, task.getDueDate()));
         }
-        updatePanelGroup();
+    }
+
+    public void calculateTaskGroupDueDate(ActionEvent event) {
+        String selectorId = ActionUtil.getParam(event, "selector");
+        int wfIndex = ActionUtil.getParam(event, WF_INDEX, Integer.class);
+
+        UIComponent selector = ComponentUtil.findComponentById(FacesContext.getCurrentInstance(), event.getComponent().getParent(), selectorId);
+        List value = (List) ((HtmlSelectOneMenu) selector).getValue();
+
+        TaskGroup taskGroup = findTaskGroup(event);
+        Date existingDueDate = taskGroup.getDueDate();
+        taskGroup.setDueDate(getNewDueDate((Boolean) value.get(1), (Integer) value.get(0), existingDueDate));
+
+        // Set the due dates according to the group
+        WorkflowUtil.setGroupTasksDueDates(taskGroup, getWorkflow().getWorkflows().get(wfIndex).getTasks());
+    }
+
+    private Date getNewDueDate(Boolean isWorkingDays, Integer dueDateDays, Date existingDueDate) {
+        LocalDate newDueDate = DatePickerWithDueDateGenerator.calculateDueDate(isWorkingDays, dueDateDays);
+        LocalTime newTime;
+        if (existingDueDate != null) {
+            newTime = new LocalTime(existingDueDate.getHours(), existingDueDate.getMinutes());
+        } else {
+            newTime = new LocalTime(23, 59);
+        }
+
+        return newDueDate.toDateTime(newTime).toDate();
     }
 
     @Override

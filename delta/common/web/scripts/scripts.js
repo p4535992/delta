@@ -137,24 +137,24 @@ function zIndexWorkaround(context)
 }
 
 function fixIEDropdownMinWidth(container, items, context) {
-	if(isIE(7)) {
-		var max = 0;
-		var ul = $jQ(container, context);
-		ul.css('visibility', 'hidden').css('display', 'block');
-		$jQ(items, context).each(function() {
-			var li = $jQ(this);
-			if(li.outerWidth() > max) {
-				max = li.outerWidth();
-			}
-		}).each(function() {
-			$jQ(this).css('min-width', max+'px');
-		});
-		ul.css('display', 'none').css('visibility', 'visible');
-	}
+   if(isIE(7)) {
+      var max = 0;
+      var ul = $jQ(container, context);
+      ul.css('visibility', 'hidden').css('display', 'block');
+      $jQ(items, context).each(function() {
+         var li = $jQ(this);
+         if(li.outerWidth() > max) {
+            max = li.outerWidth();
+         }
+      }).each(function() {
+         $jQ(this).css('min-width', max+'px');
+      });
+      ul.css('display', 'none').css('visibility', 'visible');
+   }
 }
 
 function fixIESelectMinWidth(context) {
-	if(isIE(7)) {
+   if(isIE(7)) {
       if (context) {
          if (!$jQ(context).parents().is('#container-content')) {
             return;
@@ -447,9 +447,9 @@ function addSearchSuggest(clientId, containerClientId, pickerCallback, submitUri
 
       suggest.bind("autoComplete", function(e, data) {
          ajaxSubmit(clientId, containerClientId, [], submitUri, {'data' : data.newVal});
-      	if (autoCompleteCallback) {
-      	   autoCompleteCallback.call(data.newVal);
-      	}
+         if (autoCompleteCallback) {
+            autoCompleteCallback.call(data.newVal);
+         }
       });
       jQInput.focus(function() {
          jQInput.keydown();
@@ -585,18 +585,18 @@ var openModalContent = null;
 var titlebarIndex = null;
 
 function showModal(target, height){
-	target = escapeId4JQ(target);
-	if ($jQ("#overlay").length == 0) {
-		$jQ("#" + target).before("<div id='overlay'></div>");
-	}
-	if(isIE(7)) {
-		titlebarIndex = $jQ("#titlebar").css("z-index");
-		$jQ("#titlebar").css("z-index", "-1");
-	}
-	if (openModalContent != null){
-		$jQ("#" + openModalContent).hide();
-	}
-	openModalContent = target;
+   target = escapeId4JQ(target);
+   if ($jQ("#overlay").length == 0) {
+      $jQ("#" + target).before("<div id='overlay'></div>");
+   }
+   if(isIE(7)) {
+      titlebarIndex = $jQ("#titlebar").css("z-index");
+      $jQ("#titlebar").css("z-index", "-1");
+   }
+   if (openModalContent != null){
+      $jQ("#" + openModalContent).hide();
+   }
+   openModalContent = target;
 
    $jQ("#overlay").css("display","block");
    $jQ("#" + target).css("display","block");
@@ -610,11 +610,11 @@ function showModal(target, height){
 }
 
 function hideModal(){
-	if (openModalContent != null){
-	  if(isIE(7) && titlebarIndex != null) {
-		  $jQ("#titlebar").css("zIndex", titlebarIndex);
-	  }
-	  $jQ("#" + openModalContent).hide();
+   if (openModalContent != null){
+     if(isIE(7) && titlebarIndex != null) {
+        $jQ("#titlebar").css("zIndex", titlebarIndex);
+     }
+     $jQ("#" + openModalContent).hide();
       $jQ("#overlay").remove();
    }
    return false;
@@ -670,7 +670,7 @@ function triggerPropSheetValidation(){
 }
 
 function propSheetValidateSubmitCommon() {
-   return validateDatePeriods();
+   return (!window.propSheetValidateCustom || propSheetValidateCustom()) && validateDatePeriods();
 }
 
 function validateDatePeriods() {
@@ -725,7 +725,7 @@ function propSheetValidateOnDocumentReady() {
       }
       var secondaryFinishButton = document.getElementById(propSheetValidateFormId + ':' + propSheetValidateSecondaryFinishId);
       if(secondaryFinishButton != null) {
-    	  secondaryFinishButton.onclick = function() { propSheetFinishBtnPressed = true; };
+        secondaryFinishButton.onclick = function() { propSheetFinishBtnPressed = true; };
       }
       if (propSheetValidateNextId.length > 0) {
          var validateNextId = document.getElementById(propSheetValidateFormId + ':' + propSheetValidateNextId);
@@ -1384,6 +1384,7 @@ function initWithScreenProtected() {
    toggleSubrowToggle.init();
 
    jQuery(".task-due-date-date").change(processTaskDueDateDate);
+   jQuery(".clearGroupRowDate").change(clearGroupRowDate);
 
    handleHtmlLoaded(null, selects);
 };
@@ -1557,6 +1558,26 @@ function processTaskDueDateDate(){
       }
    }
    taskDueDateDays.val("");
+}
+
+function clearGroupRowDate(){
+   var dueDateInput = $jQ(this);
+   var taskRow = dueDateInput.closest("tr");
+   while (true) {
+      taskRow = taskRow.prev();
+      if(taskRow.length == 0) {
+         return;
+      }
+      
+      var groupDateInputs = taskRow.find(".groupRowDate");
+      if (groupDateInputs.length > 0) {
+         groupDateInputs.each(function () {
+            $jQ(this).val("");
+         });
+         
+         return;
+      }
+   }
 }
 
 function setReadonly(element, readonly){
@@ -1842,8 +1863,8 @@ function handleHtmlLoaded(context, selects) {
       }
    });
 
-	propSheetValidateOnDocumentReady();
-	propSheetValidateRegisterOnDocumentReady();
+   propSheetValidateOnDocumentReady();
+   propSheetValidateRegisterOnDocumentReady();
 
    // this method should be called after critical activities have been done in handleHtmlLoaded as it displays alerts and possibly submits page
    confirmWorkflow();

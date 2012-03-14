@@ -64,6 +64,7 @@ import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
 import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
@@ -107,6 +108,8 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     private SelectItem[] externalReviewSearchFilters;
 
     protected CompoundWorkflow compoundWorkflow;
+    protected List<Map<String, List<TaskGroup>>> taskGroups = new ArrayList<Map<String, List<TaskGroup>>>();
+
     protected boolean fullAccess;
     protected boolean isUnsavedWorkFlow;
     private Boolean activeResponsibleAssignedInRepo;
@@ -252,6 +255,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         int wfIndex = ActionUtil.getParam(event, WF_INDEX, Integer.class);
         log.debug("removeWorkflow: " + wfIndex);
         compoundWorkflow.removeWorkflow(wfIndex);
+        getTaskGroups().remove(wfIndex);
         updatePanelGroup();
     }
 
@@ -292,6 +296,10 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     public void removeWorkflowTask(ActionEvent event) {
         int wfIndex = ActionUtil.getParam(event, WF_INDEX, Integer.class);
         int taskIndex = Integer.parseInt(ActionUtil.getParam(event, TASK_INDEX));
+        removeWorkflowTask(wfIndex, taskIndex, true);
+    }
+
+    public void removeWorkflowTask(Integer wfIndex, Integer taskIndex, boolean updatePanelGroup) {
         log.debug("removeWorkflowTask: " + wfIndex + ", " + taskIndex);
         Workflow block = compoundWorkflow.getWorkflows().get(wfIndex);
         Task delTask = block.getTasks().get(taskIndex);
@@ -303,7 +311,49 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             }
         }
         block.removeTask(taskIndex);
-        updatePanelGroup();
+        updateTaskGroupsAfterTaskRemoval(wfIndex, taskIndex);
+        if (updatePanelGroup) { // Regenerate component only if needed
+            updatePanelGroup();
+        }
+    }
+
+    private void updateTaskGroupsAfterTaskRemoval(Integer wfIndex, Integer taskIndex) {
+        if (taskGroups == null || taskGroups.size() <= wfIndex) {
+            return;
+        }
+
+        Map<String, List<TaskGroup>> wfTaskGroup = taskGroups.get(wfIndex);
+        if (wfTaskGroup == null) {
+            return;
+        }
+
+        for (List<TaskGroup> taskGroupList : wfTaskGroup.values()) {
+            for (TaskGroup taskGroup : taskGroupList) {
+                List<Integer> taskIds = taskGroup.getTaskIds();
+                taskIds.remove(taskIndex);
+                for (int i = 0; i < taskIds.size(); i++) {
+                    Integer taskId = taskIds.get(i);
+                    if (taskId > taskIndex) {
+                        taskIds.set(i, taskId - 1);
+                    }
+                }
+            }
+        }
+    }
+
+    public TaskGroup findTaskGroup(ActionEvent event) {
+        String groupName = ActionUtil.getParam(event, "groupName");
+        String groupId = ActionUtil.getParam(event, "groupId");
+        Integer wfIndex = ActionUtil.getParam(event, WF_INDEX, Integer.class);
+
+        for (TaskGroup group : getTaskGroups().get(wfIndex).get(groupName)) {
+            if (!group.getGroupId().equals(groupId)) {
+                continue;
+            }
+            return group;
+        }
+
+        return null;
     }
 
     // merge this into UserContactGroupSearchBean#searchAll
@@ -430,31 +480,31 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
 
             // users
             if (filterIndex == 0) {
-                setPersonPropsToTask(block, taskIndex, results[i]);
+                setPersonPropsToTask(block, taskIndex, results[i], null);
             }
             // user groups
             else if (filterIndex == 1) {
                 Set<String> children = getUserService().getUserNamesInGroup(results[i]);
+                String groupName = BeanHelper.getAuthorityService().getAuthorityDisplayName(results[i]);
                 int j = 0;
                 for (String userName : children) {
                     if (j++ > 0) {
                         block.addTask(++taskIndex);
                     }
-                    setPersonPropsToTask(block, taskIndex, userName);
+                    setPersonPropsToTask(block, taskIndex, userName, groupName);
                 }
             }
             // contacts
             else if (filterIndex == 2) {
                 if (block.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW)) {
-                    setExternalReviewPropsToTask(block, taskIndex, new NodeRef(results[i]));
+                    setExternalReviewPropsToTask(block, taskIndex, new NodeRef(results[i]), null);
                 } else {
-                    setContactPropsToTask(block, taskIndex, new NodeRef(results[i]));
+                    setContactPropsToTask(block, taskIndex, new NodeRef(results[i]), null);
                 }
             }
             // contact groups
             else if (filterIndex == 3) {
-                List<NodeRef> contacts = getAddressbookService().getContactGroupContents(new NodeRef(results[i]));
-                taskIndex = addContactGroupTasks(taskIndex, block, contacts);
+                taskIndex = addContactGroupTasks(taskIndex, block, new NodeRef(results[i]));
             } else {
                 throw new RuntimeException("Unknown filter index value: " + filterIndex);
             }
@@ -463,9 +513,11 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         updatePanelGroup();
     }
 
-    public int addContactGroupTasks(int taskIndex, Workflow block, List<NodeRef> contacts) {
+    public int addContactGroupTasks(int taskIndex, Workflow block, NodeRef contactGroup) {
         int taskCounter = 0;
         boolean isExternalReviewTask = block.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW);
+        List<NodeRef> contacts = getAddressbookService().getContactGroupContents(contactGroup);
+        String groupName = (String) getNodeService().getProperty(contactGroup, AddressbookModel.Props.GROUP_NAME);
         for (int j = 0; j < contacts.size(); j++) {
             Map<QName, Serializable> contactProps = getNodeService().getProperties(contacts.get(j));
             if (getNodeService().hasAspect(contacts.get(j), AddressbookModel.Aspects.ORGANIZATION_PROPERTIES)
@@ -475,9 +527,9 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
                     block.addTask(++taskIndex);
                 }
                 if (isExternalReviewTask) {
-                    setExternalReviewProps(block, taskIndex, contactProps);
+                    setExternalReviewProps(block, taskIndex, contactProps, groupName);
                 } else {
-                    setContactPropsToTask(block, taskIndex, contacts.get(j));
+                    setContactPropsToTask(block, taskIndex, contacts.get(j), groupName);
                 }
                 taskCounter++;
             }
@@ -485,15 +537,16 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         return taskIndex;
     }
 
-    private void setExternalReviewPropsToTask(Workflow block, int index, NodeRef contact) {
+    private void setExternalReviewPropsToTask(Workflow block, int index, NodeRef contact, String groupName) {
         Map<QName, Serializable> resultProps = getNodeService().getProperties(contact);
-        setExternalReviewProps(block, index, resultProps);
+        setExternalReviewProps(block, index, resultProps, groupName);
     }
 
-    private void setExternalReviewProps(Workflow block, int index, Map<QName, Serializable> resultProps) {
+    private void setExternalReviewProps(Workflow block, int index, Map<QName, Serializable> resultProps, String groupName) {
         Task task = block.getTasks().get(index);
         task.setInstitutionName((String) resultProps.get(AddressbookModel.Props.ORGANIZATION_NAME));
         task.setInstitutionCode((String) resultProps.get(AddressbookModel.Props.ORGANIZATION_CODE));
+        task.setOwnerGroup(groupName);
     }
 
     /**
@@ -560,6 +613,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         sortedTypes = null;
         isUnsavedWorkFlow = false;
         activeResponsibleAssignedInRepo = null;
+        taskGroups = null;
     }
 
     protected TreeMap<String, QName> getSortedTypes() {
@@ -879,14 +933,14 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         return result;
     }
 
-    private void setPersonPropsToTask(Workflow block, int taskIndex, String userName) {
+    private void setPersonPropsToTask(Workflow block, int taskIndex, String userName, String groupName) {
         Map<QName, Serializable> resultProps = getUserService().getUserProperties(userName);
         String name = UserUtil.getPersonFullName1(resultProps);
         Serializable id = resultProps.get(ContentModel.PROP_USERNAME);
         Serializable email = resultProps.get(ContentModel.PROP_EMAIL);
         Serializable orgName = (Serializable) getOrganizationStructureService().getOrganizationStructurePaths((String) resultProps.get(ContentModel.PROP_ORGID));
         Serializable jobTitle = resultProps.get(ContentModel.PROP_JOBTITLE);
-        setPropsToTask(block, taskIndex, name, id, email, orgName, jobTitle);
+        setPropsToTask(block, taskIndex, name, id, email, orgName, jobTitle, groupName);
     }
 
     private void setPersonPropsToTask(Task task, Map<QName, Serializable> personProps) {
@@ -895,10 +949,10 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         Serializable email = personProps.get(ContentModel.PROP_EMAIL);
         Serializable orgName = (Serializable) getOrganizationStructureService().getOrganizationStructurePaths((String) personProps.get(ContentModel.PROP_ORGID));
         Serializable jobTitle = personProps.get(ContentModel.PROP_JOBTITLE);
-        setPropsToTask(task, name, id, email, orgName, jobTitle);
+        setPropsToTask(task, name, id, email, orgName, jobTitle, null);
     }
 
-    private void setContactPropsToTask(Workflow block, int index, NodeRef contact) {
+    private void setContactPropsToTask(Workflow block, int index, NodeRef contact, String groupName) {
         Map<QName, Serializable> resultProps = getNodeService().getProperties(contact);
         QName resultType = getNodeService().getType(contact);
 
@@ -909,10 +963,10 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             name = UserUtil.getPersonFullName((String) resultProps.get(AddressbookModel.Props.PERSON_FIRST_NAME) //
                     , (String) resultProps.get(AddressbookModel.Props.PERSON_LAST_NAME));
         }
-        setPropsToTask(block, index, name, null, resultProps.get(AddressbookModel.Props.EMAIL), null, null);
+        setPropsToTask(block, index, name, null, resultProps.get(AddressbookModel.Props.EMAIL), null, null, groupName);
     }
 
-    private void setPropsToTask(Workflow block, int index, String name, Serializable id, Serializable email, Serializable orgName, Serializable jobTitle) {
+    private void setPropsToTask(Workflow block, int index, String name, Serializable id, Serializable email, Serializable orgName, Serializable jobTitle, Serializable groupName) {
         Task task = block.getTasks().get(index);
         if (task.getNode().hasAspect(WorkflowSpecificModel.Aspects.RESPONSIBLE) && StringUtils.isNotBlank(task.getOwnerName())
                 && task.getNodeRef() != null && !(compoundWorkflow instanceof CompoundWorkflowDefinition) && !Status.NEW.equals(task.getStatus())) {
@@ -922,15 +976,17 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
                 task = ((OrderAssignmentWorkflow) block).addResponsibleTask();
             }
         }
-        setPropsToTask(task, name, id, email, orgName, jobTitle);
+        setPropsToTask(task, name, id, email, orgName, jobTitle, groupName);
     }
 
-    private void setPropsToTask(Task task, String name, Serializable id, Serializable email, Serializable orgName, Serializable jobTitle) {
+    private void setPropsToTask(Task task, String name, Serializable id, Serializable email, Serializable orgName, Serializable jobTitle, Serializable groupName) {
         task.setOwnerName(name);
         task.setOwnerId((String) id);
         task.setOwnerEmail((String) email);
+        task.setOwnerGroup((String) groupName);
         task.getNode().getProperties().put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME.toString(), orgName);
         task.getNode().getProperties().put(WorkflowCommonModel.Props.OWNER_JOB_TITLE.toString(), jobTitle);
+        task.getNode().getProperties().put(WorkflowCommonModel.Props.OWNER_GROUP.toString(), groupName);
     }
 
     /**
@@ -1015,4 +1071,14 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         WorkflowUtil.removeEmptyTasks(compoundWorkflow);
     }
 
+    public List<Map<String, List<TaskGroup>>> getTaskGroups() {
+        if (taskGroups == null) {
+            taskGroups = new ArrayList<Map<String, List<TaskGroup>>>();
+        }
+        return taskGroups;
+    }
+
+    public void setTaskGroups(List<Map<String, List<TaskGroup>>> taskGroups) {
+        this.taskGroups = taskGroups;
+    }
 }

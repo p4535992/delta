@@ -57,6 +57,7 @@ public interface WorkflowCommonModel {
 
         // Task
         QName OWNER_EMAIL = QName.createQName(URI, "ownerEmail");
+        QName OWNER_GROUP = QName.createQName(URI, "ownerGroup");
         QName OUTCOME = QName.createQName(URI, "outcome");
         QName DOCUMENT_TYPE = QName.createQName(URI, "documentType");
         QName COMPLETED_DATE_TIME = QName.createQName(URI, "completedDateTime");

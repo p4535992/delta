@@ -14,25 +14,32 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.help.model.HelpText;
 import ee.webmedia.alfresco.help.model.HelpTextModel;
+import ee.webmedia.alfresco.help.web.HelpTextUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
 
+/**
+ * Help text service implementation.
+ * <p>
+ * Specification: <i>Kontekstitundlik abiinfo</i>.
+ * 
+ * @author Martti Tamm
+ */
 public class HelpTextServiceImpl implements HelpTextService {
-
-    private static final String TYPE_DIALOG = "dialog";
-    private static final String TYPE_DOCUMENT_TYPE = "documentType";
-    private static final String TYPE_FIELD = "field";
 
     private NodeService nodeService;
 
     private GeneralService generalService;
 
     @Override
-    public List<Node> getHelpTexts() {
+    public List<HelpText> getHelpTexts() {
         List<ChildAssociationRef> children = nodeService.getChildAssocs(getRootNode());
-        List<Node> results = new ArrayList<Node>(children.size());
+        List<HelpText> results = new ArrayList<HelpText>(children.size());
         for (ChildAssociationRef childAssoc : children) {
-            results.add(generalService.fetchNode(childAssoc.getChildRef()));
+            results.add(new HelpText(new WmNode(childAssoc.getChildRef(), HelpTextModel.Types.HELP_TEXT)));
         }
         return results;
     }
@@ -73,21 +80,25 @@ public class HelpTextServiceImpl implements HelpTextService {
 
     @Override
     public Node addDialogHelp(String code, String content) {
-        return addHelpText(TYPE_DIALOG, code, content);
+        return addHelpText(HelpTextUtil.TYPE_DIALOG, code, content);
     }
 
     @Override
     public Node addFieldHelp(String code, String content) {
-        return addHelpText(TYPE_FIELD, code, content);
+        return addHelpText(HelpTextUtil.TYPE_FIELD, code, content);
     }
 
     @Override
     public Node addDocumentTypeHelp(String code, String content) {
-        return addHelpText(TYPE_DOCUMENT_TYPE, code, content);
+        return addHelpText(HelpTextUtil.TYPE_DOCUMENT_TYPE, code, content);
     }
 
     @Override
     public void editHelp(Node helpTextNode) {
+        checkTypeAndCodeUnique(helpTextNode.getNodeRef(),
+                (String) helpTextNode.getProperties().get(HelpTextModel.Props.CODE.toString()),
+                (String) helpTextNode.getProperties().get(HelpTextModel.Props.NAME.toString()));
+
         nodeService.setProperties(helpTextNode.getNodeRef(), RepoUtil.toQNameProperties(helpTextNode.getProperties()));
     }
 
@@ -103,12 +114,25 @@ public class HelpTextServiceImpl implements HelpTextService {
     }
 
     private Node addHelpText(String type, String code, String content) {
+        checkTypeAndCodeUnique(null, type, code);
+
         Map<QName, Serializable> props = new HashMap<QName, Serializable>(3, 1);
         props.put(HelpTextModel.Props.TYPE, type);
         props.put(HelpTextModel.Props.CODE, code);
         props.put(HelpTextModel.Props.CONTENT, content);
         NodeRef childRef = nodeService.createNode(getRootNode(), ContentModel.ASSOC_CONTAINS, ContentModel.ASSOC_CONTAINS, HelpTextModel.Types.HELP_TEXT, props).getChildRef();
         return generalService.fetchNode(childRef);
+    }
+
+    private void checkTypeAndCodeUnique(NodeRef nodeRef, String type, String code) {
+        for (ChildAssociationRef childAssoc : nodeService.getChildAssocs(getRootNode())) {
+            NodeRef childRef = childAssoc.getChildRef();
+
+            if (!childRef.equals(nodeRef) && nodeService.getProperty(childRef, HelpTextModel.Props.TYPE).equals(type)
+                    && nodeService.getProperty(childRef, HelpTextModel.Props.CODE).equals(code)) {
+                throw new UnableToPerformException("help_text_unique_fail", nodeService.getProperty(childRef, HelpTextModel.Props.NAME), code);
+            }
+        }
     }
 
     // Dependency Injection Setters:

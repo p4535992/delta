@@ -6,11 +6,20 @@ import java.util.Map;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.Node;
 
+import ee.webmedia.alfresco.help.model.HelpText;
+
+/**
+ * Service contract for working with HelpText nodes.
+ * <p>
+ * Specification: <i>Kontekstitundlik abiinfo</i>.
+ * 
+ * @author Martti Tamm
+ */
 public interface HelpTextService {
 
     String BEAN_NAME = "HelpTextService";
 
-    List<Node> getHelpTexts();
+    List<HelpText> getHelpTexts();
 
     Node addDialogHelp(String code, String content);
 

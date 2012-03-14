@@ -234,8 +234,7 @@ public class UIInput
         // KAAREL: Actually we should set the value for read-only inputs. If we would like to skip setting the value, we should use disabled attribute instead.
         if (HtmlRendererUtils.isDisabledOrReadOnly(this) && StringUtils.isNotBlank((String) getAttributes().get("styleClass"))
                 && StringUtils.contains((String) getAttributes().get("styleClass"), "editable")) {
-            @SuppressWarnings("unchecked")
-            Map<Object, Object> paramMap = context.getExternalContext().getRequestParameterMap();
+            Map<String, String> paramMap = context.getExternalContext().getRequestParameterMap();
             if (paramMap.containsKey(getClientId(context))) {
                 setSubmittedValue(paramMap.get(getClientId(context)));
             }

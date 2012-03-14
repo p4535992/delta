@@ -11,6 +11,7 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.zip.DeflaterOutputStream;
 
@@ -31,6 +32,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.CountingOutputStream;
 import org.apache.commons.io.output.NullOutputStream;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.FastDateFormat;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.InputStreamSource;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -51,11 +53,14 @@ public class EmailServiceImpl implements EmailService {
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(EmailServiceImpl.class);
 
+    private static final FastDateFormat dateFormat = FastDateFormat.getInstance("yyyy-MM-dd-HH-mm-ss-SSSZ");
+
     private JavaMailSender mailService;
     private FileFolderService fileFolderService;
     private GeneralService generalService;
     private SignatureService signatureService;
     private MimetypeService mimetypeService;
+    private static String messageCopyFolder = null;
 
     // /// PUBLIC METHODS
 
@@ -111,6 +116,7 @@ public class EmailServiceImpl implements EmailService {
         // Bcc field
         addEmailRecipients(toBccEmails, toBccNames, helper, true);
 
+        subject = clean(subject);
         try {
             helper.setSubject(subject);
             helper.setText(content, isHtml);
@@ -145,15 +151,39 @@ public class EmailServiceImpl implements EmailService {
             long step1 = System.currentTimeMillis();
             mailService.send(message);
             long step2 = System.currentTimeMillis();
+
+            // Write copy of the message after it has been send, then it has same header as were set during sending
+            String info = "";
+            if (StringUtils.isNotBlank(messageCopyFolder)) {
+                try {
+                    String filename = "MimeMessage-" + dateFormat.format(new Date());
+                    File messageFile = new File(messageCopyFolder, filename);
+                    FileOutputStream messageOutputStream = new FileOutputStream(messageFile);
+                    try {
+                        message.writeTo(messageOutputStream, new String[] { "Bcc", "Content-Length" });
+                    } finally {
+                        IOUtils.closeQuietly(messageOutputStream);
+                    }
+                    info = "\n    wrote message to file " + messageFile;
+                } catch (Exception e) {
+                    log.error("Error copying message contents to file", e);
+                }
+            }
+
             if (log.isInfoEnabled()) {
                 log.info("sendEmail service call took " + (step2 - step0) + " ms\n    prepare message - " + (step1 - step0) + " ms\n    send message - "
-                        + (step2 - step1) + " ms");
+                        + (step2 - step1) + " ms" + info);
             }
         } catch (AlfrescoRuntimeException e) {
             throw e;
         } catch (Exception e) {
             throw new EmailException(e);
         }
+    }
+
+    private static String clean(String input) {
+        // Forbids the use of characters in range 1-31 (i.e., 0x01-0x1F)
+        return input == null ? null : input.replaceAll("\\p{Cntrl}", " ");
     }
 
     @Override
@@ -245,7 +275,7 @@ public class EmailServiceImpl implements EmailService {
                 throw new EmailException(e);
             }
             if (toNames != null && toNames.size() == toEmails.size()) {
-                String name = toNames.get(i);
+                String name = clean(toNames.get(i));
                 if (StringUtils.isNotBlank(encoding)) {
                     try {
                         toAddr.setPersonal(name, encoding);
@@ -294,6 +324,10 @@ public class EmailServiceImpl implements EmailService {
 
     public void setMimetypeService(MimetypeService mimetypeService) {
         this.mimetypeService = mimetypeService;
+    }
+
+    public void setMessageCopyFolder(String messageCopyFolder) {
+        this.messageCopyFolder = messageCopyFolder;
     }
 
     // /// CLASSES

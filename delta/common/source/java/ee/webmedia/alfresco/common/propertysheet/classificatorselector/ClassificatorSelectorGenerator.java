@@ -60,7 +60,7 @@ public class ClassificatorSelectorGenerator extends GeneralSelectorGenerator {
     }
 
     @Override
-    protected List<UISelectItem> initializeSelectionItems(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item,
+    protected List<UIComponent> initializeSelectionItems(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item,
             PropertyDefinition propertyDef, UIInput component, Object boundValue, boolean multiValued) {
 
         // PropertySheet might be null if component has not been added to a PropertySheet yet
@@ -71,7 +71,7 @@ public class ClassificatorSelectorGenerator extends GeneralSelectorGenerator {
         }
 
         List<ClassificatorSelectorValueProvider> valueProviders = getSelectorValueProviders(valueProviderName, component, context);
-        List<UISelectItem> results = new ArrayList<UISelectItem>(valueProviders.size() + 1);
+        List<UIComponent> results = new ArrayList<UIComponent>(valueProviders.size() + 1);
 
         ClassificatorSelectorValueProvider defaultOrExistingValue = null;
         String existingValue = boundValue instanceof String ? (String) boundValue : null;

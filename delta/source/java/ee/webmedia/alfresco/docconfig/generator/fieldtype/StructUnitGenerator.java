@@ -31,7 +31,6 @@ public class StructUnitGenerator extends BaseTypeFieldGenerator {
         final ItemConfigVO editModeItem = generatorResults.getAndAddPreGeneratedItem();
         editModeItem.setStyleClass("expand19-200 medium");
         editModeItem.setEditable(false);
-        editModeItem.setSearchSuggestDisabled(true);
         editModeItem.setDialogTitleId("series_structUnit_popUpInfo");
         editModeItem.setPickerCallback("#{OrganizationStructureListDialog.searchOrgstructs}");
 

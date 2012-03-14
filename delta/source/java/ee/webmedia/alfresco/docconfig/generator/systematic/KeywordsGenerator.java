@@ -215,9 +215,9 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
             // then this changed event is called on:
             // 1) the component whose value was changed
             // 2) on every added row's component also
-            if (event.getOldValue() == null) {
-                // We don't need to handle 2) events
-                // And these 2) events would also produce errors if add + remove on the just added row are clicked,
+            if (StringUtils.isEmpty((String) event.getOldValue()) && StringUtils.isEmpty((String) event.getNewValue())) {
+                // We don't need to handle (2) events
+                // And these (2) events would also produce errors if add + remove on the just added row are clicked,
                 // because vb.setValue below would try to access list index that was already removed by MultiValueEditor
                 return;
             }

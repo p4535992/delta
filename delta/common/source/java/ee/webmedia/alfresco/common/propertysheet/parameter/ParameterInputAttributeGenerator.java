@@ -28,8 +28,7 @@ public class ParameterInputAttributeGenerator extends TextFieldGenerator {
     protected void setupProperty(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item, PropertyDefinition propertyDef,
             UIComponent component) {
         super.setupProperty(context, propertySheet, item, propertyDef, component);
-        @SuppressWarnings("unchecked")
-        Map<Object, Object> attributes = component.getAttributes();
+        Map<String, Object> attributes = component.getAttributes();
         attributes.put("datafld", getParameterValue().toString());
     }
 

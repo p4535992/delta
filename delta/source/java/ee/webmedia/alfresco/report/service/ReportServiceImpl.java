@@ -233,6 +233,11 @@ public class ReportServiceImpl implements ReportService {
             Sheet sheet = wb.getSheetAt(0);
             if (sheet == null) {
                 sheet = wb.createSheet();
+            } else {
+                String sheetName = sheet.getSheetName();
+                wb.removeSheetAt(0);
+                sheet = wb.createSheet(sheetName);
+                wb.setSheetOrder(sheetName, 0);
             }
             Row row = sheet.getRow(0);
             if (row == null) {

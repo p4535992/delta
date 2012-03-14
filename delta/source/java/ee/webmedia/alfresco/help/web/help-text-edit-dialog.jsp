@@ -19,7 +19,8 @@
    tinyMCE.init({
       theme : "advanced",
       language : "<%=Application.getLanguage(FacesContext.getCurrentInstance()).getLanguage()%>",
-      mode : "textareas",
+      mode : "exact",
+      elements : "dialog:dialog-body:help-text-metatada:prop_hltx003a_content:hltx003a_content",
       relative_urls: false,
       plugins : "table",
       theme_advanced_toolbar_location : "top",
@@ -32,5 +33,9 @@
       width : "600",
       height : "315"
    });
+   function propSheetValidateCustom() {
+      tinyMCE.triggerSave();
+      return true;
+   }
 </script>
 </f:verbatim>

@@ -44,6 +44,7 @@ import org.alfresco.repo.management.subsystems.ChildApplicationContextManager;
 import org.alfresco.repo.security.authentication.AuthenticationException;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.attributes.AttributeService;
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.cmr.security.PersonService;
@@ -422,8 +423,9 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
                         .diff(RepoUtil.getPropertiesIgnoringSystem(personOldProperties, BeanHelper.getDictionaryService()), personProperties);
 
                 if (diff != null) {
-                    BeanHelper.getLogService().addLogEntry(LogEntry.create(LogObject.USER, personName, UserUtil.getPersonFullName1(personOldProperties), "applog_user_edit",
-                            UserUtil.getUserFullNameAndId(personProperties), diff));
+                    BeanHelper.getLogService().addLogEntry(
+                            LogEntry.create(LogObject.USER, personName, UserUtil.getPersonFullName1(personOldProperties), (NodeRef) null, "applog_user_edit",
+                                    UserUtil.getUserFullNameAndId(personProperties), diff));
                 }
                 personService.setPersonProperties(personName, personProperties);
             }

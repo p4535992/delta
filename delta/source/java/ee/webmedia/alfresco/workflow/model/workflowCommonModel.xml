@@ -137,6 +137,9 @@
             <property name="wfc:ownerEmail">
                <type>d:text</type>
             </property>
+            <property name="wfc:ownerGroup">
+               <type>d:text</type>
+            </property>
             <property name="wfc:outcome">
                <type>d:text</type>
             </property>

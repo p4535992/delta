@@ -129,6 +129,14 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         setProp(WorkflowCommonModel.Props.OWNER_EMAIL, ownerEmail);
     }
 
+    public String getOwnerGroup() {
+        return getProp(WorkflowCommonModel.Props.OWNER_GROUP);
+    }
+
+    public void setOwnerGroup(String ownerGroup) {
+        setProp(WorkflowCommonModel.Props.OWNER_GROUP, ownerGroup);
+    }
+
     @SuppressWarnings("unchecked")
     public String getOwnerOrgStructUnit() {
         return UserUtil.getDisplayUnit((List<String>) getNode().getProperties().get(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME));

@@ -18,6 +18,7 @@ public interface HelpTextModel {
     public interface Props {
         QName TYPE = QName.createQName(URI, "type");
         QName CODE = QName.createQName(URI, "code");
+        QName NAME = QName.createQName(URI, "name");
         QName CONTENT = QName.createQName(URI, "content");
     }
 }

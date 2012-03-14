@@ -46,18 +46,18 @@
    <config evaluator="node-type" condition="hlt:helpText">
       <property-sheet>
          <show-property name="hlt:codeDialog" display-label-id="help_text_name_dialog" component-generator="GeneralSelectorGenerator" selectionItems="#{DialogManager.bean.getCodes}"
-            show="#{DialogManager.bean.type=='Dialog'}" />
+            show="#{DialogManager.bean.type=='dialog'}" forcedMandatory="true" />
 
          <show-property name="hlt:codeDocumentType" display-label-id="help_text_name_documentType" component-generator="SearchGenerator" pickerCallback="#{DocTypeListDialog.searchUsedDocTypes}"
-            allowDuplicates="false" dialogTitleId="series_docType_popUpInfo" show="#{DialogManager.bean.type=='DocumentType'}" />
+            allowDuplicates="false" dialogTitleId="series_docType_popUpInfo" show="#{DialogManager.bean.type=='documentType'}" setterCallback="#{DialogManager.bean.processDocumentTypeSearchResults}"
+            forcedMandatory="true" editable="false" ajaxParentLevel="100" />
 
          <show-property name="hlt:codeField" display-label-id="help_text_name_field" component-generator="SearchGenerator" pickerCallback="#{DocTypeFieldsListBean.searchFieldDefinitions}"
-            allowDuplicates="false" dialogTitleId="docType_metadataList_add_existingField_pickerTitle" show="#{DialogManager.bean.type=='Field'}" />
-<!-- 
-            <wm:search id="searchFieldDef" pickerCallback="#{DialogManager.bean.fieldsListBean.searchFieldDefinitions}" setterCallback="#{DialogManager.bean.fieldsListBean.addExistingField}"
-               searchLinkLabel="docType_metadataList_add_existingField" dialogTitleId="docType_metadataList_add_existingField_pickerTitle" value="#{DialogManager.bean.fieldsListBean.dummy}" ajaxParentLevel="100" searchLinkTooltip="docType_metadataList_add_existingField_tooltip"
-            />
--->
+            allowDuplicates="false" dialogTitleId="docType_metadataList_add_existingField_pickerTitle" show="#{DialogManager.bean.type=='field'}"
+            setterCallback="#{DialogManager.bean.processFieldSearchResults}" forcedMandatory="true" editable="false" ajaxParentLevel="100" />
+
+         <show-property name="hlt:code" display-label-id="help_text_code" component-generator="TextFieldGenerator" editable="false" readOnlyIf="#{DialogManager.bean.type!='dialog'}" show="#{DialogManager.bean.type!='dialog'}" />
+
          <show-property name="hlt:content" display-label-id="help_text_content" styleClass="expand19-200" component-generator="TextAreaGenerator" />
       </property-sheet>
    </config>

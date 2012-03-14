@@ -8,6 +8,7 @@
       <property name="generalService" ref="GeneralService" />
       <property name="signatureService" ref="SignatureService" />
       <property name="mimetypeService" ref="MimetypeService" />
+      <property name="messageCopyFolder" value="${mail.messageFolder}" />
    </bean>
 
    <bean id="CommonEmailService" class="org.springframework.aop.framework.ProxyFactoryBean">

@@ -15,6 +15,7 @@ import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SERI
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.VOLUME;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -397,12 +398,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 functions.add(new SelectItem("", ""));
                 boolean functionFound = false;
                 for (Function function : allFunctions) {
-                    List<Series> openSeries;
-                    if (isSearchFilterOrDocTypeNull) {
-                        openSeries = getSeriesService().getAllSeriesByFunction(function.getNodeRef());
-                    } else {
-                        openSeries = getSeriesService().getAllSeriesByFunction(function.getNodeRef(), DocListUnitStatus.OPEN, idList);
-                    }
+                    List<Series> openSeries = getAllSeries(function.getNodeRef(), isSearchFilterOrDocTypeNull, idList);
                     if (openSeries.size() == 0) {
                         continue;
                     }
@@ -412,8 +408,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                     }
                 }
                 if (!functionFound) {
-                    // Allow only the active documentList node for default function
-                    if (!isSearchFilter && addIfMissing && functionRef != null && getGeneralService().getStore().equals(functionRef) && getNodeService().exists(functionRef)) {
+                    if (!isSearchFilter && addIfMissing && functionRef != null && getNodeService().exists(functionRef)) {
                         Function function = getFunctionsService().getFunctionByNodeRef(functionRef);
                         functions.add(1, new SelectItem(function.getNodeRef(), getFunctionLabel(function)));
                     } else {
@@ -434,11 +429,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 seriesRef = null;
             } else {
                 List<Series> allSeries;
-                if (isSearchFilterOrDocTypeNull) {
-                    allSeries = getSeriesService().getAllSeriesByFunction(functionRef);
-                } else {
-                    allSeries = getSeriesService().getAllSeriesByFunction(functionRef, DocListUnitStatus.OPEN, idList);
-                }
+                allSeries = getAllSeries(functionRef, isSearchFilterOrDocTypeNull, idList);
                 series = new ArrayList<SelectItem>(allSeries.size());
                 series.add(new SelectItem("", ""));
                 boolean serieFound = false;
@@ -498,8 +489,10 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 List<Volume> allVolumes;
                 if (isSearchFilterOrDocTypeNull) {
                     allVolumes = getVolumeService().getAllValidVolumesBySeries(seriesRef);
-                } else {
+                } else if (getGeneralService().getStore().equals(seriesRef.getStoreRef())) {
                     allVolumes = getVolumeService().getAllValidVolumesBySeries(seriesRef, DocListUnitStatus.OPEN);
+                } else {
+                    allVolumes = Collections.emptyList();
                 }
                 volumes = new ArrayList<SelectItem>(allVolumes.size());
                 volumes.add(new SelectItem("", ""));
@@ -542,8 +535,10 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                     List<Case> allCases;
                     if (isSearchFilterOrDocTypeNull) {
                         allCases = getCaseService().getAllCasesByVolume(volumeRef);
-                    } else {
+                    } else if (getGeneralService().getStore().equals(volumeRef.getStoreRef())) {
                         allCases = getCaseService().getAllCasesByVolume(volumeRef, DocListUnitStatus.OPEN);
+                    } else {
+                        allCases = Collections.emptyList();
                     }
                     cases = new ArrayList<SelectItem>(allCases.size());
                     casesEditable = new ArrayList<String>(allCases.size());
@@ -646,6 +641,18 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 allFunctions.addAll(getFunctionsService().getFunctions(functionsRootNodeRef));
             }
             return allFunctions;
+        }
+
+        private List<Series> getAllSeries(NodeRef functionRef, boolean isSearchFilterOrDocTypeNull, Set<String> idList) {
+            List<Series> allSeries;
+            if (isSearchFilterOrDocTypeNull) {
+                allSeries = getSeriesService().getAllSeriesByFunction(functionRef);
+            } else if (getGeneralService().getStore().equals(functionRef.getStoreRef())) {
+                allSeries = getSeriesService().getAllSeriesByFunction(functionRef, DocListUnitStatus.OPEN, idList);
+            } else {
+                allSeries = Collections.emptyList();
+            }
+            return allSeries;
         }
 
         private void updateAccessRestrictionProperties(NodeRef seriesRef) {

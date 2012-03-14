@@ -98,6 +98,7 @@ import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
+import ee.webmedia.alfresco.classificator.enums.SendMode;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -130,6 +131,7 @@ import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
 /**
  * Test data generator. Can't use any Lucene searches, because lucene indexing may be turned off during test data generation and then lucene search results would be out-of-date.
@@ -1498,7 +1500,7 @@ public class TestDataService implements SaveListener {
         getNodeService().addAspect(docRef, DocumentCommonModel.Aspects.SEARCHABLE, null);
         doc.setProp(DocumentCommonModel.Props.FILE_NAMES, fileTitles);
         doc.setProp(DocumentCommonModel.Props.FILE_CONTENTS, allWriter == null ? null : allWriter.getContentData());
-        doc.setProp(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE, new ArrayList<String>());
+        doc.setProp(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE, new ArrayList<String>(0));
         getDocumentDynamicService().updateDocument(doc, Arrays.asList("TestDataService"));
 
         // ASSOCS
@@ -1523,6 +1525,24 @@ public class TestDataService implements SaveListener {
         }
 
         createWorkflows(docRef, !isRegistered, docTypeId);
+
+        // SENDINFOS
+        if (Math.random() > 0.00006d) { // 100 out of 1 700 000 documents need to appear under unsent documents
+            Map<QName, Serializable> sendInfoProps = new HashMap<QName, Serializable>();
+            sendInfoProps.put(DocumentCommonModel.Props.SEND_INFO_RESOLUTION, getRandom(docTitles));
+            sendInfoProps.put(DocumentCommonModel.Props.SEND_INFO_RECIPIENT, getRandom(contacts));
+            sendInfoProps.put(DocumentCommonModel.Props.SEND_INFO_SEND_MODE, SendMode.MAIL.getValueName());
+            sendInfoProps.put(DocumentCommonModel.Props.SEND_INFO_SEND_STATUS, SendStatus.RECEIVED);
+            Calendar cal = Calendar.getInstance();
+            cal.add(Calendar.DATE, (int) (Math.random() - 1d) * 2000);
+            sendInfoProps.put(DocumentCommonModel.Props.SEND_INFO_SEND_DATE_TIME, cal.getTime());
+
+            getNodeService().createNode(docRef, //
+                    DocumentCommonModel.Assocs.SEND_INFO, DocumentCommonModel.Assocs.SEND_INFO, DocumentCommonModel.Types.SEND_INFO, sendInfoProps).getChildRef();
+            ArrayList<String> sendModes = new ArrayList<String>(1);
+            sendModes.add(SendMode.MAIL.getValueName());
+            getNodeService().setProperty(docRef, DocumentCommonModel.Props.SEARCHABLE_SEND_MODE, sendModes);
+        }
 
         // FUTURE: õiguseid (nii dokumendi kui sarja omad) praegu ei tee
 

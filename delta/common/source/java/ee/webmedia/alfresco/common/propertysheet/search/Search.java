@@ -472,7 +472,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
                 FacesContext context = FacesContext.getCurrentInstance();
                 Map params = context.getExternalContext().getRequestParameterMap();
                 String indexStr = StringUtils.substringAfter((String) params.get(parent.getClientId(context) + "_action"), ";");
-                int index = StringUtils.isNumeric(indexStr) ? Integer.parseInt(indexStr) : -1;
+                int index = StringUtils.isNumeric(indexStr) && !indexStr.isEmpty() ? Integer.parseInt(indexStr) : -1;
                 ((Search) parent).pickerFinish((UIGenericPicker) actionEvent.getComponent(), index);
             } else {
                 throw new RuntimeException();

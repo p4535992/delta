@@ -106,7 +106,7 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
 
         if (component instanceof UIInput) {
             ValueBinding vb = component.getValueBinding("value");
-            List<UISelectItem> results = initializeSelectionItems(context, propertySheet, item, propertyDef, (UIInput) component,
+            List<UIComponent> results = initializeSelectionItems(context, propertySheet, item, propertyDef, (UIInput) component,
                     vb != null ? vb.getValue(context) : null, multiValued);
             if (results != null) {
                 List<UIComponent> children = component.getChildren();
@@ -161,7 +161,7 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
         }
     }
 
-    protected List<UISelectItem> initializeSelectionItems(FacesContext context, UIPropertySheet propertySheet,
+    protected List<UIComponent> initializeSelectionItems(FacesContext context, UIPropertySheet propertySheet,
             PropertySheetItem item, PropertyDefinition propertyDef, UIInput component, Object boundValue, boolean multiValued) {
 
         String selectionItems = getSelectionItems();
@@ -185,7 +185,6 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
         // currently valuechangelistener and mandatory validation are not used together in any property sheet
         if (StringUtils.isBlank(getCustomAttributes().get(ATTR_VALUE_CHANGE_LISTENER))) {
             // add event handler to kick off real time checks
-            @SuppressWarnings("unchecked")
             Map<String, Object> attributes = component.getAttributes();
             attributes.put("onchange", "processButtonState();");
         }
@@ -205,7 +204,7 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
      * @param context
      * @param results
      */
-    public static void addDefault(FacesContext context, List<UISelectItem> results) {
+    public static void addDefault(FacesContext context, List<UIComponent> results) {
         UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
         selectItem.setItemLabel(MessageUtil.getMessage(context, "select_default_label"));
         selectItem.setItemValue(DEFAULT_SELECT_VALUE); // value of SelectItem can't be null
