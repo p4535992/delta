@@ -32,7 +32,6 @@ import smit.ametnik.services.AmetnikExt;
 import ee.webmedia.alfresco.log.PropDiffHelper;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
-import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.orgstructure.amr.service.AMRService;
 import ee.webmedia.alfresco.orgstructure.amr.service.RSService;
 import ee.webmedia.alfresco.user.service.UserNotFoundException;
@@ -50,7 +49,6 @@ public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenti
     private NamespacePrefixResolver namespacePrefixResolver;
     private AuthorityService authorityService;
     private AMRUserRegistry userRegistry;
-    private LogService logService;
 
     public AMRSimpleAuthenticationImpl() {
         super();
@@ -58,18 +56,8 @@ public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenti
 
     @Override
     public Authentication setCurrentUser(String userName) throws AuthenticationException {
-        boolean successfulLogin = false;
-        try {
-            updateUserData(userName);
-            successfulLogin = true;
-            return super.setCurrentUser(userName);
-        } finally {
-            if (successfulLogin) {
-                logSuccess(userName);
-            } else {
-                logFail(userName);
-            }
-        }
+        updateUserData(userName);
+        return super.setCurrentUser(userName);
     }
 
     private void updateUserData(String userName) {
@@ -146,14 +134,6 @@ public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenti
         }
     }
 
-    private void logSuccess(String userName) {
-        logService.addLogEntry(LogEntry.create(LogObject.LOG_IN_OUT, userName, "applog_login_success"));
-    }
-
-    private void logFail(String userName) {
-        logService.addLogEntry(LogEntry.create(LogObject.LOG_IN_OUT, userName, "applog_login_failed"));
-    }
-
     // START: getters / setters
     public void setAmrService(AMRService amrService) {
         this.amrService = amrService;
@@ -173,10 +153,6 @@ public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenti
 
     public void setRsService(RSService rsService) {
         this.rsService = rsService;
-    }
-
-    public void setLogService(LogService logService) {
-        this.logService = logService;
     }
     // END: getters / setters
 

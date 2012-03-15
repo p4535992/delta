@@ -34,6 +34,8 @@ import ee.webmedia.alfresco.log.model.LogSetup;
  */
 public class LogServiceImpl implements LogService, InitializingBean {
 
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(LogServiceImpl.class);
+
     private SimpleJdbcTemplate jdbcTemplate;
 
     private boolean useClientIpFromXForwardedForHttpHeader;
@@ -62,6 +64,14 @@ public class LogServiceImpl implements LogService, InitializingBean {
 
     @Override
     public void addLogEntry(LogEntry log) {
+        // This check provided just-in-case to catch empty event descriptions.
+        // Exception should not be thrown as not logging is non-critical
+        // compared to breaking serviced wanting to just log an action.
+        if (log.getEventDescription() == null) {
+            LOG.error("No event description was provided for event caused by " + log.getObjectName() + " with level " + log.getLevel());
+            return;
+        }
+
         if (jdbcTemplate.queryForInt("SELECT COUNT(*) FROM delta_log_level WHERE level=?", log.getLevel()) != 0) {
             jdbcTemplate.update("INSERT INTO delta_log (log_entry_id,level,creator_id,creator_name,computer_ip,computer_name,object_id,object_name,description) "
                     + "VALUES (to_char(CURRENT_DATE,'YYYYMMDD') || (SELECT COUNT(*) + 1 FROM delta_log WHERE date(created_date_time) = CURRENT_DATE),?,?,?,?,?,?,?,?)",
