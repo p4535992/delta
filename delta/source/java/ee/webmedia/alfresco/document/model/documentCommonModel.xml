@@ -308,6 +308,9 @@
             <property name="doccom:searchableHasStartedCompoundWorkflows">
                <type>d:boolean</type>
             </property>
+            <property name="doccom:searchableHasAllFinishedCompoundWorkflows">
+               <type>d:boolean</type>
+            </property>
             <property name="doccom:searchableFund">
                <type>d:text</type>
                <multiple>true</multiple>

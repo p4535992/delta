@@ -319,6 +319,11 @@
    <bean id="documentWorkflowStatusEventListener" class="ee.webmedia.alfresco.document.service.event.DocumentWorkflowStatusEventListener">
       <property name="workflowService" ref="WmWorkflowService" />
       <property name="nodeService" ref="NodeService" />
+   </bean>
+   
+   <bean id="documentWorkflowStatusImmediateEventListener" class="ee.webmedia.alfresco.document.service.event.DocumentWorkflowStatusImmediateEventListener">
+      <property name="workflowService" ref="WmWorkflowService" />
+      <property name="nodeService" ref="NodeService" />
       <property name="privilegeService" ref="PrivilegeService" />
       <property name="fileService" ref="FileService" />
    </bean>

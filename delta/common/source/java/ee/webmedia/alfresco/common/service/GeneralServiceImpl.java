@@ -117,6 +117,7 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     }
 
     private LinkedHashSet<ArchivalsStoreVO> archivalsStoreVOs;
+    private LinkedHashSet<StoreRef> allWithArchivalsStoreRefs;
 
     @Override
     public void setArchivalsStoreVOs(LinkedHashSet<ArchivalsStoreVO> archivalsStoreVOs) {
@@ -126,6 +127,19 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     @Override
     public LinkedHashSet<ArchivalsStoreVO> getArchivalsStoreVOs() {
         return archivalsStoreVOs;
+    }
+
+    @Override
+    public LinkedHashSet<StoreRef> getAllWithArchivalsStoreRefs() {
+        if (allWithArchivalsStoreRefs == null) {
+            LinkedHashSet<StoreRef> stores = new LinkedHashSet<StoreRef>();
+            stores.add(store);
+            for (ArchivalsStoreVO storeVO : getArchivalsStoreVOs()) {
+                stores.add(storeVO.getStoreRef());
+            }
+            allWithArchivalsStoreRefs = stores;
+        }
+        return allWithArchivalsStoreRefs;
     }
 
     @Override
@@ -806,12 +820,7 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
         if (id == null) {
             return null;
         }
-        List<StoreRef> allStoreRefs = new ArrayList<StoreRef>();
-        allStoreRefs.add(getStore());
-        for (ArchivalsStoreVO storeVo : getArchivalsStoreVOs()) {
-            allStoreRefs.add(storeVo.getStoreRef());
-        }
-        for (StoreRef storeRef : allStoreRefs) {
+        for (StoreRef storeRef : getAllWithArchivalsStoreRefs()) {
             NodeRef nodeRef = new NodeRef(storeRef, id);
             if (nodeService.exists(nodeRef)) {
                 return nodeRef;

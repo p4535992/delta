@@ -77,15 +77,17 @@
       <property name="permissionService" ref="PermissionService" />
    </bean>
 
-   <bean id="documentUpdater" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentUpdater" parent="abstractNodeUpdater" >
+   <bean id="documentUpdater2" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
        <property name="dependsOn">
          <list>
+            <ref bean="archivalsStoresBootstrap" />
             <ref bean="structUnitFieldTypeUpdater" />
             <ref bean="deleteSubtypedDocuments" />
          </list>
       </property>
+      <property name="workflowService" ref="WmWorkflowService" />
    </bean>
 
    <!-- START: web beans: -->

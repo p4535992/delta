@@ -63,7 +63,6 @@ import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.adr.model.AdrModel;
-import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
@@ -142,7 +141,6 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     private List<StoreRef> allStores = null;
     private List<StoreRef> allStoresWithArchivalStoreVOs = null; // XXX This is currently used only for tasks. If analysis for CL 186867 is complete then this might be refactored
                                                                  // to getAllStores()
-    private QName[] notIncomingLetterTypes;
 
     @Override
     public List<Document> searchDueContracts() {
@@ -865,22 +863,14 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         List<String> queryParts = new ArrayList<String>();
         queryParts.add(generateStringExactQuery(DocumentStatus.WORKING.getValueName(), DocumentCommonModel.Props.DOC_STATUS));
         queryParts.add(generateStringNullQuery(DocumentCommonModel.Props.REG_DATE_TIME));
+        queryParts.add(generatePropertyBooleanQuery(DocumentCommonModel.Props.SEARCHABLE_HAS_ALL_FINISHED_COMPOUND_WORKFLOWS, true));
         DOCUMENTS_FOR_REGISTERING_QUERY = generateDocumentSearchQuery(queryParts);
     }
 
     @Override
     public List<Document> searchDocumentsForRegistering() {
         long startTime = System.currentTimeMillis();
-        List<Document> results = searchGeneralImpl(DOCUMENTS_FOR_REGISTERING_QUERY, -1, /* queryName */"documentsForRegistering",
-                new SearchCallback<Document>() {
-                    @Override
-                    public Document addResult(ResultSetRow row) {
-                        if (workflowService.hasAllFinishedCompoundWorkflows(row.getNodeRef())) {
-                            return documentService.getDocumentByNodeRef(row.getNodeRef());
-                        }
-                        return null;
-                    }
-                });
+        List<Document> results = searchDocumentsImpl(DOCUMENTS_FOR_REGISTERING_QUERY, -1, /* queryName */"documentsForRegistering");
         if (log.isDebugEnabled()) {
             log.debug(String.format("Documents for registering search total time %d ms, query: %s" //
                     , (System.currentTimeMillis() - startTime), DOCUMENTS_FOR_REGISTERING_QUERY));
@@ -891,14 +881,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     @Override
     public int getCountOfDocumentsForRegistering() {
         long startTime = System.currentTimeMillis();
-        int count = searchGeneralImpl(DOCUMENTS_FOR_REGISTERING_QUERY, -1, /* queryName */"documentsForRegisteringCount", new SearchCallback<String>() {
-            @Override
-            public String addResult(ResultSetRow row) {
-                return workflowService.hasAllFinishedCompoundWorkflows(row.getNodeRef())
-                        ? row.getNodeRef().toString()
-                        : null;
-            }
-        }).size();
+        int count = searchNodes(DOCUMENTS_FOR_REGISTERING_QUERY, -1, /* queryName */"documentsForRegisteringCount").size();
 
         if (log.isDebugEnabled()) {
             log.debug(String.format("Documents for registering count search total time %d ms, query: %s" //
@@ -1799,12 +1782,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
 
     private List<StoreRef> getAllStoresWithArchivalStoreVOs() {
         if (allStoresWithArchivalStoreVOs == null) {
-            List<StoreRef> storeList = new ArrayList<StoreRef>();
-            storeList.add(generalService.getStore());
-            for (ArchivalsStoreVO storeVO : generalService.getArchivalsStoreVOs()) {
-                storeList.add(storeVO.getStoreRef());
-            }
-            allStoresWithArchivalStoreVOs = storeList;
+            allStoresWithArchivalStoreVOs = new ArrayList<StoreRef>(generalService.getAllWithArchivalsStoreRefs());
         }
         return allStoresWithArchivalStoreVOs;
     }

@@ -2,7 +2,6 @@ package ee.webmedia.alfresco.docdynamic.bootstrap;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -11,28 +10,31 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.cmr.security.AccessPermission;
-import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.QName;
+import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.bootstrap.StructUnitFieldTypeUpdater;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.privilege.model.PrivilegeModel;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
+import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 /**
  * This updater does multiple things with document:
  * 1) Update properties of type STRUCT_UNIT to multiValued properties (String -> List<String>)
- * 2) Remove old permissions from all documents and replace them with new ones if needed
+ * 2) Set searchableHasAllFinishedCompoundWorkflows property value
+ * 3) Remove old permissions from all documents and replace them with new ones if needed
  * 
  * @author Riina Tens - STRUCT_UNIT update
+ * @author Alar Kvell - setting searchableHasAllFinishedCompoundWorkflows
  * @author Ats Uiboupin - replacing permissions
  */
 public class DocumentUpdater extends AbstractNodeUpdater {
@@ -45,38 +47,69 @@ public class DocumentUpdater extends AbstractNodeUpdater {
 
     // END: old permissions
 
+    private WorkflowService workflowService;
+    private boolean documentUpdater1Executed = false;
+
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
+        NodeRef previousComponentRef = generalService.getNodeRef("/sys:system-registry/module:modules/module:simdhs/module:components/module:documentUpdater", new StoreRef(
+                "system://system"));
+        documentUpdater1Executed = previousComponentRef != null;
+
         // Need to go through all documents
         String query = SearchUtil.generateTypeQuery(DocumentCommonModel.Types.DOCUMENT);
-        return Arrays.asList(searchService.query(generalService.getStore(), SearchService.LANGUAGE_LUCENE, query),
-                searchService.query(generalService.getArchivalsStoreRef(), SearchService.LANGUAGE_LUCENE, query));
+        List<ResultSet> resultSets = new ArrayList<ResultSet>();
+        for (StoreRef storeRef : generalService.getAllWithArchivalsStoreRefs()) {
+            resultSets.add(searchService.query(storeRef, SearchService.LANGUAGE_LUCENE, query));
+        }
+        return resultSets;
     }
 
     @Override
     protected String[] getCsvFileHeaders() {
-        return new String[] { "docRef", "updatedStructUnitProps", "removed authorities by permission" };
+        if (documentUpdater1Executed) {
+            return new String[] { "docRef", "searchableHasAllFinishedCompoundWorkflows" };
+        }
+        return new String[] { "docRef", "searchableHasAllFinishedCompoundWorkflows", "updatedStructUnitProps", "removed authorities by permission", "removePrivilegeMappings" };
     }
 
     @Override
     protected String[] updateNode(NodeRef docRef) throws Exception {
-        String structUnitPropertiesToMultivaluedUpdaterLog = updateStructUnitPropertiesToMultivalued(docRef);
+        Map<QName, Serializable> origProps = nodeService.getProperties(docRef);
+        Map<QName, Serializable> updatedProps = new HashMap<QName, Serializable>();
+
+        String hasAllFinishedCompoundWorkflowsUpdaterLog = updateHasAllFinishedCompoundWorkflows(docRef, origProps, updatedProps);
+
+        String structUnitPropertiesToMultivaluedUpdaterLog = "";
+        if (!documentUpdater1Executed) {
+            structUnitPropertiesToMultivaluedUpdaterLog = updateStructUnitPropertiesToMultivalued(origProps, updatedProps);
+        }
+
+        if (!updatedProps.isEmpty()) {
+            nodeService.addProperties(docRef, updatedProps);
+        }
+        if (documentUpdater1Executed) {
+            return new String[] { hasAllFinishedCompoundWorkflowsUpdaterLog };
+        }
+
         String removePermissionLog = updatePermission(docRef);
-        removePrivilegeMappings(docRef);
-        return new String[] { structUnitPropertiesToMultivaluedUpdaterLog, removePermissionLog };
+        String removePrivilegeMappingsLog = removePrivilegeMappings(docRef, origProps);
+        return new String[] { hasAllFinishedCompoundWorkflowsUpdaterLog, structUnitPropertiesToMultivaluedUpdaterLog, removePermissionLog, removePrivilegeMappingsLog };
     }
 
-    private void removePrivilegeMappings(NodeRef docRef) {
+    private String removePrivilegeMappings(NodeRef docRef, Map<QName, Serializable> props) {
         @SuppressWarnings("unchecked")
-        Collection<String> privUsers = (Collection<String>) nodeService.getProperty(docRef, PrivilegeModel.Props.USER);
+        Collection<String> privUsers = (Collection<String>) props.get(PrivilegeModel.Props.USER);
         @SuppressWarnings("unchecked")
-        Collection<String> privGroups = (Collection<String>) nodeService.getProperty(docRef, PrivilegeModel.Props.GROUP);
+        Collection<String> privGroups = (Collection<String>) props.get(PrivilegeModel.Props.GROUP);
         RepoUtil.validateSameSize(privUsers, privGroups, "users", "groups");
         if (privUsers != null) {
             nodeService.removeProperty(docRef, PrivilegeModel.Props.USER);
             nodeService.removeProperty(docRef, PrivilegeModel.Props.GROUP);
             nodeService.removeAspect(docRef, PrivilegeModel.Aspects.USER_GROUP_MAPPING);
+            return "removedUserGroupMappingAspectAndProps";
         }
+        return "";
     }
 
     /**
@@ -85,11 +118,9 @@ public class DocumentUpdater extends AbstractNodeUpdater {
      * @param docRef
      * @return
      */
-    private String updateStructUnitPropertiesToMultivalued(NodeRef docRef) {
+    private String updateStructUnitPropertiesToMultivalued(Map<QName, Serializable> origProps, Map<QName, Serializable> updatedProps) {
         List<String> resultLog = new ArrayList<String>();
-        Map<QName, Serializable> props = nodeService.getProperties(docRef);
-        Map<QName, Serializable> updatedProps = new HashMap<QName, Serializable>();
-        for (Map.Entry<QName, Serializable> entry : props.entrySet()) {
+        for (Map.Entry<QName, Serializable> entry : origProps.entrySet()) {
             QName propQName = entry.getKey();
             if (DocumentDynamicModel.URI.equals(propQName.getNamespaceURI()) && propQName.getLocalName().contains(StructUnitFieldTypeUpdater.ORG_STRUCT_UNIT)) {
                 Serializable currentValue = entry.getValue();
@@ -99,42 +130,39 @@ public class DocumentUpdater extends AbstractNodeUpdater {
                         newValue.add((String) currentValue);
                     }
                     updatedProps.put(propQName, (Serializable) newValue);
-                    resultLog.add(propQName.toString());
+                    resultLog.add(propQName.toPrefixString(serviceRegistry.getNamespaceService()));
                 }
             }
         }
-        nodeService.addProperties(docRef, updatedProps);
-        String structUnitPropertiesToMultivaluedUpdaterLog = StringUtils.join(resultLog, ", ");
-        return structUnitPropertiesToMultivaluedUpdaterLog;
+        return StringUtils.join(resultLog, ", ");
     }
 
     private String updatePermission(NodeRef docRef) {
-        PermissionService permissionService = BeanHelper.getPermissionService();
-        Set<AccessPermission> allSetPermissions = permissionService.getAllSetPermissions(docRef);
+        Set<AccessPermission> allSetPermissions = serviceRegistry.getPermissionService().getAllSetPermissions(docRef);
         Map<String, String> replacePermissions = new HashMap<String, String>();
         replacePermissions.put(DELETE_DOCUMENT_META_DATA, null);
         replacePermissions.put(DELETE_DOCUMENT_FILES, null);
         replacePermissions.put(EDIT_DOCUMENT_FILES, DocumentCommonModel.Privileges.EDIT_DOCUMENT);
         replacePermissions.put(EDIT_DOCUMENT_META_DATA, DocumentCommonModel.Privileges.EDIT_DOCUMENT);
-        Map<String, List<String>> removedAuthorities = removePermission(docRef, replacePermissions, allSetPermissions, permissionService);
+        Map<String, List<String>> removedAuthorities = removePermission(docRef, replacePermissions, allSetPermissions);
         List<String> removedPermissionInfo = new ArrayList<String>(removedAuthorities.keySet().size());
         for (Entry<String, List<String>> entry : removedAuthorities.entrySet()) {
             removedPermissionInfo.add(entry.getKey() + " [ " + StringUtils.join(entry.getValue(), " ") + " ]");
         }
-        return StringUtils.join(removedPermissionInfo, "; ");
+        return StringUtils.join(removedPermissionInfo, ", ");
     }
 
-    private Map<String, List<String>> removePermission(NodeRef nodeRef, Map<String, String> replacements
-            , Set<AccessPermission> allSetPermissions, PermissionService permissionService) {
+    private Map<String, List<String>> removePermission(NodeRef nodeRef, Map<String, String> replacements, Set<AccessPermission> allSetPermissions) {
         Map<String, List<String>> hashMap = new HashMap<String, List<String>>();
         for (AccessPermission accessPermission : allSetPermissions) {
             String existingPermission = accessPermission.getPermission();
             if (accessPermission.isSetDirectly() && replacements.containsKey(existingPermission)) {
+
                 String authority = accessPermission.getAuthority();
-                permissionService.deletePermission(nodeRef, authority, existingPermission);
+                serviceRegistry.getPermissionService().deletePermission(nodeRef, authority, existingPermission);
                 String replacementPermission = replacements.get(existingPermission);
                 if (replacementPermission != null) {
-                    permissionService.setPermission(nodeRef, authority, replacementPermission, true);
+                    serviceRegistry.getPermissionService().setPermission(nodeRef, authority, replacementPermission, true);
                 }
                 List<String> authoritiesByFormerPermission = hashMap.get(existingPermission);
                 if (authoritiesByFormerPermission == null) {
@@ -146,4 +174,20 @@ public class DocumentUpdater extends AbstractNodeUpdater {
         }
         return hashMap;
     }
+
+    private String updateHasAllFinishedCompoundWorkflows(NodeRef docRef, Map<QName, Serializable> origProps, Map<QName, Serializable> updatedProps) {
+        Serializable origValueReal = origProps.get(DocumentCommonModel.Props.SEARCHABLE_HAS_ALL_FINISHED_COMPOUND_WORKFLOWS);
+        boolean origValue = Boolean.TRUE.equals(origValueReal);
+        boolean newValue = workflowService.hasAllFinishedCompoundWorkflows(docRef);
+        if (origValue != newValue) {
+            updatedProps.put(DocumentCommonModel.Props.SEARCHABLE_HAS_ALL_FINISHED_COMPOUND_WORKFLOWS, newValue);
+            return ObjectUtils.toString(origValueReal, "null") + ", " + newValue;
+        }
+        return "";
+    }
+
+    public void setWorkflowService(WorkflowService workflowService) {
+        this.workflowService = workflowService;
+    }
+
 }

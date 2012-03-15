@@ -255,7 +255,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         }
     }
 
-    private Set<NodeRef> loadNodesFromRepo() throws Exception {
+    protected Set<NodeRef> loadNodesFromRepo() throws Exception {
         log.info("Searching nodes from repository");
         List<ResultSet> resultSets = getNodeLoadingResultSet();
         if (resultSets == null || resultSets.size() == 0) {

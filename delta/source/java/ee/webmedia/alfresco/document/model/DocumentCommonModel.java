@@ -10,6 +10,7 @@ import java.util.Set;
 import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
+import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
 /**
@@ -81,6 +82,8 @@ public interface DocumentCommonModel {
         QName SEARCHABLE_SEND_MODE = QName.createQName(DOCCOM_URI, "searchableSendMode");
         /** shows if the document contains at least one compoundWorkflow, that has startedDateTime set */
         QName SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS = QName.createQName(DOCCOM_URI, "searchableHasStartedCompoundWorkflows");
+        /** If document has at least one compoundWorkflow and all compoundWorkflows have {@link Status#FINISHED}. */
+        QName SEARCHABLE_HAS_ALL_FINISHED_COMPOUND_WORKFLOWS = QName.createQName(DOCCOM_URI, "searchableHasAllFinishedCompoundWorkflows");
         QName SEARCHABLE_FUND = QName.createQName(DOCCOM_URI, "searchableFund");
         QName SEARCHABLE_FUNDS_CENTER = QName.createQName(DOCCOM_URI, "searchableFundsCenter");
         QName SEARCHABLE_EA_COMMITMENT_ITEM = QName.createQName(DOCCOM_URI, "searchableEaCommitmentItem");

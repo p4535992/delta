@@ -1070,6 +1070,10 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             log.debug("Deleting " + compoundWorkflow);
         }
         nodeService.deleteNode(nodeRef);
+
+        NodeRef docRef = compoundWorkflow.getParent();
+        boolean hasAllFinishedCompoundWorkflows = hasAllFinishedCompoundWorkflows(docRef);
+        nodeService.setProperty(docRef, DocumentCommonModel.Props.SEARCHABLE_HAS_ALL_FINISHED_COMPOUND_WORKFLOWS, hasAllFinishedCompoundWorkflows);
     }
 
     @Override

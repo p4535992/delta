@@ -1524,15 +1524,18 @@ public class TestDataService implements SaveListener {
             assocOtherDocRefs.add(otherDocRef);
         }
 
-        createWorkflows(docRef, !isRegistered, docTypeId);
+        int allTaskCount = createWorkflows(docRef, !isRegistered, docTypeId);
 
         // SENDINFOS
-        if (Math.random() > 0.00006d) { // 100 out of 1 700 000 documents need to appear under unsent documents
+        // How many documents match recipientFinishedDocuments query (are finished && have recipientName/additionalRecipientName/partyName field, that is non-empty)
+        // depends on documentTypes.xml that is used. In case of our sample documentTypes.xml, 34% of generated documents match
+        // 34% of 1 700 000 is 578 000; 100 of 578 000 is 0.0002
+        if (Math.random() > 0.0002d) {
             Map<QName, Serializable> sendInfoProps = new HashMap<QName, Serializable>();
             sendInfoProps.put(DocumentCommonModel.Props.SEND_INFO_RESOLUTION, getRandom(docTitles));
             sendInfoProps.put(DocumentCommonModel.Props.SEND_INFO_RECIPIENT, getRandom(contacts));
             sendInfoProps.put(DocumentCommonModel.Props.SEND_INFO_SEND_MODE, SendMode.MAIL.getValueName());
-            sendInfoProps.put(DocumentCommonModel.Props.SEND_INFO_SEND_STATUS, SendStatus.RECEIVED);
+            sendInfoProps.put(DocumentCommonModel.Props.SEND_INFO_SEND_STATUS, SendStatus.RECEIVED.toString());
             Calendar cal = Calendar.getInstance();
             cal.add(Calendar.DATE, (int) (Math.random() - 1d) * 2000);
             sendInfoProps.put(DocumentCommonModel.Props.SEND_INFO_SEND_DATE_TIME, cal.getTime());
@@ -1546,12 +1549,13 @@ public class TestDataService implements SaveListener {
 
         // FUTURE: õiguseid (nii dokumendi kui sarja omad) praegu ei tee
 
-        return Pair.newInstance(docRef, docTypeId + ", " + regNumber + ", " + filesCount + " files, " + assocOtherDocRefs.size() + " assocs");
+        return Pair.newInstance(docRef, docTypeId + ", " + regNumber + ", " + filesCount + " files, " + assocOtherDocRefs.size() + " assocs, " + allTaskCount + " tasks");
     }
 
-    private void createWorkflows(NodeRef docRef, boolean inProgress, String docTypeId) {
+    private int createWorkflows(NodeRef docRef, boolean inProgress, String docTypeId) {
+        int allTaskCount = 0;
         if (Math.random() < 0.05d) {
-            return;
+            return allTaskCount;
         }
         // 10% registreerimata, neist 95% omab töövoogu, seega kokku 9,5%, aga see on teostamisel
         // aga tahame et 1000 dokumenti oleksid registreerimiseks menüüpunktis
@@ -1571,6 +1575,9 @@ public class TestDataService implements SaveListener {
 
         HashMap<QName, Serializable> props = new HashMap<QName, Serializable>();
         props.put(WorkflowCommonModel.Props.STATUS, inProgress ? Status.IN_PROGRESS.getName() : Status.FINISHED.getName());
+        // TODO uncomment in 3.7
+        // import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
+        // props.put(WorkflowCommonModel.Props.TYPE, CompoundWorkflowType.DOCUMENT_WORKFLOW.toString());
         props.put(WorkflowCommonModel.Props.CREATOR_NAME, creatorFullName);
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.DATE, ((int) (Math.random() * -900)) - 30);
@@ -1701,6 +1708,7 @@ public class TestDataService implements SaveListener {
                         props
                         ).getChildRef();
                 getNodeService().addAspect(taskRef, WorkflowSpecificModel.Aspects.SEARCHABLE, null);
+                allTaskCount++;
 
                 // if assignmentWorkflow, then 1 task must have responsible active=true, (and 0-few can have responsible active=false)
                 if (taskType.equals(WorkflowSpecificModel.Types.ASSIGNMENT_TASK) && j == 0) {
@@ -1712,6 +1720,7 @@ public class TestDataService implements SaveListener {
         }
 
         getNodeService().setProperty(docRef, DocumentCommonModel.Props.SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS, true);
+        return allTaskCount;
     }
 
     private void createFile(NodeRef docRef, ArrayList<String> fileTitles, Map<QName, Serializable> userProps, OutputStream allOutput, int i) throws Exception {

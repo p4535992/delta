@@ -44,6 +44,8 @@ public interface GeneralService {
 
     LinkedHashSet<ArchivalsStoreVO> getArchivalsStoreVOs();
 
+    LinkedHashSet<StoreRef> getAllWithArchivalsStoreRefs();
+
     /**
      * @return store where archived documents are stored
      */
