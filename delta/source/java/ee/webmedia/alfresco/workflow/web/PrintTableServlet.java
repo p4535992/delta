@@ -150,8 +150,18 @@ public class PrintTableServlet extends HttpServlet {
                         + getPageTitle(mode)
                         + "&nbsp;&nbsp;</h3><div class='panel-border' id='metadata-panel-panel-border'><div id='dialog:dialog-body:doc-metatada_container'><table width='100%' cellspacing='0' cellpadding='0'><thead><tr>\n");
 
-        for (String columnName : getColumnNames(mode)) {
-            sb.append("\t<th>").append(MessageUtil.getMessage(columnName)).append("</th>\n");
+        List<String> columnNames = getColumnNames(mode);
+        for (int i = 0; i < columnNames.size(); i++) {
+            String columnName = columnNames.get(i);
+            String startTag = "\t<th>";
+            if (TableMode.REVIEW_NOTES == mode) {
+                if (i == columnNames.size() - 1) {
+                    startTag = "\t<th style=\"width:60%\">";
+                } else {
+                    startTag = "\t<th style=\"width:20%\">";
+                }
+            }
+            sb.append(startTag).append(MessageUtil.getMessage(columnName)).append("</th>\n");
         }
         sb.append("</tr></thead><tbody>\n");
 

@@ -97,10 +97,14 @@
 
 <h:outputText value="Taustatööd: "/>
 <f:verbatim><br/></f:verbatim>
+<h:commandButton id="destroyArchivedVolumes" value="destroyArchivedVolumes" type="submit"
+   actionListener="#{ArchivalsService.destroyArchivedVolumes}" rendered="#{ApplicationService.test}" />
+<f:verbatim><br/></f:verbatim>
 <h:commandButton id="updateOrganisationStructureBasedGroups" value="updateOrganisationStructureBasedGroups" type="submit"
    actionListener="#{OrganizationStructureService.updateOrganisationStructureBasedGroups}" rendered="#{ApplicationService.test}" />
-<f:verbatim><br/></f:verbatim>
+<f:verbatim><br/><br/></f:verbatim>
 <h:outputText id="reportGenerationTitle" value="Aruannete genereerimine: " />
+<f:verbatim><br/></f:verbatim>
 <h:outputText id="reportGenerationStatus" value=" Selles klastri õlas aruannete genereerimine ei jookse." rendered="#{!ReportListDialog.reportGenerationEnabled}" />
 <h:commandButton id="pauseReportGeneration" value="Peata aruannete genereerimine" type="submit"
    actionListener="#{ReportListDialog.pauseReportGeneration}" rendered="#{ReportListDialog.showPauseReportGeneration}" />

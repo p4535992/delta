@@ -18,7 +18,7 @@ public interface LogSearchModel {
         QName CREATOR_ID = QName.createQName(URI, "creatorId");
         QName OBJECT_NAME = QName.createQName(URI, "objectName");
         QName OBJECT_ID = QName.createQName(URI, "objectId");
-        QName COMPUTER_IP = QName.createQName(URI, "computerIp");
+        QName COMPUTER_ID = QName.createQName(URI, "computerId");
         QName DESCRIPTION = QName.createQName(URI, "description");
     }
 }

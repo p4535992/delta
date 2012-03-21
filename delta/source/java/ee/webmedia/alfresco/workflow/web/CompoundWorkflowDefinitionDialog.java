@@ -75,7 +75,6 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
-import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.AssignmentWorkflow;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
@@ -193,6 +192,9 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         int wfIndex = ActionUtil.getParam(event, WF_INDEX, Integer.class);
         log.debug("addWorkflowBlock: " + wfIndex + ", " + workflowType.getLocalName());
         Workflow workflow = getWorkflowService().addNewWorkflow(compoundWorkflow, workflowType, wfIndex, true);
+        if (taskGroups != null && taskGroups.size() >= wfIndex) { // If workflow was added in the middle
+            taskGroups.add(wfIndex, new HashMap<String, List<TaskGroup>>());
+        }
         if (!(compoundWorkflow instanceof CompoundWorkflowDefinition) && isCostManagerWorkflow(wfIndex)) {
             addCostManagerTasks(workflow);
         }
@@ -980,13 +982,15 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     }
 
     private void setPropsToTask(Task task, String name, Serializable id, Serializable email, Serializable orgName, Serializable jobTitle, Serializable groupName) {
+        @SuppressWarnings("unchecked")
+        List<String> orgStructUnit = (List<String>) orgName;
+
         task.setOwnerName(name);
         task.setOwnerId((String) id);
         task.setOwnerEmail((String) email);
         task.setOwnerGroup((String) groupName);
-        task.getNode().getProperties().put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME.toString(), orgName);
-        task.getNode().getProperties().put(WorkflowCommonModel.Props.OWNER_JOB_TITLE.toString(), jobTitle);
-        task.getNode().getProperties().put(WorkflowCommonModel.Props.OWNER_GROUP.toString(), groupName);
+        task.setOwnerOrgStructUnitProp(orgStructUnit);
+        task.setOwnerJobTitle((String) jobTitle);
     }
 
     /**

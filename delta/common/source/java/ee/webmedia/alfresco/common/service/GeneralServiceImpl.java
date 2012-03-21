@@ -310,7 +310,7 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
                     }
 
                     docPropsChangeHolder.addChange(node.getNodeRef(), assoc.getTypeQName(), childRef, null);
-                    nodeService.removeChild(assoc.getParentRef(), childRef);
+                    nodeService.deleteNode(childRef);
                 }
             }
         }
@@ -333,7 +333,7 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     @Override
     public WmNode fetchObjectNode(NodeRef objectRef, QName objectType) {
         QName type = nodeService.getType(objectRef);
-        Assert.isTrue(objectType.equals(type));
+        Assert.isTrue(objectType.equals(type), objectRef + " is typed as " + type + " but was requested as " + objectType);
         Set<QName> aspects = RepoUtil.getAspectsIgnoringSystem(nodeService.getAspects(objectRef));
         Map<QName, Serializable> props = RepoUtil.getPropertiesIgnoringSystem(nodeService.getProperties(objectRef), dictionaryService);
 
@@ -771,7 +771,7 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     }
 
     @Override
-    public void runOnBackground(final RunAsWork<Void> work, final String threadNamePrefix) {
+    public void runOnBackground(final RunAsWork<Void> work, final String threadNamePrefix, final boolean createTransaction) {
         Assert.notNull(threadNamePrefix, "threadName");
         final String threadName = threadNamePrefix + "-" + backgroundThreadCounter.getAndIncrement();
         AlfrescoTransactionSupport.bindListener(new TransactionListenerAdapter() {
@@ -783,23 +783,30 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
                         log.info("Started new background thread: " + Thread.currentThread().getName());
                         long startTime = System.nanoTime();
                         try {
-                            RetryingTransactionHelper txHelper = transactionService.getRetryingTransactionHelper();
-                            Pair<Long, Long> workTime = txHelper.doInTransaction(new RetryingTransactionCallback<Pair<Long, Long>>() {
-                                @Override
-                                public Pair<Long, Long> execute() throws Throwable {
-                                    log.info("Started new transaction in background thread: " + Thread.currentThread().getName());
-                                    long start = System.nanoTime();
-                                    AuthenticationUtil.runAs(work, AuthenticationUtil.getSystemUserName());
-                                    long stop = System.nanoTime();
-                                    return new Pair<Long, Long>(start, stop);
-                                }
-                            }, false, true);
+                            Pair<Long, Long> workTime;
+                            if (createTransaction) {
+                                RetryingTransactionHelper txHelper = transactionService.getRetryingTransactionHelper();
+                                workTime = txHelper.doInTransaction(new RetryingTransactionCallback<Pair<Long, Long>>() {
+                                    @Override
+                                    public Pair<Long, Long> execute() throws Throwable {
+                                        log.info("Started new transaction in background thread: " + Thread.currentThread().getName());
+                                        long start = System.nanoTime();
+                                        AuthenticationUtil.runAs(work, AuthenticationUtil.getSystemUserName());
+                                        long stop = System.nanoTime();
+                                        return new Pair<Long, Long>(start, stop);
+                                    }
+                                }, false, true);
+                            } else {
+                                long start = System.nanoTime();
+                                AuthenticationUtil.runAs(work, AuthenticationUtil.getSystemUserName());
+                                long stop = System.nanoTime();
+                                workTime = new Pair<Long, Long>(start, stop);
+                            }
                             long stopTime = System.nanoTime();
-                            log.info("Finished transaction and background thread: " + Thread.currentThread().getName() + " total time = "
+                            log.info("Finished " + (createTransaction ? "transaction and " : "") + "background thread: " + Thread.currentThread().getName() + " total time = "
                                     + CalendarUtil.duration(startTime, stopTime)
-                                    + "ms, last transaction work time = " + CalendarUtil.duration(workTime.getFirst(), workTime.getSecond())
-                                    + " ms, last transaction commit time = "
-                                    + CalendarUtil.duration(workTime.getSecond(), stopTime) + " ms");
+                                    + "ms, last work time = " + CalendarUtil.duration(workTime.getFirst(), workTime.getSecond())
+                                    + " ms" + (createTransaction ? ", last transaction commit time = " + CalendarUtil.duration(workTime.getSecond(), stopTime) + " ms" : ""));
                         } catch (Exception e) {
                             long stopTime = System.nanoTime();
                             log.error("Exception in background thread: " + Thread.currentThread().getName() + " total time = " + CalendarUtil.duration(startTime, stopTime) + "ms",

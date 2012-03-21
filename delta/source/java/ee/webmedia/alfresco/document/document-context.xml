@@ -324,8 +324,6 @@
    <bean id="documentWorkflowStatusImmediateEventListener" class="ee.webmedia.alfresco.document.service.event.DocumentWorkflowStatusImmediateEventListener">
       <property name="workflowService" ref="WmWorkflowService" />
       <property name="nodeService" ref="NodeService" />
-      <property name="privilegeService" ref="PrivilegeService" />
-      <property name="fileService" ref="FileService" />
    </bean>
 
    <!-- NB! In the future replace this with 2.5 -> 3.x migration script -->

@@ -23,13 +23,17 @@ import org.alfresco.web.ui.repo.component.UIMultiValueEditor;
 import org.alfresco.web.ui.repo.component.UIMultiValueEditor.MultiValueEditorEvent;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
+import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.ComponentPropVO;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.propertysheet.search.SearchRenderer;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.help.web.HelpTextUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Render {@link MultiValueEditor} as HTML table. Direct children of {@link MultiValueEditor} must be {@link HtmlPanelGroup} components.
@@ -40,6 +44,7 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 public class MultiValueEditorRenderer extends BaseRenderer {
 
     public static final String MULTI_VALUE_EDITOR_RENDERER_TYPE = MultiValueEditorRenderer.class.getCanonicalName();
+    public static final String GROUP_CONTROL_SEND_OUT = "sendOut";
 
     @Override
     public void decode(FacesContext context, UIComponent component) {
@@ -176,7 +181,10 @@ public class MultiValueEditorRenderer extends BaseRenderer {
         ResponseWriter out = context.getResponseWriter();
         boolean hasPicker = ((MultiValueEditor) multiValueEditor).getPickerCallback() != null;
         int rowIndex = 0;
-        @SuppressWarnings("unchecked")
+        boolean deleteEnabled = !ComponentUtil.isComponentDisabledOrReadOnly(multiValueEditor);
+        String previousGroupingValue = null;
+        boolean inGroup = false;
+        String groupRowControls = generateGroupRowControls(context, multiValueEditor);
         List<UIComponent> children = multiValueEditor.getChildren();
         int renderedRowCount = ComponentUtil.getRenderedChildrenCount(multiValueEditor);
         for (UIComponent child : children) {
@@ -185,11 +193,26 @@ public class MultiValueEditorRenderer extends BaseRenderer {
             }
 
             if (child instanceof HtmlPanelGroup) {
+                int renderedColumnCount = ComponentUtil.getRenderedChildrenCount(child);
+                String groupByColumnValue = (String) child.getAttributes().get(MultiValueEditor.GROUP_BY_COLUMN_VALUE);
+                if (StringUtils.isNotBlank(groupByColumnValue) && !groupByColumnValue.equals(previousGroupingValue)) {
+                    if (previousGroupingValue != null) {
+                        out.write("</tbody>");
+                        inGroup = false;
+                    }
+
+                    generateGroupRow(out, context, (MultiValueEditor) multiValueEditor, groupByColumnValue, rowIndex, renderedColumnCount, deleteEnabled, groupRowControls);
+                    out.write("<tbody class=\"hidden\">");
+                    inGroup = true;
+                    previousGroupingValue = groupByColumnValue;
+                } else if (StringUtils.isBlank(groupByColumnValue) && previousGroupingValue != null) {
+                    out.write("</tbody>");
+                    inGroup = false;
+                }
+
                 out.write("<tr>");
 
-                @SuppressWarnings("unchecked")
                 List<UIComponent> columns = child.getChildren();
-                int renderedColumnCount = ComponentUtil.getRenderedChildrenCount(child);
                 int columnCount = 0;
                 for (UIComponent column : columns) {
                     if (!column.isRendered()) {
@@ -221,8 +244,7 @@ public class MultiValueEditorRenderer extends BaseRenderer {
                     out.write("\" title=\"" + Application.getMessage(context, "delete") + "\">");
                     out.write("</a>");
 
-                    if (hasPicker) {
-
+                    if (hasPicker && !inGroup) {
                         out.write("<a class=\"icon-link search\" onclick=\"");
                         out.write(ComponentUtil.generateFieldSetter(context, multiValueEditor, getActionId(context, multiValueEditor),
                                 SearchRenderer.OPEN_DIALOG_ACTION + ";" + rowIndex));
@@ -232,7 +254,6 @@ public class MultiValueEditorRenderer extends BaseRenderer {
                         out.write(" title=\"" + Application.getMessage(context, SearchRenderer.SEARCH_MSG) + "\">");
                         // out.write(Application.getMessage(context, SearchRenderer.SEARCH_MSG));
                         out.write("</a>");
-
                     }
                 }
 
@@ -240,6 +261,67 @@ public class MultiValueEditorRenderer extends BaseRenderer {
                 rowIndex++;
             }
         }
+    }
+
+    private String generateGroupRowControls(FacesContext context, UIComponent multiValueEditor) {
+        String html = null;
+        String rowControls = (String) multiValueEditor.getAttributes().get(MultiValueEditor.GROUP_ROW_CONTROLS);
+        if (StringUtils.isBlank(rowControls)) {
+            return html;
+        }
+
+        if (GROUP_CONTROL_SEND_OUT.equals(rowControls)) {
+            ClassificatorService classificatorService = BeanHelper.getClassificatorService();
+            List<ClassificatorValue> activeClassificatorValues = classificatorService.getActiveClassificatorValues(classificatorService.getClassificatorByName("sendMode"));
+
+            StringBuilder s = new StringBuilder("<select class=\"changeSendOutMode width120\">");
+            s.append("<option value=\"\">").append(MessageUtil.getMessage("select_default_label")).append("</option>");
+            for (ClassificatorValue classificatorValue : activeClassificatorValues) {
+                s.append("<option value=\"").append(classificatorValue.getValueName()).append("\">").append(classificatorValue.getValueName()).append("</option>");
+            }
+            s.append("</select>");
+            html = s.toString();
+        }
+
+        return html;
+    }
+
+    private void generateGroupRow(ResponseWriter out, FacesContext context, MultiValueEditor multiValueEditor, String groupByColumnValue, int rowIndex, int columnCount,
+            boolean deleteEnabled, String rowControlComponent) throws IOException {
+
+        if (rowControlComponent != null) {
+            columnCount -= 1;
+        }
+        if (!deleteEnabled) {
+            columnCount += 1;
+        }
+
+        out.write("<tr><td");
+        if (columnCount > 0) {
+            out.write(" colspan=\"");
+            out.write(Integer.toString(columnCount));
+            out.write("\"");
+        }
+        out.write("><a href=\"#\" onclick=\"return false;\" class=\"icon-link toggle-tbody plus\"></a>");
+        out.write(groupByColumnValue);
+        out.write("</td>");
+
+        if (rowControlComponent != null) {
+            out.write("<td>");
+            out.write(rowControlComponent);
+            out.write("</td>");
+        }
+
+        if (deleteEnabled) {
+            out.write("<td class=\"actions\"><a class=\"icon-link margin-left-4 delete\" onclick=\"");
+            out.write(ComponentUtil.generateAjaxFormSubmit(context, multiValueEditor, multiValueEditor.getClientId(context), Integer.toString(MultiValueEditor.ACTION_REMOVE_GROUP)
+                    + ";" + rowIndex));
+            out.write("\" title=\"");
+            out.write(Application.getMessage(context, "delete"));
+            out.write("\"></a></td>");
+        }
+
+        out.write("</tr>");
     }
 
     private boolean hasSearchSuggest(UIComponent multiValueEditor, UIComponent column) {
@@ -316,8 +398,7 @@ public class MultiValueEditorRenderer extends BaseRenderer {
         out.write(Application.getMessage(context, SearchRenderer.CLOSE_WINDOW_MSG));
         out.write("</a></p></div><div class=\"modalpopup-content\"><div class=\"modalpopup-content-inner\">");
 
-        @SuppressWarnings("unchecked")
-        Map<Object, Object> attributes = picker.getAttributes();
+        Map<String, Object> attributes = picker.getAttributes();
         attributes.put(Search.PICKER_CALLBACK_KEY, multiValueEditor.getAttributes().get(Search.PICKER_CALLBACK_KEY));
         Utils.encodeRecursive(context, picker);
 

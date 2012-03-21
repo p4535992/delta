@@ -34,11 +34,11 @@
 <a:actionLink actionListener="#{MenuBean.addShortcut}" value="#{msg.shortcut_add}" rendered="#{MenuBean.shortcutAddable gt 0}" showLink="false" image="/images/icons/add_item.gif" styleClass="right" />
 <a:actionLink actionListener="#{MenuBean.removeShortcut}" value="#{msg.shortcut_remove}" rendered="#{MenuBean.shortcutAddable lt 0}" showLink="false" image="/images/icons/delete.gif" styleClass="right" />
 
-<a:actionLink value="#{msg.helptext}" onclick="return popup('../../../help/documentType/#{DialogManager.bean.documentType.id}')" image="/images/office/help.gif" showLink="false" styleClass="right"
+<a:actionLink value="#{msg.helptext}" onclick="return help('<%=request.getContextPath()%>/help/documentType/#{DialogManager.bean.documentType.id}')" image="/images/office/help.gif" showLink="false" styleClass="right"
   style="background-size: 100% 100%;"
   rendered="#{DialogManager.state != null && DialogManager.currentDialog.name == 'documentDynamicDialog' && applicationScope.helpText.documentType[DialogManager.bean.documentType.id] != null}" />
 
-<a:actionLink value="#{msg.helptext}" onclick="return popup('../../../help/dialog/#{DialogManager.currentDialog.name}')" image="/images/office/help.gif" showLink="false" styleClass="right"
+<a:actionLink value="#{msg.helptext}" onclick="return help('<%=request.getContextPath()%>/help/dialog/#{DialogManager.currentDialog.name}')" image="/images/office/help.gif" showLink="false" styleClass="right"
   style="background-size: 100% 100%;"
   rendered="#{DialogManager.state != null && DialogManager.currentDialog.name != 'documentDynamicDialog' && applicationScope.helpText.dialog[DialogManager.currentDialog.name] != null}" />
 

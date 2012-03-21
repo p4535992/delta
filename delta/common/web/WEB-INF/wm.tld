@@ -192,6 +192,21 @@
          <required>false</required>
          <rtexprvalue>true</rtexprvalue>
       </attribute>
+      <attribute>
+         <name>hiddenPropNames</name>
+         <required>false</required>
+         <rtexprvalue>false</rtexprvalue>
+      </attribute>
+      <attribute>
+         <name>groupByColumnName</name>
+         <required>false</required>
+         <rtexprvalue>false</rtexprvalue>
+      </attribute>
+      <attribute>
+         <name>groupRowControls</name>
+         <required>false</required>
+         <rtexprvalue>false</rtexprvalue>
+      </attribute>
    </tag>
 
    <tag>
@@ -237,6 +252,10 @@
       <attribute>
          <name>setterCallback</name>
          <description>Callback for setting value(s).</description>
+      </attribute>
+      <attribute>
+         <name>converter</name>
+         <description>Converter for setting value(s).</description>
       </attribute>
       <attribute>
          <name>dialogTitleId</name>

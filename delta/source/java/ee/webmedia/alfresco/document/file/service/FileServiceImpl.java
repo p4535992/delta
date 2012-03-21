@@ -29,11 +29,13 @@ import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.DuplicateChildNodeNameException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.cmr.security.AuthenticationService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.URLEncoder;
+import org.alfresco.web.app.servlet.DownloadContentServlet;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
@@ -419,6 +421,10 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public String generateURL(NodeRef nodeRef) {
+        String name = fileFolderService.getFileInfo(nodeRef).getName();
+        if (nodeRef.getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_ARCHIVE)) {
+            return DownloadContentServlet.generateDownloadURL(nodeRef, name);
+        }
         // calculate a WebDAV URL for the given node
         StringBuilder path = new StringBuilder("/").append(WebDAVServlet.WEBDAV_PREFIX);
 
@@ -434,7 +440,6 @@ public class FileServiceImpl implements FileService {
         NodeRef parent = nodeService.getPrimaryParent(nodeRef).getParentRef();
         path.append("/").append(URLEncoder.encode(parent.getId()));
 
-        String name = fileFolderService.getFileInfo(nodeRef).getName();
         path.append("/").append(URLEncoder.encode(name));
 
         return path.toString();

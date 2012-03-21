@@ -3,7 +3,7 @@ package ee.webmedia.alfresco.help.model;
 import org.alfresco.service.namespace.QName;
 
 /**
- * @author Ats Uiboupin
+ * @author Martti Tamm
  */
 public interface HelpTextModel {
 
@@ -11,11 +11,11 @@ public interface HelpTextModel {
 
     QName ROOT = QName.createQName(URI, "helpTexts");
 
-    public interface Types {
+    interface Types {
         QName HELP_TEXT = QName.createQName(URI, "helpText");
     }
 
-    public interface Props {
+    interface Props {
         QName TYPE = QName.createQName(URI, "type");
         QName CODE = QName.createQName(URI, "code");
         QName NAME = QName.createQName(URI, "name");

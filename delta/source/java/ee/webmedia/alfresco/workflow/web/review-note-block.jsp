@@ -10,10 +10,12 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
+<% String printButtonTooltip = MessageUtil.getMessage("workflow_task_review_notes_print"); %>
+
 <h:panelGroup id="review-note-block-facets">
    <f:facet name="title">
       <f:verbatim>
-         <a target="_blank" href="<%= BeanHelper.getWorkflowBlockBean().getReviewNotesPrintUrl() %>" class="print icon-link" ></a>
+         <a target="_blank" href="<%= BeanHelper.getWorkflowBlockBean().getReviewNotesPrintUrl() %>" class="print icon-link" title="<%= printButtonTooltip %>"></a>
       </f:verbatim>
    </f:facet>
 </h:panelGroup>

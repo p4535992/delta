@@ -734,7 +734,7 @@ select[disabled] {
 /*
 	TRASHCAN
 	*********************************/
-.filter-list {
+.trashfilter-list {
 	background: #FAFAFA none repeat scroll 0 0;
 	border: 1px solid #D7D9DB;
 }
@@ -1177,6 +1177,16 @@ textarea.inline {
 
 .add_date {
 	background: url(../images/icons/add_date.png) no-repeat;
+	line-height: 20px;
+}
+
+.plus {
+	background: url(../images/icons/plus.gif) no-repeat;
+	line-height: 20px;
+}
+
+.minus {
+	background: url(../images/icons/minus.gif) no-repeat;
 	line-height: 20px;
 }
 /*

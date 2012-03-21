@@ -288,7 +288,7 @@ public interface GeneralService {
      * @param work work to execute in a background thread after current transaction commit completes
      * @param threadName name to give the new thread that is created for executing work
      */
-    void runOnBackground(final RunAsWork<Void> work, final String threadName);
+    void runOnBackground(final RunAsWork<Void> work, final String threadName, boolean createTransaction);
 
     /** Return true if storeRef is primary or additional archivals storeRef */
     boolean isArchivalsStoreRef(StoreRef storeRef);

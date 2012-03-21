@@ -68,6 +68,9 @@
       <property name="notificationService" ref="NotificationService" />
       <property name="workflowService" ref="WmWorkflowService" />
       <property name="generalService" ref="GeneralService" />
+      <property name="privilegeService" ref="PrivilegeService" />
+      <property name="fileService" ref="FileService" />
+      <property name="transactionService" ref="TransactionService" />
    </bean>
    
    <bean id="notificationImportBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent" abstract="true">

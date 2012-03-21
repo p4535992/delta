@@ -106,6 +106,7 @@ import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowBlockItem;
 import ee.webmedia.alfresco.workflow.model.WorkflowBlockItemGroup;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
+import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel.SignatureTaskOutcome;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflowDefinition;
 import ee.webmedia.alfresco.workflow.service.SignatureTask;
@@ -372,7 +373,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 || WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK.equals(taskType)) {
             outcomeIndex = (Integer) task.getNode().getProperties().get(WorkflowSpecificModel.Props.TEMP_OUTCOME.toString());
         } else if (WorkflowSpecificModel.Types.SIGNATURE_TASK.equals(taskType)) {
-            if (outcomeIndex > 0) {
+            if (SignatureTaskOutcome.SIGNED_IDCARD.equals((int) outcomeIndex) || SignatureTaskOutcome.SIGNED_MOBILEID.equals((int) outcomeIndex)) {
 
                 // signing requires that at least 1 active file exists within this document
                 long step0 = System.currentTimeMillis();
@@ -397,7 +398,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                     MessageUtil.addStatusMessage(e);
                     return;
                 }
-                if (outcomeIndex == 1) {
+                if (SignatureTaskOutcome.SIGNED_IDCARD.equals((int) outcomeIndex)) {
                     showModal();
                 } else {
                     getMobileIdPhoneNrModal().setRendered(true);
@@ -484,7 +485,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     private List<Pair<String, String>> validate(Task task, Integer outcomeIndex) {
         QName taskType = task.getNode().getType();
         if (WorkflowSpecificModel.Types.SIGNATURE_TASK.equals(taskType)) {
-            if (outcomeIndex == 0 && StringUtils.isBlank(task.getComment())) {
+            if (SignatureTaskOutcome.NOT_SIGNED.equals((int) outcomeIndex) && StringUtils.isBlank(task.getComment())) {
                 return Arrays.asList(new Pair<String, String>("task_validation_signatureTask_comment", null));
             }
         } else if (WorkflowSpecificModel.Types.REVIEW_TASK.equals(taskType)) {
@@ -895,6 +896,11 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             // the outcome buttons
             String label = "task_outcome_" + node.getType().getLocalName();
             for (int outcomeIndex = 0; outcomeIndex < myTask.getOutcomes(); outcomeIndex++) {
+                if (WorkflowSpecificModel.Types.SIGNATURE_TASK.equals(taskType)
+                        && WorkflowSpecificModel.SignatureTaskOutcome.SIGNED_MOBILEID.equals(outcomeIndex)
+                        && !getSignatureService().isMobileIdEnabled()) {
+                    continue;
+                }
                 HtmlCommandButton outcomeButton = new HtmlCommandButton();
                 outcomeButton.setId("outcome-id-" + index + "-" + outcomeIndex);
                 Map<String, Object> outcomeBtnAttributes = ComponentUtil.putAttribute(outcomeButton, "styleClass", "taskOutcome");

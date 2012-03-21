@@ -90,7 +90,7 @@ public class LogServiceImpl implements LogService, InitializingBean {
         if (filter != null) {
             Map<String, Object> filterMap = new LinkedHashMap<String, Object>();
             if (StringUtils.hasLength(filter.getLogEntryId())) {
-                filterMap.put("log_entry_id = ?", filter.getLogEntryId());
+                filterMap.put("log_entry_id LIKE ?", filter.getLogEntryId() + "%");
             }
             if (filter.getDateCreatedStart() != null) {
                 filterMap.put("date(created_date_time) >= ?", filter.getDateCreatedStart());
@@ -102,7 +102,9 @@ public class LogServiceImpl implements LogService, InitializingBean {
                 filterMap.put("lower(creator_name) LIKE ?", "%" + filter.getCreatorName().toLowerCase() + "%");
             }
             if (StringUtils.hasLength(filter.getComputerId())) {
-                filterMap.put("computer_ip||computer_name LIKE ?", "%" + filter.getComputerId() + "%");
+                String computerId = "%" + filter.getComputerId().toLowerCase() + "%";
+                filterMap.put("(lower(computer_ip) LIKE ? OR lower(computer_name) LIKE ?)", computerId);
+                filterMap.put(null, computerId);
             }
             if (StringUtils.hasLength(filter.getDescription())) {
                 filterMap.put("lower(description) LIKE ?", "%" + filter.getDescription().toLowerCase() + "%");
@@ -118,12 +120,14 @@ public class LogServiceImpl implements LogService, InitializingBean {
                 q.append(" WHERE ");
                 boolean firstCondition = true;
                 for (String condition : filterMap.keySet()) {
-                    if (!firstCondition) {
-                        q.append(" AND ");
-                    } else {
-                        firstCondition = false;
+                    if (condition != null) {
+                        if (!firstCondition) {
+                            q.append(" AND ");
+                        } else {
+                            firstCondition = false;
+                        }
+                        q.append(condition);
                     }
-                    q.append(condition);
                 }
             }
             values = filterMap.values().toArray(new Object[filterMap.values().size()]);

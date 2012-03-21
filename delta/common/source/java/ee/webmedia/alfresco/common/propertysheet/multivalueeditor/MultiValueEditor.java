@@ -3,10 +3,12 @@ package ee.webmedia.alfresco.common.propertysheet.multivalueeditor;
 import static ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader.AttributeNames.PROP_GENERATOR_DESCRIPTORS;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNamespaceService;
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomConstants.VALUE_INDEX_IN_MULTIVALUED_PROPERTY;
+import static org.apache.commons.lang.StringUtils.isNotBlank;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -72,6 +74,10 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
     public static final String NO_ADD_LINK_LABEL = "noAddLinkLabel";
     public static final String HIDDEN_PROP_NAMES = "hiddenPropNames";
     public static final String SETTER_CALLBACK_RETURNS_MAP = "setterCallbackReturnsMap";
+    public static final String GROUP_BY_COLUMN_NAME = "groupByColumnName";
+    public static final String GROUP_BY_COLUMN_VALUE = "groupByColumnValue";
+    public static final String GROUP_ROW_CONTROLS = "groupRowControls";
+    public final static int ACTION_REMOVE_GROUP = 3;
 
     @Override
     public String getFamily() {
@@ -169,10 +175,27 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
         log.debug("Selected rowIndex=" + rowIndex + ", adding results: " + StringUtils.join(results, ", "));
 
         String preprocessCallback = (String) getAttributes().get(PREPROCESS_CALLBACK);
+        String groupByColumn = (String) getAttributes().get(GROUP_BY_COLUMN_NAME);
+        String[] resultDetails = null;
         if (StringUtils.isNotBlank(preprocessCallback)) {
-            MethodBinding preprocessBind = getFacesContext().getApplication().createMethodBinding(
-                    preprocessCallback, new Class[] { int.class, String[].class });
-            results = (String[]) preprocessBind.invoke(context, new Object[] { pickerFilterIndex, results });
+            MethodBinding preprocessBind = getFacesContext().getApplication().createMethodBinding(preprocessCallback, new Class[] { int.class, String[].class });
+            List<Pair<String, String>> groupedResults = null;
+            Object preprocessed = preprocessBind.invoke(context, new Object[] { pickerFilterIndex, results });
+            if (preprocessed instanceof List) {
+                groupedResults = (List<Pair<String, String>>) preprocessed;
+
+                String[] extractedResults = new String[groupedResults.size()];
+                resultDetails = new String[groupedResults.size()];
+                for (int i = 0; i < groupedResults.size(); i++) {
+                    Pair<String, String> pair = groupedResults.get(i);
+                    extractedResults[i] = pair.getSecond();
+                    resultDetails[i] = pair.getFirst();
+                }
+                results = extractedResults;
+
+            } else {
+                results = (String[]) preprocessed;
+            }
         }
 
         NamespaceService namespaceService = getNamespaceService();
@@ -191,8 +214,15 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
             List<Object> rowList = null;
             if (setterCallbackReturnsMap) {
                 rowMap = (Map<QName, Object>) b.invoke(context, new Object[] { results[i] });
+                QName groupingQName = QName.createQName(groupByColumn, namespaceService);
+                if (resultDetails != null && !rowMap.containsKey(groupingQName)) {
+                    rowMap.put(groupingQName, resultDetails[i]);
+                }
             } else {
                 rowList = (List<Object>) b.invoke(context, new Object[] { results[i] });
+                if (resultDetails != null) {
+                    rowList.add(resultDetails[i]);
+                }
             }
 
             if (columnListsWithPropNames.get(0).getSecond().size() > 0 && i == 0) { // Only first result overwrites row
@@ -277,6 +307,8 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
                 appendRow(context);
             } else if (assocEvent.Action == UIMultiValueEditor.ACTION_REMOVE) {
                 removeRow(context, assocEvent.RemoveIndex);
+            } else if (assocEvent.Action == MultiValueEditor.ACTION_REMOVE_GROUP) {
+                removeRowGroup(context, assocEvent.getComponent(), assocEvent.RemoveIndex);
             }
         } else {
             super.broadcast(event);
@@ -326,6 +358,17 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
 
     private void appendRowComponent(FacesContext context, Integer rowIndex, UIPropertySheet propertySheet) {
         UIComponent rowContainer = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_PANELGROUP);
+        String groupColumnName = (String) getAttributes().get(GROUP_BY_COLUMN_NAME);
+        if (isNotBlank(groupColumnName) && getRegularAndHiddenPropNames().contains(groupColumnName)) {
+            Map<String, Object> attributes = rowContainer.getAttributes();
+            ValueBinding createValueBinding = createValueBinding(context, groupColumnName, rowIndex);
+            Object value = createValueBinding.getValue(context);
+            if (value != null) {
+                attributes.put(GROUP_BY_COLUMN_NAME, groupColumnName);
+                attributes.put(GROUP_BY_COLUMN_VALUE, value);
+            }
+        }
+
         @SuppressWarnings("unchecked")
         List<UIComponent> children = getChildren();
         children.add(rowContainer);
@@ -379,11 +422,32 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
         appendRowComponent(context, rowIndex, propertySheet);
     }
 
-    private void removeRow(FacesContext context, int removeIndex) {
+    private void removeRowGroup(FacesContext context, UIComponent component, int removeIndex) {
+        String propName = (String) component.getAttributes().get(GROUP_BY_COLUMN_NAME);
+
+        List<Object> list = getList(context, propName);
+        Object propValue = list.get(removeIndex);
+        List<Integer> idxs = new ArrayList<Integer>();
+        for (int i = removeIndex; i < list.size(); i++) {
+            if (propValue.equals(list.get(i))) {
+                idxs.add(i);
+                continue;
+            }
+            break;
+        }
+
+        Integer[] array = idxs.toArray(new Integer[idxs.size()]);
+        removeRow(context, array);
+    }
+
+    private void removeRow(FacesContext context, Integer... removeIndex) {
         List<String> propNames = getRegularAndHiddenPropNames();
+        Arrays.sort(removeIndex, Collections.reverseOrder());
         for (String propName : propNames) {
             List<?> list = getList(context, propName);
-            list.remove(removeIndex);
+            for (int i : removeIndex) {
+                list.remove(i);
+            }
         }
         clearChildren();
         int numRows = getList(context, propNames.get(0)).size();

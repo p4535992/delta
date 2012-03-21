@@ -18,6 +18,7 @@ import javax.faces.event.ActionListener;
 import javax.faces.event.FacesEvent;
 
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
+import org.alfresco.util.Pair;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.common.ComponentConstants;
@@ -113,7 +114,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
             } else if (isMandatory()) {
                 throw new RuntimeException("Single-valued mandatory component should not fire SearchRemoveEvent: " + getId());
             } else {
-                ((UIComponent) getChildren().get(0)).getChildren().remove(0);
+                ComponentUtil.getChildren(this).get(0).getChildren().remove(0);
                 setValue(context, null);
                 invokeSetterCallbackIfNeeded(context, null); // so that if needed, related components could be updated
             }
@@ -170,8 +171,19 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
 
         String preprocessCallback = getPreprocesCallback();
         if (StringUtils.isNotBlank(preprocessCallback)) {
-            MethodBinding b = context.getApplication().createMethodBinding(preprocessCallback, new Class[] { int.class, String[].class });
-            results = (String[]) b.invoke(context, new Object[] { picker.getFilterIndex(), results });
+            MethodBinding preprocessBind = getFacesContext().getApplication().createMethodBinding(preprocessCallback, new Class[] { int.class, String[].class });
+            List<Pair<String, String>> groupedResults = null;
+            Object preprocessed = preprocessBind.invoke(context, new Object[] { picker.getFilterIndex(), results });
+            if (preprocessed instanceof List) {
+                groupedResults = (List<Pair<String, String>>) preprocessed;
+                String[] extractedResults = new String[groupedResults.size()];
+                for (int i = 0; i < groupedResults.size(); i++) {
+                    extractedResults[i] = groupedResults.get(i).getSecond();
+                }
+                results = extractedResults;
+            } else {
+                results = (String[]) preprocessed;
+            }
         }
 
         if (results == null) {
@@ -234,7 +246,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
     }
 
     public void clearChildren() {
-        List<UIComponent> children = ComponentUtil.getChildren(((UIComponent) getChildren().get(0)));
+        List<UIComponent> children = ComponentUtil.getChildren(ComponentUtil.getChildren(this).get(0));
         if (!children.isEmpty()) {
             children.clear();
         }
@@ -302,8 +314,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
     }
 
     protected void appendRowComponent(FacesContext context, int rowIndex) {
-        @SuppressWarnings("unchecked")
-        List<UIComponent> children = ((UIComponent) getChildren().get(0)).getChildren();
+        List<UIComponent> children = ComponentUtil.getChildren(this).get(0).getChildren();
         String id = (String) getAttributes().get(ID_KEY);
         UIOutput component = (UIOutput) context.getApplication().createComponent(
                 isEditable() ? ComponentConstants.JAVAX_FACES_INPUT : ComponentConstants.JAVAX_FACES_OUTPUT);
@@ -351,8 +362,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         List<?> list = getList(context);
         list.remove(removeIndex);
 
-        @SuppressWarnings("unchecked")
-        List<UIComponent> children = ((UIComponent) getChildren().get(0)).getChildren();
+        List<UIComponent> children = ComponentUtil.getChildren(this).get(0).getChildren();
 
         // remove a row from the middle
         children.remove(removeIndex);

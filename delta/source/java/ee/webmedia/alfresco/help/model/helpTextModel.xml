@@ -23,18 +23,25 @@
                <type>d:text</type>
                <mandatory>true</mandatory>
             </property>
-            <property name="hlt:codeDialog">
-               <type>d:text</type>
-            </property>
-            <property name="hlt:codeDocumentType">
-               <type>d:text</type>
-            </property>
-            <property name="hlt:codeField">
-               <type>d:text</type>
-            </property>
             <property name="hlt:content">
                <type>d:text</type>
                <mandatory>true</mandatory>
+            </property>
+            <property name="hlt:name">
+               <description>For storing the name of field/dialog/documentType</description>
+               <type>d:text</type>
+            </property>
+            <property name="hlt:codeDialog">
+               <description>Temporary property</description>
+               <type>d:text</type>
+            </property>
+            <property name="hlt:codeDocumentType">
+               <description>Temporary property</description>
+               <type>d:text</type>
+            </property>
+            <property name="hlt:codeField">
+               <description>Temporary property</description>
+               <type>d:text</type>
             </property>
          </properties>
       </type>

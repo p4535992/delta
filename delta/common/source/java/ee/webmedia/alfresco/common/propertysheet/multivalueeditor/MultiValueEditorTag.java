@@ -41,6 +41,9 @@ public class MultiValueEditorTag extends UIComponentTag {
     private String filters;
     private String filterIndex;
     private String preprocessCallback;
+    private String hiddenPropNames;
+    private String groupByColumnName;
+    private String groupRowControls;
 
     public void setVarName(String varName) {
         this.varName = varName;
@@ -82,6 +85,18 @@ public class MultiValueEditorTag extends UIComponentTag {
         return propsGeneration;
     }
 
+    public void setHiddenPropNames(String hiddenPropNames) {
+        this.hiddenPropNames = hiddenPropNames;
+    }
+
+    public void setGroupByColumnName(String groupByColumnName) {
+        this.groupByColumnName = groupByColumnName;
+    }
+
+    public void setGroupRowControls(String groupRowControls) {
+        this.groupRowControls = groupRowControls;
+    }
+
     @Override
     protected void setProperties(UIComponent component) {
         super.setProperties(component);
@@ -101,6 +116,9 @@ public class MultiValueEditorTag extends UIComponentTag {
         attributes.put(MultiValueEditor.PROPERTY_SHEET_VAR, varName);
         attributes.put(Search.PICKER_CALLBACK_KEY, pickerCallback);
         attributes.put(Search.DIALOG_TITLE_ID_KEY, dialogTitleId);
+        attributes.put(MultiValueEditor.HIDDEN_PROP_NAMES, hiddenPropNames);
+        attributes.put(MultiValueEditor.GROUP_BY_COLUMN_NAME, groupByColumnName);
+        attributes.put(MultiValueEditor.GROUP_ROW_CONTROLS, groupRowControls);
         attributes.put("setterCallback", setterCallback);
         if (StringUtils.isNotBlank(filters)) {
             attributes.put(MultiValueEditor.FILTERS, filters);
@@ -125,6 +143,9 @@ public class MultiValueEditorTag extends UIComponentTag {
         filters = null;
         filterIndex = null;
         preprocessCallback = null;
+        hiddenPropNames = null;
+        groupByColumnName = null;
+        groupRowControls = null;
     }
 
 }

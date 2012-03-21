@@ -266,7 +266,6 @@ public class TaskListGenerator extends BaseComponentGenerator {
 
             Map<String, Object> groupDueDateTimeAttr = new HashMap<String, Object>(dueDateTimeAttr);
             groupDueDateTimeAttr.put("styleClass", StringUtils.join(Arrays.asList((String) dueDateTimeAttr.get("styleClass"), "groupRowDate"), ' '));
-            dueDateTimeAttr.put("styleClass", StringUtils.join(Arrays.asList((String) dueDateTimeAttr.get("styleClass"), "clearGroupRowDate"), ' '));
 
             String taskPropertyDueDateLabel = MessageUtil.getMessage("task_property_due_date");
             String deleteLinkTooltipMsg = MessageUtil.getMessage("delete");
@@ -304,6 +303,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
             Set<TaskGroup> generatedGroups = new HashSet<TaskGroup>();
             for (Integer counter : visibleTasks) {
                 Task task = tasks.get(counter);
+                boolean taskInGroup = false;
 
                 // Check if we can group the tasks
                 String ownerGroup = task.getOwnerGroup();
@@ -321,6 +321,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
                     if (!taskIds.contains(counter)) {
                         taskIds.add(counter);
                     }
+                    taskInGroup = true;
                     if (!taskGroup.isExpanded()) {
                         continue; // Skip processing this task further, since it is already included in a group
                     }
@@ -395,7 +396,11 @@ public class TaskListGenerator extends BaseComponentGenerator {
                     } else {
                         dateTimePickerGenerator.setReadonly(dueDateTimeInput, true);
                     }
-                    addAttributes(dueDateTimeInput, dueDateTimeAttr);
+                    Map<String, Object> componentAttributes = new HashMap<String, Object>(dueDateTimeAttr);
+                    if (taskInGroup) {
+                        componentAttributes.put("styleClass", StringUtils.join(Arrays.asList((String) componentAttributes.get("styleClass"), "clearGroupRowDate"), ' '));
+                    }
+                    addAttributes(dueDateTimeInput, componentAttributes);
 
                     if (!isDueDateExtension) {
                         ValueBindingsWrapper vb = new ValueBindingsWrapper(Arrays.asList(
@@ -589,7 +594,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
         UIActionLink toggle = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
 
         String groupName = group.getGroupName();
-        String rowId = makeLegalId(groupName) + order;
+        String rowId = makeLegalId(group.getGroupId());
         toggle.setId("task-group-toggle-" + rowId + order);
         toggle.setImage("/images/icons/" + (group.isExpanded() ? "minus" : "plus") + ".gif");
         toggle.setValue("");
@@ -606,35 +611,46 @@ public class TaskListGenerator extends BaseComponentGenerator {
         addChildren(taskGrid, iconAndName);
 
         // Generate the spacer for resolution column if needed
-        if (hasResolutionColumn) {
+        boolean resolutionDisabled = (WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW.equals(blockType) || WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW.equals(blockType))
+                && !(dialogManager.getBean() instanceof CompoundWorkflowDialog);
+        if (hasResolutionColumn && !resolutionDisabled) {
             UIOutput spacer = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
             spacer.setValue("");
             addChildren(taskGrid, spacer);
         }
 
-        // Date
-        DateTimePickerGenerator dateTimePickerGenerator = new DateTimePickerGenerator();
-        final DateTimePicker dueDateTimeInput = (DateTimePicker) dateTimePickerGenerator.generate(context, "group-duedate-" + rowId + order);
-        dueDateTimeInput.setValueBinding("value",
-                application.createValueBinding("#{DialogManager.bean.taskGroups[" + wfIndex + "]['" + groupName + "'][" + order + "].dueDate}"));
-        addAttributes(dueDateTimeInput, dueDateTimeAttr);
-        addChildren(taskGrid, dueDateTimeInput);
+        if (dialogManager.getBean() instanceof CompoundWorkflowDialog) {
+            // Date
+            DateTimePickerGenerator dateTimePickerGenerator = new DateTimePickerGenerator();
+            final DateTimePicker dueDateTimeInput = (DateTimePicker) dateTimePickerGenerator.generate(context, "group-duedate-" + rowId + order);
+            dueDateTimeInput.setValueBinding("value",
+                    application.createValueBinding("#{DialogManager.bean.taskGroups[" + wfIndex + "]['" + groupName + "'][" + order + "].dueDate}"));
+            addAttributes(dueDateTimeInput, dueDateTimeAttr);
+            addChildren(taskGrid, dueDateTimeInput);
 
-        // Selector
-        final HtmlPanelGroup selectorPanel = (HtmlPanelGroup) context.getApplication().createComponent(HtmlPanelGroup.COMPONENT_TYPE);
-        selectorPanel.setId("task-dueDateDays-panel" + rowId);
-        UIComponent selector = createDueDateDaysSelector(context, rowId, true, null);
-        addOnchangeJavascript(selector);
-        addChildren(selectorPanel, selector);
-        addOnchangeClickLink(application, getChildren(selectorPanel), "#{CompoundWorkflowDialog.calculateTaskGroupDueDate}",
-                "task-dueDateDays-onclick" + rowId, createUIParam("selector", selector.getClientId(context), application),
-                createUIParam("groupName", groupName, application), createUIParam("groupId", group.getGroupId(), application), createWfIndexPraram(wfIndex, application));
-        addChildren(taskGrid, selectorPanel);
+            // Selector
+            final HtmlPanelGroup selectorPanel = (HtmlPanelGroup) context.getApplication().createComponent(HtmlPanelGroup.COMPONENT_TYPE);
+            selectorPanel.setId("task-dueDateDays-panel" + group.getGroupId());
+            UIComponent selector = createDueDateDaysSelector(context, rowId, true, null);
+            addOnchangeJavascript(selector);
+            addChildren(selectorPanel, selector);
+            addOnchangeClickLink(application, getChildren(selectorPanel), "#{CompoundWorkflowDialog.calculateTaskGroupDueDate}",
+                    "task-dueDateDays-onclick" + rowId, createUIParam("selector", selector.getClientId(context), application),
+                    createUIParam("groupName", groupName, application), createUIParam("groupId", group.getGroupId(), application), createWfIndexPraram(wfIndex, application));
+            addChildren(taskGrid, selectorPanel);
 
-        // Status spacer
-        UIOutput spacer = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
-        spacer.setValue("");
-        addChildren(taskGrid, spacer);
+            // Status spacer
+            UIOutput spacer = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
+            spacer.setValue("");
+            addChildren(taskGrid, spacer);
+
+            if (WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW.equals(blockType)) {
+                // Sending status spacer
+                UIOutput sendingStatus = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
+                sendingStatus.setValue("");
+                addChildren(taskGrid, sendingStatus);
+            }
+        }
 
         // Icons
         final HtmlPanelGroup iconsPanel = (HtmlPanelGroup) context.getApplication().createComponent(HtmlPanelGroup.COMPONENT_TYPE);

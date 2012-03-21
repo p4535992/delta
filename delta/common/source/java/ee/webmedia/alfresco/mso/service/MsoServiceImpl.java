@@ -18,6 +18,8 @@ import org.apache.cxf.frontend.ClientProxy;
 import org.apache.cxf.transport.http.HTTPConduit;
 import org.springframework.beans.factory.InitializingBean;
 
+import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
+import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
 import ee.webmedia.alfresco.mso.ws.Formula;
 import ee.webmedia.alfresco.mso.ws.ModifiedFormulasOutput;
 import ee.webmedia.alfresco.mso.ws.Mso;
@@ -93,9 +95,16 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
             DataSource dataSource = new ContentReaderDataSource(documentReader, null);
             input.setDocumentFile(new DataHandler(dataSource));
             log.info("Sending request to perform Mso.convertToPdf, documentReader=" + documentReader);
+
             long startTime = System.currentTimeMillis();
-            ModifiedFormulasOutput output = mso.modifiedFormulas(input);
-            long duration = System.currentTimeMillis() - startTime;
+            long duration = 0;
+            ModifiedFormulasOutput output;
+            try {
+                output = mso.modifiedFormulas(input);
+            } finally {
+                duration = System.currentTimeMillis() - startTime;
+                StatisticsPhaseListener.addTiming(StatisticsPhaseListenerLogColumn.SRV_MSO, duration);
+            }
 
             log.info("Completed Mso.getModifiedFormulas in " + duration + " ms");
             return output;
@@ -124,9 +133,16 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
             DataSource dataSource = new ContentReaderDataSource(documentReader, null);
             input.setDocumentFile(new DataHandler(dataSource));
             log.info("Sending request to perform Mso.convertToPdf, documentReader=" + documentReader);
+
             long startTime = System.currentTimeMillis();
-            MsoPdfOutput output = mso.convertToPdf(input);
-            long duration = System.currentTimeMillis() - startTime;
+            long duration = 0;
+            MsoPdfOutput output;
+            try {
+                output = mso.convertToPdf(input);
+            } finally {
+                duration = System.currentTimeMillis() - startTime;
+                StatisticsPhaseListener.addTiming(StatisticsPhaseListenerLogColumn.SRV_MSO, duration);
+            }
 
             Pair<String, String> pair = MimeUtil.getMimeTypeAndEncoding(output.getPdfFile().getContentType());
             pdfWriter.setMimetype(pair.getFirst());
@@ -155,9 +171,16 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
             }
 
             log.info("Sending request to perform Mso.replaceFormulas, formulas=[" + formulas.size() + "] documentReader=" + documentReader);
+
             long startTime = System.currentTimeMillis();
-            MsoDocumentOutput output = mso.replaceFormulas(input);
-            long duration = System.currentTimeMillis() - startTime;
+            long duration = 0;
+            MsoDocumentOutput output;
+            try {
+                output = mso.replaceFormulas(input);
+            } finally {
+                duration = System.currentTimeMillis() - startTime;
+                StatisticsPhaseListener.addTiming(StatisticsPhaseListenerLogColumn.SRV_MSO, duration);
+            }
 
             Pair<String, String> pair = MimeUtil.getMimeTypeAndEncoding(output.getDocumentFile().getContentType());
             documentWriter.setMimetype(pair.getFirst());
@@ -182,9 +205,16 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
             }
 
             log.info("Sending request to perform Mso.replaceFormulasAndTransformToPdf, formulas=[" + formulas.size() + "] documentReader=" + documentReader);
+
             long startTime = System.currentTimeMillis();
-            MsoDocumentAndPdfOutput output = mso.replaceFormulasAndConvertToPdf(input);
-            long duration = System.currentTimeMillis() - startTime;
+            long duration = 0;
+            MsoDocumentAndPdfOutput output;
+            try {
+                output = mso.replaceFormulasAndConvertToPdf(input);
+            } finally {
+                duration = System.currentTimeMillis() - startTime;
+                StatisticsPhaseListener.addTiming(StatisticsPhaseListenerLogColumn.SRV_MSO, duration);
+            }
 
             Pair<String, String> pair = MimeUtil.getMimeTypeAndEncoding(output.getDocumentFile().getContentType());
             documentWriter.setMimetype(pair.getFirst());

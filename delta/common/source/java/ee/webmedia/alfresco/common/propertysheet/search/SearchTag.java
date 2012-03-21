@@ -29,6 +29,7 @@ public class SearchTag extends UIComponentTag {
     private Integer ajaxParentLevel;
     private String searchLinkLabel;
     private String searchLinkTooltip;
+    private String converter;
 
     @Override
     public String getComponentType() {
@@ -83,6 +84,9 @@ public class SearchTag extends UIComponentTag {
             }
 
         }
+        if (converter != null) {
+            attributes.put(Search.CONVERTER_KEY, converter);
+        }
     }
 
     @Override
@@ -97,6 +101,7 @@ public class SearchTag extends UIComponentTag {
         editable = null;
         readonly = null;
         ajaxParentLevel = null;
+        converter = null;
     }
 
     public void setValue(String value) {
@@ -161,5 +166,13 @@ public class SearchTag extends UIComponentTag {
 
     public void setSearchLinkTooltip(String searchLinkTooltip) {
         this.searchLinkTooltip = searchLinkTooltip;
+    }
+
+    public void setConverter(String converter) {
+        this.converter = converter;
+    }
+
+    public String getConverter() {
+        return converter;
     }
 }

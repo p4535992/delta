@@ -15,6 +15,7 @@ import org.alfresco.service.cmr.model.FileNotFoundException;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.cmr.security.AuthenticationService;
 
@@ -93,8 +94,9 @@ public class WebDAVCustomHelper extends WebDAVHelper {
     }
 
     public static void checkDocumentFileReadPermission(NodeRef fileRef) {
-        NodeRef docRef = BeanHelper.getGeneralService().getAncestorNodeRefWithType(fileRef, DocumentCommonModel.Types.DOCUMENT, true);
-        if (docRef == null) {
+        NodeService nodeService = BeanHelper.getNodeService();
+        NodeRef docRef = nodeService.getPrimaryParent(fileRef).getParentRef();
+        if (!DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(docRef))) {
             if (!getUserService().isAdministrator() && !hasViewDocFilesPermission(fileRef)) {
                 throw new AccessDeniedException("Not allowing reading - file is not under document and user has no permission to view files. File=" + fileRef);
             }
@@ -117,19 +119,24 @@ public class WebDAVCustomHelper extends WebDAVHelper {
             throw new AccessDeniedException("not allowing writing - document is under primary archivals store");
         }
 
+        if (!fileRef.getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)) {
+            throw new AccessDeniedException("not allowing writing - document storeRef protocol is not " + StoreRef.PROTOCOL_WORKSPACE);
+        }
+
         // check for special cases
         NodeService nodeService = BeanHelper.getNodeService();
         NodeRef parentRef = nodeService.getPrimaryParent(fileRef).getParentRef();
+        if (!DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(parentRef))) {
+            throw new AccessDeniedException("Not allowing writing - file is not under document. File=" + fileRef);
+        }
+
         DocumentFileWriteDynamicAuthority documentFileWriteDynamicAuthority = BeanHelper.getDocumentFileWriteDynamicAuthority();
-        NodeRef docRef = getGeneralService().getAncestorNodeRefWithType(fileRef, DocumentCommonModel.Types.DOCUMENT, true);
-        if (docRef != null) {
-            Boolean additionalCheck = documentFileWriteDynamicAuthority.additional(docRef);
-            if (additionalCheck != null) {
-                if (additionalCheck) {
-                    return; // allow writing based on additional logic
-                }
-                throw new AccessDeniedException("not allowing writing - document is finished or has in-progress workflows or is incoming letter");
+        Boolean additionalCheck = documentFileWriteDynamicAuthority.additional(parentRef);
+        if (additionalCheck != null) {
+            if (additionalCheck) {
+                return; // allow writing based on additional logic
             }
+            throw new AccessDeniedException("not allowing writing - document is finished or has in-progress workflows or is incoming letter");
         }
 
         if (!getPrivilegeService().hasPermissions(parentRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT)) {

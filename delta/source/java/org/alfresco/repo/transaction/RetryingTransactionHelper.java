@@ -59,6 +59,8 @@ import org.springframework.jdbc.UncategorizedSQLException;
 
 import com.ibatis.common.jdbc.exception.NestedSQLException;
 
+import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
+import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
 import ee.webmedia.alfresco.common.transaction.TransactionHelperWrapperException;
 
 /**
@@ -337,13 +339,23 @@ public class RetryingTransactionHelper
                     {
                         // Something caused the transaction to be marked for rollback
                         // There is no recovery or retrying with this
-                        txn.rollback();
+                        long startTime = System.currentTimeMillis();
+                        try {
+                            txn.rollback();
+                        } finally {
+                            StatisticsPhaseListener.addTiming(StatisticsPhaseListenerLogColumn.TX_ROLLBACK, System.currentTimeMillis() - startTime);
+                        }
                     }
                     else
                     {
                         // The transaction hasn't been flagged for failure so the commit
                         // sould still be good.
-                        txn.commit();
+                        long startTime = System.currentTimeMillis();
+                        try {
+                            txn.commit();
+                        } finally {
+                            StatisticsPhaseListener.addTiming(StatisticsPhaseListenerLogColumn.TX_COMMIT, System.currentTimeMillis() - startTime);
+                        }
                     }
                 }
                 if (logger.isDebugEnabled())
@@ -393,7 +405,12 @@ public class RetryingTransactionHelper
                         // then the status will be NO_TRANSACTION.
                         if (txnStatus != Status.STATUS_NO_TRANSACTION && txnStatus != Status.STATUS_ROLLEDBACK)
                         {
-                            txn.rollback();
+                            long startTime = System.currentTimeMillis();
+                            try {
+                                txn.rollback();
+                            } finally {
+                                StatisticsPhaseListener.addTiming(StatisticsPhaseListenerLogColumn.TX_ROLLBACK, System.currentTimeMillis() - startTime);
+                            }
                         }
                     }
                     catch (Throwable e1)

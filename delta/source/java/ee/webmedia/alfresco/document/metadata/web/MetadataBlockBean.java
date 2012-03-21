@@ -1145,16 +1145,15 @@ public class MetadataBlockBean implements ClearStateListener {
         // Set template
         if (values.length > 1 && StringUtils.isNotBlank(values[1]) && getPropertySheet() != null) {
             String templateName = values[1];
-            @SuppressWarnings("unchecked")
             List<UIComponent> children = getPropertySheet().getChildren();
             children: for (UIComponent component : children) {
                 if (!component.getId().endsWith("_templateName")) {
                     continue;
                 }
                 HtmlSelectOneMenu templateList = (HtmlSelectOneMenu) component.getChildren().get(1);
-                @SuppressWarnings({ "unchecked", "cast" })
-                List<UISelectItem> templateListValues = (List<UISelectItem>) templateList.getChildren();
-                for (UISelectItem select : templateListValues) {
+                List<UIComponent> templateListValues = templateList.getChildren();
+                for (UIComponent value : templateListValues) {
+                    UISelectItem select = (UISelectItem) value;
                     String itemValue = (String) select.getItemValue();
                     if (templateName.equals(itemValue) || templateName.equals(select.getItemLabel())) {
                         document.getProperties().put(DocumentSpecificModel.Props.TEMPLATE_NAME.toString(), itemValue);

@@ -32,7 +32,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -65,10 +64,10 @@ import org.alfresco.service.cmr.repository.InvalidChildAssociationRefException;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.InvalidStoreRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeRef.Status;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.Path;
 import org.alfresco.service.cmr.repository.StoreRef;
-import org.alfresco.service.cmr.repository.NodeRef.Status;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
@@ -82,6 +81,12 @@ import org.alfresco.util.PropertyMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.util.Assert;
+
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
+import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Node service using database persistence layer to fulfill functionality
@@ -1949,9 +1954,33 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
         Serializable originalCreator = existingProperties.get(ContentModel.PROP_CREATOR);
         if (originalOwner != null || originalCreator != null)
         {
-            newProperties.put(
-                    ContentModel.PROP_ARCHIVED_ORIGINAL_OWNER,
-                    originalOwner != null ? originalOwner : originalCreator);
+            Serializable archivedOriginalOwner = originalOwner != null ? originalOwner : originalCreator;
+            newProperties.put(ContentModel.PROP_ARCHIVED_ORIGINAL_OWNER, archivedOriginalOwner);
+            newProperties.put(ContentModel.PROP_ARCHIVED_ORIGINAL_OWNER_NAME, BeanHelper.getUserService().getUserFullName((String) archivedOriginalOwner));            
+        }        
+        newProperties.put(ContentModel.PROP_ARCHIVED_ORIGINAL_LOCATION_STRING, getDisplayPath(nodeRef, true));        
+        QName type = getType(nodeRef);
+        Map<QName, Serializable> properties = getProperties(nodeRef);
+        String name;
+        if (DocumentCommonModel.Types.DOCUMENT.equals(type)) {
+            name = (String) properties.get(DocumentCommonModel.Props.DOC_NAME);
+        } else {
+            name = (String) properties.get(ContentModel.PROP_NAME);
+        }
+        newProperties.put(ContentModel.PROP_ARCHIVED_OBJECT_NAME, name);
+        if (DocumentCommonModel.Types.DOCUMENT.equals(type)) {
+            newProperties.put(ContentModel.PROP_ARCHIVED_OBJECT_TYPE_STRING, BeanHelper.getDocumentService().getDocumentByNodeRef(nodeRef).getDocumentTypeName());            
+        } else if (ContentModel.TYPE_CONTENT.equals(type) && properties.containsKey(DocumentTemplateModel.Prop.TEMPLATE_TYPE)) {
+            newProperties.put(ContentModel.PROP_ARCHIVED_OBJECT_TYPE_STRING, properties.get(DocumentTemplateModel.Prop.COMMENT));
+        } else {
+            newProperties.put(ContentModel.PROP_ARCHIVED_OBJECT_TYPE_STRING, MessageUtil.getMessage("trashcan_file_type"));            
+        }
+        if (DocumentCommonModel.Types.DOCUMENT.equals(type)) {
+            newProperties.put(ContentModel.PROP_ARCHIVED_OBJECT_TYPE, "document");            
+        } else if (ContentModel.TYPE_CONTENT.equals(type) && properties.containsKey(DocumentTemplateModel.Prop.TEMPLATE_TYPE)) {
+            newProperties.put(ContentModel.PROP_ARCHIVED_OBJECT_TYPE, "content");
+        } else {
+            newProperties.put(ContentModel.PROP_ARCHIVED_OBJECT_TYPE, "file");            
         }
         
         // change the node ownership
@@ -1969,6 +1998,42 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
                 archiveStoreRootNodePair.getSecond(),
                 ContentModel.ASSOC_CHILDREN,
                 QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "archivedItem"));
+    }
+    
+    private String getDisplayPath(NodeRef nodeRef, boolean showLeaf) {
+        StringBuilder buf = new StringBuilder(64);
+        Path path = getPath(nodeRef);
+
+        int count = path.size() - (showLeaf ? 0 : 1);
+        for (int i = 0; i < count - 1; i++) {
+            String elementString = null;
+            Path.Element element = path.get(i);
+            if (element instanceof Path.ChildAssocElement) {
+                ChildAssociationRef elementRef = ((Path.ChildAssocElement) element).getRef();
+                if (elementRef.getChildRef() != null && elementRef.getQName() != null) {
+                    elementString = DocumentLocationGenerator.getDocumentListUnitLabel(elementRef.getChildRef());
+                    if (elementString == null) {
+                        if (DocumentCommonModel.Types.DOCUMENT.equals(elementRef.getQName())) {
+                            elementString = (String) getProperties(elementRef.getChildRef()).get(DocumentCommonModel.Props.DOC_NAME);
+                        } else {
+                            elementString = MessageUtil.getMessage("trashcan_" + QName.createQName(element.getElementString()).getLocalName());
+                            if (elementString != null && elementString.startsWith("$$")) {
+                                elementString = (String) getProperties(elementRef.getChildRef()).get(ContentModel.PROP_NAME);
+                            }
+                        }
+                    }
+                }
+            } else {
+                elementString = element.getElementString();
+            }
+
+            if (elementString != null) {
+                buf.append("/");
+                buf.append(elementString);
+            }
+        }
+
+        return buf.toString();
     }
     
     public NodeRef restoreNode(NodeRef archivedNodeRef, NodeRef destinationParentNodeRef, QName assocTypeQName, QName assocQName)

@@ -2,10 +2,12 @@ package ee.webmedia.alfresco.docconfig.generator.fieldtype;
 
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docconfig.generator.BaseTypeFieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
+import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
  * @author Alar Kvell
@@ -30,6 +32,7 @@ public class UserContactGenerator extends BaseTypeFieldGenerator {
         item.setPickerCallback("#{UserContactGroupSearchBean.searchAllWithAdminsAndDocManagers}");
         item.setPreprocessCallback("#{UserContactGroupSearchBean.preprocessResultsToNames}");
         item.setSearchSuggestDisabled(true); // TODO temporary
+        ComponentUtil.addRecipientGrouping(field, item, BeanHelper.getNamespaceService());
         switch (field.getFieldTypeEnum()) {
         case USERS:
             item.setShowFilter(true);

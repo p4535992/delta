@@ -13,6 +13,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.faces.event.ActionEvent;
+
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.CopyService;
@@ -157,6 +161,16 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         }
 
         return volumesForDestruction.size();
+    }
+
+    @Override
+    public void destroyArchivedVolumes(ActionEvent event) {
+        AuthenticationUtil.runAs(new RunAsWork<Integer>() {
+            @Override
+            public Integer doWork() throws Exception {
+                return destroyArchivedVolumes();
+            }
+        }, AuthenticationUtil.getSystemUserName());
     }
 
     private List<NodeRef> searchVolumesForDestruction() {

@@ -10,7 +10,6 @@ import static ee.webmedia.alfresco.help.web.HelpTextUtil.TYPE_FIELD;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import javax.faces.component.UIInput;
@@ -77,9 +76,9 @@ public class HelpTextEditDialog extends BaseDialogBean implements BeanNameAware 
         helpText = getGeneralService().fetchNode(helpTextRef);
 
         if (TYPE_DIALOG.equals(dialogMode)) {
-            helpText.getProperties().put(getCodeEditProp().toString(), helpText.getProperties().get(PROP_CODE) + ";" + helpText.getProperties().get(PROP_NAME));
+            helpText.getProperties().put(getCodeEditProp(), helpText.getProperties().get(PROP_CODE) + ";" + helpText.getProperties().get(PROP_NAME));
         } else {
-            helpText.getProperties().put(getCodeEditProp().toString(), helpText.getProperties().get(PROP_NAME));
+            helpText.getProperties().put(getCodeEditProp(), helpText.getProperties().get(PROP_NAME));
         }
 
         WebUtil.navigateTo("dialog:" + dialogMode + BEAN_NAME_SUFFIX);
@@ -92,7 +91,6 @@ public class HelpTextEditDialog extends BaseDialogBean implements BeanNameAware 
         if (TYPE_DIALOG.equals(dialogMode)) {
             Config appConfig = Application.getConfigService(context).getGlobalConfig();
             DialogsConfigElement dialogs = (DialogsConfigElement) appConfig.getConfigElement("dialogs");
-            dialogs.getDialogs().values().iterator().next().getTitleId();
             for (DialogConfig dialogConf : dialogs.getDialogs().values()) {
                 if (dialogConf.getPage() == null || !dialogConf.getPage().contains("ee/webmedia/")) {
                     continue;
@@ -100,13 +98,13 @@ public class HelpTextEditDialog extends BaseDialogBean implements BeanNameAware 
 
                 String title = dialogConf.getTitleId() != null ? MessageUtil.getMessage(dialogConf.getTitleId()) : dialogConf.getTitle();
                 if (title != null) {
-                    String label = new StringBuilder(title).append(" (").append(dialogConf.getManagedBean()).append(')').toString();
+                    String label = title + " (" + dialogConf.getManagedBean() + ')';
                     result.add(new SelectItem(dialogConf.getName() + ";" + title, label));
                 }
             }
         }
 
-        Collections.sort(result, SelectItemComparator.INSTANCE);
+        Collections.sort(result, WebUtil.selectItemLabelComparator);
         return result;
     }
 
@@ -115,7 +113,7 @@ public class HelpTextEditDialog extends BaseDialogBean implements BeanNameAware 
         String fieldName = fieldDefinition != null ? fieldDefinition.getName() : fieldCode;
         helpText.getProperties().put(PROP_CODE, fieldCode);
         helpText.getProperties().put(PROP_NAME, fieldName);
-        helpText.getProperties().put(getCodeEditProp().toString(), fieldName);
+        helpText.getProperties().put(getCodeEditProp(), fieldName);
     }
 
     public void processDocumentTypeSearchResults(String docTypeCode) {
@@ -123,7 +121,7 @@ public class HelpTextEditDialog extends BaseDialogBean implements BeanNameAware 
         String docTypeName = docType != null ? docType.getName() : docTypeCode;
         helpText.getProperties().put(PROP_CODE, docTypeCode);
         helpText.getProperties().put(PROP_NAME, docTypeName);
-        helpText.getProperties().put(getCodeEditProp().toString(), docTypeName);
+        helpText.getProperties().put(getCodeEditProp(), docTypeName);
     }
 
     @Override
@@ -172,17 +170,7 @@ public class HelpTextEditDialog extends BaseDialogBean implements BeanNameAware 
         return helpText;
     }
 
-    private QName getCodeEditProp() {
-        return QName.createQName(HelpTextModel.URI, HelpTextModel.Props.CODE.getLocalName() + StringUtils.capitalize(dialogMode));
-    }
-
-    private static class SelectItemComparator implements Comparator<SelectItem> {
-
-        private static final Comparator<SelectItem> INSTANCE = new SelectItemComparator();
-
-        @Override
-        public int compare(SelectItem o1, SelectItem o2) {
-            return o1.getLabel().compareTo(o2.getLabel());
-        }
+    private String getCodeEditProp() {
+        return "hlt:code" + StringUtils.capitalize(dialogMode);
     }
 }

@@ -6,14 +6,17 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
 import javax.faces.model.SelectItem;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.util.Pair;
 import org.alfresco.web.ui.common.component.PickerSearchParams;
 
+import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
@@ -150,52 +153,61 @@ public class UserContactGroupSearchBean implements Serializable {
     /*
      * preprocessCallback methods
      */
-    public String[] preprocessResultsToNodeRefs(int filterIndex, String[] results) {
-        List<String> processedResult = new ArrayList<String>();
+    public List<Pair<String, String>> preprocessResultsToNodeRefs(int filterIndex, String[] results) {
+        List<Pair<String, String>> processedResult = new ArrayList<Pair<String, String>>();
         if (results != null) {
             for (String result : results) {
                 if (filterIndex == USERS_FILTER) {
                     // Replace user name with reference to the person node
                     NodeRef nodeRef = getUserService().getPerson(result);
                     if (nodeRef != null) {
-                        processedResult.add(nodeRef.toString());
+                        processedResult.add(new Pair<String, String>(null, nodeRef.toString()));
                     }
                 } else if (filterIndex == USER_GROUPS_FILTER) {
                     // Add all users contained in user group and replace user names with reference to the person node
                     Set<String> auths = getUserService().getUserNamesInGroup(result);
+                    String groupName = null;
+                    Authority group = getUserService().getAuthorityOrNull(result);
+                    if (group != null) {
+                        groupName = group.getName();
+                    }
                     for (String auth : auths) {
                         NodeRef nodeRef = getUserService().getPerson(auth);
                         if (nodeRef != null) {
-                            processedResult.add(nodeRef.toString());
+                            processedResult.add(new Pair<String, String>(groupName, nodeRef.toString()));
                         }
                     }
                 } else if (filterIndex == CONTACTS_FILTER) {
                     // Add contact
-                    processedResult.add(result);
+                    processedResult.add(new Pair<String, String>(null, result));
                 } else if (filterIndex == CONTACT_GROUPS_FILTER) {
                     // Add all contacts contained in contact group
-                    List<NodeRef> contacts = getAddressbookService().getContactGroupContents(new NodeRef(result));
+                    NodeRef contactGroupRef = new NodeRef(result);
+                    List<NodeRef> contacts = getAddressbookService().getContactGroupContents(contactGroupRef);
+                    String groupName = (String) BeanHelper.getNodeService().getProperty(contactGroupRef, AddressbookModel.Props.GROUP_NAME);
                     for (NodeRef contact : contacts) {
-                        processedResult.add(contact.toString());
+                        processedResult.add(new Pair<String, String>(groupName, contact.toString()));
                     }
                 } else {
                     throw new RuntimeException("filterIndex out of range: " + filterIndex);
                 }
             }
         }
-        return processedResult.toArray(new String[processedResult.size()]);
+        return processedResult;
     }
 
-    public String[] preprocessResultsToNames(int filterIndex, String[] results) {
-        results = preprocessResultsToNodeRefs(filterIndex, results);
-        List<String> processedResult = new ArrayList<String>();
-        for (String result : results) {
-            Object nameObj = getUserContactMappingService().getMappedNameValue(new NodeRef(result));
+    public List<Pair<String, String>> preprocessResultsToNames(int filterIndex, String[] results) {
+        List<Pair<String, String>> processedResult = preprocessResultsToNodeRefs(filterIndex, results);
+        for (Iterator<Pair<String, String>> iterator = processedResult.iterator(); iterator.hasNext();) {
+            Pair<String, String> pair = iterator.next();
+            Object nameObj = getUserContactMappingService().getMappedNameValue(new NodeRef(pair.getSecond()));
             if (nameObj != null && nameObj instanceof String) {
-                processedResult.add((String) nameObj);
+                pair.setSecond((String) nameObj);
+            } else {
+                iterator.remove();
             }
         }
-        return processedResult.toArray(new String[processedResult.size()]);
+        return processedResult;
     }
 
 }

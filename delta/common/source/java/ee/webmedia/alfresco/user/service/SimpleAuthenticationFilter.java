@@ -45,7 +45,7 @@ public class SimpleAuthenticationFilter extends AuthenticationFilter {
         } else if (isAuthenticationException(httpReq)) {
             BaseServlet.redirectToLoginPage(httpReq, httpRes, context);
         } else {
-            boolean isAuthenticating = AuthenticationHelper.getUser(context, httpReq, httpRes) == null;
+            boolean isAuthenticating = httpReq.getSession().getAttribute(AuthenticationHelper.AUTHENTICATION_USER) == null;
             AuthenticationStatus status;
             try {
                 status = AuthenticationHelper.authenticate(context, httpReq, httpRes, false);

@@ -86,7 +86,7 @@ public class ApplicationLogDialog extends AbstractSearchFilterBlockBean<LogServi
         result.setDateCreatedStart((Date) props.get(LogSearchModel.Props.DATE_CREATED_START));
         result.setDateCreatedEnd((Date) props.get(LogSearchModel.Props.DATE_CREATED_END));
         result.setCreatorName((String) props.get(LogSearchModel.Props.CREATOR_NAME));
-        result.setComputerId((String) props.get(LogSearchModel.Props.COMPUTER_IP));
+        result.setComputerId((String) props.get(LogSearchModel.Props.COMPUTER_ID));
         result.setDescription((String) props.get(LogSearchModel.Props.DESCRIPTION));
         result.setObjectName((String) props.get(LogSearchModel.Props.OBJECT_NAME));
         result.setObjectId((String) props.get(LogSearchModel.Props.OBJECT_ID));

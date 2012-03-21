@@ -79,6 +79,7 @@ import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem;
 import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem.AddRemoveActionListener;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIPropertySheet;
+import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.common.propertysheet.customchildrencontainer.CustomChildrenCreator;
 import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter;
 import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
@@ -88,7 +89,9 @@ import ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEdit
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.privilege.web.DocPermissionEvaluator;
 
 /**
@@ -1348,6 +1351,26 @@ public class ComponentUtil {
             }
         }
         return index;
+    }
+
+    public static void addRecipientGrouping(Field field, ItemConfigVO item, NamespaceService namespaceService) {
+        if (field == null || namespaceService == null) {
+            return;
+        }
+
+        QName groupColumnProp = null;
+        if (DocumentCommonModel.Props.RECIPIENT_NAME.getLocalName().equals(field.getOriginalFieldId())) {
+            groupColumnProp = DocumentCommonModel.Props.RECIPIENT_GROUP;
+        } else if (DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME.getLocalName().equals(field.getOriginalFieldId())) {
+            groupColumnProp = DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_GROUP;
+        }
+
+        if (groupColumnProp != null && item != null) {
+            String prefixProp = groupColumnProp.getPrefixedQName(namespaceService).getPrefixString();
+            String hiddenPropNames = item.getCustomAttributes().get(MultiValueEditor.HIDDEN_PROP_NAMES);
+            hiddenPropNames = StringUtils.isBlank(hiddenPropNames) ? prefixProp : hiddenPropNames + "," + prefixProp;
+            item.getCustomAttributes().put(MultiValueEditor.GROUP_BY_COLUMN_NAME, prefixProp);
+        }
     }
 
     public static CustomChildrenCreator getDocumentRowFileGenerator(final Application application) {

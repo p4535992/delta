@@ -9,7 +9,7 @@
 <a:panel id="help-text-results-panel" styleClass="panel-100 with-pager" label="#{msg.help_text_mgmt_title}" progressive="true">
 
    <a:richList id="helpTextList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%"
-      value="#{HelpTextListDialog.helpTexts}" var="r" refreshOnBind="true">
+      value="#{HelpTextListDialog.helpTexts}" var="r" refreshOnBind="true" initialSortColumn="name">
 
       <a:column id="col1" primary="true">
          <f:facet name="header">

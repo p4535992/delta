@@ -58,6 +58,8 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.io.DefaultResourceLoader;
 
+import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
+import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
 import ee.webmedia.alfresco.mso.service.MsoService;
 
 /**
@@ -296,6 +298,7 @@ public class OpenOfficeContentTransformerWorker extends ContentTransformerHelper
             reader.getContent(tempFromFile);
         }
 
+        long startTime = System.currentTimeMillis();
         try
         {
             this.converter.convert(tempFromFile, sourceFormat, tempToFile, targetFormat);
@@ -306,6 +309,8 @@ public class OpenOfficeContentTransformerWorker extends ContentTransformerHelper
             throw new ContentIOException("OpenOffice server conversion failed: \n" + "   reader: " + reader + "\n"
                     + "   writer: " + writer + "\n" + "   from file: " + tempFromFile + "\n" + "   to file: "
                     + tempToFile, e);
+        } finally {
+            StatisticsPhaseListener.addTiming(StatisticsPhaseListenerLogColumn.SRV_OOO, System.currentTimeMillis() - startTime);
         }
 
         // upload the temp output to the writer given us

@@ -615,6 +615,9 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
 
         UIComponent selector = ComponentUtil.findComponentById(FacesContext.getCurrentInstance(), event.getComponent().getParent(), selectorId);
         List value = (List) ((HtmlSelectOneMenu) selector).getValue();
+        if (value == null) {
+            return;
+        }
 
         TaskGroup taskGroup = findTaskGroup(event);
         Date existingDueDate = taskGroup.getDueDate();

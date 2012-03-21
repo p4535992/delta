@@ -992,6 +992,16 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     @Override
+    public String generateDeletedSearchQuery(String searchValue, NodeRef containerNodeRef) {
+        List<String> queryParts = generateQuickSearchDocumentQuery(parseQuickSearchWords(searchValue, 1), new ArrayList<Date>());
+        if (isBlank(queryParts)) {
+            return null;
+        }
+        queryParts.add(0, generateTypeQuery(DocumentCommonModel.Types.DOCUMENT));
+        return joinQueryPartsAnd(queryParts);
+    }
+
+    @Override
     public List<Document> searchDocumentsAndOrCases(String searchString, Date regDateTimeBegin, Date regDateTimeEnd, List<String> documentTypes, boolean trySearchCases) {
         boolean noRegDates = regDateTimeBegin == null && regDateTimeEnd == null;
         boolean noDocTypes = documentTypes == null || documentTypes.isEmpty();

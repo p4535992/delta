@@ -27,6 +27,9 @@ import com.sun.star.util.XRefreshable;
 import com.sun.star.util.XSearchDescriptor;
 import com.sun.star.util.XSearchable;
 
+import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
+import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
+
 public class OpenOfficeServiceImpl implements OpenOfficeService {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(OpenOfficeServiceImpl.class);
 
@@ -40,7 +43,6 @@ public class OpenOfficeServiceImpl implements OpenOfficeService {
             throw new RuntimeException(
                     "Generating Word files or replacing formulas is not supported with OpenOffice; a more user-friendly exception should have been thrown by previous code");
         }
-        long startTime = System.currentTimeMillis();
 
         // create temporary file to replace from
         File tempFromFile = TempFileProvider.createTempFile("DTSP-" + java.util.Calendar.getInstance().getTimeInMillis(), "."
@@ -50,56 +52,61 @@ public class OpenOfficeServiceImpl implements OpenOfficeService {
             log.debug("Copying file from contentstore to temporary file: " + tempFromFile + "\n  " + reader);
             reader.getContent(tempFromFile);
 
-            synchronized (openOfficeConnection) {
-                String tempFromFileurl = toUrl(tempFromFile);
-                log.debug("Loading file into OpenOffice from URL: " + tempFromFileurl);
-                XComponent xComponent = loadComponent(tempFromFileurl);
+            long startTime = System.currentTimeMillis();
+            try {
+                synchronized (openOfficeConnection) {
+                    String tempFromFileurl = toUrl(tempFromFile);
+                    log.debug("Loading file into OpenOffice from URL: " + tempFromFileurl);
+                    XComponent xComponent = loadComponent(tempFromFileurl);
 
-                XTextDocument xTextDocument = queryInterface(XTextDocument.class, xComponent);
-                XSearchDescriptor xSearchDescriptor;
-                XSearchable xSearchable = queryInterface(XSearchable.class, xTextDocument);
+                    XTextDocument xTextDocument = queryInterface(XTextDocument.class, xComponent);
+                    XSearchDescriptor xSearchDescriptor;
+                    XSearchable xSearchable = queryInterface(XSearchable.class, xTextDocument);
 
-                // You need a descriptor to set properies for Replace
-                xSearchDescriptor = xSearchable.createSearchDescriptor();
-                xSearchDescriptor.setPropertyValue("SearchRegularExpression", Boolean.TRUE);
-                // Set the properties the replace method need
-                xSearchDescriptor.setSearchString(REGEXP_PATTERN);
-                XIndexAccess findAll = xSearchable.findAll(xSearchDescriptor);
-                log.debug("Processing file contents, found " + findAll.getCount() + " pattern matches");
-                for (int i = 0; i < findAll.getCount(); i++) {
-                    Object byIndex = findAll.getByIndex(i);
-                    XTextRange xTextRange = queryInterface(XTextRange.class, byIndex);
-                    if (xTextRange.getString().length() < 3) {
-                        continue;
+                    // You need a descriptor to set properies for Replace
+                    xSearchDescriptor = xSearchable.createSearchDescriptor();
+                    xSearchDescriptor.setPropertyValue("SearchRegularExpression", Boolean.TRUE);
+                    // Set the properties the replace method need
+                    xSearchDescriptor.setSearchString(REGEXP_PATTERN);
+                    XIndexAccess findAll = xSearchable.findAll(xSearchDescriptor);
+                    log.debug("Processing file contents, found " + findAll.getCount() + " pattern matches");
+                    for (int i = 0; i < findAll.getCount(); i++) {
+                        Object byIndex = findAll.getByIndex(i);
+                        XTextRange xTextRange = queryInterface(XTextRange.class, byIndex);
+                        if (xTextRange.getString().length() < 3) {
+                            continue;
+                        }
+                        String formulaKey = xTextRange.getString().substring(1, xTextRange.getString().length() - 1);
+                        String formulaValue = formulas.get(formulaKey);
+                        if (formulaValue == null) {
+                            /*
+                             * Spetsifikatsioon "Dokumendi ekraanivorm - Tegevused.docx" punkt 7.1.5.2
+                             * Kui vastav metaandme väli on täitmata, siis asendamist ei toimu.
+                             */
+                            continue;
+                        }
+                        // New paragraph because justified text screws up the layout when \n is used.
+                        formulaValue = StringUtils.replace(formulaValue, "\n", "\r");
+                        xTextRange.setString(formulaValue);
                     }
-                    String formulaKey = xTextRange.getString().substring(1, xTextRange.getString().length() - 1);
-                    String formulaValue = formulas.get(formulaKey);
-                    if (formulaValue == null) {
-                        /*
-                         * Spetsifikatsioon "Dokumendi ekraanivorm - Tegevused.docx" punkt 7.1.5.2
-                         * Kui vastav metaandme väli on täitmata, siis asendamist ei toimu.
-                         */
-                        continue;
+                    XRefreshable refreshable = queryInterface(XRefreshable.class, xComponent);
+                    if (refreshable != null) {
+                        refreshable.refresh();
                     }
-                    // New paragraph because justified text screws up the layout when \n is used.
-                    formulaValue = StringUtils.replace(formulaValue, "\n", "\r");
-                    xTextRange.setString(formulaValue);
-                }
-                XRefreshable refreshable = queryInterface(XRefreshable.class, xComponent);
-                if (refreshable != null) {
-                    refreshable.refresh();
-                }
 
-                tempToFile = TempFileProvider.createTempFile("DTSP-" + java.util.Calendar.getInstance().getTimeInMillis(), "."
-                        + mimetypeService.getExtension(reader.getMimetype()));
-                String tempToFileUrl = toUrl(tempToFile);
-                log.debug("Saving file from OpenOffice to URL: " + tempToFileUrl);
-                PropertyValue[] storeProps = new PropertyValue[1];
-                storeProps[0] = new PropertyValue();
-                storeProps[0].Name = "FilterName";
-                storeProps[0].Value = "MS Word 97"; // "Microsoft Word 97/2000/XP"
-                XStorable storable = queryInterface(XStorable.class, xComponent);
-                storable.storeToURL(tempToFileUrl, storeProps); // Second replacing run requires new URL
+                    tempToFile = TempFileProvider.createTempFile("DTSP-" + java.util.Calendar.getInstance().getTimeInMillis(), "."
+                            + mimetypeService.getExtension(reader.getMimetype()));
+                    String tempToFileUrl = toUrl(tempToFile);
+                    log.debug("Saving file from OpenOffice to URL: " + tempToFileUrl);
+                    PropertyValue[] storeProps = new PropertyValue[1];
+                    storeProps[0] = new PropertyValue();
+                    storeProps[0].Name = "FilterName";
+                    storeProps[0].Value = "MS Word 97"; // "Microsoft Word 97/2000/XP"
+                    XStorable storable = queryInterface(XStorable.class, xComponent);
+                    storable.storeToURL(tempToFileUrl, storeProps); // Second replacing run requires new URL
+                }
+            } finally {
+                StatisticsPhaseListener.addTiming(StatisticsPhaseListenerLogColumn.SRV_OOO, System.currentTimeMillis() - startTime);
             }
 
             writer.putContent(tempToFile);

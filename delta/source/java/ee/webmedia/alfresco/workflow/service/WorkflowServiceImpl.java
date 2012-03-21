@@ -664,8 +664,15 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         }
         String previousOwnerId = null;
         if (compoundWorkflow.isSaved()) {
-            previousOwnerId = (String) BeanHelper.getNodeService().getProperty(compoundWorkflow.getNodeRef(), WorkflowCommonModel.Props.OWNER_ID);
+            previousOwnerId = (String) nodeService.getProperty(compoundWorkflow.getNodeRef(), WorkflowCommonModel.Props.OWNER_ID);
         }
+
+        // If this node is not saved, then all children are newly created, then childAssociationIndexes are already in the correct order.
+        // If this node was previously saved and no children are being added or removed, then childAssociationIndexes are already in the correct order.
+        // If this node was previously saved and at least one child is being added or removed, then childAssociationIndexes have to be set on all children
+        // (because maybe all children have assocIndex=-1).
+        boolean setChildAssocIndexes = false;
+        boolean wasSaved = compoundWorkflow.isSaved();
         boolean changed = createOrUpdate(queue, compoundWorkflow, compoundWorkflow.getParent(), assocType);
 
         // Remove workflows
@@ -675,23 +682,35 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                 checkWorkflow(getWorkflow(removedWorkflowNodeRef, compoundWorkflow, false), Status.NEW);
                 nodeService.deleteNode(removedWorkflowNodeRef);
                 changed = true;
+                setChildAssocIndexes = true;
             }
         }
         compoundWorkflow.getRemovedWorkflows().clear();
+
+        if (!setChildAssocIndexes && wasSaved) {
+            for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+                if (!workflow.isSaved()) {
+                    setChildAssocIndexes = true;
+                    break;
+                }
+            }
+        }
 
         int index = 0;
         for (Workflow workflow : compoundWorkflow.getWorkflows()) {
             // Create or update workflow
             saveWorkflow(queue, workflow);
 
-            // Update index
-            ChildAssociationRef childAssocRef = nodeService.getPrimaryParent(workflow.getNodeRef());
-            if (childAssocRef.getNthSibling() != index) {
-                nodeService.setChildAssociationIndex(childAssocRef, index);
-                changed = true;
+            if (setChildAssocIndexes) {
+                ChildAssociationRef childAssocRef = nodeService.getPrimaryParent(workflow.getNodeRef());
+                if (childAssocRef.getNthSibling() != index) {
+                    nodeService.setChildAssociationIndex(childAssocRef, index);
+                    changed = true;
+                }
             }
             index++;
         }
+
         // changing workflow may have changed other workflows of the document too,
         // so we need to save them also
         for (CompoundWorkflow otherCompoundWorkflow : compoundWorkflow.getOtherCompoundWorkflows()) {
@@ -713,6 +732,12 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     private boolean saveWorkflow(WorkflowEventQueue queue, Workflow workflow) {
+        // If this node is not saved, then all children are newly created, then childAssociationIndexes are already in the correct order.
+        // If this node was previously saved and no children are being added or removed, then childAssociationIndexes are already in the correct order.
+        // If this node was previously saved and at least one child is being added or removed, then childAssociationIndexes have to be set on all children
+        // (because maybe all children have assocIndex=-1).
+        boolean setChildAssocIndexes = false;
+        boolean wasSaved = workflow.isSaved();
         boolean changed = createOrUpdate(queue, workflow, workflow.getParent().getNodeRef(), WorkflowCommonModel.Assocs.WORKFLOW);
 
         // Remove tasks
@@ -722,20 +747,31 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                 checkTask(getTask(removedTaskNodeRef, workflow, false), Status.NEW);
                 nodeService.deleteNode(removedTaskNodeRef);
                 changed = true;
+                setChildAssocIndexes = true;
             }
         }
         workflow.getRemovedTasks().clear();
+
+        if (!setChildAssocIndexes && wasSaved) {
+            for (Task task : workflow.getTasks()) {
+                if (!task.isSaved()) {
+                    setChildAssocIndexes = true;
+                    break;
+                }
+            }
+        }
 
         int index = 0;
         for (Task task : workflow.getTasks()) {
             // Create or update task
             saveTask(queue, task);
 
-            // Update index
-            ChildAssociationRef childAssocRef = nodeService.getPrimaryParent(task.getNodeRef());
-            if (childAssocRef.getNthSibling() != index) {
-                nodeService.setChildAssociationIndex(childAssocRef, index);
-                changed = true;
+            if (setChildAssocIndexes) {
+                ChildAssociationRef childAssocRef = nodeService.getPrimaryParent(task.getNodeRef());
+                if (childAssocRef.getNthSibling() != index) {
+                    nodeService.setChildAssociationIndex(childAssocRef, index);
+                    changed = true;
+                }
             }
             index++;
         }

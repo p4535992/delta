@@ -69,6 +69,11 @@ public interface ContentModel
     static final QName PROP_ARCHIVED_CHILD_ASSOCS = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "archivedChildAssocs");
     static final QName PROP_ARCHIVED_SOURCE_ASSOCS = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "archivedSourceAssocs");
     static final QName PROP_ARCHIVED_TARGET_ASSOCS = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "archivedTargetAssocs");
+    static final QName PROP_ARCHIVED_ORIGINAL_OWNER_NAME = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "archivedOriginalOwnerName");
+    static final QName PROP_ARCHIVED_ORIGINAL_LOCATION_STRING = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "archivedOriginalLocationString");
+    static final QName PROP_ARCHIVED_OBJECT_TYPE_STRING = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "archivedObjectTypeString");
+    static final QName PROP_ARCHIVED_OBJECT_TYPE = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "archivedObjectType");
+    static final QName PROP_ARCHIVED_OBJECT_NAME = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "archivedObjectName");
     
     // referenceable aspect constants
     static final QName TYPE_REFERENCE = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "reference");

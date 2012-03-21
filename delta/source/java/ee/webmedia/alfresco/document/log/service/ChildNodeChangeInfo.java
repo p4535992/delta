@@ -1,6 +1,13 @@
 package ee.webmedia.alfresco.document.log.service;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.alfresco.service.namespace.QName;
+
+import ee.webmedia.alfresco.docdynamic.model.DocumentChildModel;
+import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 
 /**
  * Information holding object for composing history log message about a child node being added or removed. This class is used internally by {@link DocumentPropertiesChangeHolder}.
@@ -9,6 +16,14 @@ import org.alfresco.service.namespace.QName;
  * @author Martti Tamm
  */
 public class ChildNodeChangeInfo {
+
+    public static final ChildNodeChangeInfo APPLICANT = new ChildNodeChangeInfo("applicant", DocumentSpecificModel.Props.APPLICANT_NAME);
+
+    public static final ChildNodeChangeInfo ERRAND = new ChildNodeChangeInfo("errand", null);
+
+    public static final ChildNodeChangeInfo PARTY = new ChildNodeChangeInfo("party", DocumentSpecificModel.Props.PARTY_NAME);
+
+    private static final Map<QName, ChildNodeChangeInfo> CHILD_NODE_CHANGE_INFO;
 
     private final QName msgParamProp;
 
@@ -36,8 +51,8 @@ public class ChildNodeChangeInfo {
      * @param msgParamProp Optional node property name for injecting its value to the history message.
      */
     public ChildNodeChangeInfo(String messagePart, QName msgParamProp) {
-        addMessageKey = new StringBuilder("document_log_").append(messagePart).append("_add").toString();
-        removeMessageKey = new StringBuilder("document_log_").append(messagePart).append("_rem").toString();
+        addMessageKey = "document_log_" + messagePart + "_add";
+        removeMessageKey = "document_log_" + messagePart + "_rem";
         this.msgParamProp = msgParamProp;
     }
 
@@ -51,5 +66,19 @@ public class ChildNodeChangeInfo {
 
     public String getRemoveMessageKey() {
         return removeMessageKey;
+    }
+
+    public static ChildNodeChangeInfo getInstance(QName type) {
+        return CHILD_NODE_CHANGE_INFO.get(type);
+    }
+
+    static {
+        Map<QName, ChildNodeChangeInfo> childrenMap = new HashMap<QName, ChildNodeChangeInfo>(5, 1);
+        childrenMap.put(DocumentChildModel.Assocs.APPLICANT_ABROAD, ChildNodeChangeInfo.APPLICANT);
+        childrenMap.put(DocumentChildModel.Assocs.APPLICANT_DOMESTIC, ChildNodeChangeInfo.APPLICANT);
+        childrenMap.put(DocumentChildModel.Assocs.ERRAND_ABROAD, ChildNodeChangeInfo.ERRAND);
+        childrenMap.put(DocumentChildModel.Assocs.ERRAND_DOMESTIC, ChildNodeChangeInfo.ERRAND);
+        childrenMap.put(DocumentChildModel.Assocs.CONTRACT_PARTY, ChildNodeChangeInfo.PARTY);
+        CHILD_NODE_CHANGE_INFO = Collections.unmodifiableMap(childrenMap);
     }
 }

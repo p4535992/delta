@@ -102,7 +102,8 @@ public interface WorkflowSpecificModel {
 
     enum SignatureTaskOutcome {
         NOT_SIGNED,
-        SIGNED;
+        SIGNED_IDCARD,
+        SIGNED_MOBILEID;
 
         public static SignatureTaskOutcome of(int index) {
             if (index < 0 || index >= values().length) {

@@ -333,7 +333,7 @@
 
     <cache 
         name="org.alfresco.cache.qnameEntityCache"
-        maxElementsInMemory="1000"
+        maxElementsInMemory="5000"
         eternal="true"
         overflowToDisk="false">
     </cache>

@@ -242,15 +242,6 @@
          <item id="classificators" title-id="menu_classificators" admin="true">
             <outcome>dialog:classificatorListDialog</outcome>
          </item>
-         <item id="dimensions" title-id="menu_dimensions" accountant="true">
-            <outcome>dialog:dimensionListDialog</outcome>
-         </item>
-         <item id="transactionTemplates" title-id="menu_transactionTemplate" accountant="true">
-            <outcome>dialog:transactionTemplateListDialog</outcome>
-         </item>
-         <item id="transactionDescParameters" title-id="menu_transactionDescParameters" accountant="true">
-            <outcome>dialog:transactionDescParameterListDialog</outcome>
-         </item>
          <item id="parameters" title-id="menu_parameters" admin="true">
             <outcome>dialog:parametersListDialog</outcome>
          </item>
@@ -262,6 +253,9 @@
          </item>
          <item id="templates" title-id="menu_templates" admin="true">
             <outcome>dialog:documentTemplateListDialog</outcome>
+         </item>
+         <item id="helpText" title-id="menu_help_texts" admin="true">
+            <outcome>dialog:helpTextListDialog</outcome>
          </item>
          <item id="documentTypeManagement" title-id="menu_document_types" admin="true">
             <outcome>dialog:docTypeListDialog</outcome>
@@ -281,11 +275,20 @@
          <item id="applicationLog" title-id="menu_application_log" admin="true" supervisor="true">
             <outcome>dialog:applicationLogDialog</outcome>
          </item>
-         <item id="helpText" title-id="menu_help_texts" admin="true">
-            <outcome>dialog:helpTextListDialog</outcome>
+         <item id="manageDeletedItems" title-id="menu_manage_deleted_items" admin="true" supervisor="true">
+            <outcome>dialog:manageDeletedItems</outcome>
          </item>
          <item id="thesauri" title-id="menu_thesauri" admin="true">
             <outcome>dialog:thesaurusListDialog</outcome>
+         </item>
+         <item id="transactionTemplates" title-id="menu_transactionTemplate" accountant="true">
+            <outcome>dialog:transactionTemplateListDialog</outcome>
+         </item>
+         <item id="transactionDescParameters" title-id="menu_transactionDescParameters" accountant="true">
+            <outcome>dialog:transactionDescParameterListDialog</outcome>
+         </item>
+         <item id="dimensions" title-id="menu_dimensions" accountant="true">
+            <outcome>dialog:dimensionListDialog</outcome>
          </item>
          <item id="systemInformation" title-id="menu_system_information" admin="true">
             <outcome>dialog:showSystemInfo</outcome>

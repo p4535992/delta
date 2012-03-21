@@ -1101,6 +1101,11 @@ function initWithScreenProtected() {
       }
    });
 
+   $jQ(".toggle-tbody").live("mousedown", function (event) {
+      $jQ(this).closest("tbody").next().toggle();
+      $jQ(this).toggleClass("plus").toggleClass("minus");
+   });
+
    $jQ(".genericpicker-input").live('keyup', function (event) {
       var input = $jQ(this);
       var filter = input.prev();
@@ -1385,6 +1390,9 @@ function initWithScreenProtected() {
 
    jQuery(".task-due-date-date").change(processTaskDueDateDate);
    jQuery(".clearGroupRowDate").change(clearGroupRowDate);
+   jQuery(".groupRowDate").change(groupRowDateChange);
+   jQuery(".changeSendOutMode").change(changeSendOutMode);
+   jQuery(".resetSendOutGroupSendMode").change(resetSendOutGroupSendMode);
 
    handleHtmlLoaded(null, selects);
 };
@@ -1578,6 +1586,46 @@ function clearGroupRowDate(){
          return;
       }
    }
+}
+
+function groupRowDateChange() {
+   var input = $jQ(this);
+   var row = input.closest("tr");
+   var dateVal = row.find(".date")[0].value;
+   var timeVal = row.find(".time")[0].value;
+   
+   while (true) {
+      row = row.next();
+      if(row.length == 0) {
+         return;
+      }
+      
+      var dateInput = row.find(".clearGroupRowDate.date");
+      var timeInput = row.find(".clearGroupRowDate.time");
+      if (dateInput.length < 1 || timeInput.length < 1) {
+         return; // Out of thid group
+      }
+      dateInput[0].value = dateVal;
+      timeInput[0].value = timeVal;
+   }
+}
+
+function changeSendOutMode() {
+   var value = this.value;
+   if (value == "") {
+      return;
+   }
+   
+   $jQ(this).closest("tbody").next().find("select").each(function () {
+      this.value = value;
+   });
+}
+
+function resetSendOutGroupSendMode() {
+   var select = $jQ(this);
+   select.closest("tbody").prev().find(".changeSendOutMode").each(function () {
+      this.value = "";
+   });
 }
 
 function setReadonly(element, readonly){
@@ -2077,7 +2125,7 @@ function clickNextLink(currElId){
 function endsWith(str, suffix) {
    return str && suffix && str.indexOf(suffix, str.length - suffix.length) !== -1;
 }
-function popup(url) {
+function help(url) {
    var settings=
       "toolbar=no,location=no,directories=no,"+
       "status=no,menubar=no,scrollbars=yes,"+

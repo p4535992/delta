@@ -97,7 +97,12 @@ public class DocumentLogHelper {
      * @return Case name or the empty value text.
      */
     public static String getCaseName(NodeRef caseRef, String emptyValueText) {
-        return caseRef == null ? emptyValueText : (String) BeanHelper.getNodeService().getProperty(caseRef, CaseModel.Props.TITLE);
+        NodeService nodeService = BeanHelper.getNodeService();
+        if (caseRef == null || !nodeService.exists(caseRef)) {
+            return emptyValueText;
+        }
+
+        return (String) BeanHelper.getNodeService().getProperty(caseRef, CaseModel.Props.TITLE);
     }
 
     /**

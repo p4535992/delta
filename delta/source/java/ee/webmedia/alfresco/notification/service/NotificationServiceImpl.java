@@ -486,14 +486,14 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     private List<Notification> processNewTask(Task task, List<Notification> notifications) {
-        if (StringUtils.isNotEmpty(task.getOwnerId()) && isSubscribed(task.getOwnerId(), NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION)) {
-            // Send to system user
-            Notification notification = setupNotification(NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION);
-            notification.addRecipient(task.getOwnerName(), task.getOwnerEmail());
-            notifications.add(notification);
-        }
-
-        if (StringUtils.isEmpty(task.getInstitutionName())) {
+        if (StringUtils.isNotEmpty(task.getOwnerId())) {
+            if (isSubscribed(task.getOwnerId(), NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION)) {
+                // Send to system user
+                Notification notification = setupNotification(NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION);
+                notification.addRecipient(task.getOwnerName(), task.getOwnerEmail());
+                notifications.add(notification);
+            }
+        } else if (StringUtils.isEmpty(task.getInstitutionName())) {
             // Send to third party
             Notification notification = setupNotification(NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION, 1);
             notification.setSenderEmail(parametersService.getStringParameter(Parameters.DOC_SENDER_EMAIL));
@@ -782,7 +782,9 @@ public class NotificationServiceImpl implements NotificationService {
     private List<Notification> processSignatureTask(Task task, List<Notification> notifications) {
         final CompoundWorkflow compoundWorkflow = task.getParent().getParent();
 
-        if (WorkflowSpecificModel.SignatureTaskOutcome.SIGNED.equals(task.getOutcomeIndex()) && StringUtils.isNotEmpty(task.getOwnerId())) {
+        if ((WorkflowSpecificModel.SignatureTaskOutcome.SIGNED_IDCARD.equals(task.getOutcomeIndex())
+                || WorkflowSpecificModel.SignatureTaskOutcome.SIGNED_MOBILEID.equals(task.getOutcomeIndex()))
+                && StringUtils.isNotEmpty(task.getOwnerId())) {
             if (isSubscribed(compoundWorkflow.getOwnerId(), NotificationModel.NotificationType.TASK_SIGNATURE_TASK_COMPLETED)) {
                 Notification notification = setupNotification(NotificationModel.NotificationType.TASK_SIGNATURE_TASK_COMPLETED);
                 notification.addRecipient(compoundWorkflow.getOwnerName(), userService.getUserEmail(compoundWorkflow.getOwnerId()));

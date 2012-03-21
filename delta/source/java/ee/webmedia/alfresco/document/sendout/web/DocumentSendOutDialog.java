@@ -92,7 +92,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentSendOutDialog.class);
 
-    private static final String[] PROP_KEYS = { "recipientName", "recipientEmail", "recipientSendMode" };
+    private static final String[] PROP_KEYS = { "recipientName", "recipientEmail", "recipientSendMode", "recipientGroup" };
 
     private transient UIPanel modalContainer;
 
@@ -250,17 +250,20 @@ public class DocumentSendOutDialog extends BaseDialogBean {
 
         List<String> names = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_NAME), false);
         List<String> emails = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_EMAIL), false);
+        List<String> groups = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_GROUP), false);
         String contractName = (String) props.get(DocumentSpecificModel.Props.SECOND_PARTY_NAME);
         String contractEmail = (String) props.get(DocumentSpecificModel.Props.SECOND_PARTY_EMAIL);
         if (StringUtils.isNotBlank(contractName) || StringUtils.isNotBlank(contractEmail)) {
             names.add(StringUtils.isNotBlank(contractName) ? contractName : "");
             emails.add(StringUtils.isNotBlank(contractEmail) ? contractEmail : "");
+            groups.add("");
         }
         contractName = (String) props.get(DocumentSpecificModel.Props.THIRD_PARTY_NAME);
         contractEmail = (String) props.get(DocumentSpecificModel.Props.THIRD_PARTY_EMAIL);
         if (StringUtils.isNotBlank(contractName) || StringUtils.isNotBlank(contractEmail)) {
             names.add(StringUtils.isNotBlank(contractName) ? contractName : "");
             emails.add(StringUtils.isNotBlank(contractEmail) ? contractEmail : "");
+            groups.add("");
         }
         List<String> partyNames = (List<String>) props.get(DocumentSpecificModel.Props.PARTY_NAME);
         List<String> partyEmails = (List<String>) props.get(DocumentSpecificModel.Props.PARTY_EMAIL);
@@ -276,15 +279,17 @@ public class DocumentSendOutDialog extends BaseDialogBean {
 
                 names.add(name);
                 emails.add(email);
+                groups.add("");
             }
         }
 
         if (names.size() == 1 && emails.size() == 1 && StringUtils.isBlank(names.get(0)) && StringUtils.isBlank(emails.get(0))) {
             names = new ArrayList<String>();
             emails = new ArrayList<String>();
+            groups = new ArrayList<String>();
         }
 
-        addAdditionalRecipients(props, names, emails);
+        addAdditionalRecipients(props, names, emails, groups);
         List<String> recSendModes = new ArrayList<String>(names.size());
         for (int i = 0; i < names.size(); i++) {
             if (StringUtils.isNotBlank(names.get(i)) || StringUtils.isNotBlank(emails.get(i))) {
@@ -297,15 +302,18 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         properties.put(PROP_KEYS[0], names);
         properties.put(PROP_KEYS[1], emails);
         properties.put(PROP_KEYS[2], recSendModes);
+        properties.put(PROP_KEYS[3], groups);
 
         model.setProperties(properties);
     }
 
-    private void addAdditionalRecipients(Map<String, Object> props, List<String> names, List<String> emails) {
+    private void addAdditionalRecipients(Map<String, Object> props, List<String> names, List<String> emails, List<String> groups) {
         @SuppressWarnings("unchecked")
         List<String> namesAdd = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME), false);
         @SuppressWarnings("unchecked")
         List<String> emailsAdd = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL), false);
+        @SuppressWarnings("unchecked")
+        List<String> groupsAdd = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_GROUP), false);
         RepoUtil.validateSameSize(namesAdd, emailsAdd, "additionalNames", "additionalEmails");
 
         List<Integer> removeIndexes = new ArrayList<Integer>();
@@ -321,16 +329,21 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         Collections.reverse(removeIndexes);
         for (Integer index : removeIndexes) {
             namesAdd.remove((int) index);
+            groupsAdd.remove((int) index);
         }
 
         names.addAll(namesAdd);
         emails.addAll(emailsAdd);
+        groups.addAll(groupsAdd);
 
         if (names.isEmpty()) {
             names.add("");
         }
         if (emails.isEmpty()) {
             emails.add("");
+        }
+        if (groups.isEmpty()) {
+            groups.add("");
         }
     }
 

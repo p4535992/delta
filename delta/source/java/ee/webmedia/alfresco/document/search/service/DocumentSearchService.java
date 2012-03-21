@@ -296,4 +296,6 @@ public interface DocumentSearchService {
 
     List<StoreRef> getStoresFromDocumentReportFilter(Map<String, Object> properties);
 
+    String generateDeletedSearchQuery(String searchValue, NodeRef containerNodeRef);
+
 }

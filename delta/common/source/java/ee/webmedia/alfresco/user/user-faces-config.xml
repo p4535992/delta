@@ -73,5 +73,10 @@
          <value>#{PermissionService}</value>
       </managed-property>
    </managed-bean>
+   
+   <converter>
+      <converter-id>ee.webmedia.alfresco.user.web.UserConverter</converter-id>
+      <converter-class>ee.webmedia.alfresco.user.web.UserConverter</converter-class>
+   </converter>
 
 </faces-config>

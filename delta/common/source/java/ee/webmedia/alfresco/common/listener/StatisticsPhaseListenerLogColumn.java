@@ -19,4 +19,10 @@ public enum StatisticsPhaseListenerLogColumn {
     VIEWID,
     EVENT,
     SESSION_SIZE,
+    HIBERNATE,
+    TX_ROLLBACK,
+    TX_COMMIT,
+    IDX_QUERY,
+    SRV_OOO,
+    SRV_MSO,
 }

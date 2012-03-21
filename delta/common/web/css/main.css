@@ -1087,6 +1087,25 @@ td.actions-column * {
 	.filter-list a {
 		margin-right: 20px;
 	}
+	
+.trashfilter-list {
+	margin:10px 0;
+	padding:5px;
+}
+
+	.trashfilter-list ul,
+	.trashfilter-list li{
+		display: inline;
+	}
+	
+	.trashfilter-list img {
+		margin: 0 5px;
+		vertical-align: -3px;
+	}
+	
+	.trashfilter-list a {
+		margin-right: 20px;
+	}
 
 #recover-items-panel {
 	margin: 50px 0 15px;

@@ -122,9 +122,11 @@ public interface DocumentCommonModel {
 
         QName RECIPIENT_NAME = QName.createQName(URI, "recipientName");
         QName RECIPIENT_EMAIL = QName.createQName(URI, "recipientEmail");
+        QName RECIPIENT_GROUP = QName.createQName(URI, "recipientGroup");
 
         QName ADDITIONAL_RECIPIENT_NAME = QName.createQName(URI, "additionalRecipientName");
         QName ADDITIONAL_RECIPIENT_EMAIL = QName.createQName(URI, "additionalRecipientEmail");
+        QName ADDITIONAL_RECIPIENT_GROUP = QName.createQName(URI, "additionalRecipientGroup");
 
         QName SEND_DESC_VALUE = QName.createQName(URI, "sendDescValue");
 
