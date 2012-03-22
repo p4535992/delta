@@ -467,6 +467,12 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         UIGenericPicker picker = (UIGenericPicker) event.getComponent();
         int wfIndex = (Integer) picker.getAttributes().get(TaskListGenerator.ATTR_WORKFLOW_INDEX);
         int taskIndex = Integer.parseInt((String) picker.getAttributes().get(Search.OPEN_DIALOG_KEY));
+        boolean addOrderAssignmentResponsibleTask = false;
+        Workflow block = compoundWorkflow.getWorkflows().get(wfIndex);
+        if (taskIndex >= 0) {
+            Task originalTask = block.getTasks().get(taskIndex);
+            addOrderAssignmentResponsibleTask = originalTask.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK) && originalTask.isResponsible();
+        }
         String[] results = picker.getSelectedResults();
         if (results == null) {
             return;
@@ -474,10 +480,9 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         log.debug("processOwnerSearchResults: " + picker.getId() + ", " + wfIndex + ", " //
                 + taskIndex + ", " + filterIndex + " = " + StringUtils.join(results, ","));
 
-        Workflow block = compoundWorkflow.getWorkflows().get(wfIndex);
         for (int i = 0; i < results.length; i++) {
             if (i > 0) {
-                block.addTask(++taskIndex);
+                taskIndex = addTask(taskIndex, addOrderAssignmentResponsibleTask, block);
             }
 
             // users
@@ -491,7 +496,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
                 int j = 0;
                 for (String userName : children) {
                     if (j++ > 0) {
-                        block.addTask(++taskIndex);
+                        taskIndex = addTask(taskIndex, addOrderAssignmentResponsibleTask, block);
                     }
                     setPersonPropsToTask(block, taskIndex, userName, groupName);
                 }
@@ -506,7 +511,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             }
             // contact groups
             else if (filterIndex == 3) {
-                taskIndex = addContactGroupTasks(taskIndex, block, new NodeRef(results[i]));
+                taskIndex = addContactGroupTasks(taskIndex, block, new NodeRef(results[i]), addOrderAssignmentResponsibleTask);
             } else {
                 throw new RuntimeException("Unknown filter index value: " + filterIndex);
             }
@@ -515,7 +520,16 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         updatePanelGroup();
     }
 
-    public int addContactGroupTasks(int taskIndex, Workflow block, NodeRef contactGroup) {
+    private int addTask(int taskIndex, boolean addOrderAssignmentResponsibleTask, Workflow block) {
+        if (addOrderAssignmentResponsibleTask) {
+            ((OrderAssignmentWorkflow) block).addResponsibleTask(++taskIndex);
+        } else {
+            block.addTask(++taskIndex);
+        }
+        return taskIndex;
+    }
+
+    public int addContactGroupTasks(int taskIndex, Workflow block, NodeRef contactGroup, boolean addOrderAssignmentResponsibleTask) {
         int taskCounter = 0;
         boolean isExternalReviewTask = block.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW);
         List<NodeRef> contacts = getAddressbookService().getContactGroupContents(contactGroup);
@@ -526,7 +540,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
                     && Boolean.TRUE.equals(contactProps.get(AddressbookModel.Props.TASK_CAPABLE))
                     && (!isExternalReviewTask || Boolean.TRUE.equals(contactProps.get(AddressbookModel.Props.DVK_CAPABLE)))) {
                 if (taskCounter > 0) {
-                    block.addTask(++taskIndex);
+                    taskIndex = addTask(taskIndex, addOrderAssignmentResponsibleTask, block);
                 }
                 if (isExternalReviewTask) {
                     setExternalReviewProps(block, taskIndex, contactProps, groupName);
