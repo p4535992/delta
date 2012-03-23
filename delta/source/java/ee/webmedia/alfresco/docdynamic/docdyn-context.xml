@@ -77,7 +77,7 @@
       <property name="permissionService" ref="PermissionService" />
    </bean>
 
-   <bean id="documentUpdater2" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentUpdater" parent="abstractNodeUpdater" >
+   <bean id="documentUpdater3" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
        <property name="dependsOn">
@@ -88,6 +88,17 @@
          </list>
       </property>
       <property name="workflowService" ref="WmWorkflowService" />
+   </bean>
+
+   <bean id="documentRegNumbersUpdater" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentRegNumbersUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+       <property name="dependsOn">
+         <list>
+            <ref bean="documentUpdater3" />
+         </list>
+      </property>
+      <property name="documentUpdater" ref="documentUpdater3" />
    </bean>
 
    <!-- START: web beans: -->

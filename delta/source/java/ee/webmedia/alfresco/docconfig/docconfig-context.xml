@@ -51,7 +51,7 @@
       <property name="documentConfigService" ref="DocumentConfigService" />
       <property name="dependsOn">
          <list>
-            <ref bean="documentUpdater2" />
+            <ref bean="documentUpdater3" />
          </list>
       </property>      
    </bean>

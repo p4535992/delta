@@ -20,6 +20,7 @@ public enum StatisticsPhaseListenerLogColumn {
     EVENT,
     SESSION_SIZE,
     HIBERNATE,
+    DB,
     TX_ROLLBACK,
     TX_COMMIT,
     IDX_QUERY,

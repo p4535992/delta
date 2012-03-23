@@ -257,7 +257,7 @@ public class ADMLuceneSearcherImpl extends AbstractLuceneBase implements LuceneS
 
     public ResultSet query(SearchParameters searchParameters)
     {
-      long startTime = System.currentTimeMillis();
+      long startTime = System.nanoTime();
       try {
         if (searchParameters.getStores().size() != 1)
         {
@@ -506,7 +506,7 @@ public class ADMLuceneSearcherImpl extends AbstractLuceneBase implements LuceneS
             }
         }
       } finally {
-          StatisticsPhaseListener.addTiming(StatisticsPhaseListenerLogColumn.IDX_QUERY, System.currentTimeMillis() - startTime);
+          StatisticsPhaseListener.addTimingNano(StatisticsPhaseListenerLogColumn.IDX_QUERY, startTime);
       }
     }
 

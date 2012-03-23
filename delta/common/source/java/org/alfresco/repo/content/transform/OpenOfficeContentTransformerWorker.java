@@ -298,7 +298,7 @@ public class OpenOfficeContentTransformerWorker extends ContentTransformerHelper
             reader.getContent(tempFromFile);
         }
 
-        long startTime = System.currentTimeMillis();
+        long startTime = System.nanoTime();
         try
         {
             this.converter.convert(tempFromFile, sourceFormat, tempToFile, targetFormat);
@@ -310,7 +310,7 @@ public class OpenOfficeContentTransformerWorker extends ContentTransformerHelper
                     + "   writer: " + writer + "\n" + "   from file: " + tempFromFile + "\n" + "   to file: "
                     + tempToFile, e);
         } finally {
-            StatisticsPhaseListener.addTiming(StatisticsPhaseListenerLogColumn.SRV_OOO, System.currentTimeMillis() - startTime);
+            StatisticsPhaseListener.addTimingNano(StatisticsPhaseListenerLogColumn.SRV_OOO, startTime);
         }
 
         // upload the temp output to the writer given us

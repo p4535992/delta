@@ -873,7 +873,18 @@ public class TestDataService implements SaveListener {
     }
 
     private void createFunctions(int count) {
-        List<Function> allFunctions = getFunctionsService().getAllFunctions();
+        // DOK.LOETELU
+        NodeRef rootRef = getFunctionsService().getFunctionsRoot();
+
+        // List<ArchivalsStoreVO> archivalsStoreVOs = new ArrayList<ArchivalsStoreVO>(getGeneralService().getArchivalsStoreVOs());
+        // ARHIVAALIDE LOETELU
+        // NodeRef rootRef = archivalsStoreVOs.get(0).getNodeRef();
+        // 1. ARHIIVIMOODUSTAJA
+        // NodeRef rootRef = archivalsStoreVOs.get(1).getNodeRef();
+        // 2. ARHIIVIMOODUSTAJA
+        // NodeRef rootRef = archivalsStoreVOs.get(2).getNodeRef();
+
+        List<Function> allFunctions = getFunctionsService().getFunctions(rootRef);
         List<Pair<String, String>> copy = new ArrayList<Pair<String, String>>(functionMarksAndTitles);
         int order = 1;
         functions = new HashSet<NodeRef>();
@@ -901,7 +912,7 @@ public class TestDataService implements SaveListener {
             props.put(FunctionsModel.Props.TYPE.toString(), mark.indexOf(".") == -1 ? "funktsioon" : "allfunktsioon");
             props.put(FunctionsModel.Props.STATUS.toString(), DocListUnitStatus.OPEN.getValueName());
             props.put(FunctionsModel.Props.ORDER.toString(), order + 1);
-            getFunctionsService().saveOrUpdate(function);
+            getFunctionsService().saveOrUpdate(function, rootRef);
             functions.add(function.getNodeRef());
             order = Math.max(function.getOrder(), order);
             log.info("Created function " + mark + " " + title);
@@ -1173,16 +1184,18 @@ public class TestDataService implements SaveListener {
                 docLocations.add(new DocumentLocationVO(seriesByVolumeRef.get(volumeRef), volumeRef, caseRef));
             }
         }
-        Iterator<String> i = copy.iterator();
-        while (i.hasNext() && cases.size() < count) {
-            checkStop();
-            String title = i.next();
-            i.remove();
-            createCase(title, volumesRandom);
-        }
-        while (cases.size() < count) {
-            checkStop();
-            createCase(getRandom(fnSerVolTitles), volumesRandom);
+        if (!volumesWithCases.isEmpty()) {
+            Iterator<String> i = copy.iterator();
+            while (i.hasNext() && cases.size() < count) {
+                checkStop();
+                String title = i.next();
+                i.remove();
+                createCase(title, volumesRandom);
+            }
+            while (cases.size() < count) {
+                checkStop();
+                createCase(getRandom(fnSerVolTitles), volumesRandom);
+            }
         }
         log.info("There are " + cases.size() + " cases; goal was " + count + " cases");
     }

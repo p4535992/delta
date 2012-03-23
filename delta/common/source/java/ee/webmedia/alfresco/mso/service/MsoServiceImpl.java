@@ -28,6 +28,7 @@ import ee.webmedia.alfresco.mso.ws.MsoDocumentAndPdfOutput;
 import ee.webmedia.alfresco.mso.ws.MsoDocumentInput;
 import ee.webmedia.alfresco.mso.ws.MsoDocumentOutput;
 import ee.webmedia.alfresco.mso.ws.MsoPdfOutput;
+import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.ContentReaderDataSource;
 import ee.webmedia.alfresco.utils.MimeUtil;
 
@@ -96,15 +97,14 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
             input.setDocumentFile(new DataHandler(dataSource));
             log.info("Sending request to perform Mso.convertToPdf, documentReader=" + documentReader);
 
-            long startTime = System.currentTimeMillis();
-            long duration = 0;
+            long startTime = System.nanoTime();
             ModifiedFormulasOutput output;
             try {
                 output = mso.modifiedFormulas(input);
             } finally {
-                duration = System.currentTimeMillis() - startTime;
-                StatisticsPhaseListener.addTiming(StatisticsPhaseListenerLogColumn.SRV_MSO, duration);
+                StatisticsPhaseListener.addTimingNano(StatisticsPhaseListenerLogColumn.SRV_MSO, startTime);
             }
+            long duration = CalendarUtil.duration(startTime);
 
             log.info("Completed Mso.getModifiedFormulas in " + duration + " ms");
             return output;
@@ -134,15 +134,14 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
             input.setDocumentFile(new DataHandler(dataSource));
             log.info("Sending request to perform Mso.convertToPdf, documentReader=" + documentReader);
 
-            long startTime = System.currentTimeMillis();
-            long duration = 0;
+            long startTime = System.nanoTime();
             MsoPdfOutput output;
             try {
                 output = mso.convertToPdf(input);
             } finally {
-                duration = System.currentTimeMillis() - startTime;
-                StatisticsPhaseListener.addTiming(StatisticsPhaseListenerLogColumn.SRV_MSO, duration);
+                StatisticsPhaseListener.addTimingNano(StatisticsPhaseListenerLogColumn.SRV_MSO, startTime);
             }
+            long duration = CalendarUtil.duration(startTime);
 
             Pair<String, String> pair = MimeUtil.getMimeTypeAndEncoding(output.getPdfFile().getContentType());
             pdfWriter.setMimetype(pair.getFirst());
@@ -172,15 +171,14 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
 
             log.info("Sending request to perform Mso.replaceFormulas, formulas=[" + formulas.size() + "] documentReader=" + documentReader);
 
-            long startTime = System.currentTimeMillis();
-            long duration = 0;
+            long startTime = System.nanoTime();
             MsoDocumentOutput output;
             try {
                 output = mso.replaceFormulas(input);
             } finally {
-                duration = System.currentTimeMillis() - startTime;
-                StatisticsPhaseListener.addTiming(StatisticsPhaseListenerLogColumn.SRV_MSO, duration);
+                StatisticsPhaseListener.addTimingNano(StatisticsPhaseListenerLogColumn.SRV_MSO, startTime);
             }
+            long duration = CalendarUtil.duration(startTime);
 
             Pair<String, String> pair = MimeUtil.getMimeTypeAndEncoding(output.getDocumentFile().getContentType());
             documentWriter.setMimetype(pair.getFirst());
@@ -206,15 +204,14 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
 
             log.info("Sending request to perform Mso.replaceFormulasAndTransformToPdf, formulas=[" + formulas.size() + "] documentReader=" + documentReader);
 
-            long startTime = System.currentTimeMillis();
-            long duration = 0;
+            long startTime = System.nanoTime();
             MsoDocumentAndPdfOutput output;
             try {
                 output = mso.replaceFormulasAndConvertToPdf(input);
             } finally {
-                duration = System.currentTimeMillis() - startTime;
-                StatisticsPhaseListener.addTiming(StatisticsPhaseListenerLogColumn.SRV_MSO, duration);
+                StatisticsPhaseListener.addTimingNano(StatisticsPhaseListenerLogColumn.SRV_MSO, startTime);
             }
+            long duration = CalendarUtil.duration(startTime);
 
             Pair<String, String> pair = MimeUtil.getMimeTypeAndEncoding(output.getDocumentFile().getContentType());
             documentWriter.setMimetype(pair.getFirst());

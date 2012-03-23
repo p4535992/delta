@@ -384,6 +384,8 @@ public interface DocumentService {
 
     void updateParentNodesContainingDocsCount(NodeRef documentNodeRef, boolean documentAdded);
 
+    void updateParentDocumentRegNumbers(NodeRef docRef, String removedRegNumber, String addedRegNumber);
+
     /**
      * @param parentRef
      * @return number of documents under given volume or case

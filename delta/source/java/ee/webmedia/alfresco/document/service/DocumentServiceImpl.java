@@ -565,12 +565,15 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                     @Override
                     public NodeRef doWork() throws Exception {
                         updateParentNodesContainingDocsCount(docNodeRef, false);
+                        String regNumber = (String) nodeService.getProperty(docNodeRef, REG_NUMBER);
+                        updateParentDocumentRegNumbers(docNodeRef, regNumber, null);
                         NodeRef newDocNodeRef = nodeService.moveNode(docNodeRef, targetParentRef //
                                 , DocumentCommonModel.Assocs.DOCUMENT, DocumentCommonModel.Assocs.DOCUMENT).getChildRef();
                         if (!newDocNodeRef.equals(docNodeRef)) {
                             throw new RuntimeException("NodeRef changed while moving");
                         }
                         updateParentNodesContainingDocsCount(docNodeRef, true);
+                        updateParentDocumentRegNumbers(docNodeRef, null, regNumber);
                         return null;
                     }
                 }, AuthenticationUtil.getSystemUserName());
@@ -1369,10 +1372,12 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             }
         }
         updateParentNodesContainingDocsCount(nodeRef, false);
+        String regNumber = (String) nodeService.getProperty(nodeRef, REG_NUMBER);
+        updateParentDocumentRegNumbers(nodeRef, regNumber, null);
         if (StringUtils.isNotBlank(comment)) { // Create deletedDocument under parent volume
             DeletedDocument deletedDocument = new DeletedDocument();
             deletedDocument.setActor(getUserFullNameAndId(userService.getCurrentUserProperties()));
-            deletedDocument.createDocumentData((String) nodeService.getProperty(nodeRef, REG_NUMBER), (String) nodeService.getProperty(nodeRef, DOC_NAME));
+            deletedDocument.createDocumentData(regNumber, (String) nodeService.getProperty(nodeRef, DOC_NAME));
             deletedDocument.setComment(comment);
             volumeService.saveDeletedDocument(generalService.getAncestorNodeRefWithType(nodeRef, VolumeModel.Types.VOLUME), deletedDocument);
         }
@@ -1733,7 +1738,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         String regNumber = (String) props.get(DocumentCommonModel.Props.REG_NUMBER);
         final Date now = new Date();
         final NodeRef initDocParentRef = caseNodeRef != null ? caseNodeRef : volumeNodeRef;
-        List<Document> allDocs = null;
+        List<String> allDocs = null;
         long startTime = System.currentTimeMillis();
         if (!isReplyOrFollowupDoc) {
             log.debug("Starting to register initialDocument, docRef=" + docRef);
@@ -1742,7 +1747,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             if (!series.isNewNumberForEveryDoc() && series.isIndividualizingNumbers()) {
                 regNumber += REGISTRATION_INDIVIDUALIZING_NUM_SUFFIX;
             }
-            Pair<String, List<Document>> result = addUniqueNumberIfNeccessary(regNumber, initDocParentRef, isRelocating, null);
+            Pair<String, List<String>> result = addUniqueNumberIfNeccessary(regNumber, initDocParentRef, isRelocating, null);
             regNumber = result.getFirst();
             allDocs = result.getSecond();
         } else { // registration of reply/followUp("Järg- või vastusdokument")
@@ -1752,20 +1757,20 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             final String initDocRegNr = (String) initDocProps.get(REG_NUMBER.toString());
             boolean initDocRegNrNotBlank = StringUtils.isNotBlank(initDocRegNr);
             if (series.isNewNumberForEveryDoc()) {
-                Pair<String, List<Document>> result = addUniqueNumberIfNeccessary(parseRegNrPattern(series, volumeNodeRef, register, regNumber, now), initDocParentRef,
+                Pair<String, List<String>> result = addUniqueNumberIfNeccessary(parseRegNrPattern(series, volumeNodeRef, register, regNumber, now), initDocParentRef,
                         isRelocating, null);
                 regNumber = result.getFirst();
                 allDocs = result.getSecond();
             } else if (initDocRegNrNotBlank && !series.isIndividualizingNumbers() && !series.isNewNumberForEveryDoc()) {
-                Pair<String, List<Document>> result = addUniqueNumberIfNeccessary(initDocRegNr, initDocParentRef, isRelocating, null);
+                Pair<String, List<String>> result = addUniqueNumberIfNeccessary(initDocRegNr, initDocParentRef, isRelocating, null);
                 regNumber = result.getFirst();
                 allDocs = result.getSecond();
             } else if (initDocRegNrNotBlank && !series.isNewNumberForEveryDoc() && series.isIndividualizingNumbers()) {
                 { // add individualizing number to regNr
                     final RegNrHolder initDocRegNrHolder = new RegNrHolder(initDocRegNr);
                     if (initDocRegNrHolder.getIndividualizingNr() != null) {
-
-                        Pair<Integer, List<Document>> result = getMaxIndivNrInParent(docRef, initDocRegNrHolder, initDocParentRef, initDocRegNrHolder.getIndividualizingNr());
+                        String docRegNumber = (String) nodeService.getProperty(docRef, REG_NUMBER);
+                        Pair<Integer, List<String>> result = getMaxIndivNrInParent(docRegNumber, initDocRegNrHolder, initDocParentRef, initDocRegNrHolder.getIndividualizingNr());
                         int maxIndivNr = result.getFirst();
                         allDocs = result.getSecond();
                         regNumber = initDocRegNrHolder.getRegNrWithoutIndividualizingNr() + (maxIndivNr + 1);
@@ -1773,7 +1778,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                     } else {
                         // with correct data and *current* expected user behaviors this code should not be reached,
                         // however Maiga insisted that this behavior would be applied if smth. goes wrong
-                        Pair<String, List<Document>> result = addUniqueNumberIfNeccessary(initDocRegNr, initDocParentRef, isRelocating, null);
+                        Pair<String, List<String>> result = addUniqueNumberIfNeccessary(initDocRegNr, initDocParentRef, isRelocating, null);
                         regNumber = result.getFirst();
                         allDocs = result.getSecond();
                     }
@@ -1842,6 +1847,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                 adrDeletedDocumentAdded = true;
             }
 
+            updateParentDocumentRegNumbers(docNode.getNodeRef(), (String) props.get(REG_NUMBER.toString()), regNumber);
             props.put(REG_NUMBER.toString(), regNumber);
             propertyChangesMonitorHelper.addIgnoredProps(props, REG_NUMBER);
             if (!isRelocating || (generateNewRegNumberInReregistration && changeShortRegAndIndividualOnRelocatingDoc(previousVolume, series))) {
@@ -1901,41 +1907,50 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         return false;
     }
 
-    private Pair<String, List<Document>> addUniqueNumberIfNeccessary(String regNumber, NodeRef initDocParentRef, boolean isRelocating, List<Document> allDocs) {
+    @SuppressWarnings("unchecked")
+    private Pair<String, List<String>> addUniqueNumberIfNeccessary(String regNumber, NodeRef initDocParentRef, boolean isRelocating, List<String> allRegNumbers) {
         if (!isRelocating) {
             return Pair.newInstance(regNumber, null);
         }
         final RegNrHolder initDocRegNrHolder = new RegNrHolder(regNumber);
         int uniqueNumber = 0;
-        if (allDocs == null) {
-            allDocs = getAllDocumentsByParentNodeRef(initDocParentRef);
+        if (allRegNumbers == null) {
+            allRegNumbers = (List<String>) nodeService.getProperty(initDocParentRef, DocumentCommonModel.Props.DOCUMENT_REG_NUMBERS);
         }
-        for (Document anotherDoc : allDocs) {
-            final RegNrHolder anotherDocRegNrHolder = new RegNrHolder(anotherDoc.getRegNumber());
-            if (StringUtils.equals(initDocRegNrHolder.getRegNrWithIndividualizingNr(), anotherDocRegNrHolder.getRegNrWithIndividualizingNr())) {
-                final Integer anotherDocUniqueNr = anotherDocRegNrHolder.getUniqueNumber();
-                if (anotherDocUniqueNr != null) {
-                    uniqueNumber = Math.max(uniqueNumber, anotherDocUniqueNr);
-                }
-            }
-        }
-        return Pair.newInstance(regNumber + (uniqueNumber == 0 ? "" : "(" + (uniqueNumber + 1) + ")"), allDocs);
-    }
-
-    private Pair<Integer, List<Document>> getMaxIndivNrInParent(final NodeRef docRef, final RegNrHolder initDocRegNrHolder, final NodeRef initDocParentRef, int maxIndivNr) {
-        List<Document> allDocs = getAllDocumentsByParentNodeRef(initDocParentRef);
-        for (Document anotherDoc : allDocs) {
-            if (!docRef.equals(anotherDoc.getNodeRef())) {
-                final RegNrHolder anotherDocRegNrHolder = new RegNrHolder(anotherDoc.getRegNumber());
-                if (StringUtils.equals(initDocRegNrHolder.getRegNrWithoutIndividualizingNr(), anotherDocRegNrHolder.getRegNrWithoutIndividualizingNr())) {
-                    final Integer anotherDocIndivNr = anotherDocRegNrHolder.getIndividualizingNr();
-                    if (anotherDocIndivNr != null) {
-                        maxIndivNr = Math.max(maxIndivNr, anotherDocIndivNr);
+        if (allRegNumbers != null) {
+            for (String anotherDocRegNumber : allRegNumbers) {
+                final RegNrHolder anotherDocRegNrHolder = new RegNrHolder(anotherDocRegNumber);
+                if (StringUtils.equals(initDocRegNrHolder.getRegNrWithIndividualizingNr(), anotherDocRegNrHolder.getRegNrWithIndividualizingNr())) {
+                    final Integer anotherDocUniqueNr = anotherDocRegNrHolder.getUniqueNumber();
+                    if (anotherDocUniqueNr != null) {
+                        uniqueNumber = Math.max(uniqueNumber, anotherDocUniqueNr);
                     }
                 }
             }
         }
-        return Pair.newInstance(maxIndivNr, allDocs);
+        return Pair.newInstance(regNumber + (uniqueNumber == 0 ? "" : "(" + (uniqueNumber + 1) + ")"), allRegNumbers);
+    }
+
+    private Pair<Integer, List<String>> getMaxIndivNrInParent(final String docRegNumber, final RegNrHolder initDocRegNrHolder, final NodeRef initDocParentRef, int maxIndivNr) {
+        @SuppressWarnings("unchecked")
+        List<String> allRegNumbers = (List<String>) nodeService.getProperty(initDocParentRef, DocumentCommonModel.Props.DOCUMENT_REG_NUMBERS);
+        if (allRegNumbers != null) {
+            boolean encounteredOnce = false;
+            for (String anotherDocRegNumber : allRegNumbers) {
+                if (!encounteredOnce && StringUtils.equals(docRegNumber, anotherDocRegNumber)) { // TODO discuss this change with Maiga
+                    encounteredOnce = true;
+                } else {
+                    final RegNrHolder anotherDocRegNrHolder = new RegNrHolder(anotherDocRegNumber);
+                    if (StringUtils.equals(initDocRegNrHolder.getRegNrWithoutIndividualizingNr(), anotherDocRegNrHolder.getRegNrWithoutIndividualizingNr())) {
+                        final Integer anotherDocIndivNr = anotherDocRegNrHolder.getIndividualizingNr();
+                        if (anotherDocIndivNr != null) {
+                            maxIndivNr = Math.max(maxIndivNr, anotherDocIndivNr);
+                        }
+                    }
+                }
+            }
+        }
+        return Pair.newInstance(maxIndivNr, allRegNumbers);
     }
 
     private boolean changeShortRegAndIndividualOnRelocatingDoc(Node previousVolumeNode, Series newSeries) {
@@ -2734,6 +2749,37 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             return true;
         }
         return false;
+    }
+
+    @Override
+    public void updateParentDocumentRegNumbers(NodeRef docRef, String removedRegNumber, String addedRegNumber) {
+        if (StringUtils.equals(removedRegNumber, addedRegNumber) || (StringUtils.isBlank(removedRegNumber) && StringUtils.isBlank(addedRegNumber))) {
+            log.info("updateParentDocumentRegNumbers: removedRegNumber and addedRegNumber are equal or blank, docRef=" + docRef);
+            return;
+        }
+        NodeRef parentRef = nodeService.getPrimaryParent(docRef).getParentRef();
+        if (!nodeService.hasAspect(parentRef, DocumentCommonModel.Aspects.DOCUMENT_REG_NUMBERS_CONTAINER)) {
+            log.info("updateParentDocumentRegNumbers: parent node does not have aspect, docRef=" + docRef + " parentRef=" + parentRef);
+            return;
+        }
+        @SuppressWarnings("unchecked")
+        List<String> regNumbers = (List<String>) nodeService.getProperty(parentRef, DocumentCommonModel.Props.DOCUMENT_REG_NUMBERS);
+        log.info("updateParentDocumentRegNumbers: got regNumbers=" + (regNumbers == null ? "null" : "[" + regNumbers.size() + "]") + ", docRef=" + docRef + " parentRef="
+                + parentRef);
+        if (StringUtils.isNotBlank(removedRegNumber) && regNumbers != null) {
+            regNumbers.remove(removedRegNumber); // remove only first occurence -- intended
+            log.info("updateParentDocumentRegNumbers: removed '" + removedRegNumber + "'");
+        }
+        if (StringUtils.isNotBlank(addedRegNumber)) {
+            if (regNumbers == null) {
+                regNumbers = new ArrayList<String>();
+            }
+            regNumbers.add(addedRegNumber); // add without checking for duplicates -- intended
+            log.info("updateParentDocumentRegNumbers: added '" + addedRegNumber + "'");
+        }
+        nodeService.setProperty(parentRef, DocumentCommonModel.Props.DOCUMENT_REG_NUMBERS, (Serializable) regNumbers);
+        log.info("updateParentDocumentRegNumbers: saved regNumbers=" + (regNumbers == null ? "null" : "[" + regNumbers.size() + "]") + ", docRef=" + docRef + " parentRef="
+                + parentRef);
     }
 
     @Override

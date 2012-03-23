@@ -358,7 +358,7 @@ public class HibernateTemplate extends HibernateAccessor implements HibernateOpe
 	 * @throws org.springframework.dao.DataAccessException in case of Hibernate errors
 	 */
 	public Object execute(HibernateCallback action, boolean exposeNativeSession) throws DataAccessException {
-      long startTime = System.currentTimeMillis();
+      long startTime = System.nanoTime();
       try {
 		Assert.notNull(action, "Callback object must not be null");
 
@@ -406,7 +406,7 @@ public class HibernateTemplate extends HibernateAccessor implements HibernateOpe
 			}
 		}
       } finally {
-        StatisticsPhaseListener.addTiming(StatisticsPhaseListenerLogColumn.HIBERNATE, System.currentTimeMillis() - startTime);
+        StatisticsPhaseListener.addTimingNano(StatisticsPhaseListenerLogColumn.HIBERNATE, startTime);
       }
 	}
 

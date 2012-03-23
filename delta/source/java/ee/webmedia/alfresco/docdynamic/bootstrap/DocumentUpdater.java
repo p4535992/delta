@@ -49,12 +49,28 @@ public class DocumentUpdater extends AbstractNodeUpdater {
 
     private WorkflowService workflowService;
     private boolean documentUpdater1Executed = false;
+    private boolean documentUpdater2Executed = false;
+    private final Map<NodeRef /* documentParentRef */, List<String /* regNumber */>> documentRegNumbers = new HashMap<NodeRef, List<String>>();
+
+    @Override
+    protected boolean usePreviousState() {
+        return false;
+    }
+
+    public Map<NodeRef, List<String>> getDocumentRegNumbers() {
+        return documentRegNumbers;
+    }
 
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
-        NodeRef previousComponentRef = generalService.getNodeRef("/sys:system-registry/module:modules/module:simdhs/module:components/module:documentUpdater", new StoreRef(
-                "system://system"));
+        StoreRef systemStoreRef = new StoreRef("system://system");
+        String prefix = "/sys:system-registry/module:modules/module:simdhs/module:components/module:";
+
+        NodeRef previousComponentRef = generalService.getNodeRef(prefix + "documentUpdater", new StoreRef("system://system"));
         documentUpdater1Executed = previousComponentRef != null;
+
+        previousComponentRef = generalService.getNodeRef(prefix + "documentUpdater2", systemStoreRef);
+        documentUpdater2Executed = previousComponentRef != null;
 
         // Need to go through all documents
         String query = SearchUtil.generateTypeQuery(DocumentCommonModel.Types.DOCUMENT);
@@ -78,7 +94,21 @@ public class DocumentUpdater extends AbstractNodeUpdater {
         Map<QName, Serializable> origProps = nodeService.getProperties(docRef);
         Map<QName, Serializable> updatedProps = new HashMap<QName, Serializable>();
 
-        String hasAllFinishedCompoundWorkflowsUpdaterLog = updateHasAllFinishedCompoundWorkflows(docRef, origProps, updatedProps);
+        String regNumber = (String) origProps.get(DocumentCommonModel.Props.REG_NUMBER);
+        if (StringUtils.isNotBlank(regNumber)) {
+            NodeRef parentRef = nodeService.getPrimaryParent(docRef).getParentRef();
+            List<String> regNumbers = documentRegNumbers.get(parentRef);
+            if (regNumbers == null) {
+                regNumbers = new ArrayList<String>();
+                documentRegNumbers.put(parentRef, regNumbers);
+            }
+            regNumbers.add(regNumber);
+        }
+
+        String hasAllFinishedCompoundWorkflowsUpdaterLog = "";
+        if (!documentUpdater2Executed) {
+            hasAllFinishedCompoundWorkflowsUpdaterLog = updateHasAllFinishedCompoundWorkflows(docRef, origProps, updatedProps);
+        }
 
         String structUnitPropertiesToMultivaluedUpdaterLog = "";
         if (!documentUpdater1Executed) {

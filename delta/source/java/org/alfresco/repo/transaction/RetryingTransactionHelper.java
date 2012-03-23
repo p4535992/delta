@@ -339,22 +339,22 @@ public class RetryingTransactionHelper
                     {
                         // Something caused the transaction to be marked for rollback
                         // There is no recovery or retrying with this
-                        long startTime = System.currentTimeMillis();
+                        long startTime = System.nanoTime();
                         try {
                             txn.rollback();
                         } finally {
-                            StatisticsPhaseListener.addTiming(StatisticsPhaseListenerLogColumn.TX_ROLLBACK, System.currentTimeMillis() - startTime);
+                            StatisticsPhaseListener.addTimingNano(StatisticsPhaseListenerLogColumn.TX_ROLLBACK, startTime);
                         }
                     }
                     else
                     {
                         // The transaction hasn't been flagged for failure so the commit
                         // sould still be good.
-                        long startTime = System.currentTimeMillis();
+                        long startTime = System.nanoTime();
                         try {
                             txn.commit();
                         } finally {
-                            StatisticsPhaseListener.addTiming(StatisticsPhaseListenerLogColumn.TX_COMMIT, System.currentTimeMillis() - startTime);
+                            StatisticsPhaseListener.addTimingNano(StatisticsPhaseListenerLogColumn.TX_COMMIT, startTime);
                         }
                     }
                 }
@@ -405,11 +405,11 @@ public class RetryingTransactionHelper
                         // then the status will be NO_TRANSACTION.
                         if (txnStatus != Status.STATUS_NO_TRANSACTION && txnStatus != Status.STATUS_ROLLEDBACK)
                         {
-                            long startTime = System.currentTimeMillis();
+                            long startTime = System.nanoTime();
                             try {
                                 txn.rollback();
                             } finally {
-                                StatisticsPhaseListener.addTiming(StatisticsPhaseListenerLogColumn.TX_ROLLBACK, System.currentTimeMillis() - startTime);
+                                StatisticsPhaseListener.addTimingNano(StatisticsPhaseListenerLogColumn.TX_ROLLBACK, startTime);
                             }
                         }
                     }

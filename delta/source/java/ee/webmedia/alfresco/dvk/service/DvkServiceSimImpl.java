@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.dvk.service;
 
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_NUMBER;
 import static ee.webmedia.alfresco.utils.XmlUtil.findChildByQName;
 
 import java.io.ByteArrayInputStream;
@@ -245,10 +246,18 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
             List<String> statusErrorNotificationContents = checkDvkDocumentVersionAndStatus(dvkTasks, dvkId, existingDocumentNodeRef, originalDvkIdsAndStatuses);
             try {
                 Map<QName, Task> notifications = new HashMap<QName, Task>();
+                String oldRegNumber = null;
+                if (existingDocumentNodeRef != null) {
+                    oldRegNumber = (String) nodeService.getProperty(existingDocumentNodeRef, REG_NUMBER);
+                }
                 NodeRef importedDoc = importerService.importWorkflowDocument(XmlObject.Factory.parse(docNode).newReader(), location, existingDocumentNodeRef,
                         dataFileList, dvkId, notifications);
                 if (existingDocumentNodeRef == null && importedDoc != null) {
                     documentService.updateParentNodesContainingDocsCount(importedDoc, true);
+                }
+                if (importedDoc != null) {
+                    String regNumber = (String) nodeService.getProperty(importedDoc, REG_NUMBER);
+                    documentService.updateParentDocumentRegNumbers(importedDoc, oldRegNumber, regNumber);
                 }
                 if (existingDocumentNodeRef == null && !locationWithCheck.getSecond()) {
                     // new document was imported to wrong (default) location

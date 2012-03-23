@@ -845,6 +845,8 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             try {
                 // Moving is executed with System user rights, because this is not appropriate to implement in permissions model
                 documentService.updateParentNodesContainingDocsCount(docNodeRef, false);
+                String regNumber = (String) nodeService.getProperty(docNodeRef, REG_NUMBER);
+                documentService.updateParentDocumentRegNumbers(docNodeRef, regNumber, null);
                 NodeRef newDocNodeRef = nodeService.moveNode(docNodeRef, targetParentRef //
                         , DocumentCommonModel.Assocs.DOCUMENT, DocumentCommonModel.Assocs.DOCUMENT).getChildRef();
                 // don't compare entire nodeRef, but only nodeRef ids to allow inter-store moving
@@ -854,6 +856,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 document.getNode().updateNodeRef(newDocNodeRef);
                 docNodeRef = newDocNodeRef;
                 documentService.updateParentNodesContainingDocsCount(docNodeRef, true);
+                documentService.updateParentDocumentRegNumbers(docNodeRef, null, regNumber);
 
                 if (existingParentNode != null && !targetParentRef.equals(existingParentNode.getNodeRef())) {
                     final String existingRegNr = (String) document.getProp(REG_NUMBER);

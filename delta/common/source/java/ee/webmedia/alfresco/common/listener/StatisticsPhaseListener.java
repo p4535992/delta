@@ -104,7 +104,11 @@ public class StatisticsPhaseListener implements PhaseListener {
         }
     }
 
-    public static void addTiming(StatisticsPhaseListenerLogColumn logColumn, long value) {
+    public static void addTimingNano(StatisticsPhaseListenerLogColumn logColumn, long startTimeNano) {
+        addTiming(logColumn, System.nanoTime() - startTimeNano);
+    }
+
+    private static void addTiming(StatisticsPhaseListenerLogColumn logColumn, long value) {
         if (!log.isInfoEnabled()) {
             return;
         }
@@ -140,7 +144,7 @@ public class StatisticsPhaseListener implements PhaseListener {
                     s.append(logColumn.toString());
                 }
                 s.append(",");
-                s.append(timing.getFirst()).append(",").append(timing.getSecond());
+                s.append(timing.getFirst()).append(",").append(timing.getSecond() / 1000000L);
             }
         }
         log.info(s);

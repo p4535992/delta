@@ -52,7 +52,7 @@ public class OpenOfficeServiceImpl implements OpenOfficeService {
             log.debug("Copying file from contentstore to temporary file: " + tempFromFile + "\n  " + reader);
             reader.getContent(tempFromFile);
 
-            long startTime = System.currentTimeMillis();
+            long startTime = System.nanoTime();
             try {
                 synchronized (openOfficeConnection) {
                     String tempFromFileurl = toUrl(tempFromFile);
@@ -106,7 +106,7 @@ public class OpenOfficeServiceImpl implements OpenOfficeService {
                     storable.storeToURL(tempToFileUrl, storeProps); // Second replacing run requires new URL
                 }
             } finally {
-                StatisticsPhaseListener.addTiming(StatisticsPhaseListenerLogColumn.SRV_OOO, System.currentTimeMillis() - startTime);
+                StatisticsPhaseListener.addTimingNano(StatisticsPhaseListenerLogColumn.SRV_OOO, startTime);
             }
 
             writer.putContent(tempToFile);

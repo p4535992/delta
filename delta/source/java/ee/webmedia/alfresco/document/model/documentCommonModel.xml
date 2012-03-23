@@ -227,6 +227,15 @@
          </associations>
       </aspect>
 
+      <aspect name="doccom:documentRegNumbersContainer">
+         <properties>
+            <property name="doccom:documentRegNumbers">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+         </properties>
+      </aspect>
+
       <aspect name="doccom:documentContainer">
          <associations>
             <child-association name="doccom:document">

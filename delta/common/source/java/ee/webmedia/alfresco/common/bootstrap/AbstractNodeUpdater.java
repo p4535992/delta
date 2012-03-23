@@ -38,6 +38,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.util.Assert;
 
 import com.csvreader.CsvReader;
 import com.csvreader.CsvWriter;
@@ -166,10 +167,17 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         executeUpdater();
     }
 
+    protected boolean usePreviousState() {
+        return true;
+    }
+
     protected void executeUpdater() throws Exception {
         log.info("Starting node updater");
         nodesFile = new File(inputFolder, getNodesCsvFileName());
-        nodes = loadNodesFromFile(nodesFile, false);
+        nodes = null;
+        if (usePreviousState()) {
+            nodes = loadNodesFromFile(nodesFile, false);
+        }
         if (nodes == null) {
             nodes = loadNodesFromRepo();
             if (nodes == null) {
@@ -179,7 +187,15 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
             writeNodesToFile(nodesFile, nodes);
         }
         completedNodesFile = new File(inputFolder, getCompletedNodesCsvFileName());
-        completedNodes = loadNodesFromFile(completedNodesFile, true);
+        completedNodes = null;
+        if (usePreviousState()) {
+            completedNodes = loadNodesFromFile(completedNodesFile, true);
+        } else {
+            if (completedNodesFile.exists()) {
+                log.info("Completed nodes file exists, deleting: " + completedNodesFile.getAbsolutePath());
+                Assert.isTrue(completedNodesFile.delete());
+            }
+        }
         if (completedNodes != null) {
             nodes.removeAll(completedNodes);
             log.info("Removed " + completedNodes.size() + " completed nodes from nodes list, " + nodes.size() + " nodes remained");

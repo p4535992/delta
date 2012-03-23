@@ -108,7 +108,12 @@ public class CalendarUtil {
         return days;
     }
 
+    public static long duration(long startTime) {
+        return duration(startTime, System.nanoTime());
+    }
+
     public static long duration(long startTime, long stopTime) {
         return (stopTime - startTime) / 1000000L;
     }
+
 }

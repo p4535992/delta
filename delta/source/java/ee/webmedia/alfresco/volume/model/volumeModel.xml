@@ -112,6 +112,7 @@
          </associations>
          <mandatory-aspects>
             <aspect>doccom:documentContainer</aspect>
+            <aspect>doccom:documentRegNumbersContainer</aspect>
          </mandatory-aspects>
       </type>
    </types>

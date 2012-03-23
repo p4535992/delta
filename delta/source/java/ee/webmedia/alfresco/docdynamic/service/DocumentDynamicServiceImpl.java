@@ -569,10 +569,14 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         updateSearchableChildNodeProps(docNode, null, childAssocTypeQNamesRoot.getChildren(), propDefs);
 
         { // update properties and log changes made in properties
+            String oldRegNumber = (String) nodeService.getProperty(docRef, REG_NUMBER);
             DocumentServiceImpl.PropertyChangesMonitorHelper propertyChangesMonitorHelper = new DocumentServiceImpl.PropertyChangesMonitorHelper();
             propertyChangesMonitorHelper.addIgnoredProps(docProps //
                     , REG_NUMBER, REG_DATE_TIME // registration changes
                     );
+            String newRegNumber = (String) nodeService.getProperty(docRef, REG_NUMBER);
+            documentService.updateParentDocumentRegNumbers(docRef, oldRegNumber, newRegNumber);
+
             DocumentPropertiesChangeHolder changedPropsNewValues = saveThisNodeAndChildNodes(null, docNode,
                     childAssocTypeQNamesRoot.getChildren(), null, propertyChangesMonitorHelper, propDefs);
             if (!EventsLoggingHelper.isLoggingDisabled(docNode, DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED)) {

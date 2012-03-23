@@ -52,7 +52,7 @@ public interface DocumentCommonModel {
         QName FAVORITE_CONTAINER = QName.createQName(DOCCOM_URI, "favoriteContainer");
         QName FAVORITE_DIRECTORY_ASPECT = QName.createQName(DOCCOM_URI, "favoriteDirectoryAspect");// new
         QName FORUM_PARTICIPANTS = QName.createQName(DOCCOM_URI, "forumParticipants");
-
+        QName DOCUMENT_REG_NUMBERS_CONTAINER = QName.createQName(DOCCOM_URI, "documentRegNumbersContainer");
     }
 
     interface Assocs {
@@ -72,6 +72,8 @@ public interface DocumentCommonModel {
     }
 
     interface Props {
+        QName DOCUMENT_REG_NUMBERS = QName.createQName(URI, "documentRegNumbers");
+
         QName FUNCTION = QName.createQName(URI, "function");
         QName SERIES = QName.createQName(URI, "series");
         QName VOLUME = QName.createQName(URI, "volume");

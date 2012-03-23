@@ -108,6 +108,8 @@
 		<delete file="${common.dir.lib.server}/commons-codec-1.3.jar" />
 		<!-- Newer version (1.4) of commons-io is added from common/lib folder -->
 		<delete file="${common.dir.lib.server}/commons-io-1.1.jar" />
+		<!-- Newer version (1.4) of commons-dbcp is added from common/lib folder -->
+		<delete file="${common.dir.lib.server}/commons-dbcp-1.2.2.jar" />
 		<!-- Newer version (1.6.2) of joda-time is added from common/lib folder -->
 		<delete file="${common.dir.lib.server}/joda-time-1.2.1.jar" />
 		<!-- Newer version (1.4.4) of javax.mail is added from common/lib folder -->
