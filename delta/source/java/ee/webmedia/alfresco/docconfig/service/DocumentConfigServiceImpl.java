@@ -32,6 +32,9 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.base.BaseObject;
@@ -61,6 +64,7 @@ import ee.webmedia.alfresco.docconfig.generator.SaveListener;
 import ee.webmedia.alfresco.docconfig.generator.fieldtype.DateGenerator;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean;
+import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.search.model.DocumentReportModel;
@@ -73,7 +77,7 @@ import ee.webmedia.alfresco.utils.UserUtil;
 /**
  * @author Alar Kvell
  */
-public class DocumentConfigServiceImpl implements DocumentConfigService {
+public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFactoryAware {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentConfigServiceImpl.class);
 
     private DocumentAdminService documentAdminService;
@@ -82,6 +86,8 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
     private UserContactMappingService userContactMappingService;
     private UserService userService;
     private ClassificatorService classificatorService;
+    private EInvoiceService _einvoiceService;
+    protected BeanFactory beanFactory;
 
     private final Map<FieldType, FieldGenerator> fieldGenerators = new HashMap<FieldType, FieldGenerator>();
     private final Map<String, FieldGenerator> originalFieldIdGenerators = new HashMap<String, FieldGenerator>();
@@ -253,66 +259,70 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
             }
         }
 
-        /**
-         * <show-property name="docsearch:fund" display-label-id="transaction_fund" component-generator="MultiValueEditorGenerator"
-         * showHeaders="false" styleClass="add-default" noAddLinkLabel="true" addLabelId="add_row" isAutomaticallyAddRows="true"
-         * propsGeneration="docsearch:fund¤DimensionSelectorGenerator¤dimensionName=invoiceFunds¤styleClass=expand19-200 tooltip¤converter="/>
-         */
-        {
-            // docsearch:fund
-            ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.FUND.toPrefixString(namespaceService));
-            itemConfig.setDisplayLabelId("transaction_fund");
-            itemConfig.setComponentGenerator("MultiValueEditorGenerator");
-            itemConfig.setShowHeaders(false);
-            itemConfig.setStyleClass("add-default");
-            itemConfig.setNoAddLinkLabel(true);
-            itemConfig.setAddLabelId("add_row");
-            itemConfig.setIsAutomaticallyAddRows(true);
-            itemConfig.setPropsGeneration("docsearch:fund¤DimensionSelectorGenerator¤dimensionName=invoiceFunds¤styleClass=expand19-200 tooltip¤converter=");
-            itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
-            config.getPropertySheetConfigElement().addItem(itemConfig);
-        }
+        if (getEInvoiceServiceService().isEinvoiceEnabled()) {
 
-        /**
-         * <show-property name="docsearch:fundsCenter" display-label-id="transaction_fundsCenter" component-generator="MultiValueEditorGenerator"
-         * showHeaders="false" styleClass="add-default" noAddLinkLabel="true" addLabelId="add_row" isAutomaticallyAddRows="true"
-         * propsGeneration="docsearch:fundsCenter¤DimensionSelectorGenerator¤dimensionName=invoiceFundsCenters¤styleClass=expand19-200 tooltip¤converter="/>
-         */
-        {
-            // docsearch:fundsCenter
-            ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.FUNDS_CENTER.toPrefixString(namespaceService));
-            itemConfig.setDisplayLabelId("transaction_fundsCenter");
-            itemConfig.setComponentGenerator("MultiValueEditorGenerator");
-            itemConfig.setShowHeaders(false);
-            itemConfig.setStyleClass("add-default");
-            itemConfig.setNoAddLinkLabel(true);
-            itemConfig.setAddLabelId("add_row");
-            itemConfig.setIsAutomaticallyAddRows(true);
-            itemConfig.setPropsGeneration("docsearch:fundsCenter¤DimensionSelectorGenerator¤dimensionName=invoiceFundsCenters¤styleClass=expand19-200 tooltip¤converter=");
-            itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
-            config.getPropertySheetConfigElement().addItem(itemConfig);
-        }
+            /**
+             * <show-property name="docsearch:fund" display-label-id="transaction_fund" component-generator="MultiValueEditorGenerator"
+             * showHeaders="false" styleClass="add-default" noAddLinkLabel="true" addLabelId="add_row" isAutomaticallyAddRows="true"
+             * propsGeneration="docsearch:fund¤DimensionSelectorGenerator¤dimensionName=invoiceFunds¤styleClass=expand19-200 tooltip¤converter="/>
+             */
+            {
+                // docsearch:fund
+                ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.FUND.toPrefixString(namespaceService));
+                itemConfig.setDisplayLabelId("transaction_fund");
+                itemConfig.setComponentGenerator("MultiValueEditorGenerator");
+                itemConfig.setShowHeaders(false);
+                itemConfig.setStyleClass("add-default");
+                itemConfig.setNoAddLinkLabel(true);
+                itemConfig.setAddLabelId("add_row");
+                itemConfig.setIsAutomaticallyAddRows(true);
+                itemConfig.setPropsGeneration("docsearch:fund¤DimensionSelectorGenerator¤dimensionName=invoiceFunds¤styleClass=expand19-200 tooltip¤converter=");
+                itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
+                config.getPropertySheetConfigElement().addItem(itemConfig);
+            }
 
-        /**
-         * <show-property name="docsearch:eaCommitmentItem" display-label-id="transaction_eaCommitmentItem" component-generator="MultiValueEditorGenerator"
-         * showHeaders="false" styleClass="add-default" noAddLinkLabel="true" addLabelId="add_row" filter="eaPrefixInclude" isAutomaticallyAddRows="true"
-         * propsGeneration="docsearch:eaCommitmentItem¤DimensionSelectorGenerator¤dimensionName=invoiceCommitmentItem¤styleClass=expand19-200 tooltip¤converter="/>
-         */
-        {
-            // docsearch:eaCommitmentItem
-            ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.EA_COMMITMENT_ITEM.toPrefixString(namespaceService));
-            itemConfig.setDisplayLabelId("transaction_eaCommitmentItem");
-            itemConfig.setComponentGenerator("MultiValueEditorGenerator");
-            itemConfig.setShowHeaders(false);
-            itemConfig.setStyleClass("add-default");
-            itemConfig.setNoAddLinkLabel(true);
-            itemConfig.setAddLabelId("add_row");
-            itemConfig.setFilter("eaPrefixInclude");
-            itemConfig.setIsAutomaticallyAddRows(true);
-            itemConfig.setPropsGeneration(
-                    "docsearch:eaCommitmentItem¤DimensionSelectorGenerator¤filter=eaPrefixInclude¤dimensionName=invoiceCommitmentItem¤styleClass=expand19-200 tooltip¤converter=");
-            itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
-            config.getPropertySheetConfigElement().addItem(itemConfig);
+            /**
+             * <show-property name="docsearch:fundsCenter" display-label-id="transaction_fundsCenter" component-generator="MultiValueEditorGenerator"
+             * showHeaders="false" styleClass="add-default" noAddLinkLabel="true" addLabelId="add_row" isAutomaticallyAddRows="true"
+             * propsGeneration="docsearch:fundsCenter¤DimensionSelectorGenerator¤dimensionName=invoiceFundsCenters¤styleClass=expand19-200 tooltip¤converter="/>
+             */
+            {
+                // docsearch:fundsCenter
+                ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.FUNDS_CENTER.toPrefixString(namespaceService));
+                itemConfig.setDisplayLabelId("transaction_fundsCenter");
+                itemConfig.setComponentGenerator("MultiValueEditorGenerator");
+                itemConfig.setShowHeaders(false);
+                itemConfig.setStyleClass("add-default");
+                itemConfig.setNoAddLinkLabel(true);
+                itemConfig.setAddLabelId("add_row");
+                itemConfig.setIsAutomaticallyAddRows(true);
+                itemConfig.setPropsGeneration("docsearch:fundsCenter¤DimensionSelectorGenerator¤dimensionName=invoiceFundsCenters¤styleClass=expand19-200 tooltip¤converter=");
+                itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
+                config.getPropertySheetConfigElement().addItem(itemConfig);
+            }
+
+            /**
+             * <show-property name="docsearch:eaCommitmentItem" display-label-id="transaction_eaCommitmentItem" component-generator="MultiValueEditorGenerator"
+             * showHeaders="false" styleClass="add-default" noAddLinkLabel="true" addLabelId="add_row" filter="eaPrefixInclude" isAutomaticallyAddRows="true"
+             * propsGeneration="docsearch:eaCommitmentItem¤DimensionSelectorGenerator¤dimensionName=invoiceCommitmentItem¤styleClass=expand19-200 tooltip¤converter="/>
+             */
+            {
+                // docsearch:eaCommitmentItem
+                ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.EA_COMMITMENT_ITEM.toPrefixString(namespaceService));
+                itemConfig.setDisplayLabelId("transaction_eaCommitmentItem");
+                itemConfig.setComponentGenerator("MultiValueEditorGenerator");
+                itemConfig.setShowHeaders(false);
+                itemConfig.setStyleClass("add-default");
+                itemConfig.setNoAddLinkLabel(true);
+                itemConfig.setAddLabelId("add_row");
+                itemConfig.setFilter("eaPrefixInclude");
+                itemConfig.setIsAutomaticallyAddRows(true);
+                itemConfig
+                        .setPropsGeneration(
+                        "docsearch:eaCommitmentItem¤DimensionSelectorGenerator¤filter=eaPrefixInclude¤dimensionName=invoiceCommitmentItem¤styleClass=expand19-200 tooltip¤converter=");
+                itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
+                config.getPropertySheetConfigElement().addItem(itemConfig);
+            }
         }
 
         {
@@ -1279,6 +1289,19 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
     public void setClassificatorService(ClassificatorService classificatorService) {
         this.classificatorService = classificatorService;
     }
+
+    @Override
+    public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+        this.beanFactory = beanFactory;
+    }
+
+    private EInvoiceService getEInvoiceServiceService() {
+        if (_einvoiceService == null) {
+            _einvoiceService = (EInvoiceService) beanFactory.getBean(EInvoiceService.BEAN_NAME);
+        }
+        return _einvoiceService;
+    }
+
     // END: setters
 
 }

@@ -103,7 +103,7 @@ public class DelegationHistoryGenerator extends BaseComponentGenerator {
                 , createColumn(TMP_MAIN_OWNER, context)
                 , createColumn(TMP_CO_OWNER, context)
                 , createColumn(WorkflowSpecificModel.Props.RESOLUTION, context)
-                , createColumn(WorkflowSpecificModel.Props.DUE_DATE, context, MessageUtil.getMessage("date_pattern")) //
+                , createColumn(WorkflowSpecificModel.Props.DUE_DATE, context, MessageUtil.getMessage("date_time_pattern")) //
         );
         return richList;
     }

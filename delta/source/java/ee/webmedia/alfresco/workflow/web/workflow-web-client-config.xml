@@ -139,7 +139,7 @@
    <!-- All nodes with aspect wfs:commonTask except wfs:assignmentTask and wfs:orderAssignmentTask(that shows the same information in delegation history) -->
    <config evaluator="node-type" condition="wfs:signatureTask,wfs:opinionTask,wfs:reviewTask,wfs:externalReviewTask,wfs:informationTask,wfs:confirmationTask,wfs:dueDateExtensionTask">
       <property-sheet>
-         <show-property name="wfs:dueDate" outputText="true" styleClass="date" />
+         <show-property name="{temp}dueDateTimeStr" outputText="true" styleClass="date" display-label-id="task_property_due_date" />
       </property-sheet>
    </config>
    

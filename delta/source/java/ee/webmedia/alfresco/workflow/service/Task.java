@@ -31,6 +31,7 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
     private static final long serialVersionUID = 1L;
 
     public static FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
+    public static FastDateFormat dateTimeFormat = FastDateFormat.getInstance("dd.MM.yyyy HH:mm");
 
     public static enum Action {
         NONE,
@@ -41,6 +42,7 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
     private static final QName PROP_RESOLUTION = RepoUtil.createTransientProp("resolution");
     private static final QName PROP_WORKFLOW_CATEGORY = RepoUtil.createTransientProp("category");
     private static final QName PROP_TEMP_FILES = RepoUtil.createTransientProp("files");
+    private static final QName PROP_DUE_DATE_TIME_STR = RepoUtil.createTransientProp("dueDateTimeStr");
 
     private final Workflow parent;
     private final int outcomes;
@@ -76,6 +78,7 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
 
         node.addPropertyResolver(PROP_RESOLUTION.toString(), resolutionPropertyResolver);
         node.addPropertyResolver(PROP_WORKFLOW_CATEGORY.toString(), categoryPropertyResolver);
+        node.addPropertyResolver(PROP_DUE_DATE_TIME_STR.toString(), dueDateTimeStrPropertyResolver);
     }
 
     protected Task copy(Workflow copyParent) {
@@ -413,6 +416,17 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
                 return null;
             }
             return getParent().getNode().getProperties().get(WorkflowSpecificModel.Props.CATEGORY);
+        }
+
+    };
+
+    private final NodePropertyResolver dueDateTimeStrPropertyResolver = new NodePropertyResolver() {
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public Object get(Node node) {
+            Date dueDate = (Date) node.getProperties().get(WorkflowSpecificModel.Props.DUE_DATE);
+            return dueDate != null ? dateTimeFormat.format(dueDate) : "";
         }
 
     };

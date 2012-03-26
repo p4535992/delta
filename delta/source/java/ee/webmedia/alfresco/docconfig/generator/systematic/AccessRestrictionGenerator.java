@@ -322,18 +322,18 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
         if (document.isDraftOrImapOrDvk()) {
             return;
         }
-
+    
         final Map<QName, Serializable> oldProps = nodeService.getProperties(nodeRef);
         if (getChangedAccessRestrictionFieldIds(document, oldProps).isEmpty()) {
             return;
         }
-
+    
         // If user changed the access restriction, verify that reason was also changed
         final String reason = (String) document.getProp(DocumentCommonModel.Props.ACCESS_RESTRICTION_CHANGE_REASON);
         if (StringUtils.isNotBlank(reason) && !StringUtils.equals(reason, (String) oldProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_CHANGE_REASON))) {
             return;
         }
-
+    
         validationHelper.addErrorMessage(AccessRestrictionGenerator.ACCESS_RESTRICTION_CHANGE_REASON_ERROR);
     }
 

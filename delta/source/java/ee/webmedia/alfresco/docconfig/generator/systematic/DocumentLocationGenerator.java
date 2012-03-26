@@ -274,19 +274,28 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
         @Override
         public void reset(boolean inEditMode) {
             final Node document = dialogDataProvider.getNode();
-            NodeRef functionRef = (NodeRef) document.getProperties().get(functionProp);
-            NodeRef seriesRef = (NodeRef) document.getProperties().get(seriesProp);
-            NodeRef volumeRef = (NodeRef) document.getProperties().get(volumeProp);
-            NodeRef caseRef = (NodeRef) document.getProperties().get(caseProp);
+            Map<String, Object> docProps = document.getProperties();
+            NodeRef functionRef = (NodeRef) docProps.get(functionProp);
+            NodeRef seriesRef = (NodeRef) docProps.get(seriesProp);
+            NodeRef volumeRef = (NodeRef) docProps.get(volumeProp);
+            NodeRef caseRef = (NodeRef) docProps.get(caseProp);
 
             if (inEditMode) {
-                String caseLabel = null;
+                String caseLabel = (String) docProps.get(caseLabelEditableProp);
                 if (caseRef != null) {
-                    caseLabel = getCaseLabel(getCaseService().getCaseByNoderef(caseRef));
+                    String caseLabelByCaseRef = getCaseLabel(getCaseService().getCaseByNoderef(caseRef));
+                    if (StringUtils.isNotBlank(caseLabel)) {
+                        if (!StringUtils.equals(caseLabel, caseLabelByCaseRef)) {
+                            // reset is using document snapshot data, where user has entered different case name
+                            caseRef = null;
+                        }
+                    } else {
+                        caseLabel = caseLabelByCaseRef;
+                    }
                 }
                 DocumentDynamic documentDynamic = dialogDataProvider.getDocument();
                 boolean updateAccessRestrictionProps = documentDynamic != null ? !documentDynamic.isDisableUpdateInitialAccessRestrictionProps() : false;
-                updateFnSerVol(functionRef, seriesRef, volumeRef, caseRef, caseLabel, true, updateAccessRestrictionProps);
+                updateFnSerVol(functionRef, seriesRef, volumeRef, caseRef, caseLabel, true, updateAccessRestrictionProps, true);
             } else {
                 document.getProperties().put(functionLabelProp.toString(), getDocumentListUnitLabel(functionRef));
                 document.getProperties().put(seriesLabelProp.toString(), getDocumentListUnitLabel(seriesRef));
@@ -357,14 +366,14 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
 
         public void functionValueChanged(ValueChangeEvent event) {
             NodeRef functionRef = (NodeRef) event.getNewValue();
-            updateFnSerVol(functionRef, null, null, null, null, false, true);
+            updateFnSerVol(functionRef, null, null, null, null, false, true, false);
         }
 
         public void seriesValueChanged(ValueChangeEvent event) {
             Node document = dialogDataProvider.getNode();
             NodeRef functionRef = (NodeRef) document.getProperties().get(functionProp);
             NodeRef seriesRef = (NodeRef) event.getNewValue();
-            updateFnSerVol(functionRef, seriesRef, null, null, null, false, true);
+            updateFnSerVol(functionRef, seriesRef, null, null, null, false, true, false);
         }
 
         public void volumeValueChanged(ValueChangeEvent event) {
@@ -372,11 +381,11 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             NodeRef functionRef = (NodeRef) document.getProperties().get(functionProp);
             NodeRef seriesRef = (NodeRef) document.getProperties().get(seriesProp);
             NodeRef volumeRef = (NodeRef) event.getNewValue();
-            updateFnSerVol(functionRef, seriesRef, volumeRef, null, null, false, true);
+            updateFnSerVol(functionRef, seriesRef, volumeRef, null, null, false, true, false);
         }
 
         private void updateFnSerVol(NodeRef functionRef, NodeRef seriesRef, NodeRef volumeRef, NodeRef caseRef, String caseLabel, boolean addIfMissing,
-                boolean updateAccessRestrictionProperties) {
+                boolean updateAccessRestrictionProperties, boolean useCaseLabel) {
             Node document = dialogDataProvider.getNode();
             UIPropertySheet ps = dialogDataProvider.getPropertySheet();
             boolean isSearchFilter = DocumentSearchModel.Types.FILTER.equals(document.getType());
@@ -561,12 +570,12 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                         }
                     }
                     // If list contains only one value, then select it right away
-                    if (StringUtils.isBlank(caseLabel) && casesEditable.size() == 1) {
+                    if (!useCaseLabel && StringUtils.isBlank(caseLabel) && casesEditable.size() == 1) {
                         caseLabel = StringUtils.trim(casesEditable.get(0));
                     }
                     if (cases.size() == 2) {
                         cases.remove(0);
-                        if (caseRef == null) {
+                        if (caseRef == null && !useCaseLabel) {
                             caseRef = (NodeRef) cases.get(0).getValue();
                         }
                     }
@@ -581,7 +590,9 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 caseRef = null;
             } else {
                 casesEditable = null;
-                caseLabel = null;
+                if (!useCaseLabel) {
+                    caseLabel = null;
+                }
             }
 
             if (ps != null) {

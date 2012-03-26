@@ -70,13 +70,16 @@ public class AjaxBean implements Serializable {
             out.write("FILE_DELETED");
             return;
         }
+
+        // If user cannot edit the document, then output nothing
+        if (Boolean.FALSE.equals(BeanHelper.getDocumentFileWriteDynamicAuthority().additional(docRef))) {
+            return;
+        }
+
         String lockOwner = null;
         DocLockService docLockService = BeanHelper.getDocLockService();
-        boolean generated = false;
-        if (fileRef != null) {
-            generated = BeanHelper.getFileService().isFileGenerated(fileRef);
-            lockOwner = docLockService.getLockOwnerIfLocked(generated ? docRef : fileRef);
-        }
+        boolean generated = BeanHelper.getFileService().isFileGenerated(fileRef);
+        lockOwner = docLockService.getLockOwnerIfLocked(generated ? docRef : fileRef);
 
         if (lockOwner != null) {
             out.write(BeanHelper.getUserService().getUserFullName(lockOwner));

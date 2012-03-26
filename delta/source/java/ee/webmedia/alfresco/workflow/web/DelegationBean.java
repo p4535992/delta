@@ -280,7 +280,8 @@ public class DelegationBean implements Serializable {
         } catch (WorkflowChangedException e) {
             CompoundWorkflowDialog.handleException(e, null);
         } catch (Exception e) {
-            throw e;
+            LOG.error("Compound workflow action failed!", e);
+            MessageUtil.addErrorMessage(context, null);
         }
     }
 

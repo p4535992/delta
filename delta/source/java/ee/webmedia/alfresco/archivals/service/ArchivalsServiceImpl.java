@@ -139,13 +139,13 @@ public class ArchivalsServiceImpl implements ArchivalsService {
 
     @Override
     public int destroyArchivedVolumes() {
+        DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm");
         List<NodeRef> volumesForDestruction = searchVolumesForDestruction();
         for (NodeRef volumeNodeRef : volumesForDestruction) {
-            nodeService.setProperty(volumeNodeRef, VolumeModel.Props.STATUS, DocListUnitStatus.DESTROYED.getValueName());
+            HashMap<QName, Serializable> props = new HashMap<QName, Serializable>();
+            props.put(VolumeModel.Props.STATUS, DocListUnitStatus.DESTROYED.getValueName());
             String archivingnote = (String) nodeService.getProperty(volumeNodeRef, VolumeModel.Props.ARCHIVING_NOTE);
-            DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm");
-            nodeService.setProperty(volumeNodeRef, VolumeModel.Props.ARCHIVING_NOTE,
-                    archivingnote + " Hävitatud: " + dateFormat.format(new Date()));
+            props.put(VolumeModel.Props.ARCHIVING_NOTE, archivingnote + " Hävitatud: " + dateFormat.format(new Date()));
 
             // remove all childs
             List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(volumeNodeRef);
@@ -157,7 +157,11 @@ public class ArchivalsServiceImpl implements ArchivalsService {
                 nodeService.deleteNode(nodeRef);
             }
             seriesService.updateContainingDocsCountByVolume(volumeService.getVolumeByNodeRef(volumeNodeRef).getSeriesNodeRef(), volumeNodeRef, false);
-            nodeService.setProperty(volumeNodeRef, VolumeModel.Props.CONTAINING_DOCS_COUNT, 0); // all documents are deleted
+            props.put(VolumeModel.Props.CONTAINING_DOCS_COUNT, 0);
+            if (nodeService.hasAspect(volumeNodeRef, DocumentCommonModel.Aspects.DOCUMENT_REG_NUMBERS_CONTAINER)) {
+                props.put(DocumentCommonModel.Props.DOCUMENT_REG_NUMBERS, null);
+            }
+            nodeService.addProperties(volumeNodeRef, props);
         }
 
         return volumesForDestruction.size();

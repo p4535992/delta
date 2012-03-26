@@ -400,7 +400,7 @@ public class WorkflowUtil {
 
     public static void requireStatusUnchanged(BaseWorkflowObject object) {
         if (isStatusChanged(object)) {
-            throw new RuntimeException("Changing status is not permitted outside of service:\n" + object);
+            throw new WorkflowChangedException("Changing status is not permitted outside of service:\n" + object);
         }
     }
 

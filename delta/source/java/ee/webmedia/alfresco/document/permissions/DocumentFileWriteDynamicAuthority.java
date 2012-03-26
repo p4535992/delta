@@ -65,25 +65,22 @@ public class DocumentFileWriteDynamicAuthority extends BaseDynamicAuthority {
     }
 
     public Boolean additional(NodeRef parent) {
-        if (BeanHelper.getWorkflowService().hasInprogressCompoundWorkflows(parent)) {
-            return false;
-        }
         DocumentService documentService = BeanHelper.getDocumentService();
         Node docNode = documentService.getDocument(parent);
         documentService.throwIfNotDynamicDoc(docNode);
         String docTypeId = (String) docNode.getProperties().get(Props.OBJECT_TYPE_ID);
         if (SystematicDocumentType.INCOMING_LETTER.getId().equals(docTypeId)) {
-            log.trace("Document is incoming letter, refusing authority " + getAuthority());
+            log.debug("Document is incoming letter, refusing authority " + getAuthority());
             return false;
         }
 
         if (!StringUtils.equals(DocumentStatus.WORKING.getValueName(), (String) nodeService.getProperty(parent, DocumentCommonModel.Props.DOC_STATUS))) {
             if (!getDocumentAdminService().getDocumentTypeProperty(docTypeId, DocumentAdminModel.Props.EDIT_FILES_OF_FINISHED_DOC_ENABLED, Boolean.class)) {
-                log.trace("Document status is not working, refusing authority " + getAuthority());
+                log.debug("Document status is not working, refusing authority " + getAuthority());
                 return false;
             }
         }
-        return null; // not granting, but not jet refusing either
+        return null;
     }
 
     @Override

@@ -77,8 +77,12 @@ public class VolumeDetailsDialog extends BaseDialogBean {
     // START: jsf actions/accessors
     public void showDetails(ActionEvent event) {
         NodeRef volumeNodeRef = ActionUtil.getParam(event, PARAM_VOLUME_NODEREF, NodeRef.class);
-        currentEntry = getVolumeService().getVolumeByNodeRef(volumeNodeRef);
+        reload(volumeNodeRef);
         deletedDocuments = getVolumeService().getDeletedDocuments(volumeNodeRef);
+    }
+
+    private void reload(NodeRef volumeNodeRef) {
+        currentEntry = getVolumeService().getVolumeByNodeRef(volumeNodeRef);
     }
 
     public void addNewVolume(ActionEvent event) {
@@ -105,6 +109,7 @@ public class VolumeDetailsDialog extends BaseDialogBean {
         if (!isClosed()) {
             try {
                 getVolumeService().closeVolume(currentEntry);
+                reload(currentEntry.getNode().getNodeRef());
             } catch (UnableToPerformException e) {
                 MessageUtil.addErrorMessage(e.getMessage());
                 return;
@@ -122,6 +127,7 @@ public class VolumeDetailsDialog extends BaseDialogBean {
         if (!isOpened()) {
             try {
                 getVolumeService().openVolume(currentEntry);
+                reload(currentEntry.getNode().getNodeRef());
             } catch (UnableToPerformException e) {
                 MessageUtil.addErrorMessage(e.getMessage());
                 return;
@@ -142,7 +148,7 @@ public class VolumeDetailsDialog extends BaseDialogBean {
         DateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
         NodeRef archivedVolumeNodeRef = getArchivalsService().archiveVolume(currentEntry.getNode().getNodeRef(),
                 String.format(MessageUtil.getMessage("volume_archiving_note"), df.format(new Date())));
-        currentEntry = getVolumeService().getVolumeByNodeRef(archivedVolumeNodeRef); // refresh screen with archived volume data
+        reload(archivedVolumeNodeRef);
         ((MenuBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuBean.BEAN_NAME)).updateTree();
         MessageUtil.addInfoMessage("volume_archive_success");
     }
@@ -195,7 +201,9 @@ public class VolumeDetailsDialog extends BaseDialogBean {
     }
 
     public Boolean disableCasesCreatableByUser() {
-        return !Boolean.TRUE.equals(currentEntry.getNode().getProperties().get(VolumeModel.Props.CONTAINS_CASES));
+        return !Boolean.TRUE.equals(currentEntry.getNode().getProperties().get(VolumeModel.Props.CONTAINS_CASES))
+                || DocListUnitStatus.CLOSED.equals(currentEntry.getStatus())
+                || DocListUnitStatus.DESTROYED.equals(currentEntry.getStatus());
     }
 
     // TODO Vladimir: should be with is prefix

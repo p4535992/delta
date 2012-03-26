@@ -1743,7 +1743,7 @@ function handleHtmlLoaded(context, selects) {
    /**
     * Open Office documents directly from server
     */
-   $jQ('a.webdav-open', context).click(function () {
+   $jQ('.webdav-open', context).click(function () {
       // 1) this.href = 'https://dhs.example.com/dhs/webdav/xxx/yyy/zzz/abc.doc'
       // 2) $jQ(this).attr('href') = '/dhs/webdav/xxx/yyy/zzz/abc.doc'
       var path = this.href; // SharePoint ActiveXObject methods need to get full URL
@@ -1760,7 +1760,9 @@ function handleHtmlLoaded(context, selects) {
            mode: 'queue',
            success: function (responseText) {
              $jQ(".submit-protection-layer").hide();
-             if (responseText.indexOf("DOCUMENT_DELETED") > -1) {
+             if (responseText.length == 0) { // If we get an empty response, then open read-only (other conditions prevent from editing - incoming letter, finished, some running workflow)
+                webdavOpenReadOnly(path); 
+             } else if (responseText.indexOf("DOCUMENT_DELETED") > -1) {
                 alert("Faili ei saa avada, dokument on kustutatud");
                 return false;
              } else if (responseText.indexOf("FILE_DELETED") > -1) {
@@ -1783,10 +1785,12 @@ function handleHtmlLoaded(context, selects) {
       }
       return false;
    });
+
    $jQ('a.webdav-readOnly', context).click(function () {
       webdavOpenReadOnly(this.href);
       return false;
    });
+
    jQuery(".dailyAllowanceDaysField, .dailyAllowanceRateField, .errandReportDateBase, .eventBeginDate, .eventEndDate", context).change();
    jQuery(".expectedExpenseSumField", context).keyup();
    $jQ('.triggerPropSheetValidation', context).each(function () {

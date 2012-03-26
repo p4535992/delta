@@ -16,6 +16,7 @@ import org.apache.commons.collections.comparators.TransformingComparator;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateFormatUtils;
+import org.apache.commons.lang.time.FastDateFormat;
 import org.springframework.web.util.HtmlUtils;
 
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -28,6 +29,7 @@ import ee.webmedia.alfresco.workflow.service.Task;
 public class WorkflowBlockItem implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    private static final FastDateFormat DATE_FORMAT = FastDateFormat.getInstance("dd.MM.yyyy");
     private final Task task;
     private boolean raisedRights = false;
     private boolean separator = false;
@@ -72,6 +74,10 @@ public class WorkflowBlockItem implements Serializable {
     }
 
     public String getTaskResolution() {
+        if (task.isType(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK)) {
+            Date proposedDueDate = task.getProposedDueDate();
+            return MessageUtil.getMessage("task_due_date_extension_resolution", DATE_FORMAT.format(proposedDueDate), task.getResolution());
+        }
         return task.getResolution();
     }
 
