@@ -5,7 +5,9 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelper
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentLockHelperBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPropertySheetStateBean;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGenerator.ACCESS_RESTRICTION_CHANGE_REASON_ERROR;
 import static ee.webmedia.alfresco.docdynamic.web.ChangeReasonModalComponent.ACCESS_RESTRICTION_CHANGE_REASON_MODAL_ID;
 import static ee.webmedia.alfresco.docdynamic.web.ChangeReasonModalComponent.DELETE_DOCUMENT_REASON_MODAL_ID;
@@ -76,6 +78,8 @@ import ee.webmedia.alfresco.document.web.FavoritesModalComponent;
 import ee.webmedia.alfresco.document.web.FavoritesModalComponent.AddToFavoritesEvent;
 import ee.webmedia.alfresco.document.web.evaluator.DeleteDocumentEvaluator;
 import ee.webmedia.alfresco.document.web.evaluator.RegisterDocumentEvaluator;
+import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.simdhs.servlet.ExternalAccessServlet;
@@ -489,7 +493,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
                     MessageUtil.addInfoMessage("document_info_not_registered");
                 }
                 currentSnapshot.viewModeWasOpenedInThePast = true;
-                BeanHelper.getDocumentLogService().addDocumentLog(docRef, MessageUtil.getMessage("document_log_status_opened_not_inEditMode"));
+                getLogService().addLogEntry(LogEntry.create(LogObject.DOCUMENT, getUserService(), docRef, "document_log_status_opened_not_inEditMode"));
             }
             currentSnapshot.config = BeanHelper.getDocumentConfigService().getConfig(getNode());
             if (document.isDraftOrImapOrDvk()) {

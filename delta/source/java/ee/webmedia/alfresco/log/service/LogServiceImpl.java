@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.log.service;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -18,6 +19,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.simple.ParameterizedRowMapper;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import ee.webmedia.alfresco.filter.model.FilterVO;
@@ -73,10 +75,36 @@ public class LogServiceImpl implements LogService, InitializingBean {
         }
 
         if (jdbcTemplate.queryForInt("SELECT COUNT(*) FROM delta_log_level WHERE level=?", log.getLevel()) != 0) {
-            jdbcTemplate.update("INSERT INTO delta_log (log_entry_id,level,creator_id,creator_name,computer_ip,computer_name,object_id,object_name,description) "
-                    + "VALUES (to_char(CURRENT_DATE,'YYYYMMDD') || (SELECT COUNT(*) + 1 FROM delta_log WHERE date(created_date_time) = CURRENT_DATE),?,?,?,?,?,?,?,?)",
-                    new Object[] { log.getLevel(), log.getCreatorId(), log.getCreatorName(), log.getComputerIp(), log.getComputerName(), log.getObjectId(), log.getObjectName(),
-                            log.getEventDescription() });
+
+            Map<String, Object> result = jdbcTemplate
+                    .queryForMap("SELECT delta_log_date.idprefix, to_char(CURRENT_DATE,'YYYYMMDD') AS idprefix_now, nextval('delta_log_seq') AS idsuffix, current_timestamp AS now FROM delta_log_date LIMIT 1");
+            String idPrefix = (String) result.get("idprefix");
+            String idPrefixNow = (String) result.get("idprefix_now");
+            Long idSuffix = (Long) result.get("idsuffix");
+            Timestamp now = (Timestamp) result.get("now");
+            if (!idPrefixNow.equals(idPrefix)) {
+                jdbcTemplate.update("LOCK TABLE delta_log_date");
+                Map<String, Object> result2 = jdbcTemplate.queryForMap("SELECT delta_log_date.idprefix FROM delta_log_date LIMIT 1");
+                String idPrefix2 = (String) result2.get("idprefix");
+                if (!idPrefixNow.equals(idPrefix2)) {
+                    jdbcTemplate.update("UPDATE delta_log_date SET idprefix = ?", idPrefixNow);
+                    jdbcTemplate.queryForMap("SELECT setval('delta_log_seq', 1, false)");
+
+                    Map<String, Object> result3 = jdbcTemplate
+                            .queryForMap("SELECT delta_log_date.idprefix, to_char(CURRENT_DATE,'YYYYMMDD') AS idprefix_now, nextval('delta_log_seq') AS idsuffix, current_timestamp AS now FROM delta_log_date LIMIT 1");
+                    idPrefix = (String) result3.get("idprefix");
+                    idPrefixNow = (String) result3.get("idprefix_now");
+                    idSuffix = (Long) result3.get("idsuffix");
+                    now = (Timestamp) result3.get("now");
+                    Assert.isTrue(idPrefixNow.equals(idPrefix), "idPrefixNow=" + idPrefixNow + " idPrefix=" + idPrefix);
+                }
+            }
+
+            jdbcTemplate.update(
+                    "INSERT INTO delta_log (log_entry_id,created_date_time,level,creator_id,creator_name,computer_ip,computer_name,object_id,object_name,description) "
+                            + "VALUES (?,?,?,?,?,?,?,?,?,?)",
+                    new Object[] { idPrefix + idSuffix.toString(), now, log.getLevel(), log.getCreatorId(), log.getCreatorName(), log.getComputerIp(), log.getComputerName(),
+                            log.getObjectId(), log.getObjectName(), log.getEventDescription() });
         }
     }
 

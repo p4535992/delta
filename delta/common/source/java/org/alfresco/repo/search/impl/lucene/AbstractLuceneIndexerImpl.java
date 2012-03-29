@@ -48,6 +48,9 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermDocs;
 
+import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
+import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
+
 /**
  * Common support for indexing across implementations
  * 
@@ -397,6 +400,8 @@ public abstract class AbstractLuceneIndexerImpl<T> extends AbstractLuceneBase
      */
     public void commit() throws LuceneIndexException
     {
+      long startTime = System.nanoTime();
+      try {
         switch (getStatus().getStatus())
         {
         case Status.STATUS_COMMITTING:
@@ -448,6 +453,9 @@ public abstract class AbstractLuceneIndexerImpl<T> extends AbstractLuceneBase
             }
             break;
         }
+      } finally {
+          StatisticsPhaseListener.addTimingNano(StatisticsPhaseListenerLogColumn.IDX_COMMIT, startTime);
+      }
     }
 
     /**
@@ -459,6 +467,8 @@ public abstract class AbstractLuceneIndexerImpl<T> extends AbstractLuceneBase
      */
     public int prepare() throws LuceneIndexException
     {
+      long startTime = System.nanoTime();
+      try {
         switch (getStatus().getStatus())
         {
         case Status.STATUS_COMMITTING:
@@ -498,6 +508,9 @@ public abstract class AbstractLuceneIndexerImpl<T> extends AbstractLuceneBase
                 throw new LuceneIndexException("Index failed to prepare", e);
             }
         }
+      } finally {
+          StatisticsPhaseListener.addTimingNano(StatisticsPhaseListenerLogColumn.IDX_PREPARE, startTime);
+      }
     }
 
     /**
@@ -517,6 +530,8 @@ public abstract class AbstractLuceneIndexerImpl<T> extends AbstractLuceneBase
      */
     public void rollback() throws LuceneIndexException
     {
+      long startTime = System.nanoTime();
+      try {
         switch (getStatus().getStatus())
         {
 
@@ -541,6 +556,9 @@ public abstract class AbstractLuceneIndexerImpl<T> extends AbstractLuceneBase
             }
             break;
         }
+      } finally {
+          StatisticsPhaseListener.addTimingNano(StatisticsPhaseListenerLogColumn.IDX_COMMIT, startTime);
+      }
     }
 
     /**
@@ -818,6 +836,8 @@ public abstract class AbstractLuceneIndexerImpl<T> extends AbstractLuceneBase
      */
     public void flushPending() throws LuceneIndexException
     {
+      long startTime = System.nanoTime();
+      try {
         // Make sure the in flush deletion list is clear at the start
         deletionsSinceFlush.clear();
         IndexReader mainReader = null;
@@ -907,6 +927,9 @@ public abstract class AbstractLuceneIndexerImpl<T> extends AbstractLuceneBase
 
             }
         }
+      } finally {
+          StatisticsPhaseListener.addTimingNano(StatisticsPhaseListenerLogColumn.IDX_COMMIT, startTime);
+      }
     }
 
     /**

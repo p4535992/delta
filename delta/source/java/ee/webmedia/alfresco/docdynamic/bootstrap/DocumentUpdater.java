@@ -48,8 +48,6 @@ public class DocumentUpdater extends AbstractNodeUpdater {
     // END: old permissions
 
     private WorkflowService workflowService;
-    private boolean documentUpdater1Executed = false;
-    private boolean documentUpdater2Executed = false;
     private final Map<NodeRef /* documentParentRef */, List<String /* regNumber */>> documentRegNumbers = new HashMap<NodeRef, List<String>>();
 
     @Override
@@ -63,15 +61,6 @@ public class DocumentUpdater extends AbstractNodeUpdater {
 
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
-        StoreRef systemStoreRef = new StoreRef("system://system");
-        String prefix = "/sys:system-registry/module:modules/module:simdhs/module:components/module:";
-
-        NodeRef previousComponentRef = generalService.getNodeRef(prefix + "documentUpdater", new StoreRef("system://system"));
-        documentUpdater1Executed = previousComponentRef != null;
-
-        previousComponentRef = generalService.getNodeRef(prefix + "documentUpdater2", systemStoreRef);
-        documentUpdater2Executed = previousComponentRef != null;
-
         // Need to go through all documents
         String query = SearchUtil.generateTypeQuery(DocumentCommonModel.Types.DOCUMENT);
         List<ResultSet> resultSets = new ArrayList<ResultSet>();
@@ -83,9 +72,6 @@ public class DocumentUpdater extends AbstractNodeUpdater {
 
     @Override
     protected String[] getCsvFileHeaders() {
-        if (documentUpdater1Executed) {
-            return new String[] { "docRef", "searchableHasAllFinishedCompoundWorkflows" };
-        }
         return new String[] { "docRef", "searchableHasAllFinishedCompoundWorkflows", "updatedStructUnitProps", "removed authorities by permission", "removePrivilegeMappings" };
     }
 
@@ -105,21 +91,12 @@ public class DocumentUpdater extends AbstractNodeUpdater {
             regNumbers.add(regNumber);
         }
 
-        String hasAllFinishedCompoundWorkflowsUpdaterLog = "";
-        if (!documentUpdater2Executed) {
-            hasAllFinishedCompoundWorkflowsUpdaterLog = updateHasAllFinishedCompoundWorkflows(docRef, origProps, updatedProps);
-        }
+        String hasAllFinishedCompoundWorkflowsUpdaterLog = updateHasAllFinishedCompoundWorkflows(docRef, origProps, updatedProps);
 
-        String structUnitPropertiesToMultivaluedUpdaterLog = "";
-        if (!documentUpdater1Executed) {
-            structUnitPropertiesToMultivaluedUpdaterLog = updateStructUnitPropertiesToMultivalued(origProps, updatedProps);
-        }
+        String structUnitPropertiesToMultivaluedUpdaterLog = updateStructUnitPropertiesToMultivalued(origProps, updatedProps);
 
         if (!updatedProps.isEmpty()) {
             nodeService.addProperties(docRef, updatedProps);
-        }
-        if (documentUpdater1Executed) {
-            return new String[] { hasAllFinishedCompoundWorkflowsUpdaterLog };
         }
 
         String removePermissionLog = updatePermission(docRef);

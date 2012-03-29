@@ -287,6 +287,7 @@ public class RetryingTransactionHelper
         RuntimeException lastException = null;
         for (int count = 0; count == 0 || count < maxRetries; count++)
         {
+            long iterationStartTime = System.nanoTime();
             UserTransaction txn = null;
             try
             {
@@ -446,7 +447,7 @@ public class RetryingTransactionHelper
                                 count, (double)sleepInterval/1000D,
                                 retryCause.getMessage(),
                                 retryCause.getClass().getName());
-                        logger.info(msg);
+                        logger.info(msg, e);
                     }
                     try
                     {
@@ -456,6 +457,7 @@ public class RetryingTransactionHelper
                     {
                         // Do nothing.
                     }
+                    StatisticsPhaseListener.addTimingNano(StatisticsPhaseListenerLogColumn.TX_RETRY, iterationStartTime);
                     // Try again
                     continue;
                 }

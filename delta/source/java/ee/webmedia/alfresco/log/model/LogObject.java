@@ -19,6 +19,7 @@ public enum LogObject {
     RIGHTS_VOLUME("Toimik", LogLevel.SPACES),
     RIGHTS_DOCUMENT("Dokument", LogLevel.DOCUMENT),
     NOTICE("Teavitus", LogLevel.EMAIL_NOTICES),
+    REGISTER("Register", LogLevel.SPACES),
     RESTORE("Kustutamine", LogLevel.DELETED_OBJECTS),
     TASK("Tööülesanne", LogLevel.WORKFLOW),
     SEARCH_DOC("Dokumendi otsing", LogLevel.SEARCHES),

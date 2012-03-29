@@ -76,9 +76,7 @@ import ee.sk.xmlenc.EncryptedData;
 import ee.sk.xmlenc.EncryptedKey;
 import ee.sk.xmlenc.EncryptionProperty;
 import ee.webmedia.alfresco.app.AppConstants;
-import ee.webmedia.alfresco.log.model.LogEntry;
-import ee.webmedia.alfresco.log.model.LogObject;
-import ee.webmedia.alfresco.log.service.LogService;
+import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.exception.SignatureRuntimeException;
 import ee.webmedia.alfresco.signature.model.DataItem;
@@ -89,6 +87,7 @@ import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 import ee.webmedia.alfresco.signature.model.SkLdapCertificate;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UserUtil;
 
@@ -103,7 +102,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
     private NodeService nodeService;
     private MimetypeService mimetypeService;
     private UserService userService;
-    private LogService logService;
+    private DocumentLogService documentLogService;
     private JaxWsProxyFactoryBean digiDocServiceFactory;
     private boolean test = false;
 
@@ -131,8 +130,8 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         this.mimetypeService = mimetypeService;
     }
 
-    public void setLogService(LogService logService) {
-        this.logService = logService;
+    public void setDocumentLogService(DocumentLogService documentLogService) {
+        this.documentLogService = documentLogService;
     }
 
     public void setDigiDocServiceFactory(JaxWsProxyFactoryBean digiDocServiceFactory) {
@@ -312,7 +311,6 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
             addSignature(signedDoc, signatureDigest, signatureHex);
             NodeRef newNodeRef = createContentNode(parent, filename);
             writeSignedDoc(newNodeRef, signedDoc);
-            logService.addLogEntry(LogEntry.create(LogObject.DOCUMENT, userService, newNodeRef, "applog_doc_file_generated", filename));
             return newNodeRef;
         } catch (Exception e) {
             throw new SignatureRuntimeException("Failed to add signature and write ddoc to file " + filename + ", parent = " + parent + ", contents = "
@@ -327,7 +325,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
             addSignature(signedDoc, signatureChallenge, signature);
             NodeRef newNodeRef = createContentNode(parent, filename);
             writeSignedDoc(newNodeRef, signedDoc);
-            logService.addLogEntry(LogEntry.create(LogObject.DOCUMENT, userService, newNodeRef, "applog_doc_file_generated", filename));
+            documentLogService.addDocumentLog(newNodeRef, MessageUtil.getMessage("applog_doc_file_generated", filename));
             return newNodeRef;
         } catch (Exception e) {
             throw new SignatureRuntimeException("Failed to add signature and write ddoc to file " + filename + ", parent = " + parent + ", contents = "

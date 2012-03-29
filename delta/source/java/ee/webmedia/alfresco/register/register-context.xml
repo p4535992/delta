@@ -44,6 +44,8 @@
    <bean id="registerService" class="ee.webmedia.alfresco.register.service.RegisterServiceImpl">
       <property name="generalService" ref="GeneralService" />
       <property name="nodeService" ref="NodeService" />
+      <property name="logService" ref="LogService" />
+      <property name="userService" ref="UserService" />
       <property name="dataSource" ref="dataSource" />
       <property name="valueEditable" value="${conf.register-value.editable}" />
    </bean>

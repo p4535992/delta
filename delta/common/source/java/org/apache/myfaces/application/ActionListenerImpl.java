@@ -59,7 +59,7 @@ public class ActionListenerImpl
         else
         {
             fromAction = methodBinding.getExpressionString();
-            long startTime = System.currentTimeMillis();
+            long startTime = System.nanoTime();
             try
             {
                 outcome = (String) methodBinding.invoke(facesContext, null);
@@ -83,18 +83,18 @@ public class ActionListenerImpl
             finally
             {
                 if (fromAction != null) {
-                    long duration = System.currentTimeMillis() - startTime;
+                    long duration = (System.nanoTime() - startTime) / 1000000L;
                     StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.ACTION, duration + "," + methodBinding.getExpressionString());
                 }
             }
         }
 
-        long startTime = System.currentTimeMillis();
+        long startTime = System.nanoTime();
         NavigationHandler navigationHandler = application.getNavigationHandler();
         navigationHandler.handleNavigation(facesContext,
                                            fromAction,
                                            outcome);
-        long duration = System.currentTimeMillis() - startTime;
+        long duration = (System.nanoTime() - startTime) / 1000000L;
         StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.OUTCOME, duration + "," + outcome);
 		//Render Response if needed
 		facesContext.renderResponse();

@@ -37,7 +37,7 @@ public class StatisticsPhaseListener implements PhaseListener {
         if (!log.isInfoEnabled()) {
             return;
         }
-        phaseStartTime.set(new Long(System.currentTimeMillis()));
+        phaseStartTime.set(new Long(System.nanoTime()));
     }
 
     @Override
@@ -45,7 +45,7 @@ public class StatisticsPhaseListener implements PhaseListener {
         if (!log.isInfoEnabled()) {
             return;
         }
-        long duration = System.currentTimeMillis() - phaseStartTime.get().longValue();
+        long duration = (System.nanoTime() - phaseStartTime.get().longValue()) / 1000000L;
         if (PhaseId.RESTORE_VIEW.equals(event.getPhaseId())) {
             add(StatisticsPhaseListenerLogColumn.PHASE_1RESTORE_VIEW, Long.toString(duration));
         } else if (PhaseId.APPLY_REQUEST_VALUES.equals(event.getPhaseId())) {

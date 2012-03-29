@@ -51,7 +51,7 @@
       <property name="documentConfigService" ref="DocumentConfigService" />
       <property name="dependsOn">
          <list>
-            <ref bean="documentUpdater3" />
+            <ref bean="documentUpdater4" />
          </list>
       </property>      
    </bean>
@@ -585,7 +585,7 @@
       <property name="nodeService" ref="NodeService" />
    </bean>     
 
-   <bean id="readonlyFieldsFixBootstrap" class="ee.webmedia.alfresco.docconfig.bootstrap.ReadonlyFieldsFixBootstrap" parent="abstractNodeUpdater">
+   <bean id="readonlyFieldsFixBootstrap2" class="ee.webmedia.alfresco.docconfig.bootstrap.ReadonlyFieldsFixBootstrap" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
@@ -595,12 +595,12 @@
       </property>
    </bean>     
 
-   <bean id="leaveCancelEndDateNameFixBootstrap" class="ee.webmedia.alfresco.docconfig.bootstrap.LeaveCancelEndDateNameFixBootstrap" parent="abstractNodeUpdater">
+   <bean id="leaveCancelEndDateNameFixBootstrap2" class="ee.webmedia.alfresco.docconfig.bootstrap.LeaveCancelEndDateNameFixBootstrap" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
-            <ref bean="readonlyFieldsFixBootstrap" />
+            <ref bean="readonlyFieldsFixBootstrap2" />
          </list>
       </property>
    </bean>     

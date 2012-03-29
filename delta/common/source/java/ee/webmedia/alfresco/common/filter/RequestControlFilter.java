@@ -157,15 +157,15 @@ public class RequestControlFilter implements Filter {
                 // Put this request in the queue and wait
                 enqueueRequest(httpRequest, syncObject);
                 log(logPrefix, "check 3");
-                startWaitTime = System.currentTimeMillis();
+                startWaitTime = System.nanoTime();
                 if (!waitForRelease(httpRequest, syncObject)) {
-                    stopWaitTime = System.currentTimeMillis();
-                    StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.REQUEST_CANCEL, Long.toString(stopWaitTime - startWaitTime));
+                    stopWaitTime = System.nanoTime();
+                    StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.REQUEST_CANCEL, Long.toString((stopWaitTime - startWaitTime) / 1000000L));
                     // this request was replaced in the queue by another request,
                     // so it need not be processed
                     return;
                 }
-                stopWaitTime = System.currentTimeMillis();
+                stopWaitTime = System.nanoTime();
             }
             log(logPrefix, "check 5");
             // lock the session, so that no other requests are processed until this one finishes
@@ -173,17 +173,18 @@ public class RequestControlFilter implements Filter {
         }
         // process this request, and then release the session lock regardless of
         // any exceptions thrown farther down the chain.
-        long startWorkTime = System.currentTimeMillis();
+        long startWorkTime = System.nanoTime();
         try {
             log(logPrefix, "check 6 - START WORK");
             chain.doFilter(request, response);
             log(logPrefix, "check 7 - STOP WORK");
         } finally {
-            long stopWorkTime = System.currentTimeMillis();
+            long stopWorkTime = System.nanoTime();
             log(logPrefix, "check 8");
             releaseQueuedRequest(httpRequest, syncObject);
             LogHelper.resetUserInfo();
-            StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.REQUEST_END, (stopWorkTime - startWorkTime) + "," + (stopWaitTime - startWaitTime));
+            StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.REQUEST_END,
+                    ((stopWorkTime - startWorkTime) / 1000000L) + "," + ((stopWaitTime - startWaitTime) / 1000000L));
             StatisticsPhaseListener.log();
         }
     }

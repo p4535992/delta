@@ -29,6 +29,28 @@
       <property name="dataSource" ref="dataSource" />
    </bean>
 
+   <bean id="logDateAndSequenceBootstrap" class="ee.webmedia.alfresco.log.bootstrap.LogDateAndSequenceBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="logTableBootstrapFix" />
+         </list>
+      </property>
+      <property name="dataSource" ref="dataSource" />
+   </bean>
+
+   <bean id="logSequenceInitBootstrap" class="ee.webmedia.alfresco.log.bootstrap.LogSequenceInitBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="logDateAndSequenceBootstrap" />
+         </list>
+      </property>
+      <property name="dataSource" ref="dataSource" />
+   </bean>
+
    <!-- SERVICE -->
 
    <bean id="logService" class="ee.webmedia.alfresco.log.service.LogServiceImpl">

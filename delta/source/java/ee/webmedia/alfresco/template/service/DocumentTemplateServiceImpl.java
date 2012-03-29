@@ -67,9 +67,6 @@ import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
-import ee.webmedia.alfresco.log.model.LogEntry;
-import ee.webmedia.alfresco.log.model.LogObject;
-import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.mso.service.MsoService;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.template.exception.ExistingFileFromTemplateException;
@@ -112,7 +109,6 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     private FileService fileService;
     private MimetypeService mimetypeService;
     private FileFolderService fileFolderService;
-    private DocumentLogService documentLogService;
     private OpenOfficeService openOfficeService;
     private DictionaryService dictionaryService;
     private MsoService msoService;
@@ -122,7 +118,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     private DocumentConfigService documentConfigService;
     private DocumentAdminService documentAdminService;
     private VersionsService versionsService;
-    private LogService appLogService;
+    private DocumentLogService documentLogService;
 
     private static BeanPropertyMapper<DocumentTemplate> templateBeanPropertyMapper;
     static {
@@ -298,8 +294,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             templateProps.put(FileModel.Props.DISPLAY_NAME, displayName);
             nodeService.addProperties(existingGeneratedFile, templateProps);
 
-            documentLogService.addDocumentLog(documentNodeRef, I18NUtil.getMessage("document_log_status_fileAdded", displayName));
-            appLogService.addLogEntry(LogEntry.create(LogObject.DOCUMENT, userService, existingGeneratedFile, "applog_doc_file_generated", displayName));
+            documentLogService.addDocumentLog(documentNodeRef, MessageUtil.getMessage("applog_doc_file_generated", displayName));
             log.debug("Created new node: " + existingGeneratedFile + "\nwith name: " + name + "; displayName: " + displayName);
         }
 
@@ -1013,10 +1008,6 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         this.fileFolderService = fileFolderService;
     }
 
-    public void setDocumentLogService(DocumentLogService documentLogService) {
-        this.documentLogService = documentLogService;
-    }
-
     public void setOpenOfficeService(OpenOfficeService openOfficeService) {
         this.openOfficeService = openOfficeService;
     }
@@ -1059,8 +1050,8 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         this.versionsService = versionsService;
     }
 
-    public void setAppLogService(LogService appLogService) {
-        this.appLogService = appLogService;
+    public void setDocumentLogService(DocumentLogService documentLogService) {
+        this.documentLogService = documentLogService;
     }
 
     // END: getters / setters

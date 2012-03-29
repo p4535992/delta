@@ -19,10 +19,13 @@ import org.alfresco.web.bean.repository.TransientNode;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
+import ee.webmedia.alfresco.log.PropDiffHelper;
+import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.log.model.LogObject;
+import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.register.model.Register;
 import ee.webmedia.alfresco.register.model.RegisterModel;
+import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
@@ -39,6 +42,8 @@ public class RegisterServiceImpl implements RegisterService {
 
     private GeneralService generalService;
     private NodeService nodeService;
+    private LogService logService;
+    private UserService userService;
     private SimpleJdbcTemplate jdbcTemplate;
     private final String SEQ_REGISTER_PREFIX = "register_";
     private final String SEQ_REGISTER_SUFFIX = "_seq";
@@ -144,17 +149,28 @@ public class RegisterServiceImpl implements RegisterService {
             throw new UnableToPerformException("validation_is_nonegative_int_number", counterLabel);
         }
         // Check if node is new or it is being updated
+        Map<QName, Serializable> newProps = RepoUtil.toQNameProperties(prop);
         if (!nodeService.exists(register.getNodeRef())) {
             Integer regId = getMaxRegisterId() + 1;
-            prop.put(RegisterModel.Prop.ID.toString(), regId);
+            newProps.put(RegisterModel.Prop.ID, regId);
             createSequence(regId);
             nodeService.createNode(getRoot(), RegisterModel.Assoc.REGISTER,
-                    QName.createQName(RegisterModel.URI, regId.toString()), RegisterModel.Types.REGISTER,
-                    RepoUtil.toQNameProperties(prop));
+                    QName.createQName(RegisterModel.URI, regId.toString()), RegisterModel.Types.REGISTER, newProps);
             setSequenceCurrentValue(getSequenceName(regId), counter);
+            logService.addLogEntry(LogEntry.create(LogObject.REGISTER, userService, "applog_register_add", prop.get(RegisterModel.Prop.NAME.toString())));
         } else {
-            nodeService.setProperties(register.getNodeRef(), RepoUtil.toQNameProperties(prop));
+            Map<QName, Serializable> oldProps = nodeService.getProperties(register.getNodeRef());
+            nodeService.setProperties(register.getNodeRef(), newProps);
             setSequenceCurrentValue(getSequenceName((Integer) prop.get(RegisterModel.Prop.ID)), counter);
+
+            String diff = new PropDiffHelper()
+                    .label(RegisterModel.Prop.NAME, "register_name")
+                    .label(RegisterModel.Prop.COUNTER, "register_counter")
+                    .label(RegisterModel.Prop.ACTIVE, "register_active")
+                    .label(RegisterModel.Prop.AUTO_RESET, "register_autoReset")
+                    .label(RegisterModel.Prop.COMMENT, "register_comment")
+                    .diff(oldProps, newProps);
+            logService.addLogEntry(LogEntry.create(LogObject.REGISTER, userService, "applog_register_edit", prop.get(RegisterModel.Prop.NAME.toString()), diff));
         }
     }
 
@@ -213,15 +229,13 @@ public class RegisterServiceImpl implements RegisterService {
         this.nodeService = nodeService;
     }
 
-    /**
-     * // dependency cycle: DocumentService -> RegisterService -> documentSearchService -> DocumentService
-     * 
-     * @return
-     */
-    private DocumentSearchService getDocumentSearchService() {
-        return BeanHelper.getDocumentSearchService();
+    public void setLogService(LogService logService) {
+        this.logService = logService;
     }
 
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
     // END: getters / setters
 
 }

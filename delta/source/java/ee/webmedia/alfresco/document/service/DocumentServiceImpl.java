@@ -44,6 +44,7 @@ import java.util.Set;
 import javax.faces.context.FacesContext;
 
 import org.alfresco.i18n.I18NUtil;
+import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.content.transform.ContentTransformer;
 import org.alfresco.repo.policy.PolicyComponent;
@@ -64,6 +65,7 @@ import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.CopyService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
@@ -1382,9 +1384,13 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             volumeService.saveDeletedDocument(generalService.getAncestorNodeRefWithType(nodeRef, VolumeModel.Types.VOLUME), deletedDocument);
         }
 
+        String status = (String) nodeService.getProperty(nodeRef, DocumentCommonModel.Props.DOC_STATUS);
+
         nodeService.deleteNode(nodeRef);
 
-        logService.addLogEntry(LogEntry.create(LogObject.DOCUMENT, userService, nodeRef, "document_log_status_deleted"));
+        NodeRef archivedRef = new NodeRef(StoreRef.STORE_REF_ARCHIVE_SPACESSTORE, nodeRef.getId());
+        String location = nodeService.exists(archivedRef) ? (String) nodeService.getProperty(archivedRef, ContentModel.PROP_ARCHIVED_ORIGINAL_LOCATION_STRING) : "";
+        logService.addLogEntry(LogEntry.create(LogObject.DOCUMENT, userService, nodeRef, "document_log_status_deleted", status, location));
 
         if (favDirRemoved) {
             menuService.process(BeanHelper.getMenuBean().getMenu(), false, true);
@@ -2369,7 +2375,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                         ddoc = signatureService.createContainer(document, files, uniqueFilename, task.getSignatureChallenge(), signature);
                     }
                     long step4 = System.currentTimeMillis();
-                    documentLogService.addDocumentLog(document, I18NUtil.getMessage("document_log_status_fileAdded", uniqueFilename));
+                    documentLogService.addDocumentLog(document, MessageUtil.getMessage("applog_doc_file_generated", filename));
                     long step5 = System.currentTimeMillis();
                     fileService.setAllFilesInactiveExcept(document, ddoc);
                     long step6 = System.currentTimeMillis();

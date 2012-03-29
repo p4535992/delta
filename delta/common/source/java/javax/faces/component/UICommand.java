@@ -96,7 +96,7 @@ public class UICommand
             MethodBinding actionListenerBinding = getActionListener();
             if (actionListenerBinding != null)
             {
-                long startTime = System.currentTimeMillis();
+                long startTime = System.nanoTime();
                 try
                 {
                     actionListenerBinding.invoke(context, new Object[] {event});
@@ -115,7 +115,7 @@ public class UICommand
                 }
                 finally
                 {
-                    long duration = System.currentTimeMillis() - startTime;
+                    long duration = (System.nanoTime() - startTime) / 1000000L;
                     StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.ACTION_LISTENER, duration + "," + actionListenerBinding.getExpressionString());
                 }
             }

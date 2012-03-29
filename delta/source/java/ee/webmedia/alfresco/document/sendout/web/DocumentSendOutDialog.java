@@ -251,6 +251,9 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         List<String> names = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_NAME), false);
         List<String> emails = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_EMAIL), false);
         List<String> groups = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_GROUP), false);
+        while (groups.size() < names.size()) {
+            groups.add("");
+        }
         String contractName = (String) props.get(DocumentSpecificModel.Props.SECOND_PARTY_NAME);
         String contractEmail = (String) props.get(DocumentSpecificModel.Props.SECOND_PARTY_EMAIL);
         if (StringUtils.isNotBlank(contractName) || StringUtils.isNotBlank(contractEmail)) {
@@ -315,6 +318,9 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         @SuppressWarnings("unchecked")
         List<String> groupsAdd = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_GROUP), false);
         RepoUtil.validateSameSize(namesAdd, emailsAdd, "additionalNames", "additionalEmails");
+        while (groupsAdd.size() < namesAdd.size()) {
+            groupsAdd.add("");
+        }
 
         List<Integer> removeIndexes = new ArrayList<Integer>();
         int j = 0;
