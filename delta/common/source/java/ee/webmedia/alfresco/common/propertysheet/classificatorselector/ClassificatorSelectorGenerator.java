@@ -45,6 +45,7 @@ public class ClassificatorSelectorGenerator extends GeneralSelectorGenerator {
     public static final String ATTR_CLASSIFICATOR_NAME = "classificatorName";
     public static final String ATTR_CLASSIFICATOR_PROP = "classificatorProp";
     public static final String ATTR_DESCRIPTION_AS_LABEL = "descriptionAsLabel";
+    public static final String ATTR_IGNORE_REPO_VALUE = "ignoreRepoValue";
 
     private transient ClassificatorService classificatorService;
     private transient GeneralService generalService;
@@ -77,18 +78,20 @@ public class ClassificatorSelectorGenerator extends GeneralSelectorGenerator {
         String existingValue = boundValue instanceof String ? (String) boundValue : null;
         String repoValue = null;
         if (!multiValued) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> requestMap = FacesContext.getCurrentInstance().getExternalContext().getRequestMap();
-            final Object[] nodeAndPropName = (Object[]) requestMap.get(WMUIProperty.REPO_NODE);
-            if (nodeAndPropName != null) {
-                Node requestNode = (Node) nodeAndPropName[0];
-                String propName = (String) nodeAndPropName[1];
-                QName qName = QName.createQName(propName, BeanHelper.getNamespaceService());
-                if (requestNode != null) {
-                    NodeRef nodeRef = requestNode.getNodeRef();
-                    NodeService nodeService = BeanHelper.getNodeService();
-                    if (nodeRef != null && (!(node instanceof WmNode) || ((WmNode) node).isSaved()) && nodeService.exists(nodeRef)) {
-                        repoValue = (String) nodeService.getProperty(nodeRef, qName);
+            if (!Boolean.TRUE.equals(component.getAttributes().get(ATTR_IGNORE_REPO_VALUE))) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> requestMap = FacesContext.getCurrentInstance().getExternalContext().getRequestMap();
+                final Object[] nodeAndPropName = (Object[]) requestMap.get(WMUIProperty.REPO_NODE);
+                if (nodeAndPropName != null) {
+                    Node requestNode = (Node) nodeAndPropName[0];
+                    String propName = (String) nodeAndPropName[1];
+                    QName qName = QName.createQName(propName, BeanHelper.getNamespaceService());
+                    if (requestNode != null) {
+                        NodeRef nodeRef = requestNode.getNodeRef();
+                        NodeService nodeService = BeanHelper.getNodeService();
+                        if (nodeRef != null && (!(node instanceof WmNode) || ((WmNode) node).isSaved()) && nodeService.exists(nodeRef)) {
+                            repoValue = (String) nodeService.getProperty(nodeRef, qName);
+                        }
                     }
                 }
             }

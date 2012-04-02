@@ -35,10 +35,16 @@ public interface UserService {
     String ARCHIVISTS_DISPLAY_NAME = "archivists_display_name";
 
     /**
-     * Fetches the node reference, where user preferences are kept
+     * Fetches the node reference, where user preferences are kept,
+     * create user preferences node, if not present
      * 
      * @param userName if null, defaults to AuthenticationUtil.getRunAsUser()
      * @return
+     */
+    NodeRef retrieveUsersPreferenceNodeRef(String userName);
+
+    /**
+     * Fetches the node reference, if it exists, null otherwise
      */
     NodeRef getUsersPreferenceNodeRef(String userName);
 

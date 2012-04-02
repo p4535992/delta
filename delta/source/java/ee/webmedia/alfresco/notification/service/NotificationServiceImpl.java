@@ -1195,9 +1195,12 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     private boolean isSubscribed(String userName, QName subscriptionType) {
+        if (userService.getPerson(userName) == null) {
+            return false;
+        }
         NodeRef usersPreferenceRef = userService.getUsersPreferenceNodeRef(userName);
         if (usersPreferenceRef == null) {
-            return false;
+            return true;
         }
         Serializable property = nodeService.getProperty(usersPreferenceRef, subscriptionType);
         if (property == null || (property != null && Boolean.valueOf(property.toString()))) {

@@ -58,7 +58,7 @@ public class NotificationPreferencesUpdater extends AbstractModuleComponent {
         }
         for (Node user : users) {
             String userName = (String) user.getProperties().get(ContentModel.PROP_USERNAME);
-            NodeRef usersPreferenceNodeRef = userService.getUsersPreferenceNodeRef(userName);
+            NodeRef usersPreferenceNodeRef = userService.retrieveUsersPreferenceNodeRef(userName);
             if (usersPreferenceNodeRef != null) {
                 nodeService.addProperties(usersPreferenceNodeRef, updatedProps);
             } else {

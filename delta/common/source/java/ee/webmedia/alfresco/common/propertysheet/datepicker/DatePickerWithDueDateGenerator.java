@@ -9,7 +9,6 @@ import static ee.webmedia.alfresco.common.propertysheet.classificatorselector.Mu
 import static ee.webmedia.alfresco.utils.ComponentUtil.addAttributes;
 import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +26,7 @@ import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.joda.time.LocalDate;
 
+import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorGenerator;
 import ee.webmedia.alfresco.common.propertysheet.classificatorselector.LabelAndValueSelectorRenderer;
 import ee.webmedia.alfresco.common.propertysheet.classificatorselector.MultiClassificatorSelectorGenerator;
 import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
@@ -88,7 +88,7 @@ public class DatePickerWithDueDateGenerator extends DatePickerGenerator {
     protected void setupValidDateConstraint(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem property, UIComponent component) {
         super.setupValidDateConstraint(context, propertySheet, property, getDatePickerComponent(component));
     }
-    
+
     @Override
     protected void createAndSetConverter(FacesContext context, String converterId, UIComponent component) {
         super.createAndSetConverter(context, converterId, getDatePickerComponent(component));
@@ -112,19 +112,19 @@ public class DatePickerWithDueDateGenerator extends DatePickerGenerator {
         classificatorSelectorComponentAttributes.put(CustomAttributeNames.STYLE_CLASS, "width120 task-due-date-days");
         classificatorSelectorComponentAttributes.put("displayMandatoryMark", true);
         classificatorSelectorComponentAttributes.put("styleClass", "task-due-date-days margin-left-4 width130");
+        classificatorSelectorComponentAttributes.put(ClassificatorSelectorGenerator.ATTR_IGNORE_REPO_VALUE, Boolean.TRUE);
 
         UIComponent classificatorSelector = classificatorSelectorGenerator.generateSelectComponent(context, null, false);
         classificatorSelector.setId("task-dueDateDays-" + id);
         ComponentUtil.createAndSetConverter(context, DueDateDaysConverter.CONVERTER_ID, classificatorSelector);
+        addAttributes(classificatorSelector, classificatorSelectorComponentAttributes);
 
-        List<ValueBinding> valueBindings = new ArrayList<ValueBinding>();
         if (vb != null) {
             classificatorSelector.setValueBinding("value", vb);
         }
         classificatorSelectorGenerator.setupSelectComponent(context, null, null, null, classificatorSelector, false);
         classificatorSelector.setRendererType(LabelAndValueSelectorRenderer.LABEL_AND_VALUE_SELECTOR_RENDERER_TYPE);
 
-        addAttributes(classificatorSelector, classificatorSelectorComponentAttributes);
         if (!isEditable) {
             putAttribute(classificatorSelector, "readonly", true);
         }
@@ -140,14 +140,14 @@ public class DatePickerWithDueDateGenerator extends DatePickerGenerator {
         }
         return newDueDate;
     }
-    
+
     private UIComponent getDatePickerComponent(UIComponent component) {
         if (component instanceof HtmlPanelGroup && component.getChildCount() == 2) {
             return ComponentUtil.getChildren(component).get(0);
         }
         return component;
     }
-    
+
     private UIComponent getDropdownComponent(UIComponent component) {
         if (component instanceof HtmlPanelGroup && component.getChildCount() == 2) {
             return ComponentUtil.getChildren(component).get(1);

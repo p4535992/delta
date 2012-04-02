@@ -71,7 +71,16 @@ public class UserServiceImpl implements UserService {
     private List<String> systematicGroups;
 
     @Override
+    public NodeRef retrieveUsersPreferenceNodeRef(String userName) {
+        return retrieveUserPreferencesNode(userName, true);
+    }
+
+    @Override
     public NodeRef getUsersPreferenceNodeRef(String userName) {
+        return retrieveUserPreferencesNode(userName, false);
+    }
+
+    private NodeRef retrieveUserPreferencesNode(String userName, boolean createIfMissing) {
         if (userName == null) {
             userName = AuthenticationUtil.getRunAsUser();
         }
@@ -81,7 +90,7 @@ public class UserServiceImpl implements UserService {
         if (person == null) {
             return null;
         }
-        if (nodeService.hasAspect(person, ApplicationModel.ASPECT_CONFIGURABLE) == false) {
+        if (createIfMissing && !nodeService.hasAspect(person, ApplicationModel.ASPECT_CONFIGURABLE)) {
             // create the configuration folder for this Person node
             configurableService.makeConfigurable(person);
         }
@@ -89,8 +98,12 @@ public class UserServiceImpl implements UserService {
         // target of the assoc is the configurations folder ref
         NodeRef configRef = configurableService.getConfigurationFolder(person);
         if (configRef == null) {
-            throw new IllegalStateException("Unable to find associated 'configurations' folder for node: "
-                    + person);
+            if (createIfMissing) {
+                // tried to create the folder, but failed
+                throw new IllegalStateException("Unable to find associated 'configurations' folder for node: " + person);
+            } else {
+                return null;
+            }
         }
 
         String xpath = NamespaceService.APP_MODEL_PREFIX + ":" + "preferences";
@@ -98,7 +111,7 @@ public class UserServiceImpl implements UserService {
 
         if (nodes.size() == 1) {
             prefRef = nodes.get(0);
-        } else {
+        } else if (createIfMissing) {
             // create the preferences Node for this user
             ChildAssociationRef childRef = nodeService.createNode(configRef, ContentModel.ASSOC_CONTAINS, QName.createQName(
                     NamespaceService.APP_MODEL_1_0_URI, "preferences"), ContentModel.TYPE_CMOBJECT);

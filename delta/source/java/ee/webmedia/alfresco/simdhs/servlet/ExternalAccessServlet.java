@@ -14,6 +14,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import ee.webmedia.alfresco.common.listener.ExternalAccessPhaseListener;
+import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
+import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
 
 /**
  * Servlet allowing external URL access to various global JSF views in the Web Client.
@@ -41,6 +43,8 @@ public class ExternalAccessServlet extends BaseServlet {
 
         Pair<String, String[]> outcomeAndArgs = getDocumentUriTokens(req.getContextPath().length(), uri);
         req.setAttribute(ExternalAccessPhaseListener.OUTCOME_AND_ARGS_ATTR, outcomeAndArgs);
+
+        StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.ACTION, outcomeAndArgs.getFirst());
 
         // Now handleNavigation puts this as the first item in the view stack
         getServletContext().getRequestDispatcher(FACES_SERVLET + "/jsp/dashboards/container.jsp").forward(req, res);

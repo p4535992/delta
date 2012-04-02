@@ -41,6 +41,9 @@ import org.alfresco.web.app.servlet.ajax.InvokeCommand;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
+import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
+
 /**
  * Servlet responsible for processing AJAX requests.
  * The URL to the servlet should be in the form:
@@ -127,6 +130,8 @@ public class AjaxServlet extends BaseServlet {
             } else {
                 throw new AlfrescoRuntimeException("Unrecognised command received: " + commandName);
             }
+
+            StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.ACTION, commandName + "/" + expression);
 
             // execute the command
             command.execute(facesContext, expression, request, response);

@@ -41,7 +41,7 @@ public class NotificationDialog extends BaseDialogBean {
     @Override
     public void restored() {
         final String userName = AuthenticationUtil.getRunAsUser();
-        userPrefsNode = new Node(userService.getUsersPreferenceNodeRef(userName));
+        userPrefsNode = new Node(userService.retrieveUsersPreferenceNodeRef(userName));
         notificationService.addMissingConfigurations(userPrefsNode);
         super.restored();
     }
