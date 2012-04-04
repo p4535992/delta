@@ -3009,32 +3009,46 @@ public class IndexInfo implements IndexMonitor
         {
             while (true)
             {
-                synchronized (this)
+                // schedule() is the only public synchronized method here;
+                // and all schedule() calls are made from places that have obtained readWriteLock.writeLock,
+                // so there should not happen a deadlock here
+
+                g_logger.info("Obtaining write lock for IndexInfo: " + IndexInfo.this.toString());
+                readWriteLock.writeLock().lock();
+                try
                 {
-                    if (scheduledState == ScheduledState.FAILED || scheduledState == ScheduledState.UN_SCHEDULED)
+                    g_logger.info("Obtaining monitor lock for " + getLogName() + " of IndexInfo: " + IndexInfo.this.toString());
+                    synchronized (this)
                     {
-                        g_logger.info("Current scheduledState = " + scheduledState + " - scheduling merger now");
-                        special = true;
-                        switch (scheduledState)
+                        if (scheduledState == ScheduledState.FAILED || scheduledState == ScheduledState.UN_SCHEDULED)
                         {
-                        case FAILED:
-                            scheduledState = ScheduledState.RECOVERY_SCHEDULED;
-                            run();
-                            break;
-                        case UN_SCHEDULED:
-                            scheduledState = ScheduledState.SCHEDULED;
-                            run();
-                            break;
-                        case RECOVERY_SCHEDULED:
-                        case SCHEDULED:
-                        default:
-                            // Nothing to do
-                            break;
+                            g_logger.info("Current scheduledState = " + scheduledState + " - scheduling merger now");
+                            special = true;
+                            switch (scheduledState)
+                            {
+                            case FAILED:
+                                scheduledState = ScheduledState.RECOVERY_SCHEDULED;
+                                run();
+                                break;
+                            case UN_SCHEDULED:
+                                scheduledState = ScheduledState.SCHEDULED;
+                                run();
+                                break;
+                            case RECOVERY_SCHEDULED:
+                            case SCHEDULED:
+                            default:
+                                // Nothing to do
+                                break;
+                            }
+                            return;
                         }
-                        return;
+                        g_logger.info("Current scheduledState = " + scheduledState + " - releasing locks, sleeping 1 sec and trying again");
                     }
                 }
-                g_logger.info("Current scheduledState = " + scheduledState + " - sleeping 1 sec and trying again");
+                finally
+                {
+                    readWriteLock.writeLock().unlock();
+                }
                 try
                 {
                     Thread.sleep(1000);
@@ -3826,18 +3840,13 @@ public class IndexInfo implements IndexMonitor
                         if (special)
                         {
                             special = false;
-                            StringBuilder s = new StringBuilder("Special merge - using position=0; mergeList:");
+                            g_logger.info("Special merge - using position=0; " + toString() + dumpInfoAsString());
                             int sum = 0;
-                            for (int i = 0; i < mergeList.size(); i++)
+                            for (int i = 1; i < mergeList.size(); i++)
                             {
                                 IndexEntry indexEntry = mergeList.get(i);
-                                if (i > 0)
-                                {
-                                    sum += indexEntry.getDocumentCount();
-                                }
-                                s.append("\n  ").append(indexEntry.toString());
+                                sum += indexEntry.getDocumentCount();
                             }
-                            g_logger.info(s.toString());
                             if (sum <= 10000)
                             {
                                 g_logger.info("Sum of documentCount of indexEntry[1.." + (mergeList.size() - 1) + "] is "  + sum + ", skipping special merge");
@@ -4106,11 +4115,11 @@ public class IndexInfo implements IndexMonitor
     {
         if (s_logger.isDebugEnabled())
         {
-            s_logger.debug(dumpInfoAsString());
+            s_logger.debug(toString() + dumpInfoAsString());
         }
     }
 
-    private String dumpInfoAsString()
+    public String dumpInfoAsString()
     {
             int count = 0;
             StringBuilder builder = new StringBuilder();

@@ -457,8 +457,8 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     }
 
     @Override
-    public DocumentDynamic updateDocument(DocumentDynamic documentOriginal, List<String> saveListenerBeanNames) {
-        return updateDocumentGetDocAndNodeRefs(documentOriginal, saveListenerBeanNames).getFirst();
+    public DocumentDynamic updateDocument(DocumentDynamic documentOriginal, List<String> saveListenerBeanNames, boolean relocateAssocDocs) {
+        return updateDocumentGetDocAndNodeRefs(documentOriginal, saveListenerBeanNames, relocateAssocDocs).getFirst();
     }
 
     private static final Comparator<DocumentDynamic> DOCUMENT_BY_REG_DATE_TIME_COMPARATOR;
@@ -474,25 +474,36 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     }
 
     @Override
-    public Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> updateDocumentGetDocAndNodeRefs(DocumentDynamic documentOriginal, List<String> saveListenerBeanNames) {
-        // originalDocumentNodeRef may be null, but in that case it must be the only null nodeRef among all documents saved during this operation
+    public Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> updateDocumentGetDocAndNodeRefs(DocumentDynamic documentOriginal, List<String> saveListenerBeanNames,
+            boolean relocateAssocDocs) {
         NodeRef originalDocumentNodeRef = documentOriginal.getNodeRef();
+        Set<NodeRef> associatedDocRefs = Collections.singleton(originalDocumentNodeRef);
         List<DocumentDynamic> associatedDocs = new ArrayList<DocumentDynamic>();
-        Set<NodeRef> checkedDocs = new HashSet<NodeRef>();
         associatedDocs.add(documentOriginal);
+
+        long findStartTime = System.nanoTime();
+        if (relocateAssocDocs) {
+            associatedDocRefs = getAssociatedDocRefs(documentOriginal);
+            if (associatedDocRefs.size() > 1) {
+                NodeRef originalDocumentParentRef = nodeService.getPrimaryParent(originalDocumentNodeRef).getParentRef();
+                for (NodeRef associatedDocRef : associatedDocRefs) {
+                    NodeRef associatedDocParentRef = nodeService.getPrimaryParent(associatedDocRef).getParentRef();
+                    if (!originalDocumentParentRef.equals(associatedDocParentRef)) {
+                        associatedDocs.add(getDocument(associatedDocRef));
+                    }
+                }
+            }
+        }
+        long findStopAndSaveStartTime = System.nanoTime();
+
+        DocumentDynamic originalDocumentUpdated = null;
+        List<Pair<NodeRef, NodeRef>> originalNodeRefs = new ArrayList<Pair<NodeRef, NodeRef>>();
+        Collections.sort(associatedDocs, DOCUMENT_BY_REG_DATE_TIME_COMPARATOR);
         NodeRef functionRef = documentOriginal.getFunction();
         NodeRef seriesRef = documentOriginal.getSeries();
         NodeRef volumeRef = documentOriginal.getVolume();
         NodeRef caseRef = documentOriginal.getCase();
         String caseLabel = documentOriginal.getProp(DocumentLocationGenerator.CASE_LABEL_EDITABLE);
-        long startTime = System.nanoTime();
-        getAssociatedDocRefs(documentOriginal, associatedDocs, checkedDocs);
-        if (associatedDocs.size() > 1) {
-            LOG.info("Saving original document and " + (associatedDocs.size() - 1) + " associated documents...");
-        }
-        DocumentDynamic originalDocumentUpdated = null;
-        List<Pair<NodeRef, NodeRef>> originalNodeRefs = new ArrayList<Pair<NodeRef, NodeRef>>();
-        Collections.sort(associatedDocs, DOCUMENT_BY_REG_DATE_TIME_COMPARATOR);
         for (DocumentDynamic associatedDocument : associatedDocs) {
             if (!associatedDocument.getNodeRef().getId().equals(originalDocumentNodeRef.getId())) {
                 DocumentConfig cfg = documentConfigService.getConfig(associatedDocument.getNode());
@@ -508,10 +519,10 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
                 originalDocumentUpdated = update(associatedDocument, saveListenerBeanNames);
             }
         }
-        long stopTime = System.nanoTime();
-        if (associatedDocs.size() > 1) {
-            LOG.info("Saving original document and " + (associatedDocs.size() - 1) + " associated documents took " + duration(startTime, stopTime) + " ms");
-        }
+        long saveStopTime = System.nanoTime();
+        LOG.info("Saved 1 original document and " + (associatedDocs.size() - 1) + " associated documents, skipped " + (associatedDocRefs.size() - associatedDocs.size())
+                + " associated documents; finding and loading took " + duration(findStartTime, findStopAndSaveStartTime) + " ms, saving took "
+                + duration(findStopAndSaveStartTime, saveStopTime) + " ms");
         return Pair.newInstance(originalDocumentUpdated, originalNodeRefs);
     }
 
@@ -594,17 +605,11 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         return document;
     }
 
-    // NB! It is assumed that only one unsaved document may occur in the updated hierarchy (i.e. one document with nodeRef = null)
-    // Otherwise all unsaved nodes are considered as same nodeRef and only the first one is processed
-    private void getAssociatedDocRefs(DocumentDynamic document, List<DocumentDynamic> associatedDocs, Set<NodeRef> checkedDocs) {
+    private Set<NodeRef> getAssociatedDocRefs(DocumentDynamic document) {
         NodeRef docRef = document.getNodeRef();
-        Set<DocumentDynamic> currentAssociatedDocs = new HashSet<DocumentDynamic>();
-        if (checkedDocs.contains(docRef)) {
-            return;
-        }
-        checkedDocs.add(docRef);
 
-        Collection<AssociationRef> newAssocs = new ArrayList<AssociationRef>();
+        Set<NodeRef> currentAssociatedDocs = new HashSet<NodeRef>();
+        List<AssociationRef> newAssocs = new ArrayList<AssociationRef>();
         Map<String, AssociationRef> addedAssocs = document.getNode().getAddedAssociations().get(DocumentCommonModel.Assocs.DOCUMENT_REPLY.toString());
         if (addedAssocs != null) {
             newAssocs.addAll(addedAssocs.values());
@@ -613,56 +618,58 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         if (addedAssocs != null) {
             newAssocs.addAll(addedAssocs.values());
         }
-        if (newAssocs != null) {
-            for (AssociationRef assocRef : newAssocs) {
-                NodeRef sourceRef = assocRef.getSourceRef();
-                if (!sourceRef.equals(docRef) && !containsDocument(sourceRef, associatedDocs) && isSearchable(sourceRef)) {
-                    currentAssociatedDocs.add(getDocument(sourceRef));
-                }
-                NodeRef targetRef = assocRef.getTargetRef();
-                if (!targetRef.equals(docRef) && !containsDocument(targetRef, associatedDocs) && isSearchable(targetRef)) {
-                    currentAssociatedDocs.add(getDocument(targetRef));
-                }
+        for (AssociationRef assocRef : newAssocs) {
+            NodeRef sourceRef = assocRef.getSourceRef();
+            if (!sourceRef.equals(docRef) && !currentAssociatedDocs.contains(sourceRef) && isSearchable(sourceRef)) {
+                currentAssociatedDocs.add(sourceRef);
             }
+            NodeRef targetRef = assocRef.getTargetRef();
+            if (!targetRef.equals(docRef) && !currentAssociatedDocs.contains(targetRef) && isSearchable(targetRef)) {
+                currentAssociatedDocs.add(targetRef);
+            }
+        }
+
+        Set<NodeRef> associatedDocs = new HashSet<NodeRef>();
+        associatedDocs.add(docRef);
+        getAssociatedDocRefs(docRef, associatedDocs, new HashSet<NodeRef>(), currentAssociatedDocs);
+        return associatedDocs;
+    }
+
+    private void getAssociatedDocRefs(NodeRef docRef, Set<NodeRef> associatedDocs, Set<NodeRef> checkedDocs, Set<NodeRef> currentAssociatedDocs) {
+        if (checkedDocs.contains(docRef)) {
+            return;
+        }
+        checkedDocs.add(docRef);
+
+        if (currentAssociatedDocs == null) {
+            currentAssociatedDocs = new HashSet<NodeRef>();
         }
         if (docRef != null) {
             List<AssociationRef> targetAssocs = nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY);
             targetAssocs.addAll(nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP));
             for (AssociationRef assoc : targetAssocs) {
                 NodeRef targetRef = assoc.getTargetRef();
-                if (!containsDocument(targetRef, associatedDocs) && isSearchable(targetRef)) {
-                    currentAssociatedDocs.add(getDocument(targetRef));
+                if (!associatedDocs.contains(targetRef) && isSearchable(targetRef)) {
+                    currentAssociatedDocs.add(targetRef);
                 }
             }
             List<AssociationRef> sourceAssocs = nodeService.getSourceAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY);
             sourceAssocs.addAll(nodeService.getSourceAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP));
             for (AssociationRef assoc : sourceAssocs) {
                 NodeRef sourceRef = assoc.getSourceRef();
-                if (!containsDocument(sourceRef, associatedDocs) && isSearchable(sourceRef)) {
-                    currentAssociatedDocs.add(getDocument(sourceRef));
+                if (!associatedDocs.contains(sourceRef) && isSearchable(sourceRef)) {
+                    currentAssociatedDocs.add(sourceRef);
                 }
             }
         }
         associatedDocs.addAll(currentAssociatedDocs);
-        for (DocumentDynamic associatedDoc : currentAssociatedDocs) {
-            getAssociatedDocRefs(associatedDoc, associatedDocs, checkedDocs);
+        for (NodeRef associatedDoc : currentAssociatedDocs) {
+            getAssociatedDocRefs(associatedDoc, associatedDocs, checkedDocs, null);
         }
     }
 
     private boolean isSearchable(NodeRef sourceRef) {
         return nodeService.hasAspect(sourceRef, DocumentCommonModel.Aspects.SEARCHABLE);
-    }
-
-    private boolean containsDocument(NodeRef sourceRef, List<DocumentDynamic> associatedDocs) {
-        if (associatedDocs == null) {
-            return false;
-        }
-        for (DocumentDynamic document : associatedDocs) {
-            if (document.getNodeRef().equals(sourceRef)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private void setParentFolderProps(DocumentDynamic document) {

@@ -391,11 +391,18 @@
          <h:commandButton id="runMergeNow" value="runMergeNow" type="submit" actionListener="#{TestingForDeveloperBean.runMergeNow}">
            <f:param name="storeRef" value="#{row}" />
          </h:commandButton>
+         <f:verbatim>&nbsp;</f:verbatim>
+         <h:commandButton id="printInfo" value="printInfo" type="submit" actionListener="#{TestingForDeveloperBean.printIndexInfo}">
+           <f:param name="storeRef" value="#{row}" />
+         </h:commandButton>
       </h:column>
    </h:dataTable>
 
 <f:verbatim><br/></f:verbatim>
 <h:commandButton id="runMergeNowOnAllIndexesAndPerformIndexBackup" value="runMergeNowOnAllIndexesAndPerformIndexBackup" type="submit" actionListener="#{TestingForDeveloperBean.runMergeNowOnAllIndexesAndPerformIndexBackup}" />
+
+<f:verbatim><br/><br/></f:verbatim>
+<h:inputTextarea id="indexInfo" value="#{TestingForDeveloperBean.indexInfoText}" readonly="true" styleClass="expand19-200" style="font-family: monospace;" />
 
 <f:verbatim><hr/></f:verbatim>
 

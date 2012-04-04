@@ -1514,7 +1514,7 @@ public class TestDataService implements SaveListener {
         doc.setProp(DocumentCommonModel.Props.FILE_NAMES, fileTitles);
         doc.setProp(DocumentCommonModel.Props.FILE_CONTENTS, allWriter == null ? null : allWriter.getContentData());
         doc.setProp(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE, new ArrayList<String>(0));
-        getDocumentDynamicService().updateDocument(doc, Arrays.asList("TestDataService"));
+        getDocumentDynamicService().updateDocument(doc, Arrays.asList("TestDataService"), false);
 
         // ASSOCS
         Random assocsRandom = new Random();

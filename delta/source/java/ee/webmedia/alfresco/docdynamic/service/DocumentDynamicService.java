@@ -64,7 +64,7 @@ public interface DocumentDynamicService {
      * @throws UnableToPerformException one error message if validation or save was unsuccessful.
      * @throws UnableToPerformMultiReasonException multiple error messages if validation or save was unsuccessful.
      */
-    DocumentDynamic updateDocument(DocumentDynamic document, List<String> saveListenerBeanNames);
+    DocumentDynamic updateDocument(DocumentDynamic document, List<String> saveListenerBeanNames, boolean relocateAssocDocs);
 
     boolean isDraft(NodeRef docRef);
 
@@ -91,7 +91,8 @@ public interface DocumentDynamicService {
     boolean isShowMessageIfUnregistered();
 
     /** Same as updateDocument; return list of original nodeRefs that were updated by the method */
-    Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> updateDocumentGetDocAndNodeRefs(DocumentDynamic documentOriginal, List<String> saveListenerBeanNames);
+    Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> updateDocumentGetDocAndNodeRefs(DocumentDynamic documentOriginal, List<String> saveListenerBeanNames,
+            boolean relocateAssocDocs);
 
     String getDocumentType(NodeRef documentRef);
 

@@ -344,7 +344,7 @@ public class RetryingTransactionHelper
                         try {
                             txn.rollback();
                         } finally {
-                            StatisticsPhaseListener.addTimingNano(StatisticsPhaseListenerLogColumn.TX_ROLLBACK, startTime);
+                            StatisticsPhaseListener.addTimingNano(readOnly ? StatisticsPhaseListenerLogColumn.TX_ROLLBACK_RO : StatisticsPhaseListenerLogColumn.TX_ROLLBACK_RW, startTime);
                         }
                     }
                     else
@@ -355,7 +355,7 @@ public class RetryingTransactionHelper
                         try {
                             txn.commit();
                         } finally {
-                            StatisticsPhaseListener.addTimingNano(StatisticsPhaseListenerLogColumn.TX_COMMIT, startTime);
+                            StatisticsPhaseListener.addTimingNano(readOnly ? StatisticsPhaseListenerLogColumn.TX_COMMIT_RO : StatisticsPhaseListenerLogColumn.TX_COMMIT_RW, startTime);
                         }
                     }
                 }
@@ -410,7 +410,7 @@ public class RetryingTransactionHelper
                             try {
                                 txn.rollback();
                             } finally {
-                                StatisticsPhaseListener.addTimingNano(StatisticsPhaseListenerLogColumn.TX_ROLLBACK, startTime);
+                                StatisticsPhaseListener.addTimingNano(readOnly ? StatisticsPhaseListenerLogColumn.TX_ROLLBACK_RO : StatisticsPhaseListenerLogColumn.TX_ROLLBACK_RW, startTime);
                             }
                         }
                     }

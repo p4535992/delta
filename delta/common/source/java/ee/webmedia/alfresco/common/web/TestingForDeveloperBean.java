@@ -24,6 +24,7 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.transaction.TransactionService;
+import org.apache.commons.lang.time.FastDateFormat;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.dvk.service.DvkService;
@@ -43,7 +44,10 @@ public class TestingForDeveloperBean implements Serializable {
     private transient SearchService searchService;
     private transient TransactionService transactionService;
 
+    private static final FastDateFormat dateTimeFormat = FastDateFormat.getInstance("dd.MM.yyyy HH:mm:ss.SSSZ");
+
     private String fileName;
+    private String indexInfoText;
 
     public String getFileName() {
         return fileName;
@@ -51,6 +55,10 @@ public class TestingForDeveloperBean implements Serializable {
 
     public void setFileName(String fileName) {
         this.fileName = fileName;
+    }
+
+    public String getIndexInfoText() {
+        return indexInfoText;
     }
 
     public void addNonSerializableObjectToSession(@SuppressWarnings("unused") ActionEvent event) {
@@ -157,21 +165,46 @@ public class TestingForDeveloperBean implements Serializable {
             @Override
             public Void execute() throws Throwable {
                 Indexer indexer = indexerAndSearcher.getIndexer(storeRef);
-                runMergeNow(indexer);
+                IndexInfo indexInfo = getIndexInfo(indexer);
+                runMergeNow(indexInfo);
+                printIndexInfo(indexInfo);
                 return null;
             }
         });
     }
 
-    private void runMergeNow(Indexer indexer) throws Exception {
-        Field indexInfoField = AbstractLuceneBase.class.getDeclaredField("indexInfo");
-        indexInfoField.setAccessible(true);
-        IndexInfo indexInfo = (IndexInfo) indexInfoField.get(indexer);
+    private void runMergeNow(IndexInfo indexInfo) {
         LOG.info("Scheduling special merge to run on indexInfo: " + indexInfo);
         indexInfo.runMergeNow();
 
         // XXX sõltuvalt mis selgub öise indekseerimisaktiivsuse kohta võib olla vajalik ka protsessi jooksmise ajal määrata mergerTargetOverlaysBlockingFactor väärtus suuremaks et
         // kasutajaid mitte blokeerida ja võibolla lubada Lucenel rohkem mälu kasutada et indeksite ümber kirjutamise effektiivust tõsta.
+    }
+
+    private IndexInfo getIndexInfo(Indexer indexer) throws NoSuchFieldException, IllegalAccessException {
+        Field indexInfoField = AbstractLuceneBase.class.getDeclaredField("indexInfo");
+        indexInfoField.setAccessible(true);
+        return (IndexInfo) indexInfoField.get(indexer);
+    }
+
+    public void printIndexInfo(ActionEvent event) {
+        final StoreRef storeRef = new StoreRef(ActionUtil.getParam(event, "storeRef"));
+        final LuceneIndexerAndSearcher indexerAndSearcher = BeanHelper.getSpringBean(LuceneIndexerAndSearcher.class, "admLuceneIndexerAndSearcherFactory");
+        getTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
+            @Override
+            public Void execute() throws Throwable {
+                Indexer indexer = indexerAndSearcher.getIndexer(storeRef);
+                IndexInfo indexInfo = getIndexInfo(indexer);
+                printIndexInfo(indexInfo);
+                return null;
+            }
+        });
+    }
+
+    private void printIndexInfo(IndexInfo indexInfo) {
+        String indexInfoTextWithoutDate = indexInfo.toString() + indexInfo.dumpInfoAsString();
+        indexInfoText = dateTimeFormat.format(System.currentTimeMillis()) + "\n" + indexInfoTextWithoutDate;
+        LOG.info(indexInfoTextWithoutDate);
     }
 
     protected RetryingTransactionHelper getTransactionHelper() {

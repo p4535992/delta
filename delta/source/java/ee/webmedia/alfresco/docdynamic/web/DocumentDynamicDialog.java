@@ -602,7 +602,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
                         @Override
                         public Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> execute() throws Throwable {
                             // May throw UnableToPerformException or UnableToPerformMultiReasonException
-                            return getDocumentDynamicService().updateDocumentGetDocAndNodeRefs(getDocument(), getConfig().getSaveListenerBeanNames());
+                            return getDocumentDynamicService().updateDocumentGetDocAndNodeRefs(getDocument(), getConfig().getSaveListenerBeanNames(), true);
                         }
                     }, false, true);
             savedDocument = result.getFirst();

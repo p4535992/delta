@@ -1564,7 +1564,7 @@ public class PostipoissDocumentsImporter {
 
         doc.getNode().getProperties().putAll(RepoUtil.toStringProperties(propsMap));
         doc.getNode().getProperties().put(DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED.toString(), Boolean.TRUE);
-        getDocumentDynamicService().updateDocument(doc, Arrays.asList("postipoissImporter"));
+        getDocumentDynamicService().updateDocument(doc, Arrays.asList("postipoissImporter"), false);
 
         // Add sendInfo
         if (recipient != null) {

@@ -208,7 +208,7 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
             document.setVolume(volume);
             document.setCase(null);
             document.getNode().getProperties().put(DocumentLocationGenerator.CASE_LABEL_EDITABLE.toString(), caseLabel);
-            List<Pair<NodeRef, NodeRef>> updatedRefs = getDocumentDynamicService().updateDocumentGetDocAndNodeRefs(document, cfg.getSaveListenerBeanNames()).getSecond();
+            List<Pair<NodeRef, NodeRef>> updatedRefs = getDocumentDynamicService().updateDocumentGetDocAndNodeRefs(document, cfg.getSaveListenerBeanNames(), true).getSecond();
             for (Pair<NodeRef, NodeRef> pair : updatedRefs) {
                 updatedNodeRefs.add(pair.getFirst());
                 updatedNodeRefs.add(pair.getSecond());
