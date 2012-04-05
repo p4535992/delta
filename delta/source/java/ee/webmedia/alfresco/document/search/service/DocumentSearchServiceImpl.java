@@ -525,7 +525,6 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     private String generateRecipientFinichedQuery() {
         List<String> queryParts = new ArrayList<String>();
         queryParts.add(generateStringNotEmptyQuery(DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME,
-                DocumentSpecificModel.Props.SECOND_PARTY_NAME, DocumentSpecificModel.Props.THIRD_PARTY_NAME,
                 DocumentSpecificModel.Props.PARTY_NAME /* on document node, duplicates partyName property values from all contractParty child-nodes */
         ));
         queryParts.add(generateStringExactQuery(DocumentStatus.FINISHED.getValueName(), DocumentCommonModel.Props.DOC_STATUS));
@@ -1348,8 +1347,9 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             if (value instanceof String) {
                 queryParts.add(generateStringWordsWildcardQuery((String) value, propQName));
             } else if (value instanceof List) {
-                DocumentAdminService ser = BeanHelper.getDocumentAdminService(); // including docAdminService in context.xml creates an exception because docAdminService
-                // includes DocSearchService
+                // including docAdminService in context.xml creates a circular dependency because docAdminService includes DocSearchService
+                DocumentAdminService ser = BeanHelper.getDocumentAdminService();
+                // TODO DLSeadist -- this is probably slow, because it loads fieldDefinitions every time from repo
                 FieldDefinition def = ser.getFieldDefinition(propQName.getLocalName());
                 @SuppressWarnings("unchecked")
                 List<String> list = (List<String>) value;

@@ -78,6 +78,8 @@ import ee.webmedia.alfresco.docdynamic.model.DocumentChildModel;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
+import ee.webmedia.alfresco.document.file.model.FileModel;
+import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.mso.ws.Formula;
@@ -227,6 +229,11 @@ public class PutMethod extends WebDAVMethod {
     }
 
     private void updateDocumentAndGeneratedFiles(FileInfo contentNodeInfo, NodeRef document) throws Exception, ParseException {
+        String generationType = (String) getNodeService().getProperty(contentNodeInfo.getNodeRef(), FileModel.Props.GENERATION_TYPE);
+        if (!GeneratedFileType.WORD_TEMPLATE.name().equals(generationType)) {
+            return;
+        }
+
         if (!getMsoService().isAvailable()) {
             log.debug("MsoService is not available, skipping updating document");
             return;

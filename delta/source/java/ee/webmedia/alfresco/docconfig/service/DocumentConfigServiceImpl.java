@@ -16,10 +16,14 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.alfresco.repo.dictionary.IndexTokenisationMode;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
+import org.alfresco.service.cmr.dictionary.ClassDefinition;
+import org.alfresco.service.cmr.dictionary.ConstraintDefinition;
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
+import org.alfresco.service.cmr.dictionary.ModelDefinition;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
@@ -984,6 +988,111 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         return new DynamicPropertyDefinitionImpl(field, null, null);
     }
 
+    // ConcurrentHashMap does not allow null values, so we objects from this special class
+    public static class NullDynamicPropertyDefinition implements DynamicPropertyDefinition {
+
+        @Override
+        public ModelDefinition getModel() {
+            return null;
+        }
+
+        @Override
+        public QName getName() {
+            return null;
+        }
+
+        @Override
+        public String getTitle() {
+            return null;
+        }
+
+        @Override
+        public String getDescription() {
+            return null;
+        }
+
+        @Override
+        public String getDefaultValue() {
+            return null;
+        }
+
+        @Override
+        public DataTypeDefinition getDataType() {
+            return null;
+        }
+
+        @Override
+        public ClassDefinition getContainerClass() {
+            return null;
+        }
+
+        @Override
+        public boolean isOverride() {
+            return false;
+        }
+
+        @Override
+        public boolean isMultiValued() {
+            return false;
+        }
+
+        @Override
+        public boolean isMandatory() {
+            return false;
+        }
+
+        @Override
+        public boolean isMandatoryEnforced() {
+            return false;
+        }
+
+        @Override
+        public boolean isProtected() {
+            return false;
+        }
+
+        @Override
+        public boolean isIndexed() {
+            return false;
+        }
+
+        @Override
+        public boolean isStoredInIndex() {
+            return false;
+        }
+
+        @Override
+        public IndexTokenisationMode getIndexTokenisationMode() {
+            return null;
+        }
+
+        @Override
+        public boolean isIndexedAtomically() {
+            return false;
+        }
+
+        @Override
+        public List<ConstraintDefinition> getConstraints() {
+            return null;
+        }
+
+        @Override
+        public QName[] getChildAssocTypeQNameHierarchy() {
+            return null;
+        }
+
+        @Override
+        public Boolean getMultiValuedOverride() {
+            return null;
+        }
+
+        @Override
+        public QName getDataTypeQName() {
+            return null;
+        }
+
+    }
+
     @Override
     public DynamicPropertyDefinition getPropertyDefinitionById(String fieldId) {
         if (fieldId == null) {
@@ -991,15 +1100,32 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         }
 
         DynamicPropertyDefinition propertyDefinition = propertyDefinitionForSearchCache.get(fieldId);
+        if (propertyDefinition instanceof NullDynamicPropertyDefinition) {
+            return null;
+        }
         if (propertyDefinition != null) {
             return propertyDefinition;
         }
 
         propertyDefinition = getPropDefForSearch(fieldId, false);
         if (propertyDefinition == null) {
+            if (hiddenFieldDependencies.containsKey(fieldId)) {
+                String originalFieldId = hiddenFieldDependencies.get(fieldId);
+                DynamicPropertyDefinition originalPropDef = getPropDefForSearch(originalFieldId, false);
+                if (originalPropDef == null) {
+                    LOG.warn("PropertyDefinition docdyn:" + fieldId + " not found (hidden field, whose originalFieldId is " + originalFieldId + ")");
+                    propertyDefinitionForSearchCache.put(fieldId, new NullDynamicPropertyDefinition());
+                    return null;
+                }
+                propertyDefinition = createPropertyDefinitionForHiddenField(fieldId, originalPropDef);
+                propertyDefinitionForSearchCache.put(fieldId, propertyDefinition);
+                return propertyDefinition;
+            }
+
+            LOG.warn("PropertyDefinition docdyn:" + fieldId + " not found");
+            propertyDefinitionForSearchCache.put(fieldId, new NullDynamicPropertyDefinition());
             return null;
         }
-
         propertyDefinitionForSearchCache.put(fieldId, propertyDefinition);
         return propertyDefinition;
     }

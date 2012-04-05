@@ -59,7 +59,6 @@ import org.alfresco.repo.search.impl.lucene.fts.FullTextSearchIndexer;
 import org.alfresco.repo.tenant.TenantService;
 import org.alfresco.service.cmr.dictionary.AspectDefinition;
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
-import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.dictionary.TypeDefinition;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
@@ -92,14 +91,12 @@ import org.apache.lucene.index.TermDocs;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Hits;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Searcher;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.BooleanClause.Occur;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
-import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 
 /**
  * The implementation of the lucene based indexer. Supports basic transactional behaviour if used on its own.
@@ -1683,17 +1680,8 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
 
     }
     
-    private PropertyDefinition getPropertyDefinition(QName qname) {
-        if (qname == null) {
-            return null;
-        }
-
-        PropertyDefinition property = getDictionaryService().getProperty(qname);
-        if (property == null && DocumentDynamicModel.URI.equals(qname.getNamespaceURI())) {
-            property = getDocumentConfigService().getPropertyDefinitionById(qname.getLocalName());
-        }
-
-        return property;
+    private PropertyDefinition getPropertyDefinition(QName propName) {
+        return getDocumentConfigService().getStaticOrDynamicPropertyDefinition(propName);
     }
 
     public DocumentConfigService getDocumentConfigService() {

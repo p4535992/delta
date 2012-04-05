@@ -557,7 +557,7 @@ public abstract class AbstractLuceneIndexerImpl<T> extends AbstractLuceneBase
             break;
         }
       } finally {
-          StatisticsPhaseListener.addTimingNano(StatisticsPhaseListenerLogColumn.IDX_COMMIT, startTime);
+          StatisticsPhaseListener.addTimingNano(StatisticsPhaseListenerLogColumn.IDX_ROLLBACK, startTime);
       }
     }
 
@@ -928,7 +928,7 @@ public abstract class AbstractLuceneIndexerImpl<T> extends AbstractLuceneBase
             }
         }
       } finally {
-          StatisticsPhaseListener.addTimingNano(StatisticsPhaseListenerLogColumn.IDX_COMMIT, startTime);
+          StatisticsPhaseListener.addTimingNano(StatisticsPhaseListenerLogColumn.IDX_FLUSH, startTime);
       }
     }
 
