@@ -45,8 +45,8 @@ import ee.webmedia.alfresco.docconfig.generator.BasePropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.generator.BaseSystematicFieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
+import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.utils.ComponentUtil;
@@ -329,8 +329,12 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
         }
     
         // If user changed the access restriction, verify that reason was also changed
-        final String reason = (String) document.getProp(DocumentCommonModel.Props.ACCESS_RESTRICTION_CHANGE_REASON);
-        if (StringUtils.isNotBlank(reason) && !StringUtils.equals(reason, (String) oldProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_CHANGE_REASON))) {
+        final String reason = (String) document.getProp(DocumentDynamicDialog.TEMP_ACCESS_RESTRICTION_CHANGE_REASON);
+        if (StringUtils.isNotBlank(reason)) {
+            // Reset the reason in repository so DocumentPropertyChangeHolder can pick up the change when user enters the same value
+            nodeService.removeProperty(nodeRef, ACCESS_RESTRICTION_CHANGE_REASON);
+            document.setProp(ACCESS_RESTRICTION_CHANGE_REASON, reason);
+            document.getNode().getProperties().remove(DocumentDynamicDialog.TEMP_ACCESS_RESTRICTION_CHANGE_REASON);
             return;
         }
     

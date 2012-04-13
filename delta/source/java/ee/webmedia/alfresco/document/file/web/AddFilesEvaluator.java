@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.document.file.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
 
@@ -17,7 +18,8 @@ public class AddFilesEvaluator extends BaseActionEvaluator {
 
     @Override
     public boolean evaluate(Node docNode) {
-        return docNode.hasPermission(Privileges.EDIT_DOCUMENT)
+        return docNode.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)
+                && docNode.hasPermission(Privileges.EDIT_DOCUMENT)
                 && !Boolean.TRUE.equals(docNode.getProperties().get(DocumentSpecificModel.Props.NOT_EDITABLE))
                 && !getWorkflowService().hasInprogressCompoundWorkflows(docNode.getNodeRef());
     }

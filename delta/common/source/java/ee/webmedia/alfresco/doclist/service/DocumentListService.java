@@ -33,4 +33,6 @@ public interface DocumentListService {
 
     Pair<List<NodeRef>, Long> getAllDocumentAndCaseRefs();
 
+    String getDisplayPath(NodeRef nodeRef, boolean showLeaf);
+
 }

@@ -112,6 +112,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentDynamicDialog.class);
 
     public static final String BEAN_NAME = "DocumentDynamicDialog";
+    public static final QName TEMP_ACCESS_RESTRICTION_CHANGE_REASON = RepoUtil.createTransientProp(DocumentCommonModel.Props.ACCESS_RESTRICTION_CHANGE_REASON.getLocalName());
     private static final String PARAM_NODEREF = "nodeRef";
     private String renderedModal;
     private boolean showConfirmationPopup;
@@ -738,7 +739,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     }
 
     public void setAccessRestrictionChangeReason(ActionEvent event) {
-        getDocument().setProp(DocumentCommonModel.Props.ACCESS_RESTRICTION_CHANGE_REASON, ((ChangeReasonEvent) event).getReason());
+        getDocument().setProp(TEMP_ACCESS_RESTRICTION_CHANGE_REASON, ((ChangeReasonEvent) event).getReason());
         finish();
     }
 

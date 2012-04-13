@@ -185,6 +185,9 @@
             <property name="sys:archivedObjectName">
                <type>d:text</type>               
             </property>
+            <property name="sys:archivedByName">
+               <type>d:text</type>
+            </property>
          </properties>
       </aspect>
       <aspect name="sys:archived-assocs">

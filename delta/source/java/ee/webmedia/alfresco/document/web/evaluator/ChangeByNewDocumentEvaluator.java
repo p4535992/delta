@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.document.web.evaluator;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
 
@@ -18,7 +19,8 @@ public class ChangeByNewDocumentEvaluator extends BaseActionEvaluator {
 
     @Override
     public boolean evaluate(Node node) {
-        return new ViewStateActionEvaluator().evaluate(node) && new IsAdminOrDocManagerEvaluator().evaluate(node) && isChangeByNewDocumentEnabled(node);
+        return node.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)
+                && new ViewStateActionEvaluator().evaluate(node) && new IsAdminOrDocManagerEvaluator().evaluate(node) && isChangeByNewDocumentEnabled(node);
     }
 
     private boolean isChangeByNewDocumentEnabled(Node node) {

@@ -6,6 +6,7 @@ import javax.faces.context.FacesContext;
 
 import org.alfresco.model.ForumModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
@@ -22,6 +23,9 @@ public class CreateForumNodeEvaluator extends BaseActionEvaluator {
 
     @Override
     public boolean evaluate(Node node) {
+        if (!node.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)) {
+            return false;
+        }
         UserService userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(UserService.BEAN_NAME);
         WorkflowBlockBean workflowBlock = (WorkflowBlockBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), WorkflowBlockBean.BEAN_NAME);
         String userName = AuthenticationUtil.getRunAsUser();

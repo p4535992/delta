@@ -46,12 +46,12 @@
          <f:facet name="header">
             <h:outputText id="col4-sort" value="#{msg.workflow}" styleClass="header" />
          </f:facet>
-         <h:panelGroup rendered="#{r.raisedRights}">
+         <h:panelGroup rendered="#{WorkflowBlockBean.inWorkspace and r.raisedRights}">
             <a:actionLink  value="#{r.workflowType}" action="dialog:compoundWorkflowDialog" actionListener="#{CompoundWorkflowDialog.setupWorkflow}" styleClass="workflow-conf">
                <f:param name="nodeRef" value="#{r.compoundWorkflowNodeRef}" />
             </a:actionLink>
          </h:panelGroup>
-         <h:outputText rendered="#{!r.raisedRights}" id="col4-text" value="#{r.workflowType}" />
+         <h:outputText rendered="#{!WorkflowBlockBean.inWorkspace or !r.raisedRights}" id="col4-text" value="#{r.workflowType}" />
       </a:column>
       
       <%-- taskOwnerName --%>

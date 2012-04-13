@@ -28,10 +28,12 @@ import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyExactQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyWildcardQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsOr;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateStringExactQuery;
 
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -72,7 +74,7 @@ import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.Utils.URLMode;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIModeList;
-import org.apache.axis.utils.StringUtils;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
@@ -116,6 +118,11 @@ public class TrashcanDialog extends BaseDialogBean implements IContextListener
    private final static String DATE_ATTR = Repository.escapeQName(ContentModel.PROP_ARCHIVED_DATE);
    
    private final static String SEARCH_USERPREFIX  = "@" + USER_ATTR + ":%s";
+   
+   @Override
+   public void restored(){
+       refresh();
+   }
    
    public void setProperty(TrashcanDialogProperty property)
    {
@@ -236,9 +243,6 @@ public class TrashcanDialog extends BaseDialogBean implements IContextListener
                   QName type = getNodeService().getType(nodeRef);
                   
                   MapNode node = new MapNode(nodeRef, getNodeService(), false);
-                  if (!isDisplayableNode(node)) {
-                      continue;
-                  }
                   node.addPropertyResolver("locationPath", resolverLocationPath);
                   node.addPropertyResolver("displayPath", resolverDisplayPath);
                   node.addPropertyResolver("deletedDate", resolverDeletedDate);
@@ -282,17 +286,6 @@ public class TrashcanDialog extends BaseDialogBean implements IContextListener
       property.setListedItems((itemNodes != null ? itemNodes : Collections.<Node> emptyList()));
       
       return property.getListedItems();
-   }
-   
-   private boolean isDisplayableNode (Node node){
-       //TODO: ehk peaks selle juba kustutamise hetkel otsustama?
-       ChildAssociationRef childRef = (ChildAssociationRef)node.getProperties().get(ContentModel.PROP_ARCHIVED_ORIGINAL_PARENT_ASSOC);       
-       Path.Element element = getNodeService().getPath(childRef.getParentRef()).last();       
-       ChildAssociationRef elementRef = ((Path.ChildAssocElement) element).getRef();       
-       if (elementRef != null && DocumentCommonModel.Types.DRAFTS.equals(elementRef.getQName())) {
-           return false;
-       }
-       return true;
    }
    
    private NodePropertyResolver resolverObjectName = new NodePropertyResolver() {
@@ -454,7 +447,8 @@ public class TrashcanDialog extends BaseDialogBean implements IContextListener
       
       public Object get(Node node)
       {
-          return node.getProperties().get(ContentModel.PROP_ARCHIVED_ORIGINAL_OWNER_NAME);
+          return node.getProperties().get(ContentModel.PROP_ARCHIVED_BY_NAME) + 
+                 " (" + node.getProperties().get(ContentModel.PROP_ARCHIVED_BY) + ")";
       }
    };
    
@@ -610,8 +604,7 @@ public class TrashcanDialog extends BaseDialogBean implements IContextListener
    {
       UIModeList filterComponent = (UIModeList)event.getComponent();
       property.setDateFilter(filterComponent.getValue().toString());
-      contextUpdated();
-      property.setShowItems(true);
+      refresh();
    }
    
    /**
@@ -621,29 +614,25 @@ public class TrashcanDialog extends BaseDialogBean implements IContextListener
    {
       UIModeList filterComponent = (UIModeList)event.getComponent();
       property.setUserFilter(filterComponent.getValue().toString());
-      contextUpdated();
-      property.setShowItems(true);
+      refresh();
    }
    
    public void userFilterClear(ActionEvent event) {
        property.setUserFilter(TrashcanDialog.FILTER_TYPE_ALL);
        property.setUserSearchText("");
-       contextUpdated();
-       property.setShowItems(true);
+       refresh();
    }
    
    public void docTypeFilterChanged(ActionEvent event) {
        UIModeList filterComponent = (UIModeList) event.getComponent();
        property.setDocTypeFilter(filterComponent.getValue().toString());
-       contextUpdated();
-       property.setShowItems(true);
+       refresh();
    }
 
    public void docTypeFilterClear(ActionEvent event) {
        property.setDocTypeFilter(TrashcanDialog.FILTER_TYPE_ALL);
        property.setDocTypeSearchText("");
-       contextUpdated();
-       property.setShowItems(true);
+       refresh();
    }
    
    // ------------------------------------------------------------------------------
@@ -666,50 +655,36 @@ public class TrashcanDialog extends BaseDialogBean implements IContextListener
     */
    private String buildSearchQuery(TrashcanDialogProperty filter) {
        List<String> queryParts = new ArrayList<String>(50);
-       List<String> propertyQueryParts = new ArrayList<String>(50);
-       List<String> archiveQueryParts = new ArrayList<String>(50);
-
+       
        String searchText = filter.getSearchText();
        if (searchText != null && !StringUtils.isEmpty(searchText)) {
-           propertyQueryParts.add(generatePropertyWildcardQuery(DocumentCommonModel.Props.DOC_NAME, searchText, true, true, true));
-           propertyQueryParts.add(generatePropertyWildcardQuery(DocumentCommonModel.Props.SHORT_REG_NUMBER, searchText, true, true, true));
-           propertyQueryParts.add(generatePropertyWildcardQuery(DocumentAdminModel.Props.OBJECT_TYPE_ID, searchText, true, true, true));
-           propertyQueryParts.add(generatePropertyWildcardQuery(DocumentCommonModel.Props.SHORT_REG_NUMBER, searchText, true, true, true));          
-           archiveQueryParts.add(
-                   joinQueryPartsAnd(
-                           (FILTER_DOCU_TYPE.equals(property.getDocTypeFilter()) ? generatePropertyExactQuery(DocumentAdminModel.Props.OBJECT_TYPE_ID,
-                                   property.getDocTypeSearchText(), true) : ""),
-                           joinQueryPartsOr(
-                                   BeanHelper.getDocumentSearchService().generateDeletedSearchQuery(searchText, null))
-                           )
-                   );                   
-           archiveQueryParts.add(generatePropertyWildcardQuery(ContentModel.PROP_NAME, searchText, true, true, true));
-       } else {           
-           if (FILTER_DOCU_TYPE.equals(property.getDocTypeFilter())) {
-               archiveQueryParts.add(generatePropertyExactQuery(DocumentAdminModel.Props.OBJECT_TYPE_ID, property.getDocTypeSearchText(), true));
-           }           
+           queryParts.add(
+                   joinQueryPartsOr(
+                                  BeanHelper.getDocumentSearchService().generateDeletedSearchQuery(searchText, null),
+                                  generatePropertyWildcardQuery(ContentModel.PROP_NAME, searchText, true, false, true)
+                        )
+                   );
+       }
+       if (FILTER_DOCU_TYPE.equals(property.getDocTypeFilter())) {
+           queryParts.add(generatePropertyExactQuery(DocumentAdminModel.Props.OBJECT_TYPE_ID, property.getDocTypeSearchText(), true));
        }
        if (FILTER_DATE_ALL.equals(property.getDateFilter()) == false) {
            Date toDate = new Date();
-           Date fromDate = null;
-           if (FILTER_DATE_TODAY.equals(property.getDateFilter())) {
-               fromDate = new Date(toDate.getYear(), toDate.getMonth(), toDate.getDate(), 0, 0, 0);
-           } else if (FILTER_DATE_WEEK.equals(property.getDateFilter())) {
-               fromDate = new Date(toDate.getTime() - (1000L * 60L * 60L * 24L * 7L));
+           Date fromDate = new Date(toDate.getYear(), toDate.getMonth(), toDate.getDate(), 0, 0, 0);           
+           if (FILTER_DATE_WEEK.equals(property.getDateFilter())) {
+               fromDate = new Date(fromDate.getTime() - (1000L * 60L * 60L * 24L * 7L));               
            } else if (FILTER_DATE_MONTH.equals(property.getDateFilter())) {
-               fromDate = new Date(toDate.getTime() - (1000L * 60L * 60L * 24L * 30L));
+               fromDate = new Date(fromDate.getTime() - (1000L * 60L * 60L * 24L * 30L));
            }
-           if (fromDate != null) {
-               SimpleDateFormat df = CachingDateFormat.getDateFormat();
-               String strFromDate = LuceneQueryParser.escape(df.format(fromDate));
-               String strToDate = LuceneQueryParser.escape(df.format(toDate));
-               StringBuilder buf = new StringBuilder(128);
-               buf.append("@").append(DATE_ATTR)
-                       .append(":").append("[").append(strFromDate)
-                       .append(" TO ").append(strToDate).append("]");
+           SimpleDateFormat df = CachingDateFormat.getDateFormat();
+           String strFromDate = LuceneQueryParser.escape(df.format(fromDate));
+           String strToDate = LuceneQueryParser.escape(df.format(toDate));
+           StringBuilder buf = new StringBuilder(128);
+           buf.append("@").append(DATE_ATTR)
+                   .append(":").append("[").append(strFromDate)
+                   .append(" TO ").append(strToDate).append("]");
 
-               queryParts.add(buf.toString());
-           }
+           queryParts.add(buf.toString());
        }
 
        // append user search clause
@@ -722,15 +697,11 @@ public class TrashcanDialog extends BaseDialogBean implements IContextListener
            username = property.getUserSearchText();
        }
        if (username != null && username.length() != 0) {
-           queryParts.add(String.format(SEARCH_USERPREFIX, username));
+           generateStringExactQuery(username, ContentModel.PROP_ARCHIVED_BY);
        }
 
        queryParts.add("ASPECT:\"" + ContentModel.ASPECT_ARCHIVED + "\"");
-       if (archiveQueryParts.size() > 0) {
-           queryParts.add(joinQueryPartsOr(archiveQueryParts));
-       }
-
-       // Üldine and ( file or document)
+       
        return joinQueryPartsAnd(queryParts);
    }
    
@@ -877,6 +848,10 @@ public class TrashcanDialog extends BaseDialogBean implements IContextListener
       return Application.getCurrentUser(FacesContext.getCurrentInstance()).isAdmin();
    }
    
+   private void refresh(){
+       contextUpdated();
+       property.setShowItems(true);
+   }   
    
    // ------------------------------------------------------------------------------
    // IContextListener implementation

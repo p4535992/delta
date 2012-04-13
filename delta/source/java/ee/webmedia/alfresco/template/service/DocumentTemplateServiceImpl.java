@@ -273,6 +273,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         }
 
         if (existingGeneratedFile == null) { // Create the container for template content
+            // XXX Alar: target file mimeType comes from MSO service, so it would be better to set file extension based on that mimeType
             String extension = mimetypeService.getExtension(MimetypeMap.MIMETYPE_WORD);
             if (StringUtils.endsWithIgnoreCase(templateFilename, ".dotx")) {
                 extension += "x"; // Well, ain't this nice! :) (Filename must end with docx if 2003/2007 template is used)
@@ -308,6 +309,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     }
 
     private void replaceFormulas(NodeRef document, NodeRef sourceFile, NodeRef destinationFile, String sourceFileName, boolean finalize) {
+        // Basically the same check is performed in MsoService#isFormulasReplaceable, but with MIME types
         if (!StringUtils.endsWithIgnoreCase(sourceFileName, ".doc") && !StringUtils.endsWithIgnoreCase(sourceFileName, ".docx")
                 && !StringUtils.endsWithIgnoreCase(sourceFileName, ".dot") && !StringUtils.endsWithIgnoreCase(sourceFileName, ".dotx")) {
             throw new UnableToPerformException(MessageSeverity.ERROR, "template_replace_formulas_invalid_file_extension");

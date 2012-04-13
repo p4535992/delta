@@ -1,5 +1,7 @@
 package ee.webmedia.mso;
 
+import static java.util.Arrays.deepToString;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -111,7 +113,16 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
     public static final String MIMETYPE_PDF = "application/pdf";
     public static final String MIMETYPE_TEXT = "text/plain";
     public static final String MIMETYPE_HTML = "text/html";
-    public static final String MIMETYPE_DOC_DOT = "application/msword";
+    public static final String MIMETYPE_DOC = "application/msword";
+    public static final String MIMETYPE_RTF = "application/rtf";
+    public static final String MIMETYPE_DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    public static final String MIMETYPE_DOT = "application/dot";
+    public static final String MIMETYPE_DOTX = "application/vnd.openxmlformats-officedocument.wordprocessingml.template";
+    public static final String MIMETYPE_XLS = "application/vnd.excel";
+    public static final String MIMETYPE_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+    public static final String[] WORD_MIMETYPES = new String[] { MIMETYPE_DOC, MIMETYPE_DOCX, MIMETYPE_DOT, MIMETYPE_DOTX, MIMETYPE_RTF, MIMETYPE_TEXT, MIMETYPE_HTML };
+
     public static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS");
     public static final String MACRO_CONVERT_TO_PDF = "ConvertToPdf";
     public static final String MACRO_REPLACE_FORMULAS = "ReplaceFormulas";
@@ -207,15 +218,12 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
 
         programsByMimeType = new HashMap<String, MsoProgram>();
         // Keep mimeTypes as lowercase!
-        programsByMimeType.put(MIMETYPE_DOC_DOT, word); // DOC
-        programsByMimeType.put("application/rtf", word); // RTF
-        programsByMimeType.put("application/vnd.openxmlformats-officedocument.wordprocessingml.document", word); // DOCX
+        for (String mimetype : WORD_MIMETYPES) {
+            programsByMimeType.put(mimetype, word);
+        }
 
-        programsByMimeType.put(MIMETYPE_TEXT, word); // TXT
-        programsByMimeType.put(MIMETYPE_HTML, word); // HTML
-
-        programsByMimeType.put("application/vnd.excel", excel); // XLS
-        programsByMimeType.put("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", excel); // XLSX
+        programsByMimeType.put(MIMETYPE_XLS, excel); // XLS
+        programsByMimeType.put(MIMETYPE_XLSX, excel); // XLSX
 
         log.info("Assuming the following external locations:"
                 + "\n    classExec=" + classExecPath
@@ -244,7 +252,7 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
             macroName = MACRO_MODIFIED_FORMULAS;
             
             if (!"word".equals(programName)) {
-                throw new RuntimeException("Replacing formulas is only supported with Word, mimeType must be '" + MIMETYPE_DOC_DOT + "', this input mimeType="
+                throw new RuntimeException("Replacing formulas is only supported with Word, mimeType must be one of '" + deepToString(WORD_MIMETYPES) + "', this input mimeType="
                         + inputMimeType + " programName=" + programName);
             }
 
@@ -324,7 +332,7 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
             macroName = MACRO_REPLACE_FORMULAS;
 
             if (!"word".equals(programName)) {
-                throw new RuntimeException("Replacing formulas is only supported with Word, mimeType must be '" + MIMETYPE_DOC_DOT + "', this input mimeType="
+                throw new RuntimeException("Replacing formulas is only supported with Word, mimeType must be one of '" + deepToString(WORD_MIMETYPES) + "', this input mimeType="
                         + inputMimeType + " programName=" + programName);
             }
 
@@ -333,7 +341,8 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
             File outputFile = buildOutput();
 
             MsoDocumentOutput output = new MsoDocumentOutput();
-            output.setDocumentFile(new DataHandler(new FileDataSource(outputFile, MIMETYPE_DOC_DOT)));
+            String outputMimetype = MIMETYPE_DOCX.equals(inputMimeType) || MIMETYPE_DOTX.equals(inputMimeType) ? MIMETYPE_DOCX : MIMETYPE_DOC;
+            output.setDocumentFile(new DataHandler(new FileDataSource(outputFile, outputMimetype)));
             if (log.isDebugEnabled()) {
                 log.debug("End request: " + filename);
             }
@@ -362,7 +371,7 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
             macroName = MACRO_REPLACE_FORMULAS_AND_CONVERT_TO_PDF;
 
             if (!"word".equals(programName)) {
-                throw new RuntimeException("Replacing formulas is only supported with Word, mimeType must be '" + MIMETYPE_DOC_DOT + "', this input mimeType="
+                throw new RuntimeException("Replacing formulas is only supported with Word, mimeType must be one of '" + deepToString(WORD_MIMETYPES) + "', this input mimeType="
                         + inputMimeType + " programName=" + programName);
             }
 

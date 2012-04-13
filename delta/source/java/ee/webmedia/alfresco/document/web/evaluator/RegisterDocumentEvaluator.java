@@ -7,6 +7,7 @@ import java.util.Map;
 
 import javax.faces.context.FacesContext;
 
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
@@ -31,7 +32,8 @@ public class RegisterDocumentEvaluator extends BaseActionEvaluator {
 
     @Override
     public boolean evaluate(Node docNode) {
-        return new ViewStateActionEvaluator().evaluate(docNode) && canRegister(docNode, true);
+        return docNode.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)
+                && new ViewStateActionEvaluator().evaluate(docNode) && canRegister(docNode, true);
     }
 
     public boolean canRegister(Node docNode, boolean checkStoppedOrInprogressWorkflows) {

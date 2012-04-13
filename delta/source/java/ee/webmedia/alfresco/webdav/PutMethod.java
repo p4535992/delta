@@ -35,11 +35,11 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -82,8 +82,6 @@ import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
-import ee.webmedia.alfresco.mso.ws.Formula;
-import ee.webmedia.alfresco.mso.ws.ModifiedFormulasOutput;
 
 /**
  * Implements the WebDAV PUT method
@@ -238,14 +236,12 @@ public class PutMethod extends WebDAVMethod {
             log.debug("MsoService is not available, skipping updating document");
             return;
         }
-        ModifiedFormulasOutput modifiedFormulas = getMsoService().modifiedFormulas(
-                getContentService().getReader(contentNodeInfo.getNodeRef(), ContentModel.PROP_CONTENT));
+        Map<String, String> formulas = getMsoService().modifiedFormulas(getContentService().getReader(contentNodeInfo.getNodeRef(), ContentModel.PROP_CONTENT));
 
-        if (modifiedFormulas == null) {
+        if (formulas == null || formulas.isEmpty()) {
             return;
         }
 
-        Collection<Formula> formulas = modifiedFormulas.getModifiedFormulas(); // Set is returned
         DocumentDynamicService documentDynamicService = BeanHelper.getDocumentDynamicService();
         DocumentDynamic doc = documentDynamicService.getDocument(document);
         /*
@@ -268,9 +264,9 @@ public class PutMethod extends WebDAVMethod {
         List<ContractPartyField> partyFields = new ArrayList<ContractPartyField>();
         ClassificatorService classificatorService = BeanHelper.getClassificatorService();
 
-        for (Formula formula : formulas) {
-            String formulaKey = formula.getKey();
-            String formulaValue = formula.getValue();
+        for (Entry<String, String> entry : formulas.entrySet()) {
+            String formulaKey = entry.getKey();
+            String formulaValue = entry.getValue();
 
             // Check for special fields like recipients or contract parties
             int propIndex = -1;

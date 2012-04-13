@@ -54,7 +54,6 @@
       <type name="cm:folder">
          <title>Folder</title>
          <parent>cm:cmobject</parent>
-         <archive>true</archive>
          <associations>
             <child-association name="cm:contains">
                <source>
@@ -444,7 +443,6 @@
       <type name="cm:thumbnail">
 	     <title>Thumbnail</title>
 		 <parent>cm:content</parent>
-		 <archive>true</archive>
 		 <properties>     
 		    <property name="cm:thumbnailName">
 		        <title>Thumbnail Name</title>

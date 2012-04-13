@@ -16,6 +16,7 @@ import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
 import org.alfresco.service.cmr.repository.DuplicateChildNodeNameException;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.web.app.servlet.DownloadContentServlet;
 import org.alfresco.web.bean.NavigationBean;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
@@ -225,6 +226,10 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
         return !documentDialogHelperBean.isNotEditable()
                 && (new IsOwnerEvaluator().evaluate(docNode) || isAdminOrDocmanagerWithViewDocPermission(docNode))
                 && (!activeFile || !getWorkflowService().hasInprogressCompoundWorkflows(docRef));
+    }
+
+    public boolean isInWorkspace() {
+        return docRef.getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE);
     }
 
     // START: getters / setters

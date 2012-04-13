@@ -74,6 +74,7 @@ public interface ContentModel
     static final QName PROP_ARCHIVED_OBJECT_TYPE_STRING = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "archivedObjectTypeString");
     static final QName PROP_ARCHIVED_OBJECT_TYPE = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "archivedObjectType");
     static final QName PROP_ARCHIVED_OBJECT_NAME = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "archivedObjectName");
+    static final QName PROP_ARCHIVED_BY_NAME = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "archivedByName");
     
     // referenceable aspect constants
     static final QName TYPE_REFERENCE = QName.createQName(NamespaceService.SYSTEM_MODEL_1_0_URI, "reference");

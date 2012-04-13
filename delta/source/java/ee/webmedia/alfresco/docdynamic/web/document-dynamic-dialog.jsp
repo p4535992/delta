@@ -8,10 +8,10 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:booleanEvaluator id="workflowBlockEvaluator" value="#{!DocumentDialogHelperBean.inEditMode}">
+<a:booleanEvaluator id="workflowBlockEvaluator" value="#{DocumentDialogHelperBean.inWorkspace and !DocumentDialogHelperBean.inEditMode}">
    <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/workflow-block.jsp" />
 </a:booleanEvaluator>
-<h:panelGroup rendered="#{DocumentDynamicDialog.modalRendered}">
+<h:panelGroup rendered="#{DocumentDialogHelperBean.inWorkspace and DocumentDynamicDialog.modalRendered}">
    <h:panelGroup id="dialog-modal-container" binding="#{DocumentDynamicDialog.modalContainer}" />
    <f:verbatim>
       <script type="text/javascript">
@@ -21,7 +21,7 @@
       </script>
    </f:verbatim>
 </h:panelGroup>
-<a:booleanEvaluator id="confirmAccessRestrictionChangedEvaluator" value="#{DocumentDynamicDialog.showConfirmationPopup}">
+<a:booleanEvaluator id="confirmAccessRestrictionChangedEvaluator" value="#{DocumentDialogHelperBean.inWorkspace and DocumentDynamicDialog.showConfirmationPopup}">
    <f:verbatim>
    <script type="text/javascript">
       $jQ(document).ready(function () {
@@ -35,8 +35,8 @@
    </script>
    </f:verbatim>
 </a:booleanEvaluator>
-<a:actionLink id="document-after-confirmation-accepted-link" value="confirmationAcceptedLink" actionListener="#{DocumentDynamicDialog.sendAccessRestrictionChangedEmails}" styleClass="hidden" />
-<a:actionLink id="document-after-confirmation-rejected-link" value="confirmationRejectedLink" actionListener="#{DocumentDynamicDialog.cancel}" styleClass="hidden" />
+<a:actionLink id="document-after-confirmation-accepted-link" value="confirmationAcceptedLink" actionListener="#{DocumentDialogHelperBean.inWorkspace and DocumentDynamicDialog.sendAccessRestrictionChangedEmails}" styleClass="hidden" />
+<a:actionLink id="document-after-confirmation-rejected-link" value="confirmationRejectedLink" actionListener="#{DocumentDialogHelperBean.inWorkspace and DocumentDynamicDialog.cancel}" styleClass="hidden" />
 
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/search/web/document-similar-block.jsp" />
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/type/web/document-type-block.jsp" />
@@ -45,7 +45,7 @@
    <f:facet name="title">
       <r:permissionEvaluator id="metadata-link-edit-evaluator" value="#{DocumentDynamicDialog.node}" allow="editDocument">
          <a:actionLink id="metadata-link-edit" showLink="false" image="/images/icons/edit_properties.gif" value="#{msg.modify}" tooltip="#{msg.modify}"
-            actionListener="#{DocumentDynamicDialog.switchToEditMode}" rendered="#{!DocumentDialogHelperBean.inEditMode}" />
+            actionListener="#{DocumentDynamicDialog.switchToEditMode}" rendered="#{DocumentDialogHelperBean.inWorkspace and !DocumentDialogHelperBean.inEditMode}" />
       </r:permissionEvaluator>
    </f:facet>
 </h:panelGroup>
@@ -72,10 +72,10 @@ $jQ(document).ready(function() {
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/sendout/web/send-out-block.jsp" />
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/log/web/document-log-block.jsp" />
 
-<a:booleanEvaluator id="searchBlockEvaluator" value="#{DocumentDynamicDialog.showSearchBlock}">
+<a:booleanEvaluator id="searchBlockEvaluator" value="#{DocumentDialogHelperBean.inWorkspace and DocumentDynamicDialog.showSearchBlock}">
    <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/search/web/document-search-block.jsp" />
 </a:booleanEvaluator>
 
-<a:booleanEvaluator value="#{DocumentDialogHelperBean.inEditMode}" id="docMeta-InEditMode">
+<a:booleanEvaluator value="#{DocumentDialogHelperBean.inWorkspace and DocumentDialogHelperBean.inEditMode}" id="docMeta-InEditMode">
    <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/docdynamic/web/metadata-block-lockRefresh.jsp" />
 </a:booleanEvaluator>

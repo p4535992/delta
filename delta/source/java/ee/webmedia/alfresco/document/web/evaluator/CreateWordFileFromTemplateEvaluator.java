@@ -5,6 +5,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 
 import java.util.Set;
 
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.util.EqualsHelper;
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
@@ -22,6 +23,9 @@ public class CreateWordFileFromTemplateEvaluator extends BaseActionEvaluator {
 
     @Override
     public boolean evaluate(Node node) {
+        if (!node.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)) {
+            return false;
+        }
         boolean viewMode = new ViewStateActionEvaluator().evaluate(node);
         Object docStatus = node.getProperties().get(DocumentCommonModel.Props.DOC_STATUS.toString());
         Set<Task> allActiveTasks = getWorkflowService().getTasks(node.getNodeRef(), allActiveTasksPredicate);

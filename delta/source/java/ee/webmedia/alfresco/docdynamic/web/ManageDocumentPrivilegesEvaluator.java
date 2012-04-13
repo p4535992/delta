@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.docdynamic.web;
 
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
 
@@ -16,6 +17,7 @@ public class ManageDocumentPrivilegesEvaluator extends BaseActionEvaluator {
 
     @Override
     public boolean evaluate(Node node) {
-        return new ViewStateActionEvaluator().evaluate(node) && new DocumentSavedActionEvaluator().evaluate(node);
+        return node.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)
+                && new ViewStateActionEvaluator().evaluate(node) && new DocumentSavedActionEvaluator().evaluate(node);
     }
 }

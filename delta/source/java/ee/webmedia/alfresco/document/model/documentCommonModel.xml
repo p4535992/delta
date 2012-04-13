@@ -21,6 +21,7 @@
 
       <type name="doccom:document">
          <parent>cm:folder</parent>
+         <archive>true</archive>
          <!-- TODO FIXME Temporary properties for CL 188299 -->
          <properties>
             <property name="docdyn:regDateTime">

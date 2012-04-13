@@ -102,7 +102,7 @@
       </a:column>
 
       <%-- Remove and Version column --%>
-      <a:column id="col7" rendered="#{r.activeAndNotDigiDoc and DialogManager.bean != AddFileDialog}">
+      <a:column id="col7" rendered="#{FileBlockBean.inWorkspace and r.activeAndNotDigiDoc and DialogManager.bean != AddFileDialog}">
          <a:actionLink id="col7-act33" value="#{r.name}" actionListener="#{FileBlockBean.toggleActive}" showLink="false"
             image="/images/icons/document-convert.png" tooltip="#{msg.file_toggle_deactive} " rendered="#{FileBlockBean.toggleActive}">
             <f:param name="nodeRef" value="#{r.nodeRef}" />
@@ -133,7 +133,7 @@
          </wm:docPermissionEvaluator>         
       </a:column>
 
-      <a:column id="col1-ddoc" primary="true" rendered="#{r.activeDigiDoc}">
+      <a:column id="col1-ddoc" primary="true" rendered="#{FileBlockBean.inWorkspace and r.activeDigiDoc}">
          <a:panel id="ddoc-inner-panel" styleClass="digidoc-panel">
             <h:dataTable id="ddocList" value="#{r.dataItems}" var="v">
                <h:column id="col1-inner">
@@ -270,7 +270,7 @@
       </a:column>
 
       <%-- Remove and Version column --%>
-      <a:column id="col27" rendered="#{r.notActiveAndNotDigiDoc and DialogManager.bean != AddFileDialog}">
+      <a:column id="col27" rendered="#{FileBlockBean.inWorkspace and r.notActiveAndNotDigiDoc and DialogManager.bean != AddFileDialog}">
          <a:actionLink id="col27-act3" value="#{r.name}" actionListener="#{FileBlockBean.toggleActive}" showLink="false"
             image="/images/icons/document-convert.png" tooltip="#{msg.file_toggle_active}" rendered="#{FileBlockBean.toggleInActive}">
             <f:param name="nodeRef" value="#{r.nodeRef}" />
@@ -295,7 +295,7 @@
          </wm:docPermissionEvaluator>         
       </a:column>
 
-      <a:column id="col21-ddoc" primary="true" rendered="#{r.notActiveAndDigiDoc}">
+      <a:column id="col21-ddoc" primary="true" rendered="#{FileBlockBean.inWorkspace and r.notActiveAndDigiDoc}">
          <a:panel id="ddoc-inner-panel" styleClass="digidoc-panel">
             <h:dataTable id="ddocList" value="#{r.dataItems}" var="v">
                <h:column id="col21-inner">
@@ -353,7 +353,7 @@
    </a:richList>
 </a:panel>
 
-<a:panel label="PDF" id="pdf-panel" styleClass="panel-100" progressive="true" rendered="#{FileBlockBean.pdfUrl != null}">
+<a:panel label="PDF" id="pdf-panel" styleClass="panel-100" progressive="true" rendered="#{FileBlockBean.inWorkspace and FileBlockBean.pdfUrl != null}">
    <f:verbatim>
       <iframe width="100%" height="450" style="z-index: -1;" wmode="transparent" tabindex="-1" src="<%=request.getContextPath()%></f:verbatim><h:outputText value="#{FileBlockBean.pdfUrl}" /><f:verbatim>" class="fileViewerFrame" name="embedpdf_1" id="embedpdf_1">
       </iframe>

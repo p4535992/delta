@@ -4,6 +4,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService
 
 import java.util.Map;
 
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
 
@@ -26,6 +27,9 @@ public class SendOutActionEvaluator extends BaseActionEvaluator {
 
     @Override
     public boolean evaluate(Node node) {
+        if (!node.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)) {
+            return false;
+        }
         boolean result = new ViewStateActionEvaluator().evaluate(node) && new DocumentSavedActionEvaluator().evaluate(node)
                 && node.hasPermission(DocumentCommonModel.Privileges.EDIT_DOCUMENT);
         if (result) {

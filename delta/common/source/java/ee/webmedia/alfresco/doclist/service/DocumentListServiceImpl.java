@@ -5,22 +5,29 @@ import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
 
+import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.repository.Path;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.Pair;
 import org.apache.commons.lang.time.FastDateFormat;
 
 import com.csvreader.CsvWriter;
 
+import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
 import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
+import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
@@ -51,6 +58,7 @@ public class DocumentListServiceImpl implements DocumentListService {
     private DocumentDynamicService documentDynamicService;
     private DocumentService documentService;
     private NodeService nodeService;
+    private GeneralService generalService;
 
     private final FastDateFormat fastDateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
 
@@ -271,6 +279,56 @@ public class DocumentListServiceImpl implements DocumentListService {
         return new Pair<List<NodeRef>, Long>(c, deletedDocCount);
     }
 
+    @Override
+    public String getDisplayPath(NodeRef nodeRef, boolean showLeaf) {
+        StringBuilder buf = new StringBuilder(64);
+        Path path = nodeService.getPath(nodeRef);
+
+        int count = path.size() - (showLeaf ? 0 : 1);
+        boolean checkfirst = true;
+        for (int i = 0; i < count; i++) {
+            String elementString = null;
+            Path.Element element = path.get(i);
+            if (element instanceof Path.ChildAssocElement) {
+                ChildAssociationRef elementRef = ((Path.ChildAssocElement) element).getRef();
+                if (elementRef.getChildRef() != null && elementRef.getQName() != null) {
+                    if (checkfirst) {
+                        LinkedHashSet<ArchivalsStoreVO> storeVOs = generalService.getArchivalsStoreVOs();
+                        for (ArchivalsStoreVO storeVO : storeVOs) {
+                            if (storeVO.getNodeRef().equals(elementRef.getChildRef())) {
+                                elementString = storeVO.getTitle();
+                                break;
+                            }
+                        }
+                        checkfirst = false;
+                    }
+                    if (elementString == null) {
+                        elementString = DocumentLocationGenerator.getDocumentListUnitLabel(elementRef.getChildRef());
+                        if (elementString == null) {
+                            if (DocumentCommonModel.Types.DOCUMENT.equals(elementRef.getQName())) {
+                                elementString = (String) nodeService.getProperties(elementRef.getChildRef()).get(DocumentCommonModel.Props.DOC_NAME);
+                            } else {
+                                elementString = MessageUtil.getMessage("trashcan_" + QName.createQName(element.getElementString()).getLocalName());
+                                if (elementString != null && elementString.startsWith("$$")) {
+                                    elementString = (String) nodeService.getProperties(elementRef.getChildRef()).get(ContentModel.PROP_NAME);
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                elementString = element.getElementString();
+            }
+
+            if (elementString != null) {
+                buf.append("/");
+                buf.append(elementString);
+            }
+        }
+
+        return buf.toString();
+    }
+
     // BEGIN GETTERS
 
     public void setSeriesService(SeriesService seriesService) {
@@ -299,6 +357,10 @@ public class DocumentListServiceImpl implements DocumentListService {
 
     public void setFunctionsService(FunctionsService functionsService) {
         this.functionsService = functionsService;
+    }
+
+    public void setGeneralService(GeneralService generalService) {
+        this.generalService = generalService;
     }
 
     // END GETTERS_SETTERS

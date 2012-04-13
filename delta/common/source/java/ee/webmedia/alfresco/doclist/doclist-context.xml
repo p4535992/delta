@@ -10,6 +10,7 @@
       <property name="documentService" ref="DocumentService" />
       <property name="documentDynamicService" ref="DocumentDynamicService" />
       <property name="functionsService" ref="FunctionsService" />
+      <property name="generalService" ref="GeneralService" />
    </bean>
    
    <bean id="DocumentListService" class="org.springframework.aop.framework.ProxyFactoryBean">

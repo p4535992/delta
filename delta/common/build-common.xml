@@ -555,6 +555,12 @@
          <param name="wsdl" value="MsoService.wsdl" />
       </antcall>
       <antcall target="generate-jaxws-conditionally">
+         <param name="name" value="mso2" />
+         <param name="wsdl" value="MsoService2.wsdl" />
+         <param name="extension" value="true" />
+         <param name="additionalCopy" value="MsoService2-*.xsd" />
+      </antcall>
+      <antcall target="generate-jaxws-conditionally">
          <param name="name" value="ocr" />
          <param name="wsdl" value="OcrService.wsdl" />
       </antcall>
@@ -656,6 +662,7 @@
          sourcedestdir="${project.dir.build}/${name}"
          destdir="${project.dir.build}/${name}-classes"
          debug="true"
+         extension="${extension}"
       />
 		<!-- wsimport writes full path of wsdl file into java file - remove full path, filename stays as "xyz.wsdl" -->
 		<replaceregexp match="file:[^'&quot;]*/([^/]*\.wsdl)" replace="\1" flags="g">
@@ -669,6 +676,9 @@
 			<src path="${project.dir.build}/${name}" />
 		</javac>
 		<copy todir="${project.dir.build}/${name}/ee/webmedia/alfresco/${name}/ws" preservelastmodified="true" file="${common.dir.etc}/${wsdl}" />
+		<copy todir="${project.dir.build}/${name}/ee/webmedia/alfresco/${name}/ws" preservelastmodified="true">
+			<fileset dir="${common.dir.etc}" includes="${additionalCopy}"/>
+		</copy>
 		<delete file="${common.dir.lib.server}/${name}-ws.jar" failonerror="false" />
 		<jar destfile="${common.dir.lib.server}/${name}-ws.jar" basedir="${project.dir.build}/${name}" />
 		<copy todir="${project.dir.exploded.lib}" preservelastmodified="true" file="${common.dir.lib.server}/${name}-ws.jar" />

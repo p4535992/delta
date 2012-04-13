@@ -45,6 +45,7 @@
    <import resource="classpath:ee/webmedia/alfresco/testdata/testdata-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/doclist/doclist-context.xml"/>
    <import resource="classpath:ee/webmedia/alfresco/report/report-context.xml" />
+   <import resource="classpath:org/alfresco/web/bean/trashcan/trashcan-context.xml" />
 
    <bean class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
       <property name="configs">

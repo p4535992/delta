@@ -129,7 +129,7 @@
            value="#{TrashcanDialogProperty.userSearchText}"
            dataMultiValued="false"
            dataMandatory="false"
-           pickerCallback="#{UserListDialog.searchOtherUsers}"
+           pickerCallback="#{UserListDialog.searchUsers}"
            setterCallback="#{TrashcanDialogProperty.setUserSearchText}"
            dialogTitleId="users_search_title"
            editable="false"
@@ -177,7 +177,7 @@
          actionListener="#{TrashcanDeleteListedItemsDialog.setupListAction}" />
    </a:panel>
 
-   <a:richList id="trashcan-list" binding="#{TrashcanDialogProperty.itemsRichList}" viewMode="details" pageSize="10" rowStyleClass="recordSetRow"
+   <a:richList id="trashcan-list" binding="#{TrashcanDialogProperty.itemsRichList}" pageSize="#{BrowseBean.pageSizeContent}" viewMode="details" rowStyleClass="recordSetRow"
       altRowStyleClass="recordSetRowAlt" width="100%" value="#{DialogManager.bean.items}" var="r" initialSortColumn="deletedDate" initialSortDescending="true">
 
       <%-- Primary column showing object type --%>
@@ -242,7 +242,7 @@
             <f:param name="id" value="#{r.id}" />
          </a:actionLink>
       </a:column>
-
-      <a:dataPager styleClass="pager" />
+      <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
+      <a:dataPager id="pager1" styleClass="pager" />
    </a:richList>
 </a:panel>

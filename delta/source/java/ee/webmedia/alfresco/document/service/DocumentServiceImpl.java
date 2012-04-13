@@ -2348,7 +2348,6 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
     public void finishDocumentSigning(final SignatureTask task, final String signature) {
         long step0 = System.currentTimeMillis();
         final NodeRef document = task.getParent().getParent().getParent();
-        final String filename = generateDdocFilename(document);
         final long step1 = System.currentTimeMillis();
         String debug = AuthenticationUtil.runAs(new RunAsWork<String>() {
             @Override
@@ -2367,6 +2366,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                 } else {
                     List<NodeRef> files = fileService.getAllActiveFilesNodeRefs(document);
                     long step3 = System.currentTimeMillis();
+                    final String filename = generateDdocFilename(document);
                     String uniqueFilename = generalService.getUniqueFileName(document, filename);
                     NodeRef ddoc;
                     if (task.getSignatureDigest() != null) {
@@ -2375,7 +2375,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                         ddoc = signatureService.createContainer(document, files, uniqueFilename, task.getSignatureChallenge(), signature);
                     }
                     long step4 = System.currentTimeMillis();
-                    documentLogService.addDocumentLog(document, MessageUtil.getMessage("applog_doc_file_generated", filename));
+                    documentLogService.addDocumentLog(document, MessageUtil.getMessage("applog_doc_file_generated", uniqueFilename));
                     long step5 = System.currentTimeMillis();
                     fileService.setAllFilesInactiveExcept(document, ddoc);
                     long step6 = System.currentTimeMillis();

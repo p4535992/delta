@@ -11,7 +11,7 @@
    <f:facet name="title">
       <r:permissionEvaluator id="assocs-permission-evaluator" value="#{DocumentDynamicDialog.node}" allow="viewDocumentMetaData">
          <a:actionLink image="/images/icons/import.gif" id="col3-text" showLink="false" tooltip="#{msg.document_assocAdd}" value="" 
-            actionListener="#{DocumentDynamicDialog.searchDocsAndCases}" action="#docsearch-panel" rendered="#{not DocumentDynamicDialog.inEditMode}" >
+            actionListener="#{DocumentDynamicDialog.searchDocsAndCases}" action="#docsearch-panel" rendered="#{DocumentDialogHelperBean.inWorkspace and not DocumentDynamicDialog.inEditMode}" >
          </a:actionLink>
       </r:permissionEvaluator>
    </f:facet>

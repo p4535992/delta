@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.module.AbstractModuleComponent;
-import org.alfresco.service.cmr.repository.ChildAssociationRef;
+import org.alfresco.repo.node.StoreArchiveMap;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
@@ -26,6 +26,7 @@ public class ArchivalsStoresBootstrap extends AbstractModuleComponent {
     private GeneralService generalService;
     private String additionalArchivals;
     private boolean deleteArchivalsExistingContents;
+    private StoreArchiveMap storeArchiveMap;
 
     private final LinkedHashSet<ArchivalsStoreVO> archivalsStoreVOs = new LinkedHashSet<ArchivalsStoreVO>();
 
@@ -39,6 +40,7 @@ public class ArchivalsStoresBootstrap extends AbstractModuleComponent {
         }
         NodeService nodeService = serviceRegistry.getNodeService();
         List<StoreRef> stores = nodeService.getStores();
+        StoreRef archiveStoreRef = StoreRef.STORE_REF_ARCHIVE_SPACESSTORE;
         for (ArchivalsStoreVO archivalsStoreVO : archivalsStoreVOs) {
             StoreRef storeRef = archivalsStoreVO.getStoreRef();
             if (!stores.contains(storeRef)) {
@@ -53,15 +55,17 @@ public class ArchivalsStoresBootstrap extends AbstractModuleComponent {
                 QName type = nodeService.getType(nodeRef);
                 Assert.isTrue(FunctionsModel.Types.FUNCTIONS_ROOT.equals(type));
 
-                if (deleteArchivalsExistingContents) {
-                    LOG.info("Deleting existing contents under " + nodeRef);
-                    for (ChildAssociationRef childAssociationRef : nodeService.getChildAssocs(nodeRef)) {
-                        nodeService.deleteNode(childAssociationRef.getChildRef());
-                    }
-                    LOG.info("Deleting completed");
-                    // workspace://ArchivalsStore... stores don't have corresponding archive stores (for recycle bin) defined in storeArchiveMap,
-                    // so we don't have to worry that deleted nodes transerring to recycle bin and recycle bin getting huge
-                }
+                /*
+                 * if (deleteArchivalsExistingContents) {
+                 * LOG.info("Deleting existing contents under " + nodeRef);
+                 * for (ChildAssociationRef childAssociationRef : nodeService.getChildAssocs(nodeRef)) {
+                 * nodeService.deleteNode(childAssociationRef.getChildRef());
+                 * }
+                 * LOG.info("Deleting completed");
+                 * // workspace://ArchivalsStore... stores don't have corresponding archive stores (for recycle bin) defined in storeArchiveMap,
+                 * // so we don't have to worry that deleted nodes transerring to recycle bin and recycle bin getting huge
+                 * }
+                 */
             } else {
                 QName assocQName = QName.createQName(archivalsStoreVO.getPrimaryPath().substring(1), serviceRegistry.getNamespaceService());
                 nodeRef = nodeService.createNode(
@@ -75,6 +79,7 @@ public class ArchivalsStoresBootstrap extends AbstractModuleComponent {
                 nodeService.addAspect(nodeRef, ContentModel.ASPECT_ROOT, null);
             }
             archivalsStoreVO.setNodeRef(nodeRef);
+            storeArchiveMap.put(nodeRef.getStoreRef(), archiveStoreRef);
             LOG.info(archivalsStoreVO.toString() + " - " + (created ? "didn't exist, created" : "existed"));
         }
         generalService.setArchivalsStoreVOs(archivalsStoreVOs);
@@ -90,6 +95,10 @@ public class ArchivalsStoresBootstrap extends AbstractModuleComponent {
 
     public void setDeleteArchivalsExistingContents(boolean deleteArchivalsExistingContents) {
         this.deleteArchivalsExistingContents = deleteArchivalsExistingContents;
+    }
+
+    public void setStoreArchiveMap(StoreArchiveMap storeArchiveMap) {
+        this.storeArchiveMap = storeArchiveMap;
     }
 
 }

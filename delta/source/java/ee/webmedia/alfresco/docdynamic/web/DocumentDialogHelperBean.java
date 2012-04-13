@@ -9,6 +9,7 @@ import javax.faces.event.PhaseId;
 import javax.faces.event.ValueChangeEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.repo.component.property.UIProperty;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
@@ -100,5 +101,10 @@ public class DocumentDialogHelperBean implements Serializable {
                 ancestorComponent.getChildren().clear();
             }
         });
+    }
+
+    public boolean isInWorkspace() {
+        Node node = getNode();
+        return (node == null ? false : node.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)) ;
     }
 }

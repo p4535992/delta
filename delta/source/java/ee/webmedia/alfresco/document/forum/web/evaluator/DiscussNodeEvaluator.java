@@ -12,6 +12,7 @@ import org.alfresco.repo.security.permissions.impl.AccessPermissionImpl;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
@@ -34,6 +35,9 @@ public class DiscussNodeEvaluator extends BaseActionEvaluator {
      */
     @Override
     public boolean evaluate(Node node) {
+        if (!node.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)) {
+            return false;
+        }
         boolean result = false;
         GeneralService generalService = (GeneralService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(GeneralService.BEAN_NAME);
         node = generalService.fetchNode(node.getNodeRef()); // refresh the node, because dialog caches it, and sub dialogs change props/aspects

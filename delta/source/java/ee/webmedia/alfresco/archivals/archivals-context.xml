@@ -19,6 +19,7 @@
       <property name="generalService" ref="GeneralService" />
       <property name="additionalArchivals" value="${archivals-additional}" />
       <property name="deleteArchivalsExistingContents" value="${archivals-deleteExistingContents}" />
+      <property name="storeArchiveMap" ref="storeArchiveMap" />
    </bean>
 
    <bean class="ee.webmedia.alfresco.archivals.service.DocumentRegisterMenuItemProcessor">
