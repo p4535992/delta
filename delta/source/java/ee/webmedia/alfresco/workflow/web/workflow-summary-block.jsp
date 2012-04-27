@@ -1,3 +1,4 @@
+<%@page import="ee.webmedia.alfresco.common.web.BeanHelper"%>
 <%@ taglib uri="http://java.sun.com/jsf/html" prefix="h"%>
 <%@ taglib uri="http://java.sun.com/jsf/core" prefix="f"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
@@ -59,7 +60,8 @@
          <f:facet name="header">
             <h:outputText id="col5-sort" value="#{msg.task_property_owner}" styleClass="header" />
          </f:facet>
-         <h:outputText id="col5-text" value="#{r.taskOwnerName}" />
+         <a:actionLink value="#{r.groupName}" styleClass="workflow-conf" href="#{r.workflowGroupTasksUrl}" target="_blank" image="/images/icons/plus.gif" rendered="#{r.groupBlockItem}" /> 
+         <h:outputText id="col5-text" value="#{r.taskOwnerName}" rendered="#{!r.groupBlockItem}" />
       </a:column>
       
       <%-- taskResolution --%>

@@ -24,11 +24,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 public class SenderEmailRemovableFromSystematicGroupFixBootstrap extends AbstractNodeUpdater {
 
     @Override
-    protected boolean isRequiresNewTransaction() {
-        return false;
-    }
-
-    @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
         String query = joinQueryPartsAnd(Arrays.asList(
                 generateTypeQuery(DocumentAdminModel.Types.FIELD),

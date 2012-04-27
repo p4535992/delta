@@ -104,6 +104,7 @@ import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
+import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.document.assocsdyn.service.DocumentAssociationsService;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
@@ -585,7 +586,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                     }
                     final boolean isInitialDocWithRepliesOrFollowUps //
                     = nodeService.getSourceAssocs(docNodeRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY).size() > 0 //
-                            || nodeService.getSourceAssocs(docNodeRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP).size() > 0;
+                    || nodeService.getSourceAssocs(docNodeRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP).size() > 0;
                     if (isInitialDocWithRepliesOrFollowUps) {
                         throw new UnableToPerformException(MessageSeverity.ERROR, "document_errorMsg_register_movingNotEnabled_hasReplyOrFollowUp");
                     }
@@ -1336,15 +1337,15 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         String caseLbl = caseNode != null ? caseNode.getProperties().get(CaseModel.Props.TITLE).toString() : null;
         String volumeLbl = volumeNode != null ? volumeNode.getProperties().get(VolumeModel.Props.MARK).toString() //
                 + " " + volumeNode.getProperties().get(VolumeModel.Props.TITLE).toString() : null;
-        String seriesLbl = seriesNode != null ? seriesNode.getProperties().get(SeriesModel.Props.SERIES_IDENTIFIER).toString() //
-                + " " + seriesNode.getProperties().get(SeriesModel.Props.TITLE).toString() : null;
-        String functionLbl = functionNode != null ? functionNode.getProperties().get(FunctionsModel.Props.MARK).toString() //
-                + " " + functionNode.getProperties().get(FunctionsModel.Props.TITLE).toString() : null;
-        props.put(TransientProps.FUNCTION_LABEL, functionLbl);
-        props.put(TransientProps.SERIES_LABEL, seriesLbl);
-        props.put(TransientProps.VOLUME_LABEL, volumeLbl);
-        props.put(TransientProps.CASE_LABEL, caseLbl);
-        props.put(TransientProps.CASE_LABEL_EDITABLE, caseLbl);
+                String seriesLbl = seriesNode != null ? seriesNode.getProperties().get(SeriesModel.Props.SERIES_IDENTIFIER).toString() //
+                        + " " + seriesNode.getProperties().get(SeriesModel.Props.TITLE).toString() : null;
+                        String functionLbl = functionNode != null ? functionNode.getProperties().get(FunctionsModel.Props.MARK).toString() //
+                                + " " + functionNode.getProperties().get(FunctionsModel.Props.TITLE).toString() : null;
+                                props.put(TransientProps.FUNCTION_LABEL, functionLbl);
+                                props.put(TransientProps.SERIES_LABEL, seriesLbl);
+                                props.put(TransientProps.VOLUME_LABEL, volumeLbl);
+                                props.put(TransientProps.CASE_LABEL, caseLbl);
+                                props.put(TransientProps.CASE_LABEL_EDITABLE, caseLbl);
     }
 
     @Override
@@ -2044,7 +2045,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         }
         final boolean isReplyOrFollowupDoc = replyAssocs.size() > 0
                 || nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP).size() > 0; //
-        return isReplyOrFollowupDoc;
+                return isReplyOrFollowupDoc;
     }
 
     private List<Document> getAllDocumentsByParentNodeRef(NodeRef parentRef) {
@@ -2220,6 +2221,34 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             }
             return propsChangedLogger;
         }
+
+        public static boolean hasSameLocation(DocumentDynamic document, NodeRef function, NodeRef series, NodeRef volume, String caseLabel) {
+            NodeRef docFunction = document.getFunction();
+            if (docFunction == null || !docFunction.equals(function)) {
+                return false;
+            }
+            NodeRef docSeries = document.getSeries();
+            if (docSeries == null || !docSeries.equals(series)) {
+                return false;
+            }
+            NodeRef docVolume = document.getVolume();
+            if (docVolume == null || !docVolume.equals(volume)) {
+                return false;
+            }
+            NodeRef caseRef = document.getCase();
+            boolean hasCaseLabel = !StringUtils.isBlank(caseLabel);
+            if ((caseRef == null && hasCaseLabel) || (caseRef != null && !hasCaseLabel)) {
+                return false;
+            }
+            if (caseRef != null && hasCaseLabel) {
+                Case aCase = BeanHelper.getCaseService().getCaseByNoderef(caseRef);
+                if (!caseLabel.equalsIgnoreCase(aCase.getTitle())) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
     }
 
     @Override
@@ -2789,13 +2818,20 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
     }
 
     @Override
-    public void updateParentNodesContainingDocsCount(NodeRef documentNodeRef, boolean documentAdded) {
-        generalService.updateParentContainingDocsCount(generalService.getAncestorNodeRefWithType(documentNodeRef, CaseModel.Types.CASE),
-                CaseModel.Props.CONTAINING_DOCS_COUNT, documentAdded, null);
-        generalService.updateParentContainingDocsCount(generalService.getAncestorNodeRefWithType(documentNodeRef, VolumeModel.Types.VOLUME),
-                VolumeModel.Props.CONTAINING_DOCS_COUNT, documentAdded, null);
-        generalService.updateParentContainingDocsCount(generalService.getAncestorNodeRefWithType(documentNodeRef, SeriesModel.Types.SERIES),
-                SeriesModel.Props.CONTAINING_DOCS_COUNT, documentAdded, null);
+    public void updateParentNodesContainingDocsCount(final NodeRef documentNodeRef, final boolean documentAdded) {
+        generalService.runOnBackground(new RunAsWork<Void>() {
+
+            @Override
+            public Void doWork() throws Exception {
+                generalService.updateParentContainingDocsCount(generalService.getAncestorNodeRefWithType(documentNodeRef, CaseModel.Types.CASE),
+                        CaseModel.Props.CONTAINING_DOCS_COUNT, documentAdded, null);
+                generalService.updateParentContainingDocsCount(generalService.getAncestorNodeRefWithType(documentNodeRef, VolumeModel.Types.VOLUME),
+                        VolumeModel.Props.CONTAINING_DOCS_COUNT, documentAdded, null);
+                generalService.updateParentContainingDocsCount(generalService.getAncestorNodeRefWithType(documentNodeRef, SeriesModel.Types.SERIES),
+                        SeriesModel.Props.CONTAINING_DOCS_COUNT, documentAdded, null);
+                return null;
+            }
+        }, "updateParentNodesContainingDocsCount", true);
     }
 
     // START: getters / setters

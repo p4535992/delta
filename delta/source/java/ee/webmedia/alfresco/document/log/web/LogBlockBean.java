@@ -11,6 +11,7 @@ import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicBlock;
 import ee.webmedia.alfresco.document.log.model.DocumentLog;
@@ -65,6 +66,16 @@ public class LogBlockBean implements DocumentDynamicBlock {
 
     public boolean isRendered() {
         return logs != null && logs.size() > 0;
+    }
+
+    // in version 3.8 this method is overriden method
+    public boolean isShowLogDetailsLink() {
+        return BeanHelper.getUserService().isSupervisor();
+    }
+
+    // in version 3.8 this method is overriden method
+    public NodeRef getParentRef() {
+        return parentRef;
     }
 
     // START: getters / setters

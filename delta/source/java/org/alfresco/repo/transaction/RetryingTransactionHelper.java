@@ -377,7 +377,7 @@ public class RetryingTransactionHelper
                 // Somebody else 'owns' the transaction, so just rethrow.
                 if (txn == null)
                 {
-                    if (throwOriginalException){
+                    if (throwOriginalException) {
                         throw new TransactionHelperWrapperException(e);
                     }
                     RuntimeException ee = AlfrescoRuntimeException.makeRuntimeException(
@@ -422,13 +422,39 @@ public class RetryingTransactionHelper
                 }
                 if (e instanceof RollbackException)
                 {
-                    lastException = (e.getCause() instanceof RuntimeException) ?
-                         (RuntimeException)e.getCause() : new AlfrescoRuntimeException("Exception in Transaction.", e.getCause());
+                    if (e.getCause() instanceof RuntimeException)
+                    {
+                        lastException = (RuntimeException) e.getCause();
+                    }
+                    else
+                    {
+                        if (throwOriginalException)
+                        {
+                            lastException = new TransactionHelperWrapperException(e.getCause());
+                        }
+                        else
+                        {
+                            lastException = new AlfrescoRuntimeException("Exception in Transaction.", e.getCause());
+                        }
+                    }
                 }
                 else
                 {
-                    lastException = (e instanceof RuntimeException) ?
-                         (RuntimeException)e : new AlfrescoRuntimeException("Exception in Transaction.", e);
+                    if (e instanceof RuntimeException)
+                    {
+                        lastException = (RuntimeException) e;
+                    }
+                    else
+                    {
+                        if (throwOriginalException)
+                        {
+                            lastException = new TransactionHelperWrapperException(e);
+                        }
+                        else
+                        {
+                            lastException = new AlfrescoRuntimeException("Exception in Transaction.", e);
+                        }
+                    }
                 }
                 // Check if there is a cause for retrying
                 Throwable retryCause = extractRetryCause(e);

@@ -36,11 +36,6 @@ public class RepairPropertyTypeMismatchUpdater extends AbstractNodeUpdater {
     private DocumentConfigService documentConfigService;
 
     @Override
-    protected boolean isRequiresNewTransaction() {
-        return false;
-    }
-
-    @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
         String query = generatePropertyNotNullQuery(OBJECT_TYPE_ID);
         List<ResultSet> result = new ArrayList<ResultSet>(2);

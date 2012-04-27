@@ -12,7 +12,7 @@
 
 <% String printButtonTooltip = MessageUtil.getMessage("workflow_task_review_notes_print"); %>
 
-<h:panelGroup id="review-note-block-facets">
+<h:panelGroup id="review-note-block-facets" styleClass="nonfloating-element" >
    <f:facet name="title">
       <f:verbatim>
          <a target="_blank" href="<%= BeanHelper.getWorkflowBlockBean().getReviewNotesPrintUrl() %>" class="print icon-link" title="<%= printButtonTooltip %>"></a>

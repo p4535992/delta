@@ -91,8 +91,4 @@ public class ContractPartyAssocUpdater extends AbstractNodeUpdater {
         }
     }
 
-    @Override
-    protected boolean isRequiresNewTransaction() {
-        return false; // otherwise freezes on createNode when updating from 3.5.1 to 3.5.2
-    }
 }

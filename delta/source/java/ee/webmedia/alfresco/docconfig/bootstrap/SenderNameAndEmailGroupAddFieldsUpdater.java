@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.List;
 
 import org.alfresco.repo.module.AbstractModuleComponent;
-import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 
@@ -16,7 +15,6 @@ import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
  * Updater that adds senderInitialsToAdr field to SenderNameAndEmail field group
  * 
  * @author Kaarel Jõgeva
- *
  */
 public class SenderNameAndEmailGroupAddFieldsUpdater extends AbstractModuleComponent {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(SenderNameAndEmailGroupAddFieldsUpdater.class);
@@ -27,16 +25,6 @@ public class SenderNameAndEmailGroupAddFieldsUpdater extends AbstractModuleCompo
     @Override
     protected void executeInternal() throws Throwable {
         LOG.info("Executing " + getName());
-        serviceRegistry.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
-            @Override
-            public Void execute() throws Throwable {
-                executeInTransaction();
-                return null;
-            }
-        }, false, true);
-    }
-
-    public void executeInTransaction() {
         NodeRef senderNameAndEmailGroupDefinitionRef = generalService.getNodeRef("/docadmin:fieldGroupDefinitions/docadmin:senderNameAndEmail");
         if (senderNameAndEmailGroupDefinitionRef == null) {
             LOG.info("Could not find senderNameAndEmail field group definition. Stopping updater.");

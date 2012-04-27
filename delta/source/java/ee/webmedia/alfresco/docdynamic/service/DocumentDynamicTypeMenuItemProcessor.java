@@ -18,6 +18,7 @@ import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.springframework.beans.factory.InitializingBean;
 
+import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.menu.model.DropdownMenuItem;
@@ -34,7 +35,7 @@ public class DocumentDynamicTypeMenuItemProcessor implements InitializingBean, M
 
         @Override
         public int compare(MenuItem o1, MenuItem o2) {
-            return o1.getTitle().compareToIgnoreCase(o2.getTitle());
+            return AppConstants.DEFAULT_COLLATOR.compare(o1.getTitle(), o2.getTitle());
         }
     };
 
@@ -87,16 +88,17 @@ public class DocumentDynamicTypeMenuItemProcessor implements InitializingBean, M
 
         // Create menu items from structure
         List<MenuItem> children;
+        List<MenuItem> firstLevelSubItems = menuItem.getSubItems();
         for (Entry<String, List<DocumentType>> entry : structure.entrySet()) {
             String groupName = entry.getKey();
             if (isNotBlank(groupName)) {
                 DropdownMenuItem group = new DropdownMenuItem();
                 group.setTitle(groupName);
                 group.setSubmenuId(groupName + "-submenu");
-                menuItem.getSubItems().add(group);
+                firstLevelSubItems.add(group);
                 children = group.getSubItems();
             } else {
-                children = menuItem.getSubItems();
+                children = firstLevelSubItems;
             }
 
             for (DocumentType type : entry.getValue()) {
@@ -106,9 +108,12 @@ public class DocumentDynamicTypeMenuItemProcessor implements InitializingBean, M
                 item.getParams().put("documentTypeId", type.getId());
                 children.add(item);
             }
-
-            // Sort added items alphabetically
-            Collections.sort(children, COMPARATOR);
+        }
+        Collections.sort(firstLevelSubItems, COMPARATOR);
+        for (MenuItem subItem : firstLevelSubItems) {
+            if(subItem.hasSubItems()){
+                Collections.sort(subItem.getSubItems(), COMPARATOR);
+            }
         }
     }
 

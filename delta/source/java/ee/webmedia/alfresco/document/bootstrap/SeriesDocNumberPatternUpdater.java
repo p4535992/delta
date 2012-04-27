@@ -58,8 +58,4 @@ public class SeriesDocNumberPatternUpdater extends AbstractNodeUpdater {
         behaviourFilter.disableBehaviour(ContentModel.ASPECT_AUDITABLE); // Allows us to set our own modifier and modified values
     }
 
-    @Override
-    protected boolean isRequiresNewTransaction() {
-        return false; // otherwise freezes on addProperties when updating from 2.5.x to 3.5.2
-    }
 }

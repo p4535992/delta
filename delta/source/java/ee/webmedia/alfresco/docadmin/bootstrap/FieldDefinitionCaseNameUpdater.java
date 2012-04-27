@@ -27,11 +27,6 @@ public class FieldDefinitionCaseNameUpdater extends AbstractNodeUpdater {
     private final String fieldDefinitionName = MessageUtil.getMessage("case");
 
     @Override
-    protected boolean isRequiresNewTransaction() {
-        return false;
-    }
-
-    @Override
     protected List<ResultSet> getNodeLoadingResultSet() {
         String query = joinQueryPartsAnd(Arrays.asList(
                 generateTypeQuery(DocumentAdminModel.Types.FIELD),

@@ -3,7 +3,6 @@ package ee.webmedia.alfresco.common.bootstrap;
 import javax.sql.DataSource;
 
 import org.alfresco.repo.module.AbstractModuleComponent;
-import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
@@ -20,17 +19,6 @@ public class CreateContentDataIndexBootstrap extends AbstractModuleComponent {
 
     @Override
     protected void executeInternal() throws Throwable {
-        LOG.info("Executing " + getName());
-        serviceRegistry.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
-            @Override
-            public Void execute() throws Throwable {
-                executeInTransaction();
-                return null;
-            }
-        }, false, true);
-    }
-
-    private void executeInTransaction() {
         LOG.info("Creating database index on alf_content_data table");
         jdbcTemplate.update("CREATE INDEX alf_content_data_url_id ON alf_content_data (content_url_id)");
     }

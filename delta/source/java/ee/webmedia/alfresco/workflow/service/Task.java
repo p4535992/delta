@@ -50,6 +50,12 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
     private Action action = Action.NONE;
     private List<Pair<String, Date>> dueDateHistoryRecords;
     private List<NodeRef> removedFiles;
+    /** If null, indicates that due date history data existence has not been checked and should not be updated in delta_task table */
+    private Boolean hasDueDateHistory;
+    private Boolean originalHasDueDateHistory;
+    /** If null, indicates that file existence has not been checked and should not be updated in delta_task table */
+    private Boolean hasFiles;
+    private Boolean originalHasFiles;
 
     /**
      * Task's index in workflow during last save
@@ -160,6 +166,10 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
 
     public void setOwnerJobTitle(String ownerJobTitle) {
         setProp(WorkflowCommonModel.Props.OWNER_JOB_TITLE, ownerJobTitle);
+    }
+
+    public String getPreviousOwnerId() {
+        return getProp(WorkflowCommonModel.Props.PREVIOUS_OWNER_ID);
     }
 
     public Date getCompletedDateTime() {
@@ -375,7 +385,8 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
 
     @Override
     protected String additionalToString() {
-        return "\n  parent=" + WmNode.toString(getParent()) + "\n  outcomes=" + outcomes;
+        return "";
+        // return "\n  parent=" + WmNode.toString(getParent()) + "\n  outcomes=" + outcomes;
     }
 
     @Override
@@ -492,6 +503,38 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
             removedFiles = new ArrayList<NodeRef>();
         }
         return removedFiles;
+    }
+
+    public void setHasDueDateHistory(boolean hasDueDateHistory) {
+        this.hasDueDateHistory = hasDueDateHistory;
+    }
+
+    public Boolean getHasDueDateHistory() {
+        return hasDueDateHistory;
+    }
+
+    public Boolean getHasFiles() {
+        return hasFiles;
+    }
+
+    public void setHasFiles(Boolean hasFiles) {
+        this.hasFiles = hasFiles;
+    }
+
+    public Boolean getOriginalHasDueDateHistory() {
+        return originalHasDueDateHistory;
+    }
+
+    public void setOriginalHasDueDateHistory(Boolean originalHasDueDateHistory) {
+        this.originalHasDueDateHistory = originalHasDueDateHistory;
+    }
+
+    public Boolean getOriginalHasFiles() {
+        return originalHasFiles;
+    }
+
+    public void setOriginalHasFiles(Boolean originalHasFiles) {
+        this.originalHasFiles = originalHasFiles;
     }
 
 }

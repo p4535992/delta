@@ -8,9 +8,9 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:booleanEvaluator id="workflowBlockEvaluator" value="#{DocumentDialogHelperBean.inWorkspace and !DocumentDialogHelperBean.inEditMode}">
+<h:panelGroup rendered="#{DocumentDialogHelperBean.inWorkspace and !DocumentDialogHelperBean.inEditMode}">
    <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/workflow-block.jsp" />
-</a:booleanEvaluator>
+</h:panelGroup>
 <h:panelGroup rendered="#{DocumentDialogHelperBean.inWorkspace and DocumentDynamicDialog.modalRendered}">
    <h:panelGroup id="dialog-modal-container" binding="#{DocumentDynamicDialog.modalContainer}" />
    <f:verbatim>

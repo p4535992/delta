@@ -41,16 +41,18 @@ import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.BooleanQuery;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.parameters.model.Parameters;
+import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.utils.SearchUtil;
 
 public abstract class AbstractSearchServiceImpl {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AbstractSearchServiceImpl.class);
-    protected static final int RESULTS_LIMIT = 100;
 
     protected DictionaryService dictionaryService;
     protected NodeService nodeService;
     protected GeneralService generalService;
     protected SearchService searchService;
+    protected ParametersService parametersService;
     protected LuceneConfig config;
 
     protected LuceneAnalyser luceneAnalyser;
@@ -228,7 +230,7 @@ public abstract class AbstractSearchServiceImpl {
             results.add(doSearchQuery(sp, queryName));
 
             // Optimization: don't search from other stores if limit is reached
-            if (limit > -1 && results.size() >= RESULTS_LIMIT) {
+            if (limit > -1 && results.size() >= getResultsLimit()) {
                 break;
             }
         }
@@ -260,6 +262,10 @@ public abstract class AbstractSearchServiceImpl {
         this.nodeService = nodeService;
     }
 
+    public void setParametersService(ParametersService parametersService) {
+        this.parametersService = parametersService;
+    }
+
     public void setSearchService(SearchService searchService) {
         this.searchService = searchService;
     }
@@ -275,6 +281,10 @@ public abstract class AbstractSearchServiceImpl {
 
     public LuceneAnalyser getAnalyzer() {
         return luceneAnalyser;
+    }
+
+    public int getResultsLimit() {
+        return parametersService.getLongParameter(Parameters.MAX_SEARCH_RESULT_ROWS).intValue();
     }
 
     private List<Token> getTokens(String queryText) {

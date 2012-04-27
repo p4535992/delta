@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
 
@@ -32,6 +33,9 @@ public abstract class BaseAddAssocEvaluator extends BaseActionEvaluator {
 
     @Override
     public boolean evaluate(Node docNode) {
+        if (docNode != null && !docNode.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)) {
+            return false;
+        }
         if (docNode == null || !new ViewStateActionEvaluator().evaluate(docNode)) {
             return false;
         }

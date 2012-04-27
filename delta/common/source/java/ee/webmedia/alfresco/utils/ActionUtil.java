@@ -42,7 +42,8 @@ public class ActionUtil {
         } else if (c.getChildCount() != 0) { // CommandButton or something else
             for (Object child : c.getChildren()) {
                 if (child instanceof UIParameter && ((UIParameter) child).getName().equals(key)) {
-                    return ((UIParameter) child).getValue().toString();
+                    Object value = ((UIParameter) child).getValue();
+                    return value == null ? null : value.toString();
                 }
             }
         }

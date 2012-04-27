@@ -708,7 +708,11 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
     @Override
     public void save(DocumentDynamic document) {
         ErrandState errandStateHolder = BeanHelper.getPropertySheetStateBean().getStateHolder(ERRAND_STATE_HOLDER_KEY, ErrandState.class);
-        errandStateHolder.calculateValues(document.getNode(), true);
+        // errandStateHolder may be null if save action is not initiated from document dialog.
+        // At present, it is assumed that there is no need to recalculate values when saving not from document dialog.
+        if (errandStateHolder != null) {
+            errandStateHolder.calculateValues(document.getNode(), true);
+        }
     }
 
     public void setParametersService(ParametersService parametersService) {

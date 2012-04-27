@@ -6,7 +6,6 @@ import java.util.Set;
 
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.repo.module.AbstractModuleComponent;
-import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.cmr.security.AuthorityType;
 import org.apache.commons.logging.Log;
@@ -26,16 +25,6 @@ public class SupervisionGroupRestoreBootstrap extends AbstractModuleComponent {
     @Override
     protected void executeInternal() throws Throwable {
         LOG.info("Executing " + getName());
-        serviceRegistry.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
-            @Override
-            public Void execute() throws Throwable {
-                executeInTransaction();
-                return null;
-            }
-        }, false, true);
-    }
-
-    private void executeInTransaction() {
         AuthorityService authorityService = BeanHelper.getAuthorityService();
         Set<String> zones = new HashSet<String>(authorityService.getDefaultZones());
         for (Iterator<String> it = zones.iterator(); it.hasNext();) {

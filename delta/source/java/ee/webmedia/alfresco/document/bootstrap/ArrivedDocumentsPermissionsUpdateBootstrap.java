@@ -11,7 +11,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.alfresco.repo.module.AbstractModuleComponent;
-import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -36,16 +35,6 @@ public class ArrivedDocumentsPermissionsUpdateBootstrap extends AbstractModuleCo
     @Override
     protected void executeInternal() throws Throwable {
         LOG.info("Executing " + getName());
-        serviceRegistry.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
-            @Override
-            public Void execute() throws Throwable {
-                executeInTransaction();
-                return null;
-            }
-        }, false, true);
-    }
-
-    private void executeInTransaction() {
         addPermissions(getAllFolderRefs());
     }
 

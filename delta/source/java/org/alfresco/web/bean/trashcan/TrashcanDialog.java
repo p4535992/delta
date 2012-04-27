@@ -98,7 +98,7 @@ public class TrashcanDialog extends BaseDialogBean implements IContextListener
    private static final String MSG_RECOVERED_ITEM_PARENT_S = "recovered_item_parent_short";
    private static final String MSG_RECOVERED_ITEM_FAILURE_S = "recovered_item_failure_short";
    private static final String MSG_RECOVERY_REASON = "recovery_report_reason";
-   private static final String MSG_LOCATION = "location";
+   private static final String MSG_LOCATION = "original_location";
    private static final String MSG_NAME = "name";
    private final static String MSG_CLOSE = "close";
    
@@ -122,6 +122,12 @@ public class TrashcanDialog extends BaseDialogBean implements IContextListener
    @Override
    public void restored(){
        refresh();
+   }
+   
+   @Override
+   public void init(Map<String, String> parameters) {
+       property.resetFilters();
+       contextUpdated();       
    }
    
    public void setProperty(TrashcanDialogProperty property)
@@ -697,7 +703,7 @@ public class TrashcanDialog extends BaseDialogBean implements IContextListener
            username = property.getUserSearchText();
        }
        if (username != null && username.length() != 0) {
-           generateStringExactQuery(username, ContentModel.PROP_ARCHIVED_BY);
+           queryParts.add(generateStringExactQuery(username, ContentModel.PROP_ARCHIVED_BY));
        }
 
        queryParts.add("ASPECT:\"" + ContentModel.ASPECT_ARCHIVED + "\"");

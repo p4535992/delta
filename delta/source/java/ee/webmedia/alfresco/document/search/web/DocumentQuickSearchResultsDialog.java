@@ -1,17 +1,21 @@
 package ee.webmedia.alfresco.document.search.web;
 
 import java.util.Collections;
+import java.util.List;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.util.Pair;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Hits;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.CreatedOrRegistratedDateComparator;
+import ee.webmedia.alfresco.document.model.Document;
+import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.web.BaseDocumentListDialog;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.utils.ActionUtil;
@@ -41,12 +45,19 @@ public class DocumentQuickSearchResultsDialog extends BaseDocumentListDialog {
     @Override
     public void restored() {
         BeanHelper.getVisitedDocumentsBean().resetVisitedDocuments(documents);
+        if (temporarilyDisableLimiting) {
+            doInitialSearch();
+        }
         doPostSearch();
     }
 
     protected void doInitialSearch() {
         try {
-            documents = getDocumentSearchService().searchDocumentsQuick(searchValue, containerNodeRef);
+            DocumentSearchService documentSearchService = getDocumentSearchService();
+            Pair<List<Document>, Boolean> searchDocumentsQuick = documentSearchService.searchDocumentsQuick(searchValue, containerNodeRef, !temporarilyDisableLimiting);
+            temporarilyDisableLimiting = false;
+            documents = searchDocumentsQuick.getFirst();
+            documentListLimited = searchDocumentsQuick.getSecond();
             Collections.sort(documents, CreatedOrRegistratedDateComparator.getComparator());
         } catch (BooleanQuery.TooManyClauses e) {
             log.error("Quick search of '" + searchValue + "' failed: " + e.getMessage()); // stack trace is logged in the service

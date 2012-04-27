@@ -156,12 +156,6 @@
             <property name="wfc:ownerJobTitle">
                <type>d:text</type>
             </property>
-            <property name="wfc:creatorId">
-               <type>d:text</type>
-            </property>
-            <property name="wfc:creatorEmail">
-               <type>d:text</type>
-            </property>            
          </properties>
          <mandatory-aspects>
             <aspect>wfc:common</aspect>

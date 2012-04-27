@@ -10,6 +10,7 @@ import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
 import ee.webmedia.alfresco.utils.ActionUtil;
@@ -24,6 +25,7 @@ public class FieldDefinitionListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
 
     private List<FieldDefinition> fieldDefinitions;
+    private String searchCriteria;
 
     @Override
     public void init(Map<String, String> params) {
@@ -48,6 +50,18 @@ public class FieldDefinitionListDialog extends BaseDialogBean {
         return null;
     }
 
+    public void search() {
+        if (StringUtils.isBlank(searchCriteria)) {
+            MessageUtil.addInfoMessage("fieldDefinitions_list_search_empty_search");
+            return;
+        }
+        fieldDefinitions = getDocumentAdminService().searchFieldDefinitions(searchCriteria);
+    }
+
+    public void showAll() {
+        restored();
+    }
+
     @Override
     public boolean getFinishButtonDisabled() {
         return false;
@@ -56,6 +70,7 @@ public class FieldDefinitionListDialog extends BaseDialogBean {
     @Override
     public String cancel() {
         fieldDefinitions = null;
+        searchCriteria = null;
         return super.cancel();
     }
 
@@ -73,6 +88,15 @@ public class FieldDefinitionListDialog extends BaseDialogBean {
     public List<FieldDefinition> getFieldDefinitions() {
         return fieldDefinitions;
     }
+
+    public String getSearchCriteria() {
+        return searchCriteria;
+    }
+
+    public void setSearchCriteria(String searchCriteria) {
+        this.searchCriteria = searchCriteria;
+    }
+
     // END: getters / setters
 
 }

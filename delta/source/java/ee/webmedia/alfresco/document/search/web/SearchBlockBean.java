@@ -91,7 +91,8 @@ public class SearchBlockBean implements DocumentDynamicBlock {
     /** @param event from JSP */
     public void setup(ActionEvent event) {
         try {
-            documents = getDocumentSearchService().searchDocumentsAndOrCases(searchValue, regDateTimeBegin, regDateTimeEnd, selectedDocumentTypes, !isBaseDocumentSearch());
+            documents = getDocumentSearchService().searchDocumentsAndOrCases(searchValue, regDateTimeBegin, regDateTimeEnd, selectedDocumentTypes, !isBaseDocumentSearch())
+                    .getFirst();
         } catch (UnableToPerformException e) {
             MessageUtil.addStatusMessage(e);
             documents = Collections.<Document> emptyList();

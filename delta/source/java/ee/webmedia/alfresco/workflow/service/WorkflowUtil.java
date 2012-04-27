@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
@@ -15,6 +16,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.utils.Predicate;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
@@ -607,8 +609,8 @@ public class WorkflowUtil {
         }
         for (Task task : tasks) {
             if (task.isStatus(allowedStatuses)
-                        && StringUtils.isBlank((String) task.getProp(WorkflowSpecificModel.Props.RESOLUTION))
-                        && !WorkflowUtil.isGeneratedByDelegation(task)) {
+                    && StringUtils.isBlank((String) task.getProp(WorkflowSpecificModel.Props.RESOLUTION))
+                    && !WorkflowUtil.isGeneratedByDelegation(task)) {
                 task.setProp(WorkflowSpecificModel.Props.RESOLUTION, workflowResolution);
             }
         }
@@ -637,4 +639,22 @@ public class WorkflowUtil {
             }
         }
     }
+
+    public static Set<Task> getTasks(Set<Task> selectedTasks, List<CompoundWorkflow> compoundWorkflows, Predicate<Task> taskPredicate) {
+        if (compoundWorkflows == null) {
+            return selectedTasks;
+        }
+        for (CompoundWorkflow compoundWorkflow : compoundWorkflows) {
+            for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+                List<Task> tasks = workflow.getTasks();
+                for (Task task : tasks) {
+                    if (taskPredicate.evaluate(task)) {
+                        selectedTasks.add(task);
+                    }
+                }
+            }
+        }
+        return selectedTasks;
+    }
+
 }

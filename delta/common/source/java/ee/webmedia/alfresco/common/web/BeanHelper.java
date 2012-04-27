@@ -127,6 +127,7 @@ import ee.webmedia.alfresco.user.web.UserListDialog;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 import ee.webmedia.alfresco.volume.web.VolumeDetailsDialog;
 import ee.webmedia.alfresco.workflow.search.service.TaskReportFilterService;
+import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImplFSStub;
@@ -656,6 +657,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static DocumentReportFilterService getDocumentReportFilterService() {
         return getService(DocumentReportFilterService.class, DocumentReportFilterService.BEAN_NAME);
+    }
+
+    public static WorkflowDbService getWorkflowDbService() {
+        return getService(WorkflowDbService.class, WorkflowDbService.BEAN_NAME);
     }
 
     // END: delta services

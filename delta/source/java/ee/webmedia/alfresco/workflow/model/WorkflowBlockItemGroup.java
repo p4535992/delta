@@ -10,6 +10,7 @@ import org.apache.commons.collections.Transformer;
 import org.apache.commons.collections.comparators.ComparatorChain;
 import org.apache.commons.collections.comparators.NullComparator;
 import org.apache.commons.collections.comparators.TransformingComparator;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * @author Kaarel Jõgeva
@@ -17,6 +18,7 @@ import org.apache.commons.collections.comparators.TransformingComparator;
 public class WorkflowBlockItemGroup implements Serializable {
     private static final long serialVersionUID = 1L;
     private List<WorkflowBlockItem> items;
+    private List<WorkflowBlockItem> groupedItems;
     private int workflowCount;
 
     public WorkflowBlockItemGroup(List<WorkflowBlockItem> items, int workflowCount) {
@@ -29,6 +31,64 @@ public class WorkflowBlockItemGroup implements Serializable {
             items = new ArrayList<WorkflowBlockItem>(0);
         }
         return items;
+    }
+
+    public List<WorkflowBlockItem> getGroupedItems() {
+        if (items == null) {
+            items = new ArrayList<WorkflowBlockItem>(0);
+        }
+        if (groupedItems == null) {
+            groupedItems = new ArrayList<WorkflowBlockItem>(0);
+            int itemsSize = items.size();
+            WorkflowBlockItem lastGroupItem = null;
+            for (int i = 0; i < itemsSize; i++) {
+                WorkflowBlockItem item = items.get(i);
+                String ownerGroupName = item.getOwnerGroup();
+                if (StringUtils.isBlank(ownerGroupName)) {
+                    // rows with no group are always displayed as separate row and finish previous group, if one exists
+                    if (lastGroupItem != null) {
+                        groupedItems.add(lastGroupItem);
+                        lastGroupItem = null;
+                    }
+                    groupedItems.add(item);
+                } else {
+                    boolean isLastItem = i == itemsSize - 1;
+                    // start new group if two items following each other have same group and same workflow
+                    boolean needStartNewGroup = false;
+                    if (!isLastItem) {
+                        WorkflowBlockItem nextItem = items.get(i + 1);
+                        needStartNewGroup = item.getOwnerGroup().equals(nextItem.getOwnerGroup()) && item.getWorkflowIndex() == nextItem.getWorkflowIndex();
+                    }
+                    if (lastGroupItem == null) {
+                        lastGroupItem = addItemOrGroupItem(lastGroupItem, item, ownerGroupName, needStartNewGroup);
+                    } else {
+                        if (lastGroupItem.getGroupName().equals(ownerGroupName) && lastGroupItem.getGroupWorkflowIndex() == item.getWorkflowIndex()) {
+                            lastGroupItem.getGroupItems().add(item);
+                            if (isLastItem) {
+                                groupedItems.add(lastGroupItem);
+                                lastGroupItem = null;
+                            }
+                        } else {
+                            groupedItems.add(lastGroupItem);
+                            lastGroupItem = null;
+                            lastGroupItem = addItemOrGroupItem(lastGroupItem, item, ownerGroupName, needStartNewGroup);
+                        }
+                    }
+                }
+            }
+
+        }
+        return groupedItems;
+    }
+
+    private WorkflowBlockItem addItemOrGroupItem(WorkflowBlockItem lastGroupItem, WorkflowBlockItem item, String ownerGroupName, boolean needStartNewGroup) {
+        if (needStartNewGroup) {
+            lastGroupItem = new WorkflowBlockItem(ownerGroupName, item.getWorkflowIndex(), item.isRaisedRights());
+            lastGroupItem.getGroupItems().add(item);
+        } else {
+            groupedItems.add(item);
+        }
+        return lastGroupItem;
     }
 
     public void setItems(List<WorkflowBlockItem> items) {

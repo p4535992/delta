@@ -27,6 +27,8 @@ $jQ(document).ready(function(){
    </a:panel>
 </a:booleanEvaluator>
 
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/limited-message-panel.jsp" />
+
 <a:booleanEvaluator id="confirmMoveAssociatedDocumentsEvaluator" value="#{DocumentListDialog.confirmMoveAssociatedDocuments}">
    <f:verbatim>
    <script type="text/javascript">

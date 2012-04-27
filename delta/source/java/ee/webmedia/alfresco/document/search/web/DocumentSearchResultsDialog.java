@@ -23,6 +23,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.ui.common.component.UIActionLink;
@@ -44,6 +45,7 @@ import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
+import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.document.web.BaseDocumentListDialog;
 import ee.webmedia.alfresco.privilege.web.DocPermissionEvaluator;
@@ -80,12 +82,19 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
     @Override
     public void restored() {
         getVisitedDocumentsBean().resetVisitedDocuments(originalDocuments);
+        if (temporarilyDisableLimiting) {
+            doInitialSearch();
+        }
         doPostSearch();
     }
 
     protected void doInitialSearch() {
         try {
-            originalDocuments = getDocumentSearchService().searchDocuments(searchFilter);
+            DocumentSearchService documentSearchService = getDocumentSearchService();
+            Pair<List<Document>, Boolean> searchDocuments = documentSearchService.searchDocuments(searchFilter, !temporarilyDisableLimiting);
+            temporarilyDisableLimiting = false;
+            originalDocuments = searchDocuments.getFirst();
+            documentListLimited = searchDocuments.getSecond();
         } catch (BooleanQuery.TooManyClauses e) {
             Map<QName, Serializable> filterProps = RepoUtil.getNotEmptyProperties(RepoUtil.toQNameProperties(searchFilter.getProperties()));
             // filterProps.remove(DocumentSearchModel.Props.OUTPUT);

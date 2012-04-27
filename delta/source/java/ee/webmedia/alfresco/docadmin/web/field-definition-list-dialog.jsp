@@ -9,6 +9,8 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
+<%@ include file="/WEB-INF/classes/ee/webmedia/alfresco/classificator/web/searchPanel.jsp" %>
+
 <a:panel id="docTypeFields-panel" label="#{msg.fieldDefinitions_list}" styleClass="panel-100 with-pager" >
    <a:richList id="docTypeFieldsList" value="#{FieldDefinitionListDialog.fieldDefinitions}" refreshOnBind="true" var="fd" viewMode="details" 
       pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" initialSortColumn="name">

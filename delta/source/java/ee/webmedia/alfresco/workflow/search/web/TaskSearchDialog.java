@@ -30,7 +30,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
-import ee.webmedia.alfresco.workflow.search.model.TaskInfo;
 import ee.webmedia.alfresco.workflow.search.model.TaskSearchModel;
 import ee.webmedia.alfresco.workflow.search.service.TaskSearchFilterService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
@@ -88,8 +87,7 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
-        List<TaskInfo> tasks = getDocumentSearchService().searchTasks(filter);
-        taskSearchResultsDialog.setup(tasks);
+        taskSearchResultsDialog.setup(filter);
         super.isFinished = false;
         return AlfrescoNavigationHandler.DIALOG_PREFIX + "taskSearchResultsDialog";
     }

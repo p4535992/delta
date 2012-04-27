@@ -96,8 +96,4 @@ public class VolumeTypeUpdater extends AbstractNodeUpdater {
         return new String[] { "volume.nodeRef", "old volumeType", "changed volumeType", "localNames of updated properties (namespace changed from vol to docdyn)" };
     }
 
-    @Override
-    protected boolean isRequiresNewTransaction() {
-        return false; // otherwise freezes on setProperties when updating from 2.5.x to 3.5.2
-    }
 }

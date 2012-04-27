@@ -42,6 +42,7 @@ import ee.webmedia.alfresco.dvk.service.ExternalReviewException;
 import ee.webmedia.alfresco.dvk.service.ExternalReviewException.ExceptionType;
 import ee.webmedia.alfresco.notification.model.NotificationModel;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
@@ -56,6 +57,7 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
 
     private DocumentService documentService;
     private WorkflowService workflowService;
+    private WorkflowDbService workflowDbService;
     private ClassificatorService classificatorService;
     private UserService userService;
     private MimetypeService mimetypeService;
@@ -181,8 +183,10 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
                         }
                         if (taskNewProps.size() > 0) {
                             nodeService.addProperties(task.getNode().getNodeRef(), taskNewProps);
+                            task.getNode().getProperties().putAll(RepoUtil.toStringProperties(taskNewProps));
                         }
                     }
+                    workflowDbService.createTaskEntry(task);
                 }
             }
         }
@@ -339,7 +343,7 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
                     throw new RuntimeException("Failed to decode", e);
                 } catch (IOException e) {
                     throw new RuntimeException("Failed write output to nodeRef=" + nodeRef + " contentUrl="
-                                + writer.getContentUrl(), e);
+                            + writer.getContentUrl(), e);
                 }
                 reportContentCreated(nodeRef, fileName);
             }
@@ -409,6 +413,10 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
 
     public void setWorkflowService(WorkflowService workflowService) {
         this.workflowService = workflowService;
+    }
+
+    public void setWorkflowDbService(WorkflowDbService workflowDbService) {
+        this.workflowDbService = workflowDbService;
     }
 
     public void setClassificatorService(ClassificatorService classificatorService) {

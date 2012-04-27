@@ -117,7 +117,7 @@ public class MsoService1Impl implements MsoService, InitializingBean {
                     return null;
                 }
                 for (Formula formula : output.getModifiedFormulas()) {
-                    if (StringUtils.isBlank(formula.getKey()) || StringUtils.isBlank(formula.getValue())) {
+                    if (StringUtils.isBlank(formula.getKey())) {
                         continue;
                     }
                     formulas.put(formula.getKey(), formula.getValue());

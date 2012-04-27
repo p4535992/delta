@@ -43,14 +43,15 @@ public interface DocumentSearchService {
      * 
      * @param searchString
      * @param containerNodeRef if not null, only documents with given parent container nodeRef are returned
+     * @param limited
      * @return list of matching documents (max 100 entries)
      */
-    List<Document> searchDocumentsQuick(String searchString, NodeRef containerNodeRef);
+    Pair<List<Document>, Boolean> searchDocumentsQuick(String searchString, NodeRef containerNodeRef, boolean limited);
 
     /**
      * @param trySearchCases - if false, case search is not executed, if true, evaluate also other conditions to determine whether to search cases or not
      */
-    List<Document> searchDocumentsAndOrCases(String searchValue, Date regDateTimeBegin, Date regDateTimeEnd, List<String> documentTypes, boolean trySearchCases);
+    Pair<List<Document>, Boolean> searchDocumentsAndOrCases(String searchValue, Date regDateTimeBegin, Date regDateTimeEnd, List<String> documentTypes, boolean trySearchCases);
 
     /**
      * Searches for documents using a search filter.
@@ -61,7 +62,7 @@ public interface DocumentSearchService {
      * @param filter
      * @return list of matching documents (max 100 entries)
      */
-    List<Document> searchDocuments(Node filter);
+    Pair<List<Document>, Boolean> searchDocuments(Node filter, boolean limited);
 
     /**
      * Searches for documents using a search filter.
@@ -105,9 +106,10 @@ public interface DocumentSearchService {
     /**
      * Fetches list of documents where date in regDateTime property is current date
      * 
+     * @param temporarilyDisableLimiting
      * @return list of Document objects
      */
-    List<Document> searchTodayRegisteredDocuments();
+    Pair<List<Document>, Boolean> searchTodayRegisteredDocuments(String searchString, boolean temporarilyDisableLimiting);
 
     /**
      * Fetches a list of documents where recipient or additional recipient is present and docStatus is finished.
@@ -162,7 +164,7 @@ public interface DocumentSearchService {
      * @param filter
      * @return list of matching tasks
      */
-    List<TaskInfo> searchTasks(Node filter);
+    Pair<List<TaskInfo>, Boolean> searchTasks(Node filter, boolean limited);
 
     /**
      * Searches for tasks using a search filter.
@@ -293,6 +295,8 @@ public interface DocumentSearchService {
     int getDiscussionDocumentsCount();
 
     List<Document> searchDueContracts();
+
+    int getResultsLimit();
 
     List<StoreRef> getStoresFromDocumentReportFilter(Map<String, Object> properties);
 

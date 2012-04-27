@@ -321,6 +321,15 @@ public class TrashcanDialogProperty implements Serializable
         return docTypeSearchText;
     }
     
+    public void resetFilters() {
+        setDateFilter(FILTER_DATE_ALL);
+        setUserFilter(FILTER_USER_ALL);
+        setUserSearchText(null);
+        setDocTypeFilter(FILTER_TYPE_ALL);
+        setDocTypeSearchText(null);
+        setSearchText(null);
+    }
+    
     /**
      *@return nodeArchiveService
      */

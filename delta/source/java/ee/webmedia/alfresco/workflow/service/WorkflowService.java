@@ -219,4 +219,18 @@ public interface WorkflowService {
 
     List<CompoundWorkflowDefinition> getUserCompoundWorkflowDefinitions(String userId);
 
+    /**
+     * This method retrieves compound workflow tasks' data from repo, not from delta_task table.
+     * Use ONLY in updater for adding existing tasks to newly created delta_task table!
+     * Don't use for handling compound workflows in Delta!
+     */
+    CompoundWorkflow getCompoundWorkflowFromRepo(NodeRef compoundWorkflowRef);
+
+    /**
+     * This method retrieves compound workflow definition tasks' data from repo, not from delta_task table.
+     * Use ONLY in updater for adding existing tasks to newly created delta_task table!
+     * Don't use for handling compound workflow definitions in Delta!
+     */
+    CompoundWorkflowDefinition getCompoundWorkflowDefinitionFromRepo(NodeRef nodeRef);
+
 }

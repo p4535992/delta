@@ -73,7 +73,7 @@ public class UploadFileInput extends UIInput implements NamingContainer {
                 writer.write("<td>");
                 writer.write("<a class=\"icon-link\" ");
                 writer.write("title=\"" + Application.getMessage(context, "delete") + "\" ");
-                writer.write("style=\"background-image: url(/simdhs/images/icons/delete.gif);\" ");
+                writer.write("style=\"background: url('" + context.getExternalContext().getRequestContextPath() + "/images/icons/delete.gif') no-repeat;\" ");
                 writer.write("onclick=\"");
                 writer.write(Utils.generateFormSubmit(context, this, uniqueId, EVENT_REMOVE + fileCounter));
                 writer.write("\">");
@@ -114,8 +114,8 @@ public class UploadFileInput extends UIInput implements NamingContainer {
         writer.write("</script>\n");
 
         writer.write("\n<input id='" + uniqueId
-                    + "-body:file-input' contentEditable='false' type='file' size='35' name='alfFileInput' onchange='javascript:handle_upload_" +
-                    jsSuffix + "(this)'/>");
+                + "-body:file-input' contentEditable='false' type='file' size='35' name='alfFileInput' onchange='javascript:handle_upload_" +
+                jsSuffix + "(this)'/>");
     }
 
     public boolean hasFiles(List<Object> files) {

@@ -37,7 +37,7 @@
 
    <target name="tomcat-stop" depends="load-conf" description="Stop tomcat server domain">
       <echo message="Stopping Tomcat" />
-      <exec executable="${dir.tomcat}/tomcat${executable.tomcat.extension}" failonerror="true">
+      <exec executable="${dir.tomcat}/tomcat${executable.tomcat.extension}" failonerror="false">
          <arg value="stop" />
       </exec>
    </target>

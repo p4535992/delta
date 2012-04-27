@@ -1415,8 +1415,8 @@ public class TestDataService implements SaveListener {
             if (value == null
                     || (value instanceof String && StringUtils.isBlank((String) value))
                     || (value instanceof List && (((List<?>) value).size() == 0
-                            || (((List<?>) value).size() == 1 && (((List<?>) value).get(0) == null
-                                    || (((List<?>) value).get(0) instanceof String && StringUtils.isBlank((String) ((List<?>) value).get(0)))))))) {
+                    || (((List<?>) value).size() == 1 && (((List<?>) value).get(0) == null
+                    || (((List<?>) value).get(0) instanceof String && StringUtils.isBlank((String) ((List<?>) value).get(0)))))))) {
 
                 // Always fill empty fields that are mandatory; if not mandatory then fill only half of the fields
                 if (!field.isMandatory() && Math.random() < 0.5d) {
@@ -1729,6 +1729,7 @@ public class TestDataService implements SaveListener {
                     props.put(WorkflowSpecificModel.Props.ACTIVE, Boolean.TRUE);
                     getNodeService().addAspect(taskRef, WorkflowSpecificModel.Aspects.RESPONSIBLE, props);
                 }
+                BeanHelper.getWorkflowDbService().createTaskEntry(BeanHelper.getWorkflowService().getTask(taskRef, false), wfRef);
             }
         }
 

@@ -40,6 +40,11 @@ public class RemoveIdenticalContacts extends AbstractModuleComponent {
     private NodeService nodeService;
 
     @Override
+    public boolean isRequiresNewTransaction() {
+        return false;
+    }
+
+    @Override
     protected void executeInternal() throws Throwable {
         LOG.info("Starting RemoveIdenticalContacts updater.");
 

@@ -333,6 +333,7 @@
       <property name="dependsOn">
          <list>
             <ref bean="functionsRootBootstrap" />
+            <ref bean="archivalsStoresBootstrap" />
             <ref bean="volumeTypeAndNamespaceUpdater" />
          </list>
       </property>

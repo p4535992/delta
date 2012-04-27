@@ -153,6 +153,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     private List<Task> finishedReviewTasks;
     private List<Task> finishedOpinionTasks;
     private List<Task> finishedOrderAssignmentTasks;
+    private List<WorkflowBlockItem> groupedWorkflowBlockItems;
     private SignatureTask signatureTask;
     private List<File> removedFiles;
     private String phoneNr;
@@ -184,6 +185,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         finishedReviewTasks = null;
         finishedOpinionTasks = null;
         finishedOrderAssignmentTasks = null;
+        groupedWorkflowBlockItems = null;
         signatureTask = null;
         dataTableGroup = null;
         removedFiles = null;
@@ -194,14 +196,19 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     public void restore() {
         compoundWorkflows = getWorkflowService().getCompoundWorkflows(docRef);
         myTasks = getWorkflowService().getMyTasksInProgress(compoundWorkflows);
+        for (Task task : myTasks) {
+            if (task.getHasFiles() && task.isType(WorkflowSpecificModel.Types.OPINION_TASK)) {
+                addTaskFiles(task);
+            }
+        }
         finishedReviewTasks = WorkflowUtil.getFinishedTasks(compoundWorkflows, WorkflowSpecificModel.Types.REVIEW_TASK);
         finishedOpinionTasks = WorkflowUtil.getFinishedTasks(compoundWorkflows, WorkflowSpecificModel.Types.OPINION_TASK);
         for (Task task : finishedOpinionTasks) {
-            task.getFiles().addAll(getFileService().getAllFilesExcludingDigidocSubitems(task.getNodeRef()));
+            addTaskFiles(task);
         }
         finishedOrderAssignmentTasks = WorkflowUtil.getFinishedTasks(compoundWorkflows, WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK);
         for (Task task : finishedOrderAssignmentTasks) {
-            task.getFiles().addAll(getFileService().getAllFilesExcludingDigidocSubitems(task.getNodeRef()));
+            addTaskFiles(task);
         }
         signatureTask = null;
         removedFiles = null;
@@ -221,6 +228,10 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 }
             }
         }
+    }
+
+    private void addTaskFiles(Task task) {
+        task.getFiles().addAll(getFileService().getAllFilesExcludingDigidocSubitems(task.getNodeRef()));
     }
 
     public boolean isCompoundWorkflowOwner() {
@@ -349,7 +360,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         }
         return null;
     }
-    
+
     public boolean isInWorkspace() {
         return docRef.getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE);
     }
@@ -594,11 +605,22 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     }
 
     public String getReviewNotesPrintUrl() {
-        String requestContextPath = FacesContext.getCurrentInstance().getExternalContext().getRequestContextPath();
+        return getPrintTableUrl(TableMode.REVIEW_NOTES, true);
+    }
+
+    public String getWorkflowGroupTasksUrl() {
+        return getPrintTableUrl(TableMode.WORKFLOW_GROUP_TASKS, false);
+    }
+
+    private String getPrintTableUrl(TableMode mode, boolean addContextPath) {
+        String requestContextPath = "";
+        if (addContextPath) {
+            requestContextPath = FacesContext.getCurrentInstance().getExternalContext().getRequestContextPath();
+        }
         if (!StringUtils.endsWith(requestContextPath, "/")) {
             requestContextPath += "/";
         }
-        return requestContextPath + "printTable?" + PrintTableServlet.TABLE_MODE + "=" + TableMode.REVIEW_NOTES;
+        return requestContextPath + "printTable?" + PrintTableServlet.TABLE_MODE + "=" + mode;
     }
 
     public boolean getOpinionNoteBlockRendered() {
@@ -1108,7 +1130,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     }
 
     public List<WorkflowBlockItem> getWorkflowBlockItems() {
-        List<WorkflowBlockItemGroup> workflows = new ArrayList<WorkflowBlockItemGroup>();
+        List<WorkflowBlockItemGroup> workflowBlockItemGroups = new ArrayList<WorkflowBlockItemGroup>();
         for (CompoundWorkflow cWf : getCompoundWorkflows()) {
             List<WorkflowBlockItem> items = new ArrayList<WorkflowBlockItem>();
             final List<Workflow> wfs = cWf.getWorkflows();
@@ -1125,26 +1147,56 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 }
             }
             Collections.sort(items, WorkflowBlockItem.COMPARATOR);
-            workflows.add(new WorkflowBlockItemGroup(items, wfs.size()));
+            workflowBlockItemGroups.add(new WorkflowBlockItemGroup(items, wfs.size()));
         }
 
-        if (workflows.isEmpty()) {
+        if (workflowBlockItemGroups.isEmpty()) {
             return Collections.<WorkflowBlockItem> emptyList();
         }
 
         // Sort by workflows
-        Collections.sort(workflows, WorkflowBlockItemGroup.COMPARATOR);
+        Collections.sort(workflowBlockItemGroups, WorkflowBlockItemGroup.COMPARATOR);
 
         // Flatten the structure.
-        List<WorkflowBlockItem> items = new ArrayList<WorkflowBlockItem>();
-        for (WorkflowBlockItemGroup workflowBlockItemGroup : workflows) {
-            items.addAll(workflowBlockItemGroup.getItems());
-            items.add(new WorkflowBlockItem(true));
-            items.add(new WorkflowBlockItem(false));
+        groupedWorkflowBlockItems = new ArrayList<WorkflowBlockItem>();
+        int numberInGroupedBlock = 0;
+        String workflowGroupTasksUrl = getWorkflowGroupTasksUrl() + "&amp;" + PrintTableServlet.GROUP_NR_PARAM + "=";
+        for (WorkflowBlockItemGroup workflowBlockItemGroup : workflowBlockItemGroups) {
+            List<WorkflowBlockItem> groupedItems = workflowBlockItemGroup.getGroupedItems();
+            for (WorkflowBlockItem groupedItem : groupedItems) {
+                groupedItem.setWorkflowGroupTasksUrl(workflowGroupTasksUrl + numberInGroupedBlock++);
+            }
+            groupedWorkflowBlockItems.addAll(groupedItems);
+            groupedWorkflowBlockItems.add(new WorkflowBlockItem(true));
+            groupedWorkflowBlockItems.add(new WorkflowBlockItem(false));
+            numberInGroupedBlock += 2;
         }
-        items.remove(items.size() - 1); // remove two last ones
-        items.remove(items.size() - 1);
-        return items;
+        groupedWorkflowBlockItems.remove(groupedWorkflowBlockItems.size() - 1); // remove two last ones
+        groupedWorkflowBlockItems.remove(groupedWorkflowBlockItems.size() - 1);
+        return groupedWorkflowBlockItems;
+    }
+
+    public List<WorkflowBlockItem> getGroupedWorkflowBlockItems() {
+        return groupedWorkflowBlockItems;
+    }
+
+    /** Return groups that have same compund workflow ref, same workflow id and same group name as argument group */
+    public List<WorkflowBlockItem> getSameGroupWorkflowBlockItems(int numberInGroup) {
+        WorkflowBlockItem initiatingWorkflowBlockItem = groupedWorkflowBlockItems.get(numberInGroup);
+        if (!initiatingWorkflowBlockItem.isGroupBlockItem()) {
+            return Collections.singletonList(initiatingWorkflowBlockItem);
+        }
+        NodeRef compoundWorkflowNodeRef = initiatingWorkflowBlockItem.getCompoundWorkflowNodeRef();
+        int workflowIndex = initiatingWorkflowBlockItem.getGroupWorkflowIndex();
+        String groupName = initiatingWorkflowBlockItem.getGroupName();
+        List<WorkflowBlockItem> workflowBlockItems = new ArrayList<WorkflowBlockItem>();
+        for (WorkflowBlockItem item : groupedWorkflowBlockItems) {
+            if (item.isGroupBlockItem() && item.getCompoundWorkflowNodeRef().equals(compoundWorkflowNodeRef) && item.getWorkflowIndex() == workflowIndex
+                    && groupName.equals(item.getGroupName())) {
+                workflowBlockItems.add(item);
+            }
+        }
+        return workflowBlockItems;
     }
 
     public CustomChildrenCreator getNoteBlockRowFileGenerator() {

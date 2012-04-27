@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.alfresco.repo.module.AbstractModuleComponent;
-import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
@@ -31,16 +30,6 @@ public class StorageTypeClassificatorUpdaterBootstrap extends AbstractModuleComp
     @Override
     protected void executeInternal() throws Throwable {
         LOG.info("Executing " + getName());
-        serviceRegistry.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
-            @Override
-            public Void execute() throws Throwable {
-                executeInTransaction();
-                return null;
-            }
-        }, false, true);
-    }
-
-    private void executeInTransaction() {
         final NodeRef nodeRef = generalService.getNodeRef(STORAGE_TYPE_CLASSIFICATOR_PATH);
         if (nodeRef != null) {
             Map<QName, Serializable> props = new HashMap<QName, Serializable>(2);

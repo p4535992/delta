@@ -99,6 +99,10 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
         tasks.add(task);
     }
 
+    protected void addTasks(List<Task> tasks) {
+        this.tasks.addAll(tasks);
+    }
+
     public boolean isAddTaskAllowed() {
         return newTaskTemplate != null && newTaskClass != null;
     }

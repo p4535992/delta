@@ -1,7 +1,6 @@
 package ee.webmedia.alfresco.document.scanned.bootstrap;
 
 import org.alfresco.repo.module.AbstractModuleComponent;
-import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.cmr.security.AuthorityType;
@@ -26,16 +25,7 @@ public class UndoScannedDocumentManagersPermissionsBootstrap extends AbstractMod
     @Override
     protected void executeInternal() throws Throwable {
         LOG.info("Executing " + getName());
-        serviceRegistry.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
-            @Override
-            public Void execute() throws Throwable {
-                executeInTransaction();
-                return null;
-            }
-        }, false, true);
-    }
 
-    public void executeInTransaction() {
         AuthorityService authorityService = serviceRegistry.getAuthorityService();
         PermissionService permissionService = serviceRegistry.getPermissionService();
 

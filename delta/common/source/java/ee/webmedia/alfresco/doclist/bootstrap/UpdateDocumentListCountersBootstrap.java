@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.alfresco.repo.module.AbstractModuleComponent;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
-import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.transaction.TransactionService;
 import org.apache.commons.logging.Log;
@@ -37,13 +36,7 @@ public class UpdateDocumentListCountersBootstrap extends AbstractModuleComponent
         RetryingTransactionHelper retryingTransactionHelper = transactionService.getRetryingTransactionHelper();
         for (final NodeRef nodeRef : roots) {
             LOG.info("Starting to update document list counters under " + nodeRef);
-            retryingTransactionHelper.doInTransaction(new RetryingTransactionCallback<Integer>() {
-                @Override
-                public Integer execute() throws Throwable {
-                    documentListService.updateDocCounters(nodeRef);
-                    return null;
-                }
-            });
+            documentListService.updateDocCounters(nodeRef);
             LOG.info("Completed updating document list counters under " + nodeRef);
         }
     }

@@ -4,8 +4,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import org.alfresco.repo.transaction.RetryingTransactionHelper;
-import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.search.ResultSet;
@@ -42,15 +40,7 @@ public class DeleteSubtypedDocuments extends AbstractNodeUpdater {
     @Override
     protected void executeUpdater() throws Exception {
         super.executeUpdater();
-        RetryingTransactionHelper retryingTransactionHelper = transactionService.getRetryingTransactionHelper();
-        retryingTransactionHelper.doInTransaction(new RetryingTransactionCallback<Integer>() {
-
-            @Override
-            public Integer execute() throws Throwable {
-                documentListService.updateDocCounters();
-                return null;
-            }
-        });
+        documentListService.updateDocCounters();
     }
 
     @Override

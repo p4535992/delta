@@ -2,7 +2,7 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
-   <bean id="notificationParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent" abstract="true">
+   <bean id="searchParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
@@ -14,6 +14,7 @@
       <property name="bootstrapViews">
          <list>
             <props>
+               <prop key="encoding">UTF-8</prop>
                <prop key="path">/param:parameters</prop>
                <prop key="location">ee/webmedia/alfresco/search/bootstrap/search-parameters.xml</prop>
             </props>

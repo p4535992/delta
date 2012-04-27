@@ -12,6 +12,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -42,6 +43,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
@@ -52,6 +54,7 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.ComparableTransformer;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
+import ee.webmedia.alfresco.workflow.model.WorkflowBlockItem;
 import ee.webmedia.alfresco.workflow.service.Task;
 
 /**
@@ -63,6 +66,7 @@ import ee.webmedia.alfresco.workflow.service.Task;
  */
 @SuppressWarnings("deprecation")
 public class PrintTableServlet extends HttpServlet {
+    public static final String GROUP_NR_PARAM = "groupNr";
     private static final long serialVersionUID = 1L;
     public static final String TABLE_MODE = "tableMode";
 
@@ -96,7 +100,8 @@ public class PrintTableServlet extends HttpServlet {
 
     public enum TableMode {
         REVIEW_NOTES,
-        DOCUMENT_FIELD_COMPARE
+        DOCUMENT_FIELD_COMPARE,
+        WORKFLOW_GROUP_TASKS
     }
 
     @Override
@@ -119,6 +124,8 @@ public class PrintTableServlet extends HttpServlet {
                 rows = getReviewNotesData();
             } else if (TableMode.DOCUMENT_FIELD_COMPARE == mode) {
                 rows = getDocumentFieldsData(request);
+            } else if (TableMode.WORKFLOW_GROUP_TASKS == mode) {
+                rows = getWorkflowGroupData(request);
             }
 
             renderRows(out, rows);
@@ -136,6 +143,8 @@ public class PrintTableServlet extends HttpServlet {
             return MessageUtil.getMessage("workflow_task_review_notes");
         case DOCUMENT_FIELD_COMPARE:
             return MessageUtil.getMessage("document_assocsBlockBean_compare");
+        case WORKFLOW_GROUP_TASKS:
+            return MessageUtil.getMessage("workflow_group_tasks");
         }
         return "";
     }
@@ -173,6 +182,9 @@ public class PrintTableServlet extends HttpServlet {
             return Arrays.asList("workflow_task_reviewer_name", "workflow_date", "workflow_task_review_note");
         } else if (TableMode.DOCUMENT_FIELD_COMPARE == mode) {
             return Arrays.asList("document_assocsBlockBean_compare_field", "document_assocsBlockBean_compare_doc1", "document_assocsBlockBean_compare_doc2");
+        } else if (TableMode.WORKFLOW_GROUP_TASKS == mode) {
+            return Arrays.asList("workflow_started", "task_property_due_date", "workflow_creator", "workflow", "task_property_owner", "task_property_resolution",
+                    "task_property_comment_assignmentTask", "workflow_status");
         }
 
         return Collections.<String> emptyList();
@@ -241,6 +253,44 @@ public class PrintTableServlet extends HttpServlet {
         }
 
         return Collections.emptyList();
+    }
+
+    private List<Row> getWorkflowGroupData(HttpServletRequest request) {
+        String groupNrStr = request.getParameter(GROUP_NR_PARAM);
+        int groupNumber = -1;
+        try {
+            groupNumber = Integer.parseInt(groupNrStr);
+        } catch (NumberFormatException e) {
+            throw new RuntimeException("Unable to parse group number from request parameter value=" + groupNrStr);
+        }
+        List<Row> data = new ArrayList<Row>();
+        if (groupNumber >= 0) {
+            List<WorkflowBlockItem> groupedWorkflowBlockItems = BeanHelper.getWorkflowBlockBean().getSameGroupWorkflowBlockItems(groupNumber);
+            List<WorkflowBlockItem> workflowBlockItems = new ArrayList<WorkflowBlockItem>();
+            for (WorkflowBlockItem groupedWorkflowBlockItem : groupedWorkflowBlockItems) {
+                if (groupedWorkflowBlockItem.isGroupBlockItem()) {
+                    workflowBlockItems.addAll(groupedWorkflowBlockItem.getGroupItems());
+                } else {
+                    Collections.singletonList(groupedWorkflowBlockItem);
+                }
+            }
+            @SuppressWarnings("unchecked")
+            Comparator<WorkflowBlockItem> byOwnerComparator = new TransformingComparator(new ComparableTransformer<WorkflowBlockItem>() {
+                @Override
+                public String tr(WorkflowBlockItem item) {
+                    return item.getTaskOwnerName();
+                }
+            }, AppConstants.DEFAULT_COLLATOR);
+            Collections.sort(workflowBlockItems, byOwnerComparator);
+            for (WorkflowBlockItem item : workflowBlockItems) {
+                Date startedDateTime = item.getStartedDateTime();
+                Date dueDate = item.getDueDate();
+                data.add(new Row(asList(startedDateTime != null ? Task.dateTimeFormat.format(startedDateTime) : "",
+                        (dueDate != null ? Task.dateFormat.format(dueDate) : "") + (StringUtils.isNotBlank(item.getDueDateHistory()) ? "<br/>" + item.getDueDateHistory() : ""),
+                        item.getTaskCreatorName(), item.getWorkflowType(), item.getTaskOwnerName(), item.getTaskResolution(), item.getTaskOutcome(), item.getTaskStatus())));
+            }
+        }
+        return data;
     }
 
     private List<Row> getDocumentFieldsData(HttpServletRequest request) {

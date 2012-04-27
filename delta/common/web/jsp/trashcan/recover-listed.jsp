@@ -41,6 +41,18 @@
 </td>
 </tr>
 <tr>
+<td colspan=2 class="mainSubTitle">&nbsp;</td>
+</tr>
+<tr>
+<td colspan=2 class="mainSubTitle">
+</f:verbatim><h:outputText value="#{msg.recover_listed_items_confirm_info}" />
+<f:verbatim>
+</td>
+</tr>
+<tr>
+<td colspan=2 class="mainSubTitle">&nbsp;</td>
+</tr>
+<tr>
 <td colspan=2>
 </f:verbatim><h:outputText value="#{TrashcanRecoverListedItemsDialog.listedItemsTable}" escape="false" />
 <f:verbatim>

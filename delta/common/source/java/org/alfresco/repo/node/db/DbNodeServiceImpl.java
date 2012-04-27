@@ -777,6 +777,7 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
            
         if (requiresDelete)
         {
+            deleteChildDataFromDb(nodeRef, nodeTypeQName);
             // Cascade as required
             if (cascadeInTransaction)
             {
@@ -797,6 +798,10 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
             // The archive performs a move, which will fire the appropriate OnDeleteNode
             invokeOnDeleteNode(childAssocRef, nodeTypeQName, nodeAspectQNames, true);
         }
+    }
+    
+    private void deleteChildDataFromDb(NodeRef nodeRef, QName nodeTypeQName) {
+        BeanHelper.getWorkflowDbService().deleteTasksCascading(nodeRef, nodeTypeQName);
     }
     
     private void deletePrimaryChildren(Pair<Long, NodeRef> nodePair, boolean cascade)

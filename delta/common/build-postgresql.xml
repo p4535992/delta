@@ -29,7 +29,7 @@
    <target name="dropDB" depends="loadDbConf" description="backup db and repo">
       <echo>Dropping database '${db.name}'</echo>
       <sql driver="${db.driver}" password="${db.pgadmin.pass}" url="${db.pgadmin.url}" userid="${db.pgadmin.user}" autocommit="true" onerror="continue">
-         <classpath location="lib/postgresql-8.3-605.jdbc3.jar" />
+         <classpath location="lib/postgresql-9.1-901.jdbc4.jar" />
          DROP DATABASE ${db.name};
       </sql>
    </target>

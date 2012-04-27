@@ -49,6 +49,7 @@ import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.service.DocumentServiceImpl;
 import ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
@@ -164,7 +165,7 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         // assume that current document list contains documents from one location, check location for first document only
         if (!getListCheckboxes().isEmpty()) {
             DocumentDynamic document = getDocumentDynamicService().getDocument(getListCheckboxes().keySet().iterator().next());
-            if (hasSameLocation(document, function, series, volume, caseLabel)) {
+            if (DocumentServiceImpl.PropertyChangesMonitorHelper.hasSameLocation(document, function, series, volume, caseLabel)) {
                 return;
             }
         }
@@ -240,33 +241,6 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         return true;
     }
 
-    private boolean hasSameLocation(DocumentDynamic document, NodeRef function, NodeRef series, NodeRef volume, String caseLabel) {
-        NodeRef docFunction = document.getFunction();
-        if (docFunction == null || !docFunction.equals(function)) {
-            return false;
-        }
-        NodeRef docSeries = document.getSeries();
-        if (docSeries == null || !docSeries.equals(series)) {
-            return false;
-        }
-        NodeRef docVolume = document.getVolume();
-        if (docVolume == null || !docVolume.equals(volume)) {
-            return false;
-        }
-        NodeRef caseRef = document.getCase();
-        boolean hasCaseLabel = !StringUtils.isBlank(caseLabel);
-        if ((caseRef == null && hasCaseLabel) || (caseRef != null && !hasCaseLabel)) {
-            return false;
-        }
-        if (caseRef != null && hasCaseLabel) {
-            Case aCase = BeanHelper.getCaseService().getCaseByNoderef(caseRef);
-            if (!caseLabel.equalsIgnoreCase(aCase.getTitle())) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     public DocumentConfig getConfig() {
         if (config == null) {
             config = getDocumentConfigService().getDocLocationConfig();
@@ -285,7 +259,7 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         } else {// assuming that parentVolume is volume
             parentRef = parentVolume.getNode().getNodeRef();
         }
-        documents = getChildNodes(parentRef);
+        documents = getChildNodes(parentRef, BeanHelper.getDocumentSearchService().getResultsLimit());
         if (documents.size() <= 2000) {// if sorting takes less than ca 6 sec (ca 15ms per document, 400doc*15ms==6sec)
             Collections.sort(documents);// sorting needs properties to be fetched from repo
         }
@@ -293,15 +267,20 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         clearRichList();
     }
 
-    private List<Document> getChildNodes(NodeRef parentRef) {
-        List<ChildAssociationRef> childAssocs = getNodeService().getChildAssocs(parentRef, RegexQNamePattern.MATCH_ALL, RegexQNamePattern.MATCH_ALL);
+    private List<Document> getChildNodes(NodeRef parentRef, int limit) {
+        List<ChildAssociationRef> childAssocs = getNodeService().getChildAssocs(parentRef, RegexQNamePattern.MATCH_ALL, DocumentCommonModel.Types.DOCUMENT);
         List<Document> docsOfParent = new ArrayList<Document>(childAssocs.size());
         for (ChildAssociationRef childAssocRef : childAssocs) {
             NodeRef docRef = childAssocRef.getChildRef();
-            if (!DocumentCommonModel.Types.DOCUMENT.equals(getNodeService().getType(docRef))) { // XXX DLSeadist filter out old document types
-                continue;
-            }
             docsOfParent.add(new Document(docRef));
+            if (!temporarilyDisableLimiting && docsOfParent.size() >= limit) {
+                documentListLimited = true;
+                break;
+            }
+        }
+        if (temporarilyDisableLimiting) {
+            documentListLimited = false;
+            temporarilyDisableLimiting = false;
         }
         return docsOfParent;
     }

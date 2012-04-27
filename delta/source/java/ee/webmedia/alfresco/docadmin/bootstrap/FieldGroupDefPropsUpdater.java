@@ -91,8 +91,4 @@ public class FieldGroupDefPropsUpdater extends AbstractNodeUpdater {
         return new String[] { "fieldGroupDefinition.nodeRef", "fieldGroupDefinition.name" };
     }
 
-    @Override
-    protected boolean isRequiresNewTransaction() {
-        return false;
-    }
 }

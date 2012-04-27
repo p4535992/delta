@@ -83,6 +83,12 @@
                   </h:commandButton>
                </a:panel>
 
+               <a:panel id="constrained-quicksearch-today-registered" styleClass="search-box alt" rendered="#{DialogManager.currentDialog.name eq 'todayRegisteredDocumentsSearchResultsDialog'}">
+                  <h:graphicImage value="/images/parts/search_controls_left.png" width="3" height="21" styleClass="simple" />
+                  <h:inputText value="#{TodayRegisteredDocumentsSearchResultsDialog.searchValue}" maxlength="50" id="constrainedQuickSearch" styleClass="constrainedQuickSearch-input" />
+                  <h:commandButton id="constrainedQuickSearchBtn" value="#{msg.search}" type="submit" actionListener="#{TodayRegisteredDocumentsSearchResultsDialog.setupSearch}" />
+               </a:panel>
+
                <a:panel id="titlebar-dialog-buttons-panel" styleClass="titlebar-buttons" rendered="#{DialogManager.OKButtonVisible || (DialogManager.currentDialog.name eq 'manageGroups' && GroupsDialog.group ne null)}">
                   <r:dialogButtons id="titlebar-dialog-buttons" styleClass="wizardButton" />
                </a:panel>

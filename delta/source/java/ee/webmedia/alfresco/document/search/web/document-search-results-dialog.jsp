@@ -11,6 +11,7 @@
       <h:outputText value="#{DocumentSearchResultsDialog.infoMessage}" />
    </a:panel>
 </a:booleanEvaluator>
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/limited-message-panel.jsp" />
 
 <a:panel id="document-panel" styleClass="panel-100 with-pager" label="#{DocumentSearchResultsDialog.listTitle}" progressive="true">
 

@@ -27,11 +27,6 @@ public class StructUnitFieldTypeUpdater extends AbstractNodeUpdater {
     public static final String ORG_STRUCT_UNIT = "OrgStructUnit";
 
     @Override
-    protected boolean isRequiresNewTransaction() {
-        return false;
-    }
-
-    @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
         String query = SearchUtil.joinQueryPartsAnd(
                 joinQueryPartsOr(

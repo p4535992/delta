@@ -32,16 +32,6 @@ public class NotificationPreferencesUpdater extends AbstractModuleComponent {
     @Override
     protected void executeInternal() throws Throwable {
         LOG.info("Executing " + getName());
-        serviceRegistry.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
-            @Override
-            public Void execute() throws Throwable {
-                executeInTransaction();
-                return null;
-            }
-        }, false, true);
-    }
-
-    private void executeInTransaction() {
         GeneralService generalService = BeanHelper.getGeneralService();
         if (!pathExists(generalService, "/sys:system") || !pathExists(generalService, "/sys:system/sys:people")) {
             LOG.debug("Users parent folder /sys:system/sys:people does not exist, skipping user preferences update.");

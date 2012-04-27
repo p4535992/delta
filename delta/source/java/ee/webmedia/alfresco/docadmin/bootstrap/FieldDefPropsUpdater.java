@@ -85,8 +85,4 @@ public class FieldDefPropsUpdater extends AbstractNodeUpdater {
         return new String[] { "fieldDefinition.nodeRef", "fieldId" };
     }
 
-    @Override
-    protected boolean isRequiresNewTransaction() {
-        return false;
-    }
 }

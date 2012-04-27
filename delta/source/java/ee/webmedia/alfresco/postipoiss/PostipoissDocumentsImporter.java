@@ -1852,7 +1852,7 @@ public class PostipoissDocumentsImporter {
             props.put(DocumentCommonModel.Props.CREATOR_NAME, kes);
             props.put(DocumentCommonModel.Props.EVENT_DESCRIPTION, PostipoissDocumentsMapper.join("; ", nimetus, kelleleTekst, resolutsioon));
             nodeService.createNode(docRef, DocumentCommonModel.Types.DOCUMENT_LOG, DocumentCommonModel.Types.DOCUMENT_LOG,
-                            DocumentCommonModel.Types.DOCUMENT_LOG, props);
+                    DocumentCommonModel.Types.DOCUMENT_LOG, props);
 
             if (!"edastamine täitmiseks".equals(nimetus)) {
                 continue;
@@ -1878,7 +1878,7 @@ public class PostipoissDocumentsImporter {
                 String kelleleTehtud = kellele.elementText("tehtud");
 
                 if (StringUtils.isBlank(kelleleEnimi) || StringUtils.isBlank(kellelePnimi) || StringUtils.isBlank(kelleleIkood) || StringUtils.isBlank(kelleleEmail)
-                            || StringUtils.isBlank(kelleleTahtaeg) || StringUtils.isNotBlank(kelleleTehtud)) {
+                        || StringUtils.isBlank(kelleleTahtaeg) || StringUtils.isNotBlank(kelleleTehtud)) {
                     continue;
                 }
                 if (wfRef == null) {
@@ -1890,12 +1890,12 @@ public class PostipoissDocumentsImporter {
                     props.put(WorkflowCommonModel.Props.STATUS, Status.IN_PROGRESS.getName());
                     props.put(WorkflowCommonModel.Props.STOPPED_DATE_TIME, null);
                     NodeRef cwfRef = getNodeService().createNode(
-                                docRef,
-                                WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW,
-                                WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW,
-                                WorkflowCommonModel.Types.COMPOUND_WORKFLOW,
-                                props
-                                ).getChildRef();
+                            docRef,
+                            WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW,
+                            WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW,
+                            WorkflowCommonModel.Types.COMPOUND_WORKFLOW,
+                            props
+                            ).getChildRef();
 
                     props = new HashMap<QName, Serializable>();
                     props.put(WorkflowCommonModel.Props.CREATOR_NAME, kelleltEnimi + " " + kelleltPnimi);
@@ -1907,12 +1907,12 @@ public class PostipoissDocumentsImporter {
                     props.put(WorkflowCommonModel.Props.STOP_ON_FINISH, Boolean.FALSE);
                     props.put(WorkflowSpecificModel.Props.RESOLUTION, resolutsioon);
                     wfRef = getNodeService().createNode(
-                                cwfRef,
-                                WorkflowCommonModel.Assocs.WORKFLOW,
-                                WorkflowCommonModel.Assocs.WORKFLOW,
-                                WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW,
-                                props
-                                ).getChildRef();
+                            cwfRef,
+                            WorkflowCommonModel.Assocs.WORKFLOW,
+                            WorkflowCommonModel.Assocs.WORKFLOW,
+                            WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW,
+                            props
+                            ).getChildRef();
                 }
 
                 props = new HashMap<QName, Serializable>();
@@ -1951,12 +1951,12 @@ public class PostipoissDocumentsImporter {
                 props.put(WorkflowSpecificModel.Props.COMMENT, "");
 
                 NodeRef taskRef = getNodeService().createNode(
-                            wfRef,
-                            WorkflowCommonModel.Assocs.TASK,
-                            WorkflowCommonModel.Assocs.TASK,
-                            WorkflowSpecificModel.Types.ASSIGNMENT_TASK,
-                            props
-                            ).getChildRef();
+                        wfRef,
+                        WorkflowCommonModel.Assocs.TASK,
+                        WorkflowCommonModel.Assocs.TASK,
+                        WorkflowSpecificModel.Types.ASSIGNMENT_TASK,
+                        props
+                        ).getChildRef();
                 getNodeService().addAspect(taskRef, WorkflowSpecificModel.Aspects.SEARCHABLE, null);
                 if (firstTaskRef == null) {
                     firstTaskRef = taskRef;
@@ -1970,7 +1970,7 @@ public class PostipoissDocumentsImporter {
                 } else {
                     getPrivilegeService().setPermissions(docRef, kelleleIkood, Collections.singleton(Privileges.VIEW_DOCUMENT_FILES));
                 }
-
+                BeanHelper.getWorkflowDbService().createTaskEntry(BeanHelper.getWorkflowService().getTask(taskRef, false), wfRef);
                 docProps.put(DocumentCommonModel.Props.SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS, Boolean.TRUE);
             }
         }
@@ -1980,6 +1980,7 @@ public class PostipoissDocumentsImporter {
             getNodeService().addAspect(firstTaskRef, WorkflowSpecificModel.Aspects.RESPONSIBLE, props);
             String ownerId = (String) getNodeService().getProperty(firstTaskRef, WorkflowCommonModel.Props.OWNER_ID);
             getPrivilegeService().setPermissions(docRef, ownerId, Collections.singleton(Privileges.EDIT_DOCUMENT));
+            BeanHelper.getWorkflowDbService().updateTaskProperties(firstTaskRef, props);
         }
     }
 
@@ -2048,10 +2049,10 @@ public class PostipoissDocumentsImporter {
             CsvWriter writer = new CsvWriter(new FileWriter(postponedAssocsFile, false), CSV_SEPARATOR);
             try {
                 writer.writeRecord(new String[] {
-                            "sourceDocumentId",
-                            "targetDocumentId",
-                            "assocType"
-                    });
+                        "sourceDocumentId",
+                        "targetDocumentId",
+                        "assocType"
+                });
                 for (List<PostponedAssoc> list : postponedAssocsCommited.values()) {
                     for (PostponedAssoc postponedAssoc : list) {
                         writer.writeRecord(new String[] {

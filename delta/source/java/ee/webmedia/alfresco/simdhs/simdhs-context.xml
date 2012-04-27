@@ -12,6 +12,7 @@
    <import resource="classpath:ee/webmedia/alfresco/menu/menu-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/classificator/classificator-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/parameters/parameters-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/search/search-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/orgstructure/organizationStructure-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/cases/case-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/volume/volume-context.xml" />

@@ -6,15 +6,18 @@ import java.util.Map;
 
 import javax.faces.component.UIPanel;
 import javax.faces.context.FacesContext;
+import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * @author Alar Kvell
@@ -29,6 +32,8 @@ public abstract class BaseDocumentListDialog extends BaseDialogBean {
     private transient UIPanel panel;
 
     protected List<Document> documents;
+    protected boolean documentListLimited = false;
+    protected boolean temporarilyDisableLimiting = false;
     private Map<NodeRef, Boolean> listCheckboxes = new HashMap<NodeRef, Boolean>();
 
     @Override
@@ -47,6 +52,7 @@ public abstract class BaseDocumentListDialog extends BaseDialogBean {
     @Override
     public String cancel() {
         documents = null;
+        documentListLimited = false;
         clearRichList();
         listCheckboxes = new HashMap<NodeRef, Boolean>();
         return super.cancel();
@@ -63,12 +69,25 @@ public abstract class BaseDocumentListDialog extends BaseDialogBean {
 
     public abstract String getListTitle();
 
+    public void getAllDocsWithoutLimit(ActionEvent event) {
+        temporarilyDisableLimiting = true;
+        restored();
+    }
+
+    public String getLimitedMessage() {
+        return MessageUtil.getMessage("document_list_limited", BeanHelper.getDocumentSearchService().getResultsLimit());
+    }
+
     public String getInfoMessage() {
         return ""; // Subclasses can override if necessary
     }
 
     public boolean isInfoMessageVisible() {
         return getInfoMessage().length() > 0;
+    }
+
+    public boolean isDocumentListLimited() {
+        return documentListLimited;
     }
 
     public boolean isShowOrgStructColumn() {

@@ -34,7 +34,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.web.app.servlet.BaseServlet;
-import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.app.servlet.ajax.AjaxCommand;
 import org.alfresco.web.app.servlet.ajax.GetCommand;
 import org.alfresco.web.app.servlet.ajax.InvokeCommand;
@@ -114,7 +113,7 @@ public class AjaxServlet extends BaseServlet {
             final String expression = tokens[2];
 
             // setup the faces context
-            final FacesContext facesContext = FacesHelper.getFacesContext(request, response, getServletContext());
+            final FacesContext facesContext = FacesContext.getCurrentInstance();
 
             // start a timer
             if (perfLogger.isDebugEnabled()) {

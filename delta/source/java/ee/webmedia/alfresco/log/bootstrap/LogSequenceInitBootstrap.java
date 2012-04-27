@@ -5,7 +5,6 @@ import java.util.Map;
 import javax.sql.DataSource;
 
 import org.alfresco.repo.module.AbstractModuleComponent;
-import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
@@ -21,16 +20,6 @@ public class LogSequenceInitBootstrap extends AbstractModuleComponent {
     @Override
     protected void executeInternal() throws Throwable {
         LOG.info("Executing " + getName());
-        serviceRegistry.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
-            @Override
-            public Void execute() throws Throwable {
-                executeInTransaction();
-                return null;
-            }
-        }, false, true);
-    }
-
-    private void executeInTransaction() {
         Map<String, Object> result = jdbcTemplate.queryForMap("SELECT delta_log_date.idprefix, to_char(CURRENT_DATE,'YYYYMMDD') AS idprefix_now FROM delta_log_date LIMIT 1");
         String idPrefix = (String) result.get("idprefix");
         String idPrefixNow = (String) result.get("idprefix_now");

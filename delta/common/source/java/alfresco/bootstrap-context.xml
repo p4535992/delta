@@ -384,7 +384,8 @@
             <ref bean="transactionService" />
         </property>
         <property name="moduleService">
-            <ref bean="ModuleService" />
+            <!-- Must use service without interceptors, because ModuleComponentHelper wants to manage transactions itself -->
+            <ref bean="moduleService" />
         </property>
     </bean>
 

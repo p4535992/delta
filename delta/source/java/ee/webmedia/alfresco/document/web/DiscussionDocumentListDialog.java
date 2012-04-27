@@ -13,7 +13,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 public class DiscussionDocumentListDialog extends BaseDocumentListDialog {
     private static final long serialVersionUID = 1L;
 
-
     /** @param event */
     public void setup(ActionEvent event) {
         restored();

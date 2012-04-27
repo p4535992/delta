@@ -23,11 +23,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 public class DocumentTemplateTypeUpdater extends AbstractNodeUpdater {
 
     @Override
-    protected boolean isRequiresNewTransaction() {
-        return false;
-    }
-
-    @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
         List<ResultSet> result = new ArrayList<ResultSet>(2);
         String query = SearchUtil.generateAspectQuery(DocumentTemplateModel.Aspects.TEMPLATE);

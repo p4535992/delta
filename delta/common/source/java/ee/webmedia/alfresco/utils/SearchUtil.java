@@ -471,7 +471,7 @@ public class SearchUtil {
         if (limit < 0) {
             sp.setLimitBy(LimitBy.UNLIMITED);
         } else {
-            sp.setLimit(limit);
+            sp.setLimit(limit + 1);
             sp.setLimitBy(LimitBy.FINAL_SIZE);
         }
         return sp;

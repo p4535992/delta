@@ -1,15 +1,12 @@
 package ee.webmedia.alfresco.document.assignresponsibility.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getAssignResponsibilityService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 
 import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 
 import javax.faces.context.FacesContext;
@@ -17,7 +14,6 @@ import javax.faces.event.ActionEvent;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
-import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
@@ -70,10 +66,6 @@ public class AssignResponsibilityBean implements Serializable {
         String toOwnerId = (String) getNode().getProperties().get(OWNER_ID);
         getAssignResponsibilityService().changeOwnerOfAllDocumentsAndTasks(fromOwnerId, toOwnerId, true);
         leaving = true;
-        Map<QName, Serializable> props = new HashMap<QName, Serializable>(2);
-        props.put(UserModel.Props.LEAVING_DATE_TIME, new Date());
-        props.put(UserModel.Props.LIABILITY_GIVEN_TO_PERSON_ID, toOwnerId);
-        getNodeService().addProperties(getUserService().getCurrentUser(), props);
         MessageUtil.addInfoMessage("assign_responsibility_perform_success", UserUtil.getPersonFullName1(BeanHelper.getUserService().getUserProperties(toOwnerId)));
     }
 

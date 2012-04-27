@@ -20,6 +20,7 @@ import ee.webmedia.alfresco.log.model.LogFilter;
 import ee.webmedia.alfresco.log.model.LogSearchModel;
 import ee.webmedia.alfresco.log.model.LogSetup;
 import ee.webmedia.alfresco.log.service.LogService;
+import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 
@@ -31,6 +32,7 @@ import ee.webmedia.alfresco.utils.WebUtil;
 public class ApplicationLogDialog extends AbstractSearchFilterBlockBean<LogService> {
 
     private static final long serialVersionUID = 1L;
+    private static final String NODEREF_PARAM = "nodeRef";
 
     private LogSetup logSetup;
 
@@ -58,6 +60,12 @@ public class ApplicationLogDialog extends AbstractSearchFilterBlockBean<LogServi
     public void search(@SuppressWarnings("unused") ActionEvent event) {
         getAppLogListDialog().search(getLogService().getLogEntries(getLogFilter()));
         WebUtil.navigateTo("dialog:applicationLogListDialog");
+    }
+
+    public void searchNodeRefEntries(ActionEvent event) {
+        LogFilter filter = new LogFilter();
+        filter.setObjectId(ActionUtil.getParam(event, NODEREF_PARAM));
+        getAppLogListDialog().search(getLogService().getLogEntries(filter));
     }
 
     @Override

@@ -24,6 +24,7 @@ import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
  */
 public class MoveTaskFileToChildAssoc extends AbstractNodeUpdater {
 
+    public static final QName TASK_FILE_PROP_QNAME = QName.createQName(WorkflowSpecificModel.URI, "file");
     private FileService fileService;
     private MimetypeService mimetypeService;
     private ContentService contentService;
@@ -32,14 +33,14 @@ public class MoveTaskFileToChildAssoc extends AbstractNodeUpdater {
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
         String query = SearchUtil.joinQueryPartsAnd(
                 Arrays.asList(SearchUtil.generateTypeQuery(WorkflowCommonModel.Types.TASK),
-                        SearchUtil.generatePropertyNotNullQuery(QName.createQName(WorkflowSpecificModel.URI, "file"))));
+                        SearchUtil.generatePropertyNotNullQuery(TASK_FILE_PROP_QNAME)));
         return Arrays.asList(searchService.query(generalService.getStore(), SearchService.LANGUAGE_LUCENE, query),
                 searchService.query(generalService.getArchivalsStoreRef(), SearchService.LANGUAGE_LUCENE, query));
     }
 
     @Override
     protected String[] updateNode(NodeRef nodeRef) throws Exception {
-        QName propName = QName.createQName(WorkflowSpecificModel.URI, "file");
+        QName propName = TASK_FILE_PROP_QNAME;
         ContentReader reader = contentService.getReader(nodeRef, propName);
         if (reader == null) {
             return new String[] { "contentDataIsNull" };
