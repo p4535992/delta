@@ -505,17 +505,18 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         NodeRef caseRef = documentOriginal.getCase();
         String caseLabel = documentOriginal.getProp(DocumentLocationGenerator.CASE_LABEL_EDITABLE);
         for (DocumentDynamic associatedDocument : associatedDocs) {
-            if (!associatedDocument.getNodeRef().getId().equals(originalDocumentNodeRef.getId())
-                    && !DocumentServiceImpl.PropertyChangesMonitorHelper.hasSameLocation(associatedDocument, functionRef, seriesRef, volumeRef, caseLabel)) {
-                DocumentConfig cfg = documentConfigService.getConfig(associatedDocument.getNode());
-                associatedDocument.setFunction(functionRef);
-                associatedDocument.setSeries(seriesRef);
-                associatedDocument.setVolume(volumeRef);
-                associatedDocument.setCase(caseRef);
-                associatedDocument.setProp(DocumentLocationGenerator.CASE_LABEL_EDITABLE, caseLabel);
-                NodeRef oldNodeRef = associatedDocument.getNodeRef();
-                NodeRef newNodeRef = update(associatedDocument, cfg.getSaveListenerBeanNames()).getNodeRef();
-                originalNodeRefs.add(Pair.newInstance(oldNodeRef, newNodeRef));
+            if (!associatedDocument.getNodeRef().getId().equals(originalDocumentNodeRef.getId())) {
+                if (!DocumentServiceImpl.PropertyChangesMonitorHelper.hasSameLocation(associatedDocument, functionRef, seriesRef, volumeRef, caseLabel)) {
+                    DocumentConfig cfg = documentConfigService.getConfig(associatedDocument.getNode());
+                    associatedDocument.setFunction(functionRef);
+                    associatedDocument.setSeries(seriesRef);
+                    associatedDocument.setVolume(volumeRef);
+                    associatedDocument.setCase(caseRef);
+                    associatedDocument.setProp(DocumentLocationGenerator.CASE_LABEL_EDITABLE, caseLabel);
+                    NodeRef oldNodeRef = associatedDocument.getNodeRef();
+                    NodeRef newNodeRef = update(associatedDocument, cfg.getSaveListenerBeanNames()).getNodeRef();
+                    originalNodeRefs.add(Pair.newInstance(oldNodeRef, newNodeRef));
+                }
             } else {
                 originalDocumentUpdated = update(associatedDocument, saveListenerBeanNames);
             }
