@@ -13,12 +13,12 @@
       <antcall target="dropDB" />
       <echo>Droping database user '${db.username}'</echo>
       <sql driver="${db.driver}" password="${db.pgadmin.pass}" url="${db.pgadmin.url}" userid="${db.pgadmin.user}" autocommit="true" onerror="continue">
-         <classpath location="lib/postgresql-8.3-605.jdbc3.jar" />
+         <classpath location="lib/postgresql-9.1-901.jdbc4.jar" />
          DROP ROLE ${db.username};
       </sql>
       <echo>Creating database user '${db.username}' (with password given by property $${db.password})</echo>
       <sql driver="${db.driver}" password="${db.pgadmin.pass}" url="${db.pgadmin.url}" userid="${db.pgadmin.user}" autocommit="true" onerror="continue">
-         <classpath location="lib/postgresql-8.3-605.jdbc3.jar" />
+         <classpath location="lib/postgresql-9.1-901.jdbc4.jar" />
          CREATE ROLE ${db.username} LOGIN PASSWORD '${db.password}' NOSUPERUSER NOINHERIT NOCREATEDB NOCREATEROLE;
       </sql>
       <antcall target="createDB" />
@@ -37,7 +37,7 @@
    <target name="createDB" depends="loadDbConf" description="backup db and repo">
       <echo>Creating database '${db.name}'</echo>
       <sql driver="${db.driver}" password="${db.pgadmin.pass}" url="${db.pgadmin.url}" userid="${db.pgadmin.user}" autocommit="true" onerror="continue">
-         <classpath location="lib/postgresql-8.3-605.jdbc3.jar" />
+         <classpath location="lib/postgresql-9.1-901.jdbc4.jar" />
          CREATE DATABASE ${db.name} WITH OWNER = ${db.username} ENCODING ='UTF8';
       </sql>
    </target>

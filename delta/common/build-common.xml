@@ -634,7 +634,7 @@
 		<echo>Generating ${name}-ws.jar from ${wsdl}</echo>
 		<delete dir="${project.dir.build}/${name}" failonerror="false" />
 		<taskdef name="xmlbean" classname="org.apache.xmlbeans.impl.tool.XMLBean" classpathref="classpath-generate" />
-		<xmlbean classpathref="classpath-generate" schema="${common.dir.etc}/${wsdl}" javasource="1.6" srconly="true" srcgendir="${project.dir.build}/${name}" classgendir="${project.dir.build}/${name}" noupa="true"  />
+		<xmlbean classpathref="classpath-generate" schema="${common.dir.etc}/${wsdl}" javasource="1.6" srconly="true" srcgendir="${project.dir.build}/${name}" classgendir="${project.dir.build}/${name}" noupa="true" fork="true" />
 		<javac destdir="${project.dir.build}/${name}" classpathref="classpath-generate" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
 			<src path="${project.dir.build}/${name}" />
 		</javac>

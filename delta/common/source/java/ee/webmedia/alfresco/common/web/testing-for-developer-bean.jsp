@@ -406,6 +406,13 @@
 
 <f:verbatim><hr/></f:verbatim>
 
+<h:outputText value="lookBackMinutes: "/>
+<h:inputText value="#{customReindexComponent.lookBackMinutes}" size="6" converter="javax.faces.Integer" />
+<f:verbatim>&nbsp;</f:verbatim>
+<h:commandButton id="searchHolesAndIndex" value="searchHolesAndIndex" type="submit" actionListener="#{TestingForDeveloperBean.searchHolesAndIndex}" />
+
+<f:verbatim><hr/></f:verbatim>
+
 <h:outputText styleClass="mainTitle" value="Arendajale testimiseks"/>
 <f:verbatim><br/></f:verbatim>
 

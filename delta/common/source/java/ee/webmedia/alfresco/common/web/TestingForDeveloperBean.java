@@ -26,6 +26,7 @@ import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.transaction.TransactionService;
 import org.apache.commons.lang.time.FastDateFormat;
 
+import ee.webmedia.alfresco.common.service.CustomReindexComponent;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.utils.ActionUtil;
@@ -205,6 +206,11 @@ public class TestingForDeveloperBean implements Serializable {
         String indexInfoTextWithoutDate = indexInfo.toString() + indexInfo.dumpInfoAsString();
         indexInfoText = dateTimeFormat.format(System.currentTimeMillis()) + "\n" + indexInfoTextWithoutDate;
         LOG.info(indexInfoTextWithoutDate);
+    }
+
+    public void searchHolesAndIndex(ActionEvent event) {
+        CustomReindexComponent customReindexComponent = BeanHelper.getSpringBean(CustomReindexComponent.class, "customReindexComponent");
+        customReindexComponent.reindex();
     }
 
     protected RetryingTransactionHelper getTransactionHelper() {

@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.workflow.service;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -50,6 +51,7 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
     private Action action = Action.NONE;
     private List<Pair<String, Date>> dueDateHistoryRecords;
     private List<NodeRef> removedFiles;
+    private boolean filesLoaded;
     /** If null, indicates that due date history data existence has not been checked and should not be updated in delta_task table */
     private Boolean hasDueDateHistory;
     private Boolean originalHasDueDateHistory;
@@ -385,8 +387,7 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
 
     @Override
     protected String additionalToString() {
-        return "";
-        // return "\n  parent=" + WmNode.toString(getParent()) + "\n  outcomes=" + outcomes;
+        return "\n  parent=" + WmNode.toString(getParent()) + "\n  outcomes=" + outcomes;
     }
 
     @Override
@@ -490,12 +491,27 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
     }
 
     /** Return list of FileWithContentType or File objects */
-    @SuppressWarnings("unchecked")
     public List<Object> getFiles() {
+        return Collections.unmodifiableList(getFilesList());
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Object> getFilesList() {
         if (getNode().getProperties().get(PROP_TEMP_FILES.toString()) == null) {
             getNode().getProperties().put(PROP_TEMP_FILES.toString(), new ArrayList<File>());
         }
         return (ArrayList<Object>) getNode().getProperties().get(PROP_TEMP_FILES.toString());
+    }
+
+    /** Load existing files */
+    public void loadFiles(List<File> list) {
+        getFilesList().addAll(list);
+        filesLoaded = true;
+    }
+
+    public void clearFiles() {
+        getFilesList().clear();
+        filesLoaded = false;
     }
 
     public List<NodeRef> getRemovedFiles() {
@@ -503,6 +519,10 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
             removedFiles = new ArrayList<NodeRef>();
         }
         return removedFiles;
+    }
+
+    public boolean filesLoaded() {
+        return filesLoaded;
     }
 
     public void setHasDueDateHistory(boolean hasDueDateHistory) {

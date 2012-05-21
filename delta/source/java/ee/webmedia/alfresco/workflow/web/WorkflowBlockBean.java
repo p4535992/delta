@@ -203,6 +203,8 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         }
         finishedReviewTasks = WorkflowUtil.getFinishedTasks(compoundWorkflows, WorkflowSpecificModel.Types.REVIEW_TASK);
         finishedOpinionTasks = WorkflowUtil.getFinishedTasks(compoundWorkflows, WorkflowSpecificModel.Types.OPINION_TASK);
+        // jsp:include parameters are not taken in account in list construction if list is not nulled
+        reviewNotesRichList = null;
         for (Task task : finishedOpinionTasks) {
             addTaskFiles(task);
         }
@@ -231,7 +233,9 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     }
 
     private void addTaskFiles(Task task) {
-        task.getFiles().addAll(getFileService().getAllFilesExcludingDigidocSubitems(task.getNodeRef()));
+        if (!task.filesLoaded()) {
+            task.loadFiles(getFileService().getAllFilesExcludingDigidocSubitems(task.getNodeRef()));
+        }
     }
 
     public boolean isCompoundWorkflowOwner() {
@@ -371,6 +375,11 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             Task task = getMyTasks().get(index);
             addRemovedFiles(task);
             getWorkflowService().saveInProgressTask(task);
+            // as service operates on copy of task, we need to clear files lists here also
+            // force reloading files
+            task.clearFiles();
+            // clear removed files
+            task.getRemovedFiles().clear();
             MessageUtil.addInfoMessage("save_success");
         } catch (WorkflowChangedException e) {
             log.debug("Saving task failed", e);

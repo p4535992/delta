@@ -3858,6 +3858,12 @@ public class IndexInfo implements IndexMonitor
                         {
                             position = findMergeIndex(1, mergerMaxMergeDocs, mergerMergeFactor, mergeList);
                         }
+                        if (position >= mergeList.size())
+                        {
+                            g_logger.info("Calculated position " + position + " is larger than mergeList size " + mergeList.size() + ", skipping merge - " + toString()
+                                    + dumpInfoAsString());
+                            return set;
+                        }
                         String firstMergeId = mergeList.get(position).getName();
 
                         long count = 0;

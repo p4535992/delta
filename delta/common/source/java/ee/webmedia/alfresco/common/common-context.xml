@@ -267,6 +267,12 @@
       <property name="dataSource" ref="dataSource" />
    </bean>   
 
+   <bean id="customReindexComponent" class="ee.webmedia.alfresco.common.service.CustomReindexComponent" parent="indexRecoveryComponentBase">
+      <property name="enabled" value="${findHolesAndIndex.enabled}" />
+      <property name="maxRecordSetSize" value="${index.tracking.maxRecordSetSize}" />
+      <property name="maxTransactionsPerLuceneCommit" value="${index.tracking.maxTransactionsPerLuceneCommit}" />
+   </bean>
+
    <!-- START: web beans: -->
 
    <bean id="TestingForDeveloperBean" class="ee.webmedia.alfresco.common.web.TestingForDeveloperBean" scope="session" />

@@ -103,6 +103,9 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
 
     private static final String CONTINUE_VALIDATED_WORKFLOW = "continueValidatedWorkflow";
     private static final String START_VALIDATED_WORKFLOW = "startValidatedWorkflow";
+    private static final String STOP_VALIDATED_WORKFLOW = "stopValidatedWorkflow";
+    private static final String COPY_VALIDATED_WORKFLOW = "copyValidatedWorkflow";
+    private static final String SAVE_VALIDATED_WORKFLOW = "saveValidatedWorkflow";
     private static final long serialVersionUID = 1L;
     public static final String BEAN_NAME = "CompoundWorkflowDialog";
 
@@ -149,12 +152,23 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             return null;
         }
         if (validate(context, isInProgress, false, false)) {
-            if (!askConfirmIfHasSameTask(MessageUtil.getMessage("workflow_compound_save"), DialogAction.SAVING)) {
-                saveCompWorkflow();
-                return outcome;
+            List<String> confirmationMessages = getConfirmationMessages(false);
+            if (confirmationMessages != null && !confirmationMessages.isEmpty()) {
+                updatePanelGroup(confirmationMessages, SAVE_VALIDATED_WORKFLOW);
+                return null;
             }
+            saveValidatedWorkflow(null);
+            return outcome;
+
         }
         return null;
+    }
+
+    public void saveValidatedWorkflow(ActionEvent event) {
+        if (!askConfirmIfHasSameTask(MessageUtil.getMessage("workflow_compound_save"), DialogAction.SAVING)) {
+            saveCompWorkflow();
+            updatePanelGroup();
+        }
     }
 
     @Override
@@ -319,15 +333,17 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         BeanHelper.getDocumentDynamicDialog().switchMode(false); // document metadata might have changed (for example owner)
     }
 
-    private List<String> getConfirmationMessages(boolean isStartWorkflow) {
+    private List<String> getConfirmationMessages(boolean checkDocumentDueDate) {
         NodeService nodeService = BeanHelper.getNodeService();
         NodeRef docRef = compoundWorkflow.getParent();
         Date invoiceDueDate = null;
         Date notInvoiceDueDate = null;
-        if (SystematicDocumentType.INVOICE.isSameType((String) nodeService.getProperty(docRef, DocumentAdminModel.Props.ID))) {
-            invoiceDueDate = (Date) nodeService.getProperty(docRef, DocumentSpecificModel.Props.INVOICE_DUE_DATE);
-        } else {
-            notInvoiceDueDate = (Date) nodeService.getProperty(docRef, DocumentSpecificModel.Props.DUE_DATE);
+        if (checkDocumentDueDate) {
+            if (SystematicDocumentType.INVOICE.isSameType((String) nodeService.getProperty(docRef, DocumentAdminModel.Props.ID))) {
+                invoiceDueDate = (Date) nodeService.getProperty(docRef, DocumentSpecificModel.Props.INVOICE_DUE_DATE);
+            } else {
+                notInvoiceDueDate = (Date) nodeService.getProperty(docRef, DocumentSpecificModel.Props.DUE_DATE);
+            }
         }
         List<String> messages = new ArrayList<String>();
         boolean addedDueDateInPastMsg = false;
@@ -336,20 +352,22 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             for (Task task : workflow.getTasks()) {
                 Date taskDueDate = task.getDueDate();
                 if (taskDueDate != null) {
-                    if (invoiceDueDate != null) {
-                        Date invoiceDueDateMinus3Days = DateUtils.addDays(invoiceDueDate, -3);
-                        if (!DateUtils.isSameDay(invoiceDueDateMinus3Days, taskDueDate) && taskDueDate.after(invoiceDueDateMinus3Days)) {
-                            getAndAddMessage(messages, workflow, taskDueDate, "task_confirm_invoice_task_due_date", invoiceDueDate);
+                    if (checkDocumentDueDate) {
+                        if (invoiceDueDate != null) {
+                            Date invoiceDueDateMinus3Days = DateUtils.addDays(invoiceDueDate, -3);
+                            if (!DateUtils.isSameDay(invoiceDueDateMinus3Days, taskDueDate) && taskDueDate.after(invoiceDueDateMinus3Days)) {
+                                getAndAddMessage(messages, workflow, taskDueDate, "task_confirm_invoice_task_due_date", invoiceDueDate);
+                            }
+                        }
+                        if (notInvoiceDueDate != null) {
+                            if (!DateUtils.isSameDay(notInvoiceDueDate, taskDueDate) && taskDueDate.after(notInvoiceDueDate)) {
+                                getAndAddMessage(messages, workflow, taskDueDate, "task_confirm_not_invoice_task_due_date", notInvoiceDueDate);
+                            }
                         }
                     }
-                    if (!addedDueDateInPastMsg && ((isStartWorkflow || task.isStatus(Status.NEW)) && taskDueDate.before(now))) {
+                    if (!addedDueDateInPastMsg && task.isStatus(Status.NEW) && taskDueDate.before(now)) {
                         messages.add(MessageUtil.getMessage("task_confirm_due_date_in_past"));
                         addedDueDateInPastMsg = true;
-                    }
-                    if (notInvoiceDueDate != null) {
-                        if (!DateUtils.isSameDay(notInvoiceDueDate, taskDueDate) && taskDueDate.after(notInvoiceDueDate)) {
-                            getAndAddMessage(messages, workflow, taskDueDate, "task_confirm_not_invoice_task_due_date", notInvoiceDueDate);
-                        }
                     }
                 }
             }
@@ -374,9 +392,25 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         try {
             preprocessWorkflow();
             if (validate(FacesContext.getCurrentInstance(), false, true, false)) {
+                List<String> confirmationMessages = getConfirmationMessages(false);
+                if (confirmationMessages != null && !confirmationMessages.isEmpty()) {
+                    updatePanelGroup(confirmationMessages, STOP_VALIDATED_WORKFLOW);
+                    return;
+                }
                 compoundWorkflow = getWorkflowService().saveAndStopCompoundWorkflow(compoundWorkflow);
                 MessageUtil.addInfoMessage("workflow_compound_stop_success");
             }
+        } catch (Exception e) {
+            handleException(e, "workflow_compound_stop_workflow_failed");
+        }
+        updatePanelGroup();
+    }
+
+    public void stopValidatedWorkflow(@SuppressWarnings("unused") ActionEvent event) {
+        log.debug("stopValidatedWorkflow");
+        try {
+            compoundWorkflow = getWorkflowService().saveAndStopCompoundWorkflow(compoundWorkflow);
+            MessageUtil.addInfoMessage("workflow_compound_stop_success");
         } catch (Exception e) {
             handleException(e, "workflow_compound_stop_workflow_failed");
         }
@@ -394,7 +428,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                 return;
             }
             if (validate(FacesContext.getCurrentInstance(), true, false, true)) {
-                List<String> confirmationMessages = getConfirmationMessages(false);
+                List<String> confirmationMessages = getConfirmationMessages(true);
                 if (confirmationMessages != null && !confirmationMessages.isEmpty()) {
                     updatePanelGroup(confirmationMessages, CONTINUE_VALIDATED_WORKFLOW);
                     return;
@@ -455,12 +489,31 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         if (validate(FacesContext.getCurrentInstance(), false, false, false)) {
             try {
                 preprocessWorkflow();
+                List<String> confirmationMessages = getConfirmationMessages(false);
+                if (confirmationMessages != null && !confirmationMessages.isEmpty()) {
+                    updatePanelGroup(confirmationMessages, COPY_VALIDATED_WORKFLOW);
+                    return;
+                }
                 compoundWorkflow = getWorkflowService().saveAndCopyCompoundWorkflow(compoundWorkflow);
             } catch (Exception e) {
                 handleException(e, "workflow_compound_copy_workflow_failed");
             }
             updatePanelGroup();
         }
+    }
+
+    /**
+     * Action listener for JSP.
+     */
+    public void copyValidatedWorkflow(@SuppressWarnings("unused") ActionEvent event) {
+        log.debug("copyValidatedWorkflow");
+        try {
+            compoundWorkflow = getWorkflowService().saveAndCopyCompoundWorkflow(compoundWorkflow);
+        } catch (Exception e) {
+            handleException(e, "workflow_compound_copy_workflow_failed");
+        }
+        updatePanelGroup();
+
     }
 
     /**
@@ -703,17 +756,17 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                         && ((wfType.equals(WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW)
                                 && !isAdminOrDocmanagerWithPermission(doc, Privileges.VIEW_DOCUMENT_FILES, Privileges.VIEW_DOCUMENT_META_DATA))
                                 || wfType.equals(WorkflowSpecificModel.Types.OPINION_WORKFLOW)
-                        || wfType.equals(WorkflowSpecificModel.Types.REVIEW_WORKFLOW))) {
+                                || wfType.equals(WorkflowSpecificModel.Types.REVIEW_WORKFLOW))) {
                     continue;
                 }
                 if ((wfType.equals(WorkflowSpecificModel.Types.OPINION_WORKFLOW)
-                            || wfType.equals(WorkflowSpecificModel.Types.CONFIRMATION_WORKFLOW)
-                            || wfType.equals(WorkflowSpecificModel.Types.REVIEW_WORKFLOW))
-                            && !BaseDialogBean.hasPermission(docRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT)) {
+                        || wfType.equals(WorkflowSpecificModel.Types.CONFIRMATION_WORKFLOW)
+                        || wfType.equals(WorkflowSpecificModel.Types.REVIEW_WORKFLOW))
+                        && !BaseDialogBean.hasPermission(docRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT)) {
                     continue;
                 }
                 if (wfType.equals(WorkflowSpecificModel.Types.DOC_REGISTRATION_WORKFLOW)
-                            && !BeanHelper.getUserService().isAdministrator()) {
+                        && !BeanHelper.getUserService().isAdministrator()) {
                     continue;
                 }
                 if (wfType.equals(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW) && !workflowService.externalReviewWorkflowEnabled()) {
@@ -1068,7 +1121,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         private boolean parallelBlockEnded(Task task, int indexInCompoundWorkflow) {
             return indexInCompoundWorkflow != workflowIndex
                     && (insideParallelWorkflow
-                            || (insideParallelBlock && !task.getParent().isType(WorkflowSpecificModel.CAN_START_PARALLEL)));
+                    || (insideParallelBlock && !task.getParent().isType(WorkflowSpecificModel.CAN_START_PARALLEL)));
         }
 
         private void setCheckDate() {

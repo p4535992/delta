@@ -81,6 +81,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ConfigurableApplicationContext;
 
+import ee.webmedia.alfresco.common.service.CustomReindexComponent;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 
 /**
@@ -1557,6 +1558,14 @@ public abstract class AbstractLuceneIndexerAndSearcherFactory implements LuceneI
         }
 
         public void executeInternal(LuceneIndexBackupComponent backupComponent) {
+            CustomReindexComponent customReindexComponent = BeanHelper.getSpringBean(CustomReindexComponent.class, "customReindexComponent");
+            if (customReindexComponent.isEnabled()) {
+                customReindexComponent.setLookBackMinutes(1500); // 25 hours
+                customReindexComponent.reindex();
+            } else {
+                logger.info("Skipping searching holes and indexing, it is disabled");
+            }
+
             final LuceneIndexerAndSearcher indexerAndSearcher = BeanHelper.getSpringBean(LuceneIndexerAndSearcher.class, "admLuceneIndexerAndSearcherFactory");
             RetryingTransactionHelper txHelper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
             List<StoreRef> stores = BeanHelper.getNodeService().getStores();

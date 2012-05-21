@@ -1004,6 +1004,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         for (NodeRef removedFileRef : task.getRemovedFiles()) {
             nodeService.deleteNode(removedFileRef);
         }
+        task.getRemovedFiles().clear();
         List<String> existingDisplayNames = new ArrayList<String>();
         for (Object fileObj : task.getFiles()) {
             if (!(fileObj instanceof FileWithContentType)) {

@@ -44,7 +44,11 @@ import com.csvreader.CsvReader;
 import com.csvreader.CsvWriter;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.utils.ProgressTracker;
 
+/**
+ * @author Alar Kvell
+ */
 public abstract class AbstractNodeUpdater extends AbstractModuleComponent implements InitializingBean {
     protected final Log log = LogFactory.getLog(getClass());
 
@@ -306,8 +310,8 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
 
         public UpdateNodesBatchProgress() {
             origin = nodes;
-            completedSize = completedNodes.size();
             processName = "Nodes updating";
+            progress = new ProgressTracker(completedNodes.size() + origin.size(), completedNodes.size());
         }
 
         @Override
@@ -374,20 +378,11 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         List<E> batchList;
         @SuppressWarnings("hiding")
         int batchSize = AbstractNodeUpdater.this.batchSize;
-        int totalSize;
-        int i;
-        int completedSize;
-        int thisRunCompletedSize;
-        long thisRunStartTime;
-        long startTime;
         String processName;
         File stopFile;
+        ProgressTracker progress;
 
         private void init() {
-            totalSize = completedSize + origin.size();
-            thisRunStartTime = System.currentTimeMillis();
-            startTime = thisRunStartTime;
-            i = 0;
             batchList = new ArrayList<E>(batchSize);
             stopFile = new File(inputFolder, "stop.file");
         }
@@ -416,35 +411,13 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
 
         private void step() {
             executeInTransaction();
-            completedSize += batchList.size();
-            thisRunCompletedSize += batchList.size();
             batchList = new ArrayList<E>(batchSize);
-            long endTime = System.currentTimeMillis();
-            double completedPercent = (completedSize) * 100L / ((double) totalSize);
-            double lastDocsPerSec = (i) * 1000L / ((double) (endTime - startTime));
-            long thisRunTotalTime = endTime - thisRunStartTime;
-            double totalDocsPerSec = (thisRunCompletedSize) * 1000L / ((double) thisRunTotalTime);
-            long remainingSize = ((long) totalSize) - ((long) completedSize);
-            long divisor = (thisRunCompletedSize) * 60000L;
-            int etaMinutes = ((int) (remainingSize * thisRunTotalTime / divisor)) + 1;
-            int etaHours = 0;
-            if (etaMinutes > 59) {
-                etaHours = etaMinutes / 60;
-                etaMinutes = etaMinutes % 60;
-            }
-            String eta = etaMinutes + "m";
-            if (etaHours > 0) {
-                eta = etaHours + "h " + eta;
-            }
-            i = 0;
-            String info = "%s: %6.2f%% completed - %7d of %7d, %5.1f docs per second (last), %5.1f (total), ETA %s";
+            String info = processName + ": " + progress.step(batchList.size());
             int sleepTime2 = getSleepTime();
             if (sleepTime2 > 0) {
                 info += ", sleep n * " + sleepTime2 + " ms";
             }
-            log.info(String.format(info, processName,
-                    completedPercent, completedSize, totalSize, lastDocsPerSec, totalDocsPerSec, eta));
-            startTime = endTime;
+            log.info(info);
         }
 
         public void run() {
@@ -454,8 +427,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
             }
             for (E e : origin) {
                 batchList.add(e);
-                i++;
-                if (i >= batchSize) {
+                if (batchList.size() >= batchSize) {
                     step();
                     if (isStopRequested()) {
                         return;
