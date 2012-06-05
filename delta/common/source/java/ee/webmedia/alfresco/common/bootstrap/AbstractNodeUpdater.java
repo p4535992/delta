@@ -411,13 +411,16 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
 
         private void step() {
             executeInTransaction();
-            batchList = new ArrayList<E>(batchSize);
-            String info = processName + ": " + progress.step(batchList.size());
-            int sleepTime2 = getSleepTime();
-            if (sleepTime2 > 0) {
-                info += ", sleep n * " + sleepTime2 + " ms";
+            String info = progress.step(batchList.size());
+            if (info != null) {
+                info = processName + ": " + info;
+                int sleepTime2 = getSleepTime();
+                if (sleepTime2 > 0) {
+                    info += ", sleep n * " + sleepTime2 + " ms";
+                }
+                log.info(info);
             }
-            log.info(info);
+            batchList = new ArrayList<E>(batchSize);
         }
 
         public void run() {

@@ -53,6 +53,8 @@ import ee.webmedia.alfresco.document.service.DocumentServiceImpl;
 import ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
@@ -193,27 +195,31 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         NodeRef volume = (NodeRef) locationProps.get(DocumentCommonModel.Props.VOLUME.toString());
         String caseLabel = (String) locationProps.get(DocumentLocationGenerator.CASE_LABEL_EDITABLE);
         Set<NodeRef> updatedNodeRefs = new HashSet<NodeRef>();
-        for (Entry<NodeRef, Boolean> entry : getListCheckboxes().entrySet()) {
-            if (!entry.getValue()) {
-                continue;
+        try {
+            for (Entry<NodeRef, Boolean> entry : getListCheckboxes().entrySet()) {
+                if (!entry.getValue()) {
+                    continue;
+                }
+                NodeRef docRef = entry.getKey();
+                if (updatedNodeRefs.contains(docRef)) {
+                    // document was already moved as followup or reply document of some selected document
+                    continue;
+                }
+                DocumentDynamic document = getDocumentDynamicService().getDocument(docRef);
+                DocumentConfig cfg = getDocumentConfigService().getConfig(document.getNode());
+                document.setFunction(function);
+                document.setSeries(series);
+                document.setVolume(volume);
+                document.setCase(null);
+                document.getNode().getProperties().put(DocumentLocationGenerator.CASE_LABEL_EDITABLE.toString(), caseLabel);
+                List<Pair<NodeRef, NodeRef>> updatedRefs = getDocumentDynamicService().updateDocumentGetDocAndNodeRefs(document, cfg.getSaveListenerBeanNames(), true).getSecond();
+                for (Pair<NodeRef, NodeRef> pair : updatedRefs) {
+                    updatedNodeRefs.add(pair.getFirst());
+                    updatedNodeRefs.add(pair.getSecond());
+                }
             }
-            NodeRef docRef = entry.getKey();
-            if (updatedNodeRefs.contains(docRef)) {
-                // document was already moved as followup or reply document of some selected document
-                continue;
-            }
-            DocumentDynamic document = getDocumentDynamicService().getDocument(docRef);
-            DocumentConfig cfg = getDocumentConfigService().getConfig(document.getNode());
-            document.setFunction(function);
-            document.setSeries(series);
-            document.setVolume(volume);
-            document.setCase(null);
-            document.getNode().getProperties().put(DocumentLocationGenerator.CASE_LABEL_EDITABLE.toString(), caseLabel);
-            List<Pair<NodeRef, NodeRef>> updatedRefs = getDocumentDynamicService().updateDocumentGetDocAndNodeRefs(document, cfg.getSaveListenerBeanNames(), true).getSecond();
-            for (Pair<NodeRef, NodeRef> pair : updatedRefs) {
-                updatedNodeRefs.add(pair.getFirst());
-                updatedNodeRefs.add(pair.getSecond());
-            }
+        } catch (UnableToPerformException e) {
+            MessageUtil.addStatusMessage(FacesContext.getCurrentInstance(), e);
         }
         restored();
     }

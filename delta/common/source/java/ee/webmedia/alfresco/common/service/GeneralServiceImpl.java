@@ -735,7 +735,7 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     @Override
     // TODO: current implementation doesn't worry about situation where more than one transaction tries to update documents count on same object
     // (but maybe alfresco prevents it?)
-    public void updateParentContainingDocsCount(final NodeRef parentNodeRef, final QName propertyName, boolean added, Integer count) {
+    public void updateParentContainingDocsCount(final NodeRef parentNodeRef, final QName propertyName, Boolean added, Integer count) {
         if (parentNodeRef == null) {
             return;
         }
@@ -747,7 +747,12 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
 
         int value = Integer.parseInt(valueProperty.toString());
         count = (count == null) ? 1 : count;
-        int newValue = (added) ? value + count : value - count;
+        int newValue;
+        if (added != null) {
+            newValue = (added) ? value + count : value - count;
+        } else {
+            newValue = value + count;
+        }
         if (newValue < 0) {
             newValue = 0;
         }
@@ -766,12 +771,19 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     @Override
     public void deleteNodeRefs(Collection<NodeRef> nodeRefs) {
         for (NodeRef nodeRef : nodeRefs) {
-            nodeService.deleteNode(nodeRef);
+            if (nodeService.exists(nodeRef)) {
+                nodeService.deleteNode(nodeRef);
+            }
         }
     }
 
     @Override
     public void runOnBackground(final RunAsWork<Void> work, final String threadNamePrefix, final boolean createTransaction) {
+        runOnBackground(work, threadNamePrefix, createTransaction, null);
+    }
+
+    @Override
+    public void runOnBackground(final RunAsWork<Void> work, final String threadNamePrefix, final boolean createTransaction, final RunAsWork<Void> workAfterCommit) {
         Assert.notNull(threadNamePrefix, "threadName");
         final String threadName = threadNamePrefix + "-" + backgroundThreadCounter.getAndIncrement();
         AlfrescoTransactionSupport.bindListener(new TransactionListenerAdapter() {
@@ -818,6 +830,14 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
                 log.info("Creating and starting a new background thread: " + threadName);
                 Thread thread = new Thread(runnable, threadName);
                 thread.start();
+
+                if (workAfterCommit != null) {
+                    try {
+                        workAfterCommit.doWork();
+                    } catch (Exception e) {
+                        log.error("Exception in work after commit!", e);
+                    }
+                }
             }
         });
     }

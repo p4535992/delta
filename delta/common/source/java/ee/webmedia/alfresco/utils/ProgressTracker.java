@@ -18,7 +18,7 @@ public class ProgressTracker implements Serializable {
     private long stepCompletedSize = 0;
 
     public ProgressTracker(long totalSize, long completedSize) {
-        Assert.isTrue(totalSize >= 0);
+        Assert.isTrue(totalSize > 0);
         Assert.isTrue(completedSize >= 0);
         Assert.isTrue(completedSize <= totalSize);
         this.totalSize = totalSize;
@@ -31,13 +31,17 @@ public class ProgressTracker implements Serializable {
         stepCompletedSize += i;
         thisRunCompletedSize += i;
         completedSize += i;
-        long now = System.nanoTime() / 1000000L;
-        if (now - stepStartTime < 1000 && completedSize < totalSize) {
+        long stepEndTime = System.nanoTime() / 1000000L;
+        long stepTime = stepEndTime - stepStartTime;
+        if (thisRunCompletedSize <= 0 || (stepTime < 1000 && completedSize < totalSize)) {
             return null;
         }
-        long stepEndTime = now;
+        if (stepTime == 0) {
+            // If completedSize == totalSize, then we still want to display the last info line, even though stepTime = 0, so prevent division by zero
+            stepEndTime++;
+        }
         double completedPercent = completedSize * 100L / ((double) totalSize);
-        double lastDocsPerSec = stepCompletedSize * 1000L / ((double) (stepEndTime - stepStartTime));
+        double lastDocsPerSec = stepCompletedSize * 1000L / ((double) stepTime);
         long thisRunTotalTime = stepEndTime - thisRunStartTime;
         double totalDocsPerSec = thisRunCompletedSize * 1000L / ((double) thisRunTotalTime);
         long remainingSize = totalSize - completedSize;

@@ -254,13 +254,14 @@ public interface GeneralService {
 
     /**
      * Updates parent node containingDocsCount property
+     * If {@code added} is null, then {@code count} is added to current value (negative or positive);
      * 
      * @param parentNodeRef parent to update
      * @param propertyName property name to update
      * @param added should we increase or decrease
      * @param count how many docs were added/removed
      */
-    void updateParentContainingDocsCount(NodeRef parentNodeRef, QName propertyName, boolean added, Integer count);
+    void updateParentContainingDocsCount(NodeRef parentNodeRef, QName propertyName, Boolean added, Integer count);
 
     /**
      * Sets up the writer (mimetype, encoding) and writes contents of the file
@@ -289,6 +290,8 @@ public interface GeneralService {
      * @param threadName name to give the new thread that is created for executing work
      */
     void runOnBackground(final RunAsWork<Void> work, final String threadName, boolean createTransaction);
+
+    void runOnBackground(RunAsWork<Void> work, String threadNamePrefix, boolean createTransaction, RunAsWork<Void> workAfterCommit);
 
     /** Return true if storeRef is primary or additional archivals storeRef */
     boolean isArchivalsStoreRef(StoreRef storeRef);

@@ -332,7 +332,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                 if (se.getMessage().contains("Err001")) {
                     errorKey += "_invalid_file_content";
                 }
-                throw new UnableToPerformException(MessageSeverity.ERROR, errorKey);
+                throw new UnableToPerformException(MessageSeverity.ERROR, errorKey, se);
             } catch (Exception e) {
                 throw new UnableToPerformException(MessageSeverity.ERROR, "template_replace_formulas_failed", e);
             }

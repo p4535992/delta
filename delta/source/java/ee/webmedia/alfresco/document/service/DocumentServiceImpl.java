@@ -50,6 +50,7 @@ import org.alfresco.repo.content.transform.ContentTransformer;
 import org.alfresco.repo.policy.PolicyComponent;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
+import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
 import org.alfresco.service.cmr.dictionary.AspectDefinition;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
@@ -2819,19 +2820,43 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
 
     @Override
     public void updateParentNodesContainingDocsCount(final NodeRef documentNodeRef, final boolean documentAdded) {
-        generalService.runOnBackground(new RunAsWork<Void>() {
+        generalService.updateParentContainingDocsCount(generalService.getAncestorNodeRefWithType(documentNodeRef, CaseModel.Types.CASE),
+                CaseModel.Props.CONTAINING_DOCS_COUNT, documentAdded, null);
+        generalService.updateParentContainingDocsCount(generalService.getAncestorNodeRefWithType(documentNodeRef, VolumeModel.Types.VOLUME),
+                VolumeModel.Props.CONTAINING_DOCS_COUNT, documentAdded, null);
 
-            @Override
-            public Void doWork() throws Exception {
-                generalService.updateParentContainingDocsCount(generalService.getAncestorNodeRefWithType(documentNodeRef, CaseModel.Types.CASE),
-                        CaseModel.Props.CONTAINING_DOCS_COUNT, documentAdded, null);
-                generalService.updateParentContainingDocsCount(generalService.getAncestorNodeRefWithType(documentNodeRef, VolumeModel.Types.VOLUME),
-                        VolumeModel.Props.CONTAINING_DOCS_COUNT, documentAdded, null);
-                generalService.updateParentContainingDocsCount(generalService.getAncestorNodeRefWithType(documentNodeRef, SeriesModel.Types.SERIES),
-                        SeriesModel.Props.CONTAINING_DOCS_COUNT, documentAdded, null);
-                return null;
+        NodeRef seriesRef = generalService.getAncestorNodeRefWithType(documentNodeRef, SeriesModel.Types.SERIES);
+        if (AlfrescoTransactionSupport.getResource("seriesContainingCount") == null) {
+            final Map<NodeRef, Integer> countBySeries = new HashMap<NodeRef, Integer>();
+            countBySeries.put(seriesRef, documentAdded ? 1 : -1);
+            AlfrescoTransactionSupport.bindResource("seriesContainingCount", countBySeries);
+
+            generalService.runOnBackground(new RunAsWork<Void>() {
+
+                @Override
+                public Void doWork() throws Exception {
+                    for (Entry<NodeRef, Integer> entry : countBySeries.entrySet()) {
+                        generalService.updateParentContainingDocsCount(entry.getKey(), SeriesModel.Props.CONTAINING_DOCS_COUNT, null, entry.getValue());
+                    }
+                    return null;
+                }
+            }, "updateSeriesContainingDocsCount", true, new RunAsWork<Void>() {
+
+                @Override
+                public Void doWork() throws Exception {
+                    AlfrescoTransactionSupport.unbindResource("seriesContainingCount");
+                    return null;
+                }
+            });
+        } else {
+            Map<NodeRef, Integer> counts = AlfrescoTransactionSupport.getResource("seriesContainingCount");
+            Integer count = counts.get(seriesRef);
+            if (count == null) {
+                count = 0;
             }
-        }, "updateParentNodesContainingDocsCount", true);
+            count = documentAdded ? (count + 1) : (count - 1);
+            counts.put(seriesRef, count);
+        }
     }
 
     // START: getters / setters
