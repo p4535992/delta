@@ -27,6 +27,7 @@ import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.log.service.DocumentPropertiesChangeHolder;
+import ee.webmedia.alfresco.utils.AdjustableSemaphore;
 
 /**
  * @author Ats Uiboupin
@@ -297,5 +298,8 @@ public interface GeneralService {
     boolean isArchivalsStoreRef(StoreRef storeRef);
 
     NodeRef getExistingNodeRefAllStores(String id);
+
+    /** Run semaphoreCallback code quarded by given semaphore */
+    <T> T runSemaphored(AdjustableSemaphore adjustableSemaphore, ExecuteCallback<T> searchCallback);
 
 }

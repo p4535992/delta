@@ -127,6 +127,29 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
             for (QName removedProp : removedProps) {
                 filter.getProperties().remove(removedProp.toString() + WMUIProperty.AFTER_LABEL_BOOLEAN);
             }
+            setFilterDefaultValues(filter);
+        }
+    }
+
+    private void setFilterDefaultValues(Node filterNode) {
+        long start = System.currentTimeMillis();
+        try {
+            List<FieldDefinition> searchableFields = BeanHelper.getDocumentAdminService().getSearchableFieldDefinitions();
+            Map<String, Object> filterProp = filterNode.getProperties();
+            for (FieldDefinition fieldDefinition : searchableFields) {
+                if (filterProp.containsKey(fieldDefinition.getQName().toString())) {
+                    continue;
+                }
+                PropertyDefinition def = getDocumentConfigService().getPropertyDefinition(filterNode, fieldDefinition.getQName());
+                if (defaultCheckedFields.contains(def.getName().getLocalName())) {
+                    filterProp.put(fieldDefinition.getQName().toString() + WMUIProperty.AFTER_LABEL_BOOLEAN, Boolean.TRUE);
+                }
+                if (def.isMultiValued()) {
+                    filterProp.put(fieldDefinition.getQName().toString(), new ArrayList<Object>());
+                }
+            }
+        } finally {
+            LOG.info("search filter default values: " + (System.currentTimeMillis() - start) + "ms");
         }
     }
 
@@ -181,16 +204,7 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
             transientNode.getProperties().put(DocumentSearchModel.Props.DOCUMENT_TYPE.toString() + WMUIProperty.AFTER_LABEL_BOOLEAN, Boolean.TRUE);
             transientNode.getProperties().put(DocumentSearchModel.Props.SEND_MODE.toString() + WMUIProperty.AFTER_LABEL_BOOLEAN, Boolean.TRUE);
             transientNode.getProperties().put(DocumentSearchModel.Props.DOCUMENT_CREATED.toString() + WMUIProperty.AFTER_LABEL_BOOLEAN, Boolean.TRUE);
-            List<FieldDefinition> searchableFields = BeanHelper.getDocumentAdminService().getSearchableFieldDefinitions();
-            for (FieldDefinition fieldDefinition : searchableFields) {
-                PropertyDefinition def = getDocumentConfigService().getPropertyDefinition(transientNode, fieldDefinition.getQName());
-                if (defaultCheckedFields.contains(def.getName().getLocalName())) {
-                    transientNode.getProperties().put(fieldDefinition.getQName().toString() + WMUIProperty.AFTER_LABEL_BOOLEAN, Boolean.TRUE);
-                }
-                if (def.isMultiValued()) {
-                    transientNode.getProperties().put(fieldDefinition.getQName().toString(), new ArrayList<Object>());
-                }
-            }
+            setFilterDefaultValues(transientNode);
             return transientNode;
         } finally {
             LOG.info("New search filter generation: " + (System.currentTimeMillis() - start) + "ms");

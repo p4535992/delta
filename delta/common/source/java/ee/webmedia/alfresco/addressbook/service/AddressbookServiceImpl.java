@@ -86,6 +86,16 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
     }
 
     @Override
+    public List<AddressbookEntry> listAddressbookEntries(QName type) {
+        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(getAddressbookRoot(), type, RegexQNamePattern.MATCH_ALL);
+        List<AddressbookEntry> addressbooks = new ArrayList<AddressbookEntry>(childRefs.size());
+        for (ChildAssociationRef ref : childRefs) {
+            addressbooks.add(new AddressbookEntry(getNode(ref.getChildRef())));
+        }
+        return addressbooks;
+    }
+
+    @Override
     public List<Node> listContactGroups() {
         return listAddressbookChildren(AddressbookModel.Assocs.CONTACT_GROUPS);
     }

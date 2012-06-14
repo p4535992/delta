@@ -15,6 +15,7 @@ import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.user.model.Authority;
+import ee.webmedia.alfresco.utils.AdjustableSemaphore;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.workflow.search.model.TaskInfo;
 import ee.webmedia.alfresco.workflow.service.Task;
@@ -301,5 +302,7 @@ public interface DocumentSearchService {
     List<StoreRef> getStoresFromDocumentReportFilter(Map<String, Object> properties);
 
     String generateDeletedSearchQuery(String searchValue, NodeRef containerNodeRef);
+
+    AdjustableSemaphore getQuickSearchSemaphore();
 
 }

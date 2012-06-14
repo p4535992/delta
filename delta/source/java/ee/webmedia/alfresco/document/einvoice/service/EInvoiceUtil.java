@@ -16,7 +16,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -64,6 +63,7 @@ public class EInvoiceUtil {
     private static final String EINVOICE_PACKAGE = "ee.webmedia.alfresco.document.einvoice.generated";
     private static JAXBContext eInvoiceJaxbContext = initJaxbContext(EINVOICE_PACKAGE);
     private static Schema eInvoiceJaxbSchema = initSchema("e-invoice_ver1.1.xsd", EInvoice.class);
+    private static final String W3C_XML_SCHEMA_NS_URI = "http://www.w3.org/2001/XMLSchema";
 
     private static final String DIMENSIONS_LIST_PACKAGE = "ee.webmedia.alfresco.document.einvoice.dimensionslist.generated";
     private static final JAXBContext dimensionsListJaxbContext = initJaxbContext(DIMENSIONS_LIST_PACKAGE);
@@ -152,7 +152,7 @@ public class EInvoiceUtil {
 
     public static Schema initSchema(String xsd, Class<?> clazz) {
         try {
-            SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+            SchemaFactory schemaFactory = SchemaFactory.newInstance(W3C_XML_SCHEMA_NS_URI);
             Schema schema = schemaFactory.newSchema(new StreamSource(clazz.getResourceAsStream(xsd)));
             return schema;
         } catch (Exception e) {

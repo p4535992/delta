@@ -410,6 +410,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
     private void setFailV2Properties(FailV2 failSisuga, File file) {
         failSisuga.setPealkiri(getNullIfEmpty(file.getDisplayName()));
         failSisuga.setMuutmiseAeg(convertToXMLGergorianCalendar(file.getModified()));
+        failSisuga.setId(file.getNodeRef().toString());
     }
 
     private List<SeotudDokument> getSeotudDokumentList(NodeRef document, Set<String> documentTypeIds) {

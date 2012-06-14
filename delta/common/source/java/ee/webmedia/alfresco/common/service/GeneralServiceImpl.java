@@ -79,6 +79,7 @@ import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.upload.UploadFileInput.FileWithContentType;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.log.service.DocumentPropertiesChangeHolder;
+import ee.webmedia.alfresco.utils.AdjustableSemaphore;
 import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
@@ -773,6 +774,34 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
         for (NodeRef nodeRef : nodeRefs) {
             if (nodeService.exists(nodeRef)) {
                 nodeService.deleteNode(nodeRef);
+            }
+        }
+    }
+
+    @Override
+    public <T> T runSemaphored(AdjustableSemaphore semaphore, ExecuteCallback<T> semaphoredCallback) {
+        boolean semaphoreAcquired = false;
+        try {
+            long start = System.nanoTime();
+
+            semaphore.acquire();
+            semaphoreAcquired = true;
+
+            long stop = System.nanoTime();
+            long duration = CalendarUtil.duration(start, stop);
+            if (duration > 20) {
+                log.info("Semaphore wait " + duration + " ms, " + semaphore.getMaxPermits() + " max permits allowed");
+            }
+
+            log.debug("Semaphore aquired.");
+            return semaphoredCallback.execute();
+        } catch (InterruptedException e) {
+            // TODO: is this correct? Should never happen under normal conditions
+            return null;
+        } finally {
+            if (semaphoreAcquired) {
+                semaphore.release();
+                log.debug("Semaphore released.");
             }
         }
     }

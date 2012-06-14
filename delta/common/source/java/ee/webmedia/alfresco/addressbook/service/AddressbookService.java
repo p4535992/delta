@@ -37,6 +37,8 @@ public interface AddressbookService {
      */
     List<Node> listOrganization();
 
+    List<AddressbookEntry> listAddressbookEntries(QName type);
+
     /**
      * @return list of nodes of type ab:contactGroups
      */

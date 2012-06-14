@@ -13,7 +13,9 @@ import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
+import ee.webmedia.alfresco.addressbook.service.AddressbookEntry;
 import ee.webmedia.alfresco.addressbook.util.AddressbookUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
@@ -23,9 +25,9 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 public class AddressbookListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
     public static final String BEAN_NAME = "AddressbookListDialog";
-    private List<Node> organizations = Collections.<Node> emptyList();
-    private List<Node> orgPeople = Collections.<Node> emptyList();
-    private List<Node> people = Collections.<Node> emptyList();
+    private List<AddressbookEntry> organizations = Collections.emptyList();
+    private List<AddressbookEntry> orgPeople = Collections.emptyList();
+    private List<AddressbookEntry> people = Collections.emptyList();
     private String searchCriteria = "";
 
     @Override
@@ -68,35 +70,35 @@ public class AddressbookListDialog extends BaseDialogBean {
      */
     public String showAll() {
         setSearchCriteria("");
-        setOrgPeople(Collections.<Node> emptyList());
-        setOrganizations(getAddressbookService().listOrganization());
-        setPeople(getAddressbookService().listPerson());
+        setOrgPeople(new ArrayList<AddressbookEntry>());
+        setOrganizations(getAddressbookService().listAddressbookEntries(AddressbookModel.Assocs.ORGANIZATIONS));
+        setPeople(getAddressbookService().listAddressbookEntries(AddressbookModel.Assocs.ABPEOPLE));
         return null;
     }
 
     public String search() {
         List<Node> a = getAddressbookService().search(getSearchCriteria(), -1);
-        setOrganizations(new ArrayList<Node>());
-        setPeople(new ArrayList<Node>());
-        setOrgPeople(new ArrayList<Node>());
+        setOrganizations(new ArrayList<AddressbookEntry>());
+        setPeople(new ArrayList<AddressbookEntry>());
+        setOrgPeople(new ArrayList<AddressbookEntry>());
         for (Node node : a) {
             if (node.getType().equals(Types.ORGANIZATION)) {
-                getOrganizations().add(node);
+                getOrganizations().add(new AddressbookEntry(node));
             } else if (node.getType().equals(Types.PRIV_PERSON)) {
-                getPeople().add(node);
+                getPeople().add(new AddressbookEntry(node));
             } else if (node.getType().equals(Types.ORGPERSON)) {
                 node.addPropertyResolver("parentOrgName", AddressbookUtil.resolverParentOrgName);
                 node.addPropertyResolver("parentOrgRef", AddressbookUtil.resolverParentOrgRef);
-                getOrgPeople().add(node);
+                getOrgPeople().add(new AddressbookEntry(node));
             }
         }
         return null;
     }
 
     protected void reset() {
-        orgPeople = Collections.<Node> emptyList();
-        organizations = Collections.<Node> emptyList();
-        people = Collections.<Node> emptyList();
+        orgPeople = Collections.emptyList();
+        organizations = Collections.emptyList();
+        people = Collections.emptyList();
         searchCriteria = "";
     }
 
@@ -105,11 +107,11 @@ public class AddressbookListDialog extends BaseDialogBean {
         return this;
     }
 
-    public List<Node> getOrgPeople() {
+    public List<AddressbookEntry> getOrgPeople() {
         return orgPeople;
     }
 
-    public void setOrgPeople(List<Node> list) {
+    public void setOrgPeople(List<AddressbookEntry> list) {
         orgPeople = list;
     }
 
@@ -121,20 +123,19 @@ public class AddressbookListDialog extends BaseDialogBean {
         this.searchCriteria = searchCriteria;
     }
 
-    public List<Node> getOrganizations() {
+    public List<AddressbookEntry> getOrganizations() {
         return organizations;
     }
 
-    public void setOrganizations(List<Node> organizations) {
+    public void setOrganizations(List<AddressbookEntry> organizations) {
         this.organizations = organizations;
     }
 
-    public List<Node> getPeople() {
+    public List<AddressbookEntry> getPeople() {
         return people;
     }
 
-    public void setPeople(List<Node> people) {
+    public void setPeople(List<AddressbookEntry> people) {
         this.people = people;
     }
-
 }

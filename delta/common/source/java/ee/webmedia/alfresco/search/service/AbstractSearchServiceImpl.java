@@ -40,9 +40,12 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.BooleanQuery;
 
+import ee.webmedia.alfresco.common.service.ExecuteCallback;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
+import ee.webmedia.alfresco.utils.AdjustableSemaphore;
 import ee.webmedia.alfresco.utils.SearchUtil;
 
 public abstract class AbstractSearchServiceImpl {
@@ -111,6 +114,11 @@ public abstract class AbstractSearchServiceImpl {
         if (StringUtils.isBlank(searchString)) {
             return new Pair<List<String>, List<Date>>(searchWords, searchDates);
         }
+        Long maxWords = BeanHelper.getParametersService().getLongParameter(Parameters.QUICK_SEARCH_WORDS_COUNT);
+        if (maxWords == null || maxWords < 1 || maxWords > 10) {
+            // TODO: is this valid default maximum value?
+            maxWords = 10L;
+        }
         for (String searchWord : searchString.split("\\s")) {
             if (parseDates) {
                 Date date = null;
@@ -118,7 +126,7 @@ public abstract class AbstractSearchServiceImpl {
                     date = userDateFormat.parse(searchWord);
                     // if not date, then ParseException is thrown and processing continues below as regular word
 
-                    if (searchWords.size() + searchDates.size() >= 10) {
+                    if (searchWords.size() + searchDates.size() >= maxWords) {
                         continue;
                     }
                     if (log.isDebugEnabled()) {
@@ -141,7 +149,7 @@ public abstract class AbstractSearchServiceImpl {
             String searchWordStripped = SearchUtil.stripCustom(SearchUtil.replaceCustom(searchWord, ""));
             for (Token token : getTokens(searchWordStripped)) {
                 String termText = token.term();
-                if (termText.length() >= minTextLength && searchWords.size() + searchDates.size() < 10) {
+                if (termText.length() >= minTextLength && searchWords.size() + searchDates.size() < maxWords) {
                     termText = QueryParser.escape(termText);
 
                     boolean exists = false;
@@ -176,7 +184,11 @@ public abstract class AbstractSearchServiceImpl {
     }
 
     protected List<NodeRef> searchNodes(String query, int limit, String queryName, StoreRef storeRef) {
-        ResultSet resultSet = doSearch(query, limit, queryName, storeRef);
+        return searchNodes(query, limit, queryName, storeRef, null);
+    }
+
+    protected List<NodeRef> searchNodes(String query, int limit, String queryName, StoreRef storeRef, AdjustableSemaphore adjustableSemaphore) {
+        ResultSet resultSet = doSearch(query, limit, queryName, storeRef, adjustableSemaphore);
         try {
             List<NodeRef> limitResults = limitResults(resultSet.getNodeRefs(), limit);
             return removeNonExistingNodeRefs(limitResults);
@@ -214,27 +226,55 @@ public abstract class AbstractSearchServiceImpl {
      * @return query resultset
      */
     protected ResultSet doSearch(String query, int limit, String queryName, StoreRef storeRef) {
-        SearchParameters sp = generateLuceneSearchParams(query, storeRef == null ? generalService.getStore() : storeRef, limit);
-        return doSearchQuery(sp, queryName);
+        return doSearch(query, limit, queryName, storeRef, null);
+    }
+
+    protected final ResultSet doSearch(String query, int limit, final String queryName, StoreRef storeRef, AdjustableSemaphore adjustableSemaphore) {
+        final SearchParameters sp = generateLuceneSearchParams(query, storeRef == null ? generalService.getStore() : storeRef, limit);
+        ExecuteCallback<ResultSet> searchCallback = new ExecuteCallback<ResultSet>() {
+            @Override
+            public ResultSet execute() {
+                return doSearchQuery(sp, queryName);
+            }
+        };
+        return runSemaphored(adjustableSemaphore, searchCallback);
+    }
+
+    private <T> T runSemaphored(AdjustableSemaphore adjustableSemaphore, ExecuteCallback<T> searchCallback) {
+        if (adjustableSemaphore != null) {
+            return BeanHelper.getGeneralService().runSemaphored(adjustableSemaphore, searchCallback);
+        }
+        return searchCallback.execute();
     }
 
     protected List<ResultSet> doSearches(String query, int limit, String queryName, Collection<StoreRef> storeRefs) {
-        SearchParameters sp = generateLuceneSearchParams(query, null, limit);
+        return doSearches(query, limit, queryName, storeRefs, null);
+    }
+
+    protected final List<ResultSet> doSearches(String query, final int limit, final String queryName, Collection<StoreRef> storeRefs, AdjustableSemaphore semaphore) {
+        final SearchParameters sp = generateLuceneSearchParams(query, null, limit);
         if (storeRefs == null || storeRefs.size() == 0) {
             storeRefs = Arrays.asList(generalService.getStore());
         }
-        final List<ResultSet> results = new ArrayList<ResultSet>(storeRefs.size());
-        for (StoreRef storeRef : storeRefs) {
-            sp.getStores().clear();
-            sp.addStore(storeRef);
-            results.add(doSearchQuery(sp, queryName));
+        final Collection<StoreRef> stores = (storeRefs == null || storeRefs.size() == 0) ? Arrays.asList(generalService.getStore()) : storeRefs;
+        ExecuteCallback<List<ResultSet>> searchCallback = new ExecuteCallback<List<ResultSet>>() {
+            @Override
+            public List<ResultSet> execute() {
+                List<ResultSet> results = new ArrayList<ResultSet>(stores.size());
+                for (StoreRef storeRef : stores) {
+                    sp.getStores().clear();
+                    sp.addStore(storeRef);
+                    results.add(doSearchQuery(sp, queryName));
 
-            // Optimization: don't search from other stores if limit is reached
-            if (limit > -1 && results.size() >= getResultsLimit()) {
-                break;
+                    // Optimization: don't search from other stores if limit is reached
+                    if (limit > -1 && results.size() >= getResultsLimit()) {
+                        break;
+                    }
+                }
+                return results;
             }
-        }
-        return results;
+        };
+        return runSemaphored(semaphore, searchCallback);
     }
 
     protected ResultSet doSearchQuery(SearchParameters sp, String queryName) {

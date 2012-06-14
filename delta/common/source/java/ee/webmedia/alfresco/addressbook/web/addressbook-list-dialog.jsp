@@ -63,15 +63,15 @@ function updateButtonState()
                               <f:facet name="header">
                                  <a:sortLink id="ab-org-list-sort" label="#{msg.name}" value="name" mode="case-insensitive" />
                               </f:facet>
-                              <a:booleanEvaluator id="ab-org-list-eval1" value="#{r['ab:activeStatus']}">
+                              <a:booleanEvaluator id="ab-org-list-eval1" value="#{r.node['ab:activeStatus']}">
                                  <h:graphicImage id="ab-org-list-eval1-img" url="/images/icons/person.gif" />
                               </a:booleanEvaluator>
-                              <a:booleanEvaluator id="ab-org-list-eval2" value="#{!r['ab:activeStatus']}">
+                              <a:booleanEvaluator id="ab-org-list-eval2" value="#{!r.node['ab:activeStatus']}">
                                  <h:graphicImage id="ab-org-list-eval2-img" url="/images/icons/error.gif" />
                               </a:booleanEvaluator>
-                              <a:actionLink id="ab-org-list-link1" value="#{r['ab:orgName']} (#{r['ab:orgAcronym']})" showLink="false"
+                              <a:actionLink id="ab-org-list-link1" value="#{r.node['ab:orgName']} (#{r.node['ab:orgAcronym']})" showLink="false"
                                  action="dialog:addressbookOrgDetails" actionListener="#{AddressbookOrgDetailsDialog.setupViewEntry}">
-                                 <f:param id="ab-org-list-param1" name="nodeRef" value="#{r.nodeRef}" />
+                                 <f:param id="ab-org-list-param1" name="nodeRef" value="#{r.node.nodeRef}" />
                               </a:actionLink>
                            </a:column>
                            
@@ -80,7 +80,7 @@ function updateButtonState()
                               <f:facet name="header">
                                  <h:outputText value="#{msg.document_email}" />
                               </f:facet>
-                              <h:outputText id="ab-org-list-email" value="#{r['ab:email']}" />
+                              <h:outputText id="ab-org-list-email" value="#{r.node['ab:email']}" />
                            </a:column>
                            
                            <%-- DVK --%>
@@ -88,7 +88,7 @@ function updateButtonState()
                               <f:facet name="header">
                                  <h:outputText value="#{msg.addressbook_dvk_capable}" />
                               </f:facet>
-                              <h:outputText id="ab-org-list-dvk" value="#{r['ab:dvkCapable']}">
+                              <h:outputText id="ab-org-list-dvk" value="#{r.node['ab:dvkCapable']}">
                                  <a:convertBoolean />
                               </h:outputText>
                            </a:column>
@@ -103,14 +103,14 @@ function updateButtonState()
                               <r:permissionEvaluator value="#{AddressbookService.addressbookRoot}" allow="WriteProperties">
                                  <a:actionLink id="ab-org-list-link-mod" value="#{msg.modify}" image="/images/icons/edituser.gif" showLink="false"
                                     action="dialog:addressbookAddEdit" actionListener="#{AddressbookAddEditDialog.setupEdit}">
-                                    <f:param id="ab-org-list-link-mod-param" name="nodeRef" value="#{r.nodeRef}" />
+                                    <f:param id="ab-org-list-link-mod-param" name="nodeRef" value="#{r.node.nodeRef}" />
                                  </a:actionLink>
                               </r:permissionEvaluator>
 <!--                               TODO use new deleteDialog here -->
                               <r:permissionEvaluator id="ab-org-list-deleteEval" value="#{AddressbookService.addressbookRoot}" allow="DeleteNode">
                                  <a:actionLink value="#{msg.delete}" image="/images/icons/delete_person.gif" showLink="false" action="dialog:deleteDialog"
                                     actionListener="#{DeleteDialog.setupDeleteDialog}">
-                                    <f:param name="nodeRef" value="#{r.nodeRef}" />
+                                    <f:param name="nodeRef" value="#{r.node.nodeRef}" />
                                     <f:param name="confirmMessagePlaceholder0" value="#{actionContext.name}" />
                                     <f:param name="showObjectData" value="true" />
                                     <f:param name="showConfirm" value="false" />
@@ -136,15 +136,15 @@ function updateButtonState()
                               <f:facet name="header">
                                  <a:sortLink id="ab-people-list-sort" label="#{msg.name}" value="name" mode="case-insensitive" styleClass="header" />
                               </f:facet>
-                              <a:booleanEvaluator id="ab-people-list-eval1" value="#{r['ab:activeStatus']}">
+                              <a:booleanEvaluator id="ab-people-list-eval1" value="#{r.node['ab:activeStatus']}">
                                  <h:graphicImage id="ab-people-list-eval1-img" url="/images/icons/person.gif" />
                               </a:booleanEvaluator>
-                              <a:booleanEvaluator id="ab-people-list-eval2" value="#{!r['ab:activeStatus']}">
+                              <a:booleanEvaluator id="ab-people-list-eval2" value="#{!r.node['ab:activeStatus']}">
                                  <h:graphicImage id="ab-people-list-eval2-img" url="/images/icons/error.gif" />
                               </a:booleanEvaluator>
-                              <a:actionLink id="ab-people-list-link1" value="#{r['ab:personTitle']} #{r['ab:personFirstName']} #{r['ab:personLastName']}"
+                              <a:actionLink id="ab-people-list-link1" value="#{r.node['ab:personTitle']} #{r.node['ab:personFirstName']} #{r.node['ab:personLastName']}"
                                  showLink="false" action="dialog:addressbookPersonDetails" actionListener="#{AddressbookPersonDetailsDialog.setupViewEntry}">
-                                 <f:param id="ab-people-list-link1-param" name="nodeRef" value="#{r.nodeRef}" />
+                                 <f:param id="ab-people-list-link1-param" name="nodeRef" value="#{r.node.nodeRef}" />
                               </a:actionLink>
                            </a:column>
                            
@@ -153,7 +153,7 @@ function updateButtonState()
                               <f:facet name="header">
                                  <h:outputText value="#{msg.document_email}" />
                               </f:facet>
-                              <h:outputText id="ab-people-list-email" value="#{r['ab:email']}" />
+                              <h:outputText id="ab-people-list-email" value="#{r.node['ab:email']}" />
                            </a:column>
 
                            <%-- Actions column --%>
@@ -166,13 +166,13 @@ function updateButtonState()
                               <r:permissionEvaluator value="#{AddressbookService.addressbookRoot}" allow="WriteProperties">
                                  <a:actionLink id="ab-people-list-link-mod" value="#{msg.modify}" image="/images/icons/edituser.gif" showLink="false"
                                     action="dialog:addressbookAddEdit" actionListener="#{AddressbookAddEditDialog.setupEdit}">
-                                    <f:param id="ab-people-list-link-mod-param" name="nodeRef" value="#{r.nodeRef}" />
+                                    <f:param id="ab-people-list-link-mod-param" name="nodeRef" value="#{r.node.nodeRef}" />
                                  </a:actionLink>
                               </r:permissionEvaluator>
                               <r:permissionEvaluator id="ab-people-list-deleteEval" value="#{AddressbookService.addressbookRoot}" allow="DeleteNode">
                                  <a:actionLink value="#{msg.delete}" image="/images/icons/delete_person.gif" showLink="false" action="dialog:deleteDialog"
                                     actionListener="#{DeleteDialog.setupDeleteDialog}">
-                                    <f:param name="nodeRef" value="#{r.nodeRef}" />
+                                    <f:param name="nodeRef" value="#{r.node.nodeRef}" />
                                     <f:param name="confirmMessagePlaceholder0" value="#{actionContext.name}" />
                                     <f:param name="showObjectData" value="true" />
                                     <f:param name="showConfirm" value="false" />
@@ -197,15 +197,15 @@ function updateButtonState()
                                  <f:facet name="header">
                                     <a:sortLink id="ab-people-list2-sort" label="#{msg.name}" value="name" mode="case-insensitive" styleClass="header" />
                                  </f:facet>
-                                 <a:booleanEvaluator id="ab-people-list2-eval1" value="#{r['ab:activeStatus']}">
+                                 <a:booleanEvaluator id="ab-people-list2-eval1" value="#{r.node['ab:activeStatus']}">
                                     <h:graphicImage id="ab-people-list2-eval1-img" url="/images/icons/person.gif" />
                                  </a:booleanEvaluator>
-                                 <a:booleanEvaluator id="ab-people-list2-eval2" value="#{!r['ab:activeStatus']}">
+                                 <a:booleanEvaluator id="ab-people-list2-eval2" value="#{!r.node['ab:activeStatus']}">
                                     <h:graphicImage id="ab-people-list2-eval2-img" url="/images/icons/error.gif" />
                                  </a:booleanEvaluator>
-                                 <a:actionLink id="ab-org-people-list-link1" value="#{r['ab:personTitle']} #{r['ab:personFirstName']} #{r['ab:personLastName']}"
+                                 <a:actionLink id="ab-org-people-list-link1" value="#{r.node['ab:personTitle']} #{r.node['ab:personFirstName']} #{r.node['ab:personLastName']}"
                                     showLink="false" action="dialog:addressbookOrgPersonDetails" actionListener="#{AddressbookPersonDetailsDialog.setupViewEntry}">
-                                    <f:param id="ab-people-list-link1-param" name="nodeRef" value="#{r.nodeRef}" />
+                                    <f:param id="ab-people-list-link1-param" name="nodeRef" value="#{r.node.nodeRef}" />
                                  </a:actionLink>
                               </a:column>
 
@@ -214,16 +214,16 @@ function updateButtonState()
                                  <f:facet name="header">
                                     <h:outputText id="ab-people-list2-ot6" value="#{msg.document_email}" />
                                  </f:facet>
-                                 <h:outputText id="ab-people-list2-ot7" value="#{r['ab:email']}" />
+                                 <h:outputText id="ab-people-list2-ot7" value="#{r.node['ab:email']}" />
                               </a:column>
 
                               <a:column id="ab-people-list2-col5">
                                  <f:facet name="header">
                                     <a:sortLink id="ab-people-list2-ot8-sort" label="#{msg.addressbook_org}" value="parentOrgName" mode="case-insensitive" styleClass="header" />
                                  </f:facet>
-                                 <a:actionLink id="ab-people-list2-link-org" value="#{r.parentOrgName}"
+                                 <a:actionLink id="ab-people-list2-link-org" value="#{r.node.parentOrgName}"
                                     showLink="false" action="dialog:addressbookOrgDetails" actionListener="#{AddressbookOrgDetailsDialog.setupViewEntry}">
-                                    <f:param name="nodeRef" value="#{r.parentOrgRef}" />
+                                    <f:param name="nodeRef" value="#{r.node.parentOrgRef}" />
                                  </a:actionLink>
                                  
                               </a:column>
@@ -234,11 +234,11 @@ function updateButtonState()
                                  </f:facet>
                                  <a:actionLink id="ab-people-list2-link-mod" value="#{msg.modify}" image="/images/icons/edituser.gif" showLink="false"
                                     action="dialog:addressbookAddEdit" actionListener="#{AddressbookAddEditDialog.setupEdit}">
-                                    <f:param id="ab-people-list2-link-mod-param" name="nodeRef" value="#{r.nodeRef}" />
+                                    <f:param id="ab-people-list2-link-mod-param" name="nodeRef" value="#{r.node.nodeRef}" />
                                  </a:actionLink>
                                  <a:actionLink value="#{msg.delete}" image="/images/icons/delete_person.gif" showLink="false" action="dialog:deleteDialog"
                                     actionListener="#{DeleteDialog.setupDeleteDialog}">
-                                    <f:param name="nodeRef" value="#{r.nodeRef}" />
+                                    <f:param name="nodeRef" value="#{r.node.nodeRef}" />
                                     <f:param name="confirmMessagePlaceholder0" value="#{actionContext.name}" />
                                     <f:param name="showObjectData" value="true" />
                                     <f:param name="showConfirm" value="false" />

@@ -76,6 +76,7 @@ import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIModeList;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.common.service.ExecuteCallback;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
@@ -229,12 +230,22 @@ public class TrashcanDialog extends BaseDialogBean implements IContextListener
          if (getArchiveRootRef() != null && property.isShowItems())
          {
             String query = buildSearchQuery(property);
-            SearchParameters sp = new SearchParameters();
+            final SearchParameters sp = new SearchParameters();
             sp.setLanguage(SearchService.LANGUAGE_LUCENE);
             sp.setQuery(query);
             sp.addStore(getArchiveRootRef().getStoreRef());     // the Archived Node store
-            
-            results = getSearchService().query(sp);
+            ExecuteCallback<ResultSet> searchCallback = new ExecuteCallback<ResultSet>() {
+                @Override
+                public ResultSet execute() {
+                    return getSearchService().query(sp);
+
+                }
+            };
+            if (StringUtils.isNotBlank(property.getSearchText())) {
+                results = BeanHelper.getGeneralService().runSemaphored(BeanHelper.getDocumentSearchService().getQuickSearchSemaphore(), searchCallback);
+            } else {
+                results = searchCallback.execute();
+            }
             itemNodes = new ArrayList<Node>(results.length());
          }
          
