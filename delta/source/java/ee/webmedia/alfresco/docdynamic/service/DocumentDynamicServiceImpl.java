@@ -63,6 +63,7 @@ import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGener
 import ee.webmedia.alfresco.docconfig.service.DocumentConfig;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
+import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
@@ -482,13 +483,21 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         associatedDocs.add(documentOriginal);
 
         long findStartTime = System.nanoTime();
+        NodeRef functionRef = documentOriginal.getFunction();
+        NodeRef seriesRef = documentOriginal.getSeries();
+        NodeRef volumeRef = documentOriginal.getVolume();
+        // It is assumed that when reaching this code, original document's case label is always set,
+        // if volume contains cases, no matter from where this method is called
+        String caseLabel = StringUtils.trimToNull((String) documentOriginal.getProp(DocumentLocationGenerator.CASE_LABEL_EDITABLE));
+        // collect associated documents that have different location than original document's _new_ location
         if (relocateAssocDocs) {
             associatedDocRefs = getAssociatedDocRefs(documentOriginal);
             if (associatedDocRefs.size() > 1) {
-                NodeRef originalDocumentParentRef = nodeService.getPrimaryParent(originalDocumentNodeRef).getParentRef();
+                NodeRef parentRef = DocumentDynamicDialog.getParent(volumeRef, caseLabel);
                 for (NodeRef associatedDocRef : associatedDocRefs) {
                     NodeRef associatedDocParentRef = nodeService.getPrimaryParent(associatedDocRef).getParentRef();
-                    if (!originalDocumentParentRef.equals(associatedDocParentRef)) {
+                    // parentRef is null if new case is going to be created during saving document
+                    if ((parentRef == null || !parentRef.equals(associatedDocParentRef)) && !associatedDocRef.equals(originalDocumentNodeRef)) {
                         associatedDocs.add(getDocument(associatedDocRef));
                     }
                 }
@@ -499,24 +508,16 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         DocumentDynamic originalDocumentUpdated = null;
         List<Pair<NodeRef, NodeRef>> originalNodeRefs = new ArrayList<Pair<NodeRef, NodeRef>>();
         Collections.sort(associatedDocs, DOCUMENT_BY_REG_DATE_TIME_COMPARATOR);
-        NodeRef functionRef = documentOriginal.getFunction();
-        NodeRef seriesRef = documentOriginal.getSeries();
-        NodeRef volumeRef = documentOriginal.getVolume();
-        NodeRef caseRef = documentOriginal.getCase();
-        String caseLabel = documentOriginal.getProp(DocumentLocationGenerator.CASE_LABEL_EDITABLE);
         for (DocumentDynamic associatedDocument : associatedDocs) {
             if (!associatedDocument.getNodeRef().getId().equals(originalDocumentNodeRef.getId())) {
-                if (!DocumentServiceImpl.PropertyChangesMonitorHelper.hasSameLocation(associatedDocument, functionRef, seriesRef, volumeRef, caseLabel)) {
-                    DocumentConfig cfg = documentConfigService.getConfig(associatedDocument.getNode());
-                    associatedDocument.setFunction(functionRef);
-                    associatedDocument.setSeries(seriesRef);
-                    associatedDocument.setVolume(volumeRef);
-                    associatedDocument.setCase(caseRef);
-                    associatedDocument.setProp(DocumentLocationGenerator.CASE_LABEL_EDITABLE, caseLabel);
-                    NodeRef oldNodeRef = associatedDocument.getNodeRef();
-                    NodeRef newNodeRef = update(associatedDocument, cfg.getSaveListenerBeanNames()).getNodeRef();
-                    originalNodeRefs.add(Pair.newInstance(oldNodeRef, newNodeRef));
-                }
+                DocumentConfig cfg = documentConfigService.getConfig(associatedDocument.getNode());
+                associatedDocument.setFunction(functionRef);
+                associatedDocument.setSeries(seriesRef);
+                associatedDocument.setVolume(volumeRef);
+                associatedDocument.setProp(DocumentLocationGenerator.CASE_LABEL_EDITABLE, caseLabel);
+                NodeRef oldNodeRef = associatedDocument.getNodeRef();
+                NodeRef newNodeRef = update(associatedDocument, cfg.getSaveListenerBeanNames()).getNodeRef();
+                originalNodeRefs.add(Pair.newInstance(oldNodeRef, newNodeRef));
             } else {
                 originalDocumentUpdated = update(associatedDocument, saveListenerBeanNames);
             }

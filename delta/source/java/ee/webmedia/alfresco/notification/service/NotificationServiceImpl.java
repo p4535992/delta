@@ -229,6 +229,7 @@ public class NotificationServiceImpl implements NotificationService {
             return;
         }
         notification.addRecipient(substitute.getSubstituteName(), toEmailAddress);
+        notification.getAdditionalFormulas().put("personSubstituted", userService.getUserFullName(substitute.getReplacedPersonUserName()));
 
         LinkedHashMap<String, NodeRef> nodeRefs = new LinkedHashMap<String, NodeRef>();
         nodeRefs.put(null, substitute.getNodeRef());
@@ -322,7 +323,9 @@ public class NotificationServiceImpl implements NotificationService {
         substituteNotification = processSubstituteNewTask(task, substituteNotification);
         NodeRef docRef = task.getParent().getParent().getParent();
         try {
-            sendNotification(substituteNotification, docRef, setupTemplateData(task));
+            if (substituteNotification != null) {
+                sendNotification(substituteNotification, docRef, setupTemplateData(task));
+            }
             for (Notification notification : notifications) {
                 sendNotification(notification, docRef, setupTemplateData(task));
             }

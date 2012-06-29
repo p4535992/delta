@@ -587,7 +587,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                     }
                     final boolean isInitialDocWithRepliesOrFollowUps //
                     = nodeService.getSourceAssocs(docNodeRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY).size() > 0 //
-                    || nodeService.getSourceAssocs(docNodeRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP).size() > 0;
+                            || nodeService.getSourceAssocs(docNodeRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP).size() > 0;
                     if (isInitialDocWithRepliesOrFollowUps) {
                         throw new UnableToPerformException(MessageSeverity.ERROR, "document_errorMsg_register_movingNotEnabled_hasReplyOrFollowUp");
                     }
@@ -1338,15 +1338,15 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         String caseLbl = caseNode != null ? caseNode.getProperties().get(CaseModel.Props.TITLE).toString() : null;
         String volumeLbl = volumeNode != null ? volumeNode.getProperties().get(VolumeModel.Props.MARK).toString() //
                 + " " + volumeNode.getProperties().get(VolumeModel.Props.TITLE).toString() : null;
-                String seriesLbl = seriesNode != null ? seriesNode.getProperties().get(SeriesModel.Props.SERIES_IDENTIFIER).toString() //
-                        + " " + seriesNode.getProperties().get(SeriesModel.Props.TITLE).toString() : null;
-                        String functionLbl = functionNode != null ? functionNode.getProperties().get(FunctionsModel.Props.MARK).toString() //
-                                + " " + functionNode.getProperties().get(FunctionsModel.Props.TITLE).toString() : null;
-                                props.put(TransientProps.FUNCTION_LABEL, functionLbl);
-                                props.put(TransientProps.SERIES_LABEL, seriesLbl);
-                                props.put(TransientProps.VOLUME_LABEL, volumeLbl);
-                                props.put(TransientProps.CASE_LABEL, caseLbl);
-                                props.put(TransientProps.CASE_LABEL_EDITABLE, caseLbl);
+        String seriesLbl = seriesNode != null ? seriesNode.getProperties().get(SeriesModel.Props.SERIES_IDENTIFIER).toString() //
+                + " " + seriesNode.getProperties().get(SeriesModel.Props.TITLE).toString() : null;
+        String functionLbl = functionNode != null ? functionNode.getProperties().get(FunctionsModel.Props.MARK).toString() //
+                + " " + functionNode.getProperties().get(FunctionsModel.Props.TITLE).toString() : null;
+        props.put(TransientProps.FUNCTION_LABEL, functionLbl);
+        props.put(TransientProps.SERIES_LABEL, seriesLbl);
+        props.put(TransientProps.VOLUME_LABEL, volumeLbl);
+        props.put(TransientProps.CASE_LABEL, caseLbl);
+        props.put(TransientProps.CASE_LABEL_EDITABLE, caseLbl);
     }
 
     @Override
@@ -1749,8 +1749,8 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         List<String> allDocs = null;
         long startTime = System.currentTimeMillis();
         if (!isReplyOrFollowupDoc) {
-            log.debug("Starting to register initialDocument, docRef=" + docRef);
-            // registration of initial document ("Algatusdokument")
+            log.debug("Starting to " + (isRelocating ? "reregister document" : "register initialDocument") + ", docRef=" + docRef);
+            // registration of initial document ("Algatusdokument") or reregistering document during relocating
             regNumber = parseRegNrPattern(series, volumeNodeRef, register, regNumber, now);
             if (!series.isNewNumberForEveryDoc() && series.isIndividualizingNumbers()) {
                 regNumber += REGISTRATION_INDIVIDUALIZING_NUM_SUFFIX;
@@ -1761,8 +1761,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         } else { // registration of reply/followUp("Järg- või vastusdokument")
             log.debug("Starting to register " + (replyAssocs.size() > 0 ? "reply" : "followUp") + " document, docRef=" + docRef);
             final Node initialDoc = getDocument(getInitialDocument(docRef));
-            final Map<String, Object> initDocProps = initialDoc.getProperties();
-            final String initDocRegNr = (String) initDocProps.get(REG_NUMBER.toString());
+            final String initDocRegNr = (String) initialDoc.getProperties().get(REG_NUMBER.toString());
             boolean initDocRegNrNotBlank = StringUtils.isNotBlank(initDocRegNr);
             if (series.isNewNumberForEveryDoc()) {
                 Pair<String, List<String>> result = addUniqueNumberIfNeccessary(parseRegNrPattern(series, volumeNodeRef, register, regNumber, now), initDocParentRef,
@@ -2046,7 +2045,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         }
         final boolean isReplyOrFollowupDoc = replyAssocs.size() > 0
                 || nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP).size() > 0; //
-                return isReplyOrFollowupDoc;
+        return isReplyOrFollowupDoc;
     }
 
     private List<Document> getAllDocumentsByParentNodeRef(NodeRef parentRef) {
@@ -2294,7 +2293,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                 boolean didRegister = false;
                 String docTypeId = (String) nodeService.getProperty(document, Props.OBJECT_TYPE_ID);
                 if (getDocumentAdminService().getDocumentTypeProperty(docTypeId, DocumentAdminModel.Props.REGISTRATION_ENABLED, Boolean.class)) {
-                    didRegister = registerDocumentIfNotRegistered(document, false);
+                    didRegister = registerDocumentIfNotRegistered(document, true);
                 }
                 long step1 = System.currentTimeMillis();
                 if (didRegister) {

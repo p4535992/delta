@@ -48,6 +48,7 @@ import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
 import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem;
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -93,6 +94,7 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 import ee.webmedia.alfresco.utils.WebUtil;
+import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 
 /**
@@ -282,10 +284,15 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     }
 
     private void addTargetAssoc(NodeRef targetRef, QName targetType, boolean isSourceAssoc) {
-        AssocsBlockBean assocsBlockBean = (AssocsBlockBean) getBlocks().get(AssocsBlockBean.class);
+        AssocsBlockBean assocsBlockBean = getAssocsBlockBean();
         AssociationRef assocRef = RepoUtil.addAssoc(getNode(), targetRef, targetType, true);
         final DocAssocInfo docAssocInfo = getDocumentAssociationsService().getDocAssocInfo(assocRef, isSourceAssoc);
         assocsBlockBean.getDocAssocInfos().add(docAssocInfo);
+    }
+
+    private AssocsBlockBean getAssocsBlockBean() {
+        AssocsBlockBean assocsBlockBean = (AssocsBlockBean) getBlocks().get(AssocsBlockBean.class);
+        return assocsBlockBean;
     }
 
     /**
@@ -423,6 +430,8 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         private boolean showDocsAndCasesAssocs;
         private boolean saveAndRegister;
         private boolean saveAndRegisterContinue;
+        private boolean confirmMoveAssociatedDocuments;
+        private boolean moveAssociatedDocumentsConfirmed;
         private DocumentConfig config;
 
         @Override
@@ -488,6 +497,8 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
                 setSaveAndRegister(false);
                 setSaveAndRegisterContinue(false);
             }
+            currentSnapshot.confirmMoveAssociatedDocuments = false;
+            currentSnapshot.moveAssociatedDocumentsConfirmed = false;
             currentSnapshot.inEditMode = inEditMode;
             if (!inEditMode) {
                 if (StringUtils.isBlank(document.getRegNumber()) && document.getRegDateTime() == null && BeanHelper.getDocumentDynamicService().isShowMessageIfUnregistered()) {
@@ -594,6 +605,10 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
                 return null;
             }
         }
+        if (!getCurrentSnapshot().moveAssociatedDocumentsConfirmed && isRelocatingAssociations()) {
+            getCurrentSnapshot().confirmMoveAssociatedDocuments = true;
+            return null;
+        }
         final DocumentDynamic savedDocument;
         final boolean isDraft = getDocument().isDraft();
         try {
@@ -603,7 +618,8 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
                         @Override
                         public Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> execute() throws Throwable {
                             // May throw UnableToPerformException or UnableToPerformMultiReasonException
-                            return getDocumentDynamicService().updateDocumentGetDocAndNodeRefs(getDocument(), getConfig().getSaveListenerBeanNames(), true);
+                            return getDocumentDynamicService().updateDocumentGetDocAndNodeRefs(getDocument(), getConfig().getSaveListenerBeanNames(),
+                                    getCurrentSnapshot().confirmMoveAssociatedDocuments);
                         }
                     }, false, true);
             savedDocument = result.getFirst();
@@ -653,6 +669,42 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
 
     }
 
+    private boolean isRelocatingAssociations() {
+        DocumentDynamic document = getDocument();
+        NodeRef newParentRef = getParent(document.getVolume(), StringUtils.trimToNull((String) document.getProp(DocumentLocationGenerator.CASE_LABEL_EDITABLE)));
+        // For documents not under volume or case, check location change against associated document
+        // TODO : Riina: in 3.10 branch, add document.isFromWebService() check here
+        if (document.isDraftOrImapOrDvk() || document.isIncomingInvoice()) {
+            List<DocAssocInfo> docAssocs = getAssocsBlockBean().getDocAssocInfos();
+            if (docAssocs == null || docAssocs.isEmpty()) {
+                return false;
+            }
+            NodeRef associatedDocParentRef = getNodeService().getPrimaryParent(docAssocs.get(0).getNodeRef()).getParentRef();
+            return !associatedDocParentRef.equals(newParentRef);
+        }
+        NodeRef currentParentRef = getNodeService().getPrimaryParent(document.getNodeRef()).getParentRef();
+        if (currentParentRef.equals(newParentRef)) {
+            return false;
+        }
+        return BeanHelper.getDocumentAssociationsService().isBaseOrReplyOrFollowUpDocument(getNode().getNodeRef(), null);
+    }
+
+    public static NodeRef getParent(NodeRef volumeRef, String caseLabel) {
+        Volume volume = BeanHelper.getVolumeService().getVolumeByNodeRef(volumeRef);
+        NodeRef parentRef = null;
+        if (volume.isContainsCases()) {
+            Case existingCase = BeanHelper.getCaseService().getCaseByTitle(caseLabel, volumeRef, null);
+            parentRef = existingCase != null ? existingCase.getNode().getNodeRef() : null;
+        } else {
+            parentRef = volumeRef;
+        }
+        return parentRef;
+    }
+
+    public boolean isConfirmMoveAssociatedDocuments() {
+        return getCurrentSnapshot().confirmMoveAssociatedDocuments;
+    }
+
     private void setSaveAndRegister(boolean saveAndRegister) {
         getCurrentSnapshot().saveAndRegister = saveAndRegister;
     }
@@ -693,6 +745,11 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     public void saveAndRegister() {
         setSaveAndRegister(true);
         setSaveAndRegisterContinue(false);
+        super.finish();
+    }
+
+    public void changeDocLocationConfirmed(ActionEvent event) {
+        getCurrentSnapshot().moveAssociatedDocumentsConfirmed = true;
         super.finish();
     }
 

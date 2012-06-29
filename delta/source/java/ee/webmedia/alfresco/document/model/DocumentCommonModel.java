@@ -34,6 +34,11 @@ public interface DocumentCommonModel {
         QName DOCUMENT = QName.createQName(DOCCOM_URI, "document");
         QName DRAFTS = QName.createQName(DOCCOM_URI, "drafts");
         QName SEND_INFO = QName.createQName(DOCCOM_URI, "sendInfo");
+        /**
+         * Deprecated - document log is not saved under document node any more, but only in application log.
+         * Don't create new nodes of this type. Can be deleted when all existing associations have been migrated to application log (Riina).
+         */
+        @Deprecated
         QName DOCUMENT_LOG = QName.createQName(DOCCOM_URI, "documentLog");
         QName METADATA_CONTAINER = QName.createQName(DOCCOM_URI, "metadataContainer");
         QName FAVORITE_DIRECTORY = QName.createQName(DOCCOM_URI, "favoriteDirectory");
@@ -65,6 +70,11 @@ public interface DocumentCommonModel {
         /** document(activeDoc) -> document(selectedAssociatedDoc) */
         QName DOCUMENT_2_DOCUMENT = QName.createQName(DOCCOM_URI, "document2Document");
         QName SEND_INFO = QName.createQName(DOCCOM_URI, "sendInfo");
+        /**
+         * Deprecated - document log is not saved under document node any more, but only in application log.
+         * Don't create new associations of this type. Can be deleted when all existing associations have been migrated to application log (Riina).
+         */
+        @Deprecated
         QName DOCUMENT_LOG = QName.createQName(DOCCOM_URI, "documentLog");
         QName FAVORITE = QName.createQName(DOCCOM_URI, "favorite");
         QName FAVORITE_DIRECTORY = QName.createQName(DOCCOM_URI, "favoriteDirectory");

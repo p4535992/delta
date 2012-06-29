@@ -9,10 +9,15 @@ import org.alfresco.service.cmr.lock.LockType;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.file.service.FileService;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+
 public class DocLockServiceImpl extends LockServiceImpl implements DocLockService {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocLockServiceImpl.class);
     /** timeOut in seconds how long lock is kept after creation(refreshing) before expiring */
     private final int lockTimeout = 180;
+    private FileService fileService;
 
     @Override
     public String getLockOwnerIfLocked(NodeRef nodeRef) {
@@ -96,6 +101,20 @@ public class DocLockServiceImpl extends LockServiceImpl implements DocLockServic
         return lockSts;
     }
 
+    @Override
+    public boolean isGeneratedFileDocumentLocked(NodeRef fileRef) {
+        if (!fileService.isFileGenerated(fileRef)) {
+            return false;
+        }
+
+        NodeRef docRef = BeanHelper.getGeneralService().getAncestorNodeRefWithType(fileRef, DocumentCommonModel.Types.DOCUMENT);
+        if (docRef != null) {
+            return (getLockStatus(docRef) == LockStatus.LOCKED);
+        }
+
+        return false;
+    }
+
     private LockStatus debugLock(NodeRef lockNode, String msgPrefix) {
         LockStatus lockSts = getLockStatus(lockNode);
         if (log.isDebugEnabled()) {
@@ -145,6 +164,10 @@ public class DocLockServiceImpl extends LockServiceImpl implements DocLockServic
     @Override
     public int getLockTimeout() {
         return lockTimeout;
+    }
+
+    public void setFileService(FileService fileService) {
+        this.fileService = fileService;
     }
     // END: getters / setters
 

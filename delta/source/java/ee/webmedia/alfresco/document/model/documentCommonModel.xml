@@ -78,6 +78,9 @@
                   <many>true</many>
                </target>
             </child-association>
+          
+         <!-- Deprecated - document log is not saved under document node any more, but only in application log.
+          Don't create new associations of this type. Can be deleted when all existing associations have been migrated to application log (Riina). -->
             <child-association name="doccom:documentLog">
                <source>
                   <mandatory>true</mandatory>
@@ -164,6 +167,8 @@
          </properties>
       </type>
       
+      <!-- Deprecated - document log is not saved under document node any more, but only in application log.
+           Don't create new nodes of this type. Can be deleted when all existing associations have been migrated to application log (Riina). -->
       <type name="doccom:documentLog">
          <parent>sys:base</parent>
          <mandatory-aspects>

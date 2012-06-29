@@ -151,9 +151,8 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         cal.add(Calendar.DATE, contractDueDays);
         Date dueDateLimit = cal.getTime();
 
-        String query = joinQueryPartsAnd(
-                generateTypeQuery(DocumentCommonModel.Types.DOCUMENT)
-                , generateStringExactQuery(SystematicDocumentType.CONTRACT.getId(), DocumentAdminModel.Props.OBJECT_TYPE_ID)
+        String query = generateDocumentSearchQuery(
+                generateStringExactQuery(SystematicDocumentType.CONTRACT.getId(), DocumentAdminModel.Props.OBJECT_TYPE_ID)
                 , joinQueryPartsOr(
                         generatePropertyNullQuery(DocumentSpecificModel.Props.DUE_DATE)
                         , generateDatePropertyRangeQuery(now, dueDateLimit, DocumentSpecificModel.Props.DUE_DATE)
@@ -173,14 +172,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         long startTime = System.currentTimeMillis();
 
         String query = generateDiscussionDocumentsQuery();
-        List<Document> results = searchGeneralImpl(query, -1, /* queryName */"discussionDocuments", new SearchCallback<Document>() {
-
-            @Override
-            public Document addResult(ResultSetRow row) {
-                return documentService.getDocumentByNodeRef(row.getNodeRef());
-            }
-
-        }).getFirst();
+        List<Document> results = searchDocumentsImpl(query, -1, /* queryName */"discussionDocuments").getFirst();
 
         if (log.isDebugEnabled()) {
             log.debug("Discussion documents search total time " + (System.currentTimeMillis() - startTime) + " ms, results " + results.size() //
@@ -194,14 +186,8 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         long startTime = System.currentTimeMillis();
 
         String query = generateDiscussionDocumentsQuery();
-        int count = searchGeneralImpl(query, -1, /* queryName */"discussionDocumentsCount", new SearchCallback<Integer>() {
-
-            @Override
-            public Integer addResult(ResultSetRow row) {
-                return row.getIndex();
-            }
-
-        }).getFirst().size();
+        ResultSet results = doSearch(query, -1, /* queryName */"discussionDocumentsCount", null);
+        int count = countResults(Collections.singletonList(results));
 
         if (log.isDebugEnabled()) {
             log.debug("Discussion documents count search total time " + (System.currentTimeMillis() - startTime) + " ms, results " + count//
@@ -308,7 +294,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     public List<Document> searchInvoicesWithEmptySapAccount() {
         long startTime = System.currentTimeMillis();
         List<String> queryParts = new ArrayList<String>(3);
-        queryParts.add(generateTypeQuery(DocumentSubtypeModel.Types.INVOICE));
+        queryParts.add(generateTypeQuery(DocumentSubtypeModel.Types.INVOICE)); // TODO use generateDocumentSearchQuery + objectTypeId=invoice
         queryParts.add(generatePropertyNullQuery(DocumentSpecificModel.Props.SELLER_PARTY_SAP_ACCOUNT));
         queryParts.add(generatePropertyNotNullQuery(DocumentSpecificModel.Props.SELLER_PARTY_REG_NUMBER));
 
@@ -357,14 +343,12 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         if (documentTypeIds.size() == 0) {
             return null;
         }
-        queryParts.add(generateTypeQuery(DocumentCommonModel.Types.DOCUMENT));
         queryParts.add(generateMultiStringExactQuery(new ArrayList<String>(documentTypeIds), DocumentAdminModel.Props.OBJECT_TYPE_ID));
 
         // If document is of type incomingLetter, then it must be registered. All other documents must be finished
         queryParts.add(joinQueryPartsOr(Arrays.asList(
                 generateAndNotQuery(generateStringExactQuery(DocumentStatus.FINISHED.getValueName(), DocumentCommonModel.Props.DOC_STATUS),
                         generateStringExactQuery(INCOMING_LETTER.getId(), DocumentAdminModel.Props.OBJECT_TYPE_ID))
-
                 , joinQueryPartsAnd(Arrays.asList(
                         generateStringExactQuery(INCOMING_LETTER.getId(), DocumentAdminModel.Props.OBJECT_TYPE_ID),
                         generatePropertyNotNullQuery(DocumentCommonModel.Props.REG_NUMBER)
@@ -377,8 +361,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         accessParts.add(generateStringExactQuery(AccessRestriction.OPEN.getValueName(), DocumentCommonModel.Props.ACCESS_RESTRICTION));
         queryParts.add(joinQueryPartsOr(accessParts));
 
-        queryParts.add(generateAspectQuery(DocumentCommonModel.Aspects.SEARCHABLE));
-        return joinQueryPartsAnd(queryParts);
+        return generateDocumentSearchQuery(queryParts);
     }
 
     @Override
@@ -533,7 +516,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         List<String> queryParts = new ArrayList<String>();
         queryParts.add(generateStringNotEmptyQuery(DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME,
                 DocumentSpecificModel.Props.PARTY_NAME /* on document node, duplicates partyName property values from all contractParty child-nodes */
-                ));
+        ));
         queryParts.add(generateStringExactQuery(DocumentStatus.FINISHED.getValueName(), DocumentCommonModel.Props.DOC_STATUS));
         queryParts.add(generateStringNullQuery(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE));
         String query = generateDocumentSearchQuery(queryParts);
@@ -1008,8 +991,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         if (isBlank(queryParts)) {
             return null;
         }
-        queryParts.add(0, generateTypeQuery(DocumentCommonModel.Types.DOCUMENT));
-        return joinQueryPartsAnd(queryParts);
+        return generateDocumentSearchQuery(queryParts);
     }
 
     @Override
@@ -1093,7 +1075,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         }
         long startTime = System.currentTimeMillis();
         List<String> queryParts = new ArrayList<String>(4);
-        queryParts.add(SearchUtil.generateTypeQuery(DocumentSubtypeModel.Types.INVOICE));
+        queryParts.add(SearchUtil.generateTypeQuery(DocumentSubtypeModel.Types.INVOICE)); // TODO use generateDocumentSearchQuery + objectTypeId=invoice
         queryParts.add(SearchUtil.generateStringExactQuery(regNumber, DocumentSpecificModel.Props.SELLER_PARTY_REG_NUMBER));
         queryParts.add(SearchUtil.generateStringExactQuery(invoiceNumber, DocumentSpecificModel.Props.INVOICE_NUMBER));
         queryParts.add(SearchUtil.generatePropertyDateQuery(DocumentSpecificModel.Props.INVOICE_DATE, invoiceDate));
@@ -1109,7 +1091,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     public List<Document> searchContractsByRegNumber(String regNumber) {
         List<String> queryParts = new ArrayList<String>();
         long startTime = System.currentTimeMillis();
-        queryParts.add(SearchUtil.generateTypeQuery(DocumentTypeHelper.CONTRACT_TYPES));
+        queryParts.add(SearchUtil.generateTypeQuery(DocumentTypeHelper.CONTRACT_TYPES)); // TODO use generateDocumentSearchQuery + objectTypeId=...
         queryParts.add(SearchUtil.generateStringExactQuery(regNumber, DocumentCommonModel.Props.REG_NUMBER,
                 DocumentSpecificModel.Props.SECOND_PARTY_CONTRACT_NUMBER));
         String query = SearchUtil.joinQueryPartsAnd(queryParts);
@@ -1129,7 +1111,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         List<String> queryParts = new ArrayList<String>(2);
         if (StringUtils.isNotBlank(contractNumber)) {
             List<String> contractQueryParts = new ArrayList<String>(4);
-            contractQueryParts.add(SearchUtil.generateTypeQuery(DocumentTypeHelper.CONTRACT_TYPES));
+            contractQueryParts.add(SearchUtil.generateTypeQuery(DocumentTypeHelper.CONTRACT_TYPES)); // TODO use generateDocumentSearchQuery + objectTypeId=...
             contractQueryParts.add(SearchUtil.generateStringExactQuery(contractNumber, DocumentCommonModel.Props.REG_NUMBER));
             // on document node, duplicates partyName property values from all contractParty child-nodes
             contractQueryParts.add(generateStringWordsWildcardQuery(sellerPartyName, DocumentSpecificModel.Props.PARTY_NAME));
@@ -1504,11 +1486,15 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         return dataType.equals(DataTypeDefinition.DATE) || dataType.equals(DataTypeDefinition.DATETIME);
     }
 
+    private static String generateDocumentSearchQuery(String... queryParts) {
+        return generateDocumentSearchQuery(Arrays.asList(queryParts));
+    }
+
     private static String generateDocumentSearchQuery(List<String> queryParts) {
         if (isBlank(queryParts)) {
             return null;
         }
-        queryParts.add(0, generateTypeQuery(DocumentCommonModel.Types.DOCUMENT)); // XXX is this accurate for dynamic documents?
+        queryParts.add(0, generateTypeQuery(DocumentCommonModel.Types.DOCUMENT));
         queryParts.add(1, generateAspectQuery(DocumentCommonModel.Aspects.SEARCHABLE));
         return joinQueryPartsAnd(queryParts);
     }

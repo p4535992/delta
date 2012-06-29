@@ -5,6 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -66,15 +67,11 @@ public class LogServiceImpl implements LogService, InitializingBean {
 
     @Override
     public void addLogEntry(LogEntry log) {
-        // This check provided just-in-case to catch empty event descriptions.
-        // Exception should not be thrown as not logging is non-critical
-        // compared to breaking serviced wanting to just log an action.
-        if (log.getEventDescription() == null) {
-            LOG.error("No event description was provided for event caused by " + log.getObjectName() + " with level " + log.getLevel());
+        if (!checkDescriptorNotNull(log)) {
             return;
         }
 
-        if (jdbcTemplate.queryForInt("SELECT COUNT(*) FROM delta_log_level WHERE level=?", log.getLevel()) != 0) {
+        if (logEndabled(log)) {
 
             Map<String, Object> result = jdbcTemplate
                     .queryForMap("SELECT delta_log_date.idprefix, to_char(CURRENT_DATE,'YYYYMMDD') AS idprefix_now, nextval('delta_log_seq') AS idsuffix, current_timestamp AS now FROM delta_log_date LIMIT 1");
@@ -100,12 +97,55 @@ public class LogServiceImpl implements LogService, InitializingBean {
                 }
             }
 
-            jdbcTemplate.update(
-                    "INSERT INTO delta_log (log_entry_id,created_date_time,level,creator_id,creator_name,computer_ip,computer_name,object_id,object_name,description) "
-                            + "VALUES (?,?,?,?,?,?,?,?,?,?)",
-                    new Object[] { idPrefix + idSuffix.toString(), now, log.getLevel(), log.getCreatorId(), log.getCreatorName(), log.getComputerIp(), log.getComputerName(),
-                            log.getObjectId(), log.getObjectName(), log.getEventDescription() });
+            addLogEntry(log, idPrefix, idSuffix, now);
         }
+    }
+
+    @Override
+    public void addLogEntry(LogEntry log, Date dateCreated, String idPrefix, Long idSuffix) {
+        if (!checkDescriptorNotNull(log)) {
+            return;
+        }
+        Assert.isTrue(dateCreated != null && org.apache.commons.lang.StringUtils.isNotBlank(idPrefix) && idSuffix != null);
+        if (logEndabled(log)) {
+            addLogEntry(log, idPrefix, idSuffix, new Timestamp(dateCreated.getTime()));
+        }
+    }
+
+    private boolean checkDescriptorNotNull(LogEntry log) {
+        // This check provided just-in-case to catch empty event descriptions.
+        // Exception should not be thrown as not logging is non-critical
+        // compared to breaking serviced wanting to just log an action.
+        if (log.getEventDescription() == null) {
+            LOG.error("No event description was provided for event caused by " + log.getObjectName() + " with level " + log.getLevel());
+            return false;
+        }
+        return true;
+    }
+
+    private void addLogEntry(LogEntry log, String idPrefix, Long idSuffix, Timestamp now) {
+        jdbcTemplate.update(
+                "INSERT INTO delta_log (log_entry_id,created_date_time,level,creator_id,creator_name,computer_ip,computer_name,object_id,object_name,description) "
+                        + "VALUES (?,?,?,?,?,?,?,?,?,?)",
+                new Object[] { idPrefix + idSuffix.toString(), now, log.getLevel(), log.getCreatorId(), log.getCreatorName(), log.getComputerIp(), log.getComputerName(),
+                        log.getObjectId(), log.getObjectName(), log.getEventDescription() });
+    }
+
+    private boolean logEndabled(LogEntry log) {
+        return jdbcTemplate.queryForInt("SELECT COUNT(*) FROM delta_log_level WHERE level=?", log.getLevel()) != 0;
+    }
+
+    @Override
+    public Date getFirstLogEntryDate(NodeRef nodeRef) {
+        Assert.notNull(nodeRef);
+        StringBuilder q = new StringBuilder("SELECT min(created_date_time) FROM delta_log WHERE object_id=?");
+        return jdbcTemplate.queryForObject(q.toString(), Date.class, nodeRef.toString());
+    }
+
+    @Override
+    public Date getFirstLogEntryDate() {
+        StringBuilder q = new StringBuilder("SELECT min(created_date_time) FROM delta_log");
+        return jdbcTemplate.queryForObject(q.toString(), Date.class);
     }
 
     @Override
@@ -136,6 +176,9 @@ public class LogServiceImpl implements LogService, InitializingBean {
             }
             if (StringUtils.hasLength(filter.getDescription())) {
                 filterMap.put("lower(description) LIKE ?", "%" + filter.getDescription().toLowerCase() + "%");
+            }
+            if (StringUtils.hasLength(filter.getExcludedDescription())) {
+                filterMap.put("lower(description) NOT LIKE ?", "%" + filter.getExcludedDescription().toLowerCase() + "%");
             }
             if (StringUtils.hasLength(filter.getObjectName())) {
                 filterMap.put("lower(object_name) LIKE ?", "%" + filter.getObjectName().toLowerCase() + "%");

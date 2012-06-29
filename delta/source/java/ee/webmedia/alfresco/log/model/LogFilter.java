@@ -24,6 +24,8 @@ public class LogFilter implements Serializable {
 
     private String description;
 
+    private String excludedDescription;
+
     private String objectName;
 
     private String objectId;
@@ -90,5 +92,13 @@ public class LogFilter implements Serializable {
 
     public void setObjectId(String objectId) {
         this.objectId = objectId;
+    }
+
+    public String getExcludedDescription() {
+        return excludedDescription;
+    }
+
+    public void setExcludedDescription(String excludedDescription) {
+        this.excludedDescription = excludedDescription;
     }
 }

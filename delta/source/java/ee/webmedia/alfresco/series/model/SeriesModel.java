@@ -13,6 +13,11 @@ public interface SeriesModel {
 
     interface Associations {
         QName SERIES = QName.createQName(URI, "series");
+        /**
+         * Deprecated - series log is not saved under series node any more, but only in application log.
+         * Don't create new associations of this type. Can be deleted when all existing associations have been migrated to application log (Riina).
+         */
+        @Deprecated
         QName SERIES_LOG = QName.createQName(URI, "seriesLog");
     }
 

@@ -513,6 +513,11 @@ public class FileServiceImpl implements FileService {
         return nodeService.getProperty(fileRef, FileModel.Props.GENERATED_FROM_TEMPLATE) != null;
     }
 
+    @Override
+    public boolean isFileAssociatedWithDocMetadata(NodeRef fileRef) {
+        return fileRef != null && Boolean.TRUE.equals(nodeService.getProperty(fileRef, FileModel.Props.UPDATE_METADATA_IN_FILES));
+    }
+
     // START: getters / setters
     public void setFileFolderService(FileFolderService fileFolderService) {
         this.fileFolderService = fileFolderService;

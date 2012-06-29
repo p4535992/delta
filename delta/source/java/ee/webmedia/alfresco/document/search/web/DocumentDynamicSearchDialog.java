@@ -129,6 +129,7 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
             }
             setFilterDefaultValues(filter);
         }
+        getPropertySheetStateBean().reset(config.getStateHolders(), this);
     }
 
     private void setFilterDefaultValues(Node filterNode) {

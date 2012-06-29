@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.document.log.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
+
 import java.util.List;
 
 import javax.faces.context.FacesContext;
@@ -14,10 +16,12 @@ import org.springframework.web.jsf.FacesContextUtils;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicBlock;
-import ee.webmedia.alfresco.document.log.model.DocumentLog;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.log.model.LogFilter;
 import ee.webmedia.alfresco.series.model.SeriesModel;
+import ee.webmedia.alfresco.utils.MessageUtil;
 
 public class LogBlockBean implements DocumentDynamicBlock {
     private static final long serialVersionUID = 1L;
@@ -28,7 +32,7 @@ public class LogBlockBean implements DocumentDynamicBlock {
     private transient DictionaryService dictionaryService;
 
     private NodeRef parentRef;
-    private List<DocumentLog> logs;
+    protected List<LogEntry> logs;
 
     private QName parentNodeType;
 
@@ -48,14 +52,32 @@ public class LogBlockBean implements DocumentDynamicBlock {
         restore();
     }
 
+    @SuppressWarnings("unchecked")
     public void restore() {
+        @SuppressWarnings("rawtypes")
+        List tmpLog;
         if (SeriesModel.Types.SERIES.equals(parentNodeType)) {
-            logs = getDocumentLogService().getSeriesLogs(parentRef);
+            tmpLog = getLogService().getLogEntries(getSeriesLogFilter());
         } else if (getDictionaryService().isSubClass(parentNodeType, DocumentCommonModel.Types.DOCUMENT)) {
-            logs = getDocumentLogService().getDocumentLogs(parentRef);
+            tmpLog = getLogService().getLogEntries(getDocumentLogFilter());
         } else {
             throw new IllegalArgumentException("Unexpected type of parent node for loging block. type='" + parentNodeType + "'");
         }
+        logs = tmpLog;
+    }
+
+    private LogFilter getDocumentLogFilter() {
+        LogFilter logFilter = new LogFilter();
+        logFilter.setExcludedDescription(MessageUtil.getMessage("document_log_status_opened_not_inEditMode"));
+        logFilter.setObjectId(parentRef.toString());
+        return logFilter;
+    }
+
+    private LogFilter getSeriesLogFilter() {
+        LogFilter logFilter = new LogFilter();
+        logFilter.setExcludedDescription(MessageUtil.getMessage("applog_space_open", "%", "%"));
+        logFilter.setObjectId(parentRef.toString());
+        return logFilter;
     }
 
     public void reset() {
@@ -80,7 +102,7 @@ public class LogBlockBean implements DocumentDynamicBlock {
 
     // START: getters / setters
 
-    public List<DocumentLog> getLogs() {
+    public List<LogEntry> getLogs() {
         return logs;
     }
 

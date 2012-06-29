@@ -71,6 +71,17 @@
          </list>
       </property>
    </bean>
+   
+   <bean id="moveDocumentAndSeriesLogToAppLog2" class="ee.webmedia.alfresco.log.bootstrap.MoveDocumentAndSeriesLogToAppLog" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+            <ref bean="logSequenceInitBootstrap" />
+         </list>
+      </property>
+   </bean>   
 
    <!-- WEB/JSF -->
 

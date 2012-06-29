@@ -45,6 +45,7 @@ import org.alfresco.service.namespace.QName;
 import org.dom4j.io.XMLWriter;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 /**
@@ -178,23 +179,29 @@ public class LockMethod extends WebDAVMethod {
         WebDAVCustomHelper.checkDocumentFileWritePermission(fileRef);
         Map<QName, Serializable> originalProps = getNodeService().getProperties(fileRef);
 
-        // Check if this is a new lock or a refresh
-        if (hasLockToken()) {
-            // Refresh an existing lock
-            refreshLock(fileRef, userName);
-        } else {
-            // Create a new lock
-            createLock(fileRef, userName);
+        int responseStatus = HttpServletResponse.SC_OK;
+        try {
+            // Check if this is a new lock or a refresh
+            if (hasLockToken()) {
+                // Refresh an existing lock
+                refreshLock(fileRef, userName);
+            } else {
+                // Create a new lock
+                createLock(fileRef, userName);
+            }
+            // Set modifier and modified properties to original, so that locking doesn't appear to change the file
+            Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+            props.put(ContentModel.PROP_MODIFIER, originalProps.get(ContentModel.PROP_MODIFIER));
+            props.put(ContentModel.PROP_MODIFIED, originalProps.get(ContentModel.PROP_MODIFIED));
+            getBehaviourFilter().disableBehaviour(ContentModel.ASPECT_AUDITABLE);
+            getNodeService().addProperties(fileRef, props);
+        } catch (WebDAVServerException e) {
+            responseStatus = e.getHttpStatusCode();
+            logger.error("Failed to refresh or create WebDAV lock", e);
+        } finally {
+            // We either created a new lock or refreshed an existing lock, send back the lock details
+            generateResponse(fileRef, userName, responseStatus);
         }
-        // Set modifier and modified properties to original, so that locking doesn't appear to change the file
-        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
-        props.put(ContentModel.PROP_MODIFIER, originalProps.get(ContentModel.PROP_MODIFIER));
-        props.put(ContentModel.PROP_MODIFIED, originalProps.get(ContentModel.PROP_MODIFIED));
-        getBehaviourFilter().disableBehaviour(ContentModel.ASPECT_AUDITABLE);
-        getNodeService().addProperties(fileRef, props);
-
-        // We either created a new lock or refreshed an existing lock, send back the lock details
-        generateResponse(fileRef, userName);
     }
 
     protected BehaviourFilter getBehaviourFilter() {
@@ -220,7 +227,7 @@ public class LockMethod extends WebDAVMethod {
             logger.debug("Create lock status=" + lockSts);
         }
 
-        if (lockSts == LockStatus.LOCKED) {
+        if (lockSts == LockStatus.LOCKED || isLockingDisabled(lockNode)) {
             // Indicate that the resource is already locked
             throw new WebDAVServerException(WebDAV.WEBDAV_SC_LOCKED);
         }
@@ -234,6 +241,12 @@ public class LockMethod extends WebDAVMethod {
 
         ((WebDAVCustomHelper) getDAVHelper()).getVersionsService().addVersionLockableAspect(lockNode);
         ((WebDAVCustomHelper) getDAVHelper()).getVersionsService().setVersionLockableAspect(lockNode, false);
+    }
+
+    private boolean isLockingDisabled(NodeRef lockNode) {
+        FileService fileService = BeanHelper.getFileService();
+        return (fileService.isFileGeneratedFromTemplate(lockNode) || fileService.isFileAssociatedWithDocMetadata(lockNode))
+                && BeanHelper.getDocLockService().isGeneratedFileDocumentLocked(lockNode);
     }
 
     /**
@@ -278,9 +291,9 @@ public class LockMethod extends WebDAVMethod {
     /**
      * Generates the XML lock discovery response body
      */
-    private void generateResponse(NodeRef lockNode, String userName) throws Exception {
+    private void generateResponse(NodeRef lockNode, String userName, int responseStatus) throws Exception {
         // Send the XML back to the client
-        m_response.setStatus(HttpServletResponse.SC_OK);
+        m_response.setStatus(responseStatus);
 
         XMLWriter xml = createXMLWriter();
 

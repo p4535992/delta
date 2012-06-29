@@ -35,8 +35,25 @@
    </script>
    </f:verbatim>
 </a:booleanEvaluator>
-<a:actionLink id="document-after-confirmation-accepted-link" value="confirmationAcceptedLink" actionListener="#{DocumentDialogHelperBean.inWorkspace and DocumentDynamicDialog.sendAccessRestrictionChangedEmails}" styleClass="hidden" />
-<a:actionLink id="document-after-confirmation-rejected-link" value="confirmationRejectedLink" actionListener="#{DocumentDialogHelperBean.inWorkspace and DocumentDynamicDialog.cancel}" styleClass="hidden" />
+<a:actionLink id="document-after-confirmation-accepted-link" value="confirmationAcceptedLink" actionListener="#{DocumentDynamicDialog.sendAccessRestrictionChangedEmails}" styleClass="hidden" />
+<a:actionLink id="document-after-confirmation-rejected-link" value="confirmationRejectedLink" actionListener="#{DocumentDynamicDialog.cancel}" styleClass="hidden" />
+
+<a:booleanEvaluator id="confirmMoveAssociatedDocumentsEvaluator" value="#{DocumentDynamicDialog.confirmMoveAssociatedDocuments}">
+   <f:verbatim>
+   <script type="text/javascript">
+      $jQ(document).ready(function () {
+         var message = '<%= MessageUtil.getMessageAndEscapeJS("document_move_associated_documents_confirmation") %>';
+         if(confirm(message)){
+            $jQ("#documents-after-confirmation-accepted-link").eq(0).click();
+         } else {
+            $jQ("#documents-after-confirmation-rejected-link").eq(0).click();
+         }
+      });
+   </script>
+   </f:verbatim>
+   <a:actionLink id="documents-after-confirmation-accepted-link" value="confirmationAcceptedLink" actionListener="#{DocumentDynamicDialog.changeDocLocationConfirmed}" styleClass="hidden" />
+   <a:actionLink id="documents-after-confirmation-rejected-link" value="confirmationRejectedLink" actionListener="#{DocumentDynamicDialog.cancel}" styleClass="hidden" />   
+</a:booleanEvaluator>
 
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/search/web/document-similar-block.jsp" />
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/type/web/document-type-block.jsp" />

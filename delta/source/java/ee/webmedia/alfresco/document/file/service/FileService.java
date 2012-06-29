@@ -135,6 +135,8 @@ public interface FileService {
 
     boolean isFileGeneratedFromTemplate(NodeRef fileRef);
 
+    boolean isFileAssociatedWithDocMetadata(NodeRef fileRef);
+
     List<String> getDocumentFileDisplayNames(NodeRef folder);
 
     /**

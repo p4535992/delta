@@ -157,18 +157,22 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                 updatePanelGroup(confirmationMessages, SAVE_VALIDATED_WORKFLOW);
                 return null;
             }
-            saveValidatedWorkflow(null);
-            return outcome;
-
+            return saveOrConfirmValidatedWorkflow();
         }
         return null;
     }
 
     public void saveValidatedWorkflow(ActionEvent event) {
-        if (!askConfirmIfHasSameTask(MessageUtil.getMessage("workflow_compound_save"), DialogAction.SAVING)) {
+        saveOrConfirmValidatedWorkflow();
+    }
+
+    private String saveOrConfirmValidatedWorkflow() {
+        String confirmationOutcome = askConfirmIfHasSameTask(MessageUtil.getMessage("workflow_compound_save"), DialogAction.SAVING, false);
+        if (confirmationOutcome == null) {
             saveCompWorkflow();
             updatePanelGroup();
         }
+        return confirmationOutcome;
     }
 
     @Override
@@ -190,7 +194,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         return false;
     }
 
-    private boolean askConfirmIfHasSameTask(String title, DialogAction requiredAction) {
+    private String askConfirmIfHasSameTask(String title, DialogAction requiredAction, boolean navigate) {
         List<Pair<String, QName>> hasSameTask = WorkflowUtil.haveSameTask(compoundWorkflow);
         if (!hasSameTask.isEmpty()) {
             ArrayList<MessageData> messageDataList = new ArrayList<MessageData>();
@@ -202,10 +206,13 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             messageDataList.add(new MessageDataImpl(MessageSeverity.WARN, "workflow_compound_confirm_continue"));
             BeanHelper.getConfirmDialog().setupConfirmDialog(this, messageDataList, title, requiredAction);
             isFinished = false;
-            WebUtil.navigateTo("dialog:confirmDialog", null);
-            return true;
+            String navigationOutcome = "dialog:confirmDialog";
+            if (navigate) {
+                WebUtil.navigateTo(navigationOutcome, null);
+            }
+            return navigationOutcome;
         }
-        return false;
+        return null;
     }
 
     private boolean saveCompWorkflow() {
@@ -305,7 +312,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                 updatePanelGroup(confirmationMessages, START_VALIDATED_WORKFLOW);
                 return;
             }
-            if (!askConfirmIfHasSameTask(MessageUtil.getMessage("workflow_compound_starting"), DialogAction.STARTING)) {
+            if (askConfirmIfHasSameTask(MessageUtil.getMessage("workflow_compound_starting"), DialogAction.STARTING, true) == null) {
                 startValidatedWorkflow(null);
             }
 
@@ -433,7 +440,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                     updatePanelGroup(confirmationMessages, CONTINUE_VALIDATED_WORKFLOW);
                     return;
                 }
-                if (!askConfirmIfHasSameTask(MessageUtil.getMessage("workflow_compound_continuing"), DialogAction.CONTINUING)) {
+                if (askConfirmIfHasSameTask(MessageUtil.getMessage("workflow_compound_continuing"), DialogAction.CONTINUING, true) == null) {
                     continueValidatedWorkflow(true);
                 }
 

@@ -1772,7 +1772,7 @@ function handleHtmlLoaded(context, selects) {
                 webdavOpen(path, sharePointObject);
              } else if (confirm(getTranslation("webdav_openReadOnly").replace("#", responseText))) {
                 // TODO CL 161673: responseText might contain HTML of CAS page if session has timed out
-                webdavOpen(path, sharePointObject);
+                webdavOpenReadOnly(path);
              } else {
                 return false;
              }

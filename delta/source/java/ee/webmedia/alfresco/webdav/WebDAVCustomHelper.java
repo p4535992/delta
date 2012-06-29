@@ -8,7 +8,9 @@ import java.util.List;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.permissions.AccessDeniedException;
+import org.alfresco.repo.webdav.WebDAV;
 import org.alfresco.repo.webdav.WebDAVHelper;
+import org.alfresco.repo.webdav.WebDAVServerException;
 import org.alfresco.service.ServiceRegistry;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
@@ -114,7 +116,7 @@ public class WebDAVCustomHelper extends WebDAVHelper {
         return AccessStatus.ALLOWED == BeanHelper.getPermissionService().hasPermission(docOrFileRef, DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES);
     }
 
-    public static void checkDocumentFileWritePermission(NodeRef fileRef) {
+    public static void checkDocumentFileWritePermission(NodeRef fileRef) throws WebDAVServerException {
         if (getGeneralService().getArchivalsStoreRef().equals(fileRef.getStoreRef())) {
             throw new AccessDeniedException("not allowing writing - document is under primary archivals store");
         }
@@ -127,7 +129,7 @@ public class WebDAVCustomHelper extends WebDAVHelper {
         NodeService nodeService = BeanHelper.getNodeService();
         NodeRef parentRef = nodeService.getPrimaryParent(fileRef).getParentRef();
         if (!DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(parentRef))) {
-            throw new AccessDeniedException("Not allowing writing - file is not under document. File=" + fileRef);
+            throw new WebDAVServerException(WebDAV.WEBDAV_SC_LOCKED, new AccessDeniedException("Not allowing writing - file is not under document. File=" + fileRef));
         }
 
         DocumentFileWriteDynamicAuthority documentFileWriteDynamicAuthority = BeanHelper.getDocumentFileWriteDynamicAuthority();
@@ -136,11 +138,11 @@ public class WebDAVCustomHelper extends WebDAVHelper {
             if (additionalCheck) {
                 return; // allow writing based on additional logic
             }
-            throw new AccessDeniedException("not allowing writing - document is finished or has in-progress workflows or is incoming letter");
+            throw new WebDAVServerException(WebDAV.WEBDAV_SC_LOCKED, new AccessDeniedException("not allowing writing - document is finished or has in-progress workflows or is incoming letter"));
         }
 
         if (!getPrivilegeService().hasPermissions(parentRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT)) {
-            throw new AccessDeniedException("permission editDocument denied for file under " + parentRef);
+            throw new WebDAVServerException(WebDAV.WEBDAV_SC_LOCKED, new AccessDeniedException("permission editDocument denied for file under " + parentRef));
         }
     }
 

@@ -136,4 +136,8 @@ public class PropDiffHelper {
         }
         return value == null ? defaultStr : value.toString();
     }
+
+    public Map<QName, String> getPropLabels() {
+        return propLabels;
+    }
 }

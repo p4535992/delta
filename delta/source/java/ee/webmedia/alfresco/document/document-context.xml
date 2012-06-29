@@ -283,7 +283,9 @@
       </property>
    </bean>
 
-   <bean id="docLockService" class="ee.webmedia.alfresco.document.service.DocLockServiceImpl" parent="lockService" init-method="init" />
+   <bean id="docLockService" class="ee.webmedia.alfresco.document.service.DocLockServiceImpl" parent="lockService" init-method="init">
+      <property name="fileService" ref="FileService" />
+   </bean>
 
    <bean id="DocLockService" class="org.springframework.aop.framework.ProxyFactoryBean">
       <property name="proxyInterfaces">

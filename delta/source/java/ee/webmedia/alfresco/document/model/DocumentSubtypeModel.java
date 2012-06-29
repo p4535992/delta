@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.document.model;
 
 import org.alfresco.service.namespace.QName;
 
+@Deprecated
 public interface DocumentSubtypeModel {
     String URI = "http://alfresco.webmedia.ee/model/document/subtype/1.0";
     String PREFIX = "docsub:";

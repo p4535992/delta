@@ -1,11 +1,14 @@
 package ee.webmedia.alfresco.log.service;
 
+import java.util.Date;
 import java.util.List;
 
+import org.alfresco.service.cmr.repository.NodeRef;
+
 import ee.webmedia.alfresco.filter.service.FilterService;
+import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogFilter;
 import ee.webmedia.alfresco.log.model.LogSetup;
-import ee.webmedia.alfresco.log.model.LogEntry;
 
 /**
  * Delta business logic specific logging service.
@@ -44,4 +47,12 @@ public interface LogService extends FilterService {
      * @return Current log entries.
      */
     List<LogEntry> getLogEntries(LogFilter filter);
+
+    Date getFirstLogEntryDate(NodeRef nodeRef);
+
+    /** Should be used only for importing older log records; for creating regular log records, use addLogEntry(LogEntry log) */
+    void addLogEntry(LogEntry log, Date dateCreated, String idPrefix, Long idSuffix);
+
+    Date getFirstLogEntryDate();
+
 }

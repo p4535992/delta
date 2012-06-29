@@ -21,6 +21,7 @@ public interface FileModel {
         QName ACTIVE = QName.createQName(URI, "active");
         QName DISPLAY_NAME = QName.createQName(URI, "displayName");
         QName NEW_VERSION_ON_NEXT_SAVE = QName.createQName(URI, "newVersionOnNextSave");
+        QName UPDATE_METADATA_IN_FILES = QName.createQName(URI, "updateMetadataInFiles");
 
     }
 }
