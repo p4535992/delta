@@ -239,6 +239,12 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
                         if (docProps.get(accessRestrictionBeginDateProp.toString()) == null) {
                             docProps.put(accessRestrictionBeginDateProp.toString(), new Date());
                         }
+                    } else if (AccessRestriction.INTERNAL.equals(accessRestriction) || AccessRestriction.OPEN.equals(accessRestriction)) {
+                        final Map<String, Object> docProps = dialogDataProvider.getNode().getProperties();
+                        docProps.put(accessRestrictionReasonProp.toString(), null);
+                        docProps.put(accessRestrictionBeginDateProp.toString(), null);
+                        docProps.put(accessRestrictionEndDateProp.toString(), null);
+                        docProps.put(accessRestrictionEndDescProp.toString(), null);
                     }
                     clearPropertySheet();
                 }
@@ -322,12 +328,12 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
         if (document.isDraftOrImapOrDvk()) {
             return;
         }
-    
+
         final Map<QName, Serializable> oldProps = nodeService.getProperties(nodeRef);
         if (getChangedAccessRestrictionFieldIds(document, oldProps).isEmpty()) {
             return;
         }
-    
+
         // If user changed the access restriction, verify that reason was also changed
         final String reason = (String) document.getProp(DocumentDynamicDialog.TEMP_ACCESS_RESTRICTION_CHANGE_REASON);
         if (StringUtils.isNotBlank(reason)) {
@@ -337,7 +343,7 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
             document.getNode().getProperties().remove(DocumentDynamicDialog.TEMP_ACCESS_RESTRICTION_CHANGE_REASON);
             return;
         }
-    
+
         validationHelper.addErrorMessage(AccessRestrictionGenerator.ACCESS_RESTRICTION_CHANGE_REASON_ERROR);
     }
 
@@ -360,6 +366,16 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
                 }
             }
         }
+
+        String oldAccessRestriction = (String) oldProps.get(ACCESS_RESTRICTION);
+        if (oldAccessRestriction != null && !accessRestriction.equals(oldAccessRestriction)
+                    && (AccessRestriction.INTERNAL.equals(accessRestriction) || AccessRestriction.OPEN.equals(accessRestriction))) {
+            newProps.put(ACCESS_RESTRICTION_REASON.toString(), null);
+            newProps.put(ACCESS_RESTRICTION_BEGIN_DATE.toString(), null);
+            newProps.put(ACCESS_RESTRICTION_END_DATE.toString(), null);
+            newProps.put(ACCESS_RESTRICTION_END_DESC.toString(), null);
+        }
+
         if (!document.isDraftOrImapOrDvk()) {
             if (!getChangedAccessRestrictionFieldIds(document, oldProps).isEmpty()) {
                 document.setAccessRestrictionPropsChanged(true);

@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.ResultSet;
@@ -44,8 +45,11 @@ public class DocumentUpdater extends AbstractNodeUpdater {
     private static final String EDIT_DOCUMENT_FILES = "editDocumentFiles";
     private static final String DELETE_DOCUMENT_META_DATA = "deleteDocumentMetaData";
     private static final String DELETE_DOCUMENT_FILES = "deleteDocumentFiles";
-
     // END: old permissions
+
+    // START: old aspects
+    QName EMAIL_DATE_TIME = QName.createQName(DocumentCommonModel.DOCCOM_URI, "emailDateTime");
+    // END: old aspects
 
     private WorkflowService workflowService;
     private final Map<NodeRef /* documentParentRef */, List<String /* regNumber */>> documentRegNumbers = new HashMap<NodeRef, List<String>>();
@@ -77,6 +81,27 @@ public class DocumentUpdater extends AbstractNodeUpdater {
 
     @Override
     protected String[] updateNode(NodeRef docRef) throws Exception {
+        QName type = nodeService.getType(docRef);
+        if (!DocumentCommonModel.Types.DOCUMENT.equals(type)) {
+            return new String[] { "isNotDocument",
+                    type.toPrefixString(serviceRegistry.getNamespaceService()) };
+        }
+        if (nodeService.hasAspect(docRef, EMAIL_DATE_TIME)) {
+            ChildAssociationRef assoc = nodeService.getPrimaryParent(docRef);
+            return new String[] { "hasEmailDateTimeAspectAndIgnored",
+                    assoc.getTypeQName().toPrefixString(serviceRegistry.getNamespaceService()),
+                    assoc.getQName().toPrefixString(serviceRegistry.getNamespaceService()),
+                    type.toPrefixString(serviceRegistry.getNamespaceService()) };
+        }
+        ChildAssociationRef primaryParentAssoc = nodeService.getPrimaryParent(docRef);
+        if (DocumentCommonModel.Types.DRAFTS.equals(primaryParentAssoc.getQName())) {
+            nodeService.deleteNode(docRef);
+            return new String[] { "isDraftAndDeleted",
+                    primaryParentAssoc.getTypeQName().toPrefixString(serviceRegistry.getNamespaceService()),
+                    primaryParentAssoc.getQName().toPrefixString(serviceRegistry.getNamespaceService()),
+                    type.toPrefixString(serviceRegistry.getNamespaceService()) };
+        }
+
         Map<QName, Serializable> origProps = nodeService.getProperties(docRef);
         Map<QName, Serializable> updatedProps = new HashMap<QName, Serializable>();
 
@@ -95,9 +120,8 @@ public class DocumentUpdater extends AbstractNodeUpdater {
 
         String structUnitPropertiesToMultivaluedUpdaterLog = updateStructUnitPropertiesToMultivalued(origProps, updatedProps);
 
-        if (!updatedProps.isEmpty()) {
-            nodeService.addProperties(docRef, updatedProps);
-        }
+        // Always update document node to trigger an update of document data in Lucene index.
+        nodeService.addProperties(docRef, updatedProps);
 
         String removePermissionLog = updatePermission(docRef);
         String removePrivilegeMappingsLog = removePrivilegeMappings(docRef, origProps);

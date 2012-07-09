@@ -130,6 +130,7 @@
          </dropdown>
          <item id="departmentDocuments" title-id="menu_department_documents">
             <href>#{MenuBean.workingDocumentsAddress}</href>
+            <target>_blank</target>
          </item>
          <dropdown title-id="menu_my_documents" browse="true">
             <xpath>/{http://alfresco.webmedia.ee/model/functions/1.0}documentList</xpath>

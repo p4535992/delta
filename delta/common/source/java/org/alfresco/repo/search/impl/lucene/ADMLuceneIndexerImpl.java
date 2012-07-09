@@ -79,6 +79,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.util.CachingDateFormat;
 import org.alfresco.util.EqualsHelper;
 import org.alfresco.util.ISO9075;
+import org.apache.commons.lang.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.lucene.analysis.Token;
@@ -88,15 +89,18 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermDocs;
+import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Hits;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Searcher;
 import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.BooleanClause.Occur;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
  * The implementation of the lucene based indexer. Supports basic transactional behaviour if used on its own.
@@ -107,6 +111,8 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
 {
     static Log s_logger = LogFactory.getLog(ADMLuceneIndexerImpl.class);
     static Log log = LogFactory.getLog("ee.webmedia.alfresco.index");
+    private static final FastDateFormat DATE_FORMAT_NOTOKENIZE = FastDateFormat.getInstance("ddMMyyyy");
+    private static final FastDateFormat DATE_FORMAT_TOKENIZE = FastDateFormat.getInstance("dd.MM.yyyy");
 
     /**
      * The node service we use to get information about nodes
@@ -584,6 +590,9 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
         List<Document> docs = new ArrayList<Document>();
         ChildAssociationRef qNameRef = null;
         Map<QName, Serializable> properties = nodeService.getProperties(nodeRef);
+        QName typeQName = nodeService.getType(nodeRef);
+
+        List<String> values = new ArrayList<String>(properties.size());
         NodeRef.Status nodeStatus = nodeService.getNodeStatus(nodeRef);
 
         Collection<Path> directPaths = nodeService.getPaths(nodeRef, false);
@@ -598,11 +607,15 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
         Document xdoc = new Document();
         xdoc.add(new Field("ID", nodeRef.toString(), Field.Store.YES, Field.Index.NO_NORMS, Field.TermVector.NO));
         xdoc.add(new Field("TX", nodeStatus.getChangeTxnId(), Field.Store.YES, Field.Index.NO_NORMS, Field.TermVector.NO));
+
         boolean isAtomic = true;
         for (QName propertyName : properties.keySet())
         {
             Serializable value = properties.get(propertyName);
-            
+            if (DocumentCommonModel.Types.DOCUMENT.equals(typeQName)
+                    && (DocumentDynamicModel.URI.equals(propertyName.getNamespaceURI()) || DocumentCommonModel.DOCCOM_URI.equals(propertyName.getNamespaceURI()))) {
+                addValues(value, values);
+            }
             value = convertForMT(propertyName, value);
             
             if (indexAllProperties)
@@ -612,6 +625,13 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
             else
             {
                 isAtomic &= indexProperty(nodeRef, propertyName, value, xdoc, true);
+            }
+        }
+
+        // Store property values in a single field so that quick search could find the document.
+        if (DocumentCommonModel.Types.DOCUMENT.equals(typeQName)) {
+            for (String value : values) {
+                xdoc.add(new Field("VALUES", value, Field.Store.NO, Field.Index.TOKENIZED, Field.TermVector.NO));
             }
         }
 
@@ -685,7 +705,7 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
                             }
                             directoryEntry.add(new Field("ISCONTAINER", "T", Field.Store.YES, Field.Index.NO_NORMS, Field.TermVector.NO));
 
-                            if (isCategory(getDictionaryService().getType(nodeService.getType(nodeRef))))
+                            if (isCategory(getDictionaryService().getType(typeQName)))
                             {
                                 directoryEntry.add(new Field("ISCATEGORY", "T", Field.Store.YES, Field.Index.NO_NORMS, Field.TermVector.NO));
                             }
@@ -720,7 +740,6 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
             ChildAssociationRef primary = nodeService.getPrimaryParent(nodeRef);
             xdoc.add(new Field("PRIMARYPARENT", tenantService.getName(primary.getParentRef()).toString(), Field.Store.YES, Field.Index.NO_NORMS, Field.TermVector.NO));
             xdoc.add(new Field("PRIMARYASSOCTYPEQNAME", ISO9075.getXPathName(primary.getTypeQName()), Field.Store.YES, Field.Index.NO, Field.TermVector.NO));
-            QName typeQName = nodeService.getType(nodeRef);
 
             xdoc.add(new Field("TYPE", ISO9075.getXPathName(typeQName), Field.Store.YES, Field.Index.NO_NORMS, Field.TermVector.NO));
             for (QName classRef : nodeService.getAspects(nodeRef))
@@ -783,7 +802,39 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
         
         return inboundValue;
     }
-    
+
+    /**
+     * Stores the value in one of the provided lists. A value of type String is stored in the first list. A value of Date is stored in the second list in 'dd.MM.yyyy' format.
+     * Other types of value will be ignored. Duplicate values won't be added to the list.
+     * <p>
+     * Later the contents of the lists can be stored in the index.
+     * 
+     * @param value A node property value to be stored in index.
+     * @param values List where String values will be stored.
+     * @param dateValues List where Date values will be stored as Strings.
+     */
+    private static void addValues(Serializable value, List<String> values) {
+        if (value instanceof String) {
+            if (!values.contains(value)) {
+                SearchUtil.extractDates((String) value, values);
+                values.add((String) value);
+            }
+        } else if (value instanceof Date) {
+            String date = DATE_FORMAT_NOTOKENIZE.format((Date) value);
+            if (!values.contains(date)) {
+                values.add(date);
+            }
+            date = DATE_FORMAT_TOKENIZE.format((Date) value);
+            if (!values.contains(date)) {
+                values.add(date);
+            }
+        } else if (value instanceof Collection) {
+            for (Object collValue : (Collection<?>) value) {
+                addValues((Serializable) collValue, values);
+            }
+        }
+    }
+
     /**
      * @param indexAtomicPropertiesOnly
      *            true to ignore all properties that must be indexed non-atomically

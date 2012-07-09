@@ -20,8 +20,10 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.cmr.security.AuthenticationService;
+import org.alfresco.service.transaction.TransactionService;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.permissions.DocumentFileWriteDynamicAuthority;
 import ee.webmedia.alfresco.document.service.DocumentService;
@@ -32,11 +34,16 @@ public class WebDAVCustomHelper extends WebDAVHelper {
     // Custom services
     private final VersionsService m_versionsService;
     private final DocumentService documentService;
+    private final DocumentLogService documentLogService;
+    private final TransactionService transactionService;
 
-    protected WebDAVCustomHelper(ServiceRegistry serviceRegistry, AuthenticationService authService, VersionsService versionsService, DocumentService documentService) {
+    protected WebDAVCustomHelper(ServiceRegistry serviceRegistry, AuthenticationService authService, VersionsService versionsService, DocumentService documentService,
+                                 DocumentLogService documentLogService, TransactionService transactionService) {
         super(serviceRegistry, authService);
         m_versionsService = versionsService;
         this.documentService = documentService;
+        this.documentLogService = documentLogService;
+        this.transactionService = transactionService;
     }
 
     /**
@@ -93,6 +100,14 @@ public class WebDAVCustomHelper extends WebDAVHelper {
 
     public DocumentService getDocumentService() {
         return documentService;
+    }
+
+    public DocumentLogService getDocumentLogService() {
+        return documentLogService;
+    }
+    
+    public TransactionService getTransactionService() {
+        return transactionService;
     }
 
     public static void checkDocumentFileReadPermission(NodeRef fileRef) {

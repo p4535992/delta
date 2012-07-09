@@ -192,8 +192,12 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         int wfIndex = ActionUtil.getParam(event, WF_INDEX, Integer.class);
         log.debug("addWorkflowBlock: " + wfIndex + ", " + workflowType.getLocalName());
         Workflow workflow = getWorkflowService().addNewWorkflow(compoundWorkflow, workflowType, wfIndex, true);
-        if (taskGroups != null && taskGroups.size() >= wfIndex) { // If workflow was added in the middle
-            taskGroups.add(wfIndex, new HashMap<String, List<TaskGroup>>());
+        List<Map<String, List<TaskGroup>>> groups = getTaskGroups();
+        HashMap<String, List<TaskGroup>> emptyGroup = new HashMap<String, List<TaskGroup>>();
+        if (groups.size() > wfIndex) { // If workflow was added in the middle
+            groups.add(wfIndex, emptyGroup);
+        } else {
+            groups.add(emptyGroup);
         }
         if (!(compoundWorkflow instanceof CompoundWorkflowDefinition) && isCostManagerWorkflow(wfIndex)) {
             addCostManagerTasks(workflow);
@@ -712,11 +716,14 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
 
         // render every workflow block
         int wfCounter = 1;
+        boolean firstLoading = taskGroups == null; // Check if we are loading pre-saved definition, where document registration WFs are not processed by TaskListGenerator
         for (Workflow block : compoundWorkflow.getWorkflows()) {
             // block actions
             HtmlPanelGroup facetGroup = (HtmlPanelGroup) application.createComponent(HtmlPanelGroup.COMPONENT_TYPE);
             facetGroup.setId("action-group-" + wfCounter);
-
+            if (firstLoading) {
+                getTaskGroups().add(new HashMap<String, List<TaskGroup>>());
+            }
             if (!dontShowAddActions && fullAccess && showAddActions(wfCounter)) {
                 // block add workflow actions
                 UIMenu addActionsMenu = buildAddActions(application, wfCounter, document);

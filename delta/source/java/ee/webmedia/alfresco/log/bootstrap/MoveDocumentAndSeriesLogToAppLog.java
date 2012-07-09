@@ -38,22 +38,9 @@ import ee.webmedia.alfresco.utils.SearchUtil;
  */
 public class MoveDocumentAndSeriesLogToAppLog extends AbstractNodeUpdater {
 
-    private Long logTableSequence = new Long(1);
+    private long logTableSequence = 1;
     private String idPrefix;
     private final List<NodeRef> logNodesToDelete = new ArrayList<NodeRef>();
-
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        super.afterPropertiesSet();
-        DateFormat idDateFormat = new SimpleDateFormat("yyyyMMdd");
-        Date idPrefixDate = BeanHelper.getLogService().getFirstLogEntryDate();
-        if (idPrefixDate != null) {
-            idPrefixDate = DateUtils.addDays(idPrefixDate, -1);
-        } else {
-            idPrefixDate = new Date();
-        }
-        idPrefix = idDateFormat.format(idPrefixDate);
-    }
 
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
@@ -96,7 +83,16 @@ public class MoveDocumentAndSeriesLogToAppLog extends AbstractNodeUpdater {
 
     @Override
     protected void executeUpdater() throws Exception {
+        DateFormat idDateFormat = new SimpleDateFormat("yyyyMMdd");
+        Date idPrefixDate = BeanHelper.getLogService().getFirstLogEntryDate();
+        if (idPrefixDate == null) {
+            idPrefixDate = new Date();
+        }
+        idPrefixDate = DateUtils.addDays(idPrefixDate, -1);
+        idPrefix = idDateFormat.format(idPrefixDate);
+
         super.executeUpdater();
+
         final Iterator<NodeRef> logNodeRefIterator = logNodesToDelete.iterator();
         log.info("Starting to delete " + logNodesToDelete.size() + " log nodes.");
         int nodesRemaining = logNodesToDelete.size();

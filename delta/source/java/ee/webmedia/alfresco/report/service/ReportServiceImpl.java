@@ -735,81 +735,61 @@ public class ReportServiceImpl implements ReportService {
                 }
 
                 if (isApplicantRow) {
-                    if (fieldsToShowArray[notMandatoryCellIndex++] && hasCostManagers) {
-                        setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document.getCostManagers().get(applicantRowCounter), LOG);
-                    } else {
-                        row.createCell(cellIndex++);
+                    if (fieldsToShowArray[notMandatoryCellIndex++]) {
+                        if (hasCostManagers) {
+                            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document.getCostManagers().get(applicantRowCounter), LOG);
+                        } else {
+                            row.createCell(cellIndex++);
+                        }
                     }
                     if (fieldsToShowArray[notMandatoryCellIndex++]) {
                         setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document.getApplicantNames().get(applicantRowCounter), LOG);
-                    } else {
-                        row.createCell(cellIndex++);
                     }
                     if (fieldsToShowArray[notMandatoryCellIndex++]) {
                         setCellValueTruncateIfNeeded(row.createCell(cellIndex++), formatDateOrEmpty(DATE_FORMAT, document.getErrandBeginDates().get(applicantRowCounter)), LOG);
-                    } else {
-                        row.createCell(cellIndex++);
                     }
                     if (fieldsToShowArray[notMandatoryCellIndex++]) {
                         setCellValueTruncateIfNeeded(row.createCell(cellIndex++), formatDateOrEmpty(DATE_FORMAT, document.getErrandEndDates().get(applicantRowCounter)), LOG);
-                    } else {
-                        row.createCell(cellIndex++);
                     }
                     if (fieldsToShowArray[notMandatoryCellIndex++] && hasCountries) {
                         setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document.getCountries().get(applicantRowCounter), LOG); // removable
-                    } else {
-                        row.createCell(cellIndex++);
                     }
                     if (fieldsToShowArray[notMandatoryCellIndex++] && hasCounties) {
                         setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document.getCounties().get(applicantRowCounter), LOG); // removable
-                    } else {
-                        row.createCell(cellIndex++);
                     }
                     if (fieldsToShowArray[notMandatoryCellIndex++] && hasCities) {
                         setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document.getCities().get(applicantRowCounter), LOG); // removable
-                    } else {
-                        row.createCell(cellIndex++);
                     }
                     applicantRowCounter++;
                 } else {
-                    cellIndex = addEmptyCells(row, cellIndex, 7);
-                    notMandatoryCellIndex += 7;
+                    int emptyCellsToAdd = 0;
+                    for (int i = 0; i < 7; i++) {
+                        emptyCellsToAdd += fieldsToShowArray[notMandatoryCellIndex++] ? 1 : 0;
+                    }
+                    cellIndex = addEmptyCells(row, cellIndex, emptyCellsToAdd);
+                    notMandatoryCellIndex += emptyCellsToAdd;
                 }
 
                 if (fieldsToShowArray[notMandatoryCellIndex++]) {
                     setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document.getDelivererName(), LOG);
-                } else {
-                    row.createCell(cellIndex++);
                 }
                 if (fieldsToShowArray[notMandatoryCellIndex++]) {
                     setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document.getProcurementType(), LOG);
-                } else {
-                    row.createCell(cellIndex++);
                 }
                 if (fieldsToShowArray[notMandatoryCellIndex++]) {
                     setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document.getInvoiceNumber(), LOG);
-                } else {
-                    row.createCell(cellIndex++);
                 }
                 if (fieldsToShowArray[notMandatoryCellIndex++]) {
                     setCellValueTruncateIfNeeded(row.createCell(cellIndex++), formatDateOrEmpty(DATE_FORMAT, document.getInvoiceDate()), LOG);
-                } else {
-                    row.createCell(cellIndex++);
                 }
                 if (fieldsToShowArray[notMandatoryCellIndex++]) {
                     setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document.getSellerPartyName(), LOG);
-                } else {
-                    row.createCell(cellIndex++);
                 }
                 if (fieldsToShowArray[notMandatoryCellIndex++]) {
                     setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document.getSellerPartyRegNumber(), LOG);
-                } else {
-                    row.createCell(cellIndex++);
                 }
                 if (fieldsToShowArray[notMandatoryCellIndex++]) {
                     setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document.getTotalSum(), LOG);
-                } else {
-                    row.createCell(cellIndex++);
                 }
                 rowIndex++;
             }
@@ -874,13 +854,9 @@ public class ReportServiceImpl implements ReportService {
         setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document.getSignerJobTitle(), LOG);
         if (fieldsToShowArray[notMandatoryCellIndex++]) {
             setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document.getKeywords(), LOG);
-        } else {
-            row.createCell(cellIndex++);
         }
         if (fieldsToShowArray[notMandatoryCellIndex++]) {
             setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document.getHierarchicalKeywords(), LOG);
-        } else {
-            row.createCell(cellIndex++);
         }
         setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document.getStorageType(), LOG);
         setCellValueTruncateIfNeeded(row.createCell(cellIndex++), formatDateOrEmpty(DATE_FORMAT, document.getCreated()), LOG);

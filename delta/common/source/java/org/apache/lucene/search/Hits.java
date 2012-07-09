@@ -23,8 +23,11 @@ import java.util.Vector;
 import java.util.Iterator;
 
 import org.alfresco.repo.search.impl.SearchStatistics;
+import org.alfresco.repo.search.impl.SearchStatistics.Data;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
+
+import ee.webmedia.alfresco.utils.CalendarUtil;
 
 /** A ranked list of documents, used to hold search results.
  * <p>
@@ -85,8 +88,8 @@ public final class Hits {
   }
 
   Hits(Searcher s, Query q, Filter f) throws IOException {
-    boolean statisticsEnabled = SearchStatistics.isEnabled();
-    long startTime = statisticsEnabled ? System.currentTimeMillis() : 0;
+    Data data = SearchStatistics.getData();
+    long startTime = data != null ? System.nanoTime() : 0;
     String originalQuery = q.toString(); // this value is good to have, if we have to analyze memory dump after OutOfMemoryError
     weight = q.weight(s);
     String rewrittenQuery = weight.getQuery().toString(); // this value is good to have, if we have to analyze memory dump after OutOfMemoryError
@@ -96,15 +99,17 @@ public final class Hits {
     nDeletions = countDeletions(s);
     getMoreDocs(50); // retrieve 100 initially
     lengthAtStart = length;
-    if (statisticsEnabled) {
-        SearchStatistics.getData().luceneHitsTime = System.currentTimeMillis() - startTime;
-        SearchStatistics.getData().resultsBeforeAcl = length;
+    if (data != null) {
+        data.luceneHitsTime = CalendarUtil.duration(startTime);
+        data.resultsBeforeAcl = length;
+        data.originalQueryChars = originalQuery.length();
+        data.rewrittenQueryChars = rewrittenQuery.length();
     }
   }
 
   Hits(Searcher s, Query q, Filter f, Sort o) throws IOException {
-    boolean statisticsEnabled = SearchStatistics.isEnabled();
-    long startTime = statisticsEnabled ? System.currentTimeMillis() : 0;
+    Data data = SearchStatistics.getData();
+    long startTime = data != null ? System.nanoTime() : 0;
     String originalQuery = q.toString(); // this value is good to have, if we have to analyze memory dump after OutOfMemoryError
     weight = q.weight(s);
     String rewrittenQuery = weight.getQuery().toString(); // this value is good to have, if we have to analyze memory dump after OutOfMemoryError
@@ -115,9 +120,11 @@ public final class Hits {
     nDeletions = countDeletions(s);
     getMoreDocs(50); // retrieve 100 initially
     lengthAtStart = length;
-    if (statisticsEnabled) {
-        SearchStatistics.getData().luceneHitsTime = System.currentTimeMillis() - startTime;
-        SearchStatistics.getData().resultsBeforeAcl = length;
+    if (data != null) {
+        data.luceneHitsTime = CalendarUtil.duration(startTime);
+        data.resultsBeforeAcl = length;
+        data.originalQueryChars = originalQuery.length();
+        data.rewrittenQueryChars = rewrittenQuery.length();
     }
   }
 

@@ -33,7 +33,6 @@ import static ee.webmedia.alfresco.utils.SearchUtil.generateStringExactQuery;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -52,7 +51,6 @@ import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.Path;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.ResultSetRow;
 import org.alfresco.service.cmr.search.SearchParameters;
@@ -76,10 +74,8 @@ import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIModeList;
 import org.apache.commons.lang.StringUtils;
 
-import ee.webmedia.alfresco.common.service.ExecuteCallback;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 /**
  * Backing bean for the Manage Deleted Items (soft delete and archiving) pages.
@@ -234,18 +230,7 @@ public class TrashcanDialog extends BaseDialogBean implements IContextListener
             sp.setLanguage(SearchService.LANGUAGE_LUCENE);
             sp.setQuery(query);
             sp.addStore(getArchiveRootRef().getStoreRef());     // the Archived Node store
-            ExecuteCallback<ResultSet> searchCallback = new ExecuteCallback<ResultSet>() {
-                @Override
-                public ResultSet execute() {
-                    return getSearchService().query(sp);
-
-                }
-            };
-            if (StringUtils.isNotBlank(property.getSearchText())) {
-                results = BeanHelper.getGeneralService().runSemaphored(BeanHelper.getDocumentSearchService().getQuickSearchSemaphore(), searchCallback);
-            } else {
-                results = searchCallback.execute();
-            }
+            results = getSearchService().query(sp);
             itemNodes = new ArrayList<Node>(results.length());
          }
          

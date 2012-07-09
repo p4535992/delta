@@ -8,6 +8,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -27,6 +29,8 @@ import org.apache.lucene.queryParser.QueryParser;
 public class SearchUtil {
 
     public static FastDateFormat luceneDateFormat = FastDateFormat.getInstance("yyyy-MM-dd'T'00:00:00.000");
+
+    private static final Pattern DATE_PATTERN = Pattern.compile("\\d\\d?\\.\\d\\d?\\.\\d\\d\\d\\d");
 
     /**
      * @param date
@@ -210,6 +214,21 @@ public class SearchUtil {
 
     public static String generatePropertyUnsetQuery(QName documentPropName) {
         return "ISUNSET:" + Repository.escapeQName(documentPropName);
+    }
+
+    /**
+     * Generates "VALUE:xxx" query where VALUE is a custom indexed Field with document property values. So this clause can only be used in document search.
+     * <p>
+     * Only String and date (in format: dd.MM.yyyy) values are indexed there. File contents are not indexed there.
+     * 
+     * @param value The document property value to search for.
+     * @return The generated clause as string.
+     */
+    public static String generateValueQuery(String value, boolean escape) {
+        if (escape) {
+            value = QueryParser.escape(stripCustom(value));
+        }
+        return "VALUES:" + value + "*";
     }
 
     public static String generatePropertyWildcardQuery(QName documentPropName, String value, boolean escape, boolean leftWildcard, boolean rightWildcard) {
@@ -477,4 +496,32 @@ public class SearchUtil {
         return sp;
     }
 
+    /**
+     * Extracts dates (as 'dd.MM.yyyy' from given text) and stores them in given list in format 'ddMMyyyy'.
+     * Duplicate formatted date values won't be added to the list.
+     * 
+     * @param text A not null String value.
+     * @param list A not null list where found dates will be stored.
+     */
+    public static void extractDates(String text, List<String> list) {
+        Matcher matcher = DATE_PATTERN.matcher(text);
+        while (matcher.find()) {
+            String date = matcher.group();
+
+            // When day or month is not in two-digit form, add these missing zeros.
+            if (date.length() < 10) {
+                if (date.indexOf('.') != 2) {
+                    date = "0" + date;
+                }
+                if (date.indexOf('.', 3) != 5) {
+                    date = date.substring(0, 3) + "0" + date.substring(3);
+                }
+            }
+
+            date = StringUtils.remove(date, '.'); // Store date as 'ddMMyyyy' (8-digit number).
+            if (!list.contains(date)) {
+                list.add(date);
+            }
+        }
+    }
 }

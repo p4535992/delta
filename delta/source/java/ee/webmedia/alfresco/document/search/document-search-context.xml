@@ -68,6 +68,16 @@
       </property>
    </bean>   
 
+   <bean id="deleteQuickSearchParallelCountClassificatorsUpdater" class="ee.webmedia.alfresco.common.bootstrap.DeleteNodeByXPathBootstrap" parent="abstractDeleteNodeByXPathBootstrap">
+      <property name="moduleId" value="common" />
+      <property name="nodeXPath" value="/param:parameters/param:quickSearchParallelCount" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+   </bean>
+
    <bean id="documentSearchService" class="ee.webmedia.alfresco.document.search.service.DocumentSearchServiceImpl">
       <property name="documentService" ref="DocumentService" />
       <property name="generalService" ref="GeneralService" />

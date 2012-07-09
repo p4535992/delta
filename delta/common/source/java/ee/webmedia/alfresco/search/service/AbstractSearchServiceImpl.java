@@ -1,26 +1,24 @@
 package ee.webmedia.alfresco.search.service;
 
-import static ee.webmedia.alfresco.utils.SearchUtil.formatLuceneDate;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateLuceneSearchParams;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.search.EmptyResultSet;
 import org.alfresco.repo.search.MLAnalysisMode;
+import org.alfresco.repo.search.impl.SearchStatistics;
 import org.alfresco.repo.search.impl.lucene.AnalysisMode;
 import org.alfresco.repo.search.impl.lucene.LuceneAnalyser;
 import org.alfresco.repo.search.impl.lucene.LuceneConfig;
@@ -33,7 +31,6 @@ import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchParameters;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
-import org.alfresco.util.Pair;
 import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.analysis.Token;
 import org.apache.lucene.analysis.TokenStream;
@@ -46,6 +43,7 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.utils.AdjustableSemaphore;
+import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
 
 public abstract class AbstractSearchServiceImpl {
@@ -97,22 +95,10 @@ public abstract class AbstractSearchServiceImpl {
         return parseQuickSearchWords(searchString, 3);
     }
 
-    public List<String> parseQuickSearchWords(String searchString, int minTextLength) {
-        return parseQuickSearchWords(searchString, false, minTextLength).getFirst();
-    }
-
-    protected Pair<List<String>, List<Date>> parseQuickSearchWordsAndDates(String searchString) {
-        return parseQuickSearchWords(searchString, true, 3);
-    }
-
-    private Pair<List<String>, List<Date>> parseQuickSearchWords(String searchString, boolean parseDates, int minTextLength) {
-        DateFormat userDateFormat = new SimpleDateFormat("dd.MM.yyyy");
-        userDateFormat.setLenient(false);
-
+    protected List<String> parseQuickSearchWords(String searchString, int minTextLength) {
         List<String> searchWords = new ArrayList<String>();
-        List<Date> searchDates = new ArrayList<Date>();
         if (StringUtils.isBlank(searchString)) {
-            return new Pair<List<String>, List<Date>>(searchWords, searchDates);
+            return searchWords;
         }
         Long maxWords = BeanHelper.getParametersService().getLongParameter(Parameters.QUICK_SEARCH_WORDS_COUNT);
         if (maxWords == null || maxWords < 1 || maxWords > 10) {
@@ -120,36 +106,15 @@ public abstract class AbstractSearchServiceImpl {
             maxWords = 10L;
         }
         for (String searchWord : searchString.split("\\s")) {
-            if (parseDates) {
-                Date date = null;
-                try {
-                    date = userDateFormat.parse(searchWord);
-                    // if not date, then ParseException is thrown and processing continues below as regular word
 
-                    if (searchWords.size() + searchDates.size() >= maxWords) {
-                        continue;
-                    }
-                    if (log.isDebugEnabled()) {
-                        log.debug("getDocumentsQuickSearch - found date match: " + searchWord + " -> " + formatLuceneDate(date));
-                    }
+            // Extract dates first.
+            SearchUtil.extractDates(searchWord, searchWords);
 
-                    boolean exists = false;
-                    for (Date tmpDate : searchDates) {
-                        exists |= tmpDate.equals(date);
-                    }
-                    if (!exists) {
-                        searchDates.add(date);
-                    }
-                    continue;
-                } catch (ParseException e) {
-                    // do nothing
-                }
-            }
-
+            // Tokenize the search word (even if contained only full date - textual content also needs to be searched):
             String searchWordStripped = SearchUtil.stripCustom(SearchUtil.replaceCustom(searchWord, ""));
             for (Token token : getTokens(searchWordStripped)) {
                 String termText = token.term();
-                if (termText.length() >= minTextLength && searchWords.size() + searchDates.size() < maxWords) {
+                if (termText.length() >= minTextLength && searchWords.size() < maxWords) {
                     termText = QueryParser.escape(termText);
 
                     boolean exists = false;
@@ -162,7 +127,7 @@ public abstract class AbstractSearchServiceImpl {
                 }
             }
         }
-        return new Pair<List<String>, List<Date>>(searchWords, searchDates);
+        return searchWords;
     }
 
     protected int countResults(List<ResultSet> resultSets) {
@@ -277,15 +242,64 @@ public abstract class AbstractSearchServiceImpl {
         return runSemaphored(semaphore, searchCallback);
     }
 
+    private static AtomicLong parallelQueryCount = new AtomicLong(0L);
+    private static AtomicLong parallelClausesCount = new AtomicLong(0L);
+
     protected ResultSet doSearchQuery(SearchParameters sp, String queryName) {
-        long startTime = System.currentTimeMillis();
+        if (StringUtils.isBlank(sp.getQuery())) {
+            return new EmptyResultSet();
+        }
+        long startTime = System.nanoTime();
         try {
-            ResultSet resultSet = searchService.query(sp);
+            int clauses = -1;
+            long parallelQueryCountBefore = -1;
+            long parallelQueryCountAfter = -1;
+            long parallelClausesCountBefore = -1;
+            long parallelClausesCountAfter = -1;
+            SearchStatistics.Data data = null;
 
             if (log.isInfoEnabled()) {
-                long duration = System.currentTimeMillis() - startTime;
-                log.info("PERFORMANCE: query " + queryName + " - " + duration + " ms");
+                // This clauses counting is simplified but enough for most queries.
+                clauses = StringUtils.countMatches(sp.getQuery(), " AND ") + StringUtils.countMatches(sp.getQuery(), " OR ") + 1;
+                parallelQueryCountBefore = parallelQueryCount.incrementAndGet();
+                parallelClausesCountBefore = parallelClausesCount.addAndGet(clauses);
+                SearchStatistics.enable();
             }
+
+            ResultSet resultSet;
+            try {
+                resultSet = searchService.query(sp);
+            } finally {
+                if (log.isInfoEnabled()) {
+                    parallelQueryCountAfter = parallelQueryCount.getAndDecrement();
+                    parallelClausesCountAfter = parallelClausesCount.getAndAdd(clauses * -1L);
+                    data = SearchStatistics.getData();
+                    SearchStatistics.disable();
+                }
+            }
+
+            if (log.isInfoEnabled()) {
+                long duration = CalendarUtil.duration(startTime);
+                StringBuilder sb = new StringBuilder(100).append("PERFORMANCE: query ").append(queryName).append(" - ").append(duration).append(" ms");
+
+                sb.append("|").append(clauses);
+                sb.append("|").append(parallelClausesCountBefore);
+                sb.append("|").append(parallelClausesCountAfter);
+                sb.append("|").append(parallelQueryCountBefore);
+                sb.append("|").append(parallelQueryCountAfter);
+                if (data != null) {
+                    sb.append("|").append(data.luceneHitsTime).append(" ms");
+                    sb.append("|").append(data.originalQueryChars);
+                    sb.append("|").append(data.rewrittenQueryChars);
+                }
+
+                // When more than 60 clauses were found in a query, log the query.
+                if (clauses > 60) {
+                    sb.append("\n    query ").append(queryName).append(": ").append(sp.getQuery());
+                }
+                log.info(sb.toString());
+            }
+
             return resultSet;
         } catch (BooleanQuery.TooManyClauses e) {
             log.error("Search failed with TooManyClauses exception, query expanded over limit\n    queryName=" + queryName + "\n    store=" + sp.getStores()
@@ -344,7 +358,6 @@ public abstract class AbstractSearchServiceImpl {
         ArrayList<org.apache.lucene.analysis.Token> list = new ArrayList<org.apache.lucene.analysis.Token>();
         org.apache.lucene.analysis.Token reusableToken = new org.apache.lucene.analysis.Token();
         org.apache.lucene.analysis.Token nextToken;
-        int positionCount = 0;
         // boolean severalTokensAtSamePosition = false; // FIXME this is never read
 
         while (true) {
@@ -357,11 +370,6 @@ public abstract class AbstractSearchServiceImpl {
                 break;
             }
             list.add((org.apache.lucene.analysis.Token) nextToken.clone());
-            if (nextToken.getPositionIncrement() != 0) {
-                positionCount += nextToken.getPositionIncrement();
-            } else {
-                // severalTokensAtSamePosition = true;
-            }
         }
         try {
             source.close();

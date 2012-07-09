@@ -113,7 +113,6 @@ public enum Parameters {
     DIMENSION_DELETION_TIME("dimensionDeletionTime"),
 
     WORKING_DOCUMENTS_ADDRESS("workingDocumentsAddress"),
-    QUICK_SEARCH_PARALLEL_COUNT("quickSearchParallelCount"),
     QUICK_SEARCH_WORDS_COUNT("quickSearchWordsCount");
 
     private String xPath;

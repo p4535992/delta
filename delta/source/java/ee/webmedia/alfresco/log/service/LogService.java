@@ -51,7 +51,7 @@ public interface LogService extends FilterService {
     Date getFirstLogEntryDate(NodeRef nodeRef);
 
     /** Should be used only for importing older log records; for creating regular log records, use addLogEntry(LogEntry log) */
-    void addLogEntry(LogEntry log, Date dateCreated, String idPrefix, Long idSuffix);
+    void addLogEntry(LogEntry log, Date dateCreated, String idPrefix, long idSuffix);
 
     Date getFirstLogEntryDate();
 

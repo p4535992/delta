@@ -37,6 +37,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.repo.content.filestore.FileContentReader;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
@@ -45,8 +46,12 @@ import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.cmr.repository.datatype.TypeConverter;
+import org.alfresco.service.transaction.TransactionService;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.webdav.WebDAVCustomHelper;
 
 /**
  * Implements the WebDAV GET method
@@ -230,6 +235,18 @@ public class GetMethod extends WebDAVMethod
 
             if (m_returnContent)
             {
+                final NodeRef parentRef = ((WebDAVCustomHelper) getDAVHelper()).getNodeService().getPrimaryParent(nodeInfo.getNodeRef()).getParentRef();
+                if (DocumentCommonModel.Types.DOCUMENT.equals(((WebDAVCustomHelper) getDAVHelper()).getNodeService().getType(parentRef))) {
+                    final String name = nodeInfo.getName();
+                    ((WebDAVCustomHelper) getDAVHelper()).getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
+                        @Override
+                        public Void execute() throws Throwable {
+                            ((WebDAVCustomHelper) getDAVHelper()).getDocumentLogService().addDocumentLog(
+                                    parentRef, MessageUtil.getMessage("file_opened", name));
+                            return null;
+                        }
+                    }, false, true);
+                }
                 // copy the content to the response output stream
                 reader.getContent(m_response.getOutputStream());
             }

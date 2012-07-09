@@ -171,6 +171,10 @@ public class LuceneAnalyser extends Analyzer
         {
             analyser = new WhitespaceAnalyzer();
         }
+        else if (fieldName.equals("VALUES"))
+        {
+            analyser = new MLAnalayser(dictionaryService, MLAnalysisMode.ALL_ONLY);
+        }
         else if (fieldName.startsWith("@"))
         {
             if (fieldName.endsWith(".mimetype"))

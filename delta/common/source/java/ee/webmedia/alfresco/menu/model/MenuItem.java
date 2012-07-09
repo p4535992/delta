@@ -76,6 +76,8 @@ public class MenuItem implements Serializable {
     private String actionListener;
     @XStreamAsAttribute
     private String href;
+    @XStreamAsAttribute
+    private String target;
     @XStreamOmitField
     private Map<String, String> params;
     private String processor;
@@ -157,7 +159,9 @@ public class MenuItem implements Serializable {
                 }
             }
             link.setHref(href);
-            link.setTarget("_blank");
+            if (StringUtils.isNotBlank(target)) {
+                link.setTarget(target);
+            }
         } else {
             final MethodBinding mb;
             if (StringUtils.startsWith(outcome2, "#{")) {
@@ -496,4 +500,13 @@ public class MenuItem implements Serializable {
     public String getHref() {
         return href;
     }
+
+    public void setTarget(String target) {
+        this.target = target;
+    }
+
+    public String getTarget() {
+        return target;
+    }
+
 }

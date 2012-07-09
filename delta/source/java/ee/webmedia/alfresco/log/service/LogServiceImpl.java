@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.log.service;
 
+import static org.springframework.util.StringUtils.hasLength;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -16,12 +18,12 @@ import java.util.Set;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.simple.ParameterizedRowMapper;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 
 import ee.webmedia.alfresco.filter.model.FilterVO;
 import ee.webmedia.alfresco.log.LogHelper;
@@ -67,11 +69,11 @@ public class LogServiceImpl implements LogService, InitializingBean {
 
     @Override
     public void addLogEntry(LogEntry log) {
-        if (!checkDescriptorNotNull(log)) {
+        if (!checkDescriptionNotNull(log)) {
             return;
         }
 
-        if (logEndabled(log)) {
+        if (logEnabled(log)) {
 
             Map<String, Object> result = jdbcTemplate
                     .queryForMap("SELECT delta_log_date.idprefix, to_char(CURRENT_DATE,'YYYYMMDD') AS idprefix_now, nextval('delta_log_seq') AS idsuffix, current_timestamp AS now FROM delta_log_date LIMIT 1");
@@ -102,17 +104,15 @@ public class LogServiceImpl implements LogService, InitializingBean {
     }
 
     @Override
-    public void addLogEntry(LogEntry log, Date dateCreated, String idPrefix, Long idSuffix) {
-        if (!checkDescriptorNotNull(log)) {
+    public void addLogEntry(LogEntry log, Date dateCreated, String idPrefix, long idSuffix) {
+        if (!checkDescriptionNotNull(log)) {
             return;
         }
-        Assert.isTrue(dateCreated != null && org.apache.commons.lang.StringUtils.isNotBlank(idPrefix) && idSuffix != null);
-        if (logEndabled(log)) {
-            addLogEntry(log, idPrefix, idSuffix, new Timestamp(dateCreated.getTime()));
-        }
+        Assert.isTrue(dateCreated != null && StringUtils.isNotBlank(idPrefix));
+        addLogEntry(log, idPrefix, idSuffix, new Timestamp(dateCreated.getTime()));
     }
 
-    private boolean checkDescriptorNotNull(LogEntry log) {
+    private boolean checkDescriptionNotNull(LogEntry log) {
         // This check provided just-in-case to catch empty event descriptions.
         // Exception should not be thrown as not logging is non-critical
         // compared to breaking serviced wanting to just log an action.
@@ -131,21 +131,19 @@ public class LogServiceImpl implements LogService, InitializingBean {
                         log.getObjectId(), log.getObjectName(), log.getEventDescription() });
     }
 
-    private boolean logEndabled(LogEntry log) {
+    private boolean logEnabled(LogEntry log) {
         return jdbcTemplate.queryForInt("SELECT COUNT(*) FROM delta_log_level WHERE level=?", log.getLevel()) != 0;
     }
 
     @Override
     public Date getFirstLogEntryDate(NodeRef nodeRef) {
         Assert.notNull(nodeRef);
-        StringBuilder q = new StringBuilder("SELECT min(created_date_time) FROM delta_log WHERE object_id=?");
-        return jdbcTemplate.queryForObject(q.toString(), Date.class, nodeRef.toString());
+        return jdbcTemplate.queryForObject("SELECT min(created_date_time) FROM delta_log WHERE object_id=?", Date.class, nodeRef.toString());
     }
 
     @Override
     public Date getFirstLogEntryDate() {
-        StringBuilder q = new StringBuilder("SELECT min(created_date_time) FROM delta_log");
-        return jdbcTemplate.queryForObject(q.toString(), Date.class);
+        return jdbcTemplate.queryForObject("SELECT min(created_date_time) FROM delta_log", Date.class);
     }
 
     @Override
@@ -157,7 +155,7 @@ public class LogServiceImpl implements LogService, InitializingBean {
 
         if (filter != null) {
             Map<String, Object> filterMap = new LinkedHashMap<String, Object>();
-            if (StringUtils.hasLength(filter.getLogEntryId())) {
+            if (hasLength(filter.getLogEntryId())) {
                 filterMap.put("log_entry_id LIKE ?", filter.getLogEntryId() + "%");
             }
             if (filter.getDateCreatedStart() != null) {
@@ -166,24 +164,24 @@ public class LogServiceImpl implements LogService, InitializingBean {
             if (filter.getDateCreatedEnd() != null) {
                 filterMap.put("date(created_date_time) <= ?", filter.getDateCreatedEnd());
             }
-            if (StringUtils.hasLength(filter.getCreatorName())) {
+            if (hasLength(filter.getCreatorName())) {
                 filterMap.put("lower(creator_name) LIKE ?", "%" + filter.getCreatorName().toLowerCase() + "%");
             }
-            if (StringUtils.hasLength(filter.getComputerId())) {
+            if (hasLength(filter.getComputerId())) {
                 String computerId = "%" + filter.getComputerId().toLowerCase() + "%";
                 filterMap.put("(lower(computer_ip) LIKE ? OR lower(computer_name) LIKE ?)", computerId);
                 filterMap.put(null, computerId);
             }
-            if (StringUtils.hasLength(filter.getDescription())) {
+            if (hasLength(filter.getDescription())) {
                 filterMap.put("lower(description) LIKE ?", "%" + filter.getDescription().toLowerCase() + "%");
             }
-            if (StringUtils.hasLength(filter.getExcludedDescription())) {
+            if (hasLength(filter.getExcludedDescription())) {
                 filterMap.put("lower(description) NOT LIKE ?", "%" + filter.getExcludedDescription().toLowerCase() + "%");
             }
-            if (StringUtils.hasLength(filter.getObjectName())) {
+            if (hasLength(filter.getObjectName())) {
                 filterMap.put("lower(object_name) LIKE ?", "%" + filter.getObjectName().toLowerCase() + "%");
             }
-            if (StringUtils.hasLength(filter.getObjectId())) {
+            if (hasLength(filter.getObjectId())) {
                 filterMap.put("object_id LIKE ?", "%" + filter.getObjectId() + "%");
             }
 

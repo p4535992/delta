@@ -156,12 +156,14 @@ public class RichListMultiTbodyRenderer extends RichListRenderer {
                 StringBuilder tbodyAttributes = new StringBuilder();
                 if (tbodyAttributesByGroup != null) {
                     Map<String, String> tbodyAttributesMap = tbodyAttributesByGroup.get(group == NULL ? null : group);
-                    for (Entry<String/* attributeName */, String/* attributeValue */> entry : tbodyAttributesMap.entrySet()) {
-                        String attributeName = entry.getKey();
-                        String attributeValue = entry.getValue();
-                        Assert.isTrue(StringUtils.isNotBlank(attributeName), "attribute name must not be blank");
-                        attributeValue = StringEscapeUtils.escapeHtml(attributeValue);
-                        tbodyAttributes.append(attributeName).append("='").append(attributeValue).append("' ");
+                    if (tbodyAttributesMap != null && tbodyAttributesMap.entrySet() != null) {
+                        for (Entry<String/* attributeName */, String/* attributeValue */> entry : tbodyAttributesMap.entrySet()) {
+                            String attributeName = entry.getKey();
+                            String attributeValue = entry.getValue();
+                            Assert.isTrue(StringUtils.isNotBlank(attributeName), "attribute name must not be blank");
+                            attributeValue = StringEscapeUtils.escapeHtml(attributeValue);
+                            tbodyAttributes.append(attributeName).append("='").append(attributeValue).append("' ");
+                        }
                     }
                 }
                 out.write("<tr/></tbody><tbody " + tbodyAttributes + ">");

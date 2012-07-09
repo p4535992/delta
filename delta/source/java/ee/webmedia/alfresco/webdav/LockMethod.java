@@ -103,6 +103,8 @@ public class LockMethod extends WebDAVMethod {
 
         m_strLockToken = parseIfHeader();
 
+        m_userAgent = m_request.getHeader(WebDAV.HEADER_USER_AGENT);
+
         // Get the lock timeout value
 
         String strTimeout = m_request.getHeader(WebDAV.HEADER_TIMEOUT);
@@ -199,6 +201,8 @@ public class LockMethod extends WebDAVMethod {
             responseStatus = e.getHttpStatusCode();
             logger.error("Failed to refresh or create WebDAV lock", e);
         } finally {
+            m_response.setHeader(WebDAV.HEADER_LOCK_TOKEN, "<" + WebDAV.makeLockToken(lockNodeInfo.getNodeRef(), userName) + ">");
+            m_response.setHeader(WebDAV.HEADER_CONTENT_TYPE, WebDAV.XML_CONTENT_TYPE);
             // We either created a new lock or refreshed an existing lock, send back the lock details
             generateResponse(fileRef, userName, responseStatus);
         }
@@ -222,12 +226,22 @@ public class LockMethod extends WebDAVMethod {
         // Check the lock status of the node
         LockStatus lockSts = lockService.getLockStatus(lockNode);
 
+        // ALF-3681 fix. WebDrive 10 client doesn't send If header when locked resource is updated so check the node by lockOwner.
+        boolean webDrive10Fix = false;
+        if (m_userAgent != null && m_userAgent.equals(WebDAV.AGENT_MICROSOFT_DATA_ACCESS_INTERNET_PUBLISHING_PROVIDER_DAV))
+        {
+            String currentUser = getAuthenticationService().getCurrentUserName();
+            String lockOwner = (String) getNodeService().getProperty(lockNode, ContentModel.PROP_LOCK_OWNER);
+            // OK to write - lock is owned by current user.
+            webDrive10Fix = lockOwner != null && lockOwner.equals(currentUser);
+        }
+
         // DEBUG
         if (logger.isDebugEnabled()) {
             logger.debug("Create lock status=" + lockSts);
         }
 
-        if (lockSts == LockStatus.LOCKED || isLockingDisabled(lockNode)) {
+        if (lockSts == LockStatus.LOCKED && !webDrive10Fix || isLockingDisabled(lockNode)) {
             // Indicate that the resource is already locked
             throw new WebDAVServerException(WebDAV.WEBDAV_SC_LOCKED);
         }

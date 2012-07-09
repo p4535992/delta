@@ -203,7 +203,7 @@ public class PutMethod extends WebDAVMethod {
                 log.info("Client sent different mimetype '" + m_strContentType + "' when updating file with original mimetype '" + mimetype + "', ignoring");
             }
         }
-
+        
         // Write the new data to the content node
         writer.putContent(is);
 

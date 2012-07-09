@@ -16,11 +16,13 @@ import org.alfresco.repo.webdav.WebDAVServerException;
 import org.alfresco.repo.webdav.WebDAVServlet;
 import org.alfresco.service.ServiceRegistry;
 import org.alfresco.service.cmr.security.AuthenticationService;
+import org.alfresco.service.transaction.TransactionService;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
+import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.versions.service.VersionsService;
 
@@ -39,7 +41,8 @@ public class WebDAVCustomServlet extends WebDAVServlet {
         DocumentService documentService = (DocumentService) context.getBean(DocumentService.BEAN_NAME);
 
         // Create the WebDAV helper
-        m_davHelper = new WebDAVCustomHelper(serviceRegistry, authService, versionsService, documentService);
+        m_davHelper = new WebDAVCustomHelper(serviceRegistry, authService, versionsService, documentService, (DocumentLogService) context.getBean(DocumentLogService.BEAN_NAME),
+                (TransactionService) context.getBean("transactionService"));
 
         // Create the WebDAV methods table
 

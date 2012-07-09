@@ -4,12 +4,6 @@
    xmlns:param="http://alfresco.webmedia.ee/model/parameters/1.0" 
 >
 
-   <param:intParameter view:childName="param:quickSearchParallelCount">
-      <view:properties>
-         <param:value>1</param:value>
-      </view:properties>
-   </param:intParameter>
-   
    <param:intParameter view:childName="param:quickSearchWordsCount">
       <view:properties>
          <param:value>10</param:value>
