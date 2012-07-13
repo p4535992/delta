@@ -3,12 +3,15 @@ package ee.webmedia.alfresco.docdynamic.bootstrap;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.alfresco.model.ContentModel;
+import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
@@ -22,7 +25,9 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
 import ee.webmedia.alfresco.docadmin.bootstrap.StructUnitFieldTypeUpdater;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
+import ee.webmedia.alfresco.document.bootstrap.FileEncodingUpdater;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.privilege.model.PrivilegeModel;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
@@ -33,6 +38,8 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
  * 1) Update properties of type STRUCT_UNIT to multiValued properties (String -> List<String>)
  * 2) Set searchableHasAllFinishedCompoundWorkflows property value
  * 3) Remove old permissions from all documents and replace them with new ones if needed
+ * 4) Update searchableFileContents if necessary (because of {@link FileEncodingUpdater})
+ * 5) Always call addProperties, to trigger re-indexing of document (ADMLuceneIndexerImpl writes special fields VALUES and xxx)
  * 
  * @author Riina Tens - STRUCT_UNIT update
  * @author Alar Kvell - setting searchableHasAllFinishedCompoundWorkflows
@@ -52,6 +59,8 @@ public class DocumentUpdater extends AbstractNodeUpdater {
     // END: old aspects
 
     private WorkflowService workflowService;
+    private DocumentService documentService;
+    private FileEncodingUpdater fileEncodingUpdater;
     private final Map<NodeRef /* documentParentRef */, List<String /* regNumber */>> documentRegNumbers = new HashMap<NodeRef, List<String>>();
 
     @Override
@@ -120,12 +129,25 @@ public class DocumentUpdater extends AbstractNodeUpdater {
 
         String structUnitPropertiesToMultivaluedUpdaterLog = updateStructUnitPropertiesToMultivalued(origProps, updatedProps);
 
+        String fileContentsLog;
+        if (fileEncodingUpdater.getDocumentsToUpdate().contains(docRef)) { // searchable aspect has been checked in fileEncodingUpdater
+            updatedProps.put(ContentModel.PROP_MODIFIER, origProps.get(ContentModel.PROP_MODIFIER));
+            // Update modified time on document, so ADR would detect up changes
+            updatedProps.put(ContentModel.PROP_MODIFIED, new Date(AlfrescoTransactionSupport.getTransactionStartTime()));
+            updatedProps.put(DocumentCommonModel.Props.FILE_CONTENTS, documentService.getSearchableFileContents(docRef));
+            fileContentsLog = "searchableFileContentsUpdated";
+        } else {
+            updatedProps.put(ContentModel.PROP_MODIFIED, origProps.get(ContentModel.PROP_MODIFIED));
+            fileContentsLog = "searchableFileContentsSkipped";
+        }
+
         // Always update document node to trigger an update of document data in Lucene index.
         nodeService.addProperties(docRef, updatedProps);
 
         String removePermissionLog = updatePermission(docRef);
         String removePrivilegeMappingsLog = removePrivilegeMappings(docRef, origProps);
-        return new String[] { hasAllFinishedCompoundWorkflowsUpdaterLog, structUnitPropertiesToMultivaluedUpdaterLog, removePermissionLog, removePrivilegeMappingsLog };
+        return new String[] { hasAllFinishedCompoundWorkflowsUpdaterLog, structUnitPropertiesToMultivaluedUpdaterLog, removePermissionLog, removePrivilegeMappingsLog,
+                fileContentsLog };
     }
 
     private String removePrivilegeMappings(NodeRef docRef, Map<QName, Serializable> props) {
@@ -219,6 +241,14 @@ public class DocumentUpdater extends AbstractNodeUpdater {
 
     public void setWorkflowService(WorkflowService workflowService) {
         this.workflowService = workflowService;
+    }
+
+    public void setDocumentService(DocumentService documentService) {
+        this.documentService = documentService;
+    }
+
+    public void setFileEncodingUpdater(FileEncodingUpdater fileEncodingUpdater) {
+        this.fileEncodingUpdater = fileEncodingUpdater;
     }
 
 }

@@ -84,22 +84,22 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
     protected void processDownloadRequest(final HttpServletRequest req, final HttpServletResponse res, final boolean redirectToLogin)
             throws ServletException, IOException {
         Log logger = getLogger();
-        String uri = req.getRequestURI();
+        // req.getPathInfo = /workspace/SpacesStore/371b7748-74cd-45d4-ac2a-e6ade845afe4/1/xyz.pdf
+        // req.getRequestURI = /dhs/ddc/workspace/SpacesStore/371b7748-74cd-45d4-ac2a-e6ade845afe4/1/xyz.pdf;JSESSIONID=CFE6CC4F12D658B180EB61EF7ABC1C9
+        String uri = req.getPathInfo();
 
         if (logger.isDebugEnabled()) {
             String queryString = req.getQueryString();
             logger.debug("Processing URL: " + uri + (queryString != null && queryString.length() > 0 ? "?" + queryString : ""));
         }
 
-        uri = uri.substring(req.getContextPath().length());
         StringTokenizer t = new StringTokenizer(uri, "/");
         int tokenCount = t.countTokens();
 
-        t.nextToken(); // skip servlet name
         // always attachment mode
 
         // a NodeRef must have been specified if no path has been found
-        if (tokenCount < 6) {
+        if (tokenCount < 5) {
             throw new IllegalArgumentException("Download URL did not contain all required args: " + uri);
         }
 

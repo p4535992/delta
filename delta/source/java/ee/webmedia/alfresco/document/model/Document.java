@@ -3,7 +3,6 @@ package ee.webmedia.alfresco.document.model;
 import static ee.webmedia.alfresco.utils.TextUtil.LIST_SEPARATOR;
 
 import java.io.Serializable;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -559,61 +558,22 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
         return documentTypeService;
     }
 
-    public DateAndMultiPropsConvertedMap convertedPropsMap = new DateAndMultiPropsConvertedMap();
-
-    /**
-     * @author Vladimir Drozdik
-     *         converts date type or multivalue properties for binding from JSP.
-     */
-    public class DateAndMultiPropsConvertedMap extends HashMap<String, Object> {
-        private static final long serialVersionUID = 1L;
-
-        @Override
-        public Object get(Object propKey) {
-            Object propValue = getProperties().get(propKey);
-            if (propValue instanceof Date) {
-                return dateFormat.format(propValue);
-            } else if (propValue instanceof Collection) {
-                if (propValue instanceof List && !((List) propValue).isEmpty() && ((List) propValue).get(0) instanceof String) {
-                    return UserUtil.getDisplayUnit((List<String>) propValue);
-                }
-                return propValue.toString();
-            } else {
-                return propValue;
-            }
-        }
-
-    }
+    public PropsConvertedMap convertedPropsMap;
 
     public Map<String, Object> getConvertedPropsMap() {
+        if (convertedPropsMap == null) {
+            convertedPropsMap = new PropsConvertedMap(getProperties(), false);
+        }
         return convertedPropsMap;
     }
 
-    public UnitStrucPropsConvertedMap unitStrucPropsConvertedMap = new UnitStrucPropsConvertedMap();
-
-    /**
-     * @author Vladimir Drozdik
-     *         converts unit structure for binding from JSP.
-     */
-    public class UnitStrucPropsConvertedMap extends HashMap<String, Object> {
-        private static final long serialVersionUID = 1L;
-
-        @SuppressWarnings("unchecked")
-        @Override
-        public Object get(Object propKey) {
-            Object propValue = getProperties().get(propKey);
-            if (propValue == null) {
-                return "";
-            }
-            if (!(propValue instanceof Iterable)) {
-                return propValue;
-            }
-            return UserUtil.getDisplayUnit((Iterable<String>) propValue);
-        }
-    }
+    public PropsConvertedMap propsConvertedMap;
 
     public Map<String, Object> getUnitStrucPropsConvertedMap() {
-        return unitStrucPropsConvertedMap;
+        if (propsConvertedMap == null) {
+            propsConvertedMap = new PropsConvertedMap(getProperties(), true);
+        }
+        return propsConvertedMap;
     }
 
 }

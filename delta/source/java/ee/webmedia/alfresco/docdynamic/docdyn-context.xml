@@ -77,7 +77,20 @@
       <property name="permissionService" ref="PermissionService" />
    </bean>
 
-   <bean id="documentUpdater6" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentUpdater" parent="abstractNodeUpdater">
+   <!-- Fixes encoding on HTML files (CL task 196507) -->
+   <bean id="fileEncodingUpdater" class="ee.webmedia.alfresco.document.bootstrap.FileEncodingUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+            <ref bean="deleteSubtypedDocuments" />
+         </list>
+      </property>
+      <property name="mimetypeService" ref="MimetypeService" />
+   </bean>
+
+   <bean id="documentUpdater7" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
        <property name="dependsOn">
@@ -85,9 +98,12 @@
             <ref bean="archivalsStoresBootstrap" />
             <ref bean="structUnitFieldTypeUpdater" />
             <ref bean="deleteSubtypedDocuments" />
+            <ref bean="fileEncodingUpdater" />
          </list>
       </property>
       <property name="workflowService" ref="WmWorkflowService" />
+      <property name="documentService" ref="DocumentService" />
+      <property name="fileEncodingUpdater" ref="fileEncodingUpdater" />
    </bean>
 
    <bean id="documentRegNumbersUpdater2" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentRegNumbersUpdater" parent="abstractNodeUpdater" >
@@ -95,10 +111,10 @@
       <property name="executeOnceOnly" value="true" />
        <property name="dependsOn">
          <list>
-            <ref bean="documentUpdater6" />
+            <ref bean="documentUpdater7" />
          </list>
       </property>
-      <property name="documentUpdater" ref="documentUpdater6" />
+      <property name="documentUpdater" ref="documentUpdater7" />
    </bean>
 
    <!-- START: web beans: -->

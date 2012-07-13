@@ -264,8 +264,8 @@
       </property>
       <property name="charactersetFinders">
          <list>
-            <bean class="org.alfresco.encoding.GuessEncodingCharsetFinder">
-               <!-- Larger buffer, because HTML files coming from Word usually contain 23K of formatting at the start -->
+            <bean class="org.alfresco.encoding.GuessEncodingCharsetFinder" />
+            <bean class="ee.webmedia.alfresco.utils.HtmlCharsetFinder">
                <property name="bufferSize" value="32768" />
             </bean>
          </list>

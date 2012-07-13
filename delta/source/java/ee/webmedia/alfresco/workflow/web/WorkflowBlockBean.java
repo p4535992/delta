@@ -964,7 +964,9 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 Map<String, Object> extensionBtnAttributes = getAttributes(extensionButton);
                 extensionBtnAttributes.put(ATTRIB_INDEX, index);
                 // postpone generating onClick js to rendering phase when we have parent form present
-                extensionBtnAttributes.put(HtmlButtonRenderer.ATTR_ONCLICK_DATA, new Pair<UIComponent, Integer>(dueDateExtensionLayer, index));
+                if (dueDateExtensionLayer != null) {
+                    extensionBtnAttributes.put(HtmlButtonRenderer.ATTR_ONCLICK_DATA, new Pair<UIComponent, Integer>(dueDateExtensionLayer, index));
+                }
                 extensionButton.setRendererType(HtmlButtonRenderer.HTML_BUTTON_RENDERER_TYPE);
 
                 extensionButton.setActionListener(app.createMethodBinding("#{WorkflowBlockBean.saveTask}", new Class[] { ActionEvent.class }));

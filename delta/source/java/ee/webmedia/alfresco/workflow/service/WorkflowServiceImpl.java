@@ -30,6 +30,7 @@ import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.repository.AssociationRef;
@@ -1157,9 +1158,17 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         }
         nodeService.deleteNode(nodeRef);
 
-        NodeRef docRef = compoundWorkflow.getParent();
-        boolean hasAllFinishedCompoundWorkflows = hasAllFinishedCompoundWorkflows(docRef);
-        nodeService.setProperty(docRef, DocumentCommonModel.Props.SEARCHABLE_HAS_ALL_FINISHED_COMPOUND_WORKFLOWS, hasAllFinishedCompoundWorkflows);
+        final NodeRef docRef = compoundWorkflow.getParent();
+        final boolean hasAllFinishedCompoundWorkflows = hasAllFinishedCompoundWorkflows(docRef);
+
+        // Ignore document locking, because we are not changing a property that is user-editable or related to one
+        AuthenticationUtil.runAs(new RunAsWork<Void>() {
+            @Override
+            public Void doWork() throws Exception {
+                nodeService.setProperty(docRef, DocumentCommonModel.Props.SEARCHABLE_HAS_ALL_FINISHED_COMPOUND_WORKFLOWS, hasAllFinishedCompoundWorkflows);
+                return null;
+            }
+        }, AuthenticationUtil.getSystemUserName());
     }
 
     @Override

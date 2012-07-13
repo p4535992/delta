@@ -64,6 +64,7 @@ import ee.webmedia.alfresco.classificator.model.Classificator;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docdynamic.model.DocumentChildModel;
 import ee.webmedia.alfresco.docdynamic.web.DocumentLockHelperBean;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
@@ -254,36 +255,17 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         while (groups.size() < names.size()) {
             groups.add("");
         }
-        String contractName = (String) props.get(DocumentSpecificModel.Props.SECOND_PARTY_NAME);
-        String contractEmail = (String) props.get(DocumentSpecificModel.Props.SECOND_PARTY_EMAIL);
-        if (StringUtils.isNotBlank(contractName) || StringUtils.isNotBlank(contractEmail)) {
-            names.add(StringUtils.isNotBlank(contractName) ? contractName : "");
-            emails.add(StringUtils.isNotBlank(contractEmail) ? contractEmail : "");
-            groups.add("");
-        }
-        contractName = (String) props.get(DocumentSpecificModel.Props.THIRD_PARTY_NAME);
-        contractEmail = (String) props.get(DocumentSpecificModel.Props.THIRD_PARTY_EMAIL);
-        if (StringUtils.isNotBlank(contractName) || StringUtils.isNotBlank(contractEmail)) {
-            names.add(StringUtils.isNotBlank(contractName) ? contractName : "");
-            emails.add(StringUtils.isNotBlank(contractEmail) ? contractEmail : "");
-            groups.add("");
-        }
-        List<String> partyNames = (List<String>) props.get(DocumentSpecificModel.Props.PARTY_NAME);
-        List<String> partyEmails = (List<String>) props.get(DocumentSpecificModel.Props.PARTY_EMAIL);
-        if (partyNames != null && partyEmails != null) {
-            RepoUtil.validateSameSize(partyNames, partyEmails, "partyNames", "partyEmails");
-            String name, email;
-            for (int i = 0; i < partyNames.size(); i++) {
-                name = partyNames.get(i);
-                email = partyEmails.get(i);
-                if (StringUtils.isBlank(name) && StringUtils.isBlank(email)) {
-                    continue;
-                }
-
-                names.add(name);
-                emails.add(email);
-                groups.add("");
+        List<Node> childNodes = node.getAllChildAssociations(DocumentChildModel.Assocs.CONTRACT_PARTY);
+        for (Node childNode : childNodes) {
+            String name = (String) childNode.getProperties().get(DocumentSpecificModel.Props.PARTY_NAME);
+            String email = (String) childNode.getProperties().get(DocumentSpecificModel.Props.PARTY_EMAIL);
+            if (StringUtils.isBlank(name) && StringUtils.isBlank(email)) {
+                continue;
             }
+
+            names.add(name);
+            emails.add(email);
+            groups.add("");
         }
 
         if (names.size() == 1 && emails.size() == 1 && StringUtils.isBlank(names.get(0)) && StringUtils.isBlank(emails.get(0))) {

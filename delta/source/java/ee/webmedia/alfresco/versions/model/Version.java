@@ -18,6 +18,10 @@ public class Version implements Serializable {
         return version;
     }
 
+    public Float getVersionAsFloat() {
+        return version == null ? null : Float.valueOf(version);
+    }
+
     public void setVersion(String version) {
         this.version = version;
     }

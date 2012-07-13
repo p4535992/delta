@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.document.service.event;
 
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.springframework.beans.factory.InitializingBean;
@@ -35,10 +37,18 @@ public class DocumentWorkflowStatusEventListener implements WorkflowEventListene
         if (object instanceof CompoundWorkflow) {
             if (event.getType().equals(WorkflowEventType.CREATED) || event.getType().equals(WorkflowEventType.UPDATED)) {
                 CompoundWorkflow cWorkflow = (CompoundWorkflow) object;
-                NodeRef docRef = cWorkflow.getParent();
+                final NodeRef docRef = cWorkflow.getParent();
 
-                boolean hasAllFinishedCompoundWorkflows = workflowService.hasAllFinishedCompoundWorkflows(docRef);
-                nodeService.setProperty(docRef, DocumentCommonModel.Props.SEARCHABLE_HAS_ALL_FINISHED_COMPOUND_WORKFLOWS, hasAllFinishedCompoundWorkflows);
+                final boolean hasAllFinishedCompoundWorkflows = workflowService.hasAllFinishedCompoundWorkflows(docRef);
+
+                // Ignore document locking, because we are not changing a property that is user-editable or related to one
+                AuthenticationUtil.runAs(new RunAsWork<Void>() {
+                    @Override
+                    public Void doWork() throws Exception {
+                        nodeService.setProperty(docRef, DocumentCommonModel.Props.SEARCHABLE_HAS_ALL_FINISHED_COMPOUND_WORKFLOWS, hasAllFinishedCompoundWorkflows);
+                        return null;
+                    }
+                }, AuthenticationUtil.getSystemUserName());
             }
         }
     }

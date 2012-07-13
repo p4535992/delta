@@ -46,8 +46,8 @@ public class UICommand
 {
     private MethodBinding _action = null;
     private MethodBinding _actionListener = null;
-    private static List<String> disableValidationActions = Arrays.asList("#{AddFileDialog.start}", "#{DocumentQuickSearchResultsDialog.setup}"
-            , "#{DocumentDialog.searchDocsAndCases}", "#{DocumentDialog.search.setup}", "#{MenuBean.closeBreadcrumbItem}");
+    private static List<String> disableValidationActions = Arrays.asList("#{AddFileDialog.start}", "#{DocumentDynamicDialog.addFile}", "#{DocumentDynamicDialog.addInactiveFile}",
+            "#{DocumentQuickSearchResultsDialog.setup}", "#{DocumentDialog.searchDocsAndCases}", "#{DocumentDialog.search.setup}", "#{MenuBean.closeBreadcrumbItem}");
 
     public void setAction(MethodBinding action)
     {

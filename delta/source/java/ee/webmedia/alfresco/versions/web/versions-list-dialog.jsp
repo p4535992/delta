@@ -11,12 +11,12 @@
 
    <%-- Main List --%>
    <a:richList id="versionsList" viewMode="details" pageSize="#{BrowseBean.pageSizeSpaces}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      width="100%" value="#{DialogManager.bean.versions}" var="r" initialSortColumn="version" initialSortDescending="true">
+      width="100%" value="#{DialogManager.bean.versions}" var="r" initialSortColumn="versionAsFloat" initialSortDescending="true">
 
       <%-- Version --%>
       <a:column id="col1" primary="true">
          <f:facet name="header">
-            <a:sortLink id="col1-sort" label="#{msg.version_version}" value="version" styleClass="header" />
+            <a:sortLink id="col1-sort" label="#{msg.version_version}" value="versionAsFloat" styleClass="header" />
          </f:facet>
          <h:outputText id="col1-text" value="#{r.version}" />
       </a:column>
