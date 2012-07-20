@@ -4,10 +4,8 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:booleanEvaluator value="#{DialogManager.bean.documentListLimited}">
-   <a:panel id="limited-message" styleClass="message">
-      <h:outputText value="#{DialogManager.bean.limitedMessage}" />
-      <h:outputText value="<br />" escape="false" />
-      <a:actionLink id="remove-doc-limitation-link" value="#{msg.document_list_show_all}"  actionListener="#{DialogManager.bean.getAllDocsWithoutLimit}" />   
-   </a:panel>
-</a:booleanEvaluator>
+<a:panel id="limited-message" styleClass="message" rendered="#{DialogManager.bean.limited}">
+   <h:outputText id="limited-message1" value="#{DialogManager.bean.limitedMessage}" />
+   <h:outputText id="limited-message2" value="<br />" escape="false" rendered="#{DialogManager.bean.showShowAll}" />
+   <a:actionLink id="remove-doc-limitation-link" value="#{msg.document_list_show_all}" actionListener="#{DialogManager.bean.getAllRows}" rendered="#{DialogManager.bean.showShowAll}" />   
+</a:panel>

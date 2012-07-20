@@ -241,8 +241,12 @@ public class SearchUtil {
         return "@" + Repository.escapeQName(documentPropName) + ":\"" + (leftWildcard ? "*" : "") + value + (rightWildcard ? "*" : "") + "\"";
     }
 
-    public static String generateParentQuery(NodeRef parentRef, StoreRef storeRef) {
-        return "PARENT:\"" + storeRef + "/" + parentRef.getId() + "\"";
+    public static String generateParentQuery(NodeRef parentRef) {
+        return "PARENT:\"" + parentRef.toString() + "\"";
+    }
+
+    public static String generatePrimaryParentQuery(NodeRef parentRef) {
+        return "PRIMARYPARENT:\"" + parentRef.toString() + "\"";
     }
 
     public static String generatePropertyDateQuery(QName documentPropName, Date date) {

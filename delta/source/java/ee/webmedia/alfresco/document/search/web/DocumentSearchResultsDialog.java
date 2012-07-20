@@ -7,7 +7,6 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getVisitedDocumentsBean
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +22,6 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.namespace.QName;
-import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.ui.common.component.UIActionLink;
@@ -66,35 +64,33 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
 
     private static final List<String> EP_EXPORT_SEND_MODES = Arrays.asList(SendMode.MAIL.getValueName(), SendMode.REGISTERED_MAIL.getValueName());
 
-    private List<Document> originalDocuments;
-    private Node searchFilter;
-    private String dialogOutcome;
+    protected Node searchFilter;
+    @SuppressWarnings("unused")
     private UIRichList richList;
 
     public String setup(Node filter) {
         searchFilter = filter;
+        resetLimit(true);
         doInitialSearch();
-        doPostSearch();
         getVisitedDocumentsBean().clearVisitedDocuments();
-        return dialogOutcome;
+        return "documentSearchResultsDialog";
+    }
+
+    @Override
+    protected void limitChangedEvent() {
+        doInitialSearch();
+        getVisitedDocumentsBean().clearVisitedDocuments();
     }
 
     @Override
     public void restored() {
-        getVisitedDocumentsBean().resetVisitedDocuments(originalDocuments);
-        if (temporarilyDisableLimiting) {
-            doInitialSearch();
-        }
-        doPostSearch();
+        getVisitedDocumentsBean().resetVisitedDocuments(documents);
     }
 
     protected void doInitialSearch() {
         try {
             DocumentSearchService documentSearchService = getDocumentSearchService();
-            Pair<List<Document>, Boolean> searchDocuments = documentSearchService.searchDocuments(searchFilter, !temporarilyDisableLimiting);
-            temporarilyDisableLimiting = false;
-            originalDocuments = searchDocuments.getFirst();
-            documentListLimited = searchDocuments.getSecond();
+            documents = setLimited(documentSearchService.searchDocuments(searchFilter, getLimit()));
         } catch (BooleanQuery.TooManyClauses e) {
             Map<QName, Serializable> filterProps = RepoUtil.getNotEmptyProperties(RepoUtil.toQNameProperties(searchFilter.getProperties()));
             // filterProps.remove(DocumentSearchModel.Props.OUTPUT);
@@ -103,7 +99,7 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
                     + "\n  searchFilter="
                     + WmNode.toString(filterProps, Repository
                             .getServiceRegistry(FacesContext.getCurrentInstance()).getNamespaceService())); // stack trace is logged in the service
-            originalDocuments = Collections.emptyList();
+            documents = setLimitedEmpty();
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_search_toomanyclauses");
         } catch (Hits.TooLongQueryException e) {
             Map<QName, Serializable> filterProps = RepoUtil.getNotEmptyProperties(RepoUtil.toQNameProperties(searchFilter.getProperties()));
@@ -113,14 +109,9 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
                     + "\n  searchFilter="
                     + WmNode.toString(filterProps, Repository
                             .getServiceRegistry(FacesContext.getCurrentInstance()).getNamespaceService())); // stack trace is logged in the service
-            originalDocuments = Collections.emptyList();
+            documents = setLimitedEmpty();
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_search_toolongquery");
         }
-    }
-
-    protected void doPostSearch() {
-        documents = new ArrayList<Document>(originalDocuments);
-        dialogOutcome = "documentSearchResultsDialog";
     }
 
     @Override

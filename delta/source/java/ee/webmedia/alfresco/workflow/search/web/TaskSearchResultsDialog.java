@@ -1,23 +1,22 @@
 package ee.webmedia.alfresco.workflow.search.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
+
 import java.util.Collections;
 import java.util.List;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
-import org.alfresco.util.Pair;
-import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.apache.myfaces.application.jsp.JspStateManagerImpl;
 
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.CreatedOrRegistratedDateComparator;
+import ee.webmedia.alfresco.document.web.BaseLimitedListDialog;
 import ee.webmedia.alfresco.simdhs.CSVExporter;
 import ee.webmedia.alfresco.simdhs.DataReader;
 import ee.webmedia.alfresco.simdhs.RichListDataReader;
-import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.workflow.search.model.TaskInfo;
 
 /**
@@ -25,14 +24,12 @@ import ee.webmedia.alfresco.workflow.search.model.TaskInfo;
  * 
  * @author Erko Hansar
  */
-public class TaskSearchResultsDialog extends BaseDialogBean {
+public class TaskSearchResultsDialog extends BaseLimitedListDialog {
 
     private static final long serialVersionUID = 1L;
 
     private List<TaskInfo> tasks;
     private Node filter;
-    protected boolean documentListLimited = false;
-    protected boolean temporarilyDisableLimiting = false;
     private UIRichList richList;
 
     @Override
@@ -40,20 +37,6 @@ public class TaskSearchResultsDialog extends BaseDialogBean {
         // finish button is not used
         return null; // but in case someone clicks finish button twice on the previous dialog,
                      // then silently ignore it and stay on the same page
-    }
-
-    public String getLimitedMessage() {
-        return MessageUtil.getMessage("task_list_limited", BeanHelper.getDocumentSearchService().getResultsLimit());
-    }
-
-    public boolean isTaskListLimited() {
-        return documentListLimited;
-    }
-
-    public void getAllTasksWithoutLimit(@SuppressWarnings("unused") ActionEvent event) {
-        temporarilyDisableLimiting = true;
-        restored();
-        temporarilyDisableLimiting = false;
     }
 
     private void clearRichList() {
@@ -64,8 +47,6 @@ public class TaskSearchResultsDialog extends BaseDialogBean {
 
     @Override
     public String cancel() {
-        documentListLimited = false;
-        temporarilyDisableLimiting = false;
         tasks = null;
         return super.cancel();
     }
@@ -76,11 +57,13 @@ public class TaskSearchResultsDialog extends BaseDialogBean {
     }
 
     @Override
-    public void restored() {
-        Pair<List<TaskInfo>, Boolean> searchTasks = BeanHelper.getDocumentSearchService().searchTasks(filter, !temporarilyDisableLimiting);
-        tasks = searchTasks.getFirst();
+    protected void limitChangedEvent() {
+        doInitialSearch();
+    }
+
+    private void doInitialSearch() {
+        tasks = setLimited(getDocumentSearchService().searchTasks(filter, getLimit()));
         clearRichList();
-        documentListLimited = searchTasks.getSecond();
         Collections.sort(tasks, CreatedOrRegistratedDateComparator.getComparator());
     }
 
@@ -95,7 +78,8 @@ public class TaskSearchResultsDialog extends BaseDialogBean {
 
     public void setup(Node filter) {
         this.filter = filter;
-        restored();
+        resetLimit(true);
+        doInitialSearch();
     }
 
     public List<TaskInfo> getTasks() {

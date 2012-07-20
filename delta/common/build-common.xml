@@ -41,6 +41,7 @@
 	<property name="conf.organization.name" value="default" />
 	<property name="appserver" value="glassfish" />
 	<property name="project.build.result.war" location="${project.dir.build}/dhs-${currentVersion}-${conf.organization.name}-${appserver}.war" />
+	<property name="project.build.result.zip" location="${project.dir.build}/delta-${currentVersion}.zip" />
 
 	<path id="classpath">
 		<fileset dir="${project.dir.exploded.lib}" includes="**/*.jar" />
@@ -289,6 +290,25 @@
 		<war destfile="${project.build.result.war}" duplicate="fail">
 			<fileset dir="${project.dir.exploded}" />
 		</war>
+	</target>
+
+	<target name="zip" depends="war" description="Build ZIP file from WAR and helper files needed for distributsion package">
+<!--
+	   <delete file="${project.dir.build}/menetlus-import-sql.zip" failonerror="false" />
+		<zip destfile="${project.dir.build}/menetlus-import-sql.zip" duplicate="fail">
+			<zipfileset dir="${project.dir.etc}/import-sql" includes="*.sql" prefix="sql" />
+		</zip>
+-->
+		<delete file="${project.build.result.zip}" failonerror="false" />
+		<zip destfile="${project.build.result.zip}" duplicate="fail">
+			<zipfileset file="${project.build.result.war}" fullpath="dhs.war" />
+			<zipfileset dir="${project.basedir}/doc" includes="Delta_P*.docx" />
+			<zipfileset file="${conf.basedir}/${conf.name}/classes/alfresco-global.properties" />
+			<zipfileset dir="${common.dir.etc}" includes="index.jsp,jvm-error.sh,krb5.conf,nginx-*.conf.example,soffice-monitor.sh,tomcat-sslvalve-fixed.jar,tomcat.sh" />
+<!--
+		    <zipfileset file="${project.dir.build}/menetlus-import-sql.zip" />
+-->
+		</zip>
 	</target>
 
 	<!-- ============= Code coverage targets ============= -->

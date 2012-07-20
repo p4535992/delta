@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.ResourceBundle;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
@@ -35,6 +36,15 @@ import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 public class MessageUtil {
     private static final Log LOG = org.apache.commons.logging.LogFactory.getLog(MessageUtil.class);
 
+    private static ResourceBundle resourceBundle;
+
+    private static ResourceBundle getResourceBundle() {
+        if (resourceBundle == null) {
+            resourceBundle = ResourceBundleWrapper.getResourceBundle(MESSAGE_BUNDLE, Locale.getDefault());
+        }
+        return resourceBundle;
+    }
+
     /**
      * @param context
      * @param messageId - message id to be used
@@ -48,7 +58,7 @@ public class MessageUtil {
         if (context != null) {
             message = Application.getMessage(context, messageId);
         } else {
-            message = ResourceBundleWrapper.getResourceBundle(MESSAGE_BUNDLE, Locale.getDefault()).getString(messageId);
+            message = getResourceBundle().getString(messageId);
         }
         final Object[] translatedValuesForHolders = getTranslatedMessageValueHolders(context, messageValuesForHolders);
         if (isMessageTranslated(messageId, message)) {

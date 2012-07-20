@@ -464,6 +464,9 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
             saveOrUpdateFieldDefinitions(fieldsToSave.values());
         }
         nodeService.deleteNode(docTypeRef);
+        if (dynType.isUsed()) {
+            menuService.menuUpdated();
+        }
     }
 
     @Override

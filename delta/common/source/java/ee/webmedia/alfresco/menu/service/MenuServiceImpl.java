@@ -92,9 +92,7 @@ public class MenuServiceImpl implements MenuService, InitializingBean {
     @Override
     public void processTasks(Menu menu, Collection<String> onlyMenuItemIds) {
         long start = System.currentTimeMillis();
-        System.out.println("PERFORMANCE: MENU PROCESS TASK START");
         process(menu, false, onlyMenuItemIds, false);
-        System.out.println("PERFORMANCE: MENU PROCESS TASK END: " + (System.currentTimeMillis() - start) + "ms");
     }
 
     @Override

@@ -6,13 +6,7 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:booleanEvaluator value="#{TaskSearchResultsDialog.taskListLimited}">
-   <a:panel id="limited-message" styleClass="message">
-      <h:outputText value="#{TaskSearchResultsDialog.limitedMessage}" />
-      <h:outputText value="<br />" escape="false" />
-      <a:actionLink id="remove-doc-limitation-link" value="#{msg.document_list_show_all}"  actionListener="#{TaskSearchResultsDialog.getAllTasksWithoutLimit}" />   
-   </a:panel>
-</a:booleanEvaluator>
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/limited-message-panel.jsp" />
 
 <a:panel id="task-panel" styleClass="panel-100" label="#{msg.task_search_results}" progressive="true" styleClass="with-pager">
    <a:panel id="task-panel-search-results" styleClass="overflow-wrapper">   

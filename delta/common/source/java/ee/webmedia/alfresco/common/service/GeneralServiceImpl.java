@@ -118,6 +118,7 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     }
 
     private LinkedHashSet<ArchivalsStoreVO> archivalsStoreVOs;
+    private LinkedHashSet<StoreRef> archivalsStoreRefs;
     private LinkedHashSet<StoreRef> allWithArchivalsStoreRefs;
 
     @Override
@@ -141,6 +142,18 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
             allWithArchivalsStoreRefs = stores;
         }
         return allWithArchivalsStoreRefs;
+    }
+
+    @Override
+    public LinkedHashSet<StoreRef> getArchivalsStoreRefs() {
+        if (archivalsStoreRefs == null) {
+            LinkedHashSet<StoreRef> stores = new LinkedHashSet<StoreRef>();
+            for (ArchivalsStoreVO storeVO : getArchivalsStoreVOs()) {
+                stores.add(storeVO.getStoreRef());
+            }
+            archivalsStoreRefs = stores;
+        }
+        return archivalsStoreRefs;
     }
 
     @Override

@@ -660,11 +660,23 @@
 
    <filter-mapping>
       <filter-name>Header Filter</filter-name>
-      <url-pattern>*.css</url-pattern>
+      <url-pattern>/css/*</url-pattern>
    </filter-mapping>
    <filter-mapping>
       <filter-name>Header Filter</filter-name>
-      <url-pattern>*.js</url-pattern>
+      <url-pattern>/images/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>Header Filter</filter-name>
+      <url-pattern>/scripts/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>Header Filter</filter-name>
+      <url-pattern>/blank.html</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>Header Filter</filter-name>
+      <url-pattern>/favicon.ico</url-pattern>
    </filter-mapping>
 
    <!-- ========== Listeners ========== -->

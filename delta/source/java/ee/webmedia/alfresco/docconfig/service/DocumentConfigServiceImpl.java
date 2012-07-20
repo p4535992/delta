@@ -767,8 +767,10 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         }
         List<Node> results = new ArrayList<Node>();
         List<Node> childNodes = node.getAllChildAssociations(hierarchy[i]);
-        for (Node childNode : childNodes) {
-            results.addAll(collectChildNodes(childNode, hierarchy, i + 1));
+        if (childNodes != null) {
+            for (Node childNode : childNodes) {
+                results.addAll(collectChildNodes(childNode, hierarchy, i + 1));
+            }
         }
         return results;
     }

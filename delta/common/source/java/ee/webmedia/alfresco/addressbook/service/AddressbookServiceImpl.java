@@ -258,7 +258,7 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
         queryParts.add(joinQueryPartsAnd(queryPartsOrg));
         queryParts.add(generatePersonByCodeQuery(regNumber));
         String query = joinQueryPartsOr(queryParts);
-        return toNodeList(searchNodes(query, -1, "contactsByRegNumber", store));
+        return toNodeList(searchNodes(query, -1, "contactsByRegNumber", Collections.singletonList(store)));
     }
 
     @Override
@@ -268,16 +268,17 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
         queryParts.add(generatePropertyNotNullQuery(Props.ORGANIZATION_CODE));
         queryParts.add(generatePropertyNotNullQuery(Props.SAP_ACCOUNT));
         String query = joinQueryPartsAnd(queryParts);
-        return toNodeList(searchNodes(query, -1, "contactsWithSapAccount", store));
+        return toNodeList(searchNodes(query, -1, "contactsWithSapAccount", Collections.singletonList(store)));
     }
 
     @Override
     public List<Node> getPersonContactsByCode(String code) {
         String query = generatePersonByCodeQuery(code);
-        return toNodeList(searchNodes(query, -1, "personContactsByCode", store));
+        return toNodeList(searchNodes(query, -1, "personContactsByCode", Collections.singletonList(store)));
     }
 
-    private List<Node> toNodeList(List<NodeRef> nodeRefs) {
+    private List<Node> toNodeList(Pair<List<NodeRef>, Boolean> results) {
+        List<NodeRef> nodeRefs = results.getFirst();
         List<Node> contactNodes = new ArrayList<Node>(nodeRefs.size());
         for (NodeRef nodeRef : nodeRefs) {
             contactNodes.add(getNode(nodeRef));
@@ -415,7 +416,7 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
         }
 
         if (types.contains(Types.ORGANIZATION) && fields == contactGroupSearchFields) {
-            List<NodeRef> nodeRefs = searchNodes(joinQueryPartsAnd(queryPartsAnd), -1, "addressbookSearch", store);
+            List<NodeRef> nodeRefs = searchNodes(joinQueryPartsAnd(queryPartsAnd), -1, "addressbookSearch", Collections.singletonList(store)).getFirst();
             // here we only want the contact groups that contain organizations?
             List<Node> filteredList = filterContactGroupsThatContainOrganizations(nodeRefs, dvkCapableOnly);
             if (filteredList.size() > limit) {
@@ -423,8 +424,7 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
             }
             return filteredList;
         }
-        List<NodeRef> nodeRefs = searchNodes(joinQueryPartsAnd(queryPartsAnd), limit, "addressbookSearch", store);
-        return toNodeList(nodeRefs);
+        return toNodeList(searchNodes(joinQueryPartsAnd(queryPartsAnd), limit, "addressbookSearch", Collections.singletonList(store)));
     }
 
     private List<Node> filterContactGroupsThatContainOrganizations(List<NodeRef> nodeRefs, boolean dvkCapableOnly) {

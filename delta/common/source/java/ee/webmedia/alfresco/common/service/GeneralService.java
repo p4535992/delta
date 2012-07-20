@@ -45,6 +45,8 @@ public interface GeneralService {
 
     LinkedHashSet<ArchivalsStoreVO> getArchivalsStoreVOs();
 
+    LinkedHashSet<StoreRef> getArchivalsStoreRefs();
+
     LinkedHashSet<StoreRef> getAllWithArchivalsStoreRefs();
 
     /**

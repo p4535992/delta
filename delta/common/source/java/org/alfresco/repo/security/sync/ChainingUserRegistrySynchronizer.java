@@ -416,7 +416,8 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
                 // The person already existed in this zone: update the person
                 ChainingUserRegistrySynchronizer.logger.info("Updating user '" + personName + "'");
 
-                Map<QName, Serializable> personOldProperties = BeanHelper.getNodeService().getProperties(personService.getPerson(personName));
+                NodeRef personRef = personService.getPerson(personName); // creates home folder if necessary
+                Map<QName, Serializable> personOldProperties = BeanHelper.getNodeService().getProperties(personRef);
 
                 String diff = new PropDiffHelper()
                         .watchUser()
@@ -454,6 +455,7 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
                     ChainingUserRegistrySynchronizer.logger.info("Creating user '" + personName + "'");
                 }
                 this.personService.createPerson(personProperties, getZones(zoneId));
+                NodeRef personRef = this.personService.getPerson(personName); // creates home folder if necessary
             }
             // Increment the count of processed people
             processedCount++;
@@ -618,9 +620,17 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
             for (String child : entry.getValue())
             {
                 String groupName = entry.getKey();
-                ChainingUserRegistrySynchronizer.logger.info("Adding '" + this.authorityService.getShortName(child)
-                        + "' to group '" + this.authorityService.getShortName(groupName) + "'");
-                this.authorityService.addAuthority(groupName, child);
+                if (AuthorityType.getAuthorityType(child) == AuthorityType.USER && !this.personService.personExists(child))
+                {
+                    ChainingUserRegistrySynchronizer.logger.warn("Not adding '" + this.authorityService.getShortName(child)
+                            + "' to group '" + this.authorityService.getShortName(groupName) + "', user does not exist");
+                }
+                else
+                {
+                    ChainingUserRegistrySynchronizer.logger.info("Adding '" + this.authorityService.getShortName(child)
+                            + "' to group '" + this.authorityService.getShortName(groupName) + "'");
+                    this.authorityService.addAuthority(groupName, child);
+                }
             }
 
         }

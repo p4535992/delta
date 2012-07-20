@@ -11,7 +11,6 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 
-import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.user.model.Authority;
@@ -46,7 +45,7 @@ public interface DocumentSearchService {
      * @param limited
      * @return list of matching documents (max 100 entries)
      */
-    Pair<List<Document>, Boolean> searchDocumentsQuick(String searchString, NodeRef containerNodeRef, boolean limited);
+    Pair<List<Document>, Boolean> searchDocumentsQuick(String searchString, NodeRef containerNodeRef, int limit);
 
     /**
      * @param trySearchCases - if false, case search is not executed, if true, evaluate also other conditions to determine whether to search cases or not
@@ -62,7 +61,7 @@ public interface DocumentSearchService {
      * @param filter
      * @return list of matching documents (max 100 entries)
      */
-    Pair<List<Document>, Boolean> searchDocuments(Node filter, boolean limited);
+    Pair<List<Document>, Boolean> searchDocuments(Node filter, int limit);
 
     /**
      * Searches for documents using a search filter.
@@ -106,10 +105,10 @@ public interface DocumentSearchService {
     /**
      * Fetches list of documents where date in regDateTime property is current date
      * 
-     * @param temporarilyDisableLimiting
+     * @param limit
      * @return list of Document objects
      */
-    Pair<List<Document>, Boolean> searchTodayRegisteredDocuments(String searchString, boolean temporarilyDisableLimiting);
+    Pair<List<Document>, Boolean> searchTodayRegisteredDocuments(String searchString, int limit);
 
     /**
      * Fetches a list of documents where recipient or additional recipient is present and docStatus is finished.
@@ -164,7 +163,7 @@ public interface DocumentSearchService {
      * @param filter
      * @return list of matching tasks
      */
-    Pair<List<TaskInfo>, Boolean> searchTasks(Node filter, boolean limited);
+    Pair<List<TaskInfo>, Boolean> searchTasks(Node filter, int limit);
 
     /**
      * Searches for tasks using a search filter.
@@ -198,26 +197,6 @@ public interface DocumentSearchService {
     List<NodeRef> searchWorkingDocumentsByOwnerId(String ownerId, boolean isPreviousOwnerId);
 
     List<NodeRef> searchNewTasksByOwnerId(String ownerId, boolean isPreviousOwnerId);
-
-    /**
-     * Used by ADR web service to search documents.
-     * 
-     * @param regDateBegin
-     * @param regDateEnd
-     * @param docType
-     * @param searchString
-     * @return
-     */
-    List<DocumentDynamic> searchAdrDocuments(Date regDateBegin, Date regDateEnd, String docTypeId, String searchString, Set<String> documentTypeIds);
-
-    /**
-     * Used by ADR web service to search document details.
-     * 
-     * @param regNumber
-     * @param regDate
-     * @return
-     */
-    List<DocumentDynamic> searchAdrDocuments(String regNumber, Date regDate, Set<String> documentTypeIds);
 
     List<NodeRef> searchAdrDocuments(Date modifiedDateBegin, Date modifiedDateEnd, Set<String> documentTypeIds);
 
@@ -296,10 +275,10 @@ public interface DocumentSearchService {
 
     List<Document> searchDueContracts();
 
-    int getResultsLimit();
-
     List<StoreRef> getStoresFromDocumentReportFilter(Map<String, Object> properties);
 
     String generateDeletedSearchQuery(String searchValue, NodeRef containerNodeRef);
+
+    Pair<List<NodeRef>, Boolean> searchAllDocumentsByParentRef(NodeRef parentRef, int limit);
 
 }

@@ -1,15 +1,12 @@
 package ee.webmedia.alfresco.document.search.web;
 
-import java.util.List;
 import java.util.Map;
 
 import javax.faces.component.UIPanel;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
-import org.alfresco.util.Pair;
-
-import ee.webmedia.alfresco.document.model.Document;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.web.BaseDocumentListDialog;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
@@ -32,22 +29,32 @@ public class TodayRegisteredDocumentsSearchResultsDialog extends BaseDocumentLis
     public void setup(ActionEvent event) {
         searchValue = "";
         quickSearch = false;
-        restored();
+        resetLimit(false);
+        doInitialSearch();
+        BeanHelper.getVisitedDocumentsBean().clearVisitedDocuments();
     }
 
     /** @param event */
     public void setupSearch(ActionEvent event) {
         quickSearch = true;
-        restored();
+        resetLimit(false);
+        doInitialSearch();
+        BeanHelper.getVisitedDocumentsBean().clearVisitedDocuments();
+    }
+
+    @Override
+    protected void limitChangedEvent() {
+        doInitialSearch();
+        BeanHelper.getVisitedDocumentsBean().clearVisitedDocuments();
     }
 
     @Override
     public void restored() {
-        Pair<List<Document>, Boolean> searchTodayRegisteredDocuments = getDocumentSearchService().searchTodayRegisteredDocuments((quickSearch ? searchValue : null),
-                !temporarilyDisableLimiting);
-        documents = searchTodayRegisteredDocuments.getFirst();
-        documentListLimited = searchTodayRegisteredDocuments.getSecond();
-        temporarilyDisableLimiting = false;
+        BeanHelper.getVisitedDocumentsBean().resetVisitedDocuments(documents);
+    }
+
+    private void doInitialSearch() {
+        documents = setLimited(getDocumentSearchService().searchTodayRegisteredDocuments(quickSearch ? searchValue : null, getLimit()));
     }
 
     @Override

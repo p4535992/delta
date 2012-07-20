@@ -4,10 +4,10 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigServic
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPropertySheetStateBean;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -18,10 +18,8 @@ import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
-import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
-import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.repository.Node;
@@ -114,7 +112,9 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         } else {
             throw new RuntimeException("Unsupported type: " + type);
         }
-        restored();
+        resetLimit(false);
+        doInitialSearch();
+        BeanHelper.getVisitedDocumentsBean().clearVisitedDocuments();
         WebUtil.navigateTo(AlfrescoNavigationHandler.DIALOG_PREFIX + "documentListDialog");
     }
 
@@ -130,11 +130,13 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
             parentCase = getCaseService().getCaseByNoderef(param);
             parentVolume = null;
         }
-        restored();
+        resetLimit(false);
+        doInitialSearch();
+        BeanHelper.getVisitedDocumentsBean().clearVisitedDocuments();
         WebUtil.navigateTo(AlfrescoNavigationHandler.DIALOG_PREFIX + "documentListDialog");
     }
 
-    public void updateLocationSelect(ActionEvent event) {
+    public void updateLocationSelect(@SuppressWarnings("unused") ActionEvent event) {
         Set<String> documentTypeIds = new HashSet<String>();
         DocumentDynamicService documentDynamicService = BeanHelper.getDocumentDynamicService();
         for (Entry<NodeRef, Boolean> entry : getListCheckboxes().entrySet()) {
@@ -221,10 +223,11 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         } catch (UnableToPerformException e) {
             MessageUtil.addStatusMessage(FacesContext.getCurrentInstance(), e);
         }
-        restored();
+        doInitialSearch();
+        BeanHelper.getVisitedDocumentsBean().clearVisitedDocuments();
     }
 
-    public void resetConfirmation(ActionEvent event) {
+    public void resetConfirmation(@SuppressWarnings("unused") ActionEvent event) {
         confirmMoveAssociatedDocuments = false;
     }
 
@@ -255,8 +258,18 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
     }
 
     @Override
+    protected void limitChangedEvent() {
+        doInitialSearch();
+        BeanHelper.getVisitedDocumentsBean().clearVisitedDocuments();
+    }
+
+    @Override
     public void restored() {
-        final NodeRef parentRef;
+        BeanHelper.getVisitedDocumentsBean().resetVisitedDocuments(documents);
+    }
+
+    private void doInitialSearch() {
+        NodeRef parentRef = null;
         locationNode = null;
         setListCheckboxes(new HashMap<NodeRef, Boolean>());
         getPropertySheetStateBean().reset(getConfig().getStateHolders(), this);
@@ -265,30 +278,37 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         } else {// assuming that parentVolume is volume
             parentRef = parentVolume.getNode().getNodeRef();
         }
-        documents = getChildNodes(parentRef, BeanHelper.getDocumentSearchService().getResultsLimit());
-        if (documents.size() <= 2000) {// if sorting takes less than ca 6 sec (ca 15ms per document, 400doc*15ms==6sec)
-            Collections.sort(documents);// sorting needs properties to be fetched from repo
+        documents = setLimited(getChildNodes(parentRef, getLimit()));
+
+        // Because documents are fetched from search, the results may not be accurate if indexing is done in background
+        // and mass change location was done during the last few seconds
+        // Therefore filter out documents, that are not under this volume or case
+        for (Iterator<Document> i = documents.iterator(); i.hasNext();) {
+            Document document = i.next();
+            if (parentCase != null) {
+                NodeRef caseRef = (NodeRef) document.getProperties().get(DocumentCommonModel.Props.CASE.toString());
+                if (!parentCase.getNode().getNodeRef().equals(caseRef)) {
+                    i.remove();
+                }
+            } else {
+                NodeRef volumeRef = (NodeRef) document.getProperties().get(DocumentCommonModel.Props.VOLUME.toString());
+                if (!parentVolume.getNode().getNodeRef().equals(volumeRef)) {
+                    i.remove();
+                }
+            }
         }
+
+        Collections.sort(documents); // always sort, because at first user gets only limited amount of documents;
+                                     // and if user presses show all, then he/she knows it will take time
         resetModals();
         clearRichList();
     }
 
-    private List<Document> getChildNodes(NodeRef parentRef, int limit) {
-        List<ChildAssociationRef> childAssocs = getNodeService().getChildAssocs(parentRef, RegexQNamePattern.MATCH_ALL, DocumentCommonModel.Types.DOCUMENT);
-        List<Document> docsOfParent = new ArrayList<Document>(childAssocs.size());
-        for (ChildAssociationRef childAssocRef : childAssocs) {
-            NodeRef docRef = childAssocRef.getChildRef();
-            docsOfParent.add(new Document(docRef));
-            if (!temporarilyDisableLimiting && docsOfParent.size() >= limit) {
-                documentListLimited = true;
-                break;
-            }
+    private Pair<List<Document>, Boolean> getChildNodes(NodeRef parentRef, int limit) {
+        if (parentRef == null) {
+            return Pair.newInstance(Collections.<Document> emptyList(), false);
         }
-        if (temporarilyDisableLimiting) {
-            documentListLimited = false;
-            temporarilyDisableLimiting = false;
-        }
-        return docsOfParent;
+        return getDocumentService().searchAllDocumentsByParentNodeRef(parentRef, limit);
     }
 
     @Override

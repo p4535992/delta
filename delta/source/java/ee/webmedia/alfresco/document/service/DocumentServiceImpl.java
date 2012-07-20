@@ -1401,7 +1401,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
 
     @Override
     public List<Document> getAllDocumentFromDvk() {
-        List<Document> documents = getAllDocumentsByParentNodeRef(generalService.getNodeRef(fromDvkXPath));
+        List<Document> documents = getIncomingDocuments(generalService.getNodeRef(fromDvkXPath));
         Collections.sort(documents);
         return documents;
     }
@@ -2048,7 +2048,18 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         return isReplyOrFollowupDoc;
     }
 
-    private List<Document> getAllDocumentsByParentNodeRef(NodeRef parentRef) {
+    @Override
+    public Pair<List<Document>, Boolean> searchAllDocumentsByParentNodeRef(NodeRef parentRef, int limit) {
+        Pair<List<NodeRef>, Boolean> results = getDocumentSearchService().searchAllDocumentsByParentRef(parentRef, limit);
+        List<Document> docsOfParent = new ArrayList<Document>(results.getFirst().size());
+        for (NodeRef docRef : results.getFirst()) {
+            docsOfParent.add(getDocumentByNodeRef(docRef));
+        }
+        return Pair.newInstance(docsOfParent, results.getSecond());
+    }
+
+    @Override
+    public List<Document> getAllDocumentsByParentNodeRef(NodeRef parentRef) {
         List<NodeRef> docsRefs = getAllDocumentRefsByParentRef(parentRef);
         List<Document> docsOfParent = new ArrayList<Document>(docsRefs.size());
         for (NodeRef docRef : docsRefs) {

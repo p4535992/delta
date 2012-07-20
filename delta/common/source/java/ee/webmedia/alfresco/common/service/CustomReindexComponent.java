@@ -7,11 +7,16 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.repo.domain.Transaction;
 import org.alfresco.repo.node.index.AbstractReindexComponent;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.util.ISO8601DateFormat;
+import org.alfresco.util.Pair;
 
 import ee.webmedia.alfresco.utils.ProgressTracker;
 
@@ -30,6 +35,11 @@ public class CustomReindexComponent extends AbstractReindexComponent {
     private long lookBackMinutes = 1440; // 24 hours
 
     @Override
+    protected boolean requireTransaction() {
+        return false;
+    }
+
+    @Override
     protected void reindexImpl() {
         List<Transaction> txns = getTransactions();
         if (txns.isEmpty()) {
@@ -40,51 +50,58 @@ public class CustomReindexComponent extends AbstractReindexComponent {
     }
 
     private List<Transaction> getTransactions() {
-        long endTimeMs = System.currentTimeMillis();
-        long startTimeMs = endTimeMs - (lookBackMinutes * 60000);
-        LOG.info("Finding transactions from " + ISO8601DateFormat.format(new Date(startTimeMs)) + " to " + ISO8601DateFormat.format(new Date(endTimeMs)) + "...");
-        List<Long> excludeTxnIds = new ArrayList<Long>();
-        List<Transaction> allTxns = new ArrayList<Transaction>();
-        List<Transaction> txns;
+        final long endTimeMs = System.currentTimeMillis();
+        final AtomicLong startTimeMs = new AtomicLong(endTimeMs - (lookBackMinutes * 60000));
+        LOG.info("Finding transactions from " + ISO8601DateFormat.format(new Date(startTimeMs.get())) + " to " + ISO8601DateFormat.format(new Date(endTimeMs)) + "...");
+        final Pair<String, String> firstAndLastTxnInfo = new Pair<String, String>(null, null);
+        final List<Long> excludeTxnIds = new ArrayList<Long>();
+        final List<Transaction> allTxns = new ArrayList<Transaction>();
+        boolean hasResults;
         do {
-            if (LOG.isDebugEnabled()) {
-                LOG.info("Query transactions from " + ISO8601DateFormat.format(new Date(startTimeMs)) + " to " + ISO8601DateFormat.format(new Date(endTimeMs)) + " (max "
-                        + maxRecordSetSize + ", exclude " + excludeTxnIds + ")");
-            }
-            txns = nodeDaoService.getTxnsByCommitTimeAscending(startTimeMs, endTimeMs, maxRecordSetSize, excludeTxnIds, false);
-            if (LOG.isDebugEnabled()) {
-                LOG.info("Found " + txns.size() + " transactions");
-            }
-            if (txns.isEmpty()) {
-                break;
-            }
-            if (LOG.isDebugEnabled()) {
-                LOG.info("First: " + getTransactionInfo(txns.get(0)));
-                LOG.info("Last : " + getTransactionInfo(txns.get(txns.size() - 1)));
-            }
-
-            allTxns.addAll(txns);
-            if (!txns.isEmpty()) {
-                startTimeMs = txns.get(txns.size() - 1).getCommitTimeMs();
-                excludeTxnIds = new ArrayList<Long>();
-                for (int i = txns.size() - 1; i >= 0; i--) {
-                    Transaction txn = txns.get(i);
-                    if (txn.getCommitTimeMs() < startTimeMs) {
-                        break;
+            hasResults = transactionService.getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Boolean>() {
+                @Override
+                public Boolean execute() throws Throwable {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.info("Query transactions from " + ISO8601DateFormat.format(new Date(startTimeMs.get())) + " to " + ISO8601DateFormat.format(new Date(endTimeMs))
+                                + " (max "
+                                + maxRecordSetSize + ", exclude " + excludeTxnIds + ")");
                     }
-                    excludeTxnIds.add(txn.getId());
+                    List<Transaction> txns = nodeDaoService.getTxnsByCommitTimeAscending(startTimeMs.get(), endTimeMs, maxRecordSetSize, excludeTxnIds, false);
+                    if (LOG.isDebugEnabled()) {
+                        LOG.info("Found " + txns.size() + " transactions");
+                    }
+                    if (txns.isEmpty()) {
+                        return false;
+                    }
+                    if (LOG.isDebugEnabled()) {
+                        LOG.info("First: " + getTransactionInfo(txns.get(0)));
+                        LOG.info("Last : " + getTransactionInfo(txns.get(txns.size() - 1)));
+                    }
+
+                    allTxns.addAll(txns);
+
+                    startTimeMs.set(txns.get(txns.size() - 1).getCommitTimeMs());
+                    excludeTxnIds.clear();
+                    for (int i = txns.size() - 1; i >= 0; i--) {
+                        Transaction txn = txns.get(i);
+                        if (txn.getCommitTimeMs() < startTimeMs.get()) {
+                            break;
+                        }
+                        excludeTxnIds.add(txn.getId());
+                    }
+                    firstAndLastTxnInfo.setFirst(getTransactionInfo(allTxns.get(0)));
+                    firstAndLastTxnInfo.setSecond(getTransactionInfo(allTxns.get(allTxns.size() - 1)));
+                    return true;
                 }
-            }
-        } while (!txns.isEmpty());
+            }, true);
+        } while (hasResults);
 
         LOG.info("Found total " + allTxns.size() + " transactions during that time period");
         if (allTxns.isEmpty()) {
             return allTxns;
         }
-        Transaction firstTxn = allTxns.get(0);
-        LOG.info("First: " + getTransactionInfo(firstTxn));
-        Transaction lastTxn = allTxns.get(allTxns.size() - 1);
-        LOG.info("Last : " + getTransactionInfo(lastTxn));
+        LOG.info("First: " + firstAndLastTxnInfo.getFirst());
+        LOG.info("Last : " + firstAndLastTxnInfo.getSecond());
         return allTxns;
     }
 
@@ -94,93 +111,102 @@ public class CustomReindexComponent extends AbstractReindexComponent {
 
     private void searchHolesAndIndex(List<Transaction> txns) {
         LOG.info("Searching for holes and starting background indexing...");
-        Transaction sliceStartTxn = null;
-        Transaction lastTxn = null;
-        Boolean sliceCommited = null;
-        int sliceItemCount = 0;
-        Map<String, Integer> sliceServerCount = new HashMap<String, Integer>();
-        ProgressTracker progress = new ProgressTracker(txns.size(), 0);
-        int i = 0;
-        int txnsToReindex = 0;
-        int holes = 0;
-        List<Long> txnIdBuffer = new ArrayList<Long>(maxTransactionsPerLuceneCommit);
-        Iterator<Transaction> txnIterator = txns.iterator();
+        final AtomicReference<Transaction> sliceStartTxn = new AtomicReference<Transaction>(null);
+        final AtomicReference<Transaction> lastTxn = new AtomicReference<Transaction>(null);
+        final AtomicReference<Boolean> sliceCommited = new AtomicReference<Boolean>(null);
+        final AtomicInteger sliceItemCount = new AtomicInteger(0);
+        final Map<String, Integer> sliceServerCount = new HashMap<String, Integer>();
+        final ProgressTracker progress = new ProgressTracker(txns.size(), 0);
+        final AtomicInteger i = new AtomicInteger(0);
+        final AtomicInteger txnsToReindex = new AtomicInteger(0);
+        final AtomicInteger holes = new AtomicInteger(0);
+        final List<Long> txnIdBuffer = new ArrayList<Long>(maxTransactionsPerLuceneCommit);
+        final Iterator<Transaction> txnIterator = txns.iterator();
         while (txnIterator.hasNext()) {
-            Transaction txn = txnIterator.next();
-            boolean commited = isTxnPresentInIndex(txn) == InIndex.YES;
-            if (sliceStartTxn == null || sliceCommited == null) {
-                sliceStartTxn = txn;
-                sliceCommited = commited;
-            }
-            if (commited != sliceCommited) {
-                if (!sliceCommited) {
-                    StringBuilder s = new StringBuilder();
-                    s.append("Found hole, contains ").append(sliceItemCount).append(" sequential transactions (");
-                    boolean first = true;
-                    for (Entry<String, Integer> entry : sliceServerCount.entrySet()) {
-                        if (first) {
-                            first = false;
-                        } else {
-                            s.append(", ");
-                        }
-                        s.append(entry.getKey()).append(" * ").append(entry.getValue());
+            transactionService.getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
+                @Override
+                public Void execute() throws Throwable {
+                    Transaction txn = txnIterator.next();
+                    boolean commited = isTxnPresentInIndex(txn) == InIndex.YES;
+                    if (sliceStartTxn.get() == null || sliceCommited.get() == null) {
+                        sliceStartTxn.set(txn);
+                        sliceCommited.set(commited);
                     }
-                    s.append(")\n  First: ").append(ISO8601DateFormat.format(new Date(sliceStartTxn.getCommitTimeMs()))).append(" ").append(sliceStartTxn.getId()).append(" ")
-                            .append(sliceStartTxn.getVersion()).append(" ").append(sliceStartTxn.getServer());
-                    s.append("\n  Last : ").append(ISO8601DateFormat.format(new Date(lastTxn.getCommitTimeMs()))).append(" ").append(lastTxn.getId()).append(" ")
-                            .append(lastTxn.getVersion()).append(" " + lastTxn.getServer());
-                    LOG.info(s.toString());
-                    holes++;
-                }
-                sliceCommited = commited;
-                sliceStartTxn = txn;
-                sliceItemCount = 0;
-                sliceServerCount = new HashMap<String, Integer>();
-            }
-            if (!commited) {
-                sliceItemCount++;
-                String server = txn.getServer().getId() + " " + txn.getServer().getIpAddress();
-                Integer serverCount = sliceServerCount.get(server);
-                if (serverCount == null) {
-                    serverCount = 1;
-                } else {
-                    serverCount = serverCount + 1;
-                }
-                sliceServerCount.put(server, serverCount);
+                    if (commited != sliceCommited.get()) {
+                        if (!sliceCommited.get()) {
+                            StringBuilder s = new StringBuilder();
+                            s.append("Found hole, contains ").append(sliceItemCount.get()).append(" sequential transactions (");
+                            boolean first = true;
+                            for (Entry<String, Integer> entry : sliceServerCount.entrySet()) {
+                                if (first) {
+                                    first = false;
+                                } else {
+                                    s.append(", ");
+                                }
+                                s.append(entry.getKey()).append(" * ").append(entry.getValue());
+                            }
+                            s.append(")\n  First: ").append(ISO8601DateFormat.format(new Date(sliceStartTxn.get().getCommitTimeMs()))).append(" ")
+                                    .append(sliceStartTxn.get().getId())
+                                    .append(" ")
+                                    .append(sliceStartTxn.get().getVersion()).append(" ").append(sliceStartTxn.get().getServer());
+                            s.append("\n  Last : ").append(ISO8601DateFormat.format(new Date(lastTxn.get().getCommitTimeMs()))).append(" ").append(lastTxn.get().getId())
+                                    .append(" ")
+                                    .append(lastTxn.get().getVersion()).append(" " + lastTxn.get().getServer());
+                            LOG.info(s.toString());
+                            holes.incrementAndGet();
+                        }
+                        sliceCommited.set(commited);
+                        sliceStartTxn.set(txn);
+                        sliceItemCount.set(0);
+                        sliceServerCount.clear();
+                    }
+                    if (!commited) {
+                        sliceItemCount.incrementAndGet();
+                        String server = txn.getServer().getId() + " " + txn.getServer().getIpAddress();
+                        Integer serverCount = sliceServerCount.get(server);
+                        if (serverCount == null) {
+                            serverCount = 1;
+                        } else {
+                            serverCount = serverCount + 1;
+                        }
+                        sliceServerCount.put(server, serverCount);
 
-                // Add the transaction ID to the buffer
-                txnIdBuffer.add(txn.getId());
-                txnsToReindex++;
-            }
+                        // Add the transaction ID to the buffer
+                        txnIdBuffer.add(txn.getId());
+                        txnsToReindex.incrementAndGet();
+                    }
+                    // Reindex if the buffer is full or if there are no more transactions
+                    if (!txnIterator.hasNext() || txnIdBuffer.size() >= maxTransactionsPerLuceneCommit) {
+                        try {
+                            reindexTransactionAsynchronously(txnIdBuffer);
+                        } catch (Throwable e) {
+                            String msgError = I18NUtil.getMessage(MSG_RECOVERY_ERROR, txn.getId(), e.getMessage());
+                            LOG.error(msgError, e);
+                        }
+                        // Clear the buffer
+                        txnIdBuffer.clear();
+                    }
+                    i.incrementAndGet();
+                    if (!txnIterator.hasNext() || i.get() >= 100) {
+                        String progressInfo = progress.step(i.get());
+                        if (progressInfo != null) {
+                            LOG.info("Holes searching: " + progressInfo);
+                        }
+                        i.set(0);
+                    }
+                    lastTxn.set(txn);
+                    return null;
+                }
+            }, true);
             // check if we have to terminate
             if (isShuttingDown()) {
                 String msgTerminated = I18NUtil.getMessage(MSG_RECOVERY_TERMINATED);
                 LOG.warn(msgTerminated);
                 return;
             }
-            // Reindex if the buffer is full or if there are no more transactions
-            if (!txnIterator.hasNext() || txnIdBuffer.size() >= maxTransactionsPerLuceneCommit) {
-                try {
-                    reindexTransactionAsynchronously(txnIdBuffer);
-                } catch (Throwable e) {
-                    String msgError = I18NUtil.getMessage(MSG_RECOVERY_ERROR, txn.getId(), e.getMessage());
-                    LOG.error(msgError, e);
-                }
-                // Clear the buffer
-                txnIdBuffer = new ArrayList<Long>(maxTransactionsPerLuceneCommit);
-            }
-            i++;
-            if (!txnIterator.hasNext() || i >= 100) {
-                String progressInfo = progress.step(i);
-                if (progressInfo != null) {
-                    LOG.info("Holes searching: " + progressInfo);
-                }
-                i = 0;
-            }
-            lastTxn = txn;
         }
-        double percent = txnsToReindex * 100 / ((double) txns.size());
-        LOG.info(String.format("Found %d holes - %d of %d transactions (%.1f%%) were missing from index and were reindexed", holes, txnsToReindex, txns.size(), percent));
+        double percent = txnsToReindex.get() * 100 / ((double) txns.size());
+        LOG.info(String.format("Found %d holes - %d of %d transactions (%.1f%%) were missing from index and were reindexed", holes.get(), txnsToReindex.get(), txns.size(), percent));
         LOG.info("Waiting for background indexing to complete...");
         waitForAsynchronousReindexing();
         LOG.info("Background indexing completed");

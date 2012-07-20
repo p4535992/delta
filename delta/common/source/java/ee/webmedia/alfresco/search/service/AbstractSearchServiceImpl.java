@@ -28,21 +28,21 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.ResultSet;
+import org.alfresco.service.cmr.search.ResultSetRow;
 import org.alfresco.service.cmr.search.SearchParameters;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.analysis.Token;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.BooleanQuery;
 
-import ee.webmedia.alfresco.common.service.ExecuteCallback;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
-import ee.webmedia.alfresco.utils.AdjustableSemaphore;
 import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
 
@@ -148,39 +148,95 @@ public abstract class AbstractSearchServiceImpl {
         return count;
     }
 
-    protected List<NodeRef> searchNodes(String query, int limit, String queryName, StoreRef storeRef) {
-        return searchNodes(query, limit, queryName, storeRef, null);
+    protected Pair<List<NodeRef>, Boolean> searchNodes(String query, int limit, String queryName, Collection<StoreRef> storeRefs) {
+        return searchGeneralImplWithoutSort(query, limit, queryName, new SearchCallback<NodeRef>() {
+            @Override
+            public NodeRef addResult(ResultSetRow row) {
+                return row.getNodeRef();
+            }
+        }, storeRefs);
     }
 
-    protected List<NodeRef> searchNodes(String query, int limit, String queryName, StoreRef storeRef, AdjustableSemaphore adjustableSemaphore) {
-        ResultSet resultSet = doSearch(query, limit, queryName, storeRef, adjustableSemaphore);
+    protected interface SearchCallback<E> {
+        E addResult(ResultSetRow row);
+    }
+
+    protected <E extends Comparable<? super E>> Pair<List<E>, Boolean> searchGeneralImpl(String query, int limit, String queryName, SearchCallback<E> callback) {
+        return searchGeneralImpl(query, limit, queryName, callback, null);
+    }
+
+    protected <E extends Comparable<? super E>> Pair<List<E>, Boolean> searchGeneralImpl( //
+            String query, int limit, String queryName, SearchCallback<E> callback, Collection<StoreRef> storeRefs) {
+        final Pair<List<E>, Boolean> extractResults = searchGeneralImplWithoutSort(query, limit, queryName, callback, storeRefs);
+        Collections.sort(extractResults.getFirst());
+        return extractResults;
+    }
+
+    protected <E> Pair<List<E>, Boolean> searchGeneralImplWithoutSort( //
+            String query, int limit, String queryName, SearchCallback<E> callback, Collection<StoreRef> storeRefs) {
+        if (StringUtils.isBlank(query)) {
+            return new Pair<List<E>, Boolean>(new ArrayList<E>(), false);
+        }
+        StoreRef singleStoreRef = null;
+        if (storeRefs == null) {
+            singleStoreRef = generalService.getStore();
+        } else if (storeRefs.size() == 1) {
+            singleStoreRef = storeRefs.iterator().next();
+        }
+        long startTime = System.currentTimeMillis();
+        final List<ResultSet> resultSets;
+        if (singleStoreRef != null) {
+            resultSets = Arrays.asList(doSearch(query, limit, queryName, singleStoreRef));
+        } else {
+            resultSets = doSearches(query, limit, queryName, storeRefs);
+        }
+        final Pair<List<E>, Boolean> extractResults = extractResults(callback, startTime, resultSets, limit);
+        return extractResults;
+    }
+
+    private <E> Pair<List<E>, Boolean> extractResults(SearchCallback<E> callback, long startTime, final List<ResultSet> resultSets, int limit) {
         try {
-            List<NodeRef> limitResults = limitResults(resultSet.getNodeRefs(), limit);
-            return removeNonExistingNodeRefs(limitResults);
+            List<E> result = new ArrayList<E>();
+            boolean resultsGotLimited = false;
+            if (log.isDebugEnabled()) {
+                long resultsCount = 0;
+                for (ResultSet resultSet : resultSets) {
+                    resultsCount += resultSet.length();
+                }
+                log.debug("Lucene search time " + (System.currentTimeMillis() - startTime) + " ms, results: " + resultsCount);
+                startTime = System.currentTimeMillis();
+            }
+
+            FILL_RESULT: for (ResultSet resultSet : resultSets) {
+                for (ResultSetRow row : resultSet) {
+                    if (!nodeService.exists(row.getNodeRef())) {
+                        continue;
+                    }
+                    E item = callback.addResult(row);
+                    if (item == null) {
+                        continue;
+                    }
+                    if (limit > -1 && result.size() + 1 > limit) {
+                        resultsGotLimited = true;
+                        break FILL_RESULT;
+                    }
+                    result.add(item);
+                }
+            }
+
+            if (log.isDebugEnabled()) {
+                log.debug("Results construction time " + (System.currentTimeMillis() - startTime) + " ms, final results: " + result.size());
+            }
+            return new Pair<List<E>, Boolean>(result, resultsGotLimited);
         } finally {
             try {
-                resultSet.close();
+                for (ResultSet resultSet : resultSets) {
+                    resultSet.close();
+                }
             } catch (Exception e) {
                 // Do nothing
             }
         }
-    }
-
-    protected List<NodeRef> removeNonExistingNodeRefs(List<NodeRef> nodeRefs) {
-        List<NodeRef> results = new ArrayList<NodeRef>(nodeRefs.size());
-        for (NodeRef nodeRef : nodeRefs) {
-            if (nodeService.exists(nodeRef)) {
-                results.add(nodeRef);
-            }
-        }
-        return results;
-    }
-
-    protected <E> List<E> limitResults(List<E> allResults, int limit) {
-        if (limit > -1 && allResults.size() > limit) {
-            return allResults.subList(0, limit);
-        }
-        return allResults;
     }
 
     /**
@@ -191,55 +247,28 @@ public abstract class AbstractSearchServiceImpl {
      * @return query resultset
      */
     protected ResultSet doSearch(String query, int limit, String queryName, StoreRef storeRef) {
-        return doSearch(query, limit, queryName, storeRef, null);
-    }
-
-    protected final ResultSet doSearch(String query, int limit, final String queryName, StoreRef storeRef, AdjustableSemaphore adjustableSemaphore) {
         final SearchParameters sp = generateLuceneSearchParams(query, storeRef == null ? generalService.getStore() : storeRef, limit);
-        ExecuteCallback<ResultSet> searchCallback = new ExecuteCallback<ResultSet>() {
-            @Override
-            public ResultSet execute() {
-                return doSearchQuery(sp, queryName);
-            }
-        };
-        return runSemaphored(adjustableSemaphore, searchCallback);
-    }
-
-    private <T> T runSemaphored(AdjustableSemaphore adjustableSemaphore, ExecuteCallback<T> searchCallback) {
-        if (adjustableSemaphore != null) {
-            return BeanHelper.getGeneralService().runSemaphored(adjustableSemaphore, searchCallback);
-        }
-        return searchCallback.execute();
+        return doSearchQuery(sp, queryName);
     }
 
     protected List<ResultSet> doSearches(String query, int limit, String queryName, Collection<StoreRef> storeRefs) {
-        return doSearches(query, limit, queryName, storeRefs, null);
-    }
-
-    protected final List<ResultSet> doSearches(String query, final int limit, final String queryName, Collection<StoreRef> storeRefs, AdjustableSemaphore semaphore) {
         final SearchParameters sp = generateLuceneSearchParams(query, null, limit);
         if (storeRefs == null || storeRefs.size() == 0) {
             storeRefs = Arrays.asList(generalService.getStore());
         }
         final Collection<StoreRef> stores = (storeRefs == null || storeRefs.size() == 0) ? Arrays.asList(generalService.getStore()) : storeRefs;
-        ExecuteCallback<List<ResultSet>> searchCallback = new ExecuteCallback<List<ResultSet>>() {
-            @Override
-            public List<ResultSet> execute() {
-                List<ResultSet> results = new ArrayList<ResultSet>(stores.size());
-                for (StoreRef storeRef : stores) {
-                    sp.getStores().clear();
-                    sp.addStore(storeRef);
-                    results.add(doSearchQuery(sp, queryName));
+        List<ResultSet> results = new ArrayList<ResultSet>(stores.size());
+        for (StoreRef storeRef : stores) {
+            sp.getStores().clear();
+            sp.addStore(storeRef);
+            results.add(doSearchQuery(sp, queryName));
 
-                    // Optimization: don't search from other stores if limit is reached
-                    if (limit > -1 && results.size() >= getResultsLimit()) {
-                        break;
-                    }
-                }
-                return results;
+            // Optimization: don't search from other stores if limit is reached
+            if (limit > -1 && results.size() > limit) {
+                break;
             }
-        };
-        return runSemaphored(semaphore, searchCallback);
+        }
+        return results;
     }
 
     private static AtomicLong parallelQueryCount = new AtomicLong(0L);
@@ -335,10 +364,6 @@ public abstract class AbstractSearchServiceImpl {
 
     public LuceneAnalyser getAnalyzer() {
         return luceneAnalyser;
-    }
-
-    public int getResultsLimit() {
-        return parametersService.getLongParameter(Parameters.MAX_SEARCH_RESULT_ROWS).intValue();
     }
 
     private List<Token> getTokens(String queryText) {

@@ -8,6 +8,7 @@ import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -114,8 +115,6 @@ public interface DocumentService {
      */
     @Deprecated
     Node createFollowUp(QName docType, NodeRef nodeRef);
-
-    List<NodeRef> getAllDocumentRefsByParentRef(NodeRef parentRef);
 
     List<Document> getAllDocumentFromDvk();
 
@@ -422,5 +421,17 @@ public interface DocumentService {
     void throwIfNotDynamicDoc(Node docNode);
 
     List<Document> getIncomingDocuments(NodeRef incomingNodeRef);
+
+    Pair<List<Document>, Boolean> searchAllDocumentsByParentNodeRef(NodeRef parentRef, int limit);
+
+    /**
+     * NB! In 3.11 this method implementation changes from repo fetching (accurate) to lucene search (should be accurate if indexes are healthy)
+     */
+    List<NodeRef> getAllDocumentRefsByParentRef(NodeRef parentRef);
+
+    /**
+     * NB! In 3.11 this method implementation changes from repo fetching (accurate) to lucene search (should be accurate if indexes are healthy)
+     */
+    List<Document> getAllDocumentsByParentNodeRef(NodeRef parentRef);
 
 }

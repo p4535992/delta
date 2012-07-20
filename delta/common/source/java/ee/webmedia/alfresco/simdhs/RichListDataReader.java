@@ -52,16 +52,6 @@ public class RichListDataReader implements DataReader {
         return data;
     }
 
-    private List<String> getDataFromRow(Object row, List<UIColumn> columnsToExport) {
-        for (UIColumn uiColumn : columnsToExport) {
-            System.out.println(row);
-            // row.getClass().getMethods()
-            // uiColumn.get
-        }
-        // TODO Auto-generated method stub
-        return null;
-    }
-
     @SuppressWarnings("unchecked")
     private List<UIColumn> getColumnsToExport(UIRichList list) {
         List<UIColumn> columnsToExport = new ArrayList<UIColumn>();

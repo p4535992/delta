@@ -75,6 +75,7 @@ public enum Parameters {
     DOC_PROP_CHANCELLORS_ORDER_SIGNER_NAME("docPropChancellorsOrderSignerName"),
     MAX_MODAL_SEARCH_RESULT_ROWS("maxModalSearchResultRows"),
     MAX_SEARCH_RESULT_ROWS("maxSearchResultRows"),
+    MAX_SEARCH_SHOW_ALL_RESULT_ROWS("maxSearchShowAllResultRows"),
     HEADER_TEXT("headerText"),
     FOOTER_TEXT("footerText"),
     VOLUME_AUTOMATIC_CLOSING_TIME("volumeAutomaticClosingTime"),

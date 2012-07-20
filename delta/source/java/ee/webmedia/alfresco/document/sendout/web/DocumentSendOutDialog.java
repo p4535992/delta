@@ -256,16 +256,18 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             groups.add("");
         }
         List<Node> childNodes = node.getAllChildAssociations(DocumentChildModel.Assocs.CONTRACT_PARTY);
-        for (Node childNode : childNodes) {
-            String name = (String) childNode.getProperties().get(DocumentSpecificModel.Props.PARTY_NAME);
-            String email = (String) childNode.getProperties().get(DocumentSpecificModel.Props.PARTY_EMAIL);
-            if (StringUtils.isBlank(name) && StringUtils.isBlank(email)) {
-                continue;
-            }
+        if (childNodes != null) {
+            for (Node childNode : childNodes) {
+                String name = (String) childNode.getProperties().get(DocumentSpecificModel.Props.PARTY_NAME);
+                String email = (String) childNode.getProperties().get(DocumentSpecificModel.Props.PARTY_EMAIL);
+                if (StringUtils.isBlank(name) && StringUtils.isBlank(email)) {
+                    continue;
+                }
 
-            names.add(name);
-            emails.add(email);
-            groups.add("");
+                names.add(name);
+                emails.add(email);
+                groups.add("");
+            }
         }
 
         if (names.size() == 1 && emails.size() == 1 && StringUtils.isBlank(names.get(0)) && StringUtils.isBlank(emails.get(0))) {
