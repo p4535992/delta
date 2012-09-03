@@ -18,6 +18,7 @@ import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.model.NodeBaseVO;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
@@ -174,6 +175,14 @@ public class DocumentDynamic extends NodeBaseVO implements Cloneable, Comparable
 
     public boolean isDocStatus(DocumentStatus status) {
         return status.getValueName().equals(getDocStatus());
+    }
+
+    public String getAccessRestriction() {
+        return (String) getProp(DocumentCommonModel.Props.ACCESS_RESTRICTION);
+    }
+
+    public String getPublishToAdr() {
+        return (String) getProp(DocumentDynamicModel.Props.PUBLISH_TO_ADR);
     }
 
     public String getRecipients() {

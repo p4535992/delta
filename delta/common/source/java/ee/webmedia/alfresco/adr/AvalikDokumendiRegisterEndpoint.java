@@ -18,6 +18,8 @@ import javax.xml.ws.handler.MessageContext;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang.builder.ToStringStyle;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
@@ -41,6 +43,7 @@ import ee.webmedia.alfresco.adr.ws.OtsiFailSisugaV2Response;
 
 @WebService(name = "AvalikDokumendiRegister", targetNamespace = "http://alfresco/avalikdokumendiregister", serviceName = "AvalikDokumendiRegisterService")
 public class AvalikDokumendiRegisterEndpoint implements AvalikDokumendiRegister {
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(AvalikDokumendiRegisterEndpoint.class);
 
     @Resource
     private WebServiceContext context;
@@ -124,7 +127,13 @@ public class AvalikDokumendiRegisterEndpoint implements AvalikDokumendiRegister 
         FailV2 result = AuthenticationUtil.runAs(new RunAsWork<FailV2>() {
             @Override
             public FailV2 doWork() throws Exception {
-                return getAdrService().failSisugaV2(new NodeRef(parameters.getDokumentId()), parameters.getFailinimi());
+                try {
+                    FailV2 failSisugaV2 = getAdrService().failSisugaV2(new NodeRef(parameters.getDokumentId()), parameters.getFailinimi());
+                    return failSisugaV2;
+                } catch (Exception e) {
+                    LOG.error("Error in failSisugaV2\n  parameters=" + objectToString(parameters), e);
+                    throw e;
+                }
             }
         }, AuthenticationUtil.getSystemUserName());
         OtsiFailSisugaV2Response wrapper = new OtsiFailSisugaV2Response();
@@ -181,7 +190,19 @@ public class AvalikDokumendiRegisterEndpoint implements AvalikDokumendiRegister 
         return AuthenticationUtil.runAs(new RunAsWork<List<DokumentDetailidegaV2>>() {
             @Override
             public List<DokumentDetailidegaV2> doWork() throws Exception {
-                return getAdrService().koikDokumendidLisatudMuudetudV2(perioodiAlgusKuupaev, perioodiLoppKuupaev, jataAlgusestVahele, tulemustePiirang);
+                try {
+                    List<DokumentDetailidegaV2> koikDokumendidLisatudMuudetudV2 = getAdrService().koikDokumendidLisatudMuudetudV2(perioodiAlgusKuupaev, perioodiLoppKuupaev,
+                            jataAlgusestVahele, tulemustePiirang);
+                    return koikDokumendidLisatudMuudetudV2;
+                } catch (Exception e) {
+                    LOG.error("Error in koikDokumendidLisatudMuudetudV2"
+                            + "\n  perioodiAlgusKuupaev=" + perioodiAlgusKuupaev
+                            + "\n  perioodiLoppKuupaev=" + perioodiLoppKuupaev
+                            + "\n  jataAlgusestVahele=" + jataAlgusestVahele
+                            + "\n  tulemustePiirang=" + objectToString(tulemustePiirang)
+                            , e);
+                    throw e;
+                }
             }
         }, AuthenticationUtil.getSystemUserName());
     }
@@ -217,9 +238,25 @@ public class AvalikDokumendiRegisterEndpoint implements AvalikDokumendiRegister 
         return AuthenticationUtil.runAs(new RunAsWork<List<DokumentId>>() {
             @Override
             public List<DokumentId> doWork() throws Exception {
-                return getAdrService().koikDokumendidKustutatudV2(perioodiAlgusKuupaev, perioodiLoppKuupaev, jataAlgusestVahele, tulemustePiirang);
+                try {
+                    List<DokumentId> koikDokumendidKustutatudV2 = getAdrService().koikDokumendidKustutatudV2(perioodiAlgusKuupaev, perioodiLoppKuupaev, jataAlgusestVahele,
+                            tulemustePiirang);
+                    return koikDokumendidKustutatudV2;
+                } catch (Exception e) {
+                    LOG.error("Error in koikDokumendidKustutatudV2"
+                            + "\n  perioodiAlgusKuupaev=" + perioodiAlgusKuupaev
+                            + "\n  perioodiLoppKuupaev=" + perioodiLoppKuupaev
+                            + "\n  jataAlgusestVahele=" + jataAlgusestVahele
+                            + "\n  tulemustePiirang=" + objectToString(tulemustePiirang)
+                            , e);
+                    throw e;
+                }
             }
         }, AuthenticationUtil.getSystemUserName());
+    }
+
+    public static String objectToString(Object object) {
+        return ToStringBuilder.reflectionToString(object, ToStringStyle.MULTI_LINE_STYLE);
     }
 
 }

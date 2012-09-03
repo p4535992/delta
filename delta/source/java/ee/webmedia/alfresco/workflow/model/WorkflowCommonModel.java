@@ -19,7 +19,11 @@ public interface WorkflowCommonModel {
         QName COMPOUND_WORKFLOW_DEFINITION = QName.createQName(URI, "compoundWorkflowDefinition");
         QName COMPOUND_WORKFLOW = QName.createQName(URI, "compoundWorkflow");
         QName WORKFLOW = QName.createQName(URI, "workflow");
+        /** No new nodes of this type should be created. Nodes for this type are still created in memory. */
+        @Deprecated
         QName TASK = QName.createQName(URI, "task");
+        /** Deprecated: no new nodes of this type should be created */
+        @Deprecated
         QName DUE_DATE_HISTORY = QName.createQName(URI, "dueDateHistory");
     }
 
@@ -27,6 +31,8 @@ public interface WorkflowCommonModel {
         QName COMPOUND_WORKFLOW_DEFINITION = QName.createQName(URI, "compoundWorkflowDefinition");
         QName COMPOUND_WORKFLOW = QName.createQName(URI, "compoundWorkflow");
         QName WORKFLOW = QName.createQName(URI, "workflow");
+        /** Deprecated: new tasks must be saved only to delta_task db table and not to repo nodes */
+        @Deprecated
         QName TASK = QName.createQName(URI, "task");
     }
 

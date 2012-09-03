@@ -2267,7 +2267,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         List<TaskAndDocument> results = new ArrayList<TaskAndDocument>(tasks.size());
         Map<NodeRef, Document> documents = new HashMap<NodeRef, Document>(tasks.size());
         for (Task task : tasks) {
-            NodeRef workflow = nodeService.getPrimaryParent(task.getNodeRef()).getParentRef();
+            NodeRef workflow = task.getParentNodeRef();
             NodeRef compoundWorkflow = nodeService.getPrimaryParent(workflow).getParentRef();
             NodeRef documentNodeRef = nodeService.getPrimaryParent(compoundWorkflow).getParentRef();
             Document document = documents.get(documentNodeRef);
@@ -2278,20 +2278,6 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             results.add(new TaskAndDocument(task, document));
         }
         return results;
-    }
-
-    @Override
-    public void stopDocumentPreceedingAndUpdateStatus(NodeRef nodeRef) {
-        nodeService.setProperty(nodeRef, DOC_STATUS, DocumentStatus.STOPPED.getValueName());
-        workflowService.stopAllCompoundWorkflows(nodeRef);
-        documentLogService.addDocumentLog(nodeRef, I18NUtil.getMessage("document_log_status_proceedingStop"));
-    }
-
-    @Override
-    public void continueDocumentPreceedingAndUpdateStatus(NodeRef nodeRef) {
-        nodeService.setProperty(nodeRef, DOC_STATUS, DocumentStatus.WORKING.getValueName());
-        workflowService.continueAllCompoundWorkflows(nodeRef);
-        documentLogService.addDocumentLog(nodeRef, I18NUtil.getMessage("document_log_status_proceedingContinue"));
     }
 
     @Override

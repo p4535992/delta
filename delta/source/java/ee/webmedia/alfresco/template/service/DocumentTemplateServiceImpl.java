@@ -46,9 +46,11 @@ import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
+import ee.webmedia.alfresco.common.listener.ExternalAccessPhaseListener;
 import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.service.OpenOfficeService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
@@ -88,6 +90,7 @@ import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
+import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
 
 /**
  * @author Kaarel Jõgeva
@@ -507,7 +510,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                 matcher.appendReplacement(result, "");
             } else { // remove group separators
                 subResult = subResult.substring("/*".length(), subResult.length() - "*/".length());
-                matcher.appendReplacement(result, escapeXml(subResult));
+                matcher.appendReplacement(result, Matcher.quoteReplacement(escapeXml(subResult)));
             }
         }
         matcher.appendTail(result);
@@ -534,7 +537,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                 formulaValue = "";
             }
             String formulaResult = escapeXml(formulaValue);
-            matcher.appendReplacement(result, formulaResult);
+            matcher.appendReplacement(result, Matcher.quoteReplacement(formulaResult));
         }
         matcher.appendTail(result);
         return result.toString();
@@ -674,7 +677,15 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         Map<String, String> formulas = new LinkedHashMap<String, String>();
 
         // All properties
-        Map<QName, Serializable> props = nodeService.getProperties(objectRef);
+        Map<QName, Serializable> props;
+        WorkflowDbService workflowDbService = BeanHelper.getWorkflowDbService();
+        boolean isTask = workflowDbService.taskExists(objectRef);
+        if (isTask) {
+            props = RepoUtil
+                    .toQNameProperties(workflowDbService.getTask(objectRef, BeanHelper.getWorkflowService().getTaskPrefixedQNames(), null, false).getNode().getProperties());
+        } else {
+            props = nodeService.getProperties(objectRef);
+        }
         for (Entry<QName, Serializable> entry : props.entrySet()) {
             String propName = entry.getKey().getLocalName();
             Serializable propValue = entry.getValue();
@@ -700,7 +711,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                 formulas.put(propName, StringUtils.join(items.iterator(), separator));
             } else {
                 boolean alternate = false;
-                if (WorkflowCommonModel.Props.STARTED_DATE_TIME.getLocalName().equals(propName) && nodeService.hasAspect(objectRef, WorkflowSpecificModel.Aspects.COMMON_TASK)) {
+                if (WorkflowCommonModel.Props.STARTED_DATE_TIME.getLocalName().equals(propName) && isTask) {
                     alternate = true;
                 }
 
@@ -728,24 +739,30 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         }
 
         if (dictionaryService.isSubClass(objectType, WorkflowCommonModel.Types.TASK)) {
-            if (nodeService.hasAspect(objectRef, WorkflowSpecificModel.Aspects.RESPONSIBLE)) {
-                Serializable activeProp = props.get(WorkflowSpecificModel.Props.ACTIVE);
-                if (activeProp != null) {
-                    Boolean isActive = (Boolean) activeProp;
-                    if (isActive) {
-                        formulas.put("activeResponsible", isActive.toString());
-                    } else {
-                        formulas.put("unactiveResponsible", isActive.toString());
-                    }
+            Serializable activeProp = workflowDbService.getTaskProperty(objectRef, WorkflowSpecificModel.Props.ACTIVE);
+            if (activeProp != null) {
+                Boolean isActive = (Boolean) activeProp;
+                if (isActive) {
+                    formulas.put("activeResponsible", isActive.toString());
+                } else {
+                    formulas.put("unactiveResponsible", isActive.toString());
                 }
             } else {
                 formulas.put("coResponsible", Boolean.TRUE.toString());
             }
         }
 
+        if (dictionaryService.isSubClass(objectType, WorkflowCommonModel.Types.WORKFLOW)) {
+            formulas.put("type", MessageUtil.getMessage("workflow_" + objectType.getLocalName()));
+        }
+
         if (objectType.equals(ForumModel.TYPE_FORUM)) {
             Map<QName, Serializable> properties = nodeService.getProperties(objectRef);
             formulas.put("creatorName", userService.getUserFullName((String) properties.get(ContentModel.PROP_CREATOR)));
+        }
+
+        if (objectType.equals(DocumentCommonModel.Types.DOCUMENT)) {
+            formulas.putAll(getDocumentFormulas(objectRef));
         }
 
         /*
@@ -764,7 +781,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     }
 
     private QName getDocumentListStructureFormulae(NodeRef objectRef, Map<String, String> formulas) {
-        QName objectType = nodeService.getType(objectRef);
+        QName objectType = BeanHelper.getWorkflowService().getNodeRefType(objectRef);
         if (dictionaryService.isSubClass(objectType, DocumentCommonModel.Types.DOCUMENT)) {
             formulas.put("functionTitle", getAncestorProperty(objectRef, FunctionsModel.Types.FUNCTION, FunctionsModel.Props.TITLE));
             formulas.put("functionMark", getAncestorProperty(objectRef, FunctionsModel.Types.FUNCTION, FunctionsModel.Props.MARK));
@@ -781,7 +798,17 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
     @Override
     public String getDocumentUrl(NodeRef document) {
-        return applicationService.getServerUrl() + servletContext.getContextPath() + "/n/document/" + document.getId();
+        return getDocumentServerUrlPrefix() + document.getId();
+    }
+
+    @Override
+    public String getDocumentServerUrlPrefix() {
+        return getServerUrl() + "/n/" + ExternalAccessPhaseListener.OUTCOME_DOCUMENT + "/";
+    }
+
+    @Override
+    public String getServerUrl() {
+        return applicationService.getServerUrl() + servletContext.getContextPath();
     }
 
     private String getTypeSpecificReplacement(Object object, boolean alternate) {

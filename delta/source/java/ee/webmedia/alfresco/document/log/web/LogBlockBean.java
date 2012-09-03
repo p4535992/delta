@@ -2,7 +2,9 @@ package ee.webmedia.alfresco.document.log.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.faces.context.FacesContext;
 
@@ -68,14 +70,19 @@ public class LogBlockBean implements DocumentDynamicBlock {
 
     private LogFilter getDocumentLogFilter() {
         LogFilter logFilter = new LogFilter();
-        logFilter.setExcludedDescription(MessageUtil.getMessage("document_log_status_opened_not_inEditMode"));
+        Set<String> excludedDescriptions = new HashSet<String>(2);
+        excludedDescriptions.add(MessageUtil.getMessage("document_log_status_opened_not_inEditMode"));
+        excludedDescriptions.add(MessageUtil.getMessage("file_opened", "%"));
+        logFilter.setExcludedDescriptions(excludedDescriptions);
         logFilter.setObjectId(parentRef.toString());
         return logFilter;
     }
 
     private LogFilter getSeriesLogFilter() {
         LogFilter logFilter = new LogFilter();
-        logFilter.setExcludedDescription(MessageUtil.getMessage("applog_space_open", "%", "%"));
+        Set<String> excludedDescriptions = new HashSet<String>(1);
+        excludedDescriptions.add(MessageUtil.getMessage("applog_space_open", "%", "%"));
+        logFilter.setExcludedDescriptions(excludedDescriptions);
         logFilter.setObjectId(parentRef.toString());
         return logFilter;
     }

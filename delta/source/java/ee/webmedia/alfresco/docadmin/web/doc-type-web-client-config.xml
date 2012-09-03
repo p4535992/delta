@@ -239,7 +239,7 @@
             dialogTitleId="classificators_search_title" tooltip="#{FieldDetailsDialog.getClassificatorDescription}" ajaxParentLevel="100"
             editable="false" allowClearSingleValued="true" dontRenderIfDisabled="true" disabled="#{FieldDetailsDialog.isPropertyHidden}" forcedMandatory="#{!FieldDetailsDialog.fieldDefinition}" />
          <show-property name="docadmin:classificatorDefaultValue" component-generator="GeneralSelectorGenerator" selectionItems="#{FieldDetailsDialog.getClassificatorSelectItems}"
-            show="#{FieldDetailsDialog.isShowProperty}" readOnlyIf="#{FieldDetailsDialog.classificatorDefaultValueReadOnly}" />
+            show="#{FieldDetailsDialog.isShowProperty}" readOnlyIf="#{FieldDetailsDialog.classificatorDefaultValueReadOnly}" dontRenderIfDisabled="true" disabled="#{FieldDetailsDialog.isPropertyHidden}" />
          <show-property name="docadmin:defaultValue" dontRenderIfDisabled="true" disabled="#{FieldDetailsDialog.isPropertyHidden}" mandatoryIf="#{FieldDetailsDialog.defaultValueMandatory}" />
          <show-property name="docadmin:defaultDateSysdate" dontRenderIfDisabled="true" disabled="#{FieldDetailsDialog.isPropertyHidden}" />
          <show-property name="docadmin:defaultUserLoggedIn" dontRenderIfDisabled="true" disabled="#{FieldDetailsDialog.isPropertyHidden}" />

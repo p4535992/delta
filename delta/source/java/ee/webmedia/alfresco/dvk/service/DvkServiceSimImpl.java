@@ -875,7 +875,8 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
                         WorkflowSpecificModel.Props.SEND_DATE_TIME,
                         WorkflowSpecificModel.Props.SEND_STATUS }));
         parameters.getExcludedAssocTypes().addAll(
-                Arrays.asList(new QName[] { DocumentCommonModel.Assocs.DOCUMENT_LOG,
+                Arrays.asList(new QName[] { /* DocumentCommonModel.Assocs.DOCUMENT_LOG */
+                        // TODO send log messages separately, if needed
                         DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP,
                         DocumentCommonModel.Assocs.DOCUMENT_REPLY,
                         DocumentCommonModel.Assocs.DOCUMENT_2_DOCUMENT }));

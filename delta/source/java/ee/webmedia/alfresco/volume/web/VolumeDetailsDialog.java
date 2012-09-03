@@ -111,7 +111,7 @@ public class VolumeDetailsDialog extends BaseDialogBean {
                 getVolumeService().closeVolume(currentEntry);
                 reload(currentEntry.getNode().getNodeRef());
             } catch (UnableToPerformException e) {
-                MessageUtil.addErrorMessage(e.getMessage());
+                MessageUtil.addStatusMessage(e);
                 return;
             }
             MessageUtil.addInfoMessage("volume_close_success");
@@ -129,7 +129,7 @@ public class VolumeDetailsDialog extends BaseDialogBean {
                 getVolumeService().openVolume(currentEntry);
                 reload(currentEntry.getNode().getNodeRef());
             } catch (UnableToPerformException e) {
-                MessageUtil.addErrorMessage(e.getMessage());
+                MessageUtil.addStatusMessage(e);
                 return;
             }
             MessageUtil.addInfoMessage("volume_open_success");

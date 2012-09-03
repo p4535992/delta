@@ -153,6 +153,7 @@ public class RegisterServiceImpl implements RegisterService {
         if (!nodeService.exists(register.getNodeRef())) {
             Integer regId = getMaxRegisterId() + 1;
             newProps.put(RegisterModel.Prop.ID, regId);
+            prop.put(RegisterModel.Prop.ID.toString(), regId); // Make ID available to caller
             createSequence(regId);
             nodeService.createNode(getRoot(), RegisterModel.Assoc.REGISTER,
                     QName.createQName(RegisterModel.URI, regId.toString()), RegisterModel.Types.REGISTER, newProps);

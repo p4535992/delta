@@ -25,6 +25,7 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.docconfig.generator.SaveListener;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
+import ee.webmedia.alfresco.log.LogHelper;
 
 /**
  * Entry point for starting and stopping whole import. Manages input parameters and coordinates structure and document import.
@@ -164,6 +165,7 @@ public class PostipoissImporter implements SaveListener {
                         @Override
                         public Void doWork() throws Exception {
                             try {
+                                LogHelper.setUserInfo("127.0.0.1", "localhost");
                                 postipoissStructureImporter.runImport(dataFolder, workFolder, archivalsRoot, openUnit);
                                 postipoissDocumentsImporter.runImport(dataFolder, workFolder, archivalsRoot, mappingsFile, batchSizeTmp, defaultOwnerId);
                                 return null;
@@ -174,7 +176,7 @@ public class PostipoissImporter implements SaveListener {
                             }
                             return null;
                         }
-                    }, AuthenticationUtil.getSystemUserName());
+                    }, "IMPORT");
                 } finally {
                     int numThreads = importerRunning.decrementAndGet();
                     log.info("Thread stopped; remaining running threads after current one = " + numThreads);

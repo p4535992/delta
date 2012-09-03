@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.workflow.service;
 
+import java.io.Serializable;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -78,23 +80,13 @@ public interface WorkflowService {
 
     List<Task> getTasks4DelegationHistory(Node delegatableTask);
 
-    CompoundWorkflow saveAndStartCompoundWorkflow(CompoundWorkflow compoundWorkflow);
+    CompoundWorkflow startCompoundWorkflow(CompoundWorkflow compoundWorkflow);
 
-    CompoundWorkflow startCompoundWorkflow(NodeRef compoundWorkflow);
+    CompoundWorkflow finishCompoundWorkflow(CompoundWorkflow compoundWorkflow);
 
-    CompoundWorkflow saveAndFinishCompoundWorkflow(CompoundWorkflow compoundWorkflow);
+    CompoundWorkflow stopCompoundWorkflow(CompoundWorkflow compoundWorkflow);
 
-    CompoundWorkflow saveAndStopCompoundWorkflow(CompoundWorkflow compoundWorkflow);
-
-    CompoundWorkflow stopCompoundWorkflow(NodeRef compoundWorkflow);
-
-    CompoundWorkflow saveAndContinueCompoundWorkflow(CompoundWorkflow compoundWorkflow);
-
-    CompoundWorkflow continueCompoundWorkflow(NodeRef compoundWorkflow);
-
-    void stopAllCompoundWorkflows(NodeRef parent);
-
-    void continueAllCompoundWorkflows(NodeRef parent);
+    CompoundWorkflow continueCompoundWorkflow(CompoundWorkflow compoundWorkflow);
 
     CompoundWorkflow saveAndCopyCompoundWorkflow(CompoundWorkflow compoundWorkflow);
 
@@ -219,18 +211,18 @@ public interface WorkflowService {
 
     List<CompoundWorkflowDefinition> getUserCompoundWorkflowDefinitions(String userId);
 
-    /**
-     * This method retrieves compound workflow tasks' data from repo, not from delta_task table.
-     * Use ONLY in updater for adding existing tasks to newly created delta_task table!
-     * Don't use for handling compound workflows in Delta!
-     */
-    CompoundWorkflow getCompoundWorkflowFromRepo(NodeRef compoundWorkflowRef);
+    List<Task> getWorkflowTasks(NodeRef workflow);
 
-    /**
-     * This method retrieves compound workflow definition tasks' data from repo, not from delta_task table.
-     * Use ONLY in updater for adding existing tasks to newly created delta_task table!
-     * Don't use for handling compound workflow definitions in Delta!
-     */
-    CompoundWorkflowDefinition getCompoundWorkflowDefinitionFromRepo(NodeRef nodeRef);
+    Map<QName, Collection<QName>> getTaskDataTypeDefaultAspects();
+
+    Map<QName, QName> getTaskPrefixedQNames();
+
+    Map<QName, List<QName>> getTaskDataTypeDefaultProps();
+
+    void retrieveTaskFiles(Task task);
+
+    QName getNodeRefType(NodeRef nodeRef);
+
+    Task createTaskInMemory(NodeRef wfRef, WorkflowType workflowType, Map<QName, Serializable> props);
 
 }

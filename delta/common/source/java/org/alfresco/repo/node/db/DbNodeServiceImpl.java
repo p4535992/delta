@@ -87,6 +87,8 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
+import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
 /**
  * Node service using database persistence layer to fulfill functionality
@@ -801,7 +803,9 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
     }
     
     private void deleteChildDataFromDb(NodeRef nodeRef, QName nodeTypeQName) {
-        BeanHelper.getWorkflowDbService().deleteTasksCascading(nodeRef, nodeTypeQName);
+        if (!dictionaryService.isSubClass(getType(nodeRef), WorkflowCommonModel.Types.TASK)) {
+            BeanHelper.getWorkflowDbService().deleteTasksCascading(nodeRef, nodeTypeQName);
+        }
     }
     
     private void deletePrimaryChildren(Pair<Long, NodeRef> nodePair, boolean cascade)
@@ -2300,6 +2304,9 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
             if (cascade)
             {
                 pullNodeChildrenToSameStore(newChildNodePair, cascade, indexChildren);
+            }
+            if (dictionaryService.isSubClass(childNodeTypeQName, WorkflowCommonModel.Types.WORKFLOW)) {
+                BeanHelper.getWorkflowDbService().updateWorkflowTasksStore(childNodeRef, storeRef);
             }
         }
     }

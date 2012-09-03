@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.privilege.service;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPrivilegeService;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isResponsible;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isStatus;
@@ -9,14 +10,20 @@ import java.util.List;
 import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
+import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
+import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
@@ -69,10 +76,10 @@ public class PrivilegeUtil {
             }
             boolean isResponsible = isResponsible(task);
             if (isSignatureTaskWith1Digidoc
-                        || (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK) && !isResponsible)
-                        || (task.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK) && !isResponsible)
-                        || task.isType(WorkflowSpecificModel.Types.OPINION_TASK, WorkflowSpecificModel.Types.INFORMATION_TASK, WorkflowSpecificModel.Types.CONFIRMATION_TASK,
-                                WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK, WorkflowSpecificModel.Types.SIGNATURE_TASK)) {
+                    || (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK) && !isResponsible)
+                    || (task.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK) && !isResponsible)
+                    || task.isType(WorkflowSpecificModel.Types.OPINION_TASK, WorkflowSpecificModel.Types.INFORMATION_TASK, WorkflowSpecificModel.Types.CONFIRMATION_TASK,
+                            WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK, WorkflowSpecificModel.Types.SIGNATURE_TASK)) {
                 requiredPrivileges.add(Privileges.VIEW_DOCUMENT_FILES); // with dependencies
             } else if (isSignatureTaskWithFiles
                     || (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK) && isResponsible)
@@ -85,6 +92,23 @@ public class PrivilegeUtil {
             }
         }
         return requiredPrivileges;
+    }
+
+    public static Boolean additionalDocumentFileWritePermission(NodeRef parent, NodeService nodeService) {
+        DocumentService documentService = BeanHelper.getDocumentService();
+        Node docNode = documentService.getDocument(parent);
+        documentService.throwIfNotDynamicDoc(docNode);
+        String docTypeId = (String) docNode.getProperties().get(Props.OBJECT_TYPE_ID);
+        if (SystematicDocumentType.INCOMING_LETTER.getId().equals(docTypeId)) {
+            return false;
+        }
+
+        if (!StringUtils.equals(DocumentStatus.WORKING.getValueName(), (String) nodeService.getProperty(parent, DocumentCommonModel.Props.DOC_STATUS))) {
+            if (!getDocumentAdminService().getDocumentTypeProperty(docTypeId, DocumentAdminModel.Props.EDIT_FILES_OF_FINISHED_DOC_ENABLED, Boolean.class)) {
+                return false;
+            }
+        }
+        return null;
     }
 
 }

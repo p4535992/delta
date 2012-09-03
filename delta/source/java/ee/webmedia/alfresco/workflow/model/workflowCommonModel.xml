@@ -92,7 +92,7 @@
       </type>
 
       <type name="wfc:workflow">
-         <parent>sys:base</parent>
+         <parent>cm:folder</parent>
          <properties>
             <property name="wfc:parallelTasks">
                <type>d:boolean</type>
@@ -112,6 +112,7 @@
             </property>
          </properties>
          <associations>
+            <!-- Deprecated: new tasks must be saved only to delta_task db table and not to repo nodes -->
             <child-association name="wfc:task"><!-- Ordered by childAssociationIndex -->
                                                <!-- Although model allows different types of tasks under one workflow (service layer probably supports it, but UI layer doesn't),
                                                     we only use one type of task under one type of workflow -->
@@ -131,6 +132,7 @@
          </mandatory-aspects>
       </type>
 
+      <!-- Deprecated. No new nodes of this type should be created. Nodes for this type are still created in memory. -->
       <type name="wfc:task">
          <parent>cm:folder</parent>
          <properties>
@@ -163,6 +165,7 @@
          </mandatory-aspects>
       </type>
       
+      <!-- Deprecated: no new nodes of this type should be created -->
       <type name="wfc:dueDateHistory">
          <parent>sys:base</parent>
          <properties>

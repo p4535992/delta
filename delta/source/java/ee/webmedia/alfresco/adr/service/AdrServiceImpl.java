@@ -57,10 +57,10 @@ import ee.webmedia.alfresco.adr.ws.SeotudDokument;
 import ee.webmedia.alfresco.adr.ws.Toimik;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
+import ee.webmedia.alfresco.classificator.enums.PublishToAdr;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.common.web.WmNode;
-import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.docdynamic.model.DocumentChildModel;
@@ -136,15 +136,8 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         }
         DocumentDynamic doc = documentDynamicService.getDocument(documentRef);
 
-        if (!documentAdminService.getAdrDocumentTypeIds().contains(doc.getDocumentTypeId())) {
-            return null;
-        }
-
-        // failiga seotud dokumendi docStatus = lõpetatud või incomingLetter & registreeritud
-        boolean isFinished = doc.isDocStatus(DocumentStatus.FINISHED);
-        boolean isRegisteredIncomingLetter = SystematicDocumentType.INCOMING_LETTER.isSameType(doc.getDocumentTypeId())
-                && StringUtils.isNotBlank((String) doc.getProp(DocumentCommonModel.Props.REG_NUMBER));
-        if (!isFinished && !isRegisteredIncomingLetter) {
+        // Let's be extra safe and check all conditions based on repository values, just in case lucene indexes are incorrect
+        if (!isDocumentAllowedToAdr(doc, documentAdminService.getAdrDocumentTypeIds(), true)) {
             return null;
         }
 
@@ -175,9 +168,8 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
 
     private File searchFile(DocumentDynamic doc, String filename) {
         log.debug("Searching for " + filename + " under " + doc.getDocName() + "(" + doc.getNodeRef() + ")");
-        // Only include file list when document accessRestriction = Avalik
-        if (!AccessRestriction.OPEN.getValueName().equals(doc.getProp(ACCESS_RESTRICTION))) {
-            log.debug("Access restriction mismatch: " + doc.getProp(ACCESS_RESTRICTION));
+
+        if (!isFileAllowedToAdr(doc)) {
             return null;
         }
 
@@ -267,8 +259,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         List<SeotudDokument> assocDocs = getSeotudDokumentList(doc.getNodeRef(), documentTypeIds);
         dokument.getSeotudDokument().addAll(assocDocs);
 
-        // Only include file list when document accessRestriction = Avalik
-        if (AccessRestriction.OPEN.getValueName().equals(doc.getProp(ACCESS_RESTRICTION))) {
+        if (isFileAllowedToAdr(doc)) {
             List<File> allActiveFiles = fileService.getAllActiveFiles(doc.getNodeRef());
             for (File file : allActiveFiles) {
                 FailV2 fail = new FailV2();
@@ -318,6 +309,13 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         dokument.setOsapool(getNullIfEmpty(osapool));
 
         // =======================================================
+
+        if (AccessRestriction.OPEN.getValueName().equals(doc.getProp(ACCESS_RESTRICTION))
+                && StringUtils.equals((String) doc.getProp(DocumentDynamicModel.Props.PUBLISH_TO_ADR), PublishToAdr.REQUEST_FOR_INFORMATION.getValueName())) {
+            dokument.setAinultTeabenoudeKorras(Boolean.TRUE);
+        } else {
+            dokument.setAinultTeabenoudeKorras(Boolean.FALSE);
+        }
 
         // Document type
         DokumendiliikV2 wsDocumentType = new DokumendiliikV2();
@@ -431,10 +429,15 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
     }
 
     public SeotudDokument getSeotudDokument(AssociationRef assocRef, boolean isSourceAssoc, Set<String> documentTypeIds) {
-        NodeRef otherDocument = isSourceAssoc ? assocRef.getSourceRef() : assocRef.getTargetRef();
-        if (!nodeService.hasAspect(otherDocument, DocumentCommonModel.Aspects.SEARCHABLE)) {
+        NodeRef otherDocRef = isSourceAssoc ? assocRef.getSourceRef() : assocRef.getTargetRef();
+        if (!DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(otherDocRef))) {
             return null;
         }
+        DocumentDynamic otherDoc = documentDynamicService.getDocument(otherDocRef);
+        if (!isDocumentAllowedToAdr(otherDoc, documentTypeIds, false)) {
+            return null;
+        }
+
         SeotudDokument seotudDokument = new SeotudDokument();
         if (DocumentCommonModel.Assocs.DOCUMENT_2_DOCUMENT.equals(assocRef.getTypeQName())) {
             seotudDokument.setSeosLiik(AssocType.DEFAULT.getValueName());
@@ -455,24 +458,8 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             return null;
         }
 
-        String docTypeId = (String) nodeService.getProperty(otherDocument, DocumentAdminModel.Props.OBJECT_TYPE_ID);
-        if (!documentTypeIds.contains(docTypeId)) {
-            return null;
-        }
-
-        Map<QName, Serializable> props = nodeService.getProperties(otherDocument);
-        String docStatus = (String) props.get(DocumentCommonModel.Props.DOC_STATUS);
-        String accessRestriction = (String) props.get(DocumentCommonModel.Props.ACCESS_RESTRICTION);
-        String regNumber = (String) props.get(DocumentCommonModel.Props.REG_NUMBER);
-        Date regDateTime = (Date) props.get(DocumentCommonModel.Props.REG_DATE_TIME);
-        if ((DocumentStatus.FINISHED.getValueName().equals(docStatus) || SystematicDocumentType.INCOMING_LETTER.isSameType(docTypeId))
-                && (AccessRestriction.OPEN.getValueName().equals(accessRestriction) || AccessRestriction.AK.getValueName().equals(accessRestriction))
-                && StringUtils.isNotEmpty(regNumber) && regDateTime != null) {
-
-            seotudDokument.setId(otherDocument.toString());
-            return seotudDokument;
-        }
-        return null;
+        seotudDokument.setId(otherDocRef.toString());
+        return seotudDokument;
     }
 
     // ========================================================================
@@ -567,12 +554,9 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
                     }
                 }
                 DocumentDynamic doc = documentDynamicService.getDocument(nodeRef);
-                if (StringUtils.isEmpty(doc.getRegNumber()) || doc.getRegDateTime() == null) {
-                    log.warn("ADR document regNumber or regDateTime is missing: nodeRef=" + doc.getNodeRef().toString() + "\nproperties="
-                            + WmNode.toString(RepoUtil.toQNameProperties(doc.getNode().getProperties()), namespaceService));
-                    continue; // should not happen!
-                    // this may move the results according to skip, and the next request has some overlapping results;
-                    // this should not be a problem, as long as there are less of these warning documents than limit
+                // Let's be extra safe and check all conditions based on repository values, just in case lucene indexes are incorrect
+                if (!isDocumentAllowedToAdr(doc, publicAdrDocumentTypeIds, true)) {
+                    continue;
                 }
                 AdrDocument adrDocument = new AdrDocument(doc.getNodeRef(), doc.getRegNumber(), doc.getRegDateTime(), compareByNodeRef);
                 if (compareByNodeRef || !results.containsKey(adrDocument)) {
@@ -595,6 +579,35 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
                 + ", time " + (System.currentTimeMillis() - startTime) + " ms"
                 + ", results " + list.size());
         return list;
+    }
+
+    private boolean isDocumentAllowedToAdr(DocumentDynamic doc, Set<String> publicAdrDocumentTypeIds, boolean logInfo) {
+        if (!publicAdrDocumentTypeIds.contains(doc.getDocumentTypeId())
+                || StringUtils.isBlank(doc.getRegNumber())
+                || doc.getRegDateTime() == null
+                || (!doc.isDocStatus(DocumentStatus.FINISHED) && !SystematicDocumentType.INCOMING_LETTER.isSameType(doc.getDocumentTypeId()))
+                || (!AccessRestriction.AK.getValueName().equals(doc.getAccessRestriction()) && !AccessRestriction.OPEN.getValueName().equals(doc.getAccessRestriction()))
+                || (doc.getPublishToAdr() != null && !PublishToAdr.TO_ADR.equals(doc.getPublishToAdr()) && !PublishToAdr.REQUEST_FOR_INFORMATION.equals(doc.getPublishToAdr()))
+                || !DocumentCommonModel.Types.DOCUMENT.equals(doc.getNode().getType())
+                || !doc.getNode().hasAspect(DocumentCommonModel.Aspects.SEARCHABLE)) {
+            if (logInfo) {
+                log.info("Document does not meet ADR criteria, ignoring: " + doc.toString());
+            }
+            return false;
+        }
+        return true;
+    }
+
+    private boolean isFileAllowedToAdr(DocumentDynamic doc) {
+        // Only include file list when document accessRestriction = Avalik AND publishToAdr = Läheb ADR-i
+        if (!AccessRestriction.OPEN.getValueName().equals(doc.getProp(ACCESS_RESTRICTION))) {
+            return false;
+        }
+        String publishToAdr = doc.getProp(DocumentDynamicModel.Props.PUBLISH_TO_ADR);
+        if (publishToAdr != null && !PublishToAdr.TO_ADR.getValueName().equals(publishToAdr)) {
+            return false;
+        }
+        return true;
     }
 
     private List<NodeRef> getDocumentsSortedByModified() {
@@ -682,14 +695,14 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             List<AdrDocument> deletedDocs = new ArrayList<AdrDocument>(deletedDocRefs.size());
             for (NodeRef deletedDoc : deletedDocRefs) {
                 Map<QName, Serializable> props = nodeService.getProperties(deletedDoc);
-                NodeRef nodeRef = (NodeRef) props.get(AdrModel.Props.NODEREF);
+                String nodeRef = (String) props.get(AdrModel.Props.NODEREF);
                 if (nodeRef == null) {
                     // Older data doesn't have nodeRef property
                     continue;
                 }
                 Date deletedDateTime = (Date) props.get(AdrModel.Props.DELETED_DATE_TIME);
                 // Use regDateTime field to store deletedDateTime
-                deletedDocs.add(new AdrDocument(nodeRef, "", deletedDateTime, true));
+                deletedDocs.add(new AdrDocument(new NodeRef(nodeRef), "", deletedDateTime, true));
             }
             log.info("List contains " + deletedDocs.size() + " documents that were deleted during specified period");
 
@@ -790,10 +803,10 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
     // ========================================================================
 
     @Override
-    public void addDeletedDocument(NodeRef document) {
+    public NodeRef addDeletedDocument(NodeRef document) {
         String regNumber = (String) nodeService.getProperty(document, DocumentCommonModel.Props.REG_NUMBER);
         Date regDateTime = (Date) nodeService.getProperty(document, DocumentCommonModel.Props.REG_DATE_TIME);
-        addDeletedDocument(document, regNumber, regDateTime);
+        return addDeletedDocument(document, regNumber, regDateTime);
     }
 
     private String getInitialsIfNeeded(String name, NodeRef documentRef) {

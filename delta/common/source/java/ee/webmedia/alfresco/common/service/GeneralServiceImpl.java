@@ -21,6 +21,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.Deflater;
 
 import javax.faces.context.FacesContext;
@@ -62,15 +64,18 @@ import org.alfresco.util.Pair;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream.UnicodeExtraFieldPolicy;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.postgresql.util.PGobject;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
+import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.app.AppConstants;
@@ -100,6 +105,7 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     private ContentService contentService;
     private MimetypeService mimetypeService;
     private TransactionService transactionService;
+    private SimpleJdbcTemplate jdbcTemplate;
 
     private final AtomicLong backgroundThreadCounter = new AtomicLong();
 
@@ -730,6 +736,11 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
 
     @Override
     public String getUniqueFileName(NodeRef folder, String fileName) {
+        return getUniqueFileName(fileName, null, folder);
+    }
+
+    @Override
+    public String getUniqueFileName(String fileName, List<NodeRef> filesToCheck, NodeRef... parentRefs) {
         String baseName = FilenameUtils.getBaseName(fileName);
         String extension = FilenameUtils.getExtension(fileName);
         if (StringUtils.isBlank(extension)) {
@@ -737,13 +748,28 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
         }
         String suffix = "";
         int i = 1;
-        while (fileFolderService.searchSimple(folder, baseName + suffix + "." + extension) != null) {
+        List<NodeRef> existingFilesWithName = getExistingFilesWithName(baseName + suffix + "." + extension, parentRefs);
+        while ((filesToCheck == null && !existingFilesWithName.isEmpty()) || (filesToCheck != null && CollectionUtils.containsAny(existingFilesWithName, filesToCheck))) {
             suffix = " (" + i + ")";
-
             i++;
+            existingFilesWithName = getExistingFilesWithName(baseName + suffix + "." + extension, parentRefs);
         }
         return baseName + suffix + "." + extension;
 
+    }
+
+    private List<NodeRef> getExistingFilesWithName(String filenameToCheck, NodeRef... parentRefs) {
+        List<NodeRef> fileRefs = new ArrayList<NodeRef>();
+        for (NodeRef parentRef : parentRefs) {
+            if (!nodeService.exists(parentRef)) {
+                continue;
+            }
+            NodeRef fileRef = fileFolderService.searchSimple(parentRef, filenameToCheck);
+            if (fileRef != null) {
+                fileRefs.add(fileRef);
+            }
+        }
+        return fileRefs;
     }
 
     @Override
@@ -898,6 +924,34 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
         return null;
     }
 
+    @Override
+    public String getTsquery(String input) {
+        if (input == null) {
+            input = "";
+        }
+        PGobject res = jdbcTemplate.queryForObject("SELECT plainto_tsquery('simple', ?)", PGobject.class, input);
+        List<String> lexems = new ArrayList<String>();
+        Pattern pattern = Pattern.compile("'[^']+'");
+        String originalTsquery = res.getValue();
+        Matcher matcher = pattern.matcher(originalTsquery);
+        while (matcher.find()) {
+            String lexemValue = matcher.group().substring(1, matcher.group().length() - 1);
+            if (lexemValue.length() < 3) {
+                continue;
+            }
+            String lexem = "'" + lexemValue + "':*";
+            if (!lexems.contains(lexem)) {
+                lexems.add(lexem);
+            }
+        }
+        String tsquery = StringUtils.join(lexems, " & ");
+        if (log.isDebugEnabled()) {
+            log.debug("Parsed:\n  input[" + input.length() + " chars]=" + input + "\n  original tsquery=" + originalTsquery + "\n  new tsquery[" + lexems.size() + " lexems]="
+                    + tsquery);
+        }
+        return tsquery;
+    }
+
     // START: getters / setters
     public void setDefaultStore(String store) {
         this.store = new StoreRef(store);
@@ -938,6 +992,11 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     public void setTransactionService(TransactionService transactionService) {
         this.transactionService = transactionService;
     }
+
+    public void setJdbcTemplate(SimpleJdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
     // END: getters / setters
 
 }

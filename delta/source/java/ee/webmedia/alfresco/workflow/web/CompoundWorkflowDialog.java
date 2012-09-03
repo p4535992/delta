@@ -195,7 +195,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     }
 
     private String askConfirmIfHasSameTask(String title, DialogAction requiredAction, boolean navigate) {
-        List<Pair<String, QName>> hasSameTask = WorkflowUtil.haveSameTask(compoundWorkflow);
+        Set<Pair<String, QName>> hasSameTask = WorkflowUtil.haveSameTask(compoundWorkflow);
         if (!hasSameTask.isEmpty()) {
             ArrayList<MessageData> messageDataList = new ArrayList<MessageData>();
             String msgKey = "workflow_compound_confirm_same_task";
@@ -324,11 +324,12 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
      */
     public void startValidatedWorkflow(@SuppressWarnings("unused") ActionEvent event) {
         try {
-            preprocessWorkflow();
             if (isUnsavedWorkFlow) {
                 getDocumentLogService().addDocumentLog(compoundWorkflow.getParent(), MessageUtil.getMessage("document_log_status_workflow"));
             }
-            compoundWorkflow = getWorkflowService().saveAndStartCompoundWorkflow(compoundWorkflow);
+            // clear panelGroup to avoid memory issues when working with large worflows
+            panelGroup.getChildren().clear();
+            compoundWorkflow = getWorkflowService().startCompoundWorkflow(compoundWorkflow);
             if (isUnsavedWorkFlow) {
                 isUnsavedWorkFlow = false;
             }
@@ -404,7 +405,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                     updatePanelGroup(confirmationMessages, STOP_VALIDATED_WORKFLOW);
                     return;
                 }
-                compoundWorkflow = getWorkflowService().saveAndStopCompoundWorkflow(compoundWorkflow);
+                compoundWorkflow = getWorkflowService().stopCompoundWorkflow(compoundWorkflow);
                 MessageUtil.addInfoMessage("workflow_compound_stop_success");
             }
         } catch (Exception e) {
@@ -416,7 +417,9 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     public void stopValidatedWorkflow(@SuppressWarnings("unused") ActionEvent event) {
         log.debug("stopValidatedWorkflow");
         try {
-            compoundWorkflow = getWorkflowService().saveAndStopCompoundWorkflow(compoundWorkflow);
+            // clear panelGroup to avoid memory issues when working with large worflows
+            panelGroup.getChildren().clear();
+            compoundWorkflow = getWorkflowService().stopCompoundWorkflow(compoundWorkflow);
             MessageUtil.addInfoMessage("workflow_compound_stop_success");
         } catch (Exception e) {
             handleException(e, "workflow_compound_stop_workflow_failed");
@@ -459,7 +462,9 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
 
     private void continueValidatedWorkflow(boolean throwException) {
         try {
-            compoundWorkflow = getWorkflowService().saveAndContinueCompoundWorkflow(compoundWorkflow);
+            // clear panelGroup to avoid memory issues when working with large worflows
+            panelGroup.getChildren().clear();
+            compoundWorkflow = getWorkflowService().continueCompoundWorkflow(compoundWorkflow);
             MessageUtil.addInfoMessage("workflow_compound_continue_success");
         } catch (Exception e) {
             // let calling method handle error
@@ -479,7 +484,9 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         log.debug("finishWorkflow");
         try {
             preprocessWorkflow();
-            compoundWorkflow = getWorkflowService().saveAndFinishCompoundWorkflow(compoundWorkflow);
+            // clear panelGroup to avoid memory issues when working with large worflows
+            panelGroup.getChildren().clear();
+            compoundWorkflow = getWorkflowService().finishCompoundWorkflow(compoundWorkflow);
             MessageUtil.addInfoMessage("workflow_compound_finish_success");
         } catch (Exception e) {
             handleException(e, "workflow_compound_finish_workflow_failed");

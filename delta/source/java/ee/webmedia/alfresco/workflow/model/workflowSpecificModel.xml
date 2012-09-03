@@ -315,7 +315,7 @@
           </properties>  
       </aspect>
 
-      <!-- some assignmentTask-s have aspect wfs:responsible, see specification -->
+      <!-- some assignmentTasks and orderAssignmentTasks have aspect wfs:responsible, see specification -->
       <aspect name="wfs:responsible">
          <properties>
             <property name="wfs:active">
@@ -331,6 +331,7 @@
       
       <aspect name="wfs:taskDueDateExtensionContainer">      
          <associations>
+            <!-- DEPRECATED: do not create new assocs of that type; taskDueDateExtension info should be saved in delta_task_due_date_extension_assoc table only. -->
             <association name="wfs:taskDueDateExtension">
                <source>
                   <mandatory>false</mandatory>
@@ -342,6 +343,7 @@
                   <many>true</many>
                </target>
             </association>
+            <!-- DEPRECATED: do not create new assocs of that type; taskDueDateHistory info should be saved in delta_task_due_date_history table only. -->
             <child-association name="wfs:taskDueDateExtensionHistory">
                <source>
                   <mandatory>false</mandatory>

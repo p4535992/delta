@@ -30,6 +30,7 @@ import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.service.DocLockService;
+import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import flexjson.JSONSerializer;
 
@@ -72,7 +73,7 @@ public class AjaxBean implements Serializable {
         }
 
         // If user cannot edit the document, then output nothing
-        if (Boolean.FALSE.equals(BeanHelper.getDocumentFileWriteDynamicAuthority().additional(docRef))) {
+        if (Boolean.FALSE.equals(PrivilegeUtil.additionalDocumentFileWritePermission(docRef, BeanHelper.getNodeService()))) {
             return;
         }
 

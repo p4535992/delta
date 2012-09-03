@@ -25,8 +25,8 @@ import org.alfresco.service.transaction.TransactionService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.permissions.DocumentFileWriteDynamicAuthority;
 import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
 import ee.webmedia.alfresco.versions.service.VersionsService;
 
 public class WebDAVCustomHelper extends WebDAVHelper {
@@ -105,7 +105,7 @@ public class WebDAVCustomHelper extends WebDAVHelper {
     public DocumentLogService getDocumentLogService() {
         return documentLogService;
     }
-    
+
     public TransactionService getTransactionService() {
         return transactionService;
     }
@@ -147,13 +147,13 @@ public class WebDAVCustomHelper extends WebDAVHelper {
             throw new WebDAVServerException(WebDAV.WEBDAV_SC_LOCKED, new AccessDeniedException("Not allowing writing - file is not under document. File=" + fileRef));
         }
 
-        DocumentFileWriteDynamicAuthority documentFileWriteDynamicAuthority = BeanHelper.getDocumentFileWriteDynamicAuthority();
-        Boolean additionalCheck = documentFileWriteDynamicAuthority.additional(parentRef);
+        Boolean additionalCheck = PrivilegeUtil.additionalDocumentFileWritePermission(parentRef, nodeService);
         if (additionalCheck != null) {
             if (additionalCheck) {
                 return; // allow writing based on additional logic
             }
-            throw new WebDAVServerException(WebDAV.WEBDAV_SC_LOCKED, new AccessDeniedException("not allowing writing - document is finished or has in-progress workflows or is incoming letter"));
+            throw new WebDAVServerException(WebDAV.WEBDAV_SC_LOCKED, new AccessDeniedException(
+                    "not allowing writing - document is finished or has in-progress workflows or is incoming letter"));
         }
 
         if (!getPrivilegeService().hasPermissions(parentRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT)) {

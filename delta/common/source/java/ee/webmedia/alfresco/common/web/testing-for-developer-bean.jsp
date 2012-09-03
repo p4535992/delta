@@ -8,11 +8,26 @@
 <%@ page isELIgnored="false" %>
 
 
-<%--
 <hr/>
-<b><h:outputText styleClass="mainTitle" value="Skriptid"/></b><br/>
-
-   <br/>
+<f:verbatim>
+<b><br/><br/><h:outputText styleClass="mainTitle" value="Skriptid"/></b><br/></f:verbatim>
+	<h:outputText value="Tööülesannete kustutamine repost. NB!!! Enne kasutamist veendu, et kõik updaterid, mis tööülesannete andmeid repost andmebaasi tabelitesse kirjutavad, on edukalt lõpuni jooksnud!!!! Vastasel korral ei saa tööülesannete andmeid enam taastada!!!"/>
+	<f:verbatim><br/></f:verbatim>
+	<h:outputText value="numberOfTasksInSingleTransaction: "/>
+    <h:inputText id="deleteAllTasksUpdaterBatchSize" value="#{deleteAllTasksFromRepo.batchSize}" size="4" />
+    <f:verbatim><br/></f:verbatim>    
+    <h:outputText value="Paus pärast iga tööülesande töötlemist (ms): "/>
+    <h:inputText id="deleteAllTasksUpdaterSleepTime" value="#{deleteAllTasksFromRepo.sleepTime}" size="4" />
+    <f:verbatim><br/></f:verbatim>
+    <h:commandButton id="startDeleteAllTasksFromRepoUpdater" value="Käivita tööülesannete kustutamise skript" type="submit"
+      actionListener="#{deleteAllTasksFromRepo.executeUpdaterInBackground}"
+      rendered="#{!deleteAllTasksFromRepo.updaterRunning}" />
+    <h:commandButton id="stopDeleteAllTasksFromRepoUpdater" value="Peata tööülesannete kustutamise skript" type="submit"
+      actionListener="#{deleteAllTasksFromRepo.stopUpdater}"
+      rendered="#{deleteAllTasksFromRepo.updaterRunning}"
+      disabled="#{deleteAllTasksFromRepo.updaterStopping}" />
+	<f:verbatim><br/></f:verbatim>
+<%--   <br/>
    <u>Dokumendi õiguste uuendamise skript (enne 2.5 versiooni)</u>
    <br/>
    <br/>
@@ -102,7 +117,7 @@
 <f:verbatim><br/></f:verbatim>
 <h:commandButton id="updateOrganisationStructureBasedGroups" value="updateOrganisationStructureBasedGroups" type="submit"
    actionListener="#{OrganizationStructureService.updateOrganisationStructureBasedGroups}" rendered="#{ApplicationService.test}" />
-<f:verbatim><br/><br/></f:verbatim>
+   <f:verbatim><br/></f:verbatim>
 <h:outputText id="reportGenerationTitle" value="Aruannete genereerimine: " />
 <f:verbatim><br/></f:verbatim>
 <h:outputText id="reportGenerationStatus" value=" Selles klastri õlas aruannete genereerimine ei jookse." rendered="#{!ReportListDialog.reportGenerationEnabled}" />

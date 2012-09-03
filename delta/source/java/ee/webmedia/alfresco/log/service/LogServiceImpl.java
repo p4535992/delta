@@ -18,6 +18,7 @@ import java.util.Set;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
@@ -69,6 +70,11 @@ public class LogServiceImpl implements LogService, InitializingBean {
 
     @Override
     public void addLogEntry(LogEntry log) {
+        addImportedLogEntry(log, null);
+    }
+
+    @Override
+    public void addImportedLogEntry(LogEntry log, Date dateCreated) {
         if (!checkDescriptionNotNull(log)) {
             return;
         }
@@ -99,12 +105,12 @@ public class LogServiceImpl implements LogService, InitializingBean {
                 }
             }
 
-            addLogEntry(log, idPrefix, idSuffix, now);
+            addLogEntry(log, idPrefix, idSuffix, dateCreated == null ? now : new Timestamp(dateCreated.getTime()));
         }
     }
 
     @Override
-    public void addLogEntry(LogEntry log, Date dateCreated, String idPrefix, long idSuffix) {
+    public void addImportedLogEntry(LogEntry log, Date dateCreated, String idPrefix, long idSuffix) {
         if (!checkDescriptionNotNull(log)) {
             return;
         }
@@ -175,9 +181,6 @@ public class LogServiceImpl implements LogService, InitializingBean {
             if (hasLength(filter.getDescription())) {
                 filterMap.put("lower(description) LIKE ?", "%" + filter.getDescription().toLowerCase() + "%");
             }
-            if (hasLength(filter.getExcludedDescription())) {
-                filterMap.put("lower(description) NOT LIKE ?", "%" + filter.getExcludedDescription().toLowerCase() + "%");
-            }
             if (hasLength(filter.getObjectName())) {
                 filterMap.put("lower(object_name) LIKE ?", "%" + filter.getObjectName().toLowerCase() + "%");
             }
@@ -200,6 +203,20 @@ public class LogServiceImpl implements LogService, InitializingBean {
                 }
             }
             values = filterMap.values().toArray(new Object[filterMap.values().size()]);
+
+            Set<String> excludedDescriptions = filter.getExcludedDescriptions();
+            if (excludedDescriptions != null) {
+                boolean firstCondition = q.length() == 0;
+                for (String excludedDescription : excludedDescriptions) {
+                    if (!firstCondition) {
+                        q.append(" AND ");
+                    } else {
+                        firstCondition = false;
+                    }
+                    q.append("lower(description) NOT LIKE ?");
+                    values = ArrayUtils.add(values, excludedDescription.toLowerCase());
+                }
+            }
         }
 
         q.append(" ORDER BY created_date_time ASC");

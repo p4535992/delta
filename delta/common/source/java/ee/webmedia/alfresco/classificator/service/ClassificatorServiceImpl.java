@@ -95,11 +95,9 @@ public class ClassificatorServiceImpl implements ClassificatorService {
         final List<Classificator> allClassificators = getAllClassificators();
         final List<ClassificatorExportVO> exportClassificators = new ArrayList<ClassificatorExportVO>(allClassificators.size());
         for (Classificator classificator : allClassificators) {
-            if (classificator.isAddRemoveValues()) {
-                final List<ClassificatorValue> allClassificatorValues = getAllClassificatorValues(classificator);
-                final ClassificatorExportVO clExport = new ClassificatorExportVO(classificator, allClassificatorValues);
-                exportClassificators.add(clExport);
-            }
+            final List<ClassificatorValue> allClassificatorValues = getAllClassificatorValues(classificator);
+            final ClassificatorExportVO clExport = new ClassificatorExportVO(classificator, allClassificatorValues);
+            exportClassificators.add(clExport);
         }
         return exportClassificators;
     }

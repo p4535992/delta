@@ -1297,9 +1297,13 @@ public class MetadataBlockBean implements ClearStateListener {
     public void reloadDoc() {
         reloadDoc(true);
     }
-
+    
     public void reloadDoc(boolean addInvoiceMessages) {
-        document = getDocumentService().getDocument(nodeRef);
+        reloadDoc(addInvoiceMessages, nodeRef);
+    }
+
+    public void reloadDoc(boolean addInvoiceMessages, NodeRef docNodeRef) {
+        document = getDocumentService().getDocument(docNodeRef);
         if (!inEditMode) {// only create lock for existing doc
             BeanHelper.getDocumentLockHelperBean().lockOrUnlockIfNeeded(inEditMode);
         }
@@ -1314,7 +1318,11 @@ public class MetadataBlockBean implements ClearStateListener {
     }
 
     public void reloadDocAndClearPropertySheet(boolean addInvoiceMessages) {
-        reloadDoc(addInvoiceMessages);
+        reloadDocAndClearPropertySheet(addInvoiceMessages, nodeRef);
+    }
+
+    public void reloadDocAndClearPropertySheet(boolean addInvoiceMessages, NodeRef docNodeRef) {
+        reloadDoc(addInvoiceMessages, docNodeRef);
         clearPropertySheet();
     }
 
@@ -1690,7 +1698,7 @@ public class MetadataBlockBean implements ClearStateListener {
         for (Node applicant : applicantNodes) {
             // Training application applicant has dailyAllowanceV2
             if (applicant.hasAspect(DocumentSpecificModel.Aspects.DAILY_ALLOWANCE_V2)) {
-                validateDailyAllowanceV2Internal(messages, dailyAllowanceSum, applicant.getProperties(), false);
+                validateDailyAllowanceV2Internal(messages, dailyAllowanceSum, applicant.getProperties(), true);
                 continue;
             }
 

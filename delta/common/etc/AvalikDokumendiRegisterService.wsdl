@@ -156,6 +156,7 @@
                      <xs:element name="fail" type="tns:failV2" nillable="true" minOccurs="0" maxOccurs="unbounded" />
                      <xs:element name="seotudDokument" type="tns:seotudDokument" nillable="true" minOccurs="0" maxOccurs="unbounded" />
                      <xs:element name="ainultTeabenoudeKorras" type="xs:boolean" minOccurs="0" />
+                     <xs:element name="juurdepaasuPiiranguMuutmisePohjus" type="xs:string" minOccurs="0" />
                   </xs:sequence>
                </xs:extension>
             </xs:complexContent>

@@ -41,7 +41,8 @@ public class DelegateButtonGenerator extends BaseComponentGenerator {
         delegateButton.setValue(MessageUtil.getMessage("task_delegate_" + assignmentTaskNode.getType().getLocalName()));
         delegateButton.setStyleClass("delegateBtn");
         Integer delegatableTaskIndex = ComponentUtil.getAttribute(propertySheet, DelegationBean.ATTRIB_DELEGATABLE_TASK_INDEX, Integer.class);
-        NodeRef compoundWorkflowRef = BeanHelper.getGeneralService().getAncestorNodeRefWithType(assignmentTaskNode.getNodeRef(), WorkflowCommonModel.Types.COMPOUND_WORKFLOW);
+        NodeRef compoundWorkflowRef = BeanHelper.getGeneralService().getAncestorNodeRefWithType(
+                BeanHelper.getWorkflowDbService().getTaskParentNodeRef(assignmentTaskNode.getNodeRef()), WorkflowCommonModel.Types.COMPOUND_WORKFLOW);
         addChildren(delegateButton,
                 createUIParam(PARAM_NODEREF, compoundWorkflowRef, app)
                 , createUIParam(DelegationBean.ATTRIB_DELEGATABLE_TASK_INDEX, delegatableTaskIndex, app));

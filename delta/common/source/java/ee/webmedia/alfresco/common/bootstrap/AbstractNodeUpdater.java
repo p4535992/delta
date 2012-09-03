@@ -523,6 +523,10 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         this.batchSize = batchSize;
     }
 
+    public int getBatchSize() {
+        return batchSize;
+    }
+
     public void setInputFolderPath(String inputFolderPath) {
         inputFolder = new File(inputFolderPath);
     }

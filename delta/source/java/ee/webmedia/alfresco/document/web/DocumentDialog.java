@@ -572,13 +572,15 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     }
 
     public void reloadDoc() {
-        node = getDocumentService().getDocument(node.getNodeRef());
-        metadataBlockBean.reloadDoc();
+		NodeRef nodeRef = node.getNodeRef();
+        node = getDocumentService().getDocument(nodeRef);
+        metadataBlockBean.reloadDoc(true, nodeRef);
     }
 
     public void reloadDocAndClearPropertySheet(boolean addInvoiceMessages) {
-        node = getDocumentService().getDocument(node.getNodeRef());
-        metadataBlockBean.reloadDocAndClearPropertySheet(addInvoiceMessages);
+		NodeRef nodeRef = node.getNodeRef();
+        node = getDocumentService().getDocument(nodeRef);
+        metadataBlockBean.reloadDocAndClearPropertySheet(addInvoiceMessages, nodeRef);
         transactionsBlockBean.restore(metadataBlockBean.getDocument());
     }
 

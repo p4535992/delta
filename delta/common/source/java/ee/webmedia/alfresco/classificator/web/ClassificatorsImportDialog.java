@@ -99,6 +99,10 @@ public class ClassificatorsImportDialog extends AbstractImportDialog {
         // create import VOs for classificators that already exist
         for (Classificator classificator : existingClassificators) {
             final String classifName = classificator.getName();
+            if (!Boolean.TRUE.equals(classificator.isAddRemoveValues())) {
+                existingClassifNames.add(classifName);
+                continue;
+            }
             final List<ClassificatorValue> importableClassificatorValues = classificatorsToImport.get(classifName);
             if (importableClassificatorValues == null) {
                 continue; // this classificator was not included in import file

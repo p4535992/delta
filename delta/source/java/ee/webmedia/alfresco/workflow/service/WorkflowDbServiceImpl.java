@@ -1,42 +1,54 @@
 package ee.webmedia.alfresco.workflow.service;
 
 import static ee.webmedia.alfresco.utils.RepoUtil.isSaved;
+import static ee.webmedia.alfresco.workflow.service.TaskSearchUtil.TASK_TYPE_FIELD;
+import static ee.webmedia.alfresco.workflow.service.TaskSearchUtil.getDbFieldNameFromPropQName;
 
 import java.io.Serializable;
+import java.sql.Array;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.StringTokenizer;
+
+import javax.sql.DataSource;
 
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.simple.ParameterizedRowMapper;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.cases.model.CaseModel;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
-import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.workflow.bootstrap.MoveTaskFileToChildAssoc;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
@@ -53,16 +65,19 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     private static final String HAS_FILES = "has_files";
     private static final String INDEX_IN_WORKFLOW_FIELD = "index_in_workflow";
     private static final String TASK_ID_FIELD = "task_id";
-    private static final String TASK_TYPE_FIELD = "task_type";
     private static final String DUE_DATE_HISTORY_FIELD = "has_due_date_history";
+    private static final String WORKFLOW_ID_KEY = "workflow_id";
+    private static final String STORE_ID_FIELD = "store_id";
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(WorkflowDbServiceImpl.class);
     private static final List<QName> NOT_SENT_TO_REPO_PROPS = Arrays.asList(QName.createQName(WorkflowCommonModel.URI, "creatorId"),
             QName.createQName(WorkflowCommonModel.URI, "creatorEmail"), MoveTaskFileToChildAssoc.TASK_FILE_PROP_QNAME);
-    private static final String SEPARATOR = "_";
 
     private SimpleJdbcTemplate jdbcTemplate;
+    private DataSource dataSource;
     private DictionaryService dictionaryService;
     private NodeService nodeService;
+
+    // TODO - Riina: add trace level'il explain'ide printimine
 
     @Override
     public void createTaskEntry(Task task) {
@@ -78,7 +93,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         Pair<List<String>, List<Object>> fieldNamesAndArguments = getFieldNamesAndArguments(task, null, changedProps);
         List<Object> arguments = fieldNamesAndArguments.getSecond();
         if (arguments.isEmpty()) {
-            // no properties were changed, no update needed
+            // no fields were changed, no update needed
             return;
         }
         arguments.add(task.getNodeRef().getId());
@@ -118,6 +133,93 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         updateTaskEntry(fieldNames, arguments, taskRef);
     }
 
+    @Override
+    public void updateTaskPropertiesAndStorRef(NodeRef taskRef, Map<QName, Serializable> props) {
+        List<String> fieldNames = new ArrayList<String>();
+        List<Object> arguments = new ArrayList<Object>();
+        fieldNames.add(STORE_ID_FIELD);
+        arguments.add(taskRef.getStoreRef().toString());
+        getPropFieldNamesAndArguments(fieldNames, arguments, props);
+        arguments.add(taskRef.getId());
+        updateTaskEntry(fieldNames, arguments, taskRef);
+    }
+
+    @Override
+    public void updateWorkflowTasksStore(NodeRef workflowRef, StoreRef newStoreRef) {
+        String sqlQuery = "UPDATE delta_task SET store_id=? WHERE workflow_id=?";
+        Object[] args = new Object[] { newStoreRef.toString(), workflowRef.getId() };
+        jdbcTemplate.update(sqlQuery, args);
+        explainQuery(sqlQuery, args);
+    }
+
+    private void explainQuery(String sqlQuery, Object... args) {
+        if (LOG.isTraceEnabled()) {
+            jdbcTemplate.getJdbcOperations().execute("SET enable_seqscan TO off");
+            List<String> explanation = jdbcTemplate.query("EXPLAIN ANALYZE " + sqlQuery, new ParameterizedRowMapper<String>() {
+
+                @Override
+                public String mapRow(ResultSet rs, int rowNum) throws SQLException {
+                    return rs.getString(1);
+                }
+            }, args);
+            LOG.trace("Explaining workflowDbService query, slq='" + sqlQuery + "', args=" + args + "\n" + TextUtil.joinNonBlankStrings(explanation, "\n"));
+        }
+    }
+
+    @Override
+    public NodeRef getTaskParentNodeRef(NodeRef nodeRef) {
+        String sqlQuery = "SELECT store_id, workflow_id FROM delta_task where task_id=?";
+        String nodeRefId = nodeRef.getId();
+        List<NodeRef> parentRefs = jdbcTemplate.query(sqlQuery, new TaskParentNodeRefMapper(), nodeRefId);
+        explainQuery(sqlQuery, nodeRefId);
+        return parentRefs == null || parentRefs.isEmpty() ? null : parentRefs.get(0);
+    }
+
+    @Override
+    public QName getTaskType(NodeRef nodeRef) {
+        Map<QName, QName> taskPrefixedQNames = BeanHelper.getWorkflowService().getTaskPrefixedQNames();
+        String sqlQuery = "SELECT task_type FROM delta_task where task_id=?";
+        String nodeRefId = nodeRef.getId();
+        String taskType = jdbcTemplate.queryForObject(sqlQuery, String.class, nodeRefId);
+        explainQuery(sqlQuery, nodeRefId);
+        for (Map.Entry<QName, QName> entry : taskPrefixedQNames.entrySet()) {
+            if (entry.getKey().getLocalName().equals(taskType)) {
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public boolean taskExists(NodeRef taskRef) {
+        String sqlQuery = "SELECT COUNT(1) FROM delta_task WHERE task_id=?";
+        String nodeRefId = taskRef.getId();
+        int rowCount = jdbcTemplate.queryForInt(sqlQuery, nodeRefId);
+        explainQuery(sqlQuery, nodeRefId);
+        return rowCount > 0;
+    }
+
+    @Override
+    public Serializable getTaskProperty(NodeRef taskRef, final QName qname) {
+        final String fieldName = getDbFieldNameFromPropQName(qname);
+        String taskId = taskRef.getId();
+        String sqlQuery = "SELECT " + fieldName + " FROM delta_task WHERE task_id=?";
+        List<Serializable> results = jdbcTemplate.query(sqlQuery, new ParameterizedRowMapper<Serializable>() {
+
+            @Override
+            public Serializable mapRow(ResultSet rs, int rowNum) throws SQLException {
+                Object value = rs.getObject(fieldName);
+                return getConvertedValue(rs, qname, fieldName, value);
+            }
+
+        }, taskId);
+        explainQuery(sqlQuery, taskId);
+        if (results.isEmpty()) {
+            throw new RuntimeException("Task with id=" + taskId + " does not exist.");
+        }
+        return results.get(0);
+    }
+
     private void updateTaskEntry(List<String> fieldNames, List<Object> arguments, NodeRef taskRef) {
         StringBuffer sb = new StringBuffer();
         boolean isNotFirst = false;
@@ -129,7 +231,9 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             sb.append(fieldName + "=?");
         }
         String sqlQuery = "UPDATE delta_task SET " + sb.toString() + " WHERE task_id=?";
-        int rowsUpdated = jdbcTemplate.update(sqlQuery, arguments.toArray());
+        Object[] argumentsArray = arguments.toArray();
+        int rowsUpdated = jdbcTemplate.update(sqlQuery, argumentsArray);
+        explainQuery(sqlQuery, argumentsArray);
         if (rowsUpdated != 1) {
             throw new RuntimeException("Update failed: updated " + rowsUpdated + " rows for task nodeRef=" + taskRef + ", sql='" + sqlQuery + "', arguments=" + arguments);
         }
@@ -143,7 +247,11 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     }
 
     private String getArgumentQuestionMarks(List<String> fieldNames) {
-        String questionMarks = StringUtils.repeat("?, ", fieldNames.size());
+        return getQuestionMarks(fieldNames.size());
+    }
+
+    private String getQuestionMarks(int size) {
+        String questionMarks = StringUtils.repeat("?, ", size);
         questionMarks = questionMarks.substring(0, questionMarks.length() - 2);
         return questionMarks;
     }
@@ -162,9 +270,9 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         List<String> fieldNames = new ArrayList<String>();
         List<Object> arguments = new ArrayList<Object>();
         boolean addTaskIndexInWorkflow = task.getTaskIndexInWorkflow() >= 0;
-        fieldNames.addAll(Arrays.asList(TASK_ID_FIELD, "workflow_id", TASK_TYPE_FIELD));
-        String workflow_id = task.getParent() != null ? task.getParent().getNodeRef().getId() : workflowfRef.getId();
-        arguments.addAll(Arrays.asList(task.getNodeRef().getId(), workflow_id, task.getType().getLocalName()));
+        fieldNames.addAll(Arrays.asList(TASK_ID_FIELD, WORKFLOW_ID_KEY, TASK_TYPE_FIELD, "store_id"));
+        String workflowId = task.getParent() != null ? task.getParent().getNodeRef().getId() : workflowfRef.getId();
+        arguments.addAll(Arrays.asList(task.getNodeRef().getId(), workflowId, task.getType().getLocalName(), task.getNodeRef().getStoreRef().toString()));
         if (addTaskIndexInWorkflow) {
             fieldNames.add(INDEX_IN_WORKFLOW_FIELD);
             arguments.add(task.getTaskIndexInWorkflow());
@@ -181,75 +289,353 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         return new Pair<List<String>, List<Object>>(fieldNames, arguments);
     }
 
-    private void getPropFieldNamesAndArguments(List<String> fieldNames, List<Object> arguments, Map<QName, Serializable> taskProps) {
-        for (Map.Entry<QName, Serializable> entry : taskProps.entrySet()) {
-            QName propName = entry.getKey();
+    private void getPropFieldNamesAndArguments(List<String> fieldNames, List<Object> arguments, @SuppressWarnings("rawtypes") Map taskProps) {
+        if (taskProps == null) {
+            return;
+        }
+        for (Object entryObj : taskProps.entrySet()) {
+            @SuppressWarnings("unchecked")
+            Map.Entry<QName, Serializable> entry = (Map.Entry<QName, Serializable>) entryObj;
+            @SuppressWarnings({ "cast" })
+            QName propName = (QName) entry.getKey();
             if (!WorkflowCommonModel.URI.equals(propName.getNamespaceURI()) && !WorkflowSpecificModel.URI.equals(propName.getNamespaceURI())) {
                 continue;
             }
             if (NOT_SENT_TO_REPO_PROPS.contains(propName)) {
                 continue;
             }
-            Serializable value = entry.getValue();
-            if (WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME.equals(propName)) {
-                value = UserUtil.getDisplayUnit((Iterable<String>) value);
+            Object value = entry.getValue();
+            if (WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME.equals(propName) && value != null) {
+                Connection connection = null;
+                try {
+                    // TODO: get "text" constant value from connection? It is database-specific
+                    connection = dataSource.getConnection();
+                    value = connection.createArrayOf("text", (((List<String>) value).toArray()));
+                } catch (SQLException e) {
+                    LOG.error("Error creating owner organization name input", e);
+                    throw new RuntimeException(e);
+                } finally {
+                    if (connection != null) {
+                        try {
+                            connection.close();
+                        } catch (SQLException e) {
+                            LOG.error("Error closing connection", e);
+                            throw new RuntimeException(e);
+                        }
+                    }
+                }
             }
             fieldNames.add(getDbFieldNameFromPropQName(propName));
             arguments.add(value);
         }
     }
 
-    private String getDbFieldNameFromPropQName(QName propName) {
-        String prefix = WorkflowCommonModel.URI.equals(propName.getNamespaceURI()) ? getPrefix(WorkflowCommonModel.PREFIX) : (WorkflowSpecificModel.URI.equals(propName
-                .getNamespaceURI())
-                ? getPrefix(WorkflowSpecificModel.PREFIX) : "");
-        Assert.isTrue(StringUtils.isNotBlank(prefix));
-        String localName = propName.getLocalName();
-        Assert.isTrue(StringUtils.isNotBlank(localName));
-        StringBuilder sb = new StringBuilder(prefix + SEPARATOR);
-        for (int i = 0; i < localName.length(); i++) {
-            char c = localName.charAt(i);
-            if (Character.isUpperCase(c)) {
-                sb.append(SEPARATOR + Character.toLowerCase(c));
-            } else {
-                sb.append(c);
-            }
-        }
-        return sb.toString();
-    }
-
-    private QName getPropQNameFromDbFieldName(String fieldName) {
-        String namespaceUri = null;
-        String prefix = null;
-        if (fieldName.startsWith(prefix = getPrefix(WorkflowCommonModel.PREFIX) + SEPARATOR)) {
-            namespaceUri = WorkflowCommonModel.URI;
-        } else if (fieldName.startsWith(prefix = getPrefix(WorkflowSpecificModel.PREFIX) + SEPARATOR)) {
-            namespaceUri = WorkflowSpecificModel.URI;
-        } else {
-            return null;
-        }
-        StringTokenizer st = new StringTokenizer(fieldName.substring(prefix.length()), SEPARATOR);
-        StringBuilder sb = new StringBuilder();
-        boolean firstToken = true;
-        while (st.hasMoreTokens()) {
-            String token = st.nextToken();
-            char firstChar = firstToken ? token.charAt(0) : Character.toUpperCase(token.charAt(0));
-            sb.append(firstChar + token.substring(1));
-            firstToken = false;
-        }
-        return QName.createQName(namespaceUri, sb.toString());
-    }
-
-    private String getPrefix(String prefix) {
-        return (new StringTokenizer(prefix, ":")).nextToken();
-    }
-
     @Override
     public List<Task> getWorkflowTasks(NodeRef originalParentRef, Collection<QName> taskDataTypeDefaultAspects, List<QName> taskDataTypeDefaultProps,
             Map<QName, QName> taskPrefixedQNames, WorkflowType workflowType, Workflow workflow, boolean copy) {
-        return jdbcTemplate.query("SELECT * FROM delta_task where workflow_id=? ORDER BY index_in_workflow",
-                new TaskRowMapper(originalParentRef, taskDataTypeDefaultAspects, taskDataTypeDefaultProps, taskPrefixedQNames, workflowType, workflow, copy),
-                new Object[] { originalParentRef.getId() });
+        String sqlQuery = "SELECT * FROM delta_task where workflow_id=? ORDER BY index_in_workflow";
+        String parentId = originalParentRef.getId();
+        List<Task> tasks = jdbcTemplate.query(sqlQuery,
+                new TaskRowMapper(originalParentRef, taskDataTypeDefaultAspects, taskDataTypeDefaultProps, taskPrefixedQNames, workflowType, workflow, copy, false),
+                parentId);
+        explainQuery(sqlQuery, parentId);
+        return tasks;
+    }
+
+    @Override
+    public Pair<List<Task>, Boolean> searchTasksMainStore(String queryCondition, List<Object> arguments, int limit) {
+        return searchTasks(queryCondition, arguments, limit, BeanHelper.getGeneralService().getStore());
+    }
+
+    @Override
+    public Pair<List<Task>, Boolean> searchTasksAllStores(String queryCondition, List<Object> arguments, int limit) {
+        return searchTasks(queryCondition, arguments, limit, null);
+    }
+
+    private Pair<List<Task>, Boolean> searchTasks(String queryCondition, List<Object> arguments, int limit, StoreRef storeRef) {
+        if (StringUtils.isBlank(queryCondition)) {
+            return new Pair<List<Task>, Boolean>(new ArrayList<Task>(), Boolean.FALSE);
+        }
+        arguments.add(0, Boolean.TRUE);
+        boolean hasStoreRef = storeRef != null;
+        if (hasStoreRef) {
+            arguments.add(1, storeRef.toString());
+        }
+        boolean limited = limit > -1;
+        if (limited) {
+            arguments.add(limit + 1);
+        }
+        TaskRowMapper taskRowMapper = new TaskRowMapper(null, null, null, BeanHelper.getWorkflowService().getTaskPrefixedQNames(), null, null, false, limited);
+        String sqlQuery = "SELECT delta_task.* "
+                + (limited ? ", count(*) OVER() AS full_count " : "") + " FROM delta_task WHERE "
+                + SearchUtil.joinQueryPartsAnd(" is_searchable=? ", hasStoreRef ? "store_id=? " : "", queryCondition)
+                + (limited ? " LIMIT ? " : "");
+        Object[] argumentsArray = arguments.toArray();
+        List<Task> tasks = jdbcTemplate.query(sqlQuery, taskRowMapper, argumentsArray);
+        explainQuery(sqlQuery, argumentsArray);
+        return new Pair<List<Task>, Boolean>(tasks, !limited || taskRowMapper.getTaskCountBeforeLimit() > tasks.size());
+    }
+
+    @Override
+    public List<NodeRef> searchTaskNodeRefs(String queryCondition, List<Object> arguments) {
+        arguments.add(0, Boolean.TRUE);
+        String sqlQuery = "SELECT task_id, store_id FROM delta_task WHERE " + SearchUtil.joinQueryPartsAnd(" is_searchable=? ", queryCondition);
+        Object[] argumentsArray = arguments.toArray();
+        List<NodeRef> taskRefs = jdbcTemplate.query(sqlQuery, new TaskNodeRefRowMapper(), argumentsArray);
+        explainQuery(sqlQuery, argumentsArray);
+        return taskRefs;
+    }
+
+    @Override
+    public int countTasks(String queryCondition, List<Object> arguments) {
+        arguments.add(0, Boolean.TRUE);
+        String sqlQuery = "SELECT COUNT(1) FROM (SELECT 1 FROM delta_task WHERE " + SearchUtil.joinQueryPartsAnd(" is_searchable=? ", queryCondition) + ") AS tmp_tasks ";
+        Object[] argumentsArray = arguments.toArray();
+        int taskCount = jdbcTemplate.queryForInt(sqlQuery, argumentsArray);
+        explainQuery(sqlQuery, argumentsArray);
+        return taskCount;
+    }
+
+    @Override
+    public Map<NodeRef, Pair<String, String>> searchTaskSendStatusInfo(String queryCondition, List<Object> arguments) {
+        if (StringUtils.isBlank(queryCondition)) {
+            return new HashMap<NodeRef, Pair<String, String>>();
+        }
+        arguments.add(0, Boolean.TRUE);
+        String sqlQuery = "SELECT task_id, store_id, wfs_sent_dvk_id, wfs_institution_code FROM delta_task WHERE "
+                + SearchUtil.joinQueryPartsAnd(" is_searchable=? ", queryCondition);
+        Object[] argumentsArray = arguments.toArray();
+        List<Pair<NodeRef, Pair<String, String>>> taskSendInfos = jdbcTemplate.query(sqlQuery,
+                new ParameterizedRowMapper<Pair<NodeRef, Pair<String, String>>>() {
+
+                    @Override
+                    public Pair<NodeRef, Pair<String, String>> mapRow(ResultSet rs, int rowNum) throws SQLException {
+                        return new Pair<NodeRef, Pair<String, String>>(nodeRefFromRs(rs, TASK_ID_FIELD), new Pair<String, String>(rs.getString("wfs_sent_dvk_id"), rs
+                                .getString("wfs_institution_code")));
+                    }
+
+                }, argumentsArray);
+        explainQuery(sqlQuery, argumentsArray);
+        Map<NodeRef, Pair<String, String>> sendInfosMap = new HashMap<NodeRef, Pair<String, String>>();
+        for (Pair<NodeRef, Pair<String, String>> sendInfo : taskSendInfos) {
+            sendInfosMap.put(sendInfo.getFirst(), sendInfo.getSecond());
+        }
+        return sendInfosMap;
+    }
+
+    private NodeRef nodeRefFromRs(ResultSet rs, String nodeRefIdField) throws SQLException {
+        String nodeRefId = rs.getString(nodeRefIdField);
+        if (StringUtils.isNotBlank(nodeRefId)) {
+            return new NodeRef(new StoreRef(rs.getString(STORE_ID_FIELD)), nodeRefId);
+        }
+        return null;
+    }
+
+    @Override
+    public Task getTask(NodeRef nodeRef, Map<QName, QName> taskPrefixedQNames, Workflow workflow, boolean copy) {
+        String sqlQuery = "SELECT * FROM delta_task where task_id=?";
+        String nodeRefId = nodeRef.getId();
+        List<Task> tasks = jdbcTemplate.query(sqlQuery,
+                new TaskRowMapper(null, null, null, taskPrefixedQNames, null, workflow, copy, false),
+                nodeRefId);
+        explainQuery(sqlQuery, nodeRefId);
+        int taskCount = tasks.size();
+        if (taskCount != 1) {
+            throw new RuntimeException("Expected to find one task, found " + taskCount + " for nodeRef=" + nodeRef);
+        }
+        return tasks.get(0);
+    }
+
+    @Override
+    public List<Task> getDueDateExtensionInitiatingTask(NodeRef nodeRef, Map<QName, QName> taskPrefixedQNames) {
+        String sqlQuery = "SELECT * FROM delta_task where task_id in (SELECT task_id FROM delta_task_due_date_extension_assoc where extension_task_id=?)";
+        String nodeRefId = nodeRef.getId();
+        List<Task> tasks = jdbcTemplate.query(sqlQuery,
+                new TaskRowMapper(null, null, null, taskPrefixedQNames, null, null, false, false),
+                nodeRefId);
+        explainQuery(sqlQuery, nodeRefId);
+        return tasks;
+    }
+
+    @Override
+    public void createTaskDueDateExtensionAssocEntry(NodeRef initiatingTaskRef, NodeRef nodeRef) {
+        int rowsInserted = jdbcTemplate.update(
+                "INSERT INTO delta_task_due_date_extension_assoc (task_id, extension_task_id) VALUES (?, ?)",
+                new Object[] { initiatingTaskRef.getId(), nodeRef.getId() });
+        if (rowsInserted != 1) {
+            throw new RuntimeException("Insert failed: inserted " + rowsInserted + " rows for initiatingNodeRef=" + initiatingTaskRef + ", targetNodeRef=" + nodeRef);
+        }
+    }
+
+    @Override
+    public void createTaskDueDateHistoryEntries(NodeRef taskRef, final List<Pair<String, Date>> historyRecords) {
+        Assert.notNull(taskRef);
+        if (historyRecords == null || historyRecords.isEmpty()) {
+            LOG.info("No history record input provided, skipping insert");
+            return;
+        }
+        final String taskRefId = taskRef.getId();
+        jdbcTemplate.getJdbcOperations().batchUpdate("INSERT INTO delta_task_due_date_history (task_id, previous_date, change_reason) VALUES (?, ?, ?)",
+                new BatchPreparedStatementSetter() {
+
+                    @Override
+                    public void setValues(PreparedStatement ps, int i) throws SQLException {
+                        ps.setString(1, taskRefId);
+                        Pair<String, Date> values = historyRecords.get(i);
+                        Date previousDate = values.getSecond();
+                        ps.setTimestamp(2, previousDate != null ? new Timestamp(previousDate.getTime()) : null);
+                        ps.setString(3, values.getFirst());
+                    }
+
+                    @Override
+                    public int getBatchSize() {
+                        return historyRecords.size();
+                    }
+                });
+    }
+
+    @Override
+    public Collection<Pair<String, Date>> getDueDateHistoryRecords(NodeRef taskRef) {
+        String sqlQuery = "SELECT previous_date, change_reason FROM delta_task_due_date_history WHERE task_id=? ORDER BY task_due_date_history_id";
+        String taskRefId = taskRef.getId();
+        List<Pair<String, Date>> dueDateHistoryRecords = jdbcTemplate.query(
+                sqlQuery,
+                new TaskDueDateHistoryMapper(), taskRefId);
+        explainQuery(sqlQuery, taskRefId);
+        // null value shouldn't actually be in the list, but just in case...
+        dueDateHistoryRecords.remove(null);
+        return dueDateHistoryRecords;
+    }
+
+    @Override
+    public void createTaskFileEntries(NodeRef taskRef, final List<File> files) {
+        Assert.notNull(taskRef);
+        if (isEmptyInsert(files)) {
+            return;
+        }
+        final List<NodeRef> fileNodeRefs = new ArrayList<NodeRef>();
+        for (File file : files) {
+            Assert.isTrue(file != null && file.getNodeRef() != null);
+            fileNodeRefs.add(file.getNodeRef());
+        }
+        createTaskFileEntriesFromNodeRefs(taskRef, fileNodeRefs);
+    }
+
+    @Override
+    public void createTaskFileEntriesFromNodeRefs(NodeRef taskRef, final List<NodeRef> fileNodeRefs) {
+        Assert.notNull(taskRef);
+        if (isEmptyInsert(fileNodeRefs)) {
+            return;
+        }
+        Assert.isTrue(!fileNodeRefs.contains(null));
+        final String taskRefId = taskRef.getId();
+        jdbcTemplate.getJdbcOperations().batchUpdate("INSERT INTO delta_task_file (task_id, file_id) VALUES (?, ?)",
+                new BatchPreparedStatementSetter() {
+
+                    @Override
+                    public void setValues(PreparedStatement ps, int i) throws SQLException {
+                        ps.setString(1, taskRefId);
+                        ps.setString(2, fileNodeRefs.get(i).getId());
+                    }
+
+                    @Override
+                    public int getBatchSize() {
+                        return fileNodeRefs.size();
+                    }
+                });
+    }
+
+    private boolean isEmptyInsert(@SuppressWarnings("rawtypes") final List files) {
+        if (files == null || files.isEmpty()) {
+            LOG.info("No file input provided, skipping insert");
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public void removeTaskFiles(NodeRef nodeRef, List<NodeRef> removedFileRefs) {
+        if (removedFileRefs == null || removedFileRefs.isEmpty()) {
+            return;
+        }
+        List<String> arguments = new ArrayList<String>();
+        arguments.add(nodeRef.getId());
+        for (NodeRef fileRef : removedFileRefs) {
+            arguments.add(fileRef.getId());
+        }
+        int numFilesToRemove = removedFileRefs.size();
+        String sqlQuery = "DELETE FROM delta_task_file WHERE task_id=? AND file_id IN (" + getQuestionMarks(numFilesToRemove) + ")";
+        Object[] argumentsArray = arguments.toArray();
+        int rowsDeleted = jdbcTemplate.update(sqlQuery, argumentsArray);
+        explainQuery(sqlQuery, argumentsArray);
+        if (rowsDeleted != numFilesToRemove) {
+            throw new RuntimeException("Delete failed: requeired to delete " + numFilesToRemove + ", actually deleted " + rowsDeleted + " rows for taskRef=" + nodeRef
+                    + ", fileNodeRefs=" + removedFileRefs);
+        }
+    }
+
+    @Override
+    public List<NodeRef> getTaskFileNodeRefs(NodeRef taskNodeRef) {
+        String sqlQuery = "SELECT delta_task.store_id as store_id, delta_task_file.file_id as file_id FROM delta_task, delta_task_file " +
+                "     WHERE delta_task.task_id=delta_task_file.task_id " +
+                "      AND delta_task_file.task_id=? ORDER BY delta_task_file.task_file_id";
+        String taskRefId = taskNodeRef.getId();
+        List<NodeRef> fileRefs = jdbcTemplate
+                .query(sqlQuery,
+                        new ParameterizedRowMapper<NodeRef>() {
+
+                            @Override
+                            public NodeRef mapRow(ResultSet rs, int rowNum) throws SQLException {
+                                return nodeRefFromRs(rs, "file_id");
+                            }
+
+                        }, taskRefId);
+        explainQuery(sqlQuery, taskRefId);
+        // null value shouldn't actually be in the list, but just in case...
+        fileRefs.remove(null);
+        return fileRefs;
+    }
+
+    private Serializable getConvertedValue(ResultSet rs, QName propName, String columnLabel, Object value) throws SQLException {
+        if (WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME.equals(propName) && value != null) {
+            Array array = rs.getArray(columnLabel);
+            // TODO: is there a better method to do this?
+            List<String> valueList = new ArrayList<String>();
+            ResultSet resultSet = array.getResultSet();
+            while (resultSet.next()) {
+                valueList.add(resultSet.getString(1));
+            }
+            return (Serializable) valueList;
+        }
+        return (Serializable) value;
+    }
+
+    private class TaskDueDateHistoryMapper implements ParameterizedRowMapper<Pair<String, Date>> {
+
+        @Override
+        public Pair<String, Date> mapRow(ResultSet rs, int rowNum) throws SQLException {
+            Date previousDate = (Date) rs.getObject("previous_date");
+            String changeReason = (String) rs.getObject("change_reason");
+            return new Pair<String, Date>(changeReason, previousDate);
+        }
+
+    }
+
+    private class TaskParentNodeRefMapper implements ParameterizedRowMapper<NodeRef> {
+
+        @Override
+        public NodeRef mapRow(ResultSet rs, int rowNum) throws SQLException {
+            return nodeRefFromRs(rs, WORKFLOW_ID_KEY);
+        }
+
+    }
+
+    private class TaskNodeRefRowMapper implements ParameterizedRowMapper<NodeRef> {
+
+        @Override
+        public NodeRef mapRow(ResultSet rs, int rowNum) throws SQLException {
+            return nodeRefFromRs(rs, TASK_ID_FIELD);
+        }
     }
 
     private class TaskRowMapper implements ParameterizedRowMapper<Task> {
@@ -261,9 +647,12 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         private final WorkflowType workflowType;
         private final Workflow workflow;
         private final boolean copy;
+        private final boolean limited;
+        private int taskCountBeforeLimit = -1;
 
         public TaskRowMapper(NodeRef originalParentRef, Collection<QName> taskDataTypeDefaultAspects, List<QName> taskDataTypeDefaultProps, Map<QName, QName> taskPrefixedQNames,
-                             WorkflowType workflowType, Workflow workflow, boolean copy) {
+                             WorkflowType workflowType, Workflow workflow, boolean copy, boolean limited) {
+            Assert.isTrue(workflowType == null || workflowType.getTaskType() == null || (taskDataTypeDefaultAspects != null && taskDataTypeDefaultProps != null));
             this.taskDataTypeDefaultAspects = taskDataTypeDefaultAspects;
             this.taskDataTypeDefaultProps = taskDataTypeDefaultProps;
             this.taskPrefixedQNames = taskPrefixedQNames;
@@ -271,13 +660,15 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             this.workflowType = workflowType;
             this.workflow = workflow;
             this.copy = copy;
+            this.limited = limited;
         }
 
         @Override
         public Task mapRow(ResultSet rs, int i) throws SQLException {
             checkTaskDataTypeDefinition(rs);
             loadRsColumnQNames(rs);
-            WmNode taskNode = getNode(rs, workflowType.getTaskType());
+            WmNode taskNode = getNode(rs);
+            WorkflowType workflowType = this.workflowType != null ? this.workflowType : BeanHelper.getWorkflowService().getWorkflowTypesByTask().get(taskNode.getType());
             Task task = Task.create(workflowType.getTaskClass(), taskNode, workflow, workflowType.getTaskOutcomes());
             boolean originalHasDueDateHistory = rs.getBoolean(DUE_DATE_HISTORY_FIELD);
             task.setHasDueDateHistory(originalHasDueDateHistory);
@@ -286,8 +677,15 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             task.setHasFiles(originalHasFiles);
             task.setOriginalHasFiles(originalHasFiles);
             task.setTaskIndexInWorkflow(rs.getInt(INDEX_IN_WORKFLOW_FIELD));
+            task.setParentNodeRefId(rs.getString(WORKFLOW_ID_KEY));
+            task.setStoreRef(rs.getString(STORE_ID_FIELD));
+            if (limited && taskCountBeforeLimit < 0) {
+                taskCountBeforeLimit = rs.getInt("full_count");
+            }
             return task;
         }
+
+        // during querying result task data type was not known, so determine type-specific properties from result
 
         private void loadRsColumnQNames(ResultSet rs) throws SQLException {
             if (rsColumnQNames == null) {
@@ -295,7 +693,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
                 ResultSetMetaData metaData = rs.getMetaData();
                 for (int i = 1; i <= metaData.getColumnCount(); i++) {
                     String columnLabel = metaData.getColumnName(i);
-                    QName propName = getPropQNameFromDbFieldName(columnLabel);
+                    QName propName = TaskSearchUtil.getPropQNameFromDbFieldName(columnLabel);
                     if (propName != null) {
                         rsColumnQNames.put(columnLabel, propName);
                     }
@@ -304,43 +702,80 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         }
 
         private void checkTaskDataTypeDefinition(ResultSet rs) throws SQLException {
-            String typeStr = rs.getString(TASK_TYPE_FIELD);
-            QName typeQName = QName.createQName(WorkflowSpecificModel.URI, typeStr);
+            if (workflowType == null) {
+                // no assumptions is made about returned task type
+                return;
+            }
+            QName typeQName = getTaskTypeFromRs(rs);
             QName workflowTaskType = workflowType.getTaskType();
             if (!workflowTaskType.equals(typeQName)) {
                 throw new RuntimeException("Workflow task type '" + workflowTaskType + "' doesn't match task type '" + typeQName + "' in db!");
             }
         }
 
-        private WmNode getNode(ResultSet rs, QName taskType) throws SQLException {
-            Set<QName> currentTaskAspects = new HashSet<QName>(taskDataTypeDefaultAspects);
-            Set<QName> currentTaskProps = new HashSet<QName>(taskDataTypeDefaultProps);
+        private QName getTaskTypeFromRs(ResultSet rs) throws SQLException {
+            String typeStr = rs.getString(TASK_TYPE_FIELD);
+            return QName.createQName(WorkflowSpecificModel.URI, typeStr);
+        }
+
+        // if task type and/or parent is given, get task with the given properties.
+        // Otherwise determine type and parent from rs
+        private WmNode getNode(ResultSet rs) throws SQLException {
+            QName taskType = workflowType != null ? workflowType.getTaskType() : getTaskTypeFromRs(rs);
+            WorkflowService workflowService = BeanHelper.getWorkflowService();
+            QName workflowType = getWorkflowTypeByTask(taskType, workflowService);
+            Set<QName> currentTaskAspects = new HashSet<QName>(taskDataTypeDefaultAspects != null ? taskDataTypeDefaultAspects : workflowService.getTaskDataTypeDefaultAspects()
+                    .get(workflowType));
+            Set<QName> currentTaskProps = new HashSet<QName>(taskDataTypeDefaultProps != null ? taskDataTypeDefaultProps : workflowService.getTaskDataTypeDefaultProps()
+                    .get(workflowType));
             Map<QName, Serializable> taskProps = new HashMap<QName, Serializable>();
-            if (rs.getObject("wfs_active") != null) {
+            if (rs.getObject(TaskSearchUtil.ACTIVE_FIELD) != null) {
                 currentTaskAspects.add(WorkflowSpecificModel.Aspects.RESPONSIBLE);
                 currentTaskProps.add(WorkflowSpecificModel.Props.ACTIVE);
             }
+            if (rs.getObject("is_searchable") != null) {
+                currentTaskAspects.add(WorkflowSpecificModel.Aspects.SEARCHABLE);
+            }
             for (Map.Entry<String, QName> entry : rsColumnQNames.entrySet()) {
                 QName propName = entry.getValue();
-                Object value = rs.getObject(entry.getKey());
+                String columnLabel = entry.getKey();
+                Object value = rs.getObject(columnLabel);
                 if (currentTaskProps.contains(propName)) {
-                    if (WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME.equals(propName)) {
-                        value = Collections.singletonList(value);
-                    }
+                    value = getConvertedValue(rs, propName, columnLabel, value);
                     taskProps.put(propName, (Serializable) value);
                 }
             }
-            return new WmNode(copy ? null : new NodeRef(originalParentRef.getStoreRef(), rs.getString(TASK_ID_FIELD)), taskPrefixedQNames.get(taskType), currentTaskAspects,
+            StoreRef storeRef = originalParentRef != null ? originalParentRef.getStoreRef() : new StoreRef(rs.getString(STORE_ID_FIELD));
+            return new WmNode(copy ? null : new NodeRef(storeRef, rs.getString(TASK_ID_FIELD)), taskPrefixedQNames.get(taskType), currentTaskAspects,
                     taskProps);
         }
+
+        private QName getWorkflowTypeByTask(QName taskType, WorkflowService workflowService) {
+            return workflowService.getWorkflowTypesByTask().get(taskType).getWorkflowType();
+        }
+
+        private int getTaskCountBeforeLimit() {
+            return taskCountBeforeLimit;
+        }
+
+        private void setTaskCountBeforeLimit(int taskCountBeforeLimit) {
+            this.taskCountBeforeLimit = taskCountBeforeLimit;
+        }
+
     }
 
     private void deleteWorkflowTasks(NodeRef removedWorkflowNodeRef) {
-        jdbcTemplate.update("DELETE FROM delta_task WHERE workflow_id=?", new Object[] { removedWorkflowNodeRef.getId() });
+        String sqlQuery = "DELETE FROM delta_task WHERE workflow_id=?";
+        String workflowRefId = removedWorkflowNodeRef.getId();
+        jdbcTemplate.update(sqlQuery, workflowRefId);
+        explainQuery(sqlQuery, workflowRefId);
     }
 
     private void deleteTask(NodeRef removedTaskNodeRef) {
-        jdbcTemplate.update("DELETE FROM delta_task WHERE task_id=?", new Object[] { removedTaskNodeRef.getId() });
+        String sqlQuery = "DELETE FROM delta_task WHERE task_id=?";
+        String taskRefId = removedTaskNodeRef.getId();
+        jdbcTemplate.update(sqlQuery, taskRefId);
+        explainQuery(sqlQuery, taskRefId);
     }
 
     @Override
@@ -412,6 +847,14 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
 
     public void setNodeService(NodeService nodeService) {
         this.nodeService = nodeService;
+    }
+
+    public DataSource getDataSource() {
+        return dataSource;
+    }
+
+    public void setDataSource(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
 }

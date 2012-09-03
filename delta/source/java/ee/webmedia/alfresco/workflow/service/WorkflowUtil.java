@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -545,16 +546,26 @@ public class WorkflowUtil {
      * @param compoundWorkflow
      * @return
      */
-    public static List<Pair<String, QName>> haveSameTask(CompoundWorkflow compoundWorkflow) {
-        List<Pair<String, QName>> ownerNameTypeList = new ArrayList<Pair<String, QName>>();
-        List<Task> thisTasks = new ArrayList<Task>();
-        List<Task> tasksForComparing = new ArrayList<Task>();
+    public static Set<Pair<String, QName>> haveSameTask(CompoundWorkflow compoundWorkflow) {
+        Set<Pair<String, QName>> ownerNameTypeSet = new HashSet<Pair<String, QName>>();
+        Set<Pair<String, QName>> thisTasks = new HashSet<Pair<String, QName>>();
         for (Workflow wf : compoundWorkflow.getWorkflows()) {
-            thisTasks.addAll(wf.getTasks());
-            tasksForComparing.addAll(thisTasks);
+            for (Task task : wf.getTasks()) {
+                if (StringUtils.isBlank(task.getOwnerId())) {
+                    continue;
+                }
+                Pair<String, QName> taskOwnerNameAndType = new Pair<String, QName>(task.getOwnerId(), task.getType());
+                if (thisTasks.contains(taskOwnerNameAndType)) {
+                    if (!task.isStatus(Status.NEW, Status.UNFINISHED)) {
+                        ownerNameTypeSet.add(taskOwnerNameAndType);
+                    }
+                } else {
+                    thisTasks.add(taskOwnerNameAndType);
+                }
+            }
         }
         if (thisTasks.isEmpty()) {
-            return ownerNameTypeList;
+            return ownerNameTypeSet;
         }
         for (CompoundWorkflow compWf : compoundWorkflow.getOtherCompoundWorkflows()) {
             if (isStatus(compWf, Status.NEW)) {
@@ -564,27 +575,19 @@ public class WorkflowUtil {
                 if (isStatus(workflow, Status.NEW)) {
                     continue;
                 }
-                tasksForComparing.addAll(workflow.getTasks());
-            }
-        }
-        for (Task thisTask : thisTasks) {
-            QName thisTaskType = thisTask.getType();
-            for (Task taskForComparing : tasksForComparing) {
-                if (thisTask.equals(taskForComparing)) {
-                    continue;
-                }
-                String comparingTaskOwnerId = taskForComparing.getOwnerId();
-                if (comparingTaskOwnerId != null && comparingTaskOwnerId.equals(thisTask.getOwnerId()) && (taskForComparing.isType(thisTaskType))
-                        && !isStatus(taskForComparing, Status.NEW) && !isStatus(taskForComparing, Status.UNFINISHED)) {
-                    Pair<String, QName> ownerNameTypePair = new Pair<String, QName>(taskForComparing.getOwnerName(), taskForComparing.getType());
-                    if (!ownerNameTypeList.contains(ownerNameTypePair)) {
-                        ownerNameTypeList.add(ownerNameTypePair);
+                for (Task task : workflow.getTasks()) {
+                    if (task.isStatus(Status.NEW, Status.UNFINISHED) || StringUtils.isBlank(task.getOwnerId())) {
+                        continue;
+                    }
+                    Pair<String, QName> taskOwnerNameAndType = new Pair<String, QName>(task.getOwnerId(), task.getType());
+                    if (thisTasks.contains(taskOwnerNameAndType)) {
+                        ownerNameTypeSet.add(taskOwnerNameAndType);
                     }
                 }
             }
         }
 
-        return ownerNameTypeList;
+        return ownerNameTypeSet;
     }
 
     public static Task createTaskCopy(Task myTask) {

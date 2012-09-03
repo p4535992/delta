@@ -25,11 +25,9 @@ import org.alfresco.model.ContentModel;
 import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
-import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
-import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.util.GUID;
 import org.alfresco.web.bean.repository.Node;
@@ -54,7 +52,6 @@ import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
@@ -893,7 +890,7 @@ public class PostipoissStructureImporter {
             missingFunctions.add(t.functionId);
             return null;
         }
-        Series series = seriesService.createSeries(fRef);
+        final Series series = seriesService.createSeries(fRef);
         Map<String, Object> props = series.getNode().getProperties();
         props.put(SeriesModel.Props.TYPE.toString(), SeriesType.SERIES.getValueName() /* toSeriesType(t) */);
         props.put(SeriesModel.Props.SERIES_IDENTIFIER.toString(), t.seriesIndex);
@@ -937,15 +934,7 @@ public class PostipoissStructureImporter {
         // We check order ourselves above
         seriesService.saveOrUpdateWithoutReorder(series);
 
-        NodeRef seriesRef = series.getNode().getNodeRef();
-        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(seriesRef, RegexQNamePattern.MATCH_ALL, SeriesModel.Associations.SERIES_LOG);
-        for (ChildAssociationRef childRef : childAssocs) {
-            Map<QName, Serializable> childProps = new HashMap<QName, Serializable>();
-            childProps.put(DocumentCommonModel.Props.CREATOR_NAME, CREATOR_MODIFIER);
-            nodeService.addProperties(childRef.getChildRef(), childProps);
-        }
-
-        return seriesRef;
+        return series.getNode().getNodeRef();
     }
 
     // A specific logic for SIM

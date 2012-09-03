@@ -2,6 +2,8 @@ package ee.webmedia.alfresco.log.model;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * DTO used for gathering system log filtering data.
@@ -24,7 +26,7 @@ public class LogFilter implements Serializable {
 
     private String description;
 
-    private String excludedDescription;
+    private Set<String> excludedDescriptions;
 
     private String objectName;
 
@@ -94,11 +96,14 @@ public class LogFilter implements Serializable {
         this.objectId = objectId;
     }
 
-    public String getExcludedDescription() {
-        return excludedDescription;
+    public void setExcludedDescriptions(Set<String> excludedDescriptions) {
+        this.excludedDescriptions = excludedDescriptions;
     }
 
-    public void setExcludedDescription(String excludedDescription) {
-        this.excludedDescription = excludedDescription;
+    public Set<String> getExcludedDescriptions() {
+        if (excludedDescriptions == null) {
+            excludedDescriptions = new HashSet<String>();
+        }
+        return excludedDescriptions;
     }
 }

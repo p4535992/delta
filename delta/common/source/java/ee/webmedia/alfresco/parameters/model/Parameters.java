@@ -95,6 +95,8 @@ public enum Parameters {
     REVIEW_WORKFLOW_COST_MANAGER_WORKFLOW_NUMBER("reviewWorkflowCostManagerWorkflowNumber"),
     INVOICE_ENTRY_DATE_ONLY_IN_CURRENT_YEAR("invoiceEntryDateOnlyInCurrentYear"),
 
+    EXTERNAL_SESSION_EXPIRATION_TIME("externalSessionExpirationTime"),
+
     // dimension parameters
     DIMENSION_CODE_INVOICE_FUNDS_CENTERS("dimensionCodeInvoiceFundsCenters"),
     DIMENSION_CODE_INVOICE_COST_CENTERS("dimensionCodeInvoiceCostCenters"),

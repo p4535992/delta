@@ -18,6 +18,8 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.workflow.service.Task;
+import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
 import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
 
 /**
@@ -138,7 +140,7 @@ public class FilenameUtil {
                 replaceAmpersand(
                 trimDotsAndSpaces(
                 stripForbiddenWindowsCharacters(
-                        name))))));
+                name))))));
 
         if (existingFileNames != null && !existingFileNames.isEmpty()) {
             safeName = generateUniqueFileDisplayName(safeName, existingFileNames);
@@ -159,6 +161,15 @@ public class FilenameUtil {
     public static Pair<String, String> getFilenameFromDisplayname(NodeRef documentNodeRef, List<String> existingDisplayNames, String displayName, GeneralService generalService) {
         displayName = generateUniqueFileDisplayName(displayName, existingDisplayNames);
         String name = checkAndGetUniqueFilename(documentNodeRef, displayName, generalService);
+        return new Pair<String, String>(name, displayName);
+    }
+
+    public static Pair<String, String> getTaskFilenameFromDisplayname(Task task, List<String> existingDisplayNames, String displayName,
+            GeneralService generalService, WorkflowDbService workflowDbService) {
+        displayName = generateUniqueFileDisplayName(displayName, existingDisplayNames);
+        checkPlusInFileName(displayName);
+        String name = generalService.getUniqueFileName(FilenameUtil.makeSafeFilename(displayName),
+                workflowDbService.getTaskFileNodeRefs(task.getNodeRef()), task.getParent().getNodeRef());
         return new Pair<String, String>(name, displayName);
     }
 

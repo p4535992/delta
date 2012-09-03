@@ -230,6 +230,8 @@ public class NotificationServiceImpl implements NotificationService {
         }
         notification.addRecipient(substitute.getSubstituteName(), toEmailAddress);
         notification.getAdditionalFormulas().put("personSubstituted", userService.getUserFullName(substitute.getReplacedPersonUserName()));
+        notification.addAdditionalFomula(DocumentSpecificModel.Props.SUBSTITUTION_BEGIN_DATE.getLocalName(), Task.dateFormat.format(substitute.getSubstitutionStartDate()));
+        notification.addAdditionalFomula(DocumentSpecificModel.Props.SUBSTITUTION_END_DATE.getLocalName(), Task.dateFormat.format(substitute.getSubstitutionEndDate()));
 
         LinkedHashMap<String, NodeRef> nodeRefs = new LinkedHashMap<String, NodeRef>();
         nodeRefs.put(null, substitute.getNodeRef());

@@ -74,7 +74,6 @@ import ee.webmedia.alfresco.document.file.web.FileBlockBean;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.log.web.LogBlockBean;
 import ee.webmedia.alfresco.document.metadata.web.MetadataBlockBean;
-import ee.webmedia.alfresco.document.permissions.DocumentFileWriteDynamicAuthority;
 import ee.webmedia.alfresco.document.search.service.DocumentReportFilterService;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchFilterService;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
@@ -667,11 +666,7 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     // START: other beans
 
-    public static DocumentFileWriteDynamicAuthority getDocumentFileWriteDynamicAuthority() {
-        return getSpringBean(DocumentFileWriteDynamicAuthority.class, DocumentFileWriteDynamicAuthority.BEAN_NAME);
-    }
-
-    // START: other beans
+    // END: other beans
 
     // START: private methods
 

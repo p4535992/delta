@@ -26,7 +26,6 @@ public class LogHelper {
      * @param request The incoming request.
      */
     public static void gatherUserInfo(HttpServletRequest request) {
-        String[] info = new String[2];
         String computerIp = null;
         String computerName = null;
         if (useClientIpFromXForwardedForHttpHeader) {
@@ -46,9 +45,7 @@ public class LogHelper {
                 computerName = null;
             }
         }
-        info[0] = computerIp;
-        info[1] = computerName;
-        USER_INFO_LOCAL.set(info);
+        setUserInfo(computerIp, computerName);
     }
 
     /**
@@ -63,6 +60,13 @@ public class LogHelper {
             // TODO if computerName isBlank, then perform name resolving here, but only if session doesn't contain previously resolved name
             logEntry.setComputerName(info[1]);
         }
+    }
+
+    public static void setUserInfo(String computerIp, String computerName) {
+        String[] info = new String[2];
+        info[0] = computerIp;
+        info[1] = computerName;
+        USER_INFO_LOCAL.set(info);
     }
 
     public static void resetUserInfo() {

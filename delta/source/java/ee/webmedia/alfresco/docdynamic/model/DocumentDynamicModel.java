@@ -39,6 +39,7 @@ public interface DocumentDynamicModel {
 
         /** document name used for ADR */
         QName DOC_NAME_ADR = QName.createQName(URI, "docNameAdr");
+        QName PUBLISH_TO_ADR = QName.createQName(URI, "publishToAdr");
         QName SIGNER_ID = QName.createQName(URI, "signerId");
         QName SIGNER_NAME = QName.createQName(URI, "signerName");
         QName SUBSTITUTE_ID = QName.createQName(URI, "substituteId");

@@ -42,6 +42,11 @@ public class MoveDocumentAndSeriesLogToAppLog extends AbstractNodeUpdater {
     private String idPrefix;
     private final List<NodeRef> logNodesToDelete = new ArrayList<NodeRef>();
 
+    private static final QName DOCUMENT_LOG = QName.createQName(DocumentCommonModel.DOCCOM_URI, "documentLog");
+    private static final QName CREATED_DATETIME = QName.createQName(DocumentCommonModel.DOCCOM_URI, "createdDateTime");
+    private static final QName CREATOR_NAME = QName.createQName(DocumentCommonModel.DOCCOM_URI, "creatorName");
+    private static final QName EVENT_DESCRIPTION = QName.createQName(DocumentCommonModel.DOCCOM_URI, "eventDescription");
+
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
         String query = SearchUtil.joinQueryPartsOr(SearchUtil.generateTypeQuery(DocumentCommonModel.Types.DOCUMENT),
@@ -58,19 +63,19 @@ public class MoveDocumentAndSeriesLogToAppLog extends AbstractNodeUpdater {
         LogObject logObject = DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(nodeRef)) ? LogObject.DOCUMENT : LogObject.SERIES;
         Date firstAppLogDate = BeanHelper.getLogService().getFirstLogEntryDate(nodeRef);
         boolean noExistingAppLog = firstAppLogDate == null;
-        List<ChildAssociationRef> logChildAssocs = nodeService.getChildAssocs(nodeRef, Collections.singleton(DocumentCommonModel.Types.DOCUMENT_LOG));
+        List<ChildAssociationRef> logChildAssocs = nodeService.getChildAssocs(nodeRef, Collections.singleton(DOCUMENT_LOG));
         StringBuffer copiedLogEntries = new StringBuffer("");
         StringBuffer deletedLogEntries = new StringBuffer("");
         int logCount = 0;
         for (ChildAssociationRef childAssoc : logChildAssocs) {
             NodeRef logRef = childAssoc.getChildRef();
             Map<QName, Serializable> logProps = nodeService.getProperties(logRef);
-            Date logDate = (Date) logProps.get(DocumentCommonModel.Props.CREATED_DATETIME);
-            String creatorName = (String) logProps.get(DocumentCommonModel.Props.CREATOR_NAME);
-            String description = (String) logProps.get(DocumentCommonModel.Props.EVENT_DESCRIPTION);
+            Date logDate = (Date) logProps.get(CREATED_DATETIME);
+            String creatorName = (String) logProps.get(CREATOR_NAME);
+            String description = (String) logProps.get(EVENT_DESCRIPTION);
             String result = "LOG" + logCount + ": logDate=" + logDate + "; creatorName=" + creatorName + "; desc=" + description + "\n";
             if (noExistingAppLog || logDate == null || (firstAppLogDate.after(logDate) && (firstAppLogDate.getTime() - logDate.getTime()) > 60000)) {
-                BeanHelper.getLogService().addLogEntry(LogEntry.createLoc(logObject, null, creatorName, nodeRef, description), logDate, idPrefix, logTableSequence++);
+                BeanHelper.getLogService().addImportedLogEntry(LogEntry.createLoc(logObject, null, creatorName, nodeRef, description), logDate, idPrefix, logTableSequence++);
                 copiedLogEntries.append(result);
             } else {
                 deletedLogEntries.append(result);

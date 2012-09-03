@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.docadmin.bootstrap;
 
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 
@@ -8,6 +7,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
@@ -29,10 +29,15 @@ public class DocTypesIdRefactorUpdater extends AbstractNodeUpdater {
     }
 
     @Override
-    protected String[] updateNode(NodeRef fieldOrFieldDefRef) throws Exception {
-        Serializable docTypeId = nodeService.getProperty(fieldOrFieldDefRef, OLD_ID);
-        nodeService.setProperty(fieldOrFieldDefRef, DocumentAdminModel.Props.ID, docTypeId);
-        nodeService.removeProperty(fieldOrFieldDefRef, OLD_ID);
+    protected String[] updateNode(NodeRef docTypeRef) throws Exception {
+        String oldDocTypeId = (String) nodeService.getProperty(docTypeRef, OLD_ID);
+        String newDocTypeId = (String) nodeService.getProperty(docTypeRef, DocumentAdminModel.Props.ID);
+        if (StringUtils.isNotBlank(oldDocTypeId)) {
+            if (StringUtils.isBlank(newDocTypeId)) {
+                nodeService.setProperty(docTypeRef, DocumentAdminModel.Props.ID, oldDocTypeId);
+            }
+            nodeService.removeProperty(docTypeRef, OLD_ID);
+        }
         return new String[] {};
     }
 

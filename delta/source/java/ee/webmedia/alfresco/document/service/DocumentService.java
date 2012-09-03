@@ -313,20 +313,6 @@ public interface DocumentService {
     List<TaskAndDocument> getTasksWithDocuments(List<Task> tasks);
 
     /**
-     * Updates the status of the document ant it's compound workflows to stopped.
-     * 
-     * @param nodeRef
-     */
-    void stopDocumentPreceedingAndUpdateStatus(NodeRef nodeRef);
-
-    /**
-     * Updates the status of the document ant it's compound workflows to working.
-     * 
-     * @param nodeRef
-     */
-    void continueDocumentPreceedingAndUpdateStatus(NodeRef nodeRef);
-
-    /**
      * Ends document.
      * 
      * @param documentRef Reference to document to be ended

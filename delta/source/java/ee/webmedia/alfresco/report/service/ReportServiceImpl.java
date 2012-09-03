@@ -582,7 +582,7 @@ public class ReportServiceImpl implements ReportService {
         @Override
         public void execute(RowProvider rowProvider, NodeRef taskRef) {
             Task task = workflowService.getTaskWithoutParentAndChildren(taskRef, null, false);
-            NodeRef documentRef = generalService.getAncestorNodeRefWithType(taskRef, DocumentCommonModel.Types.DOCUMENT);
+            NodeRef documentRef = generalService.getAncestorNodeRefWithType(task.getParentNodeRef(), DocumentCommonModel.Types.DOCUMENT);
             Document document = null;
             if (documentRef != null) {
                 document = new Document(documentRef);

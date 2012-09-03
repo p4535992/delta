@@ -9,6 +9,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getEInvoiceService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFileService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getOrganizationStructureService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPrivilegeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getSignatureService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
@@ -19,6 +20,7 @@ import static ee.webmedia.alfresco.utils.ComponentUtil.getChildren;
 import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -76,6 +78,7 @@ import ee.webmedia.alfresco.common.propertysheet.modalLayer.ModalLayerComponent.
 import ee.webmedia.alfresco.common.propertysheet.modalLayer.ValidatingModalLayerComponent;
 import ee.webmedia.alfresco.common.propertysheet.renderer.HtmlButtonRenderer;
 import ee.webmedia.alfresco.common.propertysheet.renderkit.PropertySheetGridRenderer;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicBlock;
@@ -198,7 +201,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         myTasks = getWorkflowService().getMyTasksInProgress(compoundWorkflows);
         for (Task task : myTasks) {
             if (task.getHasFiles() && task.isType(WorkflowSpecificModel.Types.OPINION_TASK)) {
-                addTaskFiles(task);
+                getWorkflowService().retrieveTaskFiles(task);
             }
         }
         finishedReviewTasks = WorkflowUtil.getFinishedTasks(compoundWorkflows, WorkflowSpecificModel.Types.REVIEW_TASK);
@@ -206,11 +209,11 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         // jsp:include parameters are not taken in account in list construction if list is not nulled
         reviewNotesRichList = null;
         for (Task task : finishedOpinionTasks) {
-            addTaskFiles(task);
+            getWorkflowService().retrieveTaskFiles(task);
         }
         finishedOrderAssignmentTasks = WorkflowUtil.getFinishedTasks(compoundWorkflows, WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK);
         for (Task task : finishedOrderAssignmentTasks) {
-            addTaskFiles(task);
+            getWorkflowService().retrieveTaskFiles(task);
         }
         signatureTask = null;
         removedFiles = null;
@@ -229,12 +232,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                     taskTypes.add(type);
                 }
             }
-        }
-    }
-
-    private void addTaskFiles(Task task) {
-        if (!task.filesLoaded()) {
-            task.loadFiles(getFileService().getAllFilesExcludingDigidocSubitems(task.getNodeRef()));
         }
     }
 
@@ -465,7 +462,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     }
 
     private void addRemovedFiles(Task task) {
-        for (File taskFile : getFileService().getAllFilesExcludingDigidocSubitems(task.getNodeRef())) {
+        for (File taskFile : getFileService().getFiles(BeanHelper.getWorkflowDbService().getTaskFileNodeRefs(task.getNodeRef()))) {
             for (File file : getRemovedFiles()) {
                 if (taskFile.getNodeRef().equals(file.getNodeRef())) {
                     task.getRemovedFiles().add(taskFile.getNodeRef());
@@ -495,7 +492,13 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         Task task = workflow.addTask();
         task.setOwnerName(initiatingTask.getCreatorName());
         task.setOwnerId(initiatingTask.getCreatorId());
-        task.setOwnerEmail(initiatingTask.getOwnerEmail());
+        task.setOwnerEmail(initiatingTask.getCreatorEmail()); // updater
+        Map<QName, Serializable> creatorProps = getUserService().getUserProperties(initiatingTask.getCreatorId());
+        if (creatorProps != null) {
+            task.setOwnerJobTitle((String) creatorProps.get(ContentModel.PROP_JOBTITLE));
+            List<String> orgName = getOrganizationStructureService().getOrganizationStructurePaths((String) creatorProps.get(ContentModel.PROP_ORGID));
+            task.setOwnerOrgStructUnitProp(orgName);
+        }
         workflow.setProp(WorkflowSpecificModel.Props.RESOLUTION, reason);
         task.setProposedDueDate(newDate);
         dueDate.setHours(23);
@@ -1214,7 +1217,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         CustomChildrenCreator fileComponentCreator = new CustomChildrenCreator() {
 
             @Override
-            public List<UIComponent> createChildren(List<Object> params) {
+            public List<UIComponent> createChildren(List<Object> params, int rowCounter) {
                 List<UIComponent> components = new ArrayList<UIComponent>();
                 if (params != null) {
                     Application application = FacesContext.getCurrentInstance().getApplication();
@@ -1222,6 +1225,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                     for (Object obj : params) {
                         File file = (File) obj;
                         final UIActionLink fileLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
+                        fileLink.setId("note-file-link-" + rowCounter + "-" + fileCounter);
                         fileLink.setValue("");
                         fileLink.setTooltip(file.getDisplayName());
                         fileLink.setShowLink(false);

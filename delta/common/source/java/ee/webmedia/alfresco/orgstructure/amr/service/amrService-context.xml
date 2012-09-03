@@ -8,8 +8,6 @@
       <property name="unmarshaller" ref="xmlBeansMarshaller" />
    </bean>
 
-   <bean id="messageFactory" class="org.springframework.ws.soap.saaj.SaajSoapMessageFactory" />
-
    <bean id="AmrService" class="ee.webmedia.alfresco.orgstructure.amr.service.AMRServiceImpl" parent="abstractWebServiceTemplate">
         <property name="defaultUri" value="${amr.service.url}" />
         <property name="asutusId" value="${amr.org.id}" />

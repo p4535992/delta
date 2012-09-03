@@ -49,7 +49,6 @@ public class ClassificatorExportVO extends Classificator {
         this(classificator.getName(), allClassificatorValues);
         setDeleteEnabled(classificator.isDeleteEnabled());
         setDescription(classificator.getDescription());
-        Assert.isTrue(classificator.isAddRemoveValues(), "Classificators, that have no changable values should not be exported: " + classificator);
     }
 
     public List<ClassificatorValue> getClassificatorValues() {

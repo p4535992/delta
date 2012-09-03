@@ -130,6 +130,7 @@ import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
+import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
@@ -1647,6 +1648,7 @@ public class TestDataService implements SaveListener {
             } else {
                 taskCount = ((int) (Math.random() * 90)) + 11; // 11 - 100
             }
+            WorkflowType workflowType = BeanHelper.getWorkflowService().getWorkflowTypes().get(wfType);
             for (int j = 0; j < taskCount; j++) {
                 if (userNamesListCopy.isEmpty()) {
                     break;
@@ -1713,23 +1715,17 @@ public class TestDataService implements SaveListener {
                 props.put(WorkflowSpecificModel.Props.IS_DUE_DATE_WORKING_DAYS, null);
 
                 // for assignmentTask and confirmationTask, resolution could be filled
-                NodeRef taskRef = getNodeService().createNode(
-                        wfRef,
-                        WorkflowCommonModel.Assocs.TASK,
-                        WorkflowCommonModel.Assocs.TASK,
-                        taskType,
-                        props
-                        ).getChildRef();
-                getNodeService().addAspect(taskRef, WorkflowSpecificModel.Aspects.SEARCHABLE, null);
-                allTaskCount++;
-
+                Task task = BeanHelper.getWorkflowService().createTaskInMemory(wfRef, workflowType, props);
+                Set<QName> aspects = task.getNode().getAspects();
+                aspects.add(WorkflowSpecificModel.Aspects.SEARCHABLE);
                 // if assignmentWorkflow, then 1 task must have responsible active=true, (and 0-few can have responsible active=false)
                 if (taskType.equals(WorkflowSpecificModel.Types.ASSIGNMENT_TASK) && j == 0) {
-                    props = new HashMap<QName, Serializable>();
-                    props.put(WorkflowSpecificModel.Props.ACTIVE, Boolean.TRUE);
-                    getNodeService().addAspect(taskRef, WorkflowSpecificModel.Aspects.RESPONSIBLE, props);
+                    task.getNode().getProperties().put(WorkflowSpecificModel.Props.ACTIVE.toString(), Boolean.TRUE);
+                    aspects.add(WorkflowSpecificModel.Aspects.RESPONSIBLE);
                 }
-                BeanHelper.getWorkflowDbService().createTaskEntry(BeanHelper.getWorkflowService().getTask(taskRef, false), wfRef);
+                task.setTaskIndexInWorkflow(j);
+                BeanHelper.getWorkflowDbService().createTaskEntry(task, wfRef);
+                allTaskCount++;
             }
         }
 

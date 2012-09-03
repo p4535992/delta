@@ -304,4 +304,8 @@ public interface GeneralService {
     /** Run semaphoreCallback code quarded by given semaphore */
     <T> T runSemaphored(AdjustableSemaphore adjustableSemaphore, ExecuteCallback<T> searchCallback);
 
+    String getUniqueFileName(String fileName, List<NodeRef> filesToCheck, NodeRef... parentRefs);
+
+    String getTsquery(String input);
+
 }

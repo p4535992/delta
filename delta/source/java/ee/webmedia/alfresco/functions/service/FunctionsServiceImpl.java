@@ -141,13 +141,13 @@ public class FunctionsServiceImpl implements FunctionsService {
             log.debug("Function updated: \n" + function);
         }
 
-        reorderFunctions(function);
+        reorderFunctions(function, functionsRoot);
 
     }
 
-    private void reorderFunctions(Function function) {
+    private void reorderFunctions(Function function, NodeRef functionsRoot) {
         final int order = getFunctionOrder(function);
-        final List<Function> allFunctions = getAllFunctions();
+        final List<Function> allFunctions = getFunctions(functionsRoot);
         Collections.sort(allFunctions, new Comparator<Function>() {
 
             @Override

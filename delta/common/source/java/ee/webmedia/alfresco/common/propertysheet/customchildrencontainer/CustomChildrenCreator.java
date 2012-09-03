@@ -11,6 +11,6 @@ import javax.faces.component.UIComponent;
  */
 public interface CustomChildrenCreator {
 
-    List<UIComponent> createChildren(List<Object> params);
+    List<UIComponent> createChildren(List<Object> params, int rowCounter);
 
 }

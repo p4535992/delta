@@ -123,4 +123,8 @@ public interface DocumentTemplateService {
 
     NodeRef getReportTemplateByName(String templateName, TemplateReportType reportType);
 
+    String getDocumentServerUrlPrefix();
+
+    String getServerUrl();
+
 }

@@ -1377,19 +1377,20 @@ public class ComponentUtil {
         return new CustomChildrenCreator() {
 
             @Override
-            public List<UIComponent> createChildren(List<Object> params) {
+            public List<UIComponent> createChildren(List<Object> params, int rowCounter) {
                 List<UIComponent> components = new ArrayList<UIComponent>();
                 if (params != null) {
                     int fileCounter = 0;
                     for (Object obj : params) {
                         File file = (File) obj;
-                        final DocPermissionEvaluator evaluatorAllow = createEvaluator(application, fileCounter, "evalAllow-");
+                        final DocPermissionEvaluator evaluatorAllow = createEvaluator(application, fileCounter, "evalAllow-" + rowCounter + "-");
                         evaluatorAllow.setAllow("viewDocumentFiles");
 
                         String fileName = file.getDisplayName();
                         String imageText = file.isDigiDocContainer() ? "/images/icons/ddoc_sign_small.gif" : "/images/icons/attachment.gif";
 
                         final UIActionLink fileAllowLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
+                        fileAllowLink.setId("doc-file-link-" + rowCounter + "-" + fileCounter);
                         fileAllowLink.setValue("");
                         fileAllowLink.setTooltip(fileName);
                         fileAllowLink.setShowLink(false);
@@ -1400,12 +1401,12 @@ public class ComponentUtil {
                         ComponentUtil.addChildren(evaluatorAllow, fileAllowLink);
                         components.add(evaluatorAllow);
 
-                        final DocPermissionEvaluator evaluatorDeny = createEvaluator(application, fileCounter, "evalDeny-");
+                        final DocPermissionEvaluator evaluatorDeny = createEvaluator(application, fileCounter, "evalDeny-" + rowCounter + "-");
                         evaluatorDeny.setDeny("viewDocumentFiles");
 
                         final HtmlGraphicImage image = (HtmlGraphicImage) application.createComponent(HtmlGraphicImage.COMPONENT_TYPE);
                         image.setValue(imageText);
-                        image.setId("doc-file-img-" + fileCounter);
+                        image.setId("doc-file-img-" + rowCounter + "-" + fileCounter);
                         image.setTitle(fileName);
                         image.setRendered(file != null);
                         image.setAlt(fileName);
@@ -1414,6 +1415,7 @@ public class ComponentUtil {
                         components.add(evaluatorDeny);
                         fileCounter++;
                     }
+                    rowCounter++;
                 }
                 return components;
             }

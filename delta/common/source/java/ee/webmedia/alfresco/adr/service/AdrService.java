@@ -93,10 +93,10 @@ public interface AdrService {
     // * (arhiveerimine - ei tehta midagi, jääb ADR'i alles)
     // * hävitamine - kustutatakse ADR'ist
 
-    void addDeletedDocument(NodeRef document);
+    NodeRef addDeletedDocument(NodeRef document);
 
-    public void deleteDocumentType(QName documentType);
+    void deleteDocumentType(QName documentType);
 
-    public void addDocumentType(QName documentType);
+    void addDocumentType(QName documentType);
 
 }

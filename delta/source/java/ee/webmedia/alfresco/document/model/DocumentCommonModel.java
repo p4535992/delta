@@ -34,12 +34,6 @@ public interface DocumentCommonModel {
         QName DOCUMENT = QName.createQName(DOCCOM_URI, "document");
         QName DRAFTS = QName.createQName(DOCCOM_URI, "drafts");
         QName SEND_INFO = QName.createQName(DOCCOM_URI, "sendInfo");
-        /**
-         * Deprecated - document log is not saved under document node any more, but only in application log.
-         * Don't create new nodes of this type. Can be deleted when all existing associations have been migrated to application log (Riina).
-         */
-        @Deprecated
-        QName DOCUMENT_LOG = QName.createQName(DOCCOM_URI, "documentLog");
         QName METADATA_CONTAINER = QName.createQName(DOCCOM_URI, "metadataContainer");
         QName FAVORITE_DIRECTORY = QName.createQName(DOCCOM_URI, "favoriteDirectory");
     }
@@ -70,12 +64,6 @@ public interface DocumentCommonModel {
         /** document(activeDoc) -> document(selectedAssociatedDoc) */
         QName DOCUMENT_2_DOCUMENT = QName.createQName(DOCCOM_URI, "document2Document");
         QName SEND_INFO = QName.createQName(DOCCOM_URI, "sendInfo");
-        /**
-         * Deprecated - document log is not saved under document node any more, but only in application log.
-         * Don't create new associations of this type. Can be deleted when all existing associations have been migrated to application log (Riina).
-         */
-        @Deprecated
-        QName DOCUMENT_LOG = QName.createQName(DOCCOM_URI, "documentLog");
         QName FAVORITE = QName.createQName(DOCCOM_URI, "favorite");
         QName FAVORITE_DIRECTORY = QName.createQName(DOCCOM_URI, "favoriteDirectory");
         QName FAVORITE_DIRECTORY_ASPECT = QName.createQName(DOCCOM_URI, "favoriteDirectoryAspect");
@@ -152,10 +140,6 @@ public interface DocumentCommonModel {
          */
         QName SEND_INFO_SEND_STATUS = QName.createQName(DOCCOM_URI, "sendStatus");
         QName SEND_INFO_DVK_ID = QName.createQName(DOCCOM_URI, "dvkId");
-
-        QName CREATED_DATETIME = QName.createQName(DOCCOM_URI, "createdDateTime");
-        QName CREATOR_NAME = QName.createQName(DOCCOM_URI, "creatorName");
-        QName EVENT_DESCRIPTION = QName.createQName(DOCCOM_URI, "eventDescription");
 
         QName LEGAL_BASIS_NAME = QName.createQName(URI, "legalBasisName");
     }

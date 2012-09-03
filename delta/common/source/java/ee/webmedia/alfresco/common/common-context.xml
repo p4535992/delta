@@ -12,6 +12,8 @@
       <property name="cacheManager" ref="internalEHCacheManager" />
    </bean>
    
+   <bean id="messageFactory" class="org.springframework.ws.soap.saaj.SaajSoapMessageFactory" />
+   
    <!--
       Overrides 'global-properties' bean defined in
       alfresco/WEB-INF/classes/alfresco/core-services-context.xml
@@ -154,6 +156,12 @@
          </list>
       </property>
    </bean>
+   
+   <bean id="createTableBootstrap" class="ee.webmedia.alfresco.common.bootstrap.CreateTableBootstrap" parent="module.baseComponent" abstract="true">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dataSource" ref="dataSource" />
+   </bean>   
 
    <bean id="serializingFilter" class="ee.webmedia.alfresco.common.filter.SerializingFilter">
       <property name="enabled" value="${serializingfilter.enabled}" />
@@ -181,6 +189,11 @@
       <property name="contentService" ref="ContentService" />
       <property name="mimetypeService" ref="MimetypeService" />
       <property name="transactionService" ref="TransactionService" />
+      <property name="jdbcTemplate">
+         <bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
+            <constructor-arg ref="dataSource" />
+         </bean>
+      </property>       
    </bean>
    
    <bean id="GeneralService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -248,6 +261,7 @@
       <property name="generalService" ref="GeneralService" />
       <property name="nodeService" ref="NodeService" />
    </bean>
+   <bean id="classpathResourceResolver" class="ee.webmedia.alfresco.common.ClasspathResourceResolver" />
 
    <bean id="createContentDataIndexBootstrap" class="ee.webmedia.alfresco.common.bootstrap.CreateContentDataIndexBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="common" />
@@ -261,7 +275,7 @@
       <property name="dataSource" ref="dataSource" />
    </bean>
    
-   <bean id="createTableBootstrap" class="ee.webmedia.alfresco.common.bootstrap.CreateTableBootstrap" parent="module.baseComponent" abstract="true">
+   <bean id="executeStatementsBootstrap" class="ee.webmedia.alfresco.common.bootstrap.ExecuteStatementsBootstrap" parent="module.baseComponent" abstract="true">
       <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="true" />
       <property name="dataSource" ref="dataSource" />

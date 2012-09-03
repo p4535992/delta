@@ -171,7 +171,7 @@ public class SeriesDetailsDialog extends BaseDialogBean {
             try {
                 BeanHelper.getSeriesService().openSeries(series);
             } catch (UnableToPerformException e) {
-                MessageUtil.addErrorMessage(e.getMessage());
+                MessageUtil.addStatusMessage(e);
                 return;
             }
             MessageUtil.addInfoMessage("series_open_success");

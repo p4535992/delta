@@ -97,9 +97,22 @@ public class FileServiceImpl implements FileService {
         return getAllFiles(nodeRef, true, false);
     }
 
+    @Override
+    public List<File> getFiles(List<NodeRef> nodeRefs) {
+        List<FileInfo> fileInfos = new ArrayList<FileInfo>();
+        for (NodeRef fileRef : nodeRefs) {
+            fileInfos.add(fileFolderService.getFileInfo(fileRef));
+        }
+        return getAllFiles(fileInfos, false, false);
+    }
+
     private List<File> getAllFiles(NodeRef nodeRef, boolean includeDigidocSubitems, boolean onlyActive) {
-        List<File> files = new ArrayList<File>();
         List<FileInfo> fileInfos = fileFolderService.listFiles(nodeRef);
+        return getAllFiles(fileInfos, includeDigidocSubitems, onlyActive);
+    }
+
+    private List<File> getAllFiles(List<FileInfo> fileInfos, boolean includeDigidocSubitems, boolean onlyActive) {
+        List<File> files = new ArrayList<File>();
         for (FileInfo fi : fileInfos) {
             final File item = createFile(fi);
             boolean isDdoc = signatureService.isDigiDocContainer(item.getNodeRef());

@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
@@ -58,6 +59,8 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
     /** If null, indicates that file existence has not been checked and should not be updated in delta_task table */
     private Boolean hasFiles;
     private Boolean originalHasFiles;
+    private String parentNodeRefId;
+    private String storeRef;
 
     /**
      * Task's index in workflow during last save
@@ -555,6 +558,26 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
 
     public void setOriginalHasFiles(Boolean originalHasFiles) {
         this.originalHasFiles = originalHasFiles;
+    }
+
+    public String getParentNodeRefId() {
+        return parentNodeRefId;
+    }
+
+    public void setParentNodeRefId(String parentNodeRefId) {
+        this.parentNodeRefId = parentNodeRefId;
+    }
+
+    public String getStoreRef() {
+        return storeRef;
+    }
+
+    public void setStoreRef(String storeRef) {
+        this.storeRef = storeRef;
+    }
+
+    public NodeRef getParentNodeRef() {
+        return new NodeRef(new StoreRef(storeRef), parentNodeRefId);
     }
 
 }

@@ -99,7 +99,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     protected static final String COMP_WORKFLOW_DEFINITION_SELECTOR_ID = "comp-workflow-definition-selector";
     protected static final String COMP_WORKFLOW_DEFINITION_INPUT_ID = "comp-workflow-definition-input";
 
-    private transient HtmlPanelGroup panelGroup;
+    protected transient HtmlPanelGroup panelGroup;
     protected transient TreeMap<String, QName> sortedTypes;
 
     private OwnerSearchBean ownerSearchBean;

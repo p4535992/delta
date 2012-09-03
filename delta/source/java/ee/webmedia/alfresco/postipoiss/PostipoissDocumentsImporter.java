@@ -85,6 +85,8 @@ import ee.webmedia.alfresco.document.register.model.RegNrHolder;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.service.DocumentService.AssocType;
+import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper.ConvertException;
 import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper.DocumentValue;
 import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper.Mapping;
@@ -96,6 +98,8 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
+import ee.webmedia.alfresco.workflow.service.Task;
+import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
 /**
  * Imports documents and files from Postipoiss.
@@ -1819,6 +1823,7 @@ public class PostipoissDocumentsImporter {
         }
         boolean responsibleActiveSet = false;
         NodeRef firstTaskRef = null;
+        String firstTaskOwnerId = null;
 
         for (Object o : root.element("tegevused").elements()) {
             Element tegevus = (Element) o;
@@ -1847,12 +1852,18 @@ public class PostipoissDocumentsImporter {
                 kes = tegevus.elementText("kellelt_tekst");
             }
             String kelleleTekst = tegevus.elementText("kellele_tekst");
-            Map<QName, Serializable> props = new HashMap<QName, Serializable>();
-            props.put(DocumentCommonModel.Props.CREATED_DATETIME, kpv);
-            props.put(DocumentCommonModel.Props.CREATOR_NAME, kes);
-            props.put(DocumentCommonModel.Props.EVENT_DESCRIPTION, PostipoissDocumentsMapper.join("; ", nimetus, kelleleTekst, resolutsioon));
-            nodeService.createNode(docRef, DocumentCommonModel.Types.DOCUMENT_LOG, DocumentCommonModel.Types.DOCUMENT_LOG,
-                    DocumentCommonModel.Types.DOCUMENT_LOG, props);
+            String description = PostipoissDocumentsMapper.join("; ", nimetus, kelleleTekst, resolutsioon);
+
+            LogEntry logEntry = new LogEntry();
+            logEntry.setComputerIp("127.0.0.1");
+            logEntry.setComputerName("localhost");
+            logEntry.setLevel(LogObject.DOCUMENT.getLevel());
+            logEntry.setObjectName(LogObject.DOCUMENT.getObjectName());
+            logEntry.setCreatorId("IMPORT");
+            logEntry.setEventDescription(description);
+            logEntry.setCreatorName(kes);
+            logEntry.setObjectId(docRef.toString());
+            BeanHelper.getLogService().addImportedLogEntry(logEntry, kpv);
 
             if (!"edastamine täitmiseks".equals(nimetus)) {
                 continue;
@@ -1868,7 +1879,10 @@ public class PostipoissDocumentsImporter {
 
             Date dateTime = StringUtils.isBlank(kuupaev) ? new Date() : kpv;
             NodeRef wfRef = null;
+            int taskIndex = 0;
+            Map<QName, Serializable> props = new HashMap<QName, Serializable>();
 
+            WorkflowType workflowType = BeanHelper.getWorkflowService().getWorkflowTypes().get(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW);
             for (Element kellele : (List<Element>) tegevus.elements("kellele")) {
                 String kelleleEnimi = kellele.elementText("enimi");
                 String kellelePnimi = kellele.elementText("pnimi");
@@ -1950,36 +1964,30 @@ public class PostipoissDocumentsImporter {
                 props.put(WorkflowCommonModel.Props.COMPLETED_DATE_TIME, null);
                 props.put(WorkflowSpecificModel.Props.COMMENT, "");
 
-                NodeRef taskRef = getNodeService().createNode(
-                        wfRef,
-                        WorkflowCommonModel.Assocs.TASK,
-                        WorkflowCommonModel.Assocs.TASK,
-                        WorkflowSpecificModel.Types.ASSIGNMENT_TASK,
-                        props
-                        ).getChildRef();
-                getNodeService().addAspect(taskRef, WorkflowSpecificModel.Aspects.SEARCHABLE, null);
+                Task task = BeanHelper.getWorkflowService().createTaskInMemory(wfRef, workflowType, props);
+                Set<QName> aspects = task.getNode().getAspects();
+                aspects.add(WorkflowSpecificModel.Aspects.SEARCHABLE);
                 if (firstTaskRef == null) {
-                    firstTaskRef = taskRef;
+                    firstTaskRef = task.getNodeRef();
+                    firstTaskOwnerId = kelleleIkood;
                 }
                 if (!responsibleActiveSet && kelleleIkood.equals(docProps.get(OWNER_ID))) {
-                    props = new HashMap<QName, Serializable>();
-                    props.put(WorkflowSpecificModel.Props.ACTIVE, Boolean.TRUE);
-                    getNodeService().addAspect(taskRef, WorkflowSpecificModel.Aspects.RESPONSIBLE, props);
+                    task.getNode().getProperties().put(WorkflowSpecificModel.Props.ACTIVE.toString(), Boolean.TRUE);
+                    aspects.add(WorkflowSpecificModel.Aspects.RESPONSIBLE);
                     responsibleActiveSet = true;
                     getPrivilegeService().setPermissions(docRef, kelleleIkood, Collections.singleton(Privileges.EDIT_DOCUMENT));
                 } else {
                     getPrivilegeService().setPermissions(docRef, kelleleIkood, Collections.singleton(Privileges.VIEW_DOCUMENT_FILES));
                 }
-                BeanHelper.getWorkflowDbService().createTaskEntry(BeanHelper.getWorkflowService().getTask(taskRef, false), wfRef);
+                task.setTaskIndexInWorkflow(taskIndex++);
+                BeanHelper.getWorkflowDbService().createTaskEntry(task, wfRef);
                 docProps.put(DocumentCommonModel.Props.SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS, Boolean.TRUE);
             }
         }
         if (!responsibleActiveSet && firstTaskRef != null) {
             Map<QName, Serializable> props = new HashMap<QName, Serializable>();
             props.put(WorkflowSpecificModel.Props.ACTIVE, Boolean.TRUE);
-            getNodeService().addAspect(firstTaskRef, WorkflowSpecificModel.Aspects.RESPONSIBLE, props);
-            String ownerId = (String) getNodeService().getProperty(firstTaskRef, WorkflowCommonModel.Props.OWNER_ID);
-            getPrivilegeService().setPermissions(docRef, ownerId, Collections.singleton(Privileges.EDIT_DOCUMENT));
+            getPrivilegeService().setPermissions(docRef, firstTaskOwnerId, Collections.singleton(Privileges.EDIT_DOCUMENT));
             BeanHelper.getWorkflowDbService().updateTaskProperties(firstTaskRef, props);
         }
     }
@@ -2173,6 +2181,8 @@ public class PostipoissDocumentsImporter {
             return;
         }
         boolean skip = false;
+
+        // Check that reverse-direction associations are not previously defined, otherwise it is a business rule failure
         List<AssociationRef> targetAssocs = nodeService.getSourceAssocs(sourceDocRef, assocTypeQName);
         for (AssociationRef assocRef : targetAssocs) {
             Assert.isTrue(assocRef.getTargetRef().equals(sourceDocRef), "targetDocRef=" + targetDocRef + ", sourceDocRef=" + sourceDocRef + ", assocRef=" + assocRef);
@@ -2207,6 +2217,39 @@ public class PostipoissDocumentsImporter {
                 }
             }
         }
+
+        // Check that same-direction associations are not previously defined, otherwise nodeService.createAssociation throws AssociationExistsException
+        targetAssocs = nodeService.getSourceAssocs(targetDocRef, assocTypeQName);
+        for (AssociationRef assocRef : targetAssocs) {
+            Assert.isTrue(assocRef.getTargetRef().equals(targetDocRef), "targetDocRef=" + targetDocRef + ", sourceDocRef=" + sourceDocRef + ", assocRef=" + assocRef);
+            log.debug("Existing target-assoc [" + assocRef.getSourceRef() + "] -> [" + assocRef.getTargetRef() + "], type=" + assocRef.getTypeQName());
+            if ((sourceDocRef.equals(assocRef.getSourceRef()) && targetDocRef.equals(assocRef.getTargetRef())) ||
+                    (targetDocRef.equals(assocRef.getSourceRef()) && sourceDocRef.equals(assocRef.getTargetRef()))) {
+                if (assocType == AssocType.DEFAULT) {
+                    log.debug("Skipping this assoc creation");
+                    skip = true;
+                } else {
+                    throw new RuntimeException("Non-default assoc cannot previously exist - existing target-assoc ["
+                            + assocRef.getSourceRef() + "] -> [" + assocRef.getTargetRef() + "], type=" + assocRef.getTypeQName());
+                }
+            }
+        }
+        sourceAssocs = nodeService.getTargetAssocs(sourceDocRef, assocTypeQName);
+        for (AssociationRef assocRef : sourceAssocs) {
+            Assert.isTrue(assocRef.getSourceRef().equals(sourceDocRef), "targetDocRef=" + targetDocRef + ", sourceDocRef=" + sourceDocRef + ", assocRef=" + assocRef);
+            log.debug("Existing source-assoc [" + assocRef.getSourceRef() + "] -> [" + assocRef.getTargetRef() + "], type=" + assocRef.getTypeQName());
+            if ((sourceDocRef.equals(assocRef.getSourceRef()) && targetDocRef.equals(assocRef.getTargetRef())) ||
+                    (targetDocRef.equals(assocRef.getSourceRef()) && sourceDocRef.equals(assocRef.getTargetRef()))) {
+                if (assocType == AssocType.DEFAULT) {
+                    log.debug("Skipping this assoc creation");
+                    skip = true;
+                } else {
+                    throw new RuntimeException("Non-default assoc cannot previously exist - existing source-assoc ["
+                            + assocRef.getSourceRef() + "] -> [" + assocRef.getTargetRef() + "], type=" + assocRef.getTypeQName());
+                }
+            }
+        }
+
         // if (targetAssocs == null || targetAssocs.isEmpty()) {
         if (!skip) {
             nodeService.createAssociation(sourceDocRef, targetDocRef, assocTypeQName);

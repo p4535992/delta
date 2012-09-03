@@ -1,5 +1,8 @@
 package ee.webmedia.alfresco.workflow.model;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.alfresco.service.namespace.QName;
 
 /**
@@ -13,6 +16,7 @@ public interface WorkflowSpecificModel {
     public QName[] CAN_START_PARALLEL = new QName[] { WorkflowSpecificModel.Types.OPINION_WORKFLOW
             , WorkflowSpecificModel.Types.INFORMATION_WORKFLOW, WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW
             , WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW };
+    public List<QName> RESPONSIBLE_TASK_WORKFLOW_TYPES = Arrays.asList(Types.ASSIGNMENT_WORKFLOW, Types.ORDER_ASSIGNMENT_WORKFLOW);
 
     interface Types {
         /** Täitmiseks */
@@ -56,9 +60,17 @@ public interface WorkflowSpecificModel {
     }
 
     interface Assocs {
-        /** task -> dueDateExtensionTask task */
+        /**
+         * DEPRECATED: do not create new assocs of that type; taskDueDateExtension info should be saved in delta_task_due_date_extension_assoc table only.
+         * task -> dueDateExtensionTask task
+         */
+        @Deprecated
         QName TASK_DUE_DATE_EXTENSION = QName.createQName(URI, "taskDueDateExtension");
-        /** task -> dueDateExtensionTaskHistory record */
+        /**
+         * DEPRECATED: do not create new assocs of that type; taskDueDateHistory info should be saved in delta_task_due_date_history table only.
+         * task -> dueDateExtensionTaskHistory record
+         */
+        @Deprecated
         QName TASK_DUE_DATE_EXTENSION_HISTORY = QName.createQName(URI, "taskDueDateExtensionHistory");
     }
 

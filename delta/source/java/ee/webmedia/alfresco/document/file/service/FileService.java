@@ -149,4 +149,6 @@ public interface FileService {
 
     NodeRef findSubfolderWithName(NodeRef parentNodeRef, String folderName, QName subfolderType);
 
+    List<File> getFiles(List<NodeRef> taskFileNodeRefs);
+
 }
