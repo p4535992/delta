@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="vol:volumeModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+      <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
+      <import uri="http://alfresco.webmedia.ee/model/document/common/1.0" prefix="doccom" />
+      <import uri="http://alfresco.webmedia.ee/model/case/1.0" prefix="case" />
+      <import uri="http://alfresco.webmedia.ee/model/document/dynamic/1.0" prefix="docdyn" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/volume/1.0" prefix="vol" />
+   </namespaces>
+
+   <types>
+      <type name="vol:deletedDocument">
+         <parent>sys:base</parent>
+         <properties>
+            <property name="vol:actor">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="vol:deletedDateTime">
+               <type>d:date</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="vol:documentData">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="vol:comment">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+         </properties>
+      </type>
+   
+      <type name="vol:volume">
+         <parent>sys:base</parent>
+         <properties>
+            <property name="docdyn:title">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="docdyn:containsCases">
+               <type>d:boolean</type>
+            </property>
+            <property name="docdyn:casesCreatableByUser">
+               <type>d:boolean</type>
+            </property>
+            <property name="docdyn:description">
+               <type>d:text</type>
+            </property>
+            <property name="docdyn:status">
+               <type>d:text</type>
+            </property>
+            <property name="docdyn:validFrom">
+               <type>d:date</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="docdyn:validTo">
+               <type>d:date</type>
+            </property>
+            <property name="docdyn:dispositionDate">
+               <type>d:date</type>
+            </property>
+            <property name="docdyn:volumeType">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="docdyn:volumeMark">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="docdyn:sendToDestruction">
+                <type>d:boolean</type>
+            </property>
+             <property name="docdyn:archivingNote">
+                 <type>d:text</type>
+             </property>
+             <property name="docdyn:containingDocsCount">
+               <type>d:int</type>
+               <default>0</default>
+            </property>
+         </properties>
+         <associations><!-- Volumes can have either documents as direct children or cases as children with documents -->
+            <child-association name="vol:deletedDocument">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>vol:deletedDocument</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+            <child-association name="case:case">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>case:case</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+         <mandatory-aspects>
+            <aspect>doccom:documentContainer</aspect>
+            <aspect>doccom:documentRegNumbersContainer</aspect>
+         </mandatory-aspects>
+      </type>
+   </types>
+
+</model>

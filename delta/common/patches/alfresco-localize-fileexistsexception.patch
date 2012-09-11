@@ -1,0 +1,61 @@
+Index: source/java/org/alfresco/service/cmr/model/FileExistsException.java
+===================================================================
+--- source/java/org/alfresco/service/cmr/model/FileExistsException.java	(revision 141908)
++++ source/java/org/alfresco/service/cmr/model/FileExistsException.java	(revision 141909)
+@@ -24,6 +24,7 @@
+  */
+ package org.alfresco.service.cmr.model;
+ 
++import org.alfresco.i18n.I18NUtil;
+ import org.alfresco.service.cmr.repository.NodeRef;
+ 
+ /**
+@@ -36,14 +37,14 @@
+ {
+     private static final long serialVersionUID = -4133713912784624118L;
+     
++    private static final String ERR_EXISTING_FILE_FOLDER = "system.err.existing_file_folder";
++
+     private NodeRef parentNodeRef;
+     private String name;
+ 
+     public FileExistsException(NodeRef parentNodeRef, String name)
+     {
+-        super("Existing file or folder " +
+-                name +
+-                " already exists");
++        super(I18NUtil.getMessage(ERR_EXISTING_FILE_FOLDER, name));
+         this.parentNodeRef = parentNodeRef;
+         this.name = name;
+     }
+Index: source/java/ee/webmedia/alfresco/common/system-messages_en_US.properties
+===================================================================
+--- source/java/ee/webmedia/alfresco/common/system-messages_en_US.properties	(revision 0)
++++ source/java/ee/webmedia/alfresco/common/system-messages_en_US.properties	(revision 141909)
+@@ -0,0 +1 @@
++system.err.existing_file_folder=File or folder {0} already exists
+Index: source/java/ee/webmedia/alfresco/common/system-messages_et_EE.properties
+===================================================================
+--- source/java/ee/webmedia/alfresco/common/system-messages_et_EE.properties	(revision 0)
++++ source/java/ee/webmedia/alfresco/common/system-messages_et_EE.properties	(revision 141909)
+@@ -0,0 +1 @@
++system.err.existing_file_folder=Fail v\u00F5i kaust {0} juba eksisteerib
+Index: source/java/ee/webmedia/alfresco/common/common-context.xml
+===================================================================
+--- source/java/ee/webmedia/alfresco/common/common-context.xml	(revision 141908)
++++ source/java/ee/webmedia/alfresco/common/common-context.xml	(revision 141909)
+@@ -58,6 +58,14 @@
+       </property>
+    </bean>
+ 
++   <bean id="commonResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
++      <property name="resourceBundles">
++         <list>
++            <value>ee.webmedia.alfresco.common.system-messages</value>
++         </list>
++      </property>
++   </bean>
++
+    <bean id="commonTransactionInterceptor" class="org.springframework.transaction.interceptor.TransactionInterceptor">
+       <property name="transactionManager" ref="transactionManager" />
+       <property name="transactionAttributes">

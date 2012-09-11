@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <bean id="userModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap">
+      <property name="models">
+         <list>
+            <value>ee/webmedia/alfresco/user/model/userModel.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="userService" class="ee.webmedia.alfresco.user.service.UserServiceImpl">
+      <property name="authenticationService" ref="AuthenticationService" />
+      <property name="authorityService" ref="AuthorityService" />
+      <property name="generalService" ref="GeneralService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="dictionaryService" ref="DictionaryService" />
+      <property name="searchService" ref="SearchService" />
+      <property name="personService" ref="PersonService" />
+      <property name="permissionService" ref="PermissionService" />
+      <property name="organizationStructureService" ref="OrganizationStructureService" />
+      <property name="configurableService" ref="ConfigurableService" />
+      <property name="namespaceService" ref="NamespaceService" />
+      <property name="logService" ref="LogService" />
+      <property name="groupsEditingAllowed" value="${groups.editingAllowed}" />
+   </bean>
+
+   <bean id="userResourceBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">
+      <property name="resourceBundles">
+         <list>
+            <value>ee.webmedia.alfresco.user.web.user-webclient</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="userSystemResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+      <property name="resourceBundles">
+         <list>
+            <value>ee.webmedia.alfresco.user.system-messages</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="UserService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.user.service.UserService</value>
+         </list>
+      </property>
+      <property name="target" ref="userService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+   
+   <bean class="ee.webmedia.alfresco.user.web.MyFavoritesMenuItemProcessor">
+      <property name="menuService" ref="MenuService" />
+   </bean>
+   
+   <!-- Set all existing users' notification properties to TRUE (all users get all available e-mail notifications as default settings)
+       FIXME: from Riina - NB! This updater MUST NOT run when migrating from 2.5 to 3.*!!! -->
+   <bean id="notificationPreferencesUpdater" class="ee.webmedia.alfresco.user.bootstrap.NotificationPreferencesUpdater" parent="module.baseComponent" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+   </bean>
+
+</beans>

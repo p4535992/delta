@@ -1,0 +1,115 @@
+r17141 | derekh | 2009-10-23 19:21:16 +0300 (R, 23 okt   2009) | 3 lines
+
+Fix ETHREEOH-3088: Cut/Paste into self causes stack overflow
+* Walking tree to fix ACLs was walking back into source node
+
+Index: alfresco/BRANCHES/V3.1/root/projects/repository/source/java/org/alfresco/repo/model/filefolder/FileFolderServiceImplTest.java
+===================================================================
+--- alfresco/BRANCHES/V3.1/root/projects/repository/source/java/org/alfresco/repo/model/filefolder/FileFolderServiceImplTest.java	(revision 17140)
++++ alfresco/BRANCHES/V3.1/root/projects/repository/source/java/org/alfresco/repo/model/filefolder/FileFolderServiceImplTest.java	(revision 17141)
+@@ -51,6 +51,7 @@
+ import org.alfresco.service.cmr.model.FileNotFoundException;
+ import org.alfresco.service.cmr.repository.ContentReader;
+ import org.alfresco.service.cmr.repository.ContentWriter;
++import org.alfresco.service.cmr.repository.CyclicChildRelationshipException;
+ import org.alfresco.service.cmr.repository.NodeRef;
+ import org.alfresco.service.cmr.repository.NodeService;
+ import org.alfresco.service.cmr.repository.StoreRef;
+@@ -685,4 +686,20 @@
+         FileFolderServiceType type = fileFolderService.getType(ContentModel.TYPE_FOLDER);
+         assertEquals("Type incorrect for folder", FileFolderServiceType.FOLDER, type);
+     }
++    
++    public void testETHREEOH_3088_MoveIntoSelf() throws Exception
++    {
++        FileInfo folderInfo = fileFolderService.create(workingRootNodeRef, "NotGood.txt", ContentModel.TYPE_FOLDER);
++        NodeRef folderNodeRef = folderInfo.getNodeRef();
++        // Move into self
++        try
++        {
++            fileFolderService.move(folderNodeRef, folderNodeRef, null);
++            fail("Failed to detect cyclic relationship");
++        }
++        catch (CyclicChildRelationshipException e)
++        {
++            // Expected
++        }
++    }
+ }
+Index: alfresco/BRANCHES/V3.1/root/projects/repository/source/java/org/alfresco/repo/node/db/hibernate/HibernateNodeDaoServiceImpl.java
+===================================================================
+--- alfresco/BRANCHES/V3.1/root/projects/repository/source/java/org/alfresco/repo/node/db/hibernate/HibernateNodeDaoServiceImpl.java	(revision 17140)
++++ alfresco/BRANCHES/V3.1/root/projects/repository/source/java/org/alfresco/repo/node/db/hibernate/HibernateNodeDaoServiceImpl.java	(revision 17141)
+@@ -97,6 +97,7 @@
+ import org.alfresco.service.cmr.repository.AssociationExistsException;
+ import org.alfresco.service.cmr.repository.AssociationRef;
+ import org.alfresco.service.cmr.repository.ChildAssociationRef;
++import org.alfresco.service.cmr.repository.CyclicChildRelationshipException;
+ import org.alfresco.service.cmr.repository.DuplicateChildNodeNameException;
+ import org.alfresco.service.cmr.repository.EntityRef;
+ import org.alfresco.service.cmr.repository.InvalidNodeRefException;
+@@ -2145,7 +2146,7 @@
+                         }
+                         else if (aclProperties.getAclType() == ACLType.SHARED)
+                         {
+-                            setFixedAcls(childNodeId, inheritedAclId, true);
++                            setFixedAcls(childNodeId, inheritedAclId, true, null);
+                         }
+                     }
+                     else
+@@ -2171,7 +2172,7 @@
+                 {
+                     Long parentAcl = newParentNode.getAccessControlList().getId();
+                     Long inheritedAcl = aclDaoComponent.getInheritedAccessControlList(parentAcl);
+-                    setFixedAcls(childNodeId, inheritedAcl, true);
++                    setFixedAcls(childNodeId, inheritedAcl, true, null);
+                 } 
+             }
+         }
+@@ -2184,16 +2185,23 @@
+      * This code is here, and not in another DAO, in order to avoid unnecessary circular callbacks
+      * and cyclical dependencies.  It would be nice if the ACL code could be separated (or combined)
+      * but the node tree walking code is best done right here.
+-     * 
+-     * @param nodeRef
+-     * @param mergeFromAclId
+-     * @param set
+      */
+     private void setFixedAcls(
+             final Long nodeId,
+             final Long mergeFromAclId,
+-            final boolean set)
++            final boolean set,
++            Set<Long> processedNodes)
+     {
++        // ETHREEOH-3088: Cut/Paste into same hierarchy
++        if (processedNodes == null)
++        {
++            processedNodes = new HashSet<Long>(3);
++        }
++        if (!processedNodes.add(nodeId))
++        {
++            throw new CyclicChildRelationshipException("Node has been pasted into its own tree.", null);
++        }
++        
+         Node mergeFromNode = getNodeNotNull(nodeId);
+         
+         if (set)
+@@ -2228,7 +2236,7 @@
+ 
+             if (acl == null)
+             {
+-                setFixedAcls(childNodeId, mergeFromAclId, true);
++                setFixedAcls(childNodeId, mergeFromAclId, true, processedNodes);
+             }
+             else if (acl.getAclType() == ACLType.LAYERED)
+             {
+@@ -2242,7 +2250,7 @@
+             }
+             else
+             {
+-                    setFixedAcls(childNodeId, mergeFromAclId, true);
++                setFixedAcls(childNodeId, mergeFromAclId, true, processedNodes);
+             }
+         }
+     }

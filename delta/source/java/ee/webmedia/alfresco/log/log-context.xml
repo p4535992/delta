@@ -1,0 +1,116 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <!-- REPOSITORY -->
+
+   <bean parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap">
+      <property name="models">
+         <list>
+            <value>ee/webmedia/alfresco/log/model/logSearchModel.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="logTableBootstrap2" class="ee.webmedia.alfresco.log.bootstrap.LogTableBootstrap" parent="createTableBootstrap" />
+
+   <bean id="logTableBootstrapFix" class="ee.webmedia.alfresco.log.bootstrap.LogTableBootstrapFix" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="logTableBootstrap2" />
+         </list>
+      </property>
+      <property name="dataSource" ref="dataSource" />
+   </bean>
+
+   <bean id="logDateAndSequenceBootstrap" class="ee.webmedia.alfresco.log.bootstrap.LogDateAndSequenceBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="logTableBootstrapFix" />
+         </list>
+      </property>
+      <property name="dataSource" ref="dataSource" />
+   </bean>
+
+   <bean id="logSequenceInitBootstrap" class="ee.webmedia.alfresco.log.bootstrap.LogSequenceInitBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="logDateAndSequenceBootstrap" />
+         </list>
+      </property>
+      <property name="dataSource" ref="dataSource" />
+   </bean>
+
+   <!-- SERVICE -->
+
+   <bean id="logService" class="ee.webmedia.alfresco.log.service.LogServiceImpl">
+      <property name="jdbcTemplate">
+         <bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
+            <constructor-arg ref="dataSource" />
+         </bean>
+      </property>
+      <property name="useClientIpFromXForwardedForHttpHeader" value="${useClientIpFromXForwardedForHttpHeader}" />
+   </bean>
+
+   <bean id="LogService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.log.service.LogService</value>
+         </list>
+      </property>
+      <property name="target" ref="logService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="moveDocumentAndSeriesLogToAppLog2" class="ee.webmedia.alfresco.log.bootstrap.MoveDocumentAndSeriesLogToAppLog" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+            <ref bean="logSequenceInitBootstrap" />
+         </list>
+      </property>
+   </bean>   
+
+   <!-- WEB/JSF -->
+
+   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
+      <property name="resourceBundles">
+         <list>
+            <value>ee/webmedia/alfresco/log/web/log-webclient</value>
+         </list>
+      </property>
+   </bean>
+ 
+   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+      <property name="resourceBundles">
+         <list>
+            <value>ee.webmedia.alfresco.log.web.app-log</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="logWebClientConfigBootstrap" class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
+      <property name="configs">
+         <list>
+            <value>classpath:ee/webmedia/alfresco/log/web/log-web-client-config.xml</value>
+         </list>
+      </property>
+   </bean>
+ 
+   <bean id="ApplicationLogDialog" class="ee.webmedia.alfresco.log.web.ApplicationLogDialog" scope="session" />
+ 
+   <bean id="ApplicationLogListDialog" class="ee.webmedia.alfresco.log.web.ApplicationLogListDialog" scope="session" />
+
+</beans>

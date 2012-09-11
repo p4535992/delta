@@ -1,0 +1,551 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="doccom:documentCommonModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+      <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
+      <import uri="http://alfresco.webmedia.ee/model/workflow/common/1.0" prefix="wfc" />
+      <import uri="http://alfresco.webmedia.ee/model/privilege/1.0" prefix="priv" />
+      <import uri="http://alfresco.webmedia.ee/model/document/admin/1.0" prefix="docadmin" />
+      <import uri="http://alfresco.webmedia.ee/model/document/dynamic/1.0" prefix="docdyn" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/document/common/1.0" prefix="doccom" />
+      <namespace uri="temp" prefix="temp" />
+   </namespaces>
+
+   <types>
+
+      <type name="doccom:document">
+         <parent>cm:folder</parent>
+         <archive>true</archive>
+         <!-- TODO FIXME Temporary properties for CL 188299 -->
+         <properties>
+            <property name="docdyn:regDateTime">
+               <type>d:datetime</type>
+            </property>
+            <property name="docdyn:accessRestrictionBeginDate">
+               <type>d:date</type>
+            </property><property name="docdyn:accessRestrictionEndDate">
+               <type>d:date</type>
+            </property>
+         </properties>
+         <associations>
+            <association name="doccom:reply">
+               <source>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </source>
+               <target>
+                  <class>doccom:document</class>
+                  <mandatory>false</mandatory>
+                  <many>false</many>
+               </target>
+            </association>
+            <association name="doccom:followUp">
+               <source>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </source>
+               <target>
+                  <class>doccom:document</class>
+                  <mandatory>false</mandatory>
+                  <many>false</many>
+               </target>
+            </association>
+            <association name="doccom:document2Document">
+               <source>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </source>
+               <target>
+                  <class>doccom:document</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </association>
+            <child-association name="doccom:sendInfo">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>doccom:sendInfo</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+          
+         <!-- Deprecated - document log is not saved under document node any more, but only in application log.
+          Don't create new associations of this type. Can be deleted when all existing associations have been migrated to application log (Riina). -->
+            <child-association name="doccom:documentLog">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>doccom:documentLog</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+            <!-- FIXME: remove the following child-association after all existing static documents are migrated to dynamic documents -->
+            <child-association name="doccom:metadataContainer">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>doccom:metadataContainer</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+         <mandatory-aspects>
+            <aspect>docadmin:object</aspect>
+            <aspect>wfc:compoundWorkflowContainer</aspect>
+            <aspect>priv:userGroupMapping</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="doccom:drafts">
+         <parent>sys:base</parent>
+         <mandatory-aspects>
+            <aspect>doccom:documentContainer</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <!-- Currently child-nodes are not directly doccom:metadataContainer type, but one of its subtypes;
+           this is because different child nodes are referenced by assocTypeQName
+      -->
+      <!-- XXX Actually, it would be a more general solution to reference differenct subnodes by assocQName
+           * then we could use the same fieldgroup multiple times on one documentType 
+           * we could get rid of different child-node types, child-assoc types and container aspects
+      -->
+      <type name="doccom:metadataContainer">
+         <parent>sys:base</parent>
+         <mandatory-aspects>
+            <aspect>docadmin:object</aspect>
+         </mandatory-aspects>
+      </type>
+
+       <type name="doccom:scannedDocs">
+           <parent>sys:base</parent>
+       </type>
+
+      <type name="doccom:sendInfo">
+         <parent>sys:base</parent>
+         <properties>
+            <property name="doccom:recipient">
+               <type>d:text</type>
+               <mandatory enforced="false">true</mandatory>
+            </property>
+            <property name="doccom:recipientRegNr">
+               <type>d:text</type>
+            </property>
+            <property name="doccom:sendDateTime">
+               <type>d:datetime</type>
+               <mandatory enforced="false">true</mandatory>
+            </property>
+            <property name="doccom:sendMode">
+               <type>d:text</type>
+            </property>
+            <property name="doccom:sendStatus">
+               <type>d:text</type>
+               <mandatory enforced="false">true</mandatory>
+            </property>
+            <property name="doccom:dvkId">
+               <type>d:text</type>
+            </property>
+            <property name="doccom:resolution">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </type>
+      
+      <!-- Deprecated - document log is not saved under document node any more, but only in application log.
+           Don't create new nodes of this type. Can be deleted when all existing associations have been migrated to application log (Riina). -->
+      <type name="doccom:documentLog">
+         <parent>sys:base</parent>
+         <mandatory-aspects>
+            <aspect>doccom:documentLogAspect</aspect>
+         </mandatory-aspects>
+      </type>
+      
+      <type name="doccom:favoriteDirectory">
+         <mandatory-aspects>
+            <aspect>doccom:favoriteContainer</aspect>
+         </mandatory-aspects>
+      </type>
+   </types>
+
+   <aspects>
+
+      <aspect name="doccom:documentLogAspect">
+         <properties>
+            <property name="doccom:createdDateTime">
+               <type>d:date</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="doccom:creatorName">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="doccom:eventDescription">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="doccom:favoriteContainer">
+         <associations>
+            <association name="doccom:favorite">
+               <source>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </source>
+               <target>
+                  <class>doccom:document</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </association>
+         </associations>
+      </aspect>
+      
+      <aspect name="doccom:favoriteDirectoryAspect">
+         <associations>
+            <child-association name="doccom:favoriteDirectory">
+               <source>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </source>
+               <target>
+                  <class>doccom:favoriteDirectory</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
+
+      <aspect name="doccom:documentRegNumbersContainer">
+         <properties>
+            <property name="doccom:documentRegNumbers">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="doccom:documentContainer">
+         <associations>
+            <child-association name="doccom:document">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>doccom:document</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
+
+      <!-- Duplicates some information on document for search purposes -->
+      <aspect name="doccom:searchable">
+         <properties>
+            <!-- Document's function and series noderefs are duplicated here, because we need to use them during lucene search -->
+            <property name="doccom:fileNames">
+               <type>d:text</type>
+               <multiple>true</multiple>
+               <index enabled="true">
+                  <atomic>true</atomic>
+                  <stored>false</stored>
+                  <tokenised>both</tokenised>
+               </index>
+            </property>
+            <property name="doccom:fileContents">
+               <type>d:content</type>
+               <index enabled="true">
+                  <atomic>true</atomic>
+                  <stored>false</stored>
+                  <tokenised>true</tokenised>
+               </index>
+            </property>
+            <property name="doccom:searchableSendMode">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+<!--
+            <property name="doccom:searchableCostManager">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="doccom:searchableApplicantName">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="doccom:searchableErrandBeginDate">
+               <type>d:date</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="doccom:searchableErrandEndDate">
+               <type>d:date</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="doccom:searchableErrandCountry">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="doccom:searchableErrandCounty">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="doccom:searchableErrandCity">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="doccom:searchablePartyName">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="doccom:searchableSubNodeProperties">
+               <type>d:text</type>
+            </property>
+-->
+            <property name="doccom:searchableHasStartedCompoundWorkflows">
+               <type>d:boolean</type>
+            </property>
+            <property name="doccom:searchableHasAllFinishedCompoundWorkflows">
+               <type>d:boolean</type>
+            </property>
+            <property name="doccom:searchableFund">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="doccom:searchableFundsCenter">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property> 
+            <property name="doccom:searchableEaCommitmentItem">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="doccom:forumParticipants">
+         <properties>
+            <property name="doccom:forumParticipants">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+         </properties>
+      </aspect>      
+
+      <!-- Needed for series -->
+      <aspect name="doccom:accessRights">
+         <properties>
+            <property name="doccom:accessRestriction"><!-- Juurdepääsupiirang -->
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+               <!-- Valik klassifikaatori väärtuste hulgast -->
+            </property>
+            <property name="doccom:accessRestrictionReason"><!-- Juurdepääsupiirangu alus -->
+               <type>d:text</type>
+               <!-- Valik klassifikaatori väärtuste hulgast -->
+            </property>
+            <property name="doccom:accessRestrictionBeginDate"><!-- Kehtiv alates -->
+               <type>d:date</type>
+            </property>
+            <property name="doccom:accessRestrictionEndDate"><!-- Kehtiv kuni -->
+               <type>d:date</type>
+            </property>
+            <property name="doccom:accessRestrictionEndDesc"><!-- Kehtiv kuni kirjeldus -->
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+
+   <!-- ============================================================================================================= -->
+   <!-- FIXME: remove the following definitions after all existing static documents are migrated to dynamic documents -->
+
+      <aspect name="doccom:common">
+         <properties>
+            <property name="doccom:function">
+               <type>d:noderef</type>
+            </property>
+            <property name="doccom:series">
+               <type>d:noderef</type>
+            </property>
+            <property name="doccom:volume">
+               <type>d:noderef</type>
+            </property>
+            <property name="doccom:case">
+               <type>d:noderef</type>
+            </property>
+            <property name="doccom:docName"><!-- Pealkiri -->
+               <type>d:text</type>
+               <mandatory enforced="false">true</mandatory>
+            </property>
+            <property name="doccom:regNumber"><!-- Viit -->
+               <type>d:text</type>
+            </property>
+            <property name="doccom:shortRegNumber"><!-- Registreerimisnumber -->
+               <type>d:text</type>
+            </property>
+            <property name="doccom:individualNumber"><!-- Registreerimisnumber -->
+               <type>d:text</type>
+            </property>
+            <property name="doccom:regDateTime"><!-- Registreerimise kuupäev -->
+               <type>d:datetime</type>
+            </property>
+            <property name="doccom:docStatus"><!-- Staatus -->
+               <type>d:text</type>
+               <!-- Väärtus võetakse klassifikaatorist, väli on metaandmete muutmise vaates alati readonly. -->
+               <default>töös</default>
+            </property>
+            <property name="doccom:comment"><!-- Täiendav info -->
+               <type>d:text</type>
+            </property>
+            <property name="doccom:storageType"><!-- Teabekandja -->
+               <type>d:text</type>
+               <mandatory enforced="false">true</mandatory>
+               <!-- Valik klassifikaatori väärtuste hulgast -->
+            </property>
+            <property name="doccom:keywords"><!-- Märksõnad -->
+               <type>d:text</type>
+            </property>
+         </properties>
+         <mandatory-aspects>
+            <aspect>doccom:owner</aspect>
+            <aspect>doccom:accessRights</aspect>
+         </mandatory-aspects>
+      </aspect>
+            
+      <aspect name="doccom:sendDesc">
+         <!-- Välja saatmise selgitus -->
+         <properties>
+            <property name="doccom:sendDescValue">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="doccom:owner">
+         <!--
+            Valik DHS kasutajate hulgast (kõik gruppi kuuluvad väljad täidetakse valitud kasutaja andmetega)
+            või sisestatakse tekstina va. prevoiusOwnerId väli
+         -->
+         <properties>
+            <property name="doccom:ownerName"><!-- Koostaja -->
+               <type>d:text</type>
+               <mandatory enforced="false">true</mandatory>
+            </property>
+            <property name="doccom:ownerId"><!-- Koostaja isikukood -->
+               <type>d:text</type>
+               <mandatory enforced="false">true</mandatory>
+               <index enabled="true">
+                  <atomic>true</atomic>
+                  <stored>false</stored>
+                  <tokenised>false</tokenised><!-- default was true -->
+               </index>
+            </property>
+            <property name="doccom:ownerJobTitle"><!-- Koostaja ametinimetus -->
+               <type>d:text</type>
+            </property>
+            <property name="doccom:ownerOrgStructUnit"><!-- Koostaja osakond -->
+               <type>d:text</type>
+               <multiple>true</multiple><!-- dynamic documents have multi-valued, old static documents have single-valued -->
+            </property>
+            <property name="doccom:ownerEmail"><!-- Koostaja e-post -->
+               <type>d:text</type>
+            </property>
+            <property name="doccom:ownerPhone"><!-- Koostaja telefon -->
+               <type>d:text</type>
+            </property>
+            <property name="doccom:previousOwnerId"><!-- Eelmise omaniku ownerId vastutuse tagasivõtmise jaoks -->
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="doccom:recipient">
+         <!--
+            Valik kontaktandmebaasist (kõik gruppi kuuluvad väljad täidetakse valitud konktakti andmetega)
+            või sisestatakse tekstina
+         -->
+         <properties>
+            <property name="doccom:recipientName"><!-- Adressaat -->
+               <type>d:text</type>
+               <multiple>true</multiple>
+               <default></default>
+            </property>
+            <property name="doccom:recipientEmail"><!-- Adressaadi e-post -->
+               <type>d:text</type>
+               <multiple>true</multiple>
+               <default></default>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="doccom:additionalRecipient">
+         <!--
+            Valik kontaktandmebaasist (kõik gruppi kuuluvad väljad täidetakse valitud konktakti andmetega)
+            või sisestatakse tekstina
+         -->
+         <properties>
+            <property name="doccom:additionalRecipientName"><!-- Lisaadressaat -->
+               <type>d:text</type>
+               <multiple>true</multiple>
+               <default></default>
+            </property>
+            <property name="doccom:additionalRecipientEmail"><!-- Lisaadressaadi e-post -->
+               <type>d:text</type>
+               <multiple>true</multiple>
+               <default></default>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="doccom:signer">
+         <properties>
+            <property name="doccom:signerJobTitle"><!-- Allkirjastaja ametinimetus -->
+               <type>d:text</type>
+            </property>
+         </properties>
+         <mandatory-aspects>
+            <aspect>doccom:signerName</aspect>
+         </mandatory-aspects>
+      </aspect>
+      
+      <aspect name="doccom:signerName">
+         <!--
+            Valik DHS kasutajate hulgast (kõik gruppi kuuluvad väljad täidetakse valitud kasutaja andmetega)
+            või sisestatakse tekstina
+         -->
+         <properties>
+            <property name="doccom:signerName"><!-- Allkirjastaja -->
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>  
+      
+      <aspect name="doccom:legalBasis">
+         <properties>
+            <property name="doccom:legalBasisName">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>      
+
+   </aspects>
+
+</model>

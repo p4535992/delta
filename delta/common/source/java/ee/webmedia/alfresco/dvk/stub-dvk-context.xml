@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <!-- import this file from subproject spring context file dvk-<projectName>-context.xml using
+      <import resource="classpath:ee/webmedia/alfresco/dvk/stub-dvk-context.xml" />
+    -->
+   <bean id="stubDhlXTeeService" class="ee.webmedia.xtee.client.dhl.DhlXTeeServiceImplFSStub" init-method="init">
+      <property name="xTeeServiceConfigurationProvider" ref="xTeeServiceConfigurationProvider" />
+      <property name="xTeeConsumer" ref="xTeeConsumer" />
+   </bean>
+
+  <bean id="stubDvkService" parent="dvkService">
+    <property name="dhlXTeeService" ref="stubDhlXTeeService" />
+  </bean>
+
+  <bean id="StubDvkService" class="org.springframework.aop.framework.ProxyFactoryBean">
+    <property name="proxyInterfaces">
+      <list>
+        <value>ee.webmedia.alfresco.dvk.service.DvkService</value>
+      </list>
+    </property>
+    <property name="target" ref="stubDvkService" />
+    <property name="interceptorNames">
+      <list>
+        <idref bean="commonTransactionInterceptor" />
+      </list>
+    </property>
+  </bean>
+
+</beans>

@@ -1,0 +1,123 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <bean id="renameOldPrimaryArchivalsRootBootstrap" class="ee.webmedia.alfresco.archivals.bootstrap.RenameOldPrimaryArchivalsRootBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="generalService" ref="GeneralService" />
+   </bean>
+
+   <bean id="archivalsStoresBootstrap" class="ee.webmedia.alfresco.archivals.bootstrap.ArchivalsStoresBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="renameOldPrimaryArchivalsRootBootstrap" />
+         </list>
+      </property>
+      <property name="generalService" ref="GeneralService" />
+      <property name="additionalArchivals" value="${archivals-additional}" />
+      <property name="deleteArchivalsExistingContents" value="${archivals-deleteExistingContents}" />
+      <property name="storeArchiveMap" ref="storeArchiveMap" />
+   </bean>
+
+   <bean class="ee.webmedia.alfresco.archivals.service.DocumentRegisterMenuItemProcessor">
+      <property name="menuService" ref="MenuService" />
+      <property name="generalService" ref="GeneralService" />
+   </bean>
+
+    <bean id="archivalsTempBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/</prop>
+               <prop key="location">ee/webmedia/alfresco/archivals/bootstrap/archivalsTemp.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
+    <bean id="archivalsParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/archivals/bootstrap/archivals-parameters.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
+    <bean id="archivalsWebClientConfigBootstrap" class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
+      <property name="configs">
+         <list>
+            <value>classpath:ee/webmedia/alfresco/archivals/web/archivals-web-client-config.xml</value>
+         </list>
+      </property>
+   </bean>
+
+    <bean id="archivalsService" class="ee.webmedia.alfresco.archivals.service.ArchivalsServiceImpl">
+      <property name="copyService" ref="CopyService"/>
+      <property name="generalService" ref="GeneralService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="seriesService" ref="SeriesService" />
+      <property name="volumeService" ref="VolumeService" />
+      <property name="functionsService" ref="FunctionsService" />
+      <property name="searchService" ref="SearchService" />
+      <property name="dictionaryService" ref="DictionaryService" />
+      <property name="adrService" ref="AdrService" />
+      <property name="documentService" ref="DocumentService" />
+      <property name="caseService" ref="CaseService" />
+      <property name="archivalsStore" value="workspace://ArchivalsStore" />
+   </bean>
+
+   <bean id="ArchivalsService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.archivals.service.ArchivalsService</value>
+         </list>
+      </property>
+      <property name="target" ref="archivalsService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+
+    <bean class="ee.webmedia.alfresco.common.bootstrap.ModuleComponentDependsOnSetter">
+      <property name="source" ref="parameterRescheduledJobsBootstrap" />
+      <property name="dependsOn" ref="archivalsParametersBootstrap" />
+   </bean>
+
+   <bean id="destroyVolumesTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean"
+         parent="parameterRescheduledTriggerParent" depends-on="archivalsParametersBootstrap">
+      <property name="enabled" value="${jobs.enabled}" />
+      <property name="parameterName" value="volumeDestructionPeriod" />
+      <property name="parameterFormat" value="D" />
+      <property name="jobDetail">
+         <bean id="updateOrganizationsListJobDetails" class="org.springframework.scheduling.quartz.JobDetailBean">
+            <property name="jobClass" value="ee.webmedia.alfresco.archivals.job.DestroyVolumesJob" />
+            <property name="jobDataAsMap">
+               <map>
+                  <entry key="archivalsService" value-ref="ArchivalsService" />
+               </map>
+            </property>
+         </bean>
+      </property>
+   </bean>
+</beans>

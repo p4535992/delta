@@ -1,0 +1,26 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <bean id="commonEmailService" class="ee.webmedia.alfresco.email.service.EmailServiceImpl">
+      <property name="mailService" ref="mailService" />
+      <property name="fileFolderService" ref="FileFolderService" />      
+      <property name="generalService" ref="GeneralService" />
+      <property name="signatureService" ref="SignatureService" />
+      <property name="mimetypeService" ref="MimetypeService" />
+      <property name="messageCopyFolder" value="${mail.messageFolder}" />
+   </bean>
+
+   <bean id="CommonEmailService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <value>ee.webmedia.alfresco.email.service.EmailService</value>
+      </property>
+      <property name="target" ref="commonEmailService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+   
+</beans>

@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head profile="http://selenium-ide.openqa.org/profiles/test-case">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="selenium.base" href="" />
+<title>doc-contract-addReply</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">doc-contract-addReply</td></tr>
+</thead><tbody>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Lisa vastus</td>
+	<td></td>
+</tr>
+<tr>
+	<td>selectAndWait</td>
+	<td>dialog:dialog-body:doc-metatada:prop_x007b_tempx007d_function_fnSerVol:relatedDropdown_function_fnSerVol</td>
+	<td>label=F2 Teine funktsioon</td>
+</tr>
+<tr>
+	<td>selectAndWait</td>
+	<td>dialog:dialog-body:doc-metatada:prop_x007b_tempx007d_series_fnSerVol:relatedDropdown_series_fnSerVol</td>
+	<td>label=SI1 Mitteindividualiseeriv sari</td>
+</tr>
+<!--eeldame, et ainult üks toimik on selle sarja all ja see on by default valitud peale sarja valimist-->
+<tr>
+	<td>type</td>
+	<td>dialog:dialog-body:doc-metatada:prop_docspecx003a_delivererName:row_-1</td>
+	<td>äraandja</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>dialog:dialog-body:doc-metatada:prop_docspecx003a_receiverName:row_-1</td>
+	<td>vastuvõtja</td>
+</tr>
+<tr>
+	<td>keyUp</td>
+	<td>dialog:dialog-body:doc-metatada:prop_docspecx003a_receiverName:row_-1</td>
+	<td>a</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>dialog:finish-button</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>Dokumendi ümberliigitamine ei ole võimalik, kuna tegemist on järg-/vastusdokumendiga</td>
+	<td></td>
+</tr>
+<!--proovime salvestada sama fn teise sarja alla-->
+<tr>
+	<td>selectAndWait</td>
+	<td>dialog:dialog-body:doc-metatada:prop_x007b_tempx007d_function_fnSerVol:relatedDropdown_function_fnSerVol</td>
+	<td>label=F1 Esimene funktsioon</td>
+</tr>
+<tr>
+	<td>selectAndWait</td>
+	<td>dialog:dialog-body:doc-metatada:prop_x007b_tempx007d_series_fnSerVol:relatedDropdown_series_fnSerVol</td>
+	<td>label=S2 Teine sari</td>
+</tr>
+<!--eeldame, et sarja all on ainult üks toimik, mis peale sarja valimist on by default valitud-->
+<tr>
+	<td>clickAndWait</td>
+	<td>dialog:finish-button</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>Dokumendi ümberliigitamine ei ole võimalik, kuna tegemist on järg-/vastusdokumendiga</td>
+	<td></td>
+</tr>
+<tr>
+	<td>selectAndWait</td>
+	<td>dialog:dialog-body:doc-metatada:prop_x007b_tempx007d_series_fnSerVol:relatedDropdown_series_fnSerVol</td>
+	<td>label=S1 Esimene sari</td>
+</tr>
+<tr>
+	<td>selectAndWait</td>
+	<td>dialog:dialog-body:doc-metatada:prop_x007b_tempx007d_volume_fnSerVol:relatedDropdown_volume_fnSerVol</td>
+	<td>label=T2 Toimik teemadega</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>dialog:finish-button</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>Dokumendi salvestamine teema alla</td>
+	<td></td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>dialog:dialog-body:aoscModal-selectCase</td>
+	<td>label=Kirjad</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>//option[@value='workspace://SpacesStore/456a26d4-c29c-419d-9bf5-dcd482a9d90e']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>dialog:dialog-body:confirmCaseSelectionBtn</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>Dokumendi ümberliigitamine ei ole võimalik, kuna tegemist on järg-/vastusdokumendiga</td>
+	<td></td>
+</tr>
+<tr>
+	<td>selectAndWait</td>
+	<td>dialog:dialog-body:doc-metatada:prop_x007b_tempx007d_volume_fnSerVol:relatedDropdown_volume_fnSerVol</td>
+	<td>label=T1 toimik teemadeta</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>dialog:finish-button</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextNotPresent</td>
+	<td>Paranda allolevad vead</td>
+	<td></td>
+</tr>
+
+</tbody></table>
+</body>
+</html>

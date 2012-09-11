@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <bean id="docListImporterViewParser" class="ee.webmedia.alfresco.functions.service.DocListImportViewParser" parent="viewParser" />
+
+   <!-- ImporterComponent that has different viewParser, that counts documents created under series, volumes and cases -->
+   <bean id="docListImporterComponent" class="org.alfresco.repo.importer.ImporterComponent" parent="importerComponent">
+      <!-- @Override default viewParser -->
+      <property name="viewParser" ref="docListImporterViewParser" />
+   </bean>
+
+   <bean id="DocListImporterComponent" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <value>org.alfresco.service.cmr.view.ImporterService</value>
+      </property>
+      <property name="target">
+         <ref bean="docListImporterComponent" />
+      </property>
+      <property name="interceptorNames">
+         <list>
+            <idref bean="ImporterService_transaction" />
+            <idref bean="AuditMethodInterceptor" />
+            <idref bean="exceptionTranslator" />
+            <idref bean="ImporterService_security" />
+         </list>
+      </property>
+   </bean>
+
+   <!-- START: web beans: -->
+   <bean id="DocumentListImportDialog" class="ee.webmedia.alfresco.functions.web.DocumentListImportDialog" scope="session" />
+   <!-- END: web beans: -->
+</beans>

@@ -1,0 +1,54 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <!-- Spring-WS servlet creates a child application context, with main spring context as the parent. -->
+   <!-- Some beans have to be here for Spring-WS servlet to autodetect them, but we can reference other -->
+   <!-- beans from parent context (e.g. GeneralService, ...) -->
+
+   <bean class="ee.webmedia.alfresco.relvastus.RelvastusEndpoint">
+      <property name="generalService" ref="GeneralService" />
+      <property name="documentTemplateService" ref="DocumentTemplateService" />
+   </bean>
+
+   <bean id="relvastusJaxbMarshaller" class="org.springframework.oxm.jaxb.Jaxb2Marshaller">
+      <property name="contextPath" value="ee.webmedia.alfresco.relvastus.generated" />
+      <property name="schema" value="classpath:ee/webmedia/alfresco/relvastus/generated/relvastus.xsd" />
+      <!--
+         If you need to serve attachments (swaRef), then enable this
+         <property name="mtomEnabled" value="true" />
+      -->
+   </bean>
+
+   <bean id="relvastusSoapMessageDispatcher" class="org.springframework.ws.soap.server.SoapMessageDispatcher">
+      <property name="endpointAdapters">
+         <list>
+            <bean class="org.springframework.ws.server.endpoint.adapter.MarshallingMethodEndpointAdapter">
+               <constructor-arg ref="relvastusJaxbMarshaller" />
+            </bean>
+         </list>
+      </property>
+   </bean>
+
+   <!-- TODO if either bean id or alias is not needed, remove one of these -->
+
+   <alias name="relvastusSoapMessageDispatcher" alias="/relvastus" />
+
+   <bean name="relvastusWsdl" class="org.springframework.ws.wsdl.wsdl11.DefaultWsdl11Definition">
+      <property name="schema">
+         <bean class="org.springframework.xml.xsd.SimpleXsdSchema">
+            <property name="xsd" value="classpath:ee/webmedia/alfresco/relvastus/generated/relvastus.xsd" />
+         </bean>
+      </property>
+      <property name="portTypeName" value="relvastus" />
+      <property name="locationUri" value="/service2/relvastus" /><!-- TODO investigate if this can be simplified -->
+      <property name="targetNamespace" value="http://delta/relvastus/definitions" />
+      <property name="requestSuffix" value="Paring" />
+      <property name="responseSuffix" value="Vastus" />
+   </bean>
+
+   <!-- TODO if either bean id or alias is not needed, remove one of these -->
+
+   <alias name="relvastusWsdl" alias="/relvastus.wsdl" />
+
+</beans>

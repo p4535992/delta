@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="tomcat" basedir=".">
+
+   <import file="build-common.xml" />
+
+   <target name="installcert" depends="compile" description="Retrieve HTTPS certificate from remote HTTPS connection and add it to application server Keystore (use if CAS connection is over HTTPS)">
+      <java dir="${project.basedir}" fork="true" classname="ee.webmedia.alfresco.utils.InstallCert" classpathref="classpath.test.compile">
+         <arg path="${dir.tomcat}/truststore.jks" />
+      </java>
+   </target>
+
+   <target name="setup-tomcat" depends="load-conf">
+      <echo message="Copying configuration file to Tomcat classpath" />
+      <copy todir="${dir.tomcat.classes}" preservelastmodified="true" overwrite="true">
+         <fileset dir="${conf.basedir}/${conf.name}/classes" />
+      </copy>
+   </target>
+
+   <target name="tomcat-start" depends="setup-tomcat" description="Start Tomcat server">
+      <condition property="tomcat.start.done">
+         <http url="${server.domain.protocol}://${server.host}:${server.domain.port}/" />
+      </condition>
+      <fail if="tomcat.start.done" message="Tomcat server is already started, please stop it first" />
+
+      <echo message="Starting Tomcat" />
+      <exec executable="${dir.tomcat}/tomcat${executable.tomcat.extension}" failonerror="true">
+         <arg value="start" />
+      </exec>
+      <echo message="Wait for the server start (see ${dir.tomcat}/logs/catalina.out) - ${server.domain.protocol}://${server.host}:${server.domain.port}/" />
+      <waitfor maxwait="1800" maxwaitunit="second" checkevery="2" checkeveryunit="second" timeoutproperty="wait.timeout">
+         <http url="${server.domain.protocol}://${server.host}:${server.domain.port}/" />
+      </waitfor>
+      <fail if="wait.timeout"
+            message="Didn't get response from url: ${server.domain.protocol}://${server.host}:${server.domain.port}." />
+      <echo message="Server started - see ${server.domain.protocol}://${server.host}:${server.domain.port}" />
+   </target>
+
+   <target name="tomcat-stop" depends="load-conf" description="Stop tomcat server domain">
+      <echo message="Stopping Tomcat" />
+      <exec executable="${dir.tomcat}/tomcat${executable.tomcat.extension}" failonerror="false">
+         <arg value="stop" />
+      </exec>
+   </target>
+
+   <target name="tomcat-deploy" depends="tomcat-stop, war">
+      <move file="${project.build.result.war}" tofile="${dir.tomcat}/webapps/dhs.war" />
+      <delete dir="${dir.tomcat}/webapps/dhs" />
+      <delete dir="${dir.tomcat}/work/Catalina/localhost/dhs" />
+      <delete dir="${dir.tomcat}/temp/Alfresco" />
+      <delete file="${dir.tomcat}/conf/Catalina/localhost/dhs.xml" />
+   </target>
+
+   <target name="deploy" depends="tomcat-deploy, tomcat-start" description="Compile sources and start Tomcat server" />
+
+   <target name="redeploy" depends="tomcat-stop, deploy" description="Stop Tomcat, compile sources and start Tomcat" />
+
+   <target name="clean-redeploy"
+           depends="tomcat-stop, clean-all, deploy"
+           description="Stop Tomcat, clean, rebuild and start Tomcat server" />
+
+</project>

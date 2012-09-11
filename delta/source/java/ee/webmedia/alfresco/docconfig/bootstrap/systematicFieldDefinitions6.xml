@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:docadmin="http://alfresco.webmedia.ee/model/document/admin/1.0" xmlns:docdyn="http://alfresco.webmedia.ee/model/document/dynamic/1.0">
+
+   <docadmin:fieldDefinition view:childName="docdyn:substituteName">
+      <view:properties>
+         <docadmin:fieldId>substituteName</docadmin:fieldId>
+         <docadmin:originalFieldId>substituteName</docadmin:originalFieldId>
+         <docadmin:name>Asendaja</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>USER</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:substituteJobTitle">
+      <view:properties>
+         <docadmin:fieldId>substituteJobTitle</docadmin:fieldId>
+         <docadmin:originalFieldId>substituteJobTitle</docadmin:originalFieldId>
+         <docadmin:name>Asendaja ametinimetus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:substitutionBeginDate">
+      <view:properties>
+         <docadmin:fieldId>substitutionBeginDate</docadmin:fieldId>
+         <docadmin:originalFieldId>substitutionBeginDate</docadmin:originalFieldId>
+         <docadmin:name>Asendus alates</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:substitutionEndDate">
+      <view:properties>
+         <docadmin:fieldId>substitutionEndDate</docadmin:fieldId>
+         <docadmin:originalFieldId>substitutionEndDate</docadmin:originalFieldId>
+         <docadmin:name>Asendus kuni</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+</view:view>

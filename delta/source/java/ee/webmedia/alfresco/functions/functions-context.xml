@@ -1,0 +1,70 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <import resource="classpath:ee/webmedia/alfresco/functions/docListImport-context.xml"/>
+
+   <bean id="functionsModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap,seriesModelBootstrap,documentModelBootstrap">
+      <property name="models">
+         <list>
+            <value>ee/webmedia/alfresco/functions/model/functionsModel.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="functionsWebClientConfigBootstrap" class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
+      <property name="configs">
+         <list>
+            <value>classpath:ee/webmedia/alfresco/functions/web/functions-web-client-config.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="functionsRootBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/</prop>
+               <prop key="location">ee/webmedia/alfresco/functions/bootstrap/functions.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="functionsBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">
+      <property name="resourceBundles">
+         <list>
+            <value>ee.webmedia.alfresco.functions.web.functions-webclient</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="functionsService" class="ee.webmedia.alfresco.functions.service.FunctionsServiceImpl">
+      <property name="generalService" ref="GeneralService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="dictionaryService" ref="DictionaryService" />
+      <property name="seriesService" ref="SeriesService" />
+      <property name="logService" ref="LogService" />
+      <property name="userService" ref="UserService" />
+   </bean>
+
+   <bean id="FunctionsService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.functions.service.FunctionsService</value>
+         </list>
+      </property>
+      <property name="target" ref="functionsService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+
+</beans>

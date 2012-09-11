@@ -1,0 +1,285 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE beans PUBLIC '-//SPRING//DTD BEAN//EN' 'http://www.springframework.org/dtd/spring-beans.dtd'>
+
+<!-- ========================== -->
+<!-- Enforcement of permissions -->
+<!-- ========================== -->
+
+<!--                                                                                     -->
+<!-- This file defines the beans that intercept method calls to the repository services  -->
+<!-- and enforce security based on the currently authenticated user.                     -->
+<!--                                                                                     -->
+
+<!-- 
+disabled method security
+- removed security interceptors:
+      NodeService_security
+      FileFolderService_security
+      ContentService_security
+
+      SearchService_security
+      CategoryService_security
+
+      LockService_security
+
+      MultilingualContentService_security
+      EditionService_security
+      CheckoutCheckinService_security
+
+      PermissionService_security
+      AuthorityService_security
+      AuthenticationService_security
+      OwnableService_security
+      PersonService_security
+
+- removed beans:
+	roleVoter
+	groupVoter
+	aclEntryVoter
+
+	accessDecisionManager
+	afterAcl
+	afterInvocationManager
+
+ -->
+<beans>
+
+
+    <!-- ======================= -->
+    <!-- Support for permissions -->
+    <!-- ========================-->
+
+    <bean id='permissionService' class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+        <property name="proxyInterfaces">
+            <value>org.alfresco.repo.security.permissions.PermissionServiceSPI</value>
+        </property>
+        <property name="transactionManager">
+            <ref bean="transactionManager" />
+        </property>
+        <property name="target">
+            <ref bean="permissionServiceImpl" />
+        </property>
+        <property name="transactionAttributes">
+            <props>
+                <prop key="*">${server.transaction.mode.default}</prop>
+            </props>
+        </property>
+    </bean>
+
+    <!--
+      <bean id="permissionServiceImpl" class="org.alfresco.repo.security.permissions.noop.PermissionServiceNOOPImpl" />
+    -->
+    
+    <bean id="permissionServiceImpl" class="org.alfresco.repo.security.permissions.impl.PermissionServiceImpl" init-method="init">
+        <property name="nodeService">
+            <ref bean="mtAwareNodeService" />
+        </property>
+        <property name="tenantService">
+            <ref bean="tenantService"/>
+        </property>
+        <property name="dictionaryService">
+            <ref bean="dictionaryService" />
+        </property>
+        <property name="permissionsDaoComponent">
+            <ref bean="permissionsDaoComponent" />
+        </property>
+        <property name="modelDAO">
+            <ref bean="permissionsModelDAO" />
+        </property>
+        <property name="authorityService">
+            <ref bean="authorityService" />
+        </property>
+        <property name="accessCache">
+            <ref bean="permissionsAccessCache" />
+        </property>
+        <property name="policyComponent">
+            <ref bean="policyComponent" />
+        </property>
+        <property name="aclDaoComponent">
+            <ref bean="aclDaoComponent" />
+        </property>
+        <property name="dynamicAuthorities">
+            <list>
+                <ref bean="ownerDynamicAuthority" />
+                <ref bean="lockOwnerDynamicAuthority" />
+            </list>
+        </property>
+    </bean>
+    
+    
+    <!-- =================== -->
+    <!-- Dynamic Authorities -->
+    <!-- =================== -->
+
+
+    <!-- The provider to evaluate if the current authentication is the owner of a node.  -->
+    <bean id="ownerDynamicAuthority" class="org.alfresco.repo.security.permissions.dynamic.OwnerDynamicAuthority">
+        <property name="ownableService">
+            <ref bean="ownableService" />
+        </property>
+    </bean>
+
+    <!-- The provider to evaluate if the currfent authentication is the local owner on a -->
+    <!-- node.                                                                           -->
+    <bean id="lockOwnerDynamicAuthority" class="org.alfresco.repo.security.permissions.dynamic.LockOwnerDynamicAuthority">
+        <property name="lockService">
+            <ref bean="lockService" />
+        </property>
+        <property name="nodeService">
+            <ref bean="nodeService" />
+        </property>
+		<property name="modelDAO">
+            <ref bean="permissionsModelDAO" />
+        </property>
+		<property name="requiredFor">
+			<list>
+				<value>Unlock</value>
+				<value>CheckIn</value>
+				<value>CancelCheckOut</value>
+			</list>
+		</property>
+    </bean>
+
+    <!-- ===================== -->
+    <!-- Permissions Model DAO -->
+    <!-- ===================== -->
+
+    <bean id='permissionsModelDAO' class="org.alfresco.repo.security.permissions.impl.model.PermissionModel">
+        <property name="model">
+            <value>alfresco/model/permissionDefinitions.xml</value>
+        </property>
+        <property name="nodeService">
+            <ref bean="nodeService" />
+        </property>
+        <property name="dictionaryService">
+            <ref bean="dictionaryService" />
+        </property>
+    </bean>
+    
+    <!-- =========================== -->
+    <!-- Permissions Model Bootstrap -->
+    <!-- =========================== -->
+    
+    <bean id="permissionModelBootstrap" class="org.alfresco.repo.security.permissions.impl.model.PermissionModelBootstrap" abstract="true" init-method="init">
+    	<property name="permissionModel" ref="permissionsModelDAO"/>    
+    </bean>
+
+
+    <!-- ================================ -->
+    <!-- Beans that enforce secure access -->
+    <!-- ================================ -->
+
+    <!-- Each bean defines a new methos security interceptor wired up with the           -->
+    <!-- authenticationManager, accessDecisionManager and afterInvocationManager, which  -->
+    <!-- can all be reused.                                                              -->
+
+    <!-- If one method cal requires security enforcement - all methods must gave a       -->
+    <!-- security entry of some sort. ACL_ALLOW can be used to give access to all        -->
+    <!-- ROLE_ADMINISTRATOR can be used to grant access to administrator related methods -->
+
+
+    <!-- The namespace service does not enforce any security requirements                -->
+    <bean id="NamespaceService_security" class="org.alfresco.repo.security.permissions.impl.AlwaysProceedMethodInterceptor" />
+
+    <!-- The dictionary service does not enforce any security requirements               -->
+    <bean id="DictionaryService_security" class="org.alfresco.repo.security.permissions.impl.AlwaysProceedMethodInterceptor" />
+
+    <!-- ================ -->
+    <!-- MimeType Service -->
+    <!-- ================ -->
+
+    <!-- There are no permissions around mime types -->
+    <bean id="MimetypeService_security" class="org.alfresco.repo.security.permissions.impl.AlwaysProceedMethodInterceptor" />
+
+    <!-- ============ -->
+    <!-- Copy Service -->
+    <!-- ============ -->
+
+    <!-- The copy service does not require any security restrictions, they are imposed   -->
+    <!-- by the node service it uses to do its work.                                     -->
+
+    <bean id="CopyService_security" class="org.alfresco.repo.security.permissions.impl.AlwaysProceedMethodInterceptor" />
+
+    <!-- =============== -->
+    <!-- Version Service -->
+    <!-- =============== -->
+
+    <!-- The version service does not have any restrictions applied at the moment. It    -->
+    <!-- does not use a node service that would apply any permissions.                   -->
+
+    <bean id="VersionService_security" class="org.alfresco.repo.security.permissions.impl.AlwaysProceedMethodInterceptor" />
+
+    <!-- ================ -->
+    <!-- The Rule Service -->
+    <!-- ================ -->
+
+    <!-- The rule service does not require any security restrictions, they are imposed   -->
+    <!-- by the node service it uses to do its work.                                     -->
+
+    <bean id="RuleService_security" class="org.alfresco.repo.security.permissions.impl.AlwaysProceedMethodInterceptor" />
+
+    <!-- ==================== -->
+    <!-- The Importer Service -->
+    <!-- ==================== -->
+
+    <!-- The importer service does not require any security restrictions, they are       -->
+    <!-- imposed by the node service it uses to do its work.                             -->
+
+    <bean id="ImporterService_security" class="org.alfresco.repo.security.permissions.impl.AlwaysProceedMethodInterceptor" />
+
+    <!-- ================== -->
+    <!-- The Action Service -->
+    <!-- ================== -->
+
+    <!-- The action service does not require any security restrictions, they are imposed -->
+    <!-- by the node service it uses to do its work.                                     -->
+    <bean id="ActionService_security" class="org.alfresco.repo.security.permissions.impl.AlwaysProceedMethodInterceptor" />
+
+    <!-- ==================== -->
+    <!-- The Template Service -->
+    <!-- ==================== -->
+
+    <!-- This service currently has no restrictions. -->
+
+    <bean id="TemplateService_security" class="org.alfresco.repo.security.permissions.impl.AlwaysProceedMethodInterceptor" />
+
+    <!-- ==================== -->
+    <!-- The Script Service -->
+    <!-- ==================== -->
+
+    <!-- This service currently has no restrictions. -->
+
+    <bean id="ScriptService_security" class="org.alfresco.repo.security.permissions.impl.AlwaysProceedMethodInterceptor" />
+
+    <!-- ================ -->
+    <!-- Workflow Service -->
+    <!-- ================ -->
+
+    <!-- TODO: Add workflow security -->
+
+    <bean id="WorkflowService_security" class="org.alfresco.repo.security.permissions.impl.AlwaysProceedMethodInterceptor" />
+
+    <!-- ============= -->
+    <!-- Audit Service -->
+    <!-- ============= -->
+
+    <!-- TODO: Add audit security -->
+
+    <bean id="AuditService_security" class="org.alfresco.repo.security.permissions.impl.AlwaysProceedMethodInterceptor" />
+
+    <!-- ======================== -->
+    <!-- Repository Admin Service -->
+    <!-- ======================== -->
+    
+    <!-- TODO: Add repository admin security -->
+    
+    <bean id="RepoAdminService_security" class="org.alfresco.repo.security.permissions.impl.AlwaysProceedMethodInterceptor" />
+
+    <!-- ===================== -->
+    <!-- Content Usage Service -->
+    <!-- ===================== -->
+    
+    <!-- TODO: Add content usage security -->
+    <bean id="ContentUsageService_security" class="org.alfresco.repo.security.permissions.impl.AlwaysProceedMethodInterceptor" />
+    
+</beans>

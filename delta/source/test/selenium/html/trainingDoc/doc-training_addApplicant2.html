@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head profile="http://selenium-ide.openqa.org/profiles/test-case">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="selenium.base" href="" />
+<title>doc-training_addApplicant2</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">doc-training_addApplicant2</td></tr>
+</thead><tbody>
+<tr>
+	<td>clickAndWait</td>
+	<td>document_errandOrderApplicant_add</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>//a[@onclick=&quot;document.forms['dialog']['dialog:dialog-body:doc-metatada:subPropSheet_applicantsSection:uiNamingContainer1:subPropSheet_1:prop_docspecx003a_applicantName:docspecx003a_applicantName_action'].value='openDialog;-1';return showModal('dialog:dialog-body:doc-metatada:subPropSheet_applicantsSection:uiNamingContainer1:subPropSheet_1:prop_docspecx003a_applicantName:docspecx003a_applicantName_popup');&quot;]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@value='Otsi' and @type='submit' and @onclick=&quot;document.forms['dialog']['dialog:dialog-body:doc-metatada:subPropSheet_applicantsSection:uiNamingContainer1:subPropSheet_1:prop_docspecx003a_applicantName:picker'].value='0';document.forms['dialog'].submit();return false;&quot;]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>dialog:dialog-body:doc-metatada:subPropSheet_applicantsSection:uiNamingContainer1:subPropSheet_1:prop_docspecx003a_applicantName:picker_results</td>
+	<td>label=Dummy</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>//option[@value='dummy']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>dialog:dialog-body:doc-metatada:subPropSheet_applicantsSection:uiNamingContainer1:subPropSheet_1:prop_docspecx003a_applicantName:picker_results</td>
+	<td>label=Maigo Erit (Arendusdivisjon)</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>//option[@value='38600000000']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//input[@value='Lisa' and @type='submit' and @onclick=&quot;document.forms['dialog']['dialog:dialog-body:doc-metatada:subPropSheet_applicantsSection:uiNamingContainer1:subPropSheet_1:prop_docspecx003a_applicantName:picker'].value='3';document.forms['dialog'].submit();return false;&quot;]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>dialog:dialog-body:doc-metatada:subPropSheet_applicantsSection:uiNamingContainer1:subPropSheet_1:prop_docspecx003a_errandBeginDate:docspecx003a_errandBeginDate</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>link=15</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>dialog:dialog-body:doc-metatada:subPropSheet_applicantsSection:uiNamingContainer1:subPropSheet_1:prop_docspecx003a_errandBeginDate:docspecx003a_errandEndDate</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>link=21</td>
+	<td></td>
+</tr>
+<!--test lisa ja kustuta ridu-->
+<tr>
+	<td>clickAndWait</td>
+	<td>//a[@onclick=&quot;document.forms['dialog']['dialog:dialog-body:doc-metatada:subPropSheet_applicantsSection:uiNamingContainer1:subPropSheet_1:prop_dailyAllowanceCateringRows:dailyAllowanceCateringRows'].value='2';document.forms['dialog'].submit();return false;&quot;]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//a[@onclick=&quot;document.forms['dialog']['dialog:dialog-body:doc-metatada:subPropSheet_applicantsSection:uiNamingContainer1:subPropSheet_1:prop_dailyAllowanceCateringRows:dailyAllowanceCateringRows'].value='0;0';document.forms['dialog'].submit();return false;&quot;]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//a[@onclick=&quot;document.forms['dialog']['dialog:dialog-body:doc-metatada:subPropSheet_applicantsSection:uiNamingContainer1:subPropSheet_1:prop_expenseRows:expenseRows'].value='2';document.forms['dialog'].submit();return false;&quot;]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//a[@onclick=&quot;document.forms['dialog']['dialog:dialog-body:doc-metatada:subPropSheet_applicantsSection:uiNamingContainer1:subPropSheet_1:prop_expenseRows:expenseRows'].value='0;0';document.forms['dialog'].submit();return false;&quot;]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//a[@id='document_errandOrderApplicant_remove' and @onclick=&quot;document.forms['dialog']['dialog:act'].value='dialog:dialog-body:doc-metatada:subPropSheet_applicantsSection:uiNamingContainer2:document_errandOrderApplicant_remove';document.forms['dialog']['aIndex'].value='2';document.forms['dialog']['sourceNodeRef'].value='workspace://SpacesStore/4e5d7625-8637-44dd-a585-14ae073ce54f';document.forms['dialog']['currentNodeRef'].value='NOT_SAVED://NOT_SAVED/a21dcf98-8298-4949-b07e-a525a5681665';document.forms['dialog'].submit();return false;&quot;]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>document_errandOrderApplicant_add</td>
+	<td></td>
+</tr>
+<!--lisa uus taotleja-->
+<tr>
+	<td>clickAndWait</td>
+	<td>document_errandOrderApplicant_add</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>dialog:dialog-body:doc-metatada:subPropSheet_applicantsSection:uiNamingContainer2:subPropSheet_2:prop_docspecx003a_applicantName:row_-1</td>
+	<td>tühi taotleja blokk</td>
+</tr>
+
+</tbody></table>
+</body>
+</html>

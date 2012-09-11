@@ -1,0 +1,444 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="docsub:documentSubtypeModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+   <!-- FIXME: remove the following imports after all existing static documents are migrated to dynamic documents -->
+        <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+        <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
+        <import uri="http://alfresco.webmedia.ee/model/document/common/1.0" prefix="doccom" />
+        <import uri="http://alfresco.webmedia.ee/model/document/specific/1.0" prefix="docspec" />
+        <import uri="http://alfresco.webmedia.ee/model/transaction/1.0" prefix="trn" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/document/subtype/1.0" prefix="docsub" />
+   </namespaces>
+
+   <!-- FIXME: remove the following definitions after all existing static documents are migrated to dynamic documents -->
+   <types>
+
+      <type name="docsub:incomingLetter">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>docspec:senderDetails</aspect>
+            <aspect>docspec:sender</aspect>
+            <aspect>docspec:transmittalMode</aspect>
+            <aspect>docspec:complience</aspect>
+         </mandatory-aspects>
+      </type>
+      
+      <type name="docsub:incomingLetterMv">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>docspec:senderDetails</aspect>
+            <aspect>docspec:sender</aspect>
+            <aspect>docspec:transmittalMode</aspect>
+            <aspect>docspec:complience</aspect>
+            <aspect>docspec:senderDetailsMv</aspect>
+            <aspect>docspec:annex</aspect>
+            <aspect>docspec:content</aspect>
+         </mandatory-aspects>
+      </type>      
+
+      <type name="docsub:outgoingLetter">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:sendDesc</aspect>
+            <aspect>doccom:recipient</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>doccom:signer</aspect>
+            <aspect>docspec:sender</aspect>
+            <aspect>docspec:template</aspect>
+         </mandatory-aspects>
+      </type>
+      
+      <type name="docsub:outgoingLetterMv">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:sendDesc</aspect>
+            <aspect>doccom:recipient</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>doccom:signer</aspect>
+            <aspect>docspec:sender</aspect>
+            <aspect>docspec:template</aspect>
+            <aspect>docspec:content</aspect>
+            <aspect>docspec:annex</aspect>
+            <aspect>docspec:outgoingLetterMv</aspect>
+         </mandatory-aspects>
+      </type>      
+
+      <type name="docsub:errandOrderAbroad">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>docspec:errandOrderAbroadV2</aspect>
+         </mandatory-aspects>
+      </type>
+      
+      <type name="docsub:errandOrderAbroadMv">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>docspec:errandDocCommon</aspect>
+            <aspect>docspec:errandOrderAbroadMv</aspect>
+         </mandatory-aspects>
+      </type>      
+      
+      <type name="docsub:errandApplicationDomestic">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>docspec:errandApplicationDomesticV2</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="docsub:trainingApplication">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>docspec:trainingApplicationV2</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="docsub:tenderingApplication">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>docspec:tenderingApplication</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="docsub:supervisionReport">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:sendDesc</aspect>
+            <aspect>doccom:recipient</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>doccom:signer</aspect>
+            <aspect>docspec:template</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="docsub:chancellorsOrder">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:sendDesc</aspect>
+            <aspect>doccom:recipient</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>doccom:signer</aspect>
+            <aspect>docspec:whose</aspect>
+            <aspect>docspec:template</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="docsub:memo">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:sendDesc</aspect>
+            <aspect>doccom:recipient</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>docspec:whom</aspect>
+            <aspect>docspec:template</aspect>
+         </mandatory-aspects>
+      </type>
+      
+      <type name="docsub:minutes">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:sendDesc</aspect>
+            <aspect>doccom:recipient</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>docspec:minutes</aspect>
+            <aspect>doccom:signer</aspect>
+            <aspect>docspec:template</aspect>
+         </mandatory-aspects>
+      </type>
+      
+      <type name="docsub:regulation">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:sendDesc</aspect>
+            <aspect>doccom:recipient</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>doccom:signer</aspect>
+         </mandatory-aspects>
+      </type>
+      
+      <type name="docsub:personelleOrderSmit">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:sendDesc</aspect>
+            <aspect>doccom:recipient</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>doccom:signer</aspect>
+         </mandatory-aspects>
+      </type>
+      
+      <type name="docsub:report">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:sendDesc</aspect>
+            <aspect>doccom:recipient</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>docspec:report</aspect>
+         </mandatory-aspects>
+      </type>
+      
+      <type name="docsub:reportMv">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:signerName</aspect>
+            <aspect>doccom:sendDesc</aspect>
+            <aspect>doccom:recipient</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>docspec:report</aspect>
+            <aspect>docspec:content</aspect>
+         </mandatory-aspects>
+      </type>    
+      
+      <type name="docsub:invoice">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>docspec:invoice</aspect>
+            <aspect>trn:transactionContainer</aspect>
+         </mandatory-aspects>
+      </type> 
+      
+      <type name="docsub:personalVehicleUsageCompensationMv">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>docspec:personalVehicleUsageCompensationMv</aspect>
+         </mandatory-aspects>
+      </type>
+      
+      <type name="docsub:resolutionMv">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:recipient</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>doccom:sendDesc</aspect>           
+            <aspect>doccom:signer</aspect>         
+            <aspect>docspec:content</aspect>
+            <aspect>docspec:template</aspect>
+         </mandatory-aspects>
+      </type>
+      
+      <type name="docsub:projectApplication">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:recipient</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>doccom:sendDesc</aspect>       
+            <aspect>docspec:projectApplication</aspect>
+            <aspect>docspec:content</aspect>
+         </mandatory-aspects>
+      </type>      
+
+      <type name="docsub:personelleOrderSim">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:sendDesc</aspect>
+            <aspect>doccom:recipient</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>doccom:signer</aspect>
+            <aspect>docspec:whose</aspect>
+            <aspect>docspec:template</aspect>
+         </mandatory-aspects>
+      </type>
+      
+      <type name="docsub:orderMv">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:sendDesc</aspect>
+            <aspect>doccom:recipient</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>doccom:signer</aspect>
+            <aspect>docspec:template</aspect>
+            <aspect>docspec:content</aspect>
+            <aspect>docspec:orderType</aspect>
+         </mandatory-aspects>
+      </type>      
+      
+      <type name="docsub:decree">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:sendDesc</aspect>
+            <aspect>doccom:recipient</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>doccom:signer</aspect>
+            <aspect>docspec:whose</aspect>
+            <aspect>docspec:template</aspect>
+         </mandatory-aspects>
+      </type>
+      
+      <type name="docsub:ministersOrder">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:sendDesc</aspect>
+            <aspect>doccom:recipient</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>doccom:signer</aspect>
+            <aspect>docspec:whose</aspect>
+            <aspect>docspec:template</aspect>
+         </mandatory-aspects>
+      </type>
+      
+      <type name="docsub:instrumentOfDeliveryAndReceipt">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:sendDesc</aspect>
+            <aspect>doccom:recipient</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>docspec:deliverer</aspect>
+            <aspect>docspec:receiver</aspect>
+            <aspect>docspec:secondPartyReg</aspect>
+            <aspect>docspec:template</aspect>
+         </mandatory-aspects>
+      </type>
+      
+      <type name="docsub:instrumentOfDeliveryAndReceiptMv">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:sendDesc</aspect>
+            <aspect>doccom:recipient</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>docspec:deliverer</aspect>
+            <aspect>docspec:receiver</aspect>
+            <aspect>docspec:secondPartyReg</aspect>
+            <aspect>docspec:content</aspect>
+            <aspect>docspec:template</aspect>
+         </mandatory-aspects>
+      </type>      
+      
+      <type name="docsub:licence">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>docspec:licenceDetails</aspect>
+         </mandatory-aspects>
+      </type>
+      
+      <type name="docsub:leavingLetter">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>docspec:leaveDetails</aspect>
+            <aspect>docspec:leaveOfficials</aspect>
+         </mandatory-aspects>
+      </type>
+      
+      <type name="docsub:managementsOrder">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:sendDesc</aspect>
+            <aspect>doccom:recipient</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>doccom:signer</aspect>
+            <aspect>docspec:managementsOrderDetails</aspect>
+            <aspect>docspec:template</aspect>
+         </mandatory-aspects>
+      </type>
+      
+      <type name="docsub:internalApplication">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:signer</aspect>
+            <aspect>docspec:applicationContent</aspect>
+            <aspect>docspec:template</aspect>
+            <aspect>docspec:applicationRecipient</aspect>            
+         </mandatory-aspects>
+      </type>
+      
+      <type name="docsub:internalApplicationMv">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>docspec:applicationContent</aspect>
+            <aspect>docspec:template</aspect>
+            <aspect>doccom:signer</aspect>
+         </mandatory-aspects>
+      </type>      
+      
+      <type name="docsub:contractSim">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:sendDesc</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>doccom:signer</aspect>
+            <aspect>docspec:firstParty</aspect>
+            <aspect>docspec:contractDetailsV2</aspect>
+            <aspect>docspec:contractSimDetails</aspect>
+            <aspect>docspec:template</aspect>
+         </mandatory-aspects>
+      </type>
+      
+      <type name="docsub:contractSmit">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:sendDesc</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>doccom:signer</aspect>
+            <aspect>docspec:contractType</aspect>
+            <aspect>docspec:firstParty</aspect>
+            <aspect>docspec:contractDetailsV2</aspect>
+            <aspect>docspec:contractSmitDetails</aspect>
+            <aspect>docspec:template</aspect>
+         </mandatory-aspects>
+      </type>
+      
+      <type name="docsub:contractMv">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:signerName</aspect>
+            <aspect>docspec:firstParty</aspect>
+            <aspect>docspec:contractMvDetails</aspect>
+            <aspect>docspec:content</aspect>
+            <aspect>doccom:sendDesc</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>docspec:template</aspect>
+         </mandatory-aspects>
+      </type>      
+
+      <type name="docsub:vacationOrder">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>docspec:whose</aspect>
+            <aspect>docspec:vacationOrderV2</aspect>
+            <aspect>doccom:legalBasis</aspect>
+         </mandatory-aspects>
+      </type>
+      
+      <type name="docsub:vacationApplication">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>docspec:vacationOrderCommon</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="docsub:vacationOrderSmit">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>docspec:vacationOrderV2</aspect>
+            <aspect>doccom:legalBasis</aspect>
+            <aspect>docspec:template</aspect>
+         </mandatory-aspects>
+      </type>
+      
+      <type name="docsub:minutesMv">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>docspec:minutesMv</aspect>
+            <aspect>docspec:content</aspect>            
+            <aspect>docspec:template</aspect>
+            <aspect>doccom:recipient</aspect>            
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>doccom:sendDesc</aspect>         
+         </mandatory-aspects>
+      </type>
+      
+      <type name="docsub:otherDocumentMv">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:recipient</aspect>            
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>doccom:sendDesc</aspect>          
+            <aspect>docspec:template</aspect>
+         </mandatory-aspects>      
+      </type>
+
+   </types>
+
+</model>

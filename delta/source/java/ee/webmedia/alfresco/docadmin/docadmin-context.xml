@@ -1,0 +1,230 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <bean id="documentAdminModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap">
+      <property name="models">
+         <list>
+            <value>ee/webmedia/alfresco/docadmin/model/documentAdminModel.xml</value>
+         </list>
+      </property>
+      <property name="labels">
+         <list>
+            <value>ee/webmedia/alfresco/docadmin/model/documentAdmin-model</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="documentAdminService" class="ee.webmedia.alfresco.docadmin.service.DocumentAdminServiceImpl">
+      <property name="dictionaryService" ref="DictionaryService" />
+      <property name="namespaceService" ref="NamespaceService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="generalService" ref="GeneralService" />
+      <property name="baseService" ref="BaseService" />
+      <property name="menuService" ref="MenuService" />
+      <property name="userService" ref="UserService" />
+      <property name="documentSearchService" ref="DocumentSearchService" />
+      <property name="importerService" ref="ImporterService" />
+   </bean>
+
+   <bean id="DocumentAdminService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.docadmin.service.DocumentAdminService</value>
+         </list>
+      </property>
+      <property name="target" ref="documentAdminService" />
+      <property name="interceptorNames" ref="commonInterceptorsList" />
+   </bean>
+
+   <bean class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
+      <property name="configs">
+         <list>
+            <value>classpath:ee/webmedia/alfresco/docadmin/web/doc-type-web-client-config.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
+      <property name="resourceBundles">
+         <list>
+            <value>ee/webmedia/alfresco/docadmin/web/docadmin-webclient</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="docTypeSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/</prop>
+               <prop key="location">ee/webmedia/alfresco/docadmin/bootstrap/docTypes.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="caseFileTypeSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/</prop>
+               <prop key="location">ee/webmedia/alfresco/docadmin/bootstrap/caseFileTypes.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="fieldDefinitionsBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/</prop>
+               <prop key="location">ee/webmedia/alfresco/docadmin/bootstrap/fieldDefinitions.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
+   <!-- Fix for task 179069 in already existing data -->
+   <bean id="fieldDefinitionDocTypesUpdater" class="ee.webmedia.alfresco.docadmin.bootstrap.FieldDefinitionDocTypesUpdater" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="docTypeSpacesBootstrap" />
+            <ref bean="fieldDefinitionsBootstrap" />
+         </list>
+      </property>
+      <property name="documentAdminService" ref="DocumentAdminService" />
+   </bean>
+
+   <bean id="fieldDefinitionDeletedDocTypesUpdater" class="ee.webmedia.alfresco.docadmin.bootstrap.FieldDefinitionDeletedDocTypesUpdater" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="docTypeSpacesBootstrap" />
+            <ref bean="fieldDefinitionsBootstrap" />
+         </list>
+      </property>
+      <property name="documentAdminService" ref="DocumentAdminService" />
+   </bean>
+
+   <!-- Changes filedDefinition with ID "case" name from "Asi" to "Teema" -->
+   <bean id="fieldDefinitionCaseNameUpdater2" class="ee.webmedia.alfresco.docadmin.bootstrap.FieldDefinitionCaseNameUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+       <property name="dependsOn">
+         <list>
+            <ref bean="docTypeSpacesBootstrap" />
+            <ref bean="fieldDefinitionsBootstrap" />
+         </list>
+      </property>
+   </bean>
+
+   <bean id="thesauriFieldsUpdater" class="ee.webmedia.alfresco.docadmin.bootstrap.ThesauriFieldsUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+   </bean>
+
+   <bean id="docTypesIdRefactorUpdater" class="ee.webmedia.alfresco.docadmin.bootstrap.DocTypesIdRefactorUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+   </bean>
+
+   <bean id="fieldDefPropsUpdater2" class="ee.webmedia.alfresco.docadmin.bootstrap.FieldDefPropsUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+   </bean>
+
+   <bean id="fieldGroupDefPropsUpdater2" class="ee.webmedia.alfresco.docadmin.bootstrap.FieldGroupDefPropsUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+   </bean>
+
+   <bean id="docTypesMenuGroupNameRefactorUpdater" class="ee.webmedia.alfresco.docadmin.bootstrap.DocTypesMenuGroupNameRefactorUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+   </bean>
+   
+   <bean id="structUnitFieldTypeUpdater" class="ee.webmedia.alfresco.docadmin.bootstrap.StructUnitFieldTypeUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+   </bean> 
+   
+   <!-- START: web beans: -->
+
+   <bean id="DocTypeListDialog" class="ee.webmedia.alfresco.docadmin.web.DocTypeListDialog" scope="session" />
+
+   <bean id="CaseFileTypeListDialog" class="ee.webmedia.alfresco.docadmin.web.CaseFileTypeListDialog" scope="session" />
+
+   <bean id="DocTypeDetailsDialog" class="ee.webmedia.alfresco.docadmin.web.DocTypeDetailsDialog" scope="session">
+      <property name="fieldsListBean" ref="DocTypeFieldsListBean" />
+      <property name="versionsListBean" ref="DocTypeVersionsListBean" />
+      <property name="replyAssocsListBean" ref="ReplyAssocsListBean" />
+      <property name="followupAssocsListBean" ref="FollowupAssocsListBean" />
+   </bean>
+
+   <bean id="CaseFileTypeDetailsDialog" class="ee.webmedia.alfresco.docadmin.web.CaseFileTypeDetailsDialog" scope="session">
+      <property name="fieldsListBean" ref="DocTypeFieldsListBean" />
+      <property name="versionsListBean" ref="CaseFileTypeVersionsListBean" />
+   </bean>
+
+   <bean id="DocTypeFieldsListBean" class="ee.webmedia.alfresco.docadmin.web.FieldsListBean" scope="session" />
+
+   <bean id="CaseFileTypeFieldsListBean" class="ee.webmedia.alfresco.docadmin.web.FieldsListBean" scope="session" />
+
+   <bean id="ReplyAssocsListBean" class="ee.webmedia.alfresco.docadmin.web.ReplyAssocsListBean" scope="session" />
+
+   <bean id="FollowupAssocsListBean" class="ee.webmedia.alfresco.docadmin.web.FollowupAssocsListBean" scope="session" />
+
+   <bean id="DocTypeVersionsListBean" class="ee.webmedia.alfresco.docadmin.web.VersionsListBean" scope="session" >
+      <constructor-arg value="ee.webmedia.alfresco.docadmin.service.DocumentType" />
+   </bean>
+
+   <bean id="CaseFileTypeVersionsListBean" class="ee.webmedia.alfresco.docadmin.web.VersionsListBean" scope="session" >
+      <constructor-arg value="ee.webmedia.alfresco.docadmin.service.CaseFileType" />
+   </bean>
+
+   <bean id="AssociationModelDetailsDialog" class="ee.webmedia.alfresco.docadmin.web.AssociationModelDetailsDialog" scope="session" >
+      <property name="fieldMappingsListBean" ref="FieldMappingsListBean"/>
+   </bean>
+
+   <bean id="FieldMappingsListBean" class="ee.webmedia.alfresco.docadmin.web.FieldMappingsListBean" scope="session" />
+
+   <bean id="FieldDefinitionListDialog" class="ee.webmedia.alfresco.docadmin.web.FieldDefinitionListDialog" scope="session" />
+
+   <bean id="FieldDetailsDialog" class="ee.webmedia.alfresco.docadmin.web.FieldDetailsDialog" scope="session" />
+
+   <bean id="FieldGroupDetailsDialog" class="ee.webmedia.alfresco.docadmin.web.FieldGroupDetailsDialog" scope="session">
+      <property name="fieldsListBean" ref="FieldGroupFieldsListBean" />
+   </bean>
+
+   <bean id="FieldGroupFieldsListBean" class="ee.webmedia.alfresco.docadmin.web.FieldsListBean" scope="session" />
+
+   <bean id="DocumentTypesImportDialog" class="ee.webmedia.alfresco.docadmin.web.DocumentTypesImportDialog" scope="session" />
+
+   <bean id="CaseFileTypesImportDialog" class="ee.webmedia.alfresco.docadmin.web.CaseFileTypesImportDialog" scope="session" />
+
+   <!-- Component generator -->
+   <bean id="DocTypeFieldGroupInfoGenerator" class="ee.webmedia.alfresco.common.propertysheet.generator.MessageSeparatorGenerator" scope="request">
+      <property name="messageKey" value="fieldGroup_details_separator_infoText_documentType" />
+   </bean>
+
+   <bean id="CaseFileTypeFieldGroupInfoGenerator" class="ee.webmedia.alfresco.common.propertysheet.generator.MessageSeparatorGenerator" scope="request">
+      <property name="messageKey" value="fieldGroup_details_separator_infoText_caseFileType" />
+   </bean>
+   <!-- END: web beans: -->
+</beans>

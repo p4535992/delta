@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:docadmin="http://alfresco.webmedia.ee/model/document/admin/1.0">
+
+   <docadmin:fieldGroup view:childName="docadmin:keywords">
+      <view:properties>
+         <docadmin:name>Märksõnad hierarhilisest märksõnastikust</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>false</docadmin:mandatoryForDoc>
+         <docadmin:readonlyFieldsName>Märksõnad</docadmin:readonlyFieldsName>
+         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:thesaurus>kui kaustas /thesauri leidub ainult üks thesaurus tüüpi objekt, siis on see vaikimisi valitud</docadmin:thesaurus>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>firstKeywordLevel</view:value>
+               <view:value>secondKeywordLevel</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+</view:view>

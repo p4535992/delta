@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:tdp="http://alfresco.webmedia.ee/model/transactionDescParameter/1.0">
+
+   <!-- transactionDescParameter child names must be same as 
+      transaction property names from transactionDetails aspect
+      as they are used to check mandatority of transaction field 
+      (i.e. tdp:fundsCenter tdp:mandatory... properties values 
+      are used to check if trn:fundsCenter field is mandatory;
+      fundsCenter part is used to connect two fields)-->
+
+   <tdp:transactionDescParameters view:childName="${transactionDescParameters.folder.name}">
+      <view:associations>
+         <tdp:transactionDescParameter>
+
+            <tdp:transactionDescParameter view:childName="tdp:fundsCenter">
+               <tdp:name>EA üksus</tdp:name>
+               <tdp:mandatoryForOwner></tdp:mandatoryForOwner>
+               <tdp:mandatoryForCostManager></tdp:mandatoryForCostManager>
+               <tdp:mandatoryForAccountant></tdp:mandatoryForAccountant>
+            </tdp:transactionDescParameter>
+
+            <tdp:transactionDescParameter view:childName="tdp:costCenter">
+               <tdp:name>Kulukoht</tdp:name>
+               <tdp:mandatoryForOwner></tdp:mandatoryForOwner>
+               <tdp:mandatoryForCostManager></tdp:mandatoryForCostManager>
+               <tdp:mandatoryForAccountant></tdp:mandatoryForAccountant>               
+            </tdp:transactionDescParameter>
+            
+            <tdp:transactionDescParameter view:childName="tdp:fund">
+               <tdp:name>Projekt</tdp:name>
+               <tdp:mandatoryForOwner></tdp:mandatoryForOwner>
+               <tdp:mandatoryForCostManager></tdp:mandatoryForCostManager>
+               <tdp:mandatoryForAccountant></tdp:mandatoryForAccountant>               
+            </tdp:transactionDescParameter>
+            
+            <tdp:transactionDescParameter view:childName="tdp:eaCommitmentItem">
+               <tdp:name>EA konto</tdp:name>
+               <tdp:mandatoryForOwner></tdp:mandatoryForOwner>
+               <tdp:mandatoryForCostManager></tdp:mandatoryForCostManager>
+               <tdp:mandatoryForAccountant></tdp:mandatoryForAccountant>
+            </tdp:transactionDescParameter>
+            
+            <tdp:transactionDescParameter view:childName="tdp:commitmentItem">
+               <tdp:name>Eelarve klassifikaator</tdp:name>
+               <tdp:mandatoryForOwner></tdp:mandatoryForOwner>
+               <tdp:mandatoryForCostManager></tdp:mandatoryForCostManager>
+               <tdp:mandatoryForAccountant></tdp:mandatoryForAccountant>               
+            </tdp:transactionDescParameter>
+            
+            <tdp:transactionDescParameter view:childName="tdp:orderNumber">
+               <tdp:name>Sisetellimus</tdp:name>
+               <tdp:mandatoryForOwner></tdp:mandatoryForOwner>
+               <tdp:mandatoryForCostManager></tdp:mandatoryForCostManager>
+               <tdp:mandatoryForAccountant></tdp:mandatoryForAccountant>               
+            </tdp:transactionDescParameter> 
+            
+            <tdp:transactionDescParameter view:childName="tdp:assetInventoryNumber">
+               <tdp:name>Vara inventari nr</tdp:name>
+               <tdp:mandatoryForOwner></tdp:mandatoryForOwner>
+               <tdp:mandatoryForCostManager></tdp:mandatoryForCostManager>
+               <tdp:mandatoryForAccountant></tdp:mandatoryForAccountant>               
+            </tdp:transactionDescParameter>
+            
+            <tdp:transactionDescParameter view:childName="tdp:sumWithoutVat">
+               <tdp:name>Summa KM-ta</tdp:name>
+               <tdp:mandatoryForOwner></tdp:mandatoryForOwner>
+               <tdp:mandatoryForCostManager></tdp:mandatoryForCostManager>
+               <tdp:mandatoryForAccountant></tdp:mandatoryForAccountant>               
+            </tdp:transactionDescParameter> 
+            
+            <tdp:transactionDescParameter view:childName="tdp:postingKey">
+               <tdp:name>Võti</tdp:name>
+               <tdp:mandatoryForOwner></tdp:mandatoryForOwner>
+               <tdp:mandatoryForCostManager></tdp:mandatoryForCostManager>
+               <tdp:mandatoryForAccountant></tdp:mandatoryForAccountant>               
+            </tdp:transactionDescParameter>
+            
+            <tdp:transactionDescParameter view:childName="tdp:account">
+               <tdp:name>Konto</tdp:name>
+               <tdp:mandatoryForOwner></tdp:mandatoryForOwner>
+               <tdp:mandatoryForCostManager></tdp:mandatoryForCostManager>
+               <tdp:mandatoryForAccountant></tdp:mandatoryForAccountant>               
+            </tdp:transactionDescParameter>
+            
+            <tdp:transactionDescParameter view:childName="tdp:invoiceTaxCode">
+               <tdp:name>KM</tdp:name>
+               <tdp:mandatoryForOwner></tdp:mandatoryForOwner>
+               <tdp:mandatoryForCostManager></tdp:mandatoryForCostManager>
+               <tdp:mandatoryForAccountant></tdp:mandatoryForAccountant>               
+            </tdp:transactionDescParameter>    
+            
+            <tdp:transactionDescParameter view:childName="tdp:tradingPartnerCode">
+               <tdp:name>TP</tdp:name>
+               <tdp:mandatoryForOwner></tdp:mandatoryForOwner>
+               <tdp:mandatoryForCostManager></tdp:mandatoryForCostManager>
+               <tdp:mandatoryForAccountant></tdp:mandatoryForAccountant>               
+            </tdp:transactionDescParameter>
+            
+           <tdp:transactionDescParameter view:childName="tdp:functionalAreaCode">
+               <tdp:name>TA</tdp:name>
+               <tdp:mandatoryForOwner></tdp:mandatoryForOwner>
+               <tdp:mandatoryForCostManager></tdp:mandatoryForCostManager>
+               <tdp:mandatoryForAccountant></tdp:mandatoryForAccountant>               
+            </tdp:transactionDescParameter>  
+            
+           <tdp:transactionDescParameter view:childName="tdp:cashFlowCode">
+               <tdp:name>RV</tdp:name>
+               <tdp:mandatoryForOwner></tdp:mandatoryForOwner>
+               <tdp:mandatoryForCostManager></tdp:mandatoryForCostManager>
+               <tdp:mandatoryForAccountant></tdp:mandatoryForAccountant>               
+            </tdp:transactionDescParameter>     
+            
+            <tdp:transactionDescParameter view:childName="tdp:businessAreaCode">
+               <tdp:name>A</tdp:name>
+               <tdp:mandatoryForOwner></tdp:mandatoryForOwner>
+               <tdp:mandatoryForCostManager></tdp:mandatoryForCostManager>
+               <tdp:mandatoryForAccountant></tdp:mandatoryForAccountant>               
+            </tdp:transactionDescParameter> 
+            
+            <tdp:transactionDescParameter view:childName="tdp:paymentMethod">
+               <tdp:name>MM</tdp:name>
+               <tdp:mandatoryForOwner></tdp:mandatoryForOwner>
+               <tdp:mandatoryForCostManager></tdp:mandatoryForCostManager>
+               <tdp:mandatoryForAccountant></tdp:mandatoryForAccountant>               
+            </tdp:transactionDescParameter>    
+            
+            <tdp:transactionDescParameter view:childName="tdp:houseBank">
+               <tdp:name>RK konto</tdp:name>
+               <tdp:mandatoryForOwner></tdp:mandatoryForOwner>
+               <tdp:mandatoryForCostManager></tdp:mandatoryForCostManager>
+               <tdp:mandatoryForAccountant></tdp:mandatoryForAccountant>               
+            </tdp:transactionDescParameter> 
+            
+            <tdp:transactionDescParameter view:childName="tdp:entryContent">
+               <tdp:name>Kande rea sisu</tdp:name>
+               <tdp:mandatoryForOwner></tdp:mandatoryForOwner>
+               <tdp:mandatoryForCostManager></tdp:mandatoryForCostManager>
+               <tdp:mandatoryForAccountant></tdp:mandatoryForAccountant>               
+            </tdp:transactionDescParameter>             
+
+         </tdp:transactionDescParameter>
+
+      </view:associations>
+   </tdp:transactionDescParameters>
+
+</view:view>

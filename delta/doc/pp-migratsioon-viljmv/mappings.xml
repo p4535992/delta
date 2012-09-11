@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<root>
+<!-- Only doccom and docspec properties can be described here -->
+
+	<generalType>
+		<prop from="jpp" to="accessRestriction" />
+		<prop from="jpp_algus_kpv" to="accessRestrictionBeginDate" />
+		<prop from="jpp_lopp_kpv" to="accessRestrictionEndDate" />
+		<prop from="jpp_alus" to="accessRestrictionReason" /><!-- SIM "jpp_lopp_alus" -->
+		<!-- <prop from="registreerimis_kpv" to="regDateTime" /> SIM "reg_kpv" -->
+	</generalType>
+
+	<sendInfoType to="sendInfo">
+		<prop from="saatmisviis" to="sendMode" />
+		<prop from="vastamise_kpv" to="sendDateTime" />
+		<prop from="saadetud" expr="const" to="sendStatus" />
+	</sendInfoType>
+
+<!--
+  27827 Kiri_sissetulev                               Sissetulev kiri
+  13600 Kiri_valjaminev                               Väljaminev kiri
+   9796 Korraldus_uld                                 Korraldus
+   4037 Maakusimusedb_valja                           Väljaminev kiri
+   2868 uldleping                                     Leping (MV)
+   2199 Maakusimusedb_sissetulev                      Sissetulev kiri
+   1066 Korraldus_puhkus_lahetus_ja_volitused         Korraldus
+    785 Projekt                                       Projektitaotlus
+    706 Protokoll                                     Protokoll
+    592 Korraldus_personal                            Korraldus
+    563 Statistiline_aruanne_analuus                  Väljaminev kiri
+    176 Akt                                           Akt
+     67 Korraldus_struktuuriuksused                   Korraldus
+     53 Tooleping                                     Leping (MV)
+     13 Avaldus_ametikohale_kandideerimiseks          Sissetulev kiri
+      1 Avaldus_ametikohale_kandideerimiseks_vastus
+
+      <prop from="pealkiri" to="docName" />
+
+      <prop from="kantsleri" expr="const" to="whoseName" />
+
+      // These should be separated with ", "
+      <prop to="senderWriter" from="isik" />
+      <prop to="senderWriter" from="ametinimetus_dvk" />
+      senderWriter=
+         isik, ametinimetus_dvk 
+      Saatjapoolene koostaja
+         Rajasalu Ülle, maavanem
+
+      <prop to="comment" prefix="Saaja asutus" from="asutus" />
+      <prop to="comment" prefix="Saatja isik" from="isik" />
+      <prop to="comment" prefix="Saaja aadress" from="aadress" />
+      <prop to="comment" prefix="Saaja aadress" from="indeks" />
+      <prop to="comment" prefix="Saaja aadress" from="linn" />
+      Täiendav info
+            Koostaja: Lembit Villem
+            Allkirjastaja: Helir-Valdor Seeder
+            Saaja asutus: AS Taisto Bussid
+            Saaja aadress: Oja 2b, 71503, Suure-Jaani
+      comment=
+         Saaja asutus: asutus
+         Saatja isik: isik
+         Saaja aadress: aadress, indeks, linn
+
+comment, content, price - CommentPropertyValue
+other d:text - StringPropertyValue
+
+StringPropertyValue puhul eraldatakse komaga, prefix pole toetatud
+CommentPropertyValue puhul eraldatakse prefixid reavahetusega, sama prefixi sees komaga
+
+ -->
+
+   <documentType from="Akt" to="instrumentOfDeliveryAndReceiptMv">
+      <prop to="regDateTime" from="kinnitamise_kpv" />
+      <prop to="delivererName" from="uleandja" />
+      <prop to="receiverName" from="vastuvotja" />
+      <prop to="docName" from="objekt" />
+
+      <prop to="comment" prefix="Koostamise kuupäev" from="koostamise_kpv" />
+      <prop to="comment" prefix="Juures viibisid" from="juuresviibinud_isikud" />
+      <prop to="comment" prefix="Lisad" from="lisad" />
+   </documentType>
+
+   <documentType from="Avaldus_ametikohale_kandideerimiseks" to="incomingLetterMv">
+      <prop to="regDateTime" from="registreerimis_kpv" />
+      <prop to="senderRegDate" from="kirja_kpv" />
+      <prop to="senderName" from="isik" />
+      <prop to="senderAddress1" from="aadress" />
+      <prop to="senderPostalCode" from="indeks" />
+      <prop to="senderAddress2" from="linn" />
+      <prop to="docName" from="sisu_kokkuvote" />
+      <prop to="dueDate" from="tahtaeg" />
+      <prop to="complienceDate" from="vastamise_kpv" />
+
+      <prop to="comment" prefix="Läbivaataja" from="labivaataja" />
+      <prop to="comment" prefix="Märkused" from="markused" />
+   </documentType>
+
+   <documentType from="Kiri_sissetulev" to="incomingLetterMv">
+      <prop to="regDateTime" from="registreerimis_kpv" />
+      <prop to="senderName" from="asutus" />
+      <prop to="senderAddress1" from="aadress" />
+      <prop to="senderPostalCode" from="indeks" />
+      <prop to="senderAddress2" from="linn" />
+      <prop to="senderName" from="koostaja_dvk" />
+      <prop to="senderPhone" from="tel_dvk" />
+      <prop to="senderEmail" from="epost_dvk" />
+      <prop to="senderRegDate" from="kirja_kpv" />
+      <prop to="senderRegNumber" from="kirja_nr" />
+      <prop to="docName" from="sisu_kokkuvote" />
+      <prop to="annex" from="lisad" />
+      <prop to="dueDate" from="tahtaeg" />
+      <prop to="complienceDate" from="vastamise_kpv" />
+      <prop to="content" from="markused" />
+      <prop to="comment" prefix="Läbivaataja" from="labivaataja" />
+
+      <prop to="senderWriter" from="isik" />
+      <prop to="senderWriter" from="ametinimetus_dvk" />
+   </documentType>
+
+   <documentType from="Kiri_valjaminev" to="outgoingLetterMv">
+      <prop to="regDateTime" from="registreerimis_kpv" />
+      <prop to="content" from="sisu" />
+      <prop to="annex" from="lisad" />
+      <prop to="replyDueDate" from="tahtaeg" />
+      <prop to="replyDate" from="taitmise_kpv" />
+      <prop to="senderRegDate" from="kirja_kpv" />
+      <prop to="senderRegNumber" from="kirja_nr" />
+      <prop to="docName" from="pealkiri" />
+
+      <prop to="comment" prefix="Koostaja" from="koostaja" />
+      <prop to="comment" prefix="Allkirjastaja" from="allkirjastaja" />
+      <prop to="comment" prefix="Saaja asutus" from="asutus" />
+      <prop to="comment" prefix="Saatja isik" from="isik" />
+      <prop to="comment" prefix="Saaja aadress" from="aadress" />
+      <prop to="comment" prefix="Saaja aadress" from="indeks" />
+      <prop to="comment" prefix="Saaja aadress" from="linn" />
+      <prop to="comment" prefix="Lisaadressaadid" from="lisaadressaadid" />
+      <prop to="comment" prefix="Saatmisviis" from="saatmisviis" />
+   </documentType>
+
+   <documentType from="Korraldus_personal" to="orderMv">
+      <prop to="regDateTime" from="registreerimis_kpv" />
+      <prop to="docName" from="pealkiri" />
+      <prop to="content" from="sisu" />
+      <prop to="signerName" from="allkirjastaja" />
+      <prop to="sendDescValue" from="valja_saadetud" />
+
+      <prop to="comment" prefix="Allkirjastamise kpv" from="allkirjastamise_kpv" />
+      <prop to="comment" prefix="Kellele suunatud" from="kellele_suunatud" />
+      <prop to="comment" prefix="Märkused" from="markused" />
+   </documentType>
+
+   <documentType from="Korraldus_puhkus_lahetus_ja_volitused" to="orderMv">
+      <prop to="regDateTime" from="registreerimis_kpv" />
+      <prop to="docName" from="pealkiri" />
+      <prop to="content" from="sisu" />
+      <prop to="signerName" from="allkirjastaja" />
+      <prop to="sendDescValue" from="valja_saadetud" />
+
+      <prop to="comment" prefix="Allkirjastamise kpv" from="allkirjastamise_kpv" />
+      <prop to="comment" prefix="Kellele suunatud" from="kellele_suunatud" />
+      <prop to="comment" prefix="Märkused" from="markused" />
+   </documentType>
+
+   <documentType from="Korraldus_struktuuriuksused" to="orderMv">
+      <prop to="regDateTime" from="registreerimis_kpv" />
+      <prop to="signerName" from="allkirjastaja" />
+      <prop to="docName" from="pealkiri" />
+      <prop to="content" from="sisu" />
+
+      <prop to="comment" prefix="Kellele suunatud" from="kellele_suunatud" />
+      <prop to="comment" prefix="Märkused" from="markused" />
+   </documentType>
+
+   <documentType from="Korraldus_uld" to="orderMv">
+      <prop to="regDateTime" from="registreerimis_kpv" />
+      <prop to="docName" from="pealkiri" />
+      <prop to="content" from="sisu" />
+      <prop to="signerName" from="allkirjastaja" />
+
+      <prop to="comment" prefix="Allkirjastamise kuupäev" from="allkirjastamise_kpv" />
+      <prop to="comment" prefix="Kellele suunatud" from="kellele_suunatud" />
+      <prop to="comment" prefix="Märkused" from="markused" />
+   </documentType>
+
+   <documentType from="Maakusimusedb_sissetulev" to="incomingLetterMv">
+      <prop to="regDateTime" from="registreerimis_kpv" />
+      <prop to="senderName" from="asutus" />
+      <prop to="senderWriter" from="isik" />
+      <prop to="senderAddress1" from="aadress" />
+      <prop to="senderPostalCode" from="indeks" />
+      <prop to="senderAddress2" from="linn" />
+      <prop to="senderRegDate" from="kirja_kpv" />
+      <prop to="senderRegNumber" from="kirja_nr" />
+      <prop to="docName" from="sisu_kokkuvote" />
+      <prop to="dueDate" from="tahtaeg" />
+      <prop to="complienceDate" from="vastamise_kpv" />
+
+      <prop to="comment" prefix="Dokumendi liik" from="dok_liik" />
+      <prop to="comment" prefix="Läbivaataja" from="labivaataja" />
+      <prop to="comment" prefix="Märkused" from="markused" />
+   </documentType>
+
+   <documentType from="Maakusimusedb_valja" to="outgoingLetterMv">
+      <prop to="regDateTime" from="registreerimis_kpv" />
+      <prop to="senderRegDate" from="kirja_kpv" />
+      <prop to="senderRegNumber" from="kirja_nr" />
+      <prop to="docName" from="pealkiri" />
+      <prop to="content" from="sisu" />
+      <prop to="replyDueDate" from="tahtaeg" />
+      <prop to="replyDate" from="taitmise_kpv" />
+
+      <prop to="comment" prefix="Dokumendi liik" from="dok_liik" />
+      <prop to="comment" prefix="Saatja asutus" from="asutus" />
+      <prop to="comment" prefix="Saatja isik" from="isik" />
+      <prop to="comment" prefix="Saatja aadress" from="aadress" />
+      <prop to="comment" prefix="Saatja aadress" from="indeks" />
+      <prop to="comment" prefix="Saatja aadress" from="linn" />
+      <prop to="comment" prefix="Lisaadressaadid" from="lisaadressaadid" />
+      <prop to="comment" prefix="Koostaja" from="koostaja" />
+      <prop to="comment" prefix="Allkirjastaja" from="allkirjastaja" />
+      <prop to="comment" prefix="Allkirjastaja" from="amet" />
+   </documentType>
+
+   <documentType from="Projekt" to="projectApplication">
+      <prop to="regDateTime" from="registreerimis_kpv" />
+      <prop to="docName" from="projekti_nimetus" />
+      <prop to="applicantInstitution" from="taotleja" />
+      <prop to="coApplicantInstitution" from="taotleja_2" />
+      <prop to="applicationSum" from="eelarve" />
+      <prop to="comment" prefix="Lisaadressaadid" from="lisaadressaat" />
+
+      <prop to="content" prefix="Sisu" from="projekti_sisu" />
+      <prop to="content" prefix="Kaasfinantseerimine" from="kaasfinantseerimine" />
+      <prop to="content" prefix="Tagasiside" from="tagasiside" />
+   </documentType>
+
+   <documentType from="Protokoll" to="minutesMv">
+      <prop to="regDateTime" from="registreerimis_kpv" />
+      <prop to="docName" from="protokolli_liik" />
+      <prop to="minutesDateTime" from="toimumise_kpv" />
+      <prop to="minutesDirector" from="koosoleku_juhataja" />
+      <prop to="minutesRecorder" from="koosoleku_protokollija" />
+      <prop to="comment" prefix="Märkused" from="markused" />
+
+      <prop to="content" prefix="Osalejad" from="osalejad" />
+      <prop to="content" prefix="Lühisisu" from="paevakord_luhisisu" />
+      <prop to="content" prefix="Otsustati" from="otsustati" />
+   </documentType>
+
+   <documentType from="Statistiline_aruanne_analuus" to="outgoingLetterMv">
+      <prop to="regDateTime" from="registreerimis_kpv" />
+      <prop to="docName" from="pealkiri" />
+      <prop to="content" from="sisu" />
+      <prop to="annex" from="lisad" />
+      <prop to="signerName" from="allkiri" />
+      <prop to="replyDueDate" from="tahtaeg" />
+
+      <prop to="comment" prefix="Dokumendi liik" from="dok_liik" />
+      <prop to="comment" prefix="Koostajad" from="koostajad" />
+      <prop to="comment" prefix="Kellele" from="kellele_esitamiseks" />
+   </documentType>
+
+   <documentType from="Tooleping" to="contractMv">
+      <prop to="regDateTime" from="registreerimis_kpv" />
+<!-- Töölepingus contractFirstPartyName = Viljandi Maavalitusus -->
+      <prop to="firstPartyName" expr="const" from="Viljandi Maavalitusus" />
+      <prop to="secondPartyContractDate" from="solmimise_kpv" /> 
+      <prop to="signerName" from="tooandja" />
+      <prop to="content" from="too_sisu" /> 
+      <prop to="contractMvEndDate" from="tahtaeg" /> 
+
+      <prop to="comment" prefix="Lõpetatud kpv" from="lopetatud_kpv" /> 
+      <prop to="comment" prefix="Märkused" from="markused" /> 
+
+      <child to="contractMvPartyType" assoc="contractMvParties">
+         <prop to="partyName" from="tootaja" />
+      </child>
+   </documentType>
+
+   <documentType from="uldleping" to="contractMv">
+      <prop to="regDateTime" from="registreerimis_kpv" />
+      <prop to="firstPartyName" from="lepingu_pool" /> 
+      <prop to="signerName" from="allkirjastaja" /> 
+      <prop to="content" from="lepingu_sisu" /> 
+      <prop to="price" from="maksumus" />
+      <prop to="contractMvEndDate" from="tahtaeg" />
+
+      <prop to="comment" prefix="Sõlmimise kpv" from="solmimise_kpv" /> 
+      <prop to="comment" prefix="Leping liik" from="lepingu_liik" /> 
+      <prop to="comment" prefix="Leping lõpetatud" from="lopetatud_kpv" /> 
+      <prop to="comment" prefix="Märkused" from="markused" /> 
+
+      <child to="contractMvPartyType" assoc="contractMvParties">
+         <prop to="partyName" from="lepingu_pool_2" />
+         <prop to="partySigner" from="allkirjastaja_2" />
+      </child>
+      <child to="contractMvPartyType" assoc="contractMvParties">
+         <prop to="partyName" from="lepingu_pool_3" />
+         <prop to="partySigner" from="allkirjastaja_3" />
+      </child>
+      <child to="contractMvPartyType" assoc="contractMvParties">
+         <prop to="partyName" from="lepingu_pool_4" />
+         <prop to="partySigner" from="allkirjastaja_4" />
+      </child>
+   </documentType>
+
+   <documentType from="Avaldus_ametikohale_kandideerimiseks_vastus" to="outgoingLetterMv">
+      <prop to="regDateTime" from="registreerimis_kpv" />
+      <prop to="senderRegDate" from="kirja_kpv" />
+      <prop to="docName" from="sisu_kokkuvote" />
+      <prop to="content" from="markused" />
+
+      <prop to="comment" prefix="Dokumendi liik" from="dok_liik" />
+      <prop to="comment" prefix="Isik" from="isik" />
+      <prop to="comment" prefix="Saaja aadress" from="aadress" />
+      <prop to="comment" prefix="Saaja aadress" from="indeks" />
+      <prop to="comment" prefix="Saaja aadress" from="linn" />
+      <prop to="comment" prefix="Allkirjastaja" from="allkirjastaja" />
+   </documentType>
+
+</root>

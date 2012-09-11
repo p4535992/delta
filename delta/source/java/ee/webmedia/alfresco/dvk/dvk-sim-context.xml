@@ -1,0 +1,58 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <import resource="classpath:ee/webmedia/alfresco/dvk/dvk-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/dvk/stub-dvk-context.xml" />
+
+   <!-- @Override different implementations in concrete projects (i.e TK) -->
+   <bean id="dvkService" class="ee.webmedia.alfresco.dvk.service.DvkServiceSimImpl" parent="dvkServiceBase">
+      <property name="documentService" ref="DocumentService" />
+      <property name="documentLogService" ref="DocumentLogService" />
+      <property name="documentSearchService" ref="DocumentSearchService" />
+      <property name="documentDynamicService" ref="DocumentDynamicService" />
+      <property name="volumeService" ref="VolumeService" />
+      <property name="importerService" ref="externalReviewWorkflowImporterComponent" />
+      <property name="exporterService" ref="exporterComponent" />
+      <property name="sendOutService" ref="SendOutService" />
+      <property name="fileService" ref="FileService" />
+      <property name="workflowService" ref="WmWorkflowService" />
+      <property name="notificationService" ref="NotificationService" />
+      <property name="einvoiceService" ref="EInvoiceService" />       
+   </bean>
+
+   <bean id="dvkCorruptDocumentPermissionsBootstrap" class="ee.webmedia.alfresco.dvk.bootstrap.DvkCorruptDocumentPermissionsBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="dvkSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="generalService" ref="GeneralService" />
+      <property name="dvkCorruptDocumentsPath" value="${dvk.received.parent.folder.xpath}${dvk.corrupt.folder.name}" />
+   </bean>
+
+   <!-- START: web beans: -->
+   <bean id="DvkCorruptListDialog" class="ee.webmedia.alfresco.dvk.web.DvkCorruptListDialog" scope="session" />
+   <!-- END: web beans: -->
+   
+   <bean class="ee.webmedia.alfresco.dvk.web.DvkCorruptMenuItemProcessor">
+      <property name="menuService" ref="MenuService" />
+      <property name="generalService" ref="GeneralService" />
+      <property name="dvkService" ref="DvkService" />
+      <property name="fileFolderService" ref="FileFolderService" />
+   </bean>
+   
+   <bean class="ee.webmedia.alfresco.dvk.web.DvkDocumentsMenuItemProcessor">
+      <property name="menuService" ref="MenuService" />
+      <property name="documentService" ref="DocumentService" />
+   </bean>
+
+   <!-- START: web beans: -->
+
+   <bean id="DvkBean" class="ee.webmedia.alfresco.dvk.web.DvkBean" scope="session" />
+
+   <!-- END: web beans: -->
+
+</beans>

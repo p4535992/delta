@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="glassfish" basedir=".">
+
+   <import file="build-common.xml" />
+
+   <!-- ============= Glassfish setup targets ============= -->
+
+   <target name="setup-glassfish" depends="load-conf">
+      <echo message="Copying configuration file to GlassFish domain classpath" />
+      <copy todir="${dir.glassfish.domain.lib.classes}" preservelastmodified="true" overwrite="true">
+         <fileset dir="${conf.basedir}/${conf.name}/classes" />
+      </copy>
+   </target>
+
+   <!-- TODO clean-glassfish target -->
+
+   <target name="installcert" depends="compile" description="Retrieve HTTPS certificate from remote HTTPS connection and add it to application server Keystore (use if CAS connection is over HTTPS)">
+      <java dir="${project.basedir}" fork="true" classname="ee.webmedia.alfresco.utils.InstallCert" classpathref="classpath.test.compile">
+         <arg path="${file.glassfish.domain.config.cacerts}" />
+      </java>
+   </target>
+
+   <!-- ============= Glassfish domain targets ============= -->
+
+   <target name="glassfish-restart" depends="glassfish-stop, glassfish-start" description="Restart GlassFish server domain" />
+
+   <target name="glassfish-start" depends="setup-glassfish" description="Start GlassFish server domain">
+      <echo message="Starting GlassFish domain '${glassfish.domain.name}'" />
+      <!-- On Windows asadmin doesn't exit at the end of start-domain command, that's why spawn=true -->
+      <exec executable="${executable.glassfish.asadmin}" spawn="true">
+         <arg value="start-domain" />
+         <arg value="${glassfish.domain.name}" />
+      </exec>
+      <echo message="Wait for the server domain start (see ${dir.glassfish}/domains/${glassfish.domain.name}/logs/server.log)" />
+      <waitfor maxwait="300" maxwaitunit="second" checkevery="2" checkeveryunit="second" timeoutproperty="wait.timeout">
+         <http url="${server.domain.protocol}://${server.host}:${server.domain.port}/" />
+      </waitfor>
+      <fail if="wait.timeout"
+            message="Didn't get response from deployment management url: ${server.domain.protocol}://${server.host}:${server.domain.port}. Maybe server.domain.port shouldn't be ${server.domain.port}?" />
+      <echo message="Server started - see ${server.domain.protocol}://${server.host}:${server.domain.port}" />
+   </target>
+
+   <target name="glassfish-start-done" depends="setup-glassfish">
+      <condition property="glassfish.start.done">
+         <http url="${server.domain.protocol}://${server.host}:${server.domain.port}/" />
+      </condition>
+      <antcall target="glassfish-start-conditionally" />
+   </target>
+
+   <target name="glassfish-start-conditionally" unless="glassfish.start.done">
+      <antcall target="glassfish-start" />
+   </target>
+
+   <target name="glassfish-stop" depends="load-conf" description="Stop GlassFish server domain">
+      <echo message="Stopping GlassFish domain '${glassfish.domain.name}'" />
+      <exec executable="${executable.glassfish.asadmin}" failonerror="true">
+         <arg value="stop-domain" />
+         <arg value="${glassfish.domain.name}" />
+      </exec>
+   </target>
+
+   <!-- ============= Glassfish deploy targets ============= -->
+
+   <target name="deploy" depends="compile,glassfish-start-done" description="Deploy exploded directory to GlassFish">
+      <condition property="glassfish.deploy.done">
+         <http url="${server.domain.protocol}://${server.host}:${server.domain.port}/${project.name}" />
+      </condition>
+      <fail if="glassfish.deploy.done" message="Project '${project.name}' is already deployed, please execute undeploy first" />
+
+      <echo message="Deploying '${project.name}' to GlassFish" />
+      <exec executable="${executable.glassfish.asadmin}" failonerror="true">
+         <arg value="deploydir" />
+         <arg value="--echo=true" />
+         <arg value="--contextroot=${project.name}" />
+         <arg value="--name=${project.name}" />
+         <arg file="${project.dir.exploded}" />
+      </exec>
+      <echo message="Checking if project is deployed as '${server.domain.protocol}://${server.host}:${server.domain.port}/${project.name}'" />
+      <waitfor maxwait="10" maxwaitunit="second" checkevery="500" checkeveryunit="millisecond" timeoutproperty="wait.timeout">
+         <http url="${server.domain.protocol}://${server.host}:${server.domain.port}/${project.name}" />
+      </waitfor>
+      <fail if="wait.timeout" message="Didn't get response from deployment url: ${server.domain.protocol}://${server.host}:${server.domain.port}/${project.name}" />
+      <echo message="Project is deployed to ${server.host} with context path '/${project.name}'" />
+   </target>
+
+   <target name="undeploy" depends="load-conf" description="Undeploy project from GlassFish">
+      <echo message="Undeploying '${project.name}' from GlassFish" />
+      <exec executable="${executable.glassfish.asadmin}" failonerror="true">
+         <arg value="undeploy" />
+         <arg value="${project.name}" />
+      </exec>
+   </target>
+
+   <target name="redeploy" depends="undeploy, deploy" description="Undeploy and deploy exploded directory (server domain must be running)" />
+
+   <target name="clean-redeploy"
+           depends="undeploy, clean, deploy"
+           description="Undeploy, clean, rebuild and deploy exploded directory (server domain must be running)" />
+
+   <target name="full-redeploy" description="Undeploy and stop server domain, clean, rebuild, start server and deploy exploded directory">
+      <antcall target="undeploy" />
+      <parallel>
+         <sequential>
+            <antcall target="glassfish-stop" />
+            <antcall target="glassfish-start" />
+         </sequential>
+         <sequential>
+            <antcall target="clean" />
+            <antcall target="compile" />
+         </sequential>
+      </parallel>
+      <antcall target="deploy" />
+   </target>
+
+   <target name="p-deploy" description="Paralel startGF(if needed)+deploy">
+      <parallel>
+         <antcall target="glassfish-start-done" />
+         <!-- start glassfish if needed -->
+         <antcall target="deploy" />
+      </parallel>
+   </target>
+
+</project>

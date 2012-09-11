@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="
+    http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <bean id="adrService" class="ee.webmedia.alfresco.adr.service.AdrServiceImpl">
+      <property name="fileFolderService" ref="fileFolderService" />
+      <property name="documentSearchService" ref="documentSearchService" />
+      <property name="fileService" ref="fileService" />
+      <property name="documentService" ref="documentService" />
+      <property name="documentAdminService" ref="documentAdminService" />
+      <property name="documentDynamicService" ref="documentDynamicService" />
+      <property name="classificatorService" ref="classificatorService" />
+      <property name="nodeService" ref="nodeService" />
+      <property name="generalService" ref="generalService" />
+      <property name="namespaceService" ref="namespaceService" />
+      <property name="dataSource" ref="dataSource" />
+   </bean>
+
+</beans>
