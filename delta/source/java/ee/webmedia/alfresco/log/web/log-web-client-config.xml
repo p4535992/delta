@@ -6,6 +6,7 @@
             <label-id>applog_export_csv</label-id>
             <image>/images/icons/export.gif</image>
             <action-listener>#{ApplicationLogListDialog.exportCsv}</action-listener>
+            <target>no_wait_workaround</target>
          </action>
 
          <action-group id="log_results_actions">

@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.document.assocsdyn.service;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getClassificatorService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocLockService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.DOC_NAME;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_DATE_TIME;
@@ -20,6 +21,8 @@ import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
+import org.alfresco.service.cmr.lock.LockStatus;
+import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -95,7 +98,7 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
         AssociationModel assocModel = getAssocModel(assocModelRef, baseDocType, replyOrF);
         if (!newDocTypeId.equals(assocModel.getDocType())) {
             throw new IllegalArgumentException("docTypeId to be created should be stored in assocModel and in associationType between documentType and AssociationModel" +
-                            ", but they are not equal!\n'" + assocModel.getDocType() + "' according to model, but\n'" + newDocTypeId + "' according to association");
+                    ", but they are not equal!\n'" + assocModel.getDocType() + "' according to model, but\n'" + newDocTypeId + "' according to association");
         }
         if (!baseDocType.getNodeRef().equals(primaryParent.getParentRef())) {
             throw new IllegalArgumentException("baseDocType.getNodeRef!=primaryParent.getParentRef()! " +
@@ -277,6 +280,12 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
     @Override
     /** Add association from new to original doc */
     public void createAssoc(final NodeRef sourceNodeRef, final NodeRef targetNodeRef, QName assocQName) {
+        if (getDocLockService().getLockStatus(sourceNodeRef) == LockStatus.LOCKED) {// lock owned by other user
+            throw new NodeLockedException(sourceNodeRef);
+        }
+        if (getDocLockService().getLockStatus(targetNodeRef) == LockStatus.LOCKED) {// lock owned by other user
+            throw new NodeLockedException(targetNodeRef);
+        }
         nodeService.createAssociation(sourceNodeRef, targetNodeRef, assocQName);
         updateModifiedDateTime(sourceNodeRef, targetNodeRef);
     }

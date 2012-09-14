@@ -193,6 +193,10 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             item.setConverter(NodeRefConverter.class.getName());
             item.setSelectionItems(getBindingName("getCases", stateHolderKey));
             item.setShowInViewMode(false);
+            boolean forSearch = field.isForSearch();
+            if (forSearch) {
+                item.setShowInEditMode(false);
+            }
             if (field.getParent() != null) {
                 item.setForcedMandatory(true);
                 item.setDontRenderIfDisabled(true);
@@ -205,6 +209,9 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             caseLabelEditableItem.setDisplayLabel(item.getDisplayLabel());
             caseLabelEditableItem.setReadOnly(item.isReadOnly());
             String readOnlyIf = item.getCustomAttributes().get(BaseComponentGenerator.READONLY_IF);
+            if (forSearch) {
+                caseLabelEditableItem.setRenderCheckboxAfterLabel(true);
+            }
             if (readOnlyIf != null) {
                 caseLabelEditableItem.setReadOnlyIf(readOnlyIf);
             }

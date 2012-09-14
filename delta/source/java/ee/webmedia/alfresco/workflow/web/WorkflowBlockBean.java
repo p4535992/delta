@@ -225,10 +225,10 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             List<String> taskTypes = new ArrayList<String>(5);
 
             for (Task task : myTasks) {
-                String type = "task_title_" + task.getType().getLocalName();
+                String type = task.getType().getLocalName();
 
                 if (!taskTypes.contains(type)) {
-                    getLogService().addLogEntry(LogEntry.create(LogObject.WORKFLOW, getUserService(), docRef, "applog_task_view", MessageUtil.getMessage(type)));
+                    getLogService().addLogEntry(LogEntry.create(LogObject.WORKFLOW, getUserService(), docRef, "applog_task_view", MessageUtil.getTypeName(task.getType())));
                     taskTypes.add(type);
                 }
             }
@@ -670,6 +670,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
 
     public void signDocument() {
         FacesContext facesContext = FacesContext.getCurrentInstance();
+        @SuppressWarnings("cast")
         String signatureHex = (String) facesContext.getExternalContext().getRequestParameterMap().get("signatureHex");
 
         try {

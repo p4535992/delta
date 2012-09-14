@@ -92,7 +92,7 @@ public class DeleteTopicDialog extends DeleteSpaceDialog
       {
          return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME + AlfrescoNavigationHandler.OUTCOME_SEPARATOR + AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
       }
-      return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
+      return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME + AlfrescoNavigationHandler.CLOSE_MULTIPLE_START + "2" + AlfrescoNavigationHandler.CLOSE_MULTIPLE_END;
    }
    
    @Override

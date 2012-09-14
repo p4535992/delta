@@ -261,11 +261,19 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
 
     private void writeNodesToFile(File file, Set<NodeRef> nodesToWrite) throws Exception {
         log.info("Writing " + nodesToWrite.size() + " nodes to file " + file.getAbsolutePath());
+        List<String[]> records = new ArrayList<String[]>();
+        for (NodeRef nodeRef : nodesToWrite) {
+            records.add(new String[] { nodeRef.toString() });
+        }
+        writeRecordsToCsvFile(file, records);
+    }
+
+    public static void writeRecordsToCsvFile(File file, List<String[]> records) {
         try {
             CsvWriter writer = new CsvWriter(new FileOutputStream(file), CSV_SEPARATOR, CSV_CHARSET);
             try {
-                for (NodeRef nodeRef : nodesToWrite) {
-                    writer.writeRecord(new String[] { nodeRef.toString() });
+                for (String[] record : records) {
+                    writer.writeRecord(record);
                 }
             } finally {
                 writer.close();

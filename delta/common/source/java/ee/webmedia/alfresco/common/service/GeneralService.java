@@ -50,6 +50,12 @@ public interface GeneralService {
     LinkedHashSet<StoreRef> getAllWithArchivalsStoreRefs();
 
     /**
+     * Return all storeRefs returned from getAllWithArchivalsStoreRefs call (active store + archived documents' stores)
+     * and storeRef where deleted documents are stored
+     */
+    LinkedHashSet<StoreRef> getAllStoreRefsWithTrashCan();
+
+    /**
      * @return store where archived documents are stored
      */
     StoreRef getArchivalsStoreRef();

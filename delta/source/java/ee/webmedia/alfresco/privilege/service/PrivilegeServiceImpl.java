@@ -270,18 +270,26 @@ public class PrivilegeServiceImpl implements PrivilegeService {
 
     private void logMemberPrivAdd(NodeRef manageableRef, String authority, boolean group, Set<String> privs) {
         if (group) {
-            log(manageableRef, "applog_priv_add_group", getAuthorityName(authority, group), StringUtils.join(privs, ", "));
+            log(manageableRef, "applog_priv_add_group", getAuthorityName(authority, group), getPrivilegesDisplayNames(privs));
         } else {
-            log(manageableRef, "applog_priv_add_user", getAuthorityName(authority, group), StringUtils.join(privs, ", "));
+            log(manageableRef, "applog_priv_add_user", getAuthorityName(authority, group), getPrivilegesDisplayNames(privs));
         }
     }
 
     private void logMemberPrivRem(NodeRef manageableRef, String authority, boolean group, Set<String> privs) {
         if (group) {
-            log(manageableRef, "applog_priv_rem_group", getAuthorityName(authority, group), StringUtils.join(privs, ", "));
+            log(manageableRef, "applog_priv_rem_group", getAuthorityName(authority, group), getPrivilegesDisplayNames(privs));
         } else {
-            log(manageableRef, "applog_priv_rem_user", getAuthorityName(authority, group), StringUtils.join(privs, ", "));
+            log(manageableRef, "applog_priv_rem_user", getAuthorityName(authority, group), getPrivilegesDisplayNames(privs));
         }
+    }
+
+    private String getPrivilegesDisplayNames(Set<String> privs) {
+        Set<String> displayNames = new HashSet<String>(privs.size());
+        for (String priv : privs) {
+            displayNames.add(MessageUtil.getMessage("permission_" + priv));
+        }
+        return StringUtils.join(displayNames, ", ");
     }
 
     // START: getters / setters

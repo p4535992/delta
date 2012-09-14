@@ -194,6 +194,9 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
         Set<String> keys = props.keySet();
         for (FieldDefinition fieldDefinition : searchableFields) {
             QName primaryQName = fieldDefinition.getQName();
+            if (primaryQName.equals(RepoUtil.createTransientProp("caseLabelEditable"))) {
+                primaryQName = DocumentCommonModel.Props.CASE;
+            }
             QName tamperedQName = RepoUtil.createTransientProp(primaryQName.getLocalName() + "LabelEditable");
             if (!(keys.contains(getLabelBoolean(primaryQName).toString()) || keys.contains(tamperedQName.toString()))) {
                 // the original field is not visible or the qname has been tampered with

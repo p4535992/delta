@@ -434,8 +434,9 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public String generateURL(NodeRef nodeRef) {
+        String runAsUser = AuthenticationUtil.getRunAsUser();
         String name = fileFolderService.getFileInfo(nodeRef).getName();
-        if (nodeRef.getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_ARCHIVE)) {
+        if (nodeRef.getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_ARCHIVE) || StringUtils.isBlank(runAsUser) || AuthenticationUtil.isRunAsUserTheSystemUser()) {
             return DownloadContentServlet.generateDownloadURL(nodeRef, name);
         }
         // calculate a WebDAV URL for the given node

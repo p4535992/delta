@@ -596,6 +596,49 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         return fileRefs;
     }
 
+    @Override
+    public List<List<String>> deleteNotExistingTasks() {
+        String sqlQuery = "SELECT * from delta_task where store_id is null";
+        final List<String> columnNames = new ArrayList<String>();
+        final List<String> taskIds = new ArrayList<String>();
+        List<List<String>> taskData = jdbcTemplate.query(sqlQuery,
+                new ParameterizedRowMapper<List<String>>() {
+
+                    @Override
+                    public List<String> mapRow(ResultSet rs, int rowNum) throws SQLException {
+                        ResultSetMetaData metaData = rs.getMetaData();
+                        int columnCount = metaData.getColumnCount();
+                        if (rowNum == 0) {
+                            for (int i = 1; i <= columnCount; i++) {
+                                columnNames.add(metaData.getColumnName(i));
+                            }
+                        }
+                        List<String> columnValues = new ArrayList<String>();
+                        for (int i = 1; i <= columnCount; i++) {
+                            Object object = rs.getObject(i);
+                            columnValues.add(object != null ? object.toString() : null);
+                        }
+                        taskIds.add(rs.getString(TASK_ID_FIELD));
+                        return columnValues;
+                    }
+
+                });
+        explainQuery(sqlQuery);
+        taskData.add(0, columnNames);
+
+        int numTasks = taskIds.size();
+        if (numTasks > 0) {
+            String createTableAsQuery = "CREATE TABLE delta_task_no_store_id_tmp AS (" + sqlQuery + ")";
+            jdbcTemplate.update(createTableAsQuery);
+
+            String deleteQuery = "DELETE FROM delta_task WHERE store_id is null";
+            jdbcTemplate.update(deleteQuery);
+            explainQuery(deleteQuery);
+        }
+
+        return taskData;
+    }
+
     private Serializable getConvertedValue(ResultSet rs, QName propName, String columnLabel, Object value) throws SQLException {
         if (WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME.equals(propName) && value != null) {
             Array array = rs.getArray(columnLabel);

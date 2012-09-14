@@ -11,15 +11,18 @@ import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
+import org.apache.commons.logging.Log;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
@@ -42,7 +45,7 @@ public class TaskAssociatedDataTableInsertBootstrap extends AbstractNodeUpdater 
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
         String query = SearchUtil.generateTypeQuery(WorkflowCommonModel.Types.TASK);
         List<ResultSet> result = new ArrayList<ResultSet>(6);
-        for (StoreRef storeRef : generalService.getAllWithArchivalsStoreRefs()) {
+        for (StoreRef storeRef : generalService.getAllStoreRefsWithTrashCan()) {
             result.add(searchService.query(storeRef, SearchService.LANGUAGE_LUCENE, query));
         }
         return result;
@@ -51,6 +54,10 @@ public class TaskAssociatedDataTableInsertBootstrap extends AbstractNodeUpdater 
     @Override
     protected String[] updateNode(NodeRef nodeRef) throws Exception {
         List<String> results = new ArrayList<String>();
+        String[] taskExistsError = checkTaskExists(nodeRef, log, nodeService, workflowService, workflowDbService);
+        if (taskExistsError != null) {
+            return taskExistsError;
+        }
         List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(nodeRef, WorkflowSpecificModel.Assocs.TASK_DUE_DATE_EXTENSION_HISTORY,
                 WorkflowSpecificModel.Assocs.TASK_DUE_DATE_EXTENSION_HISTORY);
         if (childAssocs.isEmpty()) {
@@ -106,6 +113,16 @@ public class TaskAssociatedDataTableInsertBootstrap extends AbstractNodeUpdater 
         // also updates store_id value
         workflowDbService.updateTaskPropertiesAndStorRef(nodeRef, newProps);
         return results.toArray(new String[results.size()]);
+    }
+
+    public static String[] checkTaskExists(final NodeRef nodeRef, Log log, NodeService nodeService, WorkflowService workflowService, WorkflowDbService workflowDbService) {
+        if (!workflowDbService.taskExists(nodeRef)) {
+            WmNode taskNode = new WmNode(nodeRef, nodeService.getType(nodeRef));
+            String taskStr = taskNode.toString();
+            log.error("Found task from repo that doesn't exist in delta_task table, node:\n" + taskStr);
+            return new String[] { "Task not present in delta_task table", taskStr };
+        }
+        return null;
     }
 
     public void setWorkflowDbService(WorkflowDbService workflowDbService) {

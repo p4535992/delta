@@ -1591,6 +1591,17 @@ public class PostipoissDocumentsImporter {
 
         addAssociations(documentRef, documentId, root);
 
+        LogEntry logEntry = new LogEntry();
+        logEntry.setComputerIp("127.0.0.1");
+        logEntry.setComputerName("localhost");
+        logEntry.setLevel(LogObject.DOCUMENT.getLevel());
+        logEntry.setObjectName(LogObject.DOCUMENT.getObjectName());
+        logEntry.setCreatorId("IMPORT");
+        logEntry.setCreatorName("IMPORT");
+        logEntry.setEventDescription("Dokumendi importimine");
+        logEntry.setObjectId(documentRef.toString());
+        BeanHelper.getLogService().addLogEntry(logEntry);
+
         return new ImportedDocument(documentId, documentRef, root.elementText(ppRegNumberWithoutIndividual),
                 root.elementText(ppShortRegNumber), root.elementText(ppDocumentTypeFrom),
                 root.elementText(PP_ELEMENT_SUUND), mapping.typeInfo.docVer.getParent().getId(), nodeService.getProperties(documentRef));
@@ -1860,8 +1871,8 @@ public class PostipoissDocumentsImporter {
             logEntry.setLevel(LogObject.DOCUMENT.getLevel());
             logEntry.setObjectName(LogObject.DOCUMENT.getObjectName());
             logEntry.setCreatorId("IMPORT");
-            logEntry.setEventDescription(description);
             logEntry.setCreatorName(kes);
+            logEntry.setEventDescription(description);
             logEntry.setObjectId(docRef.toString());
             BeanHelper.getLogService().addImportedLogEntry(logEntry, kpv);
 

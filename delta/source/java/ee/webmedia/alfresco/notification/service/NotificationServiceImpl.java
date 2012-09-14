@@ -36,6 +36,7 @@ import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.document.file.model.File;
@@ -71,6 +72,7 @@ import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
+import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventType;
 
@@ -694,10 +696,11 @@ public class NotificationServiceImpl implements NotificationService {
         Workflow workflow = task.getParent();
 
         // co-responsible finished task
+        WorkflowDbService workflowDbService = BeanHelper.getWorkflowDbService();
         if (StringUtils.isNotEmpty(task.getOwnerId()) && !task.getNode().hasAspect(WorkflowSpecificModel.Aspects.RESPONSIBLE)) {
             for (Task workflowTask : workflow.getTasks()) {
                 // responsible aspect
-                final Boolean active = (Boolean) nodeService.getProperty(workflowTask.getNodeRef(), WorkflowSpecificModel.Props.ACTIVE);
+                final Boolean active = (Boolean) workflowDbService.getTaskProperty(workflowTask.getNodeRef(), WorkflowSpecificModel.Props.ACTIVE);
                 if (Boolean.TRUE.equals(active)) {
                     if (isSubscribed(workflowTask.getOwnerId(), NotificationModel.NotificationType.TASK_ASSIGNMENT_TASK_COMPLETED_BY_CO_RESPONSIBLE)) {
                         Notification notification = setupNotification(NotificationModel.NotificationType.TASK_ASSIGNMENT_TASK_COMPLETED_BY_CO_RESPONSIBLE);

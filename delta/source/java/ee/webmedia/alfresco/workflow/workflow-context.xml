@@ -471,7 +471,20 @@
       <property name="enabled" value="false" /><!-- Executed only from node-browser -->
    </bean>   
    
-   <!-- Can be executed only after store_id field is filled by taskAssociatedDataTableInsertBootstrap -->
+   <bean id="logAndDeleteNotExistingTasks" class="ee.webmedia.alfresco.workflow.bootstrap.LogAndDeleteNotExistingTasks" parent="module.baseComponent" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />   
+      <property name="inputFolderPath" value="${dir.root}" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="taskAssociatedDataTableInsertBootstrap1" /> 
+            <ref bean="archivalsStoresBootstrap" />   
+         </list>
+      </property>      
+   </bean>      
+   
+   <!-- Can be executed only after store_id field is filled by taskAssociatedDataTableInsertBootstrap or fixed by fixTaskStoreIdFromWorkflow 
+      and not existing tasks have been removed by logAndDeleteNotExistingTasks -->
    <bean id="taskTableAddStoreIdNotNullConstraintBootstrap" parent="executeStatementsBootstrap" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
@@ -480,6 +493,7 @@
       <property name="dependsOn">
          <list>
             <ref bean="taskAssociatedDataTableInsertBootstrap1" />
+            <ref bean="logAndDeleteNotExistingTasks" />
          </list>
       </property>
    </bean>
@@ -494,7 +508,19 @@
             <ref bean="taskTableAddColumnBootstrap7" />
          </list>
       </property>
-   </bean>  
+   </bean>
+   
+   <bean id="taskTableSearchIndexesBootstrap2" parent="executeStatementsBootstrap" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dataSource" ref="dataSource" />
+      <property name="resourceName" value="ee/webmedia/alfresco/workflow/bootstrap/delta_task_table_search_indexes2.sql" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="taskTableAddColumnBootstrap7" />
+         </list>
+      </property>
+   </bean>    
 
    <!-- START: web beans: -->
       

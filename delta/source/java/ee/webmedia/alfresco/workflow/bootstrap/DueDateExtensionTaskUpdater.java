@@ -19,6 +19,7 @@ import org.alfresco.service.namespace.QName;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
@@ -32,7 +33,7 @@ public class DueDateExtensionTaskUpdater extends AbstractNodeUpdater {
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
         String query = SearchUtil.generateTypeQuery(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK);
         List<ResultSet> resultSets = new ArrayList<ResultSet>();
-        for (StoreRef storeRef : generalService.getAllWithArchivalsStoreRefs()) {
+        for (StoreRef storeRef : generalService.getAllStoreRefsWithTrashCan()) {
             resultSets.add(searchService.query(storeRef, SearchService.LANGUAGE_LUCENE, query));
         }
         return resultSets;
@@ -66,6 +67,7 @@ public class DueDateExtensionTaskUpdater extends AbstractNodeUpdater {
             newExtensionTaskProps.put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME, null);
         }
         nodeService.addProperties(extensionTaskRef, newExtensionTaskProps);
+        BeanHelper.getWorkflowDbService().updateTaskProperties(extensionTaskRef, newExtensionTaskProps);
         return new String[] {
                 creatorProps != null ? "creatorFound" : "creatorNotFound",
                 type.toPrefixString(serviceRegistry.getNamespaceService()),

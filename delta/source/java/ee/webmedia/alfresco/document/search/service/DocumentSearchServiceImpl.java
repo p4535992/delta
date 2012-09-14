@@ -1303,7 +1303,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                 FieldDefinition def = ser.getFieldDefinition(propQName.getLocalName());
                 @SuppressWarnings("unchecked")
                 List<String> list = (List<String>) value;
-                if (StringUtils.isBlank(def.getClassificator())) {
+                if (StringUtils.isNotBlank(def.getClassificator())) {
                     queryParts.add(generateMultiStringExactQuery(list, propQName));
                 } else {
                     queryParts.add(generateMultiStringWordsWildcardQuery(list, propQName));

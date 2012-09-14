@@ -541,15 +541,19 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             // XXX If owner is changed to another user, then after previous call we don't have permissions any more to write document properties
 
             propertyChangesMonitorHelper = new PropertyChangesMonitorHelper();// FIXME:
-            boolean propsChanged = propertyChangesMonitorHelper.setPropertiesIgnoringSystemAndReturnIfChanged(docNodeRef, docProps //
-                    , FUNCTION, SERIES, VOLUME, CASE // location changes
+            DocumentPropertiesChangeHolder changedPropsNewValues = propertyChangesMonitorHelper.setPropertiesIgnoringSystemAndReturnNewValues(docNodeRef, docProps //
                     , REG_NUMBER, SHORT_REG_NUMBER, INDIVIDUAL_NUMBER, REG_DATE_TIME // registration changes
                     , ACCESS_RESTRICTION // access restriction changed
                     );
+            if (DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(docNodeRef))) {
+                for (Serializable msg : changedPropsNewValues.generateLogMessages(getDocumentConfigService().getPropertyDefinitions(docNode), docNodeRef)) {
+                    documentLogService.addDocumentLog(docNodeRef, (String) msg);
+                }
+            }
             if (!EventsLoggingHelper.isLoggingDisabled(docNode, DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED)) {
                 if (isDraft) {
                     documentLogService.addDocumentLog(docNodeRef, MessageUtil.getMessage("document_log_status_created"));
-                } else if (propsChanged) {
+                } else if (!changedPropsNewValues.isEmpty()) {
                     documentLogService.addDocumentLog(docNodeRef, MessageUtil.getMessage("document_log_status_changed"));
                 }
                 final String newAccessrestriction = (String) docProps.get(ACCESS_RESTRICTION);
@@ -1880,12 +1884,17 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             if (SystematicDocumentType.VACATION_APPLICATION.isSameType(documentTypeId) && StringUtils.isBlank(oldRegNumber)) {
                 createSubstitutions(props);
             }
+            boolean creatorDhs = false;
             if (getDocumentAdminService().getDocumentTypeProperty(documentTypeId, DocumentAdminModel.Props.FINISH_DOC_BY_REGISTRATION, Boolean.class)) {
                 props.put(DOC_STATUS.toString(), DocumentStatus.FINISHED.getValueName());
                 propertyChangesMonitorHelper.addIgnoredProps(props, DOC_STATUS);
-                documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_registered"));
             } else {
                 if (EventsLoggingHelper.isLoggingDisabled(docNode, TEMP_LOGGING_DISABLED_REGISTERED_BY_USER)) {
+                    creatorDhs = true;
+                }
+            }
+            if (StringUtils.isBlank(oldRegNumber) && StringUtils.isNotBlank(regNumber)) {
+                if (creatorDhs) {
                     documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_registered") //
                             , I18NUtil.getMessage("document_log_creator_dhs"));
                 } else {

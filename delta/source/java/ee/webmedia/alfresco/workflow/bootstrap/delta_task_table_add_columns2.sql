@@ -9,8 +9,3 @@ ALTER TABLE delta_task ADD COLUMN wfc_owner_organization_name text[];
 CREATE INDEX delta_task_owner_organization_names ON delta_task USING GIN(wfc_owner_organization_name);
 
 ALTER TABLE delta_task ADD COLUMN store_id text;
-
--- TODO: Riina: run in 3.12 branch
--- ALTER TABLE delta_task DROP COLUMN wfs_searchable_compound_workflow_owner_organization_name;
--- ALTER TABLE delta_task ADD COLUMN wfs_searchable_compound_workflow_owner_organization_name text[];
--- CREATE INDEX delta_task_searchable_compound_workflow_owner_organization_names ON delta_task USING GIN(wfs_searchable_compound_workflow_owner_organization_name);

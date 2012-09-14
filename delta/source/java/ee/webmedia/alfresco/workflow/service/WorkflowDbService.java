@@ -76,4 +76,6 @@ public interface WorkflowDbService {
 
     void updateTaskPropertiesAndStorRef(NodeRef taskRef, Map<QName, Serializable> props);
 
+    List<List<String>> deleteNotExistingTasks();
+
 }

@@ -63,7 +63,7 @@ public class WebDAVCustomHelper extends WebDAVHelper {
         }
 
         List<String> pathElements = splitAllPaths(path);
-        if (pathElements.isEmpty()) {
+        if (pathElements.isEmpty() || pathElements.size() < 3) {
             throw new FileNotFoundException(path);
         }
 
