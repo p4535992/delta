@@ -23,11 +23,16 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
+import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
+import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 /**
  * @author Alar Kvell
  */
 public class DueDateExtensionTaskUpdater extends AbstractNodeUpdater {
+
+    private WorkflowDbService workflowDbService;
+    private WorkflowService workflowService;
 
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
@@ -41,6 +46,10 @@ public class DueDateExtensionTaskUpdater extends AbstractNodeUpdater {
 
     @Override
     protected String[] updateNode(NodeRef extensionTaskRef) throws Exception {
+        String[] taskExistsError = TaskAssociatedDataTableInsertBootstrap.checkTaskExists(extensionTaskRef, log, nodeService, workflowService, workflowDbService);
+        if (taskExistsError != null) {
+            return taskExistsError;
+        }
         QName type = nodeService.getType(extensionTaskRef);
         if (!WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK.equals(type)) {
             return new String[] { "notDueDateExtensionTask", type.toPrefixString(serviceRegistry.getNamespaceService()) };
@@ -75,6 +84,14 @@ public class DueDateExtensionTaskUpdater extends AbstractNodeUpdater {
                 creatorId,
                 (String) oldExtensionTaskProps.get(WorkflowCommonModel.Props.OWNER_EMAIL),
                 (String) newExtensionTaskProps.get(WorkflowCommonModel.Props.OWNER_EMAIL) };
+    }
+
+    public void setWorkflowDbService(WorkflowDbService workflowDbService) {
+        this.workflowDbService = workflowDbService;
+    }
+
+    public void setWorkflowService(WorkflowService workflowService) {
+        this.workflowService = workflowService;
     }
 
 }

@@ -403,6 +403,8 @@
             <ref bean="archivalsStoresBootstrap" />
          </list>
       </property>
+      <property name="workflowDbService" ref="WorkflowDbService"/>
+      <property name="workflowService" ref="WmWorkflowService"/>       
    </bean>
 
    <bean id="moveTaskFileToChildAssoc1" class="ee.webmedia.alfresco.workflow.bootstrap.MoveTaskFileToChildAssoc" parent="abstractNodeUpdater" >
