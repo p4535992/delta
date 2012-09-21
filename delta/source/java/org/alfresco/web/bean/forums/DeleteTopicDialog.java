@@ -88,11 +88,7 @@ public class DeleteTopicDialog extends DeleteSpaceDialog
    {
       outcome = super.doPostCommitProcessing(context, outcome);
       navigator.setCurrentNodeId(((ForumsBean) FacesHelper.getManagedBean(context, "ForumsBean")).getForumId()); // Set context back to forum
-      if (this.reDisplayTopics)
-      {
-         return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME + AlfrescoNavigationHandler.OUTCOME_SEPARATOR + AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
-      }
-      return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME + AlfrescoNavigationHandler.CLOSE_MULTIPLE_START + "2" + AlfrescoNavigationHandler.CLOSE_MULTIPLE_END;
+      return AlfrescoNavigationHandler.getMultipleCloseOutcome(2);
    }
    
    @Override

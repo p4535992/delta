@@ -218,7 +218,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     private boolean saveCompWorkflow() {
         try {
             preprocessWorkflow();
-            getWorkflowService().saveCompoundWorkflow(compoundWorkflow);
+            compoundWorkflow = getWorkflowService().saveCompoundWorkflow(compoundWorkflow);
             if (isUnsavedWorkFlow) {
                 getDocumentLogService().addDocumentLog(compoundWorkflow.getParent(), MessageUtil.getMessage("document_log_status_workflow"));
                 isUnsavedWorkFlow = false;

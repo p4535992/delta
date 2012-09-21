@@ -215,6 +215,10 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
 
         return closing;
     }
+    
+    public static String getMultipleCloseOutcome(int numberToClose){
+        return CLOSE_DIALOG_OUTCOME + CLOSE_MULTIPLE_START + numberToClose + CLOSE_MULTIPLE_END;
+    }
 
     protected int getNumberToClose(String outcome) {
         int toClose = 1;

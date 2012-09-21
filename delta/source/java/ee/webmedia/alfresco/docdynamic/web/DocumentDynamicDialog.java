@@ -606,6 +606,8 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             }
         }
         if (!getCurrentSnapshot().moveAssociatedDocumentsConfirmed && isRelocatingAssociations()) {
+            BeanHelper.getUserConfirmHelper().setup(new MessageDataImpl("document_move_associated_documents_confirmation"), null,
+                    "#{DocumentDynamicDialog.changeDocLocationConfirmed}", null, null, null, null);
             getCurrentSnapshot().confirmMoveAssociatedDocuments = true;
             return null;
         }
@@ -702,7 +704,11 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     }
 
     public boolean isConfirmMoveAssociatedDocuments() {
-        return getCurrentSnapshot().confirmMoveAssociatedDocuments;
+        DocDialogSnapshot currentSnapshot = getCurrentSnapshot();
+        if (currentSnapshot == null) { // XXX Why is this method called when snapshot is null? (CL 207223)
+            return false;
+        }
+        return currentSnapshot.confirmMoveAssociatedDocuments;
     }
 
     private void setSaveAndRegister(boolean saveAndRegister) {
@@ -1044,14 +1050,17 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         if (LOG.isDebugEnabled()) {
             LOG.debug("resetOrInit propertySheet=" + ObjectUtils.toString(propertySheet));
         }
+        WmNode node = getNode();
         if (propertySheet != null) {
             propertySheet.getChildren().clear();
             propertySheet.getClientValidations().clear();
-            propertySheet.setNode(getNode());
+            propertySheet.setNode(node);
             propertySheet.setMode(getMode());
             propertySheet.setConfig(getPropertySheetConfigElement());
         }
-        BeanHelper.getVisitedDocumentsBean().getVisitedDocuments().add(getNode().getNodeRef());
+        if (node != null) {
+            BeanHelper.getVisitedDocumentsBean().getVisitedDocuments().add(node.getNodeRef());
+        }
         getPropertySheetStateBean().reset(getStateHolders(), provider);
         getDocumentDialogHelperBean().reset(provider);
         resetModals();

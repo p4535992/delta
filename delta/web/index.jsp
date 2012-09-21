@@ -2,7 +2,8 @@
 if (request.getMethod().equalsIgnoreCase("GET"))
 {
       // Send redirect
-      response.sendRedirect(request.getContextPath() + "/faces/jsp/dashboards/container.jsp?" + request.getQueryString());
+      String params = request.getQueryString();
+      response.sendRedirect(request.getContextPath() + "/faces/jsp/dashboards/container.jsp" + (params==null?"":"?"+params));
 }
 // route WebDAV requests
 else if (request.getMethod().equalsIgnoreCase("PROPFIND") ||

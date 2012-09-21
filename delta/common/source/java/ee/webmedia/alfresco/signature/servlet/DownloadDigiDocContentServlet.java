@@ -32,10 +32,12 @@ import org.springframework.util.FileCopyUtils;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 import ee.webmedia.alfresco.signature.service.SignatureService;
+import ee.webmedia.alfresco.substitute.model.SubstitutionInfo;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.webdav.WebDAVCustomHelper;
 
@@ -157,6 +159,11 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
         // check that the user has at least READ_CONTENT access - else redirect to the login
         // page
         try {
+            // FIXME Somehow SubstitutionFilter and PermissionService get hold of different ContextHolders and thus filter effect is lost
+            SubstitutionInfo substInfo = BeanHelper.getSubstitutionBean().getSubstitutionInfo();
+            if (substInfo.isSubstituting()) {
+                AuthenticationUtil.setRunAsUser(substInfo.getSubstitution().getReplacedPersonUserName());
+            }
             WebDAVCustomHelper.checkDocumentFileReadPermission(dDocRef);
         } catch (AccessDeniedException e) {
             if (logger.isDebugEnabled()) {

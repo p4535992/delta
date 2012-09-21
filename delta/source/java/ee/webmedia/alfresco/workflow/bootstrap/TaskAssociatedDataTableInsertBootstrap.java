@@ -78,22 +78,23 @@ public class TaskAssociatedDataTableInsertBootstrap extends AbstractNodeUpdater 
             List<AssociationRef> assocs = nodeService.getSourceAssocs(nodeRef, WorkflowSpecificModel.Assocs.TASK_DUE_DATE_EXTENSION);
             if (assocs.isEmpty()) {
                 results.add("orphan task, due date assoc data not present");
-            }
-            NodeRef initiatingTaskRef = assocs.get(0).getSourceRef();
-            workflowDbService.createTaskDueDateExtensionAssocEntry(initiatingTaskRef, nodeRef);
-            StringBuilder sb = new StringBuilder("Added assoc for nodeRef=" + initiatingTaskRef);
-            if (assocs.size() > 1) {
-                int assocCounter = 0;
-                sb.append("; more than one assoc present; skipped nodeRefs:");
-                for (AssociationRef assocRef : assocs) {
-                    if (assocCounter > 0) {
-                        sb.append(assocRef.getSourceRef() + ", ");
+            } else {
+                NodeRef initiatingTaskRef = assocs.get(0).getSourceRef();
+                workflowDbService.createTaskDueDateExtensionAssocEntry(initiatingTaskRef, nodeRef);
+                StringBuilder sb = new StringBuilder("Added assoc for nodeRef=" + initiatingTaskRef);
+                if (assocs.size() > 1) {
+                    int assocCounter = 0;
+                    sb.append("; more than one assoc present; skipped nodeRefs:");
+                    for (AssociationRef assocRef : assocs) {
+                        if (assocCounter > 0) {
+                            sb.append(assocRef.getSourceRef() + ", ");
+                        }
+                        assocCounter++;
                     }
-                    assocCounter++;
-                }
 
+                }
+                results.add(sb.toString());
             }
-            results.add(sb.toString());
         } else {
             results.add("not dueDateExtension task");
         }

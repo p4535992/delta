@@ -67,7 +67,7 @@
          </span>
          </f:verbatim>
 
-          <h:selectOneMenu id="select_user" styleClass="#{SubstitutionBean.onChangeStyleClass}"
+          <h:selectOneMenu id="select_user"  onchange="javascript:document.getElementsByTagName('form')[1].submit();"
                            value="#{SubstitutionBean.selectedSubstitution}" valueChangeListener="#{SubstitutionBean.substitutionSelected}">
             <f:selectItem itemValue="" itemLabel="#{NavigationBean.currentUser.fullName}"/>
             <f:selectItems value="#{SubstitutionBean.activeSubstitutions}"/>
