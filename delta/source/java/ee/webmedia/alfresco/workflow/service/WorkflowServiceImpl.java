@@ -949,7 +949,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         NodeRef workflowRef = null;
         boolean orderAssignmentTask = delegatableTask.getType().equals(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK);
         if (orderAssignmentTask) {
-            workflowRef = generalService.getAncestorNodeRefWithType(delegatableTask.getNodeRef(), WorkflowCommonModel.Types.WORKFLOW, true);
+            workflowRef = workflowDbService.getTaskParentNodeRef(delegatableTask.getNodeRef());
         }
         List<Task> assignmentTasks = new ArrayList<Task>();
         cWfLoop: for (CompoundWorkflow compoundWorkflow : getCompoundWorkflowsOfType(docRef,

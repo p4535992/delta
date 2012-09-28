@@ -572,13 +572,13 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     }
 
     public void reloadDoc() {
-		NodeRef nodeRef = node.getNodeRef();
+        NodeRef nodeRef = node.getNodeRef();
         node = getDocumentService().getDocument(nodeRef);
         metadataBlockBean.reloadDoc(true, nodeRef);
     }
 
     public void reloadDocAndClearPropertySheet(boolean addInvoiceMessages) {
-		NodeRef nodeRef = node.getNodeRef();
+        NodeRef nodeRef = node.getNodeRef();
         node = getDocumentService().getDocument(nodeRef);
         metadataBlockBean.reloadDocAndClearPropertySheet(addInvoiceMessages, nodeRef);
         transactionsBlockBean.restore(metadataBlockBean.getDocument());
@@ -597,7 +597,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
                 sendOutBlockBean.restore();
                 assocsBlockBean.restore();
                 logBlockBean.restore();
-                workflowBlockBean.restore();
+                workflowBlockBean.restore("DocumentDialog.restored");
                 if (!docReloadDisabled) {
                     transactionsBlockBean.restore();
                 } else {
@@ -712,7 +712,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
                 (metadataBlockBean.getDocumentType().getId().equals(DocumentSubtypeModel.Types.LICENCE)
                         || metadataBlockBean.getDocumentType().getId().equals(DocumentSubtypeModel.Types.INCOMING_LETTER)
                         || metadataBlockBean.getDocumentType().getId().equals(DocumentSubtypeModel.Types.INCOMING_LETTER_MV))
-                        && registrationEval.evaluateAdditionalButton(metadataBlockBean.getDocument())) {
+                && registrationEval.evaluateAdditionalButton(metadataBlockBean.getDocument())) {
             if (searchBlockBean.isFoundSimilar()) {
                 buttons.add(new DialogButtonConfig("documentRegisterButton", null, "document_registerDoc_continue",
                         "#{DocumentDialog.saveAndRegisterContinue}", "false", null));

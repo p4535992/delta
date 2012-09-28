@@ -195,6 +195,8 @@ public class MenuItem implements Serializable {
 
             if (hideIt && !getStyleClass().contains(HIDDEN_MENU_ITEM)) {
                 getStyleClass().add(HIDDEN_MENU_ITEM);
+            } else if (!hideIt) {
+                getStyleClass().remove(HIDDEN_MENU_ITEM);
             }
         }
 

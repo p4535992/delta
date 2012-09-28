@@ -11,7 +11,7 @@
       <h:outputText value="#{msg.document_docType}" />
       <a:panel id="submit-doc-type">
          <h:selectOneMenu id="doc-types-select" value="#{DocumentDynamicDialog.documentType.id}" styleClass="#{DocumentDynamicDialog.onChangeStyleClass}">
-            <f:selectItems value="#{DocumentSearchBean.documentTypeListItems}" />
+            <f:selectItems value="#{DocumentDynamicDialog.documentTypeListItems}" />
          </h:selectOneMenu>
          <a:actionLink id="submit-doc-type-link" value="" actionListener="#{DocumentDynamicDialog.selectedDocumentTypeChanged}" styleClass="hidden" />
       </a:panel>

@@ -97,7 +97,7 @@ public class DelegationBean implements Serializable {
             defaultResolution = delegatableTasks.get(originalTaskIndex).getResolutionOfTask();
         }
         addDelegationTask(delegateTaskType, workflowForNewTask, taskIndex, defaultResolution);
-        updatePanelGroup();
+        updatePanelGroup("addDelegationTask");
     }
 
     private void addDelegationTask(DelegatableTaskType delegateTaskType, Workflow workflow, Integer taskIndex, String defaultResolution) {
@@ -117,15 +117,15 @@ public class DelegationBean implements Serializable {
         }
     }
 
-    private void updatePanelGroup() {
-        workflowBlockBean.constructTaskPanelGroup();
+    private void updatePanelGroup(String action) {
+        workflowBlockBean.constructTaskPanelGroup(action);
     }
 
     public void removeDelegationTask(ActionEvent event) {
         Workflow workflow = getWorkflowByAction(event);
         int taskIndex = ActionUtil.getParam(event, TASK_INDEX, Integer.class);
         workflow.removeTask(taskIndex);
-        updatePanelGroup();
+        updatePanelGroup("removeDelegationTask");
     }
 
     public void resetDelegationTask(ActionEvent event) {
@@ -266,7 +266,7 @@ public class DelegationBean implements Serializable {
             MessageDataWrapper feedback = getWorkflowService().delegate(originalTask);
             MessageUtil.addStatusMessages(context, feedback);
             if (!feedback.hasErrors()) {
-                workflowBlockBean.restore();
+                workflowBlockBean.restore("delegate");
                 MessageUtil.addInfoMessage("delegated_successfully_" + originalTask.getType().getLocalName());
                 BeanHelper.getDocumentDynamicDialog().switchMode(false); // document metadata might have changed (for example owner)
             }
@@ -411,7 +411,7 @@ public class DelegationBean implements Serializable {
                 throw new RuntimeException("Unknown filter index value: " + filterIndex);
             }
         }
-        updatePanelGroup();
+        updatePanelGroup("processOwnerSearchResults");
     }
 
     private void setPersonPropsToTask(Workflow workflow, int taskIndex, String userName) {

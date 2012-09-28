@@ -26,6 +26,7 @@ import javax.faces.component.UIInput;
 import javax.faces.component.UIPanel;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
+import javax.faces.model.SelectItem;
 
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.permissions.AccessDeniedException;
@@ -414,6 +415,22 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         openOrSwitchModeCommon(document, true);
     }
 
+    public List<SelectItem> getDocumentTypeListItems() {
+        List<SelectItem> types = BeanHelper.getDocumentSearchBean().getDocumentTypes();
+        String currentDocumentType = getDocument().getDocumentTypeId();
+        if (StringUtils.isBlank(currentDocumentType)) {
+            return types;
+        }
+        for (SelectItem item : types) {
+            if (item.getValue().equals(currentDocumentType)) {
+                return types;
+            }
+        }
+        types.add(new SelectItem(currentDocumentType, getDocumentTypeName()));
+        WebUtil.sort(types);
+        return types;
+    }
+
     /** Used in jsp */
     public String getOnChangeStyleClass() {
         return ComponentUtil.getOnChangeStyleClass();
@@ -602,6 +619,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             // select followup document before saving
             if (checkSimilarDocuments()) {
                 setSaveAndRegister(false);
+                isFinished = false;
                 return null;
             }
         }
@@ -609,6 +627,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             BeanHelper.getUserConfirmHelper().setup(new MessageDataImpl("document_move_associated_documents_confirmation"), null,
                     "#{DocumentDynamicDialog.changeDocLocationConfirmed}", null, null, null, null);
             getCurrentSnapshot().confirmMoveAssociatedDocuments = true;
+            isFinished = false;
             return null;
         }
         final DocumentDynamic savedDocument;
@@ -639,6 +658,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
 
         } catch (UnableToPerformMultiReasonException e) {
             if (!handleAccessRestrictionChange(e)) {
+                isFinished = false;
                 return null;
             }
 
@@ -1010,6 +1030,10 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
 
     @Override
     public String getContainerTitle() {
+        return getDocumentTypeName();
+    }
+
+    private String getDocumentTypeName() {
         DocumentConfig config = getConfig();
         if (config == null) {
             return null;

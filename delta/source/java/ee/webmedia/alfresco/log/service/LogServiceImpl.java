@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
@@ -222,6 +223,25 @@ public class LogServiceImpl implements LogService, InitializingBean {
         q.append(" ORDER BY created_date_time ASC");
 
         return jdbcTemplate.query(q.toString(), new LogRowMapper(), values);
+    }
+
+    @Override
+    public List<NodeRef> getDocumentsWithImapImportLog() {
+        return jdbcTemplate.query("SELECT object_id FROM delta_log WHERE creator_name='IMAP' AND level='DOCUMENT'", new ParameterizedRowMapper<NodeRef>() {
+
+            @Override
+            public NodeRef mapRow(ResultSet rs, int rowNum) throws SQLException {
+                String nodeRefStr = rs.getString(1);
+                if (StringUtils.isNotBlank(nodeRefStr)) {
+                    try {
+                        return new NodeRef(nodeRefStr);
+                    } catch (AlfrescoRuntimeException e) {
+                        return null;
+                    }
+                }
+                return null;
+            }
+        });
     }
 
     @Override

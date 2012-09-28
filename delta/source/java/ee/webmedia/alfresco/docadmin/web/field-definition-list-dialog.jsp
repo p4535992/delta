@@ -12,7 +12,7 @@
 <%@ include file="/WEB-INF/classes/ee/webmedia/alfresco/classificator/web/searchPanel.jsp" %>
 
 <a:panel id="docTypeFields-panel" label="#{msg.fieldDefinitions_list}" styleClass="panel-100 with-pager" >
-   <a:richList id="docTypeFieldsList" value="#{FieldDefinitionListDialog.fieldDefinitions}" refreshOnBind="true" var="fd" viewMode="details" 
+   <a:richList id="docTypeFieldsList" value="#{FieldDefinitionListDialog.fieldDefinitions}" binding="#{FieldDefinitionListDialog.richList}" refreshOnBind="true" var="fd" viewMode="details" 
       pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" initialSortColumn="name">
 
       <a:column id="nameCol" primary="true">

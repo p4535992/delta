@@ -26,6 +26,7 @@ import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 
 public class HtmlButtonRenderer extends HtmlButtonRendererBase {
 
+    private static org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(HtmlButtonRenderer.class);
     public static final String HTML_BUTTON_RENDERER_TYPE = HtmlButtonRenderer.class.getCanonicalName();
     public static final String ATTR_ONCLICK_DATA = "onclickData";
 
@@ -44,10 +45,20 @@ public class HtmlButtonRenderer extends HtmlButtonRendererBase {
     }
 
     private void generateOnClick(FacesContext context, ModalLayerComponent dueDateExtensionLayer, int index, HtmlCommandButton outcomeButton) {
+        if (dueDateExtensionLayer == null) {
+            LOG.error("Attached dueDateExtensionLayer=null, component id=" + outcomeButton.getId());
+        } else if (dueDateExtensionLayer.getParent() == null) {
+            String errorMessage = "Error getting parent for dueDateExtensionLayer, parent is null: task index=" + index + ", buttonId=" + outcomeButton.getId();
+            UIComponent buttonParent = outcomeButton.getParent();
+            errorMessage += "button parent=" + buttonParent;
+            LOG.error(errorMessage);
+        } else {
+            LOG.debug("Attached dueDateExtensionLayer id=" + dueDateExtensionLayer.getId() + ", parent=" + dueDateExtensionLayer + ", parent id ="
+                    + dueDateExtensionLayer.getParent().getId() + ", button id=" + outcomeButton.getId());
+        }
         String onclick = ComponentUtil.generateFieldSetter(context, dueDateExtensionLayer, getActionId(context, dueDateExtensionLayer),
                 ACTION_INDEX + ";" + index);
         onclick += "showModal('" + WorkflowUtil.getDialogId(context, dueDateExtensionLayer) + "');return false;";
         outcomeButton.setOnclick(onclick);
     }
-
 }

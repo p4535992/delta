@@ -105,7 +105,7 @@ public class CustomReindexComponent extends AbstractReindexComponent {
         return allTxns;
     }
 
-    private String getTransactionInfo(Transaction txn) {
+    public static String getTransactionInfo(Transaction txn) {
         return ISO8601DateFormat.format(new Date(txn.getCommitTimeMs())) + " " + txn.getId() + " " + txn.getVersion() + " " + txn.getServer();
     }
 

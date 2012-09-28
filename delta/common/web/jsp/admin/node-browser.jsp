@@ -364,6 +364,12 @@
           </h:column>
       </h:dataTable>
       
+      <hr/>
+      
+      <h:outputText styleClass="mainTitle" value="Lucene Index"/>
+      <br/>
+      <h:inputTextarea id="luceneIndexInfo" value="#{AdminNodeBrowseBean.luceneIndexInfo}" readonly="true" styleClass="expand19-200" />
+      
       <br/>
       <h:panelGroup id="storePropsPanel" rendered="#{AdminNodeBrowseBean.inAVMStore}">
       

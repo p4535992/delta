@@ -63,6 +63,7 @@ import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGener
 import ee.webmedia.alfresco.docconfig.service.DocumentConfig;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
@@ -387,24 +388,31 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         Map<QName, Serializable> typeProps = new HashMap<QName, Serializable>();
         setTypeProps(getDocTypeIdAndVersionNr(docVer), typeProps);
 
-        Map<String, Object> properties = document.getNode().getProperties();
+        Map<String, Object> oldProps = document.getNode().getProperties();
         Map<String, Object> newProps = new HashMap<String, Object>();
         newProps.putAll(RepoUtil.toStringProperties(typeProps));
-        newProps.put(DocumentCommonModel.Props.DOC_NAME.toString(), properties.get(DocumentCommonModel.Props.DOC_NAME));
-        newProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION.toString(), properties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION));
-        newProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE.toString(), properties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE));
-        newProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE.toString(), properties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE));
-        newProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON.toString(), properties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON));
-        newProps.put(DocumentCommonModel.Props.DOC_STATUS.toString(), properties.get(DocumentCommonModel.Props.DOC_STATUS));
-        newProps.put(DocumentCommonModel.Props.STORAGE_TYPE.toString(), properties.get(DocumentCommonModel.Props.STORAGE_TYPE));
+        newProps.put(DocumentCommonModel.Props.DOC_NAME.toString(), oldProps.get(DocumentCommonModel.Props.DOC_NAME));
+        newProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION.toString(), oldProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION));
+        newProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE.toString(), oldProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE));
+        newProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE.toString(), oldProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE));
+        newProps.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON.toString(), oldProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON));
+        newProps.put(DocumentCommonModel.Props.DOC_STATUS.toString(), oldProps.get(DocumentCommonModel.Props.DOC_STATUS));
+        newProps.put(DocumentCommonModel.Props.STORAGE_TYPE.toString(), oldProps.get(DocumentCommonModel.Props.STORAGE_TYPE));
 
         // remove all existing subnodes in memory
         TreeNode<QName> oldChildAssocTypeQNamesRoot = documentConfigService.getChildAssocTypeQNameTree(document.getNode());
         Assert.isNull(oldChildAssocTypeQNamesRoot.getData());
         removeChildNodes(document, oldChildAssocTypeQNamesRoot);
 
-        properties.clear();
-        properties.putAll(newProps);
+        // this is needed to overwrite all existing properties (possibly belonging to different document type)
+        for (String oldPropName : oldProps.keySet()) {
+            QName oldPropQName = QName.createQName(oldPropName);
+            if (DocumentDynamicModel.URI.equals(oldPropQName.getNamespaceURI()) && !newProps.containsKey(oldPropName)) {
+                newProps.put(oldPropName, null);
+            }
+        }
+        oldProps.clear();
+        oldProps.putAll(newProps);
         setParentFolderProps(document);
 
         TreeNode<QName> childAssocTypeQNamesRoot = documentConfigService.getChildAssocTypeQNameTree(docVer);

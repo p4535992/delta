@@ -66,6 +66,7 @@ import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
 import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.generator.SaveListener;
 import ee.webmedia.alfresco.docconfig.generator.fieldtype.DateGenerator;
+import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
@@ -73,10 +74,12 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.search.model.DocumentReportModel;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
+import ee.webmedia.alfresco.document.search.web.DocumentDynamicSearchDialog;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TreeNode;
 import ee.webmedia.alfresco.utils.UserUtil;
+import ee.webmedia.alfresco.workflow.search.model.TaskSearchModel;
 
 /**
  * @author Alar Kvell
@@ -97,6 +100,42 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
     private final Map<String, FieldGenerator> originalFieldIdGenerators = new HashMap<String, FieldGenerator>();
     private final Map<String /* systematicGroupName */, FieldGroupGenerator> fieldGroupGenerators = new HashMap<String, FieldGroupGenerator>();
     private final Map<String /* hiddenFieldId */, String /* fieldIdAndOriginalFieldId */> hiddenFieldDependencies = new HashMap<String, String>();
+    public static final Map<QName, String> searchLabelIds;
+
+    static {
+        searchLabelIds = new HashMap<QName, String>();
+        searchLabelIds.put(DocumentSearchModel.Props.STORE, "document_search_stores");
+        searchLabelIds.put(DocumentDynamicSearchDialog.SELECTED_STORES, "document_search_stores");
+        searchLabelIds.put(DocumentSearchModel.Props.INPUT, "document_search_input");
+        searchLabelIds.put(DocumentSearchModel.Props.DOCUMENT_TYPE, "document_docType");
+        searchLabelIds.put(DocumentSearchModel.Props.SEND_MODE, "document_send_mode");
+        searchLabelIds.put(DocumentSearchModel.Props.FUND, "transaction_fund");
+        searchLabelIds.put(DocumentSearchModel.Props.FUNDS_CENTER, "transaction_fundsCenter");
+        searchLabelIds.put(DocumentSearchModel.Props.EA_COMMITMENT_ITEM, "transaction_eaCommitmentItem");
+        searchLabelIds.put(DocumentSearchModel.Props.DOCUMENT_CREATED, "document_search_document_created");
+        searchLabelIds.put(DocumentReportModel.Props.REPORT_OUTPUT_TYPE, "document_report_output");
+        searchLabelIds.put(DocumentReportModel.Props.REPORT_TEMPLATE, "document_report_template");
+        searchLabelIds.put(DocumentCommonModel.Props.SHORT_REG_NUMBER, "document_shortRegNumber");
+        searchLabelIds.put(DocumentLocationGenerator.CASE_LABEL_EDITABLE, "case");
+
+        searchLabelIds.put(TaskSearchModel.Props.STARTED_DATE_TIME_BEGIN, "task_search_startedDateTime");
+        searchLabelIds.put(TaskSearchModel.Props.TASK_TYPE, "task_search_taskType");
+        searchLabelIds.put(TaskSearchModel.Props.OWNER_NAME, "task_search_owner");
+        searchLabelIds.put(TaskSearchModel.Props.CREATOR_NAME, "task_search_creator");
+        searchLabelIds.put(TaskSearchModel.Props.ORGANIZATION_NAME, "task_search_organization");
+        searchLabelIds.put(TaskSearchModel.Props.JOB_TITLE, "task_search_job_title");
+        searchLabelIds.put(TaskSearchModel.Props.DUE_DATE_TIME_BEGIN, "task_search_dueDateTime");
+        searchLabelIds.put(TaskSearchModel.Props.ONLY_RESPONSIBLE, "task_search_only_responsible");
+        searchLabelIds.put(TaskSearchModel.Props.COMPLETED_DATE_TIME_BEGIN, "task_search_completedDateTime");
+        searchLabelIds.put(TaskSearchModel.Props.OUTCOME, "task_search_outcome");
+        searchLabelIds.put(TaskSearchModel.Props.COMMENT, "task_search_comment");
+        searchLabelIds.put(TaskSearchModel.Props.RESOLUTION, "task_search_resolution");
+        searchLabelIds.put(TaskSearchModel.Props.STATUS, "task_search_status");
+        searchLabelIds.put(TaskSearchModel.Props.COMPLETED_OVERDUE, "task_search_completed_overdue");
+        searchLabelIds.put(TaskSearchModel.Props.STOPPED_DATE_TIME_BEGIN, "task_search_stoppedDateTime");
+        searchLabelIds.put(TaskSearchModel.Props.DOC_TYPE, "document_docType");
+
+    }
 
     // CUSTOM CACHING
     // XXX NB! some returned objects are unfortunately mutable, thus service callers must not modify them !!!
@@ -196,8 +235,9 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
          */
         {
             // docsearch:store
-            ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.STORE.toPrefixString(namespaceService));
-            itemConfig.setDisplayLabelId("document_search_stores");
+            QName prop = DocumentSearchModel.Props.STORE;
+            ItemConfigVO itemConfig = new ItemConfigVO(prop.toPrefixString(namespaceService));
+            itemConfig.setDisplayLabelId(searchLabelIds.get(prop));
             itemConfig.setComponentGenerator("GeneralSelectorGenerator");
             itemConfig.setSelectionItems("#{DialogManager.bean.getStores}");
             itemConfig.setConverter("ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter");
@@ -211,8 +251,9 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
          */
         {
             // docsearch:input
-            ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.INPUT.toPrefixString(namespaceService));
-            itemConfig.setDisplayLabelId("document_search_input");
+            QName prop = DocumentSearchModel.Props.INPUT;
+            ItemConfigVO itemConfig = new ItemConfigVO(prop.toPrefixString(namespaceService));
+            itemConfig.setDisplayLabelId(searchLabelIds.get(prop));
             itemConfig.setComponentGenerator("TextAreaGenerator");
             itemConfig.setStyleClass("expand19-200 focus");
             itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
@@ -225,8 +266,9 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
          */
         {
             // docsearch:documentType
-            ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.DOCUMENT_TYPE.toPrefixString(namespaceService));
-            itemConfig.setDisplayLabelId("document_docType");
+            QName prop = DocumentSearchModel.Props.DOCUMENT_TYPE;
+            ItemConfigVO itemConfig = new ItemConfigVO(prop.toPrefixString(namespaceService));
+            itemConfig.setDisplayLabelId(searchLabelIds.get(prop));
             itemConfig.setComponentGenerator("GeneralSelectorGenerator");
             itemConfig.setSelectionItems("#{DocumentSearchBean.getDocumentTypes}");
             itemConfig.setRenderCheckboxAfterLabel(withCheckboxes);
@@ -239,8 +281,9 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
          */
         {
             // docsearch:sendMode
-            ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.SEND_MODE.toPrefixString(namespaceService));
-            itemConfig.setDisplayLabelId("document_send_mode");
+            QName prop = DocumentSearchModel.Props.SEND_MODE;
+            ItemConfigVO itemConfig = new ItemConfigVO(prop.toPrefixString(namespaceService));
+            itemConfig.setDisplayLabelId(searchLabelIds.get(prop));
             itemConfig.setComponentGenerator("ClassificatorSelectorGenerator");
             itemConfig.setRenderCheckboxAfterLabel(withCheckboxes);
             itemConfig.setClassificatorName("transmittalMode"); // sendModeSearch classificator is deprecated
@@ -253,8 +296,9 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
             processFieldForSearchView(fieldDefinition);
             processField(config, fieldDefinition, withCheckboxes, false);
             if (fieldDefinition.getFieldId().equals("regNumber")) {
-                ItemConfigVO itemConfig = new ItemConfigVO(DocumentCommonModel.Props.SHORT_REG_NUMBER.toPrefixString(namespaceService));
-                itemConfig.setDisplayLabelId("document_shortRegNumber");
+                QName prop = DocumentCommonModel.Props.SHORT_REG_NUMBER;
+                ItemConfigVO itemConfig = new ItemConfigVO(prop.toPrefixString(namespaceService));
+                itemConfig.setDisplayLabelId(searchLabelIds.get(prop));
                 itemConfig.setComponentGenerator("TextAreaGenerator");
                 itemConfig.setStyleClass("expand19-200");
                 // itemConfig.setIgnoreIfMissing(false);
@@ -272,8 +316,9 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
              */
             {
                 // docsearch:fund
-                ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.FUND.toPrefixString(namespaceService));
-                itemConfig.setDisplayLabelId("transaction_fund");
+                QName prop = DocumentSearchModel.Props.FUND;
+                ItemConfigVO itemConfig = new ItemConfigVO(prop.toPrefixString(namespaceService));
+                itemConfig.setDisplayLabelId(searchLabelIds.get(prop));
                 itemConfig.setComponentGenerator("MultiValueEditorGenerator");
                 itemConfig.setShowHeaders(false);
                 itemConfig.setStyleClass("add-default");
@@ -292,8 +337,9 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
              */
             {
                 // docsearch:fundsCenter
-                ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.FUNDS_CENTER.toPrefixString(namespaceService));
-                itemConfig.setDisplayLabelId("transaction_fundsCenter");
+                QName prop = DocumentSearchModel.Props.FUNDS_CENTER;
+                ItemConfigVO itemConfig = new ItemConfigVO(prop.toPrefixString(namespaceService));
+                itemConfig.setDisplayLabelId(searchLabelIds.get(prop));
                 itemConfig.setComponentGenerator("MultiValueEditorGenerator");
                 itemConfig.setShowHeaders(false);
                 itemConfig.setStyleClass("add-default");
@@ -312,8 +358,9 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
              */
             {
                 // docsearch:eaCommitmentItem
-                ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.EA_COMMITMENT_ITEM.toPrefixString(namespaceService));
-                itemConfig.setDisplayLabelId("transaction_eaCommitmentItem");
+                QName prop = DocumentSearchModel.Props.EA_COMMITMENT_ITEM;
+                ItemConfigVO itemConfig = new ItemConfigVO(prop.toPrefixString(namespaceService));
+                itemConfig.setDisplayLabelId(searchLabelIds.get(prop));
                 itemConfig.setComponentGenerator("MultiValueEditorGenerator");
                 itemConfig.setShowHeaders(false);
                 itemConfig.setStyleClass("add-default");
@@ -331,10 +378,11 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
 
         {
             // docsearch:documentCreated
-            ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.DOCUMENT_CREATED.toPrefixString(namespaceService));
-            itemConfig.setDisplayLabelId("document_search_document_created");
+            QName prop = DocumentSearchModel.Props.DOCUMENT_CREATED;
+            ItemConfigVO itemConfig = new ItemConfigVO(prop.toPrefixString(namespaceService));
+            itemConfig.setDisplayLabelId(searchLabelIds.get(prop));
             itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
-            DateGenerator.setupDateFilterItemConfig(itemConfig, DocumentSearchModel.Props.DOCUMENT_CREATED);
+            DateGenerator.setupDateFilterItemConfig(itemConfig, prop);
             config.getPropertySheetConfigElement().addItem(itemConfig);
         }
 
@@ -347,8 +395,9 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
 
         {
             // docreport:reportOutputType
-            ItemConfigVO itemConfig = new ItemConfigVO(DocumentReportModel.Props.REPORT_OUTPUT_TYPE.toPrefixString(namespaceService));
-            itemConfig.setDisplayLabelId("document_report_output");
+            QName prop = DocumentReportModel.Props.REPORT_OUTPUT_TYPE;
+            ItemConfigVO itemConfig = new ItemConfigVO(prop.toPrefixString(namespaceService));
+            itemConfig.setDisplayLabelId(searchLabelIds.get(prop));
             itemConfig.setComponentGenerator("EnumSelectorGenerator");
             itemConfig.getCustomAttributes().put("enumClass", TemplateReportOutputType.class.getCanonicalName());
             itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
@@ -357,8 +406,9 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
 
         {
             // docreport:reportTemplate
-            ItemConfigVO itemConfig = new ItemConfigVO(DocumentReportModel.Props.REPORT_TEMPLATE.toPrefixString(namespaceService));
-            itemConfig.setDisplayLabelId("document_report_template");
+            QName prop = DocumentReportModel.Props.REPORT_TEMPLATE;
+            ItemConfigVO itemConfig = new ItemConfigVO(prop.toPrefixString(namespaceService));
+            itemConfig.setDisplayLabelId(searchLabelIds.get(prop));
             itemConfig.setComponentGenerator("GeneralSelectorGenerator");
             itemConfig.setSelectionItems("#{DocumentDynamicReportDialog.getReportTemplates}");
             itemConfig.setConfigItemType(ConfigItemType.PROPERTY);

@@ -81,12 +81,4 @@ public interface RegisterService {
 
     boolean isValueEditable();
 
-    /**
-     * Updates old sequences. sets MINVALUE to 0. called once in updater class.
-     * 
-     * @param registerId
-     * @param regCounterValue
-     */
-    void updateRegisterSequence(int registerId, int regCounterValue);
-
 }

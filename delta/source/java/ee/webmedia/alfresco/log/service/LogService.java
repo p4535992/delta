@@ -58,4 +58,6 @@ public interface LogService extends FilterService {
 
     Date getFirstLogEntryDate();
 
+    List<NodeRef> getDocumentsWithImapImportLog();
+
 }

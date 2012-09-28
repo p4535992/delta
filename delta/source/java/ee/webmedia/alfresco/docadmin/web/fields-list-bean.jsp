@@ -50,9 +50,10 @@ TODO: ALSeadist CL_TASK 181259 181260 DocTypeDetailsDialog
          <f:facet name="header">
             <a:outputText value="#{msg.docType_metadataList_order}" />
          </f:facet>
-         <h:inputText value="#{r.order}" styleClass="tiny">
+         <h:inputText value="#{r.order}" styleClass="tiny" rendered="#{DialogManager.bean.dynamicTypeDetailsDialog.showingLatestVersion}" >
             <wm:convertIntWithMsg />
          </h:inputText>
+         <h:outputText value="#{r.order}" styleClass="tiny" rendered="#{!DialogManager.bean.dynamicTypeDetailsDialog.showingLatestVersion}" />
       </a:column>
 
       <a:column id="name">

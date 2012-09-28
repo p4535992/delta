@@ -4,11 +4,14 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.namespace.QName;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
@@ -32,11 +35,26 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 public class PropDiffHelper {
 
     private final Map<QName, String> propLabels = new HashMap<QName, String>();
+    private final Map<QName, Class<? extends Enum<?>>> propEnums = new HashMap<QName, Class<? extends Enum<?>>>();
+    private final Set<QName> propDateTimes = new HashSet<QName>();
 
     private static final FastDateFormat DATE_FORMAT = FastDateFormat.getInstance("dd.MM.yyyy");
+    private static final FastDateFormat DATE_TIME_FORMAT = FastDateFormat.getInstance("dd.MM.yyyy HH:mm");
 
     public PropDiffHelper label(QName prop, String label) {
         propLabels.put(prop, label);
+        return this;
+    }
+
+    public PropDiffHelper labelDateTime(QName prop, String label) {
+        propLabels.put(prop, label);
+        propDateTimes.add(prop);
+        return this;
+    }
+
+    public PropDiffHelper labelEnum(QName prop, String label, Class<? extends Enum<?>> c) {
+        propLabels.put(prop, label);
+        propEnums.put(prop, c);
         return this;
     }
 
@@ -98,7 +116,7 @@ public class PropDiffHelper {
             if (sb.length() > 1) {
                 sb.append(", ");
             }
-            sb.append(label("applog_prop_change", label, value(oldValue, emptyMsg), value(newValue, emptyMsg)));
+            sb.append(label("applog_prop_change", label, value(prop, oldValue, emptyMsg), value(prop, newValue, emptyMsg)));
         }
 
         return sb.length() == 0 ? null : sb.toString();
@@ -122,6 +140,10 @@ public class PropDiffHelper {
         return sb.toString();
     }
 
+    public static String getEmptyLabel() {
+        return label("applog_empty");
+    }
+
     private static String label(String msg, Object... params) {
         String result = I18NUtil.getMessage(msg, params);
         if (result == null) {
@@ -130,9 +152,36 @@ public class PropDiffHelper {
         return result;
     }
 
-    private static String value(Object value, String defaultStr) {
+    private String value(QName prop, Object value, String defaultStr) {
+        if (value instanceof Date && propDateTimes.contains(prop)) {
+            return DATE_TIME_FORMAT.format((Date) value);
+        }
+        if (value instanceof String && propEnums.containsKey(prop) && StringUtils.isNotBlank((String) value)) {
+            @SuppressWarnings("rawtypes")
+            Class c = propEnums.get(prop);
+            try {
+                @SuppressWarnings({ "unchecked", "rawtypes" })
+                Enum e = Enum.valueOf(c, (String) value);
+                return MessageUtil.getMessage(e);
+            } catch (IllegalArgumentException ex) {
+                return (String) value;
+            }
+        }
+        return value(value, defaultStr);
+    }
+
+    public static String value(Object value, String defaultStr) {
         if (value instanceof Date) {
             return DATE_FORMAT.format((Date) value);
+        }
+        if (value instanceof Boolean) {
+            return MessageUtil.getMessage(((Boolean) value) ? "yes" : "no");
+        }
+        if (value instanceof String) {
+            if (StringUtils.isBlank((String) value)) {
+                return defaultStr;
+            }
+            return (String) value;
         }
         return value == null ? defaultStr : value.toString();
     }
@@ -140,4 +189,5 @@ public class PropDiffHelper {
     public Map<QName, String> getPropLabels() {
         return propLabels;
     }
+
 }

@@ -45,8 +45,7 @@ public class RegisterServiceImpl implements RegisterService {
     private LogService logService;
     private UserService userService;
     private SimpleJdbcTemplate jdbcTemplate;
-    private final String SEQ_REGISTER_PREFIX = "register_";
-    private final String SEQ_REGISTER_SUFFIX = "_seq";
+    private final String REGISTER_TABLE_NAME = "delta_register";
     private boolean valueEditable;
 
     @Override
@@ -75,33 +74,20 @@ public class RegisterServiceImpl implements RegisterService {
 
     @Override
     public Node getRegisterNode(int id) {
-        Node node = getRegisterNodeRefById(id);
-        return node;
-    }
-
-    private Node getRegisterNodeRefById(int registerId) {
-        final NodeRef registerRef = generalService.getNodeRef(RegisterModel.Repo.REGISTERS_SPACE + "/" + RegisterModel.NAMESPACE_PREFFIX + registerId);
+        final NodeRef registerRef = generalService.getNodeRef(RegisterModel.Repo.REGISTERS_SPACE + "/" + RegisterModel.NAMESPACE_PREFFIX + id);
         final Node registerNode = new Node(registerRef);
         final Map<String, Object> props = registerNode.getProperties();
-        props.put(RegisterModel.Prop.COUNTER.toString(), getRegisterCounter(registerId));
+        props.put(RegisterModel.Prop.COUNTER.toString(), getRegisterCounter(id));
         return registerNode;
     }
 
     private Integer getRegisterCounter(int registerId) {
-        // XXX: millegi pärast viisakam lahendus ei tööta: BadSqlGrammarException: PreparedStatementCallback; bad SQL grammar [SELECT last_value FROM ?]; nested exception is
-        // org.postgresql.util.PSQLException: ERROR: syntax error at or near "$1"
-        // return jdbcTemplate.queryForInt("SELECT last_value FROM ?", getSequenceName(registerId));
-        return jdbcTemplate.queryForInt("SELECT last_value FROM " + getSequenceName(registerId));
-    }
-
-    private String getSequenceName(int registerId) {
-        final String seqName = SEQ_REGISTER_PREFIX + registerId + SEQ_REGISTER_SUFFIX;
-        return seqName;
+        return jdbcTemplate.queryForInt("SELECT counter FROM " + REGISTER_TABLE_NAME + " WHERE register_id=?", registerId);
     }
 
     @Override
     public Register getRegister(Integer registerId) {
-        final Node registerNode = getRegisterNodeRefById(registerId);
+        final Node registerNode = getRegisterNode(registerId);
         final Map<String, Object> props = registerNode.getProperties();
         Register reg = registerBeanPropertyMapper.toObject(RepoUtil.toQNameProperties(props));
         reg.setNodeRef(registerNode.getNodeRef());
@@ -157,12 +143,12 @@ public class RegisterServiceImpl implements RegisterService {
             createSequence(regId);
             nodeService.createNode(getRoot(), RegisterModel.Assoc.REGISTER,
                     QName.createQName(RegisterModel.URI, regId.toString()), RegisterModel.Types.REGISTER, newProps);
-            setSequenceCurrentValue(getSequenceName(regId), counter);
+            setRegisterCounterValue(regId, counter);
             logService.addLogEntry(LogEntry.create(LogObject.REGISTER, userService, "applog_register_add", prop.get(RegisterModel.Prop.NAME.toString())));
         } else {
             Map<QName, Serializable> oldProps = nodeService.getProperties(register.getNodeRef());
             nodeService.setProperties(register.getNodeRef(), newProps);
-            setSequenceCurrentValue(getSequenceName((Integer) prop.get(RegisterModel.Prop.ID)), counter);
+            setRegisterCounterValue((Integer) prop.get(RegisterModel.Prop.ID), counter);
 
             String diff = new PropDiffHelper()
                     .label(RegisterModel.Prop.NAME, "register_name")
@@ -182,39 +168,27 @@ public class RegisterServiceImpl implements RegisterService {
 
     @Override
     public int increaseCount(int registerId) {
-        return jdbcTemplate.queryForInt("SELECT nextval(?)", getSequenceName(registerId));
+        int currentCounter = jdbcTemplate.queryForInt("SELECT counter FROM " + REGISTER_TABLE_NAME + " WHERE register_id=? FOR UPDATE", registerId);
+        currentCounter++;
+        setRegisterCounterValue(registerId, currentCounter);
+        return currentCounter;
     }
 
-    @Override
-    public void updateRegisterSequence(int registerId, int regCounterValue) {
-        final String seqName = getSequenceName(registerId);
-        jdbcTemplate.update("ALTER SEQUENCE " + seqName + " MINVALUE 0");
-        if (regCounterValue == 1) {
-            if (jdbcTemplate.queryForInt("SELECT nextval(?)", getSequenceName(registerId)) == 1) {
-                setSequenceCurrentValue(seqName, DEFAULT_COUNTER_INITIAL_VALUE);
-            } else {
-                setSequenceCurrentValue(seqName, 1);
-            }
-        }
-    }
-
-    private void setSequenceCurrentValue(final String seqName, int seqValue) {
-        jdbcTemplate.queryForInt("SELECT setval(?, ?)", seqName, seqValue);
+    private void setRegisterCounterValue(final int seqName, int seqValue) {
+        jdbcTemplate.update("UPDATE " + REGISTER_TABLE_NAME + " SET counter=? WHERE register_id=?", seqValue, seqName);
     }
 
     @Override
     public void resetCounter(Node register) {
         final Map<String, Object> props = register.getProperties();
         int registerId = (Integer) props.get(RegisterModel.Prop.ID);
-        setSequenceCurrentValue(getSequenceName(registerId), DEFAULT_COUNTER_INITIAL_VALUE);
+        setRegisterCounterValue(registerId, DEFAULT_COUNTER_INITIAL_VALUE);
         props.put(RegisterModel.Prop.COUNTER.toString(), DEFAULT_COUNTER_INITIAL_VALUE);
     }
 
     private void createSequence(int registerId) {
-        final String seqName = getSequenceName(registerId);
-        jdbcTemplate.update("CREATE SEQUENCE " + seqName + " MINVALUE 0");
-        setSequenceCurrentValue(getSequenceName(registerId), DEFAULT_COUNTER_INITIAL_VALUE);
-        log.debug("created sequence: " + seqName);
+        jdbcTemplate.update("INSERT INTO " + REGISTER_TABLE_NAME + " (register_id,counter) values (?,?)", registerId, DEFAULT_COUNTER_INITIAL_VALUE);
+        log.debug("created sequence: " + registerId);
     }
 
     // START: getters / setters

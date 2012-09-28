@@ -10,6 +10,7 @@ import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
+import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
@@ -26,11 +27,13 @@ public class FieldDefinitionListDialog extends BaseDialogBean {
 
     private List<FieldDefinition> fieldDefinitions;
     private String searchCriteria;
+    private UIRichList richList;
 
     @Override
     public void init(Map<String, String> params) {
         super.init(params);
         initFields();
+        clearRichList();
     }
 
     private void initFields() {
@@ -81,6 +84,12 @@ public class FieldDefinitionListDialog extends BaseDialogBean {
         initFields();
     }
 
+    private void clearRichList() {
+        if (getRichList() != null) {
+            getRichList().setValue(null);
+        }
+    }
+
     // START: getters / setters
     /**
      * Used in JSP page to create table rows
@@ -95,6 +104,14 @@ public class FieldDefinitionListDialog extends BaseDialogBean {
 
     public void setSearchCriteria(String searchCriteria) {
         this.searchCriteria = searchCriteria;
+    }
+
+    public void setRichList(UIRichList richList) {
+        this.richList = richList;
+    }
+
+    public UIRichList getRichList() {
+        return richList;
     }
 
     // END: getters / setters

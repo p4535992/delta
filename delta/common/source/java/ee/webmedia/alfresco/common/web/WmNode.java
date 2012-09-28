@@ -24,7 +24,20 @@ import org.alfresco.web.bean.repository.TransientNode;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
+import ee.webmedia.alfresco.cases.model.CaseModel;
+import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
+import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
+import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
+import ee.webmedia.alfresco.docconfig.generator.fieldtype.DateGenerator;
+import ee.webmedia.alfresco.docconfig.service.DocumentConfigServiceImpl;
+import ee.webmedia.alfresco.document.search.web.DocumentDynamicSearchDialog;
+import ee.webmedia.alfresco.functions.model.FunctionsModel;
+import ee.webmedia.alfresco.log.PropDiffHelper;
+import ee.webmedia.alfresco.series.model.SeriesModel;
+import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.volume.model.VolumeModel;
 
 /**
  * Node that does not fetch properties (or anything) lazily, but takes data on creation. Thus does not depend on static FacesContext and can be used in service
@@ -202,6 +215,10 @@ public class WmNode extends TransientNode {
     }
 
     private static void toString(StringBuilder s, Collection<?> collection, boolean printClass) {
+        toString(s, collection, printClass, false, "\n    ");
+    }
+
+    private static void toString(StringBuilder s, Collection<?> collection, boolean printClass, boolean translateSpecialClasses, String argumentSeparator) {
         if (collection == null) {
             s.append("null");
             return;
@@ -210,12 +227,16 @@ public class WmNode extends TransientNode {
         if (!collection.isEmpty()) {
             NamespaceService namespaceService = BeanHelper.getNamespaceService();
             for (Object o : collection) {
-                s.append("\n    ");
+                s.append(argumentSeparator);
                 if (printClass) {
                     toStringWithClass(s, o, namespaceService);
                 } else {
                     if (o != null) {
-                        s.append(StringUtils.replace(o.toString(), "\n", "\n    "));
+                        if (o instanceof String) {
+                            s.append(StringUtils.replace(o.toString(), "\n", "\n    "));
+                        } else {
+                            valueToString(s, o, namespaceService, printClass, translateSpecialClasses, argumentSeparator);
+                        }
                     }
                 }
             }
@@ -238,6 +259,46 @@ public class WmNode extends TransientNode {
             }
         }
         return s.toString();
+    }
+
+    public static String toHumanReadableStringIfPossible(Map<QName, Serializable> collection, NamespacePrefixResolver namespacePrefixResolver,
+            DocumentAdminService documentAdminService) {
+        if (collection == null || collection.isEmpty()) {
+            return "";
+        }
+        List<String> propsWithValues = new ArrayList<String>();
+        for (Entry<QName, Serializable> entry : collection.entrySet()) {
+            QName key = entry.getKey();
+            String localName = key.getLocalName();
+            if (localName.endsWith(WMUIProperty.AFTER_LABEL_BOOLEAN) || localName.endsWith(DateGenerator.PICKER_PREFIX) || key.equals(DocumentDynamicSearchDialog.SELECTED_STORES)) {
+                continue;
+            }
+            StringBuilder s = new StringBuilder();
+            if (localName.endsWith(DateGenerator.END_PREFIX)) {
+                s.append(getPropTitle(namespacePrefixResolver, documentAdminService, DateGenerator.getOriginalQName(key)));
+                s.append(" kuni");
+            } else {
+                s.append(getPropTitle(namespacePrefixResolver, documentAdminService, key));
+            }
+            s.append(" = ");
+            Serializable value = entry.getValue();
+            valueToString(s, value, namespacePrefixResolver, false, true, ", ");
+            propsWithValues.add(s.toString());
+        }
+        return StringUtils.join(propsWithValues, ",\n ");
+    }
+
+    private static String getPropTitle(NamespacePrefixResolver namespacePrefixResolver, DocumentAdminService documentAdminService, QName key) {
+        if (DocumentConfigServiceImpl.searchLabelIds.containsKey(key)) {
+            return MessageUtil.getMessage(DocumentConfigServiceImpl.searchLabelIds.get(key));
+        }
+        if (documentAdminService != null) {
+            FieldDefinition fieldDef = documentAdminService.getFieldDefinition(key.getLocalName());
+            if (fieldDef != null) {
+                return fieldDef.getName();
+            }
+        }
+        return key.toPrefixString(namespacePrefixResolver);
     }
 
     public static String toString(Map<QName, Serializable> collection, NamespacePrefixResolver namespacePrefixResolver) {
@@ -281,14 +342,44 @@ public class WmNode extends TransientNode {
                 s.append(className);
             }
             s.append("]");
-            if (value instanceof QName) {
-                value = ((QName) value).toPrefixString(namespacePrefixResolver);
+            valueToString(s, value, namespacePrefixResolver, true, false, "\n    ");
+        }
+    }
+
+    private static void valueToString(StringBuilder s, Object value, NamespacePrefixResolver namespacePrefixResolver, boolean printClass, boolean translateSpecialClasses,
+            String argumentSeparator) {
+        if (value instanceof QName) {
+            value = ((QName) value).toPrefixString(namespacePrefixResolver);
+        }
+        if (translateSpecialClasses && value instanceof NodeRef) {
+            QName theType = BeanHelper.getNodeService().getType((NodeRef) value);
+            if (theType != null) {
+                if (theType.equals(FunctionsModel.Types.FUNCTIONS_ROOT)) {
+                    if (BeanHelper.getFunctionsService().getFunctionsRoot().equals(value)) {
+                        value = MessageUtil.getMessage("functions_title");
+                    } else {
+                        for (ArchivalsStoreVO archivalsStore : BeanHelper.getGeneralService().getArchivalsStoreVOs()) {
+                            if (archivalsStore.getNodeRef().equals(value)) {
+                                value = archivalsStore.getTitle();
+                                break;
+                            }
+                        }
+                    }
+                } else if (theType.equals(FunctionsModel.Types.FUNCTION)) {
+                    value = BeanHelper.getFunctionsService().getFunctionByNodeRef((NodeRef) value).getTitle();
+                } else if (theType.equals(VolumeModel.Types.VOLUME)) {
+                    value = BeanHelper.getVolumeService().getVolumeByNodeRef((NodeRef) value).getTitle();
+                } else if (theType.equals(CaseModel.Types.CASE)) {
+                    value = BeanHelper.getCaseService().getCaseByNoderef((NodeRef) value).getTitle();
+                } else if (theType.equals(SeriesModel.Types.SERIES)) {
+                    value = BeanHelper.getSeriesService().getSeriesByNodeRef((NodeRef) value).getTitle();
+                }
             }
-            if (value instanceof Collection) {
-                toString(s, (Collection<?>) value, true);
-            } else {
-                s.append(StringUtils.replace(value.toString(), "\n", "\n    "));
-            }
+        }
+        if (value instanceof Collection) {
+            toString(s, (Collection<?>) value, printClass, translateSpecialClasses, argumentSeparator);
+        } else {
+            s.append(StringUtils.replace(PropDiffHelper.value(value, ""), "\n", "\n    "));
         }
     }
 

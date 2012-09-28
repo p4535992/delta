@@ -116,6 +116,16 @@
       </property>
       <property name="documentUpdater" ref="documentUpdater7" />
    </bean>
+   
+   <bean id="documentChangedTypePropertiesUpdater" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentChangedTypePropertiesUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+       <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+   </bean>
 
    <!-- START: web beans: -->
 

@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.docconfig.generator.fieldtype;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNamespaceService;
+import static ee.webmedia.alfresco.utils.TextUtil.replaceLast;
 
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
@@ -60,12 +61,26 @@ public class DateGenerator extends BaseTypeFieldGenerator {
         item.setTextId("document_search_from_to_with_picker");
     }
 
+    public static boolean isEndDate(QName prop) {
+        return prop.getLocalName().endsWith(END_PREFIX);
+    }
+
     public static QName getEndDateQName(QName propQname) {
         return QName.createQName(propQname.getNamespaceURI(), propQname.getLocalName() + END_PREFIX);
     }
 
     public static QName getDatePickerQName(QName propQname) {
         return QName.createQName(propQname.getNamespaceURI(), propQname.getLocalName() + PICKER_PREFIX);
+    }
+
+    public static QName getOriginalQName(QName propQname) {
+        String localName = propQname.getLocalName();
+        if (localName.endsWith(END_PREFIX)) {
+            localName = replaceLast(localName, END_PREFIX, "");
+        } else if (localName.endsWith(PICKER_PREFIX)) {
+            localName = replaceLast(localName, PICKER_PREFIX, "");
+        }
+        return QName.createQName(propQname.getNamespaceURI(), localName);
     }
 
 }

@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.docconfig.generator.fieldtype;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNamespaceService;
+import static ee.webmedia.alfresco.utils.TextUtil.replaceLast;
 
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
@@ -56,6 +57,18 @@ public class DoubleGenerator extends BaseTypeFieldGenerator {
 
     public static QName getEndNumberQName(QName propQname) {
         return QName.createQName(propQname.getNamespaceURI(), propQname.getLocalName() + END_PREFIX);
+    }
+
+    public static boolean isEndNumber(QName propQName) {
+        return propQName.getLocalName().endsWith(END_PREFIX);
+    }
+
+    public static QName getOriginalQName(QName propQname) {
+        String localName = propQname.getLocalName();
+        if (localName.endsWith(END_PREFIX)) {
+            localName = replaceLast(localName, END_PREFIX, "");
+        }
+        return QName.createQName(propQname.getNamespaceURI(), localName);
     }
 
 }

@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.document.search.web;
 
+import static ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty.getLabelBoolean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getSendOutService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getVisitedDocumentsBean;
@@ -7,6 +8,8 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getVisitedDocumentsBean
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +33,9 @@ import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.alfresco.web.ui.common.component.data.UISortLink;
 import org.alfresco.web.ui.common.tag.data.ColumnTag;
 import org.alfresco.web.ui.repo.component.UIActions;
+import org.apache.commons.collections.comparators.NullComparator;
+import org.apache.commons.collections.comparators.ReverseComparator;
+import org.apache.commons.collections.comparators.TransformingComparator;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Hits;
 import org.apache.myfaces.application.jsp.JspStateManagerImpl;
@@ -37,7 +43,6 @@ import org.apache.myfaces.shared_impl.taglib.UIComponentTagUtils;
 
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.enums.SendMode;
-import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
 import ee.webmedia.alfresco.document.model.Document;
@@ -50,6 +55,7 @@ import ee.webmedia.alfresco.privilege.web.DocPermissionEvaluator;
 import ee.webmedia.alfresco.simdhs.CSVExporter;
 import ee.webmedia.alfresco.simdhs.DataReader;
 import ee.webmedia.alfresco.simdhs.RichListDataReader;
+import ee.webmedia.alfresco.utils.ComparableTransformer;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
@@ -87,10 +93,17 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
         getVisitedDocumentsBean().resetVisitedDocuments(documents);
     }
 
+    @SuppressWarnings("unchecked")
     protected void doInitialSearch() {
         try {
             DocumentSearchService documentSearchService = getDocumentSearchService();
             documents = setLimited(documentSearchService.searchDocuments(searchFilter, getLimit()));
+            Collections.sort(documents, new TransformingComparator(new ComparableTransformer<Document>() {
+                @Override
+                public Comparable<Date> tr(Document document) {
+                    return document.getRegDateTime();
+                }
+            }, new ReverseComparator(new NullComparator())));
         } catch (BooleanQuery.TooManyClauses e) {
             Map<QName, Serializable> filterProps = RepoUtil.getNotEmptyProperties(RepoUtil.toQNameProperties(searchFilter.getProperties()));
             // filterProps.remove(DocumentSearchModel.Props.OUTPUT);
@@ -239,10 +252,6 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
             createAndAddColumn(context, richList, fieldTitle, primaryQName.getLocalName(), false, valueComponent.toArray(new UIComponent[valueComponent.size()]));
         }
         createAndAddColumn(context, richList, MessageUtil.getMessage("document_allFiles"), null, true, createFileColumnContent(context));
-    }
-
-    private QName getLabelBoolean(QName propQname) {
-        return QName.createQName(propQname.toString() + WMUIProperty.AFTER_LABEL_BOOLEAN);
     }
 
     @Override

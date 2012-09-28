@@ -472,7 +472,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         List<String> queryParts = new ArrayList<String>();
         queryParts.add(generateStringNotEmptyQuery(DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME,
                 DocumentSpecificModel.Props.PARTY_NAME /* on document node, duplicates partyName property values from all contractParty child-nodes */
-                ));
+        ));
         queryParts.add(generateStringExactQuery(DocumentStatus.FINISHED.getValueName(), DocumentCommonModel.Props.DOC_STATUS));
         queryParts.add(generateStringNullQuery(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE));
         String query = generateDocumentSearchQuery(queryParts);
@@ -1264,6 +1264,28 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
 
         // END: special cases
 
+        fillQueryFromProps(queryParts, props);
+
+        String searchFilter = WmNode.toHumanReadableStringIfPossible(RepoUtil.getNotEmptyProperties(props), namespaceService, BeanHelper.getDocumentAdminService());
+        log.info("Documents search filter: " + searchFilter);
+        logService.addLogEntry(LogEntry.create(LogObject.SEARCH_DOC, userService, "applog_search_docs", searchFilter));
+
+        // Quick search (Otsisõna)
+        String quickSearchInput = (String) props.get(DocumentSearchModel.Props.INPUT);
+        if (StringUtils.isNotBlank(quickSearchInput)) {
+            List<String> quickSearchWords = parseQuickSearchWords(quickSearchInput);
+            log.info("Quick search (document) - words: " + quickSearchWords.toString() + ", from string '" + quickSearchInput + "'");
+            queryParts.addAll(generateQuickSearchDocumentQuery(quickSearchWords));
+        }
+
+        String query = generateDocumentSearchQuery(queryParts);
+        if (log.isDebugEnabled()) {
+            log.debug("Documents search query construction time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
+        }
+        return query;
+    }
+
+    private void fillQueryFromProps(List<String> queryParts, Map<QName, Serializable> props) {
         // dynamic generation
         for (Entry<QName, Serializable> entry : props.entrySet()) {
             QName propQName = entry.getKey();
@@ -1286,7 +1308,23 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                 }
                 continue;
             } else if (propQName.getLocalName().contains("_")) {
-                continue;
+                if (DateGenerator.isEndDate(propQName)) {
+                    QName originalQname = DateGenerator.getOriginalQName(propQName);
+                    if (DateGenerator.isEndDate(propQName) && props.get(originalQname) == null) {
+                        propQName = originalQname;
+                    } else {
+                        continue;
+                    }
+                } else if (DoubleGenerator.isEndNumber(propQName)) {
+                    QName originalQname = DoubleGenerator.getOriginalQName(propQName);
+                    if (DoubleGenerator.isEndNumber(propQName) && props.get(originalQname) == null) {
+                        propQName = originalQname;
+                    } else {
+                        continue;
+                    }
+                } else {
+                    continue;
+                }
             } else if (DocumentCommonModel.Props.CASE.equals(propQName)) {
                 continue;
             }
@@ -1310,34 +1348,19 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                 }
             } else if (value instanceof Date) {
                 Date endDate = (Date) props.get(DateGenerator.getEndDateQName(propQName));
-                queryParts.add(generateDatePropertyRangeQuery((Date) value, endDate, propQName));
+                queryParts.add(generateDatePropertyRangeQuery((Date) props.get(propQName), endDate, propQName));
             } else if (value instanceof Double || value instanceof Integer || value instanceof Long) {
                 Number maxValue = (Number) props.get(DoubleGenerator.getEndNumberQName(propQName));
-                generateNumberPropertyRangeQuery((Number) value, maxValue, propQName);
+                queryParts.add(generateNumberPropertyRangeQuery((Number) props.get(propQName), maxValue, propQName));
             } else if (value instanceof Boolean) {
-                queryParts.add(generatePropertyBooleanQuery(propQName, (Boolean) value));
+                Boolean value2 = (Boolean) value;
+                if (value2) {
+                    queryParts.add(generatePropertyBooleanQuery(propQName, value2));
+                }
             } else if (value instanceof NodeRef) {
                 queryParts.add(generateNodeRefQuery((NodeRef) value, propQName));
             }
         }
-
-        String searchFilter = WmNode.toString(RepoUtil.getNotEmptyProperties(props), namespaceService);
-        log.info("Documents search filter: " + searchFilter);
-        logService.addLogEntry(LogEntry.create(LogObject.SEARCH_DOC, userService, "applog_search_docs", searchFilter));
-
-        // Quick search (Otsisõna)
-        String quickSearchInput = (String) props.get(DocumentSearchModel.Props.INPUT);
-        if (StringUtils.isNotBlank(quickSearchInput)) {
-            List<String> quickSearchWords = parseQuickSearchWords(quickSearchInput);
-            log.info("Quick search (document) - words: " + quickSearchWords.toString() + ", from string '" + quickSearchInput + "'");
-            queryParts.addAll(generateQuickSearchDocumentQuery(quickSearchWords));
-        }
-
-        String query = generateDocumentSearchQuery(queryParts);
-        if (log.isDebugEnabled()) {
-            log.debug("Documents search query construction time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
-        }
-        return query;
     }
 
     private String generateQuickSearchQuery(String searchString) {
@@ -1449,7 +1472,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                 WorkflowCommonModel.Props.STOPPED_DATE_TIME);
         List<QName> types = (List<QName>) props.get(TaskSearchModel.Props.TASK_TYPE);
         addTaskTypeFieldExactQueryPartsAndArguments(queryParts, arguments, types.toArray(new QName[types.size()]));
-        String searchFilter = WmNode.toString(RepoUtil.getNotEmptyProperties(RepoUtil.toQNameProperties(props)), namespaceService);
+        String searchFilter = WmNode.toHumanReadableStringIfPossible(RepoUtil.getNotEmptyProperties(RepoUtil.toQNameProperties(props)), namespaceService, null);
         log.info("Tasks search filter: " + searchFilter);
 
         // Searches are made by user. Reports are generated by DHS. We need to log only searches.

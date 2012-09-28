@@ -141,6 +141,14 @@ public class WMUIProperty extends UIProperty {
         return container;
     }
 
+    public static QName getLabelBoolean(QName propQname) {
+        return QName.createQName(propQname.toString() + WMUIProperty.AFTER_LABEL_BOOLEAN);
+    }
+
+    public static QName getPropertyFromLabelBoolean(QName labelBooleanQname) {
+        return QName.createQName(TextUtil.replaceLast(labelBooleanQname.toString(), WMUIProperty.AFTER_LABEL_BOOLEAN, ""));
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public void restoreState(FacesContext context, Object state) {

@@ -45,6 +45,7 @@ import javax.faces.model.SelectItem;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.model.FileExistsException;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -105,6 +106,7 @@ import ee.webmedia.alfresco.utils.MessageData;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.WebUtil;
+import ee.webmedia.alfresco.workflow.exception.WorkflowActiveResponsibleTaskException;
 import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowBlockItem;
@@ -177,7 +179,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         this.document = document;
         docRef = document.getNodeRef();
         delegationBean.setWorkflowBlockBean(this);
-        restore();
+        restore("init");
     }
 
     public void reset() {
@@ -196,7 +198,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         reviewNotesRichList = null;
     }
 
-    public void restore() {
+    public void restore(String action) {
         compoundWorkflows = getWorkflowService().getCompoundWorkflows(docRef);
         myTasks = getWorkflowService().getMyTasksInProgress(compoundWorkflows);
         for (Task task : myTasks) {
@@ -219,7 +221,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         removedFiles = null;
         delegationBean.reset();
         // rebuild the whole task panel
-        constructTaskPanelGroup();
+        constructTaskPanelGroup(action);
 
         if (!myTasks.isEmpty()) {
             List<String> taskTypes = new ArrayList<String>(5);
@@ -382,7 +384,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             log.debug("Saving task failed", e);
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "workflow_task_save_failed");
         }
-        restore();
+        restore("saveTask");
     }
 
     public void finishTask(ActionEvent event) {
@@ -453,9 +455,15 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             MessageUtil.addErrorMessage(context, "task_finish_error_docDeleted");
             WebUtil.navigateTo(AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME, context);
             return;
+        } catch (NodeLockedException e) {
+            log.error("Finishing task failed", e);
+            BeanHelper.getDocumentLockHelperBean().handleLockedNode("task_finish_error_document_locked");
         } catch (WorkflowChangedException e) {
             log.debug("Finishing task failed", e);
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "workflow_task_save_failed");
+        } catch (WorkflowActiveResponsibleTaskException e) {
+            log.debug("Finishing task failed: more than one active responsible task!", e);
+            MessageUtil.addErrorMessage("workflow_compound_save_failed_responsible");
         }
 
         getDocumentDialogHelperBean().switchMode(false);
@@ -579,35 +587,35 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
 
     public List<CompoundWorkflow> getCompoundWorkflows() {
         if (compoundWorkflows == null) {
-            restore();
+            restore("getCompoundWorkflows");
         }
         return compoundWorkflows;
     }
 
     public List<Task> getMyTasks() {
         if (myTasks == null) {
-            restore();
+            restore("getMyTasks");
         }
         return myTasks;
     }
 
     public List<Task> getFinishedReviewTasks() {
         if (finishedReviewTasks == null) {
-            restore();
+            restore("getFinishedReviewTasks");
         }
         return finishedReviewTasks;
     }
 
     public List<Task> getFinishedOpinionTasks() {
         if (finishedOpinionTasks == null) {
-            restore();
+            restore("getFinishedOpinionTasks");
         }
         return finishedOpinionTasks;
     }
 
     public List<Task> getFinishedOrderAssignmentTasks() {
         if (finishedOrderAssignmentTasks == null) {
-            restore();
+            restore("getFinishedOrderAssignmentTasks");
         }
         return finishedOrderAssignmentTasks;
     }
@@ -800,15 +808,15 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         return selectItems;
     }
 
-    public void constructTaskPanelGroup() {
-        constructTaskPanelGroup(getDataTableGroupInner());
+    public void constructTaskPanelGroup(String action) {
+        constructTaskPanelGroup(getDataTableGroupInner(), action);
     }
 
     /**
      * Manually generate a panel group with everything.
      */
 
-    private void constructTaskPanelGroup(HtmlPanelGroup panelGroup) {
+    private void constructTaskPanelGroup(HtmlPanelGroup panelGroup, String action) {
         List<UIComponent> panelGroupChildren = ComponentUtil.getChildren(panelGroup);
         panelGroupChildren.clear();
         FacesContext context = FacesContext.getCurrentInstance();
@@ -867,6 +875,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         for (Task task : getMyTasks()) {
             if (task.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK, WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
                 dueDateExtensionLayer = addDueDateExtensionLayer(panelGroupChildren, context, app);
+                log.debug("Added dueDateExtensionLayer to parent=" + dueDateExtensionLayer.getParent());
                 break;
             }
         }
@@ -970,6 +979,9 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 // postpone generating onClick js to rendering phase when we have parent form present
                 if (dueDateExtensionLayer != null) {
                     extensionBtnAttributes.put(HtmlButtonRenderer.ATTR_ONCLICK_DATA, new Pair<UIComponent, Integer>(dueDateExtensionLayer, index));
+                    log.debug("Attatching dueDateExtensionLayer to component id=" + extensionButton.getId() + ", rebuild action=" + action + " parent="
+                            + dueDateExtensionLayer.getParent()
+                            + ", parent id=" + (dueDateExtensionLayer.getParent() != null ? dueDateExtensionLayer.getParent().getId() : "null") + ", task=" + myTask);
                 }
                 extensionButton.setRendererType(HtmlButtonRenderer.HTML_BUTTON_RENDERER_TYPE);
 
@@ -1130,7 +1142,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
 
     public void setDataTableGroup(HtmlPanelGroup dataTableGroup) {
         if (taskPanelControlDocument != null && !taskPanelControlDocument.equals(docRef)) {
-            constructTaskPanelGroup(dataTableGroup);
+            constructTaskPanelGroup(dataTableGroup, "setDataTableGroup");
             taskPanelControlDocument = docRef;
         }
         this.dataTableGroup = dataTableGroup;
