@@ -62,7 +62,6 @@ import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
  */
 public class WorkflowDbServiceImpl implements WorkflowDbService {
 
-    private static final String HAS_FILES = "has_files";
     private static final String INDEX_IN_WORKFLOW_FIELD = "index_in_workflow";
     private static final String TASK_ID_FIELD = "task_id";
     private static final String DUE_DATE_HISTORY_FIELD = "has_due_date_history";
@@ -76,8 +75,6 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     private DataSource dataSource;
     private DictionaryService dictionaryService;
     private NodeService nodeService;
-
-    // TODO - Riina: add trace level'il explain'ide printimine
 
     @Override
     public void createTaskEntry(Task task) {
@@ -99,7 +96,6 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         arguments.add(task.getNodeRef().getId());
         updateTaskEntry(fieldNamesAndArguments.getFirst(), arguments, task.getNodeRef());
         task.setOriginalHasDueDateHistory(task.getHasDueDateHistory());
-        task.setOriginalHasFiles(task.getHasFiles());
     }
 
     @Override
@@ -162,7 +158,17 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
                     return rs.getString(1);
                 }
             }, args);
-            LOG.trace("Explaining workflowDbService query, slq='" + sqlQuery + "', args=" + args + "\n" + TextUtil.joinNonBlankStrings(explanation, "\n"));
+            StringBuffer sb = new StringBuffer("Explaining workflowDbService query, slq='" + sqlQuery + "', args=\n");
+            if (args != null && args.length > 0) {
+                int argsCounter = 1;
+                for (Object arg : args) {
+                    sb.append(argsCounter++ + ") ").append(arg != null ? arg.toString() : arg).append("\n");
+                }
+            } else {
+                sb.append(args).append("\n");
+            }
+            sb.append(TextUtil.joinNonBlankStrings(explanation, "\n"));
+            LOG.trace(sb.toString());
         }
     }
 
@@ -280,10 +286,6 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         if (!ObjectUtils.equals(task.getHasDueDateHistory(), task.getOriginalHasDueDateHistory())) {
             fieldNames.add(DUE_DATE_HISTORY_FIELD);
             arguments.add(task.getHasDueDateHistory());
-        }
-        if (!ObjectUtils.equals(task.getHasFiles(), task.getOriginalHasFiles())) {
-            fieldNames.add(HAS_FILES);
-            arguments.add(task.getHasFiles());
         }
         getPropFieldNamesAndArguments(fieldNames, arguments, changedProps);
         return new Pair<List<String>, List<Object>>(fieldNames, arguments);
@@ -597,6 +599,49 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     }
 
     @Override
+    public Map<NodeRef, List<NodeRef>> getCompoundWorkflowsTaskFiles(List<CompoundWorkflow> compoundWorkflows) {
+        final Map<NodeRef, List<NodeRef>> result = new HashMap<NodeRef, List<NodeRef>>();
+        List<String> workflowNodeRefs = new ArrayList<String>();
+        if (compoundWorkflows == null) {
+            return result;
+        }
+        StoreRef storeRef = null;
+        for (CompoundWorkflow compoundWorkflow : compoundWorkflows) {
+            for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+                if (workflow.isSaved()) {
+                    NodeRef nodeRef = workflow.getNodeRef();
+                    workflowNodeRefs.add(nodeRef.getId());
+                    storeRef = nodeRef.getStoreRef();
+                }
+            }
+        }
+        if (workflowNodeRefs.isEmpty()) {
+            return result;
+        }
+        String sqlQuery = "SELECT delta_task.task_id as task_id, delta_task_file.file_id as file_id FROM delta_task, delta_task_file " +
+                "     WHERE delta_task.task_id=delta_task_file.task_id " +
+                "      AND delta_task.workflow_id IN (" + getQuestionMarks(workflowNodeRefs.size()) + ") ORDER BY delta_task_file.task_file_id";
+        Object[] workflowRefArray = workflowNodeRefs.toArray();
+        final StoreRef storeRefFinal = storeRef;
+        jdbcTemplate.query(sqlQuery, new ParameterizedRowMapper<NodeRef>() {
+
+            @Override
+            public NodeRef mapRow(ResultSet rs, int rowNum) throws SQLException {
+                NodeRef taskRef = new NodeRef(storeRefFinal, rs.getString(TASK_ID_FIELD));
+                NodeRef fileRef = new NodeRef(storeRefFinal, rs.getString("file_id"));
+                if (!result.containsKey(taskRef)) {
+                    result.put(taskRef, new ArrayList<NodeRef>());
+                }
+                result.get(taskRef).add(fileRef);
+                return null;
+            }
+
+        }, workflowRefArray);
+        explainQuery(sqlQuery, workflowRefArray);
+        return result;
+    }
+
+    @Override
     public List<List<String>> deleteNotExistingTasks() {
         String sqlQuery = "SELECT * from delta_task where store_id is null";
         final List<String> columnNames = new ArrayList<String>();
@@ -716,9 +761,6 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             boolean originalHasDueDateHistory = rs.getBoolean(DUE_DATE_HISTORY_FIELD);
             task.setHasDueDateHistory(originalHasDueDateHistory);
             task.setOriginalHasDueDateHistory(originalHasDueDateHistory);
-            boolean originalHasFiles = rs.getBoolean(HAS_FILES);
-            task.setHasFiles(originalHasFiles);
-            task.setOriginalHasFiles(originalHasFiles);
             task.setTaskIndexInWorkflow(rs.getInt(INDEX_IN_WORKFLOW_FIELD));
             task.setParentNodeRefId(rs.getString(WORKFLOW_ID_KEY));
             task.setStoreRef(rs.getString(STORE_ID_FIELD));

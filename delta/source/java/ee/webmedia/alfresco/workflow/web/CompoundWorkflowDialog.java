@@ -117,6 +117,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     private transient ParametersService parametersService;
     private String existingUserCompoundWorkflowDefinition;
     private String newUserCompoundWorkflowDefinition;
+    private boolean finishImplConfirmed;
 
     private static final List<QName> knownWorkflowTypes = Arrays.asList(//
             WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW
@@ -148,27 +149,38 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         boolean isInProgress = WorkflowUtil.isStatus(compoundWorkflow, Status.IN_PROGRESS);
         preprocessWorkflow();
+        boolean checkConfirmations = !finishImplConfirmed;
+        finishImplConfirmed = false;
         if (isInProgress && hasOwnerWithNoEmail("workflow_compound_save_failed_owner_without_email")) {
             return null;
         }
         if (validate(context, isInProgress, false, false)) {
-            List<String> confirmationMessages = getConfirmationMessages(false);
-            if (confirmationMessages != null && !confirmationMessages.isEmpty()) {
-                updatePanelGroup(confirmationMessages, SAVE_VALIDATED_WORKFLOW);
-                return null;
+            if (checkConfirmations) {
+                List<String> confirmationMessages = getConfirmationMessages(false);
+                if (confirmationMessages != null && !confirmationMessages.isEmpty()) {
+                    updatePanelGroup(confirmationMessages, SAVE_VALIDATED_WORKFLOW);
+                    return null;
+                }
+            } else {
+                updatePanelGroup();
             }
-            return saveOrConfirmValidatedWorkflow();
+            return saveOrConfirmValidatedWorkflow(outcome);
         }
         return null;
     }
 
     public void saveValidatedWorkflow(ActionEvent event) {
-        saveOrConfirmValidatedWorkflow();
+        finishImplConfirmed = true;
+        String outcome = finish();
+        if (StringUtils.isNotBlank(outcome)) {
+            WebUtil.navigateTo(outcome);
+        }
     }
 
-    private String saveOrConfirmValidatedWorkflow() {
+    private String saveOrConfirmValidatedWorkflow(String originalOutcome) {
         String confirmationOutcome = askConfirmIfHasSameTask(MessageUtil.getMessage("workflow_compound_save"), DialogAction.SAVING, false);
         if (confirmationOutcome == null) {
+            confirmationOutcome = originalOutcome;
             saveCompWorkflow();
             updatePanelGroup();
         }
@@ -315,7 +327,6 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             if (askConfirmIfHasSameTask(MessageUtil.getMessage("workflow_compound_starting"), DialogAction.STARTING, true) == null) {
                 startValidatedWorkflow(null);
             }
-
         }
     }
 
@@ -339,6 +350,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         }
         updatePanelGroup();
         BeanHelper.getDocumentDynamicDialog().switchMode(false); // document metadata might have changed (for example owner)
+        WebUtil.navigateTo(getDefaultFinishOutcome());
     }
 
     private List<String> getConfirmationMessages(boolean checkDocumentDueDate) {

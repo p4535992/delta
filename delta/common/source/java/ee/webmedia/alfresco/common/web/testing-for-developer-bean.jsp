@@ -84,6 +84,9 @@
 --%>
 
 <f:verbatim><hr/></f:verbatim>
+<h:commandButton id="docList_updateDocCounters" value="Uuenda dokumentide loendureid" type="submit" 
+      actionListener="#{FunctionsListDialog.updateDocCounters}" />
+<f:verbatim><hr/></f:verbatim>
 
 <h:outputText value="Faili asukoht serveri kõvakettal, millest DVK dokument importida: "/>
 <f:verbatim><br/></f:verbatim>

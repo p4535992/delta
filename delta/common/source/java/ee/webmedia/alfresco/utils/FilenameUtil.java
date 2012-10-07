@@ -9,8 +9,6 @@ import java.text.DecimalFormat;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import javax.faces.context.FacesContext;
-
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.util.Pair;
@@ -149,15 +147,6 @@ public class FilenameUtil {
         return safeName;
     }
 
-    public static void checkPlusInFileName(String displayName) {
-        if (displayName.contains("+")) {
-            // On some server environments(concrete case with GlassFish on Linux server - on other Linux/Windows machine there were no such problem) when using
-            // encoded "+" ("%2B") in url's request.getRequestURI() returns unEncoded value of "+" (instead of "%2B") and
-            // further decoding will replace + with space. Hence when looking for file by name there is " " instead of "+" and file will not be found.
-            throw new RuntimeException(MessageUtil.getMessage(FacesContext.getCurrentInstance(), ERR_INVALID_FILE_NAME));
-        }
-    }
-
     public static Pair<String, String> getFilenameFromDisplayname(NodeRef documentNodeRef, List<String> existingDisplayNames, String displayName, GeneralService generalService) {
         displayName = generateUniqueFileDisplayName(displayName, existingDisplayNames);
         String name = checkAndGetUniqueFilename(documentNodeRef, displayName, generalService);
@@ -167,27 +156,21 @@ public class FilenameUtil {
     public static Pair<String, String> getTaskFilenameFromDisplayname(Task task, List<String> existingDisplayNames, String displayName,
             GeneralService generalService, WorkflowDbService workflowDbService) {
         displayName = generateUniqueFileDisplayName(displayName, existingDisplayNames);
-        checkPlusInFileName(displayName);
-        String name = generalService.getUniqueFileName(FilenameUtil.makeSafeFilename(displayName),
+        String name = generalService.getUniqueFileName(makeSafeFilename(displayName),
                 workflowDbService.getTaskFileNodeRefs(task.getNodeRef()), task.getParent().getNodeRef());
         return new Pair<String, String>(name, displayName);
     }
 
     public static String getDiplayNameFromName(String originalFileName) {
-        return originalFileName.substring(0, originalFileName.lastIndexOf(".")) + "." + FilenameUtils.getExtension(originalFileName);
+        return FilenameUtils.removeExtension(originalFileName) + "." + FilenameUtils.getExtension(originalFileName);
     }
 
     /**
      * NB! this method is intended only for cm:name property!
      */
     private static String checkAndGetUniqueFilename(NodeRef documentNodeRef, String displayName, GeneralService generalService) {
-        checkPlusInFileName(displayName);
-        String safeFilename = FilenameUtil.makeSafeFilename(displayName);
+        String safeFilename = makeSafeFilename(displayName);
         return generalService.getUniqueFileName(documentNodeRef, safeFilename);
-    }
-
-    public static String getFilenameWithoutExtension(String fileName) {
-        return fileName.substring(0, fileName.lastIndexOf("."));
     }
 
     public static String byteCountToDisplaySize(long size) {

@@ -30,7 +30,6 @@ import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
 import ee.webmedia.alfresco.template.service.DocumentTemplateServiceImpl;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
-import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
@@ -130,7 +129,7 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
         Map<String, Object> props = docTemplateNode.getProperties();
         String newName = StringUtils.strip((String) props.get(DocumentTemplateServiceImpl.TEMP_PROP_FILE_NAME_BASE.toString()))
                 + props.get(DocumentTemplateServiceImpl.TEMP_PROP_FILE_NAME_EXTENSION.toString());
-        FilenameUtil.checkPlusInFileName(newName);
+        checkPlusInFileName(newName);
         try {
             setFileName(newName);
             navigator.setCurrentNodeId(BeanHelper.getDocumentTemplateService().getRoot().getId());
@@ -151,6 +150,15 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
             getNodeService().addAspect(createdNode, DocumentTemplateModel.Aspects.TEMPLATE_DOCUMENT, properties);
         }
         return outcome;
+    }
+
+    private void checkPlusInFileName(String displayName) {
+        if (displayName.contains("+")) {
+            // On some server environments(concrete case with GlassFish on Linux server - on other Linux/Windows machine there were no such problem) when using
+            // encoded "+" ("%2B") in url's request.getRequestURI() returns unEncoded value of "+" (instead of "%2B") and
+            // further decoding will replace + with space. Hence when looking for file by name there is " " instead of "+" and file will not be found.
+            throw new RuntimeException(MessageUtil.getMessage(FacesContext.getCurrentInstance(), ERR_INVALID_FILE_NAME));
+        }
     }
 
     @Override

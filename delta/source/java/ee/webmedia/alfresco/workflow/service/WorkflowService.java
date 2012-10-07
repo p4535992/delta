@@ -219,10 +219,10 @@ public interface WorkflowService {
 
     Map<QName, List<QName>> getTaskDataTypeDefaultProps();
 
-    void retrieveTaskFiles(Task task);
-
     QName getNodeRefType(NodeRef nodeRef);
 
     Task createTaskInMemory(NodeRef wfRef, WorkflowType workflowType, Map<QName, Serializable> props);
+
+    void retrieveTaskFiles(Task task, List<NodeRef> taskFiles);
 
 }

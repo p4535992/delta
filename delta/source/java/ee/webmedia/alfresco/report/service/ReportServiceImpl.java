@@ -32,6 +32,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
@@ -103,7 +104,7 @@ public class ReportServiceImpl implements ReportService {
         Map<String, Object> filterProps = filter.getProperties();
         String filterName = (String) filterProps.get(ReportHelper.getFilterNameProp(reportType).toString());
         String templateName = (String) filterProps.get(ReportHelper.getTemplateNameProp(reportType).toString());
-        String reportName = StringUtils.isNotBlank(filterName) ? filterName : FilenameUtil.getFilenameWithoutExtension(templateName) + "_result";
+        String reportName = StringUtils.isNotBlank(filterName) ? filterName : FilenameUtils.removeExtension(templateName) + "_result";
         reportResultProps.put(ReportModel.Props.REPORT_NAME, reportName);
         reportResultProps.put(ReportModel.Props.REPORT_TYPE, reportType.toString());
         reportResultProps.put(ReportModel.Props.USER_START_DATE_TIME, new Date());

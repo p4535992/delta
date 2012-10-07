@@ -67,4 +67,6 @@
       <property name="executeOnceOnly" value="true" />
    </bean>
 
+   <bean id="GroupUsersListDialog" class="ee.webmedia.alfresco.user.web.GroupUsersListDialog" scope="session" />
+
 </beans>

@@ -66,7 +66,7 @@ public class UploadFileInput extends UIInput implements NamingContainer {
                 if (fileObj instanceof FileWithContentType) {
                     fileName = ((FileWithContentType) fileObj).fileName;
                 } else {
-                    fileName = ((File) fileObj).getName();
+                    fileName = ((File) fileObj).getDisplayName();
                 }
                 writer.write(StringEscapeUtils.escapeHtml(fileName));
                 writer.write("</td>");
@@ -135,15 +135,10 @@ public class UploadFileInput extends UIInput implements NamingContainer {
         if (StringUtils.isBlank(event)) {
             return;
         }
-
         ValueBinding vb = getValueBinding("value");
         if (event.equals(EVENT_UPLOADED)) {
-            FileUploadBean fileBean = (FileUploadBean) context.getExternalContext().getSessionMap().
-                    get(FileUploadBean.FILE_UPLOAD_BEAN_NAME);
+            FileUploadBean fileBean = getAndClearFileUploadBean(context);
             if (fileBean != null) {
-                // remove the file upload bean from the session
-                // only this component instance now has the uploaded file
-                context.getExternalContext().getSessionMap().remove(FileUploadBean.FILE_UPLOAD_BEAN_NAME);
                 FileWithContentType valueToAdd = new FileWithContentType(fileBean.getFile(), fileBean.getContentType(), fileBean.getFileName());
                 addValueToValueBinding(context, vb, valueToAdd);
             }
@@ -163,7 +158,19 @@ public class UploadFileInput extends UIInput implements NamingContainer {
                     addValueToValueBinding(context, removedValues, removedValue);
                 }
             }
+            getAndClearFileUploadBean(context);
         }
+    }
+
+    private FileUploadBean getAndClearFileUploadBean(FacesContext context) {
+        FileUploadBean fileBean = (FileUploadBean) context.getExternalContext().getSessionMap().
+                get(FileUploadBean.FILE_UPLOAD_BEAN_NAME);
+        if (fileBean != null) {
+            // remove the file upload bean from the session
+            // only this component instance now has the uploaded file
+            context.getExternalContext().getSessionMap().remove(FileUploadBean.FILE_UPLOAD_BEAN_NAME);
+        }
+        return fileBean;
     }
 
     private void addValueToValueBinding(FacesContext context, ValueBinding vb, Object valueToAdd) {

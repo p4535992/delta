@@ -63,6 +63,11 @@ public class PropertiesIntegrityEvent extends AbstractIntegrityEvent
     
     public void checkIntegrity(List<IntegrityRecord> eventResults)
     {
+        checkIntegrity(eventResults, false);
+    }    
+    
+    public void checkIntegrity(List<IntegrityRecord> eventResults, boolean ignoreMissingAspects)
+    {
         NodeRef nodeRef = getNodeRef();
         if (!nodeService.exists(nodeRef))
         {
@@ -76,7 +81,7 @@ public class PropertiesIntegrityEvent extends AbstractIntegrityEvent
         }
         else
         {
-            checkAllProperties(getNodeRef(), eventResults);
+            checkAllProperties(getNodeRef(), eventResults, ignoreMissingAspects);
         }
     }
 
@@ -85,8 +90,9 @@ public class PropertiesIntegrityEvent extends AbstractIntegrityEvent
      * 
      * @param nodeRef
      * @param eventResults
+     * @param ignoreMissingAspects 
      */
-    private void checkAllProperties(NodeRef nodeRef, List<IntegrityRecord> eventResults)
+    private void checkAllProperties(NodeRef nodeRef, List<IntegrityRecord> eventResults, boolean ignoreMissingAspects)
     {
         // get all properties for the node
         Map<QName, Serializable> nodeProperties = nodeService.getProperties(nodeRef);
@@ -116,9 +122,11 @@ public class PropertiesIntegrityEvent extends AbstractIntegrityEvent
             
             // get property definitions for the aspect
             AspectDefinition aspectDef = dictionaryService.getAspect(aspectTypeQName);
-            propertyDefs = aspectDef.getProperties().values();
-            // check them
-            checkAllProperties(nodeRef, aspectTypeQName, propertyDefs, nodeProperties, eventResults);
+            if (!ignoreMissingAspects || aspectDef != null) {
+                propertyDefs = aspectDef.getProperties().values();
+                // check them
+                checkAllProperties(nodeRef, aspectTypeQName, propertyDefs, nodeProperties, eventResults);
+            }
         }
         // done
     }

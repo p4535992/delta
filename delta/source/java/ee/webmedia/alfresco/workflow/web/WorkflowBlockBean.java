@@ -55,6 +55,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.app.servlet.ajax.InvokeCommand.ResponseMimetype;
+import org.alfresco.web.bean.FileUploadBean;
 import org.alfresco.web.bean.generator.TextAreaGenerator;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
@@ -201,22 +202,18 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     public void restore(String action) {
         compoundWorkflows = getWorkflowService().getCompoundWorkflows(docRef);
         myTasks = getWorkflowService().getMyTasksInProgress(compoundWorkflows);
-        for (Task task : myTasks) {
-            if (task.getHasFiles() && task.isType(WorkflowSpecificModel.Types.OPINION_TASK)) {
-                getWorkflowService().retrieveTaskFiles(task);
-            }
-        }
+        Map<NodeRef, List<NodeRef>> taskFiles = BeanHelper.getWorkflowDbService().getCompoundWorkflowsTaskFiles(compoundWorkflows);
+        getFiles(myTasks, taskFiles, false);
         finishedReviewTasks = WorkflowUtil.getFinishedTasks(compoundWorkflows, WorkflowSpecificModel.Types.REVIEW_TASK);
+
         finishedOpinionTasks = WorkflowUtil.getFinishedTasks(compoundWorkflows, WorkflowSpecificModel.Types.OPINION_TASK);
+        getFiles(finishedOpinionTasks, taskFiles, true);
+        finishedOrderAssignmentTasks = WorkflowUtil.getFinishedTasks(compoundWorkflows, WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK);
+        getFiles(finishedOrderAssignmentTasks, taskFiles, true);
+
         // jsp:include parameters are not taken in account in list construction if list is not nulled
         reviewNotesRichList = null;
-        for (Task task : finishedOpinionTasks) {
-            getWorkflowService().retrieveTaskFiles(task);
-        }
-        finishedOrderAssignmentTasks = WorkflowUtil.getFinishedTasks(compoundWorkflows, WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK);
-        for (Task task : finishedOrderAssignmentTasks) {
-            getWorkflowService().retrieveTaskFiles(task);
-        }
+
         signatureTask = null;
         removedFiles = null;
         delegationBean.reset();
@@ -233,6 +230,24 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                     getLogService().addLogEntry(LogEntry.create(LogObject.WORKFLOW, getUserService(), docRef, "applog_task_view", MessageUtil.getTypeName(task.getType())));
                     taskTypes.add(type);
                 }
+            }
+        }
+        clearFileUploadBean();
+    }
+
+    private void clearFileUploadBean() {
+        FacesContext context = FacesContext.getCurrentInstance();
+        FileUploadBean fileBean = (FileUploadBean) context.getExternalContext().getSessionMap().
+                get(FileUploadBean.FILE_UPLOAD_BEAN_NAME);
+        if (fileBean != null) {
+            context.getExternalContext().getSessionMap().remove(FileUploadBean.FILE_UPLOAD_BEAN_NAME);
+        }
+    }
+
+    private void getFiles(List<Task> tasks, Map<NodeRef, List<NodeRef>> taskFiles, boolean retrieveAll) {
+        for (Task task : tasks) {
+            if (retrieveAll || task.isType(WorkflowSpecificModel.Types.OPINION_TASK, WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK)) {
+                getWorkflowService().retrieveTaskFiles(task, taskFiles.get(task.getNodeRef()));
             }
         }
     }

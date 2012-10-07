@@ -727,7 +727,11 @@ public class IntegrityChecker
         {
             try
             {
-                event.checkIntegrity(integrityRecords);
+                if (event instanceof PropertiesIntegrityEvent) {
+                    ((PropertiesIntegrityEvent)event).checkIntegrity(integrityRecords, ignoreMissingAspects);
+                } else {
+                    event.checkIntegrity(integrityRecords);
+                }
             }
             catch (Throwable e)
             {

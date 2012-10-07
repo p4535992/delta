@@ -51,6 +51,7 @@
       <property name="dependsOn">
          <list>
             <ref bean="registerTableBootstrap"/>
+            <ref bean="registerRootBootstrap"/>
          </list>
       </property>
    </bean>

@@ -19,6 +19,10 @@
 
          <dialog name="permissionsDeleteDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/user/web/permissions-delete-dialog.jsp" managed-bean="PermissionsDeleteDialog"
             icon="/images/icons/users_large.gif" title-id="permission_delete_userOrGroup" />
+            
+         <dialog name="groupUsersListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/user/web/group-users-list-dialog.jsp" managed-bean="GroupUsersListDialog"
+                 icon="/images/icons/group_large.gif" title-id="groups_management" 
+                 description-id="groups_description" />
 
       </dialogs>
       <actions>

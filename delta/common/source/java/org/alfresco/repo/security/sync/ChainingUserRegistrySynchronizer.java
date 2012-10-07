@@ -43,6 +43,7 @@ import org.alfresco.repo.management.subsystems.ActivateableBean;
 import org.alfresco.repo.management.subsystems.ChildApplicationContextManager;
 import org.alfresco.repo.security.authentication.AuthenticationException;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.repo.security.person.PersonServiceImpl;
 import org.alfresco.service.cmr.attributes.AttributeService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.security.AuthorityService;
@@ -454,7 +455,12 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
                     // The person did not exist at all
                     ChainingUserRegistrySynchronizer.logger.info("Creating user '" + personName + "'");
                 }
-                this.personService.createPerson(personProperties, getZones(zoneId));
+                PersonServiceImpl.validCreatePersonCall.set(Boolean.TRUE);
+                try {
+                    personService.createPerson(personProperties, getZones(zoneId));
+                } finally {
+                    PersonServiceImpl.validCreatePersonCall.set(null);
+                }
                 NodeRef personRef = this.personService.getPerson(personName); // creates home folder if necessary
             }
             // Increment the count of processed people

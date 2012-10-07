@@ -409,13 +409,18 @@ public class SubPropertySheetItem extends PropertySheetItem {
         attr.put(STYLE_CLASS, "subPropSheet");
         attr.put("externalConfig", true);
         attr.put("labelStyleClass", "propertiesLabel");
+        boolean columnsAttributeFound = false;
         for (Entry<String, String> entry : getCustomAttributes().entrySet()) {
             final String key = entry.getKey();
             Object value = entry.getValue();
             if (JSFAttr.COLUMNS_ATTR.equalsIgnoreCase(key)) { // columns attribute must be cast to integer
                 value = Integer.parseInt((String) value);
+                columnsAttributeFound = true;
             }
             attr.put(key, value);
+        }
+        if (!columnsAttributeFound) {
+            attr.put(JSFAttr.COLUMNS_ATTR, 1);
         }
         return childProperySheet;
     }

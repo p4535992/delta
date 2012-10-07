@@ -358,7 +358,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         List<NodeRef> nodeRefs = getCompoundWorkflowNodeRefs(parent);
         List<CompoundWorkflow> compoundWorkflows = new ArrayList<CompoundWorkflow>(nodeRefs.size());
         for (NodeRef nodeRef : nodeRefs) {
-            if (nodeRef != nodeRefToSkip) {
+            if (!nodeRef.equals(nodeRefToSkip)) {
                 compoundWorkflows.add(getCompoundWorkflow(nodeRef, loadTasks));
             }
         }
@@ -531,9 +531,9 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     @Override
-    public void retrieveTaskFiles(Task task) {
-        if (!task.filesLoaded()) {
-            task.loadFiles(fileService.getFiles(workflowDbService.getTaskFileNodeRefs(task.getNodeRef())));
+    public void retrieveTaskFiles(Task task, List<NodeRef> taskFiles) {
+        if (taskFiles != null && !taskFiles.isEmpty()) {
+            task.loadFiles(fileService.getFiles(taskFiles));
         }
     }
 
@@ -994,7 +994,6 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     private boolean saveTask(WorkflowEventQueue queue, Task task) {
-        task.setHasFiles(!task.getFiles().isEmpty());
         Workflow parent = task.getParent();
         @SuppressWarnings("unchecked")
         boolean changed = createOrUpdate(queue, task, parent.getNodeRef(), null);

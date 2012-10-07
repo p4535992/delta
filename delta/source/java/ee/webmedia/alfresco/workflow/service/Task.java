@@ -56,8 +56,6 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
     /** If null, indicates that due date history data existence has not been checked and should not be updated in delta_task table */
     private Boolean hasDueDateHistory;
     private Boolean originalHasDueDateHistory;
-    /** If null, indicates that file existence has not been checked and should not be updated in delta_task table */
-    private Boolean hasFiles;
     private Boolean originalHasFiles;
     private String parentNodeRefId;
     private String storeRef;
@@ -534,14 +532,6 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
 
     public Boolean getHasDueDateHistory() {
         return hasDueDateHistory;
-    }
-
-    public Boolean getHasFiles() {
-        return hasFiles;
-    }
-
-    public void setHasFiles(Boolean hasFiles) {
-        this.hasFiles = hasFiles;
     }
 
     public Boolean getOriginalHasDueDateHistory() {

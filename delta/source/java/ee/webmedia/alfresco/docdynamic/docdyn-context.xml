@@ -126,6 +126,16 @@
          </list>
       </property>
    </bean>
+   
+   <bean id="documentAccessRestrictionUpdater" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentAccessRestrictionUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+       <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+   </bean>
 
    <!-- START: web beans: -->
 

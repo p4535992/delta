@@ -145,6 +145,8 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
         mutableProperties = Collections.unmodifiableSet(props);
     }
 
+    public static ThreadLocal<Boolean> validCreatePersonCall = new ThreadLocal<Boolean>();
+
     @Override
     public boolean equals(Object obj)
     {
@@ -612,6 +614,23 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
                 nodeService.addChild(authorityService.getOrCreateZone(zone), personRef, ContentModel.ASSOC_IN_ZONE, QName.createQName("cm", userName, namespacePrefixResolver));
             }
         }
+
+        if (Boolean.TRUE.equals(validCreatePersonCall.get()))
+        {
+            s_logger.info("Creating person (valid service call) '" + userName + "'");
+        }
+        else
+        {
+            try
+            {
+                throw new RuntimeException();
+            }
+            catch (RuntimeException e)
+            {
+                s_logger.warn("Creating person (INVALID service call) '" + userName + "'", e);
+            }
+        }
+
         return personRef;
     }
 

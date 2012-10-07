@@ -1388,11 +1388,11 @@ function initWithScreenProtected() {
    toggleSubrow.init();
    toggleSubrowToggle.init();
 
-   jQuery(".task-due-date-date").change(processTaskDueDateDate);
-   jQuery(".clearGroupRowDate").change(clearGroupRowDate);
-   jQuery(".groupRowDate").change(groupRowDateChange);
-   jQuery(".changeSendOutMode").change(changeSendOutMode);
-   jQuery(".resetSendOutGroupSendMode").change(resetSendOutGroupSendMode);
+   jQuery(".task-due-date-date").live("change", processTaskDueDateDate);
+   jQuery(".clearGroupRowDate").live("change", clearGroupRowDate);
+   jQuery(".groupRowDate").live("change", groupRowDateChange);
+   jQuery(".changeSendOutMode").live("change", changeSendOutMode);
+   jQuery(".resetSendOutGroupSendMode").live("change", resetSendOutGroupSendMode);
 
    handleHtmlLoaded(null, selects);
 };

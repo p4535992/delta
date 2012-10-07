@@ -78,4 +78,6 @@ public interface WorkflowDbService {
 
     List<List<String>> deleteNotExistingTasks();
 
+    Map<NodeRef, List<NodeRef>> getCompoundWorkflowsTaskFiles(List<CompoundWorkflow> compoundWorkflows);
+
 }

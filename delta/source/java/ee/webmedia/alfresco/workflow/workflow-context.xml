@@ -193,6 +193,18 @@
       </property>      
    </bean> 
    
+   <bean id="taskTableDropHasFilesColumn" parent="executeStatementsBootstrap" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dataSource" ref="dataSource" />
+      <property name="resourceName" value="ee/webmedia/alfresco/workflow/bootstrap/delta_task_drop_has_files_column.sql" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="taskTableBootstrap3" />
+         </list>
+      </property>
+   </bean>   
+   
    <!-- Used to fix invalid parallelTasks property and update lucene index (CL task 155454) -->
    <bean id="ParallelTasksPropertiesUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.ParallelTasksPropertiesUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />

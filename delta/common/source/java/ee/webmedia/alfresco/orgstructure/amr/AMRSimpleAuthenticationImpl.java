@@ -17,6 +17,7 @@ import net.sf.acegisecurity.Authentication;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationException;
 import org.alfresco.repo.security.authentication.SimpleAcceptOrRejectAllAuthenticationComponentImpl;
+import org.alfresco.repo.security.person.PersonServiceImpl;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.security.AuthorityService;
@@ -88,7 +89,13 @@ public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenti
                 throw new AuthenticationException("User " + userName + " has been granted no access to this instance of restricted Delta.");
             }
             getRsAccessStatusBean().setCanUserAccessRestrictedDelta(hasRsAccess);
-            NodeRef person = getPersonService().getPerson(userName);
+            PersonServiceImpl.validCreatePersonCall.set(Boolean.TRUE);
+            NodeRef person;
+            try {
+                person = getPersonService().getPerson(userName);
+            } finally {
+                PersonServiceImpl.validCreatePersonCall.set(null);
+            }
             Map<QName, Serializable> personProperties = getNodeService().getProperties(person);
             Map<QName, Serializable> personOldProperties = getPropertiesIgnoringSystem(personProperties, getDictionaryService());
             userRegistry.fillPropertiesFromAmetnik(user, personProperties);
