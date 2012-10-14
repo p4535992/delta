@@ -52,6 +52,8 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.DisableFocusingBean;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 
 /**
@@ -124,7 +126,17 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
             }
         }
         
-        if(StringUtils.isEmpty(outcome)) {
+        boolean emptyOutcome = StringUtils.isEmpty(outcome);
+        DisableFocusingBean disableFocusingBean = BeanHelper.getDisableFocusingBean();
+        if (disableFocusingBean != null) {
+            // NB! setDisableInputFocus sets focus only first time it is called during one request!
+            if (emptyOutcome) {
+                disableFocusingBean.setDisableInputFocus(true);
+            } else {
+                disableFocusingBean.setDisableInputFocus(false);
+            }
+        }        
+        if(emptyOutcome) {
             return; // this enables to navigate to anchor on a page from actionlistener
         }
         

@@ -299,12 +299,6 @@ public interface DocumentService {
     void changeTypeInMemory(Node node, QName newType);
 
     /**
-     * @param docNode
-     * @return true when docNode is registered.
-     */
-    boolean isRegistered(Node docNode);
-
-    /**
      * Fetches document objects for tasks
      * 
      * @param tasks

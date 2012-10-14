@@ -58,7 +58,7 @@
 
          <show-property name="hlt:code" display-label-id="help_text_code" component-generator="TextFieldGenerator" editable="false" readOnlyIf="#{DialogManager.bean.type!='dialog'}" show="#{DialogManager.bean.type!='dialog'}" />
 
-         <show-property name="hlt:content" display-label-id="help_text_content" styleClass="expand19-200" component-generator="TextAreaGenerator" />
+         <show-property name="hlt:content" display-label-id="help_text_content" styleClass="expand19-200 focus" component-generator="TextAreaGenerator" />
       </property-sheet>
    </config>
 </alfresco-config>

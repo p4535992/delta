@@ -68,6 +68,7 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
@@ -171,10 +172,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
             String pickerActionId = getActionId(context, picker);
             String pickerModalOnclickJsCall = "return showModal('" + getDialogId(context, picker) + "');";
 
-            // This disables doing AJAX submit when picker finish button is pressed
-            // Currently, picker finish reconstructs entire panelgroup, which is some levels above propertysheet
-            // If AJAX submit is desired, something needs to be reworked
-            putAttribute(pickerPanel, Search.AJAX_PARENT_LEVEL_KEY, Integer.valueOf(100));
+            putAttribute(pickerPanel, Search.AJAX_PARENT_LEVEL_KEY, Integer.valueOf(1));
 
             ValidatingModalLayerComponent commentPopup = null;
             String commentPopupActionId = null;
@@ -469,10 +467,10 @@ public class TaskListGenerator extends BaseComponentGenerator {
                 Action taskAction = task.getAction();
                 final List<UIComponent> actionChildren = addChildren(columnActions);
                 if (fullAccess
-                            && (taskAction == Action.NONE)
-                            && (Status.NEW.equals(taskStatus)
-                                    || ((task.getNode().hasAspect(WorkflowSpecificModel.Aspects.RESPONSIBLE) && task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK))))
-                                            && (!responsible || Boolean.TRUE.equals(task.getNode().getProperties().get(WorkflowSpecificModel.Props.ACTIVE)))) {
+                        && (taskAction == Action.NONE)
+                        && (Status.NEW.equals(taskStatus)
+                        || ((task.getNode().hasAspect(WorkflowSpecificModel.Aspects.RESPONSIBLE) && task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK))))
+                        && (!responsible || Boolean.TRUE.equals(task.getNode().getProperties().get(WorkflowSpecificModel.Props.ACTIVE)))) {
                     UIActionLink taskSearchLink = createOwnerSearchLink(context, application, listId, picker, counter, pickerActionId, pickerModalOnclickJsCall);
                     actionChildren.add(taskSearchLink);
                 }
@@ -553,7 +551,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
                 createAddTaskLink(application, listId + "-0", blockType, result, wfIndex, 0, true, responsible, addLinkText, addTaskMB);
             }
         }
-
+        ComponentUtil.setAjaxEnabledOnActionLinksRecursive(result, 1);
         return result;
     }
 
@@ -748,7 +746,9 @@ public class TaskListGenerator extends BaseComponentGenerator {
     private ValidatingModalLayerComponent createCommentPopup(Application application, String listId) {
         ValidatingModalLayerComponent commentPopup = (ValidatingModalLayerComponent) application.createComponent(ValidatingModalLayerComponent.class.getCanonicalName());
         commentPopup.setId("task-comment-popup-" + listId);
-        getAttributes(commentPopup).put(ModalLayerComponent.ATTR_HEADER_KEY, "task_finish_popup");
+        Map<String, Object> popupAttributes = getAttributes(commentPopup);
+        popupAttributes.put(ModalLayerComponent.ATTR_HEADER_KEY, "task_finish_popup");
+        popupAttributes.put(ValidatingModalLayerComponent.ATTR_AJAX_ENABLED, Boolean.TRUE);
         UIInput commentInput = (UIInput) application.createComponent(HtmlInputText.COMPONENT_TYPE);
         commentInput.setId(CompoundWorkflowDialog.MODAL_KEY_ENTRY_COMMENT);
         Map<String, Object> attributes = getAttributes(commentInput);

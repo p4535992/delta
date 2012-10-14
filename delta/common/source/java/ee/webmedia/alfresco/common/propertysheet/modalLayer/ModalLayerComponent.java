@@ -85,7 +85,7 @@ public class ModalLayerComponent extends UICommand implements Serializable {
                 WorkflowUtil.getDialogId(context, this),
                 MessageUtil.getMessage((String) getAttributes().get(ATTR_HEADER_KEY)),
                 ComponentUtil.generateFieldSetter(context, this, getActionId(context, this), "")
-                        + Utils.generateFormSubmit(context, this, getClientId(context), Integer.toString(ACTION_CLEAR)));
+                        + generateCloseOnClick(context));
 
         writeModalContent(context, out, serializer);
 
@@ -98,6 +98,10 @@ public class ModalLayerComponent extends UICommand implements Serializable {
             out.write("');");
             out.write("});</script>");
         }
+    }
+
+    protected String generateCloseOnClick(FacesContext context) {
+        return Utils.generateFormSubmit(context, this, getClientId(context), Integer.toString(ACTION_CLEAR));
     }
 
     protected void writeModalContent(FacesContext context, ResponseWriter out, JSONSerializer serializer) throws IOException {
@@ -117,9 +121,13 @@ public class ModalLayerComponent extends UICommand implements Serializable {
                 + " type=\"submit\" value=" + serializer.serialize(MessageUtil.getMessage(submitButtonMessageKey))
                 + " class=\"specificAction\""
                 + " onclick="
-                + serializer.serialize(Utils.generateFormSubmit(context, this, getClientId(context), Integer.toString(ACTION_SUBMIT)))
+                + serializer.serialize(generateSubmitOnClick(context))
                 + (Boolean.TRUE.equals(ComponentUtil.getAttributes(this).get(ATTR_SUBMIT_BUTTON_HIDDEN)) ? " style=\"display: none;\"" : "")
                 + extraAttrs + " />");
+    }
+
+    protected String generateSubmitOnClick(FacesContext context) {
+        return Utils.generateFormSubmit(context, this, getClientId(context), Integer.toString(ACTION_SUBMIT));
     }
 
     protected String getSubmitButtonId(FacesContext context) {

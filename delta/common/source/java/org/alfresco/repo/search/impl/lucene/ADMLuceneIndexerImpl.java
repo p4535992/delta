@@ -57,6 +57,7 @@ import org.alfresco.repo.search.impl.lucene.analysis.VerbatimAnalyser;
 import org.alfresco.repo.search.impl.lucene.fts.FTSIndexerAware;
 import org.alfresco.repo.search.impl.lucene.fts.FullTextSearchIndexer;
 import org.alfresco.repo.tenant.TenantService;
+import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
 import org.alfresco.service.cmr.dictionary.AspectDefinition;
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
@@ -100,6 +101,7 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.utils.ClosingTransactionListener;
 import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
@@ -1027,6 +1029,10 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
                         Reader multiReader = new MultiReader(prefix, isr);
                         doc.add(new Field(attributeName, multiReader, Field.TermVector.NO));
                         log.debug("Finished adding property " + propertyName.toString() + " to index - " + (System.currentTimeMillis() - startTime) + " ms, " + reader.getSize() + " bytes");
+
+                        // If an Exception happens somewhere, then ADMLuceneIndexerImpl/AbstractLuceneIndexerImpl do not close this reader
+                        // and then open files limit is reached some time later
+                        AlfrescoTransactionSupport.bindListener(new ClosingTransactionListener(ris));
                     }
                 }
                 else

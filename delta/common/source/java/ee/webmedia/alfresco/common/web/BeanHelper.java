@@ -120,6 +120,7 @@ import ee.webmedia.alfresco.substitute.web.SubstitutionBean;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.thesaurus.service.ThesaurusService;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.user.web.GroupUsersListDialog;
 import ee.webmedia.alfresco.user.web.PermissionsListDialog;
 import ee.webmedia.alfresco.user.web.UserDetailsDialog;
 import ee.webmedia.alfresco.user.web.UserListDialog;
@@ -362,6 +363,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
         return getJsfBean(GroupsDialog.class, GroupsDialog.BEAN_NAME);
     }
 
+    public static GroupUsersListDialog getGroupUsersListDialog() {
+        return getJsfBean(GroupUsersListDialog.class, GroupUsersListDialog.BEAN_NAME);
+    }
+
     public static DocumentListDialog getDocumentListDialog() {
         return getJsfBean(DocumentListDialog.class, DocumentListDialog.BEAN_NAME);
     }
@@ -372,6 +377,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static RsAccessStatusBean getRsAccessStatusBean() {
         return getSpringBean(RsAccessStatusBean.class, RsAccessStatusBean.BEAN_NAME);
+    }
+
+    public static DisableFocusingBean getDisableFocusingBean() {
+        return getSpringBean(DisableFocusingBean.class, DisableFocusingBean.BEAN_NAME);
     }
 
     // END: JSF web beans

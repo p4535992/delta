@@ -52,8 +52,10 @@
 <f:verbatim>
 <script type="text/javascript">
 $jQ(document).ready(function() {
+   if (setInputFocus) {
 		var container = $jQ("#"+escapeId4JQ('container-content'));
          $jQ("input:text, textarea", container).filter(':visible:enabled[readonly!="readonly"]').first().focus();
+   }
 });
 </script>
 </f:verbatim>

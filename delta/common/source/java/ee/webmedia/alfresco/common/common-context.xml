@@ -294,6 +294,8 @@
    <bean id="UserContactGroupSearchBean" class="ee.webmedia.alfresco.common.web.UserContactGroupSearchBean" scope="session" />
 
    <bean id="UserConfirmHelper" class="ee.webmedia.alfresco.common.web.UserConfirmHelper" scope="session" />
+   
+   <bean id="DisableFocusingBean" class="ee.webmedia.alfresco.common.web.DisableFocusingBean" scope="request" />
 
    <!-- END: web beans: -->
 </beans>

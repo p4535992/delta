@@ -114,6 +114,13 @@ public class WebUtil {
         return sb.append("]").toString();
     }
 
+    public static String removeHtmlComments(String input) {
+        // For example, MS Word HTML files contain comments like <!--[if gte mso 9]><xml>...
+        // And this kind of HTML cannot be rendered to browser inside our page HTML,
+        // because it breaks Internet Explorer (but not Firefox) - IE stops page rendering entirely at the point of this comment
+        return StringUtils.defaultString(input).replaceAll("(?s)<!--.*?-->", "");
+    }
+
     public static void navigateTo(String navigationOutcome) {
         navigateTo(navigationOutcome, null);
     }
@@ -128,4 +135,5 @@ public class WebUtil {
         }
         context.getApplication().getNavigationHandler().handleNavigation(context, null, navigationOutcome);
     }
+
 }

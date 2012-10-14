@@ -7,6 +7,7 @@ import org.alfresco.web.bean.repository.Node;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.utils.WebUtil;
 
 /**
  * @author Erko Hansar
@@ -49,7 +50,7 @@ public class DocumentSendInfo implements Serializable, SendInfo {
 
     @Override
     public String getResolution() {
-        return (String) node.getProperties().get(DocumentCommonModel.Props.SEND_INFO_RESOLUTION);
+        return WebUtil.removeHtmlComments((String) node.getProperties().get(DocumentCommonModel.Props.SEND_INFO_RESOLUTION));
     }
 
 }

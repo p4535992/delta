@@ -32,7 +32,7 @@
    
    <a:actionLink value="#{msg.manage_users}" image="/images/icons/users.gif" action="dialog:manageUsers" styleClass="title" rendered="#{NavigationBean.allowUserGroupAdmin}" />
    
-   <a:actionLink value="#{msg.manage_groups}" image="/images/icons/group.gif" padding="2" action="dialog:manageGroups" styleClass="title" rendered="#{NavigationBean.allowUserGroupAdmin}" />
+   <a:actionLink value="#{msg.manage_groups}" image="/images/icons/group.gif" padding="2" action="dialog:groupUsersListDialog" styleClass="title" rendered="#{NavigationBean.allowUserGroupAdmin}" />
    
    <a:actionLink value="#{msg.category_management}" image="/images/icons/categories.gif" padding="2" action="dialog:manageCategories" actionListener="#{CategoriesDialog.resetCategoryNavigation}" styleClass="title" />
    

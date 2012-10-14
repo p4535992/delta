@@ -31,6 +31,8 @@ public class ValidatingModalLayerComponent extends ModalLayerComponent {
     public static final String ATTR_MANDATORY = "mandatory";
     public static final String ATTR_IS_HIDDEN = "isHidden";
     public static final String ATTR_PRESERVE_VALUES = "attrPreserveValues";
+    public static final String ATTR_AJAX_ENABLED = "ajaxEnabled";
+    public final static int AJAX_PARENT_LEVEL = 1;
 
     @Override
     protected void writeModalContent(FacesContext context, ResponseWriter out, JSONSerializer serializer) throws IOException {
@@ -89,6 +91,22 @@ public class ValidatingModalLayerComponent extends ModalLayerComponent {
         writeSubmitButton(context, out, serializer, " disabled=" + serializer.serialize(addValidation ? "true" : "false"));
         out.write("</td></tr>");
         out.write("</tbody></table>");
+    }
+
+    @Override
+    protected String generateCloseOnClick(FacesContext context) {
+        if (Boolean.TRUE.equals(getAttributes().get(ATTR_AJAX_ENABLED))) {
+            return ComponentUtil.generateAjaxFormSubmit(context, this, getClientId(context), Integer.toString(ACTION_CLEAR), AJAX_PARENT_LEVEL);
+        }
+        return super.generateCloseOnClick(context);
+    }
+
+    @Override
+    protected String generateSubmitOnClick(FacesContext context) {
+        if (Boolean.TRUE.equals(getAttributes().get(ATTR_AJAX_ENABLED))) {
+            return ComponentUtil.generateAjaxFormSubmit(context, this, getClientId(context), Integer.toString(ACTION_SUBMIT), AJAX_PARENT_LEVEL);
+        }
+        return super.generateSubmitOnClick(context);
     }
 
     public boolean isValidatedControl(Map<String, Object> attributes) {

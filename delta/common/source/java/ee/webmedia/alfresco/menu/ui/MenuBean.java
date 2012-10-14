@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.menu.ui;
 
 import static org.alfresco.web.bean.dialog.BaseDialogBean.getCloseOutcome;
+import static org.apache.commons.lang.StringUtils.remove;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -615,6 +616,15 @@ public class MenuBean implements Serializable {
         String title = (String) link.getValue();
         if (title.endsWith(")")) {
             link.setValue(title.substring(0, title.lastIndexOf('(')));
+        }
+
+        // All shortcut items should be visible and we don't need the AJAX counter updater.
+        // (NB! Don't modify item variable since it is linked to the actual menu where items have to be hidden sometimes)
+        @SuppressWarnings("unchecked")
+        Map<String, String> attr = wrapper.getAttributes();
+        String styleClass = attr.get("styleClass");
+        if (StringUtils.isNotBlank(styleClass)) {
+            attr.put("styleClass", remove(remove(styleClass, MenuItem.HIDDEN_MENU_ITEM), "menuItemCount"));
         }
 
         @SuppressWarnings("unchecked")

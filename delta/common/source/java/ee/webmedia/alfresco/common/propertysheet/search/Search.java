@@ -81,11 +81,10 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
 
     @Override
     public void encodeBegin(FacesContext context) throws IOException {
-        if (getChildCount() == 0) {
-            createExistingComponents(context);
-            if (!isDisabled() || isChildOfUIRichList()) {
-                createPicker(context);
-            }
+        getChildren().clear();
+        createExistingComponents(context);
+        if (!isDisabled() || isChildOfUIRichList()) {
+            createPicker(context);
         }
 
         boolean empty;

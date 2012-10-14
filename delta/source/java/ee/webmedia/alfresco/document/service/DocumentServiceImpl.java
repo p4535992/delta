@@ -1624,12 +1624,6 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         return sentNodeRef.equals(nodeService.getPrimaryParent(nodeRef).getParentRef());
     }
 
-    @Override
-    public boolean isRegistered(Node docNode) {
-        final String existingRegNr = (String) docNode.getProperties().get(REG_NUMBER.toString());
-        return StringUtils.isNotBlank(existingRegNr);
-    }
-
     public boolean isRegistered(NodeRef docRef) {
         final String existingRegNr = (String) nodeService.getProperty(docRef, REG_NUMBER);
         return StringUtils.isNotBlank(existingRegNr);
@@ -1651,6 +1645,10 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         }
 
         return didRegister;
+    }
+
+    private boolean isRegistered(Node docNode) {
+        return (new RegisterDocumentEvaluator()).isRegistered(docNode);
     }
 
     @Override

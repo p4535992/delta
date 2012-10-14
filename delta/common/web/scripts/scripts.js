@@ -445,11 +445,22 @@ function addSearchSuggest(clientId, containerClientId, pickerCallback, submitUri
       }
       });
 
-      suggest.bind("autoComplete", function(e, data) {
-         ajaxSubmit(clientId, containerClientId, [], submitUri, {'data' : data.newVal});
-         if (autoCompleteCallback) {
-            autoCompleteCallback.call(data.newVal);
-         }
+      suggest.bind("autoComplete", function(event, data) {
+         handleEnterKeySkip = true;
+         setScreenProtected(true, "FIXME: palun oodake, ühendus serveriga");
+         $jQ.ajax({
+            type: 'POST',
+            url: submitUri,
+            mode: 'queue',
+            data: $jQ.param({'data' : data.newVal}),
+            success: function () {
+               if (autoCompleteCallback) {
+                  autoCompleteCallback.call(data.newVal);
+               }
+            },
+            error: ajaxError,
+            dataType: 'text'
+         });
       });
       jQInput.focus(function() {
          jQInput.keydown();
@@ -600,12 +611,11 @@ function showModal(target, height){
 
    $jQ("#overlay").css("display","block");
    $jQ("#" + target).css("display","block");
-   $jQ("#" + target).find(".genericpicker-input").focus();
    if (height != null) {
       $jQ("#" + target).css("height",height);
    }
    $jQ("#" + target).show();
-
+   $jQ("#" + target).find(".genericpicker-input").focus();
    return false;
 }
 
@@ -880,7 +890,7 @@ function ajaxSuccess(responseText, componentClientId, componentContainerId) {
 
       try {
          // Reattach behaviour
-         handleHtmlLoaded($jQ('#' + escapeId4JQ(componentContainerId)));
+         handleHtmlLoaded($jQ('#' + escapeId4JQ(componentContainerId)), false);
       } catch (e) {
          alert("Failed to update page! "+e);
       } finally {
@@ -1032,7 +1042,12 @@ function allowMultiplePageSizeChangers(){ // otherwise the last pageSizeChanger 
 /**
  * Returns true if event was handled. 
  */
+var handleEnterKeySkip = false;
 function handleEnterKey(event) {
+   if (handleEnterKeySkip) {
+      return;
+   }
+
    var target = $jQ(event.target);
    var targetTag = event.target.tagName.toLowerCase();
    
@@ -1394,7 +1409,11 @@ function initWithScreenProtected() {
    jQuery(".changeSendOutMode").live("change", changeSendOutMode);
    jQuery(".resetSendOutGroupSendMode").live("change", resetSendOutGroupSendMode);
 
-   handleHtmlLoaded(null, selects);
+   if (isIE()) {
+     jQuery("#footer a, .mailto").click(function() { nextSubmitStaysOnSamePage() });
+   }
+
+   handleHtmlLoaded(null, setInputFocus, selects);
 };
 
 var toggleSubrowToggle = {
@@ -1703,7 +1722,7 @@ function setMinEndDate(owner, dateElem, triggerEndDateChange){
 // These things need to be performed
 // 1) once after full page load
 // *) each time an area is replaced inside the page
-function handleHtmlLoaded(context, selects) {
+function handleHtmlLoaded(context, setFocus, selects) {
    
    showDuplicatedTableHeader(context);
 
@@ -1809,8 +1828,9 @@ function handleHtmlLoaded(context, selects) {
    $jQ(".genericpicker-input:visible").focus();
 
    var container = $jQ("#"+escapeId4JQ('container-content'));
+   if (setFocus) {
       $jQ("input:text,textarea", container).filter(':visible:enabled[readonly!="readonly"].focus').first().focus();
-
+   }
    applyAutocompleters();
 
 

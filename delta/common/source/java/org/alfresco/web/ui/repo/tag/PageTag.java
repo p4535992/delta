@@ -41,8 +41,10 @@ import org.alfresco.web.bean.coci.CCProperties;
 import org.alfresco.web.ui.common.Utils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.BeanCreationException;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.DisableFocusingBean;
 
 /**
  * A non-JSF tag library that adds the HTML begin and end tags if running in servlet mode
@@ -332,6 +334,16 @@ public class PageTag extends TagSupport
          }
          out.write(IE6COND_END);
 
+         // ensure that setInputFocus is defined before any function defined in $jQ(document).ready(function (){...}) is called
+         out.write("<script type=\"text/javascript\">");
+         DisableFocusingBean disableFocusingBean = null;
+         try {
+             disableFocusingBean = BeanHelper.getDisableFocusingBean();
+         } catch (BeanCreationException e) {
+             // ignore
+         }
+         out.write("var setInputFocus = " + ((disableFocusingBean != null ? disableFocusingBean.isDisableInputFocus() : true) ? "false" : "true") + ";");
+         out.write("</script>");
          // JavaScript includes
          for (final String s : PageTag.SCRIPTS)
          {

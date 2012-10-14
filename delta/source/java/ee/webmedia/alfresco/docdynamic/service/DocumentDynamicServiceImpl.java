@@ -6,7 +6,6 @@ import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FILE
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_ID;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_NAME;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.PREVIOUS_OWNER_ID;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_DATE_TIME;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_NUMBER;
 import static ee.webmedia.alfresco.utils.CalendarUtil.duration;
 
@@ -593,10 +592,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         { // update properties and log changes made in properties
             String oldRegNumber = (String) nodeService.getProperty(docRef, REG_NUMBER);
             DocumentServiceImpl.PropertyChangesMonitorHelper propertyChangesMonitorHelper = new DocumentServiceImpl.PropertyChangesMonitorHelper();
-            propertyChangesMonitorHelper.addIgnoredProps(docProps //
-                    , REG_NUMBER, REG_DATE_TIME // registration changes
-                    );
-            String newRegNumber = (String) nodeService.getProperty(docRef, REG_NUMBER);
+            String newRegNumber = (String) docNode.getProperties().get(REG_NUMBER.toString());
             documentService.updateParentDocumentRegNumbers(docRef, oldRegNumber, newRegNumber);
 
             DocumentPropertiesChangeHolder changedPropsNewValues = saveThisNodeAndChildNodes(null, docNode,

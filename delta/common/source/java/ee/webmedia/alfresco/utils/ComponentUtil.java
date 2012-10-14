@@ -25,7 +25,6 @@ import javax.faces.component.UIParameter;
 import javax.faces.component.UISelectItem;
 import javax.faces.component.UIViewRoot;
 import javax.faces.component.ValueHolder;
-import javax.faces.component.html.HtmlCommandLink;
 import javax.faces.component.html.HtmlGraphicImage;
 import javax.faces.component.html.HtmlSelectManyListbox;
 import javax.faces.context.FacesContext;
@@ -57,6 +56,7 @@ import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIPanel;
 import org.alfresco.web.ui.common.component.data.UIColumn;
 import org.alfresco.web.ui.common.component.data.UISortLink;
+import org.alfresco.web.ui.common.renderer.ActionLinkRenderer;
 import org.alfresco.web.ui.repo.RepoConstants;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
@@ -1311,16 +1311,15 @@ public class ComponentUtil {
     }
 
     public static void addOnchangeClickLink(Application application, List<UIComponent> children, String methodBindingStr, String linkId, UIParameter... parameters) {
-        HtmlCommandLink hiddenLink = new HtmlCommandLink();
+        UIActionLink hiddenLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
         hiddenLink.setId(linkId);
+        hiddenLink.setValue(linkId);
         hiddenLink.setActionListener(application.createMethodBinding(methodBindingStr, new Class[] { ActionEvent.class }));
+        children.add(hiddenLink);
+        hiddenLink.getAttributes().put("style", "display: none;");
         for (UIParameter parameter : parameters) {
             addChildren(hiddenLink, parameter);
         }
-        hiddenLink.setStyle("display: none;");
-        hiddenLink.setOnclick("setPageScrollY();");
-
-        children.add(hiddenLink);
     }
 
     public static void addOnchangeJavascript(UIComponent component) {
@@ -1428,6 +1427,32 @@ public class ComponentUtil {
                 return evaluatorAllow;
             }
         };
+    }
+
+    public static void setAjaxEnabledOnActionLinksRecursive(UIComponent component, int ajaxParentLevel) {
+        if (component instanceof UIActionLink) {
+            component.getAttributes().put(ActionLinkRenderer.AJAX_ENABLED, Boolean.TRUE);
+            component.getAttributes().put(ActionLinkRenderer.AJAX_PARENT_LEVEL, ajaxParentLevel);
+        }
+        @SuppressWarnings("unchecked")
+        List<UIComponent> children = component.getChildren();
+        if (children == null) {
+            return;
+        }
+        if (component instanceof AjaxUpdateable) {
+            ajaxParentLevel++;
+        }
+        for (UIComponent childComponent : children) {
+            setAjaxEnabledOnActionLinksRecursive(childComponent, ajaxParentLevel);
+        }
+        @SuppressWarnings("unchecked")
+        Collection<UIComponent> facets = component.getFacets().values();
+        if (facets == null) {
+            return;
+        }
+        for (UIComponent facet : facets) {
+            setAjaxEnabledOnActionLinksRecursive(facet, ajaxParentLevel);
+        }
     }
 
 }

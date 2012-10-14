@@ -36,7 +36,6 @@ import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
-import org.alfresco.web.bean.groups.GroupsDialog;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
 import org.alfresco.web.ui.common.component.UIPanel;
@@ -61,6 +60,7 @@ import ee.webmedia.alfresco.privilege.model.PrivMappings;
 import ee.webmedia.alfresco.privilege.model.UserPrivileges;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.user.web.GroupUsersListDialog;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComparableTransformer;
 import ee.webmedia.alfresco.utils.ComponentUtil;
@@ -288,11 +288,11 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
     }
 
     public void viewGroup(ActionEvent event) {
-        GroupsDialog groupsDialog = BeanHelper.getGroupsDialog();
+        GroupUsersListDialog groupsDialog = BeanHelper.getGroupUsersListDialog();
         groupsDialog.reset(event);
         groupsDialog.setDisableActions(true);
         groupsDialog.clickGroup(event);
-        WebUtil.navigateTo("dialog:manageGroups");
+        WebUtil.navigateTo("dialog:groupUsersListDialog");
     }
 
     /** @param event passed to MethodBinding */

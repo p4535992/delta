@@ -320,7 +320,25 @@
          <rtexprvalue>true</rtexprvalue>
          <description>Children generator implementing ee.webmedia.alfresco.common.propertysheet.customchildrencontainer.CustomChildrenCreator</description>
       </attribute>      
-   </tag>    
+   </tag>  
+   
+   <tag>
+      <name>ajaxCapablePanelGroupTag</name>
+      <tag-class>ee.webmedia.alfresco.common.propertysheet.ajaxcapablepanelgroup.AjaxCapablePanelGroupTag</tag-class>
+      <body-content>JSP</body-content>
+      <attribute>
+         <name>id</name>
+         <required>false</required>
+         <rtexprvalue>false</rtexprvalue>
+         <description>Element id</description>
+      </attribute>       
+      <attribute>
+         <name>binding</name>
+         <required>false</required>
+         <rtexprvalue>true</rtexprvalue>
+         <description>Optional binding for jsf element</description>
+      </attribute>      
+   </tag>
 
    <tag>
       <name>docPermissionEvaluator</name>

@@ -65,6 +65,12 @@ public class GroupUsersListDialog extends BaseDialogBean {
     }
 
     @Override
+    public void init(Map<String, String> parameters) {
+        clearRichList();
+        super.init(parameters);
+    }
+
+    @Override
     public String getContainerSubTitle() {
         return groupName;
     }
@@ -128,6 +134,12 @@ public class GroupUsersListDialog extends BaseDialogBean {
 
     public void setUsersRichList(UIRichList usersRichList) {
         this.usersRichList = usersRichList;
+    }
+
+    public void clearRichList() {
+        if (usersRichList != null) {
+            usersRichList.setValue(null);
+        }
     }
 
     /**

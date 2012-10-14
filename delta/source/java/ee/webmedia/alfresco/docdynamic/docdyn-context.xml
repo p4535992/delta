@@ -117,7 +117,7 @@
       <property name="documentUpdater" ref="documentUpdater7" />
    </bean>
    
-   <bean id="documentChangedTypePropertiesUpdater" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentChangedTypePropertiesUpdater" parent="abstractNodeUpdater" >
+   <bean id="documentChangedTypePropertiesUpdater2" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentChangedTypePropertiesUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
        <property name="dependsOn">
@@ -127,7 +127,7 @@
       </property>
    </bean>
    
-   <bean id="documentAccessRestrictionUpdater" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentAccessRestrictionUpdater" parent="abstractNodeUpdater" >
+   <bean id="documentAccessRestrictionUpdater2" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentAccessRestrictionUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
        <property name="dependsOn">

@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.faces.component.UIComponent;
@@ -633,8 +634,32 @@ public class WorkflowUtil {
                 && (!responsible || Boolean.TRUE.equals(task.getNode().getProperties().get(WorkflowSpecificModel.Props.ACTIVE)));
     }
 
+    public static void setGroupTasksDueDates(CompoundWorkflow compound, List<Map<String, List<TaskGroup>>> taskGroups) {
+        int workflowId = 0;
+        List<Workflow> workflows = compound.getWorkflows();
+
+        for (Map<String, List<TaskGroup>> group : taskGroups) {
+            Workflow workflow = workflows.get(workflowId);
+            List<Task> wfTasks = workflow.getTasks();
+            for (List<TaskGroup> groupList : group.values()) {
+                for (TaskGroup taskGroup : groupList) {
+                    for (Integer taskId : taskGroup.getTaskIds()) {
+                        Task task = wfTasks.get(taskId);
+                        if (task.getDueDate() == null) {
+                            task.setDueDate(taskGroup.getDueDate());
+                        }
+                    }
+                }
+            }
+            workflowId++;
+        }
+    }
+
     public static void setGroupTasksDueDates(TaskGroup taskGroup, List<Task> tasks) {
         Date dueDate = taskGroup.getDueDate();
+        if (dueDate == null) {
+            return; // Don't allow to empty the existing dates
+        }
         for (Integer taskId : taskGroup.getTaskIds()) {
             Task task = tasks.get(taskId);
             if (isTaskRowEditable(taskGroup.isResponsible(), taskGroup.isFullAccess(), task, task.getStatus())) {

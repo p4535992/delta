@@ -3,6 +3,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a"%>
 <%@ taglib uri="/WEB-INF/repo.tld" prefix="r"%>
+<%@ taglib uri="/WEB-INF/wm.tld" prefix="wm" %>
 
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
@@ -12,9 +13,9 @@
    <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp" />
 </a:booleanEvaluator>
 
-<a:booleanEvaluator value="#{not empty CompoundWorkflowDialog.workflow}">
+<a:booleanEvaluator id="compound-workflow-panel-group-evaluator" value="#{not empty CompoundWorkflowDialog.workflow}">
    <%-- just a placeholder for dynamically generated panels --%>
-   <h:panelGroup binding="#{CompoundWorkflowDialog.panelGroup}" />
+   <wm:ajaxCapablePanelGroupTag id="compound-workflow-panel-group" binding="#{CompoundWorkflowDialog.panelGroup}" />
    
    <a:booleanEvaluator value="#{CompoundWorkflowDialog.workflow.status == 'lõpetatud'}">
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp" />

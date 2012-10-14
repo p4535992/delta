@@ -70,6 +70,7 @@ import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
@@ -91,6 +92,8 @@ import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
  * @author Erko Hansar
  */
 public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
+
+    private static final String COMPOUND_WORKFLOW_PANEL_GROUP_ID = "compound-workflow-panel-group";
 
     private static final long serialVersionUID = 1L;
 
@@ -471,6 +474,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         UIGenericPicker picker = (UIGenericPicker) event.getComponent();
         int wfIndex = (Integer) picker.getAttributes().get(TaskListGenerator.ATTR_WORKFLOW_INDEX);
         int taskIndex = Integer.parseInt((String) picker.getAttributes().get(Search.OPEN_DIALOG_KEY));
+        picker.getAttributes().remove(Search.OPEN_DIALOG_KEY);
         boolean addOrderAssignmentResponsibleTask = false;
         Workflow block = compoundWorkflow.getWorkflows().get(wfIndex);
         if (taskIndex >= 0) {
@@ -678,7 +682,6 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         putAttribute(panelC, "styleClass", "panel-100 ie7-workflow");
         panelC.setLabel(MessageUtil.getMessage("workflow_compound_data"));
         panelC.setProgressive(true);
-        panelC.setFacetsId("dialog:dialog-body:compound-workflow-panel");
         addChildren(panelGroup, panelC);
 
         boolean dontShowAddActions = false;
@@ -761,7 +764,6 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             }
             panelW.setLabel(panelLabel);
             panelW.setProgressive(true);
-            panelW.setFacetsId("dialog:dialog-body:workflow-panel-" + wfCounter);
             if (facetGroup.getChildCount() > 0) {
                 addFacet(panelW, "title", facetGroup);
             }
@@ -810,6 +812,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         if (this instanceof CompoundWorkflowDialog) {
             addCompoundWorkflowDefinitionSaveasPanel(context);
         }
+        ComponentUtil.setAjaxEnabledOnActionLinksRecursive(panelGroup, -1);
     }
 
     private void addCompoundWorkflowDefinitionSaveasPanel(FacesContext context) {
@@ -1094,6 +1097,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
 
     protected void preprocessWorkflow() {
         WorkflowUtil.removeEmptyTasks(compoundWorkflow);
+        WorkflowUtil.setGroupTasksDueDates(compoundWorkflow, getTaskGroups());
     }
 
     public List<Map<String, List<TaskGroup>>> getTaskGroups() {
@@ -1106,4 +1110,5 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     public void setTaskGroups(List<Map<String, List<TaskGroup>>> taskGroups) {
         this.taskGroups = taskGroups;
     }
+
 }

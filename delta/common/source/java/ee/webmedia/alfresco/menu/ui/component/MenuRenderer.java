@@ -46,6 +46,7 @@ public class MenuRenderer extends BaseRenderer {
         // Prepare scrolling info
         MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME);
         if (StringUtils.isBlank(menuBean.getScrollToY()) || !menuBean.getScrollToY().equals("0")) {
+            @SuppressWarnings("cast")
             String scrollToY = (String) context.getExternalContext().getRequestParameterMap().get("scrollToY");
             menuBean.setScrollToY(scrollToY);
         } else {
@@ -126,7 +127,6 @@ public class MenuRenderer extends BaseRenderer {
                     out.write(sb.toString());
                 }
             }
-
             requestMap.put(TREE_SCRIPTS_WRITTEN, Boolean.TRUE);
         }
     }
