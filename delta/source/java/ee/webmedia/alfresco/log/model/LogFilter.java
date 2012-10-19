@@ -31,6 +31,7 @@ public class LogFilter implements Serializable {
     private String objectName;
 
     private String objectId;
+    private boolean isExactObjectId;
 
     public String getLogEntryId() {
         return logEntryId;
@@ -105,5 +106,13 @@ public class LogFilter implements Serializable {
             excludedDescriptions = new HashSet<String>();
         }
         return excludedDescriptions;
+    }
+
+    public boolean isExactObjectId() {
+        return isExactObjectId;
+    }
+
+    public void setExactObjectId(boolean isExactObjectId) {
+        this.isExactObjectId = isExactObjectId;
     }
 }

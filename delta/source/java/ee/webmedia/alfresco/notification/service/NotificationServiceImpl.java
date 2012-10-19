@@ -936,8 +936,8 @@ public class NotificationServiceImpl implements NotificationService {
             Notification notification = processDueDateNotification(new Notification(), taskDue);
             notification.addRecipient(task.getOwnerName(), task.getOwnerEmail());
 
-            Workflow workflow = task.getParent();
-            NodeRef compoundWorkflowRef = (nodeService.getPrimaryParent(workflow.getNodeRef())).getParentRef();
+            NodeRef workflowRef = task.getParentNodeRef();
+            NodeRef compoundWorkflowRef = (nodeService.getPrimaryParent(workflowRef).getParentRef());
             NodeRef docRef = (nodeService.getPrimaryParent(compoundWorkflowRef)).getParentRef();
 
             try {
@@ -1176,12 +1176,12 @@ public class NotificationServiceImpl implements NotificationService {
 
     private LinkedHashMap<String, NodeRef> setupTemplateData(Task task) {
         LinkedHashMap<String, NodeRef> templateDataNodeRefs = new LinkedHashMap<String, NodeRef>();
-        Workflow workflow = task.getParent();
-        NodeRef compoundWorkflowRef = (nodeService.getPrimaryParent(workflow.getNodeRef())).getParentRef();
+        NodeRef workflowRef = task.getParentNodeRef();
+        NodeRef compoundWorkflowRef = (nodeService.getPrimaryParent(workflowRef)).getParentRef();
         NodeRef docRef = (nodeService.getPrimaryParent(compoundWorkflowRef)).getParentRef();
         templateDataNodeRefs.put(null, docRef);
         templateDataNodeRefs.put("task", task.getNodeRef());
-        templateDataNodeRefs.put("workflow", workflow.getNodeRef());
+        templateDataNodeRefs.put("workflow", workflowRef);
         templateDataNodeRefs.put("compoundWorkflow", compoundWorkflowRef);
 
         return templateDataNodeRefs;

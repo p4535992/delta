@@ -1,8 +1,8 @@
 package ee.webmedia.alfresco.workflow.service;
 
+import static ee.webmedia.alfresco.common.search.DbSearchUtil.TASK_TYPE_FIELD;
+import static ee.webmedia.alfresco.common.search.DbSearchUtil.getDbFieldNameFromPropQName;
 import static ee.webmedia.alfresco.utils.RepoUtil.isSaved;
-import static ee.webmedia.alfresco.workflow.service.TaskSearchUtil.TASK_TYPE_FIELD;
-import static ee.webmedia.alfresco.workflow.service.TaskSearchUtil.getDbFieldNameFromPropQName;
 
 import java.io.Serializable;
 import java.sql.Array;
@@ -40,6 +40,8 @@ import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.cases.model.CaseModel;
+import ee.webmedia.alfresco.common.search.DbSearchUtil;
+import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.file.model.File;
@@ -75,6 +77,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     private DataSource dataSource;
     private DictionaryService dictionaryService;
     private NodeService nodeService;
+    private GeneralService generalService;
 
     @Override
     public void createTaskEntry(Task task) {
@@ -149,27 +152,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     }
 
     private void explainQuery(String sqlQuery, Object... args) {
-        if (LOG.isTraceEnabled()) {
-            jdbcTemplate.getJdbcOperations().execute("SET enable_seqscan TO off");
-            List<String> explanation = jdbcTemplate.query("EXPLAIN ANALYZE " + sqlQuery, new ParameterizedRowMapper<String>() {
-
-                @Override
-                public String mapRow(ResultSet rs, int rowNum) throws SQLException {
-                    return rs.getString(1);
-                }
-            }, args);
-            StringBuffer sb = new StringBuffer("Explaining workflowDbService query, slq='" + sqlQuery + "', args=\n");
-            if (args != null && args.length > 0) {
-                int argsCounter = 1;
-                for (Object arg : args) {
-                    sb.append(argsCounter++ + ") ").append(arg != null ? arg.toString() : arg).append("\n");
-                }
-            } else {
-                sb.append(args).append("\n");
-            }
-            sb.append(TextUtil.joinNonBlankStrings(explanation, "\n"));
-            LOG.trace(sb.toString());
-        }
+        generalService.explainQuery(sqlQuery, LOG, args);
     }
 
     @Override
@@ -778,7 +761,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
                 ResultSetMetaData metaData = rs.getMetaData();
                 for (int i = 1; i <= metaData.getColumnCount(); i++) {
                     String columnLabel = metaData.getColumnName(i);
-                    QName propName = TaskSearchUtil.getPropQNameFromDbFieldName(columnLabel);
+                    QName propName = DbSearchUtil.getPropQNameFromDbFieldName(columnLabel);
                     if (propName != null) {
                         rsColumnQNames.put(columnLabel, propName);
                     }
@@ -814,7 +797,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             Set<QName> currentTaskProps = new HashSet<QName>(taskDataTypeDefaultProps != null ? taskDataTypeDefaultProps : workflowService.getTaskDataTypeDefaultProps()
                     .get(workflowType));
             Map<QName, Serializable> taskProps = new HashMap<QName, Serializable>();
-            if (rs.getObject(TaskSearchUtil.ACTIVE_FIELD) != null) {
+            if (rs.getObject(DbSearchUtil.ACTIVE_FIELD) != null) {
                 currentTaskAspects.add(WorkflowSpecificModel.Aspects.RESPONSIBLE);
                 currentTaskProps.add(WorkflowSpecificModel.Props.ACTIVE);
             }
@@ -940,6 +923,10 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
 
     public void setDataSource(DataSource dataSource) {
         this.dataSource = dataSource;
+    }
+
+    public void setGeneralService(GeneralService generalService) {
+        this.generalService = generalService;
     }
 
 }

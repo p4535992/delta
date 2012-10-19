@@ -1,4 +1,4 @@
-package ee.webmedia.alfresco.workflow.service;
+package ee.webmedia.alfresco.common.search;
 
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsOr;
@@ -20,11 +20,11 @@ import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
 /**
- * Utility methods for creating db queries for searching tasks.
+ * Utility methods for creating db queries.
  * 
  * @author Riina Tens
  */
-public class TaskSearchUtil {
+public class DbSearchUtil {
 
     public static final String ACTIVE_FIELD = "wfs_active";
     public static final String TASK_TYPE_FIELD = "task_type";
@@ -95,18 +95,35 @@ public class TaskSearchUtil {
 
     /** NB When using this method, ensure that corresponding indexes have been created in database */
     public static String generateTaskStringWordsWildcardQuery(QName... propNames) {
-        // List<String> propQueryParts = new ArrayList<String>(documentPropNames.length);
         StringBuilder queryBuilder = new StringBuilder();
         boolean coalesce = propNames.length > 1;
         for (QName propName : propNames) {
-            queryBuilder.append((queryBuilder.length() > 0 ? " || ' ' || " : "")
-                    + (coalesce ? "coalesce(" : "")
-                    + getDbFieldNameFromPropQName(propName)
-                    + (coalesce ? ", '')" : ""));
+            appendFields(queryBuilder, coalesce, getDbFieldNameFromPropQName(propName));
         }
+        return createStringWordsWildcardQuery(queryBuilder);
+    }
+
+    /** NB When using this method, ensure that corresponding indexes have been created in database */
+    public static String generateStringWordsWildcardQuery(String... fieldNames) {
+        StringBuilder queryBuilder = new StringBuilder();
+        boolean coalesce = fieldNames.length > 1;
+        for (String fieldName : fieldNames) {
+            appendFields(queryBuilder, coalesce, fieldName);
+        }
+        return createStringWordsWildcardQuery(queryBuilder);
+    }
+
+    private static String createStringWordsWildcardQuery(StringBuilder queryBuilder) {
         queryBuilder.insert(0, "to_tsvector('simple', ");
         queryBuilder.append(") @@ ?::tsquery ");
         return queryBuilder.toString();
+    }
+
+    private static void appendFields(StringBuilder queryBuilder, boolean coalesce, String fieldName) {
+        queryBuilder.append((queryBuilder.length() > 0 ? " || ' ' || " : "")
+                + (coalesce ? "coalesce(" : "")
+                + fieldName
+                + (coalesce ? ", '')" : ""));
     }
 
     public static List<String> getDbFieldNamesFromPropQNames(QName... propNames) {

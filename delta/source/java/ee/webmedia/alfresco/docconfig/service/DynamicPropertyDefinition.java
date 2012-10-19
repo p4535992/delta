@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.docconfig.service;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.namespace.QName;
 
+import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 
 /**
@@ -24,5 +25,7 @@ public interface DynamicPropertyDefinition extends PropertyDefinition {
     Boolean getMultiValuedOverride();
 
     QName getDataTypeQName();
+
+    FieldType getFieldType();
 
 }

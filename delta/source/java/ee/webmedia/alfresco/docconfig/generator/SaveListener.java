@@ -1,5 +1,11 @@
 package ee.webmedia.alfresco.docconfig.generator;
 
+import java.util.Map;
+
+import org.alfresco.util.Pair;
+
+import ee.webmedia.alfresco.docadmin.service.Field;
+import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
@@ -30,6 +36,8 @@ public interface SaveListener {
     interface ValidationHelper {
 
         void addErrorMessage(String msgKey, Object... messageValuesForHolders);
+
+        Map<String, Pair<DynamicPropertyDefinition, Field>> getPropDefs();
 
     }
 }

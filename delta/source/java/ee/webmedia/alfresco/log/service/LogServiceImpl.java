@@ -27,6 +27,8 @@ import org.springframework.jdbc.core.simple.ParameterizedRowMapper;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.common.search.DbSearchUtil;
+import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.filter.model.FilterVO;
 import ee.webmedia.alfresco.log.LogHelper;
 import ee.webmedia.alfresco.log.model.LogEntry;
@@ -46,6 +48,7 @@ public class LogServiceImpl implements LogService, InitializingBean {
     private SimpleJdbcTemplate jdbcTemplate;
 
     private boolean useClientIpFromXForwardedForHttpHeader;
+    private GeneralService generalService;
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -172,21 +175,24 @@ public class LogServiceImpl implements LogService, InitializingBean {
                 filterMap.put("date(created_date_time) <= ?", filter.getDateCreatedEnd());
             }
             if (hasLength(filter.getCreatorName())) {
-                filterMap.put("lower(creator_name) LIKE ?", "%" + filter.getCreatorName().toLowerCase() + "%");
+                filterMap.put(DbSearchUtil.generateStringWordsWildcardQuery("creator_name"), generalService.getTsquery(filter.getCreatorName()));
             }
             if (hasLength(filter.getComputerId())) {
+                // creating indexes for these fields is future development (can be done used trigram index); currently these fields are not indexed
                 String computerId = "%" + filter.getComputerId().toLowerCase() + "%";
                 filterMap.put("(lower(computer_ip) LIKE ? OR lower(computer_name) LIKE ?)", computerId);
                 filterMap.put(null, computerId);
             }
             if (hasLength(filter.getDescription())) {
-                filterMap.put("lower(description) LIKE ?", "%" + filter.getDescription().toLowerCase() + "%");
+                filterMap.put(DbSearchUtil.generateStringWordsWildcardQuery("description"), generalService.getTsquery(filter.getDescription()));
             }
             if (hasLength(filter.getObjectName())) {
+                // creating index for this field is future development (can be done used trigram index); currently the field is not indexed
                 filterMap.put("lower(object_name) LIKE ?", "%" + filter.getObjectName().toLowerCase() + "%");
             }
             if (hasLength(filter.getObjectId())) {
-                filterMap.put("object_id LIKE ?", "%" + filter.getObjectId() + "%");
+                String sep = filter.isExactObjectId() ? "" : "%";
+                filterMap.put("object_id LIKE ?", sep + filter.getObjectId() + sep);
             }
 
             if (!filterMap.isEmpty()) {
@@ -221,8 +227,14 @@ public class LogServiceImpl implements LogService, InitializingBean {
         }
 
         q.append(" ORDER BY created_date_time ASC");
+        String query = q.toString();
+        List<LogEntry> results = jdbcTemplate.query(query, new LogRowMapper(), values);
+        explainQuery(query, values);
+        return results;
+    }
 
-        return jdbcTemplate.query(q.toString(), new LogRowMapper(), values);
+    private void explainQuery(String sqlQuery, Object... args) {
+        generalService.explainQuery(sqlQuery, LOG, args);
     }
 
     @Override
@@ -327,6 +339,10 @@ public class LogServiceImpl implements LogService, InitializingBean {
 
     public void setUseClientIpFromXForwardedForHttpHeader(boolean useClientIpFromXForwardedForHttpHeader) {
         this.useClientIpFromXForwardedForHttpHeader = useClientIpFromXForwardedForHttpHeader;
+    }
+
+    public void setGeneralService(GeneralService generalService) {
+        this.generalService = generalService;
     }
 
 }

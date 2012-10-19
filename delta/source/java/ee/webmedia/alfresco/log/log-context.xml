@@ -13,6 +13,18 @@
    </bean>
 
    <bean id="logTableBootstrap2" class="ee.webmedia.alfresco.log.bootstrap.LogTableBootstrap" parent="createTableBootstrap" />
+   
+   <bean id="logTableAlterIndexesBootstrap" parent="executeStatementsBootstrap" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dataSource" ref="dataSource" />
+      <property name="resourceName" value="ee/webmedia/alfresco/log/bootstrap/delta_log_table_alter_indexes.sql" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="logTableBootstrap2" />
+         </list>
+      </property>
+   </bean>      
 
    <bean id="logTableBootstrapFix" class="ee.webmedia.alfresco.log.bootstrap.LogTableBootstrapFix" parent="module.baseComponent">
       <property name="moduleId" value="common" />
@@ -56,6 +68,7 @@
          </bean>
       </property>
       <property name="useClientIpFromXForwardedForHttpHeader" value="${useClientIpFromXForwardedForHttpHeader}" />
+      <property name="generalService" ref="GeneralService" />
    </bean>
 
    <bean id="LogService" class="org.springframework.aop.framework.ProxyFactoryBean">

@@ -272,6 +272,7 @@
       <property name="dataSource" ref="dataSource" />
       <property name="dictionaryService" ref="DictionaryService" />
       <property name="nodeService" ref="NodeService" />
+      <property name="generalService" ref="GeneralService" />
    </bean>
 
    <bean id="WorkflowDbService" class="org.springframework.aop.framework.ProxyFactoryBean">

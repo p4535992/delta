@@ -1143,6 +1143,11 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
             return null;
         }
 
+        @Override
+        public FieldType getFieldType() {
+            return null;
+        }
+
     }
 
     @Override

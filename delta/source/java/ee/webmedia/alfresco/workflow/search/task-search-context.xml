@@ -27,6 +27,14 @@
       </property>
    </bean>
    
+   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+      <property name="resourceBundles">
+         <list>
+            <value>ee/webmedia/alfresco/workflow/search/web/task-search-webclient</value>
+         </list>
+      </property>
+   </bean>    
+   
    <bean id="abstractFilterService" class="ee.webmedia.alfresco.filter.service.AbstractFilterServiceImpl" abstract="true">
       <property name="generalService" ref="GeneralService" />
       <property name="nodeService" ref="NodeService" />

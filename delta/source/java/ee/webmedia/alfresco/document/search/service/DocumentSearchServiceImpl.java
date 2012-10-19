@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.document.search.service;
 
+import static ee.webmedia.alfresco.common.search.DbSearchUtil.generateTaskDatePropertyRangeQuery;
 import static ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType.INCOMING_LETTER;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateAndNotQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateAspectQuery;
@@ -23,7 +24,6 @@ import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsOr;
 import static ee.webmedia.alfresco.utils.TextUtil.isBlank;
 import static ee.webmedia.alfresco.workflow.model.Status.IN_PROGRESS;
-import static ee.webmedia.alfresco.workflow.service.TaskSearchUtil.generateTaskDatePropertyRangeQuery;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isStatus;
 
 import java.io.Serializable;
@@ -35,6 +35,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -64,10 +65,12 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.adr.model.AdrModel;
 import ee.webmedia.alfresco.cases.model.CaseModel;
+import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.classificator.enums.PublishToAdr;
 import ee.webmedia.alfresco.classificator.enums.SendMode;
+import ee.webmedia.alfresco.common.search.DbSearchUtil;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
@@ -77,6 +80,7 @@ import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.docconfig.generator.fieldtype.DateGenerator;
 import ee.webmedia.alfresco.docconfig.generator.fieldtype.DoubleGenerator;
 import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
+import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.model.Document;
@@ -113,7 +117,6 @@ import ee.webmedia.alfresco.workflow.search.model.TaskInfo;
 import ee.webmedia.alfresco.workflow.search.model.TaskSearchModel;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
-import ee.webmedia.alfresco.workflow.service.TaskSearchUtil;
 import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
@@ -472,7 +475,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         List<String> queryParts = new ArrayList<String>();
         queryParts.add(generateStringNotEmptyQuery(DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME,
                 DocumentSpecificModel.Props.PARTY_NAME /* on document node, duplicates partyName property values from all contractParty child-nodes */
-        ));
+                ));
         queryParts.add(generateStringExactQuery(DocumentStatus.FINISHED.getValueName(), DocumentCommonModel.Props.DOC_STATUS));
         queryParts.add(generateStringNullQuery(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE));
         String query = generateDocumentSearchQuery(queryParts);
@@ -529,7 +532,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         List<Object> arguments = new ArrayList<Object>();
         addTaskTypeFieldExactQueryPartsAndArguments(queryParts, arguments, taskType);
         addTaskStringExactPartsAndArgs(queryParts, arguments, SendStatus.SENT.toString(), WorkflowSpecificModel.Props.SEND_STATUS);
-        queryParts.add(TaskSearchUtil.generateTaskPropertyNotNullQuery(WorkflowSpecificModel.Props.SENT_DVK_ID));
+        queryParts.add(DbSearchUtil.generateTaskPropertyNotNullQuery(WorkflowSpecificModel.Props.SENT_DVK_ID));
         String query = generateTaskSearchQuery(queryParts);
         return BeanHelper.getWorkflowDbService().searchTaskSendStatusInfo(query, arguments);
     }
@@ -602,9 +605,9 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         List<String> queryParts = new ArrayList<String>();
         List<Object> arguments = new ArrayList<Object>();
         addTaskStringExactPartsAndArgs(queryParts, arguments, Status.IN_PROGRESS.getName(), WorkflowCommonModel.Props.STATUS);
-        queryParts.add(TaskSearchUtil.generateTaskPropertyNotNullQuery(WorkflowCommonModel.Props.OWNER_ID));
+        queryParts.add(DbSearchUtil.generateTaskPropertyNotNullQuery(WorkflowCommonModel.Props.OWNER_ID));
 
-        Pair<String, List<Object>> taskDatePropertyRangeQuery = TaskSearchUtil.generateTaskDatePropertyRangeQuery(
+        Pair<String, List<Object>> taskDatePropertyRangeQuery = DbSearchUtil.generateTaskDatePropertyRangeQuery(
                 fromDate, dueDate, WorkflowSpecificModel.Props.DUE_DATE);
         addQueryPartsAndArguments(queryParts, arguments, taskDatePropertyRangeQuery);
 
@@ -778,7 +781,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             Pair<String, List<Object>> dateQueryAndArgs = generateTaskDatePropertyRangeQuery(start, end, WorkflowSpecificModel.Props.DUE_DATE);
             boolean hasDateQuery = dateQueryAndArgs != null;
             queryPartsAndArgs.getFirst().add(joinQueryPartsOr(Arrays.asList(
-                    TaskSearchUtil.generateTaskPropertyNullQuery(WorkflowSpecificModel.Props.DUE_DATE),
+                    DbSearchUtil.generateTaskPropertyNullQuery(WorkflowSpecificModel.Props.DUE_DATE),
                     hasDateQuery ? dateQueryAndArgs.getFirst() : null)));
             if (hasDateQuery) {
                 queryPartsAndArgs.getSecond().addAll(dateQueryAndArgs.getSecond());
@@ -835,6 +838,9 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         }
         try {
             Pair<List<Document>, Boolean> results = searchDocumentsImpl(query, limit, /* queryName */"documentsByFilter", storeRefs);
+            if (results != null) {
+                filterByStructUnit(results.getFirst(), filter);
+            }
             if (log.isDebugEnabled()) {
                 log.debug("Documents search total time " + (System.currentTimeMillis() - startTime) + " ms");
             }
@@ -846,6 +852,44 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                     + "\n  searchFilter=" + WmNode.toString(filterProps, namespaceService)
                     + "\n  query=" + query, e);
             throw e;
+        }
+    }
+
+    @SuppressWarnings("rawtypes")
+    private void filterByStructUnit(List<Document> documents, Node filter) {
+        if (documents == null) {
+            return;
+        }
+        Map<QName, Serializable> props = RepoUtil.toQNameProperties(filter.getProperties());
+        for (Map.Entry<QName, Serializable> entry : props.entrySet()) {
+            Serializable value = entry.getValue();
+            if (value instanceof List) {
+                QName propQName = entry.getKey();
+                if (!DocumentDynamicModel.URI.equals(propQName.getNamespaceURI())) {
+                    continue;
+                }
+                DynamicPropertyDefinition def = BeanHelper.getDocumentConfigService().getPropertyDefinitionById(propQName.getLocalName());
+                if (!((List) value).isEmpty() && def != null && FieldType.STRUCT_UNIT == def.getFieldType()) {
+                    @SuppressWarnings("unchecked")
+                    List<String> searchStructUnits = (List<String>) value;
+                    for (Iterator<Document> it = documents.iterator(); it.hasNext();) {
+                        boolean hasStructUnit = false;
+                        @SuppressWarnings("unchecked")
+                        List<String> documentStructUnits = (List<String>) it.next().getProperties().get(propQName);
+                        if (documentStructUnits != null) {
+                            for (String searchStructUnit : searchStructUnits) {
+                                if (documentStructUnits.contains(searchStructUnit)) {
+                                    hasStructUnit = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (!hasStructUnit) {
+                            it.remove();
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -1129,7 +1173,11 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         QName ownerField = (isPreviousOwnerId) ? WorkflowCommonModel.Props.PREVIOUS_OWNER_ID : WorkflowCommonModel.Props.OWNER_ID;
         List<String> queryParts = new ArrayList<String>();
         List<Object> arguments = new ArrayList<Object>();
-        addTaskTypeFieldExactQueryPartsAndArguments(queryParts, arguments, taskType);
+        if (taskType != null) {
+            addTaskTypeFieldExactQueryPartsAndArguments(queryParts, arguments, taskType);
+        } else {
+            addTaskTypeFieldExactQueryPartsAndArguments(queryParts, arguments);
+        }
         addTaskStringExactPartsAndArgs(queryParts, arguments, status.getName(), WorkflowCommonModel.Props.STATUS);
         addTaskStringExactPartsAndArgs(queryParts, arguments, ownerId, ownerField);
         return new Pair<List<String>, List<Object>>(queryParts, arguments);
@@ -1139,7 +1187,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         if (StringUtils.isBlank(value) || propName == null) {
             return;
         }
-        queryParts.add(TaskSearchUtil.generateTaskPropertyExactQuery(propName));
+        queryParts.add(DbSearchUtil.generateTaskPropertyExactQuery(propName));
         arguments.add(value);
     }
 
@@ -1457,7 +1505,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         addDateQueryPartsAndArguments(queryParts, arguments, props, TaskSearchModel.Props.DUE_DATE_TIME_BEGIN, TaskSearchModel.Props.DUE_DATE_TIME_END,
                 WorkflowSpecificModel.Props.DUE_DATE);
         if (Boolean.TRUE.equals(props.get(TaskSearchModel.Props.ONLY_RESPONSIBLE))) {
-            queryParts.add(TaskSearchUtil.generateTaskFieldNotNullQuery(TaskSearchUtil.ACTIVE_FIELD));
+            queryParts.add(DbSearchUtil.generateTaskFieldNotNullQuery(DbSearchUtil.ACTIVE_FIELD));
         }
         addDateQueryPartsAndArguments(queryParts, arguments, props, TaskSearchModel.Props.COMPLETED_DATE_TIME_BEGIN, TaskSearchModel.Props.COMPLETED_DATE_TIME_END,
                 WorkflowCommonModel.Props.COMPLETED_DATE_TIME);
@@ -1497,14 +1545,14 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         }
         List<String> subQueryParts = new ArrayList<String>();
         for (QName type : types) {
-            subQueryParts.add(TaskSearchUtil.generateTaskFieldExactQuery(TaskSearchUtil.TASK_TYPE_FIELD));
+            subQueryParts.add(DbSearchUtil.generateTaskFieldExactQuery(DbSearchUtil.TASK_TYPE_FIELD));
             arguments.add(type.getLocalName());
         }
         queryParts.add(SearchUtil.joinQueryPartsOr(subQueryParts));
     }
 
     private void addTaskMultiStringArrayPartsAndArgs(List<String> queryParts, List<Object> arguments, List<String> list, QName ownerOrganizationName) {
-        Pair<String, List<Object>> taskMultiStringExactQueryAndArguments = TaskSearchUtil.generateTaskMultiStringArrayQuery(list, ownerOrganizationName);
+        Pair<String, List<Object>> taskMultiStringExactQueryAndArguments = DbSearchUtil.generateTaskMultiStringArrayQuery(list, ownerOrganizationName);
         if (taskMultiStringExactQueryAndArguments != null) {
             queryParts.add(taskMultiStringExactQueryAndArguments.getFirst());
             arguments.addAll(taskMultiStringExactQueryAndArguments.getSecond());
@@ -1528,13 +1576,13 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         }
         String tsquery = generalService.getTsquery(tsQueryInput);
         if (StringUtils.isNotBlank(tsquery)) {
-            queryParts.add(TaskSearchUtil.generateTaskStringWordsWildcardQuery(taskProps));
+            queryParts.add(DbSearchUtil.generateTaskStringWordsWildcardQuery(taskProps));
             arguments.add(tsquery);
         }
     }
 
     private void addTaskMultiStringExactPartsAndArgs(List<String> queryParts, List<Object> arguments, Map<String, Object> props, QName searchProp, QName prop) {
-        Pair<String, List<Object>> taskMultiStringExactQueryAndArguments = TaskSearchUtil.generateTaskMultiStringExactQuery((List<String>) props.get(searchProp), prop);
+        Pair<String, List<Object>> taskMultiStringExactQueryAndArguments = DbSearchUtil.generateTaskMultiStringExactQuery((List<String>) props.get(searchProp), prop);
         if (taskMultiStringExactQueryAndArguments != null) {
             queryParts.add(taskMultiStringExactQueryAndArguments.getFirst());
             arguments.addAll(taskMultiStringExactQueryAndArguments.getSecond());
@@ -1542,14 +1590,14 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     private void addDateQueryPartsAndArguments(List<String> queryParts, List<Object> arguments, Map<String, Object> props, QName beginProp, QName endProp, QName propToSearch) {
-        Pair<String, List<Object>> generateTaskDatePropertyRangeQuery = TaskSearchUtil.generateTaskDatePropertyRangeQuery(
+        Pair<String, List<Object>> generateTaskDatePropertyRangeQuery = DbSearchUtil.generateTaskDatePropertyRangeQuery(
                 (Date) props.get(beginProp),
                 (Date) props.get(endProp), propToSearch);
         addQueryPartsAndArguments(queryParts, arguments, generateTaskDatePropertyRangeQuery);
     }
 
     private void addBooleanQueryPartsAndArguments(List<String> queryParts, List<Object> arguments, Map<String, Object> props, QName prop, QName propToSearch) {
-        Pair<String, List<Object>> generateTaskBooleanPropertyQuery = TaskSearchUtil.generateTaskPropertyBooleanQuery(prop, (Boolean) props.get(propToSearch));
+        Pair<String, List<Object>> generateTaskBooleanPropertyQuery = DbSearchUtil.generateTaskPropertyBooleanQuery(prop, (Boolean) props.get(propToSearch));
         addQueryPartsAndArguments(queryParts, arguments, generateTaskBooleanPropertyQuery);
     }
 

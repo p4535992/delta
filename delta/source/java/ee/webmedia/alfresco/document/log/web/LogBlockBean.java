@@ -75,6 +75,7 @@ public class LogBlockBean implements DocumentDynamicBlock {
         excludedDescriptions.add(MessageUtil.getMessage("file_opened", "%"));
         logFilter.setExcludedDescriptions(excludedDescriptions);
         logFilter.setObjectId(parentRef.toString());
+        logFilter.setExactObjectId(true);
         return logFilter;
     }
 
@@ -84,6 +85,7 @@ public class LogBlockBean implements DocumentDynamicBlock {
         excludedDescriptions.add(MessageUtil.getMessage("applog_space_open", "%", "%"));
         logFilter.setExcludedDescriptions(excludedDescriptions);
         logFilter.setObjectId(parentRef.toString());
+        logFilter.setExactObjectId(true);
         return logFilter;
     }
 

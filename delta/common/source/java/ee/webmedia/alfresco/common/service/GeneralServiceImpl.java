@@ -12,6 +12,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.nio.charset.Charset;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -71,10 +73,12 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream.UnicodeE
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
 import org.postgresql.util.PGobject;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
+import org.springframework.jdbc.core.simple.ParameterizedRowMapper;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.util.Assert;
 
@@ -88,6 +92,7 @@ import ee.webmedia.alfresco.utils.AdjustableSemaphore;
 import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
+import ee.webmedia.alfresco.utils.TextUtil;
 
 /**
  * @author Ats Uiboupin
@@ -957,6 +962,31 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
                     + tsquery);
         }
         return tsquery;
+    }
+
+    @Override
+    public void explainQuery(String sqlQuery, Log traceLog, Object... args) {
+        if (traceLog.isTraceEnabled()) {
+            jdbcTemplate.getJdbcOperations().execute("SET enable_seqscan TO off");
+            List<String> explanation = jdbcTemplate.query("EXPLAIN " + sqlQuery, new ParameterizedRowMapper<String>() {
+
+                @Override
+                public String mapRow(ResultSet rs, int rowNum) throws SQLException {
+                    return rs.getString(1);
+                }
+            }, args);
+            StringBuffer sb = new StringBuffer("Explaining database query, slq='" + sqlQuery + "', args=\n");
+            if (args != null && args.length > 0) {
+                int argsCounter = 1;
+                for (Object arg : args) {
+                    sb.append(argsCounter++ + ") ").append(arg != null ? arg.toString() : arg).append("\n");
+                }
+            } else {
+                sb.append(args).append("\n");
+            }
+            sb.append(TextUtil.joinNonBlankStrings(explanation, "\n"));
+            traceLog.trace(sb.toString());
+        }
     }
 
     // START: getters / setters

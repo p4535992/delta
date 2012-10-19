@@ -22,6 +22,7 @@ import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.QNamePattern;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.logging.Log;
 
 import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
@@ -313,5 +314,7 @@ public interface GeneralService {
     String getUniqueFileName(String fileName, List<NodeRef> filesToCheck, NodeRef... parentRefs);
 
     String getTsquery(String input);
+
+    void explainQuery(String sqlQuery, Log log, Object... args);
 
 }

@@ -40,7 +40,7 @@ public abstract class BaseAddAssocEvaluator extends BaseActionEvaluator {
             return false;
         }
         DocumentType documentType = BeanHelper.getDocumentDynamicDialog().getDocumentType();
-        boolean registered = !RegisterDocumentEvaluator.isNotRegistered(docNode);
+        boolean registered = RegisterDocumentEvaluator.isRegistered(docNode);
         if (registered || isAddAssocToUnregistratedDocEnabled(documentType)) {
             List<? extends AssociationModel> associationModels = new ArrayList<AssociationModel>(documentType.getAssociationModels(assocType));
             if (skipFollowUpReportAndErrandOrderAbroad) {

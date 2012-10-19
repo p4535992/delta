@@ -184,6 +184,11 @@ public class DynamicPropertyDefinitionImpl implements DynamicPropertyDefinition 
     }
 
     @Override
+    public FieldType getFieldType() {
+        return fieldType;
+    }
+
+    @Override
     public String toString() {
         return WmNode.toString(this) + "[" +
                 "name=" + name.toPrefixString(getNamespaceService()) +

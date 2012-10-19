@@ -401,10 +401,10 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         WmNode node = getNode(nodeRef, WorkflowCommonModel.Types.COMPOUND_WORKFLOW, false, false);
         NodeRef parent = nodeService.getPrimaryParent(nodeRef).getParentRef();
         CompoundWorkflow compoundWorkflow = new CompoundWorkflow(node, parent);
-        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parent);
+        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(nodeRef);
         int workflowIndex = 0;
         for (ChildAssociationRef childAssoc : childAssocs) {
-            if (types.contains((nodeService.getType(childAssoc.getChildRef())))) {
+            if (types.contains(nodeService.getType(childAssoc.getChildRef()))) {
                 workflowIndex = addWorkflow(compoundWorkflow, false, workflowIndex, childAssoc, true);
             }
         }

@@ -38,7 +38,7 @@ public class RegisterDocumentEvaluator extends BaseActionEvaluator {
 
     public boolean canRegister(Node docNode, boolean checkStoppedOrInprogressWorkflows) {
         final FacesContext context = FacesContext.getCurrentInstance();
-        if (!isNotRegistered(docNode)) {
+        if (isRegistered(docNode)) {
             return false;
         }
         BeanHelper.getDocumentService().throwIfNotDynamicDoc(docNode);
@@ -58,13 +58,7 @@ public class RegisterDocumentEvaluator extends BaseActionEvaluator {
     }
 
     public static boolean isNotRegistered(Node docNode) {
-        final Map<String, Object> props = docNode.getProperties();
-        final String regNumber = (String) props.get(DocumentCommonModel.Props.REG_NUMBER);
-        final Date regDateTime = (Date) props.get(DocumentCommonModel.Props.REG_DATE_TIME);
-        if (StringUtils.isBlank(regNumber) && regDateTime == null) {
-            return true;
-        }
-        return false;
+        return !isRegistered(docNode);
     }
 
     public static boolean isRegistered(Node docNode) {
@@ -77,6 +71,7 @@ public class RegisterDocumentEvaluator extends BaseActionEvaluator {
         return false;
     }
 
+    /** Deprecated - for deciding if document is registered or not, use isRegistered/isNotRegistered methods. */
     public static boolean isRegNumFilled(Node docNode) {
         final Map<String, Object> props = docNode.getProperties();
         final String regNumber = (String) props.get(DocumentCommonModel.Props.REG_NUMBER);

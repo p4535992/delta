@@ -868,8 +868,11 @@ function ajaxSuccess(responseText, componentClientId, componentContainerId) {
       if(hiddenInputNames){
          var hiddenInputsContainer = $jQ("#hiddenInputsContainer");
          hiddenInputNames.each(function(elem){
-            if(hiddenInputsContainer.find("input[name='"+elem+"']").length == 0){
+            var hiddenInput = hiddenInputsContainer.find("input[name='"+elem+"']");
+            if(hiddenInput.length == 0){
                $jQ('<input type="hidden" name="'+elem+'" value="" />').appendTo(hiddenInputsContainer);
+            } else {
+               hiddenInput.val("");
             }
          });
       }

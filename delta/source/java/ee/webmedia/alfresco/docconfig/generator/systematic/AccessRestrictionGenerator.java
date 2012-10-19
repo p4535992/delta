@@ -34,6 +34,8 @@ import org.apache.commons.lang.time.DateUtils;
 import ee.webmedia.alfresco.adr.service.AdrService;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
+import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
+import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorAndTextGenerator;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.common.propertysheet.multivalueeditor.PropsBuilder;
@@ -47,11 +49,13 @@ import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.TextUtil;
 
 /**
  * @author Alar Kvell
@@ -321,9 +325,32 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
     private AdrService adrService;
     private DocumentLogService documentLogService;
     private DocumentAdminService documentAdminService;
+    private ClassificatorService classificatorService;
 
     @Override
     public void validate(DocumentDynamic document, ValidationHelper validationHelper) {
+
+        // Validate accessRestriction value against active classificator values, because if document comes from DVK,
+        // then raw value is put into accessRestriction property and document manager must correct this manually now
+        List<String> activeValues = new ArrayList<String>();
+        boolean foundValidValue = false;
+        List<ClassificatorValue> classificatorValues = classificatorService.getAllClassificatorValues("accessRestriction");
+        for (ClassificatorValue classificatorValue : classificatorValues) {
+            if (classificatorValue.isActive()) {
+                activeValues.add(classificatorValue.getValueName());
+                if (classificatorValue.getValueName().equals(document.getAccessRestriction())) {
+                    foundValidValue = true;
+                    break;
+                }
+            }
+        }
+
+        if (!foundValidValue) {
+            String fieldName = validationHelper.getPropDefs().get(DocumentCommonModel.Props.ACCESS_RESTRICTION.getLocalName()).getSecond().getName();
+            validationHelper.addErrorMessage("docdyn_accessRestriction_notValid", fieldName, TextUtil.joinNonBlankStringsWithComma(activeValues));
+            return;
+        }
+
         final NodeRef nodeRef = document.getNodeRef();
         if (document.isDraftOrImapOrDvk()) {
             return;
@@ -412,6 +439,10 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
 
     public void setNamespaceService(NamespaceService namespaceService) {
         this.namespaceService = namespaceService;
+    }
+
+    public void setClassificatorService(ClassificatorService classificatorService) {
+        this.classificatorService = classificatorService;
     }
 
     // END: setters

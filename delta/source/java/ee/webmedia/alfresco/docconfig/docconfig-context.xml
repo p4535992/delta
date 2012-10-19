@@ -672,6 +672,7 @@
       <property name="documentAdminService" ref="DocumentAdminService" />
       <property name="documentConfigService" ref="DocumentConfigService" />
       <property name="namespaceService" ref="NamespaceService" />
+      <property name="classificatorService" ref="ClassificatorService" />
    </bean>
 
    <bean id="userContactTableGenerator" class="ee.webmedia.alfresco.docconfig.generator.systematic.UserContactTableGenerator">

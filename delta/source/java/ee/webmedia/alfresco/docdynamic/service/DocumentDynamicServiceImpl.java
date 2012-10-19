@@ -456,10 +456,20 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     private static class ValidationHelperImpl implements SaveListener.ValidationHelper {
 
         private final List<MessageData> errorMessages = new ArrayList<MessageData>();
+        private final Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs;
+
+        public ValidationHelperImpl(Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs) {
+            this.propDefs = Collections.unmodifiableMap(propDefs);
+        }
 
         @Override
         public void addErrorMessage(String msgKey, Object... messageValuesForHolders) {
             errorMessages.add(new MessageDataImpl(msgKey, messageValuesForHolders));
+        }
+
+        @Override
+        public Map<String, Pair<DynamicPropertyDefinition, Field>> getPropDefs() {
+            return propDefs;
         }
 
     }
@@ -541,8 +551,9 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         DocumentDynamic document = documentOriginal.clone();
         boolean isDraft = document.isDraft();
         boolean isImapOrDvk = document.isImapOrDvk();
+        Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs = documentConfigService.getPropertyDefinitions(document.getNode());
         if (saveListenerBeanNames != null) {
-            ValidationHelperImpl validationHelper = new ValidationHelperImpl();
+            ValidationHelperImpl validationHelper = new ValidationHelperImpl(propDefs);
             for (String saveListenerBeanName : saveListenerBeanNames) {
                 SaveListener saveListener = (SaveListener) beanFactory.getBean(saveListenerBeanName, SaveListener.class);
                 saveListener.validate(document, validationHelper);
@@ -584,8 +595,6 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
         TreeNode<QName> childAssocTypeQNamesRoot = documentConfigService.getChildAssocTypeQNameTree(document.getNode());
         Assert.isNull(childAssocTypeQNamesRoot.getData());
-
-        Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs = documentConfigService.getPropertyDefinitions(document.getNode());
 
         updateSearchableChildNodeProps(docNode, null, childAssocTypeQNamesRoot.getChildren(), propDefs);
 

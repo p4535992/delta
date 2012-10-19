@@ -66,10 +66,13 @@ import org.alfresco.web.ui.common.component.UIPanel;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
+import org.apache.commons.collections.Transformer;
+import org.apache.commons.collections.comparators.TransformingComparator;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
 
+import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIPropertySheet;
 import ee.webmedia.alfresco.common.propertysheet.customchildrencontainer.CustomChildrenCreator;
@@ -257,6 +260,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     }
 
     // This method (UIAction's "value" methodBinding) is called on every render, so caching results is useful
+    @SuppressWarnings("unchecked")
     public List<ActionDefinition> findCompoundWorkflowDefinitions(@SuppressWarnings("unused") String nodeTypeId) {
         if (document == null) {
             return Collections.emptyList();
@@ -325,6 +329,13 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 }
             }
         }
+        TransformingComparator transformingComparator = new TransformingComparator(new Transformer() {
+            @Override
+            public Object transform(Object input) {
+                return ((ActionDefinition) input).Label;
+            }
+        }, AppConstants.DEFAULT_COLLATOR);
+        Collections.sort(actionDefinitions, transformingComparator);
         return actionDefinitions;
     }
 
