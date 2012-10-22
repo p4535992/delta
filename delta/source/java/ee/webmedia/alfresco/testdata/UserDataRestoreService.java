@@ -40,6 +40,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.QNamePattern;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.bean.repository.TransientNode;
 import org.apache.commons.dbcp.BasicDataSource;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
@@ -132,7 +133,7 @@ public class UserDataRestoreService {
         List<Pair<Long, Long>> substitutes = queryNodesWithGrandparentByNodeType(otherJdbcTemplate, SubstituteModel.Types.SUBSTITUTE);
         log.info("Got " + substitutes.size() + " substitutes, processing...");
         for (Pair<Long, Long> substitute : substitutes) {
-            Map<QName, Serializable> props = queryNodeProps(otherJdbcTemplate, substitute.getFirst(), null, null);
+            Map<QName, Serializable> props = queryNodeProps(otherJdbcTemplate, substitute.getFirst(), null, null, SubstituteModel.Types.SUBSTITUTE);
             String userName = persons.get(substitute.getSecond());
             if (userName == null) {
                 log.info("PersonNodeId " + substitute.getSecond() + " substitution=" + WmNode.toString(props, getNamespaceService())
@@ -274,7 +275,7 @@ public class UserDataRestoreService {
         for (Entry<Long, String> entry : persons.entrySet()) {
             Long otherPersonNodeId = entry.getKey();
             String userName = entry.getValue();
-            Map<QName, Serializable> otherProps = queryNodeProps(template, otherPersonNodeId, propQName, null);
+            Map<QName, Serializable> otherProps = queryNodeProps(template, otherPersonNodeId, propQName, null, ContentModel.TYPE_PERSON);
             if (otherProps.isEmpty()) {
                 log.info("Person '" + userName + "' " + propQName.getLocalName() + " - skipping, has not been set");
             } else {
@@ -299,7 +300,7 @@ public class UserDataRestoreService {
                 public boolean isMatch(QName qname) {
                     return NotificationModel.URI.equals(qname.getNamespaceURI());
                 }
-            }, getDictionaryService().getDataType(DataTypeDefinition.BOOLEAN));
+            }, getDictionaryService().getDataType(DataTypeDefinition.BOOLEAN), ContentModel.TYPE_CMOBJECT);
             if (otherProps.isEmpty()) {
                 log.info("Person '" + userName + "' notification preferences - skipping, has not been set");
                 continue;
@@ -321,7 +322,7 @@ public class UserDataRestoreService {
                 continue;
             }
             final Long reportNodeId = report.getFirst();
-            final Map<QName, Serializable> otherProps = queryNodeProps(template, reportNodeId, null, null);
+            final Map<QName, Serializable> otherProps = queryNodeProps(template, reportNodeId, null, null, ReportModel.Types.REPORT_RESULT);
             otherProps.putAll(queryNodeAuditableProps(template, reportNodeId));
             final Set<QName> otherAspects = queryNodeAspects(template, reportNodeId);
             BeanHelper.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
@@ -469,11 +470,14 @@ public class UserDataRestoreService {
         return props;
     }
 
-    private Map<QName, Serializable> queryNodeProps(SimpleJdbcTemplate template, Long nodeId, QNamePattern propNamePattern, DataTypeDefinition dataTypeOverride) {
+    private Map<QName, Serializable> queryNodeProps(SimpleJdbcTemplate template, Long nodeId, QNamePattern propNamePattern, DataTypeDefinition dataTypeOverride, QName nodeType) {
         List<Map<String, Object>> rows = template.queryForList("SELECT alf_node_properties.*, prop_ns.uri, prop_qname.local_name FROM alf_node_properties "
                 + "JOIN alf_qname prop_qname ON alf_node_properties.qname_id = prop_qname.id "
                 + "JOIN alf_namespace prop_ns ON prop_qname.ns_id = prop_ns.id "
                 + "WHERE alf_node_properties.node_id = ? ORDER BY list_index ASC", nodeId);
+
+        TransientNode fakeNode = new TransientNode(nodeType, null, null);
+
         Map<QName, Serializable> props = new HashMap<QName, Serializable>(rows.size());
         for (Map<String, Object> row : rows) {
             QName propQName = QName.createQName((String) row.get("uri"), (String) row.get("local_name"));
@@ -493,14 +497,15 @@ public class UserDataRestoreService {
                     dataType = getDictionaryService().getDataType(DataTypeDefinition.TEXT);
                 } else {
 
-                    QName q = propQName;
-
                     if (DocumentDynamicModel.URI.equals(propQName.getNamespaceURI())) {
-                        propDef = getDocumentConfigService().getPropertyDefinitionById(q.getLocalName());
+                        propDef = getDocumentConfigService().getPropertyDefinition(fakeNode, propQName);
+                        if (propDef == null) {
+                            propDef = getDocumentConfigService().getPropertyDefinitionById(propQName.getLocalName());
+                        }
                     } else {
-                        propDef = getDictionaryService().getProperty(q);
+                        propDef = getDictionaryService().getProperty(propQName);
                     }
-                    Assert.notNull(propDef, q.toString());
+                    Assert.notNull(propDef, propQName.toString());
                     multiValued = propDef.isMultiValued();
                     dataType = propDef.getDataType();
                 }
@@ -542,8 +547,19 @@ public class UserDataRestoreService {
                     props.put(propQName, list);
                 }
                 list.add(propValue);
+            } else if (props.containsKey(propQName)) {
+                Serializable listOrObject = props.get(propQName);
+                ArrayList<Serializable> list;
+                if (listOrObject instanceof List) {
+                    list = (ArrayList<Serializable>) listOrObject;
+                } else {
+                    list = new ArrayList<Serializable>();
+                    list.add(listOrObject);
+                    props.put(propQName, list);
+                }
+                list.add(propValue);
+                log.warn("Property value is multi-valued, but property definition is not: " + propQName.toString());
             } else {
-                Assert.isTrue(!props.containsKey(propQName));
                 props.put(propQName, propValue);
             }
         }
@@ -625,7 +641,7 @@ public class UserDataRestoreService {
             if (helper != null && !helper.isMatch(assocType, nodeType, assocName)) {
                 continue;
             }
-            Map<QName, Serializable> otherProps = queryNodeProps(template, childNodeId, null, null);
+            Map<QName, Serializable> otherProps = queryNodeProps(template, childNodeId, null, null, nodeType);
             otherProps.putAll(queryNodeAuditableProps(template, childNodeId));
             Set<QName> otherAspects = queryNodeAspects(template, childNodeId);
             if (helper != null) {
