@@ -46,7 +46,7 @@ import ee.webmedia.alfresco.document.service.DocumentPropertySets;
 public class RepoUtil {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(RepoUtil.class);
     /** Namespace used for properties that shouldn't be saved to repository */
-    private static final String TRANSIENT_PROPS_NAMESPACE = "temp";
+    public static final String TRANSIENT_PROPS_NAMESPACE = "temp";
     private static final StoreRef NOT_SAVED_STORE = new StoreRef("NOT_SAVED", "NOT_SAVED");
 
     public static boolean isSystemProperty(QName propName) {

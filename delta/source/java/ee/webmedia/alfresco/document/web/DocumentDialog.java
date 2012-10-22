@@ -453,7 +453,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     }
 
     public void addFavorite(ActionEvent event) {
-        getDocumentService().addFavorite(getDocumentDialogHelperBean().getNodeRef(), ((AddToFavoritesEvent) event).getFavoriteDirectoryName());
+        getDocumentService().addFavorite(getDocumentDialogHelperBean().getNodeRef(), ((AddToFavoritesEvent) event).getFavoriteDirectoryName(), true);
     }
 
     public void removeFavorite(@SuppressWarnings("unused") ActionEvent event) {

@@ -1012,6 +1012,11 @@ public class AdminNodeBrowseBean implements Serializable
         {
             return "Not Granted";
         }
+        
+        public int getPosition()
+        {
+            return -1;
+        }
     }
 
     public static class NoStoreMask implements Serializable

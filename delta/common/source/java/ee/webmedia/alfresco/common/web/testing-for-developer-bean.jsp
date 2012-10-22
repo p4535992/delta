@@ -70,6 +70,34 @@
 
 <f:verbatim><hr/></f:verbatim>
 
+<h:outputText value="Restore data _from_ Delta specified by the following database and contentstore folder"/>
+<f:verbatim><br/><br/></f:verbatim>
+<h:outputText value="db.name="/>
+<h:inputText value="#{UserDataRestoreService.dbName}" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="db.username="/>
+<h:inputText value="#{UserDataRestoreService.dbUsername}" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="db.password="/>
+<h:inputText value="#{UserDataRestoreService.dbPassword}" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="db.host="/>
+<h:inputText value="#{UserDataRestoreService.dbHost}" size="60" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="db.port="/>
+<h:inputText value="#{UserDataRestoreService.dbPort}" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="dir.contentstore="/>
+<h:inputText value="#{UserDataRestoreService.otherContentstore}" size="60" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="kasutajate isikukoodid (tühikute või reavahetustega eraldatud): "/>
+<h:inputTextarea id="validUsers" value="#{UserDataRestoreService.validUsers}" rows="5" cols="30" styleClass="expand19-200" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startUserDataRestore" value="executeUserDataRestore" type="submit"
+   actionListener="#{UserDataRestoreService.execute}" />
+
+<f:verbatim><hr/></f:verbatim>
+
 <h:outputText value="Faili asukoht serveri kõvakettal, millest DVK dokument importida: "/>
 <f:verbatim><br/></f:verbatim>
 <h:inputText id="fileNameInputText" value="#{TestingForDeveloperBean.fileName}" size="70" />

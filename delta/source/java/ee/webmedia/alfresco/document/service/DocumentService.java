@@ -371,7 +371,7 @@ public interface DocumentService {
 
     void addFavorite(NodeRef document);
 
-    void addFavorite(NodeRef document, String favDirName);
+    boolean addFavorite(NodeRef docRef, String favDirName, boolean updateMenu);
 
     void removeFavorite(NodeRef nodeRef);
 
