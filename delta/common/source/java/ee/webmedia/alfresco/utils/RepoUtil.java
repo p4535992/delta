@@ -230,7 +230,7 @@ public class RepoUtil {
                 Collection<?> collection = (Collection<?>) value;
                 if (collection.size() > 0) {
                     for (Object object : collection) {
-                        if (StringUtils.isNotBlank(object.toString())) {
+                        if (object != null && StringUtils.isNotBlank(object.toString())) {
                             results.put(entry.getKey(), value);
                             break;
                         }
