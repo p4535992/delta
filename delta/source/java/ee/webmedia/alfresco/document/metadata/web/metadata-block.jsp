@@ -27,12 +27,12 @@
       var registerBtn = $jQ("#" + escapeId4JQ("dialog:documentRegisterButton"));
       if (registerBtn) {
          var finishBtn = $jQ("#"+escapeId4JQ("dialog:finish-button"));
-         var finishDisabled = finishBtn.attr("disabled");
-         registerBtn.attr("disabled", finishDisabled);
+         var finishDisabled = finishBtn.prop("disabled");
+         registerBtn.prop("disabled", finishDisabled);
 
          var registerBtn2 = $jQ("#" + escapeId4JQ("dialog:documentRegisterButton-2"));
          if (registerBtn2) {
-            registerBtn2.attr("disabled", finishDisabled);
+            registerBtn2.prop("disabled", finishDisabled);
          }
       }
    }

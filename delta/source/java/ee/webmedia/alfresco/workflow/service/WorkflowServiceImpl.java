@@ -1626,7 +1626,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         Map<QName, Serializable> props = new HashMap<QName, Serializable>();
 
         logService.addLogEntry(LogEntry.create(LogObject.TASK, userService, task, "applog_task_assigned",
-                UserUtil.getPersonFullName1(personProps), I18NUtil.getMessage("task_title_" + nodeService.getType(task).getLocalName())));
+                UserUtil.getPersonFullName1(personProps), MessageUtil.getTypeName(nodeService.getType(task))));
 
         props.put(WorkflowCommonModel.Props.OWNER_ID, personProps.get(ContentModel.PROP_USERNAME));
         props.put(WorkflowCommonModel.Props.OWNER_NAME, UserUtil.getPersonFullName1(personProps));
@@ -2191,7 +2191,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         }
 
         logService.addLogEntry(LogEntry.create(LogObject.TASK, userService, task.getNodeRef(), "applog_task_done",
-                I18NUtil.getMessage("task_title_" + task.getType().getLocalName()), task.getOutcome()));
+                MessageUtil.getTypeName(task.getType()), task.getOutcome()));
     }
 
     private boolean isStoppingNeeded(Task task, int outcomeIndex) {

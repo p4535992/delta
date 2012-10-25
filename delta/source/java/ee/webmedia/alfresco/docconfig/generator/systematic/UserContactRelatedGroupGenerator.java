@@ -1,6 +1,8 @@
 package ee.webmedia.alfresco.docconfig.generator.systematic;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserContactMappingService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
+import static org.alfresco.service.cmr.repository.NodeRef.isNodeRef;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -40,6 +42,7 @@ import ee.webmedia.alfresco.utils.RepoUtil;
  */
 public class UserContactRelatedGroupGenerator extends BaseSystematicFieldGenerator {
 
+    public static final String BEAN_NAME = "userContactRelatedGroupGenerator";
     private NamespaceService namespaceService;
     private UserContactMappingService userContactMappingService;
     private DocumentAdminService documentAdminService;
@@ -302,9 +305,12 @@ public class UserContactRelatedGroupGenerator extends BaseSystematicFieldGenerat
         public void setData(String result, Node node) {
             // XXX Alar inconvenient
             Map<QName, Serializable> props = new HashMap<QName, Serializable>();
-            getUserContactMappingService().setMappedValues(props, mapping, new NodeRef(result), false);
+            NodeRef userRef = isNodeRef(result) ? new NodeRef(result) : getUserService().getPerson(result);
+            getUserContactMappingService().setMappedValues(props, mapping, userRef, false);
             for (Entry<QName, Serializable> entry : props.entrySet()) {
-                node.getProperties().put(entry.getKey().toString(), entry.getValue());
+                String key = entry.getKey().toString();
+                Serializable value = entry.getValue();
+                node.getProperties().put(key, value);
             }
             return;
         }
@@ -325,6 +331,7 @@ public class UserContactRelatedGroupGenerator extends BaseSystematicFieldGenerat
     public void setDocumentAdminService(DocumentAdminService documentAdminService) {
         this.documentAdminService = documentAdminService;
     }
+
     // END: setters
 
 }

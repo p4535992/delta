@@ -15,4 +15,6 @@ public interface GeneratorResults {
 
     void addStateHolder(String key, PropertySheetStateHolder stateHolder);
 
+    boolean hasStateHolder(String key);
+
 }

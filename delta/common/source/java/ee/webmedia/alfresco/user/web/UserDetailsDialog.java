@@ -146,11 +146,11 @@ public class UserDetailsDialog extends BaseDialogBean {
     }
 
     public boolean isRelatedFundsCenterNotEditable() {
-        return !isRelatedFundsCenterEditable();
+        return !BeanHelper.getUserService().isAdministrator() && BeanHelper.getEInvoiceService().isEinvoiceEnabled();
     }
 
     public boolean isRelatedFundsCenterEditable() {
-        return BeanHelper.getUserService().isAdministrator();
+        return BeanHelper.getUserService().isAdministrator() && BeanHelper.getEInvoiceService().isEinvoiceEnabled();
     }
 
     public boolean isServiceRankRendered() {

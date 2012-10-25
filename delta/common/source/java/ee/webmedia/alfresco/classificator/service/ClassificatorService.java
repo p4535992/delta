@@ -101,7 +101,7 @@ public interface ClassificatorService {
 
     Node getNewUnsavedClassificator();
 
-    void saveClassificatorNode(Node classificatorNode);
+    NodeRef saveClassificatorNode(Node classificatorNode);
 
     void addNewClassificators(List<ClassificatorExportVO> classificatorsToAdd);
 

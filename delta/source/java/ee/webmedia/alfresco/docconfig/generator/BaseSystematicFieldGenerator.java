@@ -1,7 +1,9 @@
 package ee.webmedia.alfresco.docconfig.generator;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
 import ee.webmedia.alfresco.docconfig.web.PropertySheetStateBean;
@@ -22,7 +24,7 @@ public abstract class BaseSystematicFieldGenerator implements FieldGenerator, Sa
 
     protected abstract String[] getOriginalFieldIds();
 
-    protected static String getBindingName(String suffix, String stateHolderKey) {
+    public static String getBindingName(String suffix, String stateHolderKey) {
         return "#{" + PropertySheetStateBean.STATE_HOLDERS_BINDING_NAME + "['" + stateHolderKey + "']." + suffix + "}";
     }
 
@@ -48,6 +50,11 @@ public abstract class BaseSystematicFieldGenerator implements FieldGenerator, Sa
     @Override
     public void setBeanName(String name) {
         beanName = name;
+    }
+
+    public boolean handlesOriginalFieldId(String originalFieldId) {
+        Assert.notNull(originalFieldId, "originalFieldId mustn't be null!");
+        return ArrayUtils.contains(getOriginalFieldIds(), originalFieldId);
     }
 
 }

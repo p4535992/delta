@@ -228,11 +228,11 @@ function prependFunction(jQHtmlElem, prependFn, eventAttributeName) {
  */
 function processFnSerVolCaseCloseButton(status){
    var closeBtns = getCloseButtons();
-   var finishDisabled = getFinishButtons().attr("disabled");
+   var finishDisabled = getFinishButtons().prop("disabled");
    if(status != "avatud"){
       closeBtns.remove();
    } else if(finishDisabled || status == "avatud"){
-      closeBtns.attr("disabled", finishDisabled);
+      closeBtns.prop("disabled", finishDisabled);
    }
 }
 
@@ -429,14 +429,14 @@ function addSearchSuggest(clientId, containerClientId, pickerCallback, submitUri
 }
 
 function addSearchSuggest(clientId, containerClientId, pickerCallback, submitUri, autoCompleteCallback) {
-   autocompleters.push(function () {
+   autocompleters.push(function addAutocompleter() {
       var jQInput = $jQ("#"+escapeId4JQ(clientId));
       var uri = getContextPath() + "/ajax/invoke/AjaxSearchBean.searchSuggest";
       var suggest = jQInput.autocomplete(uri, {extraParams: {'pickerCallback' : pickerCallback}, matchContains: 1, minChars: 3, suggestAll: 1, delay: 50,
       onItemSelect: function (li) {
          processButtonState();
       },
-      formatResult: function (data) {
+      formatResult: function formatSuggestResult(data) {
          var end = data.indexOf("<");
          if (end > 0) {
             return data.substring(0, data.indexOf("<"));
@@ -445,7 +445,7 @@ function addSearchSuggest(clientId, containerClientId, pickerCallback, submitUri
       }
       });
 
-      suggest.bind("autoComplete", function(event, data) {
+      suggest.bind("autoComplete", function handleAutocomplete(event, data) {
          handleEnterKeySkip = true;
          setScreenProtected(true, "FIXME: palun oodake, ühendus serveriga");
          $jQ.ajax({
@@ -453,10 +453,12 @@ function addSearchSuggest(clientId, containerClientId, pickerCallback, submitUri
             url: submitUri,
             mode: 'queue',
             data: $jQ.param({'data' : data.newVal}),
-            success: function () {
+            success: function autocompleteSuccess(responseText) {
                if (autoCompleteCallback) {
                   autoCompleteCallback.call(data.newVal);
                }
+               ajaxSuccess(responseText, clientId, containerClientId);
+               setScreenProtected(false);
             },
             error: ajaxError,
             dataType: 'text'
@@ -1128,8 +1130,8 @@ function initWithScreenProtected() {
       var input = $jQ(this);
       var filter = input.prev();
       var filterValue;
-      if (filter != null && filter.attr('value') != undefined) {
-         filterValue = filter.attr('value');
+      if (filter != null && filter.val() != undefined) {
+         filterValue = filter.val();
       }
 
       var tbody = input.closest('tbody');
@@ -1148,14 +1150,14 @@ function initWithScreenProtected() {
          select.children('option').each(function (i) {
             var option = $jQ(this);
             if (option.text().toLowerCase().indexOf(inputValue.toLowerCase()) < 0) {
-               option.attr('disabled', 'disabled').hide();
+               option.prop('disabled', 'disabled').hide();
                option.wrap('<span />').hide();
             }
          });
          select.children('span').each(function (i) {
             var option = $jQ(this).find('option');
             if (option.text().toLowerCase().indexOf(inputValue.toLowerCase()) > -1) {
-               option.attr('disabled', '').show();
+               option.prop('disabled', '').show();
                $jQ(this).replaceWith(option).show();
             }
          });
@@ -1706,7 +1708,7 @@ function extendCondencePlugin() {
 
 function setMinEndDate(owner, dateElem, triggerEndDateChange){
    if (dateElem.attr("class").indexOf("beginDate") < 0) return;
-   var beginDate = dateElem.attr("value");
+   var beginDate = dateElem.val();
    if (beginDate == null || beginDate.trim().length == 0) return;
    var row = dateElem.closest("tr");
    if (row == null) return;
@@ -1862,6 +1864,7 @@ function handleHtmlLoaded(context, setFocus, selects) {
       prevText: '',
       yearRange: '-100:+100',
       duration: '',
+      showAnim: '',
       onSelect: function( selectedDate ) {
          var dateElem = jQuery(this);
          dateElem.trigger("change");
@@ -1887,7 +1890,7 @@ function handleHtmlLoaded(context, setFocus, selects) {
             var selectorId = selector.attr("id");
             var beginDate = jQuery("#" + escapeId4JQ(selectorId.replace("_DateRangePicker","")));
             var endDate = jQuery("#" + escapeId4JQ(selectorId.replace("_DateRangePicker","_EndDate")));
-            setDateFromEnum(beginDate,endDate,selector.attr("value"));
+            setDateFromEnum(beginDate,endDate,selector.val());
             beginDate.change(clearRangePicker);
             endDate.change(clearRangePicker);
             selector.change(setDateFromEnumOnChange);
@@ -2104,7 +2107,7 @@ function setDateFromEnumOnChange(){
    var selectorId = selector.attr("id");
    var beginDate = jQuery("#" + escapeId4JQ(selectorId.replace("_DateRangePicker","")));
    var endDate = jQuery("#" + escapeId4JQ(selectorId.replace("_DateRangePicker","_EndDate")));
-   setDateFromEnum(beginDate,endDate,selector.attr("value"));
+   setDateFromEnum(beginDate,endDate,selector.val());
 }
 function getEstonianWeekday(date){
    var weekday = date.getDay()-1;

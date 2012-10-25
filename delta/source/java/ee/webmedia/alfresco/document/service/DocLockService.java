@@ -25,4 +25,6 @@ public interface DocLockService extends LockService {
     String getLockOwnerIfLocked(NodeRef nodeRef);
 
     boolean isGeneratedFileDocumentLocked(NodeRef fileRef);
+
+    boolean isLockByOther(NodeRef nodeRef);
 }

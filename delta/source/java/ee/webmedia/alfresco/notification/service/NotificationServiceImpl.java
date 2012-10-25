@@ -723,7 +723,8 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     private List<Notification> processOrderAssignmentTask(Task task, List<Notification> notifications) {
-        if (!Boolean.TRUE.equals(task.getProp(WorkflowSpecificModel.Props.SEND_ORDER_ASSIGNMENT_COMPLETED_EMAIL))) {
+        Boolean sendEmail = task.getProp(WorkflowSpecificModel.Props.SEND_ORDER_ASSIGNMENT_COMPLETED_EMAIL);
+        if (sendEmail != null && !Boolean.TRUE.equals(sendEmail)) {
             return notifications;
         }
         Notification notification = setupNotification(NotificationModel.NotificationType.TASK_ORDER_ASSIGNMENT_TASK_COMPLETED);

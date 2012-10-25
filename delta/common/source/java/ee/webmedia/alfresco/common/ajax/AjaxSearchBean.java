@@ -141,7 +141,7 @@ public class AjaxSearchBean extends AjaxBean {
     }
 
     private SelectItem[] getSelectItems(FacesContext context, String callback, String contains, String filterValue) {
-        int filter = 0;
+        int filter = -1;
         if (StringUtils.isNotBlank(filterValue) && !"undefined".equals(filterValue)) {
             filter = Integer.parseInt(filterValue);
         }

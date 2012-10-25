@@ -413,7 +413,9 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
                 return node.getProperties().get(WorkflowSpecificModel.Props.RESOLUTION);
             }
             if (getParent() == null) {
-                return null;
+                // if it occurs that task workflowResolution property is not valid value here (although it should be),
+                // don't load entire workflow, but query workflow resolution property from nodeService
+                return node.getProperties().get(WorkflowSpecificModel.Props.WORKFLOW_RESOLUTION);
             }
             return getParent().getNode().getProperties().get(WorkflowSpecificModel.Props.RESOLUTION);
         }

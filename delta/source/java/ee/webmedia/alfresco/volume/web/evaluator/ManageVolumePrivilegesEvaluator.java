@@ -1,9 +1,8 @@
 package ee.webmedia.alfresco.volume.web.evaluator;
 
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
+import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
-
-import ee.webmedia.alfresco.volume.model.Volume;
 
 /**
  * Evaluator, that evaluates to true if privileges management button is visible
@@ -15,7 +14,12 @@ public class ManageVolumePrivilegesEvaluator extends BaseActionEvaluator {
 
     @Override
     public boolean evaluate(Object obj) {
-        return !(((Volume) obj).getNode() instanceof TransientNode);
+        return evaluate((Node) obj);
+    }
+
+    @Override
+    public boolean evaluate(Node node) {
+        return !(node instanceof TransientNode);
     }
 
 }

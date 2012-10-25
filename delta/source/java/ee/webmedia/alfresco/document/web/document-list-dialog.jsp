@@ -14,7 +14,7 @@
 
 $jQ(document).ready(function(){
    $jQ(".selectAllHeader").change(function() {
-      $jQ(".headerSelectable").attr('checked',$jQ(this).attr('checked'));
+      $jQ(".headerSelectable").prop('checked',$jQ(this).prop('checked'));
    });
 });
 

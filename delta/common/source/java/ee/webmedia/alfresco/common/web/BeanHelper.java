@@ -53,6 +53,8 @@ import ee.webmedia.alfresco.docadmin.web.DynamicTypeDetailsDialog;
 import ee.webmedia.alfresco.docadmin.web.DynamicTypeDetailsDialog.DynTypeDialogSnapshot;
 import ee.webmedia.alfresco.docadmin.web.FieldDetailsDialog;
 import ee.webmedia.alfresco.docadmin.web.FieldGroupDetailsDialog;
+import ee.webmedia.alfresco.docconfig.generator.systematic.UserContactRelatedGroupGenerator;
+import ee.webmedia.alfresco.docconfig.generator.systematic.UserContactTableGenerator;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
 import ee.webmedia.alfresco.docconfig.service.UserContactMappingService;
 import ee.webmedia.alfresco.docconfig.web.PropertySheetStateBean;
@@ -382,6 +384,14 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static DisableFocusingBean getDisableFocusingBean() {
         return getSpringBean(DisableFocusingBean.class, DisableFocusingBean.BEAN_NAME);
+    }
+
+    public static UserContactRelatedGroupGenerator getUserContactRelatedGroupGenerator() {
+        return getSpringBean(UserContactRelatedGroupGenerator.class, UserContactRelatedGroupGenerator.BEAN_NAME);
+    }
+
+    public static UserContactTableGenerator getUserContactTableGenerator() {
+        return getSpringBean(UserContactTableGenerator.class, UserContactTableGenerator.BEAN_NAME);
     }
 
     // END: JSF web beans

@@ -53,6 +53,7 @@ import ee.webmedia.alfresco.utils.RepoUtil;
  */
 public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
 
+    public static final String BEAN_NAME = "userContactTableGenerator";
     private NamespaceService namespaceService;
     private UserContactMappingService userContactMappingService;
     private ClassificatorService classificatorService;

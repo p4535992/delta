@@ -98,10 +98,10 @@ public class ClassificatorDetailsDialog extends BaseDialogBean {
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         if (RepoUtil.isUnsaved(classificatorNode)) {
-            BeanHelper.getClassificatorService().saveClassificatorNode(classificatorNode);
+            NodeRef classificatorRef = BeanHelper.getClassificatorService().saveClassificatorNode(classificatorNode);
             MessageUtil.addInfoMessage("save_success");
-            resetData();
-            return outcome;
+            reloadSavedData(classificatorRef);
+            return null;
         }
         String validationMessage;
         final Set<String> messages = new HashSet<String>(3);
@@ -139,14 +139,19 @@ public class ClassificatorDetailsDialog extends BaseDialogBean {
             for (String message : messages) {
                 MessageUtil.addErrorMessage(message);
             }
-            outcome = null;
-            super.isFinished = false;
         } else {
             BeanHelper.getClassificatorService().updateClassificatorValues(selectedClassificator, classificatorNode, originalValues, classificatorValues, addedClassificatorValues);
-            resetData();
+            reloadSavedData(selectedClassificator.getNodeRef());
             MessageUtil.addInfoMessage("save_success");
         }
-        return outcome;
+        return null;
+    }
+
+    private void reloadSavedData(NodeRef classificatorRef) {
+        resetData();
+        selectedClassificator = BeanHelper.getClassificatorService().getClassificatorByNodeRef(classificatorRef);
+        classificatorNode = new Node(classificatorRef);
+        loadClassificatorValues();
     }
 
     @Override

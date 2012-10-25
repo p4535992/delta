@@ -503,8 +503,13 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         public void addStateHolder(String key, PropertySheetStateHolder stateHolder) {
             Assert.notNull(key, "key");
             Map<String, PropertySheetStateHolder> stateHolders = config.getStateHolders();
-            Assert.isTrue(!stateHolders.containsKey(key));
+            Assert.isTrue(!stateHolders.containsKey(key), "Stateholder already exists for " + key);
             stateHolders.put(key, stateHolder);
+        }
+
+        @Override
+        public boolean hasStateHolder(String key) {
+            return config.getStateHolders().containsKey(key);
         }
 
     }

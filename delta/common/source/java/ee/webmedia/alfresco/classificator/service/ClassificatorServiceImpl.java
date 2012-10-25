@@ -230,7 +230,7 @@ public class ClassificatorServiceImpl implements ClassificatorService {
 
     private List<ClassificatorValue> getAllClassificatorValues(final NodeRef classificatorRef) {
         List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(classificatorRef, ClassificatorModel.Associations.CLASSIFICATOR_VALUE,
-                    RegexQNamePattern.MATCH_ALL);
+                RegexQNamePattern.MATCH_ALL);
         List<ClassificatorValue> classificatorValues = new ArrayList<ClassificatorValue>(childRefs.size());
         for (ChildAssociationRef childRef : childRefs) {
             ClassificatorValue clv = new ClassificatorValue();
@@ -287,7 +287,7 @@ public class ClassificatorServiceImpl implements ClassificatorService {
                         joinQueryPartsOr(
                                 generateTypeQuery(DocumentAdminModel.Types.FIELD)
                                 , generateTypeQuery(DocumentAdminModel.Types.FIELD_DEFINITION)
-                                )
+                        )
                         , generatePropertyExactQuery(DocumentAdminModel.Props.CLASSIFICATOR, classificatorName, false))
                 );
         return used;
@@ -415,15 +415,15 @@ public class ClassificatorServiceImpl implements ClassificatorService {
     }
 
     @Override
-    public void saveClassificatorNode(Node classificatorNode) {
+    public NodeRef saveClassificatorNode(Node classificatorNode) {
         Map<QName, Serializable> propsMap = RepoUtil.toQNameProperties(classificatorNode.getProperties());
         String newName = (String) propsMap.get(ClassificatorModel.Props.CLASSIFICATOR_NAME);
         validateNewClassifName(newName);
-        nodeService.createNode(getClassificatorRoot(),
+        return nodeService.createNode(getClassificatorRoot(),
                 ClassificatorModel.Associations.CLASSIFICATOR,
                 getAssocName(newName),
                 ClassificatorModel.Types.CLASSIFICATOR,
-                    propsMap).getChildRef();
+                propsMap).getChildRef();
     }
 
     private void validateNewClassifName(String newName) {

@@ -52,7 +52,7 @@ $jQ(document).ready(function() {
       var isChecked = jqCheckBox.is(":checked");
       var byClassSelector = "." + getAllClasses(jqCheckBox).join('.');
       var curGroupCurPermCBs = $jQ(byClassSelector + ":enabled", jqCheckBox.closest("tbody"));
-      curGroupCurPermCBs.attr('checked', isChecked);
+      curGroupCurPermCBs.prop('checked', isChecked);
       curGroupCurPermCBs.each(function(index) {
          if (this != originalCheckBox) {
             $jQ(this).change();
@@ -76,7 +76,7 @@ $jQ(document).ready(function() {
       // rest of this method used to be following 3 lines, but they are 20 times slower than next 25 lines
       // var byClassSelector = "." + classes.join('.');
       // var relatedCBs = $jQ(byClassSelector + ":enabled", privilegesTable);
-      // relatedCBs.attr('checked', isChecked);
+      // relatedCBs.prop('checked', isChecked);
       var user = null;
       var permission = null;
       for ( var i in classes) {
@@ -98,7 +98,7 @@ $jQ(document).ready(function() {
             if (this != curCBRowEl) {
                var otherGroupSameUserRow = $jQ(this);
                var relatedCB = otherGroupSameUserRow.find("." + permission + ":enabled");
-               relatedCB.attr('checked', isChecked);
+               relatedCB.prop('checked', isChecked);
                addDependantPrivileges(relatedCB);
             }
          });
@@ -154,7 +154,7 @@ $jQ(document).ready(function() {
                allChecked = false;
             }
          }
-         groupPermissionHeaderCB.attr('checked', allChecked);
+         groupPermissionHeaderCB.prop('checked', allChecked);
       });
    }
 
@@ -183,7 +183,7 @@ $jQ(document).ready(function() {
                      var privToUpdate = privName[privToUpdateIndex];
                      var relatedPermCBToUpdate = curCB.closest("tr").find("td input[type='checkbox'].permission_" + privToUpdate + ":enabled");
                      if (!relatedPermCBToUpdate.is(":checked")) {
-                        relatedPermCBToUpdate.attr('checked', true);
+                        relatedPermCBToUpdate.prop('checked', true);
                      }
                   }
                }

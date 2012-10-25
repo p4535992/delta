@@ -179,9 +179,10 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
             if (object instanceof Task) {
                 Task task = (Task) event.getObject();
                 if (task.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK) && task.isStatus(Status.FINISHED)) {
+                    Boolean sendEmail = task.getProp(WorkflowSpecificModel.Props.SEND_ORDER_ASSIGNMENT_COMPLETED_EMAIL);
                     if (initiatingTask == null || initiatingTask.getNodeRef().equals(task.getNodeRef())
                             || !initiatingTask.getParent().getNodeRef().equals(task.getParent().getNodeRef())
-                            || !Boolean.TRUE.equals(task.getProp(WorkflowSpecificModel.Props.SEND_ORDER_ASSIGNMENT_COMPLETED_EMAIL))) {
+                            || (sendEmail != null && !Boolean.TRUE.equals(sendEmail))) {
                         continue;
                     }
                 }
@@ -197,9 +198,10 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
             Task task = (Task) event.getObject();
             if (task.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK) && task.isStatus(Status.FINISHED)) {
                 Task initiatingTask = queue.getParameter(WorkflowQueueParameter.ORDER_ASSIGNMENT_FINISH_TRIGGERING_TASK);
+                Boolean sendEmail = task.getProp(WorkflowSpecificModel.Props.SEND_ORDER_ASSIGNMENT_COMPLETED_EMAIL);
                 if (initiatingTask == null || initiatingTask.getNodeRef().equals(task.getNodeRef())
                         || !initiatingTask.getParent().getNodeRef().equals(task.getParent().getNodeRef())
-                        || !Boolean.TRUE.equals(task.getProp(WorkflowSpecificModel.Props.SEND_ORDER_ASSIGNMENT_COMPLETED_EMAIL))) {
+                        || (sendEmail != null && !Boolean.TRUE.equals(sendEmail))) {
                     sendNotifications = false;
                 }
             }

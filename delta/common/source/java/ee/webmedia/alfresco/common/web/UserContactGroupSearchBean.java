@@ -15,6 +15,7 @@ import javax.faces.model.SelectItem;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.util.Pair;
 import org.alfresco.web.ui.common.component.PickerSearchParams;
+import org.apache.commons.lang.ArrayUtils;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.user.model.Authority;
@@ -34,6 +35,7 @@ public class UserContactGroupSearchBean implements Serializable {
     private SelectItem[] usersContactsFilters;
     private SelectItem[] usersGroupsContactsGroupsFilters;
 
+    public static final int USERS_AND_CONTACTS_FILTER = -1;
     public static final int USERS_FILTER = 0;
     public static final int USER_GROUPS_FILTER = 1;
     public static final int CONTACTS_FILTER = 2;
@@ -135,6 +137,8 @@ public class UserContactGroupSearchBean implements Serializable {
             return BeanHelper.getAddressbookSearchBean().searchContacts(params);
         } else if (params.isFilterIndex(CONTACT_GROUPS_FILTER)) {
             return BeanHelper.getAddressbookSearchBean().searchContactGroups(params);
+        } else if (params.isFilterIndex(USERS_AND_CONTACTS_FILTER)) {
+            return (SelectItem[]) ArrayUtils.addAll(BeanHelper.getUserListDialog().searchUsers(params), BeanHelper.getAddressbookSearchBean().searchContacts(params));
         }
         throw new RuntimeException("filterIndex out of range: " + params.getFilterIndex());
     }

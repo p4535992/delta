@@ -23,7 +23,7 @@
    <%-- Classificator Values List --%>
    <a:richList id="classificatorsDetailsList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow"
       altRowStyleClass="recordSetRowAlt" width="100%" value="#{ClassificatorDetailsDialog.classificatorValues}" var="clValue" initialSortColumn="order"
-      binding="#{ClassificatorDetailsDialog.richList}">
+      binding="#{ClassificatorDetailsDialog.richList}" refreshOnBind="true">
 
       <%-- Name column --%>
       <a:column id="col1">

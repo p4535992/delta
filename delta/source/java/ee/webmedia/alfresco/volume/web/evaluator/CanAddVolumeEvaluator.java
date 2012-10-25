@@ -19,11 +19,6 @@ public class CanAddVolumeEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 0L;
 
     @Override
-    public boolean evaluate(Object obj) {
-        throw new RuntimeException("method evaluate(Object obj) is unimplemented");
-    }
-
-    @Override
     public boolean evaluate(Node node) {
         String status = (String) node.getProperties().get(SeriesModel.Props.STATUS);
         @SuppressWarnings("unchecked")

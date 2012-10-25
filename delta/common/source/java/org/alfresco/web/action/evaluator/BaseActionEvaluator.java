@@ -34,26 +34,13 @@ import org.alfresco.web.bean.repository.Node;
  */
 public class BaseActionEvaluator implements ActionEvaluator
 {
-   public boolean evaluate(Node node)
-   {
-      // Forbid the action by default
-      
-      return false;
-   }
-   
-   public boolean evaluate(Object obj)
-   {
-      // if a Node object is passed to this method call
-      // the explicit evaluate(Node) method otherwise
-      // forbid the action by default.
-      
-      if (obj instanceof Node)
-      {
-         return evaluate((Node)obj);
-      }
-      else
-      {
-         return false;
-      }
-   }
+    
+    public boolean evaluate(Node node) {
+        return evaluate((Object) node);
+    }
+
+    public boolean evaluate(Object obj) {
+        return evaluate((Node) obj);
+    }
+    
 }

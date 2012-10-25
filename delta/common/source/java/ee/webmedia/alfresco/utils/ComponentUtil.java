@@ -831,7 +831,7 @@ public class ComponentUtil {
 
         String clientId = child.getClientId(context);
         // Strip method binding delimiters for javascript
-        if (pickerCallback.contains("#{")) {
+        if (StringUtils.isNotBlank(pickerCallback) && pickerCallback.contains("#{")) {
             pickerCallback = pickerCallback.substring("#{".length(), pickerCallback.length() - 1);
         }
 
@@ -1157,6 +1157,18 @@ public class ComponentUtil {
                 return component;
             }
             component = component.getParent();
+        }
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T extends UIComponent> T findParentWithClass(FacesContext context, UIComponent component, Class<T> clazz) {
+        UIComponent parent = component.getParent();
+        while (parent != null) {
+            if (parent.getClass().isAssignableFrom(clazz)) {
+                return (T) parent;
+            }
+            parent = parent.getParent();
         }
         return null;
     }

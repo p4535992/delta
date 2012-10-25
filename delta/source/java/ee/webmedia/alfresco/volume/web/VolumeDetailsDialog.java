@@ -190,14 +190,14 @@ public class VolumeDetailsDialog extends BaseDialogBean {
 
     @Override
     public Object getActionsContext() {
-        return currentEntry;
+        return currentEntry != null ? currentEntry.getNode() : null;
     }
 
     public Boolean disableContainsCases() {
         return !isNew() && (DocListUnitStatus.CLOSED.equals(currentEntry.getStatus())
-                            || DocListUnitStatus.DESTROYED.equals(currentEntry.getStatus())
-                            || getCaseService().getCasesCountByVolume(currentEntry.getNode().getNodeRef()) > 0
-                            || getDocumentService().getDocumentsCountByVolumeOrCase(currentEntry.getNode().getNodeRef()) > 0);
+                || DocListUnitStatus.DESTROYED.equals(currentEntry.getStatus())
+                || getCaseService().getCasesCountByVolume(currentEntry.getNode().getNodeRef()) > 0
+                || getDocumentService().getDocumentsCountByVolumeOrCase(currentEntry.getNode().getNodeRef()) > 0);
     }
 
     public Boolean disableCasesCreatableByUser() {

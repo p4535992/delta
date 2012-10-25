@@ -1,12 +1,25 @@
 package ee.webmedia.alfresco.docconfig.generator.fieldtype;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserContactRelatedGroupGenerator;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserContactTableGenerator;
+
+import java.util.Map;
+
+import org.alfresco.service.namespace.QName;
+import org.springframework.util.Assert;
+
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
+import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
 import ee.webmedia.alfresco.docadmin.service.Field;
+import ee.webmedia.alfresco.docadmin.service.FieldGroup;
+import ee.webmedia.alfresco.docconfig.generator.BaseSystematicFieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.BaseTypeFieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
+import ee.webmedia.alfresco.docconfig.generator.systematic.UserContactRelatedGroupGenerator.UserContactRelatedGroupState;
+import ee.webmedia.alfresco.docconfig.service.UserContactMappingCode;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
@@ -21,8 +34,6 @@ public class UserContactGenerator extends BaseTypeFieldGenerator {
 
     // TODO in some cases the filter index resets after search
 
-    // TODO fix autocomplete!
-
     @Override
     public void generateField(Field field, GeneratorResults generatorResults) {
         final ItemConfigVO item = generatorResults.getAndAddPreGeneratedItem();
@@ -31,7 +42,19 @@ public class UserContactGenerator extends BaseTypeFieldGenerator {
         item.setEditable(true);
         item.setPickerCallback("#{UserContactGroupSearchBean.searchAllWithAdminsAndDocManagers}");
         item.setPreprocessCallback("#{UserContactGroupSearchBean.preprocessResultsToNames}");
-        item.setSearchSuggestDisabled(true); // TODO temporary
+        String stateHolderKey = field.getFieldId();
+        boolean handledById = field.getOriginalFieldId() != null && (
+                getUserContactRelatedGroupGenerator().handlesOriginalFieldId(field.getOriginalFieldId())
+                || getUserContactTableGenerator().handlesOriginalFieldId(field.getOriginalFieldId()));
+        boolean inSystematicGroup = (field.getParent() instanceof FieldGroup) && ((FieldGroup) field.getParent()).isSystematic();
+        boolean itemUnprocessed = !item.getCustomAttributes().containsKey(Search.SETTER_CALLBACK) && !generatorResults.hasStateHolder(stateHolderKey);
+        if ((!handledById || handledById && !inSystematicGroup) && itemUnprocessed) {
+            item.setSetterCallback(BaseSystematicFieldGenerator.getBindingName("setData", stateHolderKey));
+            item.setSetterCallbackTakesNode(true);
+            Map<QName, UserContactMappingCode> mapping = BeanHelper.getUserContactMappingService().getFieldIdsMappingOrNull(field);
+            Assert.notNull(mapping, "Couldn't find mapping for " + field.getFieldId());
+            generatorResults.addStateHolder(stateHolderKey, new UserContactRelatedGroupState(mapping));
+        }
         ComponentUtil.addRecipientGrouping(field, item, BeanHelper.getNamespaceService());
         switch (field.getFieldTypeEnum()) {
         case USERS:

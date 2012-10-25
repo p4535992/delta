@@ -24,6 +24,7 @@
  */
 package ee.webmedia.alfresco.webdav;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocLockService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getMsoService;
 
 import java.io.BufferedInputStream;
@@ -50,6 +51,7 @@ import org.alfresco.repo.webdav.WebDAVMethod;
 import org.alfresco.repo.webdav.WebDAVServerException;
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
+import org.alfresco.service.cmr.lock.LockStatus;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
@@ -143,6 +145,13 @@ public class PutMethod extends WebDAVMethod {
         }
         NodeRef fileRef = contentNodeInfo.getNodeRef();
         WebDAVCustomHelper.checkDocumentFileWritePermission(fileRef);
+
+        // Require the file to be locked for current user
+        LockStatus lockStatus = getDocLockService().getLockStatus(fileRef);
+        if (!LockStatus.LOCK_OWNER.equals(lockStatus)) {
+            log.info("Not saving " + fileRef + ". LockStatus is " + lockStatus.name() + ", lock owner " + getDocLockService().getLockOwnerIfLocked(fileRef));
+            throw new WebDAVServerException(WebDAV.WEBDAV_SC_LOCKED);
+        }
 
         if (m_request.getContentLength() <= 0) {
             StringBuilder s = new StringBuilder("Client is trying to save zero-length content, ignoring and returning success; request headers:");

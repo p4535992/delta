@@ -23,12 +23,19 @@
             var confirmSetInheritance = '<%= MessageUtil.getMessageAndEscapeJS("manage_permissions_confirm_setInheritance") %>';
             var msg = checked ? confirmSetInheritance : confirmRemoveInheritance;
             if(confirm(msg)){
-	           clickFinishButton();
+               clickFinishButton();
             } else {
-               jQCB.attr('checked', !checked);
+               jQCB.prop('checked', !checked);
             }
          }
       }
+      
+      $jQ(document).ready(function() {
+         $jQ('.saveIfNeeded').change(function() {
+            saveIfNeeded(this);
+         });
+      });
+
    </script>
    <script type="text/javascript" src="<%=request.getContextPath()%>/scripts/manage-inheritable-privileges-dialog.js?r=<%=PageTag.urlSuffix%>"> </script>
 </f:verbatim>
@@ -54,7 +61,7 @@
    documents without view-permission are visible
     --%>
    <h:outputText value="#{ManageInheritablePrivilegesDialog.typeHandler.checkboxLabel}" />
-   <h:selectBooleanCheckbox value="#{ManageInheritablePrivilegesDialog.typeHandler.checkboxValue}" onchange="saveIfNeeded(this)" valueChangeListener="#{ManageInheritablePrivilegesDialog.typeHandler.checkboxChanged}" disabled="#{!ManageInheritablePrivilegesDialog.typeHandler.editable}" />
+   <h:selectBooleanCheckbox value="#{ManageInheritablePrivilegesDialog.typeHandler.checkboxValue}" styleClass="saveIfNeeded" valueChangeListener="#{ManageInheritablePrivilegesDialog.typeHandler.checkboxChanged}" disabled="#{!ManageInheritablePrivilegesDialog.typeHandler.editable}" />
 </h:panelGroup>
 
    <a:richList id="permissions-list" binding="#{ManageInheritablePrivilegesDialog.permissionsRichList}" value="#{ManageInheritablePrivilegesDialog.userPrivilegesRows}" var="r" refreshOnBind="true"

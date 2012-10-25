@@ -86,17 +86,19 @@ public class PageTag extends TagSupport
                 "/scripts/jquery/jquery" + (log.isDebugEnabled() ? "" : "-min") + ".js",
                 "/scripts/jquery/jquery.scrollTo" + (log.isDebugEnabled() ? "" : "-min") + ".js",
                                 // jQuery UI
-                "/scripts/jquery/jquery.ui.core.js",
-                "/scripts/jquery/ui.datepicker.js",
+                "/scripts/jquery/jquery.ui.core.min.js",
+                "/scripts/jquery/jquery.ui.datepicker.min.js",
+                "/scripts/jquery/jquery.ui.datepicker-et.min.js",
                                 // jQuery Plugins
                 "/scripts/jquery/jquery.textarea-expander.js",
                 "/scripts/jquery/jquery.tooltip.js",
                 "/scripts/jquery/jquery.hoverIntent.js",
                 "/scripts/jquery/jquery.textmetrix.js",
                 "/scripts/jquery/jquery.autocomplete.js",
-                "/scripts/jquery/jquery.ui.widget.js",
-                "/scripts/jquery/jquery.ui.position.js",                
-                "/scripts/jquery/jquery.ui.autocomplete.js",                
+                "/scripts/jquery/jquery.ui.widget.min.js",
+                "/scripts/jquery/jquery.ui.position.min.js",
+                "/scripts/jquery/jquery.ui.menu.js",
+                "/scripts/jquery/jquery.ui.autocomplete.js",
                 "/scripts/jquery/jquery.jLog-min.js",
                 "/scripts/jquery/jquery.condense.js",
                 "/scripts/jquery/jquery.ajaxqueue.js",
@@ -141,7 +143,11 @@ public class PageTag extends TagSupport
       "/css/main.css",
       "/css/picker.css",
       "/scripts/jquery/jquery.autocomplete.css",
-      "/scripts/jquery/jquery.ui.autocomplete.css",
+      "/scripts/jquery/jquery.ui.core.min.css",
+      "/scripts/jquery/jquery.ui.datepicker.min.css",
+      "/scripts/jquery/jquery.ui.menu.min.css",
+      "/scripts/jquery/jquery.ui.autocomplete.min.css",
+      "/scripts/jquery/jquery.ui.theme.min.css",
       "/css/styles.css"
    };
 

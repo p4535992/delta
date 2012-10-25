@@ -108,6 +108,7 @@ public interface WorkflowSpecificModel {
         QName CREATOR_EMAIL = QName.createQName(URI, "creatorEmail");
         QName PROPOSED_DUE_DATE = QName.createQName(URI, "proposedDueDate");
         QName CONFIRMED_DUE_DATE = QName.createQName(URI, "confirmedDueDate");
+        /** Null value should always be treated as TRUE */
         QName SEND_ORDER_ASSIGNMENT_COMPLETED_EMAIL = QName.createQName(URI, "sendOrderAssignmentCompletedEmail");
         QName FILE_VERSIONS = QName.createQName(URI, "fileVersions");
     }
