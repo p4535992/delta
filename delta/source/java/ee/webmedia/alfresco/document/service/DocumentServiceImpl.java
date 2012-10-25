@@ -2530,14 +2530,14 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
 
     @Override
     public void addFavorite(NodeRef docRef) {
-        addFavorite(docRef, null);
+        addFavorite(docRef, null, true);
     }
 
     @Override
-    public void addFavorite(NodeRef docRef, String favDirName) {
+    public boolean addFavorite(NodeRef docRef, String favDirName, boolean updateMenu) {
 
         if (isFavorite(docRef) != null) {
-            return;
+            return false;
         }
         NodeRef user = userService.getUser(AuthenticationUtil.getRunAsUser()).getNodeRef();
         if (!nodeService.hasAspect(user, DocumentCommonModel.Aspects.FAVORITE_CONTAINER)) {
@@ -2557,10 +2557,13 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                 favDir = favDirs.get(0).getChildRef();
             }
             nodeService.createAssociation(favDir, docRef, DocumentCommonModel.Assocs.FAVORITE);
-            menuService.process(BeanHelper.getMenuBean().getMenu(), false, true);
+            if (updateMenu) {
+                menuService.process(BeanHelper.getMenuBean().getMenu(), false, true);
+            }
         } else {
             nodeService.createAssociation(user, docRef, DocumentCommonModel.Assocs.FAVORITE);
         }
+        return true;
     }
 
     @Override

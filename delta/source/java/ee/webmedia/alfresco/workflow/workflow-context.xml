@@ -537,6 +537,21 @@
       </property>
    </bean>    
 
+   <bean id="addTaskPrivilegesToDocumentUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.AddTaskPrivilegesToDocumentUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="false" /><!-- executed from node-browser manually -->
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+      <property name="privilegeService" ref="PrivilegeService"/>
+      <property name="fileService" ref="FileService"/>
+      <property name="workflowService" ref="WmWorkflowService"/>
+      <property name="documentDynamicService" ref="DocumentDynamicService"/>
+   </bean>
+
    <!-- START: web beans: -->
       
    <bean id="DvkWorkflowExporter" class="ee.webmedia.alfresco.workflow.web.DvkWorkflowExporter" scope="session" />

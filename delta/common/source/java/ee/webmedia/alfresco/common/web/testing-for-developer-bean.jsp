@@ -87,6 +87,56 @@
 <h:commandButton id="docList_updateDocCounters" value="Uuenda dokumentide loendureid" type="submit" 
       actionListener="#{FunctionsListDialog.updateDocCounters}" />
 <f:verbatim><hr/></f:verbatim>
+<h:outputText value="Dokumentidele õiguste lisamine lähtuvalt tööülesannetest"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Kasutajate isikukoodid (tühikute või reavahetustega eraldatud): "/>
+<h:inputTextarea id="addTaskPrivilegesToDocumentUpdaterValidUsers" value="#{addTaskPrivilegesToDocumentUpdater.validUsers}" rows="5" cols="30" styleClass="expand19-200" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Mitu tööülesannet ühes transaktsioonis töödelda: "/>
+<h:inputText id="addTaskPrivilegesToDocumentUpdaterBatchSize" value="#{addTaskPrivilegesToDocumentUpdater.batchSize}" converter="javax.faces.Integer" size="4" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startAddTaskPrivilegesToDocumentUpdater" value="Käivita õiguste lisamine" type="submit"
+   actionListener="#{addTaskPrivilegesToDocumentUpdater.executeUpdaterInBackground}"
+   rendered="#{addTaskPrivilegesToDocumentUpdater.updaterRunning == false}" />
+<h:commandButton id="stopAddTaskPrivilegesToDocumentUpdater" value="Peata õiguste lisamine" type="submit"
+   actionListener="#{addTaskPrivilegesToDocumentUpdater.stopUpdater}"
+   rendered="#{addTaskPrivilegesToDocumentUpdater.updaterRunning == true}"
+   disabled="#{addTaskPrivilegesToDocumentUpdater.updaterStopping == true}" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Paus pärast iga tööülesande töötlemist (ms): "/>
+<h:inputText id="addTaskPrivilegesToDocumentUpdaterSleepTime" value="#{addTaskPrivilegesToDocumentUpdater.sleepTime}" converter="javax.faces.Integer" size="4" />
+<h:commandButton id="updateAddTaskPrivilegesToDocumentUpdaterSleepTime" value="Uuenda" type="submit"
+      actionListener="#{addTaskPrivilegesToDocumentUpdater.updateSleepTime}" />
+
+<f:verbatim><hr/></f:verbatim>
+
+<h:outputText value="Restore data _from_ Delta specified by the following database and contentstore folder"/>
+<f:verbatim><br/><br/></f:verbatim>
+<h:outputText value="db.name="/>
+<h:inputText value="#{UserDataRestoreService.dbName}" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="db.username="/>
+<h:inputText value="#{UserDataRestoreService.dbUsername}" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="db.password="/>
+<h:inputText value="#{UserDataRestoreService.dbPassword}" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="db.host="/>
+<h:inputText value="#{UserDataRestoreService.dbHost}" size="60" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="db.port="/>
+<h:inputText value="#{UserDataRestoreService.dbPort}" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="dir.contentstore="/>
+<h:inputText value="#{UserDataRestoreService.otherContentstore}" size="60" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="kasutajate isikukoodid (tühikute või reavahetustega eraldatud): "/>
+<h:inputTextarea id="validUsers" value="#{UserDataRestoreService.validUsers}" rows="5" cols="30" styleClass="expand19-200" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startUserDataRestore" value="executeUserDataRestore" type="submit"
+   actionListener="#{UserDataRestoreService.execute}" />
+
+<f:verbatim><hr/></f:verbatim>
 
 <h:outputText value="Faili asukoht serveri kõvakettal, millest DVK dokument importida: "/>
 <f:verbatim><br/></f:verbatim>
