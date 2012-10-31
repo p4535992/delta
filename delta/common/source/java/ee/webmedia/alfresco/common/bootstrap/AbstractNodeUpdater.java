@@ -175,36 +175,49 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         return true;
     }
 
+    protected boolean usePreviousInputState() {
+        return usePreviousState();
+    }
+
+    protected boolean usePreviousCompletedState() {
+        return usePreviousState();
+    }
+
     protected void executeUpdater() throws Exception {
-        log.info("Starting node updater");
-        nodesFile = new File(inputFolder, getNodesCsvFileName());
-        nodes = null;
-        if (usePreviousState()) {
-            nodes = loadNodesFromFile(nodesFile, false);
-        }
-        if (nodes == null) {
-            nodes = loadNodesFromRepo();
+        try {
+            log.info("Starting node updater");
+            nodesFile = new File(inputFolder, getNodesCsvFileName());
+            nodes = null;
+            if (usePreviousInputState()) {
+                nodes = loadNodesFromFile(nodesFile, false);
+            }
             if (nodes == null) {
-                log.info("Cancelling node update");
-                return;
+                nodes = loadNodesFromRepo();
+                if (nodes == null) {
+                    log.info("Cancelling node update");
+                    return;
+                }
+                writeNodesToFile(nodesFile, nodes);
             }
-            writeNodesToFile(nodesFile, nodes);
-        }
-        completedNodesFile = new File(inputFolder, getCompletedNodesCsvFileName());
-        completedNodes = null;
-        if (usePreviousState()) {
-            completedNodes = loadNodesFromFile(completedNodesFile, true);
-        } else {
-            if (completedNodesFile.exists()) {
-                log.info("Completed nodes file exists, deleting: " + completedNodesFile.getAbsolutePath());
-                Assert.isTrue(completedNodesFile.delete());
+            completedNodesFile = new File(inputFolder, getCompletedNodesCsvFileName());
+            completedNodes = null;
+            if (usePreviousCompletedState()) {
+                completedNodes = loadNodesFromFile(completedNodesFile, true);
+            } else {
+                if (completedNodesFile.exists()) {
+                    log.info("Completed nodes file exists, deleting: " + completedNodesFile.getAbsolutePath());
+                    Assert.isTrue(completedNodesFile.delete());
+                }
             }
-        }
-        if (completedNodes != null) {
-            nodes.removeAll(completedNodes);
-            log.info("Removed " + completedNodes.size() + " completed nodes from nodes list, " + nodes.size() + " nodes remained");
-        } else {
-            completedNodes = new HashSet<NodeRef>();
+            if (completedNodes != null) {
+                nodes.removeAll(completedNodes);
+                log.info("Removed " + completedNodes.size() + " completed nodes from nodes list, " + nodes.size() + " nodes remained");
+            } else {
+                completedNodes = new HashSet<NodeRef>();
+            }
+        } catch (Exception e) {
+            stopFlag.set(true);
+            throw e;
         }
         log.info("Starting to update " + nodes.size() + " nodes");
         if (nodes.size() > 0) {
@@ -321,7 +334,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
     }
 
     private void updateNodesBatch(final List<NodeRef> batchList) throws Exception {
-        final List<String[]> batchInfos = new ArrayList<String[]>(batchSize);
+        final List<String[]> batchInfos = new ArrayList<String[]>(batchList.size());
         for (NodeRef nodeRef : batchList) {
             if (!nodeService.exists(nodeRef)) {
                 batchInfos.add(new String[] { nodeRef.toString(), "nodeDoesNotExist" });
@@ -517,6 +530,10 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         helper.setMaxRetries(3);
         helper.setTransactionService(serviceRegistry.getTransactionService());
         return helper;
+    }
+
+    public int getBatchSize() {
+        return batchSize;
     }
 
     public void setBatchSize(int batchSize) {
