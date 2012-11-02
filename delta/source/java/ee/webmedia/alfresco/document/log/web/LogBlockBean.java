@@ -70,6 +70,7 @@ public class LogBlockBean implements DocumentDynamicBlock {
         LogFilter logFilter = new LogFilter();
         logFilter.setExcludedDescription(MessageUtil.getMessage("document_log_status_opened_not_inEditMode"));
         logFilter.setObjectId(parentRef.toString());
+        logFilter.setExactObjectId(true);
         return logFilter;
     }
 
@@ -77,6 +78,7 @@ public class LogBlockBean implements DocumentDynamicBlock {
         LogFilter logFilter = new LogFilter();
         logFilter.setExcludedDescription(MessageUtil.getMessage("applog_space_open", "%", "%"));
         logFilter.setObjectId(parentRef.toString());
+        logFilter.setExactObjectId(true);
         return logFilter;
     }
 

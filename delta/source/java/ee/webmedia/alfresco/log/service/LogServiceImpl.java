@@ -182,7 +182,8 @@ public class LogServiceImpl implements LogService, InitializingBean {
                 filterMap.put("lower(object_name) LIKE ?", "%" + filter.getObjectName().toLowerCase() + "%");
             }
             if (hasLength(filter.getObjectId())) {
-                filterMap.put("object_id LIKE ?", "%" + filter.getObjectId() + "%");
+                String sep = filter.isExactObjectId() ? "" : "%";
+                filterMap.put("object_id " + (filter.isExactObjectId() ? "=" : "LIKE") + " ?", sep + filter.getObjectId() + sep);
             }
 
             if (!filterMap.isEmpty()) {
