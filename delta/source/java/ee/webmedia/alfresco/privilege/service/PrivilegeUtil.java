@@ -53,9 +53,16 @@ public class PrivilegeUtil {
     }
 
     public static Set<String> getRequiredPrivsForInprogressTask(Task task, NodeRef docRef, FileService fileService) {
+        if (isStatus(task, Status.IN_PROGRESS)) {
+            return getRequiredPrivsForTask(task, docRef, fileService);
+        }
+        return new HashSet<String>();
+    }
+
+    public static Set<String> getRequiredPrivsForTask(Task task, NodeRef docRef, FileService fileService) {
         String taskOwnerId = task.getOwnerId();
         Set<String> requiredPrivileges = new HashSet<String>(4);
-        if (!StringUtils.isBlank(taskOwnerId) && isStatus(task, Status.IN_PROGRESS)) {
+        if (!StringUtils.isBlank(taskOwnerId)) {
             // give permissions to task owner
             boolean isSignatureTaskWith1Digidoc = false;
             boolean isSignatureTaskWithFiles = false;
