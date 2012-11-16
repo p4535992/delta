@@ -130,9 +130,13 @@ public class UserServiceImpl implements UserService {
         }
         if (!nodeService.hasAspect(personRef, ReportModel.Aspects.REPORTS_QUEUE_CONTAINER)) {
             nodeService.addAspect(personRef, ReportModel.Aspects.REPORTS_QUEUE_CONTAINER, null);
-            nodeService.createNode(personRef, ReportModel.Assocs.REPORTS_QUEUE, ReportModel.Assocs.REPORTS_QUEUE, ReportModel.Types.REPORTS_QUEUE_ROOT);
         }
-        return getReportsFolder(personRef);
+        NodeRef reportsFolder = getReportsFolder(personRef);
+        if (reportsFolder == null) {
+            reportsFolder = nodeService.createNode(personRef, ReportModel.Assocs.REPORTS_QUEUE, ReportModel.Assocs.REPORTS_QUEUE, ReportModel.Types.REPORTS_QUEUE_ROOT)
+                    .getChildRef();
+        }
+        return reportsFolder;
     }
 
     private NodeRef getReportsFolder(NodeRef userRef) {
