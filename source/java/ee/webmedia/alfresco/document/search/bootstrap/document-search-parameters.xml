@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view 
+   xmlns:view="http://www.alfresco.org/view/repository/1.0" 
+   xmlns:param="http://alfresco.webmedia.ee/model/parameters/1.0" 
+>
+
+   <param:intParameter view:childName="param:quickSearchWordsCount">
+      <view:properties>
+         <param:value>10</param:value>
+      </view:properties>
+   </param:intParameter>
+
+</view:view>

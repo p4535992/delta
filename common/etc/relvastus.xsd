@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" xmlns:relvastus="http://delta/relvastus/schemas" targetNamespace="http://delta/relvastus/schemas">
+
+   <xs:element name="otsiDokumendidParing">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="dokumendiLiik" type="xs:string" minOccurs="0" />
+            <xs:element name="dokumendiViit" type="xs:string" />
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+
+   <xs:element name="otsiDokumendidVastus">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="dokument" type="relvastus:dokument" minOccurs="0" maxOccurs="unbounded" />
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+
+   <xs:complexType name="dokument">
+      <xs:sequence>
+         <xs:element name="dokumendiLiik" type="xs:string" />
+         <xs:element name="viit" type="xs:string" />
+         <xs:element name="registreerimiseKuupaev" type="xs:date" />
+         <xs:element name="pealkiri" type="xs:string" />
+         <xs:element name="url" type="xs:string" />
+      </xs:sequence>
+   </xs:complexType>
+
+</xs:schema>

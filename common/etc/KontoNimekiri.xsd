@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns="http://www.riik.ee/schemas/e-arve/KontoNimekiri.xsd" targetNamespace="http://www.riik.ee/schemas/e-arve/KontoNimekiri.xsd" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:annotation>
+		<xs:documentation>Andmemudel asutuse kontoplaani andmete edastamiseks süsteemist süsteemi (tavaliselt raamatupidamissüsteemist dokumendihaldussüsteemi) ============================ Kuupäev: 15.09.2010 Versioon: 1.1 Autor: Itella Information AS ja Riigi Infosüsteemide Arenduskeskus Litsents: EUPL</xs:documentation>
+	</xs:annotation>
+	<xs:element name="KontoNimekiri">
+		<xs:annotation>
+			<xs:documentation>Juurelement</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="KontoInfo" maxOccurs="unbounded">
+					<xs:annotation>
+						<xs:documentation>Konto info</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="KontoInfo">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Konto" type="NormaalTekstType">
+					<xs:annotation>
+						<xs:documentation>Konto kood raamatupidamissüsteemis</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="Selgitus" type="NormaalTekstType">
+					<xs:annotation>
+						<xs:documentation>Konto selgitus, mida kuvatakse dokumendihaldussüsteemis kasutajale</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="KaibemaksuKood" type="LyhiTekstType">
+					<xs:annotation>
+						<xs:documentation>Konto poolt kasutatav käibemaksu kood (vastavalt konkreetses lahenduses kasutatavatele koodidele, see saadakse läbi käibemaksu koodide nimekirja sünkroniseerimise süsteemide vahel)</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element minOccurs="0" name="KehtibAlates" type="KuupaevType">
+					<xs:annotation>
+						<xs:documentation>Konto kehtivuse alguse kuupäev (nt konto avatakse 01.01.2011, seega pole enne seda kuupäeva mõistlik seda enam konteerimisel kasutada)</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element minOccurs="0" name="KehtibKuni" type="KuupaevType">
+					<xs:annotation>
+						<xs:documentation>Konto kehtivuse lõpu kuupäev (nt konto suletakse 01.01.2011, seega pole peale seda kuupäeva mõistlik seda enam konteerimisel kasutada)</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:simpleType name="KuupaevType">
+		<xs:annotation>
+			<xs:documentation>Kuupäev</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:date" />
+	</xs:simpleType>
+	<xs:simpleType name="LyhiTekstType">
+		<xs:annotation>
+			<xs:documentation>Lühikene tekst (kuni 20 tähemärki)</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:maxLength value="20" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="NormaalTekstType">
+		<xs:annotation>
+			<xs:documentation>Tavaline tekst (kuni 100 tähemärki)</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:maxLength value="100" />
+		</xs:restriction>
+	</xs:simpleType>
+</xs:schema>

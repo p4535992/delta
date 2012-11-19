@@ -1,0 +1,99 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <bean id="versionsModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap">
+      <property name="models">
+         <list>
+            <value>ee/webmedia/alfresco/versions/model/versionsModel.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="versionsWebClientConfigBootstrap" class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
+      <property name="configs">
+         <list>
+            <value>classpath:ee/webmedia/alfresco/versions/web/versions-web-client-config.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="versionsBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">
+      <property name="resourceBundles">
+         <list>
+            <value>ee.webmedia.alfresco.versions.web.versions-webclient</value>
+         </list>
+      </property>
+   </bean>
+
+   <!-- Override alfresco bean definition -->   
+    <bean id="versionService" class="ee.webmedia.alfresco.versions.service.VersionServiceExtImpl" init-method="initialise">
+        <property name="nodeService">
+            <ref bean="NodeService" />
+        </property>
+        <property name="dbNodeService">
+            <ref bean="mtAwareNodeService" />
+        </property>
+        <property name="versionCounterService">
+            <ref bean="versionCounterService" />
+        </property>
+        <property name="searcher">
+            <ref bean="versionSearchService" />
+        </property>
+        <property name="dictionaryService">
+            <ref bean="dictionaryService" />
+        </property>
+        <property name="policyComponent">
+            <ref bean="policyComponent" />
+        </property>
+        <property name="policyBehaviourFilter">
+            <ref bean="policyBehaviourFilter" />
+        </property>
+        <property name="permissionService">
+            <ref bean="permissionService" />
+        </property>
+        <property name="onlyUseDeprecatedV1">
+            <value>${version.store.onlyUseDeprecatedV1}</value>
+        </property>
+    </bean>
+    
+    <bean id="VersionService" class="org.springframework.aop.framework.ProxyFactoryBean">
+        <property name="proxyInterfaces">
+            <value>ee.webmedia.alfresco.versions.service.VersionServiceExt</value>
+        </property>
+        <property name="target">
+            <ref bean="versionService"/>
+        </property>
+        <property name="interceptorNames">
+            <list>
+                <idref bean="VersionService_transaction"/>
+                <idref bean="AuditMethodInterceptor"/>
+                <idref bean="exceptionTranslator"/>
+                <idref bean="VersionService_security"/>
+            </list>
+        </property>
+    </bean> 
+
+   <bean id="versionsService" class="ee.webmedia.alfresco.versions.service.VersionsServiceImpl">
+      <property name="versionServiceExt" ref="VersionService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="userService" ref="UserService" />
+      <property name="documentLogService" ref="DocumentLogService" />
+      <property name="dictionaryService" ref="DictionaryService" />
+   </bean>
+
+   <bean id="VersionsService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.versions.service.VersionsService</value>
+         </list>
+      </property>
+      <property name="target" ref="versionsService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+
+</beans>

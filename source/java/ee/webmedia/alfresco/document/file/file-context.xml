@@ -1,0 +1,60 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
+      <property name="resourceBundles">
+         <list>
+            <value>ee/webmedia/alfresco/document/file/web/file-webclient</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap">
+      <property name="models">
+         <list>
+            <value>ee/webmedia/alfresco/document/file/model/fileModel.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+      <property name="ignoreUnresolvablePlaceholders" value="true" />
+      <property name="location" value="classpath:ee/webmedia/alfresco/document/scanned/bootstrap/scanned-bootstrap.properties" />
+   </bean>
+
+   <bean class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
+      <property name="configs">
+         <list>
+            <value>classpath:ee/webmedia/alfresco/document/file/web/file-web-client-config.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="fileService" class="ee.webmedia.alfresco.document.file.service.FileServiceImpl">
+      <property name="fileFolderService" ref="FileFolderService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="userService" ref="UserService" />
+      <property name="signatureService" ref="SignatureService" />
+      <property name="authenticationService" ref="AuthenticationService" />
+      <property name="contentService" ref="ContentService" />
+      <property name="generalService" ref="GeneralService"/>
+      <property name="documentLogService" ref="DocumentLogService"/>
+      <property name="scannedFilesPath" value="${scannedFiles.rootPath}${scannedFiles.folder.name}"/>
+   </bean>
+
+   <bean id="FileService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.document.file.service.FileService</value>
+         </list>
+      </property>
+      <property name="target" ref="fileService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+
+</beans>

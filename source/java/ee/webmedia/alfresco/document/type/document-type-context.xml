@@ -1,0 +1,68 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+<!--
+   <bean parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap">
+      <property name="models">
+         <list>
+            <value>ee/webmedia/alfresco/document/type/model/documentTypeModel.xml</value>
+         </list>
+      </property>
+      <property name="labels">
+         <list>
+            <value>ee/webmedia/alfresco/document/type/model/documentType-model</value>
+         </list>
+      </property>
+   </bean>
+-->
+   <bean class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
+      <property name="configs">
+         <list>
+            <value>classpath:ee/webmedia/alfresco/document/type/web/document-type-web-client-config.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
+      <property name="resourceBundles">
+         <list>
+            <value>ee/webmedia/alfresco/document/type/web/document-type-webclient</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="documentTypeService" class="ee.webmedia.alfresco.document.type.service.DocumentTypeServiceImpl">
+      <property name="generalService" ref="GeneralService" />
+      <property name="namespaceService" ref="NamespaceService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="menuService" ref="MenuService" />
+   </bean>
+
+   <bean id="DocumentTypeService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.document.type.service.DocumentTypeService</value>
+         </list>
+      </property>
+      <property name="target" ref="documentTypeService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+
+   <bean class="ee.webmedia.alfresco.document.type.service.DocumentTypeMenuItemProcessor">
+      <property name="menuService" ref="MenuService" />
+      <property name="documentTypeService" ref="DocumentTypeService" />
+      <property name="namespaceService" ref="NamespaceService" />
+   </bean>
+
+   <!-- START: web beans: -->
+
+   <bean id="DocumentTypeDetailsDialog" class="ee.webmedia.alfresco.document.type.web.DocumentTypeDetailsDialog" scope="session" />
+
+   <!-- END: web beans: -->
+
+</beans>

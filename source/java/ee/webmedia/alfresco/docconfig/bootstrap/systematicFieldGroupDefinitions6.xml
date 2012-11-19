@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:docadmin="http://alfresco.webmedia.ee/model/document/admin/1.0">
+
+   <docadmin:fieldGroup view:childName="docadmin:leaveRequest">
+      <view:properties>
+         <docadmin:name>Puhkuse taotlemine</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:readonlyFieldsName>Palun vormistada mind</docadmin:readonlyFieldsName>
+         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>leaveType</view:value>
+               <view:value>leaveBeginDate</view:value>
+               <view:value>leaveEndDate</view:value>
+               <view:value>leaveDays</view:value>
+               <view:value>leaveWorkYear</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:leaveChange">
+      <view:properties>
+         <docadmin:name>Puhkuse muutmine</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:readonlyFieldsName>Muuta ajakava- või korraldusejärgne puhkus järgnevalt (lühendamine, pikendamine, üleviimine)</docadmin:readonlyFieldsName>
+         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>leaveInitialBeginDate</view:value>
+               <view:value>leaveInitialEndDate</view:value>
+               <view:value>leaveNewBeginDate</view:value>
+               <view:value>leaveNewEndDate</view:value>
+               <view:value>leaveChangedDays</view:value>
+               <view:value>leaveNewWorkYear</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:leaveCancel">
+      <view:properties>
+         <docadmin:name>Puhkuse tühistamine</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:readonlyFieldsName>Tühistada ajakava- või korraldusejärgne puhkus</docadmin:readonlyFieldsName>
+         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>leaveCancelBeginDate</view:value>
+               <view:value>leaveCancelEndDate</view:value>
+               <view:value>leaveCancelledDays</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+</view:view>

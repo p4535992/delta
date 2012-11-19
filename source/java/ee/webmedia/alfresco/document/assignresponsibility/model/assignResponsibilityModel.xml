@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="asr:assignResponsibilityModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/assignresponsibility/common/1.0" prefix="asr" />
+   </namespaces>
+
+   <types>
+
+      <type name="asr:assignResponsibility">
+         <parent>sys:base</parent>
+         <properties>
+            <property name="asr:ownerName">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </type>
+
+   </types>
+
+</model>

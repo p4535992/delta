@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <bean parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap">
+      <property name="models">
+         <list>
+            <value>ee/webmedia/alfresco/ocr/model/ocrModel.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="ocrService" class="ee.webmedia.alfresco.ocr.service.OcrServiceImpl">
+      <property name="nodeService" ref="NodeService" />
+      <property name="fileFolderService" ref="FileFolderService" />
+      <property name="transactionService" ref="TransactionService" />
+      <property name="mimetypeService" ref="MimetypeService" />
+      <property name="generalService" ref="GeneralService" />
+      <property name="endpointAddress" value="${ocr.url}" />
+   </bean>
+
+   <bean id="OcrService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.ocr.service.OcrService</value>
+         </list>
+      </property>
+      <property name="target" ref="ocrService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+
+</beans>

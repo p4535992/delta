@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head profile="http://selenium-ide.openqa.org/profiles/test-case">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="selenium.base" href="" />
+<title>addRemove-Block</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">addRemove-Block</td></tr>
+</thead><tbody>
+<tr>
+	<td>clickAndWait</td>
+	<td>metadata-link-edit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>document_errandOrderApplicant_add</td>
+	<td></td>
+</tr>
+<!--// lisa lähetus blokk taotlejale, kes hiljem eemaldatakse-->
+<tr>
+	<td>clickAndWait</td>
+	<td>//a[@id='document_errandsAbroad_add' and @onclick=&quot;document.forms['dialog']['dialog:act'].value='dialog:dialog-body:doc-metatada:subPropSheet_applicantsSection:uiNamingContainer1:subPropSheet_1:subPropSheet_errandsAbroad:uiNamingContainer0:document_errandsAbroad_add';document.forms['dialog']['currentNodeRef'].value='workspace://SpacesStore/9a0c638f-9ec5-4947-a291-9a362a6a44d4';document.forms['dialog']['aIndex'].value='0';setPageScrollY();document.forms['dialog'].submit();return false;&quot;]</td>
+	<td></td>
+</tr>
+<!--//-->
+<tr>
+	<td>type</td>
+	<td>dialog:dialog-body:doc-metatada:subPropSheet_applicantsSection:uiNamingContainer1:subPropSheet_1:subPropSheet_errandsAbroad:uiNamingContainer1:subPropSheet_1:prop_docspecx003a_country:docspecx003a_country</td>
+	<td>riik - eemaldataval taotlejal</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//a[@id='document_errandsAbroad_add' and @onclick=&quot;document.forms['dialog']['dialog:act'].value='dialog:dialog-body:doc-metatada:subPropSheet_applicantsSection:uiNamingContainer1:subPropSheet_1:subPropSheet_errandsAbroad:uiNamingContainer1:document_errandsAbroad_add';document.forms['dialog']['currentNodeRef'].value='NOT_SAVED://NOT_SAVED/04ae8344-304e-424c-b138-d8bf9b66359c';document.forms['dialog']['aIndex'].value='1';setPageScrollY();document.forms['dialog'].submit();return false;&quot;]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//a[@id='document_errandsAbroad_remove' and @onclick=&quot;document.forms['dialog']['dialog:act'].value='dialog:dialog-body:doc-metatada:subPropSheet_applicantsSection:uiNamingContainer1:subPropSheet_1:subPropSheet_errandsAbroad:uiNamingContainer1:document_errandsAbroad_remove';document.forms['dialog']['currentNodeRef'].value='NOT_SAVED://NOT_SAVED/1c43394d-c56b-4580-8191-14c61ae787e8';document.forms['dialog']['aIndex'].value='1';setPageScrollY();document.forms['dialog'].submit();return false;&quot;]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>dialog:dialog-body:doc-metatada:subPropSheet_applicantsSection:uiNamingContainer1:subPropSheet_1:subPropSheet_errandsAbroad:uiNamingContainer2:subPropSheet_2:prop_docspecx003a_country:docspecx003a_country</td>
+	<td>riik2 - eemaldataval taotlejal</td>
+</tr>
+<!--// eemalda üks lähetuse blokk taotlejalt, kes hiljem eemaldatakse-->
+<tr>
+	<td>clickAndWait</td>
+	<td>//a[@id='document_errandsAbroad_remove' and @onclick=&quot;document.forms['dialog']['dialog:act'].value='dialog:dialog-body:doc-metatada:subPropSheet_applicantsSection:uiNamingContainer1:subPropSheet_1:subPropSheet_errandsAbroad:uiNamingContainer1:document_errandsAbroad_remove';document.forms['dialog']['currentNodeRef'].value='NOT_SAVED://NOT_SAVED/04ae8344-304e-424c-b138-d8bf9b66359c';document.forms['dialog']['aIndex'].value='1';setPageScrollY();document.forms['dialog'].submit();return false;&quot;]</td>
+	<td></td>
+</tr>
+<!--// lisa uus taotleja-->
+<tr>
+	<td>type</td>
+	<td>dialog:dialog-body:doc-metatada:subPropSheet_applicantsSection:uiNamingContainer2:subPropSheet_2:prop_docspecx003a_applicantName:row_-1</td>
+	<td>uus taotleja</td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>dialog:dialog-body:doc-metatada:subPropSheet_applicantsSection:uiNamingContainer2:subPropSheet_2:prop_docspecx003a_costManager:docspecx003a_costManager</td>
+	<td>label=errandOrderAbroadCostManager1</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>dialog:dialog-body:doc-metatada:subPropSheet_applicantsSection:uiNamingContainer2:subPropSheet_2:subPropSheet_errandsAbroad:uiNamingContainer0:subPropSheet_0:prop_docspecx003a_country:docspecx003a_country</td>
+	<td>uus riik</td>
+</tr>
+<!--// täiendav inf 12-->
+<tr>
+	<td>verifyTextPresent</td>
+	<td>täiendav inf 12</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>document_errandsAbroad_remove</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextNotPresent</td>
+	<td>täiendav inf 12</td>
+	<td></td>
+</tr>
+<!--//-->
+<tr>
+	<td>verifyTextPresent</td>
+	<td>21t1 kirjeldus</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>document_errandOrderApplicant_remove</td>
+	<td></td>
+</tr>
+<!--// 21t1 kirjeldus-->
+<tr>
+	<td>verifyTextNotPresent</td>
+	<td>21t1 kirjeldus</td>
+	<td></td>
+</tr>
+<!--// save-->
+<tr>
+	<td>clickAndWait</td>
+	<td>dialog:finish-button</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextNotPresent</td>
+	<td>21t1 kirjeldus</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextNotPresent</td>
+	<td>täiendav inf 12</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td></td>
+	<td></td>
+</tr>
+
+</tbody></table>
+</body>
+</html>

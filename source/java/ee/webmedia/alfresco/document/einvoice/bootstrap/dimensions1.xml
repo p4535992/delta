@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:dim="http://alfresco.webmedia.ee/model/dimension/1.0">
+
+  <dim:dimension view:childName="dim:invoicePostingKey">
+      <dim:name>invoicePostingKey</dim:name>
+      <dim:comment></dim:comment>
+  </dim:dimension>
+
+</view:view>

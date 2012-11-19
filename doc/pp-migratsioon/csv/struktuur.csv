@@ -1,0 +1,62 @@
+Osakonna kood;Osakonna nimetus;Jrknr;Ülemosakonna kood
+101;1 Siseministeeriumi ja valitsemisala töö korraldamine;1000;1
+10101;1.1 Juhtimine. Planeerimine ja aruandlus;1001;101
+10102;1.2 Asjaajamine ja arhiivihaldus;1002;101
+102;2 Õigusloome ja õigusteenindus;1003;1
+103;3 Personalitöö;1004;1
+10301;3.1 Tööõiguse tagamine ja personaliarvestus;1005;103
+10302;3.2 Töökeskkond ja -ohutus;1006;103
+10303;3.3 Koolituse korraldamine;1007;103
+10304;3.4 Atesteerimine ja konkursside korraldamine;1008;103
+10305;3.5 Ergutamine;1009;103
+104;4 Järelevalve ja auditeerimine;1010;1
+10401;4.1 Siseaudit;1011;104
+10402;4.2 Teenistuslik järelevalve;1012;104
+106;5 Osalus EL otsustusprotsessis ning koostöö rahvusvaheliste institutsioonide ja organisatsioonidega;1013;1
+10601;5.1 Euroopa Liiduga seotud asjade korraldamine;1014;106
+10602;5.2 Rahvusvaheliste lepete ja konventsioonide alase töö korraldamine;1015;106
+10603;5.2 Rahvusvaheline suhtlus;1016;106
+107;6 Avalikkuse informeerimise korraldamine;1017;1
+108;7 Majandustegevus;1021;1
+10801;7.1 Eelarve planeerimine, koostamine, jaotamine. Raamatupidamine;1022;108
+10802;7.2 Vara haldamine ja majandamine. Ehitustegevuse asjade korraldamine;1023;108
+10803;7.3 Transpordivahendite haldamine ja majandamine;1024;108
+10804;7.4 Hangete korraldamine;1025;108
+10805;7.3 Hangete korraldamine;1026;108
+10806;7.1 Finantsplaneerimine ja raamatupidamise arvestus;1027;108
+10807;7.2 Vara haldamine ja hooldus. Ehitustegevuse asjade korraldamine;1028;108
+10809;7.3 Hangete korraldamine;1029;108
+109;8 Infotehnoloogia, side- ja valvetehnika asjade korraldamine;1030;1
+110;9 Riigi sisejulgeoleku ja avaliku korra tagamise koordineerimine;1031;1
+11001;9.1 Sisejulgeoleku ja avaliku korra tagamine;1032;110
+11002;9.2 Kriminaalpreventsioon;1033;110
+11003;9.2 Kriisireguleerimine;1034;110
+11004;9.3 Teabe kogumine ja töötlemine;1035;110
+111;10 Rahvastikuga seotud asjade korraldamine;1036;1
+11101;10.1 Rahvastiku arvestus;1037;111
+11102;10.2 Rahvastiku perekonnaseisualaste toimingute korraldamine;1038;111
+11103;10.3 Kirikute ja koguduste asjade korraldamine;1039;111
+112;11 Kodakondsusküsimuste ja välismaalastega seotud asjade koordineerimine;1040;1
+11201;11 Kodakondsus- ja välismaalaste poliitika koordineerimine;1041;112
+113;12 Kohaliku omavalitsuse ja regionaalse arengu asjade korraldamine;1042;1
+11301;12.1 Riigi kohaliku omavalitsuse tegevuse koordineerimine;1043;113
+11302;12.2 Riigi regionaalarengu koordineerimine;1044;113
+11303;12.3 Riigi territooriumi haldusjaotuse, haldusterritoriaalse ja asustusjaotuse korraldamine;1045;113
+11304;12.4 Eesti kohanimede ametliku korraldamise ja kasutamise koordineerimine;1046;113
+11306;12.5 Riigi regionaalhalduse korraldamine;1047;113
+11309;12.6 Euroopa Liidu struktuuriabi meetmete rakendamine;1048;113
+114;13 Planeeringute koostamise korraldamine ja järelevalve;1049;1
+116;6 Avalikkuse informeerimine ja sisekommunikatsioon;1018;1
+11601;6.1 Avalikkuse informeerimine;1019;116
+11602;6.2 Sisekommunikatsioon;1020;116
+117;14 Riigisaladuse töö korraldamine;1049;1
+119;1 Ministeeriumi töö korraldamine. Juhtimine. Planeerimine. Aruandlus;1;1
+120;2 Infohaldus. Õigusteenindus;2;1
+121;4 Auditeerimine;4;1
+122;5 EL Otsustusprotsess ja rahvusvaheline koostöö;5;1
+123;7 Majandustegevus. Finantsplaneerimine ja raamatupidamine;7;1
+124;8 Kirikute ja koguduste asjade korraldamine;8;1
+125;9 Siseturvalisuse poliitika korraldamine;9;1
+126;11 Kodakondsus- ja välismaalaste poliitika korraldamine;11;1
+127;12 Kohalik omavalitsus, regionaalhaldus ja regionaalne areng;12;1
+128;14 Välis- ja struktuurivahendid;14;1

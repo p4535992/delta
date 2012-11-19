@@ -1,0 +1,32 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <bean id="documentImportService" class="ee.webmedia.alfresco.importer.excel.service.DocumentImportServiceImpl" parent="documentService">
+      <property name="attachmentFilesLocationBase" value="${importer.excel.attachmentFilesLocationBase}" />
+      <property name="classificatorService" ref="ClassificatorService" />
+      <property name="documentAssociationsService" ref="DocumentAssociationsService" />
+   </bean>
+
+   <bean id="DocumentImportService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.importer.excel.service.DocumentImportService</value>
+         </list>
+      </property>
+      <property name="target" ref="documentImportService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+
+   <bean id="smitExcelImporter" class="ee.webmedia.alfresco.importer.excel.bootstrap.SmitExcelImporter">
+      <property name="documentImportService" ref="DocumentImportService" />
+      <property name="importFolderLocation" value="${importer.excel.excelFilesLocationBase}" />
+      <property name="batchSize" value="${importer.excel.nrOfDocumentsInTransaction}" />
+      <property name="attachmentFilesLocationBase" value="${importer.excel.attachmentFilesLocationBase}" />
+   </bean>
+
+</beans>

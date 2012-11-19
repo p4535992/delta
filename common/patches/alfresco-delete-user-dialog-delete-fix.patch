@@ -1,0 +1,12 @@
+Index: projects/web-client/source/java/org/alfresco/web/bean/users/DeleteUserDialog.java
+===================================================================
+@@ -106,8 +106,7 @@
+             }
+             catch (AuthenticationException authErr)
+             {
+-               Utils.addErrorMessage(Application.getMessage(context, ERROR_USER_DELETE));
+-               ReportedException.throwIfNecessary(authErr);
++                // Let's not worry if authentication details don't exist
+             }
+          }
+

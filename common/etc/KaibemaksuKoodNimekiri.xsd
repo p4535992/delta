@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns="http://www.riik.ee/schemas/e-arve/KaibemaksuKoodNimekiri.xsd" targetNamespace="http://www.riik.ee/schemas/e-arve/KaibemaksuKoodNimekiri.xsd" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:annotation>
+		<xs:documentation>Andmemudel asutuse käibemaksu koodide andmete edastamiseks süsteemist süsteemi (tavaliselt raamatupidamissüsteemist dokumendihaldussüsteemi) ============================ Kuupäev: 15.09.2010 Versioon: 1.1 Autor: Itella Information AS ja Riigi Infosüsteemide Arenduskeskus Litsents: EUPL</xs:documentation>
+	</xs:annotation>
+	<xs:element name="KaibemaksuKoodNimekiri">
+		<xs:annotation>
+			<xs:documentation>Juurelement</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="KaibemaksuKoodInfo" maxOccurs="unbounded">
+					<xs:annotation>
+						<xs:documentation>Käibemaksu koodi info</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="KaibemaksuKoodInfo">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="KaibemaksuKood" type="LyhiTekstType">
+					<xs:annotation>
+						<xs:documentation>Käibemaksu kood raamatupidamissüsteemis</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="KaibemaksuProtsent" type="xs:nonNegativeInteger">
+					<xs:annotation>
+						<xs:documentation>Käibemaksu protsent täisarvuna</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="KaibemaksuSelgitus" type="NormaalTekstType">
+					<xs:annotation>
+						<xs:documentation>Käibemaksu selgitustekst, mida kuvatakse dokumendihaldussüsteemis kasutajale</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:simpleType name="LyhiTekstType">
+		<xs:annotation>
+			<xs:documentation>Lühikene tekst (kuni 20 tähemärki)</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:maxLength value="20" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="NormaalTekstType">
+		<xs:annotation>
+			<xs:documentation>Tavaline tekst (kuni 100 tähemärki)</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:maxLength value="100" />
+		</xs:restriction>
+	</xs:simpleType>
+</xs:schema>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:docadmin="http://alfresco.webmedia.ee/model/document/admin/1.0">
+
+   <docadmin:fieldGroup view:childName="docadmin:caseVolumeValid">
+      <view:properties>
+         <docadmin:name>Asjatoimiku kehtivus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>false</docadmin:mandatoryForDoc>
+         <docadmin:mandatoryForVol>true</docadmin:mandatoryForVol>
+         <docadmin:readonlyFieldsName>Kehtiv</docadmin:readonlyFieldsName>
+         <docadmin:readonlyFieldsRule>{validFrom} - {validTo}</docadmin:readonlyFieldsRule>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:inapplicableForDoc>true</docadmin:inapplicableForDoc>
+         <docadmin:order>7</docadmin:order>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>validFrom</view:value>
+               <view:value>validTo</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:caseVolumeLocation">
+      <view:properties>
+         <docadmin:name>Asjatoimiku asukoht</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>false</docadmin:mandatoryForDoc>
+         <docadmin:mandatoryForVol>true</docadmin:mandatoryForVol>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:inapplicableForDoc>true</docadmin:inapplicableForDoc>
+         <docadmin:order>3</docadmin:order>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>function</view:value>
+               <view:value>series</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+</view:view>

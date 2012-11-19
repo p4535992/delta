@@ -1,0 +1,234 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <import resource="classpath:ee/webmedia/alfresco/dvk/service/dhl-service-impl-context.xml" />
+
+   <bean parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap">
+      <property name="models">
+         <list>
+            <value>ee/webmedia/alfresco/dvk/model/dvkModel.xml</value>
+         </list>
+      </property>
+      <property name="labels">
+         <list>
+            <value>ee/webmedia/alfresco/dvk/model/dvk-model</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="dvkSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">${dvk.received.parent.folder.xpath}</prop>
+               <prop key="location">ee/webmedia/alfresco/dvk/bootstrap/dvk.xml</prop>
+               <prop key="messages">ee/webmedia/alfresco/dvk/bootstrap/dvk-bootstrap</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="deleteDvkOrganizationRegNrParameterBootstrap" class="ee.webmedia.alfresco.common.bootstrap.DeleteNodeByXPathBootstrap" parent="abstractDeleteNodeByXPathBootstrap">
+      <property name="moduleId" value="common" />
+      <property name="nodeXPath" value="/param:parameters/param:dvkOrganizationRegNr" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>      
+   </bean>
+
+   <bean id="dvkParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/dvk/bootstrap/dvk-parameters.xml</prop>
+               <prop key="encoding">UTF-8</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="dvkParametersBootstrap1" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/dvk/bootstrap/dvk-parameters1.xml</prop>
+               <prop key="encoding">UTF-8</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="dvkParametersBootstrap2" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/dvk/bootstrap/dvk-parameters2.xml</prop>
+               <prop key="encoding">UTF-8</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="dvkParametersBootstrap3" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/dvk/bootstrap/dvk-parameters3.xml</prop>
+               <prop key="encoding">UTF-8</prop>
+            </props>
+         </list>
+      </property>
+   </bean>   
+
+   <bean class="ee.webmedia.alfresco.common.bootstrap.ModuleComponentDependsOnSetter">
+      <property name="source" ref="parameterRescheduledJobsBootstrap" />
+      <property name="dependsOn" ref="dvkParametersBootstrap" />
+   </bean>
+
+   <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+      <property name="ignoreUnresolvablePlaceholders" value="true" />
+      <property name="location" value="classpath:ee/webmedia/alfresco/dvk/bootstrap/dvk-bootstrap.properties" />
+   </bean>
+
+   <bean id="dvkServiceBase" abstract="true">
+      <property name="receivedDvkDocumentsPath" value="${dvk.received.parent.folder.xpath}${dvk.received.folder.name}" />
+      <property name="corruptDvkDocumentsPath" value="${dvk.received.parent.folder.xpath}${dvk.corrupt.folder.name}" />
+      <property name="dhlXTeeService" ref="dhlXTeeService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="fileFolderService" ref="FileFolderService" />
+      <property name="mimetypeService" ref="MimetypeService" />
+      <property name="propertiesResolver" ref="xTeeServicePropertiesResolver" />
+      <property name="noTitleSpacePrefix" value="fail_" />
+      <property name="generalService" ref="GeneralService" />
+      <property name="parametersService" ref="ParametersService" />
+      <property name="addressbookService" ref="AddressbookService" />
+      <property name="applicationService" ref="ApplicationService" />
+      <property name="institutionCode" value="${x-tee.institution}" />
+   </bean>
+
+   <!-- Overridden in concrete projects(i.e SIM and TK) -->
+   <bean id="dvkService" class="ee.webmedia.alfresco.dvk.service.DvkServiceImpl" abstract="true" parent="dvkServiceBase" />
+
+   <bean id="DvkService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.dvk.service.DvkService</value>
+         </list>
+      </property>
+      <property name="target" ref="dvkService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+
+   <bean id="dvkReceiveDocumentsJobDetails" class="org.springframework.scheduling.quartz.JobDetailBean">
+      <property name="jobClass" value="ee.webmedia.alfresco.dvk.job.DvkReceiveDocumentsJob" />
+      <property name="jobDataAsMap">
+         <map>
+            <entry key="DvkService" value-ref="DvkService" />
+         </map>
+      </property>
+   </bean>
+
+   <bean id="dvkReceiveDocumentsTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent">
+      <property name="enabled" value="${jobs.enabled}" />
+      <property name="parameterName" value="dvkReceiveDocumentsInterval" />
+      <property name="parameterFormat" value="m" />
+      <property name="jobDetail" ref="dvkReceiveDocumentsJobDetails" />
+   </bean>
+
+   <bean id="dvkReceiveDocSendStatusesJobDetails" class="org.springframework.scheduling.quartz.JobDetailBean">
+      <property name="jobClass" value="ee.webmedia.alfresco.dvk.job.DvkReceiveDocSendStatusesJob" />
+      <property name="jobDataAsMap">
+         <map>
+            <entry key="DvkService" value-ref="DvkService" />
+         </map>
+      </property>
+   </bean>
+
+   <bean id="dvkReceiveDocSendStatusesTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent">
+      <property name="enabled" value="${jobs.enabled}" />
+      <property name="parameterName" value="dvkReceiveDocSendStatusesInterval" />
+      <property name="parameterFormat" value="m" />
+      <property name="jobDetail" ref="dvkReceiveDocSendStatusesJobDetails" />
+   </bean>
+
+   <bean class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
+      <property name="configs">
+         <list>
+            <value>classpath:ee/webmedia/alfresco/dvk/web/dvk-web-client-config.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
+      <property name="resourceBundles">
+         <list>
+            <value>ee/webmedia/alfresco/dvk/web/dvk-webclient</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="dvkReceiveOrganizationsTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent">
+      <property name="enabled" value="${jobs.enabled}" />
+      <property name="parameterName" value="dvkReceiveOrganizations" />
+      <property name="parameterFormat" value="H:mm" />
+      <property name="jobDetail">
+         <bean id="dvkReceiveOrganizationsJobDetails" class="org.springframework.scheduling.quartz.JobDetailBean">
+            <property name="jobClass" value="ee.webmedia.alfresco.dvk.job.DvkReceiveOrganizationsJob" />
+            <property name="jobDataAsMap">
+               <map>
+                  <entry key="DvkService" value-ref="DvkService" />
+               </map>
+            </property>
+         </bean>
+      </property>
+   </bean>
+
+</beans>

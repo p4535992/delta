@@ -1,0 +1,156 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE faces-config PUBLIC "-//Sun Microsystems, Inc.//DTD JavaServer Faces Config 1.1//EN"
+                              "http://java.sun.com/dtd/web-facesconfig_1_1.dtd">
+<faces-config>
+   <!-- 
+      Loaded after Alfresco JSF configuration files.
+      You can define here:
+      * new managed JSF beans
+      * overrides of previously defined Alfresco managed JSF beans
+      * new navigation rules
+      * ...
+      But NOT overrides of existing navigation rules (you must use META-INF/faces-config.xml for that)
+      More information: http://wiki.alfresco.com/wiki/Packaging_And_Deploying_Extensions#JSF_configuration_files
+    -->
+
+   <lifecycle>
+      <phase-listener>ee.webmedia.alfresco.common.listener.StatisticsPhaseListener</phase-listener>
+      <phase-listener>ee.webmedia.alfresco.common.listener.RefreshInvokerPhaseListener</phase-listener>
+      <phase-listener>ee.webmedia.alfresco.common.listener.ExternalAccessPhaseListener</phase-listener>
+   </lifecycle>
+
+   <managed-bean>
+      <managed-bean-name>AjaxBean</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.common.ajax.AjaxBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>AjaxSearchBean</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.common.ajax.AjaxSearchBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <description>
+         Bean that generates a date picker component
+      </description>
+      <managed-bean-name>DatePickerGenerator</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerGenerator</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+      <managed-property>
+         <property-name>addBeginDateClassByPropName</property-name>
+         <list-entries>
+            <value>accessRestrictionEndDateBegin</value>
+            <value>errandEndDateBegin</value>
+            <value>validFrom</value>
+         </list-entries>
+      </managed-property>
+      <managed-property>
+         <property-name>addEndDateClassByPropName</property-name>
+         <list-entries>
+            <value>accessRestrictionBeginDateEnd</value>
+            <value>errandBeginDateEnd</value>
+            <value>validTo</value>
+         </list-entries>
+      </managed-property>
+   </managed-bean>
+
+   <managed-bean>
+      <description>
+         Bean that generates a date picker component with due date selector
+      </description>
+      <managed-bean-name>DatePickerWithDueDateGenerator</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerWithDueDateGenerator</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+    <managed-bean>
+        <managed-bean-name>ClearStateNotificationHandler</managed-bean-name>
+        <managed-bean-class>ee.webmedia.alfresco.common.web.ClearStateNotificationHandler</managed-bean-class>
+        <managed-bean-scope>session</managed-bean-scope>
+    </managed-bean>
+
+    <managed-bean>
+        <managed-bean-name>PanelStateBean</managed-bean-name>
+        <managed-bean-class>org.alfresco.web.bean.ajax.PanelStateBean</managed-bean-class>
+        <managed-bean-scope>request</managed-bean-scope>
+    </managed-bean>
+   
+   <!-- Custom Admin Node Browser Bean -->
+   <managed-bean>
+      <description>
+         Backing bean used for the low-level Node Browser
+      </description>
+      <managed-bean-name>AdminNodeBrowseBean</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.common.web.WMAdminNodeBrowseBean</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>transactionService</property-name>
+         <value>#{TransactionService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>nodeService</property-name>
+         <value>#{NodeService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>dictionaryService</property-name>
+         <value>#{DictionaryService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>searchService</property-name>
+         <value>#{SearchService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>namespaceService</property-name>
+         <value>#{NamespaceService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>permissionService</property-name>
+         <value>#{PermissionService}</value>
+      </managed-property>
+   </managed-bean>
+   
+   <converter>
+      <converter-id>ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter</converter-id>
+      <converter-class>ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter</converter-class>
+   </converter>
+   
+   <converter>
+      <converter-id>ee.webmedia.alfresco.common.propertysheet.datepicker.TimePickerConverter</converter-id>
+      <converter-class>ee.webmedia.alfresco.common.propertysheet.datepicker.TimePickerConverter</converter-class>
+   </converter>
+   
+   <converter>
+      <converter-id>ee.webmedia.alfresco.workflow.web.DueDateDaysConverter</converter-id>
+      <converter-class>ee.webmedia.alfresco.workflow.web.DueDateDaysConverter</converter-class>
+   </converter>
+   
+   <converter>
+      <converter-id>ee.webmedia.alfresco.common.web.ConvertIntWithMsg</converter-id>
+      <converter-class>ee.webmedia.alfresco.common.web.ConvertIntWithMsg</converter-class>
+   </converter>
+
+   <component>
+      <component-type>component.CustomSelectOneRadio</component-type>
+      <component-class>ee.webmedia.alfresco.common.radio.UICustomSelectOneRadio</component-class>
+      <component-extension>
+         <component-family>CustomSelectOneRadio</component-family>
+         <renderer-type>renderer.CustomSelectOneRadio</renderer-type>
+      </component-extension>
+   </component>
+   
+   <render-kit>
+      <renderer>
+         <component-family>CustomSelectOneRadio</component-family>
+         <renderer-type>renderer.CustomSelectOneRadio</renderer-type>
+         <renderer-class>ee.webmedia.alfresco.common.radio.HTMLCustomSelectOneRadioRenderer</renderer-class>
+      </renderer>
+      <renderer>
+         <component-family>javax.faces.Panel</component-family>
+         <renderer-type>ee.alfresco.web.ui.common.renderer.SimpleHtmlElementRenderer</renderer-type>
+         <renderer-class>ee.alfresco.web.ui.common.renderer.SimpleHtmlElementRenderer</renderer-class>
+      </renderer>
+   </render-kit>
+
+</faces-config>

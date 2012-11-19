@@ -1,0 +1,261 @@
+<alfresco-config>
+
+   <config evaluator="aspect-name" condition="ab:everyone">
+      <property-sheet>
+         <show-property name="ab:activeStatus" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="aspect-name" condition="ab:person">
+      <property-sheet>
+         <show-property name="ab:personFirstName" styleClass="focus" />
+         <show-property name="ab:personLastName" />
+         <show-property name="ab:personId" />
+         <show-property name="ab:mobilePhone" />
+         <show-property name="ab:jobName" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="aspect-name" condition="ab:contactGroupProperties">
+      <property-sheet>
+      <!-- ab:sapAccount is hidden at the moment -->
+         <show-property name="ab:groupName" styleClass="focus" />
+         <show-property name="ab:taskCapable" readOnlyIf="#{ContactGroupListDialog.getNotAllowedEditTaskCapable}" />
+         <show-property name="ab:manageableForAdmin" readOnlyIf="#{ContactGroupListDialog.getNotAllowedEditTaskCapable}" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="aspect-name" condition="ab:organizationProperties">
+      <property-sheet>
+         <show-property name="ab:orgName" styleClass="focus" />
+         <show-property name="ab:orgAltName" />
+         <show-property name="ab:orgAcronym" />
+         <show-property name="ab:orgCode" />
+         <show-property name="ab:sapAccount" read-only="true" />
+         <show-property name="ab:location" />
+      </property-sheet>
+   </config>
+   
+   <config evaluator="aspect-name" condition="ab:everyone">
+      <property-sheet>
+         <show-property name="ab:email" />
+      </property-sheet>
+  </config>
+  
+   <config evaluator="aspect-name" condition="ab:organizationProperties">
+      <property-sheet>
+         <show-property name="ab:firstAdditionalEmail" show-in-view-mode="false"/>
+         <show-property name="ab:secondAdditionalEmail" show-in-view-mode="false"/>
+      </property-sheet>
+   </config>  
+  
+  <config evaluator="aspect-name" condition="ab:everyone">
+      <property-sheet>
+         <show-property name="ab:phone" />
+      </property-sheet>
+   </config>
+   
+   <config evaluator="aspect-name" condition="ab:organizationProperties">
+      <property-sheet>
+         <show-property name="ab:firstAdditionalPhone" show-in-view-mode="false"/>
+         <show-property name="ab:secondAdditionalPhone" show-in-view-mode="false"/>
+      </property-sheet>
+   </config>     
+
+   <config evaluator="aspect-name" condition="ab:skype">
+      <property-sheet>
+         <show-property name="ab:skype" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="aspect-name" condition="ab:struct">
+      <property-sheet>
+         <show-property name="ab:struct" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="aspect-name" condition="ab:orgPrivate">
+      <property-sheet>
+         <show-property name="ab:address1" />
+         <show-property name="ab:address2" />
+         <show-property name="ab:postal" />
+         <show-property name="ab:city" />
+         <show-property name="ab:country" />
+         <show-property name="ab:fax" />
+         <show-property name="ab:website" component-generator="LinkGenerator" />
+      </property-sheet>
+   </config>
+   
+   <config evaluator="aspect-name" condition="ab:organizationProperties">
+      <property-sheet>
+         <show-property name="ab:dvkCapable" read-only="true" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="aspect-name" condition="ab:organizationProperties">
+      <property-sheet>
+         <show-property name="ab:taskCapable" readOnlyIf="#{AddressbookAddEditDialog.getNotAllowedEditTaskCapable}" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="aspect-name" condition="ab:encryptionPersonId">
+      <property-sheet>
+         <show-property name="ab:encryptionPersonId" />
+      </property-sheet>
+   </config>
+   
+   <config>
+      <actions>
+
+         <action id="addressbook_add_contact">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
+            <label-id>addressbook_contactgroup_add_title</label-id>
+            <tooltip-id>addressbook_contactgroup_add_title</tooltip-id>
+            <image>/images/icons/add_group.gif</image>
+            <action>dialog:addressbookAddContactGroup</action>
+            <action-listener>#{ContactGroupAddDialog.setupAddGroup}</action-listener>
+            <params>
+               <param name="nodeRef">#{ContactGroupContactsDialog.actionsContext.nodeRef}</param>
+            </params>
+         </action>
+
+         <!-- Addressbook action-->
+         <action id="addressbook_add_org">
+            <evaluator>ee.webmedia.alfresco.addressbook.web.evaluator.AddressbookCreateChildrenEvaluator</evaluator>
+            <label-id>addressbook_add_organization</label-id>
+            <image>/images/icons/create_user.gif</image>
+            <action>dialog:addressbookAddEdit</action>
+            <action-listener>#{AddressbookAddEditDialog.setupAdd}</action-listener>
+            <params>
+               <param name="type">ab:organization</param>
+            </params>
+         </action>
+
+         <action id="addressbook_add_person">
+            <evaluator>ee.webmedia.alfresco.addressbook.web.evaluator.AddressbookCreateChildrenEvaluator</evaluator>
+            <label-id>addressbook_add_privPerson</label-id>
+            <image>/images/icons/create_user.gif</image>
+            <action>dialog:addressbookAddEdit</action>
+            <action-listener>#{AddressbookAddEditDialog.setupAdd}</action-listener>
+            <params>
+               <param name="type">ab:privPerson</param>
+            </params>
+         </action>
+
+         <action id="addressbook_add_org_person">
+            <evaluator>ee.webmedia.alfresco.addressbook.web.evaluator.AddressbookCreateChildrenEvaluator</evaluator>
+            <label-id>addressbook_add_orgPerson</label-id>
+            <image>/images/icons/create_user.gif</image>
+            <action>dialog:addressbookAddEdit</action>
+            <action-listener>#{AddressbookAddEditDialog.setupAdd}</action-listener>
+            <params>
+               <param name="type">ab:orgPerson</param>
+               <param name="parentOrg">#{AddressbookOrgDetailsDialog.currentNode.nodeRef}</param>
+            </params>
+         </action>
+         
+         <action id="addressbook_edit_org">
+            <evaluator>ee.webmedia.alfresco.addressbook.web.evaluator.AddressbookCreateChildrenEvaluator</evaluator>
+            <label-id>addressbook_edit_organization</label-id>
+            <image>/images/icons/edituser.gif</image>
+            <action>dialog:addressbookAddEdit</action>
+            <action-listener>#{AddressbookAddEditDialog.setupEdit}</action-listener>
+            <params>
+               <param name="nodeRef">#{AddressbookOrgDetailsDialog.currentNode.nodeRef}</param>
+            </params>
+         </action>
+
+         <action id="addressbook_edit_priv_person">
+            <evaluator>ee.webmedia.alfresco.addressbook.web.evaluator.AddressbookCreateChildrenEvaluator</evaluator>
+            <label-id>addressbook_edit_privPerson</label-id>
+            <image>/images/icons/edituser.gif</image>
+            <action>dialog:addressbookAddEdit</action>
+            <action-listener>#{AddressbookAddEditDialog.setupEdit}</action-listener>
+            <params>
+               <param name="nodeRef">#{AddressbookPersonDetailsDialog.currentNode.nodeRef}</param>
+            </params>
+         </action>
+
+         <action id="addressbook_edit_org_person">
+            <evaluator>ee.webmedia.alfresco.addressbook.web.evaluator.AddressbookCreateChildrenEvaluator</evaluator>
+            <label-id>addressbook_edit_orgPerson</label-id>
+            <image>/images/icons/edituser.gif</image>
+            <action>dialog:addressbookAddEdit</action>
+            <action-listener>#{AddressbookAddEditDialog.setupEdit}</action-listener>
+            <params>
+               <param name="nodeRef">#{AddressbookPersonDetailsDialog.currentNode.nodeRef}</param>
+            </params>
+         </action>
+
+         <action id="addressbook_contactgroup_add">
+            <evaluator>ee.webmedia.alfresco.addressbook.web.evaluator.AddressbookCreateChildrenEvaluator</evaluator>
+            <label-id>new_group</label-id>
+            <image>/images/icons/create_group.gif</image>
+            <action-listener>#{ContactGroupCreateDialog.createContactGroup}</action-listener>
+            <action>dialog:addressbookCreateContactGroup</action>
+         </action>
+
+         <action id="addressbook_add_to_group">
+            <label-id>addressbook_add_to_contactgroup</label-id>
+            <image>/images/icons/add_group.gif</image>
+            <onclick>showModal('dialog:dialog-body:addressbook_add_to_group_popup'); return false;</onclick>
+         </action>
+
+         <!-- Action menu for Addressbook-->
+         <action-group id="addressbook_menu">
+            <action idref="addressbook_add_org" />
+            <action idref="addressbook_add_person" />
+         </action-group>
+
+         <action-group id="addressbook_org_menu">
+            <action idref="addressbook_edit_org" />
+            <action idref="addressbook_add_org_person" />
+            <action idref="addressbook_add_to_group" />
+         </action-group>
+
+         <action-group id="addressbook_person_menu">
+            <action idref="addressbook_edit_priv_person" />
+            <action idref="addressbook_add_to_group" />
+         </action-group>
+
+         <action-group id="addressbook_org_person_menu">
+            <action idref="addressbook_edit_org_person" />
+         </action-group>
+
+         <action-group id="addressbook_contactgroup_menu">
+            <action idref="addressbook_contactgroup_add" />
+         </action-group>
+
+         <action-group id="addressbook_contactgroup_contacts_menu">
+            <action idref="addressbook_add_contact" />
+         </action-group>
+
+      </actions>
+      <dialogs>
+
+         <dialog name="addressbookList" page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/addressbook-list-dialog.jsp" managed-bean="AddressbookListDialog" icon="/images/icons/users_large.gif"
+            title-id="addressbook_manage" actions-config-id="addressbook_menu" show-ok-button="false" />
+         <dialog name="addressbookOrgDetails" page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/view-entry-org.jsp" managed-bean="AddressbookOrgDetailsDialog" icon="/images/icons/users_large.gif"
+            title-id="addressbook_org_data" actions-config-id="addressbook_org_menu" />
+         <dialog name="addressbookPersonDetails" page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/view-entry-person.jsp" managed-bean="AddressbookPersonDetailsDialog" icon="/images/icons/users_large.gif"
+            title-id="addressbook_private_person_data" actions-config-id="addressbook_person_menu" />
+         <dialog name="addressbookOrgPersonDetails" page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/view-entry-person.jsp" managed-bean="AddressbookPersonDetailsDialog" icon="/images/icons/users_large.gif"
+            title-id="addressbook_org_person_data" actions-config-id="addressbook_org_person_menu" />
+
+         <dialog name="addressbookAddEdit" page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/addressbook-add-edit.jsp" managed-bean="AddressbookAddEditDialog" icon="/images/icons/new_user_large.gif"
+            show-ok-button="true" />
+         <dialog name="addressbookManageContactGroups" page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/contactgroup-list-dialog.jsp" managed-bean="ContactGroupListDialog"
+            icon="/images/icons/users_large.gif" title-id="addressbook_contactgroup_title" actions-config-id="addressbook_contactgroup_menu" show-ok-button="true" />
+         <dialog name="addressbookManageContacts" page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/contactgroup-contacts-dialog.jsp" managed-bean="ContactGroupContactsDialog"
+            icon="/images/icons/users_large.gif" title-id="addressbook_contactgroup_title" actions-config-id="addressbook_contactgroup_contacts_menu" />
+         <dialog name="addressbookCreateContactGroup" page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/contactgroup-create-dialog.jsp" managed-bean="ContactGroupCreateDialog"
+            icon="/images/icons/create_group_large.gif" title-id="addressbook_contactgroup_create_title" />
+         <dialog name="addressbookAddContactGroup" page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/contactgroup-add-dialog.jsp" managed-bean="ContactGroupAddDialog"
+            icon="/images/icons/add_user_large.gif" title-id="addressbook_contactgroup_add_title" />
+         <dialog name="addressbookDeleteContactGroup" page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/contactgroup-delete-dialog.jsp" managed-bean="ContactGroupDeleteDialog"
+            icon="/images/icons/delete_group_large.gif" />
+         <dialog name="confirmAddDuplicate" page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/confirmAddDuplicate.jsp" managed-bean="ConfirmAddDuplicateDialog" icon="/images/icons/approve.gif" title-id="confirm_addDuplicate" />
+
+      </dialogs>
+   </config>
+</alfresco-config>

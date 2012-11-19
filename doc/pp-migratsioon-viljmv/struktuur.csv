@@ -1,0 +1,31 @@
+Osakonna kood;Osakonna nimetus;jrk;Ülemosakonna kood
+010101;1.1 Juhtimine;1;101
+010102;1.2 Asjaajamise korraldamine;2;101
+010103;1.3 Õigusalane teenindamine;3;101
+010104;1.4 Töö- ja teenistussuhted;4;101
+010105;1.5 Töötervishoid ja tööohutus;5;101
+010106;1.6 Siseaudit;6;101
+010107;1.7 Avalikud suhted;7;101
+010108;1.8 Infotehnoloogia;8;101
+010201;2.1 Riiklik järelevalve;9;102
+010202;2.2 Teenistuslik järelevalve;10;102
+010301;3.1 Omandireformi teostamine;11;103
+010302;3.2 Maaküsimused;12;103
+010401;4.1 Finantstegevus, raamatupidam.,eelarve ja investeeringud;13;104
+010402;4.2 Riigivara valitsemise korraldamine;14;104
+0105;5 Sotsiaaltöö ja lastekaitse;15;1
+0106;6 Tervishoid;16;1
+0107;7 Haridus;17;1
+010701;7.1 Alaealiste komisjoni töö korraldamine;18;107
+010702;7.2 Nõustamiskomisjoni töö korraldamine;19;107
+0108;8 Kultuur, sport ja noorsootöö;20;1
+0109;9 Regionaalse arengu korraldamine;21;1
+0110;10 Majandus;22;1
+011101;11.1 Sünniakti koostamine;23;111
+011102;11.2 Surmaakti koostamine;24;111
+011103;11.3 Abieluakti koostamine;25;111
+011104;11.4 Abielulahutusakti koostamine;26;111
+011105;11.5 Nimemuutmisakti koostamine;27;111
+011106;11.6 Tunnistuste, tõendite ja ärakirjade väljaandmine;28;111
+011107;11.7 Perekonnaseisualane aruandlus;29;111
+0112;12 Raamatupidamine ja personaliarvestus;30;1

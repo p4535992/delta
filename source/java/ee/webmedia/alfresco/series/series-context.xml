@@ -1,0 +1,83 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <bean id="seriesModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap,volumeModelBootstrap">
+      <property name="models">
+         <list>
+            <value>ee/webmedia/alfresco/series/model/seriesModel.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="seriesBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">
+      <property name="resourceBundles">
+         <list>
+            <value>ee.webmedia.alfresco.series.web.series-webclient</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+      <property name="resourceBundles">
+         <list>
+            <value>ee.webmedia.alfresco.series.service.series-log</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="seriesWebClientConfigBootstrap" class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="documentWebClientBootstrap">
+      <property name="configs">
+         <list>
+            <value>classpath:ee/webmedia/alfresco/series/web/series-web-client-config.xml</value>
+         </list>
+      </property>
+   </bean>
+   
+   <!-- Used to update series volume types values. CL task: 177957 -->
+   <bean id="seriesUpdater" class="ee.webmedia.alfresco.series.bootstrap.SeriesUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+   </bean>
+
+   <bean id="seriesService" class="ee.webmedia.alfresco.series.service.SeriesServiceImpl">
+      <property name="dictionaryService" ref="DictionaryService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="generalService" ref="GeneralService" />
+      <property name="docLogService" ref="DocumentLogService" />
+      <property name="appLogService" ref="LogService" />
+      <property name="userService" ref="UserService" />
+      <property name="permissionService" ref="PermissionService" />
+      <!--  XXX: property:volumeService - retrieved from applicationContext to avoid circular dependency between VolumeService and SeriesService      -->
+   </bean>
+
+   <bean id="SeriesService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.series.service.SeriesService</value>
+         </list>
+      </property>
+      <property name="target" ref="seriesService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+
+   <!-- Used to add document regNr pattern to old series (CL task 174930) -->
+   <bean id="SeriesDocNumberPatternUpdater" class="ee.webmedia.alfresco.document.bootstrap.SeriesDocNumberPatternUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+   </bean>
+   
+   <!-- Adds to docNumberPattern register prefix and suffix if they exist. -->
+   <bean id="SeriesDocNumberPatternAddRegisterSufPrefUpdater" class="ee.webmedia.alfresco.document.bootstrap.SeriesDocNumberPatternAddRegisterSufPrefUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+   </bean>
+
+   <!-- START: web beans: -->
+
+   <bean id="SeriesTypePrivilegesHandler" class="ee.webmedia.alfresco.series.web.SeriesTypePrivilegesHandler" scope="session"/>
+
+   <!-- END: web beans: -->
+
+</beans>

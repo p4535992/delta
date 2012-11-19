@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="http://webmedia.ee/mso" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+   xmlns="http://schemas.xmlsoap.org/wsdl/" targetNamespace="http://webmedia.ee/mso" name="MsoService">
+   <types>
+      <xs:schema xmlns:tns="http://webmedia.ee/mso" xmlns:swaRef="http://ws-i.org/profiles/basic/1.1/xsd" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+         version="1.0" targetNamespace="http://webmedia.ee/mso">
+
+         <xs:import namespace="http://ws-i.org/profiles/basic/1.1/xsd" schemaLocation="http://ws-i.org/profiles/basic/1.1/swaref.xsd"></xs:import>
+         <xs:element name="convertToPdf" nillable="true" type="tns:convertToPdf"></xs:element>
+
+         <xs:element name="convertToPdfResponse" nillable="true" type="tns:convertToPdfResponse"></xs:element>
+
+         <xs:element name="modifiedFormulas" nillable="true" type="tns:modifiedFormulas"></xs:element>
+
+         <xs:element name="modifiedFormulasResponse" nillable="true" type="tns:modifiedFormulasResponse"></xs:element>
+
+         <xs:element name="replaceFormulas" nillable="true" type="tns:replaceFormulas"></xs:element>
+
+         <xs:element name="replaceFormulasAndConvertToPdf" nillable="true" type="tns:replaceFormulasAndConvertToPdf"></xs:element>
+
+         <xs:element name="replaceFormulasAndConvertToPdfResponse" nillable="true" type="tns:replaceFormulasAndConvertToPdfResponse"></xs:element>
+
+         <xs:element name="replaceFormulasResponse" nillable="true" type="tns:replaceFormulasResponse"></xs:element>
+
+         <xs:complexType name="replaceFormulasAndConvertToPdf">
+            <xs:sequence>
+               <xs:element name="msoDocumentAndFormulasInput" type="tns:msoDocumentAndFormulasInput"></xs:element>
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="msoDocumentAndFormulasInput">
+            <xs:complexContent>
+               <xs:extension base="tns:msoDocumentInput">
+                  <xs:sequence>
+                     <xs:element name="formula" type="tns:formula" maxOccurs="unbounded"></xs:element>
+                  </xs:sequence>
+               </xs:extension>
+            </xs:complexContent>
+         </xs:complexType>
+
+         <xs:complexType name="msoDocumentInput">
+            <xs:sequence>
+               <xs:element name="documentFile" type="swaRef:swaRef"></xs:element>
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="formula">
+            <xs:sequence>
+               <xs:element name="key" type="xs:string"></xs:element>
+               <xs:element name="value" type="xs:string"></xs:element>
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="replaceFormulasAndConvertToPdfResponse">
+            <xs:sequence>
+               <xs:element name="msoDocumentAndPdfOutput" type="tns:msoDocumentAndPdfOutput"></xs:element>
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="msoDocumentAndPdfOutput">
+            <xs:complexContent>
+               <xs:extension base="tns:msoDocumentOutput">
+                  <xs:sequence>
+                     <xs:element name="pdfFile" type="swaRef:swaRef"></xs:element>
+                  </xs:sequence>
+               </xs:extension>
+            </xs:complexContent>
+         </xs:complexType>
+
+         <xs:complexType name="msoDocumentOutput">
+            <xs:sequence>
+               <xs:element name="documentFile" type="swaRef:swaRef"></xs:element>
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="replaceFormulas">
+            <xs:sequence>
+               <xs:element name="msoDocumentAndFormulasInput" type="tns:msoDocumentAndFormulasInput"></xs:element>
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="replaceFormulasResponse">
+            <xs:sequence>
+               <xs:element name="msoDocumentOutput" type="tns:msoDocumentOutput"></xs:element>
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="convertToPdf">
+            <xs:sequence>
+               <xs:element name="msoDocumentInput" type="tns:msoDocumentInput"></xs:element>
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="convertToPdfResponse">
+            <xs:sequence>
+               <xs:element name="msoPdfOutput" type="tns:msoPdfOutput"></xs:element>
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="msoPdfOutput">
+            <xs:sequence>
+               <xs:element name="pdfFile" type="swaRef:swaRef"></xs:element>
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="modifiedFormulas">
+            <xs:sequence>
+               <xs:element name="msoDocumentInput" type="tns:msoDocumentInput"></xs:element>
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="modifiedFormulasResponse">
+            <xs:sequence>
+               <xs:element name="modifiedFormulasOutput" type="tns:modifiedFormulasOutput"></xs:element>
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="modifiedFormulasOutput">
+            <xs:sequence>
+                     <xs:element name="modifiedFormulas" type="tns:formula" maxOccurs="unbounded"></xs:element>
+            </xs:sequence>
+         </xs:complexType>
+      </xs:schema>
+   </types>
+   <message name="convertToPdf">
+      <part name="parameters" element="tns:convertToPdf"></part>
+   </message>
+   <message name="convertToPdfResponse">
+      <part name="parameters" element="tns:convertToPdfResponse"></part>
+   </message>
+   <message name="modifiedFormulas">
+      <part name="parameters" element="tns:modifiedFormulas"></part>
+   </message>
+   <message name="modifiedFormulasResponse">
+      <part name="parameters" element="tns:modifiedFormulasResponse"></part>
+   </message>
+   <message name="replaceFormulas">
+      <part name="parameters" element="tns:replaceFormulas"></part>
+   </message>
+   <message name="replaceFormulasResponse">
+      <part name="parameters" element="tns:replaceFormulasResponse"></part>
+   </message>
+   <message name="replaceFormulasAndConvertToPdf">
+      <part name="parameters" element="tns:replaceFormulasAndConvertToPdf"></part>
+   </message>
+   <message name="replaceFormulasAndConvertToPdfResponse">
+      <part name="parameters" element="tns:replaceFormulasAndConvertToPdfResponse"></part>
+   </message>
+   <portType name="Mso">
+      <operation name="convertToPdf">
+         <input message="tns:convertToPdf"></input>
+         <output message="tns:convertToPdfResponse"></output>
+      </operation>
+      <operation name="modifiedFormulas">
+         <input message="tns:modifiedFormulas"></input>
+         <output message="tns:modifiedFormulasResponse"></output>
+      </operation>
+      <operation name="replaceFormulas">
+         <input message="tns:replaceFormulas"></input>
+         <output message="tns:replaceFormulasResponse"></output>
+      </operation>
+      <operation name="replaceFormulasAndConvertToPdf">
+         <input message="tns:replaceFormulasAndConvertToPdf"></input>
+         <output message="tns:replaceFormulasAndConvertToPdfResponse"></output>
+      </operation>
+   </portType>
+   <binding name="MsoPortBinding" type="tns:Mso">
+      <soap:binding transport="http://schemas.xmlsoap.org/soap/http" style="document"></soap:binding>
+      <operation name="convertToPdf">
+         <soap:operation soapAction=""></soap:operation>
+         <input>
+            <soap:body use="literal"></soap:body>
+         </input>
+         <output>
+            <soap:body use="literal"></soap:body>
+         </output>
+      </operation>
+      <operation name="modifiedFormulas">
+         <soap:operation soapAction=""></soap:operation>
+         <input>
+            <soap:body use="literal"></soap:body>
+         </input>
+         <output>
+            <soap:body use="literal"></soap:body>
+         </output>
+      </operation>
+      <operation name="replaceFormulas">
+         <soap:operation soapAction=""></soap:operation>
+         <input>
+            <soap:body use="literal"></soap:body>
+         </input>
+         <output>
+            <soap:body use="literal"></soap:body>
+         </output>
+      </operation>
+      <operation name="replaceFormulasAndConvertToPdf">
+         <soap:operation soapAction=""></soap:operation>
+         <input>
+            <soap:body use="literal"></soap:body>
+         </input>
+         <output>
+            <soap:body use="literal"></soap:body>
+         </output>
+      </operation>
+   </binding>
+   <service name="MsoService">
+      <port name="MsoPort" binding="tns:MsoPortBinding">
+         <soap:address location="ENDPOINT_ADDRESS"></soap:address>
+      </port>
+   </service>
+</definitions>
