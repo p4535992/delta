@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:dul="http://www.nortal.com/schemas/delta/delta_uam_lisaandmed" xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.nortal.com/schemas/delta/delta_uam_lisaandmed" elementFormDefault="qualified">
+	<xs:annotation>
+		<xs:documentation>
+      Delta EDHS andmete UAM'i jaoks eksportimisel dokumendiliigi või asjatoimiku liigi spetsiifiliste andmete esituse XML skeem.
+      Sellele skeemile vastavalt koostatakse dokumendi kohta UAM_Import/Arhivaal/KyMeta/KyMetaLiik elemendi sisu ja asjatoimiku kohta UAM_Import/Arhiivikirjeldus/Kirjeldusyksus/KySisuStruktAla/KyMetaLiik elemendi sisu.
+    </xs:documentation>
+	</xs:annotation>
+	<xs:element name="deltaLisaAndmed" type="dul:deltaLisaAndmedType">
+		<xs:annotation>
+			<xs:documentation>Dokumendi/asjatoimiku metaandmed, mille jaoks UAM'i impordi XML skeemis vasted puuduvad.
+      </xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:complexType name="deltaLisaAndmedType">
+		<xs:annotation>
+			<xs:documentation>Delta dokumendi/asjatoimiku metaandmete esitamise andmetüüp.</xs:documentation>
+		</xs:annotation>
+		<xs:choice maxOccurs="unbounded">
+			<xs:element name="andmevali" type="dul:andmevaliType">
+				<xs:annotation>
+					<xs:documentation>Üheväärtuseline metaandmeväli ja selle väärtus.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="andmevaliMV" type="dul:andmevaliMVType">
+				<xs:annotation>
+					<xs:documentation>Mitmeväärtuseline metaandmeväli ja selle väärtused.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="andmevaljadeGrupp" type="dul:andmevaljadeGruppType">
+				<xs:annotation>
+					<xs:documentation>Standardne andmeväljade grupp koos selles sisalduvate ühe- või mitmeväärtuseliste metaandmeväljade ja nende väärtustega.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:choice>
+	</xs:complexType>
+	<xs:complexType name="andmevaliType">
+		<xs:annotation>
+			<xs:documentation>Üheväärtuselise andmevälja tüüp.</xs:documentation>
+		</xs:annotation>
+		<xs:simpleContent>
+			<xs:extension base="string">
+				<xs:annotation>
+					<xs:documentation>Andmevälja väärtus.</xs:documentation>
+				</xs:annotation>
+				<xs:attribute name="avKood" type="dul:avKoodType">
+					<xs:annotation>
+						<xs:documentation>Andmevälja kood Deltas oleval dokumendil/asjatoimikul.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+				<xs:attribute name="avNimetus" type="xs:string">
+					<xs:annotation>
+						<xs:documentation>Andmevälja nimetus Deltas oleva dokumendi dokumendiliigi juures (asjatoimiku korral asjatoimiku liigi juures).</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+			</xs:extension>
+		</xs:simpleContent>
+	</xs:complexType>
+	<xs:complexType name="andmevaliMVType">
+		<xs:annotation>
+			<xs:documentation>Mitmeväärtuselise andmevälja tüüp.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="vaartus" type="xs:string" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Mitmeväärtuselise andmevälja väärtuste loetelu.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+		<xs:attribute name="avKood" type="dul:avKoodType">
+			<xs:annotation>
+				<xs:documentation>Andmevälja kood Deltas oleval dokumendil/asjatoimikul.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="avNimetus" type="xs:string">
+			<xs:annotation>
+				<xs:documentation>Andmevälja nimetus Deltas oleva dokumendi dokumendiliigi juures (asjatoimiku korral asjatoimiku liigi juures).</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	<xs:complexType name="andmevaljadeGruppType">
+		<xs:annotation>
+			<xs:documentation>Andmeväljade grupi tüüp.</xs:documentation>
+		</xs:annotation>
+		<xs:choice maxOccurs="unbounded">
+			<xs:element name="andmevali" type="dul:andmevaliType">
+				<xs:annotation>
+					<xs:documentation>Andmeväljade grupis olev üheväärtuseline metaandmeväli.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="andmevaliMV" type="dul:andmevaliMVType">
+				<xs:annotation>
+					<xs:documentation>Andmeväljade grupis olev mitmeväärtuseline metaandmeväli.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:choice>
+		<xs:attribute name="grNimetus" type="xs:string">
+			<xs:annotation>
+				<xs:documentation>Andmevälja grupi pealkiri Deltas oleva dokumendi dokumendiliigi/asjatoimiku liigi juures.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	<xs:simpleType name="avKoodType">
+		<xs:annotation>
+			<xs:documentation>Andmevälja koodi tüüp.</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="string">
+			<xs:pattern value="([0-9a-zA-Z]){2,}"/>
+		</xs:restriction>
+	</xs:simpleType>
+</xs:schema>

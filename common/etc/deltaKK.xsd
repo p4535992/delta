@@ -1,0 +1,176 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://delta/tasks/schemas" xmlns="http://delta/tasks/schemas" elementFormDefault="qualified">
+   <xs:annotation>
+      <xs:documentation>
+         XML skeem DVK kaudu Delta kooskõlastamise tööülesannete andmete edastamiseks.
+
+         Stsenaariumid.
+         1) Kooskõlastamise tööülesande andmete edastamine [deltaKK/linkedReviewTask]
+         2) Kooskõlastamise tööülesande kustutamine [deltaKK/deleteLinkedReviewTask]
+      </xs:documentation>
+   </xs:annotation>
+
+   <xs:element name="deltaKK" type="deltaKKRootType">
+      <xs:annotation>
+         <xs:documentation>Juurelement</xs:documentation>
+      </xs:annotation>
+   </xs:element>
+
+   <xs:complexType name="deltaKKRootType">
+      <xs:annotation>
+         <xs:documentation>Delta kooskõlastamise tööülesannete andmete edastamise koondelemendi tüüp.
+            linkedReviewTask - Kooskõlastamise tööülesande andmed. Kasutatakse nii algse ülesande edastamisel kui andmete muutumisel.
+            deleteLinkedReviewTask - Kasutatakse tööülesande kustutamisel.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:choice>
+         <xs:element name="linkedReviewTask" type="linkedReviewTaskType" />
+         <xs:element name="deleteLinkedReviewTask" type="deleteLinkedReviewTaskType" />
+      </xs:choice>
+   </xs:complexType>
+
+   <xs:complexType name="linkedReviewTaskType">
+      <xs:annotation>
+         <xs:documentation>
+            Tüüp elemendile, millega edastatakse kooskõlastamise tööülesande andmed teise asutusse.
+            Kasutatakse nii tööülesande tekitamisel kui selle andmete muutumisel.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="creatorName" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>Tööülesande looja nimi.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="creatorId" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>
+                  Tööülesande looja kasutajatunnus.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:element>         <xs:element name="startedDateTime" type="xs:dateTime">
+            <xs:annotation>
+               <xs:documentation>
+                  Tööülesande täitmisele suunamise aeg.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="ownerId" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>
+                  Tööülesande omaniku (kooskõlastaja) kasutajanimi.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="ownerName" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>
+                  Tööülesande omaniku (kooskõlastaja) nimi.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="dueDate" type="xs:dateTime">
+            <xs:annotation>
+               <xs:documentation>
+                  Tööülesande täitmise (kooskõlastamise) tähtaeg.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="status" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>Tööülesande staatus.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="compoundWorkflowTitle" type="xs:string" minOccurs="0">
+            <xs:annotation>
+               <xs:documentation>Terviktöövoo pealkiri.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="compoundWorkflowComment" type="xs:string" minOccurs="0">
+            <xs:annotation>
+               <xs:documentation>Terviktöövoo kommentaar.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="workflowResolution" type="xs:string" minOccurs="0">
+            <xs:annotation>
+               <xs:documentation>Töövoo resolutsioon.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="creatorInstitutionName" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>
+                  Asutuse nimetus, mille Deltas asub tööülesande originaal.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="creatorInstitutionCode" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>
+                  Asutuse registrikood, mille Deltas asub tööülesande
+                  originaal.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="originalNoderefId" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>
+                  Algse kooskõlastamise tööülesande (reviewTask-i) noderef-i
+                  ID osa.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="originalTaskObjectUrl" type="xs:anyURI">
+            <xs:annotation>
+               <xs:documentation>
+                  URL, mis viitab tööülesande aluseks olevale objektile
+                  (terviktöövoole) selles Deltas, kus tööülesande originaal
+                  asub.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="outcome" type="xs:string" minOccurs="0">
+            <xs:annotation>
+               <xs:documentation>Tööülesande tulem.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="comment" type="xs:string" minOccurs="0">
+            <xs:annotation>
+               <xs:documentation>
+                  Tööülesande täitmisel antud kommentaar (kooskõlastusmärge).
+               </xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="completedDateTime" type="xs:dateTime" minOccurs="0">
+            <xs:annotation>
+               <xs:documentation>
+                  Tööülesande täidetuks märkimise aeg.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element name="stoppedDateTime" type="xs:dateTime" minOccurs="0">
+            <xs:annotation>
+               <xs:documentation>
+                  Tööülesande peatamise aeg.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:element>      </xs:sequence>
+   </xs:complexType>
+
+   <xs:complexType name="deleteLinkedReviewTaskType">
+      <xs:annotation>
+         <xs:documentation>
+            Kooskõlastamise tööülesande kustutamise andmetüüp.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element name="originalNoderefId" type="xs:string">
+            <xs:annotation>
+               <xs:documentation>Kustutatava tööülesande originaali (reviewTask-i) noderef-i ID osa.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+
+
+
+</xs:schema>

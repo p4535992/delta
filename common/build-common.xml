@@ -264,6 +264,7 @@
 		</javac>
 		<javac destdir="${project.dir.exploded.classes}" classpathref="classpath" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
 			<compilerarg value="-Xlint" />
+			<compilerarg value="-Xlint:-deprecation" />
 			<!-- XXX why do I have "bad path element" warnings, where do these path elements come from? -->
 			<compilerarg value="-Xlint:-path" />
 			<src path="${common.dir.src}" />
@@ -293,21 +294,17 @@
 	</target>
 
 	<target name="zip" depends="war" description="Build ZIP file from WAR and helper files needed for distributsion package">
-<!--
-	   <delete file="${project.dir.build}/menetlus-import-sql.zip" failonerror="false" />
+		<delete file="${project.dir.build}/menetlus-import-sql.zip" failonerror="false" />
 		<zip destfile="${project.dir.build}/menetlus-import-sql.zip" duplicate="fail">
 			<zipfileset dir="${project.dir.etc}/import-sql" includes="*.sql" prefix="sql" />
 		</zip>
--->
 		<delete file="${project.build.result.zip}" failonerror="false" />
 		<zip destfile="${project.build.result.zip}" duplicate="fail">
 			<zipfileset file="${project.build.result.war}" fullpath="dhs.war" />
 			<zipfileset dir="${project.basedir}/doc" includes="Delta_P*.docx" />
 			<zipfileset file="${conf.basedir}/${conf.name}/classes/alfresco-global.properties" />
-			<zipfileset dir="${common.dir.etc}" includes="index.jsp,jvm-error.sh,krb5.conf,nginx-*.conf.example,soffice-monitor.sh,tomcat-sslvalve-fixed.jar,tomcat.sh" />
-<!--
+			<zipfileset dir="${common.dir.etc}" includes="index.jsp,jvm-error.sh,krb5.conf,nginx-*.conf.example,soffice-monitor.sh,tomcat-sslvalve-fixed.jar,tomcat.sh,OpenOffice_WebDAV_Protocol.reg" />
 		    <zipfileset file="${project.dir.build}/menetlus-import-sql.zip" />
--->
 		</zip>
 	</target>
 
@@ -362,6 +359,7 @@
 		</copy>
 		<javac destdir="${project.dir.test.classes}" classpathref="classpath.test.compile" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
 			<compilerarg value="-Xlint" />
+			<compilerarg value="-Xlint:-deprecation" />
 			<!-- XXX why do I have "bad path element" warnings, where do these path elements come from? -->
 			<compilerarg value="-Xlint:-path" />
 			<src path="${common.dir.src.test}" />
@@ -636,7 +634,21 @@
   	 	<param name="xsd" value="ikt.xsd" />
   	 	<param name="package" value="ee.webmedia.alfresco.ikt.generated" />
   	 	<param name="folder" value="ee/webmedia/alfresco/ikt/generated" />
-  	 </antcall>    	
+  	    <param name="additionalCopy" value="swaref.xsd" />
+  	 </antcall>
+   	 <antcall target="generate-jaxb-conditionally" >
+   	 	<param name="name" value="addDocument" />
+   	 	<param name="xsd" value="addDocument.xsd" />
+   	 	<param name="package" value="ee.webmedia.alfresco.adddocument.generated" />
+   	 	<param name="folder" value="ee/webmedia/alfresco/adddocument/generated" />
+   	 	<param name="additionalCopy" value="swaref.xsd" />
+   	 </antcall>
+ 	 <antcall target="generate-jaxb-conditionally" >
+ 	 	<param name="name" value="deltaKK" />
+ 	 	<param name="xsd" value="deltaKK.xsd" />
+ 	 	<param name="package" value="ee.webmedia.alfresco.workflow.generated" />
+ 	 	<param name="folder" value="ee/webmedia/alfresco/workflow/generated" />
+ 	 </antcall>      
      <antcall target="generate-cxf-conditionally" >
         <param name="name" value="digidocservice" />
         <param name="wsdl" value="DigiDocService_2_3.wsdl" />
@@ -722,7 +734,7 @@
 		<mkdir dir="${project.dir.build}/${name}" />
 		<!-- xjc fails if classpath is directing to main library location (classpath-generate) -->
 		<taskdef name="xjc" classname="com.sun.tools.xjc.XJCTask" classpathref="classpath-jaxb" />
-		<xjc destdir="${project.dir.build}/${name}" package="${package}" removeOldOutput="true">
+		<xjc destdir="${project.dir.build}/${name}" package="${package}" removeOldOutput="true" catalog="${common.dir.etc}/spring.schemas.cat" >
 		    <!-- TODO binding="${common.dir.etc}/jaxb-bindings.xjb" -->
 			<schema dir="${common.dir.etc}" includes="${xsd}" />
 		</xjc>
@@ -738,6 +750,12 @@
 			<src path="${project.dir.build}/${name}" />
 		</javac>
 		<copy todir="${project.dir.build}/${name}/${folder}" preservelastmodified="true" file="${common.dir.etc}/${xsd}" />
+		<copy todir="${project.dir.build}/${name}/${folder}" preservelastmodified="true" file="${common.dir.etc}/local-${xsd}" failonerror="false" />
+	   
+		<copy todir="${project.dir.build}/${name}/${folder}" preservelastmodified="true">
+			<fileset dir="${common.dir.etc}" includes="${additionalCopy}"/>
+		</copy>
+	   
 		<delete file="${common.dir.lib.server}/${name}.jar" failonerror="false" />
 		<jar destfile="${common.dir.lib.server}/${name}.jar" basedir="${project.dir.build}/${name}" />
 		<copy todir="${project.dir.exploded.lib}" preservelastmodified="true" file="${common.dir.lib.server}/${name}.jar" />

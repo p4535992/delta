@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" xmlns:adddoc="http://delta/addDocument/schemas" targetNamespace="http://delta/addDocument/schemas"
+   xmlns:swaRef="http://ws-i.org/profiles/basic/1.1/xsd">
+
+   <xs:import namespace="http://ws-i.org/profiles/basic/1.1/xsd" schemaLocation="http://ws-i.org/profiles/basic/1.1/swaref.xsd" />
+
+   <xs:element name="addDocumentRequest">
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element name="document" type="adddoc:document" />
+         </xs:sequence>
+      </xs:complexType>
+   </xs:element>
+
+   <xs:element name="addDocumentResponse">
+      <xs:complexType>
+         <xs:choice>
+            <xs:element name="status" type="xs:string" />
+         </xs:choice>
+      </xs:complexType>
+   </xs:element>
+
+   <xs:complexType name="document">
+      <xs:sequence>
+         <xs:element name="documentType" type="xs:string" />
+         <xs:element name="senderApplication" type="xs:string" />
+         <xs:element name="fields" type="adddoc:fields" minOccurs="0" />
+         <xs:element name="files" type="adddoc:files" minOccurs="0" />         
+      </xs:sequence>
+   </xs:complexType>
+
+   <xs:complexType name="fields">
+      <xs:sequence>   
+         <xs:element name="field" type="adddoc:field" minOccurs="0" maxOccurs="unbounded" />
+      </xs:sequence>
+   </xs:complexType>
+   
+   <xs:complexType name="field">
+      <xs:sequence>   
+         <xs:element name="id" type="xs:string" />
+         <xs:element name="values" type="adddoc:values" />
+      </xs:sequence>
+   </xs:complexType>
+   
+   <!-- For single-valued fields, element with no value element and element with one empty value are both considered to be null value.
+         For multi-valued fields, element with no value elements means null (empty list), element with empty value element(s) means list containing one (or more) empty (null) element -->
+   <xs:complexType name="values">
+      <xs:sequence>
+         <xs:element name="value" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+   </xs:complexType>   
+
+   <xs:complexType name="files">
+      <xs:sequence>   
+         <xs:element name="file" type="adddoc:file" minOccurs="0" maxOccurs="unbounded" />
+      </xs:sequence>
+   </xs:complexType>
+
+   <xs:complexType name="file">
+      <xs:sequence>
+         <xs:element name="name" type="xs:string" />
+         <xs:element name="content" type="swaRef:swaRef" />
+      </xs:sequence>
+   </xs:complexType>
+
+</xs:schema>
