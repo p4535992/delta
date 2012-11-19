@@ -5,10 +5,9 @@
        xmlns:p="http://www.springframework.org/schema/p"       
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
        http://www.springframework.org/schema/webflow-config http://www.springframework.org/schema/webflow-config/spring-webflow-config-2.0.xsd">
-       
-	<bean id="casPropertyPlaceholderConfigurer2" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"
-		p:location="/WEB-INF/cas.properties" />
-       
+
+    <import resource="spring-configuration/propertyFileConfigurer.xml" />
+
 	<!-- Theme Resolver -->
 	<bean id="themeResolver" class="org.jasig.cas.services.web.ServiceThemeResolver"
 		p:defaultThemeName="${cas.themeResolver.defaultThemeName}"
@@ -138,10 +137,10 @@
     </bean>
 
 
-    <bean class="org.springframework.webflow.mvc.servlet.FlowHandlerAdapter"
+     <bean class="org.springframework.webflow.mvc.servlet.FlowHandlerAdapter"
         p:flowExecutor-ref="flowExecutor"
         p:flowUrlHandler-ref="flowUrlHandler" />
-
+ 
     <bean id="flowUrlHandler" class="org.jasig.cas.web.flow.CasDefaultFlowUrlHandler" />
 
     <webflow:flow-executor id="flowExecutor" flow-registry="flowRegistry">
@@ -225,6 +224,9 @@
     <bean id="gatewayServicesManagementCheck" class="org.jasig.cas.web.flow.GatewayServicesManagementCheck">
         <constructor-arg index="0" ref="servicesManager" />
     </bean>
+		
+	<bean id="generateLoginTicketAction" class="org.jasig.cas.web.flow.GenerateLoginTicketAction"
+		p:ticketIdGenerator-ref="loginTicketUniqueIdGenerator" />
 	
 	<bean id="addRegisteredServiceSimpleFormController" class="org.jasig.cas.services.web.RegisteredServiceSimpleFormController"
 		p:formView="addServiceView"

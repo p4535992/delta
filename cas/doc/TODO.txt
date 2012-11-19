@@ -1,0 +1,6 @@
+Teadaolevad probleemid:
+* Kui ID-kaardiga autentimine õnnestub kliendi poolel (s.t. korrektne PIN1), aga ebaõnnestub serveri poolel (nt. kui OCSP server ei vasta, et ID-kaardi sert on kehtiv),
+  siis ei kuvata ühtegi veateadet, vaid lihtsalt login leht uuesti.
+* Kui ID-kaarti pole sees ja vajutati ID-kaardiga autentimise nupu peale, siis tuleb brauseri vealeht "Ühendus katkestati".
+* Kui OCSP päringute sooritamine on välja lülitatud, siis vist(?) võivad mingid test ID-kaardid läbi minna, sest mingid juurserdid vist on allkirjastanud ka testkaarte.
+  See pole prioriteetne, sest ka Deltas tehakse isikukoodi kontroll ning testkaartidel ei tohiks olla kattuvaid isikukoode reaalsete isikutega.

@@ -4,6 +4,7 @@
       xsi:schemaLocation="http://www.springframework.org/schema/webflow
                           http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd">
 
+    <var name="credentials" class="org.jasig.cas.authentication.principal.UsernamePasswordCredentials" />
     <on-start>
         <evaluate expression="initialFlowSetupAction" />
     </on-start>
@@ -47,11 +48,15 @@
 	<action-state id="spnego">
 		<evaluate expression="spnego" />
 		<transition on="success" to="sendTicketGrantingTicket" />
-		<transition on="error" to="viewLoginForm" />
+		<transition on="error" to="generateLoginTicket" />
 	</action-state>
 
+	<action-state id="generateLoginTicket">
+        <evaluate expression="generateLoginTicketAction.generate(flowRequestContext)" />
+		<transition on="generated" to="viewLoginForm" />
+	</action-state>
+    
 	<view-state id="viewLoginForm" view="casLoginView" model="credentials">
-        <var name="credentials" class="org.jasig.cas.authentication.principal.UsernamePasswordCredentials" />
         <binder>
             <binding property="username" />
             <binding property="password" />
@@ -60,7 +65,6 @@
             <set name="viewScope.commandName" value="'credentials'" />
         </on-entry>
 		<transition on="submit" bind="true" validate="true" to="realSubmit">
-            <set name="flowScope.credentials" value="credentials" />
             <evaluate expression="authenticationViaFormAction.doBind(flowRequestContext, flowScope.credentials)" />
         </transition>
 	</view-state>
@@ -70,7 +74,7 @@
         <evaluate expression="authenticationViaFormAction.submit(flowRequestContext, flowScope.credentials, messageContext)" />
 		<transition on="warn" to="warn" />
 		<transition on="success" to="sendTicketGrantingTicket" />
-		<transition on="error" to="viewLoginForm" />
+		<transition on="error" to="generateLoginTicket" />
 	</action-state>
 	
 	<action-state id="sendTicketGrantingTicket">
@@ -85,7 +89,10 @@
 	<action-state id="generateServiceTicket">
         <evaluate expression="generateServiceTicketAction" />
 		<transition on="success" to ="warn" />
-		<transition on="error" to="viewLoginForm" />
+        <!-- If TGT is expired, then treat it the same way as a fresh visit:
+          * correctly perform SPNEGO immediately
+          * and this also helps to correctly perform X509 check, otherwise expired TGT would have forced a bypass, and even clicking ID-card button didn't work -->
+		<transition on="error" to="startAuthenticate" />
 		<transition on="gateway" to="gatewayServicesManagementCheck" />
 	</action-state>
 

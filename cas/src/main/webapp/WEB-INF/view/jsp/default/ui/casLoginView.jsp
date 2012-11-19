@@ -25,9 +25,17 @@
 
 <%@ page contentType="text/html; charset=UTF-8" %>
 <jsp:directive.include file="includes/top.jsp" />
+
+<c:if test="${not pageContext.request.secure}">
+<div id="msg" class="errors">
+    <h2>Non-secure Connection</h2>
+    <p>You are currently accessing CAS over a non-secure connection.  Single Sign On WILL NOT WORK.  In order to have single sign on work, you MUST log in over HTTPS.</p>
+</div>
+</c:if>
+
+  <div class="box fl-panel" id="login">
 			<form:form method="post" id="fm1" cssClass="fm-v clearfix" commandName="${commandName}" htmlEscape="true">
-			    <form:errors path="*" cssClass="errors" id="status" element="div" />
-                <div class="box fl-panel" id="login">
+                  <form:errors path="*" id="msg" cssClass="errors" element="div" />
                 <!-- <spring:message code="screen.welcome.welcome" /> -->
                     <h2><spring:message code="screen.welcome.instructions" /></h2>
                     <div class="row fl-controls-left">
@@ -58,7 +66,8 @@
                         <label for="warn"><spring:message code="screen.welcome.label.warn" /></label>
                     </div>
                     <div class="row btn-row">
-						<input type="hidden" name="lt" value="${flowExecutionKey}" />
+						<input type="hidden" name="lt" value="${loginTicket}" />
+						<input type="hidden" name="execution" value="${flowExecutionKey}" />
 						<input type="hidden" name="_eventId" value="submit" />
 
                         <input class="btn-submit" name="submit" accesskey="l" value="<spring:message code="screen.welcome.button.login" />" tabindex="4" type="submit" />
@@ -75,9 +84,9 @@
                             <img src="<c:url value="/images/auth_id.gif" />" alt="" width="88" height="31" border="0" />
                         </a>
                     </div>
-                </div>
             </form:form>
 
+          </div>
             <div id="sidebar">
                 <p class="fl-panel fl-note fl-bevel-white fl-font-size-80"><spring:message code="screen.welcome.security" /></p>
                 <div id="list-languages" class="fl-panel">
@@ -98,6 +107,7 @@
                                <option value="it">Italiano</option>
                                <option value="ur">Urdu</option>
                                <option value="zh_CN">Chinese (Simplified)</option>
+                               <option value="zh_TW">Chinese (Traditional)</option>
                                <option value="de">Deutsch</option>
                                <option value="ja">Japanese</option>
                                <option value="hr">Croatian</option>
@@ -106,6 +116,8 @@
                                <option value="pl">Polish</option>
                                <option value="ca">Catalan</option>
                                <option value="mk">Macedonian</option>
+                               <option value="fa">Farsi</option>
+                               <option value="ar">Arabic</option>
                            </select>
                            <input type="submit" value="Switch">
                         </form>
@@ -122,6 +134,7 @@
 							><li><a href="${loginUrl}it">Italiano</a></li
 							><li><a href="${loginUrl}ur">Urdu</a></li
 							><li><a href="${loginUrl}zh_CN">Chinese (Simplified)</a></li
+                            ><li><a href="${loginUrl}zh_TW">Chinese (Traditional)</a></li
 							><li><a href="${loginUrl}de">Deutsch</a></li
 							><li><a href="${loginUrl}ja">Japanese</a></li
 							><li><a href="${loginUrl}hr">Croatian</a></li
@@ -129,6 +142,8 @@
 							><li><a href="${loginUrl}sl">Slovenian</a></li
                             ><li><a href="${loginUrl}ca">Catalan</a></li
                             ><li><a href="${loginUrl}mk">Macedonian</a></li
+                            ><li><a href="${loginUrl}fa">Farsi</a></li
+                            ><li><a href="${loginUrl}ar">Arabic</a></li
 							><li class="last"><a href="${loginUrl}pl">Polish</a></li
 						></ul>
                      </c:otherwise>

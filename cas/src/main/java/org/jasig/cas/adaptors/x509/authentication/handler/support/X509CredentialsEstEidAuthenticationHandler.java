@@ -33,6 +33,7 @@ public class X509CredentialsEstEidAuthenticationHandler extends AbstractPreAndPo
 
     private NotaryFactory notaryFactory;
 
+    private boolean ocspEnabled = true;
     private boolean test = false;
     private String pkcs12Container;
     private String pkcs12Password;
@@ -40,6 +41,9 @@ public class X509CredentialsEstEidAuthenticationHandler extends AbstractPreAndPo
 
     @Override
     public void afterPropertiesSet() throws Exception {
+        if (!ocspEnabled) {
+            return;
+        }
         if (StringUtils.hasLength(pkcs12Container)) {
             File container = new File(pkcs12Container);
             if (!container.canRead()) {
@@ -96,9 +100,11 @@ public class X509CredentialsEstEidAuthenticationHandler extends AbstractPreAndPo
             certificate.checkValidity();
             log.debug("certificate is valid");
 
-            notaryFactory.checkCertificate(certificate);
-            // If OCSP response is successful, then no exception is thrown
-            log.debug("certificate OCSP confirmation succeeded");
+            if (ocspEnabled) {
+                notaryFactory.checkCertificate(certificate);
+                // If OCSP response is successful, then no exception is thrown
+                log.debug("certificate OCSP confirmation succeeded");
+            }
 
             // If certificate has been revoked, then the following error is logged:
             // ERROR [ee.sk.digidoc.factory.BouncyCastleNotaryFactory] - <Certificate has been revoked!>
@@ -155,6 +161,10 @@ public class X509CredentialsEstEidAuthenticationHandler extends AbstractPreAndPo
 
     public boolean supports(final Credentials credentials) {
         return credentials != null && X509CertificateCredentials.class.isAssignableFrom(credentials.getClass());
+    }
+
+    public void setOcspEnabled(boolean ocspEnabled) {
+        this.ocspEnabled = ocspEnabled;
     }
 
     public void setTest(boolean test) {
