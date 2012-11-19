@@ -64,6 +64,14 @@ public class WebUtil {
         return StringUtils.replace(replacedText, "href=\"www.", "href=\"http://www."); // Prefix www with protocol
     }
 
+    public static boolean isNotValidUrl(String website) {
+        if (StringUtils.isBlank(website)) {
+            return true;
+        }
+        website = website.toLowerCase();
+        return !(website.startsWith("http://") || website.startsWith("https://") || website.startsWith("ftp://"));
+    }
+
     /**
      * Escapes all HTML except <a/> links
      * Regex from: http://www.mkyong.com/regular-expressions/how-to-extract-html-links-with-regular-expression/

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
@@ -64,5 +65,13 @@ public interface DvkService {
     String generateAndSendInvoiceFileToSap(Node node, List<Transaction> transactions) throws IOException;
 
     String getReceivedDvkDocumentsPath();
+
+    boolean sendReviewTaskNotification(Task task);
+
+    void sendReviewTaskDeletingNotification(Task task);
+
+    boolean isDvkCapable(List<Node> dvkCapableOrgs, String recipientOrgCode);
+
+    Pair<Integer, Integer> resendFailedSends();
 
 }

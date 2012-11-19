@@ -13,6 +13,7 @@ import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
 
 import org.alfresco.i18n.I18NUtil;
+import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.dictionary.TypeDefinition;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
@@ -364,6 +365,15 @@ public class MessageUtil {
         if (StringUtils.isBlank(translatedTypeName)) {
             throw new IllegalStateException("there should be translation for type " + typeDef
                     + " in model properties file with key '" + getTranslationKeyForType(objectTypeQName, typeDef) + "'");
+        }
+        return translatedTypeName;
+    }
+
+    public static String getPropertyName(QName propertyQName) {
+        PropertyDefinition propertyDef = BeanHelper.getDictionaryService().getProperty(propertyQName);
+        String translatedTypeName = propertyDef.getTitle();
+        if (StringUtils.isBlank(translatedTypeName)) {
+            return propertyQName.toString();
         }
         return translatedTypeName;
     }

@@ -58,6 +58,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.InitializingBean;
 
+import ee.webmedia.alfresco.orgstructure.model.OrganizationStructure;
+
 /**
  * A {@link UserRegistry} implementation with the ability to query Alfresco-like descriptions of users and groups from
  * an LDAP directory, optionally restricted to those modified since a certain time.
@@ -999,4 +1001,10 @@ public class LDAPUserRegistry implements UserRegistry, InitializingBean, Activat
             throw new UnsupportedOperationException();
         }
     }
+
+    @Override
+    public Iterator<NodeDescription> getOrganizationStructures() {
+        throw new UnsupportedOperationException();
+    }
+
 }

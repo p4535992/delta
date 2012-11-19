@@ -40,17 +40,19 @@
                <mandatory>true</mandatory>
             </property>
             <property name="os:unitId">
-               <type>d:int</type>
+               <type>d:text</type>
                <mandatory>true</mandatory>
             </property>
             <property name="os:superUnitId">
-               <type>d:int</type>
-               <mandatory>true</mandatory>
+               <type>d:text</type>
             </property>
             <property name="os:organizationPath">
                <type>d:text</type>
                <multiple>true</multiple>
-            </property>            
+            </property>
+            <property name="os:institutionRegCode">
+               <type>d:text</type>
+            </property>
          </properties>
       </type>
    </types>

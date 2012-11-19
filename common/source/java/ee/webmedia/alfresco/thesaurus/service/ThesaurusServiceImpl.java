@@ -142,6 +142,11 @@ public class ThesaurusServiceImpl implements ThesaurusService {
     }
 
     @Override
+    public int getThesauriCount() {
+        return nodeService.getChildAssocs(getThesauriRoot()).size();
+    }
+
+    @Override
     public List<Thesaurus> getThesauri(boolean fetchKeywords) {
         List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(getThesauriRoot());
         List<Thesaurus> thesauri = new ArrayList<Thesaurus>(childAssocs.size());

@@ -42,6 +42,7 @@ public interface AddressbookModel {
         QName FIRST_ADDITIONAL_PHONE = QName.createQName(AddressbookModel.URI, "firstAdditionalPhone");
         QName SECOND_ADDITIONAL_PHONE = QName.createQName(AddressbookModel.URI, "secondAdditionalPhone");
         QName MOBILE_PHONE = QName.createQName(AddressbookModel.URI, "mobilePhone");
+        QName PRIVATE_PERSON_ORG_NAME = QName.createQName(AddressbookModel.URI, "privatePersonOrgName");
         QName ORGANIZATION_NAME = QName.createQName(AddressbookModel.URI, "orgName");
         QName ORGANIZATION_ALTERNATE_NAME = QName.createQName(AddressbookModel.URI, "orgAltName");
         QName ORGANIZATION_ACRONYM = QName.createQName(AddressbookModel.URI, "orgAcronym");

@@ -10,6 +10,9 @@ import org.springframework.beans.factory.BeanFactory;
 public abstract class AppConstants {
     public static final String CHARSET = "UTF-8";
     private static BeanFactory beanFactory;
+    /**
+     * Case-insensitive
+     */
     public static final Collator DEFAULT_COLLATOR;
 
     public static class SerializableDefaultCollatorDelegate extends Collator implements Serializable {
@@ -34,7 +37,7 @@ public abstract class AppConstants {
 
     static {
         Collator tmp_collator = Collator.getInstance(getDefaultLocale());
-        tmp_collator.setStrength(Collator.SECONDARY);
+        tmp_collator.setStrength(Collator.SECONDARY); // case-insensitive
         tmp_collator.setDecomposition(Collator.CANONICAL_DECOMPOSITION);
         DEFAULT_COLLATOR = tmp_collator;
     }

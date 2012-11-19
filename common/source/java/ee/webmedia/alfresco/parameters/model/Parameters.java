@@ -55,7 +55,6 @@ public enum Parameters {
     // END: errandOrderAbroad (välisLähetuse taotlus)
     VACATION_ORDER_LEGAL_BASIS("vacationOrderLegalBasis"),
     WELCOME_TEXT("welcomeText"),
-    VOLUME_DESTRUCTION_PERIOD("volumeDestructionPeriod"),
     EMAIL_FOR_SUBSTITUTE_SUBJECT("emailForSubstituteSubject"),
     TASK_DUE_DATE_NOTIFICATION_TIME("taskDueDateNotificationTime"),
     TASK_DUE_DATE_NOTIFICATION_DAYS("taskDueDateNotificationDays"),
@@ -74,6 +73,7 @@ public enum Parameters {
     DOC_PROP_VACATION_ORDER_LEGAL_BASIS_NAME("docPropVacationOrderLegalBasisName"),
     DOC_PROP_CHANCELLORS_ORDER_SIGNER_NAME("docPropChancellorsOrderSignerName"),
     MAX_MODAL_SEARCH_RESULT_ROWS("maxModalSearchResultRows"),
+    TASK_OWNER_STRUCT_UNIT("taskOwnerStructUnit"),
     MAX_SEARCH_RESULT_ROWS("maxSearchResultRows"),
     MAX_SEARCH_SHOW_ALL_RESULT_ROWS("maxSearchShowAllResultRows"),
     HEADER_TEXT("headerText"),
@@ -116,7 +116,15 @@ public enum Parameters {
     DIMENSION_DELETION_TIME("dimensionDeletionTime"),
 
     WORKING_DOCUMENTS_ADDRESS("workingDocumentsAddress"),
-    QUICK_SEARCH_WORDS_COUNT("quickSearchWordsCount");
+    ONE_STEP_ALLOWED_IN_COMPOUND_WORKFLOW_MESSAGE("oneStepAllowedInCompoundWorkflowMessage"),
+
+    QUICK_SEARCH_WORDS_COUNT("quickSearchWordsCount"),
+
+    UPLOAD_FILE_MAX_SIZE("uploadFileMaxSize"),
+    DOC_MANAGER_EMAIL("docManagerEmail"),
+    DVK_FAILED_SENDS_RESEND_TIME("dvkFailedSendsResendTime"),
+    MOVE_TO_ARCHIVE_LIST_DEFAULT_MONTHS("moveToArchiveListDefaultMonths"),
+    ARCHIVAL_ACTIVITY_DOC_TYPE_ID("archivalActivityDocTypeId");
 
     private String xPath;
     private String parameterName;

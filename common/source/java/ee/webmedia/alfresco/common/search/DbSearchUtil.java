@@ -211,4 +211,23 @@ public class DbSearchUtil {
         return getDbFieldNameFromPropQName(propName) + "=? ";
     }
 
+    public static String generateTaskPropertyNotQuery(QName propName) {
+        return getDbFieldNameFromPropQName(propName) + "!=? ";
+    }
+
+    public static String generateNotQuery(String query) {
+        if (query == null || query.length() == 0) {
+            return null;
+        }
+        return " NOT (" + query + ")";
+    }
+
+    public static String generateTaskStringHasLengthQuery(QName propName) {
+        return generateTaskPropertyNotNullQuery(propName) + " AND length(" + getDbFieldNameFromPropQName(propName) + ") != 0";
+    }
+
+    public static String generateTaskPropertiesNotEqualQuery(QName propName1, QName propName2) {
+        return getDbFieldNameFromPropQName(propName1) + "!= " + getDbFieldNameFromPropQName(propName2);
+    }
+
 }

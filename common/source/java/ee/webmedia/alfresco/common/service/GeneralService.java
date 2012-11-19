@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.common.service;
 
 import java.io.File;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.Collection;
@@ -21,6 +22,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.QNamePattern;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.logging.Log;
 
@@ -44,10 +46,18 @@ public interface GeneralService {
 
     void setArchivalsStoreVOs(LinkedHashSet<ArchivalsStoreVO> archivalsStoreVOs);
 
+    /**
+     * If you call this method from a bootstrap / module component, then you must use dependsOn = archivalsStoresBootstrap.
+     * 
+     * @return
+     */
     LinkedHashSet<ArchivalsStoreVO> getArchivalsStoreVOs();
 
-    LinkedHashSet<StoreRef> getArchivalsStoreRefs();
-
+    /**
+     * If you call this method from a bootstrap / module component, then you must use dependsOn = archivalsStoresBootstrap.
+     * 
+     * @return
+     */
     LinkedHashSet<StoreRef> getAllWithArchivalsStoreRefs();
 
     /**
@@ -116,6 +126,8 @@ public interface GeneralService {
      */
     List<NodeRef> searchNodes(String input, QName type, Set<QName> props, int limit);
 
+    List<NodeRef> searchNodes(String input, QName type, Set<QName> props, int limit, String queryAndAddition);
+
     /**
      * Sets nodeProps to given nodeRef excluding system and contentModel properties
      * 
@@ -154,7 +166,7 @@ public interface GeneralService {
      * @param parentType - type that parent of given childRef is expected to have
      * @return dorect primary parent node if it has givent parentType, null otherwise
      */
-    Node getParentWithType(NodeRef childRef, QName parentType);
+    Node getParentWithType(NodeRef childRef, QName... parentType);
 
     Node getPrimaryParent(NodeRef nodeRef);
 
@@ -284,13 +296,15 @@ public interface GeneralService {
      */
     void writeFile(ContentWriter writer, File file, String fileName, String mimetype);
 
+    Pair<String, String> getMimetypeAndEncoding(InputStream is, String fileName, String mimetype);
+
     NodeRef addFileOrFolder(File file, NodeRef parentNodeRef, boolean flatten);
 
     NodeRef addFile(File file, NodeRef parentNodeRef);
 
-    void deleteNodeRefs(Collection<NodeRef> nodeRefs);
+    void deleteNodeRefs(Collection<NodeRef> nodeRefs, boolean moveToTrashCan);
 
-    NodeRef getParentNodeRefWithType(NodeRef childRef, QName parentType);
+    NodeRef getParentNodeRefWithType(NodeRef childRef, QName... parentType);
 
     /**
      * Perform work in a background thread. Background thread is created and started after current transaction commit successfully completes; if current transaction is rolled back,
@@ -311,9 +325,15 @@ public interface GeneralService {
     /** Run semaphoreCallback code quarded by given semaphore */
     <T> T runSemaphored(AdjustableSemaphore adjustableSemaphore, ExecuteCallback<T> searchCallback);
 
+    LinkedHashSet<StoreRef> getArchivalsStoreRefs();
+
     String getUniqueFileName(String fileName, List<NodeRef> filesToCheck, NodeRef... parentRefs);
 
     String getTsquery(String input);
+
+    String getStoreTitle(StoreRef storeRef);
+
+    boolean hasAdditionalArchivalStores();
 
     void explainQuery(String sqlQuery, Log log, Object... args);
 

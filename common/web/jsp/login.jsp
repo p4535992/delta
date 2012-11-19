@@ -89,7 +89,7 @@
 
       <h:form acceptcharset="UTF-8" id="loginForm">
          <div id="login-container">
-            <h:graphicImage url="/images/logo/logo.png" alt="#{ApplicationService.projectTitle}" title="#{ApplicationService.projectTitle}" />
+            <h:graphicImage url="#{ApplicationService.logoUrl}" alt="#{ApplicationService.projectTitle}" title="#{ApplicationService.projectTitle}" />
             <h:outputText
             value="#{msg.login_details}" styleClass="login-instructions" /> <h:panelGrid
             cellpadding="0" cellspacing="0" columns="2"

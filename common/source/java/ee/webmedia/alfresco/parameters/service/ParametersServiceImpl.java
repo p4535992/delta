@@ -154,7 +154,9 @@ public class ParametersServiceImpl implements ParametersService {
             final Serializable paramValue = nodeService.getProperty(paramNodeRef, ParametersModel.Props.Parameter.VALUE);
             final String paramDescription = (String) nodeService.getProperty(paramNodeRef, ParametersModel.Props.Parameter.DESCRIPTION);
             final Parameter<? extends Serializable> parameter = getParameter(paramName, paramValue, paramNodeRef, paramDescription);
-            parameters.add(parameter);
+            if (parameter != null) {
+                parameters.add(parameter);
+            }
         }
         return parameters;
     }

@@ -34,7 +34,7 @@ public interface OrganizationStructureService {
      * @param unitId
      * @return organization structure or {@code null} of not found
      */
-    OrganizationStructure getOrganizationStructure(int unitId);
+    OrganizationStructure getOrganizationStructure(String unitId);
 
     /**
      * Return one organization structure.
@@ -48,6 +48,8 @@ public interface OrganizationStructureService {
      * @return number of organisations updated
      */
     int updateOrganisationStructures();
+
+    void updateOrganisationStructures(ActionEvent event);
 
     /**
      * Find organization structures by name. If input is empty, all organization structures are returned.

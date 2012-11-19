@@ -73,9 +73,13 @@ import org.alfresco.service.cmr.repository.MLText;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.Path;
+import org.alfresco.service.cmr.repository.Path.Element;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.cmr.repository.datatype.TypeConversionException;
+import org.alfresco.service.cmr.security.AccessPermission;
+import org.alfresco.service.cmr.security.AccessStatus;
+import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.CachingDateFormat;
 import org.alfresco.util.EqualsHelper;
@@ -97,12 +101,15 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Searcher;
 import org.apache.lucene.search.TermQuery;
 
+import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.utils.ClosingTransactionListener;
 import ee.webmedia.alfresco.utils.SearchUtil;
+import ee.webmedia.alfresco.volume.model.VolumeModel;
 
 /**
  * The implementation of the lucene based indexer. Supports basic transactional behaviour if used on its own.
@@ -614,7 +621,7 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
         for (QName propertyName : properties.keySet())
         {
             Serializable value = properties.get(propertyName);
-            if (DocumentCommonModel.Types.DOCUMENT.equals(typeQName)
+            if ((DocumentCommonModel.Types.DOCUMENT.equals(typeQName) || VolumeModel.Types.VOLUME.equals(typeQName) || CaseFileModel.Types.CASE_FILE.equals(typeQName))
                     && (DocumentDynamicModel.URI.equals(propertyName.getNamespaceURI()) || DocumentCommonModel.DOCCOM_URI.equals(propertyName.getNamespaceURI()))) {
                 addValues(value, values);
             }
@@ -631,10 +638,8 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
         }
 
         // Store property values in a single field so that quick search could find the document.
-        if (DocumentCommonModel.Types.DOCUMENT.equals(typeQName)) {
-            for (String value : values) {
-                xdoc.add(new Field("VALUES", value, Field.Store.NO, Field.Index.TOKENIZED, Field.TermVector.NO));
-            }
+        for (String value : values) {
+            xdoc.add(new Field("VALUES", value, Field.Store.NO, Field.Index.TOKENIZED, Field.TermVector.NO));
         }
 
         boolean isRoot = nodeRef.equals(tenantService.getName(nodeService.getRootNode(nodeRef.getStoreRef())));
@@ -747,6 +752,23 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
             for (QName classRef : nodeService.getAspects(nodeRef))
             {
                 xdoc.add(new Field("ASPECT", ISO9075.getXPathName(classRef), Field.Store.YES, Field.Index.NO_NORMS, Field.TermVector.NO));
+            }
+
+            // Index some information about access restrictions when document is in a series that requires access restrictions to be applied on contained documents.
+            // Document field "DOC_VISIBLE_TO" is added with authority names with "viewDocumentMetaData" privilege (including inherited authorities with same privilege).
+            if (DocumentCommonModel.Types.DOCUMENT.equals(typeQName) && StoreRef.PROTOCOL_WORKSPACE.equals(nodeRef.getStoreRef().getProtocol())) {
+                NodeRef seriesRef = (NodeRef) properties.get(DocumentCommonModel.Props.SERIES);
+                if (seriesRef != null && !nodeService.exists(nodeRef)) {
+                    log.warn("Document " + nodeRef + " references nonexistent series " + seriesRef);
+                    seriesRef = null;
+                }
+                if (seriesRef == null || Boolean.FALSE.equals(nodeService.getProperty(seriesRef, SeriesModel.Props.DOCUMENTS_VISIBLE_FOR_USERS_WITHOUT_ACCESS))) {
+                    for (AccessPermission permission : BeanHelper.getPermissionService().getAllSetPermissions(nodeRef)) {
+                        if (permission.getAccessStatus() == AccessStatus.ALLOWED && DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA.equals(permission.getPermission())) {
+                            xdoc.add(new Field("DOC_VISIBLE_TO", permission.getAuthority(), Field.Store.NO, Field.Index.NO_NORMS, Field.TermVector.NO));
+                        }
+                    }
+                }
             }
 
             xdoc.add(new Field("ISROOT", "F", Field.Store.NO, Field.Index.NO_NORMS, Field.TermVector.NO));

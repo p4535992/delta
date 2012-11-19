@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.user.service;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getOrganizationStructureService;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,11 +43,14 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.log.PropDiffHelper;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
+import ee.webmedia.alfresco.parameters.model.Parameters;
+import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.report.model.ReportModel;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.model.UserModel;
@@ -61,6 +66,7 @@ public class UserServiceImpl implements UserService {
     private NodeService nodeService;
     private DictionaryService dictionaryService;
     private SearchService searchService;
+    private ParametersService parametersService;
     private PersonService personService;
     private PermissionService permissionService;
     private OrganizationStructureService organizationStructureService;
@@ -68,7 +74,7 @@ public class UserServiceImpl implements UserService {
     private NamespaceService namespaceService;
     private LogService logService;
     private boolean groupsEditingAllowed;
-    private List<String> systematicGroups;
+    private Set<String> systematicGroups;
 
     @Override
     public NodeRef retrieveUsersPreferenceNodeRef(String userName) {
@@ -130,9 +136,13 @@ public class UserServiceImpl implements UserService {
         }
         if (!nodeService.hasAspect(personRef, ReportModel.Aspects.REPORTS_QUEUE_CONTAINER)) {
             nodeService.addAspect(personRef, ReportModel.Aspects.REPORTS_QUEUE_CONTAINER, null);
-            nodeService.createNode(personRef, ReportModel.Assocs.REPORTS_QUEUE, ReportModel.Assocs.REPORTS_QUEUE, ReportModel.Types.REPORTS_QUEUE_ROOT);
         }
-        return getReportsFolder(personRef);
+        NodeRef reportsFolder = getReportsFolder(personRef);
+        if (reportsFolder == null) {
+            reportsFolder = nodeService.createNode(personRef, ReportModel.Assocs.REPORTS_QUEUE, ReportModel.Assocs.REPORTS_QUEUE, ReportModel.Types.REPORTS_QUEUE_ROOT)
+                    .getChildRef();
+        }
+        return reportsFolder;
     }
 
     private NodeRef getReportsFolder(NodeRef userRef) {
@@ -145,12 +155,30 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public NodeRef retrieveCurrentUserForNotification(QName aspectQName) {
+        NodeRef currentUserRef = getCurrentUser();
+        if (!nodeService.getAspects(currentUserRef).contains(aspectQName)) {
+            nodeService.addAspect(currentUserRef, aspectQName, null);
+        }
+        return currentUserRef;
+    }
+
+    @Override
+    public boolean isCurrentStructUnitUser() {
+        String taskOwnerStructUnit = parametersService.getStringParameter(Parameters.TASK_OWNER_STRUCT_UNIT);
+        Set<String> authorities = authorityService.getAuthorities();
+        return StringUtils.isBlank(taskOwnerStructUnit) || isDocumentManager() || isSupervisor() || authorities.contains(getGroup(taskOwnerStructUnit))
+                || authorities.contains(taskOwnerStructUnit);
+    }
+
+    @Override
     public boolean isAdministrator() {
-        return authorityService.hasAdminAuthority();
+        return AuthenticationUtil.isRunAsUserTheSystemUser() || authorityService.hasAdminAuthority();
     }
 
     private boolean isAdministrator(String userName) {
-        return ((userName != null) && authorityService.getAuthoritiesForUser(userName).contains(PermissionService.ADMINISTRATOR_AUTHORITY));
+        return ((userName != null) && (AuthenticationUtil.SYSTEM_USER_NAME.equals(userName) || authorityService.getAuthoritiesForUser(userName).contains(
+                PermissionService.ADMINISTRATOR_AUTHORITY)));
     }
 
     @Override
@@ -177,6 +205,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public boolean isArchivist() {
+        return isAdministrator() || authorityService.getAuthorities().contains(getArchivistsGroup());
+    }
+
+    @Override
     public boolean isSupervisor() {
         if (isAdministrator()) {
             return true;
@@ -200,26 +233,30 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public String getDocumentManagersGroup() {
-        return authorityService.getName(AuthorityType.GROUP, DOCUMENT_MANAGERS_GROUP);
+        return getGroup(DOCUMENT_MANAGERS_GROUP);
     }
 
     @Override
     public String getAccountantsGroup() {
-        return authorityService.getName(AuthorityType.GROUP, ACCOUNTANTS_GROUP);
+        return getGroup(ACCOUNTANTS_GROUP);
     }
 
     @Override
     public String getSupervisionGroup() {
-        return authorityService.getName(AuthorityType.GROUP, SUPERVISION_GROUP);
+        return getGroup(SUPERVISION_GROUP);
     }
 
     private String getArchivistsGroup() {
-        return authorityService.getName(AuthorityType.GROUP, ARCHIVIST_GROUP);
+        return getGroup(ARCHIVIST_GROUP);
     }
 
     @Override
     public String getAdministratorsGroup() {
-        return authorityService.getName(AuthorityType.GROUP, "ALFRESCO_ADMINISTRATORS");
+        return getGroup(ADMINISTRATORS_GROUP);
+    }
+
+    private String getGroup(String name) {
+        return authorityService.getName(AuthorityType.GROUP, name);
     }
 
     @Override
@@ -229,21 +266,36 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<Node> searchUsers(String input, boolean returnAllUsers, String group, int limit) {
+        return searchUsers(input, returnAllUsers, group, limit, null);
+    }
+
+    @Override
+    public List<Node> searchUsers(String input, boolean returnAllUsers, String group, int limit, String exactGroup) {
         Set<QName> props = new HashSet<QName>(2);
         props.add(ContentModel.PROP_FIRSTNAME);
         props.add(ContentModel.PROP_LASTNAME);
+        props.add(ContentModel.PROP_JOBTITLE);
 
-        return searchUsersByProps(input, returnAllUsers, group, props, limit);
+        return searchUsersByProps(input, returnAllUsers, group, props, limit, exactGroup);
     }
 
     // XXX filtering by group is not optimal - it is done after searching/getting all users
-    private List<Node> searchUsersByProps(String input, boolean returnAllUsers, String group, Set<QName> props, int limit) {
-        List<NodeRef> nodeRefs = generalService.searchNodes(input, ContentModel.TYPE_PERSON, props, limit);
+    private List<Node> searchUsersByProps(String input, boolean returnAllUsers, String group, Set<QName> props, int limit, String exactGroup) {
+        List<String> groupNames = null;
+        List<String> queryAndAdditions = new ArrayList<String>();
+        if (StringUtils.isNotBlank(group)) {
+            queryAndAdditions.add(SearchUtil.generatePropertyExactQuery(ContentModel.PROP_USERNAME, getUserNamesInGroup(group), true));
+        }
+        if (StringUtils.isNotBlank(exactGroup)) {
+            groupNames = BeanHelper.getDocumentSearchService().searchAuthorityGroupsByExactName(exactGroup);
+            queryAndAdditions.add(SearchUtil.generatePropertyExactQuery(ContentModel.PROP_USERNAME, getUserNamesInGroup(groupNames), true));
+        }
+        List<NodeRef> nodeRefs = generalService.searchNodes(input, ContentModel.TYPE_PERSON, props, limit, SearchUtil.joinQueryPartsAnd(queryAndAdditions));
         if (nodeRefs == null) {
             if (returnAllUsers) {
                 // XXX use alfresco services instead
                 List<Node> users = getUsers(limit);
-                filterByGroup(users, group);
+                filterByGroup(users, groupNames);
                 return users;
             }
             return Collections.emptyList();
@@ -263,7 +315,7 @@ public class UserServiceImpl implements UserService {
             users.add(node);
         }
 
-        filterByGroup(users, group);
+        filterByGroup(users, groupNames);
         return users;
     }
 
@@ -348,17 +400,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Integer getCurrentUsersStructUnitId() {
+    public String getCurrentUsersStructUnitId() {
         Map<QName, Serializable> userProperties = getUserProperties(AuthenticationUtil.getRunAsUser());
-        Serializable orgId = userProperties.get(ContentModel.PROP_ORGID);
-        if (StringUtils.isBlank((String) orgId)) {
-            return null;
-        }
-        return Integer.parseInt(orgId.toString());
+        String orgId = (String) userProperties.get(ContentModel.PROP_ORGID);
+        return orgId;
     }
 
     @Override
-    public Set<String> getUsernamesByStructUnit(List<Integer> structUnits) {
+    public Set<String> getUsernamesByStructUnit(List<String> structUnits) {
         if (structUnits == null || structUnits.isEmpty()) {
             return Collections.<String> emptySet();
         }
@@ -371,15 +420,11 @@ public class UserServiceImpl implements UserService {
                 if (!nodeService.exists(personRef)) {
                     continue;
                 }
-                String strStructUnit = (String) nodeService.getProperty(personRef, ContentModel.PROP_ORGID);
-                Integer structUnit = null;
-                if (StringUtils.isNotBlank(strStructUnit)) {
-                    structUnit = Integer.valueOf(strStructUnit);
-                    if (structUnits.contains(structUnit)) {
-                        String userName = (String) nodeService.getProperty(personRef, ContentModel.PROP_USERNAME);
-                        Assert.notNull(userName);
-                        users.add(userName);
-                    }
+                String structUnit = (String) nodeService.getProperty(personRef, ContentModel.PROP_ORGID);
+                if (StringUtils.isNotBlank(structUnit) && structUnits.contains(structUnit)) {
+                    String userName = (String) nodeService.getProperty(personRef, ContentModel.PROP_USERNAME);
+                    Assert.notNull(userName);
+                    users.add(userName);
                 }
             }
             return users;
@@ -424,6 +469,18 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public List<String> getUserOrgPathOrOrgName(Map<QName, Serializable> props) {
+        @SuppressWarnings("unchecked")
+        List<String> orgPaths = (List<String>) props.get(ContentModel.PROP_ORGANIZATION_PATH);
+        if (orgPaths != null && !orgPaths.isEmpty()) {
+            return orgPaths;
+        }
+        String orgId = (String) props.get(ContentModel.PROP_ORGID);
+        String orgName = getOrganizationStructureService().getOrganizationStructureName(orgId);
+        return new ArrayList<String>(Collections.singleton(orgName));
+    }
+
+    @Override
     public String getUserFullNameAndId(String userName) {
         Map<QName, Serializable> props = getUserProperties(userName);
         if (props == null) {
@@ -452,10 +509,11 @@ public class UserServiceImpl implements UserService {
         return isGroupsEditingAllowed() && !getSystematicGroups().contains(group);
     }
 
-    private List<String> getSystematicGroups() {
+    @Override
+    public Set<String> getSystematicGroups() {
         if (systematicGroups == null) {
-            systematicGroups = Arrays.asList(getAdministratorsGroup(), getDocumentManagersGroup(), getAccountantsGroup()
-                    , getSupervisionGroup(), getAccountantsGroup(), getArchivistsGroup());
+            systematicGroups = new HashSet<String>(Arrays.asList(getAdministratorsGroup(), getDocumentManagersGroup(), getAccountantsGroup(), getSupervisionGroup(),
+                    getArchivistsGroup()));
         }
         return systematicGroups;
     }
@@ -507,12 +565,25 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Set<String> getUserNamesInGroup(String group) {
-        return authorityService.getContainedAuthorities(AuthorityType.USER, group, true);
+    public Set<String> getUserNamesInGroup(String groupName) {
+        return getUserNamesInGroup(Arrays.asList(groupName));
+    }
+
+    @Override
+    public Set<String> getUserNamesInGroup(List<String> groupNames) {
+        Set<String> usersInGroup = new HashSet<String>();
+        for (String groupName : groupNames) {
+            usersInGroup.addAll(authorityService.getContainedAuthorities(AuthorityType.USER, groupName, true));
+        }
+        return usersInGroup;
     }
 
     @Override
     public Set<String> getUsersGroups(String userName) {
+        if (userName == null) {
+            return new HashSet<String>(0);
+        }
+
         Set<String> authoritiesForUser = authorityService.getAuthoritiesForUser(userName);
         Set<String> groupNames = new HashSet<String>(authoritiesForUser.size());
         for (String authority : authoritiesForUser) {
@@ -546,11 +617,11 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    private void filterByGroup(List<Node> users, String group) {
-        if (group == null) {
+    private void filterByGroup(List<Node> users, List<String> groupNames) {
+        if (groupNames == null) {
             return;
         }
-        Set<String> auths = getUserNamesInGroup(authorityService.getName(AuthorityType.GROUP, "SIGNERS"));
+        Set<String> auths = getUserNamesInGroup(groupNames);
         for (Iterator<Node> i = users.iterator(); i.hasNext();) {
             Node user = i.next();
             Object userName = user.getProperties().get(ContentModel.PROP_USERNAME);
@@ -588,6 +659,25 @@ public class UserServiceImpl implements UserService {
             }
         }
         return personNodes;
+    }
+
+    @Override
+    public List<NodeRef> getAllUserRefs() {
+        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(personService.getPeopleContainer());
+        List<NodeRef> personRefs = new ArrayList<NodeRef>(childRefs.size());
+        for (ChildAssociationRef childRef : childRefs) {
+            personRefs.add(childRef.getChildRef());
+        }
+        return personRefs;
+    }
+
+    @Override
+    public List<String> getUserNames(List<NodeRef> userNodes) {
+        List<String> result = new ArrayList<String>(userNodes.size());
+        for (NodeRef nodeRef : userNodes) {
+            result.add((String) nodeService.getProperty(nodeRef, ContentModel.PROP_USERNAME));
+        }
+        return result;
     }
 
     // START: setters/getters
@@ -642,6 +732,10 @@ public class UserServiceImpl implements UserService {
 
     public void setGroupsEditingAllowed(boolean groupsEditingAllowed) {
         this.groupsEditingAllowed = groupsEditingAllowed;
+    }
+
+    public void setParametersService(ParametersService parametersService) {
+        this.parametersService = parametersService;
     }
 
     // END: setters/getters

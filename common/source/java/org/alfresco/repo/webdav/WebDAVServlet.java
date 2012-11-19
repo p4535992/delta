@@ -55,6 +55,8 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
+import ee.webmedia.alfresco.monitoring.MonitoredService;
+import ee.webmedia.alfresco.monitoring.MonitoringUtil;
 
 /**
  * Servlet that accepts WebDAV requests for the hub. The request is served by the hub's content
@@ -139,6 +141,7 @@ public class WebDAVServlet extends HttpServlet
 
             // Execute the WebDAV request, which must take care of its own transaction
             method.execute();
+            MonitoringUtil.logSuccess(MonitoredService.IN_WEBDAV);
         }
         catch (Throwable e)
         {
@@ -153,6 +156,11 @@ public class WebDAVServlet extends HttpServlet
             if (e instanceof WebDAVServerException)
             {
                 WebDAVServerException error = (WebDAVServerException) e;
+                if (error.getHttpStatusCode()<500) {
+                    MonitoringUtil.logSuccess(MonitoredService.IN_WEBDAV);
+                } else {
+                    MonitoringUtil.logError(MonitoredService.IN_WEBDAV, e);
+                }
                 if (error.getCause() != null)
                 {
                     if (error.getCause() instanceof AccessDeniedException)
@@ -184,6 +192,7 @@ public class WebDAVServlet extends HttpServlet
             else
             {
                 logger.error(INTERNAL_SERVER_ERROR, e);
+                MonitoringUtil.logError(MonitoredService.IN_WEBDAV, e);
 
                 if (response.isCommitted())
                 {

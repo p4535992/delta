@@ -92,6 +92,7 @@ public class MultiValueEditorGenerator extends BaseComponentGenerator implements
         addValueFromCustomAttributes(MultiValueEditor.IS_AUTOMATICALLY_ADD_ROWS, attributes, Boolean.class);
         addValueFromCustomAttributes(ComponentUtil.IS_ALWAYS_EDIT, attributes, Boolean.class);
         addValueFromCustomAttributes(Search.SEARCH_SUGGEST_DISABLED, attributes, Boolean.class, false);
+        addValueFromCustomAttributes(Search.FILTERS_ALLOW_GROUP_SELECT_KEY, attributes, Boolean.class, false);
         addValueFromCustomAttributes(MultiValueEditor.HIDDEN_PROP_NAMES, attributes);
         addValueFromCustomAttributes(MultiValueEditor.SETTER_CALLBACK_RETURNS_MAP, attributes, Boolean.class, false);
         addValueFromCustomAttributes(MultiValueEditor.GROUP_BY_COLUMN_NAME, attributes);

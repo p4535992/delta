@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.common.propertysheet.datepicker;
 
+import java.util.Map;
+
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIInput;
 import javax.faces.context.FacesContext;
@@ -37,6 +39,16 @@ public class DateTimePickerGenerator extends DatePickerGenerator {
         UIInput childComponent = (UIInput) super.generate(context, id + fieldNameSuffix);
         ComponentUtil.addChildren(container, childComponent);
         ComponentUtil.createAndSetConverter(context, converterId, childComponent);
+    }
+
+    @Override
+    protected void setupProperty(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item, PropertyDefinition propertyDef, UIComponent component) {
+        super.setupProperty(context, propertySheet, item, propertyDef, component);
+
+        Map<String, Object> attributes = ComponentUtil.getAttributes(component);
+
+        addValueFromCustomAttributes(DateTimePickerRenderer.DATE_STYLE_CLASS_ATTR, attributes);
+        addValueFromCustomAttributes(DateTimePickerRenderer.TIME_STYLE_CLASS_ATTR, attributes);
     }
 
     @Override

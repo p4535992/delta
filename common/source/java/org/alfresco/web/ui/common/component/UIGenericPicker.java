@@ -24,6 +24,8 @@
  */
 package org.alfresco.web.ui.common.component;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getAuthorityService;
+
 import java.io.IOException;
 import java.util.Map;
 import java.util.ResourceBundle;
@@ -46,6 +48,7 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.common.ajax.AjaxUpdateable;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -65,11 +68,16 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
     private final static String FIELD_FILTER = "_filter";
     private final static String FIELD_CONTAINS = "_contains";
     private final static String FIELD_RESULTS = "_results";
+    private final static String FIELD_SELECTED_GROUP = "_selectedGroup";
+    private final static String FIELD_GROUP_SELECTOR = "_groupSelector";
+    private final static String FIELD_SELECTED_GROUP_TEXT = "_selectedGroupText";
 
     /** I18N message strings */
     private final static String MSG_SEARCH = "search";
     private final static String MSG_CLEAR = "clear";
     private final static String MSG_MODAL_SEARCH_LIMITED = "modal_search_limited";
+    private final static String MSG_MODAL_SEARCH_USERGROUP_SELECTED = "modal_search_usergroup_selected";
+    private final static String MSG_MODAL_SEARCH_SELECT_USERGROUP = "modal_search_select_usergroup";
     private final static String MSG_ADD = "add";
     private final static String MSG_RESULTS1 = "results_contains";
     private final static String MSG_RESULTS2 = "results_contains_filter";
@@ -84,6 +92,8 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
     private Boolean showFilter = null;
     private Boolean showContains = null;
     private Boolean showAddButton = null;
+    private Boolean showSelectButton = Boolean.FALSE;
+    private Boolean filterByTaskOwnerStructUnit = Boolean.FALSE;
     private Boolean filterRefresh = null;
     private Boolean multiSelect = null;
     private String addButtonLabel;
@@ -92,9 +102,10 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
     private Integer size = null;
 
     private SelectItem[] filters = null;
-    private int filterIndex = 0;
+    private int filterIndex = UserContactGroupSearchBean.USERS_FILTER;
     private int defaultFilterIndex = 0;
     private String contains = "";
+    private String selectedUsergroup = "";
     private String[] selectedResults = null;
     private SelectItem[] currentResults = null;
 
@@ -140,6 +151,9 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
         multiSelect = (Boolean) values[14];
         size = (Integer) values[15];
         defaultFilterIndex = (Integer) values[16];
+        selectedUsergroup = (String) values[17];
+        showSelectButton = (Boolean) values[18];
+        filterByTaskOwnerStructUnit = (Boolean) values[19];
     }
 
     /**
@@ -147,7 +161,7 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
      */
     @Override
     public Object saveState(FacesContext context) {
-        Object values[] = new Object[17];
+        Object values[] = new Object[20];
         // standard component attributes are saved by the super class
         values[0] = super.saveState(context);
         values[1] = showFilter;
@@ -166,6 +180,9 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
         values[14] = multiSelect;
         values[15] = size;
         values[16] = defaultFilterIndex;
+        values[17] = selectedUsergroup;
+        values[18] = showSelectButton;
+        values[19] = filterByTaskOwnerStructUnit;
         return (values);
     }
 
@@ -178,6 +195,7 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
         Map valuesMap = context.getExternalContext().getRequestParameterValuesMap();
         String fieldId = getHiddenFieldName();
         String value = (String) requestMap.get(fieldId);
+        String selectedGroup = (String) requestMap.get(fieldId + FIELD_SELECTED_GROUP);
 
         int action = ACTION_NONE;
         if (value != null && value.length() != 0) {
@@ -204,7 +222,7 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
         String[] results = (String[]) valuesMap.get(fieldId + FIELD_RESULTS);
 
         // queue an event
-        PickerEvent event = new PickerEvent(this, action, filterIndex, contains, results);
+        PickerEvent event = new PickerEvent(this, action, filterIndex, contains, results, selectedGroup);
         queueEvent(event);
     }
 
@@ -236,22 +254,30 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
                 filterIndex = defaultFilterIndex;
                 selectedResults = null;
                 currentResults = null;
+                selectedUsergroup = "";
                 break;
 
             case ACTION_FILTER:
                 // filter changed then query with new settings
+                selectedUsergroup = "";
+                //$FALL-THROUGH$
             case ACTION_SEARCH:
                 // We want to get "filterIndex" and "contains" values that were used while performing the search,
                 // not the ones that user may have modified later
                 filterIndex = pickerEvent.FilterIndex;
                 contains = pickerEvent.Contains;
+                if (pickerEvent.Action != ACTION_FILTER && StringUtils.isNotBlank(pickerEvent.UserGroupSearch)) {
+                    selectedUsergroup = pickerEvent.UserGroupSearch;
+                }
 
                 // query with current settings
                 MethodBinding callback = getQueryCallback();
                 if (callback != null) {
                     // use reflection to execute the query callback method and retrieve results
-                    Object result = callback.invoke(getFacesContext(), new Object[] { new PickerSearchParams(filterIndex, contains.trim(),
-                            BeanHelper.getParametersService().getLongParameter(Parameters.MAX_MODAL_SEARCH_RESULT_ROWS).intValue()) });
+                    Object result = callback.invoke(getFacesContext(),
+                            new Object[] { new PickerSearchParams(filterIndex, contains.trim(),
+                                    BeanHelper.getParametersService().getLongParameter(Parameters.MAX_MODAL_SEARCH_RESULT_ROWS).intValue(), selectedUsergroup,
+                                    filterByTaskOwnerStructUnit) });
 
                     if (result instanceof SelectItem[]) {
                         currentResults = (SelectItem[]) result;
@@ -290,9 +316,12 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
         out.write("<tr valign=\"top\"><td>");
 
         // filter drop-down
+        String filterId = clientId + FIELD_FILTER;
         if (getShowFilter() == true) {
             out.write("<select class=\"genericpicker-filter ff-margin-right-2\" name='");
-            out.write(clientId + FIELD_FILTER);
+            out.write(filterId);
+            out.write("' id='");
+            out.write(filterId);
             out.write("' size='1'");
 
             // apply onchange Form submit here if component attributes require it
@@ -309,8 +338,12 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
             if (items != null) {
                 for (int i = 0; i < items.length; i++) {
                     out.write("<option value=\"");
-                    out.write(items[i].getValue().toString());
-                    if (filterIndex != i) {
+                    // KAAREL: I checked and it seems that we are using integers as values everywhere.
+                    // When this is not the case this cast will fail fast.
+                    Integer value = (Integer) items[i].getValue();
+                    out.write(value.toString());
+                    // Since select values aren't 0-based integer lists anymore, the selected attribute must be assigned regarding the value.
+                    if (filterIndex != value) {
                         out.write("\">");
                     } else {
                         out.write("\" selected=\"true\">");
@@ -324,7 +357,7 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
         }
 
         // Contains textbox
-        if (getShowContains() == true) {
+        if (getShowContains()) {
             out.write("<input");
             String pickerCallback = (String) getAttributes().get(Search.PICKER_CALLBACK_KEY);
             if (StringUtils.isBlank(pickerCallback)) {
@@ -338,14 +371,24 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
                 if (!getShowFilter()) {
                     out.write(filterIndex + "|");
                 }
-                out.write(pickerCallback + "'");
+                out.write(pickerCallback + "|" + filterByTaskOwnerStructUnit + "'");
             }
             out.write(" name='");
             out.write(clientId + FIELD_CONTAINS);
-            out.write("' type='text' class=\"genericpicker-input focus\" maxlength='256' style='width:120px' value=\"");
+            out.write("' type='text' class=\"genericpicker-input focus\" maxlength='256' style='width:200px !important;' value=\"");
             out.write(Utils.encode(contains));
             out.write("\">&nbsp;");
         }
+
+        // a hidden field for selected usergroup
+        // For some reason, if type=hidden, then the value field was sent to the browser, but the browser cleared it, so no value was sent back
+        out.write("<input type='text' id='");
+        out.write(clientId + FIELD_SELECTED_GROUP);
+        out.write("' name='");
+        out.write(clientId + FIELD_SELECTED_GROUP);
+        out.write("' value='");
+        out.write(selectedUsergroup);
+        out.write("' style='display:none;'>");
 
         // Search button
         out.write("<button class=\"specificAction\" type=\"button\" onclick=\"");
@@ -396,6 +439,12 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
         out.write("</select>");
         out.write("</td></tr>");
 
+        if (!StringUtils.isBlank(selectedUsergroup)) {
+            out.write("<tr><td><span id=\"" + clientId + FIELD_SELECTED_GROUP_TEXT + "\">");
+            out.write(Utils.encode(MessageUtil.getMessage(MSG_MODAL_SEARCH_USERGROUP_SELECTED, getAuthorityService().getAuthorityDisplayName(selectedUsergroup))));
+            out.write("</span></td></tr>");
+        }
+
         // help text
         if (getMultiSelect() == true) {
             out.write("<tr");
@@ -428,7 +477,23 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
             }
             out.write(generateFormSubmit(context, ACTION_ADD, ajaxParentLevel));
             out.write("\">");
-            out.write("</td></tr>");
+            // select group for search
+            if (showSelectButton != null && showSelectButton) {
+                out.write("&nbsp;<input class=\"picker-add\" type='submit' id='" + clientId + FIELD_GROUP_SELECTOR + "'");
+                if (filterIndex != UserContactGroupSearchBean.USER_GROUPS_FILTER) {
+                    out.write("disabled='disabled'");
+                }
+                out.write(" value='");
+                out.write(Utils.encode(MessageUtil.getMessage(MSG_MODAL_SEARCH_SELECT_USERGROUP)));
+                out.write("' onclick=\"");
+                out.write("selectGroupForModalSearch('" + clientId + FIELD_RESULTS + "', '" + clientId + FIELD_SELECTED_GROUP + "', '" + filterId + "'); "
+                        + generateFormSubmit(context, ACTION_SEARCH, 0));
+                out.write("\">");
+                out.write("<script language=\"javascript\" type=\"text/javascript\">");
+                out.write("$jQ(document).ready(function() { $jQ('#'+escapeId4JQ('" + clientId + FIELD_FILTER + "')).change(groupModalFilterChange);});");
+                out.write("</script>");
+                out.write("</td></tr>");
+            }
         }
 
         // end outer table
@@ -702,6 +767,14 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
         return ComponentUtil.generateAjaxFormSubmit(context, this, getHiddenFieldName(), Integer.toString(action), parentLevel);
     }
 
+    public void setShowSelectButton(Boolean showSelectButton) {
+        this.showSelectButton = showSelectButton;
+    }
+
+    public void setFilterByTaskOwnerStructUnit(Boolean filterByTaskOwnerStructUnit) {
+        this.filterByTaskOwnerStructUnit = filterByTaskOwnerStructUnit;
+    }
+
     // ------------------------------------------------------------------------------
     // Inner classes
 
@@ -710,14 +783,20 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
      */
     @SuppressWarnings("serial")
     public static class PickerEvent extends ActionEvent {
-        public PickerEvent(UIComponent component, int action, int filterIndex, String contains, String[] results) {
+        public PickerEvent(UIComponent component, int action, int filterIndex, String contains, String[] results, String userGroupSearch) {
             super(component);
             Action = action;
             FilterIndex = filterIndex;
             Contains = contains;
             Results = results;
+            UserGroupSearch = userGroupSearch;
         }
 
+        public PickerEvent(UIComponent component, int action, int filterIndex, String contains, String[] results) {
+            this(component, action, filterIndex, contains, results, null);
+        }
+
+        public String UserGroupSearch;
         public int Action;
         public int FilterIndex;
         public String Contains;

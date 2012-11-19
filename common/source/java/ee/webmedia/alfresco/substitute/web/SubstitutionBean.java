@@ -24,6 +24,7 @@ import org.alfresco.web.app.servlet.BaseServlet;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.substitute.model.SubstitutionInfo;
@@ -41,12 +42,14 @@ public class SubstitutionBean implements Serializable {
     public static final String BEAN_NAME = "SubstitutionBean";
     private SubstitutionInfo substitutionInfo = new SubstitutionInfo();
     private boolean forceSubstituteTaskReload = false;
+    private Boolean currentStructUnitUser;
 
     public String getSelectedSubstitution() {
         return substitutionInfo.getSelectedSubstitution();
     }
 
     public void setSelectedSubstitution(String selectedSubstitution) {
+        currentStructUnitUser = null;
         if (StringUtils.isBlank(selectedSubstitution)) {
             substitutionInfo = new SubstitutionInfo();
         } else {
@@ -54,6 +57,13 @@ public class SubstitutionBean implements Serializable {
             substitutionInfo = new SubstitutionInfo(getSubstituteService().getSubstitute(userNodeRef));
         }
         setForceSubstituteTaskReload(true);
+    }
+
+    public boolean isCurrentStructUnitUser() {
+        if (currentStructUnitUser == null) {
+            currentStructUnitUser = BeanHelper.getUserService().isCurrentStructUnitUser();
+        }
+        return currentStructUnitUser;
     }
 
     public void substitutionSelected(ValueChangeEvent event) {

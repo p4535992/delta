@@ -47,6 +47,9 @@ import org.alfresco.util.EqualsHelper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+
 /**
  * Implementation of the node archive abstraction.
  * 
@@ -141,6 +144,16 @@ public class NodeArchiveServiceImpl implements NodeArchiveService
             // success
             report.setRestoredNodeRef(newNodeRef);
             report.setStatus(RestoreStatus.SUCCESS);
+
+            // Remove deleted document entry for ADR sync
+            if (DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(newNodeRef))) { 
+                List<NodeRef> searchAdrDeletedDocument = BeanHelper.getDocumentSearchService().searchAdrDeletedDocument(newNodeRef);
+                if (!searchAdrDeletedDocument.isEmpty()) {
+                    for (NodeRef deletedAdrEntry : searchAdrDeletedDocument) {
+                        nodeService.deleteNode(deletedAdrEntry);
+                    }
+                }
+            }
         }
         catch (InvalidNodeRefException e)
         {

@@ -174,7 +174,7 @@ public class MsoService2Impl implements MsoService, InitializingBean {
                         + documentReader.getEncoding() + "|" + pdfWriter.getSize());
             }
         } catch (Exception e) {
-            log.error("Error in transformToPdf", e);
+            log.error("Error in transformToPdf! | ContentURL: " + documentReader.getContentUrl() + " | Input mimetype: " + documentReader.getMimetype().toLowerCase(), e);
             throw e;
         }
     }

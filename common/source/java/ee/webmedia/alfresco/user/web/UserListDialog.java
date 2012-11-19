@@ -1,5 +1,9 @@
 package ee.webmedia.alfresco.user.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
+import static ee.webmedia.alfresco.common.web.UserContactGroupSearchBean.FILTER_INDEX_SEPARATOR;
+import static ee.webmedia.alfresco.common.web.UserContactGroupSearchBean.USERS_FILTER;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -21,6 +25,7 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
+import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.user.model.UserListRowVO;
 import ee.webmedia.alfresco.user.model.UserModel;
 import ee.webmedia.alfresco.user.service.UserService;
@@ -148,7 +153,19 @@ public class UserListDialog extends BaseDialogBean {
     }
 
     private SelectItem[] searchUsers(PickerSearchParams params, boolean excludeCurrentUser, boolean useNameAsValue, boolean showSubstitutionInfo) {
-        List<Node> nodes = getOrganizationStructureService().setUsersUnit(getUserService().searchUsers(params.getSearchString(), true, params.getLimit()));
+        String selectedGroup = params.getGroupSelectLimitation();
+        if (StringUtils.isBlank(selectedGroup)) {
+            selectedGroup = null;
+        }
+        String exactGroup = null;
+        if (params.getFilterByStructUnitParam()) {
+            String taskOwnerStructUnitParam = getParametersService().getStringParameter(Parameters.TASK_OWNER_STRUCT_UNIT);
+            if (StringUtils.isNotBlank(taskOwnerStructUnitParam)) {
+                exactGroup = taskOwnerStructUnitParam;
+            }
+        }
+        List<Node> nodes = getOrganizationStructureService().setUsersUnit(
+                getUserService().searchUsers(params.getSearchString(), true, selectedGroup, params.getLimit(), exactGroup));
         int nodesSize = nodes.size();
         List<SelectItem> results = new ArrayList<SelectItem>(nodesSize);
 
@@ -167,9 +184,12 @@ public class UserListDialog extends BaseDialogBean {
             if (excludeCurrentUser && StringUtils.equals(userName, currentUser) || node.hasAspect(UserModel.Aspects.LEAVING)) {
                 continue;
             }
-            String label = UserUtil.getPersonFullNameWithUnitName(node.getProperties(), showSubstitutionInfo);
+            String label = UserUtil.getPersonFullNameWithUnitNameAndJobTitle(node.getProperties(), showSubstitutionInfo);
             String value = userName;
-            results.add(new SelectItem(value, label));
+            if (params.isIncludeFilterIndex()) {
+                value += (FILTER_INDEX_SEPARATOR + USERS_FILTER);
+            }
+            results.add(new SelectItem(value, label, label));
         }
 
         WebUtil.sort(results);

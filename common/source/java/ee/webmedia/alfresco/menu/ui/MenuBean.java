@@ -31,9 +31,11 @@ import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.IDialogBean;
+import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.config.DialogsConfigElement.DialogConfig;
 import org.alfresco.web.config.WizardsConfigElement.WizardConfig;
 import org.alfresco.web.ui.common.component.UIActionLink;
@@ -45,11 +47,14 @@ import org.springframework.web.jsf.FacesContextUtils;
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.menu.model.DropdownMenuItem;
 import ee.webmedia.alfresco.menu.model.Menu;
 import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.service.MenuService;
+import ee.webmedia.alfresco.menu.service.ShortcutMenuItem;
+import ee.webmedia.alfresco.menu.service.ShortcutMenuItemOutcome;
 import ee.webmedia.alfresco.menu.ui.component.MenuItemWrapper;
 import ee.webmedia.alfresco.menu.ui.component.MenuRenderer;
 import ee.webmedia.alfresco.menu.ui.component.UIMenuComponent;
@@ -58,6 +63,7 @@ import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
+import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 /**
@@ -66,6 +72,7 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
 public class MenuBean implements Serializable {
 
     public static final String SHORTCUT_MENU_ITEM_PREFIX = "shortcut-";
+    public static final String SHORTCUT_OUTCOME_MENU_ITEM_PREFIX = SHORTCUT_MENU_ITEM_PREFIX + "outcome-";
     private static final long serialVersionUID = 1L;
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(MenuBean.class);
 
@@ -79,9 +86,40 @@ public class MenuBean implements Serializable {
     public static final int DOCUMENT_REGISTER_ID = 1;
     public static final int MY_DOCUMENTS_ID = 3;
     public static final int CREATE_NEW_DOCUMENT = 8;
+    public static final int CREATE_NEW = 9;
 
-    public static final List<String> HIDDEN_WHEN_EMPTY = Arrays.asList("assignmentTasks", "informationTasks", "orderAssignmentTasks", "opinionTasks", "discussions", "reviewTasks",
-            "externalReviewTasks", "confirmationTasks", "signatureTasks", "forRegisteringList", "userWorkingDocuments");
+    private static final String ACTION_KEY_OUTCOME = "outcome";
+    private static final String ACTION_KEY_ACTION = "action";
+    private static final String ACTION_KEY_NODE_REF = "nodeRef";
+    private static final String ACTION_KEY_MENU_ITEM_NODE_REF = "menuItemNodeRef";
+
+    public static final List<String> HIDDEN_WHEN_EMPTY = Arrays.asList(
+            "assignmentTasks"
+            , "informationTasks"
+            , "orderAssignmentTasks"
+            , "opinionTasks"
+            , "discussions"
+            , "reviewTasks"
+            , "externalReviewTasks"
+            , "confirmationTasks"
+            , "signatureTasks"
+            , "forRegisteringList"
+            , "userWorkingDocuments"
+            , "userCaseFiles"
+            );
+    public static final List<String> HIDDEN_TO_OTHER_STRUCT_UNIT_PEOPLE = Arrays.asList(
+            "documentRegister"
+            , "contact"
+            , "me"
+            , "search"
+            , "restrictedDelta"
+            , "regularDelta"
+            , "documentDynamicTypes"
+            , "newCaseFileOrWorkflow"
+            , "menu_my_responsibility"
+            , "departmentDocuments"
+            , "myDocuments"
+            );
 
     private transient HtmlPanelGroup shortcutsPanelGroup;
     private transient HtmlPanelGroup breadcrumb;
@@ -96,7 +134,7 @@ public class MenuBean implements Serializable {
     private int updateCount = 0;
     private String lastLinkId;
     private NodeRef linkNodeRef;
-    private List<String> shortcuts;
+    private List<ShortcutMenuItem> shortcuts;
     private String activeItemId = "0";
     private String clickedId = "";
     private Stack<String> stateList = new Stack<String>();
@@ -472,6 +510,10 @@ public class MenuBean implements Serializable {
         return activeItemId;
     }
 
+    public String getWebServiceDocumentsMenuItemTitle() {
+        return BeanHelper.getAddDocumentService().getWebServiceDocumentsMenuItemTitle();
+    }
+
     public void setActiveItemId(String activeItemId) {
         if (StringUtils.isNotBlank(activeItemId)) {
             this.activeItemId = activeItemId;
@@ -536,7 +578,7 @@ public class MenuBean implements Serializable {
     // =============================== SHORTCUTS ==============================
     // ========================================================================
 
-    public List<String> getShortcuts() {
+    public List<ShortcutMenuItem> getShortcuts() {
         if (shortcuts == null) {
             shortcuts = getMenuService().getShortcuts();
         }
@@ -557,8 +599,8 @@ public class MenuBean implements Serializable {
 
     private void generateShortcutLinks() {
         shortcutsPanelGroup.getChildren().clear();
-        for (Iterator<String> i = getShortcuts().iterator(); i.hasNext();) {
-            String menuItemId = i.next();
+        for (Iterator<ShortcutMenuItem> i = getShortcuts().iterator(); i.hasNext();) {
+            ShortcutMenuItem menuItemId = i.next();
             if (!generateAndAddShortcut(menuItemId)) {
                 i.remove();
             }
@@ -595,27 +637,66 @@ public class MenuBean implements Serializable {
         return item;
     }
 
-    private boolean generateAndAddShortcut(String menuItemId) {
-        FacesContext context = FacesContext.getCurrentInstance();
-        Pair<MenuItem, String[]> menuItemAndPath = getMenuItemAndPathFromMenuItemId(menuItemId);
-        if (menuItemAndPath == null) {
+    private boolean generateAndAddShortcut(ShortcutMenuItem shortcutMenuItem) {
+        if (shortcutMenuItem == null || (!shortcutMenuItem.isOutcomeShortcut() && StringUtils.isBlank(shortcutMenuItem.getMenuItemId()))) {
             return false;
         }
-        MenuItem item = menuItemAndPath.getFirst();
-        MenuItemWrapper wrapper = (MenuItemWrapper) item.createComponent(context, SHORTCUT_MENU_ITEM_PREFIX + shortcutsPanelGroup.getChildCount()
+        FacesContext context = FacesContext.getCurrentInstance();
+        MenuItem item;
+        Pair<MenuItem, String[]> menuItemAndPath = null;
+        String idPrefix;
+        if (shortcutMenuItem.isOutcomeShortcut()) {
+            item = new MenuItem();
+            idPrefix = SHORTCUT_OUTCOME_MENU_ITEM_PREFIX;
+            NodeRef actionNodeRef = shortcutMenuItem.getActionNodeRef();
+            item.setOutcome(shortcutMenuItem.getOutcome().getOutcome());
+            item.setActionListener(shortcutMenuItem.getOutcome().getAction());
+            item.setId(SHORTCUT_OUTCOME_MENU_ITEM_PREFIX + "item-" + shortcutsPanelGroup.getChildCount());
+            Map<String, String> params = item.getParams();
+            if (actionNodeRef == null && requiresNodeRef(shortcutMenuItem)) {
+                return false;
+            }
+            if (actionNodeRef != null) {
+                if (!BeanHelper.getNodeService().exists(actionNodeRef)) {
+                    return false;
+                }
+                Map<QName, Serializable> props = BeanHelper.getNodeService().getProperties(actionNodeRef);
+                StringBuffer sb = new StringBuffer("");
+                for (QName titlePropQName : shortcutMenuItem.getOutcome().getTitlePropQNames()) {
+                    sb.append(props.get(titlePropQName)).append(" ");
+                }
+                item.setTitle(sb.toString());
+                params.put("nodeRef", actionNodeRef.toString());
+            }
+        } else {
+            idPrefix = SHORTCUT_MENU_ITEM_PREFIX;
+            menuItemAndPath = getMenuItemAndPathFromMenuItemId(shortcutMenuItem.getMenuItemId());
+            if (menuItemAndPath == null) {
+                return false;
+            }
+            item = menuItemAndPath.getFirst();
+        }
+        MenuItemWrapper wrapper = (MenuItemWrapper) item.createComponent(context, idPrefix + shortcutsPanelGroup.getChildCount()
                 , getUserService(), getWorkflowService(), getEinvoiceService(), BeanHelper.getRSService(), false);
         if (wrapper == null) {
             return false; // no permissions or for some other reason wrapper is not created
         }
         wrapper.setPlain(true);
 
-        UIActionLink link = (UIActionLink) wrapper.getChildren().get(0);
-        String shortcut = getShortcutFromPath(menuItemAndPath.getSecond());
-        link.addActionListener(new ShortcutClickedActionListener(shortcut));
+        if (!shortcutMenuItem.isOutcomeShortcut()) {
+            UIActionLink link = (UIActionLink) wrapper.getChildren().get(0);
+            String shortcut = getShortcutFromPath(menuItemAndPath.getSecond());
+            link.addActionListener(new ShortcutClickedActionListener(shortcut));
 
-        String title = (String) link.getValue();
-        if (title.endsWith(")")) {
-            link.setValue(title.substring(0, title.lastIndexOf('(')));
+            String title = (String) link.getValue();
+            if (title.endsWith(")")) {
+                link.setValue(title.substring(0, title.lastIndexOf('(')));
+            }
+        } else {
+            List<UIComponent> children = ((UIActionLink) wrapper.getChildren().get(0)).getChildren();
+            if (!children.isEmpty()) {
+                ((UIParameter) children.get(0)).setId(SHORTCUT_MENU_ITEM_PREFIX + "param-" + shortcutsPanelGroup.getChildCount());
+            }
         }
 
         // All shortcut items should be visible and we don't need the AJAX counter updater.
@@ -631,6 +712,19 @@ public class MenuBean implements Serializable {
         List<UIComponent> children = shortcutsPanelGroup.getChildren();
         children.add(wrapper);
         return true;
+    }
+
+    private boolean requiresNodeRef(ShortcutMenuItem shortcutMenuItem) {
+        ShortcutMenuItemOutcome outcome = shortcutMenuItem.getOutcome();
+        return ShortcutMenuItemOutcome.CASE_FILE == outcome || ShortcutMenuItemOutcome.VOLUME == outcome;
+    }
+
+    public static ShortcutMenuItemOutcome getOutcome(String outcomeStr) {
+        try {
+            return ShortcutMenuItemOutcome.valueOf(outcomeStr);
+        } catch (IllegalArgumentException e) {
+            return ShortcutMenuItemOutcome.VOLUME;
+        }
     }
 
     private Pair<MenuItem, String[]> getMenuItemAndPathFromMenuItemId(String menuItemId) {
@@ -683,7 +777,7 @@ public class MenuBean implements Serializable {
         if (menuItemId == null) {
             return 0;
         }
-        if (shortcuts.contains(menuItemId)) {
+        if (isExistingShortcut(new ShortcutMenuItem(menuItemId))) {
             return -1;
         }
 
@@ -732,23 +826,67 @@ public class MenuBean implements Serializable {
     public void addShortcut(@SuppressWarnings("unused") ActionEvent event) {
         String shortcut = getShortcutFromClickedId();
         String menuItemId = getMenuItemIdFromShortcut(shortcut);
-        if (menuItemId == null || shortcuts.contains(menuItemId)) {
+        ShortcutMenuItem shortcutMenuItem = new ShortcutMenuItem(menuItemId);
+        if (menuItemId == null || isExistingShortcut(shortcutMenuItem)) {
             return;
         }
-        if (generateAndAddShortcut(menuItemId)) {
-            getMenuService().addShortcut(menuItemId);
-            shortcuts.add(menuItemId);
+        if (generateAndAddShortcut(shortcutMenuItem)) {
+            getMenuService().addShortcut(shortcutMenuItem);
+            shortcuts.add(shortcutMenuItem);
+        }
+    }
+
+    public void addVolumeOutcomeShortcut(ActionEvent event) {
+        ShortcutMenuItemOutcome outcome = getOutcome(ActionUtil.getParam(event, ACTION_KEY_OUTCOME));
+        NodeRef nodeRef = null;
+        if (ActionUtil.hasParam(event, ACTION_KEY_NODE_REF)) {
+            nodeRef = new NodeRef(ActionUtil.getParam(event, ACTION_KEY_NODE_REF));
+        }
+        ShortcutMenuItem shortcutMenuItem = new ShortcutMenuItem(null, outcome, nodeRef);
+        if (isExistingShortcut(shortcutMenuItem)) {
+            return;
+        }
+        if (generateAndAddShortcut(shortcutMenuItem)) {
+            shortcutMenuItem = getMenuService().addShortcut(shortcutMenuItem);
+            shortcuts.add(shortcutMenuItem);
         }
     }
 
     public void removeShortcut(@SuppressWarnings("unused") ActionEvent event) {
         String shortcut = getShortcutFromClickedId();
         String menuItemId = getMenuItemIdFromShortcut(shortcut);
-        if (menuItemId == null || !shortcuts.contains(menuItemId)) {
+        ShortcutMenuItem shortcutMenuItem = new ShortcutMenuItem(menuItemId);
+        if (menuItemId == null || !isExistingShortcut(shortcutMenuItem)) {
             return;
         }
-        getMenuService().removeShortcut(menuItemId);
-        shortcuts.remove(menuItemId);
+        getMenuService().removeShortcut(shortcutMenuItem);
+        removeShortcutFromList(shortcutMenuItem, shortcuts);
+        generateShortcutLinks();
+    }
+
+    public static void removeShortcutFromList(ShortcutMenuItem shortcut, List<ShortcutMenuItem> shortcuts) {
+        for (Iterator<ShortcutMenuItem> i = shortcuts.iterator(); i.hasNext();) {
+            ShortcutMenuItem item = i.next();
+            if (item.equals(shortcut)) {
+                i.remove();
+            }
+        }
+    }
+
+    public void removeOutcomeShortcut(ActionEvent event) {
+        NodeRef volumeNodeRef = new NodeRef(ActionUtil.getParam(event, ACTION_KEY_MENU_ITEM_NODE_REF));
+        ShortcutMenuItem shortcutToRemove = null;
+        for (ShortcutMenuItem shortcutMenuItem : shortcuts) {
+            if (volumeNodeRef.equals(shortcutMenuItem.getActionNodeRef())) {
+                shortcutToRemove = shortcutMenuItem;
+                break;
+            }
+        }
+        if (shortcutToRemove == null) {
+            return;
+        }
+        getMenuService().removeShortcut(shortcutToRemove);
+        shortcuts.remove(shortcutToRemove);
         generateShortcutLinks();
     }
 
@@ -829,7 +967,105 @@ public class MenuBean implements Serializable {
             return showEmpty == null || !showEmpty;
         }
 
+        if (HIDDEN_TO_OTHER_STRUCT_UNIT_PEOPLE.contains(menuItemId)) {
+            return !BeanHelper.getSubstitutionBean().isCurrentStructUnitUser();
+        }
+
+        if ("volSearch".equals(menuItemId)) {
+            return !BeanHelper.getVolumeService().isCaseVolumeEnabled();
+        }
         return false;
+    }
+
+    public boolean isShowAddCaseFileVolumeShortcut() {
+        if (!isCaseFileVolumeDialog()) {
+            return false;
+        }
+        return isNotExistingShortcut();
+    }
+
+    public boolean isShowAddVolumeShortcut() {
+        if (!isVolumeDialog()) {
+            return false;
+        }
+        return isNotExistingShortcut();
+    }
+
+    private boolean isNotExistingShortcut() {
+        NodeRef currentVolumeRef = getCurrentVolumeRef();
+        return currentVolumeRef != null && !isExistingShortcut(currentVolumeRef);
+    }
+
+    private boolean isCaseFileVolumeDialog() {
+        try {
+            return "caseFileDialog".equals(BeanHelper.getDialogManager().getCurrentDialog().getName());
+        } catch (NullPointerException e) {
+            return false;
+        }
+    }
+
+    private boolean isVolumeDialog() {
+        try {
+            return "caseDocListDialog".equals(BeanHelper.getDialogManager().getCurrentDialog().getName());
+        } catch (NullPointerException e) {
+            return false;
+        }
+    }
+
+    public boolean isShowRemoveVolumeOutcomeShortcut() {
+        NodeRef currentVolumeRef = getCurrentVolumeRef();
+        if (currentVolumeRef == null) {
+            return false;
+        }
+        return isExistingShortcut(currentVolumeRef);
+    }
+
+    private boolean isExistingShortcut(NodeRef currentVolumeRef) {
+        if (currentVolumeRef == null) {
+            return false;
+        }
+        for (ShortcutMenuItem shortcut : shortcuts) {
+            if (shortcut.isOutcomeShortcut() && currentVolumeRef.equals(shortcut.getActionNodeRef())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isExistingShortcut(ShortcutMenuItem shortcutMenuItem) {
+        return isExistingShortcut(shortcutMenuItem, shortcuts);
+    }
+
+    public static boolean isExistingShortcut(ShortcutMenuItem shortcutMenuItem, List<ShortcutMenuItem> shortcuts) {
+        for (ShortcutMenuItem shortcut : shortcuts) {
+            if (shortcut.equals(shortcutMenuItem)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public NodeRef getCurrentVolumeRef() {
+        NodeRef currentVolumeRef = null;
+        if (isCaseFileVolumeDialog()) {
+            WmNode caseFile = BeanHelper.getCaseFileDialog().getNode();
+            currentVolumeRef = caseFile != null ? caseFile.getNodeRef() : null;
+        } else if (isVolumeDialog()) {
+            Volume volume = BeanHelper.getCaseDocumentListDialog().getParent();
+            if (volume != null) {
+                Node volumeNode = volume.getNode();
+                currentVolumeRef = volumeNode != null ? volumeNode.getNodeRef() : null;
+            }
+        }
+        return currentVolumeRef;
+    }
+
+    public String getVolumeOpenOutcome() {
+        return ShortcutMenuItemOutcome.VOLUME.toString();
+    }
+
+    public String getCaseFileOpenOutcome() {
+        return ShortcutMenuItemOutcome.CASE_FILE.toString();
     }
 
     public String getRestrictedDeltaName() {

@@ -31,8 +31,10 @@
 
 <wm:menu primary="false" />
 
+<a:booleanEvaluator id="currentStructUnitUserCheck" value="#{SubstitutionBean.currentStructUnitUser}">
 <f:verbatim><div id="shelf" class="shelf"><div class="menu"><a class="icon-link collapse" href="#" onclick="_togglePersistentMenu(event, 'shortcuts');"></f:verbatim>
 <h:outputText value="#{msg.shortcuts}" />
 <f:verbatim></a><ul id="shortcuts"></f:verbatim>
 <h:panelGroup binding="#{MenuBean.shortcutsPanelGroup}" />
 <f:verbatim></ul></div></div></f:verbatim>
+</a:booleanEvaluator>

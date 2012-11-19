@@ -29,6 +29,8 @@ import org.apache.log4j.Logger;
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
 import ee.webmedia.alfresco.log.LogHelper;
+import ee.webmedia.alfresco.monitoring.MonitoredService;
+import ee.webmedia.alfresco.monitoring.MonitoringUtil;
 
 /**
  * NOTE by Erko Hansar
@@ -132,17 +134,42 @@ public class RequestControlFilter implements Filter {
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpSession session = httpRequest.getSession();
+        String servletPath = httpRequest.getServletPath();
+        boolean monitorIt = true;
+        if (servletPath != null && "/webdav".equals(servletPath)) {
+            monitorIt = false; // webdav is monitored in its own servlet
+        }
 
         LogHelper.gatherUserInfo(httpRequest);
 
         // if this request is excluded from the filter, then just process it
         if (!isFilteredRequest(httpRequest)) {
-            chain.doFilter(request, response);
+            try {
+                chain.doFilter(request, response);
+                if (monitorIt) {
+                    MonitoringUtil.logSuccess(MonitoredService.IN_WWW);
+                }
+            } catch (IOException e) {
+                if (monitorIt) {
+                    MonitoringUtil.logError(MonitoredService.IN_WWW, e);
+                }
+                throw e;
+            } catch (ServletException e) {
+                if (monitorIt) {
+                    MonitoringUtil.logError(MonitoredService.IN_WWW, e);
+                }
+                throw e;
+            } catch (RuntimeException e) {
+                if (monitorIt) {
+                    MonitoringUtil.logError(MonitoredService.IN_WWW, e);
+                }
+                throw e;
+            }
             LogHelper.resetUserInfo();
             return;
         }
         StatisticsPhaseListener.clear();
-        StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.SERVLET_PATH, httpRequest.getServletPath());
+        StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.SERVLET_PATH, servletPath);
         // Setting log prefix to allow request tracking
         String logPrefix = getLogPrefix(session);
         log(logPrefix, "REQUEST BEGINS " + httpRequest.hashCode());
@@ -178,6 +205,24 @@ public class RequestControlFilter implements Filter {
             log(logPrefix, "check 6 - START WORK");
             chain.doFilter(request, response);
             log(logPrefix, "check 7 - STOP WORK");
+            if (monitorIt) {
+                MonitoringUtil.logSuccess(MonitoredService.IN_WWW);
+            }
+        } catch (IOException e) {
+            if (monitorIt) {
+                MonitoringUtil.logError(MonitoredService.IN_WWW, e);
+            }
+            throw e;
+        } catch (ServletException e) {
+            if (monitorIt) {
+                MonitoringUtil.logError(MonitoredService.IN_WWW, e);
+            }
+            throw e;
+        } catch (RuntimeException e) {
+            if (monitorIt) {
+                MonitoringUtil.logError(MonitoredService.IN_WWW, e);
+            }
+            throw e;
         } finally {
             long stopWorkTime = System.nanoTime();
             log(logPrefix, "check 8");

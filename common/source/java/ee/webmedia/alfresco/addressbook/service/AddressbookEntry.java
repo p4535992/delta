@@ -7,7 +7,6 @@ import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
-import ee.webmedia.alfresco.addressbook.util.AddressbookUtil;
 
 /**
  * @author Priit Pikk
@@ -36,7 +35,7 @@ public class AddressbookEntry implements Serializable {
         }
     }
 
-    public String getParentOrgName() {
-        return (String) AddressbookUtil.resolverParentOrgName.get(node);
+    public String getPrivatePersonOrgName() {
+        return (String) node.getProperties().get(AddressbookModel.Props.PRIVATE_PERSON_ORG_NAME);
     }
 }

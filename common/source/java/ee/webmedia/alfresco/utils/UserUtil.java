@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.utils;
 
+import static ee.webmedia.alfresco.utils.TextUtil.joinStringAndStringWithComma;
 import static ee.webmedia.alfresco.utils.TextUtil.joinStringAndStringWithSpace;
 
 import java.io.Serializable;
@@ -12,6 +13,7 @@ import java.util.Set;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
@@ -22,8 +24,12 @@ import org.springframework.util.CollectionUtils;
 import com.ibm.icu.util.StringTokenizer;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
+import ee.webmedia.alfresco.parameters.model.Parameters;
+import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.substitute.model.Substitute;
+import ee.webmedia.alfresco.user.service.UserService;
 
 public class UserUtil {
 
@@ -83,11 +89,14 @@ public class UserUtil {
         return fullName;
     }
 
-    public static String getPersonFullNameWithUnitName(Map<String, Object> props, boolean showSubstitutionInfo) {
+    public static String getPersonFullNameWithUnitNameAndJobTitle(Map<String, Object> props, boolean showSubstitutionInfo) {
         String fullName = getPersonFullName2(props, false);
-        String unitName = (String) props.get(OrganizationStructureService.UNIT_NAME_PROP);
-        if (StringUtils.isNotBlank(unitName)) {
-            fullName += " (" + StringUtils.strip(unitName) + ")";
+        String bracketContent = joinStringAndStringWithComma(
+                StringUtils.strip((String) props.get(ContentModel.PROP_JOBTITLE)),
+                StringUtils.strip((String) props.get(OrganizationStructureService.UNIT_NAME_PROP))
+                );
+        if (StringUtils.isNotBlank(bracketContent)) {
+            fullName += " (" + bracketContent + ")";
         }
         if (showSubstitutionInfo) {
             return joinStringAndStringWithSpace(fullName, getSubstitute((String) props.get(ContentModel.PROP_USERNAME)));
@@ -260,4 +269,40 @@ public class UserUtil {
         }
         return organizationPaths;
     }
+
+    public static Set<String> getUsersInGroup(String group
+            , NodeService nodeService
+            , UserService userService
+            , ParametersService parametersService
+            , DocumentSearchService documentSearchService
+            ) {
+        Set<String> children = userService.getUserNamesInGroup(group);
+        String structUnit = parametersService.getStringParameter(Parameters.TASK_OWNER_STRUCT_UNIT);
+        if (StringUtils.isNotBlank(structUnit)) {
+            List<NodeRef> res = documentSearchService.filterUsersInUserGroup(structUnit, children);
+            children.clear();
+            for (NodeRef nodeRef : res) {
+                children.add((String) nodeService.getProperty(nodeRef, ContentModel.PROP_USERNAME));
+            }
+        }
+        return children;
+    }
+
+    public static List<Map<QName, Serializable>> getFilteredTaskOwnerStructUnitUsersProps(Set<String> usernames, NodeService nodeService, ParametersService parametersService,
+            DocumentSearchService documentSearchService, UserService userService) {
+        List<Map<QName, Serializable>> userProps = new ArrayList<Map<QName, Serializable>>();
+        String structUnit = parametersService.getStringParameter(Parameters.TASK_OWNER_STRUCT_UNIT);
+        if (StringUtils.isNotBlank(structUnit)) {
+            List<NodeRef> res = documentSearchService.filterUsersInUserGroup(structUnit, usernames);
+            for (NodeRef nodeRef : res) {
+                userProps.add(nodeService.getProperties(nodeRef));
+            }
+        } else {
+            for (String username : usernames) {
+                userProps.add(RepoUtil.toQNameProperties(userService.getUser(username).getProperties()));
+            }
+        }
+        return userProps;
+    }
+
 }

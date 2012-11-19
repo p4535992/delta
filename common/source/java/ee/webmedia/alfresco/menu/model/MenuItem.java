@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.menu.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,7 @@ import ee.webmedia.alfresco.menu.ui.component.UIMenuComponent.ClearViewStackActi
 import ee.webmedia.alfresco.orgstructure.amr.service.RSService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.volume.service.VolumeService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 /**
@@ -69,6 +71,8 @@ public class MenuItem implements Serializable {
     private boolean accountant;
     @XStreamAsAttribute
     private boolean supervisor;
+    @XStreamAsAttribute
+    private boolean archivist;
     private String outcome;
     @XStreamAlias("subitems")
     private List<MenuItem> subItems;
@@ -282,10 +286,20 @@ public class MenuItem implements Serializable {
         if (isRenderingDisabled() || isRestricted() && !hasPermissions(userService)) {
             return false;
         }
-        if (isExternalReview() && !isExternalReviewEnabled(workflowService)) {
+        if (isExternalReview() && !(isExternalReviewEnabled(workflowService) || workflowService.isReviewToOtherOrgEnabled())) {
+            return false;
+        }
+        if (isOrderAssignment() && !isOrderAssignmentEnabled(workflowService)) {
             return false;
         }
         if (isEinvoiceFunctionality() && !isEinvoiceFunctionalityEnabled(einvoiceService)) {
+            return false;
+        }
+        VolumeService volumeService = BeanHelper.getVolumeService();
+        if ("userCompoundWorkflows".equals(id) && !workflowService.isIndependentWorkflowEnabled() && !volumeService.isCaseVolumeEnabled()) {
+            return false;
+        }
+        if ("userCaseFiles".equals(id) && !volumeService.isCaseVolumeEnabled()) {
             return false;
         }
         boolean isRestrictedDelta = rsService.isRestrictedDelta();
@@ -296,11 +310,38 @@ public class MenuItem implements Serializable {
                 && (isRestrictedDelta || StringUtils.isBlank(rsService.getRestrictedDeltaUrl()) || !BeanHelper.getRsAccessStatusBean().isCanUserAccessRestrictedDelta())) {
             return false;
         }
+        if ("compoundWorkflowSearch".equals(id)) {
+            return BeanHelper.getVolumeService().isCaseVolumeEnabled() || workflowService.isIndependentWorkflowEnabled();
+        }
+        if (Arrays.asList("executedReports", "taskReports", "documentReports", "volumeReports").contains(id)) {
+            return BeanHelper.getReportService().isUsableByAdminDocManagerOnly() ? userService.isDocumentManager() : true;
+        }
+        if (Arrays.asList("compoundWorkflows", "assignmentTasks", "informationTasks", "reviewTasks", "externalReviewTasks", "confirmationTasks", "taskSearch", "taskReports")
+                .contains(id)) {
+            return workflowService.isWorkflowEnabled();
+        }
+        if (Arrays.asList("orderAssignmentTasks", "opinionTasks", "signatureTasks").contains(id)) {
+            return workflowService.isDocumentWorkflowEnabled() || workflowService.isIndependentWorkflowEnabled();
+        }
+        if ("externalReviewTasks".equals(id)) {
+            return workflowService.isReviewToOtherOrgEnabled() || workflowService.externalReviewWorkflowEnabled();
+        }
+        if ("webServiceDocuments".equals(id) && StringUtils.isBlank(BeanHelper.getAddDocumentService().getWebServiceDocumentsMenuItemTitle())) {
+            return false;
+        }
         return true;
     }
 
     protected boolean isEinvoiceFunctionalityEnabled(EInvoiceService einvoiceService) {
         return einvoiceService.isEinvoiceEnabled();
+    }
+
+    protected boolean isOrderAssignment() {
+        return "orderAssignmentTasks".equals(id);
+    }
+
+    protected boolean isOrderAssignmentEnabled(WorkflowService workflowService) {
+        return workflowService.isOrderAssignmentWorkflowEnabled();
     }
 
     protected boolean isEinvoiceFunctionality() {
@@ -334,16 +375,23 @@ public class MenuItem implements Serializable {
         if (isSupervisor() && userService.isSupervisor()) {
             return true;
         }
+        if (isArchivist() && userService.isArchivist()) {
+            return true;
+        }
 
         return false;
     }
 
     public boolean isRestricted() {
-        return isAdmin() || isDocManager() || isAccountant() || isSupervisor();
+        return isAdmin() || isDocManager() || isAccountant() || isSupervisor() || isArchivist();
     }
 
     public boolean isExternalReview() {
         return "externalReviewTasks".equals(id);
+    }
+
+    public boolean isLinkedReview() {
+        return "linkedReviewTask".equals(id);
     }
 
     public boolean isIncomingEinvoice() {
@@ -477,6 +525,14 @@ public class MenuItem implements Serializable {
 
     public boolean isSupervisor() {
         return supervisor;
+    }
+
+    public void setArchivist(boolean archivist) {
+        this.archivist = archivist;
+    }
+
+    public boolean isArchivist() {
+        return archivist;
     }
 
     public boolean isRenderingDisabled() {

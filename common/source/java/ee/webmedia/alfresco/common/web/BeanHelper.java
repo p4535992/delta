@@ -25,6 +25,7 @@ import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.DialogManager;
 import org.alfresco.web.bean.groups.GroupsDialog;
 
+import ee.webmedia.alfresco.adddocument.service.AddDocumentService;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.addressbook.web.bean.AddressbookGroupsManagerBean;
 import ee.webmedia.alfresco.addressbook.web.bean.AddressbookSearchBean;
@@ -32,15 +33,23 @@ import ee.webmedia.alfresco.addressbook.web.dialog.AddressbookAddEditDialog;
 import ee.webmedia.alfresco.adr.service.AdrService;
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.archivals.service.ArchivalsService;
+import ee.webmedia.alfresco.archivals.web.ArchivalActivitiesListDialog;
+import ee.webmedia.alfresco.archivals.web.ConfirmVolumeArchiveActionDialog;
 import ee.webmedia.alfresco.base.BaseService;
+import ee.webmedia.alfresco.casefile.log.service.CaseFileLogService;
+import ee.webmedia.alfresco.casefile.service.CaseFileFavoritesService;
+import ee.webmedia.alfresco.casefile.service.CaseFileService;
+import ee.webmedia.alfresco.casefile.web.CaseFileDialog;
+import ee.webmedia.alfresco.casefile.web.CaseFileLogBlockBean;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.cases.web.CaseDetailsDialog;
-import ee.webmedia.alfresco.cases.web.CaseListDialog;
+import ee.webmedia.alfresco.cases.web.CaseDocumentListDialog;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.classificator.web.ClassificatorDetailsDialog;
 import ee.webmedia.alfresco.classificator.web.ClassificatorsImportDialog;
 import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.service.OpenOfficeService;
 import ee.webmedia.alfresco.docadmin.service.CaseFileType;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
@@ -73,6 +82,7 @@ import ee.webmedia.alfresco.document.einvoice.web.DimensionListDialog;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.file.web.AddFileDialog;
 import ee.webmedia.alfresco.document.file.web.FileBlockBean;
+import ee.webmedia.alfresco.document.lock.service.DocLockService;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.log.web.LogBlockBean;
 import ee.webmedia.alfresco.document.metadata.web.MetadataBlockBean;
@@ -85,7 +95,7 @@ import ee.webmedia.alfresco.document.search.web.SearchBlockBean;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.sendout.web.DocumentSendOutDialog;
 import ee.webmedia.alfresco.document.sendout.web.SendOutBlockBean;
-import ee.webmedia.alfresco.document.service.DocLockService;
+import ee.webmedia.alfresco.document.service.DocumentFavoritesService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.document.web.DocumentDialog;
@@ -93,6 +103,9 @@ import ee.webmedia.alfresco.document.web.DocumentListDialog;
 import ee.webmedia.alfresco.document.web.VisitedDocumentsBean;
 import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.email.service.EmailService;
+import ee.webmedia.alfresco.eventplan.service.EventPlanService;
+import ee.webmedia.alfresco.eventplan.web.EventPlanDialog;
+import ee.webmedia.alfresco.eventplan.web.EventPlanLogBlockBean;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.functions.web.FunctionsDetailsDialog;
 import ee.webmedia.alfresco.help.service.HelpTextService;
@@ -126,12 +139,25 @@ import ee.webmedia.alfresco.user.web.GroupUsersListDialog;
 import ee.webmedia.alfresco.user.web.PermissionsListDialog;
 import ee.webmedia.alfresco.user.web.UserDetailsDialog;
 import ee.webmedia.alfresco.user.web.UserListDialog;
+import ee.webmedia.alfresco.versions.service.VersionsService;
+import ee.webmedia.alfresco.volume.search.service.VolumeReportFilterService;
+import ee.webmedia.alfresco.volume.search.service.VolumeSearchFilterService;
+import ee.webmedia.alfresco.volume.search.web.VolumeSearchResultsDialog;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 import ee.webmedia.alfresco.volume.web.VolumeDetailsDialog;
+import ee.webmedia.alfresco.workflow.search.service.CompoundWorkflowSearchFilterService;
 import ee.webmedia.alfresco.workflow.search.service.TaskReportFilterService;
 import ee.webmedia.alfresco.workflow.search.service.TaskSearchFilterService;
+import ee.webmedia.alfresco.workflow.search.web.CompoundWorkflowSearchResultsDialog;
+import ee.webmedia.alfresco.workflow.search.web.TaskSearchResultsDialog;
+import ee.webmedia.alfresco.workflow.service.CompoundWorkflowFavoritesService;
 import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
+import ee.webmedia.alfresco.workflow.web.CompoundWorkflowAssocListDialog;
+import ee.webmedia.alfresco.workflow.web.CompoundWorkflowAssocSearchBlock;
+import ee.webmedia.alfresco.workflow.web.CompoundWorkflowDialog;
+import ee.webmedia.alfresco.workflow.web.CompoundWorkflowLogBlockBean;
+import ee.webmedia.alfresco.workflow.web.RelatedUrlListBlock;
 import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImplFSStub;
 
@@ -184,6 +210,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
         return getJsfBean(DocumentSearchResultsDialog.class, DocumentSearchResultsDialog.BEAN_NAME);
     }
 
+    public static VolumeSearchResultsDialog getVolumeSearchResultsDialog() {
+        return getJsfBean(VolumeSearchResultsDialog.class, VolumeSearchResultsDialog.BEAN_NAME);
+    }
+
     public static SeriesDetailsDialog getSeriesDetailsDialog() {
         return getJsfBean(SeriesDetailsDialog.class, SeriesDetailsDialog.BEAN_NAME);
     }
@@ -196,8 +226,8 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
         return getJsfBean(CaseDetailsDialog.class, CaseDetailsDialog.BEAN_NAME);
     }
 
-    public static CaseListDialog getCaseListDialog() {
-        return getJsfBean(CaseListDialog.class, CaseListDialog.BEAN_NAME);
+    public static CaseDocumentListDialog getCaseDocumentListDialog() {
+        return getJsfBean(CaseDocumentListDialog.class, CaseDocumentListDialog.BEAN_NAME);
     }
 
     public static ClassificatorDetailsDialog getClassificatorDetailsDialog() {
@@ -248,6 +278,14 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
         return getJsfBean(HelpTextEditDialog.class, type + HelpTextEditDialog.BEAN_NAME_SUFFIX);
     }
 
+    public static ConfirmVolumeArchiveActionDialog getConfirmVolumeArchiveActionDialog() {
+        return getJsfBean(ConfirmVolumeArchiveActionDialog.class, ConfirmVolumeArchiveActionDialog.BEAN_NAME);
+    }
+
+    public static ArchivalActivitiesListDialog getArchivalActivitiesListDialog() {
+        return getJsfBean(ArchivalActivitiesListDialog.class, ArchivalActivitiesListDialog.BEAN_NAME);
+    }
+
     @SuppressWarnings({ "cast", "rawtypes", "unchecked" })
     public static <D extends DynamicType, S extends DynTypeDialogSnapshot<D>> DynamicTypeDetailsDialog<D, S> getDynamicTypeDetailsDialog(Class<D> dynTypeClass) {
         if (DocumentType.class.equals(dynTypeClass)) {
@@ -272,6 +310,14 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static UserListDialog getUserListDialog() {
         return getJsfBean(UserListDialog.class, UserListDialog.BEAN_NAME);
+    }
+
+    public static TaskSearchResultsDialog getTaskSearchResultsDialog() {
+        return getJsfBean(TaskSearchResultsDialog.class, TaskSearchResultsDialog.BEAN_NAME);
+    }
+
+    public static CompoundWorkflowSearchResultsDialog getCompoundWorkflowSearchResultsDialog() {
+        return getJsfBean(CompoundWorkflowSearchResultsDialog.class, CompoundWorkflowSearchResultsDialog.BEAN_NAME);
     }
 
     public static ConfirmDialog getConfirmDialog() {
@@ -312,6 +358,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static DocumentDynamicDialog getDocumentDynamicDialog() {
         return getJsfBean(DocumentDynamicDialog.class, DocumentDynamicDialog.BEAN_NAME);
+    }
+
+    public static CaseFileDialog getCaseFileDialog() {
+        return getJsfBean(CaseFileDialog.class, CaseFileDialog.BEAN_NAME);
     }
 
     public static PropertySheetStateBean getPropertySheetStateBean() {
@@ -380,6 +430,30 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static RsAccessStatusBean getRsAccessStatusBean() {
         return getSpringBean(RsAccessStatusBean.class, RsAccessStatusBean.BEAN_NAME);
+    }
+
+    public static CompoundWorkflowDialog getCompoundWorkflowDialog() {
+        return getJsfBean(CompoundWorkflowDialog.class, CompoundWorkflowDialog.BEAN_NAME);
+    }
+
+    public static CompoundWorkflowAssocListDialog getCompoundWorkflowAssocListDialog() {
+        return getJsfBean(CompoundWorkflowAssocListDialog.class, CompoundWorkflowAssocListDialog.BEAN_NAME);
+    }
+
+    public static CompoundWorkflowAssocSearchBlock getCompoundWorkflowAssocSearchBlock() {
+        return getJsfBean(CompoundWorkflowAssocSearchBlock.class, CompoundWorkflowAssocSearchBlock.BEAN_NAME);
+    }
+
+    public static CompoundWorkflowLogBlockBean getCompoundWorkflowLogBlockBean() {
+        return getJsfBean(CompoundWorkflowLogBlockBean.class, CompoundWorkflowLogBlockBean.BEAN_NAME);
+    }
+
+    public static RelatedUrlListBlock getRelatedUrlListBlock() {
+        return getJsfBean(RelatedUrlListBlock.class, RelatedUrlListBlock.BEAN_NAME);
+    }
+
+    public static CaseFileLogBlockBean getCaseFileLogBlockBean() {
+        return getJsfBean(CaseFileLogBlockBean.class, CaseFileLogBlockBean.BEAN_NAME);
     }
 
     public static DisableFocusingBean getDisableFocusingBean() {
@@ -466,9 +540,17 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
         return getSpringBean(BehaviourFilter.class, "policyBehaviourFilter");
     }
 
+    public static CaseFileLogService getCaseFileLogService() {
+        return getSpringBean(CaseFileLogService.class, CaseFileLogService.BEAN_NAME);
+    }
+
     // END: alfresco services
 
     // START: delta services
+
+    public static OpenOfficeService getOpenOfficeService() {
+        return getSpringBean(OpenOfficeService.class, OpenOfficeService.BEAN_NAME);
+    }
 
     public static MsoService getMsoService() {
         return getSpringBean(MsoService.class, MsoService.BEAN_NAME);
@@ -520,6 +602,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static FileService getFileService() {
         return getService(FileService.class, FileService.BEAN_NAME);
+    }
+
+    public static VersionsService getVersionsService() {
+        return getService(VersionsService.class, VersionsService.BEAN_NAME);
     }
 
     public static EInvoiceService getEInvoiceService() {
@@ -576,6 +662,10 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
 
     public static DocumentDynamicService getDocumentDynamicService() {
         return getService(DocumentDynamicService.class, DocumentDynamicService.BEAN_NAME);
+    }
+
+    public static CaseFileService getCaseFileService() {
+        return getService(CaseFileService.class, CaseFileService.BEAN_NAME);
     }
 
     public static ThesaurusService getThesaurusService() {
@@ -638,8 +728,20 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
         return getService(DocumentSearchFilterService.class, DocumentSearchFilterService.BEAN_NAME);
     }
 
+    public static VolumeSearchFilterService getVolumeSearchFilterService() {
+        return getService(VolumeSearchFilterService.class, VolumeSearchFilterService.BEAN_NAME);
+    }
+
     public static TaskSearchFilterService getTaskSearchFilterService() {
         return getService(TaskSearchFilterService.class, TaskSearchFilterService.BEAN_NAME);
+    }
+
+    public static VolumeReportFilterService getVolumeReportFilterService() {
+        return getService(VolumeReportFilterService.class, VolumeReportFilterService.BEAN_NAME);
+    }
+
+    public static CompoundWorkflowSearchFilterService getCompoundWorkflowSearchFilterService() {
+        return getService(CompoundWorkflowSearchFilterService.class, CompoundWorkflowSearchFilterService.BEAN_NAME);
     }
 
     public static NotificationService getNotificationService() {
@@ -682,8 +784,36 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
         return getService(DocumentReportFilterService.class, DocumentReportFilterService.BEAN_NAME);
     }
 
+    public static DocumentFavoritesService getDocumentFavoritesService() {
+        return getService(DocumentFavoritesService.class, DocumentFavoritesService.BEAN_NAME);
+    }
+
+    public static CaseFileFavoritesService getCaseFileFavoritesService() {
+        return getService(CaseFileFavoritesService.class, CaseFileFavoritesService.BEAN_NAME);
+    }
+
+    public static CompoundWorkflowFavoritesService getCompoundWorkflowFavoritesService() {
+        return getService(CompoundWorkflowFavoritesService.class, CompoundWorkflowFavoritesService.BEAN_NAME);
+    }
+
     public static WorkflowDbService getWorkflowDbService() {
         return getService(WorkflowDbService.class, WorkflowDbService.BEAN_NAME);
+    }
+
+    public static AddDocumentService getAddDocumentService() {
+        return getService(AddDocumentService.class, AddDocumentService.BEAN_NAME);
+    }
+
+    public static EventPlanService getEventPlanService() {
+        return getService(EventPlanService.class, EventPlanService.BEAN_NAME);
+    }
+
+    public static EventPlanDialog getEventPlanDialog() {
+        return getJsfBean(EventPlanDialog.class, EventPlanDialog.BEAN_NAME);
+    }
+
+    public static EventPlanLogBlockBean getEventPlanLogBlock() {
+        return getJsfBean(EventPlanLogBlockBean.class, EventPlanLogBlockBean.BEAN_NAME);
     }
 
     // END: delta services

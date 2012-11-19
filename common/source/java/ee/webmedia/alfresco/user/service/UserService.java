@@ -25,6 +25,7 @@ public interface UserService {
 
     String AUTH_DOCUMENT_MANAGERS_GROUP = AuthorityType.GROUP.getPrefixString() + DOCUMENT_MANAGERS_GROUP;
     String AUTH_ADMINISTRATORS_GROUP = AuthorityType.GROUP.getPrefixString() + ADMINISTRATORS_GROUP;
+    String AUTH_ACCOUNTANTS_GROUP = AuthorityType.GROUP.getPrefixString() + ACCOUNTANTS_GROUP;
     String AUTH_SUPERVISION_GROUP = AuthorityType.GROUP.getPrefixString() + SUPERVISION_GROUP;
     String AUTH_ARCHIVIST_GROUP = AuthorityType.GROUP.getPrefixString() + ARCHIVIST_GROUP;
 
@@ -56,13 +57,21 @@ public interface UserService {
     boolean isAdministrator();
 
     /**
+     * Checks if user has archivist privileges
+     * 
+     * @return true if has
+     */
+    boolean isArchivist();
+
+    /**
      * Checks if user belongs to document managers group or is an administrator, because administrators have document managers privileges.
      * 
      * @return true if belongs
      */
-    boolean isDocumentManager();
 
     boolean isDocumentManager(String userName);
+
+    boolean isDocumentManager();
 
     /**
      * Return group name for document administrators group
@@ -148,13 +157,13 @@ public interface UserService {
 
     String getUserEmail(String userName);
 
-    Integer getCurrentUsersStructUnitId();
+    String getCurrentUsersStructUnitId();
 
     /**
      * @param structUnits - organization structure units
      * @return userNames of the users directly in given structUnits (not in some descendant structUnit of given structUnits)
      */
-    Set<String> getUsernamesByStructUnit(List<Integer> structUnits);
+    Set<String> getUsernamesByStructUnit(List<String> structUnits);
 
     boolean isGroupsEditingAllowed();
 
@@ -206,5 +215,21 @@ public interface UserService {
     Set<String> getUsersGroups(String userName);
 
     NodeRef retrieveUserReportsFolderRef(String username);
+
+    List<Node> searchUsers(String input, boolean returnAllUsers, String group, int limit, String exactGroup);
+
+    List<String> getUserNames(List<NodeRef> userNodes);
+
+    Set<String> getSystematicGroups();
+
+    List<NodeRef> getAllUserRefs();
+
+    boolean isCurrentStructUnitUser();
+
+    NodeRef retrieveCurrentUserForNotification(QName aspectQName);
+
+    List<String> getUserOrgPathOrOrgName(Map<QName, Serializable> props);
+
+    Set<String> getUserNamesInGroup(List<String> groupNames);
 
 }

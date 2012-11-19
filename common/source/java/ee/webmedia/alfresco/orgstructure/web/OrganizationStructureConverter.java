@@ -21,7 +21,7 @@ public class OrganizationStructureConverter extends MultiSelectConverterBase {
     @Override
     protected String convertSelectedValueToString(Object value) {
         try {
-            Integer unitId = DefaultTypeConverter.INSTANCE.convert(Integer.class, value);
+            String unitId = DefaultTypeConverter.INSTANCE.convert(String.class, value);
             OrganizationStructure os = getOrganizationStructureService().getOrganizationStructure(unitId);
             if (os == null) {
                 return value.toString();

@@ -29,6 +29,7 @@ import java.sql.Timestamp;
 import java.text.CollationKey;
 import java.text.Collator;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -36,6 +37,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.lang.ClassUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -199,9 +201,13 @@ public abstract class Sort
          }
          else
          {
-            s_logger.warn("Unsupported sort data type: " + returnType + " defaulting to .toString()");
-            this.comparator = new SimpleComparator();
-            bknownType = false;
+             if(ClassUtils.getAllInterfaces(returnType).contains(Comparable.class)){
+                 this.comparator = new SimpleComparableComparator();
+             }else{
+                 s_logger.warn("Unsupported sort data type: " + returnType + " defaulting to .toString()");
+                 this.comparator = new SimpleComparator();
+                 bknownType = false;
+             }
          }
          
          // create a collation key for each required column item in the dataset
@@ -341,6 +347,17 @@ public abstract class Sort
          if (obj1 == null) return -1;
          if (obj2 == null) return 1;
          return (obj1.toString()).compareTo(obj2.toString());
+      }
+   }
+   
+   private static class SimpleComparableComparator implements Comparator
+   {      
+      public int compare(final Object obj1, final Object obj2)
+      {
+         if (obj1 == null && obj2 == null) return 0;
+         if (obj1 == null) return -1;
+         if (obj2 == null) return 1;
+         return ((Comparable)obj1).compareTo(obj2);
       }
    }
    

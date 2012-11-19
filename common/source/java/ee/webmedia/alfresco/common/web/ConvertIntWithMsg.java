@@ -8,7 +8,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.convert.ConverterException;
 import javax.faces.convert.IntegerConverter;
 
-import org.alfresco.web.ui.common.component.data.UIColumn;
+import org.alfresco.web.ui.repo.component.property.UIProperty;
 
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageDataImpl;
@@ -35,18 +35,18 @@ public class ConvertIntWithMsg extends IntegerConverter implements StateHolder {
         try {
             return super.getAsObject(facesContext, uiComponent, value);
         } catch (ConverterException e) {
-            UIColumn column = ComponentUtil.getAncestorComponent(uiComponent, UIColumn.class, true);
-            if (column != null) {
-                String columnLabel = ComponentUtil.getColumnLabel(column);
-                if (isNotBlank(customMsgKey) && isNotBlank(columnLabel)) {
-                    throw new RuntimeException("Should we prefer column name or customMsgKey for localisation of the error message? \ncustomMsgKey='"
-                            + customMsgKey + "'\n columnLabel=" + columnLabel, e);
-                }
-                MessageDataImpl msgData = new MessageDataImpl("validation_is_int_number", columnLabel);
-                throw new ConverterException(MessageUtil.getFacesMessage(msgData), e);
+            UIProperty property = ComponentUtil.getAncestorComponent(uiComponent, UIProperty.class);
+            final String columnLabel;
+            if (property == null) {
+                columnLabel = ComponentUtil.getColumnLabel(uiComponent);
+            } else {
+                columnLabel = ComponentUtil.getPropertyLabel(property, "");
             }
-            // same order or placeholders as in parent class
-            MessageDataImpl msgData = new MessageDataImpl(customMsgKey, uiComponent.getId(), value);
+            if (isNotBlank(customMsgKey) && isNotBlank(columnLabel)) {
+                throw new RuntimeException("Should we prefer column name or customMsgKey for localisation of the error message? \ncustomMsgKey='"
+                        + customMsgKey + "'\n columnLabel=" + columnLabel, e);
+            }
+            MessageDataImpl msgData = new MessageDataImpl("validation_is_int_number", columnLabel);
             throw new ConverterException(MessageUtil.getFacesMessage(msgData), e);
         }
     }

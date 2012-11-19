@@ -21,6 +21,7 @@ import javax.faces.event.PhaseId;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.webdav.WebDAVHelper;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.web.app.servlet.DownloadContentServlet;
 import org.alfresco.web.app.servlet.ajax.InvokeCommand.ResponseMimetype;
 import org.alfresco.web.ui.common.Utils;
 import org.apache.myfaces.shared_impl.renderkit.html.HtmlFormRendererBase;
@@ -29,7 +30,7 @@ import org.apache.myfaces.shared_impl.util.StateUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.document.service.DocLockService;
+import ee.webmedia.alfresco.document.lock.service.DocLockService;
 import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import flexjson.JSONSerializer;
@@ -49,7 +50,6 @@ public class AjaxBean implements Serializable {
 
     @ResponseMimetype(MimetypeMap.MIMETYPE_HTML)
     public void isFileLocked() throws IOException {
-        // FIXME XXX This method isn't called when opening WebDAV file in IE! CL 161673
         FacesContext context = FacesContext.getCurrentInstance();
 
         @SuppressWarnings("unchecked")
@@ -86,10 +86,37 @@ public class AjaxBean implements Serializable {
             out.write(BeanHelper.getUserService().getUserFullName(lockOwner));
             return;
         }
-        if (generated) {
-            docLockService.setLockIfFree(docRef); // Lock the document. File is locked by WebDAV client
-        }
+
+        // We mustn't lock the node now, since this will block MS Word session from locking it!
         out.write("NOT_LOCKED");
+    }
+
+    @ResponseMimetype(MimetypeMap.MIMETYPE_HTML)
+    public void getDownloadUrl() throws IOException {
+        FacesContext context = FacesContext.getCurrentInstance();
+
+        @SuppressWarnings("unchecked")
+        Map<String, String> params = context.getExternalContext().getRequestParameterMap();
+        String path = params.get("url");
+        Assert.hasLength(path, "url was not found in request");
+        ResponseWriter out = context.getResponseWriter();
+        if (!path.contains("/webdav/")) {
+            out.write(path);
+            return;
+        }
+
+        String[] parts = path.split(WebDAVHelper.PathSeperator);
+        String id = parts[parts.length - 2];
+        String filename = parts[parts.length - 1];
+        NodeRef docRef = BeanHelper.getGeneralService().getExistingNodeRefAllStores(id);
+        if (docRef == null) {
+            out.write("DOCUMENT_DELETED");
+            return;
+        }
+        NodeRef fileRef = BeanHelper.getFileFolderService().searchSimple(docRef, filename);
+        String requestContextPath = context.getExternalContext().getRequestContextPath();
+        String generateDownloadURL = DownloadContentServlet.generateDownloadURL(fileRef, filename);
+        out.write(requestContextPath + generateDownloadURL);
     }
 
     @ResponseMimetype(MimetypeMap.MIMETYPE_HTML)
@@ -204,8 +231,14 @@ public class AjaxBean implements Serializable {
     }
 
     protected String getParam(Map<String, String> params, String paramKey) {
+        return getParam(params, paramKey, false);
+    }
+
+    protected String getParam(Map<String, String> params, String paramKey, boolean canBeEmpty) {
         String param = params.get(paramKey);
-        Assert.hasLength(param, paramKey + " was not found in request");
+        if (!canBeEmpty) {
+            Assert.hasLength(param, paramKey + " was not found in request");
+        }
         Assert.isTrue(!"undefined".equals(param), paramKey + " was found in request, but with undefined value");
         return param;
     }

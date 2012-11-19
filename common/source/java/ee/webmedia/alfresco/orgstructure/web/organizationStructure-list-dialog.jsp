@@ -37,7 +37,15 @@
          </f:facet>
          <h:outputText id="col3-text" value="#{os.organizationDisplayPath}" />
       </a:column>      
-      
+
+      <%-- Institution regCode --%>
+      <a:column id="col4" rendered="#{not userService.groupsEditingAllowed}">
+         <f:facet name="header">
+            <a:sortLink id="col4-sort" label="#{msg.orgstruct_institutionRegCode}" value="institutionRegCode" styleClass="header" />
+         </f:facet>
+         <h:outputText id="col4-text" value="#{os.institutionRegCode}" />
+      </a:column>      
+
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
       <a:dataPager id="pager1" styleClass="pager" />
    </a:richList>

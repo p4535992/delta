@@ -36,9 +36,10 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  */
 public class EnumSelectorGenerator extends GeneralSelectorGenerator implements HandlesViewMode {
 
-    private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(EnumSelectorGenerator.class);
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(EnumSelectorGenerator.class);
 
     public static final String ATTR_DISABLE_SORTING = "disableSorting";
+    public static final String ATTR_DISABLE_DEFAULT = "disableDefault";
     public static final String ATTR_ENUM_CLASS = "enumClass";
     public static final String ATTR_ENUM_PROP = "enumProp";
 
@@ -70,7 +71,7 @@ public class EnumSelectorGenerator extends GeneralSelectorGenerator implements H
     @Override
     public UIComponent generateSelectComponent(FacesContext context, String id, boolean multiValued) {
         final UIComponent selectComponent = super.generateSelectComponent(context, id, multiValued);
-        if (!log.isDebugEnabled()) {
+        if (!LOG.isDebugEnabled()) {
             return selectComponent;
         }
         // for debugging purpose in development
@@ -90,8 +91,12 @@ public class EnumSelectorGenerator extends GeneralSelectorGenerator implements H
             return null;
         }
         Class<? extends Enum<?>> en = EnumConverter.getEnumClass(enumClassName);
+        EnumSelectorItemFilter<Enum<?>> filter = getFilter();
         List<UIComponent> selectOptions = new ArrayList<UIComponent>();
         for (Enum<?> c : en.getEnumConstants()) {
+            if (filter != null && !filter.showItem(c) && !isBoundValue(c, boundValue)) {
+                continue;
+            }
             UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
             selectItem.setItemLabel(MessageUtil.getMessage(c));
             selectItem.setItemValue(c.name());
@@ -102,13 +107,35 @@ public class EnumSelectorGenerator extends GeneralSelectorGenerator implements H
             ComponentUtil.sortByLabel(selectOptions);
         }
 
-        if (!multiValued) {
+        if (!multiValued && !new Boolean(getCustomAttributes().get(ATTR_DISABLE_DEFAULT))) {
             ClassificatorSelectorGenerator.addDefault(context, selectOptions);
 
             setConverter(context, component, boundValue, enumClassName);
         }
 
         return selectOptions;
+    }
+
+    @SuppressWarnings("unchecked")
+    private boolean isBoundValue(Enum<?> c, Object boundValue) {
+        if (!(boundValue instanceof String) || StringUtils.isBlank((String) boundValue)) {
+            return false;
+        }
+        return c == Enum.valueOf(c.getClass(), (String) boundValue);
+    }
+
+    @SuppressWarnings("unchecked")
+    private EnumSelectorItemFilter<Enum<?>> getFilter() {
+        String filterClass = getCustomAttributes().get("filter");
+        if (StringUtils.isBlank(filterClass)) {
+            return null;
+        }
+        try {
+            return (EnumSelectorItemFilter<Enum<?>>) Class.forName(filterClass).newInstance();
+        } catch (Exception e) {
+            LOG.debug("Unable to create class for enum filter, class=" + filterClass, e);
+        }
+        return null;
     }
 
     private void setConverter(FacesContext context, UIInput component, Object boundValue, String enumClassName) {

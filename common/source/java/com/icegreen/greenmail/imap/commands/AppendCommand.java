@@ -20,6 +20,9 @@ import com.icegreen.greenmail.imap.ProtocolException;
 import com.icegreen.greenmail.store.FolderException;
 import com.icegreen.greenmail.store.MailFolder;
 
+import ee.webmedia.alfresco.monitoring.MonitoredService;
+import ee.webmedia.alfresco.monitoring.MonitoringUtil;
+
 import javax.mail.Flags;
 import javax.mail.internet.MimeMessage;
 
@@ -60,30 +63,42 @@ public class AppendCommand extends AuthenticatedStateCommand {
                              ImapResponse response,
                              ImapSession session)
             throws ProtocolException, FolderException {
-        String mailboxName = parser.mailbox(request);
-        Flags flags = parser.optionalAppendFlags(request);
-        if (flags == null) {
-            flags = new Flags();
-        }
-        Date datetime = parser.optionalDateTime(request);
-        if (datetime == null) {
-            datetime = new Date();
-        }
-        MimeMessage message = parser.mimeMessage(request);
-        parser.endLine(request);
-
-        MailFolder folder = null;
-        try {
-            folder = getMailbox(mailboxName, session, true);
+        try{
+            String mailboxName = parser.mailbox(request);
+            Flags flags = parser.optionalAppendFlags(request);
+            if (flags == null) {
+                flags = new Flags();
+            }
+            Date datetime = parser.optionalDateTime(request);
+            if (datetime == null) {
+                datetime = new Date();
+            }
+            MimeMessage message = parser.mimeMessage(request);
+            parser.endLine(request);
+            
+            MailFolder folder = null;
+            try {
+                folder = getMailbox(mailboxName, session, true);
+            } catch (FolderException e) {
+                e.setResponseCode("TRYCREATE");
+                throw e;
+            }
+            
+            folder.appendMessage(message, flags, datetime);
+            
+            session.unsolicitedResponses(response);
+            response.commandComplete(this);
+            MonitoringUtil.logSuccess(MonitoredService.IN_IMAP);
+        } catch (ProtocolException e) {
+            MonitoringUtil.logError(MonitoredService.IN_IMAP,e);
+            throw e;
         } catch (FolderException e) {
-            e.setResponseCode("TRYCREATE");
+            MonitoringUtil.logError(MonitoredService.IN_IMAP,e);
+            throw e;
+        } catch (RuntimeException e) {
+            MonitoringUtil.logError(MonitoredService.IN_IMAP,e);
             throw e;
         }
-
-        folder.appendMessage(message, flags, datetime);
-
-        session.unsolicitedResponses(response);
-        response.commandComplete(this);
     }
 
     /**

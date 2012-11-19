@@ -752,8 +752,11 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
 
         // check if we need to archive the node
         StoreRef archiveStoreRef = null;
+        TypeDefinition typeDef = dictionaryService.getType(nodeTypeQName);
+        boolean isDocumentNode = typeDef != null && DocumentCommonModel.Types.DOCUMENT.equals(typeDef.getName());
         if (nodeAspectQNames.contains(ContentModel.ASPECT_TEMPORARY) ||
-                nodeAspectQNames.contains(ContentModel.ASPECT_WORKING_COPY))
+                nodeAspectQNames.contains(ContentModel.ASPECT_WORKING_COPY)
+                || nodeAspectQNames.contains(DocumentCommonModel.Aspects.DELETE_PERMANENT))
         {
            // The node is either temporary or a working copy.
            // It can not be archived.
@@ -764,14 +767,13 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
            StoreRef storeRef = nodeRef.getStoreRef();
            archiveStoreRef = storeArchiveMap.get(storeRef);
            // get the type and check if we need archiving
-           TypeDefinition typeDef = dictionaryService.getType(nodeTypeQName);          
            if (typeDef == null || !typeDef.isArchive() || archiveStoreRef == null)
            {
               requiresDelete = true;
            }
            else
            {
-               if(typeDef != null && DocumentCommonModel.Types.DOCUMENT.equals(typeDef.getName()) && DocumentCommonModel.Types.DRAFTS.equals(getPrimaryParent(childAssocRef.getParentRef()).getQName())){
+               if(isDocumentNode && DocumentCommonModel.Types.DRAFTS.equals(getPrimaryParent(childAssocRef.getParentRef()).getQName())){
                    requiresDelete = true;
                }               
            }
@@ -780,6 +782,9 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
         if (requiresDelete)
         {
             deleteChildDataFromDb(nodeRef, nodeTypeQName);
+            if (isDocumentNode) {
+                updateAssociatedCompoundWorkflows(nodeRef);
+            }
             // Cascade as required
             if (cascadeInTransaction)
             {
@@ -800,6 +805,11 @@ public class DbNodeServiceImpl extends AbstractNodeServiceImpl
             // The archive performs a move, which will fire the appropriate OnDeleteNode
             invokeOnDeleteNode(childAssocRef, nodeTypeQName, nodeAspectQNames, true);
         }
+    }
+    
+
+    private void updateAssociatedCompoundWorkflows(NodeRef nodeRef) {
+        BeanHelper.getWorkflowService().removeDeletedDocumentFromCompoundWorkflows(nodeRef);
     }
     
     private void deleteChildDataFromDb(NodeRef nodeRef, QName nodeTypeQName) {

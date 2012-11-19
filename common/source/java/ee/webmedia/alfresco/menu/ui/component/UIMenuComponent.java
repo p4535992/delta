@@ -27,6 +27,7 @@ public class UIMenuComponent extends UIComponentBase {
     private boolean primary;
 
     public static final String PRIMARY_ATTRIBUTE_KEY = "primary";
+    public static final String TOOLTIP_ATTRIBUTE_KEY = "tooltip";
     public static final String VALUE_SEPARATOR = "_";
     public static final String VIEW_STACK = "_alfViewStack";
 
@@ -38,20 +39,20 @@ public class UIMenuComponent extends UIComponentBase {
             UIActionLink link = (UIActionLink) event.getComponent();
             String clientId = link.getClientId(context);
             String activeId = clientId.replaceAll("^[^0-9]*", "");
+            String linkId = link.getId();
 
             // Links defined in menu-structure.xml have XPath
             boolean forceReset = link.getAttributes().get(DropdownMenuItem.ATTRIBUTE_XPATH) != null;
 
-            // When creating new document, don't reset
-            boolean createNewDocument = false;
-            if (activeId.startsWith(MenuBean.CREATE_NEW_DOCUMENT + VALUE_SEPARATOR)) {
-                createNewDocument = true;
-            }
+            // When creating new document or new object, don't reset
+            boolean createNewDocument = activeId.startsWith(MenuBean.CREATE_NEW_DOCUMENT + VALUE_SEPARATOR);
+            boolean createNew = activeId.startsWith(MenuBean.CREATE_NEW + VALUE_SEPARATOR);
+            boolean outcomeShortcut = linkId != null && linkId.startsWith(MenuBean.SHORTCUT_OUTCOME_MENU_ITEM_PREFIX);
 
             // Clear the view stack, otherwise it would grow too big as the cancel button is hidden in some views
             // Later in the life-cycle the view where this action came from is added to the stack, so visible cancel buttons will function properly
             // We mustn't clear the stack and therefore reset breadcrumb for browse MenuItems
-            if ((!isUpdateTreeActionListener(link) && !createNewDocument) || forceReset) {
+            if ((!isUpdateTreeActionListener(link) && !createNewDocument && !createNew && !outcomeShortcut) || forceReset) {
                 MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME);
                 MenuBean.clearViewStack(menuBean.getActiveItemId(), clientId);
             }

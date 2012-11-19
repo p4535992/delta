@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.utils;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -11,6 +13,7 @@ import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
@@ -22,6 +25,10 @@ import org.alfresco.web.bean.repository.Repository;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.apache.lucene.queryParser.QueryParser;
+import org.springframework.util.Assert;
+
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.series.model.SeriesModel;
 
 /**
  * @author Alar Kvell
@@ -33,8 +40,13 @@ public class SearchUtil {
     private static final Pattern DATE_PATTERN = Pattern.compile("\\d\\d?\\.\\d\\d?\\.\\d\\d\\d\\d");
 
     /**
+     * Query for retrieving series where document access is restricted. Searches using {@link #generateDocAccess(List, String)} can use this query to find such series.
+     */
+    public static final String QUERY_RESTRICTED_SERIES = joinQueryPartsAnd(generateTypeQuery(SeriesModel.Types.SERIES),
+            generatePropertyBooleanQuery(SeriesModel.Props.DOCUMENTS_VISIBLE_FOR_USERS_WITHOUT_ACCESS, false));
+
+    /**
      * @param date
-     * @param residual
      * @return "yyyy-MM-dd'T'00:00:00.000" if the property is not residual, else "yyyy-MM-dd"
      */
     public static String formatLuceneDate(Date date) {
@@ -95,7 +107,7 @@ public class SearchUtil {
      * 
      * @param input search string, all special characters must be stripped or escaped previously
      * @param type node type, may be {@code null}
-     * @param props node property that is searched
+     * @param prop node property that is searched
      * @return Lucene search query
      */
     public static String generateQuery(String input, QName type, QName prop) {
@@ -332,10 +344,25 @@ public class SearchUtil {
         List<String> queryParts = new ArrayList<String>(documentPropNames.length);
         for (NodeRef value : values) {
             for (QName documentPropName : documentPropNames) {
-                queryParts.add(generatePropertyExactQuery(documentPropName, value.toString(), true));
+                queryParts.add(generatePropertyExactQuery(documentPropName, value.toString(), false));
             }
         }
         return joinQueryPartsOr(queryParts, false);
+    }
+
+    public static String generateNotMultiNodeRefQuery(String positiveArgument, List<NodeRef> values, QName... documentPropNames) {
+        if (values == null || values.isEmpty()) {
+            return null;
+        }
+        Assert.isTrue(StringUtils.isNotBlank(positiveArgument));
+        List<String> queryParts = new ArrayList<String>(documentPropNames.length + 1);
+        queryParts.add(positiveArgument);
+        for (NodeRef value : values) {
+            for (QName documentPropName : documentPropNames) {
+                queryParts.add("NOT " + generatePropertyExactQuery(documentPropName, value.toString(), false));
+            }
+        }
+        return joinQueryPartsAnd(queryParts, false);
     }
 
     public static String generateStringExactQuery(String value, QName... documentPropNames) {
@@ -501,6 +528,35 @@ public class SearchUtil {
     }
 
     /**
+     * @param userId - if null, use current user
+     */
+    public static String generateDocAccess(List<NodeRef> restrictedSeriesRefs, String userId) {
+        if (restrictedSeriesRefs.isEmpty() || getUserService().isAdministrator()) {
+            return null;
+        }
+
+        if (userId == null) {
+            userId = AuthenticationUtil.getRunAsUser();
+        }
+
+        Set<String> userGroups = new HashSet<String>();
+        userGroups.add(userId);
+        userGroups.addAll(getUserService().getUsersGroups(userId));
+
+        List<String> query = new ArrayList<String>(userGroups.size() + 2);
+        query.add(generateNotMultiNodeRefQuery(generateTypeQuery(DocumentCommonModel.Types.DOCUMENT), restrictedSeriesRefs, DocumentCommonModel.Props.SERIES));
+        query.add(generatePropertyExactQuery(DocumentCommonModel.Props.OWNER_ID, userId, false));
+
+        for (String group : userGroups) {
+            if (StringUtils.isNotBlank(group)) {
+                query.add("DOC_VISIBLE_TO:\"" + QueryParser.escape(group) + "\"");
+            }
+        }
+
+        return joinQueryPartsOr(query);
+    }
+
+    /**
      * Extracts dates (as 'dd.MM.yyyy' from given text) and stores them in given list in format 'ddMMyyyy'.
      * Duplicate formatted date values won't be added to the list.
      * 
@@ -528,4 +584,5 @@ public class SearchUtil {
             }
         }
     }
+
 }

@@ -165,20 +165,34 @@ public class SearchRenderer extends BaseRenderer {
 
             out.write("<tr><td>");
             setInputStyleClass(child, search);
+
+            int rowIndex = getRowIndex(search);
+            if (rowIndex < 0) {
+                rowIndex = i;
+            }
+            child.setId(StringUtils.substringBeforeLast(child.getId(), "_") + "_" + rowIndex); // Replace random counter for multiple valued autocomplete
+
             Utils.encodeRecursive(context, child);
             renderExtraInfo(search, out);
+            if (hasSearchSuggest(search)) {
+                out.write(ComponentUtil.generateSuggestScript(context, child, (String) search.getAttributes().get(Search.PICKER_CALLBACK_KEY)));
+            }
             out.write("</td><td>");
-            if (search.isEditable()) {
+            boolean editable = search.isEditable();
+            if (editable) {
                 renderPicker(context, out, search, picker, i);
             }
             if (isRemoveLinkRendered(search)) {
                 renderRemoveLink(context, out, search, i);
             }
+            if (!editable && i == children.size() - 1) {
+                renderPicker(context, out, search, picker, -1);
+            }
             out.write("</td></tr>");
         }
         out.write("</tbody></table>");
 
-        if (children.isEmpty() || !search.isEditable()) {
+        if (children.isEmpty()) {
             renderPicker(context, out, search, picker, -1);
         }
         renderAddLink(context, search, out);

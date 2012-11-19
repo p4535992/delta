@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.utils;
 import javax.mail.internet.ContentType;
 import javax.mail.internet.ParseException;
 
+import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.util.Pair;
 import org.apache.commons.lang.StringUtils;
@@ -42,6 +43,10 @@ public class MimeUtil {
             encoding = "UTF-8";
         }
         return new Pair<String, String>(mimeType, encoding);
+    }
+
+    public static boolean isPdf(String mimeType) {
+        return MimetypeMap.MIMETYPE_PDF.equals(mimeType);
     }
 
 }

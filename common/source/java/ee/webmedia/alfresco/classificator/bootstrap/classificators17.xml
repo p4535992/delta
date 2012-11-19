@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:cl="http://alfresco.webmedia.ee/model/classificator/1.0">
+   <cl:classificator view:childName="cl:financingSourceChoice">
+      <cl:name>financingSourceChoice</cl:name>
+      <cl:addRemoveValues>true</cl:addRemoveValues>
+      <cl:deleteEnabled>false</cl:deleteEnabled>
+      <cl:description>Finantseerimisallikas</cl:description>            
+   </cl:classificator>
+   <cl:classificator view:childName="cl:expenseTypeChoice">
+      <cl:name>expenseTypeChoice</cl:name>
+      <cl:addRemoveValues>true</cl:addRemoveValues>
+      <cl:deleteEnabled>false</cl:deleteEnabled>
+      <cl:description>Kulud</cl:description>
+   </cl:classificator>
+   <cl:classificator view:childName="cl:payingReasonAndExtent">
+      <cl:name>payingReasonAndExtent</cl:name>
+      <cl:addRemoveValues>true</cl:addRemoveValues>
+      <cl:deleteEnabled>false</cl:deleteEnabled>
+      <cl:description>Maksmise alus ja ulatus</cl:description>
+   </cl:classificator>   
+</view:view>         

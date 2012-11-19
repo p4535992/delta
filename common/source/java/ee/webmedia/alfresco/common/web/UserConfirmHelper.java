@@ -18,9 +18,11 @@ import javax.faces.event.ActionEvent;
 import javax.faces.event.ActionListener;
 
 import org.alfresco.web.ui.common.ConstantMethodBinding;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.utils.MessageData;
+import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
@@ -35,6 +37,10 @@ public class UserConfirmHelper implements Serializable {
     private static final String DENY_ID = "userConfirmHelperDeny";
 
     private transient UIPanel confirmContainer;
+
+    public void setup(String confirmMessageId, String confirmAction, String confirmActionListener, Map<String, String> confirmParameters) {
+        setup(new MessageDataImpl(confirmMessageId), confirmAction, confirmActionListener, confirmParameters, null, null, null);
+    }
 
     public void setup(MessageData confirmMessage,
             String confirmAction, String confirmActionListener, Map<String, String> confirmParameters,
@@ -82,15 +88,15 @@ public class UserConfirmHelper implements Serializable {
         script.setEscape(false);
 
         StringBuilder sb = new StringBuilder("<script type=\"text/javascript\">")
-        .append("$jQ(document).ready(function() {")
-        .append("var response = confirm(\"")
-        .append(MessageUtil.getMessage(confirmMessage))
-        .append("\");")
-        .append("var btnId = response ? \"").append(CONFIRM_ID).append("\" : \"").append(DENY_ID).append("\";")
-        .append("var btn = $jQ(escapeId4JQ(\"#dialog:\" + btnId));")
-        .append("btn.click();")
-        .append("});")
-        .append("</script>");
+                .append("$jQ(document).ready(function() {")
+                .append("var response = confirm(\"")
+                .append(StringEscapeUtils.escapeJavaScript(MessageUtil.getMessage(confirmMessage)))
+                .append("\");")
+                .append("var btnId = response ? \"").append(CONFIRM_ID).append("\" : \"").append(DENY_ID).append("\";")
+                .append("var btn = $jQ(escapeId4JQ(\"#dialog:\" + btnId));")
+                .append("btn.click();")
+                .append("});")
+                .append("</script>");
         script.setValue(sb.toString());
 
         return script;

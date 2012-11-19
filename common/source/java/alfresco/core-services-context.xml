@@ -84,6 +84,17 @@
             </list>
         </property>
     </bean>
+
+    <bean id="createOrMoveRootDirBootstrap" class="ee.webmedia.alfresco.common.bootstrap.CreateOrMoveRootDirBootstrap">
+      <property name="dirRoot" value="${dir.root}" />
+      <property name="dirRootShared" value="${dir.root.shared}" />
+      <property name="dirRootLocal" value="${dir.root.local}" />
+      <property name="dirContentstore" value="${dir.contentstore}" />
+      <property name="dirContentstoreDeleted" value="${dir.contentstore.deleted}" />
+      <property name="dirAuditContentstore" value="${dir.auditcontentstore}" />
+      <property name="dirIndexes" value="${dir.indexes}" />
+      <property name="dirIndexesBackup" value="${dir.indexes.backup}" />
+    </bean>
     
     <bean id="jgroupsPropertySetter" class="org.alfresco.config.SystemPropertiesSetterBean" init-method="init">
         <property name="propertyMap">
@@ -537,7 +548,7 @@
         </property>
     </bean>
 
-    <bean id="abstractLuceneIndexerAndSearcherFactory" abstract="true" class="org.alfresco.repo.search.impl.lucene.AbstractLuceneIndexerAndSearcherFactory">
+    <bean id="abstractLuceneIndexerAndSearcherFactory" abstract="true" class="org.alfresco.repo.search.impl.lucene.AbstractLuceneIndexerAndSearcherFactory" depends-on="createOrMoveRootDirBootstrap">
         <property name="indexRootLocation">
             <value>${dir.indexes}</value>
         </property>

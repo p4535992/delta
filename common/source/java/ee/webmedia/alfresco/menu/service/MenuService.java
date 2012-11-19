@@ -96,14 +96,22 @@ public interface MenuService {
 
     void processTasks(Menu menu, Collection<String> onlyMenuItemIds);
 
-    List<String> getShortcuts();
+    List<ShortcutMenuItem> getShortcuts();
 
-    void addShortcut(String shortcut);
+    ShortcutMenuItem addShortcut(ShortcutMenuItem shortcut);
 
-    void removeShortcut(String shortcut);
+    ShortcutMenuItem addShortcut(ShortcutMenuItem shortcut, NodeRef user);
+
+    void removeShortcut(ShortcutMenuItem shortcut);
 
     Map<String, MenuItemFilter> getMenuItemFilters();
 
     void process(Menu loadedMenu, boolean reloaded, boolean sessionScope);
+
+    void addFunctionVolumeShortcuts(NodeRef functionNodeRef);
+
+    void addAllFunctionVolumeShortcuts(NodeRef userRef);
+
+    void addVolumeShortcuts(NodeRef volumeRef, boolean isCaseFile);
 
 }

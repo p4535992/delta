@@ -18,6 +18,11 @@ public class DocumentManagerEvaluator extends BaseActionEvaluator {
 
     @Override
     public boolean evaluate(Node node) {
+        return evaluate((Object) node);
+    }
+
+    @Override
+    public boolean evaluate(Object obj) {
         UserService userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext(//
                 FacesContext.getCurrentInstance()).getBean(UserService.BEAN_NAME);
         return userService.isDocumentManager();

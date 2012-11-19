@@ -34,7 +34,6 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.attributes.Attribute;
 import org.alfresco.repo.attributes.LongAttributeValue;
@@ -61,7 +60,6 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.log.PropDiffHelper;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
-import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 
@@ -309,7 +307,8 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
                 AuthorityType authorityType = AuthorityType.getAuthorityType(userName);
                 if (authorityType == AuthorityType.USER)
                 {
-                    this.personService.getPerson(userName);
+                    NodeRef personRef = personService.getPerson(userName);
+                    BeanHelper.getMenuService().addAllFunctionVolumeShortcuts(personRef);
                     return true;
                 }
             }
@@ -338,12 +337,17 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
                 } catch (AuthenticationException e) {
                     // When LDAP connection fails, it throws AuthenticationException
                     logger.warn("User synchronization failed on login, ignoring", e);
+                    // If person exists, then allow login anyway
+                    // This works only with idCode, not username
+                    if (personService.personExists(idCodeOrUsername)) {
+                        return idCodeOrUsername;
+                    }
+                    return null;
                 }
                 if (userId != null && personService.personExists(userId)) {
                     return userId;
-                } else {
-                    return null;
                 }
+                return null;
             }
         }
         return null;
@@ -462,6 +466,7 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
                     PersonServiceImpl.validCreatePersonCall.set(null);
                 }
                 NodeRef personRef = this.personService.getPerson(personName); // creates home folder if necessary
+                BeanHelper.getMenuService().addAllFunctionVolumeShortcuts(personRef);
             }
             // Increment the count of processed people
             processedCount++;
@@ -531,30 +536,14 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
         Iterator<NodeDescription> groups = userRegistry.getGroups(lastModified);
         Map<String, Set<String>> groupAssocsToCreate = new TreeMap<String, Set<String>>();
         Set<String> groupsToDelete = this.authorityService.getAllAuthoritiesInZone(zoneId, AuthorityType.GROUP);
+        Set<String> systematicGroupNames = BeanHelper.getUserService().getSystematicGroups();
         while (groups.hasNext())
         {
             NodeDescription group = groups.next();
             PropertyMap groupProperties = group.getProperties();
             String groupName = (String) groupProperties.get(ContentModel.PROP_AUTHORITY_NAME);
 
-            // Handle 2 special groups - their system name is different from display name
-            // The same names are used in DocumentManagersGroupBootstrap
-            AuthorityType authorityType = AuthorityType.getAuthorityType(groupName);
-            String documentManagersGroupDisplayName = I18NUtil.getMessage(UserService.DOCUMENT_MANAGERS_DISPLAY_NAME);
-            String administratorsGroupDisplayName = I18NUtil.getMessage(UserService.ALFRESCO_ADMINISTRATORS_DISPLAY_NAME);
-            String accountantsGroupDisplayName = I18NUtil.getMessage(UserService.ACCOUNTANTS_DISPLAY_NAME);
-            if (groupName.equals(authorityService.getName(authorityType, documentManagersGroupDisplayName))) {
-                groupName = authorityService.getName(authorityType, UserService.DOCUMENT_MANAGERS_GROUP);
-                groupProperties.put(ContentModel.PROP_AUTHORITY_DISPLAY_NAME, documentManagersGroupDisplayName);
-            } else if (groupName.equals(authorityService.getName(authorityType, administratorsGroupDisplayName))) {
-                groupName = authorityService.getName(authorityType, UserService.ADMINISTRATORS_GROUP);
-                groupProperties.put(ContentModel.PROP_AUTHORITY_DISPLAY_NAME, administratorsGroupDisplayName);
-            } else if (groupName.equals(authorityService.getName(authorityType, accountantsGroupDisplayName))) {
-                groupName = authorityService.getName(authorityType, UserService.ACCOUNTANTS_GROUP);
-                groupProperties.put(ContentModel.PROP_AUTHORITY_DISPLAY_NAME, accountantsGroupDisplayName);
-            }
-
-            if (groupsToDelete.remove(groupName))
+            if (groupsToDelete.remove(groupName) || systematicGroupNames.contains(groupName))
             {
                 // update an existing group in the same zone
                 Set<String> oldChildren = this.authorityService.getContainedAuthorities(null, groupName, true);
@@ -642,6 +631,7 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
         }
 
         // Delete groups if we have complete information for the zone
+        groupsToDelete.removeAll(systematicGroupNames);
         if (force && !groupsToDelete.isEmpty())
         {
             for (String group : groupsToDelete)

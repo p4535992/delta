@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.common.service;
 
+import org.alfresco.util.Pair;
 import org.springframework.context.ApplicationContext;
 
 /**
@@ -51,5 +52,15 @@ public interface ApplicationService {
     String getFooterText();
 
     ApplicationContext getApplicationContext();
+
+    /**
+     * @return URL of custom logo if configured, or URL of standard logo otherwise
+     */
+    String getLogoUrl();
+
+    /**
+     * @return image of custom logo if configured, or {@code null} otherwise
+     */
+    Pair<byte[], String> getCustomLogo();
 
 }

@@ -20,9 +20,11 @@ import org.apache.commons.logging.LogFactory;
 
 import smit.ametnik.services.Aadress;
 import smit.ametnik.services.AmetnikExt;
+import smit.ametnik.services.YksusExt;
 import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.orgstructure.amr.service.AMRService;
 import ee.webmedia.alfresco.orgstructure.amr.service.RSService;
+import ee.webmedia.alfresco.orgstructure.model.OrganizationStructureModel;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.UserUtil;
 
@@ -132,7 +134,7 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
         if (BigInteger.valueOf(-1).equals(yksusId)) {
             yksusId = null;
         }
-        properties.put(ContentModel.PROP_ORGID, yksusId);
+        properties.put(ContentModel.PROP_ORGID, yksusId != null ? yksusId.toString() : null);
         properties.put(ContentModel.PROP_EMAIL, email);
         properties.put(ContentModel.PROP_USERNAME, ametnik.getIsikukood());
         properties.put(ContentModel.PROP_FIRSTNAME, ametnik.getEesnimi());
@@ -149,6 +151,29 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
             properties.put(ContentModel.PROP_POSTAL_CODE, aadress.getSihtkood());
         }
         properties.put(ContentModel.PROP_SERVICE_RANK, ametnik.getTeenistusaste());
+    }
+
+    @Override
+    public Iterator<NodeDescription> getOrganizationStructures() {
+        YksusExt[] yksusArray = amrService.getYksusByAsutusId();
+        List<NodeDescription> orgStructures = new ArrayList<NodeDescription>(yksusArray.length);
+        for (YksusExt yksus : yksusArray) {
+            orgStructures.add(yksusToOrganizationStructure(yksus));
+        }
+        return orgStructures.iterator();
+    }
+
+    private NodeDescription yksusToOrganizationStructure(YksusExt yksus) {
+        NodeDescription org = new NodeDescription();
+        org.getProperties().put(OrganizationStructureModel.Props.UNIT_ID, yksus.getId().toString());
+        org.getProperties().put(OrganizationStructureModel.Props.NAME, yksus.getNimetus());
+        BigInteger ylemYksusId = yksus.getYlemYksusId();
+        if (ylemYksusId != null) {
+            org.getProperties().put(OrganizationStructureModel.Props.SUPER_UNIT_ID, ylemYksusId.toString());
+        }
+        Serializable organizationPath = (Serializable) UserUtil.formatYksusRadaToOrganizationPath(yksus.getYksusRada());
+        org.getProperties().put(OrganizationStructureModel.Props.ORGANIZATION_PATH, organizationPath);
+        return org;
     }
 
     // START: getters / setters

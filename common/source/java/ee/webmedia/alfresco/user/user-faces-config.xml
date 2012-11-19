@@ -78,5 +78,10 @@
       <converter-id>ee.webmedia.alfresco.user.web.UserConverter</converter-id>
       <converter-class>ee.webmedia.alfresco.user.web.UserConverter</converter-class>
    </converter>
+   
+   <converter>
+      <converter-id>ee.webmedia.alfresco.user.web.AuthorityConverter</converter-id>
+      <converter-class>ee.webmedia.alfresco.user.web.AuthorityConverter</converter-class>
+   </converter>   
 
 </faces-config>

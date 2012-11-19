@@ -850,8 +850,11 @@ hr {
 	vertical-align: top;
 	line-height: 15px;
 	/* width: 10%; */
-	padding-top: 3px;
-	padding-bottom: 3px;
+}
+
+.propertiesLabel span {
+   padding-top: 3px;
+   display: inline-block;
 }
 
 .propertiesLabel + td .propertiesLabel,
@@ -1971,6 +1974,8 @@ TH A.header-wrap {
 
 select.genericpicker-filter{
 	margin-right: 3px;
+	min-width:10px !important;
+	width:auto !important;
 }
 
 /* richlist viewMode="detailsMultiTbody"
@@ -2072,6 +2077,15 @@ textarea.borderless{
 .workflow-separator hr {
 	margin: 0;
 	border-color: #333;
+}
+
+
+.printTableHeadings {
+	text-align: left;
+	font-weight: bold;
+	vertical-align: center;
+	line-height: 15px;
+	/* width: 10%; */
 }
 
 /* Transaction block styles */

@@ -58,7 +58,7 @@ public class OrganizationStructureListDialog extends BaseDialogBean {
         int i = 0;
         for (OrganizationStructure struct : structs) {
             String organizationDisplayPath = UserUtil.getDisplayUnit(struct.getOrganizationPath());
-            results[i++] = new SelectItem(Integer.toString(struct.getUnitId()), StringUtils.isNotBlank(organizationDisplayPath) ? organizationDisplayPath : struct.getName());
+            results[i++] = new SelectItem(struct.getUnitId(), StringUtils.isNotBlank(organizationDisplayPath) ? organizationDisplayPath : struct.getName());
             if (i == params.getLimit()) {
                 break;
             }
@@ -85,7 +85,7 @@ public class OrganizationStructureListDialog extends BaseDialogBean {
 
     private void addPaths(String[] results, List<String> organizationPaths, int index, boolean longestOnly) {
         try {
-            Integer unitId = Integer.parseInt(results[index]);
+            String unitId = results[index];
             OrganizationStructure orgStruct = getOrganizationStructureService().getOrganizationStructure(unitId);
             if (longestOnly) {
                 organizationPaths.add(orgStruct.getOrganizationDisplayPath());

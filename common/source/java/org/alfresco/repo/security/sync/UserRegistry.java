@@ -27,6 +27,8 @@ package org.alfresco.repo.security.sync;
 import java.util.Date;
 import java.util.Iterator;
 
+import ee.webmedia.alfresco.orgstructure.model.OrganizationStructure;
+
 /**
  * A <code>UserRegistry</code> is an encapsulation of an external registry from which user and group information can be
  * queried (typically an LDAP directory). Implementations may optional support the ability to query only those users and
@@ -63,4 +65,7 @@ public interface UserRegistry
      *         authority node.
      */
     public Iterator<NodeDescription> getGroups(Date modifiedSince);
+
+    Iterator<NodeDescription> getOrganizationStructures();
+
 }

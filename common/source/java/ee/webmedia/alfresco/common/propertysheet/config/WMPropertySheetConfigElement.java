@@ -13,6 +13,7 @@ import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorAndTextGenerator;
 import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorGenerator;
+import ee.webmedia.alfresco.common.propertysheet.classificatorselector.EnumSelectorGenerator;
 import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIPropertySheet;
@@ -316,6 +317,10 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
             setCustomAttribute(ClassificatorSelectorGenerator.ATTR_CLASSIFICATOR_NAME, classificatorName);
         }
 
+        public void setEnumClass(String enumClass) {
+            setCustomAttribute(EnumSelectorGenerator.ATTR_ENUM_CLASS, enumClass);
+        }
+
         public void setAllowCommaAsDecimalSeparator(Boolean allowCommaAsDecimalSeparator) {
             setCustomAttribute(WMUIProperty.ALLOW_COMMA_AS_DECIMAL_SEPARATOR_ATTR, allowCommaAsDecimalSeparator == null ? null : allowCommaAsDecimalSeparator.toString());
         }
@@ -350,6 +355,10 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
 
         public void setFilters(String filtersBinding) {
             setCustomAttribute(Search.FILTERS_KEY, filtersBinding);
+        }
+
+        public void setFiltersAllowGroupSelect(Boolean allowGroupSelect) {
+            setCustomAttribute(Search.FILTERS_ALLOW_GROUP_SELECT_KEY, allowGroupSelect == null ? null : allowGroupSelect.toString());
         }
 
         public void setUsernameProp(String usernameProp) {

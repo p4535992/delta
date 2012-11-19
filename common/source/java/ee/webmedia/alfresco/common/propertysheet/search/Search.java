@@ -29,6 +29,7 @@ import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.ajax.AjaxUpdateable;
+import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
@@ -56,9 +57,11 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
     public static final String DIALOG_TITLE_ID_KEY = "dialogTitleId";
     public static final String CONVERTER_KEY = "converter";
     public static final String PICKER_CALLBACK_KEY = "pickerCallback";
+    public static final String PICKER_CALLBACK_KEY_PARAM = "pickerCallbackParams";
     public static final String VALUE_KEY = "value";
     public static final String SHOW_FILTER_KEY = "showFilter";
     public static final String FILTERS_KEY = "filters";
+    public static final String FILTERS_ALLOW_GROUP_SELECT_KEY = "filtersAllowGroupSelect";
     public static final String ID_KEY = "id";
     public static final String STYLE_CLASS_KEY = "styleClass";
     public static final String AJAX_PARENT_LEVEL_KEY = "ajaxParentLevel";
@@ -139,6 +142,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
             ValueBinding pickerV = context.getApplication().createValueBinding((String) getAttributes().get(FILTERS_KEY));
             picker.setValueBinding("filters", pickerV);
         }
+        picker.setShowSelectButton(isAttributeTrue(FILTERS_ALLOW_GROUP_SELECT_KEY));
         picker.setWidth(400);
         picker.setMultiSelect(isMultiSelect());
         String pickerCallback = (String) getAttributes().get(PICKER_CALLBACK_KEY);
@@ -149,6 +153,8 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         Integer filterIndex = (Integer) getAttributes().get(FILTER_INDEX);
         if (filterIndex != null) {
             picker.setDefaultFilterIndex(filterIndex);
+        } else {
+            picker.setDefaultFilterIndex(UserContactGroupSearchBean.USERS_FILTER);
         }
 
         // Disable AJAX if inside RichList
@@ -200,7 +206,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
             }
         }
         getAttributes().remove(OPEN_DIALOG_KEY);
-        picker.queueEvent(new UIGenericPicker.PickerEvent(picker, UIGenericPicker.ACTION_CLEAR, 0, null, null));
+        picker.queueEvent(new UIGenericPicker.PickerEvent(picker, UIGenericPicker.ACTION_CLEAR, UserContactGroupSearchBean.USERS_FILTER, null, null));
     }
 
     /**
@@ -211,7 +217,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
      * @param context
      * @param index
      */
-    protected void multiValuedPickerFinish(String[] results, FacesContext context, int index) {
+    public void multiValuedPickerFinish(String[] results, FacesContext context, int index) {
         @SuppressWarnings("unchecked")
         List<String> list = (List<String>) getList(context);
         // collect new values
@@ -414,7 +420,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         return isAttributeTrue(Search.SETTER_CALLBACK_TAKES_NODE);
     }
 
-    protected String getPreprocesCallback() {
+    public String getPreprocesCallback() {
         return (String) ComponentUtil.getAttribute(this, PREPROCESS_CALLBACK);
     }
 
@@ -426,7 +432,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         return ComponentUtil.isComponentDisabledOrReadOnly(this);
     }
 
-    protected boolean isMultiValued() {
+    public boolean isMultiValued() {
         return isAttributeTrue(DATA_MULTI_VALUED);
     }
 

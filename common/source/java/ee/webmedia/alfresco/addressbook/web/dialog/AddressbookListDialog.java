@@ -87,7 +87,6 @@ public class AddressbookListDialog extends BaseDialogBean {
             } else if (node.getType().equals(Types.PRIV_PERSON)) {
                 getPeople().add(new AddressbookEntry(node));
             } else if (node.getType().equals(Types.ORGPERSON)) {
-                node.addPropertyResolver("parentOrgName", AddressbookUtil.resolverParentOrgName);
                 node.addPropertyResolver("parentOrgRef", AddressbookUtil.resolverParentOrgRef);
                 getOrgPeople().add(new AddressbookEntry(node));
             }

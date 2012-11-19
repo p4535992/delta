@@ -1,9 +1,11 @@
 package ee.webmedia.alfresco.adr.service;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.activation.DataHandler;
@@ -12,15 +14,23 @@ import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.alfresco.service.cmr.model.FileFolderService;
+import org.alfresco.service.cmr.model.FileInfo;
+import org.alfresco.service.cmr.repository.ContentIOException;
 import org.alfresco.service.cmr.repository.ContentReader;
+import org.alfresco.service.cmr.repository.ContentStreamListener;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.service.transaction.TransactionService;
+import org.alfresco.util.Pair;
+import org.apache.commons.collections.list.SynchronizedList;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.adr.model.AdrModel;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.document.file.service.FileService;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.ContentReaderDataSource;
 
 /**
@@ -31,8 +41,13 @@ public abstract class BaseAdrServiceImpl implements AdrService {
     protected FileFolderService fileFolderService;
     protected GeneralService generalService;
     protected NodeService nodeService;
+    protected FileService fileService;
+    protected TransactionService transactionService;
 
+    @SuppressWarnings("unchecked")
+    private final List<NodeRef> tempFiles = SynchronizedList.decorate(new ArrayList<NodeRef>());
     private static DatatypeFactory datatypeFactory; // JAXP RI implements DatatypeFactory in a thread-safe way
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(BaseAdrServiceImpl.class);
 
     public BaseAdrServiceImpl() {
         try {
@@ -123,13 +138,43 @@ public abstract class BaseAdrServiceImpl implements AdrService {
         nodeService.createNode(root, AdrModel.Types.ADR_ADDED_DOCUMENT_TYPE, AdrModel.Types.ADR_ADDED_DOCUMENT_TYPE, AdrModel.Types.ADR_ADDED_DOCUMENT_TYPE, props);
     }
 
-    protected DataHandler getFileDataHandler(NodeRef nodeRef, String filename) {
+    protected Pair<Boolean, DataHandler> getFileDataHandler(NodeRef nodeRef, String filename) {
+        boolean transformedToPdf = false;
         ContentReader fileReader = fileFolderService.getReader(nodeRef);
         if (fileReader == null) {
-            return null;
+            return Pair.newInstance(transformedToPdf, null);
+        }
+
+        NodeRef previouslyGeneratedPdf = fileService.getPreviouslyGeneratedPdf(nodeRef);
+        if (fileService.isPdfUpToDate(nodeRef, previouslyGeneratedPdf)) {
+            fileReader = fileFolderService.getReader(previouslyGeneratedPdf);
+        } else {
+
+            // If it is possible to transform to PDF, then we must create a temporary file
+            if (fileService.isTransformableToPdf(fileReader.getMimetype())) {
+                // Transform the file to PDF and replace current file reader
+                FileInfo pdfFile = fileService.transformToPdf(generalService.getNodeRef(DocumentCommonModel.Repo.TEMP_FILES_SPACE), nodeRef, fileReader, filename, filename, null);
+                if (pdfFile != null) {
+                    final NodeRef pdfRef = pdfFile.getNodeRef();
+                    fileReader = fileFolderService.getReader(pdfRef);
+                    fileReader.addListener(new ContentStreamListener() {
+
+                        @Override
+                        public void contentStreamClosed() throws ContentIOException {
+                            // We cannot delete directly here, add to a queue
+                            tempFiles.add(pdfRef);
+                        }
+                    });
+                    fileReader.setRetryingTransactionHelper(transactionService.getRetryingTransactionHelper());
+                    transformedToPdf = true;
+                } else {
+                    // Get same reader again, because last instance has been used for reading; and one reader cannot be opened multiple times
+                    fileReader = fileFolderService.getReader(nodeRef);
+                }
+            }
         }
         ContentReaderDataSource dataSource = new ContentReaderDataSource(fileReader, filename);
-        return new DataHandler(dataSource);
+        return Pair.newInstance(transformedToPdf, new DataHandler(dataSource));
     }
 
     protected static XMLGregorianCalendar convertToXMLGergorianCalendar(Date date) {
@@ -148,6 +193,18 @@ public abstract class BaseAdrServiceImpl implements AdrService {
         return input;
     }
 
+    protected void cleanTempFiles() {
+        List<NodeRef> files = new ArrayList<NodeRef>(tempFiles);
+        tempFiles.clear();
+
+        for (NodeRef nodeRef : files) {
+            if (!nodeService.exists(nodeRef)) {
+                continue;
+            }
+            nodeService.deleteNode(nodeRef);
+        }
+    }
+
     // START: getters / setters
 
     public void setFileFolderService(FileFolderService fileFolderService) {
@@ -162,4 +219,11 @@ public abstract class BaseAdrServiceImpl implements AdrService {
         this.generalService = generalService;
     }
 
+    public void setFileService(FileService fileService) {
+        this.fileService = fileService;
+    }
+
+    public void setTransactionService(TransactionService transactionService) {
+        this.transactionService = transactionService;
+    }
 }

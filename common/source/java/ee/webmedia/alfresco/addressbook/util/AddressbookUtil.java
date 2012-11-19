@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.addressbook.util;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getAddressbookService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
+import static ee.webmedia.alfresco.common.web.UserContactGroupSearchBean.FILTER_INDEX_SEPARATOR;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -90,12 +91,17 @@ public class AddressbookUtil {
      * @return
      */
     public static SelectItem[] transformAddressbookNodesToSelectItems(List<Node> nodes) {
+        return transformAddressbookNodesToSelectItems(nodes, null);
+    }
+
+    public static SelectItem[] transformAddressbookNodesToSelectItems(List<Node> nodes, Integer filter) {
         SelectItem[] results = new SelectItem[nodes.size()];
         int i = 0;
         for (Node node : nodes) {
             String value = node.getNodeRefAsString();
             StringBuilder label = new StringBuilder();
             Map<String, Object> props = node.getProperties();
+            boolean isOrgPerson = node.getType().equals(Types.ORGPERSON);
             if (node.getType().equals(Types.ORGANIZATION)) {
                 String orgName = (String) props.get(Props.ORGANIZATION_NAME.toString());
                 label.append(orgName);
@@ -108,17 +114,25 @@ public class AddressbookUtil {
                         .get(Props.PERSON_LAST_NAME.toString()));
                 label.append(personName);
                 label.append(" (");
-                label.append(MessageUtil.getMessage("addressbook_private_person").toLowerCase());
+                label.append(MessageUtil.getMessage(isOrgPerson ? "addressbook_contactperson" : "addressbook_private_person").toLowerCase());
             }
-            String email = (String) props.get(Props.EMAIL.toString());
-            if (StringUtils.isNotEmpty(email)) {
+            String afterComma;
+            if (isOrgPerson) {
+                afterComma = (String) props.get(Props.PRIVATE_PERSON_ORG_NAME.toString());
+            } else {
+                afterComma = (String) props.get(Props.EMAIL.toString());
+            }
+            if (StringUtils.isNotEmpty(afterComma)) {
                 label.append(", ");
-                label.append(email);
+                label.append(afterComma);
             }
             if (!node.getType().equals(Types.CONTACT_GROUP)) {
                 label.append(")");
             }
             String description = createSelectItemDescription(node);
+            if (filter != null) {
+                value += (FILTER_INDEX_SEPARATOR + filter);
+            }
             if (StringUtils.isNotBlank(description)) {
                 results[i++] = new SelectItem(value, label.toString(), description);
             } else {
@@ -129,15 +143,6 @@ public class AddressbookUtil {
         WebUtil.sort(results);
         return results;
     }
-
-    public static NodePropertyResolver resolverParentOrgName = new NodePropertyResolver() {
-        private static final long serialVersionUID = 1L;
-
-        @Override
-        public Object get(Node node) {
-            return getNodeService().getProperty(getAddressbookService().getOrgOfPerson(node.getNodeRef()), AddressbookModel.Props.ORGANIZATION_NAME);
-        }
-    };
 
     public static NodePropertyResolver resolverParentOrgRef = new NodePropertyResolver() {
         private static final long serialVersionUID = 1L;

@@ -10,6 +10,7 @@ import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
 
 /**
  * Base class for Java VO's that represent nodes in repository
@@ -19,6 +20,7 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 public class NodeBaseVO implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    @AlfrescoModelProperty(isMappable = false)
     protected WmNode node;
 
     public WmNode getNode() {

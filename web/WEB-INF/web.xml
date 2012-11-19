@@ -40,7 +40,6 @@
          ,/WEB-INF/classes/ee/webmedia/alfresco/imap/imap-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/document/forum/forum-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/workflow/workflow-faces-config.xml
-         ,/WEB-INF/classes/ee/webmedia/alfresco/workflow/search/task-search-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/notification/notification-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/document/scanned/scanned-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/document/register/register-faces-config.xml
@@ -678,6 +677,14 @@
       <filter-name>Header Filter</filter-name>
       <url-pattern>/favicon.ico</url-pattern>
    </filter-mapping>
+   <filter-mapping>
+      <filter-name>Header Filter</filter-name>
+      <url-pattern>/n/logo</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>Header Filter</filter-name>
+      <url-pattern>/navigate/logo</url-pattern>
+   </filter-mapping>
 
    <!-- ========== Listeners ========== -->
 
@@ -711,6 +718,11 @@
       <servlet-name>Faces Servlet</servlet-name>
       <servlet-class>javax.faces.webapp.FacesServlet</servlet-class>
       <load-on-startup>1</load-on-startup>
+   </servlet>
+   
+   <servlet>
+      <servlet-name>monitoringServlet</servlet-name>
+      <servlet-class>ee.webmedia.alfresco.monitoring.MonitoringServlet</servlet-class>
    </servlet>
 
    <servlet>
@@ -775,6 +787,11 @@
       <url-pattern>/uploadFileServlet</url-pattern>
    </servlet-mapping>
 
+  <servlet-mapping>
+    <servlet-name>monitoringServlet</servlet-name>
+    <url-pattern>/service/monitor/*</url-pattern>
+  </servlet-mapping>
+
    <servlet-mapping>
       <servlet-name>downloadContent</servlet-name>
       <url-pattern>/download/*</url-pattern>
@@ -838,7 +855,7 @@
    <!-- ========== Other ========== -->
 
    <session-config>
-      <session-timeout>60</session-timeout>
+      <session-timeout>180</session-timeout>
    </session-config>
 
    <welcome-file-list>

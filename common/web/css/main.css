@@ -302,7 +302,7 @@ html, body {
 	
 		#menu li a {
 				display: inline-block;
-				padding: 0 12px;
+				padding: 0 10px;
 		}
 	
 	#menu li a.active {
@@ -1301,7 +1301,8 @@ input[type="checkbox"] {
 }
 
 .modalpopup-content-inner table td {
-	padding: 4px 0 !important;
+	padding-top: 4px;
+	padding-bottom: 4px;
 }
 
 .modalpopup-content-inner table td input[type="text"] {

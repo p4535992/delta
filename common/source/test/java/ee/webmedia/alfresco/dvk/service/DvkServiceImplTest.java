@@ -52,7 +52,7 @@ public class DvkServiceImplTest extends BaseAlfrescoSpringTest {
         log.debug("warmup done to get better time measure for the first test");
     }
 
-    public final void testSendDocuments() {
+    public final void testSendDocuments() throws Exception {
         // Collection<ContentToSend> contentsToSend = getContentsToSend();
         Collection<ContentToSend> contentsToSend = getContentsToSend();
         final DvkSendLetterDocuments sendDocument = getSendDocument();

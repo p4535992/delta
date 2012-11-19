@@ -49,6 +49,7 @@ public class NodeLockedException extends AlfrescoRuntimeException
     private static final String ERROR_MESSAGE_2 = I18NUtil.getMessage("lock_service.no_op2");
 
     private final NodeRef nodeRef;
+    private String customMessageId;
 
     /**
      * @param message
@@ -67,5 +68,13 @@ public class NodeLockedException extends AlfrescoRuntimeException
     
     public NodeRef getNodeRef() {
         return nodeRef;
+    }
+
+    public String getCustomMessageId() {
+        return customMessageId;
+    }
+
+    public void setCustomMessageId(String customMessageId) {
+        this.customMessageId = customMessageId;
     }
 }

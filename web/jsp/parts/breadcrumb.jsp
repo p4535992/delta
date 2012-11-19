@@ -31,8 +31,24 @@
 </a:panel>
 --%>
 
-<a:actionLink actionListener="#{MenuBean.addShortcut}" value="#{msg.shortcut_add}" rendered="#{MenuBean.shortcutAddable gt 0}" showLink="false" image="/images/icons/add_item.gif" styleClass="right" />
-<a:actionLink actionListener="#{MenuBean.removeShortcut}" value="#{msg.shortcut_remove}" rendered="#{MenuBean.shortcutAddable lt 0}" showLink="false" image="/images/icons/delete.gif" styleClass="right" />
+<%@ taglib uri="http://java.sun.com/jsf/core" prefix="f"%>
+
+<a:actionLink id="menu-shortcut-add" actionListener="#{MenuBean.addShortcut}" value="#{msg.shortcut_add}" rendered="#{MenuBean.shortcutAddable gt 0}" showLink="false" image="/images/icons/add_item.gif" styleClass="right" />
+<a:actionLink id="menu-shortcut-remove" actionListener="#{MenuBean.removeShortcut}" value="#{msg.shortcut_remove}" rendered="#{MenuBean.shortcutAddable lt 0}" showLink="false" image="/images/icons/delete.gif" styleClass="right" />
+
+<a:actionLink id="case-file-shortcut-add" actionListener="#{MenuBean.addVolumeOutcomeShortcut}" value="#{msg.shortcut_add}" rendered="#{MenuBean.showAddCaseFileVolumeShortcut}" showLink="false" image="/images/icons/add_item.gif" styleClass="right" >
+	<f:param name="outcome" value="#{MenuBean.caseFileOpenOutcome}" />
+	<f:param name="nodeRef" value="#{MenuBean.currentVolumeRef}" />
+</a:actionLink>
+
+<a:actionLink id="volume-shortcut-add" actionListener="#{MenuBean.addVolumeOutcomeShortcut}" value="#{msg.shortcut_add}" rendered="#{MenuBean.showAddVolumeShortcut}" showLink="false" image="/images/icons/add_item.gif" styleClass="right" >
+	<f:param name="outcome" value="#{MenuBean.volumeOpenOutcome}" />
+	<f:param name="nodeRef" value="#{MenuBean.currentVolumeRef}" />
+</a:actionLink>
+
+<a:actionLink id="outcome-shortcut-remove" actionListener="#{MenuBean.removeOutcomeShortcut}" value="#{msg.shortcut_remove}" rendered="#{MenuBean.showRemoveVolumeOutcomeShortcut}" showLink="false" image="/images/icons/delete.gif" styleClass="right" >
+	<f:param name="menuItemNodeRef" value="#{MenuBean.currentVolumeRef}" />
+</a:actionLink>
 
 <a:actionLink value="#{msg.helptext}" onclick="return help('#{DocumentTemplateService.serverUrl}/help/documentType/#{DialogManager.bean.documentType.id}')" image="/images/office/help.gif" showLink="false" styleClass="right"
   style="background-size: 100% 100%;"
@@ -45,7 +61,7 @@
 <f:verbatim>
 <div id="breadcrumb">
 </f:verbatim>
-   <h:panelGroup binding="#{MenuBean.breadcrumb}" />
+   <h:panelGroup id="menu-breadcrumb" binding="#{MenuBean.breadcrumb}" />
 <f:verbatim>
 </div>
 </f:verbatim>

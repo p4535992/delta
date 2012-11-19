@@ -34,7 +34,7 @@
 <a:panel id="header">
    <a:panel id="logo">
 
-      <a:actionLink id="client-logo" value="#{ApplicationService.projectTitle}" href="/" tooltip="Avalehele" image="/images/logo/logo.png" showLink="false" />
+      <a:actionLink id="client-logo" value="#{ApplicationService.projectTitle}" href="/" tooltip="Avalehele" image="#{ApplicationService.logoUrl}" showLink="false" />
       <a:actionLink id="project-name" value="Dokumendihaldus" href="/" tooltip="Dokumendihaldus" />
       
       <a:panel id="search" styleClass="search-box">

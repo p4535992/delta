@@ -1013,9 +1013,8 @@ public class AdminNodeBrowseBean implements Serializable
             return "Not Granted";
         }
         
-        public int getPosition()
-        {
-            return -1;
+        public int getPosition(){
+            return 1;
         }
     }
 
@@ -1036,6 +1035,10 @@ public class AdminNodeBrowseBean implements Serializable
         public String getAccessStatus()
         {
             return "Allowed";
+        }
+        
+        public int getPosition(){
+            return 1;
         }
     }
 

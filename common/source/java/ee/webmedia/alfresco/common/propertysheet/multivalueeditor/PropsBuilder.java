@@ -15,9 +15,9 @@ public class PropsBuilder {
     private final StringBuilder sb = new StringBuilder();
 
     public PropsBuilder(QName fieldId, String generatorName) {
-        sb.append(fieldId.toPrefixString(BeanHelper.getNamespaceService())) // frist part is property name
-                .append(DEFAULT_OPTIONS_SEPARATOR)
-                .append(generatorName != null ? generatorName : "");// second part is generator name(can be empty for default generator)
+        sb.append(fieldId.toPrefixString(BeanHelper.getNamespaceService())) // first part is property name
+        .append(DEFAULT_OPTIONS_SEPARATOR)
+        .append(generatorName != null ? generatorName : ""); // second part is generator name(can be empty for default generator)
     }
 
     public PropsBuilder addProp(String key, String value) {

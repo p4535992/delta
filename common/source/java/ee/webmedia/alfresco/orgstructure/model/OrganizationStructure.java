@@ -4,6 +4,9 @@ import java.io.Serializable;
 import java.util.Comparator;
 import java.util.List;
 
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.apache.commons.lang.StringUtils;
+
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
@@ -15,15 +18,23 @@ public class OrganizationStructure implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String name;
-    private int unitId;
-    private int superUnitId;
+    private String unitId;
+    private String superUnitId;
     private List<String> organizationPath;
+    private String institutionRegCode;
 
     @AlfrescoModelProperty(isMappable = false)
-    private String organizationDisplayPath;
-
+    private NodeRef nodeRef;
     @AlfrescoModelProperty(isMappable = false)
     private String superValueName;
+
+    public NodeRef getNodeRef() {
+        return nodeRef;
+    }
+
+    public void setNodeRef(NodeRef nodeRef) {
+        this.nodeRef = nodeRef;
+    }
 
     public String getName() {
         return name;
@@ -41,19 +52,19 @@ public class OrganizationStructure implements Serializable {
         this.superValueName = superValueName;
     }
 
-    public int getUnitId() {
+    public String getUnitId() {
         return unitId;
     }
 
-    public void setUnitId(int unitId) {
+    public void setUnitId(String unitId) {
         this.unitId = unitId;
     }
 
-    public int getSuperUnitId() {
+    public String getSuperUnitId() {
         return superUnitId;
     }
 
-    public void setSuperUnitId(int superUnitId) {
+    public void setSuperUnitId(String superUnitId) {
         this.superUnitId = superUnitId;
     }
 
@@ -69,16 +80,25 @@ public class OrganizationStructure implements Serializable {
         return UserUtil.getDisplayUnit(organizationPath);
     }
 
-    public void setOrganizationDisplayPath(String organizationDisplayPath) {
-        this.organizationDisplayPath = organizationDisplayPath;
+    public String getInstitutionRegCode() {
+        return institutionRegCode;
+    }
+
+    public void setInstitutionRegCode(String institutionRegCode) {
+        this.institutionRegCode = institutionRegCode;
     }
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("\nName = " + name + "\n");
-        sb.append("unitId = " + unitId + "\n");
-        sb.append("superUnitId = " + superUnitId + "\n");
+        StringBuilder sb = new StringBuilder("OrganizationStructure[");
+        sb.append("\n  nodeRef=").append(nodeRef);
+        sb.append("\n  unitId=").append(unitId);
+        sb.append("\n  superUnitId=").append(superUnitId);
+        sb.append("\n  superValueName=").append(superValueName);
+        sb.append("\n  name=").append(name);
+        sb.append("\n  organizationPath=").append(organizationPath == null ? null : StringUtils.join(organizationPath, '|'));
+        sb.append("\n  institutionRegCode=").append(institutionRegCode);
+        sb.append("\n]");
         return sb.toString();
     }
 

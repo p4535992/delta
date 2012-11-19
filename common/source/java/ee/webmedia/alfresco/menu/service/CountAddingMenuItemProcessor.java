@@ -1,9 +1,11 @@
 package ee.webmedia.alfresco.menu.service;
 
 import javax.faces.context.FacesContext;
+import javax.faces.el.ValueBinding;
 
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.web.app.servlet.FacesHelper;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.web.MenuItemCountBean;
@@ -26,8 +28,17 @@ public abstract class CountAddingMenuItemProcessor implements MenuService.MenuIt
             return;
         }
 
-        if (menuItem.getTitle() == null) {
-            menuItem.setTitle(I18NUtil.getMessage(menuItem.getTitleId()));
+        String itemTitle = menuItem.getTitle();
+        boolean isValueBinding = StringUtils.startsWith(itemTitle, "#{");
+        if (itemTitle == null || isValueBinding) {
+            if (isValueBinding) {
+                ValueBinding vb = facesContext.getApplication().createValueBinding(itemTitle);
+                if (vb != null) {
+                    menuItem.setTitle((String) vb.getValue(facesContext));
+                }
+            } else {
+                menuItem.setTitle(I18NUtil.getMessage(menuItem.getTitleId()));
+            }
             menuItem.getStyleClass().add("menuItemCount");
         }
 

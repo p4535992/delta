@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.dvk.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDvkService;
+
 import java.io.Serializable;
 import java.util.Collection;
 
@@ -8,9 +10,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.web.app.context.UIContextService;
-import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
@@ -18,8 +18,7 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  */
 public class DvkBean implements Serializable {
     private static final long serialVersionUID = 1L;
-
-    private transient DvkService dvkService;
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DvkBean.class);
 
     public void receiveDocuments(@SuppressWarnings("unused") ActionEvent event) {
         Collection<String> docs = getDvkService().receiveDocuments();
@@ -42,20 +41,14 @@ public class DvkBean implements Serializable {
     }
 
     public void updateOrganizationsDvkCapability(@SuppressWarnings("unused") ActionEvent event) {
-        final int dvkCapableOrgs = getDvkService().updateOrganizationsDvkCapability();
-        MessageUtil.addInfoMessage("dvk_updateOrganizationsDvkCapability_success", dvkCapableOrgs);
-    }
-
-    // START: getters / setters
-    public void setDvkService(DvkService dvkService) {
-        this.dvkService = dvkService;
-    }
-
-    public DvkService getDvkService() {
-        if (dvkService == null) {
-            dvkService = (DvkService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(DvkService.BEAN_NAME);
+        int dvkCapableOrgs;
+        try {
+            dvkCapableOrgs = getDvkService().updateOrganizationsDvkCapability();
+            MessageUtil.addInfoMessage("dvk_updateOrganizationsDvkCapability_success", dvkCapableOrgs);
+        } catch (Exception e) {
+            MessageUtil.addErrorMessage("dvk_updateOrganizationsDvkCapability_error", e.getMessage());
+            LOG.error(e.getMessage(), e);
         }
-        return dvkService;
     }
-    // END: getters / setters
+
 }

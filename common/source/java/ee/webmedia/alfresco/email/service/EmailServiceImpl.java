@@ -42,6 +42,8 @@ import org.springframework.util.CollectionUtils;
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.email.model.EmailAttachment;
+import ee.webmedia.alfresco.monitoring.MonitoredService;
+import ee.webmedia.alfresco.monitoring.MonitoringUtil;
 import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MimeUtil;
@@ -170,13 +172,16 @@ public class EmailServiceImpl implements EmailService {
                 }
             }
 
+            MonitoringUtil.logSuccess(MonitoredService.OUT_SMTP);
             if (log.isInfoEnabled()) {
                 log.info("sendEmail service call took " + (step2 - step0) + " ms\n    prepare message - " + (step1 - step0) + " ms\n    send message - "
                         + (step2 - step1) + " ms" + info);
             }
         } catch (AlfrescoRuntimeException e) {
+            MonitoringUtil.logError(MonitoredService.OUT_SMTP, e);
             throw e;
         } catch (Exception e) {
+            MonitoringUtil.logError(MonitoredService.OUT_SMTP, e);
             throw new EmailException(e);
         }
     }

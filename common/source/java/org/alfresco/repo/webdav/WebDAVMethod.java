@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -67,6 +68,8 @@ public abstract class WebDAVMethod
     // Log output
 
     protected static Log logger = LogFactory.getLog("org.alfresco.webdav.protocol");
+
+    public static final String PARAM_TICKET = "webdaw_ticket";
 
     // Output formatted XML in the response
 
@@ -146,6 +149,14 @@ public abstract class WebDAVMethod
             @Override
             public Object execute() throws Exception
             {
+                // Set the ticket for request
+                List<String> pathParts = WebDAVHelper.splitAllPaths(getPath());
+                if (pathParts.isEmpty()) {
+                    logger.error("Path " + getPath() + " didn't contain needed parseable info!");
+                    throw new WebDAVServerException(HttpServletResponse.SC_BAD_REQUEST);
+                }
+                m_request.setAttribute(PARAM_TICKET, pathParts.get(0));
+
                 executeImpl();
                 return null;
             }

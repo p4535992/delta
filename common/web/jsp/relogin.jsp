@@ -56,7 +56,7 @@
    
    <h:form acceptcharset="UTF-8" id="loggedOutForm" >
    <div id="login-container">
-            <h:graphicImage url="/images/logo/logo.png" alt="#{ApplicationService.projectTitle}" title="#{ApplicationService.projectTitle}" />
+            <h:graphicImage url="#{ApplicationService.logoUrl}" alt="#{ApplicationService.projectTitle}" title="#{ApplicationService.projectTitle}" />
             
             <h:outputText value="#{msg.loggedout_details}" styleClass="login-instructions center" />
             <a:actionLink href="/faces/jsp/browse/browse.jsp" value="#{msg.relogin}" />

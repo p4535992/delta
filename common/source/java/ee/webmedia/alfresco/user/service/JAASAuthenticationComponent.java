@@ -14,6 +14,9 @@ import org.alfresco.repo.security.authentication.AuthenticationException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import ee.webmedia.alfresco.monitoring.MonitoredService;
+import ee.webmedia.alfresco.monitoring.MonitoringUtil;
+
 /**
  * Authentication via JAAS - we are using it to authenticate with Kerberos (against Active Directory)
  * For JAAS to work, a configuration file needs to exist and some environment variables need to be set.
@@ -44,9 +47,14 @@ public class JAASAuthenticationComponent extends SimpleUpdatingAuthenticationCom
             // Login has gone through OK, set up the acegi context
             setCurrentUser(userName);
             log.trace("SetCurrentUser succeeded");
+            MonitoringUtil.logSuccess(MonitoredService.OUT_AD_KERBEROS);
         } catch (LoginException e) {
             log.error("Authentication failed", e);
+            MonitoringUtil.logSuccess(MonitoredService.OUT_AD_KERBEROS);
             throw new AuthenticationException("Authenticaion failed for '" + userName + "': " + e.getMessage(), e);
+        } catch (RuntimeException e) {
+            MonitoringUtil.logError(MonitoredService.OUT_AD_KERBEROS, e);
+            throw e;
         }
     }
 

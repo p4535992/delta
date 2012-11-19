@@ -1,0 +1,9 @@
+<alfresco-config>
+   <config>
+      <dialogs>
+         <dialog name="webServiceDocumentListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="WebServiceDocumentListDialog"
+            icon="/images/icons/versioned_properties_large.gif" show-ok-button="false" />
+                        
+      </dialogs>
+   </config>
+</alfresco-config>

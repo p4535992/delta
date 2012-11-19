@@ -76,6 +76,8 @@ import ee.sk.xmlenc.EncryptedData;
 import ee.sk.xmlenc.EncryptedKey;
 import ee.sk.xmlenc.EncryptionProperty;
 import ee.webmedia.alfresco.app.AppConstants;
+import ee.webmedia.alfresco.monitoring.MonitoredService;
+import ee.webmedia.alfresco.monitoring.MonitoringUtil;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.exception.SignatureRuntimeException;
 import ee.webmedia.alfresco.signature.model.DataItem;
@@ -208,7 +210,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
 
     @Override
     public boolean isDigiDocContainer(FileInfo fileInfo) {
-        return fileInfo.getName().toLowerCase().endsWith(".ddoc") && !fileInfo.isFolder();
+        return FilenameUtil.isDigiDocFile(fileInfo.getName()) && !fileInfo.isFolder();
     }
 
     @Override
@@ -373,7 +375,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         }
     }
 
-    private void addSignature(SignedDoc signedDoc, SignatureDigest signatureDigest, String signatureHex) throws DigiDocException, SignatureException {
+    private void addSignature(SignedDoc signedDoc, SignatureDigest signatureDigest, String signatureHex) throws Exception {
         byte[] signatureBytes = SignedDoc.hex2bin(signatureHex);
         Signature sig = prepareSignature(signedDoc, signatureDigest.getCertHex());
 
@@ -389,7 +391,17 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
 
         // If OCSP response is successful, then no exception is thrown
         long startTime = System.nanoTime();
-        sig.getConfirmation();
+        try {
+            sig.getConfirmation();
+            MonitoringUtil.logSuccess(MonitoredService.OUT_SK_OCSP);
+        } catch (Exception e) {
+            if (e instanceof DigiDocException && ((DigiDocException) e).getCode() == 88) {
+                MonitoringUtil.logSuccess(MonitoredService.OUT_SK_OCSP);
+            } else {
+                MonitoringUtil.logError(MonitoredService.OUT_SK_OCSP, e);
+            }
+            throw e;
+        }
         long stopTime = System.nanoTime();
         log.info("PERFORMANCE: query skOcspSignatureConfirmation - " + duration(startTime, stopTime) + " ms");
 
@@ -686,13 +698,19 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
                     status);
             long stopTime = System.nanoTime();
             if (!"OK".equals(status.value)) {
-                log.error("Error performing query skDigiDocServiceMobileCreateSignature - " + duration(startTime, stopTime) + " ms: status='" + status.value + "'");
+                String string = "Error performing query skDigiDocServiceMobileCreateSignature - " + duration(startTime, stopTime) + " ms: status='" + status.value + "'";
+                log.error(string);
+                MonitoringUtil.logError(MonitoredService.OUT_SK_DIGIDOCSERVICE, string);
                 throw new UnableToPerformException("sk_digidocservice_error");
             }
+            MonitoringUtil.logSuccess(MonitoredService.OUT_SK_DIGIDOCSERVICE);
             log.info("PERFORMANCE: query skDigiDocServiceMobileCreateSignature - " + duration(startTime, stopTime) + " ms, status=OK");
         } catch (SOAPFaultException e) {
             long stopTime = System.nanoTime();
             handleDigiDocServiceSoapFault(e, startTime, stopTime, "skDigiDocServiceMobileCreateSignature");
+        } catch (RuntimeException e) {
+            MonitoringUtil.logError(MonitoredService.OUT_SK_DIGIDOCSERVICE, e);
+            throw e;
         }
 
         // RESPONSE
@@ -727,19 +745,30 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
             long stopTime = System.nanoTime();
             if (!Arrays.asList("SIGNATURE", "OUTSTANDING_TRANSACTION", "EXPIRED_TRANSACTION", "USER_CANCEL", "MID_NOT_READY", "PHONE_ABSENT", "SIM_ERROR", "SENDING_ERROR",
                     "INTERNAL_ERROR").contains(status.value)) {
-                log.error("Error performing query skDigiDocServiceGetMobileCreateSignatureStatus - " + duration(startTime, stopTime) + " ms: status=" + status.value);
+                String string = "Error performing query skDigiDocServiceGetMobileCreateSignatureStatus - " + duration(startTime, stopTime) + " ms: status=" + status.value;
+                log.error(string);
+                MonitoringUtil.logError(MonitoredService.OUT_SK_DIGIDOCSERVICE, string);
                 throw new UnableToPerformException("sk_digidocservice_error");
             }
             log.info("PERFORMANCE: query skDigiDocServiceGetMobileCreateSignatureStatus - " + duration(startTime, stopTime) + " ms, status=" + status.value);
+            if ("INTERNAL_ERROR".equals(status.value)) {
+                MonitoringUtil.logError(MonitoredService.OUT_SK_DIGIDOCSERVICE, status.value);
+            } else {
+                MonitoringUtil.logSuccess(MonitoredService.OUT_SK_DIGIDOCSERVICE);
+            }
             if ("SIGNATURE".equals(status.value)) {
                 return signature.value;
             } else if ("OUTSTANDING_TRANSACTION".equals(status.value)) {
                 return null;
             }
-            throw new UnableToPerformException("ddoc_signature_failed_" + status.value);
+            UnableToPerformException unableToPerformException = new UnableToPerformException("ddoc_signature_failed_" + status.value);
+            throw unableToPerformException;
         } catch (SOAPFaultException e) {
             long stopTime = System.nanoTime();
             handleDigiDocServiceSoapFault(e, startTime, stopTime, "skDigiDocServiceGetMobileCreateSignatureStatus");
+        } catch (RuntimeException e) {
+            MonitoringUtil.logError(MonitoredService.OUT_SK_DIGIDOCSERVICE, e);
+            throw e;
         }
         Assert.isTrue(false); // unreachable code
         return null;
@@ -759,15 +788,18 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
             int faultCode = Integer.parseInt(e.getMessage());
             if (faultCode >= 200 && faultCode < 300) {
                 log.info("PERFORMANCE: query " + queryName + " - " + duration(startTime, stopTime) + " ms, faultCode=" + faultCode);
+                MonitoringUtil.logError(MonitoredService.OUT_SK_DIGIDOCSERVICE, e);
                 throw new UnableToPerformException("ddoc_signature_failed_INTERNAL_ERROR");
             } else if (faultCode == 101 || (faultCode >= 300 && faultCode <= 303)) {
                 log.info("PERFORMANCE: query " + queryName + " - " + duration(startTime, stopTime) + " ms, faultCode=" + faultCode);
+                MonitoringUtil.logSuccess(MonitoredService.OUT_SK_DIGIDOCSERVICE);
                 throw new UnableToPerformException("ddoc_signature_failed_" + faultCode);
             }
         } catch (NumberFormatException e2) {
             // do nothing
         }
         log.error("Error performing query " + queryName + " - " + duration(startTime, stopTime) + " ms: " + e.getMessage(), e);
+        MonitoringUtil.logError(MonitoredService.OUT_SK_DIGIDOCSERVICE, e);
         throw new UnableToPerformException("sk_digidocservice_error");
     }
 

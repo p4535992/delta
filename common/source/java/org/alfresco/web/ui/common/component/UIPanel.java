@@ -283,6 +283,7 @@ public class UIPanel extends UICommand
       if (this.hasAdornments)
       {
           out.write("<div id='"+hideableDivId+"' class='panel-border'");
+          isExpanded(); // call this out to refresh the expanded variable, but do not use it because it returns always true
           if (!expanded) {
               out.write(" style=\"display:none;\"");
           }
@@ -598,8 +599,14 @@ public class UIPanel extends UICommand
     */
    public boolean isExpanded()
    {
+       ValueBinding vb = getValueBinding("expanded");
+       if (vb != null)
+       {
+          this.expanded = (Boolean)vb.getValue(getFacesContext());
+       }
+
       // Child components are always rendered, their expansion are handled in browser using javascript. 
-      return true;
+      return true; // return always true, because otherwise child components will not be rendered
    }
 
    /**
@@ -610,6 +617,10 @@ public class UIPanel extends UICommand
    public void setExpanded(boolean expanded)
    {
       this.expanded = Boolean.valueOf(expanded);
+   }
+   
+   public Boolean getExpandedState(){
+       return expanded;
    }
 
    /**

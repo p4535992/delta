@@ -91,4 +91,11 @@ public interface ThesaurusService {
      */
     boolean isThesaurusUsed(String thesaurusName);
 
+    /**
+     * Return the count of thesauri defined
+     * 
+     * @return number of thesauri found
+     */
+    int getThesauriCount();
+
 }

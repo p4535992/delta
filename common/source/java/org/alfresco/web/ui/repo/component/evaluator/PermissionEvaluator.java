@@ -36,6 +36,11 @@ import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.ui.common.component.evaluator.BaseEvaluator;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.series.model.SeriesModel;
+import ee.webmedia.alfresco.user.service.UserService;
+
 /**
  * Evaulator for returning whether a Node is Allowed/Denied a list of permissions
  * 
@@ -129,6 +134,11 @@ public class PermissionEvaluator extends BaseEvaluator
                {
                   result = result & (AccessStatus.DENIED == service.hasPermission(((NodeRef)obj), deny[i]));
                }
+            }
+
+            if (!result && allow.length > 0 && DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA.equals(allow[0])) {
+                NodeRef seriesRef = BeanHelper.getGeneralService().getAncestorNodeRefWithType((NodeRef) obj, SeriesModel.Types.SERIES);
+                result = seriesRef != null && !Boolean.FALSE.equals(BeanHelper.getNodeService().getProperty(seriesRef, SeriesModel.Props.DOCUMENTS_VISIBLE_FOR_USERS_WITHOUT_ACCESS));
             }
          }
         return result;

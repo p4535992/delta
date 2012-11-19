@@ -144,7 +144,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
                                         return null;
                                     } catch (Exception e) {
                                         log.error("Background updater error", e);
-                                        if (stopFlag.get()) {
+                                        if (!isRetryUpdaterInBackground() || stopFlag.get()) {
                                             return null;
                                         }
                                         Thread.sleep(5000);
@@ -160,6 +160,10 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         } else {
             log.warn("Updater is already running");
         }
+    }
+
+    protected boolean isRetryUpdaterInBackground() {
+        return true;
     }
 
     @Override
@@ -341,10 +345,14 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         }
     }
 
+    protected boolean processOnlyExistingNodeRefs() {
+        return true;
+    }
+
     private void updateNodesBatch(final List<NodeRef> batchList) throws Exception {
         final List<String[]> batchInfos = new ArrayList<String[]>(batchList.size());
         for (NodeRef nodeRef : batchList) {
-            if (!nodeService.exists(nodeRef)) {
+            if (processOnlyExistingNodeRefs() && !nodeService.exists(nodeRef)) {
                 batchInfos.add(new String[] { nodeRef.toString(), "nodeDoesNotExist" });
                 continue;
             }

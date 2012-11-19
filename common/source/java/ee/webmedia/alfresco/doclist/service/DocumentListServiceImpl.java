@@ -14,7 +14,6 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.Path;
 import org.alfresco.service.namespace.QName;
-import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.Pair;
 import org.apache.commons.lang.time.FastDateFormat;
 
@@ -34,6 +33,7 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
+import ee.webmedia.alfresco.register.service.RegisterService;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.series.service.SeriesService;
@@ -59,6 +59,7 @@ public class DocumentListServiceImpl implements DocumentListService {
     private DocumentService documentService;
     private NodeService nodeService;
     private GeneralService generalService;
+    private RegisterService registerService;
 
     private final FastDateFormat fastDateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
 
@@ -90,9 +91,9 @@ public class DocumentListServiceImpl implements DocumentListService {
         for (Series serie : series) {
             Integer retensionPeriod = serie.getRetentionPeriod();
             printLine(csvWriter, serie.getType(), serie.getSeriesIdentifier(), serie.getTitle(), serie.getContainingDocsCount(),
-                      (retensionPeriod == null ? "" : retensionPeriod.toString()),
-                      nodeService.getProperty(serie.getNode().getNodeRef(), SeriesModel.Props.ACCESS_RESTRICTION).toString(),
-                      serie.getStatus());
+                    (retensionPeriod == null ? "" : retensionPeriod.toString()),
+                    nodeService.getProperty(serie.getNode().getNodeRef(), SeriesModel.Props.ACCESS_RESTRICTION).toString(),
+                    serie.getStatus());
             printVolumes(csvWriter, serie.getNode().getNodeRef());
         }
     }
@@ -109,13 +110,14 @@ public class DocumentListServiceImpl implements DocumentListService {
         List<Volume> volumes = volumeService.getAllVolumesBySeries(nodeRef);
         String label = MessageUtil.getMessage("volume");
         for (Volume volume : volumes) {
-            Date dispositionDate = volume.getDispositionDate();
+            Date dispositionDate = volume.getRetainUntilDate();
             printLine(csvWriter, label, volume.getVolumeMark(), volume.getTitle(),
-                      volume.getContainingDocsCount(), (dispositionDate == null ? "" : fastDateFormat.format(dispositionDate)), "", volume.getStatus());
+                    volume.getContainingDocsCount(), (dispositionDate == null ? "" : fastDateFormat.format(dispositionDate)), "", volume.getStatus());
+
+            // If volume contains cases and documents, then documents must be printed first
+            printDocuments(csvWriter, volume.getNode().getNodeRef());
             if (volume.isContainsCases()) {
                 printCases(csvWriter, volume.getNode().getNodeRef());
-            } else {
-                printDocuments(csvWriter, volume.getNode().getNodeRef());
             }
         }
     }
@@ -175,6 +177,7 @@ public class DocumentListServiceImpl implements DocumentListService {
                 }
             }
         }
+        registerService.resetAllAutoResetCounters();
         log.info("created copy of " + counter + " year-based volumes that were opened.");
         return counter;
     }
@@ -186,7 +189,7 @@ public class DocumentListServiceImpl implements DocumentListService {
         for (Function function : functionsService.getAllFunctions()) {
             for (Series series : seriesService.getAllSeriesByFunction(function.getNodeRef())) {
                 for (Volume volume : volumeService.getAllOpenExpiredVolumesBySeries(series.getNode().getNodeRef())) {
-                    volumeService.closeVolume(volume);
+                    volumeService.closeVolume(volume.getNodeRef());
                     counter++;
                     log.info("Closed volume: [" + function.getMark() + "]" + function.getTitle() + "/[" + series.getSeriesIdentifier() + "]"
                             + series.getTitle() + "/[" + volume.getVolumeMark() + "]" + volume.getTitle() + ", validTo=" + volume.getValidTo());
@@ -199,7 +202,12 @@ public class DocumentListServiceImpl implements DocumentListService {
 
     @Override
     public long updateDocCounters() {
-        return updateDocCounters(functionsService.getFunctionsRoot());
+        long result = updateDocCounters(functionsService.getFunctionsRoot());
+        LinkedHashSet<ArchivalsStoreVO> archivalsStoreVOs = generalService.getArchivalsStoreVOs();
+        for (ArchivalsStoreVO archivalsStoreVO : archivalsStoreVOs) {
+            result += updateDocCounters(archivalsStoreVO.getNodeRef());
+        }
+        return result;
     }
 
     @Override
@@ -222,11 +230,12 @@ public class DocumentListServiceImpl implements DocumentListService {
                             nodeService.setProperty(caseRef, CaseModel.Props.CONTAINING_DOCS_COUNT, documentsCountByCase);
                             docCountInVolume += documentsCountByCase;
                         }
-                    } else {
-                        final List<NodeRef> allDocumentsByVolume = documentService.getAllDocumentRefsByParentRef(volumeRef);
-                        final int documentsCountByVolume = allDocumentsByVolume.size();
-                        docCountInVolume += documentsCountByVolume;
                     }
+                    // Also include documents
+                    final List<NodeRef> allDocumentsByVolume = documentService.getAllDocumentRefsByParentRef(volumeRef);
+                    final int documentsCountByVolume = allDocumentsByVolume.size();
+                    docCountInVolume += documentsCountByVolume;
+
                     nodeService.setProperty(volumeRef, VolumeModel.Props.CONTAINING_DOCS_COUNT, docCountInVolume);
                     docCountInSeries += docCountInVolume;
                 }
@@ -240,43 +249,37 @@ public class DocumentListServiceImpl implements DocumentListService {
     }
 
     @Override
-    public Pair<List<NodeRef>, Long> getAllDocumentAndCaseRefs() {
-        long deletedDocCount = 0;
-        log.info("Starting to gather all noderefs of documents and cases to be removed");
-        final ArrayList<NodeRef> c = new ArrayList<NodeRef>(4000);
-        for (ChildAssociationRef function : functionsService.getFunctionAssocs(functionsService.getFunctionsRoot())) {
-            long docCountInFunction = 0;
+    public Pair<List<NodeRef>, List<NodeRef>> getAllDocumentAndStructureRefs(NodeRef functionsRoot) {
+        final List<NodeRef> docRefs = new ArrayList<NodeRef>(4000);
+        final List<NodeRef> functionRefs = new ArrayList<NodeRef>();
+        final List<NodeRef> seriesRefs = new ArrayList<NodeRef>();
+        final List<NodeRef> volumeRefs = new ArrayList<NodeRef>();
+        final List<NodeRef> caseRefs = new ArrayList<NodeRef>();
+        for (ChildAssociationRef function : functionsService.getFunctionAssocs(functionsRoot)) {
             final NodeRef functionRef = function.getChildRef();
             for (NodeRef seriesRef : seriesService.getAllSeriesRefsByFunction(functionRef)) {
-                long docCountInSeries = 0;
                 for (ChildAssociationRef volume : volumeService.getAllVolumeRefsBySeries(seriesRef)) {
-                    long docCountInVolume = 0;
                     final NodeRef volumeRef = volume.getChildRef();
                     Boolean containsCases = (Boolean) nodeService.getProperty(volumeRef, VolumeModel.Props.CONTAINS_CASES);
                     if (containsCases != null && containsCases) {
-                        for (ChildAssociationRef aCase : caseService.getCaseRefsByVolume(volumeRef)) {
-                            final NodeRef caseRef = aCase.getChildRef();
-                            Integer docsUnderCase = (Integer) nodeService.getProperty(caseRef, CaseModel.Props.CONTAINING_DOCS_COUNT);
-                            c.add(caseRef);
-                            docCountInVolume += docsUnderCase != null ? docsUnderCase : 0;
+                        for (NodeRef caseRef : caseService.getCaseRefsByVolume(volumeRef)) {
+                            docRefs.addAll(documentService.getAllDocumentRefsByParentRef(caseRef));
+                            caseRefs.add(caseRef);
                         }
-                    } else {
-                        List<ChildAssociationRef> docsOfVolumeAssocs = nodeService.getChildAssocs(volumeRef, RegexQNamePattern.MATCH_ALL,
-                                RegexQNamePattern.MATCH_ALL);
-                        final int documentsCountByVolume = docsOfVolumeAssocs.size();
-                        for (ChildAssociationRef childAssociationRef : docsOfVolumeAssocs) {
-                            c.add(childAssociationRef.getChildRef());
-                        }
-                        docCountInVolume += documentsCountByVolume;
                     }
-                    docCountInSeries += docCountInVolume;
+                    docRefs.addAll(documentService.getAllDocumentRefsByParentRef(volumeRef));
+                    volumeRefs.add(volumeRef);
                 }
-                docCountInFunction += docCountInSeries;
+                seriesRefs.add(seriesRef);
             }
-            deletedDocCount += docCountInFunction;
+            functionRefs.add(functionRef);
         }
-        log.info("found " + deletedDocCount + " documents from documentList to delete.");
-        return new Pair<List<NodeRef>, Long>(c, deletedDocCount);
+        final List<NodeRef> structRefs = new ArrayList<NodeRef>(4000);
+        structRefs.addAll(caseRefs);
+        structRefs.addAll(volumeRefs);
+        structRefs.addAll(seriesRefs);
+        structRefs.addAll(functionRefs);
+        return new Pair<List<NodeRef>, List<NodeRef>>(docRefs, structRefs);
     }
 
     @Override
@@ -361,6 +364,10 @@ public class DocumentListServiceImpl implements DocumentListService {
 
     public void setGeneralService(GeneralService generalService) {
         this.generalService = generalService;
+    }
+
+    public void setRegisterService(RegisterService registerService) {
+        this.registerService = registerService;
     }
 
     // END GETTERS_SETTERS

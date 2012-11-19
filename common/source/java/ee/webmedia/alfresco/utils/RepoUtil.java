@@ -87,11 +87,21 @@ public class RepoUtil {
     }
 
     public static <K, V> Map<K, V> copyProperties(Map<K, V> props, Map<K, V> results) {
+        return copyProperties(props, results, (K[]) null);
+    }
+
+    public static <K, V> Map<K, V> copyProperties(Map<K, V> props, Map<K, V> results, K... propsToCopy) {
+        if (props == null) {
+            return null;
+        }
         if (results == null) {
             results = new HashMap<K, V>(props.size());
         }
-        for (Entry<K, V> entry : props.entrySet()) {
-            results.put(entry.getKey(), copyProperty(entry.getValue()));
+        if (propsToCopy == null) {
+            propsToCopy = (K[]) props.keySet().toArray();
+        }
+        for (K key : propsToCopy) {
+            results.put(key, copyProperty(props.get(key)));
         }
         return results;
     }
@@ -387,6 +397,27 @@ public class RepoUtil {
         List<T> list = (List<T>) document.getProperties().get(propName);
         T element = list != null && list.size() > index ? list.get(index) : null;
         return element;
+    }
+
+    public static List<String> getLocalNames(QName... qNames) {
+        List<String> localNames = new ArrayList<String>();
+        for (QName qName : qNames) {
+            localNames.add(qName.getLocalName());
+        }
+
+        return localNames;
+    }
+
+    public static List<String> getNodeRefIds(List<NodeRef> nodeRefs) {
+        List<String> nodeRefIds = new ArrayList<String>();
+        for (NodeRef docRef : nodeRefs) {
+            nodeRefIds.add(docRef.getId());
+        }
+        return nodeRefIds;
+    }
+
+    public static boolean isInWorkspace(Node node) {
+        return (node == null ? false : node.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE));
     }
 
 }

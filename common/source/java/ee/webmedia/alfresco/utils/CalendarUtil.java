@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.utils;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -87,6 +88,10 @@ public class CalendarUtil {
 
     public static int getDaysBetween(LocalDate beginDate, LocalDate endDate) {
         return Math.abs(Days.daysBetween(beginDate, endDate).getDays()) + 1;
+    }
+
+    public static int getDaysBetweenSigned(Date beginDay, Date endDay) {
+        return Days.daysBetween(new LocalDate(beginDay), new LocalDate(endDay)).getDays();
     }
 
     public static int getNationalHolidaysBetween(LocalDate beginDate, LocalDate endDate, ClassificatorService classificatorService) {

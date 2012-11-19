@@ -2,7 +2,7 @@ var delta = [];
 delta['translations'] = [];
 
 /** Vertical scrollbar appears when browser window is narrower than minScreenWidth */
-var minScreenWidth = 920;
+var minScreenWidth = 1020;
 
 function setMinScreenWidth(minWidth){
    minScreenWidth = minWidth;
@@ -217,7 +217,11 @@ function prependFunction(jQHtmlElem, prependFn, eventAttributeName) {
       jQElem.attr(eventAttributeName, "return false;");
       var jQEventType = eventAttributeName.substring(2, eventAttributeName.length);
       jQElem.bind(jQEventType, function() {
-         return prependFn(jQElem) && originalClickHandler();
+         if(typeof(originalClickHandler) == "function"){
+            return prependFn(jQElem) && originalClickHandler();
+         } else {
+            return prependFn(jQElem) && eval("(function() {" + originalClickHandler + "})();");
+         }
       });
    });
 }
@@ -425,14 +429,18 @@ function isSameDate(date1, date2){
 }
 
 function addSearchSuggest(clientId, containerClientId, pickerCallback, submitUri) {
-   addSearchSuggest(clientId, containerClientId, pickerCallback, submitUri, null);
+   addSearchSuggest(clientId, containerClientId, pickerCallback, null, submitUri, null);
 }
 
-function addSearchSuggest(clientId, containerClientId, pickerCallback, submitUri, autoCompleteCallback) {
+function addSearchSuggest(clientId, containerClientId, pickerCallback, pickerCallbackParams, submitUri) {
+   addSearchSuggest(clientId, containerClientId, pickerCallback, pickerCallbackParams, submitUri, null);
+}
+
+function addSearchSuggest(clientId, containerClientId, pickerCallback, pickerCallbackParams, submitUri, autoCompleteCallback) {
    autocompleters.push(function addAutocompleter() {
       var jQInput = $jQ("#"+escapeId4JQ(clientId));
       var uri = getContextPath() + "/ajax/invoke/AjaxSearchBean.searchSuggest";
-      var suggest = jQInput.autocomplete(uri, {extraParams: {'pickerCallback' : pickerCallback}, matchContains: 1, minChars: 3, suggestAll: 1, delay: 50,
+      var suggest = jQInput.autocomplete(uri, {extraParams: {'pickerCallback' : pickerCallback, 'pickerCallbackParams' : pickerCallbackParams}, matchContains: 1, minChars: 3, suggestAll: 1, delay: 50,
       onItemSelect: function (li) {
          processButtonState();
       },
@@ -448,11 +456,14 @@ function addSearchSuggest(clientId, containerClientId, pickerCallback, submitUri
       suggest.bind("autoComplete", function handleAutocomplete(event, data) {
          handleEnterKeySkip = true;
          setScreenProtected(true, "FIXME: palun oodake, ühendus serveriga");
+         // Get other field values from updateable container and append AC data 
+         var postData = getContainerFields(containerClientId, clientId, []);
+         postData += "&" + $jQ.param({'data' : data.newVal});
          $jQ.ajax({
             type: 'POST',
             url: submitUri,
             mode: 'queue',
-            data: $jQ.param({'data' : data.newVal}),
+            data: postData,
             success: function autocompleteSuccess(responseText) {
                if (autoCompleteCallback) {
                   autoCompleteCallback.call(data.newVal);
@@ -564,7 +575,21 @@ function webdavOpenReadOnly(url) {
 //      alert("To open using webdaw you must have IE compatible browser(for example firefox with IEtab or Internet Explorer)");
 //   }
 //   alert("regular file download");
-   window.open(url, '_blank');// regular file saveAs/open by downloading it to HD
+   var uri = getContextPath() + '/ajax/invoke/AjaxBean.getDownloadUrl?path=' + url;
+
+   $jQ.ajax({
+      type: 'POST',
+      url: uri,
+      data: 'url=' + url, // path is already escaped, so disable jquery escaping by giving it a string directly
+      mode: 'queue',
+      success: function openForDownload(responseText) {
+        if (confirm(getTranslation("webdav_noPermissionsDownloadConfirm"))) {
+           window.open(responseText, '_blank');// regular file saveAs/open by downloading it to HD
+        }
+      },
+      error: ajaxError,
+      datatype: 'html'
+    });
    return false;
 }
 
@@ -632,11 +657,34 @@ function hideModal(){
    return false;
 }
 
+function selectGroupForModalSearch(selectId, hiddenId, filterId){
+   var selectedValue =$jQ("#" + escapeId4JQ(selectId)).val(); 
+   var hidden = $jQ("#" + escapeId4JQ(hiddenId));
+   var filter = $jQ("#" + escapeId4JQ(filterId));
+   hidden.val(selectedValue);
+   filter.val(parseInt(filter.val())-1);
+}
+
+function groupModalFilterChange(){
+   var selector = $jQ("#" + escapeId4JQ(this.id.replace("_filter","_groupSelector")));
+   if(selector == null) {
+      return;
+   }
+   $jQ("#" + escapeId4JQ(this.id.replace("_filter","_selectedGroup"))).val("");
+   $jQ("#" + escapeId4JQ(this.id.replace("_filter","_selectedGroupText"))).remove();
+   if(this.value == "1"){
+      selector.attr('disabled','');
+   } else {
+      selector.attr('disabled','disabled');
+   }
+}
+
 var propSheetValidateSubmitFn = [];
 var propSheetValidateFormId = '';
 var propSheetValidateFinishId = '';
 var propSheetValidateSecondaryFinishId = '';
 var propSheetValidateNextId = '';
+var propSheetValidateSecondaryNextId = '';
 var propSheetFinishBtnPressed = false;
 var propSheetNextBtnPressed = false;
 
@@ -649,6 +697,7 @@ function registerPropertySheetValidator(submitFn, formId, finishBtnId, nextBtnId
    propSheetValidateFinishId = finishBtnId;
    propSheetValidateSecondaryFinishId = finishBtnId + "-2";
    propSheetValidateNextId = nextBtnId;
+   propSheetValidateSecondaryNextId = nextBtnId + "-2";
 }
 
 function processButtonState() {
@@ -745,6 +794,12 @@ function propSheetValidateOnDocumentReady() {
             validateNextId.onclick = function() { propSheetNextBtnPressed = true; };
          }
       }
+      if (propSheetValidateSecondaryNextId.length > 0) {
+         var validateSecondaryNextId = document.getElementById(propSheetValidateFormId + ':' + propSheetValidateSecondaryNextId);
+         if (validateSecondaryNextId != null){
+            validateSecondaryNextId.onclick = function() { propSheetNextBtnPressed = true; };
+         }
+      }      
       processButtonState();
    }
 }
@@ -752,11 +807,16 @@ function propSheetValidateOnDocumentReady() {
 function propSheetValidateRegisterOnDocumentReady() {
    if (propSheetValidateSubmitFn.length > 0) {
       document.getElementById(propSheetValidateFormId).onsubmit = propSheetValidateSubmit;
-      var registerBtn = document.getElementById(propSheetValidateFormId + ':documentRegisterButton');
-      if(registerBtn){
-         registerBtn.onclick = function() { propSheetFinishBtnPressed = true; };
-      }
+      setButtonPropSheetFinish(propSheetValidateFormId + ':documentRegisterButton');
+      setButtonPropSheetFinish(propSheetValidateFormId + ':documentRegisterButton-2');
       processButtonState();
+   }
+}
+
+function setButtonPropSheetFinish(elementId){
+   var button = document.getElementById(elementId);
+   if(button){
+      button.onclick = function() { propSheetFinishBtnPressed = true; };
    }
 }
 
@@ -833,15 +893,7 @@ function ajaxSubmit(componentClientId, componentContainerId, submittableParams, 
 function ajaxSubmit(componentClientId, componentContainerId, submittableParams, uri, payload) {
    setScreenProtected(true, "FIXME: palun oodake, ühendus serveriga");
 
-   // Find all form fields that are inside this component
-   var componentChildFormElements = $jQ('#' + escapeId4JQ(componentContainerId)).find('input,select,textarea');
-
-   // Find additional hidden fields at the end of the page that HtmlFormRendererBase renders
-   var hiddenFormElements = $jQ('input[type=hidden]').filter(function() {
-      return componentClientId == this.name.substring(0, componentClientId.length) || $jQ.inArray(this.name, submittableParams) >= 0;
-   });
-
-   var postData = componentChildFormElements.add(hiddenFormElements).serialize();
+   var postData = getContainerFields(componentContainerId, componentClientId, submittableParams);
    if (payload != null) {
       postData += "&" + $jQ.param(payload);
    }
@@ -856,6 +908,18 @@ function ajaxSubmit(componentClientId, componentContainerId, submittableParams, 
       error: ajaxError,
       dataType: 'html'
    });
+}
+
+function getContainerFields(componentContainerId, componentClientId, submittableParams) {
+// Find all form fields that are inside this component
+   var componentChildFormElements = $jQ('#' + escapeId4JQ(componentContainerId)).find('input,select,textarea');
+
+   // Find additional hidden fields at the end of the page that HtmlFormRendererBase renders
+   var hiddenFormElements = $jQ('input[type=hidden]').filter(function() {
+      return componentClientId == this.name.substring(0, componentClientId.length) || $jQ.inArray(this.name, submittableParams) >= 0;
+   });
+
+   return componentChildFormElements.add(hiddenFormElements).serialize();
 }
 
 function ajaxSuccess(responseText, componentClientId, componentContainerId) {
@@ -1068,6 +1132,11 @@ function handleEnterKey(event) {
       return true;
    }
    
+   // if enter is pressed in association search block, it has higher priority than specificAction and defaultAction
+   if(target.hasClass("searchAssocOnEnter") && _searchAssocs(event)){
+      return true;
+   }
+   
    // Are there any specific actions (modal search, dialog search)?
    var specificActions = $jQ('.specificAction').filter(":visible");
    if (specificActions.length == 1) { // Do nothing if multiple actions match
@@ -1126,18 +1195,22 @@ function initWithScreenProtected() {
       $jQ(this).toggleClass("plus").toggleClass("minus");
    });
 
-   $jQ(".genericpicker-input").live('keyup', function (event) {
+   $jQ(".genericpicker-input").live('keyup', throttle(function (event) {
       var input = $jQ(this);
       var filter = input.prev();
+      var hidden = input.next();
       var filterValue;
+      var hiddenValue;
       if (filter != null && filter.val() != undefined) {
          filterValue = filter.val();
       }
-
-      var tbody = input.closest('tbody');
-      var select = tbody.find('.genericpicker-results');
+      if (hidden != null && hidden.attr('value') != undefined) {
+         hiddenValue = hidden.attr('value');
+      }
 
       var successCallback = function(responseText) {
+         var tbody = $jQ(this);
+         var select = tbody.find('.genericpicker-results');
          select.children().remove();
          var index = responseText.indexOf("|");
          select.attr("size", responseText.substring(0, index));
@@ -1146,14 +1219,9 @@ function initWithScreenProtected() {
       };
 
       // Workaround for IE/WebKit, since it cannot hide option elements...
-      var backSpaceCallback = function(inputValue){
-         select.children('option').each(function (i) {
-            var option = $jQ(this);
-            if (option.text().toLowerCase().indexOf(inputValue.toLowerCase()) < 0) {
-               option.prop('disabled', 'disabled').hide();
-               option.wrap('<span />').hide();
-            }
-         });
+      var backSpaceCallback = function(inputValue, callbackContext){
+         var tbody = $jQ(callbackContext);
+         var select = tbody.find('.genericpicker-results');
          select.children('span').each(function (i) {
             var option = $jQ(this).find('option');
             if (option.text().toLowerCase().indexOf(inputValue.toLowerCase()) > -1) {
@@ -1163,41 +1231,65 @@ function initWithScreenProtected() {
          });
       };
 
-      doSearch(input, filterValue, event, successCallback, backSpaceCallback);
-   });
+      doSearch(input, filterValue, hiddenValue, event, successCallback, backSpaceCallback, input.closest('tbody'));
+   }, 500));
 
-   function doSearch(input, filterValue, event, successCallback, backSpaceCallback) {
+   var reSearch = true;
+   function doSearch(input, filterValue, hiddenValue, event, successCallback, backSpaceCallback, callbackContext) {
       var callback = input.attr('datasrc');
       if(!callback){
          alert("no search callback found");
       }
       var value = input.val();
       if (!value) {
+         reSearch = true;
          return;
       }
       if(!filterValue){
-         filterValue = 0;
+         filterValue = 1; // UserContactGroupSearchBean.USERS_FILTER
       }
 
-      var index = callback.indexOf("|");
-      if (index >= 0) {
-         filterValue = callback.substring(0, index);
-         callback = callback.substring(index + 1);
+      var filterByStructUnit = "false";
+      var split = callback.split("|");
+      if (split.length == 3) {
+         filterValue = split[0];
+         callback = split[1];
+         filterByStructUnit = split[2];
+      } else if (split.length == 2) {
+         callback = split[0];
+         filterByStructUnit = split[1];
       }
 
       var backspace = event.keyCode == 8;
-      if (value.length == 3 && !backspace) {
+      var tbody = $jQ(callbackContext);
+      var select = tbody.find('.genericpicker-results');
+      var opts = select.children('option');
+      if (value.length > 2 && reSearch && !backspace) {
          $jQ.ajax({
             type: 'POST',
             url: getContextPath() + "/ajax/invoke/AjaxSearchBean.searchPickerResults",
-            data: $jQ.param({'contains' : value, 'pickerCallback' : callback, 'filterValue' : filterValue}),
+            data: $jQ.param({'contains' : value, 'pickerCallback' : callback, 'filterValue' : filterValue, 'hiddenValue' : hiddenValue, "filterByStructUnit" : filterByStructUnit}),
             mode: 'queue',
+            context: callbackContext,
             success: successCallback,
             error: ajaxError,
             dataType: 'html'
          });
-      } else if (value.length > 3 || backspace) {
-         backSpaceCallback(value);
+         reSearch = false;
+      } else if (value.length > 3 && !backspace) {
+         opts.each(function (i) {
+            var option = $jQ(this);
+            if (option.text().toLowerCase().indexOf(value.toLowerCase()) < 0) {
+               option.attr('disabled', 'disabled').hide();
+               option.wrap('<span />').hide();
+            }
+         });
+      } else if (value.length > 2 || backspace) {
+         backSpaceCallback(value, callbackContext);
+      }
+      
+      if (value.length < 3) {
+         reSearch = true;
       }
    };
 
@@ -1231,6 +1323,84 @@ function initWithScreenProtected() {
          // Set date
          elem.closest(".panel-border").find(".reportDueDate").datepicker('setDate',  reportDue);
       }
+   });
+   
+   $jQ(".driveCompensationRate").live('change', function(event) {
+      $jQ(".driveKm").change(); // Trigger updates
+   });
+
+   $jQ(".driveOdoBegin,.driveOdoEnd").live('change', function (event) {
+      var elem = $jQ(this);
+      var begin = elem.hasClass("driveOdoBegin");
+      var other = begin ? $jQ(elem.parent().next().children()[0]) : $jQ(elem.parent().prev().children()[0]);
+      if (!elem || !other) {
+         return;
+      }
+      
+      var driveKm = elem.closest("tr").find(".driveKm");
+      var val1 = elem.val();
+      var val2 = other.val();
+      if (!val1 || !val2) {
+         driveKm.val("");
+      } else {
+         driveKm.val(begin ? val2 - val1 : val1 - val2); // Show negative value, when data is incorrect
+      }
+      driveKm.change();
+   });
+   
+   $jQ(".driveKm").live('change', function (event) {
+      var kmElem = $jQ(this);
+      var propSheet = kmElem.closest("table").parent().closest("table");
+      var rateElem = propSheet.find(".driveCompensationRate");
+      
+      if (kmElem == null || rateElem == null) {
+         return;
+      }
+      
+      var compCalc = $jQ(kmElem.parent().next().children()[0]);
+      
+      var kmVal = kmElem.val();
+      var rateVal = rateElem.val();
+      if (!isNumeric(kmVal, true) || !isNumeric(rateVal)) {
+         compCalc.val("");
+      } else {
+         compCalc.val(round((kmVal * rateVal), 2));
+      }
+      compCalc.change();
+      
+      // Update sum
+      var totalKmElem = $jQ(propSheet.find(".driveTotalKm")[0]);
+      if (!totalKmElem) {
+         return;
+      }
+      var totalKm = 0;
+      kmElem.closest("table").find(".driveKm").each(function () {
+         if (isNumeric(this.value)) {
+            totalKm += parseInt(this.value);
+         }
+      });
+
+      totalKmElem.val(totalKm);
+      totalKmElem.change();
+   });
+   
+   $jQ(".driveTotalKm").live('change', function (event) {
+      var kmElem = $jQ(this);
+      var propSheet = kmElem.closest("table");
+      var rateElem = $jQ(propSheet.find(".driveCompensationRate")[0]);
+      var compElem = $jQ(propSheet.find(".driveTotalCompensation")[0]);
+      if (!rateElem || !compElem) {
+         return;
+      }
+      
+      var kmVal = kmElem.val();
+      var rateVal = rateElem.val();
+      if (!isNumeric(kmVal, true) || !isNumeric(rateVal)) {
+         compElem.val("");
+      } else {
+         compElem.val(round((kmVal * rateVal), 2));
+      }
+      compElem.change();
    });
 
    $jQ(".beginTotalCount,.endTotalCount").live('change', function (event) {
@@ -1342,12 +1512,14 @@ function initWithScreenProtected() {
       var allowanceDays = parseInt(row.find(".dailyAllowanceDaysField").val());
       var allowanceRate = parseInt(row.find(".dailyAllowanceRateField").val());
       var sumField = row.find(".dailyAllowanceSumField");
-      if(!allowanceDays || !allowanceRate) {
-         return;
+      var sum = 0;
+      if (allowanceDays && allowanceRate) {
+         var sum = allowanceDays * (allowanceRate / 100) * sumField.attr("datafld");
       }
-      var sum = allowanceDays * (allowanceRate / 100) * sumField.attr("datafld");
       if (sum) {
          sumField.val(round(sum, 2));
+      } else {
+         sumField.val(0);
       }
 
       // Sum all rows in this block and set total daily allowance sum
@@ -1393,6 +1565,66 @@ function initWithScreenProtected() {
       }
       transFooterTotalSumElem = jQuery("#footer-sum-2:first");
       setTransTotalSumColor(transFooterTotalSumElem, invoiceTotalSum, getFloatOrNull(transFooterTotalSumElem.text()));
+   });
+   
+   jQuery(".errandReportSumField").live('change', function(event) {      
+      var elem = $jQ(this);
+      var totalSum = 0;
+      var sum = 0;
+      var sumString;
+      elem.closest("table").find(".errandReportSumField").each(function () {         
+         sumString = $jQ(this).val();
+         sum = getFloatOrNull(sumString);
+         if(sum) {
+            totalSum += sum;
+         }
+      });
+
+      var totalField = elem.closest("div").closest("tr").next().find(".errandReportTotalSumField");
+      totalField.val(round(totalSum, 2));
+   });
+   
+   jQuery(".errandSummaryDebitField").live('change', function(event) {      
+      var elem = $jQ(this);
+      var totalSum = 0;
+      var sum = 0;
+      var sumString;
+      elem.closest("table").find(".errandSummaryDebitField").each(function () {         
+         sumString = $jQ(this).val();
+         sum = getFloatOrNull(sumString);
+         if(sum) {
+            totalSum += sum;
+         }
+      });
+
+      var totalField = elem.closest("div").closest("table").find(".errandSummaryDebitTotalField");
+      totalField.val(round(totalSum, 2));
+   });
+   
+   jQuery(".errandSummaryCreditField").live('change', function(event) {      
+      var elem = $jQ(this);
+      var totalSum = 0;
+      var sum = 0;
+      var sumString;
+      elem.closest("table").find(".errandSummaryCreditField").each(function () {         
+         sumString = $jQ(this).val();
+         sum = getFloatOrNull(sumString);
+         if(sum) {
+            totalSum += sum;
+         }
+      });
+
+      var totalField = elem.closest("div").closest("table").find(".errandSummaryCreditTotalField");
+      totalField.val(round(totalSum, 2));
+   });
+   
+   jQuery(".driveTotalKmField, .driveCompensationRateField").live('change', function(event) {
+      var driveTotalCompensation = $jQ(".driveTotalCompensationField");
+      var driveTotalKmField = getFloatOrNull($jQ(".driveTotalKmField").val());
+      var driveCompensationRate = getFloatOrNull($jQ(".driveCompensationRateField").val());
+      if(driveTotalKmField && driveCompensationRate) {
+         driveTotalCompensation.val(round((driveTotalKmField * driveCompensationRate), 2));
+      }      
    });
 
    jQuery(".trans-row-sum-input").live('change', recalculateInvoiceSums);
@@ -1551,6 +1783,9 @@ function textCounter(input, maxlimit) {
 // return number for valid numeric string,
 // 0 for blank string and NaN for all other values
 function getFloatOrNull(originalSumString){
+   if (!originalSumString) {
+      return NaN;
+   }
    var sumString = originalSumString.replace(",", ".");
    sumString = sumString.replace(/ /g, "");
    if(sumString == ""){
@@ -1565,7 +1800,16 @@ function getFloatOrNull(originalSumString){
 // use to avoid javascript parsing strings like "55 krooni" to number 55
 // (conversion that java validation wouldn't allow)
 function isNumeric(numberStr){
-   var validChars = "0123456789.";
+   return isNumeric(numberStr, false);
+}
+function isNumeric(numberStr, integer){
+   if (!numberStr) {
+      return false;
+   }
+   var validChars = "0123456789";
+   if (!integer) {
+      validChars += ".";
+   }
    var additionalFirstChars = "+-";
    for (i = 0; i < numberStr.length; i++){
       var currentChar = numberStr.charAt(i);
@@ -1691,6 +1935,7 @@ function extendCondencePlugin() {
       if(!(p && p[2] == "-")){
          moreTxt = getTranslation('jQuery.condence.moreText');
       }
+      var isStrictTrim = jQuery(this).hasClass("strictTrim"); 
       jQuery(this).condense({
          moreSpeed: 0,
          lessSpeed: 0,
@@ -1699,7 +1944,7 @@ function extendCondencePlugin() {
          ellipsis: "",
          condensedLength: condenceAtChar,
          minTrail: moreTxt.length,
-         strictTrim: false  // assume that condense content is not text (html, except links, is escaped)
+         strictTrim: isStrictTrim  // assume that condense content is not text (html, except links, is escaped)
                            // and does search for word breaks for triming text
          }
        );
@@ -1724,6 +1969,19 @@ function setMinEndDate(owner, dateElem, triggerEndDateChange){
    }
 }
 
+function initExpanders(context){
+   
+   //initialize all expanding textareas
+   var expanders = jQuery("textarea[class*=expand]", context);
+   expanders.TextAreaExpander();
+   if(isIE()) {
+      // trigger size recalculation if IE, because e.scrollHeight may be inaccurate before keyup() is called
+      expanders.keyup();
+      jQuery.fn.TextAreaExpander.ieInitialized = true;
+   }
+   
+}
+
 // These things need to be performed
 // 1) once after full page load
 // *) each time an area is replaced inside the page
@@ -1737,14 +1995,10 @@ function handleHtmlLoaded(context, setFocus, selects) {
       ,tooltipContainerElemName: "p"
    });
 
-   //initialize all expanding textareas
-   var expanders = jQuery("textarea[class*=expand]", context);
-   expanders.TextAreaExpander();
    var ieVer = isIE();
+   initExpanders(context);
+   
    if(ieVer) { // Darn IE bugs...
-      // trigger size recalculation if IE, because e.scrollHeight may be inaccurate before keyup() is called
-      expanders.keyup();
-      jQuery.fn.TextAreaExpander.ieInitialized = true;
       zIndexWorkaround(context);
 
       var jqSelects = (selects==undefined) ? $jQ("select") : selects;
@@ -1762,7 +2016,7 @@ function handleHtmlLoaded(context, setFocus, selects) {
          fixIEDropdownMinWidth("footer-titlebar .extra-actions .dropdown-menu", "#footer-titlebar .extra-actions .dropdown-menu li", context);
          fixIEDropdownMinWidth(".title-component .dropdown-menu.in-title", ".title-component .dropdown-menu.in-title li", context);
       }
-   }
+   }     
 
    /**
     * Open Office documents directly from server
@@ -1817,6 +2071,7 @@ function handleHtmlLoaded(context, setFocus, selects) {
 
    jQuery(".dailyAllowanceDaysField, .dailyAllowanceRateField, .errandReportDateBase, .eventBeginDate, .eventEndDate", context).change();
    jQuery(".expectedExpenseSumField", context).keyup();
+   jQuery(".errandReportSumField, .errandSummaryDebitField, .errandSummaryCreditField, .driveTotalKmField", context).change();
    $jQ('.triggerPropSheetValidation', context).each(function () {
       prependOnclick($jQ(this), triggerPropSheetValidation);
    });
@@ -1976,7 +2231,7 @@ function handleHtmlLoaded(context, setFocus, selects) {
       });
    }
 
-   $jQ(".readonly", context).attr('readonly', 'readonly');
+   $jQ(".readonly", context).attr('readonly', 'readonly');   
 }
 
 //-----------------------------------------------------------------------------
@@ -2167,4 +2422,16 @@ function help(url) {
       win.focus();
    }
    return false;
+}
+
+// http://remysharp.com/2010/07/21/throttling-function-calls/
+function throttle(fn, delay) {
+   var timer = null;
+   return function() {
+      var context = this, args = arguments;
+      clearTimeout(timer);
+      timer = setTimeout(function() {
+         fn.apply(context, args);
+      }, delay);
+   };
 }

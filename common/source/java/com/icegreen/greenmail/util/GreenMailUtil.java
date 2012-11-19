@@ -40,6 +40,9 @@ import org.apache.commons.logging.LogFactory;
 
 import com.icegreen.greenmail.imap.commands.AppendCommand;
 
+import ee.webmedia.alfresco.monitoring.MonitoredService;
+import ee.webmedia.alfresco.monitoring.MonitoringUtil;
+
 /**
  * @author Wael Chatila
  * @version $Id: $
@@ -129,11 +132,18 @@ public class GreenMailUtil {
             } else {
                 log.info("Not writing message to file, imap.messageFolder is blank");
             }
+            MonitoringUtil.logSuccess(MonitoredService.IN_IMAP);
             return message;
         }
         catch (UnsupportedEncodingException e)
         {
+            MonitoringUtil.logError(MonitoredService.IN_IMAP,e);
             throw new RuntimeException(e);
+        }
+        catch (RuntimeException e)
+        {
+            MonitoringUtil.logError(MonitoredService.IN_IMAP,e);
+            throw e;
         }
         // catch (IOException e)
         // {

@@ -22,6 +22,8 @@ public class ClassificatorValue implements Serializable, Comparable<Classificato
     private String classificatorDescription;
     private String valueData;
     private int order;
+    @AlfrescoModelProperty(isMappable = false)
+    private int originalOrder;
     private boolean byDefault;
     private boolean readOnly;
     private boolean active;
@@ -92,6 +94,14 @@ public class ClassificatorValue implements Serializable, Comparable<Classificato
 
     public void setOrder(int order) {
         this.order = order;
+    }
+
+    public int getOriginalOrder() {
+        return originalOrder;
+    }
+
+    public void setOriginalOrder(int originalOrder) {
+        this.originalOrder = originalOrder;
     }
 
     @Override

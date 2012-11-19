@@ -135,6 +135,11 @@
       <converter-class>ee.webmedia.alfresco.common.propertysheet.converter.ListNonBlankStringsWithCommaConverter</converter-class>
    </converter>
 
+   <converter>
+      <converter-id>ee.webmedia.alfresco.common.propertysheet.converter.DateTimeConverter</converter-id>
+      <converter-class>ee.webmedia.alfresco.common.propertysheet.converter.DateTimeConverter</converter-class>
+   </converter>
+
    <validator>
       <description>MandatoryIfValidator can be used to set UIInput required if some other UIInput is filled(i.e. checkbox checked, text input filled, selection
          made from select options(see SELECT_VALUES_INDICATING_MANDATORY constant that specifies values that indicate significance of other input)</description>

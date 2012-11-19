@@ -26,7 +26,7 @@
             <entry key=".*">
                <list>
                   <value>${ooo.exe}</value>
-                  <value>-accept=socket,host=localhost,port=${ooo.port};urp;StarOffice.ServiceManager</value>
+                  <value>-accept=socket,host=127.0.0.1,port=${ooo.port};urp;StarOffice.ServiceManager</value>
                   <bean class="org.alfresco.util.StringAppendingFactoryBean">
                      <property name="items">
                         <list>
@@ -115,6 +115,7 @@
    <bean id="openOfficeService" class="ee.webmedia.alfresco.common.service.OpenOfficeServiceImpl">
       <property name="mimetypeService" ref="MimetypeService" />
       <property name="openOfficeConnection" ref="openOfficeConnection" />
+      <property name="documentTemplateService" ref="DocumentTemplateService" />
    </bean>
 
 </beans>

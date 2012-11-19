@@ -74,7 +74,7 @@ public class WMUIPropertySheet extends UIPropertySheet {
         if (vb == null) {
             return true;
         }
-        return (Boolean) vb.getValue(getFacesContext());
+        return Boolean.TRUE.equals(vb.getValue(getFacesContext()));
     }
 
     @Override

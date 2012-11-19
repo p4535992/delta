@@ -17,6 +17,7 @@
       <property name="nodeService" ref="NodeService" />
       <property name="dictionaryService" ref="DictionaryService" />
       <property name="searchService" ref="SearchService" />
+      <property name="parametersService" ref="ParametersService" />
       <property name="personService" ref="PersonService" />
       <property name="permissionService" ref="PermissionService" />
       <property name="organizationStructureService" ref="OrganizationStructureService" />
@@ -67,6 +68,23 @@
       <property name="executeOnceOnly" value="true" />
    </bean>
 
+   <!-- Import the user registry from the authentication subsystem -->
+   <bean id="userRegistry" class="org.alfresco.repo.management.subsystems.ChainingSubsystemProxyFactory">
+      <property name="applicationContextManager">
+         <ref bean="Authentication" />
+      </property>
+      <property name="interfaces">
+         <list>
+            <value>org.alfresco.repo.security.sync.UserRegistry</value>
+         </list>
+      </property>
+   </bean>
+
+   <!-- START: web beans: -->
+
+   <bean id="UserSyncDialog" class="ee.webmedia.alfresco.user.web.UserSyncDialog" scope="session" />
    <bean id="GroupUsersListDialog" class="ee.webmedia.alfresco.user.web.GroupUsersListDialog" scope="session" />
+
+   <!-- END: web beans: -->
 
 </beans>

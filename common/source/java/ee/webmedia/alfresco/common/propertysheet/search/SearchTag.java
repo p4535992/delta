@@ -87,6 +87,12 @@ public class SearchTag extends UIComponentTag {
         if (converter != null) {
             attributes.put(Search.CONVERTER_KEY, converter);
         }
+        if (showFilter != null) {
+            attributes.put(Search.SHOW_FILTER_KEY, showFilter);
+        }
+        if (filters != null) {
+            attributes.put(Search.FILTERS_KEY, filters);
+        }
     }
 
     @Override

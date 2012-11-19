@@ -23,6 +23,13 @@
          <rtexprvalue>true</rtexprvalue>
          <description>If set to true, menu is displayed as the top-level menu e.g. the menu in the header. Otherwise the appropriate sub menu is rendered.</description>
       </attribute>
+      
+      <attribute>
+         <name>tooltip</name>
+         <required>false</required>
+         <rtexprvalue>true</rtexprvalue>
+         <description>Tooltip.</description>
+      </attribute>      
    </tag>
 
    <tag>

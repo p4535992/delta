@@ -17,10 +17,6 @@
       <managed-bean-name>DvkBean</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.dvk.web.DvkBean</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
-      <managed-property>
-         <property-name>dvkService</property-name>
-         <value>#{DvkService}</value>
-      </managed-property>
    </managed-bean>
 
 </faces-config>

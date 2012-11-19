@@ -37,7 +37,7 @@
 <a:panel id="header">
    <a:panel id="logo">
 
-      <a:actionLink id="client-logo" value="#{ApplicationService.headerText}" href="/" tooltip="#{ApplicationService.headerText}" image="/images/logo/logo.png" showLink="false" />
+      <a:actionLink id="client-logo" value="#{ApplicationService.headerText}" href="/" tooltip="#{ApplicationService.headerText}" image="#{ApplicationService.logoUrl}" showLink="false" />
       <a:actionLink id="project-name" value="#{ApplicationService.headerText}" href="/" tooltip="#{ApplicationService.headerText}" />
       
       <a:panel id="search" styleClass="search-box">
@@ -76,9 +76,9 @@
             action="#{LoginBean.logout}" immediate="true" />
          <a:actionLink id="login" image="/images/icons/login.gif" value="#{msg.login}" rendered="#{NavigationBean.isGuest}" action="#{LoginBean.logout}" />
 
-         <h:graphicImage value="/images/parts/search_controls_left.png" width="3" height="21" styleClass="simple" />
-         <h:inputText value="#{DocumentQuickSearchResultsDialog.searchValue}" maxlength="50" id="quickSearch" styleClass="quickSearch-input" />
-         <h:commandButton id="quickSearchBtn" value="#{msg.search}" type="submit" action="dialog:documentQuickSearchResultsDialog" actionListener="#{DocumentQuickSearchResultsDialog.setup}" />
+         <h:graphicImage value="/images/parts/search_controls_left.png" width="3" height="21" styleClass="simple" rendered="#{SubstitutionBean.currentStructUnitUser}" />
+         <h:inputText value="#{DocumentQuickSearchResultsDialog.searchValue}" maxlength="50" id="quickSearch" styleClass="quickSearch-input" rendered="#{SubstitutionBean.currentStructUnitUser}" />
+         <h:commandButton id="quickSearchBtn" value="#{msg.search}" type="submit" action="dialog:documentQuickSearchResultsDialog" actionListener="#{DocumentQuickSearchResultsDialog.setup}" rendered="#{SubstitutionBean.currentStructUnitUser}" />
       </a:panel>
 
    </a:panel>

@@ -112,7 +112,9 @@
 
             <a:panel id="actions">
             <%--<f:subview id="extra-actions" rendered="#{DialogManager.filterListVisible or DialogManager.moreActionsId != null}"> --%>
-            <f:subview id="extra-actions" rendered="#{DialogManager.filterListVisible and DialogManager.currentDialog.name ne 'manageGroups' or (DialogManager.currentDialog.name eq 'document' or DialogManager.currentDialog.name eq 'documentDynamicDialog') and (WorkflowBlockBean.workflowMethodBindingName != null or AssocsBlockBean.repliesAssocsBindingName != null or AssocsBlockBean.followupAssocsBindingName != null) and DocumentDialogHelperBean.inEditMode == false}">
+            <f:subview id="extra-actions" rendered="#{DialogManager.filterListVisible and DialogManager.currentDialog.name ne 'manageGroups' 
+            			or ((DialogManager.currentDialog.name eq 'document' or DialogManager.currentDialog.name eq 'documentDynamicDialog') and (WorkflowBlockBean.workflowMethodBindingName != null or WorkflowBlockBean.independentWorkflowMethodBindingName != null or AssocsBlockBean.repliesAssocsBindingName != null or AssocsBlockBean.followupAssocsBindingName != null) and DocumentDialogHelperBean.inEditMode == false)
+            			or (DialogManager.currentDialog.name eq 'caseFileDialog' and DialogManager.bean.inWorkspace and DialogManager.bean.inEditMode == false and (WorkflowBlockBean.workflowMethodBindingName != null or WorkflowBlockBean.independentWorkflowMethodBindingName != null))}">
                <f:verbatim>
                <ul class="actions-menu extra-actions">
                </f:verbatim>
@@ -171,10 +173,25 @@
                <f:verbatim></li></f:verbatim>
                </f:subview>
 
-               <f:subview id="more-actions-panel-sub2" rendered="#{(DialogManager.currentDialog.name eq 'document' or DialogManager.currentDialog.name eq 'documentDynamicDialog') and DocumentDialogHelperBean.inWorkspace and WorkflowBlockBean.workflowMethodBindingName != null and DocumentDialogHelperBean.inEditMode == false}">
+               <f:subview id="more-actions-panel-independent-workflow" rendered="#{(DialogManager.currentDialog.name eq 'document' or DialogManager.currentDialog.name eq 'documentDynamicDialog') and DocumentDialogHelperBean.inWorkspace and WorkflowBlockBean.independentWorkflowMethodBindingName != null and DocumentDialogHelperBean.inEditMode == false}">
                   <f:verbatim><li></f:verbatim>
                      <a:menu id="workflow_menu" style="white-space:nowrap" menuStyleClass="dropdown-menu right"
-                        label="#{WorkflowBlockBean.workflowMenuLabel}" image="/images/icons/arrow-down.png" >
+                        label="#{WorkflowBlockBean.workflowMenuLabel}" image="/images/icons/arrow-down.png" tooltip="#{WorkflowBlockBean.independentWorkflowMenuTooltip}" > 
+                        <%-- Here the method call of the value parameter is actually returning a string in the form "#{method binding}"
+                             UIActions class has been modified to interpret such strings as method bindings that take 1 parameter and
+                             return a list of ActionDefinition objects. See UIActions and WorkflowBlockBean classes for details.
+                              --%>
+                        <r:actions id="workflow_menu_items" value="#{WorkflowBlockBean.independentWorkflowMethodBindingName}" context="#{DialogManager.actionsContext}" />
+                     </a:menu>
+               <f:verbatim></li></f:verbatim>
+               </f:subview>
+
+               <f:subview id="more-actions-panel-sub2" rendered="#{(((DialogManager.currentDialog.name eq 'document' or DialogManager.currentDialog.name eq 'documentDynamicDialog') and DocumentDialogHelperBean.inWorkspace and DocumentDialogHelperBean.inEditMode == false)
+                        			or (DialogManager.currentDialog.name eq 'caseFileDialog' and DialogManager.bean.inWorkspace and DialogManager.bean.inEditMode == false and DialogManager.bean.workflowCreatable))
+                         			and WorkflowBlockBean.workflowMethodBindingName != null}">
+                  <f:verbatim><li></f:verbatim>
+                     <a:menu id="workflow_menu" style="white-space:nowrap" menuStyleClass="dropdown-menu right"
+                        label="#{WorkflowBlockBean.workflowMenuLabel}" image="/images/icons/arrow-down.png" tooltip="#{WorkflowBlockBean.documentWorkflowMenuTooltip}" >
                         <%-- Here the method call of the value parameter is actually returning a string in the form "#{method binding}"
                              UIActions class has been modified to interpret such strings as method bindings that take 1 parameter and
                              return a list of ActionDefinition objects. See UIActions and WorkflowBlockBean classes for details.
@@ -293,7 +310,9 @@
 
             <a:panel id="footer-actions">
             <%--<f:subview id="footer-extra-actions" rendered="#{DialogManager.filterListVisible or DialogManager.moreActionsId != null}"> --%>
-            <f:subview id="footer-extra-actions" rendered="#{DialogManager.filterListVisible and DialogManager.currentDialog.name ne 'manageGroups' or (DialogManager.currentDialog.name eq 'document' or DialogManager.currentDialog.name eq 'documentDynamicDialog') and DocumentDialogHelperBean.inWorkspace and WorkflowBlockBean.workflowMethodBindingName != null and DocumentDialogHelperBean.inEditMode == false}">
+            <f:subview id="footer-extra-actions" rendered="#{DialogManager.filterListVisible and DialogManager.currentDialog.name ne 'manageGroups' 
+            			or ((DialogManager.currentDialog.name eq 'document' or DialogManager.currentDialog.name eq 'documentDynamicDialog') and DocumentDialogHelperBean.inWorkspace and WorkflowBlockBean.workflowMethodBindingName != null and DocumentDialogHelperBean.inEditMode == false)
+            			or (DialogManager.currentDialog.name eq 'caseFileDialog' and DialogManager.bean.inWorkspace and DialogManager.bean.inEditMode == false and WorkflowBlockBean.workflowMethodBindingName != null)}" >
                <f:verbatim>
                <ul class="actions-menu extra-actions">
                </f:verbatim>
@@ -330,7 +349,9 @@
                   </f:verbatim>   
                      <a:menu id="footer-workflow_menu" style="white-space:nowrap" menuStyleClass="dropdown-menu right"
                         label="#{WorkflowBlockBean.workflowMenuLabel}" image="/images/icons/arrow-down.png" 
-                        rendered="#{(DialogManager.currentDialog.name eq 'document' or DialogManager.currentDialog.name eq 'documentDynamicDialog') and DocumentDialogHelperBean.inWorkspace and WorkflowBlockBean.workflowMethodBindingName != null and DocumentDialogHelperBean.inEditMode == false}">
+                        rendered="#{(((DialogManager.currentDialog.name eq 'document' or DialogManager.currentDialog.name eq 'documentDynamicDialog') and DocumentDialogHelperBean.inWorkspace and DocumentDialogHelperBean.inEditMode == false)
+                        			or (DialogManager.currentDialog.name eq 'caseFileDialog' and DialogManager.bean.inWorkspace and DialogManager.bean.inEditMode == false))
+                         			and WorkflowBlockBean.workflowMethodBindingName != null}">
                         <%-- Here the method call of the value parameter is actually returning a string in the form "#{method binding}"
                              UIActions class has been modified to interpret such strings as method bindings that take 1 parameter and
                              return a list of ActionDefinition objects. See UIActions and WorkflowBlockBean classes for details.

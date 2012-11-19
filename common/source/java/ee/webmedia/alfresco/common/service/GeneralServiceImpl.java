@@ -72,6 +72,7 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream.UnicodeExtraFieldPolicy;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.postgresql.util.PGobject;
@@ -84,14 +85,17 @@ import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
+import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.upload.UploadFileInput.FileWithContentType;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.log.service.DocumentPropertiesChangeHolder;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.AdjustableSemaphore;
 import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
+import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.utils.TextUtil;
 
 /**
@@ -145,11 +149,8 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     @Override
     public LinkedHashSet<StoreRef> getAllWithArchivalsStoreRefs() {
         if (allWithArchivalsStoreRefs == null) {
-            LinkedHashSet<StoreRef> stores = new LinkedHashSet<StoreRef>();
+            LinkedHashSet<StoreRef> stores = new LinkedHashSet<StoreRef>(getArchivalsStoreRefs());
             stores.add(store);
-            for (ArchivalsStoreVO storeVO : getArchivalsStoreVOs()) {
-                stores.add(storeVO.getStoreRef());
-            }
             allWithArchivalsStoreRefs = stores;
         }
         return allWithArchivalsStoreRefs;
@@ -200,6 +201,26 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
             }
         }
         return false;
+    }
+
+    @Override
+    public boolean hasAdditionalArchivalStores() {
+        return archivalsStoreVOs != null && archivalsStoreVOs.size() > 1;
+    }
+
+    @Override
+    public String getStoreTitle(StoreRef storeRef) {
+        if (store.equals(storeRef)) {
+            return "Dokumentide loetelu";
+        }
+        if (archivalsStoreVOs != null) {
+            for (ArchivalsStoreVO storeVO : archivalsStoreVOs) {
+                if (storeVO.getStoreRef().equals(storeRef)) {
+                    return storeVO.getTitle();
+                }
+            }
+        }
+        return null;
     }
 
     @Override
@@ -270,7 +291,7 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     }
 
     @Override
-    public Node getParentWithType(NodeRef childRef, final QName parentType) {
+    public Node getParentWithType(NodeRef childRef, final QName... parentType) {
         final NodeRef parentRef = getParentNodeRefWithType(childRef, parentType);
         return parentRef != null ? fetchNode(parentRef) : null;
     }
@@ -365,7 +386,11 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     @Override
     public WmNode fetchObjectNode(NodeRef objectRef, QName objectType) {
         QName type = nodeService.getType(objectRef);
-        Assert.isTrue(objectType.equals(type), objectRef + " is typed as " + type + " but was requested as " + objectType);
+        // XXX quickfix, a caseFile object can sometimes be used as a volume
+        // FIXME Alar?? we should actually find all calls with type volume to this method and rewrite them properly
+        if (!(objectType.equals(VolumeModel.Types.VOLUME) && type.equals(CaseFileModel.Types.CASE_FILE))) {
+            Assert.isTrue(objectType.equals(type), objectRef + " is typed as " + type + " but was requested as " + objectType);
+        }
         Set<QName> aspects = RepoUtil.getAspectsIgnoringSystem(nodeService.getAspects(objectRef));
         Map<QName, Serializable> props = RepoUtil.getPropertiesIgnoringSystem(nodeService.getProperties(objectRef), dictionaryService);
 
@@ -516,21 +541,30 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
 
     @Override
     public List<NodeRef> searchNodes(String input, QName type, Set<QName> props) {
-        return searchNodes(input, type, props, 100);
+        return searchNodes(input, type, props, 100, null);
     }
 
     @Override
     public List<NodeRef> searchNodes(String input, QName type, Set<QName> props, int limit) {
+        return searchNodes(input, type, props, 100, null);
+    }
+
+    @Override
+    public List<NodeRef> searchNodes(String input, QName type, Set<QName> props, int limit, String queryAndAddition) {
         limit = limit < 0 ? 100 : limit;
         if (input == null) {
             return null;
         }
         String parsedInput = SearchUtil.replace(input, " ").trim();
-        if (parsedInput.length() < 1) {
+        boolean queryAndIsBlank = StringUtils.isBlank(queryAndAddition);
+        if (parsedInput.length() < 1 && queryAndIsBlank) {
             return null;
         }
 
         String query = SearchUtil.generateQuery(parsedInput, type, props);
+        if (!queryAndIsBlank) {
+            query = SearchUtil.joinQueryPartsAnd(query, queryAndAddition);
+        }
         log.debug("Query: " + query);
 
         return getDocumentSearchService().searchNodes(query, limit, "searchNodesByTypeAndProps");
@@ -641,6 +675,19 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
 
     @Override
     public void writeFile(ContentWriter writer, File file, String fileName, String mimetype) {
+        try {
+            InputStream is = new BufferedInputStream(new FileInputStream(file));
+            Pair<String, String> result = getMimetypeAndEncoding(is, fileName, mimetype);
+            writer.setMimetype(result.getFirst());
+            writer.setEncoding(result.getSecond());
+            writer.putContent(file);
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public Pair<String, String> getMimetypeAndEncoding(InputStream is, String fileName, String mimetype) {
         // Always ignore user-provided mime-type
         String oldMimetype = StringUtils.lowerCase(mimetype);
         mimetype = mimetypeService.guessMimetype(fileName);
@@ -650,33 +697,25 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
         }
 
         String encoding;
-        InputStream is = null;
         try {
-            is = new BufferedInputStream(new FileInputStream(file));
             Charset charset = mimetypeService.getContentCharsetFinder().getCharset(is, mimetype);
             encoding = charset.name();
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
         } finally {
             try {
-                if (is != null) {
-                    is.close();
-                }
+                is.close();
             } catch (IOException e) {
-                // Do nothing
+                throw new RuntimeException(e);
             }
         }
-
-        writer.setMimetype(mimetype);
-        writer.setEncoding(encoding);
-        writer.putContent(file);
+        Pair<String, String> result = Pair.newInstance(mimetype, encoding);
+        return result;
     }
 
     @Override
-    public NodeRef getParentNodeRefWithType(NodeRef childRef, QName parentType) {
+    public NodeRef getParentNodeRefWithType(NodeRef childRef, QName... parentType) {
         final NodeRef parentRef = nodeService.getPrimaryParent(childRef).getParentRef();
         final QName realParentType = nodeService.getType(parentRef);
-        if (parentType.equals(realParentType)) {
+        if (ArrayUtils.contains(parentType, realParentType)) {
             return parentRef;
         }
         return null;
@@ -821,10 +860,18 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     }
 
     @Override
-    public void deleteNodeRefs(Collection<NodeRef> nodeRefs) {
+    public void deleteNodeRefs(Collection<NodeRef> nodeRefs, boolean moveToTrashCan) {
         for (NodeRef nodeRef : nodeRefs) {
-            if (nodeService.exists(nodeRef)) {
-                nodeService.deleteNode(nodeRef);
+            try {
+                if (nodeService.exists(nodeRef)) {
+                    if (!moveToTrashCan) {
+                        nodeService.addAspect(nodeRef, DocumentCommonModel.Aspects.DELETE_PERMANENT, null);
+                    }
+                    nodeService.deleteNode(nodeRef);
+                }
+            } catch (Exception e) {
+                log.error("Error deleting " + nodeRef + " : " + e.getMessage(), e);
+                // throw (e instanceof RuntimeException) ? (RuntimeException) e : new RuntimeException(e);
             }
         }
     }

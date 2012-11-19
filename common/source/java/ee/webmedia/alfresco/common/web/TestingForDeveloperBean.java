@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.common.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getSpringBean;
+
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -16,19 +18,24 @@ import org.alfresco.repo.search.impl.lucene.AbstractLuceneIndexerAndSearcherFact
 import org.alfresco.repo.search.impl.lucene.AbstractLuceneIndexerAndSearcherFactory.LuceneIndexBackupJob;
 import org.alfresco.repo.search.impl.lucene.LuceneIndexerAndSearcher;
 import org.alfresco.repo.search.impl.lucene.index.IndexInfo;
+import org.alfresco.repo.security.sync.UserRegistrySynchronizer;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
+import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.SearchService;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.service.transaction.TransactionService;
 import org.apache.commons.lang.time.FastDateFormat;
 
+import ee.webmedia.alfresco.classificator.enums.TemplateType;
 import ee.webmedia.alfresco.common.service.CustomReindexComponent;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.dvk.service.DvkService;
+import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImplFSStub;
 
@@ -107,6 +114,22 @@ public class TestingForDeveloperBean implements Serializable {
         deleteChildren(getNodeRef("/docadmin:fieldDefinitions"));
         deleteChildren(getNodeRef("/docadmin:fieldGroupDefinitions"));
         deleteChildren(getNodeRef("/docadmin:documentTypes"));
+    }
+
+    public void deleteTestTemplatesBootstrapAndTemplates(@SuppressWarnings("unused") ActionEvent event) {
+        deleteBootstrap("simdhs", "testWorkflowTemplatesBootstrap");
+        List<FileInfo> templateFiles = BeanHelper.getFileFolderService().listFiles(BeanHelper.getDocumentTemplateService().getRoot());
+        LOG.info("Found total " + templateFiles.size() + " templates");
+        for (FileInfo fi : templateFiles) {
+            if (getNodeService().hasAspect(fi.getNodeRef(), DocumentTemplateModel.Aspects.TEMPLATE_NOTIFICATION)
+                    || TemplateType.NOTIFICATION_TEMPLATE.toString().equals(getNodeService().getProperty(fi.getNodeRef(), DocumentTemplateModel.Prop.TEMPLATE_TYPE))
+                    || getNodeService().hasAspect(fi.getNodeRef(), QName.createQName(DocumentTemplateModel.URI, "systemTemplate"))
+                    || "Süsteemne mall".equals(getNodeService().getProperty(fi.getNodeRef(), DocumentTemplateModel.Prop.DOCTYPE_ID))) {
+                LOG.info("Deleting template \"" + fi.getName() + "\"");
+                getNodeService().deleteNode(fi.getNodeRef());
+            }
+        }
+        LOG.info("Completed deleting templates");
     }
 
     private void deleteBootstrap(String moduleName, String bootstrapName) {
@@ -206,6 +229,13 @@ public class TestingForDeveloperBean implements Serializable {
         String indexInfoTextWithoutDate = indexInfo.toString() + indexInfo.dumpInfoAsString();
         indexInfoText = dateTimeFormat.format(System.currentTimeMillis()) + "\n" + indexInfoTextWithoutDate;
         LOG.info(indexInfoTextWithoutDate);
+    }
+
+    public void updateUsersAndGroups(ActionEvent event) {
+        LOG.debug("Starting to update users and usergroups");
+        UserRegistrySynchronizer userRegistrySynchronizer = getSpringBean(UserRegistrySynchronizer.class, "UserRegistrySynchronizer");
+        userRegistrySynchronizer.synchronize(true);
+        LOG.debug("Finished updating users and usergroups");
     }
 
     public void searchHolesAndIndex(ActionEvent event) {

@@ -170,12 +170,14 @@
    <bean id="ApplicationService" class="ee.webmedia.alfresco.common.service.ApplicationServiceImpl">
       <property name="moduleService" ref="ModuleService" />
       <property name="parametersService" ref="ParametersService" />
+      <property name="mimetypeService" ref="mimetypeService" />
       <property name="commonVersionLocation" value="classpath:ee/webmedia/alfresco/common/common-version.properties" />
       <property name="projectVersionLocation" value="classpath:ee/webmedia/alfresco/common/project-version.properties" />
       <property name="projectName" value="${project.name}" />
       <property name="test" value="${project.test}" />
       <property name="logoutRedirectUrl" value="${cas.casServerUrl}logout" />
       <property name="serverUrl" value="${server.url}" />
+      <property name="logoFile" value="${logo.file}" />
    </bean>
 
    <bean id="generalService" class="ee.webmedia.alfresco.common.service.GeneralServiceImpl" depends-on="spacesBootstrap">
@@ -252,8 +254,28 @@
       </property>
    </bean>
 
+   <bean id="modalSearchParametersBootstrap2" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/common/bootstrap/modal-search-parameters2.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
    <bean id="abstractNodeUpdater" abstract="true" parent="module.baseComponent">
-      <property name="inputFolderPath" value="${dir.root}" />
+      <property name="inputFolderPath" value="${dir.root.shared}/updater" />
    </bean>
 
    <bean id="abstractDeleteNodeByXPathBootstrap" abstract="true" class="ee.webmedia.alfresco.common.bootstrap.DeleteNodeByXPathBootstrap" parent="module.baseComponent">
@@ -261,7 +283,6 @@
       <property name="generalService" ref="GeneralService" />
       <property name="nodeService" ref="NodeService" />
    </bean>
-   <bean id="classpathResourceResolver" class="ee.webmedia.alfresco.common.ClasspathResourceResolver" />
 
    <bean id="createContentDataIndexBootstrap" class="ee.webmedia.alfresco.common.bootstrap.CreateContentDataIndexBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="common" />
@@ -279,13 +300,15 @@
       <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="true" />
       <property name="dataSource" ref="dataSource" />
-   </bean>   
+   </bean>    
 
    <bean id="customReindexComponent" class="ee.webmedia.alfresco.common.service.CustomReindexComponent" parent="indexRecoveryComponentBase">
       <property name="enabled" value="${findHolesAndIndex.enabled}" />
       <property name="maxRecordSetSize" value="${index.tracking.maxRecordSetSize}" />
       <property name="maxTransactionsPerLuceneCommit" value="${index.tracking.maxTransactionsPerLuceneCommit}" />
    </bean>
+   
+   <bean id="classpathResourceResolver" class="ee.webmedia.alfresco.common.ClasspathResourceResolver" />
 
    <!-- START: web beans: -->
 
@@ -294,8 +317,9 @@
    <bean id="UserContactGroupSearchBean" class="ee.webmedia.alfresco.common.web.UserContactGroupSearchBean" scope="session" />
 
    <bean id="UserConfirmHelper" class="ee.webmedia.alfresco.common.web.UserConfirmHelper" scope="session" />
-   
+
    <bean id="DisableFocusingBean" class="ee.webmedia.alfresco.common.web.DisableFocusingBean" scope="request" />
 
    <!-- END: web beans: -->
+
 </beans>

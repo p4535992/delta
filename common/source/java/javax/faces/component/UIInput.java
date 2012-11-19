@@ -22,12 +22,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import javax.faces.FacesException;
 import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
 import javax.faces.convert.Converter;
 import javax.faces.convert.ConverterException;
 import javax.faces.el.EvaluationException;
 import javax.faces.el.MethodBinding;
+import javax.faces.el.PropertyNotFoundException;
 import javax.faces.el.ValueBinding;
 import javax.faces.event.AbortProcessingException;
 import javax.faces.event.FacesEvent;
@@ -453,20 +455,27 @@ public class UIInput
         }
         catch (ConverterException e)
         {
-            if (!Utils.isRequestValidationDisabled(context)) {
-                FacesMessage facesMessage = e.getFacesMessage();
-                if (facesMessage != null)
-                {
-                    context.addMessage(getClientId(context), facesMessage);
-                }
-                else
-                {
-                    _MessageUtils.addErrorMessage(context, this, CONVERSION_MESSAGE_ID,new Object[]{getId()});
-                }
-            }
-            setValid(false);
+            handleRequestDisabledOrNot(context, e);
+        }
+        catch (PropertyNotFoundException ex){
+            handleRequestDisabledOrNot(context, ex);
         }
         return submittedValue;
+    }
+
+    private void handleRequestDisabledOrNot(FacesContext context, FacesException e) {
+        if (!Utils.isRequestValidationDisabled(context)) {
+            FacesMessage facesMessage = (e instanceof ConverterException) ? ((ConverterException)e).getFacesMessage() : null;
+            if (facesMessage != null)
+            {
+                context.addMessage(getClientId(context), facesMessage);
+            }
+            else
+            {
+                _MessageUtils.addErrorMessage(context, this, CONVERSION_MESSAGE_ID,new Object[]{getId()});
+            }
+        }
+        setValid(false);
     }
 
 

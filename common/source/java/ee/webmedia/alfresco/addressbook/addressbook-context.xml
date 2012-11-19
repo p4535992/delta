@@ -37,6 +37,7 @@
          <set>
             <value>ab:personFirstName</value>
             <value>ab:personLastName</value>
+            <value>ab:privatePersonOrgName</value>
             <value>ab:orgName</value>
             <value>ab:orgAltName</value>
             <value>ab:orgAcronym</value>
@@ -121,6 +122,11 @@
             <ref bean="taskCapablePropertyRemoverOnPeople"/>
          </list>
       </property>
+   </bean>     
+      
+   <bean id="addOrgNameToOrgContacts" class="ee.webmedia.alfresco.addressbook.bootstrap.AddOrgNameToOrgContactUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
    </bean>     
    
    <bean id="encryptionPersonIdAdderForOrgs" class="ee.webmedia.alfresco.addressbook.bootstrap.EncryptionPersonIdAdderForOrgs" parent="abstractNodeUpdater" >

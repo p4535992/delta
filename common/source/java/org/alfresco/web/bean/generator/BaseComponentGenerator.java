@@ -345,11 +345,11 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
     }
 
     public static boolean evaluateBoolean(String expression, FacesContext context, PropertySheetItem item) {
+        if (expression == null || "false".equals(expression)) {
+            return false;
+        }
         if ("true".equals(expression)) {
             return true;
-        }
-        if ("false".equals(expression)) {
-            return false;
         }
         try {
             return ((Boolean) context.getApplication().createMethodBinding(expression, new Class[] {}).invoke(context, null)).booleanValue();
@@ -492,7 +492,7 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
     }
 
     protected boolean isValidationDisabled() {
-        return Boolean.valueOf(getCustomAttributes().get(VALDIATION_DISABLED));
+        return evaluateBoolean(getCustomAttributes().get(VALDIATION_DISABLED), FacesContext.getCurrentInstance());
     }
     
     protected boolean isMandatoryMarkerDisabled() {

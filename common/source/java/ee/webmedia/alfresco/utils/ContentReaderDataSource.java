@@ -46,4 +46,16 @@ public class ContentReaderDataSource implements DataSource {
         return fileName;
     }
 
+    public String getMimeType() {
+        return contentReader.getMimetype();
+    }
+
+    public long getContentSize() {
+        return contentReader.getSize();
+    }
+
+    public String getEncoding() {
+        return contentReader.getEncoding();
+    }
+
 }

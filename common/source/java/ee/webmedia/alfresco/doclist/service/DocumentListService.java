@@ -31,7 +31,13 @@ public interface DocumentListService {
 
     long updateDocCounters(NodeRef functionsRoot);
 
-    Pair<List<NodeRef>, Long> getAllDocumentAndCaseRefs();
+    /**
+     * Get all document nodeRefs and all case/volume/series/function nodeRefs in that particular order, so this list could be used to delete the nodes in that order.
+     * 
+     * @param functionsRoot
+     * @return
+     */
+    Pair<List<NodeRef>, List<NodeRef>> getAllDocumentAndStructureRefs(NodeRef functionsRoot);
 
     String getDisplayPath(NodeRef nodeRef, boolean showLeaf);
 

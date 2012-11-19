@@ -20,9 +20,13 @@ function informUser(control, message, showMessage)
    }
 }
 
-function isEmptyInput(inputId){
+function isEmptyInput(inputId) {
    var inputValue = document.getElementById(inputId).value;
-   return inputValue == null || inputValue.replace(/^\\s+|\\s+$/g, '').length == 0;
+   return isEmptyValue(inputValue);
+}
+
+function isEmptyValue(inputValue) {
+   return inputValue == null || (!(inputValue instanceof Array) && inputValue.replace(/^\\s+|\\s+$/g, '').length == 0);
 }
 
 /**

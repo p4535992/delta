@@ -65,6 +65,15 @@
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 
+   <managed-bean>
+      <description>
+         Bean that generates a datetime picker component
+      </description>
+      <managed-bean-name>DateTimePickerGenerator</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.common.propertysheet.datepicker.DateTimePickerGenerator</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
     <managed-bean>
         <managed-bean-name>ClearStateNotificationHandler</managed-bean-name>
         <managed-bean-class>ee.webmedia.alfresco.common.web.ClearStateNotificationHandler</managed-bean-class>

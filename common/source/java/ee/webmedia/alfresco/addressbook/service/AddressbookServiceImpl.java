@@ -309,6 +309,15 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
     @Override
     public void updateNode(Node node) {
         nodeService.setProperties(node.getNodeRef(), toQNameProperties(node.getProperties()));
+        if (node.getType().equals(Types.ORGANIZATION)) {
+            String orgName = (String) node.getProperties().get(Props.ORGANIZATION_NAME.toString());
+            for (Node personNode : listPerson(node.getNodeRef())) {
+                String personOrg = (String) personNode.getProperties().get(Props.PRIVATE_PERSON_ORG_NAME.toString());
+                if (!orgName.equals(personOrg)) {
+                    nodeService.setProperty(personNode.getNodeRef(), Props.PRIVATE_PERSON_ORG_NAME, orgName);
+                }
+            }
+        }
     }
 
     @Override
@@ -415,6 +424,10 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
             queryPartsAnd.add(SearchUtil.generatePropertyExactNotQuery(Props.ORGANIZATION_CODE, institutionToRemove, true));
         }
 
+        if (limit >= 0 && fields != contactGroupSearchFields) {
+            queryPartsAnd.add(generatePropertyBooleanQuery(Props.ACTIVESTATUS, true));
+        }
+
         if (types.contains(Types.ORGANIZATION) && fields == contactGroupSearchFields) {
             List<NodeRef> nodeRefs = searchNodes(joinQueryPartsAnd(queryPartsAnd), -1, "addressbookSearch", Collections.singletonList(store)).getFirst();
             // here we only want the contact groups that contain organizations?
@@ -502,6 +515,10 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
         QName randomqname = QName.createQName(URI, GUID.generate());
         ChildAssociationRef a = nodeService.createNode(parent == null ? getAddressbookRoot() : parent, assoc,
                 randomqname, type, data);
+        if (Types.ORGPERSON.equals(type)) {
+            // add org name to props for better search and representation
+            nodeService.setProperty(a.getChildRef(), Props.PRIVATE_PERSON_ORG_NAME, nodeService.getProperty(parent, Props.ORGANIZATION_NAME));
+        }
         return a.getChildRef();
     }
 

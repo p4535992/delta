@@ -54,6 +54,7 @@ public final class FileUploadBean implements Serializable
    private List<File> file;
    private List<String> fileName;
    private List<String> fileNameWithoutExtension;
+   private List<Boolean> associatedWithMetaData;
    private List<String> filePath;
    private List<String> contentType;
    private boolean multiple = false;
@@ -129,16 +130,21 @@ public final class FileUploadBean implements Serializable
            
        if(this.fileNameWithoutExtension == null)
            this.fileNameWithoutExtension = new ArrayList<String>(10);
+       
+       if (associatedWithMetaData == null) {
+           associatedWithMetaData = new ArrayList<Boolean>(10);
+       }
 
         String filenameWithoutExtension = FilenameUtils.removeExtension(fileName);
         if (!multiple) {
             this.fileName.add(0, fileName);
             this.fileNameWithoutExtension.add(0, filenameWithoutExtension);
+            associatedWithMetaData.add(0, false);
         } else {
             this.fileName.add(fileName);
             this.fileNameWithoutExtension.add(filenameWithoutExtension);
+            associatedWithMetaData.add(false);
         }
-        
    }
 
     public List<String> getFileNames() {
@@ -155,6 +161,14 @@ public final class FileUploadBean implements Serializable
 
     public void setFileNameWithoutExtension(List<String> fileNameWithoutExtension) {
         this.fileNameWithoutExtension = fileNameWithoutExtension;
+    }
+    
+    public List<Boolean> getAssociatedWithMetaData() {
+        return associatedWithMetaData;
+    }
+
+    public void setAssociatedWithMetaData(List<Boolean> associatedWithMetaData) {
+        this.associatedWithMetaData = associatedWithMetaData;
     }
 
 /**
@@ -249,5 +263,6 @@ public final class FileUploadBean implements Serializable
         getFileNameWithoutExtension().remove(index);
         getContentTypes().remove(index);
         getFilePaths().remove(index);
+        getAssociatedWithMetaData().remove(index);
     }
 }
