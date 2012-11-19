@@ -31,14 +31,6 @@
       <managed-bean-name>FunctionsDetailsDialog</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.functions.web.FunctionsDetailsDialog</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
-      <managed-property>
-         <property-name>functionsService</property-name>
-         <value>#{FunctionsService}</value>
-      </managed-property>
-      <managed-property>
-         <property-name>menuService</property-name>
-         <value>#{MenuService}</value>
-      </managed-property>
    </managed-bean>
 
 </faces-config>

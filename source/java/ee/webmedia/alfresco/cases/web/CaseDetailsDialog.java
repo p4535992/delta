@@ -1,5 +1,8 @@
 package ee.webmedia.alfresco.cases.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getCaseService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getVolumeService;
+
 import java.util.Map;
 
 import javax.faces.context.FacesContext;
@@ -7,12 +10,14 @@ import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
+import org.alfresco.web.bean.repository.MapNode;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
-import org.springframework.web.jsf.FacesContextUtils;
+import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.cases.model.Case;
-import ee.webmedia.alfresco.cases.service.CaseService;
+import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
@@ -27,11 +32,11 @@ public class CaseDetailsDialog extends BaseDialogBean {
     public static final String BEAN_NAME = "CaseDetailsDialog";
 
     private static final String PARAM_VOLUME_NODEREF = "volumeNodeRef";
-    private static final String PARAM_CASE_NODEREF = "caseNodeRef";
+    public static final String PARAM_CASE_NODEREF = "caseNodeRef";
 
-    private transient CaseService caseService;
     private Case currentEntry;
     private boolean newCase;
+    private transient UIPropertySheet propertySheet;
 
     @Override
     public void init(Map<String, String> params) {
@@ -83,6 +88,11 @@ public class CaseDetailsDialog extends BaseDialogBean {
             return null;
         }
         if (!isClosed()) {
+            propertySheet.getChildren().clear();
+            if (StringUtils.isBlank((String) getCurrentNode().getProperties().get(CaseModel.Props.TITLE))) {
+                MessageUtil.addInfoMessage("case_error_mandatory_title");
+                return null;
+            }
             getCaseService().closeCase(currentEntry);
             MessageUtil.addInfoMessage("case_close_success");
             return getDefaultFinishOutcome();
@@ -90,8 +100,41 @@ public class CaseDetailsDialog extends BaseDialogBean {
         return null;
     }
 
+    public String open() {
+        if (currentEntry.getNode() instanceof TransientNode) {
+            return null;
+        }
+        if (isClosed()) {
+            propertySheet.getChildren().clear();
+            if (getVolumeService().isClosed(new MapNode(currentEntry.getVolumeNodeRef()))) {
+                MessageUtil.addInfoMessage("case_open_volume_closed");
+                return null;
+            }
+            getCaseService().openCase(currentEntry);
+            MessageUtil.addInfoMessage("case_open_success");
+            return getDefaultFinishOutcome();
+        }
+        return null;
+    }
+
+    public String delete() {
+        if (currentEntry.getNode() instanceof TransientNode) {
+            return null;
+        }
+        if (isClosed()) {
+            try {
+                getCaseService().delete(currentEntry);
+                MessageUtil.addInfoMessage("case_deleted");
+                return getDefaultFinishOutcome();
+            } catch (UnableToPerformException e) {
+                MessageUtil.addStatusMessage(e);
+            }
+        }
+        return null;
+    }
+
     public boolean isClosed() {
-        return caseService.isClosed(getCurrentNode());
+        return getCaseService().isClosed(getCurrentNode());
     }
 
     public boolean isNew() {
@@ -105,18 +148,12 @@ public class CaseDetailsDialog extends BaseDialogBean {
         newCase = false;
     }
 
-    // START: getters / setters
-    protected CaseService getCaseService() {
-        if (caseService == null) {
-            caseService = (CaseService) FacesContextUtils.getRequiredWebApplicationContext(//
-                    FacesContext.getCurrentInstance()).getBean(CaseService.BEAN_NAME);
-        }
-        return caseService;
+    public void setPropertySheet(UIPropertySheet propertySheet) {
+        this.propertySheet = propertySheet;
     }
 
-    public void setCaseService(CaseService caseService) {
-        this.caseService = caseService;
+    public UIPropertySheet getPropertySheet() {
+        return propertySheet;
     }
 
-    // END: getters / setters
 }

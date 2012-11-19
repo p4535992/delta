@@ -20,11 +20,17 @@
 
     <!-- @Override kerberos-authentication-context.xml -->
     <!-- Also, on successful authentication, userRegistrySynchronizer.createOrUpdatePersonByIdCode() is called -->
-    <bean id="authenticationComponent" class="ee.webmedia.alfresco.user.service.JAASAuthenticationComponent" parent="authenticationComponentBase">
+    <bean id="authenticationComponent" class="ee.webmedia.alfresco.user.service.JAASAuthenticationComponent" parent="authenticationComponentBase" depends-on="kerberosConfig">
         <property name="nodeService" ref="nodeService" />
         <property name="personService" ref="personService" />
         <property name="transactionService" ref="transactionService" />
         <property name="defaultAdministratorUserNameList" value="${external.authentication.defaultAdministratorUserNames}" />
     </bean>
+
+   <bean name="kerberosConfig" class="ee.webmedia.alfresco.user.service.KerberosConfig">
+      <property name="kerberosRealm" value="${kerberos.realm}" />
+      <property name="kerberosKdc" value="${kerberos.kdc}" />
+      <property name="kerberosConf" value="${kerberos.conf}" />
+   </bean>
 
 </beans>

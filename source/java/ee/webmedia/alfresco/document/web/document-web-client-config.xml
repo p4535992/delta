@@ -366,7 +366,7 @@
       <dialogs>
 
          <dialog name="documentListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="DocumentListDialog"
-            icon="/images/icons/versioned_properties_large.gif" title-id="document_list" description-id="document_list_info" actions-config-id="docListActions" />
+            icon="/images/icons/versioned_properties_large.gif" description-id="document_list_info" actions-config-id="docListActions" />
 
          <dialog name="document" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-dialog.jsp" managed-bean="DocumentDialog"
             icon="/images/icons/details_large.gif" title-id="document" actions-config-id="document_actions" 
@@ -384,11 +384,15 @@
          <dialog name="unsentDocumentListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="UnsentDocumentListDialog"
             icon="/images/icons/versioned_properties_large.gif" title-id="document_unsent_list" show-ok-button="false" />
 
-         <dialog name="favoritesDocumentListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="FavoritesDocumentListDialog"
+         <dialog name="favoritesDocumentListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/favourites-list-dialog.jsp" managed-bean="FavoritesDocumentListDialog"
             icon="/images/icons/versioned_properties_large.gif" title-id="document_myFavorites" show-ok-button="false" />
 
          <dialog name="discussionDocumentListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="DiscussionDocumentListDialog"
             icon="/images/icons/versioned_properties_large.gif" title-id="browse_topics" show-ok-button="false" />
+            
+         <dialog name="documentSendForInformationDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/sendout/web/document-send-for-information-dialog.jsp" managed-bean="DocumentSendForInformationDialog"
+            icon="/images/icons/details_large.gif" title-id="document_send_for_information_dialog" />
+                        
       </dialogs>
    </config>
 </alfresco-config>

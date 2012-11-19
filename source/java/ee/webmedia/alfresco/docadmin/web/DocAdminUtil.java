@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.docadmin.web;
 
+import static ee.webmedia.alfresco.utils.RepoUtil.toQNameProperties;
+
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
@@ -14,12 +16,18 @@ import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.base.BaseObject.ChildrenList;
+import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
+import ee.webmedia.alfresco.docadmin.service.CaseFileType;
+import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
+import ee.webmedia.alfresco.docadmin.service.DynamicType;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docadmin.service.MetadataContainer;
 import ee.webmedia.alfresco.docadmin.service.MetadataItem;
+import ee.webmedia.alfresco.docconfig.service.PropDefCacheKey;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
@@ -94,10 +102,7 @@ public class DocAdminUtil {
     }
 
     public static Pair<String, Integer> getDocTypeIdAndVersionNr(Node documentDynamicNode) {
-        String docTypeId = (String) documentDynamicNode.getProperties().get(Props.OBJECT_TYPE_ID);
-        Integer docTypeVersionNr = (Integer) documentDynamicNode.getProperties().get(Props.OBJECT_TYPE_VERSION_NR);
-        Pair<String, Integer> docTypeIdAndVersionNr = new Pair<String, Integer>(docTypeId, docTypeVersionNr);
-        return docTypeIdAndVersionNr;
+        return getDocTypeIdAndVersionNr(toQNameProperties(documentDynamicNode.getProperties()));
     }
 
     public static Pair<String, Integer> getDocTypeIdAndVersionNr(Map<QName, Serializable> props) {
@@ -112,4 +117,34 @@ public class DocAdminUtil {
         return docTypeIdAndVersionNr;
     }
 
+    public static PropDefCacheKey getPropDefCacheKey(Node documentDynamicNode) {
+        Pair<String, Integer> docTypeIdAndVersionNr = getDocTypeIdAndVersionNr(documentDynamicNode);
+        return new PropDefCacheKey(getDynamicTypeClass(documentDynamicNode), docTypeIdAndVersionNr.getFirst(), docTypeIdAndVersionNr.getSecond());
+    }
+
+    public static PropDefCacheKey getPropDefCacheKey(Class<? extends DynamicType> typeClass, DocumentTypeVersion docVer) {
+        Pair<String, Integer> docTypeIdAndVersionNr = getDocTypeIdAndVersionNr(docVer);
+        return new PropDefCacheKey(typeClass, docTypeIdAndVersionNr.getFirst(), docTypeIdAndVersionNr.getSecond());
+    }
+
+    public static PropDefCacheKey getPropDefCacheKey(Class<? extends DynamicType> typeClass, Map<QName, Serializable> props) {
+        Pair<String, Integer> docTypeIdAndVersionNr = getDocTypeIdAndVersionNr(props);
+        return new PropDefCacheKey(typeClass, docTypeIdAndVersionNr.getFirst(), docTypeIdAndVersionNr.getSecond());
+    }
+
+    public static Class<? extends DynamicType> getDynamicTypeClass(Node node) {
+        if (node == null) {
+            return null;
+        }
+
+        Class<? extends DynamicType> typeClass = null;
+        QName type = node.getType();
+        if (DocumentCommonModel.Types.DOCUMENT.equals(type)) {
+            typeClass = DocumentType.class;
+        } else if (CaseFileModel.Types.CASE_FILE.equals(type)) {
+            typeClass = CaseFileType.class;
+        }
+
+        return typeClass;
+    }
 }

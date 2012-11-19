@@ -4,6 +4,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,8 +14,10 @@ import java.util.Set;
 import javax.faces.context.FacesContext;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.file.service.FileService;
@@ -28,8 +31,6 @@ import ee.webmedia.alfresco.privilege.web.PrivilegesHandler;
 import ee.webmedia.alfresco.utils.MessageData;
 import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.utils.Predicate;
-import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
@@ -43,7 +44,11 @@ public class DocumentTypePrivilegesHandler extends AbstractInheritingPrivilegesH
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentTypePrivilegesHandler.class);
 
     protected DocumentTypePrivilegesHandler() {
-        super(DocumentCommonModel.Types.DOCUMENT, Arrays.asList(Privileges.VIEW_DOCUMENT_META_DATA, Privileges.VIEW_DOCUMENT_FILES, Privileges.EDIT_DOCUMENT));
+        this(DocumentCommonModel.Types.DOCUMENT, Arrays.asList(Privileges.VIEW_DOCUMENT_META_DATA, Privileges.VIEW_DOCUMENT_FILES, Privileges.EDIT_DOCUMENT));
+    }
+
+    protected DocumentTypePrivilegesHandler(QName nodeType, Collection<String> manageablePermissions) {
+        super(nodeType, manageablePermissions);
     }
 
     @Override
@@ -83,12 +88,11 @@ public class DocumentTypePrivilegesHandler extends AbstractInheritingPrivilegesH
         }
         WorkflowService ws = BeanHelper.getWorkflowService();
         NodeRef docRef = state.getManageableRef();
-        Set<Task> tasks = ws.getTasks(docRef, new Predicate<Task>() {
-            @Override
-            public boolean eval(Task task) {
-                return task.isStatus(Status.IN_PROGRESS);
-            }
-        });
+        Set<Task> tasks = ws.getTasksInProgress(docRef);
+        NodeRef caseFileRef = BeanHelper.getGeneralService().getAncestorNodeRefWithType(docRef, CaseFileModel.Types.CASE_FILE);
+        if (caseFileRef != null) {
+            tasks.addAll(ws.getTasksInProgress(caseFileRef));
+        }
         if (tasks.isEmpty()) {
             return false;
         }
@@ -100,7 +104,8 @@ public class DocumentTypePrivilegesHandler extends AbstractInheritingPrivilegesH
             if (userPrivileges == null) {
                 continue;
             }
-            Set<String> requiredPrivileges = PrivilegeUtil.getPrivsWithDependencies(PrivilegeUtil.getRequiredPrivsForInprogressTask(task, docRef, fileService));
+            Set<String> requiredPrivileges = PrivilegeUtil.getPrivsWithDependencies(PrivilegeUtil.getRequiredPrivsForInprogressTask(task, docRef, fileService,
+                    CaseFileModel.Types.CASE_FILE.equals(getNodeType())));
             requiredPrivileges.removeAll(userPrivileges.getActivePrivileges());
             if (!requiredPrivileges.isEmpty()) {
                 Set<String> missingPrivileges = missingPrivsByUser.get(userPrivileges.getUserName());

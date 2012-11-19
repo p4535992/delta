@@ -47,14 +47,14 @@
       <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}newWorkflowStarted']}" />
       <h:outputText value="#{msg.notification_newWorkflowStarted_label}" />
       
-      <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}orderAssignmentTaskCompleted']}" />
-      <h:outputText value="#{msg.notification_orderAssignmentTaskCompleted_label}" />   
+      <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}orderAssignmentTaskCompleted']}" rendered="#{NotificationDialog.showOrderAssignmentTaskData}" />
+      <h:outputText value="#{msg.notification_orderAssignmentTaskCompleted_label}" rendered="#{NotificationDialog.showOrderAssignmentTaskData}" />   
       
-      <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}confirmationTaskCompleted']}" />
-      <h:outputText value="#{msg.notification_confirmationTaskCompleted_label}" />
+      <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}confirmationTaskCompleted']}" rendered="#{NotificationDialog.showConfirmationTaskData}" />
+      <h:outputText value="#{msg.notification_confirmationTaskCompleted_label}" rendered="#{NotificationDialog.showConfirmationTaskData}"  />
       
-      <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}confirmationTaskCompletedNotAccepted']}" />
-      <h:outputText value="#{msg.notification_confirmationTaskCompletedNotAccepted_label}" />    
+      <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}confirmationTaskCompletedNotAccepted']}" rendered="#{NotificationDialog.showConfirmationTaskData}" />
+      <h:outputText value="#{msg.notification_confirmationTaskCompletedNotAccepted_label}" rendered="#{NotificationDialog.showConfirmationTaskData}" />    
       
       <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}taskDueDateExtensionTaskCompleted']}" />
       <h:outputText value="#{msg.notification_taskDueDateExtensionTaskCompleted_label}" />
@@ -70,6 +70,9 @@
 
       <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}taskCancelled']}" />
       <h:outputText value="#{msg.notification_taskCancelled_label}" /> 
+      
+      <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}groupAssignmentTaskCompletedByOthers']}" rendered="#{NotificationDialog.showGroupAssignmentTaskData}" />
+      <h:outputText value="#{msg.notification_groupAssignmentTaskCompletedByOthers_label}" rendered="#{NotificationDialog.showGroupAssignmentTaskData}" />       
 
    </h:panelGrid>
 

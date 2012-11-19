@@ -161,6 +161,10 @@ public abstract class PrivilegesHandler implements Serializable {
         return new MessageDataImpl(MessageSeverity.INFO, getNodeType().getLocalName() + "_manage_permissions_info");
     }
 
+    public String getConfirmMessage() {
+        return "";
+    }
+
     public boolean isPermissionColumnDisabled(@SuppressWarnings("unused") String privilege) {
         return false;
     }

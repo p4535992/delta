@@ -21,7 +21,14 @@ public interface FileModel {
         QName ACTIVE = QName.createQName(URI, "active");
         QName DISPLAY_NAME = QName.createQName(URI, "displayName");
         QName NEW_VERSION_ON_NEXT_SAVE = QName.createQName(URI, "newVersionOnNextSave");
+        QName CONVERT_TO_PDF_IF_SIGNED = QName.createQName(URI, "convertToPdfIfSigned");
+        QName COMMENT = QName.createQName(URI, "comment");
+        QName COMPOUND_WORKFLOW = QName.createQName(URI, "compoundWorkflow");
+        /** NodeRef of pdf file that has been generated from this file */
+        QName GENERATED_FILE = QName.createQName(URI, "generatedFile");
         QName UPDATE_METADATA_IN_FILES = QName.createQName(URI, "updateMetadataInFiles");
-
+        QName PDF_GENERATED_FROM_FILE = QName.createQName(URI, "pdfGeneratedFromFile");
+        QName LOCKED_FILE_NODEREF = QName.createQName(URI, "lockedFileNodeRef");
+        QName ACTIVITY_FILE_TYPE = QName.createQName(URI, "activityFileType");
     }
 }

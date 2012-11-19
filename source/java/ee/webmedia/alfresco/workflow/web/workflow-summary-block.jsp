@@ -7,8 +7,9 @@
 
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
+<%@ page import="ee.webmedia.alfresco.common.web.BeanHelper" %>
 
-<a:panel id="workflowSummaryBlock" label="#{msg.workflows}" progressive="true" expanded="false">
+<a:panel id="workflowSummaryBlock" label="#{msg.tasks}" progressive="true" expanded="<%=new Boolean(BeanHelper.getWorkflowBlockBean().isWorkflowSummaryBlockExpanded()).toString() %>">
    <a:richList viewMode="details" refreshOnBind="true" id="workflowList" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" value="#{WorkflowBlockBean.workflowBlockItems}" var="r" >
       
       <%-- startedDateTime --%>
@@ -29,7 +30,7 @@
             <h:outputText id="col2-text" value="#{r.dueDate}">
                <a:convertXMLDate pattern="#{msg.date_pattern}" />
             </h:outputText>
-            <h:outputText value="<br/>" escape="false"/>
+            <h:outputText id="col2-br" value="<br/>" escape="false"/>
             <h:outputText id="col2-popup-link" value="#{r.dueDateHistory}" escape="false" />
 
       </a:column>
@@ -47,8 +48,8 @@
          <f:facet name="header">
             <h:outputText id="col4-sort" value="#{msg.workflow}" styleClass="header" />
          </f:facet>
-         <h:panelGroup rendered="#{WorkflowBlockBean.inWorkspace and r.raisedRights}">
-            <a:actionLink  value="#{r.workflowType}" action="dialog:compoundWorkflowDialog" actionListener="#{CompoundWorkflowDialog.setupWorkflow}" styleClass="workflow-conf">
+         <h:panelGroup id="col4-panel" rendered="#{WorkflowBlockBean.inWorkspace and r.raisedRights}">
+            <a:actionLink id="col4-act" value="#{r.workflowType}" action="dialog:compoundWorkflowDialog" actionListener="#{CompoundWorkflowDialog.setupWorkflow}" styleClass="workflow-conf">
                <f:param name="nodeRef" value="#{r.compoundWorkflowNodeRef}" />
             </a:actionLink>
          </h:panelGroup>
@@ -60,7 +61,7 @@
          <f:facet name="header">
             <h:outputText id="col5-sort" value="#{msg.task_property_owner}" styleClass="header" />
          </f:facet>
-         <a:actionLink value="#{r.groupName}" styleClass="workflow-conf" href="#{r.workflowGroupTasksUrl}" target="_blank" image="/images/icons/plus.gif" rendered="#{r.groupBlockItem}" /> 
+         <a:actionLink id="col5-act" value="#{r.groupName}" styleClass="workflow-conf" href="#{r.workflowGroupTasksUrl}" target="_blank" image="/images/icons/plus.gif" rendered="#{r.groupBlockItem}" /> 
          <h:outputText id="col5-text" value="#{r.taskOwnerName}" rendered="#{!r.groupBlockItem}" />
       </a:column>
       

@@ -12,7 +12,7 @@
 <%@page import="ee.webmedia.alfresco.common.web.BeanHelper"%>
 <%@page import="org.apache.commons.lang.StringEscapeUtils"%>
 <a:panel id="metadata-panel" label="#{msg.document_metadata}" styleClass="panel-100" progressive="true">
-   <r:propertySheetGrid id="case-metatada" value="#{CaseDetailsDialog.currentNode}" columns="1" mode="edit" externalConfig="true" labelStyleClass="propertiesLabel" />
+   <r:propertySheetGrid id="case-metatada" value="#{CaseDetailsDialog.currentNode}" columns="1" mode="edit" externalConfig="true" labelStyleClass="propertiesLabel" binding="#{CaseDetailsDialog.propertySheet}"/>
 </a:panel>
 
 <f:verbatim>

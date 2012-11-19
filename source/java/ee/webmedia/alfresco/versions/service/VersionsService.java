@@ -23,7 +23,7 @@ public interface VersionsService {
      * @param nodeRef
      * @return
      */
-    List<Version> getAllVersions(NodeRef nodeRef, String fileName);
+    List<Version> getAllVersions(NodeRef nodeRef);
 
     /**
      * Adds the user and date information to the custom aspect properties.
@@ -31,6 +31,8 @@ public interface VersionsService {
      * @param nodeRef
      */
     void updateVersionModifiedAspect(NodeRef nodeRef);
+
+    void addVersionModifiedAspect(NodeRef nodeRef);
 
     /**
      * Updates the version if the node is unlocked and last version was not saved.. (.. today or ..by authenticated user)
@@ -65,7 +67,7 @@ public interface VersionsService {
      * 
      * @param lockNode
      */
-    void addVersionLockableAspect(NodeRef lockNode);
+    boolean addVersionLockableAspect(NodeRef lockNode);
 
     /**
      * Calculate next version label based on current version (no new version is actually created)
@@ -74,5 +76,9 @@ public interface VersionsService {
      * @return
      */
     String calculateNextVersionLabel(NodeRef fileRef);
+
+    void activateVersion(NodeRef versionRef);
+
+    boolean addVersionableAspect(NodeRef nodeRef);
 
 }

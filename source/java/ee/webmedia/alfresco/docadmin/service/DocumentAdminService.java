@@ -48,7 +48,9 @@ public interface DocumentAdminService {
 
     Pair<DocumentType, DocumentTypeVersion> getDocumentTypeAndVersion(String docTypeId, Integer docTypeVersionNr);
 
-    <T> T getDocumentTypeProperty(NodeRef docTypeRef, QName property, Class<T> returnClass);
+    Pair<CaseFileType, DocumentTypeVersion> getCaseFileTypeAndVersion(String caseFileTypeId, Integer docTypeVersionNr);
+
+    <T> T getTypeProperty(NodeRef docTypeRef, QName property, Class<T> returnClass);
 
     /**
      * if you have docTypeRef, use {@link #getDocumentTypeProperty(NodeRef, QName, Class)} instead
@@ -154,7 +156,9 @@ public interface DocumentAdminService {
             Map<String /* documentTypeId */, Pair<String /* documentTypeName */, Pair<Set<String> /* fieldGroupNames */, Set<QName> /* fieldGroupNames */>>> systematicDocumentTypes,
             NodeRef fieldGroupDefinitionsTmp, NodeRef fieldDefinitionsTmp);
 
-    List<FieldDefinition> getSearchableFieldDefinitions();
+    List<FieldDefinition> getSearchableDocumentFieldDefinitions();
+
+    List<FieldDefinition> getSearchableVolumeFieldDefinitions();
 
     void registerGroupShowShowInTwoColumns(Set<String> originalFieldIds);
 
@@ -234,5 +238,21 @@ public interface DocumentAdminService {
 
     /** Return true if fieldDefinition is used in some docType where used=true */
     boolean isFieldDefintionUsed(String fieldId);
+
+    List<CaseFileType> getUsedCaseFileTypes(DynTypeLoadEffort effort);
+
+    <T> T getCaseFileTypeProperty(String caseFileTypeId, QName property, Class<T> returnClass);
+
+    NodeRef getCaseFileTypeRef(String id);
+
+    CaseFileType getCaseFileType(String id, DynTypeLoadEffort effort);
+
+    String getCaseFileTypeName(Node caseFile);
+
+    List<FieldDefinition> getVolumeFieldDefinitions();
+
+    List<CaseFileType> getAllCaseFileTypes(DynTypeLoadEffort effort);
+
+    DocumentType getUsedDocumentType(String documentTypeId);
 
 }

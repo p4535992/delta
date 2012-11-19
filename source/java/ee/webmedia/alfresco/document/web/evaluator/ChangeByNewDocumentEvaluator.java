@@ -20,7 +20,9 @@ public class ChangeByNewDocumentEvaluator extends BaseActionEvaluator {
     @Override
     public boolean evaluate(Node node) {
         return node.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)
-                && new ViewStateActionEvaluator().evaluate(node) && new IsAdminOrDocManagerEvaluator().evaluate(node) && isChangeByNewDocumentEnabled(node);
+                && new ViewStateActionEvaluator().evaluate(node)
+                && new DocumentNotInDraftsFunctionActionEvaluator().evaluate(node)
+                && new IsAdminOrDocManagerEvaluator().evaluate(node) && isChangeByNewDocumentEnabled(node);
     }
 
     private boolean isChangeByNewDocumentEnabled(Node node) {

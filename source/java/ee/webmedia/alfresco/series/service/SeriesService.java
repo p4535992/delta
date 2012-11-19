@@ -26,9 +26,11 @@ public interface SeriesService {
 
     List<Series> getAllSeriesByFunction(NodeRef functionNodeRef);
 
+    List<Series> getAllCaseFileSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status);
+
     List<Series> getAllSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status, Set<String> docTypeIds);
 
-    List<Series> getAllSeriesByFunctionForStructUnit(NodeRef functionNodeRef, Integer structUnitId);
+    List<Series> getAllSeriesByFunctionForStructUnit(NodeRef functionNodeRef, String structUnitId);
 
     Series getSeriesByNodeRef(String seriesNodeRef);
 
@@ -58,5 +60,7 @@ public interface SeriesService {
 
     /** this method should only be called by the updater */
     void setSeriesDefaultPermissionsOnCreate(NodeRef seriesRef);
+
+    void delete(Series series);
 
 }

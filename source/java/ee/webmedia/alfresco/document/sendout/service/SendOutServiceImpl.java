@@ -5,6 +5,7 @@ import java.io.Serializable;
 import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,9 +38,12 @@ import ee.webmedia.alfresco.email.service.EmailException;
 import ee.webmedia.alfresco.email.service.EmailService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
+import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.signature.model.SkLdapCertificate;
 import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.signature.service.SkLdapService;
+import ee.webmedia.alfresco.user.model.Authority;
+import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.sendout.TaskSendInfo;
@@ -281,6 +285,29 @@ public class SendOutServiceImpl implements SendOutService {
             docName.append("dokument");
         }
         return docName.toString();
+    }
+
+    @Override
+    public void sendDocumentForInformation(List<String> authorityIds, Node docNode, String emailTemplate) {
+        List<Authority> authorities = new ArrayList<Authority>();
+        PrivilegeService privilegeService = BeanHelper.getPrivilegeService();
+        UserService userService = BeanHelper.getUserService();
+        NodeRef docRef = docNode.getNodeRef();
+        Set<String> privilegesToAdd = new HashSet<String>(Arrays.asList(DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA,
+                DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES));
+        for (String authorityId : authorityIds) {
+            Authority authority = userService.getAuthorityOrNull(authorityId);
+            if (authority == null) {
+                continue;
+            }
+            authorities.add(authority);
+            String authorityStr = authority.getAuthority();
+            if (!privilegeService.hasPermissionOnAuthority(docRef, authorityStr, DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA,
+                    DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES)) {
+                privilegeService.setPermissions(docRef, authorityStr, privilegesToAdd);
+            }
+        }
+        BeanHelper.getNotificationService().sendDocumentForInformationNotification(authorities, docNode, emailTemplate);
     }
 
     @Override

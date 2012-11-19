@@ -1,5 +1,9 @@
 package ee.webmedia.alfresco.document.einvoice.service;
 
+import static ee.webmedia.alfresco.utils.XmlUtil.getUnmarshaller;
+import static ee.webmedia.alfresco.utils.XmlUtil.initJaxbContext;
+import static ee.webmedia.alfresco.utils.XmlUtil.initSchema;
+
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
@@ -21,9 +25,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.helpers.DefaultValidationEventHandler;
-import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
-import javax.xml.validation.SchemaFactory;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
@@ -63,7 +65,6 @@ public class EInvoiceUtil {
     private static final String EINVOICE_PACKAGE = "ee.webmedia.alfresco.document.einvoice.generated";
     private static JAXBContext eInvoiceJaxbContext = initJaxbContext(EINVOICE_PACKAGE);
     private static Schema eInvoiceJaxbSchema = initSchema("e-invoice_ver1.1.xsd", EInvoice.class);
-    private static final String W3C_XML_SCHEMA_NS_URI = "http://www.w3.org/2001/XMLSchema";
 
     private static final String DIMENSIONS_LIST_PACKAGE = "ee.webmedia.alfresco.document.einvoice.dimensionslist.generated";
     private static final JAXBContext dimensionsListJaxbContext = initJaxbContext(DIMENSIONS_LIST_PACKAGE);
@@ -141,26 +142,6 @@ public class EInvoiceUtil {
         return invoiceDecimalFormat;
     }
 
-    public static JAXBContext initJaxbContext(String destPackage) {
-        try {
-            return JAXBContext.newInstance(destPackage);
-        } catch (Exception e) {
-            LOG.error("Error getting jaxb context.", e);
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static Schema initSchema(String xsd, Class<?> clazz) {
-        try {
-            SchemaFactory schemaFactory = SchemaFactory.newInstance(W3C_XML_SCHEMA_NS_URI);
-            Schema schema = schemaFactory.newSchema(new StreamSource(clazz.getResourceAsStream(xsd)));
-            return schema;
-        } catch (Exception e) {
-            LOG.error("Error getting jaxb schema.", e);
-            throw new RuntimeException(e);
-        }
-    }
-
     public static Unmarshaller getEInvoiceUnmarshaller() throws JAXBException {
         Unmarshaller unmarshaller = getUnmarshaller(eInvoiceJaxbContext, eInvoiceJaxbSchema);
         unmarshaller.setEventHandler(new EInvoiceValidationEventHandler());
@@ -185,14 +166,6 @@ public class EInvoiceUtil {
 
     public static Unmarshaller getAccountUnmarshaller() throws JAXBException {
         return getUnmarshaller(accountJaxbContext, accountJaxbSchema);
-    }
-
-    public static Unmarshaller getUnmarshaller(JAXBContext jaxbContext, Schema jaxbSchema) throws JAXBException {
-        Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-        unmarshaller.setSchema(jaxbSchema);
-        // event handler to print error messages to log
-        unmarshaller.setEventHandler(new DefaultValidationEventHandler());
-        return unmarshaller;
     }
 
     public static EInvoice unmarshalEInvoice(org.w3c.dom.Node input) {

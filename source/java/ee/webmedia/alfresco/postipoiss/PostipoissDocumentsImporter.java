@@ -98,6 +98,7 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
+import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
@@ -1566,9 +1567,11 @@ public class PostipoissDocumentsImporter {
 
         addHistoryItems(documentRef, root, propsMap, mapping);
 
+        propsMap.put(DocumentCommonModel.Props.DOCUMENT_IS_IMPORTED, Boolean.TRUE);
+
         doc.getNode().getProperties().putAll(RepoUtil.toStringProperties(propsMap));
         doc.getNode().getProperties().put(DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED.toString(), Boolean.TRUE);
-        getDocumentDynamicService().updateDocument(doc, Arrays.asList("postipoissImporter"), false);
+        getDocumentDynamicService().updateDocument(doc, Arrays.asList("postipoissImporter"), false, true);
 
         // Add sendInfo
         if (recipient != null) {
@@ -1892,6 +1895,7 @@ public class PostipoissDocumentsImporter {
             NodeRef wfRef = null;
             int taskIndex = 0;
             Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+            Map<QName, Serializable> taskSearchableProps = null;
 
             WorkflowType workflowType = BeanHelper.getWorkflowService().getWorkflowTypes().get(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW);
             for (Element kellele : (List<Element>) tegevus.elements("kellele")) {
@@ -1938,6 +1942,7 @@ public class PostipoissDocumentsImporter {
                             WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW,
                             props
                             ).getChildRef();
+                    taskSearchableProps = WorkflowUtil.getTaskSearchableProps(props);
                 }
 
                 props = new HashMap<QName, Serializable>();
@@ -1975,9 +1980,11 @@ public class PostipoissDocumentsImporter {
                 props.put(WorkflowCommonModel.Props.COMPLETED_DATE_TIME, null);
                 props.put(WorkflowSpecificModel.Props.COMMENT, "");
 
+                props.putAll(taskSearchableProps);
                 Task task = BeanHelper.getWorkflowService().createTaskInMemory(wfRef, workflowType, props);
                 Set<QName> aspects = task.getNode().getAspects();
                 aspects.add(WorkflowSpecificModel.Aspects.SEARCHABLE);
+
                 if (firstTaskRef == null) {
                     firstTaskRef = task.getNodeRef();
                     firstTaskOwnerId = kelleleIkood;

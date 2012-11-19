@@ -41,6 +41,8 @@
       <property name="nodeService" ref="NodeService" />
       <property name="applicationService" ref="ApplicationService" />
       <property name="logService" ref="LogService" />
+      <property name="generalService" ref="GeneralService" />
+      <property name="indexerAndSearcher" ref="admLuceneIndexerAndSearcherFactory" />
    </bean>
 
    <bean id="PrivilegeService" class="org.springframework.aop.framework.ProxyFactoryBean">

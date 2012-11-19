@@ -22,10 +22,14 @@
                <value>peatatud</value>
                <value>lõpetatud</value>
                <value>teostamata</value>
+               <value>kustutatud</value>
             </list>
          </parameter>
       </constraint>
 
+      <constraint name="wfc:type" type="ee.webmedia.alfresco.common.constraint.EnumConstraint">
+         <parameter name="enumClass"><value>ee.webmedia.alfresco.workflow.model.CompoundWorkflowType</value></parameter>
+      </constraint>  
       <!-- TODO use UserNameConstraint ? -->
 
    </constraints>
@@ -51,6 +55,13 @@
             <aspect>sys:aspect_root</aspect>
          </mandatory-aspects>
       </type>
+      
+      <type name="wfc:independentCompoundWorkflows">
+         <parent>sys:base</parent>      
+         <mandatory-aspects>
+            <aspect>wfc:compoundWorkflowContainer</aspect>
+         </mandatory-aspects>
+      </type>
 
       <type name="wfc:compoundWorkflowDefinition">
          <parent>wfc:compoundWorkflow</parent>
@@ -64,14 +75,51 @@
                <mandatory enforced="true">true</mandatory>
                <multiple>true</multiple>
             </property>
+            <property name="wfc:caseFileTypes">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+               <multiple>true</multiple>
+            </property>
             <property name="wfc:userId"><!-- if null, then visible for all users -->
                <type>d:text</type>
             </property>
+            <property name="wfc:mainDocument">
+               <type>d:noderef</type>
+            </property>            
          </properties>
       </type>
 
       <type name="wfc:compoundWorkflow">
          <parent>sys:base</parent>
+         <properties>         
+            <property name="wfc:type">
+               <type>d:text</type>
+               <mandatory enforced="true">true</mandatory>
+               <constraints>
+                  <constraint ref="wfc:type" />
+               </constraints>                
+            </property>
+            <property name="wfc:title">
+               <type>d:text</type>
+            </property>
+            <property name="wfc:comment">
+               <type>d:text</type>
+            </property>
+            <property name="wfc:createdDateTime">
+               <type>d:date</type>
+            </property>
+            <property name="wfc:finishedDateTime">
+               <type>d:date</type>
+            </property>
+            <!-- FIXME: ask Maiga if this can be of type d:int -->
+            <property name="wfc:procedureId">
+               <type>d:text</type>
+            </property> 
+            <property name="wfc:documentsToSign">
+               <type>d:noderef</type>
+               <multiple>true</multiple>
+            </property>            
+         </properties>
          <associations>
             <child-association name="wfc:workflow"><!-- Ordered by childAssociationIndex -->
                <source>
@@ -84,6 +132,17 @@
                   <many>true</many>
                </target>
             </child-association>
+            <child-association name="wfc:relatedUrl">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>wfc:relatedUrl</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>            
          </associations>
          <mandatory-aspects>
             <aspect>wfc:common</aspect>
@@ -151,13 +210,6 @@
             <property name="wfc:completedDateTime">
                <type>d:datetime</type>
             </property>
-            <property name="wfc:ownerOrganizationName">
-               <type>d:text</type>
-               <multiple>true</multiple>
-            </property>
-            <property name="wfc:ownerJobTitle">
-               <type>d:text</type>
-            </property>
          </properties>
          <mandatory-aspects>
             <aspect>wfc:common</aspect>
@@ -178,6 +230,35 @@
             </property>            
          </properties>
       </type>
+      
+      <type name="wfc:relatedUrl">
+         <parent>sys:base</parent>
+         <properties>
+            <property name="wfc:url">
+               <type>d:text</type>
+               <mandatory enforced="true">true</mandatory>
+            </property>
+            <property name="wfc:urlComment">
+               <type>d:text</type>
+            </property>
+            <property name="wfc:urlCreatorName">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="wfc:created">
+               <type>d:date</type>
+               <mandatory>true</mandatory>
+            </property> 
+            <property name="wfc:urlModifierName">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="wfc:modified">
+               <type>d:date</type>
+               <mandatory>true</mandatory>
+            </property>
+         </properties>
+      </type>      
 
    </types>
 
@@ -221,6 +302,13 @@
             <property name="wfc:previousOwnerId">
                <type>d:text</type>
             </property>
+            <property name="wfc:ownerOrganizationName">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="wfc:ownerJobTitle">
+               <type>d:text</type>
+            </property>            
          </properties>
       </aspect>
 

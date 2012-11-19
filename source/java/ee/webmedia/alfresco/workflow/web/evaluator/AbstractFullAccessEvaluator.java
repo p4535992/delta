@@ -20,4 +20,10 @@ public abstract class AbstractFullAccessEvaluator extends BaseActionEvaluator {
         return (Boolean) vb.getValue(context);
     }
 
+    protected boolean isOwnerOrDocManager() {
+        FacesContext context = FacesContext.getCurrentInstance();
+        ValueBinding vb = context.getApplication().createValueBinding("#{CompoundWorkflowDialog.ownerOrDocManager}");
+        return (Boolean) vb.getValue(context);
+    }
+
 }

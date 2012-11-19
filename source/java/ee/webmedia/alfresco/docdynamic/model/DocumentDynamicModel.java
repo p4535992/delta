@@ -66,6 +66,25 @@ public interface DocumentDynamicModel {
         QName EXPENSE_TYPE = QName.createQName(URI, "expenseType");
         QName REPORT_DUE_DATE = QName.createQName(URI, "reportDueDate");
 
+        QName APPLICANT_TYPE = QName.createQName(URI, "applicantType");
+        QName APPLICANT_AREA = QName.createQName(URI, "applicantArea");
+        QName APPLICATION_LANGUAGE = QName.createQName(URI, "applicationLanguage");
+        QName CASE_RESULT = QName.createQName(URI, "caseResult");
+        QName SUPERVISION_VISIT = QName.createQName(URI, "supervisionVisit");
+        QName OPCAT = QName.createQName(URI, "opcat");
+        QName COMMENT = QName.createQName(URI, "comment");
+        QName FIRST_LEVEL_RESPONDENT = QName.createQName(URI, "firstLevelRespondent");
+        QName SECOND_LEVEL_RESPONDENT = QName.createQName(URI, "secondLevelRespondent");
+        QName LEGISLATION = QName.createQName(URI, "legislation");
+        QName GENERAL_RIGHT_TO_EQUALITY = QName.createQName(URI, "generalRightToEquality");
+        QName DISCRIMINATION = QName.createQName(URI, "discrimination");
+        QName GOOD_ADMINISTRATION = QName.createQName(URI, "goodAdministration");
+        QName CHILD_RIGHTS = QName.createQName(URI, "childRights");
+        QName CHILD_APPLICANT = QName.createQName(URI, "childApplicant");
+        QName TO_SURVEY = QName.createQName(URI, "toSurvey");
+        QName PROCEDURE_STATUS = QName.createQName(URI, "procedureStatus");
+        QName EQUALITY_OF_TREATMENT = QName.createQName(URI, "equalityOfTreatment");
+
         QName FIRST_PARTY_CONTACT_PERSON_NAME = QName.createQName(URI, "firstPartyContactPersonName");
         QName FIRST_PARTY_CONTACT_PERSON_SERVICE_RANK = QName.createQName(URI, "firstPartyContactPersonServiceRank");
         QName FIRST_PARTY_CONTACT_PERSON_JOB_TITLE = QName.createQName(URI, "firstPartyContactPersonJobTitle");
@@ -100,6 +119,28 @@ public interface DocumentDynamicModel {
         QName LEAVE_WORK_YEAR = QName.createQName(URI, "leaveWorkYear");
         QName LEAVE_CHANGED_DAYS = QName.createQName(URI, "leaveChangedDays");
         QName LEAVE_NEW_WORK_YEAR = QName.createQName(URI, "leaveNewWorkYear");
-    }
 
+        QName STATUS = QName.createQName(URI, "status");
+        QName TITLE = QName.createQName(URI, "title");
+
+        QName EXPENSE_TYPE_CHOICE = QName.createQName(URI, "expenseTypeChoice");
+        QName ERRAND_REPORT_SUM = QName.createQName(URI, "errandReportSum");
+        QName ERRAND_REPORT_TOTAL_SUM = QName.createQName(URI, "errandReportTotalSum");
+        QName ERRAND_SUMMARY_DEBIT = QName.createQName(URI, "errandSummaryDebit");
+        QName ERRAND_SUMMARY_DEBIT_TOTAL = QName.createQName(URI, "errandSummaryDebitTotal");
+        QName ERRAND_SUMMARY_CREDIT = QName.createQName(URI, "errandSummaryCredit");
+        QName ERRAND_SUMMARY_CREDIT_TOTAL = QName.createQName(URI, "errandSummaryCreditTotal");
+        QName DRIVE_TOTAL_KM = QName.createQName(URI, "driveTotalKm");
+        QName DRIVE_COMPENSATION_RATE = QName.createQName(URI, "driveCompensationRate");
+        QName DRIVE_TOTAL_COMPENSATION = QName.createQName(URI, "driveTotalCompensation");
+
+        QName DOC_TITLE = QName.createQName(URI, "title");
+        QName WORKFLOW_DUE_DATE = QName.createQName(URI, "workflowDueDate");
+        QName WORKFLOW_END_DATE = QName.createQName(URI, "workflowEndDate");
+        QName VALID_FROM = QName.createQName(URI, "validFrom");
+        QName VALID_TO = QName.createQName(URI, "validTo");
+        QName DOCUMENT_TEMPLATE = QName.createQName(URI, "documentTemplate");
+
+        QName VOLUME_MARK = QName.createQName(URI, "volumeMark");
+    }
 }

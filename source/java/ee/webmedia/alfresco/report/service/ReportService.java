@@ -64,4 +64,6 @@ public interface ReportService {
      */
     void doPauseReportGeneration();
 
+    boolean isUsableByAdminDocManagerOnly();
+
 }

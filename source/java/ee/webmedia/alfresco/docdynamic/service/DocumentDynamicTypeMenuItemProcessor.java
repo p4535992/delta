@@ -16,11 +16,14 @@ import java.util.Map.Entry;
 import org.alfresco.service.cmr.security.AccessPermission;
 import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.cmr.security.PermissionService;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
+import ee.webmedia.alfresco.docadmin.service.DynamicType;
 import ee.webmedia.alfresco.menu.model.DropdownMenuItem;
 import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.service.MenuService;
@@ -31,7 +34,7 @@ import ee.webmedia.alfresco.menu.service.MenuService.MenuItemProcessor;
  */
 public class DocumentDynamicTypeMenuItemProcessor implements InitializingBean, MenuItemProcessor {
 
-    private static final Comparator<MenuItem> COMPARATOR = new Comparator<MenuItem>() {
+    public static final Comparator<MenuItem> COMPARATOR = new Comparator<MenuItem>() {
 
         @Override
         public int compare(MenuItem o1, MenuItem o2) {
@@ -46,30 +49,23 @@ public class DocumentDynamicTypeMenuItemProcessor implements InitializingBean, M
     @Override
     public void doWithMenuItem(MenuItem menuItem) {
         List<DocumentType> documentTypes = documentAdminService.getDocumentTypes(DocumentAdminService.DONT_INCLUDE_CHILDREN, true);
-        if (documentTypes.isEmpty()) {
+        processDynamicTypeMenuItem(permissionService, CREATE_DOCUMENT, documentTypes, menuItem, "#{DocumentDynamicDialog.createDraft}");
+    }
+
+    public static void processDynamicTypeMenuItem(PermissionService permissionService, String permission, List<? extends DynamicType> types, MenuItem menuItem,
+            String actionListener) {
+        Assert.isTrue(StringUtils.isNotBlank(permission), "permission is mandatory");
+        Assert.isTrue(StringUtils.isNotBlank(actionListener), "action listener is mandatory");
+        if (types.isEmpty()) {
             return;
         }
 
-        Map<String, List<DocumentType>> structure = new HashMap<String, List<DocumentType>>();
-        List<DocumentType> subitems;
-        /*
-         * TODO ALSeadist asjatoimiku liikide menüü loomine, õiguste kontrolli puhul kasutada
-         * DocumentCommonModel.Privileges.CREATE_DOCUMENT
-         * asemel õigust:
-         * public static final String CREATE_CASE_FILE = "createCaseFile";
-         */
-        for (DocumentType documentType : documentTypes) {
-            // Check if current user can create this type of document
-            boolean restricted = false;
-            for (AccessPermission accessPermission : permissionService.getAllSetPermissions(documentType.getNodeRef())) {
+        Map<String, List<DynamicType>> structure = new HashMap<String, List<DynamicType>>();
+        List<DynamicType> subitems;
 
-                if (CREATE_DOCUMENT.equals(accessPermission.getPermission())) {
-                    restricted = true;
-                    break;
-                }
-            }
-
-            if (restricted && AccessStatus.DENIED == permissionService.hasPermission(documentType.getNodeRef(), CREATE_DOCUMENT)) {
+        for (DynamicType documentType : types) {
+            // Check if current user can create this type of item
+            if (!hasPermission(permissionService, permission, documentType)) {
                 continue;
             }
 
@@ -80,7 +76,7 @@ public class DocumentDynamicTypeMenuItemProcessor implements InitializingBean, M
 
             subitems = structure.get(menuGroupName);
             if (subitems == null) {
-                structure.put(menuGroupName, new ArrayList<DocumentType>(Arrays.asList(documentType)));
+                structure.put(menuGroupName, new ArrayList<DynamicType>(Arrays.asList(documentType)));
             } else {
                 subitems.add(documentType);
             }
@@ -89,7 +85,7 @@ public class DocumentDynamicTypeMenuItemProcessor implements InitializingBean, M
         // Create menu items from structure
         List<MenuItem> children;
         List<MenuItem> firstLevelSubItems = menuItem.getSubItems();
-        for (Entry<String, List<DocumentType>> entry : structure.entrySet()) {
+        for (Entry<String, List<DynamicType>> entry : structure.entrySet()) {
             String groupName = entry.getKey();
             if (isNotBlank(groupName)) {
                 DropdownMenuItem group = new DropdownMenuItem();
@@ -101,20 +97,34 @@ public class DocumentDynamicTypeMenuItemProcessor implements InitializingBean, M
                 children = firstLevelSubItems;
             }
 
-            for (DocumentType type : entry.getValue()) {
+            for (DynamicType type : entry.getValue()) {
                 MenuItem item = new MenuItem();
                 item.setTitle(type.getName());
-                item.setActionListener("#{DocumentDynamicDialog.createDraft}");
-                item.getParams().put("documentTypeId", type.getId());
+                item.setActionListener(actionListener);
+                item.getParams().put("typeId", type.getId());
                 children.add(item);
             }
         }
         Collections.sort(firstLevelSubItems, COMPARATOR);
         for (MenuItem subItem : firstLevelSubItems) {
-            if(subItem.hasSubItems()){
+            if (subItem.hasSubItems()) {
                 Collections.sort(subItem.getSubItems(), COMPARATOR);
             }
         }
+    }
+
+    public static boolean hasPermission(PermissionService permissionService, String permission, DynamicType documentType) {
+        boolean restricted = false;
+        for (AccessPermission accessPermission : permissionService.getAllSetPermissions(documentType.getNodeRef())) {
+            if (permission.equals(accessPermission.getPermission())) {
+                restricted = true;
+                break;
+            }
+        }
+        if (restricted && AccessStatus.DENIED == permissionService.hasPermission(documentType.getNodeRef(), permission)) {
+            return false;
+        }
+        return true;
     }
 
     @Override

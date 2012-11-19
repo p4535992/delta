@@ -1,5 +1,8 @@
 package ee.webmedia.alfresco.functions.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getFunctionsService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getMenuService;
+
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
@@ -7,15 +10,13 @@ import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
-import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
-import ee.webmedia.alfresco.functions.service.FunctionsService;
-import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
 
 public class FunctionsDetailsDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
@@ -23,9 +24,6 @@ public class FunctionsDetailsDialog extends BaseDialogBean {
 
     private static final String PARAM_FUNCTION_NODEREF = "nodeRef";
     private static final String ERROR_MESSAGE_SERIES_EXIST = "function_validation_series";
-
-    private transient FunctionsService functionsService;
-    private transient MenuService menuService;
 
     private Function function;
     private boolean newFunction;
@@ -88,6 +86,22 @@ public class FunctionsDetailsDialog extends BaseDialogBean {
         return null;
     }
 
+    public String delete() {
+        if (function.getNode() instanceof TransientNode) {
+            return null;
+        }
+        if (isClosed()) {
+            try {
+                getFunctionsService().delete(function);
+                MessageUtil.addInfoMessage("function_delete_success");
+                return getDefaultCancelOutcome();
+            } catch (UnableToPerformException e) {
+                MessageUtil.addStatusMessage(e);
+            }
+        }
+        return null;
+    }
+
     public String reopen() {
         if (isClosed()) {
             propertySheet.getChildren().clear();
@@ -127,30 +141,6 @@ public class FunctionsDetailsDialog extends BaseDialogBean {
 
     public void setFunction(Function function) {
         this.function = function;
-    }
-
-    protected FunctionsService getFunctionsService() {
-        if (functionsService == null) {
-            functionsService = (FunctionsService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(FunctionsService.BEAN_NAME);
-        }
-        return functionsService;
-    }
-
-    public void setFunctionsService(FunctionsService functionsService) {
-        this.functionsService = functionsService;
-    }
-
-    protected MenuService getMenuService() {
-        if (menuService == null) {
-            menuService = (MenuService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(MenuService.BEAN_NAME);
-        }
-        return menuService;
-    }
-
-    public void setMenuService(MenuService menuService) {
-        this.menuService = menuService;
     }
 
     public void setPropertySheet(UIPropertySheet propertySheet) {

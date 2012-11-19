@@ -11,12 +11,15 @@
 <h:panelGroup rendered="#{DocumentDialogHelperBean.inWorkspace and !DocumentDialogHelperBean.inEditMode}">
    <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/workflow-block.jsp" />
 </h:panelGroup>
+<h:panelGroup id="dialog-modal-container" binding="#{DocumentDynamicDialog.modalContainer}" />
 <h:panelGroup rendered="#{DocumentDialogHelperBean.inWorkspace and DocumentDynamicDialog.modalRendered}">
-   <h:panelGroup id="dialog-modal-container" binding="#{DocumentDynamicDialog.modalContainer}" />
+   <!-- Ensure that CompoundWorkflowDialog.fetchAndResetRenderedModal is called only once because it sets modal id = null in it's finally block-->
    <f:verbatim>
       <script type="text/javascript">
          $jQ(document).ready(function () {
-            showModal("</f:verbatim><a:outputText value="#{DocumentDynamicDialog.renderedModal}" /><f:verbatim>");
+            var modalId = "</f:verbatim><a:outputText value="#{DocumentDynamicDialog.fetchAndResetRenderedModal}" /><f:verbatim>";
+            showModal(modalId);
+            initExpanders($jQ("#" + modalId));
          });
       </script>
    </f:verbatim>
@@ -25,7 +28,7 @@
    <f:verbatim>
    <script type="text/javascript">
       $jQ(document).ready(function () {
-         var message = '<%= MessageUtil.getMessage("document_access_restriction_changed_confirmation") %>';
+         var message = '<%= MessageUtil.getMessageAndEscapeJS("document_access_restriction_changed_confirmation") %>';
       	if(confirm(message)){
       	   $jQ("#document-after-confirmation-accepted-link").eq(0).click();
       	} else {
@@ -36,7 +39,7 @@
    </f:verbatim>
 </a:booleanEvaluator>
 <a:actionLink id="document-after-confirmation-accepted-link" value="confirmationAcceptedLink" actionListener="#{DocumentDynamicDialog.sendAccessRestrictionChangedEmails}" styleClass="hidden" />
-<a:actionLink id="document-after-confirmation-rejected-link" value="confirmationRejectedLink" actionListener="#{DocumentDynamicDialog.cancel}" styleClass="hidden" />
+<a:actionLink id="document-after-confirmation-rejected-link" value="confirmationRejectedLink" actionListener="#{DocumentDynamicDialog.dontSendAccessRestrictionChangedEmails}" styleClass="hidden" />
 
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/search/web/document-similar-block.jsp" />
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/type/web/document-type-block.jsp" />
@@ -69,14 +72,15 @@ $jQ(document).ready(function() {
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/review-note-block.jsp" />
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/opinion-note-block.jsp" />
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/order-assignment-note-block.jsp" />
-<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/workflow-summary-block.jsp" />
+<h:panelGroup id="document-workflow-summary" rendered="#{WorkflowBlockBean.isShowDocumentWorkflowSummaryBlock}">
+	<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/workflow-summary-block.jsp" />
+</h:panelGroup>
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/associations/web/assocs-block.jsp" />
-<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/sendout/web/send-out-block.jsp" />
-<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/log/web/document-log-block.jsp" />
-
 <a:booleanEvaluator id="searchBlockEvaluator" value="#{DocumentDialogHelperBean.inWorkspace and DocumentDynamicDialog.showSearchBlock}">
    <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/search/web/document-search-block.jsp" />
 </a:booleanEvaluator>
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/sendout/web/send-out-block.jsp" />
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/log/web/document-log-block.jsp" />
 
 <a:booleanEvaluator value="#{DocumentDialogHelperBean.inWorkspace and DocumentDialogHelperBean.inEditMode}" id="docMeta-InEditMode">
    <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/docdynamic/web/metadata-block-lockRefresh.jsp" />

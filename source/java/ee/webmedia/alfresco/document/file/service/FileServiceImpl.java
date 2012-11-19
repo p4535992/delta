@@ -1,12 +1,17 @@
 package ee.webmedia.alfresco.document.file.service;
 
+import static ee.webmedia.alfresco.utils.MimeUtil.isPdf;
+
+import java.io.InputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
@@ -30,7 +35,6 @@ import org.alfresco.service.cmr.repository.DuplicateChildNodeNameException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
-import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.cmr.security.AuthenticationService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
@@ -38,23 +42,29 @@ import org.alfresco.util.URLEncoder;
 import org.alfresco.web.app.servlet.DownloadContentServlet;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
 import ee.webmedia.alfresco.document.file.web.Subfolder;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 import ee.webmedia.alfresco.signature.service.SignatureService;
+import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.MimeUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
-import ee.webmedia.alfresco.versions.model.VersionsModel;
+import ee.webmedia.alfresco.versions.service.VersionsService;
 
 /**
  * @author Dmitri Melnikov
@@ -70,8 +80,18 @@ public class FileServiceImpl implements FileService {
     private ContentService contentService;
     private GeneralService generalService;
     private DocumentLogService documentLogService;
+    private DocumentDynamicService _documentDynamicService;
+    private VersionsService versionsService;
+    private DocumentTemplateService _documentTemplateService;
+    private Set<String> openOfficeFiles;
 
     private String scannedFilesPath;
+
+    @Override
+    public InputStream getFileContentInputStream(NodeRef fileRef) {
+        ContentReader reader = fileFolderService.getReader(fileRef);
+        return reader.getContentInputStream();
+    }
 
     @Override
     public boolean toggleActive(NodeRef nodeRef) {
@@ -117,8 +137,9 @@ public class FileServiceImpl implements FileService {
             final File item = createFile(fi);
             boolean isDdoc = signatureService.isDigiDocContainer(item.getNodeRef());
             item.setDigiDocContainer(isDdoc);
-            item.setTransformableToPdf(isTransformableToPdf(fi.getContentData()));
-            item.setPdf(isPdfFile(fi.getContentData()));
+            ContentData contentData = fi.getContentData();
+            item.setTransformableToPdf(contentData != null && isTransformableToPdf(contentData.getMimetype()));
+            item.setPdf(contentData != null && isPdf(contentData.getMimetype()));
             if (item.isActive() || !onlyActive) {
                 files.add(item);
             }
@@ -160,10 +181,12 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public List<NodeRef> getAllActiveFilesNodeRefs(NodeRef nodeRef) {
+    public List<NodeRef> getAllActiveFilesForDdoc(NodeRef nodeRef) {
         List<NodeRef> nodeRefs = new ArrayList<NodeRef>();
         for (File file : getAllActiveFiles(nodeRef)) { // TODO not optimal
-            nodeRefs.add(file.getNodeRef());
+            if (file.getGeneratedFileRef() == null) {
+                nodeRefs.add(file.getNodeRef());
+            }
         }
         return nodeRefs;
     }
@@ -178,55 +201,75 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public void transformActiveFilesToPdf(NodeRef document) {
-        for (File file : getAllActiveFiles(document)) {
-            FileInfo generatePdf = generatePdf(document, file.getNodeRef());
+    public void transformActiveFilesToPdf(NodeRef document, boolean inactivateOriginalFiles) {
+        List<File> allActiveFiles = getAllActiveFiles(document);
+        List<NodeRef> deletedFiles = new ArrayList<NodeRef>();
+        for (File file : allActiveFiles) {
+            NodeRef fileRef = file.getNodeRef();
+            if (deletedFiles.contains(fileRef)) {
+                continue;
+            }
+            NodeRef generatedFileRef = file.getGeneratedFileRef();
+            if (generatedFileRef != null && nodeService.exists(generatedFileRef)) {
+                nodeService.deleteNode(generatedFileRef);
+                deletedFiles.add(generatedFileRef);
+            }
+            FileInfo generatePdf = file.getConvertToPdfIfSignedFromProps() ? transformToPdf(document, fileRef, false) : null;
             if (generatePdf != null) {
-                nodeService.setProperty(generatePdf.getNodeRef()
+                NodeRef pdfNodeRef = generatePdf.getNodeRef();
+                nodeService.setProperty(pdfNodeRef
                         , FileModel.Props.GENERATION_TYPE, GeneratedFileType.SIGNED_PDF.name());
+                nodeService.setProperty(file.getNodeRef(), FileModel.Props.GENERATED_FILE, pdfNodeRef);
+            }
+            if ((generatePdf != null || generatedFileRef != null) && inactivateOriginalFiles) {
                 toggleActive(file.getNodeRef());
             }
         }
     }
 
-    private boolean isTransformableToPdf(ContentData contentData) {
-        if (contentData == null) {
+    @Override
+    public boolean isTransformableToPdf(String mimeType) {
+        if (StringUtils.isBlank(mimeType)) {
             return false;
         }
-        if (isPdfFile(contentData)) {
+        if (MimeUtil.isPdf(mimeType)) {
             return false;
         }
-        ContentTransformer transformer = contentService.getTransformer(contentData.getMimetype(), MimetypeMap.MIMETYPE_PDF);
+        ContentTransformer transformer = contentService.getTransformer(mimeType, MimetypeMap.MIMETYPE_PDF);
         return transformer != null;
     }
 
-    private boolean isPdfFile(ContentData contentData) {
-        return MimetypeMap.MIMETYPE_PDF.equals(contentData.getMimetype());
-    }
-
     @Override
-    public FileInfo transformToPdf(NodeRef file) {
+    public FileInfo transformToPdf(NodeRef docRef, NodeRef file, boolean createVersion) {
         if (!nodeService.exists(file)) {
             throw new UnableToPerformException("file_generate_pdf_error_deleted");
         }
-        return generatePdf(nodeService.getPrimaryParent(file).getParentRef(), file);
-    }
+        NodeRef previouslyGeneratedPdf = getPreviouslyGeneratedPdf(file);
 
-    private FileInfo generatePdf(NodeRef parent, NodeRef file) {
+        String filename = (String) nodeService.getProperty(previouslyGeneratedPdf == null ? file : previouslyGeneratedPdf, ContentModel.PROP_NAME);
+        String displayName = (String) nodeService.getProperty(previouslyGeneratedPdf == null ? file : previouslyGeneratedPdf, FileModel.Props.DISPLAY_NAME);
+        displayName = (displayName == null) ? filename : displayName;
+
+        if (createVersion && previouslyGeneratedPdf != null) {
+            versionsService.addVersionLockableAspect(previouslyGeneratedPdf);
+            versionsService.updateVersion(previouslyGeneratedPdf, displayName, !isPdfUpToDate(file, previouslyGeneratedPdf));
+            // Unlock the node here, since previous method locked it and there is no session (e.g. Word) that would unlock the file.
+            versionsService.setVersionLockableAspect(previouslyGeneratedPdf, false);
+        }
+
         ContentReader reader = fileFolderService.getReader(file);
         // Normally reader is not null; only some faulty code may write a file with no contentData
         if (reader == null || MimetypeMap.MIMETYPE_PDF.equals(reader.getMimetype())) {
             return null;
         }
-        String filename = (String) nodeService.getProperty(file, ContentModel.PROP_NAME);
-        String displayName = (String) nodeService.getProperty(file, FileModel.Props.DISPLAY_NAME);
-        displayName = (displayName == null) ? filename : displayName;
-        return transformToPdf(parent, reader, filename, displayName);
+
+        return transformToPdf(nodeService.getPrimaryParent(file).getParentRef(), file, reader, filename, displayName, previouslyGeneratedPdf);
     }
 
     @Override
-    public FileInfo transformToPdf(NodeRef parent, ContentReader reader, String filename, String displayName) {
-        ContentWriter writer = contentService.getWriter(null, null, false);
+    public FileInfo transformToPdf(NodeRef parent, NodeRef fileRef, ContentReader reader, String filename, String displayName, NodeRef overwritableNodeRef) {
+        ContentWriter writer = overwritableNodeRef == null ? contentService.getWriter(null, null, false) : contentService.getWriter(overwritableNodeRef, ContentModel.PROP_CONTENT,
+                true);
         writer.setMimetype(MimetypeMap.MIMETYPE_PDF);
         ContentTransformer transformer = contentService.getTransformer(reader.getMimetype(), writer.getMimetype());
         if (transformer == null) {
@@ -247,17 +290,20 @@ public class FileServiceImpl implements FileService {
             return null;
         }
 
-        String name = generalService.getUniqueFileName(parent, FilenameUtils.removeExtension(filename) + ".pdf");
-        FileInfo createdFile = fileFolderService.create(
-                parent,
-                name,
-                ContentModel.TYPE_CONTENT);
-        nodeService.setProperty(createdFile.getNodeRef(), ContentModel.PROP_CONTENT, writer.getContentData());
-        displayName = FilenameUtils.removeExtension(displayName);
-        displayName += ".pdf";
-        nodeService.setProperty(createdFile.getNodeRef(), FileModel.Props.DISPLAY_NAME, getUniqueFileDisplayName(parent, displayName));
+        FileInfo result;
+        if (overwritableNodeRef == null) {
+            String name = generalService.getUniqueFileName(parent, FilenameUtils.removeExtension(filename) + ".pdf");
+            result = fileFolderService.create(parent, name, ContentModel.TYPE_CONTENT);
+            nodeService.setProperty(result.getNodeRef(), ContentModel.PROP_CONTENT, writer.getContentData());
+            displayName = FilenameUtils.removeExtension(displayName);
+            displayName += ".pdf";
+            nodeService.setProperty(result.getNodeRef(), FileModel.Props.DISPLAY_NAME, getUniqueFileDisplayName(parent, displayName));
+        } else {
+            result = fileFolderService.getFileInfo(overwritableNodeRef);
+        }
+        nodeService.setProperty(result.getNodeRef(), FileModel.Props.PDF_GENERATED_FROM_FILE, fileRef);
 
-        return createdFile;
+        return result;
     }
 
     @Override
@@ -293,11 +339,12 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public NodeRef addFileToDocument(final String name, final String displayName, final NodeRef documentNodeRef, final NodeRef fileNodeRef) {
-        return addFileToDocument(name, displayName, documentNodeRef, fileNodeRef, true);
+        return addFileToDocument(name, displayName, documentNodeRef, fileNodeRef, true, false);
     }
 
     @Override
-    public NodeRef addFileToDocument(final String name, final String displayName, final NodeRef documentNodeRef, final NodeRef fileNodeRef, boolean active) {
+    public NodeRef addFileToDocument(final String name, final String displayName, final NodeRef documentNodeRef, final NodeRef fileNodeRef, boolean active,
+            boolean associatedWithMetaData) {
         // Moving is executed with System user rights, because this is not appropriate to implement in permissions model
         NodeRef movedFileNodeRef = AuthenticationUtil.runAs(new RunAsWork<NodeRef>() {
             @Override
@@ -309,6 +356,7 @@ public class FileServiceImpl implements FileService {
                         ContentModel.ASSOC_CONTAINS, ContentModel.ASSOC_CONTAINS).getChildRef();
             }
         }, AuthenticationUtil.getSystemUserName());
+        checkAssociatedWithMetaData(fileNodeRef, associatedWithMetaData);
         nodeService.setProperty(fileNodeRef, FileModel.Props.ACTIVE, active);
         addFileToDocument(displayName, documentNodeRef, movedFileNodeRef);
         return movedFileNodeRef;
@@ -316,23 +364,23 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType) {
-        return addFileToDocument(name, displayName, documentNodeRef, file, mimeType, true);
+        return addFileToDocument(name, displayName, documentNodeRef, file, mimeType, true, false);
     }
 
     @Override
-    public NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType, boolean active) {
-        NodeRef fileNodeRef = addFile(name, displayName, documentNodeRef, file, mimeType, active);
+    public NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType, boolean active, boolean associatedWithMetaData) {
+        NodeRef fileNodeRef = addFile(name, displayName, documentNodeRef, file, mimeType, active, associatedWithMetaData);
         addFileToDocument(displayName, documentNodeRef, fileNodeRef);
         return fileNodeRef;
     }
 
     @Override
     public NodeRef addFile(String name, String displayName, NodeRef nodeRef, java.io.File file, String mimeType) {
-        return addFile(name, displayName, nodeRef, file, mimeType, true);
+        return addFile(name, displayName, nodeRef, file, mimeType, true, false);
     }
 
     @Override
-    public NodeRef addFile(String name, String displayName, NodeRef nodeRef, java.io.File file, String mimeType, boolean active) {
+    public NodeRef addFile(String name, String displayName, NodeRef nodeRef, java.io.File file, String mimeType, boolean active, boolean associatedWithMetaData) {
         FileInfo fileInfo = fileFolderService.create(
                 nodeRef,
                 name,
@@ -340,10 +388,35 @@ public class FileServiceImpl implements FileService {
         NodeRef fileNodeRef = fileInfo.getNodeRef();
         ContentWriter writer = fileFolderService.getWriter(fileNodeRef);
         generalService.writeFile(writer, file, name, mimeType);
-        nodeService.setProperty(fileNodeRef, FileModel.Props.DISPLAY_NAME, displayName);
-        nodeService.setProperty(fileNodeRef, FileModel.Props.ACTIVE, active);
+        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        checkAssociatedWithMetaData(associatedWithMetaData, props);
+        props.put(FileModel.Props.DISPLAY_NAME, displayName);
+        props.put(FileModel.Props.ACTIVE, active);
+        props.put(FileModel.Props.CONVERT_TO_PDF_IF_SIGNED, isTransformableToPdf(writer.getMimetype()));
+        nodeService.addProperties(fileNodeRef, props);
+        if (associatedWithMetaData) {
+            getDocumentDynamicService().updateDocumentAndGeneratedFiles(fileNodeRef, nodeRef, false);
+        }
 
         return fileNodeRef;
+    }
+
+    private Map<QName, Serializable> checkAssociatedWithMetaData(boolean associatedWithMetaData, Map<QName, Serializable> props) {
+        if (props == null) {
+            props = new HashMap<QName, Serializable>(2);
+        }
+        if (!associatedWithMetaData) {
+            return props;
+        }
+        props.put(FileModel.Props.GENERATED_FROM_TEMPLATE, MessageUtil.getMessage("file_uploaded_by_user"));
+        props.put(FileModel.Props.GENERATION_TYPE, GeneratedFileType.WORD_TEMPLATE.name());
+        props.put(FileModel.Props.UPDATE_METADATA_IN_FILES, Boolean.TRUE);
+
+        return props;
+    }
+
+    private void checkAssociatedWithMetaData(NodeRef fileNodeRef, boolean associatedWithMetaData) {
+        nodeService.addProperties(fileNodeRef, checkAssociatedWithMetaData(associatedWithMetaData, null));
     }
 
     @Override
@@ -362,29 +435,9 @@ public class FileServiceImpl implements FileService {
     }
 
     private void addFileToDocument(String displayName, NodeRef documentNodeRef, NodeRef fileNodeRef) {
-        addVersionModifiedAspect(fileNodeRef);
+        versionsService.addVersionModifiedAspect(fileNodeRef);
+        versionsService.addVersionLockableAspect(fileNodeRef);
         documentLogService.addDocumentLog(documentNodeRef, MessageUtil.getMessage("document_log_status_fileAdded", displayName));
-    }
-
-    private void addVersionModifiedAspect(NodeRef nodeRef) {
-        if (!nodeService.hasAspect(nodeRef, VersionsModel.Aspects.VERSION_MODIFIED)) {
-            Map<QName, Serializable> properties = nodeService.getProperties(nodeRef);
-
-            String user = (String) properties.get(ContentModel.PROP_CREATOR);
-
-            Date modified = DefaultTypeConverter.INSTANCE.convert(Date.class, properties.get(ContentModel.PROP_CREATED));
-            Map<QName, Serializable> aspectProperties = new HashMap<QName, Serializable>(3);
-            aspectProperties.put(VersionsModel.Props.VersionModified.MODIFIED, modified);
-
-            Map<QName, Serializable> personProps = userService.getUserProperties(user);
-            String first = (String) personProps.get(ContentModel.PROP_FIRSTNAME);
-            String last = (String) personProps.get(ContentModel.PROP_LASTNAME);
-
-            aspectProperties.put(VersionsModel.Props.VersionModified.FIRSTNAME, first);
-            aspectProperties.put(VersionsModel.Props.VersionModified.LASTNAME, last);
-
-            nodeService.addAspect(nodeRef, VersionsModel.Aspects.VERSION_MODIFIED, aspectProperties);
-        }
     }
 
     @Override
@@ -436,11 +489,19 @@ public class FileServiceImpl implements FileService {
     public String generateURL(NodeRef nodeRef) {
         String runAsUser = AuthenticationUtil.getRunAsUser();
         String name = fileFolderService.getFileInfo(nodeRef).getName();
-        if (!nodeRef.getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE) || StringUtils.isBlank(runAsUser) || AuthenticationUtil.isRunAsUserTheSystemUser()) {
+        NodeRef primaryParentRef = nodeService.getPrimaryParent(nodeRef).getParentRef();
+        boolean isUnderDocument = DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(primaryParentRef));
+        if (!nodeRef.getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE) || StringUtils.isBlank(runAsUser) || AuthenticationUtil.isRunAsUserTheSystemUser()
+                || !isUnderDocument) {
             return DownloadContentServlet.generateDownloadURL(nodeRef, name);
         }
+
+        StringBuilder path = new StringBuilder();
+        if (isOpenOfficeFile(name)) {
+            path.append("vnd.sun.star.webdav://").append(getDocumentTemplateService().getServerUrl().replaceFirst(".*://", ""));
+        }
         // calculate a WebDAV URL for the given node
-        StringBuilder path = new StringBuilder("/").append(WebDAVServlet.WEBDAV_PREFIX);
+        path.append("/").append(WebDAVServlet.WEBDAV_PREFIX);
 
         // authentication ticket
         String ticket = authenticationService.getCurrentTicket();
@@ -451,12 +512,17 @@ public class FileServiceImpl implements FileService {
 
         path.append("/").append(URLEncoder.encode(AuthenticationUtil.getRunAsUser())); // maybe substituting
 
-        NodeRef parent = nodeService.getPrimaryParent(nodeRef).getParentRef();
+        NodeRef parent = primaryParentRef;
         path.append("/").append(URLEncoder.encode(parent.getId()));
 
-        path.append("/").append(URLEncoder.encode(name));
+        String filename = URLEncoder.encode(name);
+        path.append("/").append(filename);
 
         return path.toString();
+    }
+
+    private boolean isOpenOfficeFile(String name) {
+        return openOfficeFiles.contains(FilenameUtils.getExtension(name));
     }
 
     @Override
@@ -519,12 +585,41 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public boolean isFileGenerated(NodeRef fileRef) {
-        return isFileGeneratedFromTemplate(fileRef) || nodeService.getProperty(fileRef, FileModel.Props.GENERATION_TYPE) != null;
+        return fileRef != null && (isFileGeneratedFromTemplate(fileRef) || nodeService.getProperty(fileRef, FileModel.Props.GENERATION_TYPE) != null);
     }
 
     @Override
     public boolean isFileGeneratedFromTemplate(NodeRef fileRef) {
-        return nodeService.getProperty(fileRef, FileModel.Props.GENERATED_FROM_TEMPLATE) != null;
+        return fileRef != null && nodeService.getProperty(fileRef, FileModel.Props.GENERATED_FROM_TEMPLATE) != null;
+    }
+
+    @Override
+    public NodeRef getPreviouslyGeneratedPdf(NodeRef sourceFileRef) {
+        if (!nodeService.exists(sourceFileRef)) {
+            return null;
+        }
+
+        NodeRef parentRef = nodeService.getPrimaryParent(sourceFileRef).getParentRef();
+        List<FileInfo> listFiles = fileFolderService.listFiles(parentRef);
+        for (FileInfo fi : listFiles) {
+            NodeRef fromNodeRef = (NodeRef) fi.getProperties().get(FileModel.Props.PDF_GENERATED_FROM_FILE);
+            if (ObjectUtils.equals(sourceFileRef, fromNodeRef)) {
+                return fi.getNodeRef();
+            }
+        }
+
+        return null;
+    }
+
+    @Override
+    public boolean isPdfUpToDate(NodeRef sourceFileRef, NodeRef pdfFileRef) {
+        if (sourceFileRef == null || pdfFileRef == null) {
+            return false;
+        }
+
+        Date sourceModified = (Date) nodeService.getProperty(sourceFileRef, ContentModel.PROP_MODIFIED);
+        Date pdfModified = (Date) nodeService.getProperty(pdfFileRef, ContentModel.PROP_MODIFIED);
+        return sourceModified != null && pdfModified != null && sourceModified.before(pdfModified);
     }
 
     @Override
@@ -567,6 +662,36 @@ public class FileServiceImpl implements FileService {
 
     public void setScannedFilesPath(String scannedDocumentsPath) {
         scannedFilesPath = scannedDocumentsPath;
+    }
+
+    public DocumentDynamicService getDocumentDynamicService() {
+        if (_documentDynamicService == null) {
+            _documentDynamicService = BeanHelper.getDocumentDynamicService();
+        }
+        return _documentDynamicService;
+    }
+
+    public void setVersionsService(VersionsService versionsService) {
+        this.versionsService = versionsService;
+    }
+
+    public DocumentTemplateService getDocumentTemplateService() {
+        if (_documentTemplateService == null) {
+            _documentTemplateService = BeanHelper.getDocumentTemplateService();
+        }
+        return _documentTemplateService;
+    }
+
+    public void setOpenOfficeFiles(String openOfficeFiles) {
+        if (StringUtils.isBlank(openOfficeFiles)) {
+            this.openOfficeFiles = Collections.emptySet();
+        }
+        String[] extensions = openOfficeFiles.split(",");
+        Set<String> extSet = new HashSet<String>();
+        for (String ext : extensions) {
+            extSet.add(ext);
+        }
+        this.openOfficeFiles = extSet;
     }
 
     // END: getters / setters

@@ -4,6 +4,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getAuthorityService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getContentService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDictionaryService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentFavoritesService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNamespaceService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
@@ -262,7 +263,7 @@ public class UserDataRestoreService {
                 + "AND alf_node.node_deleted = false", otherContainerNodeId);
         for (Map<String, Object> row : rows) {
             NodeRef docRef = new NodeRef((String) row.get("protocol"), (String) row.get("identifier"), (String) row.get("uuid"));
-            if (getDocumentService().addFavorite(docRef, favoriteDirName, false)) {
+            if (getDocumentFavoritesService().addFavorite(docRef, favoriteDirName, false)) {
                 log.info("Person '" + userName + "' favorite document " + docRef + " - created, under favorite directory "
                         + (favoriteDirName == null ? "root" : "'" + favoriteDirName + "'"));
             } else {

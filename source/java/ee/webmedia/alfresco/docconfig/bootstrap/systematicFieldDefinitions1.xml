@@ -271,7 +271,7 @@
          <docadmin:name>Teema</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
-         <docadmin:mandatory>true</docadmin:mandatory>
+         <docadmin:mandatory>false</docadmin:mandatory>
          <docadmin:mandatoryChangeable>false</docadmin:mandatoryChangeable>
          <docadmin:fieldType>COMBOBOX_EDITABLE</docadmin:fieldType>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>

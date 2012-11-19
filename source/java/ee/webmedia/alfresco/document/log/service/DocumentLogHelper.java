@@ -12,6 +12,7 @@ import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.ArrayUtils;
 
+import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -141,6 +142,33 @@ public class DocumentLogHelper {
             docTypeProps.put(field.getQName(), field);
         }
         return docTypeProps;
+    }
+
+    public static Map<QName, Field> getCaseFileTypeProps(NodeRef docRef) {
+        if (docRef == null || !BeanHelper.getNodeService().exists(docRef) || !CaseFileModel.Types.CASE_FILE.equals(BeanHelper.getNodeService().getType(docRef))) {
+            return Collections.emptyMap();
+        }
+        WmNode docNode = BeanHelper.getCaseFileService().getCaseFile(docRef).getNode();
+        Pair<String, Integer> typeAndVersion = DocAdminUtil.getDocTypeIdAndVersionNr(docNode);
+        DocumentTypeVersion docTypeVersion = BeanHelper.getDocumentAdminService().getCaseFileTypeAndVersion(typeAndVersion.getFirst(), typeAndVersion.getSecond()).getSecond();
+        List<Field> fields = docTypeVersion.getFieldsDeeply();
+
+        Map<QName, Field> docTypeProps = new LinkedHashMap<QName, Field>(fields.size(), 1);
+        for (Field field : fields) {
+            docTypeProps.put(field.getQName(), field);
+        }
+        return docTypeProps;
+    }
+
+    public static Map<QName, Field> getObjectTypeProps(NodeRef docRef) {
+        if (CaseFileModel.Types.CASE_FILE.equals(BeanHelper.getNodeService().getType(docRef))) {
+            return getCaseFileTypeProps(docRef);
+        } else if (DocumentCommonModel.Types.DOCUMENT.equals(BeanHelper.getNodeService().getType(docRef))) {
+            return getDocumentTypeProps(docRef);
+        } else {
+            return Collections.emptyMap();
+        }
+
     }
 
     /**

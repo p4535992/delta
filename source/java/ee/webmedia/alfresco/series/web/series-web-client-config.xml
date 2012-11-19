@@ -17,10 +17,24 @@
          </action>
 
          <action id="series_open">
-            <evaluator>ee.webmedia.alfresco.series.web.SeriesIsClosedEvaluator</evaluator>
+            <evaluator>ee.webmedia.alfresco.series.web.evaluator.SeriesIsClosedEvaluator</evaluator>
             <label-id>series_open</label-id>
             <image>/images/icons/versioned_properties.gif</image>
             <action-listener>#{SeriesDetailsDialog.open}</action-listener>
+         </action>
+
+         <action id="series_close">
+            <evaluator>ee.webmedia.alfresco.series.web.evaluator.SeriesIsOpenedEvaluator</evaluator>
+            <label-id>series_close</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action>#{SeriesDetailsDialog.close}</action>
+         </action>
+
+         <action id="series_delete">
+            <evaluator>ee.webmedia.alfresco.series.web.evaluator.SeriesIsClosedEvaluator</evaluator>
+            <label-id>series_delete</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action>#{SeriesDetailsDialog.delete}</action>
          </action>
 
          <action id="series_permissions">
@@ -39,6 +53,8 @@
 
          <action-group id="browse_actions_series_details">
             <action idref="series_open"/>
+            <action idref="series_close"/>
+            <action idref="series_delete"/>
             <action idref="series_permissions" />
          </action-group>
 
@@ -50,9 +66,6 @@
 
          <dialog name="seriesDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/series/web/series-details-dialog.jsp" managed-bean="SeriesDetailsDialog"
 		    icon="/images/icons/versioned_properties_large.gif" title-id="series_details" show-ok-button="true" >
-            <buttons>
-               <button id="close-button" label-id="series_close" action="#{SeriesDetailsDialog.close}" disabled="#{SeriesDetailsDialog.closed}" />
-            </buttons>
          </dialog>
          
          <dialog name="mySeriesListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/series/web/mydocuments/myseries-list-dialog.jsp" managed-bean="MySeriesListDialog"
@@ -81,7 +94,7 @@
          <show-property name="ser:newNumberForEveryDoc" display-label-id="series_newNumberForEveryDoc" readOnlyIf="ser:status=suletud" component-generator="CheckboxGenerator" />
          <show-property name="ser:individualizingNumbers" display-label-id="series_individualizingNumbers" readOnlyIf="ser:status=suletud" component-generator="CheckboxGenerator" />
          <show-property name="ser:volType" display-label-id="series_volType" component-generator="EnumSelectorGenerator" 
-            enumClass="ee.webmedia.alfresco.classificator.enums.VolumeType" readOnlyIf="ser:status=suletud" /> 
+            enumClass="ee.webmedia.alfresco.classificator.enums.VolumeType" readOnlyIf="ser:status=suletud" filter="ee.webmedia.alfresco.classificator.enums.VolumeTypeFilter" /> 
          <show-property name="ser:volRegister" display-label-id="series_volRegister" readOnlyIf="ser:status=suletud" show="#{VolumeService.caseVolumeEnabled}" 
             component-generator="GeneralSelectorGenerator" converter="javax.faces.Integer" selectionItems="#{RegisterListDialog.findActiveRegisters}"/>
          <show-property name="ser:volNumberPattern" display-label-id="series_volNumberPattern"  readOnlyIf="ser:status=suletud" show="#{VolumeService.caseVolumeEnabled}" />
@@ -99,8 +112,8 @@
          <show-property name="ser:structUnit" display-label-id="series_structUnit" component-generator="SearchGenerator"
             pickerCallback="#{OrganizationStructureListDialog.searchOrgstructs}" converter="ee.webmedia.alfresco.orgstructure.web.OrganizationStructureConverter"
             dialogTitleId="series_structUnit_popUpInfo" />
-         <show-property name="ser:retentionPeriod" display-label-id="series_retentionPeriod" converter="javax.faces.Integer" />
-         <show-property name="ser:retentionDesc" display-label-id="series_retentionDesc" styleClass="expand19-200" component-generator="TextAreaGenerator" />
+         <show-property name="ser:eventPlan" display-label-id="series_eventPlan" component-generator="GeneralSelectorGenerator"
+            selectionItems="#{SeriesDetailsDialog.getEventPlans}" converter="ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter" />
       </property-sheet>
    </config>
 </alfresco-config>

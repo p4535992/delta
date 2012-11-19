@@ -11,13 +11,46 @@
    <namespaces>
       <namespace uri="http://alfresco.webmedia.ee/model/workflow/specific/1.0" prefix="wfs" />
    </namespaces>
+   
+   <constraints>
+   
+      <constraint name="wfs:signingType" type="ee.webmedia.alfresco.common.constraint.EnumConstraint">
+         <parameter name="enumClass"><value>ee.webmedia.alfresco.workflow.model.SigningType</value></parameter>
+      </constraint>  
+
+   </constraints>
 
    <types>
+   
+      <type name="wfs:linkedReviewTasks">
+         <parent>sys:base</parent>
+         <associations>
+            <child-association name="wfs:linkedReviewTask">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>wfs:linkedReviewTask</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </type>
 
       <!-- ========================== WORKFLOWS ========================== -->
 
       <type name="wfs:signatureWorkflow"><!-- always sequential tasks -->
          <parent>wfc:workflow</parent>
+         <properties>
+            <property name="wfs:signingType">
+               <type>d:text</type>
+               <constraints>
+                  <constraint ref="wfs:signingType" />
+               </constraints>                
+            </property>
+         </properties>
          <overrides>
             <property name="wfc:parallelTasks">
                <default>false</default>
@@ -105,6 +138,13 @@
             <aspect>wfs:commonWorkflow</aspect>
          </mandatory-aspects>
       </type>
+      
+      <type name="wfs:groupAssignmentWorkflow"><!-- always parallel tasks -->
+         <parent>wfc:workflow</parent>
+         <mandatory-aspects>
+            <aspect>wfs:commonWorkflow</aspect>
+         </mandatory-aspects>
+      </type>      
 
       <!-- ========================== TASKS ========================== -->
 
@@ -126,7 +166,10 @@
          <parent>wfc:task</parent>
          <mandatory-aspects>
             <aspect>wfs:commonTask</aspect>
-            <aspect>wfs:fileVersions</aspect>            
+            <aspect>wfs:fileVersions</aspect> 
+            <aspect>wfs:institution</aspect>
+            <aspect>wfs:creatorInstitution</aspect>
+            <aspect>wfs:sentDvkData</aspect>     
          </mandatory-aspects>
       </type>
       
@@ -135,8 +178,23 @@
          <mandatory-aspects>
             <aspect>wfs:commonTask</aspect>
             <aspect>wfs:externalReviewDetails</aspect>
+            <aspect>wfs:institution</aspect>
+            <aspect>wfs:creatorInstitutionCode</aspect>
          </mandatory-aspects>
-      </type>      
+      </type>
+      
+      <!-- NB! linkedReviewTask is not saved under workflow - there is no workflow type defined for it. 
+            Instead linkedReviewTasks are saved under /linkedReviewTasks root -->
+      <type name="wfs:linkedReviewTask">
+         <parent>wfc:task</parent>
+         <mandatory-aspects>
+            <aspect>wfs:commonTask</aspect>
+            <aspect>wfs:creatorInstitution</aspect>
+            <aspect>wfs:recievedDvkId</aspect>
+            <aspect>wfs:linkedReviewTaskDetails</aspect>
+            <aspect>wfs:comment</aspect>
+         </mandatory-aspects>
+      </type>
 
       <type name="wfs:informationTask">
          <parent>wfc:task</parent>
@@ -190,6 +248,13 @@
             <aspect>wfs:commonTask</aspect>
          </mandatory-aspects>
       </type>
+      
+      <type name="wfs:groupAssignmentTask">
+         <parent>wfc:task</parent>
+         <mandatory-aspects>
+            <aspect>wfs:commonTask</aspect>
+         </mandatory-aspects>
+      </type>      
 
    </types>
 
@@ -272,39 +337,96 @@
             </property>
          </properties>
       </aspect>
-      
-      <aspect name="wfs:externalReviewDetails">
+     
+      <aspect name="wfs:institution">
          <properties>
             <!-- TODO: check mandatory property requirements -->
             <property name="wfs:institutionName">
                <type>d:text</type>
-               <mandatory enforced="true">true</mandatory>
             </property>
             <property name="wfs:institutionCode">
                <type>d:text</type>
-               <mandatory enforced="true">true</mandatory>
-            </property>  
+            </property>
+         </properties>
+      </aspect>
+      
+      <aspect name="wfs:creatorInstitution">
+         <properties>
+            <property name="wfs:creatorInstitutionName">
+               <type>d:text</type>
+            </property>
+         </properties>
+         <mandatory-aspects>
+            <aspect>wfs:creatorInstitutionCode</aspect>
+         </mandatory-aspects>
+      </aspect>
+      
+      <aspect name="wfs:creatorInstitutionCode">
+         <properties>
             <property name="wfs:creatorInstitutionCode">
                <type>d:text</type>
-               <mandatory enforced="true">true</mandatory>
             </property>
+         </properties>         
+      </aspect>      
+            
+      <aspect name="wfs:externalReviewDetails">
+         <properties>
             <property name="wfs:originalDvkId">
                <type>d:text</type>
             </property>             
-            <property name="wfs:sentDvkId">
-               <type>d:text</type>
-            </property>  
-            <property name="wfs:recievedDvkId">
-               <type>d:text</type>
-            </property>              
-            <property name="wfs:sendStatus">
-               <type>d:text</type>
-            </property> 
             <property name="wfs:sendDateTime">
                <type>d:date</type>
             </property>    
          </properties>
+         <mandatory-aspects>
+            <aspect>wfs:recievedDvkId</aspect>
+            <aspect>wfs:sentDvkData</aspect>
+         </mandatory-aspects>
       </aspect>
+      
+      <aspect name="wfs:linkedReviewTaskDetails">
+         <properties>
+            <property name="wfs:originalNoderefId">
+               <type>d:text</type>
+            </property>
+            <property name="wfs:originalTaskObjectUrl">
+               <type>d:text</type>
+            </property>
+         </properties>
+         <mandatory-aspects>
+            <aspect>wfs:searchableCompoundWorkflowTitleAndComment</aspect>
+         </mandatory-aspects>
+      </aspect>
+      
+      <aspect name="wfs:searchableCompoundWorkflowTitleAndComment">
+         <properties>
+            <property name="wfs:compoundWorkflowTitle">
+               <type>d:text</type>
+            </property>
+            <property name="wfs:compoundWorkflowComment">
+               <type>d:text</type>
+            </property>             
+         </properties>
+      </aspect>
+      
+      <aspect name="wfs:recievedDvkId">
+         <properties>
+            <property name="wfs:recievedDvkId">
+               <type>d:text</type>
+            </property>              
+         </properties>
+      </aspect>   
+      
+      <aspect name="wfs:sentDvkData">
+         <properties>
+            <property name="wfs:sentDvkId">
+               <type>d:text</type>
+            </property>  
+            <property name="wfs:sendStatus">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>  
 
       <!-- XXX Deprecated: This aspect is not used in new tasks any more -->
       <aspect name="wfs:file">   
@@ -326,8 +448,43 @@
          </properties>
       </aspect>
 
-      <!-- gets added to all tasks which are saved under document compound workflow -->
-      <aspect name="wfs:searchable"></aspect>
+      <!-- Gets added to all tasks which are saved under compound workflow or independent tasks root and don't have status="kustutatud"  -->
+      <!-- Duplicates some information on task for search purposes -->
+      <aspect name="wfs:searchable">
+         <properties>
+            <property name="wfs:searchableCompoundWorkflowType">
+               <type>d:text</type>
+            </property>
+            <property name="wfs:searchableCompoundWorkflowOwnerName">
+               <type>d:text</type>
+            </property>
+            <property name="wfs:searchableCompoundWorkflowOwnerOrganizationName">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="wfs:searchableCompoundWorkflowOwnerJobTitle">
+               <type>d:text</type>
+            </property>
+            <property name="wfs:searchableCompoundWorkflowCreatedDateTime">
+               <type>d:date</type>
+            </property>
+            <property name="wfs:searchableCompoundWorkflowStartedDateTime">
+               <type>d:date</type>
+            </property>
+            <property name="wfs:searchableCompoundWorkflowStoppedDateTime">
+               <type>d:date</type>
+            </property> 
+            <property name="wfs:searchableCompoundWorkflowFinishedDateTime">
+               <type>d:date</type>
+            </property>             
+            <property name="wfs:searchableCompoundWorkflowStatus">
+               <type>d:text</type>
+            </property>             
+         </properties>
+         <mandatory-aspects>
+            <aspect>wfs:searchableCompoundWorkflowTitleAndComment</aspect>
+         </mandatory-aspects>
+      </aspect>
       
       <aspect name="wfs:taskDueDateExtensionContainer">      
          <associations>

@@ -38,8 +38,8 @@ import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.dvk.service.DvkService;
-import ee.webmedia.alfresco.dvk.service.ExternalReviewException;
-import ee.webmedia.alfresco.dvk.service.ExternalReviewException.ExceptionType;
+import ee.webmedia.alfresco.dvk.service.ReviewTaskException;
+import ee.webmedia.alfresco.dvk.service.ReviewTaskException.ExceptionType;
 import ee.webmedia.alfresco.notification.model.NotificationModel;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.RepoUtil;
@@ -80,7 +80,7 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
             viewParser.parse(viewReader, nodeImporter);
         } catch (RuntimeException e) {
             nodeImporter.error(e);
-            throw new ExternalReviewException(ExceptionType.PARSING_EXCEPTION, e);
+            throw new ReviewTaskException(ExceptionType.PARSING_EXCEPTION, e);
         }
         NodeRef dvkDocumentNodeRef = nodeImporter.getImportedRootNodeRef();
         if (dvkDocumentNodeRef == null) {

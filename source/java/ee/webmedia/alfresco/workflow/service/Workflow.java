@@ -5,9 +5,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.workflow.model.SigningType;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
@@ -60,6 +62,7 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
     @Override
     protected <T extends BaseWorkflowObject> T copyImpl(T copy) {
         Workflow workflow = (Workflow) super.copyImpl(copy);
+        workflow.setIndexInCompoundWorkflow(indexInCompoundWorkflow);
         for (Task task : tasks) {
             workflow.tasks.add(task.copy(workflow));
         }
@@ -97,6 +100,10 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
 
     protected void addTask(Task task) {
         tasks.add(task);
+    }
+
+    protected void addTask(Task task, int index) {
+        tasks.add(index, task);
     }
 
     protected void addTasks(List<Task> tasks) {
@@ -192,6 +199,24 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
 
     public String getCategory() {
         return getProp(WorkflowSpecificModel.Props.CATEGORY);
+    }
+
+    public void setSigningType(SigningType signingType) {
+        setProp(WorkflowSpecificModel.Props.SIGNING_TYPE, signingType != null ? signingType.toString() : null);
+    }
+
+    public boolean isSignTogether() {
+        String signingTypeStr = getSigningTypeStr();
+        return StringUtils.isBlank(signingTypeStr) ? false : SigningType.SIGN_TOGETHER == SigningType.valueOf(signingTypeStr);
+    }
+
+    public SigningType getSigningType() {
+        String signingTypeStr = getSigningTypeStr();
+        return StringUtils.isBlank(signingTypeStr) ? null : SigningType.valueOf(signingTypeStr);
+    }
+
+    private String getSigningTypeStr() {
+        return getProp(WorkflowSpecificModel.Props.SIGNING_TYPE);
     }
 
     @Override

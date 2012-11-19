@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +52,8 @@ import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
+import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
+import org.alfresco.service.cmr.repository.datatype.TypeConverter;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
@@ -63,6 +66,7 @@ import org.alfresco.web.config.ActionsConfigElement.ActionDefinition;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIPanel;
+import org.alfresco.web.ui.common.component.data.UIColumn;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
@@ -72,6 +76,7 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
 
+import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIPropertySheet;
@@ -96,6 +101,7 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
+import ee.webmedia.alfresco.document.web.evaluator.DocumentNotInDraftsFunctionActionEvaluator;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
@@ -104,6 +110,7 @@ import ee.webmedia.alfresco.signature.model.SignatureChallenge;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
 import ee.webmedia.alfresco.signature.web.SignatureAppletModalComponent;
 import ee.webmedia.alfresco.signature.web.SignatureBlockBean;
+import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageData;
@@ -112,6 +119,7 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.workflow.exception.WorkflowActiveResponsibleTaskException;
 import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
+import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowBlockItem;
 import ee.webmedia.alfresco.workflow.model.WorkflowBlockItemGroup;
@@ -137,27 +145,36 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     public static final String BEAN_NAME = "WorkflowBlockBean";
 
     private static final String WORKFLOW_METHOD_BINDING_NAME = "#{WorkflowBlockBean.findCompoundWorkflowDefinitions}";
+    private static final String INDEPENDENT_WORKFLOW_METHOD_BINDING_NAME = "#{WorkflowBlockBean.findIndependentCompoundWorkflowDefinitions}";
     private static final String DROPDOWN_MENU_ITEM_ICON = "/images/icons/versioned_properties.gif";
     private static final String MSG_WORKFLOW_ACTION_GROUP = "workflow_compound_start_workflow";
     private static final String TASK_DUE_DATE_EXTENSION_ID = "task-due-date-extension";
     private static final String ATTRIB_OUTCOME_INDEX = "outcomeIndex";
+    private static final String ATTRIB_MODAL_EVENT = "modalEvent";
+    public static final String ATTRIB_FINISH_VALIDATED = "finishValidated";
+    private static final String FINISH_TASK = "WorkflowBlockBean.finishTask";
+    private static final String SAVE_TASK = "WorkflowBlockBean.saveTask";
+    private static final String SEND_TASK_DUE_DATE_EXTENSION_REQUEST = "WorkflowBlockBean.sendTaskDueDateExtensionRequest";
 
     /** task index attribute name */
-    private static final String ATTRIB_INDEX = "index";
+    public static final String ATTRIB_INDEX = "index";
     private static final String MODAL_KEY_REASON = "reason";
     private static final String MODAL_KEY_DUE_DATE = "dueDate";
     private static final String MODAL_KEY_PROPOSED_DUE_DATE = "proposedDueDate";
     private FileBlockBean fileBlockBean;
     private DelegationBean delegationBean;
     private TransactionsBlockBean transactionsBlockBean;
+    private CompoundWorkflowDialog compoundWorkflowDialog;
 
     private transient HtmlPanelGroup dataTableGroup;
     private transient UIRichList reviewNotesRichList;
 
-    private NodeRef docRef;
-    private Node document;
+    private NodeRef containerRef;
+    private Node container;
     private NodeRef taskPanelControlDocument;
     private List<CompoundWorkflow> compoundWorkflows;
+    // in case of independent workflow, use only given workflow
+    private CompoundWorkflow compoundWorkflow;
     private List<Task> myTasks;
     private List<Task> finishedReviewTasks;
     private List<Task> finishedOpinionTasks;
@@ -169,27 +186,46 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     private String challengeId;
     private String signature;
     private MessageData signatureError;
+    private List<NodeRef> signingQueue;
+    Map<NodeRef, List<File>> signingFiles;
+    /** Has non-null value if current signing is signing multiple (> 1) documents together */
+    private NodeRef mainDocumentRef;
+    private Map<NodeRef, String> originalStatuses;
 
     @Override
     public void resetOrInit(DialogDataProvider provider) {
         if (provider == null) {
             reset();
         } else {
+            compoundWorkflow = null;
+            compoundWorkflowDialog = null;
             init(provider.getNode());
         }
     }
 
-    public void init(Node document) {
-        this.document = document;
-        docRef = document.getNodeRef();
+    public void init(Node container) {
+        this.container = container;
+        containerRef = container.getNodeRef();
         delegationBean.setWorkflowBlockBean(this);
+        // // jsp:include parameters are not taken in account in list construction if list is not nulled
+        // reviewNotesRichList = null;
         restore("init");
     }
 
+    public void initIndependentWorkflow(CompoundWorkflow compoundWorkflow, CompoundWorkflowDialog compoundWorkflowDialog) {
+        // use copy of compound workflow because otherwise both
+        // CompoundWorkflowDialog and WorkflowBlockBean display inputs are bind to same task object
+        // resulting in undetermined task data
+        this.compoundWorkflow = getWorkflowService().copyCompoundWorkflowInMemory(compoundWorkflow);
+        this.compoundWorkflowDialog = compoundWorkflowDialog;
+        init(new Node(BeanHelper.getWorkflowService().getIndependentWorkflowsRoot()));
+    }
+
     public void reset() {
-        document = null;
-        docRef = null;
+        container = null;
+        containerRef = null;
         compoundWorkflows = null;
+        compoundWorkflow = null;
         myTasks = null;
         finishedReviewTasks = null;
         finishedOpinionTasks = null;
@@ -200,10 +236,22 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         removedFiles = null;
         delegationBean.reset();
         reviewNotesRichList = null;
+        signingQueue = null;
+        signingFiles = null;
+        mainDocumentRef = null;
+        originalStatuses = null;
     }
 
     public void restore(String action) {
-        compoundWorkflows = getWorkflowService().getCompoundWorkflows(docRef);
+        if (compoundWorkflow != null && compoundWorkflow.isIndependentWorkflow()) {
+            compoundWorkflows = Arrays.asList(compoundWorkflow);
+        } else if (BeanHelper.getWorkflowService().getIndependentWorkflowsRoot().equals(containerRef)) {
+            compoundWorkflows = Collections.emptyList();
+        } else if (containerRef != null) {
+            compoundWorkflows = getWorkflowService().getCompoundWorkflows(containerRef);
+        } else {
+            compoundWorkflows = new ArrayList<CompoundWorkflow>();
+        }
         myTasks = getWorkflowService().getMyTasksInProgress(compoundWorkflows);
         Map<NodeRef, List<NodeRef>> taskFiles = BeanHelper.getWorkflowDbService().getCompoundWorkflowsTaskFiles(compoundWorkflows);
         getFiles(myTasks, taskFiles, false);
@@ -217,7 +265,9 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         // jsp:include parameters are not taken in account in list construction if list is not nulled
         reviewNotesRichList = null;
 
-        signatureTask = null;
+        if (signingQueue == null || signingQueue.isEmpty()) {
+            signatureTask = null;
+        }
         removedFiles = null;
         delegationBean.reset();
         // rebuild the whole task panel
@@ -230,7 +280,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 String type = task.getType().getLocalName();
 
                 if (!taskTypes.contains(type)) {
-                    getLogService().addLogEntry(LogEntry.create(LogObject.WORKFLOW, getUserService(), docRef, "applog_task_view", MessageUtil.getTypeName(task.getType())));
+                    getLogService().addLogEntry(LogEntry.create(LogObject.WORKFLOW, getUserService(), containerRef, "applog_task_view", MessageUtil.getTypeName(task.getType())));
                     taskTypes.add(type);
                 }
             }
@@ -259,74 +309,103 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         return getWorkflowService().isOwner(getCompoundWorkflows());
     }
 
+    public boolean isWorkflowSummaryBlockExpanded() {
+        return compoundWorkflow != null && compoundWorkflow.isIndependentWorkflow() && !compoundWorkflow.isStatus(Status.NEW);
+    }
+
+    public boolean getIsShowDocumentWorkflowSummaryBlock() {
+        return getWorkflowService().isDocumentWorkflowEnabled();
+    }
+
     // This method (UIAction's "value" methodBinding) is called on every render, so caching results is useful
     @SuppressWarnings("unchecked")
     public List<ActionDefinition> findCompoundWorkflowDefinitions(@SuppressWarnings("unused") String nodeTypeId) {
-        if (document == null) {
+        if (container == null) {
             return Collections.emptyList();
         }
+        return getCompoundWorkflowDefinitionsByType(getCompoundWorkflowType());
+    }
 
-        boolean showCWorkflowDefsWith1Workflow = false;
-        for (CompoundWorkflow cWorkflow : compoundWorkflows) {
-            if (cWorkflow.isStatus(Status.IN_PROGRESS, Status.STOPPED) && cWorkflow.getWorkflows().size() > 1) {
-                showCWorkflowDefsWith1Workflow = true;
-            }
+    public List<ActionDefinition> findIndependentCompoundWorkflowDefinitions(@SuppressWarnings("unused") String nodeTypeId) {
+        if (container == null) {
+            return Collections.emptyList();
         }
+        return getCompoundWorkflowDefinitionsByType(CompoundWorkflowType.INDEPENDENT_WORKFLOW);
+    }
 
-        String documentTypeId = (String) document.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID);
-        String documentStatus = (String) document.getProperties().get(DocumentCommonModel.Props.DOC_STATUS);
-
+    @SuppressWarnings("unchecked")
+    public List<ActionDefinition> getCompoundWorkflowDefinitionsByType(CompoundWorkflowType compoundWorkflowType) {
         WorkflowService wfService = getWorkflowService();
-        List<CompoundWorkflowDefinition> workflowDefs = wfService.getCompoundWorkflowDefinitions(false);
-        List<ActionDefinition> actionDefinitions = new ArrayList<ActionDefinition>(workflowDefs.size());
         String userId = AuthenticationUtil.getRunAsUser();
-        // remove CompoundWorkflowDefinitions that shouldn't be visible the user viewing this document regardless permissions
+        List<CompoundWorkflowDefinition> workflowDefs = wfService.getCompoundWorkflowDefinitionsByType(userId, compoundWorkflowType);
+
         for (Iterator<CompoundWorkflowDefinition> it = workflowDefs.iterator(); it.hasNext();) {
             CompoundWorkflowDefinition compoundWorkflowDefinition = it.next();
-            String cWFUserId = compoundWorkflowDefinition.getUserId();
-            if (cWFUserId != null && !StringUtils.equals(cWFUserId, userId)) {
-                it.remove(); // defined by other user for private use
-            } else if (!compoundWorkflowDefinition.getDocumentTypes().contains(documentTypeId)) {
-                it.remove(); // not for same DocType
-            } else if (showCWorkflowDefsWith1Workflow && compoundWorkflowDefinition.getWorkflows().size() > 1) {
-                it.remove(); // already have active cWorkflow with multiple workflows - allowed only one at the time
-            } else if (!wfService.externalReviewWorkflowEnabled() && containsExternalReviewWorkflows(compoundWorkflowDefinition)) {
+            if (!wfService.externalReviewWorkflowEnabled() && containsExternalReviewWorkflows(compoundWorkflowDefinition)) {
                 it.remove();
             }
         }
-
-        boolean isWorking = DocumentStatus.WORKING.getValueName().equals(documentStatus);
-        boolean isFinished = DocumentStatus.FINISHED.getValueName().equals(documentStatus);
-        boolean hasPrivEditDoc = getPrivilegeService().hasPermissions(docRef, Privileges.EDIT_DOCUMENT);
-        boolean hasViewPrivs = getPrivilegeService().hasPermissions(docRef, Privileges.VIEW_DOCUMENT_META_DATA, Privileges.VIEW_DOCUMENT_FILES);
-        boolean hasViewPrivsWithoutEdit = !hasPrivEditDoc && hasViewPrivs;
-        Boolean adminOrDocmanagerWithPermission = null;
-        for (CompoundWorkflowDefinition cWorkflowDef : workflowDefs) {
-            if (isWorking && hasPrivEditDoc) {
-                actionDefinitions.add(createActionDef(cWorkflowDef));
-                continue;
-            } else if (isWorking && hasViewPrivsWithoutEdit) {
-                if (!hasOtherWFs(cWorkflowDef, WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW
-                        , WorkflowSpecificModel.Types.INFORMATION_WORKFLOW, WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW)) {
-                    actionDefinitions.add(createActionDef(cWorkflowDef));
-                    continue;
-                }
-            } else if (isFinished && hasViewPrivs) {
-                if (!hasOtherWFs(cWorkflowDef, WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW
-                        , WorkflowSpecificModel.Types.INFORMATION_WORKFLOW, WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW)) {
-                    actionDefinitions.add(createActionDef(cWorkflowDef));
-                    continue;
+        List<ActionDefinition> actionDefinitions = new ArrayList<ActionDefinition>(workflowDefs.size());
+        if (CompoundWorkflowType.DOCUMENT_WORKFLOW.equals(compoundWorkflowType)) {
+            boolean showCWorkflowDefsWith1Workflow = false;
+            for (CompoundWorkflow cWorkflow : compoundWorkflows) {
+                if (cWorkflow.isStatus(Status.IN_PROGRESS, Status.STOPPED) && cWorkflow.getWorkflows().size() > 1) {
+                    showCWorkflowDefsWith1Workflow = true;
                 }
             }
-            if (isFinished) {
-                if (adminOrDocmanagerWithPermission == null) {
-                    adminOrDocmanagerWithPermission = isAdminOrDocmanagerWithPermission(new Node(docRef), Privileges.VIEW_DOCUMENT_META_DATA, Privileges.VIEW_DOCUMENT_FILES);
+
+            String documentTypeId = (String) container.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID);
+            String documentStatus = (String) container.getProperties().get(DocumentCommonModel.Props.DOC_STATUS);
+
+            // remove CompoundWorkflowDefinitions that shouldn't be visible the user viewing this document regardless permissions
+            for (Iterator<CompoundWorkflowDefinition> it = workflowDefs.iterator(); it.hasNext();) {
+                CompoundWorkflowDefinition compoundWorkflowDefinition = it.next();
+                if (!compoundWorkflowDefinition.getDocumentTypes().contains(documentTypeId)) {
+                    it.remove(); // not for same DocType
+                } else if (showCWorkflowDefsWith1Workflow && compoundWorkflowDefinition.getWorkflows().size() > 1) {
+                    it.remove(); // already have active cWorkflow with multiple workflows - allowed only one at the time
                 }
-                if (adminOrDocmanagerWithPermission
-                        && !hasOtherWFs(cWorkflowDef, WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW, WorkflowSpecificModel.Types.INFORMATION_WORKFLOW,
-                                WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW, WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW)) {
+            }
+
+            boolean isWorking = DocumentStatus.WORKING.getValueName().equals(documentStatus);
+            boolean isFinished = DocumentStatus.FINISHED.getValueName().equals(documentStatus);
+            boolean hasPrivEditDoc = getPrivilegeService().hasPermissions(containerRef, Privileges.EDIT_DOCUMENT);
+            boolean hasViewPrivs = getPrivilegeService().hasPermissions(containerRef, Privileges.VIEW_DOCUMENT_META_DATA, Privileges.VIEW_DOCUMENT_FILES);
+            boolean hasViewPrivsWithoutEdit = !hasPrivEditDoc && hasViewPrivs;
+            Boolean adminOrDocmanagerWithPermission = null;
+            for (CompoundWorkflowDefinition cWorkflowDef : workflowDefs) {
+                if (isWorking && hasPrivEditDoc) {
                     actionDefinitions.add(createActionDef(cWorkflowDef));
+                    continue;
+                } else if (isWorking && hasViewPrivsWithoutEdit) {
+                    if (!hasOtherWFs(cWorkflowDef, WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW
+                            , WorkflowSpecificModel.Types.INFORMATION_WORKFLOW, WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW)) {
+                        actionDefinitions.add(createActionDef(cWorkflowDef));
+                        continue;
+                    }
+                } else if (isFinished && hasViewPrivs) {
+                    if (!hasOtherWFs(cWorkflowDef, WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW
+                            , WorkflowSpecificModel.Types.INFORMATION_WORKFLOW, WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW)) {
+                        actionDefinitions.add(createActionDef(cWorkflowDef));
+                        continue;
+                    }
                 }
+                if (isFinished) {
+                    if (adminOrDocmanagerWithPermission == null) {
+                        adminOrDocmanagerWithPermission = isAdminOrDocmanagerWithPermission(new Node(containerRef), Privileges.VIEW_DOCUMENT_META_DATA,
+                                Privileges.VIEW_DOCUMENT_FILES);
+                    }
+                    if (adminOrDocmanagerWithPermission
+                            && !hasOtherWFs(cWorkflowDef, WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW, WorkflowSpecificModel.Types.INFORMATION_WORKFLOW,
+                                    WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW, WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW)) {
+                        actionDefinitions.add(createActionDef(cWorkflowDef));
+                    }
+                }
+            }
+        } else {
+            boolean isCaseFileWorkflow = CompoundWorkflowType.CASE_FILE_WORKFLOW.equals(compoundWorkflowType);
+            for (CompoundWorkflowDefinition cWorkflowDef : workflowDefs) {
+                actionDefinitions.add(isCaseFileWorkflow ? createActionDef(cWorkflowDef) : createIndependentWorkflowActionDef(cWorkflowDef));
             }
         }
         TransformingComparator transformingComparator = new TransformingComparator(new Transformer() {
@@ -339,14 +418,36 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         return actionDefinitions;
     }
 
+    private CompoundWorkflowType getCompoundWorkflowType() {
+        QName parentType = container.getType();
+        CompoundWorkflowType compoundWorkflowType;
+        if (isDocumentWorkflow(parentType)) {
+            compoundWorkflowType = CompoundWorkflowType.DOCUMENT_WORKFLOW;
+        } else if (isCaseWorkflow(parentType)) {
+            compoundWorkflowType = CompoundWorkflowType.CASE_FILE_WORKFLOW;
+        } else {
+            throw new UnableToPerformException("Unallowed parent type for compound workflow: " + parentType);
+        }
+        return compoundWorkflowType;
+    }
+
     private ActionDefinition createActionDef(CompoundWorkflowDefinition compoundWorkflowDefinition) {
         ActionDefinition actionDefinition = new ActionDefinition("compoundWorkflowDefinitionAction");
         actionDefinition.Image = DROPDOWN_MENU_ITEM_ICON;
         actionDefinition.Label = compoundWorkflowDefinition.getName();
         actionDefinition.Action = "#{WorkflowBlockBean.getCompoundWorkflowDialog}";
         actionDefinition.ActionListener = "#{CompoundWorkflowDialog.setupNewWorkflow}";
+        actionDefinition.addParam("parentNodeRef", container.getNodeRefAsString());
         actionDefinition.addParam("compoundWorkflowDefinitionNodeRef", compoundWorkflowDefinition.getNodeRef().toString());
-        actionDefinition.addParam("documentNodeRef", document.getNodeRefAsString());
+        return actionDefinition;
+    }
+
+    private ActionDefinition createIndependentWorkflowActionDef(CompoundWorkflowDefinition compoundWorkflowDefinition) {
+        ActionDefinition actionDefinition = createActionDef(compoundWorkflowDefinition);
+        // override parent node set in createActionDef
+        actionDefinition.addParam("parentNodeRef", getWorkflowService().getIndependentWorkflowsRoot().toString());
+        actionDefinition.ActionListener = "#{CompoundWorkflowDialog.setupNewIndependentWorkflowFromDocument}";
+        actionDefinition.addParam("docAssocNodeRef", container.getNodeRefAsString());
         return actionDefinition;
     }
 
@@ -379,25 +480,70 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     }
 
     public String getWorkflowMethodBindingName() {
-        // Check if at least one condition is true, if not return null (don't show the button)
-        // the logged in user is an admin or doc.manager
-        // or user's id is document 'ownerId'
-        // or user's id is 'taskOwnerId' and 'taskStatus' = IN_PROGRESS of some document's task
-
-        if (getPrivilegeService().hasPermissions(docRef, Privileges.VIEW_DOCUMENT_META_DATA, Privileges.VIEW_DOCUMENT_FILES)) {
-            return WORKFLOW_METHOD_BINDING_NAME;
+        try {
+            // independent compound workflow
+            if (compoundWorkflow != null) {
+                return null;
+            }
+            QName parentType = null;
+            if (containerRef != null && getNodeService().exists(containerRef)) {
+                parentType = getNodeService().getType(containerRef);
+            }
+            if ((isDocumentWorkflow(parentType) && getWorkflowService().isDocumentWorkflowEnabled() && getPrivilegeService().hasPermissions(containerRef,
+                    Privileges.VIEW_DOCUMENT_META_DATA, Privileges.VIEW_DOCUMENT_FILES)
+                    && (containerRef == null || new DocumentNotInDraftsFunctionActionEvaluator().evaluate(new Node(containerRef))))
+                    || isCaseWorkflow(parentType) && BeanHelper.getWorkflowService().hasNoStoppedOrInprogressCompoundWorkflows(containerRef)) {
+                return WORKFLOW_METHOD_BINDING_NAME;
+            }
+            return null;
+        } catch (RuntimeException e) {
+            // Log error here, because JSF EL evaluator does not log detailed error cause
+            log.error("Error getting workflowMethodBindingName", e);
+            throw e;
         }
-        return null;
+    }
+
+    public String getIndependentWorkflowMethodBindingName() {
+        try {
+            if (compoundWorkflow == null
+                    && getWorkflowService().isIndependentWorkflowEnabled()
+                    && getPrivilegeService().hasPermissions(containerRef, Privileges.VIEW_DOCUMENT_META_DATA, Privileges.VIEW_DOCUMENT_FILES)
+                    && (containerRef == null || !isDocumentWorkflow(BeanHelper.getNodeService().getType(containerRef))
+                    || new DocumentNotInDraftsFunctionActionEvaluator().evaluate(new Node(containerRef)))) {
+                return INDEPENDENT_WORKFLOW_METHOD_BINDING_NAME;
+            }
+            return null;
+        } catch (RuntimeException e) {
+            // Log error here, because JSF EL evaluator does not log detailed error cause
+            log.error("Error getting independentWorkflowMethodBindingName", e);
+            throw e;
+        }
+    }
+
+    private boolean isCaseWorkflow(QName parentType) {
+        return CaseFileModel.Types.CASE_FILE.equals(parentType);
+    }
+
+    private boolean isDocumentWorkflow(QName parentType) {
+        return DocumentCommonModel.Types.DOCUMENT.equals(parentType);
     }
 
     public boolean isInWorkspace() {
-        return docRef.getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE);
+        return containerRef.getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE);
     }
 
     public void saveTask(ActionEvent event) {
-        Integer index = (Integer) event.getComponent().getAttributes().get(ATTRIB_INDEX);
+        // Save all changes to independent workflow before updating task.
+        Integer index = ActionUtil.hasParam(event, ATTRIB_INDEX) ? ActionUtil.getParam(event, ATTRIB_INDEX, Integer.class) : (Integer) event.getComponent().getAttributes()
+                .get(ATTRIB_INDEX);
+        List<Pair<String, Object>> params = new ArrayList<Pair<String, Object>>();
+        params.add(new Pair<String, Object>(ATTRIB_INDEX, index));
+        if (!saveIfIndependentWorkflow(params, SAVE_TASK, event)) {
+            return;
+        }
+
         try {
-            Task task = getMyTasks().get(index);
+            Task task = reloadWorkflow(index);
             addRemovedFiles(task);
             getWorkflowService().saveInProgressTask(task);
             // as service operates on copy of task, we need to clear files lists here also
@@ -410,49 +556,56 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             log.debug("Saving task failed", e);
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "workflow_task_save_failed");
         }
-        restore("saveTask");
+        notifyDialogsIfNeeded();
+    }
+
+    protected boolean saveIfIndependentWorkflow(List<Pair<String, Object>> params, String workflowBlockCallback, ActionEvent event) {
+        if (compoundWorkflow != null && compoundWorkflowDialog != null && compoundWorkflow.isIndependentWorkflow()) {
+            boolean confirmationsProcessed = ActionUtil.hasParam(event, ATTRIB_FINISH_VALIDATED) && ActionUtil.getParam(event, ATTRIB_FINISH_VALIDATED, Boolean.class);
+            String response = null;
+            if (confirmationsProcessed) {
+                response = compoundWorkflowDialog.saveOrConfirmValidatedWorkflow(null, true);
+            } else {
+                params.add(new Pair<String, Object>(ATTRIB_FINISH_VALIDATED, Boolean.TRUE));
+                response = compoundWorkflowDialog.saveWorkflow(FacesContext.getCurrentInstance(), workflowBlockCallback, params, null);
+            }
+            return StringUtils.isNotBlank(response);
+        }
+        return true; // CaseFile and Document workflows
+
     }
 
     public void finishTask(ActionEvent event) {
-        Integer index = (Integer) event.getComponent().getAttributes().get(ATTRIB_INDEX);
-        Integer outcomeIndex = (Integer) event.getComponent().getAttributes().get(ATTRIB_OUTCOME_INDEX);
-        Task task = getMyTasks().get(index);
+        Integer index = (Integer) (ActionUtil.hasParam(event, ATTRIB_INDEX) ? ActionUtil.getParam(event, ATTRIB_INDEX, Integer.class) : event.getComponent().getAttributes()
+                .get(ATTRIB_INDEX));
+        Integer outcomeIndex = (Integer) (ActionUtil.hasParam(event, ATTRIB_OUTCOME_INDEX) ? ActionUtil.getParam(event, ATTRIB_OUTCOME_INDEX, Integer.class) : event.getComponent()
+                .getAttributes().get(ATTRIB_OUTCOME_INDEX));
+        List<Pair<String, Object>> params = new ArrayList<Pair<String, Object>>();
+        params.add(new Pair<String, Object>(ATTRIB_INDEX, index));
+        params.add(new Pair<String, Object>(ATTRIB_OUTCOME_INDEX, outcomeIndex));
+
+        if (!saveIfIndependentWorkflow(params, FINISH_TASK, event)) {
+            return;
+        }
+
+        // saving independent compound workflow has succeeded at this point,
+        // we need to update blocks no matter if saving task succeeds or not
+
+        Task task = reloadWorkflow(index);
+        if (task == null) {
+            return;
+        }
         QName taskType = task.getNode().getType();
 
         if (WorkflowSpecificModel.Types.REVIEW_TASK.equals(taskType)
                 || WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK.equals(taskType)) {
-            outcomeIndex = (Integer) task.getNode().getProperties().get(WorkflowSpecificModel.Props.TEMP_OUTCOME.toString());
+            Integer nodeOutcome = (Integer) task.getNode().getProperties().get(WorkflowSpecificModel.Props.TEMP_OUTCOME.toString());
+            if (nodeOutcome != null) {
+                outcomeIndex = nodeOutcome;
+            }
         } else if (WorkflowSpecificModel.Types.SIGNATURE_TASK.equals(taskType)) {
             if (SignatureTaskOutcome.SIGNED_IDCARD.equals((int) outcomeIndex) || SignatureTaskOutcome.SIGNED_MOBILEID.equals((int) outcomeIndex)) {
-
-                // signing requires that at least 1 active file exists within this document
-                long step0 = System.currentTimeMillis();
-                List<File> activeFiles = getFileService().getAllActiveFiles(docRef);
-                if (activeFiles == null || activeFiles.isEmpty()) {
-                    MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "task_files_required");
-                    return;
-                }
-
-                signatureTask = ((SignatureTask) task).clone();
-                try {
-                    long step1 = System.currentTimeMillis();
-                    getDocumentService().prepareDocumentSigning(docRef);
-                    long step2 = System.currentTimeMillis();
-                    fileBlockBean.restore();
-                    long step3 = System.currentTimeMillis();
-                    if (log.isInfoEnabled()) {
-                        log.info("prepareDocumentSigning took total time " + (step3 - step0) + " ms\n    load file list - " + (step1 - step0)
-                                + " ms\n    service call - " + (step2 - step1) + " ms\n    reload file list - " + (step3 - step2) + " ms");
-                    }
-                } catch (UnableToPerformException e) {
-                    MessageUtil.addStatusMessage(e);
-                    return;
-                }
-                if (SignatureTaskOutcome.SIGNED_IDCARD.equals((int) outcomeIndex)) {
-                    showModal();
-                } else {
-                    getMobileIdPhoneNrModal().setRendered(true);
-                }
+                prepareSigning(outcomeIndex, task);
                 return;
             }
         } else if (task.isType(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK) && outcomeIndex == DueDateExtensionWorkflowType.DUE_DATE_EXTENSION_OUTCOME_NOT_ACCEPTED) {
@@ -483,16 +636,185 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             return;
         } catch (NodeLockedException e) {
             log.error("Finishing task failed", e);
-            BeanHelper.getDocumentLockHelperBean().handleLockedNode("task_finish_error_document_locked");
+            BeanHelper.getDocumentLockHelperBean().handleLockedNode("task_finish_error_document_locked", e);
         } catch (WorkflowChangedException e) {
-            log.debug("Finishing task failed", e);
+            log.error("Finishing task failed", e);
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "workflow_task_save_failed");
         } catch (WorkflowActiveResponsibleTaskException e) {
             log.debug("Finishing task failed: more than one active responsible task!", e);
             MessageUtil.addErrorMessage("workflow_compound_save_failed_responsible");
         }
+        notifyDialogsIfNeeded();
+    }
 
-        getDocumentDialogHelperBean().switchMode(false);
+    private Task reloadWorkflow(Integer index) {
+        // get task that has not been saved
+        Task task = getMyTasks().get(index);
+
+        if (!(compoundWorkflow != null && compoundWorkflow.isIndependentWorkflow() && task.isSaved())) {
+            return task;
+        }
+
+        // For performance reasons, preserve only needed properties, not whole workflow hierarchy
+        Map<String, Object> changedProps = getWorkflowService().getTaskChangedProperties(task);
+        NodeRef taskRef = task.getNodeRef();
+        Status status = Status.of(task.getStatus());
+        List<Object> files = task.getFiles();
+        List<File> unsavedRemovedFiles = removedFiles;
+        task = null;
+
+        // init this bean with compoundWorkflowDialog data
+        compoundWorkflowDialog.initWorkflowBlockBean();
+
+        removedFiles = unsavedRemovedFiles;
+        Task updatedTask = null;
+        outer: for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+            for (Task updated : workflow.getTasks()) {
+                if (taskRef.equals(updated.getNodeRef())) {
+                    updatedTask = updated;
+                    break outer;
+                }
+            }
+        }
+        if (updatedTask != null) {
+            if (!updatedTask.isStatus(status)) {
+                if (log.isDebugEnabled()) {
+                    log.error("Task status has changed during saving compound workflow, finishing task is not possible. Original status=" + status +
+                            ", saved task=\n" + task);
+                }
+                MessageUtil.addErrorMessage("workflow_task_finish_failed");
+            } else {
+                updatedTask.copyFiles(files);
+                task = updatedTask;
+                task.getNode().getProperties().putAll(changedProps);
+            }
+        } else {
+            // should never actually happen
+            if (log.isDebugEnabled()) {
+                log.error("Task with nodeRef=" + taskRef + " not found after saving compound workflow with nodeRef=" + compoundWorkflow.getNodeRef());
+            }
+            MessageUtil.addErrorMessage("workflow_task_finish_failed");
+        }
+
+        return task;
+    }
+
+    private void prepareSigning(Integer outcomeIndex, Task task) {
+        // signing requires that at least 1 active file exists within this document
+        long step0 = System.currentTimeMillis();
+
+        List<File> activeFiles = new ArrayList<File>();
+        Map<NodeRef, List<File>> signingFiles = null;
+        if (compoundWorkflow == null) {
+            activeFiles = getFileService().getAllActiveFiles(containerRef);
+            signingFiles = new HashMap<NodeRef, List<File>>();
+            signingFiles.put(containerRef, activeFiles);
+        } else {
+            signingFiles = getWorkflowService().getCompoundWorkflowSigningFiles(compoundWorkflow);
+            for (Map.Entry<NodeRef, List<File>> entry : signingFiles.entrySet()) {
+                List<File> documentFiles = entry.getValue();
+                if (documentFiles != null) {
+                    activeFiles.addAll(documentFiles);
+                }
+            }
+        }
+        if (activeFiles == null || activeFiles.isEmpty()) {
+            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "task_files_required");
+            return;
+        }
+        if (hasZeroByteFile(activeFiles)) {
+            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "task_files_zero_byte_file");
+            return;
+        }
+
+        signatureTask = ((SignatureTask) task).clone();
+        try {
+            long step1 = System.currentTimeMillis();
+            mainDocumentRef = null;
+            signingQueue = new ArrayList<NodeRef>();
+            originalStatuses = new HashMap<NodeRef, String>();
+            boolean signSeparately = true;
+            boolean hasExistingDigiDoc = false;
+            List<NodeRef> signingDocumentRefs = null;
+            if (compoundWorkflow == null) {
+                signingQueue.add(containerRef);
+                addDocumentStatus(containerRef);
+            } else {
+                signingDocumentRefs = getWorkflowService().getCompoundWorkflowSigningDocumentRefs(compoundWorkflow.getNodeRef());
+                NodeRef compoundWorkflowRef = compoundWorkflow.getNodeRef();
+                if (signatureTask.getParent().isSignTogether() && signingDocumentRefs.size() > 1) {
+                    mainDocumentRef = compoundWorkflow.getMainDocument();
+                    if (mainDocumentRef == null || !getNodeService().exists(mainDocumentRef)) {
+                        throw new UnableToPerformException("compoundWorkflow_main_document_missing");
+                    }
+                    hasExistingDigiDoc = getDocumentService().checkExistingDdoc(mainDocumentRef, compoundWorkflowRef) != null;
+                    signSeparately = false;
+                    signingQueue.add(mainDocumentRef);
+                    Map<NodeRef, List<File>> tmpFileMap = new HashMap<NodeRef, List<File>>();
+                    List<File> tmpFiles = new ArrayList<File>();
+                    tmpFileMap.put(mainDocumentRef, tmpFiles);
+                    for (Map.Entry<NodeRef, List<File>> entry : signingFiles.entrySet()) {
+                        List<File> documentFiles = entry.getValue();
+                        addDocumentStatus(entry.getKey());
+                        if (documentFiles != null) {
+                            tmpFiles.addAll(documentFiles);
+                        }
+                    }
+                    signingFiles = tmpFileMap;
+
+                } else {
+                    signingQueue.addAll(signingDocumentRefs);
+                    addDocumentStatuses(signingQueue);
+                }
+            }
+            this.signingFiles = signingFiles;
+            getDocumentService().prepareDocumentSigning(signSeparately ? signingQueue : signingDocumentRefs, !hasExistingDigiDoc, signSeparately);
+            long step2 = System.currentTimeMillis();
+            if (compoundWorkflow == null) {
+                fileBlockBean.restore();
+            } else {
+                BeanHelper.getCompoundWorkflowAssocListDialog().restored();
+            }
+            long step3 = System.currentTimeMillis();
+            if (log.isInfoEnabled()) {
+                log.info("prepareDocumentSigning took total time " + (step3 - step0) + " ms\n    load file list - " + (step1 - step0)
+                        + " ms\n    service call - " + (step2 - step1) + " ms\n    reload file list - " + (step3 - step2) + " ms");
+            }
+        } catch (UnableToPerformException e) {
+            MessageUtil.addStatusMessage(e);
+            return;
+        }
+        if (SignatureTaskOutcome.SIGNED_IDCARD.equals((int) outcomeIndex)) {
+            showModalOrSign();
+        } else {
+            showMobileIdModalOrSign();
+        }
+    }
+
+    private void addDocumentStatuses(List<NodeRef> docRefs) {
+        if (docRefs != null) {
+            for (NodeRef docRef : docRefs) {
+                addDocumentStatus(docRef);
+            }
+        }
+    }
+
+    private void addDocumentStatus(NodeRef docRef) {
+        originalStatuses.put(docRef, (String) getNodeService().getProperty(docRef, DocumentCommonModel.Props.DOC_STATUS));
+    }
+
+    private boolean needsSignatureInput(NodeRef nodeRef) {
+        List<File> files = signingFiles.get(nodeRef);
+        return files != null && !files.isEmpty();
+    }
+
+    private boolean hasZeroByteFile(List<File> files) {
+        for (File file : files) {
+            if (file.getSize() == 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void addRemovedFiles(Task task) {
@@ -511,18 +833,47 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     }
 
     public void sendTaskDueDateExtensionRequest(ActionEvent event) {
-        ModalLayerSubmitEvent commentEvent = (ModalLayerSubmitEvent) event;
-        String reason = (String) commentEvent.getSubmittedValue(MODAL_KEY_REASON);
-        Date newDate = (Date) commentEvent.getSubmittedValue(MODAL_KEY_PROPOSED_DUE_DATE);
-        Date dueDate = (Date) commentEvent.getSubmittedValue(MODAL_KEY_DUE_DATE);
-        Integer taskIndex = commentEvent.getActionIndex();
+        ModalLayerSubmitEvent commentEvent;
+        List<Pair<String, Object>> params = new ArrayList<Pair<String, Object>>();
+        String reason;
+        Date newDate;
+        Date dueDate;
+        Integer taskIndex;
+        if (event instanceof ModalLayerSubmitEvent) {
+            commentEvent = (ModalLayerSubmitEvent) event;
+            reason = (String) commentEvent.getSubmittedValue(MODAL_KEY_REASON);
+            newDate = (Date) commentEvent.getSubmittedValue(MODAL_KEY_PROPOSED_DUE_DATE);
+            dueDate = (Date) commentEvent.getSubmittedValue(MODAL_KEY_DUE_DATE);
+            taskIndex = commentEvent.getActionIndex();
+            params.add(new Pair<String, Object>(MODAL_KEY_REASON, reason));
+            TypeConverter typeConverter = DefaultTypeConverter.INSTANCE;
+            params.add(new Pair<String, Object>(MODAL_KEY_PROPOSED_DUE_DATE, typeConverter.convert(String.class, newDate)));
+            params.add(new Pair<String, Object>(MODAL_KEY_DUE_DATE, typeConverter.convert(String.class, dueDate)));
+            params.add(new Pair<String, Object>(ATTRIB_INDEX, taskIndex));
+        } else {
+            reason = ActionUtil.getParam(event, MODAL_KEY_REASON);
+            newDate = ActionUtil.getParam(event, MODAL_KEY_PROPOSED_DUE_DATE, Date.class);
+            dueDate = ActionUtil.getParam(event, MODAL_KEY_DUE_DATE, Date.class);
+            taskIndex = ActionUtil.getParam(event, ATTRIB_INDEX, Integer.class);
+        }
+
+        // Save independent workflow first
+        if (!saveIfIndependentWorkflow(params, SEND_TASK_DUE_DATE_EXTENSION_REQUEST, event)) {
+            return;
+        }
+
         if (StringUtils.isBlank(reason) || newDate == null || dueDate == null || taskIndex == null || taskIndex < 0) {
             return;
         }
-        CompoundWorkflow compoundWorkflow = getWorkflowService().getNewCompoundWorkflow(getWorkflowService().getNewCompoundWorkflowDefinition().getNode(), docRef);
+
+        Task initiatingTask = reloadWorkflow(taskIndex);
+        CompoundWorkflow compoundWorkflow = getWorkflowService().getNewCompoundWorkflow(getWorkflowService().getNewCompoundWorkflowDefinition().getNode(), containerRef);
+        compoundWorkflow.setTypeEnum(initiatingTask.getParent().getParent().getTypeEnum());
         Workflow workflow = getWorkflowService().addNewWorkflow(compoundWorkflow, WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_WORKFLOW, compoundWorkflow.getWorkflows().size(),
                 true);
-        Task initiatingTask = myTasks.get(taskIndex);
+        if (getWorkflowService().isWorkflowTitleEnabled()) {
+            compoundWorkflow.setTitle(MessageUtil.getMessage("compoundWorkflow_due_date_extension_title"));
+        }
         Task task = workflow.addTask();
         task.setOwnerName(initiatingTask.getCreatorName());
         task.setOwnerId(initiatingTask.getCreatorId());
@@ -540,7 +891,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         task.setDueDate(dueDate);
         getWorkflowService().createDueDateExtension(compoundWorkflow, initiatingTask.getNodeRef());
         MessageUtil.addInfoMessage("task_sendDueDateExtensionRequest_success_defaultMsg");
-        getDocumentDialogHelperBean().switchMode(false);
+        notifyDialogsIfNeeded();
     }
 
     @SuppressWarnings("unchecked")
@@ -554,14 +905,14 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             if ((outcomeIndex == 1 || outcomeIndex == 2) && StringUtils.isBlank(task.getComment())) {
                 return Arrays.asList(new Pair<String, String>("task_validation_reviewTask_comment", null));
             }
-            if (DocumentSubtypeModel.Types.INVOICE.equals(document.getType())) {
+            if (DocumentSubtypeModel.Types.INVOICE.equals(container.getType())) {
                 return checkTransactionCostManagers();
             }
         } else if (WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK.equals(taskType)) {
             if (outcomeIndex == 1 && StringUtils.isBlank(task.getComment())) {
                 return Arrays.asList(new Pair<String, String>("task_validation_externalReviewTask_comment", null));
             }
-        } else if (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK, WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK)) {
+        } else if (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK, WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK, WorkflowSpecificModel.Types.GROUP_ASSIGNMENT_TASK)) {
             if (StringUtils.isBlank(task.getComment())) {
                 return Arrays.asList(new Pair<String, String>("task_validation_assignmentTask_comment", null));
             }
@@ -654,6 +1005,10 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         return getPrintTableUrl(TableMode.REVIEW_NOTES, true);
     }
 
+    public String getCompoundWorkflowPrintUrl() {
+        return getPrintTableUrl(TableMode.COMPOUND_WORKFLOW, true);
+    }
+
     public String getWorkflowGroupTasksUrl() {
         return getPrintTableUrl(TableMode.WORKFLOW_GROUP_TASKS, false);
     }
@@ -681,6 +1036,14 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         return MessageUtil.getMessage(MSG_WORKFLOW_ACTION_GROUP);
     }
 
+    public String getDocumentWorkflowMenuTooltip() {
+        return MessageUtil.getMessage("compoundWorkflow_new_document_workflow");
+    }
+
+    public String getIndependentWorkflowMenuTooltip() {
+        return MessageUtil.getMessage("compoundWorkflow_new_independent_workflow");
+    }
+
     public void processCert() {
         @SuppressWarnings("unchecked")
         Map<String, String> requestParameterMap = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap();
@@ -688,7 +1051,8 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         String certId = requestParameterMap.get("certId");
         try {
             long step0 = System.currentTimeMillis();
-            SignatureDigest signatureDigest = getDocumentService().prepareDocumentDigest(docRef, certHex);
+            SignatureDigest signatureDigest = getDocumentService().prepareDocumentDigest(signingQueue.get(0), certHex,
+                    mainDocumentRef != null ? compoundWorkflow.getNodeRef() : null);
             long step1 = System.currentTimeMillis();
             showModal(signatureDigest.getDigestHex(), certId);
             signatureTask.setSignatureDigest(signatureDigest);
@@ -698,7 +1062,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         } catch (SignatureException e) {
             SignatureBlockBean.addSignatureError(e);
             closeModal();
-            signatureTask = null;
+            resetSigningData();
         }
     }
 
@@ -710,42 +1074,90 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         try {
             signDocumentImpl(signatureHex);
         } finally {
-            closeModal();
-            signatureTask = null;
+            if (signingQueue == null || signingQueue.isEmpty()) {
+                closeModal();
+                resetSigningData();
+            } else {
+                showModalOrSign();
+            }
+        }
+    }
+
+    private void showModalOrSign() {
+        if (needsSignatureInput(signingQueue.get(0))) {
+            showModal();
+        } else {
+            signDocument();
+        }
+    }
+
+    private void showMobileIdModalOrSign() {
+        if (needsSignatureInput(signingQueue.get(0))) {
+            getMobileIdPhoneNrModal().setRendered(true);
+        } else {
+            finishMobileIdSigning(null);
         }
     }
 
     private void signDocumentImpl(String signatureHex) {
         try {
             long step0 = System.currentTimeMillis();
-            getDocumentService().finishDocumentSigning(signatureTask, signatureHex);
+            boolean finishTask = signingQueue.size() == 1;
+            getDocumentService().finishDocumentSigning(signatureTask, signatureHex, signingQueue.get(0), mainDocumentRef == null, finishTask, originalStatuses);
+            signingQueue.remove(0);
             long step1 = System.currentTimeMillis();
-            getDocumentDialogHelperBean().switchMode(false);
+            notifyDialogsIfNeeded();
             long step2 = System.currentTimeMillis();
             if (log.isInfoEnabled()) {
                 log.info("finishDocumentSigning took total time " + (step2 - step0) + " ms\n    service call - " + (step1 - step0) + " ms\n    reload document - "
                         + (step2 - step1) + " ms");
             }
-            MessageUtil.addInfoMessage("task_finish_success_defaultMsg");
+            if (finishTask) {
+                MessageUtil.addInfoMessage("task_finish_success_defaultMsg");
+            }
+            return;
         } catch (UnableToPerformException e) {
             MessageUtil.addStatusMessage(e);
         } catch (WorkflowChangedException e) {
             log.debug("Finishing signature task failed", e);
-            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "workflow_task_save_failed");
+            MessageUtil.addErrorMessage("workflow_task_save_failed");
         } catch (SignatureRuntimeException e) {
             SignatureBlockBean.addSignatureError(e);
         } catch (FileExistsException e) {
             if (log.isDebugEnabled()) {
-                log.debug("Failed to create ddoc, file with same name already exists, parentRef = " + docRef, e);
+                log.debug("Failed to create ddoc, file with same name already exists, parentRef = " + containerRef, e);
             }
             Utils.addErrorMessage(MessageUtil.getMessage("ddoc_file_exists"));
+        }
+        // this code must be reached ONLY in case of error
+        signingQueue = null;
+    }
+
+    public void notifyDialogsIfNeeded() {
+        notifyDialogsIfNeeded(false);
+    }
+
+    public void notifyDialogsIfNeeded(boolean resetExpandedData) {
+        if (compoundWorkflow == null || !compoundWorkflow.isIndependentWorkflow()) {
+            getDocumentDialogHelperBean().switchMode(false);
+        }
+        if (compoundWorkflow != null && compoundWorkflowDialog != null) {
+            compoundWorkflowDialog.reload(compoundWorkflow != null ? compoundWorkflow.getNodeRef() : null, resetExpandedData);
         }
     }
 
     public void cancelSign() {
         closeModal();
+        resetSigningData();
+        notifyDialogsIfNeeded();
+    }
+
+    private void resetSigningData() {
         signatureTask = null;
-        getDocumentDialogHelperBean().switchMode(false);
+        signingQueue = null;
+        mainDocumentRef = null;
+        signingFiles = null;
+        originalStatuses = null;
     }
 
     public void startMobileIdSigning(@SuppressWarnings("unused") ActionEvent event) {
@@ -755,7 +1167,8 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         }
         try {
             long step0 = System.currentTimeMillis();
-            SignatureChallenge signatureChallenge = getDocumentService().prepareDocumentChallenge(docRef, phoneNr);
+            SignatureChallenge signatureChallenge = getDocumentService().prepareDocumentChallenge(signingQueue.get(0), phoneNr,
+                    mainDocumentRef != null ? compoundWorkflow.getNodeRef() : null);
             long step1 = System.currentTimeMillis();
             getMobileIdChallengeModal().setRendered(true);
             challengeId = "<div id=\"mobileIdChallengeMessage\" style=\"text-align: center;\"><p>Sõnumit saadetakse, palun oodake...</p><p>Kontrollkood:</p><p style=\"padding-top: 10px; font-size: 28px; vertical-align: middle;\">"
@@ -770,10 +1183,10 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             }
         } catch (UnableToPerformException e) {
             MessageUtil.addStatusMessage(e);
-            signatureTask = null;
+            resetSigningData();
         } catch (SignatureException e) {
             SignatureBlockBean.addSignatureError(e);
-            signatureTask = null;
+            resetSigningData();
         } finally {
             getMobileIdPhoneNrModal().setRendered(false);
         }
@@ -802,10 +1215,15 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 signDocumentImpl(signature);
             } else {
                 MessageUtil.addStatusMessage(signatureError);
+                signingQueue = null;
             }
         } finally {
             getMobileIdChallengeModal().setRendered(false);
-            signatureTask = null;
+            if (signingQueue == null || signingQueue.isEmpty()) {
+                resetSigningData();
+            } else {
+                showMobileIdModalOrSign();
+            }
         }
     }
 
@@ -828,7 +1246,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         List<SelectItem> selectItems = new ArrayList<SelectItem>(outcomes);
 
         for (int i = 0; i < outcomes; i++) {
-            String label = MessageUtil.getMessage("task_outcome_externalReviewTask" + i);
+            String label = MessageUtil.getMessage("task_outcome_externalReviewTask" + i + "_title");
             selectItems.add(new SelectItem(i, label));
         }
         return selectItems;
@@ -858,7 +1276,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             mobileIdPhoneNrComponent.setActionListener(app.createMethodBinding("#{WorkflowBlockBean.startMobileIdSigning}", UIActions.ACTION_CLASS_ARGS));
             Map<String, Object> mobileIdPhoneNrAttributes = getAttributes(mobileIdPhoneNrComponent);
             mobileIdPhoneNrAttributes.put(ModalLayerComponent.ATTR_HEADER_KEY, "task_title_signatureTask");
-            mobileIdPhoneNrAttributes.put(ModalLayerComponent.ATTR_SUBMIT_BUTTON_MSG_KEY, "task_outcome_signatureTask2");
+            mobileIdPhoneNrAttributes.put(ModalLayerComponent.ATTR_SUBMIT_BUTTON_MSG_KEY, "task_outcome_signatureTask2_title");
             mobileIdPhoneNrAttributes.put(ModalLayerComponent.ATTR_AUTO_SHOW, Boolean.TRUE);
             mobileIdPhoneNrAttributes.put(ModalLayerComponent.ATTR_SET_RENDERED_FALSE_ON_CLOSE, Boolean.TRUE);
 
@@ -879,7 +1297,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             mobileIdChallengeComponent.setActionListener(app.createMethodBinding("#{WorkflowBlockBean.finishMobileIdSigning}", UIActions.ACTION_CLASS_ARGS));
             Map<String, Object> mobileIdChallengeAttributes = getAttributes(mobileIdChallengeComponent);
             mobileIdChallengeAttributes.put(ModalLayerComponent.ATTR_HEADER_KEY, "task_title_signatureTask");
-            mobileIdChallengeAttributes.put(ModalLayerComponent.ATTR_SUBMIT_BUTTON_MSG_KEY, "task_outcome_signatureTask2");
+            mobileIdChallengeAttributes.put(ModalLayerComponent.ATTR_SUBMIT_BUTTON_MSG_KEY, "task_outcome_signatureTask2_title");
             mobileIdChallengeAttributes.put(ModalLayerComponent.ATTR_SUBMIT_BUTTON_HIDDEN, Boolean.TRUE);
             mobileIdChallengeAttributes.put(ModalLayerComponent.ATTR_AUTO_SHOW, Boolean.TRUE);
             mobileIdChallengeAttributes.put(ModalLayerComponent.ATTR_SET_RENDERED_FALSE_ON_CLOSE, Boolean.TRUE);
@@ -980,7 +1398,8 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 outcomeButton.setId("outcome-id-" + index + "-" + outcomeIndex);
                 Map<String, Object> outcomeBtnAttributes = ComponentUtil.putAttribute(outcomeButton, "styleClass", "taskOutcome");
                 outcomeButton.setActionListener(app.createMethodBinding("#{WorkflowBlockBean.finishTask}", new Class[] { ActionEvent.class }));
-                outcomeButton.setValue(MessageUtil.getMessage(label + outcomeIndex));
+                String buttonSuffix = "_title";
+                outcomeButton.setValue(MessageUtil.getMessage(label + outcomeIndex + buttonSuffix));
                 outcomeBtnAttributes.put(ATTRIB_INDEX, index);
                 outcomeBtnAttributes.put(ATTRIB_OUTCOME_INDEX, outcomeIndex);
 
@@ -990,7 +1409,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 if (WorkflowSpecificModel.Types.REVIEW_TASK.equals(taskType)
                         || WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK.equals(taskType)) {
                     // node.getProperties().put(WorkflowSpecificModel.Props.TEMP_OUTCOME.toString(), 0);
-                    outcomeButton.setValue(MessageUtil.getMessage(label));
+                    outcomeButton.setValue(MessageUtil.getMessage(label + buttonSuffix));
                     break;
                 }
             }
@@ -1011,7 +1430,6 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 }
                 extensionButton.setRendererType(HtmlButtonRenderer.HTML_BUTTON_RENDERER_TYPE);
 
-                extensionButton.setActionListener(app.createMethodBinding("#{WorkflowBlockBean.saveTask}", new Class[] { ActionEvent.class }));
                 extensionButton.setValue(MessageUtil.getMessage("task_ask_due_date_extension"));
                 extensionButton.setStyleClass("taskOutcome");
                 extensionBtnAttributes.put(ATTRIB_INDEX, index);
@@ -1113,14 +1531,23 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     }
 
     private boolean checkRights(Workflow workflow) {
-        boolean localRights = getUserService().isDocumentManager()
-                || getDocumentDynamicService().isOwner(docRef, AuthenticationUtil.getRunAsUser())
-                || getWorkflowService().isOwner(workflow.getParent())
-                || getWorkflowService().isOwnerOfInProgressAssignmentTask(workflow.getParent());
-        boolean externalReviewRights = !workflow.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW)
-                || !Boolean.TRUE.equals(document.getProperties().get(DocumentSpecificModel.Props.NOT_EDITABLE))
-                || !hasCurrentInstitutionTask(workflow);
-        return localRights && externalReviewRights;
+        if (compoundWorkflow != null) {
+            return false;
+        }
+        QName parentType = BeanHelper.getNodeService().getType(containerRef);
+        boolean isDocumentManager = getUserService().isDocumentManager();
+        boolean isOwner = getDocumentDynamicService().isOwner(containerRef, AuthenticationUtil.getRunAsUser()) || getWorkflowService().isOwner(workflow.getParent());
+        if (isDocumentWorkflow(parentType)) {
+            boolean localRights = isDocumentManager || isOwner || getWorkflowService().isOwnerOfInProgressAssignmentTask(workflow.getParent());
+            boolean externalReviewRights = !workflow.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW)
+                    || !Boolean.TRUE.equals(container.getProperties().get(DocumentSpecificModel.Props.NOT_EDITABLE))
+                    || !hasCurrentInstitutionTask(workflow);
+            return localRights && externalReviewRights;
+        } else if (isCaseWorkflow(parentType)) {
+            return isOwner || isAdminOrDocmanagerWithPermission(containerRef, DocumentCommonModel.Privileges.VIEW_CASE_FILE)
+                    || BeanHelper.getPrivilegeService().hasPermissions(containerRef, DocumentCommonModel.Privileges.EDIT_CASE_FILE);
+        }
+        return false;
     }
 
     private boolean hasCurrentInstitutionTask(Workflow wrkflw) {
@@ -1154,7 +1581,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         if (dataTableGroup == null) {
             dataTableGroup = new HtmlPanelGroup();
         }
-        taskPanelControlDocument = docRef;
+        taskPanelControlDocument = containerRef;
         return dataTableGroup;
     }
 
@@ -1167,9 +1594,9 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     }
 
     public void setDataTableGroup(HtmlPanelGroup dataTableGroup) {
-        if (taskPanelControlDocument != null && !taskPanelControlDocument.equals(docRef)) {
+        if (taskPanelControlDocument != null && !taskPanelControlDocument.equals(containerRef)) {
             constructTaskPanelGroup(dataTableGroup, "setDataTableGroup");
-            taskPanelControlDocument = docRef;
+            taskPanelControlDocument = containerRef;
         }
         this.dataTableGroup = dataTableGroup;
     }
@@ -1180,8 +1607,17 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
 
     public void setReviewNotesRichList(UIRichList reviewNotesRichList) {
         this.reviewNotesRichList = reviewNotesRichList;
+        for (UIComponent component : ComponentUtil.getChildren(reviewNotesRichList)) {
+            if (component instanceof UIColumn) {
+                UIColumn column = (UIColumn) component;
+                if ("review-note-block-file-versions-col".equals(column.getId())) {
+                    column.setRendered(BeanHelper.getDialogManager().getCurrentDialog().getName().equals("documentDynamicDialog"));
+                }
+            }
+        }
     }
 
+    // this method assumes we are in DOCUMENT_WORKFLOW view
     public List<WorkflowBlockItem> getWorkflowBlockItems() {
         List<WorkflowBlockItemGroup> workflowBlockItemGroups = new ArrayList<WorkflowBlockItemGroup>();
         for (CompoundWorkflow cWf : getCompoundWorkflows()) {
@@ -1196,7 +1632,9 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 }
                 boolean raisedRights = checkRights(wf);
                 for (Task task : wf.getTasks()) {
-                    items.add(new WorkflowBlockItem(task, raisedRights));
+                    if (task.isSaved()) {
+                        items.add(new WorkflowBlockItem(task, raisedRights));
+                    }
                 }
             }
             Collections.sort(items, WorkflowBlockItem.COMPARATOR);

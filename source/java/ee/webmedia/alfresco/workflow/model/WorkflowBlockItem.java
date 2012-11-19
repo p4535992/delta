@@ -122,7 +122,8 @@ public class WorkflowBlockItem implements Serializable {
     }
 
     public int getTaskIndexInWorkflow() {
-        return task.getTaskIndexInWorkflow();
+        Integer taskIndexInWorkflow = task.getTaskIndexInWorkflow();
+        return taskIndexInWorkflow != null ? taskIndexInWorkflow : -1;
     }
 
     public String getTaskOutcome() {
@@ -130,8 +131,9 @@ public class WorkflowBlockItem implements Serializable {
             return "";
         }
         StringBuffer sb = new StringBuffer(200);
-        if (StringUtils.isNotBlank(task.getOutcome())) {
-            sb.append(HtmlUtils.htmlEscape(task.getOutcome()));
+        String outcome = task.getOutcome();
+        if (StringUtils.isNotBlank(outcome) && !outcome.equals(MessageUtil.getMessage("task_completed_outcome"))) {
+            sb.append(HtmlUtils.htmlEscape(outcome));
         }
         if (sb.length() > 0) {
             sb.append(" ");

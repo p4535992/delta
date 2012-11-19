@@ -44,6 +44,8 @@ public abstract class AbstractEmailListDialog extends BaseDocumentListDialog imp
 
     protected abstract NodeRef getMainFolderRef();
 
+    public abstract String getEmailDateTimeColumnMsg();
+
     @Override
     public String getListTitle() {
         return MessageUtil.getMessage("document_incoming_emails_documents");

@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.document.file.service;
 
+import java.io.InputStream;
 import java.util.List;
 
 import org.alfresco.service.cmr.model.FileInfo;
@@ -73,15 +74,15 @@ public interface FileService {
      */
     NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, NodeRef fileNodeRef);
 
-    NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, NodeRef fileNodeRef, boolean active);
+    NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, NodeRef fileNodeRef, boolean active, boolean associatedWithMetaData);
 
     NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType);
 
-    NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType, boolean active);
+    NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType, boolean active, boolean associatedWithMetaData);
 
     NodeRef addFile(String name, String displayName, NodeRef taskNodeRef, java.io.File file, String mimeType);
 
-    NodeRef addFile(String name, String displayName, NodeRef taskNodeRef, java.io.File file, String mimeType, boolean active);
+    NodeRef addFile(String name, String displayName, NodeRef taskNodeRef, java.io.File file, String mimeType, boolean active, boolean associatedWithMetaData);
 
     NodeRef addFile(String name, String displayName, NodeRef taskNodeRef, ContentReader reader);
 
@@ -102,9 +103,9 @@ public interface FileService {
      * 
      * @param nodeRef
      */
-    void transformActiveFilesToPdf(NodeRef nodeRef);
+    void transformActiveFilesToPdf(NodeRef nodeRef, boolean inactivateOriginalFiles);
 
-    FileInfo transformToPdf(NodeRef nodeRef);
+    FileInfo transformToPdf(NodeRef docRef, NodeRef fileRef, boolean createVersion);
 
     /**
      * Transform a source file to PDF. Original source file is preserved and a new PDF file is created.
@@ -113,9 +114,10 @@ public interface FileService {
      * @param reader source file that is converted to PDF
      * @param filename the name that the created PDF file will have
      * @param displayName the name to be displayed in UI
+     * @param overwritableNodeRef if not null, then the contents are written to this location (NB! doesn't create version!)
      * @return created PDF file. If transformation was not possible or failed, returns {@code null}.
      */
-    FileInfo transformToPdf(NodeRef parent, ContentReader reader, String filename, String displayName);
+    FileInfo transformToPdf(NodeRef parent, NodeRef fileRef, ContentReader reader, String filename, String displayName, NodeRef overwritableNodeRef);
 
     /**
      * @param nodeRef
@@ -123,7 +125,8 @@ public interface FileService {
      */
     List<File> getAllActiveFiles(NodeRef nodeRef);
 
-    List<NodeRef> getAllActiveFilesNodeRefs(NodeRef nodeRef);
+    /** Get all active files, excluding the ones that are sources for generated pdfs */
+    List<NodeRef> getAllActiveFilesForDdoc(NodeRef nodeRef);
 
     void setAllFilesInactiveExcept(NodeRef parent, NodeRef activeFile);
 
@@ -149,6 +152,14 @@ public interface FileService {
 
     NodeRef findSubfolderWithName(NodeRef parentNodeRef, String folderName, QName subfolderType);
 
+    boolean isTransformableToPdf(String mimeType);
+
+    NodeRef getPreviouslyGeneratedPdf(NodeRef sourceFileRef);
+
+    boolean isPdfUpToDate(NodeRef sourceFileRef, NodeRef pdfFileRef);
+
     List<File> getFiles(List<NodeRef> taskFileNodeRefs);
+
+    InputStream getFileContentInputStream(NodeRef fileRef);
 
 }

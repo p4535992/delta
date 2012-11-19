@@ -89,7 +89,7 @@ public class TaskReportDialog extends TaskSearchDialog {
         return TaskReportModel.Types.FILTER;
     }
 
-    public List<SelectItem> getReportTemplates(FacesContext context, UIInput selectComponent) {
+    public List<SelectItem> getReportTemplates(@SuppressWarnings("unused") FacesContext context, @SuppressWarnings("unused") UIInput selectComponent) {
         return reportTemplates;
     }
 

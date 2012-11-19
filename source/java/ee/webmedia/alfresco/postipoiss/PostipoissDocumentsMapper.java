@@ -554,7 +554,7 @@ public class PostipoissDocumentsMapper {
             DocumentType docType = getDocumentAdminService().getDocumentType(name, DocumentAdminService.DOC_TYPE_WITH_OUT_GRAND_CHILDREN_EXEPT_LATEST_DOCTYPE_VER);
             Assert.notNull(docType, "Document type doesn't exist: " + name);
             typeInfo.docVer = docType.getLatestDocumentTypeVersion();
-            typeInfo.propDefs = getDocumentConfigService().getPropertyDefinitions(DocAdminUtil.getDocTypeIdAndVersionNr(typeInfo.docVer));
+            typeInfo.propDefs = getDocumentConfigService().getPropertyDefinitions(DocAdminUtil.getPropDefCacheKey(DocumentType.class, typeInfo.docVer));
             typeInfo.childAssocTypeQNameTree = getDocumentConfigService().getChildAssocTypeQNameTree(typeInfo.docVer);
             typeInfo.hierarchy = new QName[] {};
         } else {

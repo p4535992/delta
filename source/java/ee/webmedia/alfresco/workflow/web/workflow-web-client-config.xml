@@ -29,6 +29,13 @@
             <image>/images/icons/icon_stop.png</image>
             <action-listener>#{CompoundWorkflowDialog.finishWorkflow}</action-listener>
          </action>
+         
+         <action id="compound_workflow_reopen">
+            <evaluator>ee.webmedia.alfresco.workflow.web.evaluator.WorkflowReopenEvaluator</evaluator>
+            <label-id>workflow_compound_reopen</label-id>
+            <image>/images/icons/workflow.gif</image>
+            <action-listener>#{CompoundWorkflowDialog.reopenWorkflow}</action-listener>
+         </action>         
 
          <action id="compound_workflow_copy">
             <evaluator>ee.webmedia.alfresco.workflow.web.evaluator.WorkflowSavedEvaluator</evaluator>
@@ -36,6 +43,27 @@
             <image>/images/icons/new_workflow.gif</image>
             <action-listener>#{CompoundWorkflowDialog.copyWorkflow}</action-listener>
          </action>
+         
+          <action id="compound_workflow_favorites_add">
+            <evaluator>ee.webmedia.alfresco.workflow.web.evaluator.AddFavoritesCompoundWorkflowEvaluator</evaluator>
+            <label-id>document_favorites_add</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{CompoundWorkflowDialog.addCompoundWorkflowToFavorites}</action-listener>
+         </action>
+         
+          <action id="compound_workflow_show_link">
+            <evaluator>ee.webmedia.alfresco.workflow.web.evaluator.WorkflowSavedIndependentEvaluator</evaluator>
+            <label-id>compoundWorkflow_show_url</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{CompoundWorkflowDialog.showCompoundWorkflowLink}</action-listener>
+         </action>
+
+          <action id="compound_workflow_favorites_remove">
+            <evaluator>ee.webmedia.alfresco.workflow.web.evaluator.RemoveFavoritesCompoundWorkflowEvaluator</evaluator>
+            <label-id>document_favorites_remove</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{CompoundWorkflowDialog.removeFavorite}</action-listener>
+         </action>         
 
          <action id="compound_workflow_delete">
             <evaluator>ee.webmedia.alfresco.workflow.web.evaluator.WorkflowNewSavedEvaluator</evaluator>
@@ -43,6 +71,27 @@
             <image>/images/icons/delete.gif</image>
             <action>#{CompoundWorkflowDialog.deleteWorkflow}</action>
          </action>
+         
+         <action id="compound_workflow_print">
+            <evaluator>ee.webmedia.alfresco.workflow.web.evaluator.WorkflowSavedIndependentEvaluator</evaluator>
+            <label-id>workflow_compound_print_compound</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <onclick>printCompoundWorkflow(); return false;</onclick>
+         </action>
+         
+         <action id="compound_workflow_add_notification">
+            <evaluator>ee.webmedia.alfresco.workflow.web.evaluator.WorkflowAddNotificationEvaluator</evaluator>
+            <label-id>compound_workflow_add_notification</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action>#{CompoundWorkflowDialog.addNotification}</action>
+         </action>
+         
+         <action id="compound_workflow_remove_notification">
+            <evaluator>ee.webmedia.alfresco.workflow.web.evaluator.WorkflowRemoveNotificationEvaluator</evaluator>
+            <label-id>compound_workflow_remove_notification</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action>#{CompoundWorkflowDialog.removeNotification}</action>
+         </action>          
 
          <action-group id="compound_workflow_list_actions">
             <action idref="compound_workflow_add_new" />
@@ -52,8 +101,15 @@
             <action idref="compound_workflow_stop" />
             <action idref="compound_workflow_continue" />
             <action idref="compound_workflow_finish" />
+            <action idref="compound_workflow_reopen" />
             <action idref="compound_workflow_copy" />
+            <action idref="compound_workflow_favorites_add" />
+            <action idref="compound_workflow_favorites_remove" />
             <action idref="compound_workflow_delete" />
+            <action idref="compound_workflow_print" />
+            <action idref="compound_workflow_show_link" />
+            <action idref="compound_workflow_add_notification" />
+            <action idref="compound_workflow_remove_notification" />
          </action-group>
       </actions>
 
@@ -70,6 +126,12 @@
 
          <dialog name="taskListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/task-list-dialog.jsp" managed-bean="MyTasksBean"
             icon="/images/icons/workflow_task_large.gif" />
+            
+         <dialog name="compoundWorkflowListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/compound-workflow-list-dialog.jsp"
+            managed-bean="CompoundWorkflowListDialog" icon="/images/icons/workflow_large.gif" title-id="workflow_compound_list_title" show-ok-button="false" />
+            
+         <dialog name="relatedUrlDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/related-url-details-dialog.jsp"
+            managed-bean="RelatedUrlDetailsDialog" icon="/images/icons/workflow_large.gif" title-id="compoundWorkflow_relatedUrl_details_dialog" />  
 
       </dialogs>
    </config>
@@ -120,7 +182,7 @@
    </config>            
 
    <!-- All nodes with aspect wfs:commonTask except wfs:assignmentTask and wfs:orderAssignmentTask(that shows the same information in delegation history) -->
-   <config evaluator="node-type" condition="wfs:signatureTask,wfs:opinionTask,wfs:reviewTask,wfs:externalReviewTask,wfs:informationTask,wfs:confirmationTask,wfs:dueDateExtensionTask">
+   <config evaluator="node-type" condition="wfs:signatureTask,wfs:opinionTask,wfs:reviewTask,wfs:externalReviewTask,wfs:informationTask,wfs:confirmationTask,wfs:dueDateExtensionTask,wfs:groupAssignmentTask">
       <property-sheet>
          <!--
             See Task class, it adds a resolver which returns task's resolution if present or workflow's resolution otherwise 
@@ -137,7 +199,7 @@
    </config>   
    
    <!-- All nodes with aspect wfs:commonTask except wfs:assignmentTask and wfs:orderAssignmentTask(that shows the same information in delegation history) -->
-   <config evaluator="node-type" condition="wfs:signatureTask,wfs:opinionTask,wfs:reviewTask,wfs:externalReviewTask,wfs:informationTask,wfs:confirmationTask,wfs:dueDateExtensionTask">
+   <config evaluator="node-type" condition="wfs:signatureTask,wfs:opinionTask,wfs:reviewTask,wfs:externalReviewTask,wfs:informationTask,wfs:confirmationTask,wfs:dueDateExtensionTask,wfs:groupAssignmentTask">
       <property-sheet>
          <show-property name="{temp}dueDateTimeStr" outputText="true" styleClass="date" display-label-id="task_property_due_date" />
       </property-sheet>
@@ -156,7 +218,7 @@
    </config>
 
    <!-- Override: comment property label is different for assignmentTask -->
-   <config evaluator="node-type" condition="wfs:assignmentTask,wfs:orderAssignmentTask">
+   <config evaluator="node-type" condition="wfs:assignmentTask,wfs:orderAssignmentTask,wfs:groupAssignmentTask">
       <property-sheet>
          <show-property name="wfs:comment" display-label-id="task_property_comment_assignmentTask" component-generator="TextAreaGenerator" styleClass="expand19-200" />
       </property-sheet>
@@ -217,8 +279,10 @@
  
    <config evaluator="node-type" condition="wfc:compoundWorkflow">
       <property-sheet>
+         <show-property name="wfc:title" rendered="#{CompoundWorkflowDialog.showTitle}"  readOnlyIf="#{CompoundWorkflowDialog.titleReadonly}" forcedMandatory="#{!CompoundWorkflowDialog.titleReadonly}" />
          <show-property name="wfc:ownerName" editable="false" component-generator="UserSearchGenerator" usernameProp="wfc:ownerId" pickerCallback="#{UserListDialog.searchUsers}"
-            setterCallback="#{CompoundWorkflowDialog.setWorkfowOwner}" readOnlyIf="wfc:status=teostamisel" /> 
+            setterCallback="#{CompoundWorkflowDialog.setWorkfowOwner}" readOnlyIf="#{CompoundWorkflowDialog.ownerNameReadonly}" />
+         <show-property name="wfc:comment" rendered="#{CompoundWorkflowDialog.showComment}" component-generator="TextAreaGenerator" styleClass="expand19-200" readOnlyIf="#{CompoundWorkflowDialog.commentReadonly}" /> 
       </property-sheet>
    </config>
 
@@ -259,6 +323,7 @@
 
    <config evaluator="node-type" condition="wfs:signatureWorkflow">
       <property-sheet>
+         <show-property name="wfs:signingType" component-generator="EnumSelectorGenerator" enumClass="ee.webmedia.alfresco.workflow.model.SigningType" readOnlyIf="wfc:status=teostamisel||lõpetatud" rendered="#{CompoundWorkflowDialog.showSigningType}" forcedMandatory="true"/>
          <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" forcedMandatory="true" display-label-id="signatureWorkflow_tasks" />
       </property-sheet>
    </config>
@@ -313,13 +378,24 @@
       </property-sheet>
    </config>
    
-   <config evaluator="node-type" condition="wfs:signatureWorkflow,wfs:opinionWorkflow,wfs:reviewWorkflow,wfs:informationWorkflow,wfs:assignmentWorkflow,wfs:orderAssignmentWorkflow,wfs:confirmationWorkflow,wfs:docRegistrationWorkflow">
+   <config evaluator="node-type" condition="wfs:groupAssignmentWorkflow">
+      <property-sheet>
+         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" forcedMandatory="true" display-label-id="groupAssignmentWorkflow_tasks" />
+      </property-sheet>
+   </config>     
+   
+   <config evaluator="node-type" condition="wfs:signatureWorkflow,wfs:opinionWorkflow,wfs:reviewWorkflow,wfs:informationWorkflow,wfs:assignmentWorkflow,wfs:orderAssignmentWorkflow,wfs:confirmationWorkflow,wfs:docRegistrationWorkflow,wfs:groupAssignmentWorkflow">
       <property-sheet>
          <show-property name="wfc:mandatory" component-generator="CheckboxGenerator" show="#{DialogManager.bean == 'CompoundWorkflowDefinitionDialog'}"/>
       </property-sheet>
    </config>
    <!-- COMPOUND WORKFLOW CONFIG - END -->
 
-
+   <config evaluator="node-type" condition="wfc:relatedUrl">
+      <property-sheet>
+         <show-property name="wfc:url" />
+         <show-property name="wfc:urlComment" component-generator="TextAreaGenerator" styleClass="expand19-200"/>
+      </property-sheet>
+   </config>
 
 </alfresco-config>

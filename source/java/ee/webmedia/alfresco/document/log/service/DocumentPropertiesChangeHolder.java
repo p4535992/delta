@@ -3,8 +3,8 @@ package ee.webmedia.alfresco.document.log.service;
 import static ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGenerator.ACCESS_RESTRICTION_PROPS;
 import static ee.webmedia.alfresco.document.log.service.DocumentLogHelper.format;
 import static ee.webmedia.alfresco.document.log.service.DocumentLogHelper.getCaseName;
-import static ee.webmedia.alfresco.document.log.service.DocumentLogHelper.getDocumentTypeProps;
 import static ee.webmedia.alfresco.document.log.service.DocumentLogHelper.getFunctionName;
+import static ee.webmedia.alfresco.document.log.service.DocumentLogHelper.getObjectTypeProps;
 import static ee.webmedia.alfresco.document.log.service.DocumentLogHelper.getSeriesName;
 import static ee.webmedia.alfresco.document.log.service.DocumentLogHelper.getVolumeName;
 import static ee.webmedia.alfresco.document.log.service.DocumentLogHelper.msg;
@@ -44,8 +44,8 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  */
 public class DocumentPropertiesChangeHolder {
 
-    public static final String MSG_DOC_PROP_CHANGED = "document_log_status_changed";
-    public static final String MSG_DOC_LOC_CHANGED = "document_log_location_changed";
+    public static final String MSG_DOC_PROP_CHANGED_SUFIX = "_log_status_changed";
+    public static final String MSG_DOC_LOC_CHANGED_SUFIX = "_log_location_changed";
     public static final String MSG_DOC_ACCESS_RESTRICTION_CHANGED = "document_log_status_accessRestrictionChanged";
 
     private final Map<NodeRef, List<PropertyChange>> nodeChangeMapsMap = new LinkedHashMap<NodeRef, List<PropertyChange>>();
@@ -124,7 +124,8 @@ public class DocumentPropertiesChangeHolder {
             newValue = newValue != null && msgParam != null ? msgParam : newValue;
         }
 
-        if (type.equals(DocumentChildModel.Assocs.APPLICANT_ABROAD) || type.equals(DocumentChildModel.Assocs.APPLICANT_DOMESTIC)) {
+        if (type.equals(DocumentChildModel.Assocs.APPLICANT_ABROAD) || type.equals(DocumentChildModel.Assocs.APPLICANT_DOMESTIC)
+                || type.equals(DocumentChildModel.Assocs.APPLICANT_TRAINING)) {
             String applicant = (String) nodeService.getProperty(node, DocumentSpecificModel.Props.APPLICANT_NAME);
 
             if (applicant != null && oldChild != null) {
@@ -164,6 +165,21 @@ public class DocumentPropertiesChangeHolder {
     }
 
     /**
+     * Return all recorded changes for given NodeRef. If not found or invalid NodeRef is supplied, an empty list is returned
+     * 
+     * @param nodeRef NodeRef of the modified object
+     * @return unmodifiable list with PropertyChange object or empty list.
+     */
+    public List<PropertyChange> getChanges(NodeRef nodeRef) {
+        if (nodeRef == null) {
+            return Collections.emptyList();
+        }
+
+        final List<PropertyChange> list = nodeChangeMapsMap.get(nodeRef);
+        return list == null ? Collections.<PropertyChange> emptyList() : Collections.unmodifiableList(list);
+    }
+
+    /**
      * Reports whether any property value change is stored by this holder.
      * 
      * @return A Boolean that is <code>true</code> when no property change is stored in this holder.
@@ -192,6 +208,19 @@ public class DocumentPropertiesChangeHolder {
         return keys;
     }
 
+    public PropertyChange getPropertyChange(NodeRef docRef, QName property) {
+        List<PropertyChange> list = nodeChangeMapsMap.get(docRef);
+        if (list == null) {
+            return null;
+        }
+        for (PropertyChange propertyChange : list) {
+            if (property.equals(propertyChange.getProperty())) {
+                return propertyChange;
+            }
+        }
+        return null;
+    }
+
     public List<String> generateLogMessages(Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs, NodeRef docRef) {
         String emptyValue = MessageUtil.getMessage("document_log_status_empty");
         ArrayList<String> messages = new ArrayList<String>();
@@ -200,8 +229,11 @@ public class DocumentPropertiesChangeHolder {
         nodeChangeMapsMap.remove(docRef);
 
         for (Iterator<NodeRef> i = nodeChangeMapsMap.keySet().iterator(); i.hasNext();) {
-            messages.addAll(generate(propDefs, i.next(), emptyValue));
-            i.remove();
+            NodeRef nodeRef = i.next();
+            if (BeanHelper.getNodeService().exists(nodeRef)) {
+                messages.addAll(generate(propDefs, nodeRef, emptyValue));
+                i.remove();
+            }
         }
 
         return messages;
@@ -212,21 +244,25 @@ public class DocumentPropertiesChangeHolder {
         messages.addAll(generateLocationMessages(propDefs, docRef, emptyValue));
         messages.addAll(generateAccessRestrictionMessages(propDefs, docRef, emptyValue));
         messages.addAll(generateChildNodeMessages(docRef, emptyValue));
-
-        for (Field field : getDocumentTypeProps(docRef).values()) {
+        String message = getMessage(MSG_DOC_PROP_CHANGED_SUFIX, docRef);
+        for (Field field : getObjectTypeProps(docRef).values()) {
             if (!nodeChangeMapsMap.containsKey(docRef)) {
                 continue;
             }
             for (PropertyChange propertyChange : nodeChangeMapsMap.get(docRef)) {
                 if (propertyChange.getProperty().equals(field.getQName())) {
                     String[] valuePair = format(field, propertyChange, emptyValue);
-                    messages.add(MessageUtil.getMessage(MSG_DOC_PROP_CHANGED, field.getName(), valuePair[0], valuePair[1]));
+                    messages.add(MessageUtil.getMessage(message, field.getName(), valuePair[0], valuePair[1]));
                     continue;
                 }
             }
         }
 
         return messages;
+    }
+
+    private String getMessage(String sufix, NodeRef nodeRef) {
+        return BeanHelper.getNodeService().getType(nodeRef).getLocalName().toLowerCase() + sufix;
     }
 
     private List<String> generateLocationMessages(Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs, NodeRef docRef, String emptyValue) {
@@ -236,6 +272,7 @@ public class DocumentPropertiesChangeHolder {
         }
 
         String[] msgs = new String[4];
+        String message = null;
         for (Iterator<PropertyChange> i = list.iterator(); i.hasNext();) {
             PropertyChange propChange = i.next();
 
@@ -265,7 +302,10 @@ public class DocumentPropertiesChangeHolder {
             }
 
             if (oldValue != null && newValue != null) {
-                msgs[pos] = msg(propDefs, MSG_DOC_LOC_CHANGED, propChange.getProperty(), oldValue, newValue);
+                if (message == null) {
+                    message = getMessage(MSG_DOC_LOC_CHANGED_SUFIX, docRef);
+                }
+                msgs[pos] = msg(propDefs, message, propChange.getProperty(), oldValue, newValue);
                 i.remove();
             }
         }

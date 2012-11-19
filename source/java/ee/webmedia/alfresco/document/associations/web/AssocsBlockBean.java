@@ -23,14 +23,18 @@ import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
 import ee.webmedia.alfresco.document.assocsdyn.web.AddFollowUpAssocEvaluator;
 import ee.webmedia.alfresco.document.assocsdyn.web.AddReplyAssocEvaluator;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 
 /**
- * Block that shows associations of given document with other documents and related cases
+ * Block that shows associations of given document/volume/caseFile/case with other documents/volumes/caseFiles/cases
  * 
  * @author Ats Uiboupin
  */
 public class AssocsBlockBean implements DocumentDynamicBlock {
     private static final long serialVersionUID = 1L;
+
+    private static org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(WorkflowBlockBean.class);
 
     public static final String BEAN_NAME = "AssocsBlockBean";
     private static final String FOLLOWUPS_METHOD_BINDING_NAME = "#{" + BEAN_NAME + ".createAddFollowupsMenu}";
@@ -39,7 +43,7 @@ public class AssocsBlockBean implements DocumentDynamicBlock {
     public static final String PARAM_ASSOC_MODEL_REF = "assocModelRef";
 
     private Node document;
-    private List<DocAssocInfo> docAssocInfos;
+    private List<DocAssocInfo> docAssocInfos = new ArrayList<DocAssocInfo>();
 
     public void init(Node node) {
         reset();
@@ -48,12 +52,17 @@ public class AssocsBlockBean implements DocumentDynamicBlock {
     }
 
     public void restore() {
-        docAssocInfos = BeanHelper.getDocumentAssociationsService().getAssocInfos(document);
+        if (document != null && RepoUtil.isSaved(document) && BeanHelper.getNodeService().exists(document.getNodeRef())) {
+            docAssocInfos = BeanHelper.getDocumentAssociationsService().getAssocInfos(document);
+            Collections.sort(docAssocInfos);
+        } else {
+            docAssocInfos = new ArrayList<DocAssocInfo>();
+        }
     }
 
     public void reset() {
         document = null;
-        docAssocInfos = null;
+        docAssocInfos = new ArrayList<DocAssocInfo>();
     }
 
     @Override
@@ -66,11 +75,23 @@ public class AssocsBlockBean implements DocumentDynamicBlock {
     }
 
     public String getFollowupAssocsBindingName() {
-        WmNode document = getDocumentFromDialog();// FIXME document should be provided by bean
-        if (new AddFollowUpAssocEvaluator().evaluate(document)) {
-            return FOLLOWUPS_METHOD_BINDING_NAME;
+        try {
+            WmNode document = getDocumentFromDialog();// FIXME document should be provided by bean
+            if (new AddFollowUpAssocEvaluator().evaluate(document)) {
+                return FOLLOWUPS_METHOD_BINDING_NAME;
+            }
+            return null;
+        } catch (RuntimeException e) {
+            // Log error here, because JSF EL evaluator does not log detailed error cause
+            LOG.error("Error getting followupAssocsBindingName", e);
+            throw e;
         }
-        return null;
+    }
+
+    public void disableDelete() {
+        for (DocAssocInfo assocInf : docAssocInfos) {
+            assocInf.setAllowDelete(false);
+        }
     }
 
     /**
@@ -82,11 +103,17 @@ public class AssocsBlockBean implements DocumentDynamicBlock {
     }
 
     public String getRepliesAssocsBindingName() {
-        WmNode document = getDocumentFromDialog();
-        if (new AddReplyAssocEvaluator().evaluate(document)) {
-            return REPLIES_METHOD_BINDING_NAME;
+        try {
+            WmNode document = getDocumentFromDialog();
+            if (new AddReplyAssocEvaluator().evaluate(document)) {
+                return REPLIES_METHOD_BINDING_NAME;
+            }
+            return null;
+        } catch (RuntimeException e) {
+            // Log error here, because JSF EL evaluator does not log detailed error cause
+            LOG.error("Error getting repliesAssocsBindingName", e);
+            throw e;
         }
-        return null;
     }
 
     public List<ActionDefinition> createAddFollowupsMenu(@SuppressWarnings("unused") String nodeTypeId) {

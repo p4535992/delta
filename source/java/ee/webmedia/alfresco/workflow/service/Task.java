@@ -1,5 +1,9 @@
 package ee.webmedia.alfresco.workflow.service;
 
+import static ee.webmedia.alfresco.utils.RepoUtil.toQNameProperties;
+import static ee.webmedia.alfresco.utils.RepoUtil.toStringProperties;
+import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.getTaskSearchableProps;
+
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -57,7 +61,8 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
     private Boolean hasDueDateHistory;
     private Boolean originalHasDueDateHistory;
     private Boolean originalHasFiles;
-    private String parentNodeRefId;
+    private String groupDueDateVbString;
+    private String workflowNodeRefId;
     private String storeRef;
 
     /**
@@ -65,7 +70,7 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
      * (may not be current index if workflow is changed in memory).
      * At the moment used for secondary ordering in WorkflowBlock
      */
-    private int taskIndexInWorkflow = -1;
+    private Integer taskIndexInWorkflow = null;
 
     private String cssStyleClass;
 
@@ -103,6 +108,10 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         Task task = (Task) super.copyImpl(copy);
         task.outcomeIndex = outcomeIndex;
         task.action = action;
+        boolean hasNoParentNodeRef = parent == null || parent.getNodeRef() == null;
+        task.workflowNodeRefId = hasNoParentNodeRef ? null : parent.getNodeRef().getId();
+        task.storeRef = hasNoParentNodeRef ? null : parent.getNodeRef().getStoreRef().toString();
+        task.taskIndexInWorkflow = taskIndexInWorkflow;
         @SuppressWarnings("unchecked")
         T result = (T) task;
         return result;
@@ -224,6 +233,14 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
 
     public void setCreatorInstitutionCode(String creatorInstitutionCode) {
         setProp(WorkflowSpecificModel.Props.CREATOR_INSTITUTION_CODE, creatorInstitutionCode);
+    }
+
+    public String getCreatorInstitutionName() {
+        return getProp(WorkflowSpecificModel.Props.CREATOR_INSTITUTION_NAME);
+    }
+
+    public void setCreatorInstitutionName(String creatorInstitutionName) {
+        setProp(WorkflowSpecificModel.Props.CREATOR_INSTITUTION_NAME, creatorInstitutionName);
     }
 
     public String getCreatorId() {
@@ -450,14 +467,7 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
     protected void preSave() {
         super.preSave();
 
-        // Set completedOverdue value which is used in task search
-        boolean completedOverdue = false;
-        if (getCompletedDateTime() != null && getDueDate() != null) {
-            Date completedDay = DateUtils.truncate(getCompletedDateTime(), Calendar.DATE);
-            Date dueDay = DateUtils.truncate(getDueDate(), Calendar.DATE);
-            completedOverdue = completedDay.after(dueDay);
-        }
-        setProp(WorkflowSpecificModel.Props.COMPLETED_OVERDUE, completedOverdue);
+        calculateOverdue();
 
         // Set workflowResolution value which is used in task search
         if (isUnsaved()) {
@@ -468,13 +478,28 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         if (isUnsaved() && !(getParent().getParent() instanceof CompoundWorkflowDefinition)) {
             getNode().getAspects().add(WorkflowSpecificModel.Aspects.SEARCHABLE);
         }
+        if (node.getAspects().contains(WorkflowSpecificModel.Aspects.SEARCHABLE) && parent != null && parent.getParent() != null) {
+            node.getProperties().putAll(
+                    toStringProperties(getTaskSearchableProps(toQNameProperties(parent.getParent().getNode().getProperties()))));
+        }
     }
 
-    public int getTaskIndexInWorkflow() {
+    protected void calculateOverdue() {
+        // Set completedOverdue value which is used in task search
+        boolean completedOverdue = false;
+        if (getCompletedDateTime() != null && getDueDate() != null) {
+            Date completedDay = DateUtils.truncate(getCompletedDateTime(), Calendar.DATE);
+            Date dueDay = DateUtils.truncate(getDueDate(), Calendar.DATE);
+            completedOverdue = completedDay.after(dueDay);
+        }
+        setProp(WorkflowSpecificModel.Props.COMPLETED_OVERDUE, completedOverdue);
+    }
+
+    public Integer getTaskIndexInWorkflow() {
         return taskIndexInWorkflow;
     }
 
-    public void setTaskIndexInWorkflow(int taskIndexInWorkflow) {
+    public void setTaskIndexInWorkflow(Integer taskIndexInWorkflow) {
         this.taskIndexInWorkflow = taskIndexInWorkflow;
     }
 
@@ -509,6 +534,14 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
     /** Load existing files */
     public void loadFiles(List<File> list) {
         getFilesList().addAll(list);
+        filesLoaded = true;
+    }
+
+    /** Copy files */
+    public void copyFiles(List<Object> files) {
+        List<Object> filesList = getFilesList();
+        filesList.clear();
+        filesList.addAll(files);
         filesLoaded = true;
     }
 
@@ -552,12 +585,60 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         this.originalHasFiles = originalHasFiles;
     }
 
-    public String getParentNodeRefId() {
-        return parentNodeRefId;
+    public String getGroupDueDateVbString() {
+        return groupDueDateVbString;
     }
 
-    public void setParentNodeRefId(String parentNodeRefId) {
-        this.parentNodeRefId = parentNodeRefId;
+    public void setGroupDueDateVbString(String groupDueDateVbString) {
+        this.groupDueDateVbString = groupDueDateVbString;
+    }
+
+    public void setCompoundWorkflowTitle(String compoundWorkflowTitle) {
+        setProp(WorkflowSpecificModel.Props.COMPOUND_WORKFLOW_TITLE, compoundWorkflowTitle);
+    }
+
+    public String getCompoundWorkflowTitle() {
+        return getProp(WorkflowSpecificModel.Props.COMPOUND_WORKFLOW_TITLE);
+    }
+
+    public void setCompoundWorkflowComment(String compoundWorkflowComment) {
+        setProp(WorkflowSpecificModel.Props.COMPOUND_WORKFLOW_COMMENT, compoundWorkflowComment);
+    }
+
+    public String getCompoundWorkflowComment() {
+        return getProp(WorkflowSpecificModel.Props.COMPOUND_WORKFLOW_COMMENT);
+    }
+
+    public void setOriginalNoderefId(String originalNoderefId) {
+        setProp(WorkflowSpecificModel.Props.ORIGINAL_NODEREF_ID, originalNoderefId);
+    }
+
+    public void setOriginalTaskObjectUrl(String originalTaskObjectUrl) {
+        setProp(WorkflowSpecificModel.Props.ORIGINAL_TASK_OBJECT_URL, originalTaskObjectUrl);
+    }
+
+    public String getOriginalTaskObjectUrl() {
+        return getProp(WorkflowSpecificModel.Props.ORIGINAL_TASK_OBJECT_URL);
+    }
+
+    public void setWorkflowResolution(String workflowResolution) {
+        setProp(WorkflowSpecificModel.Props.WORKFLOW_RESOLUTION, workflowResolution);
+    }
+
+    public String getWorkflowResolution() {
+        return getProp(WorkflowSpecificModel.Props.WORKFLOW_RESOLUTION);
+    }
+
+    public void setReceivedDvkId(String receivedDvkId) {
+        setProp(WorkflowSpecificModel.Props.RECIEVED_DVK_ID, receivedDvkId);
+    }
+
+    public String getReceivedDvkId() {
+        return getProp(WorkflowSpecificModel.Props.RECIEVED_DVK_ID);
+    }
+
+    public void setWorkflowNodeRefId(String workflowNodeRefId) {
+        this.workflowNodeRefId = workflowNodeRefId;
     }
 
     public String getStoreRef() {
@@ -568,8 +649,11 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         this.storeRef = storeRef;
     }
 
-    public NodeRef getParentNodeRef() {
-        return new NodeRef(new StoreRef(storeRef), parentNodeRefId);
+    public NodeRef getWorkflowNodeRef() {
+        if (workflowNodeRefId == null) {
+            return parent == null ? null : parent.getNodeRef();
+        }
+        return new NodeRef(new StoreRef(storeRef), workflowNodeRefId);
     }
 
 }

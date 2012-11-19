@@ -19,6 +19,7 @@ public class AddCaseEvaluator extends DocumentManagerEvaluator {
             return false;
         }
         String status = (String) node.getProperties().get(VolumeModel.Props.STATUS);
-        return DocListUnitStatus.OPEN.equals(status);
+        Boolean containsCases = (Boolean) node.getProperties().get(VolumeModel.Props.CONTAINS_CASES);
+        return DocListUnitStatus.OPEN.equals(status) && Boolean.TRUE.equals(containsCases);
     }
 }

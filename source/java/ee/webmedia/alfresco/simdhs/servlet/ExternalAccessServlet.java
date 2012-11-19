@@ -1,9 +1,12 @@
 package ee.webmedia.alfresco.simdhs.servlet;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getApplicationService;
+
 import java.io.IOException;
 import java.util.StringTokenizer;
 
 import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -12,6 +15,7 @@ import org.alfresco.web.app.servlet.AuthenticationStatus;
 import org.alfresco.web.app.servlet.BaseServlet;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.util.FileCopyUtils;
 
 import ee.webmedia.alfresco.common.listener.ExternalAccessPhaseListener;
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
@@ -41,8 +45,19 @@ public class ExternalAccessServlet extends BaseServlet {
         if (AuthenticationStatus.Failure == servletAuthenticate(req, res)) {
             return;
         }
-        setNoCacheHeaders(res);
 
+        if ("/logo".equals(uri)) {
+            Pair<byte[], String> logo = getApplicationService().getCustomLogo();
+            if (logo != null) {
+                res.setHeader("Content-Length", Integer.toString(logo.getFirst().length));
+                res.setContentType(logo.getSecond());
+                ServletOutputStream os = res.getOutputStream();
+                FileCopyUtils.copy(logo.getFirst(), os); // closes both streams
+            }
+            return;
+        }
+
+        setNoCacheHeaders(res);
         Pair<String, String[]> outcomeAndArgs = getDocumentUriTokens(uri);
         req.setAttribute(ExternalAccessPhaseListener.OUTCOME_AND_ARGS_ATTR, outcomeAndArgs);
 

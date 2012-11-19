@@ -1,10 +1,17 @@
 package ee.webmedia.alfresco.workflow.service;
 
+import static ee.webmedia.alfresco.utils.XmlUtil.getUnmarshaller;
+import static ee.webmedia.alfresco.utils.XmlUtil.initJaxbContext;
+import static ee.webmedia.alfresco.utils.XmlUtil.initSchema;
+
+import java.io.InputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -12,16 +19,26 @@ import java.util.Set;
 
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.helpers.DefaultValidationEventHandler;
+import javax.xml.validation.Schema;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.Predicate;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
+import ee.webmedia.alfresco.workflow.generated.DeltaKKRootType;
+import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
@@ -38,6 +55,54 @@ public class WorkflowUtil {
      */
     private static final QName TMP_ADDED_BY_DELEGATION = RepoUtil.createTransientProp("addedByDelegation");
     public static final String TASK_INDEX = "taskIndex";
+    private static final Map<CompoundWorkflowType, String> compoundWorkflowTemplateSuffixes;
+    private static final Set<String> independentWorkflowDefaultDocPermissions;
+
+    private static final String WORKFLOW_PACKAGE = "ee.webmedia.alfresco.workflow.generated";
+    private static JAXBContext workflowJaxbContext = initJaxbContext(WORKFLOW_PACKAGE);
+    private static Schema deltaKKJaxbSchema = initSchema("deltaKK.xsd", DeltaKKRootType.class);
+
+    static {
+        Map<CompoundWorkflowType, String> tmpMap = new HashMap<CompoundWorkflowType, String>();
+        tmpMap.put(CompoundWorkflowType.CASE_FILE_WORKFLOW, "caseFile");
+        tmpMap.put(CompoundWorkflowType.DOCUMENT_WORKFLOW, "");
+        tmpMap.put(CompoundWorkflowType.INDEPENDENT_WORKFLOW, "independent");
+        compoundWorkflowTemplateSuffixes = tmpMap;
+
+        Set<String> privileges = new HashSet<String>();
+        privileges.add(DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA);
+        privileges.add(DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES);
+        independentWorkflowDefaultDocPermissions = privileges;
+
+        // turn on jaxb debug
+        // TODO: turn off when jaxb import has been tested in client environment (or make switchable by general log settings)
+        System.setProperty("jaxb.debug", "true");
+    }
+
+    public static void marshalDeltaKK(JAXBElement<DeltaKKRootType> deltaKKRoot, org.w3c.dom.Node document) {
+        try {
+            Marshaller marshaller = workflowJaxbContext.createMarshaller();
+            // event handler to print error messages to log
+            marshaller.setSchema(deltaKKJaxbSchema);
+            marshaller.setEventHandler(new DefaultValidationEventHandler());
+            marshaller.marshal(deltaKKRoot, document);
+        } catch (JAXBException e) {
+            String message = "Failed to marshal deltaKKRootType.";
+            LOG.debug(message, e);
+            throw new RuntimeException(message, e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static JAXBElement<DeltaKKRootType> unmarshalDeltaKK(InputStream input) {
+        JAXBElement<DeltaKKRootType> deltaKKRoot = null;
+        try {
+            deltaKKRoot = (JAXBElement<DeltaKKRootType>) getUnmarshaller(workflowJaxbContext, deltaKKJaxbSchema).unmarshal(input);
+        } catch (JAXBException e) {
+            LOG.debug("Failed to unmarshal deltaKK.", e);
+        }
+        return deltaKKRoot;
+    }
 
     // -------------
     // Checks that are required only on memory object
@@ -224,6 +289,7 @@ public class WorkflowUtil {
         return checkTask(task, false, requiredStatuses);
     }
 
+    /** Can be used for checking regular tasks stored under workflow. Deleted status is not allowed. */
     public static Status checkTask(Task task, boolean skipPropChecks, Status... requiredStatuses) {
         if (!skipPropChecks) {
             // ERKO: Specification and existing code act in a different way. When a user is chosen, both the id and email are stored and used.
@@ -232,6 +298,9 @@ public class WorkflowUtil {
             // }
         }
         Status status = Status.of(task.getStatus());
+        if (Status.DELETED == status) {
+            throw new WorkflowChangedException("Task status cannot be DELETED for tasks stored under workflow!\n" + task);
+        }
         if (requiredStatuses.length > 0 && !isStatus(task, requiredStatuses)) {
             throw new WorkflowChangedException("Task status must be one of [" + StringUtils.join(requiredStatuses, ", ") + "]\n" + task);
         }
@@ -242,10 +311,13 @@ public class WorkflowUtil {
         return checkWorkflow(workflow, false, requiredStatuses);
     }
 
-    public static List<String> getOwnersWithNoEmail(CompoundWorkflow compoundWorkflow) {
+    public static List<String> getOwnersWithNoEmailForNotFinishedTasks(CompoundWorkflow compoundWorkflow) {
         List<String> ownersNames = new ArrayList<String>();
         for (Workflow workflow : compoundWorkflow.getWorkflows()) {
             for (Task task : workflow.getTasks()) {
+                if (task.isStatus(Status.FINISHED, Status.UNFINISHED)) {
+                    continue;
+                }
                 String ownerEmail = task.getOwnerEmail();
                 String ownerName = task.getOwnerName();
                 if (StringUtils.isNotBlank(ownerName) && StringUtils.isBlank(ownerEmail)) {
@@ -308,6 +380,8 @@ public class WorkflowUtil {
             break;
         case UNFINISHED:
             throw new WorkflowChangedException("Workflow cannot have status UNFINISHED\n" + workflow);
+        case DELETED:
+            throw new WorkflowChangedException("Workflow cannot have status DELETED\n" + workflow);
         }
         if (requiredStatuses.length > 0 && !isStatus(workflow, requiredStatuses)) {
             throw new WorkflowChangedException("Workflow status must be one of [" + StringUtils.join(requiredStatuses, ", ") + "]\n" + workflow);
@@ -321,6 +395,9 @@ public class WorkflowUtil {
 
     public static Status checkCompoundWorkflow(CompoundWorkflow compoundWorkflow, boolean skipPropChecks, Status... requiredStatuses) {
         Status cWfStatus = Status.of(compoundWorkflow.getStatus());
+        if (Status.DELETED == cWfStatus) {
+            throw new WorkflowChangedException("Compound workflow status cannot be DELETED! compoundWorkflow=" + compoundWorkflow);
+        }
         List<Workflow> workflows = compoundWorkflow.getWorkflows();
         if (workflows.size() == 0 && cWfStatus != Status.NEW && cWfStatus != Status.FINISHED) {
             throw new WorkflowChangedException("CompoundWorkflow must have at least one workflow if status is not NEW nor FINISHED\n" + compoundWorkflow);
@@ -355,6 +432,8 @@ public class WorkflowUtil {
             break;
         case UNFINISHED:
             throw new WorkflowChangedException("CompoundWorkflow cannot have status UNFINISHED\n" + compoundWorkflow);
+        case DELETED:
+            throw new WorkflowChangedException("CompoundWorkflow cannot have status DELETED\n" + compoundWorkflow);
         }
         if (requiredStatuses.length > 0 && !isStatus(compoundWorkflow, requiredStatuses)) {
             throw new WorkflowChangedException("CompoundWorkflow status must be one of [" + StringUtils.join(requiredStatuses, ", ") + "]\n" + compoundWorkflow);
@@ -446,6 +525,17 @@ public class WorkflowUtil {
 
     private static boolean isOwnerOfInProgressTask(Task task, String userName) {
         return userName.equals(task.getOwnerId()) && isStatus(task, Status.IN_PROGRESS);
+    }
+
+    public static boolean isOwnerOfInProgressTask(CompoundWorkflow compoundWorkflow, String runAsUser) {
+        for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+            for (Task task : workflow.getTasks()) {
+                if (task.isStatus(Status.IN_PROGRESS) && StringUtils.equals(task.getOwnerId(), runAsUser)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public static boolean isOwner(List<CompoundWorkflow> compoundWorkflows, String userName) {
@@ -555,7 +645,8 @@ public class WorkflowUtil {
                 if (StringUtils.isBlank(task.getOwnerId())) {
                     continue;
                 }
-                Pair<String, QName> taskOwnerNameAndType = new Pair<String, QName>(task.getOwnerId(), task.getType());
+                String ownerName = task.getOwnerName();
+                Pair<String, QName> taskOwnerNameAndType = new Pair<String, QName>(StringUtils.isNotBlank(ownerName) ? ownerName : task.getOwnerId(), task.getType());
                 if (thisTasks.contains(taskOwnerNameAndType)) {
                     if (!task.isStatus(Status.NEW, Status.UNFINISHED)) {
                         ownerNameTypeSet.add(taskOwnerNameAndType);
@@ -668,6 +759,18 @@ public class WorkflowUtil {
         }
     }
 
+    public static String getCompoundWorkflowDocMsg(int numberOfDocuments, String defaultMessage) {
+        return numberOfDocuments == 0 ? defaultMessage : MessageUtil.getMessage("workflow_compound_number_of_documents", numberOfDocuments);
+    }
+
+    public static String getCompoundWorkflowTypeTemplateSuffix(CompoundWorkflowType compoundWorkflowType) {
+        return compoundWorkflowType != null ? compoundWorkflowTemplateSuffixes.get(compoundWorkflowType) : "";
+    }
+
+    public static Set<String> getIndependentWorkflowDefaultDocPermissions() {
+        return Collections.unmodifiableSet(independentWorkflowDefaultDocPermissions);
+    }
+
     public static Set<Task> getTasks(Set<Task> selectedTasks, List<CompoundWorkflow> compoundWorkflows, Predicate<Task> taskPredicate) {
         if (compoundWorkflows == null) {
             return selectedTasks;
@@ -683,6 +786,116 @@ public class WorkflowUtil {
             }
         }
         return selectedTasks;
+    }
+
+    public static String getCompoundWorkflowsState(List<CompoundWorkflow> compoundWorkflows, boolean onlyInProgress) {
+        List<String> compoundWorkflowState = new ArrayList<String>(10);
+        for (CompoundWorkflow compoundWorkflow : compoundWorkflows) {
+            compoundWorkflowState.add(getCompoundWorkflowState(compoundWorkflow, onlyInProgress));
+        }
+        return TextUtil.joinNonBlankStrings(compoundWorkflowState, "; ");
+    }
+
+    public static String getCompoundWorkflowState(CompoundWorkflow compoundWorkflow) {
+        String compoundWorkflowState;
+        if (compoundWorkflow.isStatus(Status.NEW, Status.STOPPED, Status.FINISHED)) {
+            compoundWorkflowState = compoundWorkflow.getStatus();
+        } else {
+            compoundWorkflowState = getCompoundWorkflowState(compoundWorkflow, false);
+        }
+        return compoundWorkflowState;
+    }
+
+    private static String getCompoundWorkflowState(CompoundWorkflow compoundWorkflow, boolean onlyInProgress) {
+        List<String> workflowStates = new ArrayList<String>();
+        for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+            if (onlyInProgress && !Status.IN_PROGRESS.equals(workflow.getStatus())) {
+                continue;
+            }
+            List<String> taskOwners = new ArrayList<String>();
+            for (Task task : workflow.getTasks()) {
+                if (task.isStatus(Status.IN_PROGRESS)) {
+                    taskOwners.add(task.getOwnerName());
+                }
+            }
+            workflowStates.add(MessageUtil.getMessage(workflow.getType().getLocalName())
+                    + (taskOwners.isEmpty() ? "" : " (" + TextUtil.joinNonBlankStrings(taskOwners, ", ") + ")"));
+        }
+        return TextUtil.joinNonBlankStrings(workflowStates, "; ");
+    }
+
+    public static boolean isFirstConfirmationTask(Task task) {
+        if (!task.isType(WorkflowSpecificModel.Types.CONFIRMATION_TASK)) {
+            return false;
+        }
+        for (Workflow workflow : task.getParent().getParent().getWorkflows()) {
+            if (!workflow.isType(WorkflowSpecificModel.Types.CONFIRMATION_WORKFLOW)) {
+                continue;
+            }
+            for (Task otherTask : workflow.getTasks()) {
+                if (task.getNodeRef().equals(otherTask.getNodeRef())) {
+                    return true;
+                }
+                return false;
+            }
+        }
+        // this code should never be reached
+        return true;
+    }
+
+    public static Map<QName, Serializable> getTaskSearchableProps(Map<QName, Serializable> compoundWorkflowProps) {
+        Map<QName, Serializable> taskSearchableProps = new HashMap<QName, Serializable>();
+        if (compoundWorkflowProps != null) {
+            taskSearchableProps.put(WorkflowSpecificModel.Props.COMPOUND_WORKFLOW_TITLE, compoundWorkflowProps.get(WorkflowCommonModel.Props.TITLE));
+            taskSearchableProps.put(WorkflowSpecificModel.Props.COMPOUND_WORKFLOW_COMMENT, compoundWorkflowProps.get(WorkflowCommonModel.Props.COMMENT));
+            taskSearchableProps.put(WorkflowSpecificModel.Props.SEARCHABLE_COMPOUND_WORKFLOW_CREATED_DATE_TIME,
+                    compoundWorkflowProps.get(WorkflowCommonModel.Props.CREATED_DATE_TIME));
+            taskSearchableProps.put(WorkflowSpecificModel.Props.SEARCHABLE_COMPOUND_WORKFLOW_OWNER_JOB_TITLE, compoundWorkflowProps.get(WorkflowCommonModel.Props.OWNER_JOB_TITLE));
+            taskSearchableProps.put(WorkflowSpecificModel.Props.SEARCHABLE_COMPOUND_WORKFLOW_OWNER_ORGANIZATION_NAME,
+                    compoundWorkflowProps.get(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME));
+            taskSearchableProps.put(WorkflowSpecificModel.Props.SEARCHABLE_COMPOUND_WORKFLOW_OWNER_NAME, compoundWorkflowProps.get(WorkflowCommonModel.Props.OWNER_NAME));
+            taskSearchableProps.put(WorkflowSpecificModel.Props.SEARCHABLE_COMPOUND_WORKFLOW_STARTED_DATE_TIME,
+                    compoundWorkflowProps.get(WorkflowCommonModel.Props.STARTED_DATE_TIME));
+            taskSearchableProps.put(WorkflowSpecificModel.Props.SEARCHABLE_COMPOUND_WORKFLOW_STATUS, compoundWorkflowProps.get(WorkflowCommonModel.Props.STATUS));
+            taskSearchableProps.put(WorkflowSpecificModel.Props.SEARCHABLE_COMPOUND_WORKFLOW_STOPPED_DATE_TIME,
+                    compoundWorkflowProps.get(WorkflowCommonModel.Props.STOPPED_DATE_TIME));
+            taskSearchableProps.put(WorkflowSpecificModel.Props.SEARCHABLE_COMPOUND_WORKFLOW_FINISHED_DATE_TIME,
+                    compoundWorkflowProps.get(WorkflowCommonModel.Props.FINISHED_DATE_TIME));
+            taskSearchableProps.put(WorkflowSpecificModel.Props.SEARCHABLE_COMPOUND_WORKFLOW_TYPE, compoundWorkflowProps.get(WorkflowCommonModel.Props.TYPE));
+        }
+        return taskSearchableProps;
+    }
+
+    public static void removeEmptyWorkflowsGeneratedByDelegation(CompoundWorkflow compoundWorkflow) {
+        ArrayList<Integer> emptyWfIndexes = new ArrayList<Integer>();
+        int wfIndex = 0;
+        for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+            if (WorkflowUtil.isGeneratedByDelegation(workflow) && workflow.getTasks().isEmpty()) {
+                emptyWfIndexes.add(wfIndex);
+            }
+            wfIndex++;
+        }
+        Collections.reverse(emptyWfIndexes);
+        for (int emptyWfIndex : emptyWfIndexes) {
+            compoundWorkflow.removeWorkflow(emptyWfIndex);
+        }
+    }
+
+    public static void removeTasksGeneratedByDelegation(CompoundWorkflow compoundWorkflow) {
+        for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+            ArrayList<Integer> delegatedTaskIndexes = new ArrayList<Integer>();
+            int taskIndex = 0;
+            for (Task task : workflow.getTasks()) {
+                if (WorkflowUtil.isGeneratedByDelegation(task)) {
+                    delegatedTaskIndexes.add(taskIndex);
+                }
+                taskIndex++;
+            }
+            Collections.reverse(delegatedTaskIndexes);
+            for (int delegatedTaskIndex : delegatedTaskIndexes) {
+                workflow.removeTask(delegatedTaskIndex);
+            }
+        }
     }
 
 }

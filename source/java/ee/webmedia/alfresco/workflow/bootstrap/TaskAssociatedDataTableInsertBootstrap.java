@@ -52,7 +52,7 @@ public class TaskAssociatedDataTableInsertBootstrap extends AbstractNodeUpdater 
     }
 
     @Override
-    protected String[] updateNode(NodeRef nodeRef) throws Exception {
+    protected String[] updateNode(final NodeRef nodeRef) throws Exception {
         List<String> results = new ArrayList<String>();
         String[] taskExistsError = checkTaskExists(nodeRef, log, nodeService, workflowService, workflowDbService);
         if (taskExistsError != null) {
@@ -109,6 +109,7 @@ public class TaskAssociatedDataTableInsertBootstrap extends AbstractNodeUpdater 
         } else {
             workflowDbService.createTaskFileEntries(nodeRef, files);
         }
+
         Map<QName, Serializable> newProps = new HashMap<QName, Serializable>();
         newProps.put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME, nodeService.getProperty(nodeRef, WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME));
         // also updates store_id value

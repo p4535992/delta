@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.document.search.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchResultsDialog;
@@ -22,6 +23,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
+import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
@@ -33,13 +35,17 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
+import ee.webmedia.alfresco.casefile.service.CaseFile;
+import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
 import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator.DocumentLocationState;
+import ee.webmedia.alfresco.docconfig.generator.systematic.KeywordsGenerator;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfig;
+import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchFilterService;
@@ -61,7 +67,9 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
             "recipientName",
             "docName",
             "dueDate",
-            "complienceDate");
+            "complienceDate",
+            "thesaurus",
+            "firstKeywordLevel");
     public static final QName SELECTED_STORES = RepoUtil.createTransientProp("selectedStores");
 
     protected List<SelectItem> stores;
@@ -127,26 +135,31 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
             for (QName removedProp : removedProps) {
                 filter.getProperties().remove(removedProp.toString() + WMUIProperty.AFTER_LABEL_BOOLEAN);
             }
-            setFilterDefaultValues(filter);
+            List<FieldDefinition> searchableDocumentFieldDefinitions = getDocumentAdminService().getSearchableDocumentFieldDefinitions();
+            searchableDocumentFieldDefinitions.add(createThesaurusField());
+            setFilterDefaultValues(filter, searchableDocumentFieldDefinitions, defaultCheckedFields);
         }
         getPropertySheetStateBean().reset(config.getStateHolders(), this);
     }
 
-    private void setFilterDefaultValues(Node filterNode) {
+    public static void setFilterDefaultValues(Node filterNode, List<FieldDefinition> searchableFields, List<String> defaultCheckedFields) {
         long start = System.currentTimeMillis();
         try {
-            List<FieldDefinition> searchableFields = BeanHelper.getDocumentAdminService().getSearchableFieldDefinitions();
             Map<String, Object> filterProp = filterNode.getProperties();
             for (FieldDefinition fieldDefinition : searchableFields) {
                 if (filterProp.containsKey(fieldDefinition.getQName().toString())) {
                     continue;
                 }
-                PropertyDefinition def = getDocumentConfigService().getPropertyDefinition(filterNode, fieldDefinition.getQName());
-                if (defaultCheckedFields.contains(def.getName().getLocalName())) {
+                DynamicPropertyDefinition def = getDocumentConfigService().getPropertyDefinition(filterNode, fieldDefinition.getQName());
+                if (defaultCheckedFields != null && defaultCheckedFields.contains(def.getName().getLocalName())) {
                     filterProp.put(fieldDefinition.getQName().toString() + WMUIProperty.AFTER_LABEL_BOOLEAN, Boolean.TRUE);
                 }
                 if (def.isMultiValued()) {
-                    filterProp.put(fieldDefinition.getQName().toString(), new ArrayList<Object>());
+                    ArrayList<Object> arrayList = new ArrayList<Object>();
+                    if (def.getDataTypeQName().equals(DataTypeDefinition.TEXT) && !FieldType.STRUCT_UNIT.equals(def.getFieldType())) {
+                        arrayList.add("");
+                    }
+                    filterProp.put(fieldDefinition.getQName().toString(), arrayList);
                 }
             }
         } finally {
@@ -205,11 +218,22 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
             transientNode.getProperties().put(DocumentSearchModel.Props.DOCUMENT_TYPE.toString() + WMUIProperty.AFTER_LABEL_BOOLEAN, Boolean.TRUE);
             transientNode.getProperties().put(DocumentSearchModel.Props.SEND_MODE.toString() + WMUIProperty.AFTER_LABEL_BOOLEAN, Boolean.TRUE);
             transientNode.getProperties().put(DocumentSearchModel.Props.DOCUMENT_CREATED.toString() + WMUIProperty.AFTER_LABEL_BOOLEAN, Boolean.TRUE);
-            setFilterDefaultValues(transientNode);
+            List<FieldDefinition> searchableDocumentFieldDefinitions = getDocumentAdminService().getSearchableDocumentFieldDefinitions();
+            searchableDocumentFieldDefinitions.add(createThesaurusField());
+            setFilterDefaultValues(transientNode, searchableDocumentFieldDefinitions, defaultCheckedFields);
             return transientNode;
         } finally {
             LOG.info("New search filter generation: " + (System.currentTimeMillis() - start) + "ms");
         }
+    }
+
+    public static FieldDefinition createThesaurusField() {
+        FieldDefinition thesaurusDef = BeanHelper.getDocumentAdminService().createNewUnSavedFieldDefinition();
+        thesaurusDef.setFieldId(KeywordsGenerator.THESAURUS.getLocalName());
+        thesaurusDef.setOriginalFieldId(KeywordsGenerator.THESAURUS.getLocalName());
+        thesaurusDef.setName(MessageUtil.getMessage("thesaurus"));
+        thesaurusDef.setFieldTypeEnum(FieldType.TEXT_FIELD);
+        return thesaurusDef;
     }
 
     protected Map<QName, Serializable> getMandatoryProps() {
@@ -296,6 +320,12 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
     @Override
     public void switchMode(boolean inEditMode) {
         throw new UnsupportedOperationException(); // TODO refactor this method out of this interface
+    }
+
+    @Override
+    public CaseFile getCaseFile() {
+        // Not used.
+        return null;
     }
 
 }

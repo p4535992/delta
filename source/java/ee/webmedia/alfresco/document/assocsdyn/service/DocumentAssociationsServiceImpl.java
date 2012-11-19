@@ -7,11 +7,13 @@ import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.DOC_
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_DATE_TIME;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_NUMBER;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -32,16 +34,22 @@ import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.base.BaseService;
 import ee.webmedia.alfresco.base.BaseService.Effort;
+import ee.webmedia.alfresco.casefile.log.service.CaseFileLogService;
+import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
+import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.service.AssociationModel;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
@@ -54,12 +62,34 @@ import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
+import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService.AssocType;
+import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.log.model.LogObject;
+import ee.webmedia.alfresco.log.service.LogService;
+import ee.webmedia.alfresco.privilege.service.PrivilegeService;
+import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.TextUtil;
+import ee.webmedia.alfresco.volume.model.VolumeModel;
+import ee.webmedia.alfresco.workflow.model.Status;
+import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
+import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
+import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
+import ee.webmedia.alfresco.workflow.service.Task;
+import ee.webmedia.alfresco.workflow.service.Workflow;
+import ee.webmedia.alfresco.workflow.service.WorkflowService;
+import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 
 public class DocumentAssociationsServiceImpl implements DocumentAssociationsService {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentAssociationsServiceImpl.class);
+
+    /** QName order in this list is used for sorting associations in associations block */
+    public static List<QName> ASSOCS_BETWEEN_DOC_LIST_UNIT_ITEMS = Arrays.asList(DocumentCommonModel.Assocs.DOCUMENT_2_DOCUMENT, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP,
+            DocumentCommonModel.Assocs.DOCUMENT_REPLY, CaseModel.Associations.CASE_DOCUMENT, VolumeModel.Associations.VOLUME_DOCUMENT, CaseFileModel.Assocs.CASE_FILE_DOCUMENT,
+            VolumeModel.Associations.VOLUME_CASE, CaseFileModel.Assocs.CASE_FILE_CASE, VolumeModel.Associations.VOLUME_VOLUME, CaseFileModel.Assocs.CASE_FILE_VOLUME,
+            CaseFileModel.Assocs.CASE_FILE_CASE_FILE);
 
     private DocumentAdminService documentAdminService;
     private DocumentDynamicService documentDynamicService;
@@ -67,6 +97,12 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
     private BaseService baseService;
     private NodeService nodeService;
     private DictionaryService dictionaryService;
+    private WorkflowService workflowService;
+    private LogService logService;
+    private DocumentLogService documentLogService;
+    private UserService userService;
+    private PrivilegeService privilegeService;
+    private CaseFileLogService caseFileLogService;
 
     @Override
     public List<AssociationModel> getAssocs(String documentTypeId, QName typeQNamePattern) {
@@ -288,23 +324,117 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
         }
         nodeService.createAssociation(sourceNodeRef, targetNodeRef, assocQName);
         updateModifiedDateTime(sourceNodeRef, targetNodeRef);
+        createLog(sourceNodeRef, targetNodeRef, false);
     }
 
-    /*
-     * NOTE: association with case is defined differently
-     */
+    @Override
+    public boolean createWorkflowAssoc(NodeRef docRef, NodeRef workflowRef, boolean updateMainDoc) {
+        createAssoc(docRef, workflowRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT);
+        logDocumentWorkflowAssocAction(docRef, workflowRef, "applog_compoundWorkflow_document_added", "applog_document_compoundWorkflow_added",
+                "document_log_compoundWorkflow_added");
+        setIndependentWorkflowDocPermissions(docRef, workflowRef);
+        workflowService.updateDocumentCompWorkflowSearchProps(docRef);
+        if (updateMainDoc && workflowService.getCompoundWorkflowDocumentCount(workflowRef) == 1) {
+            workflowService.updateMainDocument(workflowRef, docRef);
+            return true;
+        }
+        return false;
+    }
+
+    private void setIndependentWorkflowDocPermissions(NodeRef docRef, NodeRef workflowRef) {
+        CompoundWorkflow compoundWorkflow = workflowService.getCompoundWorkflow(workflowRef);
+        Set<String> defaultPrivileges = WorkflowUtil.getIndependentWorkflowDefaultDocPermissions();
+        String docNewOwnerUsername = null;
+        Map<String, Set<String>> userPrivileges = new HashMap<String, Set<String>>();
+        boolean isFirstConfirmationTask = true;
+        for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+            for (Task task : workflow.getTasks()) {
+                String ownerId = task.getOwnerId();
+                if (StringUtils.isBlank(ownerId)) {
+                    continue;
+                }
+                if (!userPrivileges.containsKey(ownerId)) {
+                    userPrivileges.put(ownerId, new HashSet<String>());
+                }
+                Set<String> userPriv = userPrivileges.get(ownerId);
+                if (task.isStatus(Status.IN_PROGRESS, Status.FINISHED, Status.STOPPED, Status.UNFINISHED)) {
+                    userPriv.addAll(defaultPrivileges);
+                }
+                if (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
+                    userPriv.add(DocumentCommonModel.Privileges.EDIT_DOCUMENT);
+                }
+                if (isFirstConfirmationTask && task.isType(WorkflowSpecificModel.Types.CONFIRMATION_TASK)) {
+                    userPriv.add(DocumentCommonModel.Privileges.EDIT_DOCUMENT);
+                    isFirstConfirmationTask = false;
+                }
+                if (WorkflowUtil.isActiveResponsible(task)) {
+                    docNewOwnerUsername = ownerId;
+                }
+            }
+        }
+        for (Map.Entry<String, Set<String>> entry : userPrivileges.entrySet()) {
+            Set<String> privilegesToAdd = entry.getValue();
+            if (privilegesToAdd != null && !privilegesToAdd.isEmpty()) {
+                privilegeService.setPermissions(docRef, entry.getKey(), privilegesToAdd);
+            }
+        }
+        if (docNewOwnerUsername != null && DocumentStatus.WORKING.equals((String) nodeService.getProperty(docRef, DocumentCommonModel.Props.DOC_STATUS))) {
+            documentDynamicService.setOwner(docRef, docNewOwnerUsername, false);
+        }
+    }
+
+    @Override
+    public void logDocumentWorkflowAssocRemove(final NodeRef docRef, final NodeRef workflowRef) {
+        logDocumentWorkflowAssocAction(docRef, workflowRef, "applog_compoundWorkflow_document_removed", "applog_document_compoundWorkflow_removed",
+                "document_log_compoundWorkflow_removed");
+    }
+
+    private void logDocumentWorkflowAssocAction(NodeRef docRef, NodeRef workflowRef, String appWorkflowLogMsgKey, String appDocumentLogMsgKey, String documentLogMsgKey) {
+        Map<QName, Serializable> docProps = nodeService.getProperties(docRef);
+        String typeName = documentAdminService.getDocumentTypeName((String) docProps.get(DocumentAdminModel.Props.OBJECT_TYPE_ID));
+        logService.addLogEntry(LogEntry.create(LogObject.COMPOUND_WORKFLOW, userService, workflowRef, appWorkflowLogMsgKey, typeName,
+                docProps.get(DocumentCommonModel.Props.DOC_NAME)));
+        String compoundWorkflowTitle = (String) nodeService.getProperty(workflowRef, WorkflowCommonModel.Props.TITLE);
+        logService.addLogEntry(LogEntry.create(LogObject.DOCUMENT, userService, docRef, appDocumentLogMsgKey, typeName,
+                compoundWorkflowTitle));
+        documentLogService.addDocumentLog(docRef, MessageUtil.getMessage(documentLogMsgKey, compoundWorkflowTitle));
+    }
+
+    @Override
+    public void deleteWorkflowAssoc(final NodeRef docRef, final NodeRef workflowRef) {
+        deleteAssoc(docRef, workflowRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT);
+        logDocumentWorkflowAssocRemove(docRef, workflowRef);
+        Map<QName, Serializable> compoundWorkflowProps = nodeService.getProperties(workflowRef);
+        NodeRef mainDocumentRef = (NodeRef) compoundWorkflowProps.get(WorkflowCommonModel.Props.MAIN_DOCUMENT);
+        if (docRef.equals(mainDocumentRef)) {
+            mainDocumentRef = null;
+        }
+        List<NodeRef> documentsToSign = (List<NodeRef>) compoundWorkflowProps.get(WorkflowCommonModel.Props.DOCUMENTS_TO_SIGN);
+        if (documentsToSign != null) {
+            documentsToSign.remove(docRef);
+        }
+        workflowService.updateIndependentWorkflowDocumentData(workflowRef, mainDocumentRef, documentsToSign);
+        workflowService.updateDocumentCompWorkflowSearchProps(docRef);
+    }
+
     @Override
     public void deleteAssoc(final NodeRef sourceNodeRef, final NodeRef targetNodeRef, QName assocQName) {
         if (assocQName == null) {
             assocQName = DocumentCommonModel.Assocs.DOCUMENT_2_DOCUMENT;
         }
         LOG.debug("Deleting " + assocQName + " association from document " + sourceNodeRef + " that points to " + targetNodeRef);
-        if (assocQName.equals(CaseModel.Associations.CASE_DOCUMENT)) {
-            nodeService.removeAssociation(targetNodeRef, sourceNodeRef, assocQName);
-        } else {
-            nodeService.removeAssociation(sourceNodeRef, targetNodeRef, assocQName);
-        }
+        nodeService.removeAssociation(sourceNodeRef, targetNodeRef, assocQName);
         updateModifiedDateTime(sourceNodeRef, targetNodeRef);
+        createLog(sourceNodeRef, targetNodeRef, true);
+    }
+
+    private void createLog(NodeRef sourceNodeRef, NodeRef targetNodeRef, boolean delete) {
+        if (CaseFileModel.Types.CASE_FILE.equals(nodeService.getType(sourceNodeRef))) {
+            caseFileLogService.addAssociationLog(sourceNodeRef, targetNodeRef, delete);
+        }
+        if (DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(targetNodeRef))) {
+            documentLogService.addAssociationLog(targetNodeRef, sourceNodeRef, delete);
+        }
     }
 
     /*
@@ -386,59 +516,39 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
     }
 
     private void addDocAssocInfo(AssociationRef assocRef, boolean isSourceAssoc, ArrayList<DocAssocInfo> assocInfos) {
-        DocAssocInfo assocInf = getDocAssocInfo(assocRef, isSourceAssoc);
+        DocAssocInfo assocInf = getDocListUnitAssocInfo(assocRef, isSourceAssoc);
         if (assocInf != null) {
             assocInfos.add(assocInf);
         }
     }
 
     @Override
-    public DocAssocInfo getDocAssocInfo(AssociationRef assocRef, boolean isSourceAssoc) {
+    public DocAssocInfo getDocListUnitAssocInfo(AssociationRef assocRef, boolean isSourceAssoc) {
         DocAssocInfo assocInf = new DocAssocInfo();
-        if (isSourceAssoc) {
-            final NodeRef sourceRef = assocRef.getSourceRef();
-            assocInf.setNodeRef(sourceRef);
-            if (!nodeService.hasAspect(sourceRef, DocumentCommonModel.Aspects.SEARCHABLE)) {
-                if (CaseModel.Associations.CASE_DOCUMENT.equals(assocRef.getTypeQName())) {
-                    assocInf.setCaseNodeRef(sourceRef);
-                    assocInf.setAssocType(AssocType.DEFAULT);
-                    assocInf.setType(MessageUtil.getMessage(VolumeType.CASE_FILE));
-                    assocInf.setTitle((String) nodeService.getProperty(sourceRef, CaseModel.Props.TITLE));
-                } else {
-                    LOG.debug("not searchable: " + assocRef);
-                    return null;
-                }
-            }
-            if (DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP.equals(assocRef.getTypeQName())) {
-                assocInf.setAssocType(AssocType.FOLLOWUP);
-            } else if (DocumentCommonModel.Assocs.DOCUMENT_REPLY.equals(assocRef.getTypeQName())) {
-                assocInf.setAssocType(AssocType.REPLY);
-            } else if (DocumentCommonModel.Assocs.DOCUMENT_2_DOCUMENT.equals(assocRef.getTypeQName())) {
-                assocInf.setAssocType(AssocType.DEFAULT);
-            } else if (assocInf.getAssocType() == null) {
-                throw new RuntimeException("Unexpected document type: " + assocRef.getTypeQName());
-            }
-            if (!assocInf.isCase()) {// document association, not case
-                final Node otherDocNode = new Node(sourceRef);
-                assocInf.setTitle((String) nodeService.getProperty(sourceRef, DOC_NAME));
-                Pair<String, String> documentTypeNameAndId = getDocumentAdminService().getDocumentTypeNameAndId(otherDocNode);
-                assocInf.setType(documentTypeNameAndId.getFirst());
-                assocInf.setTypeId(documentTypeNameAndId.getSecond());
-                assocInf.setRegNumber((String) nodeService.getProperty(sourceRef, REG_NUMBER));
-                assocInf.setRegDateTime((Date) nodeService.getProperty(sourceRef, REG_DATE_TIME));
-            }
-        } else {
-            final NodeRef targetRef = assocRef.getTargetRef();
-            if (!nodeService.hasAspect(targetRef, DocumentCommonModel.Aspects.SEARCHABLE)) {
-                return null;
-            }
-            if (DocumentCommonModel.Assocs.DOCUMENT_REPLY.equals(assocRef.getTypeQName())//
-                    || DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP.equals(assocRef.getTypeQName())) {
-                assocInf.setAssocType(AssocType.INITIAL);
-            } else if (DocumentCommonModel.Assocs.DOCUMENT_2_DOCUMENT.equals(assocRef.getTypeQName())) {
-                assocInf.setAssocType(AssocType.DEFAULT);
-            }
-            final Node otherDocNode = new Node(targetRef);
+        QName assocTypeQName = assocRef.getTypeQName();
+        boolean isDocumentWorkflowAssociation = DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT.equals(assocTypeQName);
+        if (skipAssoc(isSourceAssoc, assocTypeQName, isDocumentWorkflowAssociation)) {
+            return null;
+        }
+        NodeRef objectRef = isSourceAssoc ? assocRef.getSourceRef() : assocRef.getTargetRef();
+        if (isNotSearchableDocument(objectRef)) {
+            LOG.debug("not searchable: " + assocRef);
+            return null;
+        }
+        assocInf.setSource(isSourceAssoc);
+        assocInf.setOtherNodeRef(objectRef);
+        assocInf.setThisNodeRef(isSourceAssoc ? assocRef.getTargetRef() : assocRef.getSourceRef());
+        assocInf.setAssocTypeQName(assocTypeQName);
+        getAssocInfoType(isSourceAssoc, assocInf, assocTypeQName);
+        // default condition for allowing delete
+        assocInf.setAllowDelete(AssocType.DEFAULT == assocInf.getAssocType());
+        // retrieve data for association other end object
+        QName objectType = nodeService.getType(objectRef);
+        if (WorkflowCommonModel.Types.COMPOUND_WORKFLOW.equals(objectType)) {
+            assocInf.setType(MessageUtil.getMessage("compoundWorklfow_assoc_object_type"));
+            assocInf.setTitle((String) nodeService.getProperty(objectRef, WorkflowCommonModel.Props.TITLE));
+        } else if (DocumentCommonModel.Types.DOCUMENT.equals(objectType)) {
+            final Node otherDocNode = new Node(objectRef);
             final Map<String, Object> otherDocProps = otherDocNode.getProperties();
             assocInf.setTitle((String) otherDocProps.get(DOC_NAME));
             assocInf.setRegNumber((String) otherDocProps.get(REG_NUMBER));
@@ -446,10 +556,60 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
             Pair<String, String> documentTypeNameAndId = getDocumentAdminService().getDocumentTypeNameAndId(otherDocNode);
             assocInf.setType(documentTypeNameAndId.getFirst());
             assocInf.setTypeId(documentTypeNameAndId.getSecond());
-            assocInf.setNodeRef(assocRef.getTargetRef());
+        } else if (CaseModel.Types.CASE.equals(objectType)) {
+            assocInf.setCaseNodeRef(objectRef);
+            assocInf.setType(MessageUtil.getMessage("case"));
+            assocInf.setTitle((String) nodeService.getProperty(objectRef, CaseModel.Props.TITLE));
+        } else {
+            boolean isCaseFile = CaseFileModel.Types.CASE_FILE.equals(objectType);
+            if (isCaseFile || VolumeModel.Types.VOLUME.equals(objectType)) {
+                final Node volumeNode = new Node(objectRef);
+                assocInf.setVolumeNodeRef(objectRef);
+                Map<String, Object> volumeProps = volumeNode.getProperties();
+                assocInf.setTitle(TextUtil.joinNonBlankStrings(Arrays.asList((String) volumeProps.get(VolumeModel.Props.VOLUME_MARK),
+                        (String) volumeProps.get(DocumentDynamicModel.Props.TITLE)), " "));
+                if (isCaseFile) {
+                    assocInf.setType(BeanHelper.getDocumentAdminService().getCaseFileTypeName(volumeNode));
+                    assocInf.setCaseFileVolume(true);
+                } else {
+                    assocInf.setType(MessageUtil.getMessage(VolumeType.valueOf((String) volumeNode.getProperties().get(VolumeModel.Props.VOLUME_TYPE))));
+                }
+            }
         }
-        assocInf.setSource(isSourceAssoc);
         return assocInf;
+    }
+
+    private void getAssocInfoType(boolean isSourceAssoc, DocAssocInfo assocInf, QName assocTypeQName) {
+        if (DocumentCommonModel.Assocs.DOCUMENT_REPLY.equals(assocTypeQName) || DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP.equals(assocTypeQName)) {
+            if (isSourceAssoc) {
+                if (DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP.equals(assocTypeQName)) {
+                    assocInf.setAssocType(AssocType.FOLLOWUP);
+                } else if (DocumentCommonModel.Assocs.DOCUMENT_REPLY.equals(assocTypeQName)) {
+                    assocInf.setAssocType(AssocType.REPLY);
+                }
+            } else {
+                assocInf.setAssocType(AssocType.INITIAL);
+            }
+        } else if (DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT.equals(assocTypeQName)) {
+            assocInf.setAssocType(AssocType.WORKFLOW);
+        } else {
+            assocInf.setAssocType(AssocType.DEFAULT);
+        }
+    }
+
+    private boolean skipAssoc(boolean isSourceAssoc, QName assocTypeQName, boolean isDocumentWorkflowAssociation) {
+        // Compound workflow association block doesn't use this method,
+        // so retrieving workflow association info is not implemented for "from" associations
+        return !ASSOCS_BETWEEN_DOC_LIST_UNIT_ITEMS.contains(assocTypeQName)
+                && (!isDocumentWorkflowAssociation
+                || (isDocumentWorkflowAssociation
+                && (isSourceAssoc || !workflowService.isIndependentWorkflowEnabled() || !workflowService.isWorkflowTitleEnabled())));
+    }
+
+    private boolean isNotSearchableDocument(final NodeRef targetRef) {
+        QName targetType = nodeService.getType(targetRef);
+        return (DocumentCommonModel.Types.DOCUMENT.equals(targetType) || CaseFileModel.Types.CASE_FILE.equals(targetType))
+                && !nodeService.hasAspect(targetRef, DocumentCommonModel.Aspects.SEARCHABLE);
     }
 
     public void setDocumentAdminService(DocumentAdminService documentAdminService) {
@@ -474,6 +634,30 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
 
     public void setDictionaryService(DictionaryService dictionaryService) {
         this.dictionaryService = dictionaryService;
+    }
+
+    public void setWorkflowService(WorkflowService workflowService) {
+        this.workflowService = workflowService;
+    }
+
+    public void setLogService(LogService logService) {
+        this.logService = logService;
+    }
+
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
+
+    public void setDocumentLogService(DocumentLogService documentLogService) {
+        this.documentLogService = documentLogService;
+    }
+
+    public void setPrivilegeService(PrivilegeService privilegeService) {
+        this.privilegeService = privilegeService;
+    }
+
+    public void setCaseFileLogService(CaseFileLogService caseFileLogService) {
+        this.caseFileLogService = caseFileLogService;
     }
 
 }

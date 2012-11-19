@@ -11,9 +11,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.alfresco.repo.search.IndexerAndSearcher;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.repo.security.permissions.impl.AccessPermissionImpl;
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.security.AccessPermission;
@@ -25,8 +27,12 @@ import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.casefile.model.CaseFileModel;
+import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.common.service.ApplicationService;
+import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
@@ -46,7 +52,9 @@ public class PrivilegeServiceImpl implements PrivilegeService {
     private PermissionService permissionService;
     private NodeService nodeService;
     private UserService userService;
+    private GeneralService generalService;
     private AuthorityService authorityService;
+    private IndexerAndSearcher indexerAndSearcher;
     public static final String GROUPLESS_GROUP = "<groupless>";
     private ApplicationService applicationService;
     private LogService logService;
@@ -181,6 +189,45 @@ public class PrivilegeServiceImpl implements PrivilegeService {
         updatePrivileges(manageableRef, privilegesByGroup, true);
     }
 
+    @Override
+    public void updateIndexedPermissions(NodeRef nodeRef) {
+        NodeRef seriesRef = generalService.getAncestorNodeRefWithType(nodeRef, SeriesModel.Types.SERIES, false, false);
+        if (seriesRef != null && !Boolean.FALSE.equals(nodeService.getProperty(seriesRef, SeriesModel.Props.DOCUMENTS_VISIBLE_FOR_USERS_WITHOUT_ACCESS))) {
+            // Optimization: no need to reindex documents, if series is public or is changed from hidden -> public
+            return;
+        }
+        updateIndexedPermissionsImpl(nodeRef);
+    }
+
+    private void updateIndexedPermissionsImpl(NodeRef nodeRef) {
+        QName type = nodeService.getType(nodeRef);
+        if (DocumentCommonModel.Types.DOCUMENT.equals(type)) {
+            indexerAndSearcher.getIndexer(nodeRef.getStoreRef()).updateNode(nodeRef);
+            return;
+        }
+
+        for (QName assoc : getDocumentTreeNodeAssocs(type)) {
+            for (ChildAssociationRef childAssoc : nodeService.getChildAssocs(nodeRef, assoc, assoc)) {
+                NodeRef childRef = childAssoc.getChildRef();
+
+                if (permissionService.getInheritParentPermissions(childRef)) {
+                    updateIndexedPermissionsImpl(childRef);
+                }
+            }
+        }
+    }
+
+    private QName[] getDocumentTreeNodeAssocs(QName type) {
+        if (SeriesModel.Types.SERIES.equals(type)) {
+            return new QName[] { VolumeModel.Types.VOLUME, CaseFileModel.Types.CASE_FILE };
+        } else if (VolumeModel.Types.VOLUME.equals(type)) {
+            return new QName[] { CaseModel.Associations.CASE, DocumentCommonModel.Assocs.DOCUMENT };
+        } else if (CaseModel.Associations.CASE.equals(type) || CaseFileModel.Types.CASE_FILE.equals(type)) {
+            return new QName[] { DocumentCommonModel.Assocs.DOCUMENT };
+        }
+        return new QName[0];
+    }
+
     private void updatePrivileges(NodeRef manageableRef, Map<String, UserPrivileges> privilegesByAuthority, boolean group) {
         for (Iterator<Entry<String, UserPrivileges>> it = privilegesByAuthority.entrySet().iterator(); it.hasNext();) {
             Entry<String, UserPrivileges> entry = it.next();
@@ -242,7 +289,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
         QName nodeType = nodeService.getType(manageableRef);
         if (SeriesModel.Types.SERIES.equals(nodeType)) {
             obj = LogObject.RIGHTS_SERIES;
-        } else if (VolumeModel.Types.VOLUME.equals(nodeType)) {
+        } else if (VolumeModel.Types.VOLUME.equals(nodeType) || CaseFileModel.Types.CASE_FILE.equals(nodeType)) {
             obj = LogObject.RIGHTS_VOLUME;
         }
         logService.addLogEntry(LogEntry.create(obj, userService, manageableRef, messageCode, params));
@@ -301,6 +348,14 @@ public class PrivilegeServiceImpl implements PrivilegeService {
         this.authorityService = authorityService;
     }
 
+    public void setGeneralService(GeneralService generalService) {
+        this.generalService = generalService;
+    }
+
+    public void setIndexerAndSearcher(IndexerAndSearcher indexerAndSearcher) {
+        this.indexerAndSearcher = indexerAndSearcher;
+    }
+
     public void setPermissionService(PermissionService permissionService) {
         this.permissionService = permissionService;
     }
@@ -328,9 +383,11 @@ public class PrivilegeServiceImpl implements PrivilegeService {
         private final boolean inheritParentPermissions;
         private final Map<String, Set<String>> groupsByUser = new HashMap<String, Set<String>>();
         private Map<String, AccessPermission> ancestorAccessPermissionsMap;
+        private final String adminGroup;
 
         ThoroughInheritanceChecker(NodeRef manageableRef, String adminGroup) {
             parentRef = nodeService.getPrimaryParent(manageableRef).getParentRef();
+            this.adminGroup = adminGroup;
             userNamesInAdminsGroup = getUserService().getUserNamesInGroup(adminGroup);
             inheritParentPermissions = BeanHelper.getPermissionService().getInheritParentPermissions(manageableRef);
             if (isTest == null) {
@@ -409,7 +466,8 @@ public class PrivilegeServiceImpl implements PrivilegeService {
                 return true;
             }
             // check being admin after inspecting AccessPermissions
-            if (origAccessPermission.getAuthorityType() == AuthorityType.ADMIN || userNamesInAdminsGroup.contains(authority) || defaultAdmins.contains(authority)) {
+            if (origAccessPermission.getAuthorityType() == AuthorityType.ADMIN || userNamesInAdminsGroup.contains(authority) || defaultAdmins.contains(authority)
+                    || authority.equals(adminGroup)) {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("NOT inherited isAdmin: " + authority + " " + permission);
                 }
@@ -431,7 +489,9 @@ public class PrivilegeServiceImpl implements PrivilegeService {
                         }
                     }
                 }
-                MessageUtil.addErrorMessage(authority + " has permission " + permission + " on parentNode, however it is NOT INHERITED, but it is still somehow granted");
+                // XXX FROM KAAREL: When document is saved under case file for the first time then case file ownerId is added to document rights with editDocument permissions.
+                // Ats had inserted this verification here that now seems obsolete but is left as a comment for future wanderers...
+                // MessageUtil.addErrorMessage(authority + " has permission " + permission + " on parentNode, however it is NOT INHERITED, but it is still somehow granted");
             }
             return null;
         }

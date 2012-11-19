@@ -48,6 +48,17 @@
          </a:actionLink>
       </a:column>
       
+      <%-- Email date --%>
+      <a:column id="col7" primary="true" styleClass="#{r.cssStyleClass}" >
+         <f:facet name="header">
+            <a:sortLink id="col7-sort" label="#{DialogManager.bean.emailDateTimeColumnMsg}" value="emailDateTime" styleClass="header" />
+         </f:facet>
+         <a:actionLink id="col7-text" value="#{r.emailDateTimeStr}" action="#{DocumentDialog.action}" tooltip="#{r.emailDateTimeStr}" styleClass="no-underline"
+          actionListener="#{DocumentDialog.open}" styleClass="no-underline" >
+            <f:param name="nodeRef" value="#{r.node.nodeRef}" />
+          </a:actionLink>
+      </a:column>      
+       
       <a:column id="column-ownerName" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="column-ownerName-sort" label="#{msg.imap_ownerName}" value="ownerName" styleClass="header" />

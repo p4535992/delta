@@ -24,6 +24,20 @@
 
 </a:panel>
 
+<a:panel id="group-assignment-tasks-panel" styleClass="panel-100 #{(MyTasksBean.groupAssignmentPagerVisible) ? 'with-pager' : ''}" label="#{msg.task_list_group_assignment_title}" progressive="true" rendered="#{not empty MyTasksBean.groupAssignmentTasks}">
+
+   <%-- Main List --%>
+   <a:richList id="group-assignment-task-list" viewMode="details" pageSize="#{MyTasksBean.pageSize}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
+      width="100%" value="#{MyTasksBean.groupAssignmentTasks}" var="r">
+
+      <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/task-list-dialog-columns.jsp" />
+      <a:booleanEvaluator value="#{MyTasksBean.groupAssignmentPagerVisible}">
+         <a:dataPager id="group-assignment-pager" styleClass="pager" />
+      </a:booleanEvaluator>
+   </a:richList>
+
+</a:panel>
+
 <a:panel id="information-tasks-panel" styleClass="panel-100 #{(MyTasksBean.informationPagerVisible) ? 'with-pager' : ''}" label="#{msg.task_list_information_title}" progressive="true" rendered="#{not empty MyTasksBean.informationTasks}">
 
    <%-- Main List --%>

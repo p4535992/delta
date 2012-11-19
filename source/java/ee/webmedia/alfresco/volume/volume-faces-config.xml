@@ -15,14 +15,6 @@
       <managed-bean-name>VolumeListDialog</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.volume.web.VolumeListDialog</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
-      <managed-property>
-         <property-name>volumeService</property-name>
-         <value>#{VolumeService}</value>
-      </managed-property>
-      <managed-property>
-         <property-name>seriesService</property-name>
-         <value>#{SeriesService}</value>
-      </managed-property>
    </managed-bean>
 
    <managed-bean>

@@ -30,4 +30,6 @@ public interface WorkflowType {
 
     int getTaskOutcomes();
 
+    boolean isIndependentTaskType();
+
 }

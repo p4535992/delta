@@ -9,17 +9,8 @@
 	             <target>no_wait_workaround</target>
            </action>
 
-           <action id="document_search_export_estonian_post">
-               <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
-               <label-id>document_search_export_estonian_post</label-id>
-               <image>/images/icons/versioned_properties.gif</image>
-               <action-listener>#{DocumentSearchResultsDialog.exportEstonianPost}</action-listener>
-               <target>no_wait_workaround</target>
-           </action>
-
            <action-group id="document_search_actions">
                <action idref="document_search_export_csv"/>
-               <action idref="document_search_export_estonian_post"/>
            </action-group>
        </actions>
       <dialogs>

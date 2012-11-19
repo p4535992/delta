@@ -109,4 +109,9 @@ public class BaseWorkflowType implements WorkflowType, InitializingBean {
                 + "\n]";
     }
 
+    @Override
+    public boolean isIndependentTaskType() {
+        return false;
+    }
+
 }

@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.document.web.evaluator;
 
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
 
@@ -17,6 +18,6 @@ public class DocumentSavedActionEvaluator extends BaseActionEvaluator {
 
     @Override
     public boolean evaluate(Node node) {
-        return !BeanHelper.getDocumentDynamicService().isDraftOrImapOrDvk(node.getNodeRef());
+        return node.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE) && !BeanHelper.getDocumentDynamicService().isDraftOrImapOrDvk(node.getNodeRef());
     }
 }

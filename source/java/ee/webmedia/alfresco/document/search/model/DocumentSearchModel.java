@@ -16,6 +16,7 @@ public interface DocumentSearchModel {
 
     interface Types {
         QName FILTER = QName.createQName(URI, "filter");
+        QName OBJECT_FILTER = QName.createQName(URI, "objectFilter");
     }
 
     interface Assocs {
@@ -37,6 +38,10 @@ public interface DocumentSearchModel {
         QName EA_COMMITMENT_ITEM = QName.createQName(URI, "eaCommitmentItem");
         QName DOCUMENT_CREATED = QName.createQName(URI, "documentCreated");
         QName DOCUMENT_CREATED_END_DATE = QName.createQName(URI, "documentCreated_EndDate");
+
+        // objectFilter properties
+        QName OBJECT_TYPE = QName.createQName(URI, "objectType");
+        QName OBJECT_TITLE = QName.createQName(URI, "objectTitle");
     }
 
 }

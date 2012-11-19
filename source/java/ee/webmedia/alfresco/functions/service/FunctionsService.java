@@ -68,6 +68,8 @@ public interface FunctionsService {
      */
     boolean closeFunction(Function function);
 
+    void delete(Function function);
+
     /**
      * Reopen the function by setting DocListUnitStatus.OPEN status
      * 
@@ -80,5 +82,9 @@ public interface FunctionsService {
     Location getDocumentListLocation();
 
     public List<ChildAssociationRef> getFunctionAssocs(NodeRef functionsRoot);
+
+    boolean isDraftsFunction(NodeRef functionRef);
+
+    List<NodeRef> getAllLimitedActivityFunctions();
 
 }

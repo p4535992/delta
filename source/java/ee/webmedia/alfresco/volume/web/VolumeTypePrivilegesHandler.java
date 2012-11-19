@@ -4,10 +4,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
+
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 import ee.webmedia.alfresco.privilege.web.AbstractInheritingPrivilegesHandler;
 import ee.webmedia.alfresco.privilege.web.PrivilegesHandler;
+import ee.webmedia.alfresco.series.model.SeriesModel;
+import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
 /**
@@ -21,6 +26,16 @@ public class VolumeTypePrivilegesHandler extends AbstractInheritingPrivilegesHan
 
     protected VolumeTypePrivilegesHandler() {
         super(VolumeModel.Types.VOLUME, getSeriesVolumePrivs());
+    }
+
+    @Override
+    public String getConfirmMessage() {
+        NodeService nodeService = BeanHelper.getNodeService();
+        NodeRef seriesRef = nodeService.getPrimaryParent(state.getManageableRef()).getParentRef();
+        if (Boolean.FALSE.equals(nodeService.getProperty(seriesRef, SeriesModel.Props.DOCUMENTS_VISIBLE_FOR_USERS_WITHOUT_ACCESS))) {
+            return MessageUtil.getMessageAndEscapeJS("volume_manage_permissions_confirm_docsVisibleInheritChanged");
+        }
+        return super.getConfirmMessage();
     }
 
     /** used by series and volume permissions management */
@@ -37,17 +52,5 @@ public class VolumeTypePrivilegesHandler extends AbstractInheritingPrivilegesHan
             SERIES_VOLUME_MANAGEABLE_PERMISSIONS = Collections.unmodifiableList(privs);
         }
         return SERIES_VOLUME_MANAGEABLE_PERMISSIONS;
-    }
-
-    @Override
-    public boolean isEditable() {
-        if (super.isEditable()) {
-            return true;
-        }
-        return isOwner();
-    }
-
-    private boolean isOwner() {
-        return false; // regular volume doesn't have owner
     }
 }

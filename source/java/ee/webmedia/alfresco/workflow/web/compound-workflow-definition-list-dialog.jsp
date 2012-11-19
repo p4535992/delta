@@ -24,7 +24,7 @@
       </a:column>
 
       <%-- Document types column --%>
-      <a:column id="col2">
+      <a:column id="col2" rendered="#{CompoundWorkflowDefinitionListDialog.showDocumentColumn}">
          <f:facet name="header">
             <h:outputText id="col2-lbl" value="#{msg.workflow_compound_type}" />
          </f:facet>
@@ -32,13 +32,23 @@
             <f:converter converterId="ee.webmedia.alfresco.document.type.web.DocumentTypeConverter" />
          </h:outputText>
       </a:column>
+      
+      <%-- case file types column --%>
+      <a:column id="col3" rendered="#{CompoundWorkflowDefinitionListDialog.showCaseFileColumn}">
+         <f:facet name="header">
+            <h:outputText id="col3-lbl" value="#{msg.workflow_compound_caseFileType}" />
+         </f:facet>
+         <h:outputText id="col3-txt" value="#{r.caseFileTypes}">
+            <f:converter converterId="ee.webmedia.alfresco.document.type.web.CaseFileTypeConverter" />
+         </h:outputText>
+      </a:column>      
 
       <%-- Actions column --%>
-      <a:column id="col3" actions="true" style="text-align:right" styleClass="actions-column">
+      <a:column id="col4" actions="true" style="text-align:right" styleClass="actions-column">
          <f:facet name="header">
-            <h:outputText id="col3-txt" value="#{msg.workflow_compound_actions}" />
+            <h:outputText id="col4-txt" value="#{msg.workflow_compound_actions}" />
          </f:facet>
-         <a:actionLink id="col3-act2" value="#{msg.workflow_compound_delete}" tooltip="#{msg.workflow_compound_delete}"
+         <a:actionLink id="col4-act2" value="#{msg.workflow_compound_delete}" tooltip="#{msg.workflow_compound_delete}"
             actionListener="#{InformingDeleteNodeDialog.setupDelete}" action="dialog:informingDeleteNodeDialog" showLink="false" image="/images/icons/delete.gif">
             <f:param name="nodeRef" value="#{r.node.nodeRef}" />
             <f:param name="containerTitleMsgKey" value="delete_compound_workflow" />

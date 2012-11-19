@@ -32,6 +32,7 @@ import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
+import ee.webmedia.alfresco.common.model.DynamicBase;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO.ConfigItemType;
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader;
@@ -154,14 +155,17 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
         documentConfigService.registerChildAssocTypeQNameHierarchy(SystematicFieldGroupNames.ERRAND_ABROAD_APPLICANT, DocumentChildModel.Assocs.APPLICANT_ABROAD,
                 applicantAbroadAdditionalHierarchy);
 
+        documentConfigService.registerChildAssocTypeQNameHierarchy(SystematicFieldGroupNames.TRAINING_APPLICANT, DocumentChildModel.Assocs.APPLICANT_TRAINING, null);
+
         Set<String> multiValueOverrideFieldOriginalIds = new HashSet<String>();
         multiValueOverrideFieldOriginalIds.addAll(substituteTableFieldIds);
         multiValueOverrideFieldOriginalIds.addAll(dailyAllowanceTableFieldIds);
         multiValueOverrideFieldOriginalIds.addAll(expenseTableFieldIds);
         documentConfigService.registerMultiValuedOverrideBySystematicGroupName(SystematicFieldGroupNames.ERRAND_DOMESTIC_APPLICANT, multiValueOverrideFieldOriginalIds);
         documentConfigService.registerMultiValuedOverrideBySystematicGroupName(SystematicFieldGroupNames.ERRAND_ABROAD_APPLICANT, multiValueOverrideFieldOriginalIds);
+        documentConfigService.registerMultiValuedOverrideBySystematicGroupName(SystematicFieldGroupNames.TRAINING_APPLICANT, multiValueOverrideFieldOriginalIds);
 
-        return new String[] { SystematicFieldGroupNames.ERRAND_DOMESTIC_APPLICANT, SystematicFieldGroupNames.ERRAND_ABROAD_APPLICANT };
+        return new String[] { SystematicFieldGroupNames.ERRAND_DOMESTIC_APPLICANT, SystematicFieldGroupNames.ERRAND_ABROAD_APPLICANT, SystematicFieldGroupNames.TRAINING_APPLICANT };
     }
 
     @Override
@@ -623,6 +627,15 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
                     }
                 }
             }
+
+            applicants = document.getAllChildAssociations(DocumentChildModel.Assocs.APPLICANT_TRAINING);
+            if (applicants != null) {
+                for (Node applicant : applicants) {
+                    calculateDailyAllowanceSums(applicant, validate);
+                    calculateExpensesSum(applicant);
+
+                }
+            }
         }
 
         private void calculateExpensesSum(Node errand) {
@@ -701,17 +714,55 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
     }
 
     @Override
-    public void validate(DocumentDynamic document, ValidationHelper validationHelper) {
-        // Do nothing
+    public void validate(DynamicBase dynamicObject, ValidationHelper validationHelper) {
+        ErrandState errandStateHolder = BeanHelper.getPropertySheetStateBean().getStateHolder(ERRAND_STATE_HOLDER_KEY, ErrandState.class);
+        // errandStateHolder may be null if save action is not initiated from document dialog.
+        // At present, it is assumed that there is no need to check values when saving not from document dialog.
+        if (errandStateHolder != null) {
+            List<Node> applicants = dynamicObject.getNode().getAllChildAssociations(DocumentChildModel.Assocs.APPLICANT_ABROAD);
+            if (applicants != null) {
+                for (Node applicant : applicants) {
+                    List<Node> errands = applicant.getAllChildAssociations(DocumentChildModel.Assocs.ERRAND_ABROAD);
+                    if (errands != null) {
+                        validateErrandDailyAllowance(validationHelper, errandStateHolder, errands);
+                    }
+                }
+            }
+
+            applicants = dynamicObject.getNode().getAllChildAssociations(DocumentChildModel.Assocs.APPLICANT_TRAINING);
+            if (applicants != null) {
+                validateErrandDailyAllowance(validationHelper, errandStateHolder, applicants);
+            }
+        }
+    }
+
+    private void validateErrandDailyAllowance(ValidationHelper validationHelper, ErrandState errandStateHolder, List<Node> errands) {
+        outer: for (Node errand : errands) {
+            Map<String, Object> properties = errand.getProperties();
+            @SuppressWarnings("unchecked")
+            List<Long> dailyAllowanceDays = (List<Long>) properties.get(errandStateHolder.dailyAllowanceDaysProp.toString());
+            @SuppressWarnings("unchecked")
+            List<String> dailyAllowanceRates = (List<String>) properties.get(errandStateHolder.dailyAllowanceRateProp.toString());
+            if (dailyAllowanceDays != null) {
+                for (int i = 0; i < dailyAllowanceDays.size(); i++) {
+                    if (dailyAllowanceDays.get(i) != null && StringUtils.isNotBlank(dailyAllowanceRates.get(i))) {
+                        continue outer;
+                    }
+                }
+            }
+            validationHelper.addErrorMessage("document_validationMsg_mandatory_daily_allowance");
+        }
     }
 
     @Override
-    public void save(DocumentDynamic document) {
-        ErrandState errandStateHolder = BeanHelper.getPropertySheetStateBean().getStateHolder(ERRAND_STATE_HOLDER_KEY, ErrandState.class);
-        // errandStateHolder may be null if save action is not initiated from document dialog.
-        // At present, it is assumed that there is no need to recalculate values when saving not from document dialog.
-        if (errandStateHolder != null) {
-            errandStateHolder.calculateValues(document.getNode(), true);
+    public void save(DynamicBase document) {
+        if (document instanceof DocumentDynamic) {
+            ErrandState errandStateHolder = BeanHelper.getPropertySheetStateBean().getStateHolder(ERRAND_STATE_HOLDER_KEY, ErrandState.class);
+            // errandStateHolder may be null if save action is not initiated from document dialog.
+            // At present, it is assumed that there is no need to recalculate values when saving not from document dialog.
+            if (errandStateHolder != null) {
+                errandStateHolder.calculateValues(document.getNode(), true);
+            }
         }
     }
 

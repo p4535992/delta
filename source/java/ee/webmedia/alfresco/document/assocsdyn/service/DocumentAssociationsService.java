@@ -45,10 +45,17 @@ public interface DocumentAssociationsService {
 
     List<DocAssocInfo> getAssocInfos(Node docNode);
 
-    DocAssocInfo getDocAssocInfo(AssociationRef assocRef, boolean isSourceAssoc);
+    DocAssocInfo getDocListUnitAssocInfo(AssociationRef assocRef, boolean isSourceAssoc);
 
     void updateModifiedDateTime(NodeRef sourceNodeRef, NodeRef targetNodeRef);
 
     /** Return true if document is source or target node in followUp or reply association */
     boolean isBaseOrReplyOrFollowUpDocument(NodeRef docRef, Map<String, Map<String, AssociationRef>> addedAssocs);
+
+    /** Return true if workflow mainDocument property was updated */
+    boolean createWorkflowAssoc(NodeRef sourceRef, NodeRef targetRef, boolean updateMainDoc);
+
+    void deleteWorkflowAssoc(NodeRef sourceNodeRef, NodeRef targetNodeRef);
+
+    void logDocumentWorkflowAssocRemove(NodeRef docRef, NodeRef workflowRef);
 }

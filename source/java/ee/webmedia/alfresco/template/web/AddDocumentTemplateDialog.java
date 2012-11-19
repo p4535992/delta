@@ -48,6 +48,7 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
     private String templateType;
     private transient UIPropertySheet propertySheet;
     private boolean showReportOutputType;
+    public static final String USER_UPLOADED_FILE_NAME = MessageUtil.getMessage("template_user_uploaded_file_name");
 
     public void reportTypeValueChanged(final ValueChangeEvent event) {
         ComponentUtil.executeLater(PhaseId.INVOKE_APPLICATION, getPropertySheet(), new Closure() {
@@ -92,6 +93,9 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
         } else if (TemplateType.NOTIFICATION_TEMPLATE.name().equals(templateType)) {
             docTemplateNode.getAspects().add(DocumentTemplateModel.Aspects.TEMPLATE_NOTIFICATION);
             defaultComment = "template_system_template";
+        } else if (TemplateType.ARCHIVAL_REPORT_TEMPLATE.name().equals(templateType)) {
+            docTemplateNode.getAspects().add(DocumentTemplateModel.Aspects.TEMPLATE_ARCHIVAL_REPORT);
+            defaultComment = "template_archival_report_template";
         } else {
             docTemplateNode.getAspects().add(DocumentTemplateModel.Aspects.TEMPLATE_REPORT);
             defaultComment = "template_report_template";
@@ -127,8 +131,13 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
         }
 
         Map<String, Object> props = docTemplateNode.getProperties();
-        String newName = StringUtils.strip((String) props.get(DocumentTemplateServiceImpl.TEMP_PROP_FILE_NAME_BASE.toString()))
-                + props.get(DocumentTemplateServiceImpl.TEMP_PROP_FILE_NAME_EXTENSION.toString());
+        String newNameWithoutExtension = StringUtils.strip((String) props.get(DocumentTemplateServiceImpl.TEMP_PROP_FILE_NAME_BASE.toString()));
+        boolean documentTemplate = TemplateType.DOCUMENT_TEMPLATE.name().equals(templateType);
+        boolean archivalReportTemplate = TemplateType.ARCHIVAL_REPORT_TEMPLATE.name().equals(templateType);
+        if (documentTemplate && USER_UPLOADED_FILE_NAME.equals(newNameWithoutExtension)) {
+            throw new UnableToPerformException("template_wrong_file_name");
+        }
+        String newName = newNameWithoutExtension + props.get(DocumentTemplateServiceImpl.TEMP_PROP_FILE_NAME_EXTENSION.toString());
         checkPlusInFileName(newName);
         try {
             setFileName(newName);
@@ -146,8 +155,17 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
             getNodeService().addAspect(createdNode, DocumentTemplateModel.Aspects.TEMPLATE_EMAIL, properties);
         } else if (TemplateType.REPORT_TEMPLATE.name().equals(templateType)) {
             getNodeService().addAspect(createdNode, DocumentTemplateModel.Aspects.TEMPLATE_REPORT, properties);
-        } else if (TemplateType.DOCUMENT_TEMPLATE.name().equals(templateType)) {
-            getNodeService().addAspect(createdNode, DocumentTemplateModel.Aspects.TEMPLATE_DOCUMENT, properties);
+        } else if (documentTemplate || archivalReportTemplate) {
+            if (documentTemplate) {
+                getNodeService().addAspect(createdNode, DocumentTemplateModel.Aspects.TEMPLATE_DOCUMENT, properties);
+            } else if (archivalReportTemplate) {
+                getNodeService().addAspect(createdNode, DocumentTemplateModel.Aspects.TEMPLATE_ARCHIVAL_REPORT, properties);
+            }
+            if (StringUtils.equalsIgnoreCase("ott", FilenameUtils.getExtension(newName))) {
+                Map<QName, Serializable> defaultValues = new HashMap<QName, Serializable>(1);
+                defaultValues.put(DocumentTemplateModel.Prop.DEFAULT_VALUES, (Serializable) BeanHelper.getDocumentTemplateService().getDefaultFieldValues(createdNode));
+                getNodeService().addProperties(createdNode, defaultValues);
+            }
         }
         return outcome;
     }
@@ -179,7 +197,8 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
 
     public boolean validateFileExtension() {
         String name = getFileName();
-        return TemplateType.DOCUMENT_TEMPLATE.name().equals(templateType) && isFileNameHasValidExtension(name, "dotx", "dot")
+        return (TemplateType.DOCUMENT_TEMPLATE.name().equals(templateType) || TemplateType.ARCHIVAL_REPORT_TEMPLATE.name().equals(templateType))
+                && isFileNameHasValidExtension(name, "dotx", "dot", "ott")
                 || TemplateType.REPORT_TEMPLATE.name().equals(templateType) && isFileNameHasValidExtension(name, "xltx")
                 || (TemplateType.NOTIFICATION_TEMPLATE.name().equals(templateType) || TemplateType.EMAIL_TEMPLATE.name().equals(templateType))
                 && isFileNameHasValidExtension(name, "htm", "html");
@@ -196,7 +215,7 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
 
     public String getWrongFormatMsgKey() {
         String errorMsgKey;
-        if (TemplateType.DOCUMENT_TEMPLATE.name().equals(templateType)) {
+        if (TemplateType.DOCUMENT_TEMPLATE.name().equals(templateType) || TemplateType.ARCHIVAL_REPORT_TEMPLATE.name().equals(templateType)) {
             errorMsgKey = "template_wrong_file_format_doc";
         } else if (TemplateType.REPORT_TEMPLATE.name().equals(templateType)) {
             errorMsgKey = "template_wrong_file_format_report";

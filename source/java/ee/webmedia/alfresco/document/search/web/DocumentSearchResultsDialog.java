@@ -45,6 +45,7 @@ import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.enums.SendMode;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
@@ -188,7 +189,7 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
         }
         FacesContext context = FacesContext.getCurrentInstance();
         Map<String, Object> props = searchFilter.getProperties();
-        List<FieldDefinition> searchableFields = getDocumentAdminService().getSearchableFieldDefinitions();
+        List<FieldDefinition> searchableFields = getDocumentAdminService().getSearchableDocumentFieldDefinitions();
         QName dokLiikBoolean = getLabelBoolean(DocumentSearchModel.Props.DOCUMENT_TYPE);
         QName sendModeBoolean = getLabelBoolean(DocumentSearchModel.Props.SEND_MODE);
         final Map<String, String> titleLinkParams = new HashMap<String, String>(2);
@@ -230,6 +231,9 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
                 valueBinding = "#{r.seriesLabel}";
             } else if (primaryQName.equals(DocumentCommonModel.Props.VOLUME)) {
                 valueBinding = "#{r.volumeLabel}";
+            } else if (primaryQName.equals(DocumentDynamicModel.Props.FIRST_KEYWORD_LEVEL)) {
+                valueBinding = "#{r.hierarchicalKeywords}";
+                fieldTitle = MessageUtil.getMessage("thesaurus_keywords");
             } else if (isStructUnit) {
                 valueBinding = "#{r.unitStrucPropsConvertedMap['" + primaryQName.toPrefixString(getNamespaceService()) + "']}";
             } else {

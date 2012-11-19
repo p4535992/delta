@@ -9,6 +9,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
@@ -26,6 +27,7 @@ import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.application.jsp.JspStateManagerImpl;
 import org.springframework.web.jsf.FacesContextUtils;
 
@@ -94,21 +96,84 @@ public class FunctionsListDialog extends BaseDialogBean {
      * @param event
      */
     public void deleteAllDocuments(@SuppressWarnings("unused") ActionEvent event) {
-        final Pair<List<NodeRef>, Long> allDocumentAndCaseRefs = BeanHelper.getDocumentListService().getAllDocumentAndCaseRefs();
-        final List<NodeRef> refsToDelete = allDocumentAndCaseRefs.getFirst();
+        deleteDocumentListAndArchivalsListContents(false, false);
+    }
+
+    public void deleteAllDocumentsAndStructure(@SuppressWarnings("unused") ActionEvent event) {
+        deleteDocumentListAndArchivalsListContents(true, false);
+    }
+
+    public void deleteAllDocumentsAndStructureAndIndependentCompoundWorkflows(@SuppressWarnings("unused") ActionEvent event) {
+        deleteDocumentListAndArchivalsListContents(true, true);
+    }
+
+    public void deleteAllIndependentCompoundWorkflows(@SuppressWarnings("unused") ActionEvent event) {
+        deleteIndependentCompoundWorkflows();
+    }
+
+    private static final AtomicBoolean deleteInProgress = new AtomicBoolean(false);
+
+    private void deleteDocumentListAndArchivalsListContents(boolean deleteStructure, boolean deleteIndependentCompoundWorkflows) {
+        if (!deleteInProgress.compareAndSet(false, true)) {
+            throw new RuntimeException("Delete already in progress, wait for it to complete");
+        }
+        try {
+            log.info("Deleting from document list...");
+            NodeRef documentListRootRef = getFunctionsService().getFunctionsRoot();
+            deleteAllDocumentsAndStructure(documentListRootRef, deleteStructure);
+            log.info("Deleting from archivals list...");
+            NodeRef archivalsListRootRef = getGeneralService().getArchivalsStoreVOs().iterator().next().getNodeRef();
+            deleteAllDocumentsAndStructure(archivalsListRootRef, deleteStructure);
+            if (deleteIndependentCompoundWorkflows) {
+                deleteIndependentCompoundWorkflows();
+            }
+            log.info("Completed all deleting");
+        } finally {
+            deleteInProgress.set(false);
+        }
+    }
+
+    private void deleteIndependentCompoundWorkflows() {
+        log.info("Deleting independent compound workflows...");
+        NodeRef independentWorkflowsRoot = BeanHelper.getWorkflowService().getIndependentWorkflowsRoot();
+        log.info("Finding nodes to delete...");
+        List<NodeRef> independentWorkflows = new ArrayList<NodeRef>();
+        for (ChildAssociationRef childAssocRef : getNodeService().getChildAssocs(independentWorkflowsRoot)) {
+            independentWorkflows.add(childAssocRef.getChildRef());
+        }
+        log.info("There are " + independentWorkflows.size() + " independent compound workflow nodes to delete");
+        deleteNodeRefsBatch(independentWorkflows, 30);
+    }
+
+    private void deleteAllDocumentsAndStructure(NodeRef functionsRoot, boolean deleteStructure) {
         final int batchMaxSize = 30;
-        ArrayList<NodeRef> nodeRefsBatch = new ArrayList<NodeRef>(batchMaxSize);
+        log.info("Finding nodes to delete...");
+        Pair<List<NodeRef>, List<NodeRef>> allDocumentAndStructureRefs = getDocumentListService().getAllDocumentAndStructureRefs(functionsRoot);
+        List<NodeRef> docRefs = allDocumentAndStructureRefs.getFirst();
+        List<NodeRef> structRefs = allDocumentAndStructureRefs.getSecond();
+        log.info("There are " + docRefs.size() + " document nodes" + (deleteStructure ? " and " + structRefs.size() + " structure nodes" : "") + " to delete");
+        deleteNodeRefsBatch(docRefs, batchMaxSize);
+        if (deleteStructure) {
+            deleteNodeRefsBatch(structRefs, batchMaxSize);
+        }
+    }
+
+    private void deleteNodeRefsBatch(final List<NodeRef> refsToDelete, final int batchMaxSize) {
+        log.info("Total nodes to delete is " + refsToDelete.size() + ", starting to delete " + batchMaxSize + " nodes at a time...");
+        List<NodeRef> nodeRefsBatch = new ArrayList<NodeRef>(batchMaxSize);
         for (int i = 0; i < refsToDelete.size(); i++) {
             nodeRefsBatch.add(refsToDelete.get(i));
-            if (i == (refsToDelete.size() - 1) || (i % batchMaxSize == 0)) {
-                log.info("Deleting " + nodeRefsBatch.size() + " case or document nodeRefs");
-                getGeneralService().deleteNodeRefs(nodeRefsBatch);
-                log.info("Deleted " + nodeRefsBatch.size() + " case or document nodeRefs");
+            if ((i + 1) == refsToDelete.size() || ((i + 1) % batchMaxSize == 0)) {
+                try {
+                    getGeneralService().deleteNodeRefs(nodeRefsBatch, false);
+                    log.info("Deleted " + (i + 1) + " nodes out of " + refsToDelete.size() + " nodes");
+                } catch (Exception e) {
+                    log.error("Error deleting " + batchMaxSize + " nodes, continuing:\n" + nodeRefsBatch, e);
+                }
                 nodeRefsBatch.clear();
             }
         }
-        final long docCount = allDocumentAndCaseRefs.getSecond();
-        MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "docList_deleteAllDocuments_success", docCount);
+        log.info("Completed deleting " + refsToDelete.size() + " nodes");
     }
 
     // START: JSP event handlers
@@ -218,20 +283,21 @@ public class FunctionsListDialog extends BaseDialogBean {
 
     public List<Function> getMySeriesFunctions() {
         List<Function> seriesFunctions = new ArrayList<Function>(functions.size());
-        Integer currentUsersStructUnitId = getUserService().getCurrentUsersStructUnitId();
-        for (Function function : getFunctions()) {
-            List<ChildAssociationRef> childAssocs = getNodeService().getChildAssocs(function.getNodeRef());
-            for (ChildAssociationRef caRef : childAssocs) {
-                @SuppressWarnings("unchecked")
-                List<Integer> structUnits = (List<Integer>) getNodeService().getProperty(caRef.getChildRef(), SeriesModel.Props.STRUCT_UNIT);
-                boolean contains = structUnits != null && structUnits.contains(currentUsersStructUnitId);
-                if (contains) {
-                    seriesFunctions.add(function);
-                    break;
+        String currentUsersStructUnitId = getUserService().getCurrentUsersStructUnitId();
+        if (StringUtils.isNotBlank(currentUsersStructUnitId)) {
+            for (Function function : getFunctions()) {
+                List<ChildAssociationRef> childAssocs = getNodeService().getChildAssocs(function.getNodeRef());
+                for (ChildAssociationRef caRef : childAssocs) {
+                    @SuppressWarnings("unchecked")
+                    List<String> structUnits = (List<String>) getNodeService().getProperty(caRef.getChildRef(), SeriesModel.Props.STRUCT_UNIT);
+                    boolean contains = structUnits != null && structUnits.contains(currentUsersStructUnitId);
+                    if (contains) {
+                        seriesFunctions.add(function);
+                        break;
+                    }
                 }
             }
         }
-
         return seriesFunctions;
     }
 

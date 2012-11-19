@@ -93,6 +93,7 @@
       <property name="logService" ref="LogService" />
       <property name="authorityService" ref="AuthorityService" />
       <property name="luceneConfig" ref="admLuceneIndexerAndSearcherFactory" />
+      <property name="finishedIncomingLettersAreNotShown" value="${conf.myDocumentsMenu.finishedIncomingLettersAreNotShown}" />
    </bean>
 
    <bean id="DocumentSearchService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -175,6 +176,18 @@
       <property name="menuService" ref="MenuService" />
       <property name="documentSearchService" ref="DocumentSearchService" />
    </bean>
+   
+   
+   <bean id="volumeAndCaseLocationPropUpdater3" class="ee.webmedia.alfresco.document.search.bootstrap.VolumeAndCaseLocationPropUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>      
+      <property name="documentSearchService" ref="DocumentSearchService" /> 
+   </bean> 
 
    <!-- START: web beans: -->
 

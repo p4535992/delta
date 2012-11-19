@@ -9,4 +9,5 @@
 <%@ page isELIgnored="false"%>
 
 <%-- just a placeholder for dynamically generated panels --%>
+<h:panelGroup binding="#{CompoundWorkflowDefinitionDialog.commonDataGroup}" />
 <wm:ajaxCapablePanelGroupTag id="compound-workflow-panel-group" binding="#{CompoundWorkflowDefinitionDialog.panelGroup}" />

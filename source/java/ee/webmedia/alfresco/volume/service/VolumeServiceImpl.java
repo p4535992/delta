@@ -1,28 +1,41 @@
 package ee.webmedia.alfresco.volume.service;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getEventPlanService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getFunctionsService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.alfresco.service.cmr.dictionary.DictionaryService;
+import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
-import org.alfresco.web.bean.repository.TransientNode;
 import org.apache.commons.lang.time.DateUtils;
 
+import ee.webmedia.alfresco.casefile.model.CaseFileModel;
+import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.eventplan.model.EventPlanModel;
+import ee.webmedia.alfresco.eventplan.service.EventPlanService;
 import ee.webmedia.alfresco.log.PropDiffHelper;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
@@ -46,7 +59,6 @@ public class VolumeServiceImpl implements VolumeService {
     private static final BeanPropertyMapper<Volume> volumeBeanPropertyMapper = BeanPropertyMapper.newInstance(Volume.class);
     private static final BeanPropertyMapper<DeletedDocument> deletedDocumentBeanPropertyMapper = BeanPropertyMapper.newInstance(DeletedDocument.class);
 
-    private DictionaryService dictionaryService;
     private NodeService nodeService;
     private GeneralService generalService;
     private SeriesService seriesService;
@@ -54,11 +66,16 @@ public class VolumeServiceImpl implements VolumeService {
     private DocumentService documentService;
     private UserService userService;
     private LogService logService;
+    private DocumentAdminService _documentAdminService;
+    private EventPlanService eventPlanService;
     private boolean caseVolumeEnabled;
 
     @Override
     public List<ChildAssociationRef> getAllVolumeRefsBySeries(NodeRef seriesNodeRef) {
-        return nodeService.getChildAssocs(seriesNodeRef, RegexQNamePattern.MATCH_ALL, VolumeModel.Associations.VOLUME);
+        List<ChildAssociationRef> childAssocs = new ArrayList<ChildAssociationRef>(nodeService.getChildAssocs(seriesNodeRef, RegexQNamePattern.MATCH_ALL,
+                VolumeModel.Associations.VOLUME));
+        childAssocs.addAll(nodeService.getChildAssocs(seriesNodeRef, RegexQNamePattern.MATCH_ALL, CaseFileModel.Assocs.CASE_FILE));
+        return childAssocs;
     }
 
     @Override
@@ -167,20 +184,42 @@ public class VolumeServiceImpl implements VolumeService {
 
     @Override
     public void saveOrUpdate(Volume volume, boolean fromNodeProps) {
-        Node volumeNode = volume.getNode();
-        if (volumeNode instanceof TransientNode) { // save
-            Map<QName, Serializable> qNameProperties = fromNodeProps ? RepoUtil.toQNameProperties(volumeNode.getProperties())
+        WmNode volumeNode = volume.getNode();
+        boolean isNew = volumeNode.isUnsaved();
+        Node series = isNew ? new Node(volume.getSeriesNodeRef()) : generalService.getPrimaryParent(volumeNode.getNodeRef());
+        NodeRef newParentRef = series.getNodeRef();
+        Map<String, Object> locationProps = new HashMap<String, Object>();
+        NodeRef currentParenRef = (NodeRef) volume.getNode().getProperties().get(DocumentCommonModel.Props.SERIES);
+        boolean needUpdateVolumeShortcuts = false;
+        if (isNew || !newParentRef.equals(currentParenRef)) {
+            locationProps.put(DocumentCommonModel.Props.SERIES.toString(), newParentRef);
+            NodeRef newFunctionRef = generalService.getPrimaryParent(newParentRef).getNodeRef();
+            locationProps.put(DocumentCommonModel.Props.FUNCTION.toString(), newFunctionRef);
+            Node previousFunction = !isNew ? getGeneralService().getPrimaryParent(currentParenRef) : null;
+            if ((previousFunction == null || !getFunctionsService().isDraftsFunction(previousFunction.getNodeRef()))
+                    && getFunctionsService().isDraftsFunction(newFunctionRef)) {
+                needUpdateVolumeShortcuts = true;
+            }
+        }
+        Map<QName, Serializable> newProps = RepoUtil.toQNameProperties(volumeNode.getProperties());
+        if (isNew) { // save
+            Map<QName, Serializable> qNameProperties = fromNodeProps ? newProps
                     : volumeBeanPropertyMapper.toProperties(volume);
+            qNameProperties.putAll(RepoUtil.toQNameProperties(locationProps));
             volume.setNode(createVolumeNode(volume.getSeriesNodeRef(), qNameProperties));
 
             Map<String, Object> props = volume.getNode().getProperties();
             logService.addLogEntry(LogEntry.create(LogObject.VOLUME, userService, volume.getNode().getNodeRef(), "applog_space_add",
                     props.get(VolumeModel.Props.VOLUME_MARK.toString()), props.get(VolumeModel.Props.TITLE.toString())));
+
+            eventPlanService.initVolumeOrCaseFileFromSeriesEventPlan(volume.getNode().getNodeRef());
+
         } else { // update
             if (!checkContainsCasesValue(volume)) {
                 throw new UnableToPerformException("volume_contains_docs_or_cases");
             }
 
+            Map<QName, Serializable> repoProps = nodeService.getProperties(volumeNode.getNodeRef());
             String propDiff = new PropDiffHelper()
                     .label(VolumeModel.Props.STATUS, "volume_status")
                     .label(VolumeModel.Props.VOLUME_TYPE, "volume_volumeType")
@@ -189,23 +228,32 @@ public class VolumeServiceImpl implements VolumeService {
                     .label(VolumeModel.Props.DESCRIPTION, "volume_description")
                     .label(VolumeModel.Props.VALID_FROM, "volume_validFrom")
                     .label(VolumeModel.Props.VALID_TO, "volume_validTo")
-                    .label(VolumeModel.Props.ARCHIVING_NOTE, "volume_archive_note")
-                    .label(VolumeModel.Props.SEND_TO_DESTRUCTION, "volume_sendToDestruction")
                     .label(VolumeModel.Props.CASES_CREATABLE_BY_USER, "volume_casesCreatableByUser")
-                    .diff(nodeService.getProperties(volumeNode.getNodeRef()), RepoUtil.toQNameProperties(volumeNode.getProperties()));
-
+                    .diff(repoProps, newProps);
             if (propDiff != null) {
                 logService.addLogEntry(LogEntry.create(LogObject.VOLUME, userService, volumeNode.getNodeRef(), "applog_space_edit",
                         volume.getVolumeMark(), volume.getTitle(), propDiff));
             }
 
             if (fromNodeProps) {
+                volumeNode.getProperties().putAll(locationProps);
                 generalService.setPropertiesIgnoringSystem(volumeNode.getNodeRef(), volumeNode.getProperties());
             } else {
-                generalService.setPropertiesIgnoringSystem(volumeNode.getNodeRef(), RepoUtil.toStringProperties(volumeBeanPropertyMapper
-                        .toProperties(volume)));
+                Map<String, Object> stringProperties = RepoUtil.toStringProperties(volumeBeanPropertyMapper.toProperties(volume));
+                stringProperties.putAll(locationProps);
+                generalService.setPropertiesIgnoringSystem(volumeNode.getNodeRef(), stringProperties);
             }
 
+        }
+        final NodeRef volumeRef = volume.getNode().getNodeRef();
+        if (needUpdateVolumeShortcuts) {
+            getGeneralService().runOnBackground(new RunAsWork<Void>() {
+                @Override
+                public Void doWork() throws Exception {
+                    BeanHelper.getMenuService().addVolumeShortcuts(volumeRef, false);
+                    return null;
+                }
+            }, "addVolumeShortcuts", true);
         }
     }
 
@@ -218,7 +266,7 @@ public class VolumeServiceImpl implements VolumeService {
         Volume repoVolume = getVolumeByNodeRef(volume.getNode().getNodeRef());
         Boolean containsCasesValue = (Boolean) volume.getNode().getProperties().get(VolumeModel.Props.CONTAINS_CASES);
         Boolean origContainsCasesValue = (Boolean) repoVolume.getNode().getProperties().get(VolumeModel.Props.CONTAINS_CASES);
-        if (!containsCasesValue.equals(origContainsCasesValue)) {
+        if (origContainsCasesValue != null && !origContainsCasesValue.equals(containsCasesValue)) {
             return caseService.getCasesCountByVolume(volume.getNode().getNodeRef()) == 0
                     && documentService.getDocumentsCountByVolumeOrCase(volume.getNode().getNodeRef()) == 0;
         }
@@ -260,7 +308,6 @@ public class VolumeServiceImpl implements VolumeService {
             // set validFrom and validTo
             final Date baseValidFrom = baseVolume.getValidFrom();
             final Date baseValidTo = baseVolume.getValidTo();
-            final Date baseDispositionDate = baseVolume.getDispositionDate();
             Date newValidFrom = DateUtils.addYears(baseValidFrom, 1);
             newValidFrom = DateUtils.setMonths(newValidFrom, 0);
             newValidFrom = DateUtils.setDays(newValidFrom, 1);
@@ -269,9 +316,7 @@ public class VolumeServiceImpl implements VolumeService {
             if (baseValidTo != null) {
                 volume.setValidTo(DateUtils.addYears(baseValidTo, 1));
             }
-            if (baseDispositionDate != null) {
-                volume.setDispositionDate(DateUtils.addYears(baseDispositionDate, 1));
-            }
+
             volume.setContainingDocsCount(0);
         } else {
             volume = new Volume();
@@ -280,15 +325,19 @@ public class VolumeServiceImpl implements VolumeService {
             volume.setTitle(parentSeries.getTitle());
             volume.setValidFrom(new Date());
         }
+
         volume.setVolumeMark(volumeMark);
         volume.setStatus(DocListUnitStatus.OPEN.getValueName());
         final Map<QName, Serializable> props = volumeBeanPropertyMapper.toProperties(volume);
         // create node
-        final Node volumeNode;
+        final WmNode volumeNode;
         if (baseVolume != null) {
             volumeNode = createVolumeNode(volume.getSeriesNodeRef(), props); // persist
         } else {
-            volumeNode = TransientNode.createNew(dictionaryService, dictionaryService.getType(VolumeModel.Types.VOLUME), null, props);
+            volumeNode = new WmNode(RepoUtil.createNewUnsavedNodeRef(),
+                    VolumeModel.Types.VOLUME,
+                    generalService.getDefaultAspects(VolumeModel.Types.VOLUME),
+                    props);
         }
         // set properties that are not persisted
         volume.setNode(volumeNode);
@@ -296,11 +345,13 @@ public class VolumeServiceImpl implements VolumeService {
         return volume;
     }
 
-    private Node createVolumeNode(NodeRef seriesNodeRef, Map<QName, Serializable> props) {
+    private WmNode createVolumeNode(NodeRef seriesNodeRef, Map<QName, Serializable> props) {
+        props.put(DocumentCommonModel.Props.SERIES, seriesNodeRef);
+        props.put(DocumentCommonModel.Props.FUNCTION, nodeService.getPrimaryParent(seriesNodeRef).getParentRef());
         NodeRef volumeNodeRef = nodeService.createNode(seriesNodeRef,
                 VolumeModel.Associations.VOLUME, VolumeModel.Associations.VOLUME, VolumeModel.Types.VOLUME,
                 props).getChildRef();
-        return generalService.fetchNode(volumeNodeRef);
+        return getVolumeNodeByRef(volumeNodeRef);
     }
 
     @Override
@@ -329,16 +380,29 @@ public class VolumeServiceImpl implements VolumeService {
     }
 
     @Override
-    public void closeVolume(Volume volume) {
-        final Node volumeNode = volume.getNode();
-        if (isClosed(volumeNode)) {
+    public void delete(Volume volume) {
+        List<NodeRef> documents = documentService.getAllDocumentRefsByParentRef(volume.getNode().getNodeRef());
+        List<Case> cases = caseService.getAllCasesByVolume(volume.getNode().getNodeRef());
+        if (documents.isEmpty() && cases.isEmpty()) {
+            nodeService.deleteNode(volume.getNode().getNodeRef());
             return;
         }
-        Map<String, Object> props = volumeNode.getProperties();
+        throw new UnableToPerformException("volume_delete_not_empty");
 
+    }
+
+    @Override
+    public void closeVolume(NodeRef volumeRef) {
+        Pair<Boolean, Date> closeResult = getEventPlanService().closeVolumeOrCaseFile(volumeRef);
+        if (!closeResult.getFirst()) {
+            return;
+        }
+
+        Volume volume = getVolumeByNodeRef(volumeRef);
+        Map<String, Object> props = volume.getNode().getProperties();
         props.put(VolumeModel.Props.STATUS.toString(), DocListUnitStatus.CLOSED.getValueName());
-        if (props.get(VolumeModel.Props.VALID_TO) == null) {
-            props.put(VolumeModel.Props.VALID_TO.toString(), new Date());
+        if (closeResult.getSecond() != null) {
+            props.put(VolumeModel.Props.VALID_TO.toString(), closeResult.getSecond());
         }
 
         Series series = seriesService.getSeriesByNodeRef(volume.getSeriesNodeRef().toString());
@@ -346,10 +410,10 @@ public class VolumeServiceImpl implements VolumeService {
         if (retentionPeriod != null) {
             final Calendar cal1 = Calendar.getInstance();
             cal1.set(cal1.get(Calendar.YEAR) + 1 + retentionPeriod, 0, 1);// 1. January next year + retentionPeriod(in years)
-            props.put(VolumeModel.Props.DISPOSITION_DATE.toString(), DateUtils.truncate(cal1, Calendar.DAY_OF_MONTH).getTime());
+            props.put(EventPlanModel.Props.RETAIN_UNTIL_DATE.toString(), DateUtils.truncate(cal1, Calendar.DAY_OF_MONTH).getTime());
         }
-        if (!(volumeNode instanceof TransientNode)) { // force closing all cases of given volume even if there are some cases that are still opened
-            caseService.closeAllCasesByVolume(volumeNode.getNodeRef());
+        if (volume.isSaved()) { // force closing all cases of given volume even if there are some cases that are still opened
+            caseService.closeAllCasesByVolume(volume.getNodeRef());
         }
         try {
             saveOrUpdate(volume);
@@ -359,8 +423,8 @@ public class VolumeServiceImpl implements VolumeService {
     }
 
     @Override
-    public Node getVolumeNodeByRef(NodeRef volumeNodeRef) {
-        return generalService.fetchNode(volumeNodeRef);
+    public WmNode getVolumeNodeByRef(NodeRef volumeNodeRef) {
+        return generalService.fetchObjectNode(volumeNodeRef, VolumeModel.Types.VOLUME);
     }
 
     @Override
@@ -374,13 +438,20 @@ public class VolumeServiceImpl implements VolumeService {
      * @return Volume object with reference to corresponding seriesNodeRef
      */
     private Volume getVolumeByNoderef(NodeRef volumeNodeRef, NodeRef seriesNodeRef) {
-        if (!nodeService.getType(volumeNodeRef).equals(VolumeModel.Types.VOLUME)) {
+        QName type = nodeService.getType(volumeNodeRef);
+        boolean isDynamic = type.equals(CaseFileModel.Types.CASE_FILE);
+        if (!type.equals(VolumeModel.Types.VOLUME) && !isDynamic) {
             throw new RuntimeException("Given noderef '" + volumeNodeRef + "' is not volume type:\n\texpected '" //
-                    + VolumeModel.Types.VOLUME + "'\n\tbut got '" + nodeService.getType(volumeNodeRef) + "'");
+                    + VolumeModel.Types.VOLUME + " or " + CaseFileModel.Types.CASE_FILE + "'\n\tbut got '" + type + "'");
         }
+
         Volume volume = new Volume();
-        volume.setNode(getVolumeNodeByRef(volumeNodeRef));
+        WmNode node = getVolumeNodeByRef(volumeNodeRef);
+        volume.setNode(node);
         volumeBeanPropertyMapper.toObject(nodeService.getProperties(volumeNodeRef), volume);
+        if (seriesNodeRef == null) {
+            seriesNodeRef = (NodeRef) volume.getNode().getProperties().get(DocumentCommonModel.Props.SERIES);
+        }
         if (seriesNodeRef == null) {
             List<ChildAssociationRef> parentAssocs = nodeService.getParentAssocs(volumeNodeRef);
             if (parentAssocs.size() != 1) {
@@ -388,8 +459,9 @@ public class VolumeServiceImpl implements VolumeService {
             }
             seriesNodeRef = parentAssocs.get(0).getParentRef();
         }
-        volume.setVolumeType((String) nodeService.getProperty(volumeNodeRef, VolumeModel.Props.VOLUME_TYPE));
-        volume.setTitle((String) nodeService.getProperty(volumeNodeRef, VolumeModel.Props.TITLE));
+        if (isDynamic) {
+            volume.setVolumeType(null);
+        }
         volume.setSeriesNodeRef(seriesNodeRef);
         if (log.isDebugEnabled()) {
             log.debug("Found volume: " + volume);
@@ -425,10 +497,6 @@ public class VolumeServiceImpl implements VolumeService {
     }
 
     // START: getters / setters
-    public void setDictionaryService(DictionaryService dictionaryService) {
-        this.dictionaryService = dictionaryService;
-    }
-
     public void setNodeService(NodeService nodeService) {
         this.nodeService = nodeService;
     }
@@ -457,8 +525,19 @@ public class VolumeServiceImpl implements VolumeService {
         this.userService = userService;
     }
 
+    public void setEventPlanService(EventPlanService eventPlanService) {
+        this.eventPlanService = eventPlanService;
+    }
+
     public void setCaseVolumeEnabled(boolean caseVolumeEnabled) {
         this.caseVolumeEnabled = caseVolumeEnabled;
+    }
+
+    public DocumentAdminService getDocumentAdminService() {
+        if (_documentAdminService == null) {
+            _documentAdminService = BeanHelper.getDocumentAdminService();
+        }
+        return _documentAdminService;
     }
     // END: getters / setters
 

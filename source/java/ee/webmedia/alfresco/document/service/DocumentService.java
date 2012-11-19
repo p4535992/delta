@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.document.service;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -14,12 +15,15 @@ import org.springframework.beans.factory.InitializingBean;
 
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
+import ee.webmedia.alfresco.register.model.Register;
+import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.exception.SignatureRuntimeException;
 import ee.webmedia.alfresco.signature.model.SignatureChallenge;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
+import ee.webmedia.alfresco.volume.model.DeletionType;
 import ee.webmedia.alfresco.workflow.model.TaskAndDocument;
 import ee.webmedia.alfresco.workflow.service.SignatureTask;
 import ee.webmedia.alfresco.workflow.service.Task;
@@ -42,12 +46,14 @@ public interface DocumentService {
         public static final String CASE_NODEREF = RepoUtil.createTransientProp("case").toString();
         public static final QName TEMP_DOCUMENT_IS_DRAFT_OR_IMAP_OR_DVK_QNAME = RepoUtil.createTransientProp("isDraftOrImapOrDvk");
         public static final QName TEMP_DOCUMENT_IS_INCOMING_INVOICE_QNAME = RepoUtil.createTransientProp("isIncomingInvoice");
+        public static final QName TEMP_DOCUMENT_IS_FROM_WEB_SERVICE_QNAME = RepoUtil.createTransientProp("isFromWebService");
         public static final QName TEMP_DOCUMENT_IS_DVK_QNAME = RepoUtil.createTransientProp("isDvk");
         public static final QName TEMP_DOCUMENT_IS_DRAFT_QNAME = RepoUtil.createTransientProp("isDraft");
         public static final String TEMP_DOCUMENT_IS_DRAFT = TEMP_DOCUMENT_IS_DRAFT_QNAME.toString();
         public static final String TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED = "{temp}logging_disabled_docMetadataChanged";
         public static final QName TEMP_DOCUMENT_DISABLE_UPDATE_INITIAL_ACCESS_RESTRICTION_PROPS = RepoUtil.createTransientProp("disableUpdateInitialAccessRestrictionProps");
         public static final QName TEMP_DOCUMENT_ACCESS_RESTRICTION_PROPS_CHANGED = RepoUtil.createTransientProp("accessRestrictionPropsChanged");
+        public static final QName TEMP_DOCUMENT_OLD_TYPE_ID = RepoUtil.createTransientProp("oldDocTypeId");
     }
 
     String BEAN_NAME = "DocumentService";
@@ -264,9 +270,15 @@ public interface DocumentService {
     Document getDocumentByNodeRef(NodeRef document);
 
     public enum AssocType {
+        /** alusdokument */
         INITIAL("alusdokument"),
+        /** vastusdokument */
         REPLY("vastusdokument"),
+        /** järgdokument */
         FOLLOWUP("järgdokument"),
+        /** dokumendimenetlus */
+        WORKFLOW("dokumendimenetlus"),
+        /** tavaline */
         DEFAULT("tavaline");
 
         String valueName;
@@ -320,40 +332,16 @@ public interface DocumentService {
      */
     void reopenDocument(NodeRef documentRef);
 
-    void prepareDocumentSigning(NodeRef document);
+    void prepareDocumentSigning(List<NodeRef> documents, boolean generatePdfs, boolean inactivateOriginalFiles);
 
     /**
      * @throws SignatureRuntimeException
      */
-    void finishDocumentSigning(SignatureTask task, String signatureHex);
+    void finishDocumentSigning(SignatureTask task, String signatureHex, NodeRef document, boolean signSeparately, boolean finishTask, Map<NodeRef, String> originalStatuses);
 
-    SignatureDigest prepareDocumentDigest(NodeRef document, String certHex) throws SignatureException;
+    SignatureDigest prepareDocumentDigest(NodeRef document, String certHex, NodeRef compoundWorkflowRef) throws SignatureException;
 
-    SignatureChallenge prepareDocumentChallenge(NodeRef document, String phoneNo) throws SignatureException;
-
-    /**
-     * Returns a List with favorite documents, associated with favorite directory or with user directly(if parameter is null).
-     * 
-     * @param containerNodeRef
-     * @return
-     */
-    List<Document> getFavorites(NodeRef containerNodeRef);
-
-    /**
-     * Returns a pair where first boolean value indicates if given document is favorite for currently authenticated user. Second value contains source NodeRef of the association.
-     * 
-     * @param document document to check
-     * @return
-     */
-    NodeRef isFavorite(NodeRef document);
-
-    boolean isFavoriteAddable(NodeRef document);
-
-    void addFavorite(NodeRef document);
-
-    boolean addFavorite(NodeRef docRef, String favDirName, boolean updateMenu);
-
-    void removeFavorite(NodeRef nodeRef);
+    SignatureChallenge prepareDocumentChallenge(NodeRef document, String phoneNo, NodeRef compoundWorkflowRef) throws SignatureException;
 
     /**
      * @param base
@@ -389,8 +377,6 @@ public interface DocumentService {
 
     boolean isIncomingInvoice(NodeRef nodeRef);
 
-    List<String> getFavoriteDirectoryNames();
-
     List<Document> getIncomingEInvoicesForUser(String userFullName);
 
     int getUserDocumentFromIncomingInvoiceCount(String userFullName);
@@ -402,16 +388,35 @@ public interface DocumentService {
 
     List<Document> getIncomingDocuments(NodeRef incomingNodeRef);
 
+    NodeRef checkExistingDdoc(NodeRef document, NodeRef compoundWorkflowRef);
+
+    boolean isDraft(NodeRef document);
+
+    String parseRegNrPattern(Series series, NodeRef volumeNodeRef, Register docRegister, Register volRegister, String existingRegNumber, Date regDateTime, String pattern,
+            boolean disableVolCounterIncrement);
+
+    int getAllDocumentsFromFolderCount(NodeRef folder);
+
     Pair<List<Document>, Boolean> searchAllDocumentsByParentNodeRef(NodeRef parentRef, int limit);
 
     /**
-     * NB! In 3.11 this method implementation changes from repo fetching (accurate) to lucene search (should be accurate if indexes are healthy)
+     * Method name provided for compatibility - actually a search is performed, see {@link #searchAllDocumentsByParentNodeRef(NodeRef, int)}.
+     * NB! It will soon be renamed to searchAllDocumentRefsByParentRef
      */
     List<NodeRef> getAllDocumentRefsByParentRef(NodeRef parentRef);
 
     /**
-     * NB! In 3.11 this method implementation changes from repo fetching (accurate) to lucene search (should be accurate if indexes are healthy)
+     * Method name provided for compatibility - actually a search is performed, see {@link #searchAllDocumentsByParentNodeRef(NodeRef, int)}.
+     * NB! It will soon be renamed to searchAllDocumentsByParentNodeRef
      */
     List<Document> getAllDocumentsByParentNodeRef(NodeRef parentRef);
+
+    List<NodeRef> getAllDocumentRefsByParentRefWithoutRestrictedAccess(NodeRef parentRef);
+
+    List<Document> getAllDocumentsByParentNodeRefWithoutRestrictedAccess(NodeRef parentRef);
+
+    boolean isVolumeColumnEnabled();
+
+    void deleteDocument(NodeRef nodeRef, String comment, DeletionType deletionType);
 
 }

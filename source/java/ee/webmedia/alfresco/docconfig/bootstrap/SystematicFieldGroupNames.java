@@ -39,4 +39,6 @@ public class SystematicFieldGroupNames {
     public static final String DRIVE_COMPENSATION = "Sõiduauto kasutamise hüvitis";
     public static final String DRIVE_COMPENSATION_RIK = "Sõiduauto kasutamise hüvitis (RIK)";
     public static final String ACCESS_RESTRICTION = "Juurdepääsupiirang";
+    public static final String CASE_VOLUME_VALID = "Asjatoimiku kehtivus";
+    public static final String CASE_VOLUME_LOCATION = "Asjatoimiku asukoht";
 }

@@ -24,6 +24,10 @@ public class TaskMenuItemProcessor extends CountAddingMenuItemProcessor implemen
         int currentUsersTaskCount = documentSearchService.getCurrentUsersTaskCount(taskType);
         if (taskType.equals(WorkflowSpecificModel.Types.CONFIRMATION_TASK)) {
             currentUsersTaskCount += documentSearchService.getCurrentUsersTaskCount(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK);
+        } else if (taskType.equals(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
+            currentUsersTaskCount += documentSearchService.getCurrentUsersTaskCount(WorkflowSpecificModel.Types.GROUP_ASSIGNMENT_TASK);
+        } else if (taskType.equals(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)) {
+            currentUsersTaskCount += documentSearchService.getCurrentUsersTaskCount(WorkflowSpecificModel.Types.LINKED_REVIEW_TASK);
         }
         return currentUsersTaskCount;
     }

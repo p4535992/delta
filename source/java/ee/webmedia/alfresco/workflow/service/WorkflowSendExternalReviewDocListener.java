@@ -48,6 +48,9 @@ public class WorkflowSendExternalReviewDocListener implements WorkflowEventListe
         if (!task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)) {
             return;
         }
+        if (!task.getParent().getParent().isDocumentWorkflow()) {
+            return;
+        }
         NodeRef docRef = task.getParent().getParent().getParent();
         // NB! it is necessary to identify whether task is changed by initiator or by receiver!
         if (workflowService.isRecievedExternalReviewTask(task)) {
@@ -80,6 +83,9 @@ public class WorkflowSendExternalReviewDocListener implements WorkflowEventListe
 
     private void handleWorkflowEvent(WorkflowEvent event, WorkflowEventQueue queue) {
         Workflow workflow = (Workflow) event.getObject();
+        if (!workflow.getParent().isDocumentWorkflow()) {
+            return;
+        }
         NodeRef docRef = workflow.getParent().getParent();
         if (!queue.getExternalReviewProcessedDocuments().contains(docRef)) {
             if (sendExternalReviewWorkflow(workflow.getParent().getWorkflows(), queue.getAdditionalExternalReviewRecipients())) {

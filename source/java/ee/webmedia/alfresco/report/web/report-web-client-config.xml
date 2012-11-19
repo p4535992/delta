@@ -4,7 +4,7 @@
 
       <dialogs>
          <dialog name="reportListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/report/web/report-list-dialog.jsp" managed-bean="ReportListDialog"
-            icon="/images/icons/versioned_properties_large.gif" title-id="report_executed_reports" />
+            icon="/images/icons/versioned_properties_large.gif" title-id="report_executed_reports" show-ok-button="false" />
       </dialogs>
    </config>
    

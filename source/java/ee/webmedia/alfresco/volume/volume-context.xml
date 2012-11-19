@@ -2,6 +2,8 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
+   <import resource="classpath:ee/webmedia/alfresco/volume/search/volume-search-context.xml" />
+
    <bean id="volumeModelBootstrap" parent="dictionaryModelBootstrap" depends-on="documentDynamicModelBootstrap,caseModelBootstrap" >
       <property name="models">
          <list>
@@ -27,7 +29,6 @@
    </bean>
 
    <bean id="volumeService" class="ee.webmedia.alfresco.volume.service.VolumeServiceImpl">
-      <property name="dictionaryService" ref="DictionaryService" />
       <property name="nodeService" ref="NodeService" />
       <property name="generalService" ref="GeneralService" />
       <property name="seriesService" ref="SeriesService" />
@@ -35,6 +36,7 @@
       <property name="documentService" ref="documentService" />
       <property name="logService" ref="LogService" />
       <property name="userService" ref="UserService" />
+      <property name="eventPlanService" ref="EventPlanService" />
       <property name="caseVolumeEnabled" value="${conf.casefile.enabled}" />
    </bean>
 

@@ -903,7 +903,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
     public boolean isEinvoiceEnabled() {
         // FIXME DLSeadist - Kui kõik süsteemsed dok.liigid on defineeritud, siis võib null kontrolli eemdaldada
         NodeRef docTypeRef = documentAdminService.getDocumentTypeRef("invoice");
-        return docTypeRef != null && documentAdminService.getDocumentTypeProperty(docTypeRef, DocumentAdminModel.Props.USED, Boolean.class);
+        return docTypeRef != null && documentAdminService.getTypeProperty(docTypeRef, DocumentAdminModel.Props.USED, Boolean.class);
     }
 
     @Override

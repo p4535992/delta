@@ -105,6 +105,12 @@ public class DocumentSendOutDialog extends BaseDialogBean {
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
+        if (BeanHelper.getDocumentLockHelperBean().isLockReleased(model.nodeRef)) {
+            MessageUtil.addErrorMessage("lock_send_out_administrator_released");
+            WebUtil.navigateTo("dialog:close");
+            return null;
+        }
+
         if (validate(context)) {
             if (model.isEncrypt()) {
                 showEncryptionRecipientsModal(context);
@@ -183,7 +189,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             documentLockHelperBean.lockOrUnlockIfNeeded(documentLockHelperBean.isLockingAllowed());
             BaseDialogBean.validatePermission(docNode, DocumentCommonModel.Privileges.EDIT_DOCUMENT);
         } catch (NodeLockedException e) {
-            BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_validation_alreadyLocked");
+            BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_validation_alreadyLocked_sendOut");
             return null;
         } catch (UnableToPerformException e) {
             MessageUtil.addStatusMessage(context, e);
@@ -523,9 +529,9 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         } catch (Exception e) {
             log.error(
                     "Sending out document failed\n  nodeRef=" + model.getNodeRef() + "\n  names=" + names + "\n  emails=" + emails + "\n  modes=" + modes
-                            + "\n  encryptionIdCodes=" + encryptionIdCodes + "\n  senderEmail=" + model.getSenderEmail() + "\n  subject=" + model.getSubject() + "\n  content="
-                            + (model.getContent() == null ? "null" : "String[" + model.getContent().length() + "]") + "\n  fileRefs=" + fileRefs + "\n  zip=" + model.isZip()
-                            + "\n  encrypt=" + model.isEncrypt(), e);
+                    + "\n  encryptionIdCodes=" + encryptionIdCodes + "\n  senderEmail=" + model.getSenderEmail() + "\n  subject=" + model.getSubject() + "\n  content="
+                    + (model.getContent() == null ? "null" : "String[" + model.getContent().length() + "]") + "\n  fileRefs=" + fileRefs + "\n  zip=" + model.isZip()
+                    + "\n  encrypt=" + model.isEncrypt(), e);
             result = false;
         }
         if (!result) {

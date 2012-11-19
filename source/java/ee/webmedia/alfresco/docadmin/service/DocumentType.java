@@ -9,6 +9,7 @@ import ee.webmedia.alfresco.base.BaseServiceImpl;
 import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 /**
  * Dynamic document type
@@ -131,6 +132,22 @@ public class DocumentType extends DynamicType {
 
     public boolean isShowUnvalued() {
         return getPropBoolean(DocumentAdminModel.Props.SHOW_UNVALUED);
+    }
+
+    public NodeRef getFunction() {
+        return getProp(DocumentCommonModel.Props.FUNCTION);
+    }
+
+    public NodeRef getSeries() {
+        return getProp(DocumentCommonModel.Props.SERIES);
+    }
+
+    public NodeRef getVolume() {
+        return getProp(DocumentCommonModel.Props.VOLUME);
+    }
+
+    public NodeRef getCase() {
+        return getProp(DocumentCommonModel.Props.CASE);
     }
 
     @Override

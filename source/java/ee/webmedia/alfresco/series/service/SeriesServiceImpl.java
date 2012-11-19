@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.series.service;
 
+import static ee.webmedia.alfresco.log.PropDiffHelper.value;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,12 +22,14 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
+import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
+import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.docadmin.web.ListReorderHelper;
 import ee.webmedia.alfresco.docadmin.web.NodeOrderModifier;
@@ -33,6 +37,7 @@ import ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGene
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
+import ee.webmedia.alfresco.eventplan.model.EventPlanModel;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.log.PropDiffHelper;
@@ -88,6 +93,18 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     }
 
     @Override
+    public List<Series> getAllCaseFileSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status) {
+        List<Series> series = getAllSeriesByFunction(functionNodeRef);
+        for (Iterator<Series> i = series.iterator(); i.hasNext();) {
+            Series s = i.next();
+            if (!status.getValueName().equals(s.getStatus()) || !s.getVolType().contains(VolumeType.CASE_FILE.name())) {
+                i.remove();
+            }
+        }
+        return series;
+    }
+
+    @Override
     public List<Series> getAllSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status, Set<String> docTypeIds) {
         List<Series> series = getAllSeriesByFunction(functionNodeRef);
         for (Iterator<Series> i = series.iterator(); i.hasNext();) {
@@ -100,13 +117,13 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     }
 
     @Override
-    public List<Series> getAllSeriesByFunctionForStructUnit(NodeRef functionNodeRef, Integer structUnitId) {
+    public List<Series> getAllSeriesByFunctionForStructUnit(NodeRef functionNodeRef, String structUnitId) {
         List<ChildAssociationRef> seriesAssocs = nodeService.getChildAssocs(functionNodeRef, RegexQNamePattern.MATCH_ALL, SeriesModel.Associations.SERIES);
         List<Series> seriesOfFunction = new ArrayList<Series>(seriesAssocs.size());
         for (ChildAssociationRef series : seriesAssocs) {
             NodeRef seriesNodeRef = series.getChildRef();
             @SuppressWarnings("unchecked")
-            List<Integer> structUnits = (List<Integer>) nodeService.getProperty(seriesNodeRef, SeriesModel.Props.STRUCT_UNIT);
+            List<String> structUnits = (List<String>) nodeService.getProperty(seriesNodeRef, SeriesModel.Props.STRUCT_UNIT);
 
             if (structUnits != null && structUnits.contains(structUnitId)) {
                 seriesOfFunction.add(getSeriesByNoderef(seriesNodeRef, functionNodeRef));
@@ -164,7 +181,6 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
                     .label(SeriesModel.Props.STRUCT_UNIT, "series_structUnit")
                     .label(SeriesModel.Props.TYPE, "series_type")
                     .label(SeriesModel.Props.DOC_TYPE, "series_docType")
-                    .label(SeriesModel.Props.RETENTION_PERIOD, "series_retentionPeriod")
                     .label(SeriesModel.Props.DOC_NUMBER_PATTERN, "series_docNumberPattern")
                     .label(SeriesModel.Props.NEW_NUMBER_FOR_EVERY_DOC, "series_newNumberForEveryDoc")
                     .label(SeriesModel.Props.VALID_FROM_DATE, "series_validFromDate")
@@ -187,6 +203,19 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
                     appLogService.addLogEntry(LogEntry.create(LogObject.SERIES, userService, seriesRef, "series_log_status_accessRestrictionChanged", accessReasonDiff));
                 }
             }
+
+            NodeRef repoEventPlan = (NodeRef) repoProps.get(SeriesModel.Props.EVENT_PLAN);
+            NodeRef newEventPlan = (NodeRef) newProps.get(SeriesModel.Props.EVENT_PLAN);
+            if (!ObjectUtils.equals(repoEventPlan, newEventPlan)) {
+                String emptyLabel = PropDiffHelper.getEmptyLabel();
+                appLogService.addLogEntry(LogEntry.create(LogObject.SERIES, userService, seriesRef, "series_log_eventplan_modified",
+                        value((repoEventPlan == null || !nodeService.exists(repoEventPlan)) ? null
+                                : nodeService.getProperty(repoEventPlan, EventPlanModel.Props.NAME), emptyLabel),
+                        value((newEventPlan == null || !nodeService.exists(newEventPlan)) ? null
+                                : nodeService.getProperty(newEventPlan, EventPlanModel.Props.NAME), emptyLabel)
+                        ));
+            }
+
             generalService.setPropertiesIgnoringSystem(seriesRef, stringQNameProperties);
         }
         if (performReorder) {
@@ -235,6 +264,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         series.setSeriesIdentifier(initialSeriesIdentifier);
         series.setInitialSeriesIdentifier(initialSeriesIdentifier);
         series.setValidFromDate(new Date());
+        series.setVolType(new ArrayList<String>());
         return series;
     }
 
@@ -290,8 +320,20 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
             return false; // will not close series or its volumes
         }
         props.put(SeriesModel.Props.STATUS.toString(), DocListUnitStatus.CLOSED.getValueName());
+        if (props.get(SeriesModel.Props.VALID_TO_DATE) == null) {
+            props.put(SeriesModel.Props.VALID_TO_DATE.toString(), new Date());
+        }
         saveOrUpdate(series);
         return true;
+    }
+
+    @Override
+    public void delete(Series series) {
+        List<ChildAssociationRef> allVolumes = getVolumeService().getAllVolumeRefsBySeries(series.getNode().getNodeRef());
+        if (!allVolumes.isEmpty()) {
+            throw new UnableToPerformException("series_delete_not_empty");
+        }
+        nodeService.deleteNode(series.getNode().getNodeRef());
     }
 
     private boolean isInClosedFunction(Series series) {

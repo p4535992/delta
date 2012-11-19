@@ -64,14 +64,14 @@ public class AssignResponsibilityBean implements Serializable {
 
     public void execute(@SuppressWarnings("unused") ActionEvent event) {
         String toOwnerId = (String) getNode().getProperties().get(OWNER_ID);
-        getAssignResponsibilityService().changeOwnerOfAllDocumentsAndTasks(fromOwnerId, toOwnerId, true);
+        getAssignResponsibilityService().changeOwnerOfAllDesignatedObjects(fromOwnerId, toOwnerId, true);
         leaving = true;
         MessageUtil.addInfoMessage("assign_responsibility_perform_success", UserUtil.getPersonFullName1(BeanHelper.getUserService().getUserProperties(toOwnerId)));
     }
 
     public void revert(@SuppressWarnings("unused") ActionEvent event) {
         String toOwnerId = (String) getUserService().getUserProperties(fromOwnerId).get(UserModel.Props.LIABILITY_GIVEN_TO_PERSON_ID);
-        getAssignResponsibilityService().changeOwnerOfAllDocumentsAndTasks(fromOwnerId, toOwnerId, false);
+        getAssignResponsibilityService().changeOwnerOfAllDesignatedObjects(fromOwnerId, toOwnerId, false);
         leaving = false;
         unsetOwner();
         MessageUtil.addInfoMessage("assign_responsibility_revert_success");

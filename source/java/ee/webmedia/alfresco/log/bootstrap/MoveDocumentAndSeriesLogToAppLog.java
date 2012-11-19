@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -75,6 +76,11 @@ public class MoveDocumentAndSeriesLogToAppLog extends AbstractNodeUpdater {
             String description = (String) logProps.get(EVENT_DESCRIPTION);
             String result = "LOG" + logCount + ": logDate=" + logDate + "; creatorName=" + creatorName + "; desc=" + description + "\n";
             if (noExistingAppLog || logDate == null || (firstAppLogDate.after(logDate) && (firstAppLogDate.getTime() - logDate.getTime()) > 60000)) {
+                if (logDate == null) {
+                    // Live environments should not contain such log entries where date=null.
+                    // Only intermediate test environments contain such entries where date=null, because of a bug.
+                    logDate = new Date(AlfrescoTransactionSupport.getTransactionStartTime());
+                }
                 BeanHelper.getLogService().addImportedLogEntry(LogEntry.createLoc(logObject, null, creatorName, nodeRef, description), logDate, idPrefix, logTableSequence++);
                 copiedLogEntries.append(result);
             } else {

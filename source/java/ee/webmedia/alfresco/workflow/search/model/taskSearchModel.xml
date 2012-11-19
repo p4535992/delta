@@ -5,10 +5,11 @@
    <imports>
       <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
       <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+      <import uri="http://alfresco.webmedia.ee/model/cw/search/1.0" prefix="cwsearch" />
    </imports>
 
    <namespaces>
-      <namespace uri="http://alfresco.webmedia.ee/model/task/search/1.0" prefix="tasksearch" />
+      <namespace uri="http://alfresco.webmedia.ee/model/task/search/1.0" prefix="tasksearch" />      
    </namespaces>
 
    <types>
@@ -22,7 +23,7 @@
       </type>
 
       <type name="tasksearch:filter">
-         <parent>sys:base</parent>
+         <parent>cwsearch:filter</parent>
          <properties>
             <property name="tasksearch:name">
                <type>d:text</type>

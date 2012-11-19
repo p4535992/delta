@@ -1,9 +1,9 @@
 package ee.webmedia.alfresco.document.search.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigService;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -11,7 +11,6 @@ import javax.faces.component.UIInput;
 import javax.faces.context.FacesContext;
 import javax.faces.model.SelectItem;
 
-import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
@@ -22,7 +21,6 @@ import org.apache.commons.logging.LogFactory;
 import ee.webmedia.alfresco.classificator.enums.TemplateReportOutputType;
 import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
 import ee.webmedia.alfresco.docconfig.generator.fieldtype.DateGenerator;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.model.DocumentReportModel;
@@ -101,13 +99,7 @@ public class DocumentDynamicReportDialog extends DocumentDynamicSearchDialog {
             Map<QName, Serializable> data = getMandatoryProps();
             TransientNode transientNode = new TransientNode(getFilterType(), null, data);
             Map<String, Object> filterProps = transientNode.getProperties();
-            List<FieldDefinition> searchableFields = BeanHelper.getDocumentAdminService().getSearchableFieldDefinitions();
-            for (FieldDefinition fieldDefinition : searchableFields) {
-                PropertyDefinition def = getDocumentConfigService().getPropertyDefinition(transientNode, fieldDefinition.getQName());
-                if (def.isMultiValued()) {
-                    filterProps.put(fieldDefinition.getQName().toString(), new ArrayList<Object>());
-                }
-            }
+            setFilterDefaultValues(transientNode, getDocumentAdminService().getSearchableDocumentFieldDefinitions(), null);
             filterProps.put(DocumentReportModel.Props.REPORT_OUTPUT_TYPE.toString(), TemplateReportOutputType.DOCS_ONLY.toString());
             return transientNode;
         } finally {

@@ -2,7 +2,6 @@ package ee.webmedia.alfresco.cases.service;
 
 import java.util.List;
 
-import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.Node;
 
@@ -55,6 +54,8 @@ public interface CaseService {
      */
     void closeCase(Case currentCase);
 
+    void openCase(Case currentCase);
+
     /**
      * Close all clases that this volume has
      * 
@@ -68,8 +69,10 @@ public interface CaseService {
 
     Case getCaseByTitle(final String newCaseTitle, NodeRef volumeRef, NodeRef caseRef);
 
-    List<ChildAssociationRef> getCaseRefsByVolume(NodeRef volumeRef);
+    List<NodeRef> getCaseRefsByVolume(NodeRef volumeRef);
 
     int getCasesCountByVolume(NodeRef volumeRef);
+
+    void delete(Case caseObject);
 
 }

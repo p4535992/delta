@@ -44,6 +44,7 @@ import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.ui.common.component.PickerSearchParams;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.Days;
@@ -66,6 +67,7 @@ import ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConvert
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.ClearStateNotificationHandler.ClearStateListener;
+import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil;
@@ -74,7 +76,7 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
-import ee.webmedia.alfresco.document.service.DocLockService;
+import ee.webmedia.alfresco.document.lock.service.DocLockService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.service.DocumentService.TransientProps;
 import ee.webmedia.alfresco.document.service.InMemoryChildNodeHelper;
@@ -82,7 +84,7 @@ import ee.webmedia.alfresco.document.type.model.DocumentType;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.document.web.DocumentDialog;
 import ee.webmedia.alfresco.dvk.service.DvkService;
-import ee.webmedia.alfresco.dvk.service.ExternalReviewException;
+import ee.webmedia.alfresco.dvk.service.ReviewTaskException;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
@@ -1173,14 +1175,16 @@ public class MetadataBlockBean implements ClearStateListener {
 
     public SelectItem[] searchUsersOrContacts(PickerSearchParams params) {
         log.debug("executeOwnerSearch: " + params.getFilterIndex() + ", " + params.getSearchString());
-        if (params.isFilterIndex(0)) { // users
-            return userListDialog.searchUsers(params);
-        } else if (params.isFilterIndex(1)) { // contacts
-            List<Node> nodes = getAddressbookService().search(params.getSearchString(), params.getLimit());
-            return AddressbookUtil.transformAddressbookNodesToSelectItems(nodes);
-        } else {
-            throw new RuntimeException("Unknown filter index value: " + params.getFilterIndex());
+        SelectItem[] results = new SelectItem[0];
+        if (params.isFilterIndex(UserContactGroupSearchBean.USERS_FILTER)) {
+            results = (SelectItem[]) ArrayUtils.addAll(results, userListDialog.searchUsers(params));
         }
+        if (params.isFilterIndex(UserContactGroupSearchBean.CONTACTS_FILTER)) {
+            List<Node> nodes = getAddressbookService().search(params.getSearchString(), params.getLimit());
+            results = (SelectItem[]) ArrayUtils.addAll(results, AddressbookUtil.transformAddressbookNodesToSelectItems(nodes));
+        }
+
+        return results;
     }
 
     public boolean isShowCase() {
@@ -1297,7 +1301,7 @@ public class MetadataBlockBean implements ClearStateListener {
     public void reloadDoc() {
         reloadDoc(true);
     }
-    
+
     public void reloadDoc(boolean addInvoiceMessages) {
         reloadDoc(addInvoiceMessages, nodeRef);
     }
@@ -1431,7 +1435,7 @@ public class MetadataBlockBean implements ClearStateListener {
                 }
                 MessageUtil.addStatusMessage(FacesContext.getCurrentInstance(), e);
                 return false;
-            } catch (ExternalReviewException e) {
+            } catch (ReviewTaskException e) {
                 MessageUtil.addInfoMessage("dvk_sending_failed");
             } finally {
                 BeanHelper.getDocumentLockHelperBean().lockOrUnlockIfNeeded(BeanHelper.getDocumentLockHelperBean().isLockingAllowed());
@@ -1613,12 +1617,12 @@ public class MetadataBlockBean implements ClearStateListener {
     public boolean isClosedUnitCheckNeeded(DocumentParentNodesVO parents, NodeRef volumeRef, Case docCase) {
         return isDraft
                 || !(volumeRef.equals(parents.getVolumeNode().getNodeRef())
-                     && (parents.getCaseNode() == null ? docCase == null
-                             : (docCase == null ? false
-                                     : parents.getCaseNode().getNodeRef().equals(docCase.getNode().getNodeRef())
-                              )
-                         )
-                     );
+                        && (parents.getCaseNode() == null ? docCase == null
+                        : (docCase == null ? false
+                                : parents.getCaseNode().getNodeRef().equals(docCase.getNode().getNodeRef())
+                                )
+                                )
+                        );
     }
 
     private void validateExpensesV2TotalSum(List<String> messages) {
@@ -1845,7 +1849,7 @@ public class MetadataBlockBean implements ClearStateListener {
             }
             MessageUtil.addStatusMessage(e);
         } catch (NodeLockedException e) {
-            BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_registerDoc_error_docLocked");
+            BeanHelper.getDocumentLockHelperBean().handleLockedNode("document_registerDoc_error_docLocked", e);
         }
         getDocumentDialogHelperBean().switchMode(false);
     }

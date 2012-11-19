@@ -175,6 +175,7 @@
       <property name="versionsListBean" ref="DocTypeVersionsListBean" />
       <property name="replyAssocsListBean" ref="ReplyAssocsListBean" />
       <property name="followupAssocsListBean" ref="FollowupAssocsListBean" />
+      <property name="defaultLocationBean" ref="DefaultLocationBean" />
    </bean>
 
    <bean id="CaseFileTypeDetailsDialog" class="ee.webmedia.alfresco.docadmin.web.CaseFileTypeDetailsDialog" scope="session">
@@ -183,6 +184,8 @@
    </bean>
 
    <bean id="DocTypeFieldsListBean" class="ee.webmedia.alfresco.docadmin.web.FieldsListBean" scope="session" />
+
+   <bean id="DefaultLocationBean" class="ee.webmedia.alfresco.docadmin.web.DefaultLocationBean" scope="session" />
 
    <bean id="CaseFileTypeFieldsListBean" class="ee.webmedia.alfresco.docadmin.web.FieldsListBean" scope="session" />
 

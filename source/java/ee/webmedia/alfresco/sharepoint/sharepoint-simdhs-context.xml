@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <bean id="sharepointImporter" class="ee.webmedia.alfresco.sharepoint.SharepointImporter">
+      <property name="jdbcTemplate">
+         <bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
+            <constructor-arg ref="dataSource" />
+         </bean>
+      </property>
+   </bean>
+
+   <bean id="sharepointDocsListener" class="ee.webmedia.alfresco.sharepoint.DocumentImportListener" />
+
+</beans>

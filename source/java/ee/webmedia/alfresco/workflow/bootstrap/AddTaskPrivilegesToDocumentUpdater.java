@@ -114,7 +114,7 @@ public class AddTaskPrivilegesToDocumentUpdater extends AbstractNodeUpdater {
                     docRef.toString(),
                     docType.toPrefixString(serviceRegistry.getNamespaceService()) };
         }
-        Set<String> privilegesToTaskOwnerId = PrivilegeUtil.getRequiredPrivsForInprogressTask(task, docRef, fileService);
+        Set<String> privilegesToTaskOwnerId = PrivilegeUtil.getRequiredPrivsForTask(task, docRef, fileService, false);
         privilegeService.setPermissions(docRef, task.getOwnerId(), privilegesToTaskOwnerId);
         DocumentDynamic doc = documentDynamicService.getDocument(docRef);
         return new String[] {

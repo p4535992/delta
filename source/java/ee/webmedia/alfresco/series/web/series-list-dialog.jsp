@@ -64,7 +64,7 @@
       </a:column>
 
       <%-- show details --%>
-      <a:column id="col5" actions="true" styleClass="actions-column" rendered="#{UserService.documentManager and not SeriesListDialog.disableActions}" >
+      <a:column id="col5" actions="true" styleClass="actions-column" rendered="#{not SeriesListDialog.disableActions and (UserService.documentManager or UserService.archivist)}" >
          <f:facet name="header">
             <h:outputText value="&nbsp;" escape="false" />
          </f:facet>

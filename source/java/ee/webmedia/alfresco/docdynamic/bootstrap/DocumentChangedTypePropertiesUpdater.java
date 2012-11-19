@@ -2,14 +2,14 @@ package ee.webmedia.alfresco.docdynamic.bootstrap;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.ResultSet;
+import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.apache.commons.lang.StringUtils;
@@ -23,6 +23,7 @@ import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
  * Fixes invalid properties belonging to different document type that are not removed when changing document type.
@@ -37,30 +38,13 @@ public class DocumentChangedTypePropertiesUpdater extends AbstractNodeUpdater {
     }
 
     @Override
-    protected Set<NodeRef> loadNodesFromRepo() throws Exception {
-        log.info("Searching nodes from database");
-        Set<NodeRef> nodeSet = new HashSet<NodeRef>(BeanHelper.getLogService().getDocumentsWithImapImportLog());
-        nodeSet.remove(null);
-        List<NodeRef> resolvedNodeRefs = new ArrayList<NodeRef>();
-        for (Iterator<NodeRef> i = nodeSet.iterator(); i.hasNext();) {
-            NodeRef nodeRef = i.next();
-            if (!nodeService.exists(nodeRef)) {
-                i.remove();
-                nodeRef = generalService.getExistingNodeRefAllStores(nodeRef.getId());
-                if (nodeRef != null) {
-                    resolvedNodeRefs.add(nodeRef);
-                }
-            }
-        }
-        nodeSet.addAll(resolvedNodeRefs);
-        log.info("Loaded total " + nodeSet.size() + " nodes from repository");
-        return nodeSet;
-    }
-
-    @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
-        // not used in this updater
-        return null;
+        String query = SearchUtil.generateTypeQuery(DocumentCommonModel.Types.DOCUMENT);
+        List<ResultSet> resultSets = new ArrayList<ResultSet>();
+        for (StoreRef storeRef : generalService.getAllStoreRefsWithTrashCan()) {
+            resultSets.add(searchService.query(storeRef, SearchService.LANGUAGE_LUCENE, query));
+        }
+        return resultSets;
     }
 
     @Override

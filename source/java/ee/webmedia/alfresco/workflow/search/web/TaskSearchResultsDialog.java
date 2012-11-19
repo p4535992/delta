@@ -27,6 +27,7 @@ import ee.webmedia.alfresco.workflow.search.model.TaskInfo;
 public class TaskSearchResultsDialog extends BaseLimitedListDialog {
 
     private static final long serialVersionUID = 1L;
+    public static final String BEAN_NAME = "TaskSearchResultsDialog";
 
     private List<TaskInfo> tasks;
     private Node filter;

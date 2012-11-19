@@ -79,6 +79,8 @@ public interface RegisterService {
      */
     void resetCounter(Node register);
 
+    void resetAllAutoResetCounters();
+
     boolean isValueEditable();
 
 }

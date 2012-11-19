@@ -26,11 +26,19 @@ public class DocumentTypeConverter extends MultiSelectConverterBase {
         if (StringUtils.isBlank(docTypeId)) {
             return "";
         }
-        NodeRef docTypeRef = getDocumentTypeService().getDocumentTypeRef(docTypeId);
+        NodeRef docTypeRef = getTypeNodeRef(docTypeId);
         if (docTypeRef == null) {
             return value.toString();
         }
+        return getConvertedValue(docTypeId);
+    }
+
+    protected String getConvertedValue(String docTypeId) {
         return getDocumentTypeService().getDocumentTypeProperty(docTypeId, DocumentAdminModel.Props.NAME, String.class);
+    }
+
+    protected NodeRef getTypeNodeRef(String docTypeId) {
+        return getDocumentTypeService().getDocumentTypeRef(docTypeId);
     }
 
     // START: getters / setters
@@ -38,7 +46,7 @@ public class DocumentTypeConverter extends MultiSelectConverterBase {
         this.documentAdminService = documentAdminService;
     }
 
-    private DocumentAdminService getDocumentTypeService() {
+    protected DocumentAdminService getDocumentTypeService() {
         if (documentAdminService == null) {
             documentAdminService = (DocumentAdminService) FacesContextUtils.getRequiredWebApplicationContext( //
                     FacesContext.getCurrentInstance()).getBean(DocumentAdminService.BEAN_NAME);

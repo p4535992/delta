@@ -123,6 +123,7 @@ public class TrashcanDialog extends BaseDialogBean implements IContextListener
    
    @Override
    public void init(Map<String, String> parameters) {
+       super.init(parameters);
        property.resetFilters();
        contextUpdated();       
    }

@@ -26,11 +26,15 @@ public class Series implements Serializable, Comparable<Series> {
     private String status;
     private Integer retentionPeriod; // can be empty
     private List<String> docType;
+    private List<String> volType;
     private int containingDocsCount;
     private boolean newNumberForEveryDoc;
     private boolean individualizingNumbers;
     private String docNumberPattern;
     private int register;
+    private String volNumberPattern;
+    private Integer volRegister;
+    private boolean documentsVisibleForUsersWithoutAccess = true;
 
     @AlfrescoModelProperty(isMappable = false)
     private Node node;
@@ -123,6 +127,15 @@ public class Series implements Serializable, Comparable<Series> {
         this.docType = docType;
     }
 
+    public List<String> getVolType() {
+        return volType;
+    }
+
+    public void setVolType(List<String> volType) {
+        node.getProperties().put(SeriesModel.Props.VOL_TYPE.toString(), volType);
+        this.volType = volType;
+    }
+
     public int getContainingDocsCount() {
         return containingDocsCount;
     }
@@ -137,6 +150,8 @@ public class Series implements Serializable, Comparable<Series> {
 
     public void setNode(Node node) {
         this.node = node;
+        documentsVisibleForUsersWithoutAccess = !Boolean.FALSE.equals(node.getProperties().get(SeriesModel.Props.DOCUMENTS_VISIBLE_FOR_USERS_WITHOUT_ACCESS.toString()));
+
     }
 
     public boolean isNewNumberForEveryDoc() {
@@ -169,6 +184,37 @@ public class Series implements Serializable, Comparable<Series> {
 
     public void setRegister(int register) {
         this.register = register;
+    }
+
+    public String getVolNumberPattern() {
+        return volNumberPattern;
+    }
+
+    public void setVolNumberPattern(String volNumberPattern) {
+        this.volNumberPattern = volNumberPattern;
+    }
+
+    public Integer getVolRegister() {
+        return volRegister;
+    }
+
+    public void setVolRegister(Integer volRegister) {
+        this.volRegister = volRegister;
+    }
+
+    public boolean isDocumentsVisibleForUsersWithoutAccess() {
+        return documentsVisibleForUsersWithoutAccess;
+    }
+
+    public NodeRef getEventPlan() {
+        return (NodeRef) getNode().getProperties().get(SeriesModel.Props.EVENT_PLAN);
+    }
+
+    public void setDocumentsVisibleForUsersWithoutAccess(boolean documentsVisibleForUsersWithoutAccess) {
+        if (node != null) {
+            node.getProperties().put(SeriesModel.Props.DOCUMENTS_VISIBLE_FOR_USERS_WITHOUT_ACCESS.toString(), documentsVisibleForUsersWithoutAccess);
+        }
+        this.documentsVisibleForUsersWithoutAccess = documentsVisibleForUsersWithoutAccess;
     }
 
     @Override

@@ -87,7 +87,7 @@
          return confirm(msg);
        });
       $jQ(".webdav-readOnly-report").click(function() {
-         webdavOpenReadOnly(this.href);
+         window.open(this.href, '_blank');
          $jQ(this).next("a").eq(0).click();
          return false;
       });      

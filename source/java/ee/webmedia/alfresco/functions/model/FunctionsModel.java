@@ -28,6 +28,7 @@ public interface FunctionsModel {
         QName MARK = QName.createQName(URI, "mark");
         QName TYPE = QName.createQName(URI, "type");
         QName DESCRIPTION = QName.createQName(URI, "description");
+        QName DOCUMENT_ACTIVITIES_ARE_LIMITED = QName.createQName(URI, "documentActivitiesAreLimited");
     }
 
 }

@@ -39,7 +39,7 @@ public class SeriesListDialog extends BaseDialogBean {
     private Function function;
     private List<Series> series;
     private boolean disableActions = false;
-    private Integer activeStructUnit;
+    private String activeStructUnit;
 
     public static final String BEAN_NAME = "SeriesListDialog";
 
@@ -94,11 +94,11 @@ public class SeriesListDialog extends BaseDialogBean {
 
     public void showMyStructUnit(ActionEvent event) {
         Map<QName, Serializable> userProperties = userService.getUserProperties(AuthenticationUtil.getRunAsUser());
-        Integer userStructUnit = Integer.parseInt(userProperties.get(ContentModel.PROP_ORGID).toString());
+        String userStructUnit = (String) userProperties.get(ContentModel.PROP_ORGID);
         showAllForStructUnit(new NodeRef(ActionUtil.getParam(event, "functionNodeRef")), userStructUnit);
     }
 
-    public void showAllForStructUnit(NodeRef nodeRef, Integer structUnitId) {
+    public void showAllForStructUnit(NodeRef nodeRef, String structUnitId) {
         function = getFunctionsService().getFunctionByNodeRef(nodeRef);
         series = getSeriesService().getAllSeriesByFunctionForStructUnit(nodeRef, structUnitId);
         activeStructUnit = structUnitId;
@@ -138,11 +138,11 @@ public class SeriesListDialog extends BaseDialogBean {
         this.disableActions = disableActions;
     }
 
-    public Integer getActiveStructUnit() {
+    public String getActiveStructUnit() {
         return activeStructUnit;
     }
 
-    public void setActiveStructUnit(Integer activeStructUnit) {
+    public void setActiveStructUnit(String activeStructUnit) {
         this.activeStructUnit = activeStructUnit;
     }
 

@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.workflow.service;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -71,12 +72,20 @@ public abstract class BaseWorkflowObject extends NodeBaseVO {
         setProp(WorkflowCommonModel.Props.STARTED_DATE_TIME, startedDateTime);
     }
 
+    protected void setCreatedDateTime(Date createdDateTime) {
+        setProp(WorkflowCommonModel.Props.CREATED_DATE_TIME, createdDateTime);
+    }
+
     public Date getStoppedDateTime() {
         return getProp(WorkflowCommonModel.Props.STOPPED_DATE_TIME);
     }
 
     protected void setStoppedDateTime(Date stoppedDateTime) {
         setProp(WorkflowCommonModel.Props.STOPPED_DATE_TIME, stoppedDateTime);
+    }
+
+    protected void setFinishedDateTime(Date finishedDateTime) {
+        setProp(WorkflowCommonModel.Props.FINISHED_DATE_TIME, finishedDateTime);
     }
 
     public String getOwnerId() {
@@ -128,6 +137,10 @@ public abstract class BaseWorkflowObject extends NodeBaseVO {
 
     protected void clearOriginalProperties() {
         originalProperties.clear();
+    }
+
+    protected Map<QName, Serializable> getOriginalProperties() {
+        return Collections.unmodifiableMap(originalProperties);
     }
 
     public boolean isStatus(Status... statuses) {

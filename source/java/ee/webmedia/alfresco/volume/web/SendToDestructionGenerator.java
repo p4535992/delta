@@ -47,7 +47,7 @@ public class SendToDestructionGenerator extends BaseComponentGenerator {
         Volume volume = dialog.getCurrentVolume();
         boolean isDestroyed = DocListUnitStatus.DESTROYED.getValueName().equals(volume.getStatus());
         Date today = DateUtils.truncate(new Date(), Calendar.DATE);
-        boolean isDispositionDateInFuture = volume.getDispositionDate() != null && volume.getDispositionDate().after(today);
+        boolean isDispositionDateInFuture = volume.getRetainUntilDate() != null && volume.getRetainUntilDate().after(today);
         return isDestroyed || isDispositionDateInFuture;
     }
 

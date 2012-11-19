@@ -22,20 +22,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.activation.DataHandler;
 import javax.sql.DataSource;
 import javax.xml.datatype.XMLGregorianCalendar;
 
+import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections.Transformer;
 import org.apache.commons.collections.comparators.ComparatorChain;
 import org.apache.commons.collections.comparators.NullComparator;
 import org.apache.commons.collections.comparators.TransformingComparator;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.springframework.jdbc.core.simple.ParameterizedRowMapper;
@@ -68,7 +72,6 @@ import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.file.model.File;
-import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
@@ -76,6 +79,7 @@ import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.service.DocumentService.AssocType;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.series.model.SeriesModel;
+import ee.webmedia.alfresco.utils.ContentReaderDataSource;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
@@ -92,13 +96,13 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
     public static FastDateFormat dateFormat = FastDateFormat.getInstance("yyyy-MM-dd");
 
     private DocumentSearchService documentSearchService;
-    private FileService fileService;
     private ClassificatorService classificatorService;
     private DocumentAdminService documentAdminService;
     private DocumentService documentService;
     private DocumentDynamicService documentDynamicService;
     private NamespaceService namespaceService;
     private SimpleJdbcTemplate jdbcTemplate;
+    private boolean accessRestrictionChangeReasonEnabled;
 
     // ========================================================================
     // =========================== REAL-TIME QUERYING =========================
@@ -141,23 +145,27 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             return null;
         }
 
-        File file = searchFile(doc, filename);
+        try {
+            File file = searchFile(doc, filename);
 
-        FailV2 failSisuga;
-        if (file == null) {
-            failSisuga = null;
-        } else {
-            failSisuga = new FailV2();
-            setFailProperties(failSisuga, file, true);
-            setFailV2Properties(failSisuga, file);
-        }
+            FailV2 failSisuga;
+            if (file == null) {
+                failSisuga = null;
+            } else {
+                failSisuga = new FailV2();
+                setFailProperties(failSisuga, file, true);
+            }
 
-        if (log.isDebugEnabled()) {
-            log.debug("ADR failSisugaV2 finished, time " + (System.currentTimeMillis() - startTime) + " ms, arguments:\n    documentRef=" + documentRef
-                    + "\n    filename=" + filename
-                    + "\n    failSisuga.suurus=" + (failSisuga == null ? -1 : failSisuga.getSuurus()));
+            if (log.isDebugEnabled()) {
+                log.debug("ADR failSisugaV2 finished, time " + (System.currentTimeMillis() - startTime) + " ms, arguments:\n    documentRef=" + documentRef
+                        + "\n    filename=" + filename
+                        + "\n    failSisuga.suurus=" + (failSisuga == null ? -1 : failSisuga.getSuurus()));
+            }
+
+            return failSisuga;
+        } finally {
+            cleanTempFiles();
         }
-        return failSisuga;
     }
 
     @Override
@@ -170,6 +178,12 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         log.debug("Searching for " + filename + " under " + doc.getDocName() + "(" + doc.getNodeRef() + ")");
 
         if (!isFileAllowedToAdr(doc)) {
+            return null;
+        }
+
+        String publishToAdr = doc.getProp(DocumentDynamicModel.Props.PUBLISH_TO_ADR);
+        if (publishToAdr != null && !PublishToAdr.TO_ADR.getValueName().equals(publishToAdr)) {
+            log.debug("Publish to ADR is set with value: " + publishToAdr);
             return null;
         }
 
@@ -264,7 +278,6 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             for (File file : allActiveFiles) {
                 FailV2 fail = new FailV2();
                 setFailProperties(fail, file, includeFileContent);
-                setFailV2Properties(fail, file);
                 dokument.getFail().add(fail);
             }
         }
@@ -315,6 +328,10 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             dokument.setAinultTeabenoudeKorras(Boolean.TRUE);
         } else {
             dokument.setAinultTeabenoudeKorras(Boolean.FALSE);
+        }
+
+        if (accessRestrictionChangeReasonEnabled && AccessRestriction.OPEN.getValueName().equals(dokument.getJuurdepaasuPiirang())) {
+            dokument.setJuurdepaasuPiiranguMuutmisePohjus(getNullIfEmpty((String) doc.getProp(DocumentCommonModel.Props.ACCESS_RESTRICTION_CHANGE_REASON)));
         }
 
         // Document type
@@ -395,20 +412,37 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         return dokument;
     }
 
-    private void setFailProperties(Fail fail, File file, boolean includeContent) {
-        fail.setFailinimi(getNullIfEmpty(file.getName())); // this should be the real file name, because ADR interface requires it to be unique under document
-        fail.setSuurus((int) file.getSize());
-        fail.setEncoding(getNullIfEmpty(file.getEncoding()));
-        fail.setMimeType(getNullIfEmpty(file.getMimeType()));
-        if (includeContent) {
-            fail.setSisu(getFileDataHandler(file.getNodeRef(), file.getName()));
-        }
-    }
+    /**
+     * NB! Caller of this function must ensure that temporary files are deleted using the clearTempFiles method.
+     */
+    private void setFailProperties(FailV2 fail, File file, boolean includeContent) {
+        String mimetype = getNullIfEmpty(file.getMimeType());
+        String encoding = getNullIfEmpty(file.getEncoding());
+        String title = getNullIfEmpty(file.getDisplayName());
+        String name = getNullIfEmpty(file.getName());
+        int size = (int) file.getSize();
 
-    private void setFailV2Properties(FailV2 failSisuga, File file) {
-        failSisuga.setPealkiri(getNullIfEmpty(file.getDisplayName()));
-        failSisuga.setMuutmiseAeg(convertToXMLGergorianCalendar(file.getModified()));
-        failSisuga.setId(file.getNodeRef().toString());
+        if (includeContent) {
+            Pair<Boolean, DataHandler> fileDataHandler = getFileDataHandler(file.getNodeRef(), file.getName());
+            fail.setSisu(fileDataHandler.getSecond());
+
+            if (fileDataHandler.getFirst()) {
+                ContentReaderDataSource contentReaderDataSource = (ContentReaderDataSource) fail.getSisu().getDataSource();
+                mimetype = MimetypeMap.MIMETYPE_PDF;
+                name = FilenameUtils.removeExtension(name) + ".pdf"; // replace the extension
+                title = FilenameUtils.removeExtension(title) + ".pdf"; // replace the extension
+                size = (int) contentReaderDataSource.getContentSize();
+                encoding = contentReaderDataSource.getEncoding();
+            }
+        }
+
+        fail.setFailinimi(name); // this should be the real file name, because ADR interface requires it to be unique under document
+        fail.setPealkiri(title);
+        fail.setMuutmiseAeg(convertToXMLGergorianCalendar(file.getModified()));
+        fail.setSuurus(size);
+        fail.setEncoding(encoding);
+        fail.setMimeType(mimetype);
+        fail.setId(file.getNodeRef().toString());
     }
 
     private List<SeotudDokument> getSeotudDokumentList(NodeRef document, Set<String> documentTypeIds) {
@@ -479,12 +513,16 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         final Map<NodeRef, Map<QName, Serializable>> seriesCache = new HashMap<NodeRef, Map<QName, Serializable>>();
         final Map<NodeRef, Map<QName, Serializable>> volumesCache = new HashMap<NodeRef, Map<QName, Serializable>>();
 
-        return koikDokumendidLisatudMuudetud(perioodiAlgusKuupaev, perioodiLoppKuupaev, new BuildDocumentCallback<DokumentDetailidegaV2>() {
-            @Override
-            public DokumentDetailidegaV2 buildDocument(DocumentDynamic doc, Set<String> documentTypeIds) {
-                return buildDokumentDetailidegaV2(doc, false, documentTypeIds, functionsCache, seriesCache, volumesCache);
-            }
-        }, jataAlgusestVahele, tulemustePiirang, true);
+        try {
+            return koikDokumendidLisatudMuudetud(perioodiAlgusKuupaev, perioodiLoppKuupaev, new BuildDocumentCallback<DokumentDetailidegaV2>() {
+                @Override
+                public DokumentDetailidegaV2 buildDocument(DocumentDynamic doc, Set<String> documentTypeIds) {
+                    return buildDokumentDetailidegaV2(doc, false, documentTypeIds, functionsCache, seriesCache, volumesCache);
+                }
+            }, jataAlgusestVahele, tulemustePiirang, true);
+        } finally {
+            cleanTempFiles();
+        }
     }
 
     private static interface BuildDocumentCallback<T> {
@@ -835,10 +873,6 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         this.documentSearchService = documentSearchService;
     }
 
-    public void setFileService(FileService fileService) {
-        this.fileService = fileService;
-    }
-
     public void setClassificatorService(ClassificatorService classificatorService) {
         this.classificatorService = classificatorService;
     }
@@ -862,5 +896,10 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
     public void setDataSource(DataSource dataSource) {
         jdbcTemplate = new SimpleJdbcTemplate(dataSource);
     }
+
+    public void setAccessRestrictionChangeReasonEnabled(boolean accessRestrictionChangeReasonEnabled) {
+        this.accessRestrictionChangeReasonEnabled = accessRestrictionChangeReasonEnabled;
+    }
     // END: getters / setters
+
 }

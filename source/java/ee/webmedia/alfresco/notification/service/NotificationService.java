@@ -13,9 +13,10 @@ import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.notification.model.GeneralNotification;
 import ee.webmedia.alfresco.substitute.model.Substitute;
-import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
+import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
+import ee.webmedia.alfresco.workflow.service.event.WorkflowEvent;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventType;
 
 /**
@@ -27,9 +28,11 @@ public interface NotificationService {
 
     public void notifyTaskEvent(Task task);
 
+    public void notifyTaskEvent(Task task, boolean isGroupAssignmentTaskFinishedAutomatically, Task orderAssignmentFinishTriggeringTask);
+
     public void notifyWorkflowEvent(Workflow workflow, WorkflowEventType eventType);
 
-    public void notifyCompoundWorkflowEvent(CompoundWorkflow compoundWorkflowEvent);
+    public void notifyCompoundWorkflowEvent(WorkflowEvent compoundWorkflowEvent);
 
     public void notifySubstitutionEvent(Substitute substitute);
 
@@ -79,5 +82,14 @@ public interface NotificationService {
 
     List<QName> getAllNotificationProps();
 
+    void notifyCompoundWorkflowStoppedAutomatically(Workflow workflow);
+
+    void sendDocumentForInformationNotification(List<Authority> authorities, Node docNode, String emailTemplate);
+
+    void addNotificationAssocForCurrentUser(NodeRef targetNodeRef, QName assocQName, QName aspectQName);
+
+    void removeNotificationAssocForCurrentUser(NodeRef targetNodeRef, QName assocQName, QName aspectQName);
+
+    public boolean isNotificationAssocExists(NodeRef userRef, NodeRef nodeRef, QName assocType);
 
 }

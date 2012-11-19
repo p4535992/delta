@@ -74,6 +74,7 @@ import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
+import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Task.Action;
 import ee.webmedia.alfresco.workflow.service.Workflow;
@@ -119,7 +120,8 @@ public class TaskListGenerator extends BaseComponentGenerator {
         Map<String, Object> propSheetAttrs = propertySheet.getAttributes();
         int wfIndex = (Integer) propSheetAttrs.get(ATTR_WORKFLOW_INDEX);
         CompoundWorkflowDefinitionDialog compoundWorkflowDefinitionDialog = (CompoundWorkflowDefinitionDialog) dialogManager.getBean();
-        Workflow workflow = compoundWorkflowDefinitionDialog.getWorkflow().getWorkflows().get(wfIndex);
+        CompoundWorkflow compoundWorkflow = compoundWorkflowDefinitionDialog.getWorkflow();
+        Workflow workflow = compoundWorkflow.getWorkflows().get(wfIndex);
 
         TaskOwnerSearchType searchType = TaskOwnerSearchType.TASK_OWNER_SEARCH_DEFAULT;
         boolean responsible = new Boolean(getCustomAttributes().get(ATTR_RESPONSIBLE));
@@ -167,7 +169,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
             pickerPanel.setRendererType(TaskListPickerRenderer.class.getCanonicalName());
             resultChildren.add(pickerPanel);
 
-            UIGenericPicker picker = createOwnerPickerComponent(application, listId, wfIndex, searchType);
+            UIGenericPicker picker = createOwnerPickerComponent(application, listId, wfIndex, searchType, compoundWorkflow.isIndependentWorkflow());
             addChildren(pickerPanel, picker);
             String pickerActionId = getActionId(context, picker);
             String pickerModalOnclickJsCall = "return showModal('" + getDialogId(context, picker) + "');";
@@ -244,7 +246,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
             String signerName = null;
             String signerId = null;
             String signerEmail = null;
-            if (isSignatureWorkflow) {
+            if (isSignatureWorkflow && workflow.getParent().isDocumentWorkflow()) {
                 NodeRef docRef = workflow.getParent().getParent();
                 if (docRef != null) {
                     NodeService nodeService = BeanHelper.getNodeService();
@@ -299,6 +301,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
                 taskGroupsByWf.add(taskGroups);
             }
             Set<TaskGroup> generatedGroups = new HashSet<TaskGroup>();
+            String dueDateVbString = null;
             for (Integer counter : visibleTasks) {
                 Task task = tasks.get(counter);
                 boolean taskInGroup = false;
@@ -310,7 +313,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
                 TaskGroup taskGroup = adjacentTaskGroup.getSecond();
                 if (StringUtils.isNotBlank(ownerGroup) && taskGroup != null) {
                     if (!generatedGroups.contains(taskGroup)) {
-                        generateGroupRow(context, application, wfIndex, workflow.isStatus(Status.NEW), taskGroup, taskGrid, deleteLinkTooltipMsg, blockType,
+                        dueDateVbString = generateGroupRow(context, application, wfIndex, workflow.isStatus(Status.NEW), taskGroup, taskGrid, deleteLinkTooltipMsg, blockType,
                                 maxTaskNr, responsible, addLinkText, addTaskMB, groupDueDateTimeAttr, order, isConfirmationWorkflow || workflow.hasTaskResolution());
                         generatedGroups.add(taskGroup);
                     }
@@ -320,6 +323,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
                         taskIds.add(counter);
                     }
                     taskInGroup = true;
+                    task.setGroupDueDateVbString(dueDateVbString);
                     if (!taskGroup.isExpanded()) {
                         continue; // Skip processing this task further, since it is already included in a group
                     }
@@ -332,10 +336,13 @@ public class TaskListGenerator extends BaseComponentGenerator {
                     groups.add(taskGroup);
                     taskGroups.put(ownerGroup, groups);
                     // Generate the group row
-                    generateGroupRow(context, application, wfIndex, workflow.isStatus(Status.NEW), taskGroup, taskGrid, deleteLinkTooltipMsg, blockType, maxTaskNr, responsible,
-                            addLinkText, addTaskMB, groupDueDateTimeAttr, order, isConfirmationWorkflow || workflow.hasTaskResolution());
+                    dueDateVbString = generateGroupRow(context, application, wfIndex, workflow.isStatus(Status.NEW), taskGroup, taskGrid, deleteLinkTooltipMsg, blockType,
+                            maxTaskNr, responsible, addLinkText, addTaskMB, groupDueDateTimeAttr, order, isConfirmationWorkflow || workflow.hasTaskResolution());
                     generatedGroups.add(taskGroup);
+                    task.setGroupDueDateVbString(dueDateVbString);
                     continue;
+                } else {
+                    dueDateVbString = null;
                 }
 
                 // Create components for individual tasks
@@ -584,10 +591,11 @@ public class TaskListGenerator extends BaseComponentGenerator {
         return taskDeleteLink;
     }
 
-    private void generateGroupRow(FacesContext context, Application application, int wfIndex, boolean isNewWorkflow, TaskGroup group, HtmlPanelGrid taskGrid,
+    private String generateGroupRow(FacesContext context, Application application, int wfIndex, boolean isNewWorkflow, TaskGroup group, HtmlPanelGrid taskGrid,
             String deleteLinkTooltipMsg, QName blockType, Integer maxTaskNr, boolean responsible, String addLinkText, MethodBinding addTaskMB, Map<String, Object> dueDateTimeAttr,
             Integer order, boolean hasResolutionColumn) {
         HtmlPanelGroup iconAndName = (HtmlPanelGroup) context.getApplication().createComponent(HtmlPanelGroup.COMPONENT_TYPE);
+        String dueDateVbString = null;
 
         UIActionLink toggle = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
 
@@ -621,8 +629,8 @@ public class TaskListGenerator extends BaseComponentGenerator {
             // Date
             DateTimePickerGenerator dateTimePickerGenerator = new DateTimePickerGenerator();
             final DateTimePicker dueDateTimeInput = (DateTimePicker) dateTimePickerGenerator.generate(context, "group-duedate-" + rowId + order);
-            dueDateTimeInput.setValueBinding("value",
-                    application.createValueBinding("#{DialogManager.bean.taskGroups[" + wfIndex + "]['" + groupName + "'][" + order + "].dueDate}"));
+            dueDateVbString = "#{DialogManager.bean.taskGroups[" + wfIndex + "]['" + groupName + "'][" + order + "].dueDate}";
+            dueDateTimeInput.setValueBinding("value", application.createValueBinding(dueDateVbString));
             addAttributes(dueDateTimeInput, dueDateTimeAttr);
             addChildren(taskGrid, dueDateTimeInput);
 
@@ -662,6 +670,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
         createAddTaskLink(application, rowId, blockType, iconsPanel, wfIndex, ++maxTaskNr, false, responsible, addLinkText, addTaskMB);
         addChildren(taskGrid, iconsPanel);
 
+        return dueDateVbString;
     }
 
     public void toggleGroup(ActionEvent event) {
@@ -811,7 +820,8 @@ public class TaskListGenerator extends BaseComponentGenerator {
         return taskSearchLink;
     }
 
-    private UIGenericPicker createOwnerPickerComponent(Application application, String listId, int workflowIndex, TaskOwnerSearchType searchType) {
+    private UIGenericPicker createOwnerPickerComponent(Application application, String listId, int workflowIndex, TaskOwnerSearchType searchType,
+            boolean isIndependentCompoundWorkflow) {
         UIGenericPicker picker = (UIGenericPicker) application.createComponent("org.alfresco.faces.GenericPicker");
         picker.setId("task-picker-" + listId);
         picker.setShowFilter(false);
@@ -825,6 +835,9 @@ public class TaskListGenerator extends BaseComponentGenerator {
         putAttribute(picker, TaskListGenerator.ATTR_WORKFLOW_INDEX, workflowIndex);
         if (!searchType.equals(TaskOwnerSearchType.TASK_OWNER_SEARCH_DUE_DATE_EXTENSION)) {
             picker.setShowFilter(true);
+            picker.setShowSelectButton(true);
+            picker.setFilterByTaskOwnerStructUnit(!searchType.equals(TaskOwnerSearchType.TASK_OWNER_SEARCH_REVIEW) || !BeanHelper.getWorkflowService().isReviewToOtherOrgEnabled()
+                    || !isIndependentCompoundWorkflow);
             picker.setValueBinding("filters", createPickerValueBinding(application, searchType));
         }
         return picker;

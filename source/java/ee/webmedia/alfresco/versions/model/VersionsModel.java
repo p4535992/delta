@@ -20,6 +20,7 @@ public interface VersionsModel {
             QName MODIFIED = QName.createQName(URI, "modifiedTime");
             QName FIRSTNAME = QName.createQName(URI, "firstName");
             QName LASTNAME = QName.createQName(URI, "lastName");
+            QName COMMENT = QName.createQName(URI, "comment");
         }
     }
 }

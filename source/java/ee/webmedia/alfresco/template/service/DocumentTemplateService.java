@@ -123,8 +123,38 @@ public interface DocumentTemplateService {
 
     NodeRef getReportTemplateByName(String templateName, TemplateReportType reportType);
 
+    String getCompoundWorkflowUrl(NodeRef compoundWorkflowRef);
+
+    String getCompoundWorkflowServerUrlPrefix();
+
     String getDocumentServerUrlPrefix();
 
     String getServerUrl();
 
+    String getCaseFileUrl(NodeRef caseFileRef);
+
+    String getVolumeUrl(NodeRef volumeRef);
+
+    NodeRef getEmailTemplateByName(String templateName);
+
+    /**
+     * Returns set document properties in the form of propName => propValue
+     * 
+     * @param documentRef
+     * @return
+     */
+    Map<String, String> getDocumentFormulas(NodeRef documentRef);
+
+    /**
+     * @param fileNodeRef
+     * @return Returned map implementation must be serializable!
+     * @throws Exception
+     */
+    Map<String, String> getDefaultFieldValues(NodeRef fileNodeRef) throws Exception;
+
+    DocumentTemplate getTemplateByName(String name) throws FileNotFoundException;
+
+    NodeRef getArchivalReportTemplateByName(String templateName);
+
+    void populateVolumeArchiveTemplate(NodeRef parentRef, List<NodeRef> volumeRefs, NodeRef templateRef);
 }

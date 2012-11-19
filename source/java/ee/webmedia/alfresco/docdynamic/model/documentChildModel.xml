@@ -66,12 +66,9 @@
          <parent>doccom:metadataContainer</parent>
       </type>
 
-<!--
-      Uncomment when implemented
       <type name="docchild:applicantTraining">
          <parent>doccom:metadataContainer</parent>
       </type>
--->
 
    </types>
    <aspects>
@@ -124,8 +121,6 @@
          </associations>
       </aspect>
 
-<!--
-      Uncomment when implemented
       <aspect name="docchild:applicantTrainingContainer">
          <associations>
             <child-association name="docchild:applicantTraining">
@@ -135,13 +130,12 @@
                </source>
                <target>
                   <class>docchild:applicantTraining</class>
-                  <mandatory>true</mandatory> At least one applicantTraining is required
+                  <mandatory>true</mandatory><!--  At least one applicantTraining is required -->
                   <many>true</many>
                </target>
             </child-association>
          </associations>
       </aspect>
--->
 
    </aspects>
 

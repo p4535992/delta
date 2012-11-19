@@ -19,6 +19,7 @@ import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SEARCHABLE_SEND_MODE;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SERIES;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SHORT_REG_NUMBER;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.UPDATE_METADATA_IN_FILES;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.VOLUME;
 import static ee.webmedia.alfresco.utils.UserUtil.getUserFullNameAndId;
 
@@ -54,6 +55,8 @@ import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
 import org.alfresco.service.cmr.dictionary.AspectDefinition;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
+import org.alfresco.service.cmr.lock.LockStatus;
+import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.AssociationRef;
@@ -67,6 +70,7 @@ import org.alfresco.service.cmr.repository.CopyService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
+import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
@@ -89,6 +93,8 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.adr.service.AdrService;
+import ee.webmedia.alfresco.casefile.log.service.CaseFileLogService;
+import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.cases.service.CaseService;
@@ -96,23 +102,31 @@ import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.classificator.enums.LeaveType;
+import ee.webmedia.alfresco.classificator.enums.PublishToAdr;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
+import ee.webmedia.alfresco.docadmin.service.DocumentType;
+import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.docadmin.service.Field;
+import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
+import ee.webmedia.alfresco.docconfig.bootstrap.SystematicFieldGroupNames;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.document.assocsdyn.service.DocumentAssociationsService;
 import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.file.web.Subfolder;
+import ee.webmedia.alfresco.document.lock.service.DocLockService;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.log.service.DocumentPropertiesChangeHolder;
+import ee.webmedia.alfresco.document.log.service.PropertyChange;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
@@ -156,10 +170,12 @@ import ee.webmedia.alfresco.utils.Transformer;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 import ee.webmedia.alfresco.volume.model.DeletedDocument;
+import ee.webmedia.alfresco.volume.model.DeletionType;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 import ee.webmedia.alfresco.workflow.model.TaskAndDocument;
+import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.SignatureTask;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
@@ -191,6 +207,8 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
     private UserService userService;
     private SubstituteService substituteService;
     private LogService logService;
+    private CaseFileLogService caseFileLogService;
+    private DocLockService docLockService;
     // START: properties that would cause dependency cycle when trying to inject them
     // private DocumentAdminService documentAdminService; // dependency cycle: DocumentAdminService -> DocumentSearchService -> DocumentService
     private DocumentTemplateService _documentTemplateService;
@@ -200,6 +218,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
     private DocumentSearchService _documentSearchService;
     private ImapServiceExt _imapServiceExt;
     private DocumentConfigService _documentConfigService;
+    private SearchService searchService;
     // END: properties that would cause dependency cycle when trying to inject them
     protected BeanFactory beanFactory;
 
@@ -215,6 +234,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
     private static final String REGISTRATION_INDIVIDUALIZING_NUM_SUFFIX = "-1";
     private static final String TEMP_LOGGING_DISABLED_REGISTERED_BY_USER = "{temp}logging_registeredByUser";
     private PropertyChangesMonitorHelper propertyChangesMonitorHelper = new PropertyChangesMonitorHelper();
+    private boolean volumeColumnEnabled;
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -390,6 +410,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         }
         Assert.notNull(documentRef, "Reference to document must be provided");
         nodeService.setProperty(documentRef, DOC_STATUS, DocumentStatus.FINISHED.getValueName());
+        setPropertyAsSystemUser(UPDATE_METADATA_IN_FILES, Boolean.FALSE, documentRef);
         documentLogService.addDocumentLog(documentRef, I18NUtil.getMessage("document_log_status_proceedingFinish"));
         if (log.isDebugEnabled()) {
             log.debug("Document ended");
@@ -401,14 +422,20 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         if (log.isDebugEnabled()) {
             log.debug("Reopening document:" + documentRef);
         }
+
+        // runAs system ignores the locking
+        if (docLockService.getLockStatus(documentRef) == LockStatus.LOCKED) {
+            throw new NodeLockedException(documentRef);
+        }
+
         Assert.notNull(documentRef, "Reference to document must be provided");
-        getAdrService().addDeletedDocument(documentRef);
         // XXX: pole vist kõige kavalam lahendus, aga kuna uut töövoogu käivitades pannakse dok-omanikuks esimene täitja,
         // siis dokumendi omaniku õigusi käivitajal enam pole
         AuthenticationUtil.runAs(new RunAsWork<NodeRef>() {
             @Override
             public NodeRef doWork() throws Exception {
                 nodeService.setProperty(documentRef, DOC_STATUS, DocumentStatus.WORKING.getValueName());
+                nodeService.setProperty(documentRef, DocumentCommonModel.Props.UPDATE_METADATA_IN_FILES, Boolean.TRUE);
                 return null;
             }
         }, AuthenticationUtil.getSystemUserName());
@@ -469,11 +496,6 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             }
         } else {
             targetParentRef = volumeNodeRef;
-            final Volume volume = volumeService.getVolumeByNodeRef(targetParentRef);
-            if (volume.isContainsCases()) {
-                throw new RuntimeException("Selected volume '" + volume.getTitle() + "' must contain cases, not directly documents. Invalid caseNodeRef: '"
-                        + caseNodeRef + "'");
-            }
             existingParentNode = getVolumeByDocument(docNodeRef);
             if (existingParentNode == null) { // moving from case to volume?
                 existingParentNode = getCaseByDocument(docNodeRef);
@@ -517,17 +539,25 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         // docProps.putAll(getSearchableOtherProps(docNode));
         docProps.put(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE.toString(), sendOutService.buildSearchableSendMode(docNodeRef));
 
+        boolean markAsDeleted = false;
         // If accessRestriction changes from OPEN/AK to INTERNAL/LIMITED
         if (AccessRestriction.INTERNAL.equals((String) docProps.get(ACCESS_RESTRICTION)) || AccessRestriction.LIMITED.equals((String) docProps.get(ACCESS_RESTRICTION))) {
             String oldAccessRestriction = (String) nodeService.getProperty(docNodeRef, ACCESS_RESTRICTION);
             if (!(AccessRestriction.INTERNAL.equals(oldAccessRestriction) || AccessRestriction.LIMITED.equals(oldAccessRestriction))) {
-
-                // And if document was FINISHED
-                String oldStatus = (String) nodeService.getProperty(docNodeRef, DOC_STATUS);
-                if (DocumentStatus.FINISHED.equals(oldStatus)) {
-                    getAdrService().addDeletedDocument(docNodeRef);
-                }
+                markAsDeleted = true;
             }
+        }
+
+        // Mark the document as deleted if publishToAdr value is set to NOT_TO_ADR
+        if (!markAsDeleted && PublishToAdr.NOT_TO_ADR.getValueName().equals(docProps.get(DocumentDynamicModel.Props.PUBLISH_TO_ADR))) {
+            String oldPublishToAdr = (String) nodeService.getProperty(docNodeRef, DocumentDynamicModel.Props.PUBLISH_TO_ADR);
+            if (!PublishToAdr.NOT_TO_ADR.getValueName().equals(oldPublishToAdr)) {
+                markAsDeleted = true;
+            }
+        }
+
+        if (markAsDeleted) {
+            getAdrService().addDeletedDocument(docNodeRef);
         }
 
         boolean isDraft = RepoUtil.getPropertyBooleanValue(docProps, DocumentService.TransientProps.TEMP_DOCUMENT_IS_DRAFT);
@@ -545,6 +575,11 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                     , REG_NUMBER, SHORT_REG_NUMBER, INDIVIDUAL_NUMBER, REG_DATE_TIME // registration changes
                     , ACCESS_RESTRICTION // access restriction changed
                     );
+            NodeRef volume = (NodeRef) docNode.getProperties().get(DocumentCommonModel.Props.VOLUME);
+            if (CaseFileModel.Types.CASE_FILE.equals(nodeService.getType(volume))) {
+                caseFileLogService.addCaseFileDocLocChangeLog(propertyChangesMonitorHelper.getPropertyChange(docNode.getNodeRef(), DocumentCommonModel.Props.VOLUME),
+                        docNode.getNodeRef());
+            }
             if (DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(docNodeRef))) {
                 for (Serializable msg : changedPropsNewValues.generateLogMessages(getDocumentConfigService().getPropertyDefinitions(docNode), docNodeRef)) {
                     documentLogService.addDocumentLog(docNodeRef, (String) msg);
@@ -1306,6 +1341,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         setTransientProperties(copiedDoc, getAncestorNodesByDocument(doc.getNodeRef()));
         // DEFAULT VALUES
         copiedDoc.getProperties().put(DOC_STATUS.toString(), DocumentStatus.WORKING.getValueName());
+        copiedDoc.getProperties().put(DocumentCommonModel.Props.UPDATE_METADATA_IN_FILES.toString(), Boolean.TRUE);
 
         if (log.isDebugEnabled()) {
             log.debug("Copied document: " + copiedDoc.toString());
@@ -1360,6 +1396,11 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
 
     @Override
     public void deleteDocument(NodeRef nodeRef, String comment) {
+        deleteDocument(nodeRef, comment, DeletionType.DELETE);
+    }
+
+    @Override
+    public void deleteDocument(NodeRef nodeRef, String comment, DeletionType deletionType) {
         log.debug("Deleting document: " + nodeRef);
         getAdrService().addDeletedDocument(nodeRef);
         List<AssociationRef> assocs = nodeService.getTargetAssocs(nodeRef, RegexQNamePattern.MATCH_ALL);
@@ -1374,9 +1415,11 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                     nodeService.deleteNode(sourceRef);
                     favDirRemoved = true;
                 }
-            } else {
-                nodeService.removeAssociation(sourceRef, assoc.getTargetRef(), assoc.getTypeQName());
-                documentAssociationsService.updateModifiedDateTime(sourceRef, assoc.getTargetRef());
+            }
+            nodeService.removeAssociation(sourceRef, assoc.getTargetRef(), assoc.getTypeQName());
+            documentAssociationsService.updateModifiedDateTime(sourceRef, assoc.getTargetRef());
+            if (DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT.equals(assoc.getTypeQName())) {
+                documentAssociationsService.logDocumentWorkflowAssocRemove(nodeRef, assoc.getTargetRef());
             }
         }
         updateParentNodesContainingDocsCount(nodeRef, false);
@@ -1387,10 +1430,16 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             deletedDocument.setActor(getUserFullNameAndId(userService.getCurrentUserProperties()));
             deletedDocument.createDocumentData(regNumber, (String) nodeService.getProperty(nodeRef, DOC_NAME));
             deletedDocument.setComment(comment);
-            volumeService.saveDeletedDocument(generalService.getAncestorNodeRefWithType(nodeRef, VolumeModel.Types.VOLUME), deletedDocument);
+            deletedDocument.setDeletionType(deletionType.getValue());
+            volumeService.saveDeletedDocument(getVolumeByDocument(nodeRef, getCaseByDocument(nodeRef)).getNodeRef(), deletedDocument);
         }
 
         String status = (String) nodeService.getProperty(nodeRef, DocumentCommonModel.Props.DOC_STATUS);
+
+        NodeRef volume = (NodeRef) nodeService.getProperty(nodeRef, VOLUME);
+        if (CaseFileModel.Types.CASE_FILE.equals(nodeService.getType(volume))) {
+            caseFileLogService.addCaseFileLog(volume, nodeRef, "casefile_log_document_deleted");
+        }
 
         nodeService.deleteNode(nodeRef);
 
@@ -1412,8 +1461,13 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
 
     @Override
     public int getAllDocumentFromDvkCount() {
+        return getAllDocumentsFromFolderCount(generalService.getNodeRef(fromDvkXPath));
+    }
+
+    @Override
+    public int getAllDocumentsFromFolderCount(NodeRef folder) {
         List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(
-                generalService.getNodeRef(fromDvkXPath), RegexQNamePattern.MATCH_ALL, RegexQNamePattern.MATCH_ALL);
+                folder, RegexQNamePattern.MATCH_ALL, RegexQNamePattern.MATCH_ALL);
         return childAssocs != null ? childAssocs.size() : 0;
     }
 
@@ -1541,7 +1595,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         } else {
             docOrCaseRef = documentRef;
         }
-        NodeRef volumeRef = generalService.getParentNodeRefWithType(docOrCaseRef, VolumeModel.Types.VOLUME);
+        NodeRef volumeRef = generalService.getParentNodeRefWithType(docOrCaseRef, VolumeModel.Types.VOLUME, CaseFileModel.Types.CASE_FILE);
         parents.put(DocumentCommonModel.Props.VOLUME, volumeRef);
         NodeRef seriesRef = null;
         if (volumeRef != null) {
@@ -1591,7 +1645,8 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         } else {
             docOrCaseRef = docRef;
         }
-        return generalService.getParentWithType(docOrCaseRef, VolumeModel.Types.VOLUME);
+        Node parentWithType = generalService.getParentWithType(docOrCaseRef, VolumeModel.Types.VOLUME, CaseFileModel.Types.CASE_FILE);
+        return parentWithType;
     }
 
     @Override
@@ -1661,10 +1716,14 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
     /**
      * NB! This method can be called only once per registration. Otherwise register sequence is increased without a reason.
      */
-    private String parseRegNrPattern(final Series series, NodeRef volumeNodeRef, final Register register, final String existingRegNumber, final Date regDateTime) {
-        String pattern = series.getDocNumberPattern();
-        final Volume volume = pattern.indexOf("{T") >= 0 ? volumeService.getVolumeByNodeRef(volumeNodeRef) : null;
-        final int registerCounter = register.getCounter();
+    @Override
+    public String parseRegNrPattern(final Series series, NodeRef volumeNodeRef, final Register docRegister, final Register volRegister, final String existingRegNumber,
+            final Date regDateTime, final String pattern, final boolean disableVolCounterIncrement) {
+        final Volume volume = pattern.indexOf("T") >= 0 ? volumeService.getVolumeByNodeRef(volumeNodeRef) : null;
+        final int docRegisterCounter = docRegister != null ? docRegister.getCounter() : -1;
+        final int volRegisterCounter = volRegister != null ? volRegister.getCounter() : -1;
+        final Long existingShortRegNr = (Long) (disableVolCounterIncrement && volume != null ? volume.getNode().getProperties().get(VolumeModel.Props.VOL_SHORT_REG_NUMBER)
+                : null);
 
         Transformer<String, String> paramValueLookup = new Transformer<String, String>() {
             @Override
@@ -1683,32 +1742,49 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                 case DA:
                     return DateFormatUtils.format(regDateTime, "yy");
                 case TN:
-                    return ""; // FIXME DLSeadist kui asjatoimik saab tehtud, peaks ka sellele asendus tekkima.
+                    if (volRegister == null) {
+                        return "";
+                    }
+                    int counterVal = volRegister.getCounter();
+                    if (existingShortRegNr == null && volRegisterCounter == volRegister.getCounter()) { // Increase if first time and registering
+                        counterVal = registerService.increaseCount(volRegister.getId());
+                        volRegister.setCounter(counterVal);
+                    } else if (existingShortRegNr != null) {
+                        counterVal = existingShortRegNr.intValue();
+                    }
+                    return digitParam(counterVal, input);
                 case DN:
                     if (existingRegNumber != null && !generateNewRegNumberInReregistration) {
                         RegNrHolder holder = new RegNrHolder(existingRegNumber);
                         return holder.getShortRegNrWithoutIndividualizingNr();
                     }
-                    if (registerCounter == register.getCounter()) { // Increase if first time
-                        register.setCounter(registerService.increaseCount(register.getId()));
-                    }
-                    String counter = Integer.toString(register.getCounter());
-                    if (RegisterNumberPatternParams.getValidDigitParam(input) == null) {
-                        return counter;
-                    }
-                    int numberOfDigits;
-                    try {
-                        numberOfDigits = Integer.valueOf(input.split("[A-Z]")[0]);
-                    } catch (NumberFormatException nfe) {
+                    if (docRegister == null) {
                         return "";
                     }
-                    if (numberOfDigits > counter.length()) {
-                        return StringUtils.leftPad(counter, numberOfDigits, '0');
+                    if (docRegisterCounter == docRegister.getCounter()) { // Increase if first time
+                        docRegister.setCounter(registerService.increaseCount(docRegister.getId()));
                     }
-                    return StringUtils.right(counter, numberOfDigits); // trim left if needed
+                    return digitParam(docRegister.getCounter(), input);
                 default:
                     return "";
                 }
+            }
+
+            private String digitParam(int registerCounter, String input) {
+                String counter = Integer.toString(registerCounter);
+                if (RegisterNumberPatternParams.getValidDigitParam(input) == null) {
+                    return counter;
+                }
+                int numberOfDigits;
+                try {
+                    numberOfDigits = Integer.valueOf(input.split("[A-Z]")[0]);
+                } catch (NumberFormatException nfe) {
+                    return "";
+                }
+                if (numberOfDigits > counter.length()) {
+                    return StringUtils.leftPad(counter, numberOfDigits, '0');
+                }
+                return StringUtils.right(counter, numberOfDigits); // trim left if needed
             }
         };
         return TextPatternUtil.getResult(pattern, paramValueLookup);
@@ -1719,8 +1795,14 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         return registerDocument(docNode, false, null);
     }
 
+    @Override
+    public boolean isVolumeColumnEnabled() {
+        return volumeColumnEnabled;
+    }
+
     private Node registerDocument(Node docNode, boolean isRelocating, Node previousVolume) {
         docNode.clearPermissionsCache(); // permissions might have been lost after rendering registration button
+        BeanHelper.getDocumentLockHelperBean().checkAssocDocumentLocks(docNode, "document_registerDoc_error_docLocked_initialDocument");
         if (!isRelocating) {
             if (!new RegisterDocumentEvaluator().canRegister(docNode, false)) {
                 throw new UnableToPerformException("document_registerDoc_error_noPermission");
@@ -1745,6 +1827,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         final boolean isReplyOrFollowupDoc = isReplyOrFollowupDoc(docRef, replyAssocs);
         final Series series = seriesService.getSeriesByNodeRef(seriesNodeRef);
         Register register = registerService.getRegister(series.getRegister());
+        Register volRegister = series.getVolRegister() == null ? null : registerService.getRegister(series.getVolRegister());
         String regNumber = (String) props.get(DocumentCommonModel.Props.REG_NUMBER);
         final Date now = new Date();
         final NodeRef initDocParentRef = caseNodeRef != null ? caseNodeRef : volumeNodeRef;
@@ -1753,7 +1836,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         if (!isReplyOrFollowupDoc) {
             log.debug("Starting to " + (isRelocating ? "reregister document" : "register initialDocument") + ", docRef=" + docRef);
             // registration of initial document ("Algatusdokument") or reregistering document during relocating
-            regNumber = parseRegNrPattern(series, volumeNodeRef, register, regNumber, now);
+            regNumber = parseRegNrPattern(series, volumeNodeRef, register, volRegister, regNumber, now, series.getDocNumberPattern(), false);
             if (!series.isNewNumberForEveryDoc() && series.isIndividualizingNumbers()) {
                 regNumber += REGISTRATION_INDIVIDUALIZING_NUM_SUFFIX;
             }
@@ -1766,7 +1849,8 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             final String initDocRegNr = (String) initialDoc.getProperties().get(REG_NUMBER.toString());
             boolean initDocRegNrNotBlank = StringUtils.isNotBlank(initDocRegNr);
             if (series.isNewNumberForEveryDoc()) {
-                Pair<String, List<String>> result = addUniqueNumberIfNeccessary(parseRegNrPattern(series, volumeNodeRef, register, regNumber, now), initDocParentRef,
+                Pair<String, List<String>> result = addUniqueNumberIfNeccessary(
+                        parseRegNrPattern(series, volumeNodeRef, register, volRegister, regNumber, now, series.getDocNumberPattern(), false), initDocParentRef,
                         isRelocating, null);
                 regNumber = result.getFirst();
                 allDocs = result.getSecond();
@@ -1805,7 +1889,12 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                         Date finalTermOfDeliveryAndReceiptDate = (Date) nodeService.getProperty(contractDocRef,
                                 DocumentSpecificModel.Props.FINAL_TERM_OF_DELIVERY_AND_RECEIPT);
                         if (finalTermOfDeliveryAndReceiptDate == null) {
-                            setPropertyAsSystemUser(DocumentSpecificModel.Props.FINAL_TERM_OF_DELIVERY_AND_RECEIPT, now, contractDocRef);
+                            try {
+                                setPropertyAsSystemUser(DocumentSpecificModel.Props.FINAL_TERM_OF_DELIVERY_AND_RECEIPT, now, contractDocRef);
+                            } catch (NodeLockedException e) {
+                                e.setCustomMessageId("document_registerDoc_error_docLocked_initialDocument");
+                                throw e;
+                            }
                         }
                     }
                 }
@@ -1813,25 +1902,30 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             // Check if its a reply outgoing letter and update originating document info (if needed)
             if (SystematicDocumentType.OUTGOING_LETTER.isSameType(documentTypeId)) {
                 if (replyAssocs.size() > 0) {
-                    final NodeRef originalDocRef = replyAssocs.get(0).getTargetRef();
-                    DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
-                    String comment = MessageUtil.getMessage("task_comment_finished_by_register_doc", regNumber, dateFormat.format(now));
-                    if (!workflowService.hasInProgressOtherUserOrderAssignmentTasks(originalDocRef)) {
-                        Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs = getPropDefs(originalDocRef);
-                        if (hasProp(DocumentSpecificModel.Props.COMPLIENCE_DATE, propDefs)) {
-                            Date complienceDate = (Date) nodeService.getProperty(originalDocRef, DocumentSpecificModel.Props.COMPLIENCE_DATE);
-                            if (complienceDate == null) {
-                                setPropertyAsSystemUser(DocumentSpecificModel.Props.COMPLIENCE_DATE, now, originalDocRef);
-                                setDocStatusFinished(originalDocRef);
+                    try {
+                        final NodeRef originalDocRef = replyAssocs.get(0).getTargetRef();
+                        DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
+                        String comment = MessageUtil.getMessage("task_comment_finished_by_register_doc", regNumber, dateFormat.format(now));
+                        if (!workflowService.hasInProgressOtherUserOrderAssignmentTasks(originalDocRef)) {
+                            Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs = getPropDefs(originalDocRef);
+                            if (hasProp(DocumentSpecificModel.Props.COMPLIENCE_DATE, propDefs)) {
+                                Date complienceDate = (Date) nodeService.getProperty(originalDocRef, DocumentSpecificModel.Props.COMPLIENCE_DATE);
+                                if (complienceDate == null) {
+                                    setPropertyAsSystemUser(DocumentSpecificModel.Props.COMPLIENCE_DATE, now, originalDocRef);
+                                    setDocStatusFinished(originalDocRef);
+                                }
+                            }
+                            if (hasProp(DocumentSpecificModel.Props.COMPLIENCE_NOTATION, propDefs)) {
+                                String complienceNotation = (String) nodeService.getProperty(originalDocRef, DocumentSpecificModel.Props.COMPLIENCE_NOTATION);
+                                setPropertyAsSystemUser(DocumentSpecificModel.Props.COMPLIENCE_NOTATION, StringUtils.isBlank(complienceNotation) ? comment : complienceNotation
+                                        + " " + comment, originalDocRef);
                             }
                         }
-                        if (hasProp(DocumentSpecificModel.Props.COMPLIENCE_NOTATION, propDefs)) {
-                            String complienceNotation = (String) nodeService.getProperty(originalDocRef, DocumentSpecificModel.Props.COMPLIENCE_NOTATION);
-                            setPropertyAsSystemUser(DocumentSpecificModel.Props.COMPLIENCE_NOTATION, StringUtils.isBlank(complienceNotation) ? comment : complienceNotation
-                                    + " " + comment, originalDocRef);
-                        }
+                        workflowService.finishTasksByRegisteringReplyLetter(originalDocRef, comment);
+                    } catch (NodeLockedException e) {
+                        e.setCustomMessageId("document_registerDoc_error_docLocked_initialDocument");
+                        throw e;
                     }
-                    workflowService.finishTasksOrCompoundWorkflowsOnRegisterDoc(originalDocRef, comment);
                 }
             }
             // Check if its a reply outgoing mv letter and update originating document info (if needed)
@@ -1886,6 +1980,9 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             if (getDocumentAdminService().getDocumentTypeProperty(documentTypeId, DocumentAdminModel.Props.FINISH_DOC_BY_REGISTRATION, Boolean.class)) {
                 props.put(DOC_STATUS.toString(), DocumentStatus.FINISHED.getValueName());
                 propertyChangesMonitorHelper.addIgnoredProps(props, DOC_STATUS);
+                props.put(UPDATE_METADATA_IN_FILES.toString(), Boolean.FALSE);
+                propertyChangesMonitorHelper.addIgnoredProps(props, UPDATE_METADATA_IN_FILES);
+                documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_registered"));
             } else {
                 if (EventsLoggingHelper.isLoggingDisabled(docNode, TEMP_LOGGING_DISABLED_REGISTERED_BY_USER)) {
                     creatorDhs = true;
@@ -2019,6 +2116,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         String docStatus = (String) nodeService.getProperty(originalDocRef, DOC_STATUS);
         if (!DocumentStatus.FINISHED.getValueName().equals(docStatus)) {
             setPropertyAsSystemUser(DOC_STATUS, DocumentStatus.FINISHED.getValueName(), originalDocRef);
+            setPropertyAsSystemUser(UPDATE_METADATA_IN_FILES, Boolean.FALSE, originalDocRef);
             documentLogService.addDocumentLog(originalDocRef, I18NUtil.getMessage("document_log_status_proceedingFinish") //
                     , I18NUtil.getMessage("document_log_creator_dhs"));
         }
@@ -2066,27 +2164,33 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
     }
 
     @Override
+    public List<NodeRef> getAllDocumentRefsByParentRef(NodeRef parentRef) {
+        return getDocumentSearchService().searchAllDocumentsByParentRef(parentRef, -1).getFirst();
+    }
+
+    @Override
     public List<Document> getAllDocumentsByParentNodeRef(NodeRef parentRef) {
+        return searchAllDocumentsByParentNodeRef(parentRef, -1).getFirst();
+    }
+
+    @Override
+    public List<NodeRef> getAllDocumentRefsByParentRefWithoutRestrictedAccess(NodeRef parentRef) {
+        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parentRef, RegexQNamePattern.MATCH_ALL, DocumentCommonModel.Types.DOCUMENT);
+        List<NodeRef> docsRefs = new ArrayList<NodeRef>(childAssocs.size());
+        for (ChildAssociationRef childAssocRef : childAssocs) {
+            docsRefs.add(childAssocRef.getChildRef());
+        }
+        return docsRefs;
+    }
+
+    @Override
+    public List<Document> getAllDocumentsByParentNodeRefWithoutRestrictedAccess(NodeRef parentRef) {
         List<NodeRef> docsRefs = getAllDocumentRefsByParentRef(parentRef);
         List<Document> docsOfParent = new ArrayList<Document>(docsRefs.size());
         for (NodeRef docRef : docsRefs) {
             docsOfParent.add(getDocumentByNodeRef(docRef));
         }
         return docsOfParent;
-    }
-
-    @Override
-    public List<NodeRef> getAllDocumentRefsByParentRef(NodeRef parentRef) {
-        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parentRef, RegexQNamePattern.MATCH_ALL, RegexQNamePattern.MATCH_ALL);
-        List<NodeRef> docsRefs = new ArrayList<NodeRef>(childAssocs.size());
-        for (ChildAssociationRef childAssocRef : childAssocs) {
-            NodeRef docRef = childAssocRef.getChildRef();
-            if (!DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(docRef))) { // XXX DLSeadist filter out old document types
-                continue;
-            }
-            docsRefs.add(docRef);
-        }
-        return docsRefs;
     }
 
     private NodeRef getInitialDocument(NodeRef followupDocRef) {
@@ -2267,49 +2371,79 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             return true;
         }
 
+        public PropertyChange getPropertyChange(NodeRef docRef, QName property) {
+            List<PropertyChange> list = propsChangedLogger.getChanges(docRef);
+            if (list == null) {
+                return null;
+            }
+            for (PropertyChange propertyChange : list) {
+                if (property.equals(propertyChange.getProperty())) {
+                    return propertyChange;
+                }
+            }
+            return null;
+        }
+
     }
 
     @Override
     public List<TaskAndDocument> getTasksWithDocuments(List<Task> tasks) {
         List<TaskAndDocument> results = new ArrayList<TaskAndDocument>(tasks.size());
         Map<NodeRef, Document> documents = new HashMap<NodeRef, Document>(tasks.size());
+        Map<NodeRef, CompoundWorkflow> compoundWorkflows = new HashMap<NodeRef, CompoundWorkflow>(tasks.size());
         for (Task task : tasks) {
-            NodeRef workflow = task.getParentNodeRef();
-            NodeRef compoundWorkflow = nodeService.getPrimaryParent(workflow).getParentRef();
-            NodeRef documentNodeRef = nodeService.getPrimaryParent(compoundWorkflow).getParentRef();
-            Document document = documents.get(documentNodeRef);
-            if (document == null) {
-                document = getDocumentByNodeRef(documentNodeRef);
-                documents.put(documentNodeRef, document);
+            NodeRef workflow = task.getWorkflowNodeRef();
+            CompoundWorkflow compoundWorkflow = null;
+            Document document = null;
+            if (workflow != null && nodeService.exists(workflow)) {
+                NodeRef compoundWorkflowRef = nodeService.getPrimaryParent(workflow).getParentRef();
+                compoundWorkflow = compoundWorkflows.get(compoundWorkflowRef);
+                if (compoundWorkflow == null) {
+                    compoundWorkflow = workflowService.getCompoundWorkflow(compoundWorkflowRef);
+                    compoundWorkflow.setNumberOfDocuments(workflowService.getCompoundWorkflowDocumentCount(compoundWorkflowRef));
+                    compoundWorkflows.put(compoundWorkflowRef, compoundWorkflow);
+                }
+                if (compoundWorkflow.isDocumentWorkflow() || compoundWorkflow.isCaseFileWorkflow()) {
+                    NodeRef documentNodeRef = nodeService.getPrimaryParent(compoundWorkflowRef).getParentRef();
+                    document = documents.get(documentNodeRef);
+                    if (document == null) {
+                        document = getDocumentByNodeRef(documentNodeRef);
+                        documents.put(documentNodeRef, document);
+                    }
+                }
             }
-            results.add(new TaskAndDocument(task, document));
+            results.add(new TaskAndDocument(task, document, compoundWorkflow));
         }
         return results;
     }
 
     @Override
-    public void prepareDocumentSigning(final NodeRef document) {
+    public void prepareDocumentSigning(final List<NodeRef> documents, final boolean generatePdfs, final boolean inactivateOriginalFiles) {
         AuthenticationUtil.runAs(new RunAsWork<Object>() {
             @Override
             public Object doWork() throws Exception {
-                long step0 = System.currentTimeMillis();
-                // Register the document, if not already registered
-                boolean didRegister = false;
-                String docTypeId = (String) nodeService.getProperty(document, Props.OBJECT_TYPE_ID);
-                if (getDocumentAdminService().getDocumentTypeProperty(docTypeId, DocumentAdminModel.Props.REGISTRATION_ENABLED, Boolean.class)) {
-                    didRegister = registerDocumentIfNotRegistered(document, true);
-                }
-                long step1 = System.currentTimeMillis();
-                if (didRegister) {
-                    getDocumentTemplateService().updateGeneratedFiles(document, true);
-                }
-                long step2 = System.currentTimeMillis();
-                // Generate PDF-files for all the files that support it.
-                fileService.transformActiveFilesToPdf(document);
-                long step3 = System.currentTimeMillis();
-                if (log.isInfoEnabled()) {
-                    log.info("prepareDocumentSigning service call took " + (step3 - step0) + " ms\n    register document - " + (step1 - step0)
-                            + " ms\n    update word files contents - " + (step2 - step1) + " ms\n    convert files to pdf - " + (step3 - step2) + " ms");
+                for (NodeRef document : documents) {
+                    long step0 = System.currentTimeMillis();
+                    // Register the document, if not already registered
+                    boolean didRegister = false;
+                    String docTypeId = (String) nodeService.getProperty(document, Props.OBJECT_TYPE_ID);
+                    if (getDocumentAdminService().getDocumentTypeProperty(docTypeId, DocumentAdminModel.Props.REGISTRATION_ENABLED, Boolean.class)) {
+                        didRegister = registerDocumentIfNotRegistered(document, true);
+                    }
+                    long step1 = System.currentTimeMillis();
+                    if (didRegister) {
+                        getDocumentTemplateService().updateGeneratedFiles(document, true);
+                    }
+                    long step2 = System.currentTimeMillis();
+                    if (generatePdfs) {
+                        // Generate PDF-files for all the files that support it.
+                        fileService.transformActiveFilesToPdf(document, inactivateOriginalFiles);
+                    }
+                    long step3 = System.currentTimeMillis();
+                    if (log.isInfoEnabled()) {
+                        log.info("prepareDocumentSigning service call took " + (step3 - step0) + " ms\n    register document - " + (step1 - step0)
+                                + " ms\n    update word files contents - " + (step2 - step1) + " ms\n    convert files to pdf - " + (step3 - step2) + " ms");
+                    }
                 }
                 return null;
             }
@@ -2317,10 +2451,10 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
     }
 
     @Override
-    public SignatureDigest prepareDocumentDigest(NodeRef document, String certHex) throws SignatureException {
+    public SignatureDigest prepareDocumentDigest(NodeRef document, String certHex, NodeRef compoundWorkflowRef) throws SignatureException {
         long step0 = System.currentTimeMillis();
         SignatureDigest signatureDigest = null;
-        NodeRef existingDdoc = checkExistingDdoc(document);
+        NodeRef existingDdoc = getExistingDdoc(document, compoundWorkflowRef);
         long step1 = System.currentTimeMillis();
         String debug = "";
         if (existingDdoc != null) {
@@ -2328,7 +2462,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             long step2 = System.currentTimeMillis();
             debug += "\n    calculate digest for existing ddoc - " + (step2 - step1) + " ms";
         } else {
-            List<NodeRef> files = getSignatureTaskActiveNodeRefs(document);
+            List<NodeRef> files = getFilesForSigning(document, compoundWorkflowRef);
             long step2 = System.currentTimeMillis();
             signatureDigest = signatureService.getSignatureDigest(files, certHex);
             long step3 = System.currentTimeMillis();
@@ -2342,11 +2476,19 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         return signatureDigest;
     }
 
+    private NodeRef getExistingDdoc(NodeRef document, NodeRef compoundWorkflowRef) {
+        if (compoundWorkflowRef == null) {
+            return checkExistingDdoc(document);
+        } else {
+            return checkExistingDdoc(document, compoundWorkflowRef);
+        }
+    }
+
     @Override
-    public SignatureChallenge prepareDocumentChallenge(NodeRef document, String phoneNo) throws SignatureException {
+    public SignatureChallenge prepareDocumentChallenge(NodeRef document, String phoneNo, NodeRef compoundWorkflowRef) throws SignatureException {
         long step0 = System.currentTimeMillis();
         SignatureChallenge signatureDigest = null;
-        NodeRef existingDdoc = checkExistingDdoc(document);
+        NodeRef existingDdoc = getExistingDdoc(document, compoundWorkflowRef);
         long step1 = System.currentTimeMillis();
         String debug = "";
         if (existingDdoc != null) {
@@ -2354,7 +2496,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             long step2 = System.currentTimeMillis();
             debug += "\n    calculate digest for existing ddoc - " + (step2 - step1) + " ms";
         } else {
-            List<NodeRef> files = getSignatureTaskActiveNodeRefs(document);
+            List<NodeRef> files = getFilesForSigning(document, compoundWorkflowRef);
             long step2 = System.currentTimeMillis();
             signatureDigest = signatureService.getSignatureChallenge(files, phoneNo);
             long step3 = System.currentTimeMillis();
@@ -2368,66 +2510,125 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         return signatureDigest;
     }
 
-    private List<NodeRef> getSignatureTaskActiveNodeRefs(NodeRef document) {
-        List<NodeRef> nodeRefs = new ArrayList<NodeRef>();
-        List<File> files = fileService.getAllActiveFiles(document);
-        for (File file : files) {
-            nodeRefs.add(file.getNodeRef());
-        }
-        return nodeRefs;
-    }
-
     @Override
-    public void finishDocumentSigning(final SignatureTask task, final String signature) {
+    public void finishDocumentSigning(final SignatureTask task, final String signature, final NodeRef document, final boolean signSeparately, boolean finishTask,
+            final Map<NodeRef, String> originalStatuses) {
         long step0 = System.currentTimeMillis();
-        final NodeRef document = task.getParent().getParent().getParent();
+        final NodeRef compoundWorkflowRef = task.getParent().getParent().getNodeRef();
         final long step1 = System.currentTimeMillis();
         String debug = AuthenticationUtil.runAs(new RunAsWork<String>() {
             @Override
             public String doWork() throws Exception {
-                NodeRef existingDdoc = checkExistingDdoc(document);
-                long step2 = System.currentTimeMillis();
-                String debug1 = "\n    check for existing ddoc - " + (step2 - step1) + " ms";
-                if (existingDdoc != null) {
-                    if (task.getSignatureDigest() != null) {
-                        signatureService.addSignature(existingDdoc, task.getSignatureDigest(), signature);
-                    } else {
-                        signatureService.addSignature(existingDdoc, task.getSignatureChallenge(), signature);
-                    }
-                    long step3 = System.currentTimeMillis();
-                    debug1 += "\n    add signature to existing ddoc - " + (step3 - step2) + " ms";
+                NodeRef existingDdoc;
+                if (signSeparately) {
+                    existingDdoc = checkExistingDdoc(document);
                 } else {
-                    List<NodeRef> files = fileService.getAllActiveFilesNodeRefs(document);
-                    long step3 = System.currentTimeMillis();
-                    final String filename = generateDdocFilename(document);
-                    String uniqueFilename = generalService.getUniqueFileName(document, filename);
-                    NodeRef ddoc;
-                    if (task.getSignatureDigest() != null) {
-                        ddoc = signatureService.createContainer(document, files, uniqueFilename, task.getSignatureDigest(), signature);
-                    } else {
-                        ddoc = signatureService.createContainer(document, files, uniqueFilename, task.getSignatureChallenge(), signature);
-                    }
-                    long step4 = System.currentTimeMillis();
-                    documentLogService.addDocumentLog(document, MessageUtil.getMessage("applog_doc_file_generated", uniqueFilename));
-                    long step5 = System.currentTimeMillis();
-                    fileService.setAllFilesInactiveExcept(document, ddoc);
-                    long step6 = System.currentTimeMillis();
-
-                    debug1 += "\n    load file list - " + (step3 - step2) + " ms";
-                    debug1 += "\n    create ddoc and add signature (" + files.size() + " files) - " + (step4 - step3) + " ms";
-                    debug1 += "\n    add log entry to document - " + (step5 - step4) + " ms";
-                    debug1 += "\n    set files inactive - " + (step6 - step5) + " ms";
+                    existingDdoc = checkExistingDdoc(document, compoundWorkflowRef);
                 }
-                fileService.deleteGeneratedFilesByType(document, GeneratedFileType.SIGNED_PDF);
+                long step2 = System.currentTimeMillis();
+                String debug1 = ("\n    check for existing ddoc - " + (step2 - step1) + " ms");
+                if (existingDdoc != null) {
+                    signExistingDdoc(task, signature, existingDdoc);
+                    long step3 = System.currentTimeMillis();
+                    debug1 += ("\n    add signature to existing ddoc - " + (step3 - step2) + " ms");
+                } else {
+                    List<NodeRef> files = getFilesForSigning(document, !signSeparately ? compoundWorkflowRef : null);
+                    long step3 = System.currentTimeMillis();
+                    if (files != null && !files.isEmpty()) {
+                        String uniqueFilename = generalService.getUniqueFileName(document, generateDdocFilename(document));
+                        NodeRef ddoc = createDdoc(task, signature, uniqueFilename, document, files);
+                        if (!signSeparately) {
+                            nodeService.setProperty(ddoc, FileModel.Props.COMPOUND_WORKFLOW, task.getParent().getParent().getNodeRef());
+                        }
+                        long step4 = System.currentTimeMillis();
+                        documentLogService.addDocumentLog(document, MessageUtil.getMessage("applog_doc_file_generated", uniqueFilename));
+                        long step5 = System.currentTimeMillis();
+                        if (signSeparately) {
+                            fileService.setAllFilesInactiveExcept(document, ddoc);
+                        }
+                        long step6 = System.currentTimeMillis();
+                        if (signSeparately) {
+                            fileService.deleteGeneratedFilesByType(document, GeneratedFileType.SIGNED_PDF);
+                        } else {
+                            for (NodeRef docRef : workflowService.getCompoundWorkflowSigningDocumentRefs(compoundWorkflowRef)) {
+                                fileService.deleteGeneratedFilesByType(docRef, GeneratedFileType.SIGNED_PDF);
+                            }
+                        }
+                        debug1 += ("\n    load file list - " + (step3 - step2) + " ms");
+                        debug1 += ("\n    create ddoc and add signature (" + files.size() + " files) - " + (step4 - step3) + " ms");
+                        debug1 += ("\n    add log entry to document - " + (step5 - step4) + " ms");
+                        debug1 += ("\n    set files inactive - " + (step6 - step5) + " ms");
+                    }
+                }
+
                 return debug1;
             }
         }, AuthenticationUtil.getSystemUserName());
         long step7 = System.currentTimeMillis();
-        workflowService.finishInProgressTask(task, 1);
+        if (finishTask) {
+            workflowService.finishInProgressTask(task, 1);
+        }
+        final String currentUser = AuthenticationUtil.getFullyAuthenticatedUser();
+        AuthenticationUtil.runAs(new RunAsWork<Void>() {
+            @Override
+            public Void doWork() throws Exception {
+                setDocumentSigner(document, task, signSeparately, originalStatuses, currentUser);
+                return null;
+            }
+        }, AuthenticationUtil.getSystemUserName());
         long step8 = System.currentTimeMillis();
         if (log.isInfoEnabled()) {
             log.info("finishDocumentSigning service call (" + (task.getSignatureDigest() != null ? "id-card" : "mobile-id") + ") took " + (step8 - step0)
                     + " ms\n    generate ddoc filename - " + (step1 - step0) + " ms" + debug + "\n    finish workflow task - " + (step8 - step7) + " ms");
+        }
+    }
+
+    private void setDocumentSigner(NodeRef document, SignatureTask task, boolean signSeparately, Map<NodeRef, String> originalStatuses, String username) {
+        CompoundWorkflow compoundWorkflow = task.getParent().getParent();
+        if (compoundWorkflow.isIndependentWorkflow()) {
+            List<NodeRef> docRefs;
+            if (signSeparately) {
+                docRefs = Collections.singletonList(document);
+            } else {
+                docRefs = workflowService.getCompoundWorkflowSigningDocumentRefs(compoundWorkflow.getNodeRef());
+            }
+            for (NodeRef docRef : docRefs) {
+                if (!DocumentStatus.WORKING.equals(originalStatuses.get(docRef))) {
+                    continue;
+                }
+                Pair<DocumentType, DocumentTypeVersion> typeAndVersion = getDocumentConfigService().getDocumentTypeAndVersion(new Node(docRef));
+                String signerNameFieldId = DocumentCommonModel.Props.SIGNER_NAME.getLocalName();
+                Collection<Field> signerNameFields = typeAndVersion.getSecond().getFieldsById(Collections.singleton(signerNameFieldId));
+                for (Field signerNameField : signerNameFields) {
+                    if (signerNameField.getOriginalFieldId().equals(signerNameFieldId) && signerNameField.getParent() instanceof FieldGroup) {
+                        FieldGroup parent = (FieldGroup) signerNameField.getParent();
+                        if (SystematicFieldGroupNames.SIGNER.equals(parent.getName())) {
+                            Map<QName, Serializable> props = RepoUtil.getPropertiesIgnoringSystem(nodeService.getProperties(docRef), dictionaryService);
+                            getDocumentConfigService().setUserContactProps(props, username, signerNameFieldId);
+                            nodeService.addProperties(docRef, props);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private NodeRef createDdoc(final SignatureTask task, final String signature, final String filename, NodeRef document, List<NodeRef> files) {
+        NodeRef ddoc;
+        if (task.getSignatureDigest() != null) {
+            ddoc = signatureService.createContainer(document, files, filename, task.getSignatureDigest(), signature);
+        } else {
+            ddoc = signatureService.createContainer(document, files, filename, task.getSignatureChallenge(), signature);
+        }
+        return ddoc;
+    }
+
+    private void signExistingDdoc(final SignatureTask task, final String signature, NodeRef existingDdoc) {
+        if (task.getSignatureDigest() != null) {
+            signatureService.addSignature(existingDdoc, task.getSignatureDigest(), signature);
+        } else {
+            signatureService.addSignature(existingDdoc, task.getSignatureChallenge(), signature);
         }
     }
 
@@ -2440,6 +2641,32 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             }
         }
         return null;
+    }
+
+    @Override
+    public NodeRef checkExistingDdoc(NodeRef document, NodeRef compoundWorkflowRef) {
+        if (document == null || compoundWorkflowRef == null) {
+            return null;
+        }
+        for (File file : fileService.getAllActiveFiles(document)) {
+            if (signatureService.isDigiDocContainer(file.getNodeRef()) && compoundWorkflowRef.equals(file.getCompoundWorkflowRef())) {
+                return file.getNodeRef();
+            }
+        }
+        return null;
+    }
+
+    private List<NodeRef> getFilesForSigning(NodeRef document, NodeRef compoundWorkflowRef) {
+        List<NodeRef> files;
+        if (compoundWorkflowRef == null) {
+            files = fileService.getAllActiveFilesForDdoc(document);
+        } else {
+            files = new ArrayList<NodeRef>();
+            for (NodeRef docRef : workflowService.getCompoundWorkflowSigningDocumentRefs(compoundWorkflowRef)) {
+                files.addAll(fileService.getAllActiveFilesForDdoc(docRef));
+            }
+        }
+        return files;
     }
 
     private String generateDdocFilename(NodeRef document) {
@@ -2463,120 +2690,9 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         return FilenameUtil.buildFileName(sb.toString(), "ddoc");
     }
 
-    private boolean isDraft(NodeRef document) {
+    @Override
+    public boolean isDraft(NodeRef document) {
         return nodeService.getPrimaryParent(document).getParentRef().equals(getDrafts());
-    }
-
-    // ========================================================================
-    // =============================== FAVORITES ==============================
-    // ========================================================================
-    @Override
-    public List<Document> getFavorites(NodeRef containerNodeRef) {
-        if (containerNodeRef == null) {
-            containerNodeRef = userService.getUser(AuthenticationUtil.getRunAsUser()).getNodeRef();
-        }
-        if (!nodeService.hasAspect(containerNodeRef, DocumentCommonModel.Aspects.FAVORITE_CONTAINER)) {
-            return Collections.emptyList();
-        }
-        List<AssociationRef> assocs = nodeService.getTargetAssocs(containerNodeRef, DocumentCommonModel.Assocs.FAVORITE);
-        List<Document> favorites = new ArrayList<Document>(assocs.size());
-        for (AssociationRef assoc : assocs) {
-            NodeRef docRef = assoc.getTargetRef();
-            if (!DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(docRef))) { // XXX DLSeadist filter out old document types
-                continue;
-            }
-            favorites.add(getDocumentByNodeRef(docRef));
-        }
-        return favorites;
-    }
-
-    @Override
-    public List<String> getFavoriteDirectoryNames() {
-        NodeRef user = userService.getUser(AuthenticationUtil.getRunAsUser()).getNodeRef();
-        List<ChildAssociationRef> dirs = nodeService.getChildAssocs(user, DocumentCommonModel.Assocs.FAVORITE_DIRECTORY, RegexQNamePattern.MATCH_ALL);
-        List<String> names = new ArrayList<String>(dirs.size());
-        for (ChildAssociationRef dirAssoc : dirs) {
-            names.add(dirAssoc.getQName().getLocalName());
-        }
-
-        return names;
-    }
-
-    @Override
-    public boolean isFavoriteAddable(NodeRef docRef) {
-        return (isFavorite(docRef) == null) && !isDraft(docRef);
-    }
-
-    @Override
-    public NodeRef isFavorite(NodeRef docRef) {
-        NodeRef user = userService.getUser(AuthenticationUtil.getRunAsUser()).getNodeRef();
-        if (!nodeService.hasAspect(user, DocumentCommonModel.Aspects.FAVORITE_CONTAINER) && !nodeService.hasAspect(user, DocumentCommonModel.Aspects.FAVORITE_DIRECTORY_ASPECT)) {
-            return null;
-        }
-        for (AssociationRef assoc : nodeService.getTargetAssocs(user, DocumentCommonModel.Assocs.FAVORITE)) {
-            if (assoc.getTargetRef().equals(docRef)) {
-                return assoc.getSourceRef();
-            }
-        }
-        for (ChildAssociationRef dirAssoc : nodeService.getChildAssocs(user, DocumentCommonModel.Assocs.FAVORITE_DIRECTORY, RegexQNamePattern.MATCH_ALL)) {
-            for (AssociationRef docAssoc : nodeService.getTargetAssocs(dirAssoc.getChildRef(), DocumentCommonModel.Assocs.FAVORITE)) {
-                if (docAssoc.getTargetRef().equals(docRef)) {
-                    return docAssoc.getSourceRef();
-                }
-            }
-        }
-        return null;
-    }
-
-    @Override
-    public void addFavorite(NodeRef docRef) {
-        addFavorite(docRef, null, true);
-    }
-
-    @Override
-    public boolean addFavorite(NodeRef docRef, String favDirName, boolean updateMenu) {
-
-        if (isFavorite(docRef) != null) {
-            return false;
-        }
-        NodeRef user = userService.getUser(AuthenticationUtil.getRunAsUser()).getNodeRef();
-        if (!nodeService.hasAspect(user, DocumentCommonModel.Aspects.FAVORITE_CONTAINER)) {
-            nodeService.addAspect(user, DocumentCommonModel.Aspects.FAVORITE_CONTAINER, null);
-        }
-        if (StringUtils.isNotBlank(favDirName)) {
-            favDirName = StringUtils.trim(favDirName);
-            if (!nodeService.hasAspect(user, DocumentCommonModel.Aspects.FAVORITE_DIRECTORY_ASPECT)) {
-                nodeService.addAspect(user, DocumentCommonModel.Aspects.FAVORITE_DIRECTORY_ASPECT, null);
-            }
-            QName assocName = QName.createQName(DocumentCommonModel.URI, QName.createValidLocalName(favDirName));
-            List<ChildAssociationRef> favDirs = nodeService.getChildAssocs(user, DocumentCommonModel.Assocs.FAVORITE_DIRECTORY, assocName);
-            NodeRef favDir;
-            if (favDirs.isEmpty()) {
-                favDir = nodeService.createNode(user, DocumentCommonModel.Assocs.FAVORITE_DIRECTORY, assocName, DocumentCommonModel.Types.FAVORITE_DIRECTORY).getChildRef();
-            } else {
-                favDir = favDirs.get(0).getChildRef();
-            }
-            nodeService.createAssociation(favDir, docRef, DocumentCommonModel.Assocs.FAVORITE);
-            if (updateMenu) {
-                menuService.process(BeanHelper.getMenuBean().getMenu(), false, true);
-            }
-        } else {
-            nodeService.createAssociation(user, docRef, DocumentCommonModel.Assocs.FAVORITE);
-        }
-        return true;
-    }
-
-    @Override
-    public void removeFavorite(NodeRef docRef) {
-        NodeRef favorite = isFavorite(docRef);
-        if (favorite != null) {
-            nodeService.removeAssociation(favorite, docRef, DocumentCommonModel.Assocs.FAVORITE);
-            if (nodeService.getType(favorite).equals(DocumentCommonModel.Types.FAVORITE_DIRECTORY) &&
-                    nodeService.getTargetAssocs(favorite, DocumentCommonModel.Assocs.FAVORITE).isEmpty()) {
-                nodeService.removeChildAssociation(nodeService.getParentAssocs(favorite).get(0));
-                menuService.process(BeanHelper.getMenuBean().getMenu(), false, true);
-            }
-        }
     }
 
     @Override
@@ -2830,6 +2946,8 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                 CaseModel.Props.CONTAINING_DOCS_COUNT, documentAdded, null);
         generalService.updateParentContainingDocsCount(generalService.getAncestorNodeRefWithType(documentNodeRef, VolumeModel.Types.VOLUME),
                 VolumeModel.Props.CONTAINING_DOCS_COUNT, documentAdded, null);
+        generalService.updateParentContainingDocsCount(generalService.getAncestorNodeRefWithType(documentNodeRef, CaseFileModel.Types.CASE_FILE),
+                VolumeModel.Props.CONTAINING_DOCS_COUNT, documentAdded, null);
 
         NodeRef seriesRef = generalService.getAncestorNodeRefWithType(documentNodeRef, SeriesModel.Types.SERIES);
         if (AlfrescoTransactionSupport.getResource("seriesContainingCount") == null) {
@@ -3032,6 +3150,22 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
 
     public void setGenerateNewRegNumberInReregistration(boolean generateNewRegNumberInReregistration) {
         this.generateNewRegNumberInReregistration = generateNewRegNumberInReregistration;
+    }
+
+    public void setCaseFileLogService(CaseFileLogService caseFileLogService) {
+        this.caseFileLogService = caseFileLogService;
+    }
+
+    public void setDocLockService(DocLockService docLockService) {
+        this.docLockService = docLockService;
+    }
+
+    public void setSearchService(SearchService searchService) {
+        this.searchService = searchService;
+    }
+
+    public void setVolumeColumnEnabled(boolean volumeColumnEnabled) {
+        this.volumeColumnEnabled = volumeColumnEnabled;
     }
 
     // END: getters / setters

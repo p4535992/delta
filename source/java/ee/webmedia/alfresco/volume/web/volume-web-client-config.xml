@@ -26,7 +26,7 @@
          
           <action id="volume_close">
               <evaluator>ee.webmedia.alfresco.volume.web.evaluator.VolumeIsOpenedEvaluator</evaluator>
-              <label-id>close</label-id>
+              <label-id>volume_close</label-id>
               <image>/images/icons/versioned_properties.gif</image>
               <action-listener>#{VolumeDetailsDialog.close}</action-listener>
           </action>
@@ -36,6 +36,13 @@
               <label-id>volume_open</label-id>
               <image>/images/icons/versioned_properties.gif</image>
               <action-listener>#{VolumeDetailsDialog.open}</action-listener>
+          </action>
+          
+          <action id="volume_delete">
+              <evaluator>ee.webmedia.alfresco.volume.web.evaluator.VolumeIsClosedEvaluator</evaluator>
+              <label-id>volume_delete</label-id>
+              <image>/images/icons/versioned_properties.gif</image>
+              <action>#{VolumeDetailsDialog.delete}</action>
           </action>
 
          <action id="volume_manage_permissions">
@@ -49,6 +56,17 @@
             </params>
          </action>
 
+         <action id="volume_eventplan">
+            <evaluator>ee.webmedia.alfresco.volume.web.evaluator.VolumeEventPlanEvaluator</evaluator>
+            <label-id>volume_eventplan_btn</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action>dialog:volumeEventPlanDialog</action>
+            <action-listener>#{VolumeEventPlanDialog.view}</action-listener>
+            <params>
+               <param name="nodeRef">#{VolumeDetailsDialog.currentNode.nodeRef}</param>
+            </params>
+         </action>
+
          <action-group id="browse_actions_volume">
             <action idref="volume_add_new" />
          </action-group>
@@ -57,7 +75,9 @@
               <action idref="volume_archive"/>
               <action idref="volume_close"/>
               <action idref="volume_open"/>
+              <action idref="volume_delete"/>
               <action idref="volume_manage_permissions"/>
+              <action idref="volume_eventplan"/>
           </action-group>
 
       </actions>
@@ -85,15 +105,13 @@
             readOnlyIf="#{VolumeDetailsDialog.disableCasesCreatableByUser}" />
          <show-property name="docdyn:description" display-label-id="volume_description" readOnlyIf="docdyn:status=suletud||hävitatud" styleClass="expand19-200"
             component-generator="TextAreaGenerator" />
+         <show-property name="docdyn:location" display-label-id="volume_location" readOnlyIf="docdyn:status=hävitatud" />
          <show-property name="docdyn:validFrom" display-label-id="volume_valid" textId="document_eventDates_templateText" component-generator="InlinePropertyGroupGenerator"
             optionsSeparator="¤" props="
              docdyn:validFrom¤¤styleClass=date inline¤readOnlyIf=docdyn:status=suletud||hävitatud
             ,docdyn:validTo¤¤styleClass=date inline¤readOnlyIf=docdyn:status=suletud||hävitatud
             " />
          <show-property name="docdyn:status" display-label-id="series_status" read-only="true" classificatorName="docListUnitStatus" component-generator="ClassificatorSelectorGenerator" />
-         <show-property name="docdyn:dispositionDate" display-label-id="volume_dispositionDate" readOnlyIf="docdyn:status=hävitatud" />
-         <show-property name="docdyn:archivingNote" display-label-id="volume_archive_note" readOnlyIf="docdyn:status=hävitatud" />
-         <show-property name="docdyn:sendToDestruction" display-label-id="volume_sendToDestruction" component-generator="SendToDestructionGenerator" />
       </property-sheet>
    </config>
 </alfresco-config>

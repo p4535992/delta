@@ -54,6 +54,10 @@
       <property name="documentLogService" ref="DocumentLogService" />
       <property name="documentTemplateService" ref="DocumentTemplateService" />
       <property name="fileService" ref="FileService" />
+      <property name="contentService" ref="ContentService" />
+      <property name="privilegeService" ref="PrivilegeService" />
+      <property name="caseFileLogService" ref="CaseFileLogService" />
+      <property name="workflowService" ref="WmWorkflowService" />
       <property name="showMessageIfUnregistered" value="${conf.document-regnumber.showMessageIfUnregistered}" />
    </bean>
 
@@ -90,7 +94,7 @@
       <property name="mimetypeService" ref="MimetypeService" />
    </bean>
 
-   <bean id="documentUpdater7" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentUpdater" parent="abstractNodeUpdater">
+   <bean id="documentUpdater9" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
        <property name="dependsOn">
@@ -105,16 +109,29 @@
       <property name="documentService" ref="DocumentService" />
       <property name="fileEncodingUpdater" ref="fileEncodingUpdater" />
    </bean>
+   
+   <!-- NB! This updater's searchableHasAllFinishedCompoundWorkflows part is not needed 
+   when it is quaranteed that documentUpdater9 also runs (it performs the same functionality) -->
+   <bean id="documentCompWorkflowSearchPropsUpdater" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentCompWorkflowSearchPropsUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+       <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+            <ref bean="deleteSubtypedDocuments" />
+         </list>
+      </property>       
+   </bean>
 
    <bean id="documentRegNumbersUpdater2" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentRegNumbersUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
        <property name="dependsOn">
          <list>
-            <ref bean="documentUpdater7" />
+            <ref bean="documentUpdater9" />
          </list>
       </property>
-      <property name="documentUpdater" ref="documentUpdater7" />
+      <property name="documentUpdater" ref="documentUpdater9" />
    </bean>
    
    <bean id="documentChangedTypePropertiesUpdater2" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentChangedTypePropertiesUpdater" parent="abstractNodeUpdater" >

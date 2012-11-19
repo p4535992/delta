@@ -8,7 +8,6 @@ import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ACCE
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.DOC_STATUS;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -25,6 +24,7 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.collections.Closure;
 import org.apache.commons.lang.ObjectUtils;
@@ -33,7 +33,8 @@ import org.apache.commons.lang.time.DateUtils;
 
 import ee.webmedia.alfresco.adr.service.AdrService;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
-import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
+import ee.webmedia.alfresco.classificator.enums.PublishToAdr;
+import ee.webmedia.alfresco.common.model.DynamicBase;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorAndTextGenerator;
@@ -46,6 +47,7 @@ import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.generator.BasePropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.generator.BaseSystematicFieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
@@ -206,9 +208,8 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
          */
         public void updateAccessRestrictionProperties(NodeRef seriesRef) {
             Node document = dialogDataProvider.getNode();
-
             final Map<String, Object> docProps = document.getProperties();
-            final String accessRestriction = (String) docProps.get(ACCESS_RESTRICTION.toString());
+            final String accessRestriction = (String) docProps.get(accessRestrictionProp.toString());
             if (StringUtils.isBlank(accessRestriction)) {
                 // read serAccessRestriction-related values from series
                 final Series series = getSeriesService().getSeriesByNodeRef(seriesRef);
@@ -219,11 +220,11 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
                 final Date serAccessRestrictionEndDate = (Date) seriesProps.get(SeriesModel.Props.ACCESS_RESTRICTION_END_DATE.toString());
                 final String serAccessRestrictionEndDesc = (String) seriesProps.get(SeriesModel.Props.ACCESS_RESTRICTION_END_DESC.toString());
                 // write them to the document
-                docProps.put(ACCESS_RESTRICTION.toString(), serAccessRestriction);
-                docProps.put(ACCESS_RESTRICTION_REASON.toString(), serAccessRestrictionReason);
-                docProps.put(ACCESS_RESTRICTION_BEGIN_DATE.toString(), serAccessRestrictionBeginDate);
-                docProps.put(ACCESS_RESTRICTION_END_DATE.toString(), serAccessRestrictionEndDate);
-                docProps.put(ACCESS_RESTRICTION_END_DESC.toString(), serAccessRestrictionEndDesc);
+                docProps.put(accessRestrictionProp.toString(), serAccessRestriction);
+                docProps.put(accessRestrictionReasonProp.toString(), serAccessRestrictionReason);
+                docProps.put(accessRestrictionBeginDateProp.toString(), serAccessRestrictionBeginDate);
+                docProps.put(accessRestrictionEndDateProp.toString(), serAccessRestrictionEndDate);
+                docProps.put(accessRestrictionEndDescProp.toString(), serAccessRestrictionEndDesc);
             }
         }
 
@@ -285,12 +286,12 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
                     } else if (StringUtils.isNotBlank(valueData)) {
                         String accessRestrictionEndDesc = (String) docProps.get(accessRestrictionEndDescProp.toString());
                         String newAccessRestrictionEndDesc = StringUtils.isBlank(accessRestrictionEndDesc) ? valueData : accessRestrictionEndDesc + ", "
-                                    + valueData;
+                                + valueData;
                         docProps.put(accessRestrictionEndDescProp.toString(), newAccessRestrictionEndDesc);
                     }
                     String currentAccessRestrictionReason = (String) docProps.get(accessRestrictionReasonProp.toString());
                     String newAccessRestrictionReason = StringUtils.isBlank(currentAccessRestrictionReason) ? accessRestrictionReason : currentAccessRestrictionReason + ", "
-                                + accessRestrictionReason;
+                            + accessRestrictionReason;
                     docProps.put(accessRestrictionReasonProp.toString(), newAccessRestrictionReason);
                     clearPropertySheet();
                     addSelectorValueToContext(accessRestrictionReason);
@@ -314,8 +315,15 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
         }
 
         public boolean isRenderAllAccessRestrictionFields() {
-            String accessRestriction = (String) dialogDataProvider.getDocument().getProp(ACCESS_RESTRICTION);
+            String accessRestriction = (String) dialogDataProvider.getNode().getProperties().get(accessRestrictionProp);
             return !AccessRestriction.OPEN.equals(accessRestriction) && !AccessRestriction.INTERNAL.equals(accessRestriction);
+        }
+
+        /**
+         * CaseFileDialog evaluates with org.alfresco.web.bean.generator.BaseComponentGenerator.evaluateBoolean(String, FacesContext, PropertySheetItem)
+         */
+        public boolean renderAllAccessRestrictionFields(@SuppressWarnings("unused") PropertySheetItem propertySheetItem) {
+            return isRenderAllAccessRestrictionFields();
         }
     }
 
@@ -328,7 +336,11 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
     private ClassificatorService classificatorService;
 
     @Override
-    public void validate(DocumentDynamic document, ValidationHelper validationHelper) {
+    public void validate(DynamicBase dynamicObject, ValidationHelper validationHelper) {
+        if (!(dynamicObject instanceof DocumentDynamic)) {
+            return;
+        }
+        DocumentDynamic document = (DocumentDynamic) dynamicObject;
 
         // Validate accessRestriction value against active classificator values, because if document comes from DVK,
         // then raw value is put into accessRestriction property and document manager must correct this manually now
@@ -375,23 +387,36 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
     }
 
     @Override
-    public void save(DocumentDynamic document) {
+    public void save(DynamicBase dynamicObject) {
+        if (!(dynamicObject instanceof DocumentDynamic)) {
+            return;
+        }
+
+        DocumentDynamic document = (DocumentDynamic) dynamicObject;
         NodeRef docRef = document.getNodeRef();
         Map<String, Object> newProps = document.getNode().getProperties();
         final Map<QName, Serializable> oldProps = nodeService.getProperties(docRef);
 
+        boolean markAsDeleted = false;
         // If accessRestriction changes from OPEN/AK to INTERNAL/LIMITED
         String accessRestriction = (String) newProps.get(ACCESS_RESTRICTION);
         if (AccessRestriction.INTERNAL.equals(accessRestriction) || AccessRestriction.LIMITED.equals(accessRestriction)) {
             String oldAccessRestriction = (String) oldProps.get(ACCESS_RESTRICTION);
             if (!(AccessRestriction.INTERNAL.equals(oldAccessRestriction) || AccessRestriction.LIMITED.equals(oldAccessRestriction))) {
-
-                // And if document was FINISHED
-                String oldStatus = (String) oldProps.get(DOC_STATUS);
-                if (DocumentStatus.FINISHED.equals(oldStatus)) {
-                    adrService.addDeletedDocument(docRef);
-                }
+                markAsDeleted = true;
             }
+        }
+
+        // Mark the document as deleted if publishToAdr value is set to NOT_TO_ADR
+        if (!markAsDeleted && PublishToAdr.NOT_TO_ADR.getValueName().equals(newProps.get(DocumentDynamicModel.Props.PUBLISH_TO_ADR))) {
+            String oldPublishToAdr = (String) oldProps.get(DocumentDynamicModel.Props.PUBLISH_TO_ADR);
+            if (!PublishToAdr.NOT_TO_ADR.getValueName().equals(oldPublishToAdr)) {
+                markAsDeleted = true;
+            }
+        }
+
+        if (markAsDeleted) {
+            adrService.addDeletedDocument(docRef);
         }
 
         String oldAccessRestriction = (String) oldProps.get(ACCESS_RESTRICTION);

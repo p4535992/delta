@@ -106,10 +106,10 @@
       </property>
    </bean>
  
-   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
       <property name="resourceBundles">
          <list>
-            <value>ee.webmedia.alfresco.log.web.app-log</value>
+            <value>ee/webmedia/alfresco/log/web/app-log</value>
          </list>
       </property>
    </bean>

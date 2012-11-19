@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.workflow.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getParametersService;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.TASK_INDEX;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isGeneratedByDelegation;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.markAsGeneratedByDelegation;
@@ -34,6 +36,7 @@ import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.user.service.UserService;
@@ -73,6 +76,7 @@ public class DelegationBean implements Serializable {
     private static final String TMP_GENERATE_RESPONSIBLE_ASSIGNMENT_TASK_DELEGATION = "{temp}delegateAsResponsibleAssignmentTask";
     /** if this property added to assignmentTask, then web-client will generate opinion task delegation */
     private static final String TMP_GENERATE_OPINION_TASK_DELEGATION = "{temp}delegateAsOpinionTask";
+    private static final String DELEGATE = "DelegationBean.delegate";
 
     private transient NodeService nodeService;
     private transient OrganizationStructureService organizationStructureService;
@@ -257,7 +261,18 @@ public class DelegationBean implements Serializable {
      * @throws Exception
      */
     public void delegate(ActionEvent event) throws Exception {
-        Task originalTask = delegatableTasks.get(ActionUtil.getParam(event, ATTRIB_DELEGATABLE_TASK_INDEX, Integer.class));
+        Integer delegatableTaskIndex = ActionUtil.getParam(event, ATTRIB_DELEGATABLE_TASK_INDEX, Integer.class);
+        List<Pair<String, Object>> params = new ArrayList<Pair<String, Object>>();
+        params.add(new Pair<String, Object>(ATTRIB_DELEGATABLE_TASK_INDEX, delegatableTaskIndex));
+        // Save all changes to independent workflow before updating task.
+        if (!workflowBlockBean.saveIfIndependentWorkflow(params, DELEGATE, event)) {
+            return;
+        }
+
+        Task originalTask = reloadWorkflow(ActionUtil.getParam(event, ATTRIB_DELEGATABLE_TASK_INDEX, Integer.class));
+        if (originalTask == null) {
+            return;
+        }
         if (originalTask.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
             originalTask.setAction(Action.FINISH);
         }
@@ -268,7 +283,7 @@ public class DelegationBean implements Serializable {
             if (!feedback.hasErrors()) {
                 workflowBlockBean.restore("delegate");
                 MessageUtil.addInfoMessage("delegated_successfully_" + originalTask.getType().getLocalName());
-                BeanHelper.getDocumentDynamicDialog().switchMode(false); // document metadata might have changed (for example owner)
+                workflowBlockBean.notifyDialogsIfNeeded(true); // document metadata might have changed (for example owner)
             }
         } catch (UnableToPerformMultiReasonException e) {
             MessageUtil.addStatusMessages(context, e.getMessageDataWrapper());
@@ -285,12 +300,97 @@ public class DelegationBean implements Serializable {
         }
     }
 
+    // reload workflow and inject delegation data
+    private Task reloadWorkflow(Integer index) {
+        // get task that has not been saved
+        Task task = delegatableTasks.get(index);
+        CompoundWorkflow unsavedCompoundWorkflow = task.getParent().getParent();
+        if (!unsavedCompoundWorkflow.isIndependentWorkflow()) {
+            return task;
+        }
+
+        List<Task> assignmentTasksCreatedByDelegation = new ArrayList<Task>();
+        List<Workflow> workflowsCreatedByDelegation = new ArrayList<Workflow>();
+
+        if (unsavedCompoundWorkflow != null && unsavedCompoundWorkflow.isIndependentWorkflow() && task.isSaved()) {
+            // For performance reasons, preserve only needed properties, not whole workflow hierarchy
+            Map<String, Object> changedProps = getWorkflowService().getTaskChangedProperties(task);
+            NodeRef taskRef = task.getNodeRef();
+            Status status = Status.of(task.getStatus());
+            for (Task workflowTask : task.getParent().getTasks()) {
+                if (isGeneratedByDelegation(workflowTask)) {
+                    assignmentTasksCreatedByDelegation.add(workflowTask);
+                }
+            }
+            NodeRef lastInProgressWorkflow = null;
+            for (Workflow workflow : unsavedCompoundWorkflow.getWorkflows()) {
+                if (workflow.isStatus(Status.IN_PROGRESS)) {
+                    lastInProgressWorkflow = workflow.getNodeRef();
+                }
+                else if (isGeneratedByDelegation(workflow)) {
+                    workflowsCreatedByDelegation.add(workflow);
+                }
+            }
+            task = null;
+
+            // init this bean with compoundWorkflowDialog data
+            BeanHelper.getCompoundWorkflowDialog().initWorkflowBlockBean();
+
+            Task updatedTask = null;
+            for (Task updated : delegatableTasks) {
+                if (taskRef.equals(updated.getNodeRef())) {
+                    updatedTask = updated;
+                    break;
+                }
+            }
+            if (updatedTask != null) {
+                if (!updatedTask.isStatus(status)) {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.error("Task status has changed during saving compound workflow, finishing task is not possible. Original status=" + status +
+                                ", saved task=\n" + task);
+                    }
+                    MessageUtil.addErrorMessage("workflow_task_finish_failed");
+                } else {
+                    task = updatedTask;
+                    CompoundWorkflow updatedCompoundWorkflow = task.getParent().getParent();
+                    task.getNode().getProperties().putAll(changedProps);
+
+                    WorkflowUtil.removeEmptyTasks(updatedCompoundWorkflow);
+                    WorkflowUtil.removeTasksGeneratedByDelegation(updatedCompoundWorkflow);
+                    WorkflowUtil.removeEmptyWorkflowsGeneratedByDelegation(updatedCompoundWorkflow);
+
+                    int indexToInsertWorkflows = 0;
+                    if (lastInProgressWorkflow != null) {
+                        for (Workflow workflow : updatedCompoundWorkflow.getWorkflows()) {
+                            indexToInsertWorkflows++;
+                            if (workflow.getNodeRef().equals(lastInProgressWorkflow)) {
+                                break;
+                            }
+                        }
+                    }
+
+                    workflowService.injectWorkflows(updatedCompoundWorkflow, indexToInsertWorkflows, workflowsCreatedByDelegation);
+                    List<Task> workflowTasks = task.getParent().getTasks();
+                    int indexOfTaskInsert = workflowTasks.indexOf(task) + 1;
+                    workflowService.injectTasks(task.getParent(), indexOfTaskInsert, assignmentTasksCreatedByDelegation);
+                }
+            } else {
+                // should never actually happen
+                if (LOG.isDebugEnabled()) {
+                    LOG.error("Task with nodeRef=" + taskRef + " not found after saving compound workflow with nodeRef=" + unsavedCompoundWorkflow.getNodeRef());
+                }
+                MessageUtil.addErrorMessage("workflow_task_finish_failed");
+            }
+        }
+        return task;
+    }
+
     /** Used for JSF binding in {@link DelegationTaskListGenerator#setPickerBindings()} */
     public void processResponsibleOwnerSearchResults(ActionEvent event) {
         UIGenericPicker picker = (UIGenericPicker) event.getComponent();
         int filterIndex = picker.getFilterIndex();
-        if (filterIndex == 1) {
-            filterIndex = 2;
+        if (filterIndex == UserContactGroupSearchBean.USER_GROUPS_FILTER) {
+            filterIndex = UserContactGroupSearchBean.CONTACTS_FILTER;
         }
         processOwnerSearchResults(event, filterIndex);
     }
@@ -381,12 +481,12 @@ public class DelegationBean implements Serializable {
         Workflow workflow = getWorkflowByAction(event);
         for (String result : results) {
             // users
-            if (filterIndex == 0) {
+            if (filterIndex == UserContactGroupSearchBean.USERS_FILTER) {
                 setPersonPropsToTask(workflow, taskIndex, result);
             }
             // user groups
-            else if (filterIndex == 1) {
-                Set<String> children = BeanHelper.getUserService().getUserNamesInGroup(result);
+            else if (filterIndex == UserContactGroupSearchBean.USER_GROUPS_FILTER) {
+                Set<String> children = UserUtil.getUsersInGroup(result, getNodeService(), getUserService(), getParametersService(), getDocumentSearchService());
                 int j = 0;
                 Task task = workflow.getTasks().get(taskIndex);
                 DelegatableTaskType delegateTaskType = DelegatableTaskType.getTypeByTask(task);
@@ -400,11 +500,11 @@ public class DelegationBean implements Serializable {
                 }
             }
             // contacts
-            else if (filterIndex == 2) {
+            else if (filterIndex == UserContactGroupSearchBean.CONTACTS_FILTER) {
                 setContactPropsToTask(workflow, taskIndex, new NodeRef(result));
             }
             // contact groups
-            else if (filterIndex == 3) {
+            else if (filterIndex == UserContactGroupSearchBean.CONTACT_GROUPS_FILTER) {
                 List<NodeRef> contacts = BeanHelper.getAddressbookService().getContactGroupContents(new NodeRef(result));
                 taskIndex = addContactGroupTasks(taskIndex, workflow, contacts);
             } else {

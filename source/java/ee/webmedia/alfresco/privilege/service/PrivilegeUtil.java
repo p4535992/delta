@@ -36,16 +36,20 @@ import ee.webmedia.alfresco.workflow.service.Task;
 public class PrivilegeUtil {
 
     public static boolean isAdminOrDocmanagerWithViewDocPermission(Node docNode) {
-        return isAdminOrDocmanagerWithPermission(docNode, Privileges.VIEW_DOCUMENT_META_DATA);
+        return isAdminOrDocmanagerWithPermission(docNode.getNodeRef(), Privileges.VIEW_DOCUMENT_META_DATA);
     }
 
     public static boolean isAdminOrDocmanagerWithPermission(Node docNode, String... permissions) {
+        return isAdminOrDocmanagerWithPermission(docNode.getNodeRef(), permissions);
+    }
+
+    public static boolean isAdminOrDocmanagerWithPermission(NodeRef docNodeRef, String... permissions) {
         if (permissions == null || permissions.length == 0) {
             throw new IllegalArgumentException("no permissions given for permissions check");
         }
         UserService userService = BeanHelper.getUserService();
         return userService.isAdministrator() || (userService.isDocumentManager()
-                && getPrivilegeService().hasPermissionOnAuthority(docNode.getNodeRef(), UserService.AUTH_DOCUMENT_MANAGERS_GROUP, permissions));
+                && getPrivilegeService().hasPermissionOnAuthority(docNodeRef, UserService.AUTH_DOCUMENT_MANAGERS_GROUP, permissions));
     }
 
     public static Set<String> getPrivsWithDependencies(Set<String> permissions) {
@@ -59,10 +63,17 @@ public class PrivilegeUtil {
         return permissionsWithDependencies;
     }
 
-    public static Set<String> getRequiredPrivsForInprogressTask(Task task, NodeRef docRef, FileService fileService) {
+    public static Set<String> getRequiredPrivsForInprogressTask(Task task, NodeRef docRef, FileService fileService, boolean isForCaseFile) {
+        if (isStatus(task, Status.IN_PROGRESS)) {
+            return getRequiredPrivsForTask(task, docRef, fileService, isForCaseFile);
+        }
+        return new HashSet<String>();
+    }
+
+    public static Set<String> getRequiredPrivsForTask(Task task, NodeRef docRef, FileService fileService, boolean isForCaseFile) {
         String taskOwnerId = task.getOwnerId();
         Set<String> requiredPrivileges = new HashSet<String>(4);
-        if (!StringUtils.isBlank(taskOwnerId) && isStatus(task, Status.IN_PROGRESS)) {
+        if (!StringUtils.isBlank(taskOwnerId)) {
             // give permissions to task owner
             boolean isSignatureTaskWith1Digidoc = false;
             boolean isSignatureTaskWithFiles = false;
@@ -75,7 +86,20 @@ public class PrivilegeUtil {
                 }
             }
             boolean isResponsible = isResponsible(task);
-            if (isSignatureTaskWith1Digidoc
+            if (task.getParent().getParent().isCaseFileWorkflow()) { // Check if task is under case file workflow
+                if (task.isType(WorkflowSpecificModel.Types.INFORMATION_TASK, WorkflowSpecificModel.Types.CONFIRMATION_TASK, WorkflowSpecificModel.Types.REVIEW_TASK,
+                        WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK)) {
+                    requiredPrivileges.add(Privileges.VIEW_DOCUMENT_FILES); // with dependencies
+                    if (isForCaseFile) {
+                        requiredPrivileges.add(Privileges.VIEW_CASE_FILE);
+                    }
+                } else if (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
+                    requiredPrivileges.add(Privileges.EDIT_DOCUMENT); // with dependencies
+                    if (isForCaseFile) {
+                        requiredPrivileges.add(Privileges.EDIT_CASE_FILE); // with dependencies
+                    }
+                }
+            } else if (isSignatureTaskWith1Digidoc // ... or under a document
                     || (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK) && !isResponsible)
                     || (task.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK) && !isResponsible)
                     || task.isType(WorkflowSpecificModel.Types.OPINION_TASK, WorkflowSpecificModel.Types.INFORMATION_TASK, WorkflowSpecificModel.Types.CONFIRMATION_TASK,

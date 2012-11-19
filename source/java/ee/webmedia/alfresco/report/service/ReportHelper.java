@@ -16,6 +16,8 @@ import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.search.model.DocumentReportModel;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.report.model.ReportModel;
+import ee.webmedia.alfresco.volume.search.model.VolumeReportModel;
+import ee.webmedia.alfresco.volume.search.model.VolumeSearchModel;
 import ee.webmedia.alfresco.workflow.search.model.TaskReportModel;
 import ee.webmedia.alfresco.workflow.search.model.TaskSearchModel;
 
@@ -77,6 +79,9 @@ public class ReportHelper {
         reportFilterTypeAndProps.put(TemplateReportType.DOCUMENTS_REPORT,
                 Arrays.asList(DocumentReportModel.Types.FILTER, DocumentReportModel.Props.REPORT_TEMPLATE, DocumentSearchModel.Props.NAME, DocumentReportModel.Assocs.FILTER,
                         DocumentReportModel.Props.REPORT_OUTPUT_TYPE));
+        reportFilterTypeAndProps.put(TemplateReportType.VOLUMES_REPORT,
+                Arrays.asList(VolumeReportModel.Types.FILTER, VolumeReportModel.Props.REPORT_TEMPLATE, VolumeSearchModel.Props.NAME, VolumeReportModel.Assocs.FILTER,
+                        VolumeReportModel.Props.REPORT_OUTPUT_TYPE));
         REPORT_FILTER_TYPE_AND_PROPS = Collections.unmodifiableMap(reportFilterTypeAndProps);
 
         Map<TemplateReportType, List<String>> reportHeaderMsgKeys = new HashMap<TemplateReportType, List<String>>();
@@ -86,7 +91,12 @@ public class ReportHelper {
                         "task_search_result_ownerOrganizationName", "task_search_result_ownerJobTitle", "task_search_result_taskType", "task_search_result_dueDate",
                         "task_search_result_completedDate", "task_search_result_comment", "task_search_result_responsible", "task_search_result_stoppedDate",
                         "task_search_result_resolution", "task_search_result_overdue", "task_search_result_status", "task_search_result_function", "task_search_result_series",
-                        "task_search_result_volume", "task_search_result_case"));
+                        "task_search_result_volume", "task_search_result_case", "task_search_result_compound_workflow_url",
+                        "task_search_result_compound_workflow_type", "task_search_result_compound_workflow_title", "task_search_result_compound_workflow_owner_name",
+                        "task_search_result_compound_workflow_owner_organization_path", "task_search_result_compound_workflow_owner_job_title",
+                        "task_search_result_compound_workflow_created_date_time", "task_search_result_compound_workflow_started_date_time",
+                        "task_search_result_compound_workflow_stopped_date_time", "task_search_result_compound_workflow_finished_date_time",
+                        "task_search_result_compound_workflow_comment", "task_search_result_compound_workflow_status", "task_search_result_compound_workflow_document_count"));
         reportHeaderMsgKeys.put(TemplateReportType.DOCUMENTS_REPORT,
                 Arrays.asList("document_report_regNumber", "document_report_regDate", "document_report_docType", "document_report_function", "document_report_series",
                         "document_report_volume", "document_report_case", "document_report_docName", "document_report_accessRestriction",
@@ -96,6 +106,27 @@ public class ReportHelper {
                         "document_report_transmittalMode", "document_report_dueDate", "document_report_complienceDate", "document_report_signerName",
                         "document_report_signerJobTitle", DOCUMENT_REPORT_KEYWORDS, DOCUMENT_REPORT_HIERARCHICAL_KEYWORDS, "document_report_storageType",
                         "document_report_created"));
+        reportHeaderMsgKeys.put(TemplateReportType.VOLUMES_REPORT,
+                Arrays.asList(
+                        "volume_report_store"
+                        , "volume_report_function"
+                        , "volume_report_series"
+                        , "volume_report_volumeType"
+                        , "volume_report_caseFileType"
+                        , "volume_report_volumeMark"
+                        , "volume_report_title"
+                        , "volume_report_description"
+                        , "volume_report_validFrom"
+                        , "volume_report_validTo"
+                        , "volume_report_status"
+                        , "volume_report_ownerName"
+                        , "volume_report_ownerOrgStructUnit"
+                        , "volume_report_ownerJobTitle"
+                        , "volume_report_ownerServiceRank"
+                        , "volume_report_ownerWorkAddress"
+                        , "volume_report_ownerEmail"
+                        , "volume_report_ownerPhone"
+                        ));
 
         Map<String, String> headerMsgKeyToFieldId = new HashMap<String, String>();
         headerMsgKeyToFieldId.put(DOCUMENT_REPORT_APPLICANT_NAME, DocumentSpecificModel.Props.APPLICANT_NAME.getLocalName());

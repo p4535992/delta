@@ -79,6 +79,10 @@ public abstract class BaseDocumentListDialog extends BaseLimitedListDialog {
         return false;
     }
 
+    public boolean isShowComplienceDateColumn() {
+        return true;
+    }
+
     /**
      * Returns the file name to import as document list columns
      * Subclasses can override if necessary.
@@ -146,6 +150,10 @@ public abstract class BaseDocumentListDialog extends BaseLimitedListDialog {
             panel = new UIPanel();
         }
         return panel;
+    }
+
+    public boolean isContainsCases() {
+        return false;
     }
 
     // END: getters / setters

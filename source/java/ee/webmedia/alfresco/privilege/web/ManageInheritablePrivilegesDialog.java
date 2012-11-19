@@ -55,6 +55,7 @@ import ee.alfresco.web.ui.common.UITableRow;
 import ee.alfresco.web.ui.common.renderer.data.RichListMultiTbodyRenderer.DetailsViewRenderer;
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.privilege.model.PrivMappings;
 import ee.webmedia.alfresco.privilege.model.UserPrivileges;
@@ -190,9 +191,18 @@ public class ManageInheritablePrivilegesDialog extends BaseDialogBean {
             }
             init(state.getManageableRef(), true);
             rebuildUserPrivilegesRows = true;
-            picker.queueEvent(new UIGenericPicker.PickerEvent(picker, UIGenericPicker.ACTION_CLEAR, 0, null, null));
+            picker.queueEvent(new UIGenericPicker.PickerEvent(picker, UIGenericPicker.ACTION_CLEAR, UserContactGroupSearchBean.USERS_FILTER, null, null));
         }
         return null;
+    }
+
+    @Override
+    protected String doPostCommitProcessing(FacesContext context, String outcome) {
+        // Perform indexing in a separate transaction, because if it takes a long time,
+        // then this transaction has not done any changes in database (changes only index).
+        // All changes to database were performed in finishImpl method.
+        getPrivilegeService().updateIndexedPermissions(state.getManageableRef());
+        return super.doPostCommitProcessing(context, outcome);
     }
 
     private Map<String, UserPrivileges> getVosThatLoosePrivileges() {

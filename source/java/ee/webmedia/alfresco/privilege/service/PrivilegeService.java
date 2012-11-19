@@ -47,6 +47,13 @@ public interface PrivilegeService {
             , Map<String, UserPrivileges> privilegesByGroup, QName listenerCode);
 
     /**
+     * Triggers re-indexing of all descendant nodes of documents under given node that inherit privileges from given node.
+     * 
+     * @param nodeRef The node (usually series) under which documents are re-indexed.
+     */
+    void updateIndexedPermissions(NodeRef nodeRef);
+
+    /**
      * Set <code>privilegesToAdd</code> permissions with dependencies for those permissions for given <code>authority</code> on given node
      * 
      * @param manageableRef

@@ -1,12 +1,8 @@
 package ee.webmedia.alfresco.workflow.service.type;
 
-import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.getExcludedNodeRefsOnFinishWorkflows;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isActiveResponsible;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isInactiveResponsible;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isStatus;
-
-import java.util.Iterator;
-import java.util.List;
 
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
@@ -26,6 +22,7 @@ import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflowDefinition;
 import ee.webmedia.alfresco.workflow.service.Task;
+import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEvent;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListenerWithModifications;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue;
@@ -72,7 +69,7 @@ public class AssignmentWorkflowType extends BaseWorkflowType implements Workflow
                     otherTask.setComment(I18NUtil.getMessage("task_comment_delegated"));
                 }
             }
-        } else if (event.getType() == WorkflowEventType.STATUS_CHANGED) {
+        } else if (cWorkflow.isDocumentWorkflow() && event.getType() == WorkflowEventType.STATUS_CHANGED) {
             Boolean isRegisterDocQueue = queue.getParameter(WorkflowQueueParameter.TRIGGERED_BY_DOC_REGISTRATION);
             // If task is changed to IN_PROGRESS
             NodeRef docRef = cWorkflow.getParent();
@@ -88,7 +85,7 @@ public class AssignmentWorkflowType extends BaseWorkflowType implements Workflow
                     }
                     setDocumentOwnerFromTask(task);
                 }
-            } else if (task.isStatus(Status.FINISHED) && !isDelegated(task) && (isRegisterDocQueue == null || !isRegisterDocQueue)) { // if task status is changed to FINISHED
+            } else if (task.isStatus(Status.FINISHED) && !isDelegated(task) && !Boolean.TRUE.equals(isRegisterDocQueue) && WorkflowUtil.isActiveResponsible(task)) {
                 if (isIncomingLetter) {
                     if (nodeService.getProperty(docRef, DocumentSpecificModel.Props.COMPLIENCE_DATE) == null) {
                         documentService.setPropertyAsSystemUser(DocumentSpecificModel.Props.COMPLIENCE_DATE, queue.getNow(), docRef);
@@ -99,21 +96,7 @@ public class AssignmentWorkflowType extends BaseWorkflowType implements Workflow
                     documentService.setDocStatusFinished(docRef);
                 }
                 if (isIncomingLetter || isOutgoingLetter) {
-                    workflowService.setWorkflowsAndTasksFinished(queue, cWorkflow,
-                            "task_outcome_unfinished_by_finishing_responsible_task", null, false, getExcludedNodeRefsOnFinishWorkflows(cWorkflow));
-                    workflowService.addOtherCompundWorkflows(cWorkflow);
-                    List<CompoundWorkflow> compoundWorkflows = cWorkflow.getOtherCompoundWorkflows();
-                    for (Iterator<CompoundWorkflow> i = compoundWorkflows.iterator(); i.hasNext();) {
-                        CompoundWorkflow compoundWorkflow = i.next();
-                        if (compoundWorkflow.isStatus(Status.NEW)) {
-                            this.workflowService.deleteCompoundWorkflow(compoundWorkflow.getNodeRef());
-                            i.remove();
-                        } else {
-                            List<NodeRef> excludedNodeRefs = getExcludedNodeRefsOnFinishWorkflows(compoundWorkflow);
-                            workflowService.setWorkflowsAndTasksFinished(queue, compoundWorkflow,
-                                    "task_outcome_unfinished_by_finishing_responsible_task", null, false, excludedNodeRefs);
-                        }
-                    }
+                    workflowService.unfinishTasksByFinishingLetterResponsibleTask(task, queue);
                 }
             }
         }

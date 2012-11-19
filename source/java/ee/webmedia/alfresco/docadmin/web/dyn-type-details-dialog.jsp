@@ -18,5 +18,8 @@
    <r:propertySheetGrid id="docTypeDetailsPS" value="#{DialogManager.bean.currentNode}" columns="1" mode="#{DialogManager.bean.showingLatestVersion ? 'edit': 'view'}" externalConfig="true" labelStyleClass="propertiesLabel" />
 </a:panel>
 
+<a:booleanEvaluator value="#{DialogManager.bean == DocTypeDetailsDialog}">
+   <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/default-location-bean.jsp" />
+</a:booleanEvaluator>
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/fields-list-bean.jsp" />
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/doc-type-versions-list-bean.jsp" />

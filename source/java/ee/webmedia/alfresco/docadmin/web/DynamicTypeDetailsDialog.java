@@ -277,6 +277,9 @@ public abstract class DynamicTypeDetailsDialog<D extends DynamicType, S extends 
 
     public String getMetaFieldsListLabel() {
         S currentSnapshot = getCurrentSnapshot();
+        if (currentSnapshot == null) {
+            return null;
+        }
         Integer docTypeVersion = currentSnapshot.docTypeVersion;
         Integer verNr = docTypeVersion != null ? docTypeVersion : currentSnapshot.getDynType().getLatestVersion();
         return MessageUtil.getMessage("doc_type_details_panel_metadata", verNr);

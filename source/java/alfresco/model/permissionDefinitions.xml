@@ -580,6 +580,8 @@
    <globalPermission permission="viewDocumentMetaData" authority="ROLE_PROP_DOC_OWNER"/>
    <globalPermission permission="viewDocumentFiles" authority="ROLE_PROP_DOC_OWNER"/>
    <globalPermission permission="editDocument" authority="ROLE_PROP_DOC_OWNER"/>
+   <globalPermission permission="editCaseFile" authority="ROLE_PROP_DOC_OWNER"/>
+   <globalPermission permission="viewCaseFile" authority="ROLE_PROP_DOC_OWNER"/>
 
    <!-- permission granted to members of ALFRESCO_ADMINISTRATORS -->
    <globalPermission permission="viewDocumentMetaData" authority="GROUP_ALFRESCO_ADMINISTRATORS"/>

@@ -8,6 +8,7 @@
       <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
       <import uri="http://alfresco.webmedia.ee/model/document/common/1.0" prefix="doccom" />
       <import uri="http://alfresco.webmedia.ee/model/volume/1.0" prefix="vol" />
+      <import uri="http://alfresco.webmedia.ee/model/casefile/1.0" prefix="cf" />
    </imports>
 
    <namespaces>
@@ -20,18 +21,19 @@
          <properties>
             <property name="ser:type">
                <type>d:text</type>
-               <mandatory>true</mandatory>
+               <mandatory enforced="true">true</mandatory>
             </property>
             <property name="ser:title">
                <type>d:text</type>
-               <mandatory>true</mandatory>
+               <mandatory enforced="true">true</mandatory>
             </property>
             <property name="ser:description">
                <type>d:text</type>
             </property>
             <property name="ser:status">
                <type>d:text</type>
-               <mandatory>true</mandatory>
+               <mandatory enforced="true">true</mandatory>
+               <default>avatud</default>
             </property>
             <property name="ser:order">
                <type>d:int</type>
@@ -39,26 +41,20 @@
 
             <property name="ser:seriesIdentifier">
                <type>d:text</type>
-               <mandatory>true</mandatory>
+               <mandatory enforced="true">true</mandatory>
             </property>
             <property name="ser:register">
                <type>d:int</type>
-               <mandatory>true</mandatory>
+               <mandatory enforced="true">true</mandatory>
             </property>
             <property name="ser:structUnit">
-               <type>d:int</type><!-- viide asutuse struktuuriüksus(t)ele; üksuse unitId -->
+               <type>d:text</type><!-- viide asutuse struktuuriüksus(t)ele; üksuse unitId -->
                <multiple>true</multiple>
-            </property>
-            <property name="ser:retentionPeriod">
-               <type>d:int</type>
             </property>
             <property name="ser:docType">
                <type>d:text</type>
-               <mandatory>true</mandatory>
+               <mandatory enforced="true">true</mandatory>
                <multiple>true</multiple>
-            </property>
-            <property name="ser:retentionDesc">
-               <type>d:text</type>
             </property>
             <property name="ser:individualizingNumbers">
                <type>d:boolean</type>
@@ -69,7 +65,7 @@
             </property>
             <property name="ser:docNumberPattern">
                <type>d:text</type>
-               <mandatory>true</mandatory>
+               <mandatory enforced="true">true</mandatory>
                <default>{S}/{DN}</default>
             </property>
             <property name="ser:newNumberForEveryDoc">
@@ -83,7 +79,7 @@
             </property>
             <property name="ser:volType">
                <type>d:text</type>
-               <mandatory>true</mandatory>
+               <mandatory enforced="true">true</mandatory>
                <multiple>true</multiple>
             </property>
             <property name="ser:volRegister">
@@ -91,6 +87,13 @@
             </property>
             <property name="ser:volNumberPattern">
                <type>d:text</type>
+            </property>
+            <property name="ser:documentsVisibleForUsersWithoutAccess">
+               <type>d:boolean</type>
+               <default>true</default>
+            </property>
+            <property name="ser:eventPlan">
+               <type>d:noderef</type>
             </property>
          </properties>
          <associations>
@@ -121,6 +124,7 @@
          </associations>
          <mandatory-aspects>
             <aspect>doccom:accessRights</aspect>
+            <aspect>cf:caseFileContainer</aspect>
          </mandatory-aspects>
       </type>
 

@@ -12,6 +12,7 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.web.evaluator.DocumentNotInDraftsFunctionActionEvaluator;
 import ee.webmedia.alfresco.document.web.evaluator.DocumentSavedActionEvaluator;
 import ee.webmedia.alfresco.document.web.evaluator.ViewStateActionEvaluator;
 import ee.webmedia.alfresco.workflow.service.HasNoStoppedOrInprogressWorkflowsEvaluator;
@@ -31,6 +32,7 @@ public class SendOutActionEvaluator extends BaseActionEvaluator {
             return false;
         }
         boolean result = new ViewStateActionEvaluator().evaluate(node) && new DocumentSavedActionEvaluator().evaluate(node)
+                && new DocumentNotInDraftsFunctionActionEvaluator().evaluate(node)
                 && node.hasPermission(DocumentCommonModel.Privileges.EDIT_DOCUMENT);
         if (result) {
             final Map<String, Object> props = node.getProperties();

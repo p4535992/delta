@@ -28,6 +28,7 @@ public interface DocumentTemplateModel {
         QName TEMPLATE_TYPE = QName.createQName(URI, "templateType");
         QName REPORT_OUTPUT_TYPE = QName.createQName(URI, "reportOutputType");
         QName REPORT_TYPE = QName.createQName(URI, "reportType");
+        QName DEFAULT_VALUES = QName.createQName(URI, "defaultValues");
     }
 
     interface Assoc {
@@ -40,6 +41,7 @@ public interface DocumentTemplateModel {
         QName TEMPLATE_EMAIL = QName.createQName(URI, "emailTemplate");
         QName TEMPLATE_DOCUMENT = QName.createQName(URI, "documentTemplate");
         QName TEMPLATE_REPORT = QName.createQName(URI, "reportTemplate");
+        QName TEMPLATE_ARCHIVAL_REPORT = QName.createQName(URI, "archivalReportTemplate");
     }
 
 }

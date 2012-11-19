@@ -7,6 +7,7 @@ import org.alfresco.web.bean.repository.Node;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.AssociationModel;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
+import ee.webmedia.alfresco.document.web.evaluator.DocumentNotInDraftsFunctionActionEvaluator;
 
 /**
  * @author Alar Kvell
@@ -24,6 +25,9 @@ public abstract class AddFollowUpDocumentTypeAssocEvaluator extends AddFollowUpA
     public boolean evaluate(Node docNode) {
         boolean result = super.evaluate(docNode);
         if (!result) {
+            return false;
+        }
+        if (!new DocumentNotInDraftsFunctionActionEvaluator().evaluate(docNode)) {
             return false;
         }
         DocumentType documentType = BeanHelper.getDocumentDynamicDialog().getDocumentType();

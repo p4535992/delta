@@ -10,6 +10,8 @@ import org.alfresco.service.namespace.QName;
 public interface CaseModel {
     String URI = "http://alfresco.webmedia.ee/model/case/1.0";
 
+    QName MODEL = QName.createQName(URI, "caseModel");
+
     interface Types {
         QName CASE = QName.createQName(URI, "case");
     }
@@ -23,6 +25,7 @@ public interface CaseModel {
     public interface Props {
         QName STATUS = QName.createQName(URI, "status");
         QName TITLE = QName.createQName(URI, "title");
+        QName CREATED = QName.createQName(URI, "created");
         QName CONTAINING_DOCS_COUNT = QName.createQName(URI, "containingDocsCount");
     }
 }

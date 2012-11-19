@@ -33,11 +33,27 @@ public class RegisterDocumentEvaluator extends BaseActionEvaluator {
     @Override
     public boolean evaluate(Node docNode) {
         return docNode.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)
+                && new DocumentNotInDraftsFunctionActionEvaluator().evaluate(docNode)
                 && new ViewStateActionEvaluator().evaluate(docNode) && canRegister(docNode, true);
     }
 
     public boolean canRegister(Node docNode, boolean checkStoppedOrInprogressWorkflows) {
+        if (!canRegister(docNode)) {
+            return false;
+        }
+        if (checkStoppedOrInprogressWorkflows && !new HasNoStoppedOrInprogressWorkflowsEvaluator().evaluate(docNode)) {
+            return false;
+        }
         final FacesContext context = FacesContext.getCurrentInstance();
+        DocumentService documentService = (DocumentService) FacesContextUtils.getRequiredWebApplicationContext(//
+                context).getBean(DocumentService.BEAN_NAME);
+        if (!documentService.isSaved(docNode.getNodeRef())) {
+            return false;
+        }
+        return docNode.hasPermission(DocumentCommonModel.Privileges.EDIT_DOCUMENT);
+    }
+
+    public boolean canRegister(Node docNode) {
         if (isRegistered(docNode)) {
             return false;
         }
@@ -46,15 +62,7 @@ public class RegisterDocumentEvaluator extends BaseActionEvaluator {
         if (!getDocumentAdminService().getDocumentTypeProperty(docTypeId, DocumentAdminModel.Props.REGISTRATION_ENABLED, Boolean.class)) {
             return false;
         }
-        if (checkStoppedOrInprogressWorkflows && !new HasNoStoppedOrInprogressWorkflowsEvaluator().evaluate(docNode)) {
-            return false;
-        }
-        DocumentService documentService = (DocumentService) FacesContextUtils.getRequiredWebApplicationContext(//
-                context).getBean(DocumentService.BEAN_NAME);
-        if (!documentService.isSaved(docNode.getNodeRef())) {
-            return false;
-        }
-        return docNode.hasPermission(DocumentCommonModel.Privileges.EDIT_DOCUMENT);
+        return true;
     }
 
     public static boolean isNotRegistered(Node docNode) {

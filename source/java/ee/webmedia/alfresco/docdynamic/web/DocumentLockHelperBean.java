@@ -11,14 +11,18 @@ import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.lock.LockStatus;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.file.model.FileModel;
+import ee.webmedia.alfresco.document.lock.service.DocLockService;
 import ee.webmedia.alfresco.document.sendout.web.DocumentSendOutDialog;
-import ee.webmedia.alfresco.document.service.DocLockService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
@@ -109,6 +113,19 @@ public class DocumentLockHelperBean implements Serializable {
         return inEditMode;
     }
 
+    public void checkAssocDocumentLocks(Node dynamicDocumentNode, String customMessage) {
+        DocLockService docLockService = BeanHelper.getDocLockService();
+        for (NodeRef assocNodeRef : BeanHelper.getDocumentDynamicService().getAssociatedDocRefs(dynamicDocumentNode)) {
+            if (docLockService.getLockStatus(assocNodeRef) == LockStatus.LOCKED) {
+                NodeLockedException nodeLockedException = new NodeLockedException(assocNodeRef);
+                if (customMessage != null) {
+                    nodeLockedException.setCustomMessageId(customMessage);
+                }
+                throw nodeLockedException;
+            }
+        }
+    }
+
     /**
      * AJAX: Extend lock on document (or create one)
      */
@@ -154,8 +171,31 @@ public class DocumentLockHelperBean implements Serializable {
         handleLockedNode(messageId, getDocumentDialogHelperBean().getNodeRef());
     }
 
+    public void handleLockedNode(String messageId, NodeLockedException e) {
+        if (StringUtils.isNotBlank(e.getCustomMessageId())) {
+            messageId = e.getCustomMessageId();
+        }
+        handleLockedNode(messageId, e.getNodeRef());
+    }
+
     public void handleLockedNode(String messageId, NodeRef nodeRef) {
-        MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), messageId,
-                BeanHelper.getUserService().getUserFullName((String) BeanHelper.getNodeService().getProperty(nodeRef, ContentModel.PROP_LOCK_OWNER)));
+        handleLockedNode(messageId, nodeRef, new Object[0]);
+    }
+
+    public void handleLockedNode(String messageId, NodeRef nodeRef, Object... valueHolders) {
+        NodeRef lockedFile = (NodeRef) getNodeService().getProperty(nodeRef, FileModel.Props.LOCKED_FILE_NODEREF);
+        if (lockedFile != null && BeanHelper.getFileService().isFileGenerated(lockedFile) || ContentModel.TYPE_CONTENT.equals(getNodeService().getType(nodeRef))) {
+            messageId += "_file";
+            valueHolders = ArrayUtils.add(valueHolders, getNodeService().getProperty(lockedFile != null ? lockedFile : nodeRef, FileModel.Props.DISPLAY_NAME));
+        }
+
+        MessageUtil.addErrorMessage(messageId, ArrayUtils.add(valueHolders,
+                BeanHelper.getUserService().getUserFullName(
+                        StringUtils.substringBefore((String) BeanHelper.getNodeService().getProperty(nodeRef, ContentModel.PROP_LOCK_OWNER), "_"))));
+    }
+
+    public boolean isLockReleased(NodeRef nodeRef) {
+        LockStatus lockStatus = getDocLockService().getLockStatus(nodeRef, AuthenticationUtil.getRunAsUser());
+        return !LockStatus.LOCK_OWNER.equals(lockStatus);
     }
 }

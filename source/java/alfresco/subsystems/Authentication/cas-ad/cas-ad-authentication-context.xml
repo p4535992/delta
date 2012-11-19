@@ -44,100 +44,63 @@
    </bean>
 
    <!-- @Override classpath:alfresco/subsystems/Authentication/common-ldap-context.xml -->
-   <!-- Same, but some changes, which are commented below -->
-   <bean id="userRegistry" class="org.alfresco.repo.security.sync.ldap.LDAPUserRegistry">
-      <property name="active">
-         <value>${ldap.synchronization.active}</value>
+   <bean id="userRegistry" class="ee.webmedia.alfresco.orgstructure.ad.ActiveDirectoryLdapUserRegistry">
+      <property name="ldapContextSource">
+         <bean class="org.springframework.ldap.core.support.LdapContextSource">
+            <property name="url" value="${ldap.authentication.java.naming.provider.url}" />
+            <property name="userDn" value="${ldap.synchronization.java.naming.security.principal}" />
+            <property name="password" value="${ldap.synchronization.java.naming.security.credentials}" />
+         </bean>
       </property>
-      <property name="queryBatchSize">
-         <value>${ldap.synchronization.queryBatchSize}</value>
-      </property>
-      <property name="groupQuery">
-         <value>${ldap.synchronization.groupQuery}</value>
-      </property>
-      <property name="groupDifferentialQuery">
-         <value>${ldap.synchronization.groupDifferentialQuery}</value>
-      </property>
-      <property name="personQuery">
-         <value>${ldap.synchronization.personQuery}</value>
-      </property>
-      <!-- Added userId query -->
-      <property name="personUsernameQuery">
-         <value>${ldap.synchronization.personUsernameQuery}</value>
-      </property>
-      <property name="personIdCodeQuery">
-         <value>${ldap.synchronization.personIdCodeQuery}</value>
-      </property>
-      <property name="personDifferentialQuery">
-         <value>${ldap.synchronization.personDifferentialQuery}</value>
-      </property>
-      <property name="groupSearchBase">
-         <value>${ldap.synchronization.groupSearchBase}</value>
-      </property>
-      <property name="userSearchBase">
-         <value>${ldap.synchronization.userSearchBase}</value>
-      </property>
-      <property name="userIdAttributeName">
-         <value>${ldap.synchronization.userIdAttributeName}</value>
-      </property>
-      <property name="modifyTimestampAttributeName">
-         <value>${ldap.synchronization.modifyTimestampAttributeName}</value>
-      </property>
-      <property name="timestampFormat">
-         <value>${ldap.synchronization.timestampFormat}</value>
-      </property>
-      <property name="groupIdAttributeName">
-         <value>${ldap.synchronization.groupIdAttributeName}</value>
-      </property>
-      <property name="groupType">
-         <value>${ldap.synchronization.groupType}</value>
-      </property>
-      <property name="personType">
-         <value>${ldap.synchronization.personType}</value>
-      </property>
-      <property name="memberAttribute">
-         <value>${ldap.synchronization.groupMemberAttributeName}</value>
-      </property>
-      <property name="attributeMapping">
+      <property name="pageSize" value="${ldap.synchronization.queryBatchSize}" />
+      <property name="personSearchBase" value="${ldap.synchronization.userSearchBase}" />
+      <property name="personSecondarySearchBase" value="${ldap.synchronization.userSecondarySearchBase}" />
+      <property name="personQuery" value="${ldap.synchronization.personQuery}" />
+      <property name="personIdCodeQuery" value="${ldap.synchronization.personIdCodeQuery}" />
+      <property name="personUsernameQuery" value="${ldap.synchronization.personUsernameQuery}" />
+      <property name="personGroupQuery" value="${ldap.synchronization.personGroupQuery}" />
+      <property name="systematicGroupSearchBase" value="${ldap.synchronization.systematicGroupSearchBase}" />
+      <property name="groupSearchBase" value="${ldap.synchronization.groupSearchBase}" />
+      <property name="groupQuery" value="${ldap.synchronization.groupQuery}" />
+      <property name="organizationalUnitSearchQuery" value="${ldap.synchronization.organizationalUnitSearchQuery}" />
+      <property name="organizationalUnitSearchBase" value="${ldap.synchronization.organizationalUnitSearchBase}" />
+      <property name="organizationalUnitSecondarySearchQuery" value="${ldap.synchronization.organizationalUnitSecondarySearchQuery}" />
+      <property name="personAttributes">
          <map>
-            <entry key="cm:userName">
-               <value>${ldap.synchronization.userIdAttributeName}</value>
-            </entry>
-            <entry key="cm:firstName">
-               <value>${ldap.synchronization.userFirstNameAttributeName}</value>
-            </entry>
-            <entry key="cm:lastName">
-               <value>${ldap.synchronization.userLastNameAttributeName}</value>
-            </entry>
-            <!-- Added jobtitle mapping -->
-            <entry key="cm:jobtitle">
-               <value>${ldap.synchronization.userJobtitleAttributeName}</value>
-            </entry>
-            <!-- Added telephone mapping -->
-            <entry key="cm:telephone">
-               <value>${ldap.synchronization.userTelephoneAttributeName}</value>
-            </entry>
-            <entry key="cm:email">
-               <value>${ldap.synchronization.userEmailAttributeName}</value>
-            </entry>
-            <!-- Deleted cm:organizationId mapping -->
-            <entry key="cm:homeFolderProvider">
-               <null />
-            </entry>
+            <entry key="cm:userName" value="${ldap.synchronization.userIdAttributeName}" /><!-- pager -->
+            <entry key="cm:firstName" value="${ldap.synchronization.userFirstNameAttributeName}" /><!-- givenName -->
+            <entry key="cm:lastName" value="${ldap.synchronization.userLastNameAttributeName}" /><!-- sn -->
+            <entry key="cm:jobtitle" value="${ldap.synchronization.userJobtitleAttributeName}" /><!-- title -->
+            <entry key="cm:telephone" value="${ldap.synchronization.userTelephoneAttributeName}" /><!-- telephoneNumber -->
+            <entry key="cm:email" value="${ldap.synchronization.userEmailAttributeName}" /><!-- mail -->
+            <entry key="cm:county" value="" />
+            <entry key="cm:municipality" value="" />
+            <entry key="cm:village" value="${ldap.synchronization.userCityAttributeName}" /><!-- l -->
+            <entry key="cm:streetHouse" value="${ldap.synchronization.userStreetAddressAttributeName}" /><!-- streetAddress -->
+            <entry key="cm:postalCode" value="${ldap.synchronization.userPostalCodeAttributeName}" /><!-- postalCode -->
+            <entry key="cm:serviceRank" value="" />
          </map>
       </property>
-      <property name="attributeDefaults">
+      <property name="groupAttributes">
          <map>
-            <entry key="cm:homeFolderProvider">
-               <value>${ldap.synchronization.defaultHomeFolderProvider}</value>
-            </entry>
+            <entry key="cm:authorityName" value="${ldap.synchronization.groupIdAttributeName}" /><!-- sAMAccountName -->
+            <entry key="cm:authorityDisplayName" value="${ldap.synchronization.groupNameAttributeName}" /><!-- name -->
          </map>
       </property>
-      <property name="LDAPInitialDirContextFactory">
-         <ref bean="ldapInitialDirContextFactory" />
+      <property name="orgStructAttributes">
+         <map>
+            <entry key="os:name" value="${ldap.synchronization.organizationalUnitName}" /><!-- name -->
+            <entry key="os:institutionRegCode" value="${ldap.synchronization.organizationalUnitRegCode}" /><!-- postalCode -->
+         </map>
       </property>
-      <property name="namespaceService">
-         <ref bean="namespaceService" />
+      <property name="systematicGroupQueryFilters">
+         <map>
+            <entry key="ALFRESCO_ADMINISTRATORS" value="${ldap.synchronization.systematicGroupQuery.administrators}" />
+            <entry key="DOCUMENT_MANAGERS" value="${ldap.synchronization.systematicGroupQuery.documentManagers}" />
+            <entry key="SUPERVISION" value="${ldap.synchronization.systematicGroupQuery.supervision}" />
+            <entry key="ARCHIVISTS" value="${ldap.synchronization.systematicGroupQuery.archivists}" />
+            <entry key="ACCOUNTANTS" value="${ldap.synchronization.systematicGroupQuery.accountants}" />
+         </map>
       </property>
    </bean>
 

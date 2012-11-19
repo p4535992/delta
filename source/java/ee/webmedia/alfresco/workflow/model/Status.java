@@ -14,7 +14,9 @@ public enum Status {
     /** lõpetatud */
     FINISHED("lõpetatud"),
     /** teostamata */
-    UNFINISHED("teostamata");
+    UNFINISHED("teostamata"),
+    /** kustutatud - used only for linkedReviewTasks */
+    DELETED("kustutatud");
 
     private String name;
 

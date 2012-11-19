@@ -27,7 +27,7 @@
             </property>
          </properties>
       </aspect>
-      
+
       <aspect name="docTempl:emailTemplate">
          <mandatory-aspects>
             <aspect>docTempl:template</aspect>
@@ -39,14 +39,14 @@
             <aspect>docTempl:template</aspect>
          </mandatory-aspects>
       </aspect>
-      
+
       <!-- XXX Deprecated: This aspect is not used in new templates any more -->
       <aspect name="docTempl:systemTemplate">
          <mandatory-aspects>
             <aspect>docTempl:template</aspect>
          </mandatory-aspects>
       </aspect>
-      
+
       <aspect name="docTempl:reportTemplate">
          <properties>
             <property name="docTempl:reportType">
@@ -63,11 +63,17 @@
          </mandatory-aspects>
       </aspect>
       
+      <aspect name="docTempl:archivalReportTemplate">
+         <mandatory-aspects>
+            <aspect>docTempl:template</aspect>
+         </mandatory-aspects>
+      </aspect>
+
       <aspect name="docTempl:documentTemplate">
          <properties>
             <property name="docTempl:docTypeId">
                <type>d:text</type>
-               <!--if 'mandatory' not commented updater cant remove this aspect. document-template-web-client-config.xml added forcedMandatory="true" -->
+               <!--if 'mandatory' not commented updater can't remove this aspect. document-template-web-client-config.xml added forcedMandatory="true" -->
                <!--<mandatory enforced="false">true</mandatory> -->
             </property>
          </properties>

@@ -74,4 +74,6 @@ public interface SendOutService {
 
     boolean hasDocumentSendInfos(NodeRef document);
 
+    void sendDocumentForInformation(List<String> authorityIds, Node docNode, String emailTemplate);
+
 }

@@ -21,6 +21,7 @@ public class Function implements Serializable, Comparable<Function> {
     private String description;
     private String status;
     private int order;
+    private boolean documentActivitiesAreLimited;
 
     @AlfrescoModelProperty(isMappable = false)
     private Node node;
@@ -73,6 +74,14 @@ public class Function implements Serializable, Comparable<Function> {
         this.order = order;
     }
 
+    public boolean isDocumentActivitiesAreLimited() {
+        return documentActivitiesAreLimited;
+    }
+
+    public void setDocumentActivitiesAreLimited(boolean documentActivitiesAreLimited) {
+        this.documentActivitiesAreLimited = documentActivitiesAreLimited;
+    }
+
     public NodeRef getNodeRef() {
         return node.getNodeRef();
     }
@@ -103,10 +112,16 @@ public class Function implements Serializable, Comparable<Function> {
         if (getOrder() == fn2.getOrder()) {
             int cmpMark;
             if ((cmpMark = DEFAULT_COLLATOR.compare(getMark(), fn2.getMark())) == 0) {
-                return DEFAULT_COLLATOR.compare(getTitle(), fn2.getTitle());
+                if (title != null && fn2.title != null) {
+                    return DEFAULT_COLLATOR.compare(getTitle(), fn2.getTitle());
+                } else if (title == null && fn2.title == null) {
+                    return 0;
+                }
+                return title == null ? -1 : 1;
             }
             return cmpMark;
         }
         return getOrder() - fn2.getOrder();
     }
+
 }

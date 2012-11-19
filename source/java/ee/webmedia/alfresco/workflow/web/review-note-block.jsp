@@ -10,7 +10,7 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<% String printButtonTooltip = MessageUtil.getMessage("workflow_task_review_notes_print"); %>
+<% String printButtonTooltip = MessageUtil.getMessageAndEscapeJS("workflow_task_review_notes_print"); %>
 
 <h:panelGroup id="review-note-block-facets" styleClass="nonfloating-element" >
    <f:facet name="title">
@@ -45,15 +45,14 @@
          <f:facet name="header">
             <a:sortLink id="col3-header" label="#{msg.workflow_task_review_note}" value="outcome" styleClass="header" />
          </f:facet>
-
          <h:panelGroup styleClass="review-note-comment">
             <h:outputText value="#{r.outcome}: " />
             <h:outputText value="#{r.commentAndLinks} " styleClass="condence150" escape="false"/>
          </h:panelGroup>
-
       </a:column>
-      
-      <a:column id="col4" style="width: 20%">
+            
+      <!-- This column -->
+      <a:column id="review-note-block-file-versions-col" primary="true" style="width: 20%" rendered="#{DialogManager.currentDialog.name eq 'documentDynamicDialog'}" >
          <f:facet name="header">
             <a:sortLink id="col4-header" label="#{msg.workflow_task_review_file_versions}" value="fileVersions" styleClass="header" />
          </f:facet>

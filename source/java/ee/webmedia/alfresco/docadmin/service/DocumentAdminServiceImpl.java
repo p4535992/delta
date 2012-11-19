@@ -57,6 +57,7 @@ import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.base.BaseObject.ChildrenList;
 import ee.webmedia.alfresco.base.BaseService;
 import ee.webmedia.alfresco.base.BaseServiceImpl;
+import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
 import ee.webmedia.alfresco.common.model.NodeBaseVO;
 import ee.webmedia.alfresco.common.service.GeneralService;
@@ -169,6 +170,10 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         return getDynamicTypesRoot(DocumentType.class);
     }
 
+    private NodeRef getCaseFileTypesRoot() {
+        return getDynamicTypesRoot(CaseFileType.class);
+    }
+
     @Override
     public void registerForbiddenFieldId(String forbiddenFieldId) {
         Assert.notNull(forbiddenFieldId);
@@ -179,6 +184,16 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     @Override
     public Set<String> getForbiddenFieldIds() {
         return Collections.unmodifiableSet(forbiddenFieldIds);
+    }
+
+    @Override
+    public List<CaseFileType> getUsedCaseFileTypes(DynTypeLoadEffort effort) {
+        return getAllTypes(CaseFileType.class, Boolean.TRUE, getCaseFileTypesRoot(), effort);
+    }
+
+    @Override
+    public List<CaseFileType> getAllCaseFileTypes(DynTypeLoadEffort effort) {
+        return getAllTypes(CaseFileType.class, null, getCaseFileTypesRoot(), effort);
     }
 
     @Override
@@ -204,14 +219,37 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
-    public <T> T getDocumentTypeProperty(String docTypeId, QName property, Class<T> returnClass) {
-        NodeRef documentTypeRef = getDocumentTypeRef(docTypeId);
-        return getDocumentTypeProperty(documentTypeRef, property, returnClass);
+    public DocumentType getUsedDocumentType(String documentTypeId) {
+        DocumentType documentType = null;
+        try {
+            documentType = getDocumentType(documentTypeId, DocumentAdminService.DOC_TYPE_WITH_OUT_GRAND_CHILDREN_EXEPT_LATEST_DOCTYPE_VER);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+        if (documentType == null || !documentType.isUsed()) {
+            return null;
+        }
+        return documentType;
     }
 
     @Override
-    public <T> T getDocumentTypeProperty(NodeRef documentTypeRef, QName property, Class<T> returnClass) {
-        Serializable value = nodeService.getProperty(documentTypeRef, property);
+    public CaseFileType getCaseFileType(String id, DynTypeLoadEffort effort) {
+        return getCaseFileType(getCaseFileTypeRef(id), effort);
+    }
+
+    @Override
+    public <T> T getDocumentTypeProperty(String docTypeId, QName property, Class<T> returnClass) {
+        return getTypeProperty(getDocumentTypeRef(docTypeId), property, returnClass);
+    }
+
+    @Override
+    public <T> T getCaseFileTypeProperty(String caseFileTypeId, QName property, Class<T> returnClass) {
+        return getTypeProperty(getCaseFileTypeRef(caseFileTypeId), property, returnClass);
+    }
+
+    @Override
+    public <T> T getTypeProperty(NodeRef typeRef, QName property, Class<T> returnClass) {
+        Serializable value = nodeService.getProperty(typeRef, property);
         if (Boolean.class.equals(returnClass)) {
             value = NodeBaseVO.convertNullToFalse((Boolean) value);
         }
@@ -224,14 +262,28 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
+    public NodeRef getCaseFileTypeRef(String id) {
+        return generalService.getNodeRef(CaseFileType.getAssocName(id).toString(), getCaseFileTypesRoot());
+    }
+
+    @Override
     public Pair<DocumentType, DocumentTypeVersion> getDocumentTypeAndVersion(String docTypeId, Integer docTypeVersionNr) {
-        DocumentType docType = getDocumentType(docTypeId, DocumentAdminService.DOC_TYPE_WITH_OUT_GRAND_CHILDREN);
-        if (docType == null) {
+        return getDynamicTypeAndVersion(DocumentType.class, getDocumentTypeRef(docTypeId), docTypeVersionNr);
+    }
+
+    @Override
+    public Pair<CaseFileType, DocumentTypeVersion> getCaseFileTypeAndVersion(String caseFileTypeId, Integer docTypeVersionNr) {
+        return getDynamicTypeAndVersion(CaseFileType.class, getCaseFileTypeRef(caseFileTypeId), docTypeVersionNr);
+    }
+
+    public <D extends DynamicType> Pair<D, DocumentTypeVersion> getDynamicTypeAndVersion(Class<D> typeClass, NodeRef typeRef, Integer docTypeVersionNr) {
+        D dynType = getDynamicType(typeClass, typeRef, DocumentAdminService.DOC_TYPE_WITH_OUT_GRAND_CHILDREN);
+        if (dynType == null) {
             return null;
         }
         DocumentTypeVersion docVersion = null;
-        for (DocumentTypeVersion version : docType.getDocumentTypeVersions()) {
-            if (docTypeVersionNr == version.getVersionNr()) {
+        for (DocumentTypeVersion version : dynType.getDocumentTypeVersions()) {
+            if (docTypeVersionNr.equals(version.getVersionNr())) {
                 baseService.loadChildren(version, null);
                 docVersion = version;
                 break;
@@ -240,11 +292,15 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         if (docVersion == null) {
             return null;
         }
-        return new Pair<DocumentType, DocumentTypeVersion>(docType, docVersion);
+        return new Pair<D, DocumentTypeVersion>(dynType, docVersion);
     }
 
     private DocumentType getDocumentType(NodeRef docTypeRef, DynTypeLoadEffort effort) {
         return getDynamicType(DocumentType.class, docTypeRef, effort);
+    }
+
+    private CaseFileType getCaseFileType(NodeRef caseFileTypeRef, DynTypeLoadEffort effort) {
+        return getDynamicType(CaseFileType.class, caseFileTypeRef, effort);
     }
 
     @Override
@@ -278,6 +334,12 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     public String getDocumentTypeName(Node document) {
         String documentTypeId = (String) document.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID);
         return getDocumentTypeName(documentTypeId);
+    }
+
+    @Override
+    public String getCaseFileTypeName(Node caseFile) {
+        String typeId = (String) caseFile.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID);
+        return getCaseFileType(getCaseFileTypeRef(typeId), DONT_INCLUDE_CHILDREN).getName();
     }
 
     @Override
@@ -627,22 +689,54 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
-    public List<FieldDefinition> getSearchableFieldDefinitions() {
+    public List<FieldDefinition> getSearchableDocumentFieldDefinitions() {
         List<FieldDefinition> searchable = new ArrayList<FieldDefinition>();
         for (FieldDefinition fieldDefinition : baseService.getChildren(getFieldDefinitionsRoot(), FieldDefinition.class)) {
             if (fieldDefinition.isParameterInDocSearch()) {
                 searchable.add(fieldDefinition);
             }
         }
-        Collections.sort(searchable, SEARCH_FIELD_COMPARATOR);
+        Collections.sort(searchable, DOC_SEARCH_FIELD_COMPARATOR);
         return searchable;
     }
 
+    @Override
+    public List<FieldDefinition> getSearchableVolumeFieldDefinitions() {
+        List<FieldDefinition> searchable = new ArrayList<FieldDefinition>();
+        for (FieldDefinition fieldDefinition : baseService.getChildren(getFieldDefinitionsRoot(), FieldDefinition.class)) {
+            if (fieldDefinition.isParameterInVolSearch()) {
+                searchable.add(fieldDefinition);
+            }
+        }
+        Collections.sort(searchable, CASE_SEARCH_FIELD_COMPARATOR);
+        return searchable;
+    }
+
+    @Override
+    public List<FieldDefinition> getVolumeFieldDefinitions() {
+        List<FieldDefinition> fields = new ArrayList<FieldDefinition>();
+        for (FieldDefinition fieldDefinition : baseService.getChildren(getFieldDefinitionsRoot(), FieldDefinition.class)) {
+            List<String> volTypes = fieldDefinition.getVolTypes();
+            if (volTypes != null && !volTypes.isEmpty()) {
+                fields.add(fieldDefinition);
+            }
+        }
+        return fields;
+    }
+
     @SuppressWarnings("unchecked")
-    public static final Comparator<FieldDefinition> SEARCH_FIELD_COMPARATOR = new TransformingComparator(new ComparableTransformer<FieldDefinition>() {
+    public static final Comparator<FieldDefinition> DOC_SEARCH_FIELD_COMPARATOR = new TransformingComparator(new ComparableTransformer<FieldDefinition>() {
         @Override
         public Comparable<?> tr(FieldDefinition input) {
             return input.getParameterOrderInDocSearch();
+        }
+    }, new NullComparator(true));
+
+    @SuppressWarnings("unchecked")
+    public static final Comparator<FieldDefinition> CASE_SEARCH_FIELD_COMPARATOR = new TransformingComparator(new ComparableTransformer<FieldDefinition>() {
+        @Override
+        public Comparable<?> tr(FieldDefinition input) {
+            return input.getParameterOrderInVolSearch();
         }
     }, new NullComparator(true));
 
@@ -749,15 +843,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
     @Override
     public boolean isDocumentTypeUsed(String documentTypeId) {
-        // TODO DLSeadist maybe need to cache the result (very rare that document type that was used becomes unused)
-        return documentSearchService.isMatch(
-                joinQueryPartsAnd(
-                        joinQueryPartsAnd(
-                                generateTypeQuery(DocumentCommonModel.Types.DOCUMENT)
-                                , generateAspectQuery(DocumentCommonModel.Aspects.SEARCHABLE)
-                        )
-                        , generatePropertyExactQuery(Props.OBJECT_TYPE_ID, documentTypeId, false))
-                );
+        return isDynamicTypeUsed(DocumentCommonModel.Types.DOCUMENT, documentTypeId);
     }
 
     @Override
@@ -780,7 +866,19 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
     @Override
     public boolean isCaseFileTypeUsed(String caseFileTypeId) {
-        return false; // TODO CL_TASK 183635
+        return isDynamicTypeUsed(CaseFileModel.Types.CASE_FILE, caseFileTypeId);
+    }
+
+    private boolean isDynamicTypeUsed(QName dynamicType, String dynamicTypeId) {
+        // TODO DLSeadist maybe need to cache the result (very rare that document or case file type that was used becomes unused)
+        return documentSearchService.isMatch(
+                joinQueryPartsAnd(
+                        joinQueryPartsAnd(
+                                generateTypeQuery(dynamicType)
+                                , generateAspectQuery(DocumentCommonModel.Aspects.SEARCHABLE)
+                        )
+                        , generatePropertyExactQuery(Props.OBJECT_TYPE_ID, dynamicTypeId, false))
+                );
     }
 
     @Override
@@ -1219,18 +1317,19 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                 });
                 importableDocTypesRootRef = tmpDocumentTypesRef[0];
                 importDynamicTypes(importableDocTypesRootRef, dynTypeClass);
-            } catch (FileNotFoundException e) {
-                throw new RuntimeException("Failed to read data for importing parameters from uploaded file: '" + xmlFile.getAbsolutePath() + "'", e);
-            } catch (UnsupportedEncodingException e) {
-                throw new RuntimeException("Unsupported encoding of uploaded file: '" + xmlFile.getAbsolutePath() + "'", e);
-            } finally {
-                IOUtils.closeQuietly(fileReader);
+
                 if (!tmpFolderExisted) {
                     nodeService.deleteNode(tmpFolderRef);
                 }
                 if (importableDocTypesRootRef != null && nodeService.exists(importableDocTypesRootRef)) {
                     nodeService.deleteNode(importableDocTypesRootRef);
                 }
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException("Failed to read data for importing parameters from uploaded file: '" + xmlFile.getAbsolutePath() + "'", e);
+            } catch (UnsupportedEncodingException e) {
+                throw new RuntimeException("Unsupported encoding of uploaded file: '" + xmlFile.getAbsolutePath() + "'", e);
+            } finally {
+                IOUtils.closeQuietly(fileReader);
                 LOG.info("Finished importing " + dynTypeMsg);
             }
         }
@@ -1485,9 +1584,12 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                 MetadataItem metadataItem = it.next();
                 if (metadataItem instanceof FieldGroup) {
                     FieldGroup fieldGroup = (FieldGroup) metadataItem;
-                    Set<NodeRef> savedNodeRefsInFieldGroup = neededNodeRefsByGroup.get(fieldGroup.getName());
+                    String fieldGroupName = fieldGroup.getName();
+                    Set<NodeRef> savedNodeRefsInFieldGroup = neededNodeRefsByGroup.get(fieldGroupName);
                     if (savedNodeRefsInFieldGroup == null) {
-                        it.remove(); // this fieldGroup was not present under docTypeVersion that is being imported
+                        if (existingFieldGroupsByName.containsKey(fieldGroupName)) {
+                            it.remove(); // this fieldGroup was not present under docTypeVersion that is being imported
+                        }
                     } else {
                         for (Iterator<NodeRef> fieldsIt = savedNodeRefsInFieldGroup.iterator(); fieldsIt.hasNext();) {
                             NodeRef nodeRef = fieldsIt.next();

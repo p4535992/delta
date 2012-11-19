@@ -33,21 +33,40 @@ public interface NotificationModel {
         QName TASK_NEW_TASK_NOTIFICATION = QName.createQName(URI, "newTaskNotification");
         QName TASK_CANCELLED_TASK_NOTIFICATION = QName.createQName(URI, "cancelledTaskNotification");
         QName TASK_SIGNATURE_TASK_COMPLETED = QName.createQName(URI, "signatureTaskCompleted");
+        QName TASK_SIGNATURE_TASK_COMPLETED_ORDERED = QName.createQName(URI, "signatureTaskCompletedOrdered");
         QName TASK_OPINION_TASK_COMPLETED = QName.createQName(URI, "opinionTaskCompleted");
+        QName TASK_OPINION_TASK_COMPLETED_ORDERED = QName.createQName(URI, "opinionTaskCompletedOrdered");
         QName TASK_REVIEW_TASK_COMPLETED = QName.createQName(URI, "reviewTaskCompleted");
+        QName TASK_REVIEW_TASK_COMPLETED_ORDERED = QName.createQName(URI, "reviewTaskCompletedOrdered");
         QName TASK_INFORMATION_TASK_COMPLETED = QName.createQName(URI, "informationTaskCompleted");
+        QName TASK_INFORMATION_TASK_COMPLETED_ORDERED = QName.createQName(URI, "informationTaskCompletedOrdered");
         QName TASK_ASSIGNMENT_TASK_COMPLETED_BY_CO_RESPONSIBLE = QName.createQName(URI, "assignmentTaskCompletedByCoResponsible");
+        QName TASK_ASSIGNMENT_TASK_COMPLETED_BY_CO_RESPONSIBLE_ORDERED = QName.createQName(URI, "assignmentTaskCompletedByCoResponsibleOrdered");
         QName TASK_ASSIGNMENT_TASK_COMPLETED_BY_RESPONSIBLE = QName.createQName(URI, "assignmentTaskCompletedByResponsible");
+        QName TASK_ASSIGNMENT_TASK_COMPLETED_BY_RESPONSIBLE_ORDERED = QName.createQName(URI, "assignmentTaskCompletedByResponsibleOrdered");
         QName TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED = QName.createQName(URI, "reviewTaskCompletedNotAccepted");
+        QName TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED_ORDERED = QName.createQName(URI, "reviewTaskCompletedNotAcceptedOrdered");
         QName TASK_REVIEW_TASK_COMPLETED_WITH_REMARKS = QName.createQName(URI, "reviewTaskCompletedWithRemarks");
+        QName TASK_REVIEW_TASK_COMPLETED_WITH_REMARKS_ORDERED = QName.createQName(URI, "reviewTaskCompletedWithRemarksOrdered");
         QName WORKFLOW_WORKFLOW_COMPLETED = QName.createQName(URI, "workflowCompleted");
         QName WORKFLOW_NEW_WORKFLOW_STARTED = QName.createQName(URI, "newWorkflowStarted");
         QName TASK_ORDER_ASSIGNMENT_WORKFLOW_COMPLETED = QName.createQName(URI, "orderAssignmentWorkflowCompleted");
         QName TASK_ORDER_ASSIGNMENT_TASK_COMPLETED = QName.createQName(URI, "orderAssignmentTaskCompleted");
+        QName TASK_ORDER_ASSIGNMENT_TASK_COMPLETED_ORDERED = QName.createQName(URI, "orderAssignmentTaskCompletedOrdered");
         QName TASK_CONFIRMATION_TASK_COMPLETED = QName.createQName(URI, "confirmationTaskCompleted");
+        QName TASK_CONFIRMATION_TASK_COMPLETED_ORDERED = QName.createQName(URI, "confirmationTaskCompletedOrdered");
         QName TASK_CONFIRMATION_TASK_COMPLETED_NOT_ACCEPTED = QName.createQName(URI, "confirmationTaskCompletedNotAccepted");
+        QName TASK_CONFIRMATION_TASK_COMPLETED_NOT_ACCEPTED_ORDERED = QName.createQName(URI, "confirmationTaskCompletedNotAcceptedOrdered");
         QName TASK_DUE_DATE_EXTENSION_TASK_COMPLETED = QName.createQName(URI, "taskDueDateExtensionTaskCompleted");
+        QName TASK_DUE_DATE_EXTENSION_TASK_COMPLETED_ORDERED = QName.createQName(URI, "taskDueDateExtensionTaskCompletedOrdered");
         QName TASK_DUE_DATE_EXTENSION_TASK_COMPLETED_NOT_ACCEPTED = QName.createQName(URI, "taskDueDateExtensionTaskCompletedNotAccepted");
+        QName TASK_DUE_DATE_EXTENSION_TASK_COMPLETED_NOT_ACCEPTED_ORDERED = QName.createQName(URI, "taskDueDateExtensionTaskCompletedNotAcceptedOrdered");
+        QName WORKFLOW_REGISTRATION_STOPPED_NO_DOCUMENTS = QName.createQName(URI, "workflowRegistrationStoppedNoDocuments");
+        QName WORKFLOW_SIGNATURE_STOPPED_NO_DOCUMENTS = QName.createQName(URI, "workflowSignatureStoppedNoDocuments");
+        QName COMPOUND_WORKFLOW_STOPPED = QName.createQName(URI, "compoundWorkflowStopped");
+        QName COMPOUND_WORKFLOW_CONTINUED = QName.createQName(URI, "compoundWorkflowContinued");
+        QName COMPOUND_WORKFLOW_REOPENED = QName.createQName(URI, "compoundWorkflowReopened");
+        QName COMPOUND_WORKFLOW_FINISHED = QName.createQName(URI, "compoundWorkflowFinished");
 
         QName EXTERNAL_REVIEW_WORKFLOW_RECIEVING_ERROR = QName.createQName(URI, "externalReviewWorkflowRecievingError");
         QName EXTERNAL_REVIEW_WORKFLOW_SERIES_ERROR = QName.createQName(URI, "externalReviewWorkflowSeriesError");
@@ -66,6 +85,11 @@ public interface NotificationModel {
         QName DELEGATED_TASK_COMPLETED = QName.createQName(URI, "delegatedTaskCompleted");
         QName REVIEW_DOCUMENT_SIGNED = QName.createQName(URI, "reviewDocumentSigned");
         QName TASK_CANCELLED = QName.createQName(URI, "taskCancelled");
+        QName TASK_CANCELLED_ORDERED = QName.createQName(URI, "taskCancelledOrdered");
+        QName GROUP_ASSIGNMENT_TASK_COMPLETED_BY_OTHERS = QName.createQName(URI, "groupAssignmentTaskCompletedByOthers");
+        QName GROUP_ASSIGNMENT_TASK_COMPLETED_ORDERED = QName.createQName(URI, "groupAssignmentTaskCompletedOrdered");
+        QName DOCUMENT_SEND_FOR_INFORMATION = QName.createQName(URI, "documentSendForInformation");
+        QName EMAIL_ATTACHMENT_SIZE_LIMIT_EXCEEDED = QName.createQName(URI, "emailAttachmentSizeLimitExceeded");
     }
 
 }

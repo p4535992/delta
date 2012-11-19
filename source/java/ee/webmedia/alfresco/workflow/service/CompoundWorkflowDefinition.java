@@ -51,6 +51,10 @@ public class CompoundWorkflowDefinition extends CompoundWorkflow {
         setPropList(WorkflowCommonModel.Props.DOCUMENT_TYPES, documentTypes);
     }
 
+    public List<String> getCaseFileTypes() {
+        return getPropList(WorkflowCommonModel.Props.CASE_FILE_TYPES);
+    }
+
     public String getUserId() {
         return getProp(WorkflowCommonModel.Props.USER_ID);
     }

@@ -20,6 +20,7 @@ public class DocTypeDetailsDialog extends DynamicTypeDetailsDialog<DocumentType,
     // START: Block beans
     private FollowupAssocsListBean followupAssocsListBean;
     private ReplyAssocsListBean replyAssocsListBean;
+    private DefaultLocationBean defaultLocationBean;
 
     public DocTypeDetailsDialog() {
         super(DocumentType.class);
@@ -49,6 +50,7 @@ public class DocTypeDetailsDialog extends DynamicTypeDetailsDialog<DocumentType,
         super.resetFields();
         followupAssocsListBean.resetOrInit(null);
         replyAssocsListBean.resetOrInit(null);
+        defaultLocationBean.resetOrInit(null);
         // don't assign null to injected beans
     }
 
@@ -59,6 +61,7 @@ public class DocTypeDetailsDialog extends DynamicTypeDetailsDialog<DocumentType,
         super.updateDialogState(documentType, currentSnapshot, docTypeVersionRef);
         followupAssocsListBean.resetOrInit(this);
         replyAssocsListBean.resetOrInit(this);
+        defaultLocationBean.resetOrInit(this);
     }
 
     /** used by jsp */
@@ -84,6 +87,16 @@ public class DocTypeDetailsDialog extends DynamicTypeDetailsDialog<DocumentType,
     /** injected by spring */
     public void setReplyAssocsListBean(ReplyAssocsListBean replyAssocsListBean) {
         this.replyAssocsListBean = replyAssocsListBean;
+    }
+
+    /** used by jsp */
+    public DefaultLocationBean getDefaultLocationBean() {
+        return defaultLocationBean;
+    }
+
+    /** injected by spring */
+    public void setDefaultLocationBean(DefaultLocationBean defaultLocationBean) {
+        this.defaultLocationBean = defaultLocationBean;
     }
 
     /** JSP */

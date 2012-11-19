@@ -14,6 +14,7 @@ import org.alfresco.web.bean.repository.Node;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
+import ee.webmedia.alfresco.docadmin.service.DynamicType;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docconfig.generator.FieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.FieldGroupGenerator;
@@ -42,6 +43,8 @@ public interface DocumentConfigService {
 
     void setUserContactProps(Map<QName, Serializable> props, String userName, String fieldId);
 
+    void setUserContactProps(Map<QName, Serializable> props, String userName, String fieldId, Class<? extends DynamicType> typeClass);
+
     void setUserContactProps(Map<QName, Serializable> props, String userName, PropertyDefinition propDef, Field field);
 
     DynamicPropertyDefinition getPropertyDefinition(Node node, QName property);
@@ -55,7 +58,7 @@ public interface DocumentConfigService {
      */
     Map<String, Pair<DynamicPropertyDefinition, Field>> getPropertyDefinitions(Node documentDynamicNode);
 
-    Map<String, Pair<DynamicPropertyDefinition, Field>> getPropertyDefinitions(Pair<String, Integer> docTypeIdAndVersionNr);
+    Map<String, Pair<DynamicPropertyDefinition, Field>> getPropertyDefinitions(PropDefCacheKey cacheKey);
 
     /**
      * Set default property values on given node and all it's child and grand-child nodes.
@@ -104,5 +107,13 @@ public interface DocumentConfigService {
     PropertyDefinition getStaticOrDynamicPropertyDefinition(QName propName);
 
     DocumentConfig getReportConfig();
+
+    DocumentConfig getVolumeSearchFilterConfig(boolean withCheckboxes);
+
+    DocumentConfig getAssocObjectSearchConfig(String additionalStateHolderKey, String renderAssocObjectFieldValueBinding);
+
+    DocumentConfig getEventPlanVolumeSearchFilterConfig();
+
+    boolean isRegDateFilterInAssociationsSearch();
 
 }

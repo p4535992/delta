@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.document.search.service;
 
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -11,11 +12,16 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 
+import ee.webmedia.alfresco.archivals.web.ArchivalActivity;
+import ee.webmedia.alfresco.casefile.service.CaseFile;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.volume.model.Volume;
+import ee.webmedia.alfresco.volume.model.VolumeOrCaseFile;
+import ee.webmedia.alfresco.workflow.model.CompoundWorkflowWithObject;
 import ee.webmedia.alfresco.workflow.search.model.TaskInfo;
+import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
 
 /**
@@ -47,10 +53,7 @@ public interface DocumentSearchService {
      */
     Pair<List<Document>, Boolean> searchDocumentsQuick(String searchString, NodeRef containerNodeRef, int limit);
 
-    /**
-     * @param trySearchCases - if false, case search is not executed, if true, evaluate also other conditions to determine whether to search cases or not
-     */
-    Pair<List<Document>, Boolean> searchDocumentsAndOrCases(String searchValue, Date regDateTimeBegin, Date regDateTimeEnd, List<String> documentTypes, boolean trySearchCases);
+    public List<AssocBlockObject> searchAssocObjects(Node objectFilter);
 
     /**
      * Searches for documents using a search filter.
@@ -63,6 +66,8 @@ public interface DocumentSearchService {
      */
     Pair<List<Document>, Boolean> searchDocuments(Node filter, int limit);
 
+    Pair<List<VolumeOrCaseFile>, Boolean> searchVolumes(Node filter, int limit);
+
     /**
      * Searches for documents using a search filter.
      * Query must be exactly the same as in searchDocuments,
@@ -72,7 +77,7 @@ public interface DocumentSearchService {
      * as we want to add checkpoints between queries to different stores
      * outside this service.
      */
-    List<NodeRef> searchDocumentsForReport(Node filter, StoreRef storeRef);
+    List<NodeRef> searchDocumentsForReport(Node filter, StoreRef storeRef, String userId);
 
     /**
      * @return documents being sent but not delivered to ALL recipients
@@ -149,6 +154,8 @@ public interface DocumentSearchService {
      */
     List<Task> searchCurrentUsersTasksInProgress(QName taskType);
 
+    List<Task> searchCurrentUsersTaskInProgressWithoutParents(QName taskType, boolean allStoresSearch);
+
     /**
      * Returns number of tasks of specified type that are assigned to currently logged in user
      * 
@@ -164,6 +171,14 @@ public interface DocumentSearchService {
      * @return list of matching tasks
      */
     Pair<List<TaskInfo>, Boolean> searchTasks(Node filter, int limit);
+
+    /**
+     * Searches for compoundWorkflows using a search filter.
+     * 
+     * @param filter
+     * @return list of matching compound workflows
+     */
+    Pair<List<CompoundWorkflow>, Boolean> searchCompoundWorkflows(Node filter, int limit);
 
     /**
      * Searches for tasks using a search filter.
@@ -255,6 +270,8 @@ public interface DocumentSearchService {
     // TODO not document specific
     List<NodeRef> searchNodes(String query, int limit, String queryName);
 
+    List<NodeRef> filterUsersInUserGroup(String structUnit, Set<String> children);
+
     /**
      * @param query
      * @return true if at least one result could be found based on query (from default store)
@@ -277,8 +294,48 @@ public interface DocumentSearchService {
 
     List<StoreRef> getStoresFromDocumentReportFilter(Map<String, Object> properties);
 
+    List<CompoundWorkflowWithObject> searchCurrentUserCompoundWorkflows();
+
+    LinkedHashSet<StoreRef> getAllStoresWithArchivalStoreVOs();
+
+    int getCurrentUserCompoundWorkflowsCount();
+
     String generateDeletedSearchQuery(String searchValue, NodeRef containerNodeRef);
 
+    NodeRef getIndependentCompoundWorkflowByProcedureId(String procedureId);
+
+    public List<CaseFile> searchCurrentUserCaseFiles();
+
+    int getCurrentUserCaseFilesCount();
+
+    List<NodeRef> searchVolumesForReport(Node filter);
+
+    List<NodeRef> searchCompoundWorkflowsOwnerId(String ownerId, boolean isPreviousOwnerId);
+
+    List<NodeRef> searchOpenCaseFilesOwnerId(String ownerId, boolean isPreviousOwnerId);
+
+    List<NodeRef> searchAdrDeletedDocument(NodeRef originalDocumentRef);
+
     Pair<List<NodeRef>, Boolean> searchAllDocumentsByParentRef(NodeRef parentRef, int limit);
+
+    NodeRef searchLinkedReviewTaskByOriginalNoderefId(String noderefId);
+
+    List<Task> searchReviewTaskToResendQuery();
+
+    List<NodeRef> searchActiveLocks();
+
+    List<String> searchAuthorityGroupsByExactName(String groupName);
+
+    List<Volume> searchVolumesForArchiveList(Node filter, List<NodeRef> defaultStores);
+
+    List<Volume> searchVolumesForArchiveList(Node filter, boolean hasArchivalValueOrRetainPermanent, boolean isWaitingForDestructionQuery, List<NodeRef> defaultStores);
+
+    List<Pair<NodeRef, String>> getAllVolumeSearchStores();
+
+    List<NodeRef> searchSeriesByEventPlan(NodeRef eventPlanRef);
+
+    List<NodeRef> searchVolumesByEventPlan(NodeRef eventPlanRef, String inputTitle, List<String> inputStatus, List<NodeRef> location);
+
+    List<ArchivalActivity> searchArchivalActivities(Node filter);
 
 }

@@ -10,6 +10,12 @@
 
          <dialog name="deleteFile" page="/jsp/dialog/deleteConfirmMessage.jsp" managed-bean="DeleteFileDialog" icon="/images/icons/delete_large.gif" title-id="delete_file"
             description-id="delete_file_info" />
+         
+         <dialog name="changeFile" page="/WEB-INF/classes/ee/webmedia/alfresco/document/file/web/change-file-dialog.jsp" managed-bean="ChangeFileDialog" icon="/images/icons/edit_properties.gif" title-id="file_change_title"
+            description-id="change_file_info" />
+            
+         <dialog name="commentFile" page="/WEB-INF/classes/ee/webmedia/alfresco/document/file/web/comment-file-dialog.jsp" managed-bean="CommentFileDialog" icon="/images/icons/edit_properties.gif" title-id="file_comment_title"
+            description-id="comment_file_info" />
 
          <dialog name="deleteNotification" page="/jsp/dialog/deleteConfirmMessage.jsp" managed-bean="DeleteNotificationDialog" icon="/images/icons/delete.gif" title-id="notification_delete"
             description-id="delete_file_info" />

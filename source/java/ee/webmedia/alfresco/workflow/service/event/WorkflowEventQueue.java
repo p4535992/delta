@@ -32,7 +32,15 @@ public class WorkflowEventQueue {
         /** Task, if set means that finishing was triggered by manually finishing given task */
         ORDER_ASSIGNMENT_FINISH_TRIGGERING_TASK,
         /** Workflow was cancelled with compound_workflow_finish button, Boolean. */
-        WORKFLOW_CANCELLED_MANUALLY
+        WORKFLOW_CANCELLED_MANUALLY,
+        /** Workflow was stopped with compound_workflow_stop button, Boolean. */
+        WORKFLOW_STOPPED_MANUALLY,
+        /** Inside continuing workflow process, Boolean. */
+        WORKFLOW_CONTINUED,
+        /** Finishing group task was initiated by finishing given task from user interface, NodeRef */
+        INITIATING_GROUP_TASK,
+        /** List<NodeRef>, tasks that are set finished when another group assignment task in the same workflow is finished by user */
+        TASKS_FINISHED_BY_GROUP_TASK
     }
 
     public List<WorkflowEvent> getEvents() {
@@ -57,8 +65,23 @@ public class WorkflowEventQueue {
         return getParameter(WorkflowQueueParameter.ADDITIONAL_EXTERNAL_REVIEW_RECIPIENTS);
     }
 
+    public List<NodeRef> getTasksFinishedByGroupTask() {
+        if (getParameter(WorkflowQueueParameter.TASKS_FINISHED_BY_GROUP_TASK) == null) {
+            setParameter(WorkflowQueueParameter.TASKS_FINISHED_BY_GROUP_TASK, new ArrayList<String>());
+        }
+        return getParameter(WorkflowQueueParameter.TASKS_FINISHED_BY_GROUP_TASK);
+    }
+
+    public NodeRef getInitiatingGroupTask() {
+        return getParameter(WorkflowQueueParameter.INITIATING_GROUP_TASK);
+    }
+
     public Map<WorkflowQueueParameter, Object> getParameters() {
         return parameters;
+    }
+
+    public Boolean getBooleanParameter(WorkflowQueueParameter key) {
+        return Boolean.TRUE.equals(getParameter(key));
     }
 
     public <T extends Object> T getParameter(WorkflowQueueParameter key) {

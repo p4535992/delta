@@ -58,7 +58,92 @@
             props="tasksearch:stoppedDateTimeBegin||styleClass=date,tasksearch:stoppedDateTimeBegin_EndDate||styleClass=date,tasksearch:stoppedDateTimeBegin_DateRangePicker|EnumSelectorGenerator|disableSorting=true|styleClass=quickDateRangePicker|enumClass=ee.webmedia.alfresco.classificator.enums.DatePeriods" 
             textId="task_search_from_to_with_picker" />
          <show-property name="tasksearch:docType" display-label-id="document_docType" component-generator="GeneralSelectorGenerator"
-            selectionItems="#{DocumentSearchBean.getDocumentTypes}" />
+            selectionItems="#{DocumentSearchBean.getDocumentTypes}" show="#{WmWorkflowService.documentWorkflowEnabled}" />
+         
+         <show-property 
+            name="cwsearch:type" 
+            display-label-id="task_search_result_compound_workflow_type" 
+            component-generator="EnumSelectorGenerator" 
+            enumClass="ee.webmedia.alfresco.workflow.model.CompoundWorkflowType" 
+            filter="ee.webmedia.alfresco.workflow.web.evaluator.CompoundWorkflowDefinitionTypeFilter"
+            />
+         <show-property 
+            name="cwsearch:title" 
+            display-label-id="task_search_result_compound_workflow_title" 
+            component-generator="TextAreaGenerator" 
+            styleClass="expand19-200" 
+                     />
+         <show-property 
+            name="cwsearch:ownerName" 
+            display-label-id="task_search_result_compound_workflow_owner_name" 
+            component-generator="MultiValueEditorGenerator"
+            pickerCallback="#{DialogManager.bean.executeOwnerSearch}" 
+            setterCallback="#{DialogManager.bean.processOwnerSearchResults}" 
+            dialogTitleId="cw_search_owner_title"
+            filters="#{DialogManager.bean.ownerSearchFilters}" 
+            showFilter="true" 
+            showHeaders="false" 
+            styleClass="task-search-with-filter add-person" 
+            editable="true" 
+            addLabelId="add" 
+            propsGeneration="cwsearch:ownerName¤¤styleClass=expand19-200 focus" 
+            />
+         <show-property 
+            name="cwsearch:structUnit" 
+            display-label-id="task_search_result_compound_workflow_owner_organization_path" 
+            component-generator="SearchGenerator" 
+            editable="false" 
+            dialogTitleId="series_structUnit_popUpInfo" 
+            pickerCallback="#{OrganizationStructureListDialog.searchOrgstructs}" 
+            preprocessCallback="#{OrganizationStructureListDialog.preprocessResultsToLongestNames}" 
+            />
+         <show-property 
+            name="cwsearch:jobTitle" 
+            display-label-id="task_search_result_compound_workflow_owner_job_title" 
+            component-generator="TextAreaGenerator" 
+            styleClass="expand19-200" 
+            />
+         <show-property 
+            name="cwsearch:createdDate" 
+            display-label-id="task_search_result_compound_workflow_created_date_time" 
+            component-generator="InlinePropertyGroupGenerator"
+            props="cwsearch:createdDate||styleClass=date,cwsearch:createdDate_EndDate||styleClass=date,cwsearch:createdDate_DateRangePicker|EnumSelectorGenerator|disableSorting=true|styleClass=quickDateRangePicker|enumClass=ee.webmedia.alfresco.classificator.enums.DatePeriods" 
+            textId="task_search_from_to_with_picker" 
+            />
+         <show-property 
+            name="cwsearch:ignitionDate" 
+            display-label-id="task_search_result_compound_workflow_started_date_time" 
+            component-generator="InlinePropertyGroupGenerator"
+            props="cwsearch:ignitionDate||styleClass=date,cwsearch:ignitionDate_EndDate||styleClass=date,cwsearch:ignitionDate_DateRangePicker|EnumSelectorGenerator|disableSorting=true|styleClass=quickDateRangePicker|enumClass=ee.webmedia.alfresco.classificator.enums.DatePeriods" 
+            textId="task_search_from_to_with_picker" 
+            />
+         <show-property 
+            name="cwsearch:stoppedDate" 
+            display-label-id="task_search_result_compound_workflow_stopped_date_time" 
+            component-generator="InlinePropertyGroupGenerator"
+            props="cwsearch:stoppedDate||styleClass=date,cwsearch:stoppedDate_EndDate||styleClass=date,cwsearch:stoppedDate_DateRangePicker|EnumSelectorGenerator|disableSorting=true|styleClass=quickDateRangePicker|enumClass=ee.webmedia.alfresco.classificator.enums.DatePeriods" 
+            textId="task_search_from_to_with_picker" 
+            />
+         <show-property 
+            name="cwsearch:endingDate" 
+            display-label-id="task_search_result_compound_workflow_finished_date_time" 
+            component-generator="InlinePropertyGroupGenerator"
+            props="cwsearch:endingDate||styleClass=date,cwsearch:endingDate_EndDate||styleClass=date,cwsearch:endingDate_DateRangePicker|EnumSelectorGenerator|disableSorting=true|styleClass=quickDateRangePicker|enumClass=ee.webmedia.alfresco.classificator.enums.DatePeriods" 
+            textId="task_search_from_to_with_picker" 
+            />
+         <show-property 
+            name="cwsearch:status" 
+            display-label-id="task_search_result_compound_workflow_status" 
+            enumClass="ee.webmedia.alfresco.workflow.model.Status" 
+            component-generator="EnumSelectorGenerator" 
+            filter="ee.webmedia.alfresco.workflow.web.evaluator.CompoundWorkflowStatusFilter"
+            />
+         <show-property 
+            name="cwsearch:comment" 
+            display-label-id="cw_search_comment" 
+            component-generator="TextAreaGenerator" 
+            styleClass="expand19-200" 
+            />
       </property-sheet>
    </config>
    

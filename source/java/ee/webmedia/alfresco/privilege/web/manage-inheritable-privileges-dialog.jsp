@@ -13,20 +13,25 @@
       var confirmMsgRemoveGroupWithUsers = '<%= MessageUtil.getMessageAndEscapeJS("manage_permissions_confirm_removeGroupWithUsers") %>';
       var confirmMsgInlineGroupUsers = '<%=BeanHelper.getManageInheritablePrivilegesDialog().getTypeHandler().getConfirmInlineGroupUsersMsg()%>';
       var privDependencies = <%= BeanHelper.getManageInheritablePrivilegesDialog().getPrivilegeDependencies() %>;
+      var valueChecked = <%= BeanHelper.getManageInheritablePrivilegesDialog().getTypeHandler().getCheckboxValue() %>;
 
       function saveIfNeeded(cb) {
-         var submitWhenCheckboxUnchecked = <%= BeanHelper.getManageInheritablePrivilegesDialog().getTypeHandler().isSubmitWhenCheckboxUnchecked() %>;
-         if (submitWhenCheckboxUnchecked ) {
-            var jQCB = $jQ(cb);
-            var checked = jQCB.is(":checked");
+         if (<%= BeanHelper.getManageInheritablePrivilegesDialog().getTypeHandler().isSubmitWhenCheckboxUnchecked() %>) {
             var confirmRemoveInheritance = '<%= MessageUtil.getMessageAndEscapeJS("manage_permissions_confirm_removeInheritance") %>';
             var confirmSetInheritance = '<%= MessageUtil.getMessageAndEscapeJS("manage_permissions_confirm_setInheritance") %>';
-            var msg = checked ? confirmSetInheritance : confirmRemoveInheritance;
+            var msg = cb.checked ? confirmSetInheritance : confirmRemoveInheritance;
             if(confirm(msg)){
                clickFinishButton();
             } else {
-               jQCB.prop('checked', !checked);
+               cb.checked = !cb.checked;
             }
+         }
+      }
+      document.getElementById("dialog:finish-button").onclick = function() {
+         var msg = '<%= BeanHelper.getManageInheritablePrivilegesDialog().getTypeHandler().getConfirmMessage() %>';
+         if (msg && valueChecked != $jQ('input:checkbox:first').is(':checked') && !confirm(msg)) {
+            $jQ('input:checkbox:first')[0].checked = valueChecked;
+            return false;
          }
       }
       
@@ -51,18 +56,12 @@
 </a:panel>
 
 <a:panel id="permissions-panel" label="#{msg.manage_permissions_panel}">
-<h:panelGroup id="removeMeWhenImplemented" rendered="#{ManageInheritablePrivilegesDialog.typeHandler.class.simpleName != 'SeriesTypePrivilegesHandler'}">
-   <%-- FIXME PRIV2 - wrapper is temp hack for removing checkbox from series permissions management view where it means different thing.
-   Wrapper should be removed when this is resolved
-    --%>
-
    <%-- checkbox: inherit permissions 
    or in case of series permissions management: 
    documents without view-permission are visible
     --%>
    <h:outputText value="#{ManageInheritablePrivilegesDialog.typeHandler.checkboxLabel}" />
    <h:selectBooleanCheckbox value="#{ManageInheritablePrivilegesDialog.typeHandler.checkboxValue}" styleClass="saveIfNeeded" valueChangeListener="#{ManageInheritablePrivilegesDialog.typeHandler.checkboxChanged}" disabled="#{!ManageInheritablePrivilegesDialog.typeHandler.editable}" />
-</h:panelGroup>
 
    <a:richList id="permissions-list" binding="#{ManageInheritablePrivilegesDialog.permissionsRichList}" value="#{ManageInheritablePrivilegesDialog.userPrivilegesRows}" var="r" refreshOnBind="true"
       viewMode="detailsMultiTbody" width="100%" styleClass="privileges detailsMultiTbody" headerStyleClass="recordSetHeader" rowStyleClass="recordSetRow"

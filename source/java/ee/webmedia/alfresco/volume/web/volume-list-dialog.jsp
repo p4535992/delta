@@ -26,13 +26,13 @@
          <f:facet name="header">
             <a:sortLink id="col2-sort" label="#{msg.volume_title}" value="title" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col2-link2documents" value="#{r.title} (#{r.containingDocsCount})" action="dialog:documentListDialog" tooltip="#{msg.document_list_info}"
-            showLink="false" actionListener="#{DocumentListDialog.setup}" rendered="#{!r.containsCases}" >
+         <a:actionLink id="col2-link2cases" value="#{r.title} (#{r.containingDocsCount})" action="dialog:caseDocListDialog" tooltip="#{msg.case_list_info}"
+            showLink="false" actionListener="#{CaseDocumentListDialog.showAll}" rendered="#{!r.dynamic}">
             <f:param name="volumeNodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>
-         <a:actionLink id="col2-link2cases" value="#{r.title} (#{r.containingDocsCount})" action="dialog:caseListDialog" tooltip="#{msg.case_list_info}"
-            showLink="false" actionListener="#{CaseListDialog.showAll}" rendered="#{r.containsCases}" >
-            <f:param name="volumeNodeRef" value="#{r.node.nodeRef}" />
+         <a:actionLink id="col2-caseFile" value="#{r.title} (#{r.containingDocsCount})" tooltip="#{msg.case_list_info}"
+            showLink="false" actionListener="#{CaseFileDialog.openFromDocumentList}" rendered="#{r.dynamic}">
+            <f:param name="nodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>
       </a:column>
 
@@ -69,29 +69,40 @@
          <f:facet name="header">
             <a:sortLink id="col7-sort" label="#{msg.volume_volumeType}" value="volumeType" styleClass="header" />
          </f:facet>
-         <h:outputText id="col7-text" value="#{r.volumeTypeEnum}">
+         <h:outputText id="col7-text-1" value="#{r.volumeTypeEnum}" rendered="#{!r.dynamic}">
             <a:convertEnum enumClass="ee.webmedia.alfresco.classificator.enums.VolumeType" />
          </h:outputText>
+         <h:outputText id="col7-text-2" value="#{r.volumeType}" rendered="#{r.dynamic}" />
       </a:column>
       
-      <%-- dispositionDate --%>
-      <a:column id="col6">
+      <%-- owner --%>
+      <a:column id="col9">
          <f:facet name="header">
-            <a:sortLink id="col6-sort" label="#{msg.volume_dispositionDate}" value="dispositionDate" styleClass="header" />
+            <a:sortLink id="col9-sort" label="#{msg.caseFile_owner}" value="ownerName" styleClass="header" />
          </f:facet>
-         <h:outputText id="col6-text" value="#{r.dispositionDate}" >
-            <a:convertXMLDate pattern="#{msg.date_pattern}" />
-         </h:outputText>
+         <h:outputText id="col9-text" value="#{r.ownerName}" rendered="#{r.dynamic}" />
+      </a:column>
+      
+      <%-- containsCases --%>
+      <a:column id="col10">
+         <f:facet name="header">
+            <a:sortLink id="col10-sort" label="#{msg.caseFile_containsCases}" value="containsCases" styleClass="header" />
+         </f:facet>
+         <h:outputText id="col10-text" value="#{r.containsCases}"> <a:convertBoolean /></h:outputText>
       </a:column>
       
       <%-- show details --%>
-      <a:column id="col8" actions="true" styleClass="actions-column" rendered="#{UserService.documentManager}" >
+      <a:column id="col8" actions="true" styleClass="actions-column" rendered="#{UserService.documentManager || UserService.archivist}" >
          <f:facet name="header">
             <h:outputText value="&nbsp;" escape="false" />
          </f:facet>
          <a:actionLink id="col8-act1" value="#{r.title}" image="/images/icons/edit_properties.gif" action="dialog:volumeDetailsDialog" showLink="false"
-            actionListener="#{VolumeDetailsDialog.showDetails}" tooltip="#{msg.volume_details_info}">
+            actionListener="#{VolumeDetailsDialog.showDetails}" tooltip="#{msg.volume_details_info}" rendered="#{!r.dynamic}">
             <f:param name="volumeNodeRef" value="#{r.node.nodeRef}" />
+         </a:actionLink>
+         <a:actionLink id="col8-act2" value="#{r.title}" image="/images/icons/ico_cal.gif" action="dialog:volumeEventPlanDialog" showLink="false"
+            actionListener="#{VolumeEventPlanDialog.view}" tooltip="#{msg.volume_eventplan}">
+            <f:param name="nodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>
       </a:column>
 

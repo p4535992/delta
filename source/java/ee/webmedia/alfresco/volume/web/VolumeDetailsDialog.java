@@ -2,14 +2,10 @@ package ee.webmedia.alfresco.volume.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getArchivalsService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getCaseService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getVolumeService;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -21,10 +17,8 @@ import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
-import org.alfresco.web.bean.repository.TransientNode;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.collections.Closure;
 import org.springframework.util.Assert;
@@ -32,11 +26,17 @@ import org.springframework.util.Assert;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.document.log.web.LogBlockBean;
+import ee.webmedia.alfresco.document.search.web.AbstractSearchBlockBean;
+import ee.webmedia.alfresco.document.search.web.BlockBeanProviderProvider;
+import ee.webmedia.alfresco.document.search.web.SearchBlockBean;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.volume.model.DeletedDocument;
@@ -48,7 +48,7 @@ import ee.webmedia.alfresco.volume.model.VolumeModel;
  * 
  * @author Ats Uiboupin
  */
-public class VolumeDetailsDialog extends BaseDialogBean {
+public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProviderProvider {
     private static final long serialVersionUID = 1L;
     public static final String BEAN_NAME = "VolumeDetailsDialog";
 
@@ -59,6 +59,14 @@ public class VolumeDetailsDialog extends BaseDialogBean {
     private List<DeletedDocument> deletedDocuments;
     private boolean newVolume;
     private transient UIPropertySheet propertySheet;
+
+    @Override
+    public void init(Map<String, String> parameters) {
+        super.init(parameters);
+        Node node = currentEntry.getNode();
+        BeanHelper.getSearchBlockBean().init(node);
+        BeanHelper.getAssocsBlockBean().init(node);
+    }
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
@@ -77,6 +85,10 @@ public class VolumeDetailsDialog extends BaseDialogBean {
     // START: jsf actions/accessors
     public void showDetails(ActionEvent event) {
         NodeRef volumeNodeRef = ActionUtil.getParam(event, PARAM_VOLUME_NODEREF, NodeRef.class);
+        showDetails(volumeNodeRef);
+    }
+
+    public void showDetails(NodeRef volumeNodeRef) {
         reload(volumeNodeRef);
         deletedDocuments = getVolumeService().getDeletedDocuments(volumeNodeRef);
     }
@@ -93,22 +105,52 @@ public class VolumeDetailsDialog extends BaseDialogBean {
         deletedDocuments = Collections.<DeletedDocument> emptyList();
     }
 
+    public void searchDocsAndCases(@SuppressWarnings("unused") ActionEvent event) {
+        SearchBlockBean searchBlockBean = BeanHelper.getSearchBlockBean();
+        searchBlockBean.init(currentEntry.getNode());
+        searchBlockBean.setExpanded(true);
+    }
+
+    public boolean isAssocsBlockExpanded() {
+        return true;
+    }
+
     public Node getCurrentNode() {
         return currentEntry.getNode();
+    }
+
+    public Node getNode() {
+        return getCurrentNode();
     }
 
     public Volume getCurrentVolume() {
         return currentEntry;
     }
 
+    public boolean isShowDocsAndCasesAssocs() {
+        return RepoUtil.isSaved(currentEntry.getNode());
+    }
+
+    public boolean isShowAddAssocsLink() {
+        return RepoUtil.isSaved(currentEntry.getNode());
+    }
+
+    public boolean isShowSearchBlock() {
+        return BeanHelper.getSearchBlockBean().isExpanded();
+    }
+
+    public boolean isInEditMode() {
+        return false;
+    }
+
     public void close(@SuppressWarnings("unused") ActionEvent event) {
-        Node currentVolumeNode = currentEntry.getNode();
-        if (currentVolumeNode instanceof TransientNode || currentVolumeNode == null) {
+        WmNode currentVolumeNode = currentEntry.getNode();
+        if (currentVolumeNode == null || currentVolumeNode.isUnsaved()) {
             return;
         }
         if (!isClosed()) {
             try {
-                getVolumeService().closeVolume(currentEntry);
+                getVolumeService().closeVolume(currentEntry.getNodeRef());
                 reload(currentEntry.getNode().getNodeRef());
             } catch (UnableToPerformException e) {
                 MessageUtil.addStatusMessage(e);
@@ -120,8 +162,8 @@ public class VolumeDetailsDialog extends BaseDialogBean {
     }
 
     public void open(@SuppressWarnings("unused") ActionEvent event) {
-        Node currentVolumeNode = currentEntry.getNode();
-        if (currentVolumeNode instanceof TransientNode || currentVolumeNode == null) {
+        WmNode currentVolumeNode = currentEntry.getNode();
+        if (currentVolumeNode == null || currentVolumeNode.isUnsaved()) {
             return;
         }
         if (!isOpened()) {
@@ -137,6 +179,24 @@ public class VolumeDetailsDialog extends BaseDialogBean {
         }
     }
 
+    public String delete() {
+        WmNode currentVolumeNode = currentEntry.getNode();
+        if (currentVolumeNode == null || currentVolumeNode.isUnsaved()) {
+            return null;
+        }
+        if (!isOpened()) {
+            try {
+                getVolumeService().delete(currentEntry);
+                MessageUtil.addInfoMessage("volume_delete_success");
+                return getDefaultCancelOutcome();
+            } catch (UnableToPerformException e) {
+                MessageUtil.addStatusMessage(e);
+                return null;
+            }
+        }
+        return null;
+    }
+
     private void clearPropSheet() {
         if (propertySheet != null) {
             propertySheet.getChildren().clear();
@@ -145,12 +205,13 @@ public class VolumeDetailsDialog extends BaseDialogBean {
 
     public void archive(@SuppressWarnings("unused") ActionEvent event) {
         Assert.notNull(currentEntry, "No current volume");
-        DateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
-        NodeRef archivedVolumeNodeRef = getArchivalsService().archiveVolume(currentEntry.getNode().getNodeRef(),
-                String.format(MessageUtil.getMessage("volume_archiving_note"), df.format(new Date())));
+        NodeRef archivedVolumeNodeRef = archiveVolume(currentEntry.getNode().getNodeRef());
         reload(archivedVolumeNodeRef);
-        ((MenuBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuBean.BEAN_NAME)).updateTree();
         MessageUtil.addInfoMessage("volume_archive_success");
+    }
+
+    public NodeRef archiveVolume(NodeRef volumeRef) {
+        return getArchivalsService().archiveVolumeOrCaseFile(volumeRef);
     }
 
     /**
@@ -196,8 +257,7 @@ public class VolumeDetailsDialog extends BaseDialogBean {
     public Boolean disableContainsCases() {
         return !isNew() && (DocListUnitStatus.CLOSED.equals(currentEntry.getStatus())
                 || DocListUnitStatus.DESTROYED.equals(currentEntry.getStatus())
-                || getCaseService().getCasesCountByVolume(currentEntry.getNode().getNodeRef()) > 0
-                || getDocumentService().getDocumentsCountByVolumeOrCase(currentEntry.getNode().getNodeRef()) > 0);
+                || getCaseService().getCasesCountByVolume(currentEntry.getNode().getNodeRef()) > 0);
     }
 
     public Boolean disableCasesCreatableByUser() {
@@ -248,6 +308,11 @@ public class VolumeDetailsDialog extends BaseDialogBean {
         });
     }
 
+    @Override
+    public AbstractSearchBlockBean getSearch() {
+        return BeanHelper.getSearchBlockBean();
+    }
+
     // END: jsf actions/accessors
 
     private void resetFields() {
@@ -275,5 +340,12 @@ public class VolumeDetailsDialog extends BaseDialogBean {
     public void setDeletedDocuments(List<DeletedDocument> deletedDocuments) {
         this.deletedDocuments = deletedDocuments;
     }
+
     // END: getters / setters
+
+    @Override
+    public LogBlockBean getLog() {
+        // not used
+        return null;
+    }
 }

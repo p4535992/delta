@@ -9,6 +9,12 @@
       <property name="nodeService" ref="NodeService" />
       <property name="dictionaryService" ref="DictionaryService" />
       <property name="baseService" ref="BaseService" />
+      <property name="workflowService" ref="WmWorkflowService" />
+      <property name="logService" ref="LogService" />
+      <property name="userService" ref="UserService" />
+      <property name="documentLogService" ref="DocumentLogService" />
+      <property name="privilegeService" ref="PrivilegeService" />
+      <property name="caseFileLogService" ref="CaseFileLogService" />
    </bean>
 
    <bean id="DocumentAssociationsService" class="org.springframework.aop.framework.ProxyFactoryBean">

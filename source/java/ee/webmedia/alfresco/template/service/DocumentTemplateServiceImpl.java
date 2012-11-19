@@ -1,5 +1,8 @@
 package ee.webmedia.alfresco.template.service;
 
+import static org.apache.commons.io.FilenameUtils.getExtension;
+import static org.apache.commons.lang.StringUtils.equalsIgnoreCase;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
@@ -42,7 +45,9 @@ import org.apache.commons.lang.time.FastDateFormat;
 import org.springframework.util.Assert;
 import org.springframework.web.context.ServletContextAware;
 
+import ee.webmedia.alfresco.archivals.model.ActivityFileType;
 import ee.webmedia.alfresco.base.BaseObject;
+import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
@@ -91,6 +96,7 @@ import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
+import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 /**
  * @author Kaarel Jõgeva
@@ -122,6 +128,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     private DocumentAdminService documentAdminService;
     private VersionsService versionsService;
     private DocumentLogService documentLogService;
+    private WorkflowService workflowService;
 
     private static BeanPropertyMapper<DocumentTemplate> templateBeanPropertyMapper;
     static {
@@ -130,17 +137,30 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
     @Override
     public void updateGeneratedFiles(NodeRef docRef, boolean isRegistering) {
-        if (!msoService.isAvailable()) {
-            // Temporary safeguard until OO document templates & formulas are properly implemented
+        boolean msoAvailable = msoService.isAvailable();
+        boolean ooAvailable = openOfficeService.isAvailable();
+
+        // Shortcuts
+        if (!msoAvailable && !ooAvailable || !isRegistering && !Boolean.TRUE.equals(nodeService.getProperty(docRef, DocumentCommonModel.Props.UPDATE_METADATA_IN_FILES))) {
             return;
         }
+
         List<FileInfo> files = fileFolderService.listFiles(docRef);
         log.debug("Found " + files.size() + " files under document " + docRef);
         if (files.isEmpty()) {
             return;
         }
         for (FileInfo file : files) {
-            if (StringUtils.isNotBlank((String) file.getProperties().get(FileModel.Props.GENERATED_FROM_TEMPLATE))) {
+            // If generator service isn't available, then skip this file
+            String generationType = (String) file.getProperties().get(FileModel.Props.GENERATION_TYPE);
+            if (GeneratedFileType.WORD_TEMPLATE.name().equals(generationType) && !msoAvailable || !GeneratedFileType.OPENOFFICE_TEMPLATE.name().equals(generationType)
+                    && !ooAvailable) {
+                return;
+            }
+
+            if (StringUtils.isNotBlank((String) file.getProperties().get(FileModel.Props.GENERATED_FROM_TEMPLATE))
+                    || Boolean.TRUE.equals(file.getProperties().get(FileModel.Props.UPDATE_METADATA_IN_FILES))) {
+
                 replaceFormulas(docRef, file.getNodeRef(), file.getNodeRef(), file.getName(), isRegistering);
             }
         }
@@ -167,7 +187,9 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     public DocumentTemplate getDocumentsTemplate(NodeRef document) {
         String documentTypeId = (String) nodeService.getProperty(document, DocumentAdminModel.Props.OBJECT_TYPE_ID);
         // it's OK to pick first one
-        FileInfo word2003Template = null;
+        FileInfo word2003OrOOTemplate = null;
+        boolean msoAvailable = msoService.isAvailable();
+        boolean ooAvailable = openOfficeService.isAvailable();
         for (FileInfo fi : fileFolderService.listFiles(getRoot())) {
             if (!nodeService.hasAspect(fi.getNodeRef(), DocumentTemplateModel.Aspects.TEMPLATE_DOCUMENT)) {
                 continue;
@@ -177,17 +199,19 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                 continue;
             }
 
-            // If current file is 2007/2010 template, return the first one fount
-            if (StringUtils.endsWithIgnoreCase(fi.getName(), ".dotx")) {
+            // If current file is 2007/2010 template, return the first one found
+            if (StringUtils.endsWithIgnoreCase(fi.getName(), ".dotx") && msoAvailable) {
                 return setupDocumentTemplate(fi);
             }
 
-            // Otherwise mark it as a candidate if only 2003 binary template is present
-            word2003Template = fi;
+            // Otherwise mark it as a candidate if only 2003 binary or OpenOffice template is present
+            word2003OrOOTemplate = fi;
         }
-
-        if (word2003Template != null) {
-            return setupDocumentTemplate(word2003Template);
+        if (word2003OrOOTemplate != null) {
+            String ext = getExtension(word2003OrOOTemplate.getName());
+            if (equalsIgnoreCase("ott", ext) && ooAvailable || equalsIgnoreCase("dot", ext) && msoAvailable) {
+                return setupDocumentTemplate(word2003OrOOTemplate);
+            }
         }
 
         return null;
@@ -204,7 +228,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                 continue;
             }
             String fileNameExtension = FilenameUtils.getExtension((String) fi.getProperties().get(DocumentTemplateModel.Prop.NAME));
-            Assert.isTrue(StringUtils.equals("dotx", fileNameExtension) || StringUtils.equals("dot", fileNameExtension));
+            Assert.isTrue(StringUtils.equals("dotx", fileNameExtension) || StringUtils.equals("dot", fileNameExtension) || StringUtils.equals("ott", fileNameExtension));
             return true;
         }
         return false;
@@ -224,13 +248,31 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     }
 
     @Override
+    public Map<String, String> getDefaultFieldValues(NodeRef fileNodeRef) throws Exception {
+        Assert.notNull(fileNodeRef, "NodeRef is mandatory");
+        if (!openOfficeService.isAvailable()) {
+            throw new UnableToPerformException("template_add_oo_service_unavailable");
+        }
+        NodeRef templateNodeRef = null;
+        if (nodeService.hasAspect(fileNodeRef, DocumentTemplateModel.Aspects.TEMPLATE_DOCUMENT)
+                || nodeService.hasAspect(fileNodeRef, DocumentTemplateModel.Aspects.TEMPLATE_ARCHIVAL_REPORT)) {
+            templateNodeRef = fileNodeRef;
+        } else {
+            String genTemplName = (String) nodeService.getProperty(fileNodeRef, FileModel.Props.GENERATED_FROM_TEMPLATE);
+            templateNodeRef = getTemplateByName(genTemplName).getNodeRef();
+        }
+        return openOfficeService.getUsedFormulasAndValues(fileFolderService.getReader(templateNodeRef));
+    }
+
+    @Override
     public String populateTemplate(NodeRef documentNodeRef, boolean overWritingGranted) throws FileNotFoundException {
-        if (!msoService.isAvailable()) {
-            // Temporary safeguard until OO document templates & formulas are properly implemented
-            throw new UnableToPerformException("document_errorMsg_template_processsing_failed_mso_missing");
+        log.debug("Creating a file from template for document: " + documentNodeRef);
+        boolean msoAvailable = msoService.isAvailable();
+        boolean ooAvailable = openOfficeService.isAvailable();
+        if (!msoAvailable && !ooAvailable) {
+            throw new UnableToPerformException("document_errorMsg_template_processsing_failed_service_missing");
         }
 
-        log.debug("Creating a file from template for document: " + documentNodeRef);
         final Map<QName, Serializable> docProp = nodeService.getProperties(documentNodeRef);
 
         String templName = "";
@@ -250,7 +292,13 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         if (nodeRef == null) {
             throw new UnableToPerformException("document_errorMsg_template_not_found");
         }
+
         String templateFilename = (String) nodeService.getProperty(nodeRef, ContentModel.PROP_NAME);
+        boolean ooTemplate = "ott".equals(FilenameUtils.getExtension(templateFilename));
+        if (ooTemplate && !ooAvailable || !ooTemplate && !msoAvailable) { // if it isn't OO template it must be Word template
+            throw new UnableToPerformException("document_errorMsg_template_not_found_for_service");
+        }
+
         log.debug("Using template: " + templateFilename);
 
         NodeRef existingGeneratedFile = null;
@@ -270,14 +318,16 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                 existingGeneratedFile = fileRef;
                 // Create new version for the file. Aspect must be added, so do this now (no point of checking if file already has it).
                 versionsService.addVersionLockableAspect(existingGeneratedFile);
+                versionsService.setVersionLockableAspect(existingGeneratedFile, false);
                 versionsService.updateVersion(fileRef, displayName, false);
+                versionsService.updateVersionModifiedAspect(existingGeneratedFile);
                 break; // Assume there is only one file.
             }
         }
 
         if (existingGeneratedFile == null) { // Create the container for template content
             // XXX Alar: target file mimeType comes from MSO service, so it would be better to set file extension based on that mimeType
-            String extension = mimetypeService.getExtension(MimetypeMap.MIMETYPE_WORD);
+            String extension = mimetypeService.getExtension(templateFilename.endsWith(".ott") ? MimetypeMap.MIMETYPE_OPENDOCUMENT_TEXT : MimetypeMap.MIMETYPE_WORD);
             if (StringUtils.endsWithIgnoreCase(templateFilename, ".dotx")) {
                 extension += "x"; // Well, ain't this nice! :) (Filename must end with docx if 2003/2007 template is used)
             }
@@ -293,11 +343,12 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             Map<QName, Serializable> templateProps = new HashMap<QName, Serializable>(3);
             // Mark down the template that was used to generate the file
             templateProps.put(FileModel.Props.GENERATED_FROM_TEMPLATE, templateFilename);
-            templateProps.put(FileModel.Props.GENERATION_TYPE, GeneratedFileType.WORD_TEMPLATE.name());
+            templateProps.put(FileModel.Props.GENERATION_TYPE, (ooTemplate ? GeneratedFileType.OPENOFFICE_TEMPLATE.name() : GeneratedFileType.WORD_TEMPLATE.name()));
+            templateProps.put(FileModel.Props.CONVERT_TO_PDF_IF_SIGNED, Boolean.TRUE);
             // Set the display name so we can process it during document registration
             templateProps.put(FileModel.Props.DISPLAY_NAME, displayName);
             nodeService.addProperties(existingGeneratedFile, templateProps);
-
+            versionsService.addVersionModifiedAspect(existingGeneratedFile);
             documentLogService.addDocumentLog(documentNodeRef, MessageUtil.getMessage("applog_doc_file_generated", displayName));
             log.debug("Created new node: " + existingGeneratedFile + "\nwith name: " + name + "; displayName: " + displayName);
         }
@@ -307,22 +358,47 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         return displayName;
     }
 
+    @Override
+    public void populateVolumeArchiveTemplate(NodeRef parentRef, List<NodeRef> volumeRefs, NodeRef templateRef) {
+        if (!msoService.isAvailable()) {
+            throw new UnableToPerformException("document_errorMsg_template_processsing_failed_service_missing");
+        }
+        // it is assumed that template name is fixed by application and thus it is not needed to check not allowed characters, length etc in filename
+        String templateFilename = (String) nodeService.getProperty(templateRef, ContentModel.PROP_NAME);
+        String filenameWithoutExtension = FilenameUtils.removeExtension(templateFilename);
+        templateFilename = filenameWithoutExtension + " " + FastDateFormat.getInstance("yyyyMMdd").format(new Date()) + ".docx";
+        NodeRef generatedFile = fileFolderService.create(parentRef, templateFilename, ContentModel.TYPE_CONTENT).getNodeRef();
+        replaceFormulas(volumeRefs, templateRef, generatedFile, templateFilename, true);
+        nodeService.setProperty(generatedFile, FileModel.Props.ACTIVITY_FILE_TYPE, ActivityFileType.GENERATED_DOCX.name());
+    }
+
     private void replaceFormulas(NodeRef document, NodeRef sourceFile, NodeRef destinationFile, String sourceFileName) {
         replaceFormulas(document, sourceFile, destinationFile, sourceFileName, false);
     }
 
-    private void replaceFormulas(NodeRef document, NodeRef sourceFile, NodeRef destinationFile, String sourceFileName, boolean finalize) {
+    @SuppressWarnings("unchecked")
+    private void replaceFormulas(Object documentOrVolumeRefList, NodeRef sourceFile, NodeRef destinationFile, String sourceFileName, boolean finalize) {
+        Assert.isTrue(documentOrVolumeRefList instanceof NodeRef || documentOrVolumeRefList instanceof List);
         // Basically the same check is performed in MsoService#isFormulasReplaceable, but with MIME types
-        if (!StringUtils.endsWithIgnoreCase(sourceFileName, ".doc") && !StringUtils.endsWithIgnoreCase(sourceFileName, ".docx")
-                && !StringUtils.endsWithIgnoreCase(sourceFileName, ".dot") && !StringUtils.endsWithIgnoreCase(sourceFileName, ".dotx")) {
+        boolean msoFile = StringUtils.endsWithIgnoreCase(sourceFileName, ".doc") || StringUtils.endsWithIgnoreCase(sourceFileName, ".docx")
+                || StringUtils.endsWithIgnoreCase(sourceFileName, ".dot") || StringUtils.endsWithIgnoreCase(sourceFileName, ".dotx");
+        boolean ooFile = StringUtils.endsWithIgnoreCase(sourceFileName, ".odt") || StringUtils.endsWithIgnoreCase(sourceFileName, ".ott");
+        if (!msoFile && !ooFile) {
             throw new UnableToPerformException(MessageSeverity.ERROR, "template_replace_formulas_invalid_file_extension");
         }
 
-        Map<String, String> formulas = getDocumentFormulas(document);
+        NodeRef document = null;
+        Map<String, String> formulas = null;
+        if (documentOrVolumeRefList instanceof NodeRef) {
+            document = (NodeRef) documentOrVolumeRefList;
+            formulas = getDocumentFormulas(document);
+        } else {
+            formulas = getArchiveFormulas((List<NodeRef>) documentOrVolumeRefList);
+        }
         if (log.isDebugEnabled()) {
             log.debug("Produced formulas " + WmNode.toString(formulas.entrySet()));
         }
-        if (msoService.isAvailable()) {
+        if (msoFile && msoService.isAvailable()) {
             if (finalize) {
                 formulas.put("FINALIZE", "1");
             }
@@ -339,12 +415,13 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             } catch (Exception e) {
                 throw new UnableToPerformException(MessageSeverity.ERROR, "template_replace_formulas_failed", e);
             }
-        } else {
-            replaceFormulasWithOpenOffice(document, sourceFile, destinationFile, sourceFileName);
+        } else if (ooFile && openOfficeService.isAvailable()) {
+            // generating document for volume list is not implemented for OpenOffice
+            replaceFormulasWithOpenOffice(document, sourceFile, destinationFile, sourceFileName, finalize);
         }
     }
 
-    private void replaceFormulasWithOpenOffice(NodeRef document, NodeRef sourceFile, NodeRef destinationFile, String sourceFileName) {
+    private void replaceFormulasWithOpenOffice(NodeRef document, NodeRef sourceFile, NodeRef destinationFile, String sourceFileName, boolean finalize) {
         Map<String, String> formulas = getDocumentFormulas(document);
         if (log.isDebugEnabled()) {
             log.debug("Produced formulas " + WmNode.toString(formulas.entrySet()));
@@ -354,10 +431,10 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         do {
             ContentReader reader = fileFolderService.getReader(sourceFile);
             ContentWriter writer = fileFolderService.getWriter(destinationFile);
-            writer.setMimetype(MimetypeMap.MIMETYPE_WORD);
+            writer.setMimetype(MimetypeMap.MIMETYPE_OPENDOCUMENT_TEXT);
 
             try {
-                openOfficeService.replace(reader, writer, formulas);
+                openOfficeService.replace(reader, writer, formulas, finalize);
                 retry = 0;
             } catch (OpenOfficeService.OpenOfficeReturnedNullInterfaceException e) {
                 retry--;
@@ -385,7 +462,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                         .append(" (")
                         .append(I18NUtil.getMessage("notification_dispostition_date"))
                         .append(": ")
-                        .append(vol.getDispositionDate() == null ? "" : dateFormat.format(vol.getDispositionDate()))
+                        .append(vol.getRetainUntilDate() == null ? "" : dateFormat.format(vol.getRetainUntilDate()))
                         .append(")")
                         .append("<br>\n");
             }
@@ -543,8 +620,57 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         return result.toString();
     }
 
-    private Map<String, String> getDocumentFormulas(NodeRef objectRef) {
+    public Map<String, String> getArchiveFormulas(List<NodeRef> volumeRefs) {
         Map<String, String> formulas = new LinkedHashMap<String, String>();
+        if (volumeRefs == null) {
+            return formulas;
+        }
+
+        String currentUser = userService.getCurrentUserName();
+        formulas.put("activityUserName", userService.getUserFullName(currentUser));
+        formulas.put("activityUserId", currentUser);
+        Date date = new Date();
+        formulas.put("activityDate", dateFormat.format(date));
+        formulas.put("activityDateTime", dateTimeFormat.format(date));
+        formulas.put("volumesList", generateVolumeListOutput(volumeRefs));
+
+        return formulas;
+    }
+
+    private String generateVolumeListOutput(List<NodeRef> volumeRefs) {
+        String sep = "\t";
+        StringBuffer sb = new StringBuffer(MessageUtil.getMessage("archivals_volume_word_file_heading_nr") + sep
+                + MessageUtil.getMessage("archivals_volume_word_file_heading_mark") + sep
+                + MessageUtil.getMessage("archivals_volume_word_file_heading_title") + sep
+                + MessageUtil.getMessage("archivals_volume_word_file_heading_valid_from") + sep
+                + MessageUtil.getMessage("archivals_volume_word_file_heading_valid_to") + sep
+                + MessageUtil.getMessage("archivals_volume_word_file_heading_owner_name") + "\r\n");
+        if (volumeRefs != null) {
+            int volumeCount = 0;
+            for (NodeRef volumeRef : volumeRefs) {
+                Map<QName, Serializable> props = nodeService.getProperties(volumeRef);
+                Date validFrom = (Date) props.get(VolumeModel.Props.VALID_FROM);
+                Date validTo = (Date) props.get(VolumeModel.Props.VALID_TO);
+                String ownerName = (String) props.get(DocumentDynamicModel.Props.OWNER_NAME);
+                sb.append(volumeCount + sep
+                        + props.get(VolumeModel.Props.MARK) + sep
+                        + props.get(VolumeModel.Props.TITLE) + sep
+                        + (validFrom != null ? dateFormat.format(validFrom) : "") + sep
+                        + (validTo != null ? dateFormat.format(validTo) : "") + sep
+                        + (StringUtils.isBlank(ownerName) ? "" : ownerName) + "\r\n");
+                volumeCount++;
+            }
+        }
+        return sb.toString();
+    }
+
+    @Override
+    public Map<String, String> getDocumentFormulas(NodeRef objectRef) {
+        Map<String, String> formulas = new LinkedHashMap<String, String>();
+        if (objectRef == null) {
+            return formulas;
+        }
+
         WmNode documentNode = generalService.fetchObjectNode(objectRef, DocumentCommonModel.Types.DOCUMENT);
         Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions = documentConfigService.getPropertyDefinitions(documentNode);
 
@@ -603,24 +729,38 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                     formulas.put(fieldId2, keywords);
                     continue;
                 } else if (SystematicFieldGroupNames.SUBSTITUTE.equals(name)) {
-                    if (formulas.containsKey("vacationOrderSubstitutionData")) {
+                    if (formulas.containsKey("$vacationOrderSubstitutionData")) {
                         continue;
                     }
-                    formulas.put("vacationOrderSubstitutionData", getVacationOrderSubstitutionData(props));
+                    formulas.put("$vacationOrderSubstitutionData", getVacationOrderSubstitutionData(props));
                 }
             }
 
             // Convert special cases
+            boolean isList = propValue instanceof List;
             if (FieldType.DATE == fieldType) {
-                if (propValue instanceof List && ((List<?>) propValue).size() == 1) {
+                if (isList && ((List<?>) propValue).size() == 1) {
                     propValue = (Serializable) ((List<?>) propValue).get(0);
+                    isList = false;
                 }
 
                 if (propValue != null) {
-                    formulas.put(fieldId, dateFormat.format(propValue));
+                    String date = null;
+                    if (isList) {
+                        @SuppressWarnings("unchecked")
+                        List<Date> dateList = (List<Date>) propValue;
+                        List<String> dates = new ArrayList<String>();
+                        for (Date d : dateList) {
+                            dates.add(dateFormat.format(d));
+                        }
+                        date = StringUtils.join(dates, "; ");
+                    } else {
+                        date = dateFormat.format(propValue);
+                    }
+                    formulas.put(fieldId, date);
                 }
                 continue;
-            } else if (FieldType.LISTBOX == fieldType && propValue instanceof List) {
+            } else if (FieldType.LISTBOX == fieldType && isList) {
                 @SuppressWarnings("unchecked")
                 List<Serializable> listPropValue = (List<Serializable>) propValue;
                 formulas.put(fieldId, StringUtils.join(listPropValue, "; "));
@@ -639,7 +779,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             formulas.put(fieldId, propValue.toString());
         }
 
-        formulas.put("docType", documentAdminService.getDocumentTypeName(documentNode));
+        formulas.put("$docType", documentAdminService.getDocumentTypeName(documentNode));
         getDocumentListStructureFormulae(objectRef, formulas);
         getContractPartyFormulae(objectRef, formulas);
 
@@ -756,6 +896,12 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             formulas.put("type", MessageUtil.getMessage("workflow_" + objectType.getLocalName()));
         }
 
+        if (dictionaryService.isSubClass(objectType, WorkflowCommonModel.Types.COMPOUND_WORKFLOW)) {
+            formulas.put("url", getCompoundWorkflowUrl(objectRef));
+        } else if (dictionaryService.isSubClass(objectType, CaseFileModel.Types.CASE_FILE)) {
+            formulas.put("url", getCaseFileUrl(objectRef));
+        }
+
         if (objectType.equals(ForumModel.TYPE_FORUM)) {
             Map<QName, Serializable> properties = nodeService.getProperties(objectRef);
             formulas.put("creatorName", userService.getUserFullName((String) properties.get(ContentModel.PROP_CREATOR)));
@@ -783,22 +929,49 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     private QName getDocumentListStructureFormulae(NodeRef objectRef, Map<String, String> formulas) {
         QName objectType = BeanHelper.getWorkflowService().getNodeRefType(objectRef);
         if (dictionaryService.isSubClass(objectType, DocumentCommonModel.Types.DOCUMENT)) {
-            formulas.put("functionTitle", getAncestorProperty(objectRef, FunctionsModel.Types.FUNCTION, FunctionsModel.Props.TITLE));
-            formulas.put("functionMark", getAncestorProperty(objectRef, FunctionsModel.Types.FUNCTION, FunctionsModel.Props.MARK));
-            formulas.put("seriesTitle", getAncestorProperty(objectRef, SeriesModel.Types.SERIES, SeriesModel.Props.TITLE));
-            formulas.put("seriesIdentifier", getAncestorProperty(objectRef, SeriesModel.Types.SERIES, SeriesModel.Props.SERIES_IDENTIFIER));
-            formulas.put("volumeTitle", getAncestorProperty(objectRef, VolumeModel.Types.VOLUME, VolumeModel.Props.TITLE));
-            formulas.put("volumeMark", getAncestorProperty(objectRef, VolumeModel.Types.VOLUME, VolumeModel.Props.MARK));
-            formulas.put("caseTitle", getAncestorProperty(objectRef, CaseModel.Types.CASE, CaseModel.Props.TITLE));
-            String docUrl = getDocumentUrl(objectRef);
-            formulas.put("docUrl", docUrl);
+            formulas.put("$functionTitle", getAncestorProperty(objectRef, FunctionsModel.Types.FUNCTION, FunctionsModel.Props.TITLE));
+            formulas.put("$functionMark", getAncestorProperty(objectRef, FunctionsModel.Types.FUNCTION, FunctionsModel.Props.MARK));
+            formulas.put("$seriesTitle", getAncestorProperty(objectRef, SeriesModel.Types.SERIES, SeriesModel.Props.TITLE));
+            formulas.put("$seriesIdentifier", getAncestorProperty(objectRef, SeriesModel.Types.SERIES, SeriesModel.Props.SERIES_IDENTIFIER));
+            formulas.put("$caseTitle", getAncestorProperty(objectRef, CaseModel.Types.CASE, CaseModel.Props.TITLE));
+            formulas.put("$docUrl", getDocumentUrl(objectRef));
+
+            String volTitle = getAncestorProperty(objectRef, VolumeModel.Types.VOLUME, VolumeModel.Props.TITLE);
+            formulas.put("$volumeTitle", StringUtils.isNotBlank(volTitle) ? volTitle : getAncestorProperty(objectRef, CaseFileModel.Types.CASE_FILE, VolumeModel.Props.TITLE));
+
+            String volMark = getAncestorProperty(objectRef, VolumeModel.Types.VOLUME, VolumeModel.Props.MARK);
+            formulas.put("$volumeMark", StringUtils.isNotBlank(volMark) ? volMark : getAncestorProperty(objectRef, CaseFileModel.Types.CASE_FILE, VolumeModel.Props.MARK));
         }
+
         return objectType;
     }
 
     @Override
     public String getDocumentUrl(NodeRef document) {
         return getDocumentServerUrlPrefix() + document.getId();
+    }
+
+    @Override
+    public String getCompoundWorkflowUrl(NodeRef compoundWorkflowRef) {
+        if (compoundWorkflowRef != null && workflowService.isIndependentWorkflow(compoundWorkflowRef)) {
+            return getCompoundWorkflowServerUrlPrefix() + compoundWorkflowRef.getId();
+        }
+        return null;
+    }
+
+    @Override
+    public String getCaseFileUrl(NodeRef caseFileRef) {
+        return getServerUrl() + "/n/" + ExternalAccessPhaseListener.OUTCOME_CASE_FILE + "/" + (caseFileRef != null ? caseFileRef.getId() : "");
+    }
+
+    @Override
+    public String getVolumeUrl(NodeRef volumeRef) {
+        return getServerUrl() + "/n/" + ExternalAccessPhaseListener.OUTCOME_VOLUME + "/" + volumeRef.getId();
+    }
+
+    @Override
+    public String getCompoundWorkflowServerUrlPrefix() {
+        return getServerUrl() + "/n/" + ExternalAccessPhaseListener.OUTCOME_COMPOUND_WORKFLOW_NODEREF + "/";
     }
 
     @Override
@@ -904,6 +1077,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         return (parent != null) ? nodeService.getProperty(parent.getNodeRef(), property).toString() : "";
     }
 
+    @Override
     public DocumentTemplate getTemplateByName(String name) throws FileNotFoundException {
         NodeRef nodeRef = fileFolderService.searchSimple(getRoot(), name);
         if (nodeRef == null) {
@@ -988,15 +1162,32 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
     @Override
     public NodeRef getNotificationTemplateByName(String templateName) {
+        QName templateAspect = DocumentTemplateModel.Aspects.TEMPLATE_NOTIFICATION;
+        return getTemplateByName(templateName, templateAspect);
+    }
+
+    @Override
+    public NodeRef getEmailTemplateByName(String templateName) {
+        QName templateAspect = DocumentTemplateModel.Aspects.TEMPLATE_EMAIL;
+        return getTemplateByName(templateName, templateAspect);
+    }
+
+    @Override
+    public NodeRef getArchivalReportTemplateByName(String templateName) {
+        QName templateAspect = DocumentTemplateModel.Aspects.TEMPLATE_ARCHIVAL_REPORT;
+        return getTemplateByName(templateName, templateAspect);
+    }
+
+    private NodeRef getTemplateByName(String templateName, QName templateAspect) {
         if (StringUtils.isNotEmpty(templateName)) {
             NodeRef template = fileFolderService.searchSimple(getRoot(), templateName);
-            if (template != null && nodeService.hasAspect(template, DocumentTemplateModel.Aspects.TEMPLATE_NOTIFICATION)) {
+            if (template != null && nodeService.hasAspect(template, templateAspect)) {
                 return template;
             }
             if (StringUtils.endsWith(templateName, ".html")) {
                 // try alternative ".htm" that is default when adding system template through GUI
                 templateName = templateName.substring(0, templateName.length() - 1);
-                return getNotificationTemplateByName(templateName);
+                return getTemplateByName(templateName, templateAspect);
             }
         }
         return null;
@@ -1081,6 +1272,10 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
     public void setDocumentLogService(DocumentLogService documentLogService) {
         this.documentLogService = documentLogService;
+    }
+
+    public void setWorkflowService(WorkflowService workflowService) {
+        this.workflowService = workflowService;
     }
 
     // END: getters / setters

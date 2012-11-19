@@ -9,19 +9,12 @@
 <%@ page import="ee.webmedia.alfresco.document.web.BaseDocumentListDialog" %>
 <%@ page import="ee.webmedia.alfresco.utils.MessageUtil" %>
 
-<f:verbatim>
-<script type="text/javascript">
+<%-- NB! Use DialogManager.bean references, because this JSP is included from other dialog JSPs --%>
 
-$jQ(document).ready(function(){
-   $jQ(".selectAllHeader").change(function() {
-      $jQ(".headerSelectable").prop('checked',$jQ(this).prop('checked'));
-   });
-});
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/select-all-header-function.jsp" />
 
-</script>
-</f:verbatim>
 <%-- This JSP is used from multiple dialogs, that's why DialogManager.bean reference is used --%>
-<a:booleanEvaluator value="#{DialogManager.bean.infoMessageVisible}">
+<a:booleanEvaluator id="document-list-info-message-evaluator" value="#{DialogManager.bean.infoMessageVisible}">
    <a:panel id="info-message" styleClass="message">
       <h:outputText value="#{DialogManager.bean.infoMessage}" />
    </a:panel>
@@ -29,7 +22,8 @@ $jQ(document).ready(function(){
 
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/limited-message-panel.jsp" />
 
-<a:booleanEvaluator id="confirmMoveAssociatedDocumentsEvaluator" value="#{DocumentListDialog.confirmMoveAssociatedDocuments}">
+<a:booleanEvaluator id="caseOrDocumentListDialogEvaluator" value="#{DialogManager.bean == DocumentListDialog || DialogManager.bean == CaseDocumentListDialog}">
+<a:booleanEvaluator id="confirmMoveAssociatedDocumentsEvaluator" value="#{DialogManager.bean.confirmMoveAssociatedDocuments}">
    <f:verbatim>
    <script type="text/javascript">
       $jQ(document).ready(function () {
@@ -42,11 +36,11 @@ $jQ(document).ready(function(){
       });
    </script>
    </f:verbatim>
-   <a:actionLink id="documents-after-confirmation-accepted-link" value="confirmationAcceptedLink" actionListener="#{DocumentListDialog.massChangeDocLocationConfirmed}" styleClass="hidden" />
-   <a:actionLink id="documents-after-confirmation-rejected-link" value="confirmationRejectedLink" actionListener="#{DocumentListDialog.resetConfirmation}" styleClass="hidden" />   
+   <a:actionLink id="documents-after-confirmation-accepted-link" value="confirmationAcceptedLink" actionListener="#{DialogManager.bean.massChangeDocLocationConfirmed}" styleClass="hidden" />
+   <a:actionLink id="documents-after-confirmation-rejected-link" value="confirmationRejectedLink" actionListener="#{DialogManager.bean.resetConfirmation}" styleClass="hidden" />   
 </a:booleanEvaluator>
 
-<a:booleanEvaluator id="showDocumentsLocationPopupEvaluator" value="#{DocumentListDialog.showDocumentsLocationPopup}">
+<a:booleanEvaluator id="showDocumentsLocationPopupEvaluator" value="#{DialogManager.bean.showDocumentsLocationPopup}">
    <f:verbatim>
       <script type="text/javascript">
       $jQ(document).ready(function () {
@@ -56,7 +50,9 @@ $jQ(document).ready(function(){
       </script>
    </f:verbatim>
 </a:booleanEvaluator>
+</a:booleanEvaluator>
 
+<h:panelGroup binding="#{DialogManager.bean.panel}" />
 
 <a:panel id="document-panel" styleClass="panel-100 with-pager" label="#{DialogManager.bean.listTitle}" progressive="true">
 
@@ -65,7 +61,7 @@ $jQ(document).ready(function(){
       width="100%" value="#{DialogManager.bean.documents}" var="r" binding="#{DialogManager.bean.richList}" refreshOnBind="true" initialSortColumn="<%=((BaseDocumentListDialog)Application.getDialogManager().getBean()).getInitialSortColumn() %>" >
       
       <%-- checkbox --%>
-      <a:column id="col0" primary="true" styleClass="#{r.cssStyleClass}" rendered="#{UserService.documentManager && DialogManager.bean.showCheckboxes}" >
+      <a:column id="col-checkbox" primary="true" styleClass="#{r.cssStyleClass}" rendered="#{UserService.documentManager && DialogManager.bean.showCheckboxes}" >
          <f:facet name="header">
             <h:selectBooleanCheckbox id="col0-header" value="false" styleClass="selectAllHeader"/>
          </f:facet>
@@ -76,9 +72,8 @@ $jQ(document).ready(function(){
       </jsp:include>
 
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
-      <a:dataPager id="pager1" styleClass="pager" />
+      <a:dataPager id="pager2" styleClass="pager" />
    </a:richList>
-   <h:panelGroup binding="#{DialogManager.bean.panel}" />
 </a:panel>
 
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp" />

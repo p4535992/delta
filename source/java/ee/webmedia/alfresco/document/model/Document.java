@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.faces.context.FacesContext;
+import javax.faces.event.ActionEvent;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -21,6 +22,7 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.cases.model.Case;
+import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.CssStylable;
@@ -33,20 +35,30 @@ import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.series.model.Series;
+import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 
-public class Document extends Node implements Comparable<Document>, CssStylable, CreatedAndRegistered {
+public class Document extends Node implements Comparable<Document>, CssStylable, CreatedAndRegistered, DocumentListRowLink {
+    public static final String GENERIC_DOCUMENT_STYLECLASS = "genericDocument";
+
+    private static final QName MAIN_DOCUMENT_PROP = RepoUtil.createTransientProp("mainDocument");
+    private static final QName DOCUMENT_TO_SIGN_PROP = RepoUtil.createTransientProp("documentToSign");
+
     private static final long serialVersionUID = 1L;
 
     public static final int SHORT_PROP_LENGTH = 20;
     public static FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
+    public static FastDateFormat dateTimeFormat = FastDateFormat.getInstance("dd.MM.yyyy HH:mm");
 
     private List<File> files; // load lazily
     private String workflowStatus;
     private Map<QName, Serializable> searchableProperties;
     private boolean initialized;
+    // true if link to document details should be displayed in document list.
+    // At present used only in compound worklfow associated documents list.
+    private boolean showLink;
 
     /** To be only accessed using {@link #getDocumentType()} */
     private transient DocumentTypeService documentTypeService;
@@ -109,7 +121,7 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
                 || SystematicDocumentType.OUTGOING_LETTER.isSameType(cssStyleClass)) {
             return cssStyleClass;
         }
-        return "genericDocument";
+        return GENERIC_DOCUMENT_STYLECLASS;
     }
 
     // Basic properties that are used in document-list-dialog.jsp
@@ -118,13 +130,28 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
         return (String) getNode().getProperties().get(DocumentCommonModel.Props.REG_NUMBER);
     }
 
+    public String getAkString() {
+        if (AccessRestriction.AK.getValueName().equalsIgnoreCase(getAccessRestriction())) {
+            return "[AK] ";
+        }
+        return "";
+    }
+
     @Override
     public Date getRegDateTime() {
         return (Date) getNode().getProperties().get(DocumentCommonModel.Props.REG_DATE_TIME);
     }
 
     public String getRegDateTimeStr() {
-        return getRegDateTime() != null ? dateFormat.format(getRegDateTime()) : "";
+        return formatDate(getRegDateTime());
+    }
+
+    public String getEmailDateTimeStr() {
+        return formatDate((Date) getNode().getProperties().get(DocumentCommonModel.Props.EMAIL_DATE_TIME));
+    }
+
+    private String formatDate(Date date) {
+        return date != null ? dateFormat.format(date) : "";
     }
 
     public String getSender() {
@@ -134,7 +161,14 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
         } else if (SystematicDocumentType.INVOICE.isSameType(docDynType)) {
             return (String) getProperties().get(DocumentSpecificModel.Props.SELLER_PARTY_NAME);
         }
-        return (String) getProperties().get(DocumentCommonModel.Props.OWNER_NAME);
+        return TextUtil.join(
+                getProperties()
+                , DocumentSpecificModel.Props.SECOND_PARTY_NAME
+                , DocumentSpecificModel.Props.THIRD_PARTY_NAME
+                , DocumentSpecificModel.Props.PARTY_NAME
+                , DocumentCommonModel.Props.RECIPIENT_NAME
+                , DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME
+                );
     }
 
     public String getSenderNameOrEmail() {
@@ -149,6 +183,16 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     public String getRecipients() {
         lazyInit();
         return TextUtil.join(getProperties(), DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME);
+    }
+
+    public String getSenderOrRecipient() {
+        String docDynType = objectTypeId();
+        if (SystematicDocumentType.INCOMING_LETTER.isSameType(docDynType)) {
+            return (String) getProperties().get(DocumentSpecificModel.Props.SENDER_DETAILS_NAME);
+        } else if (SystematicDocumentType.INVOICE.isSameType(docDynType)) {
+            return (String) getProperties().get(DocumentSpecificModel.Props.SELLER_PARTY_NAME);
+        }
+        return getAllRecipients();
     }
 
     public String getAllRecipients() {
@@ -242,12 +286,9 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     }
 
     public String getVolumeLabel() {
-        NodeRef nodeRef = (NodeRef) getNode().getProperties().get(DocumentCommonModel.Props.VOLUME);
-        if (nodeRef != null) {
-            Volume volume = BeanHelper.getVolumeService().getVolumeByNodeRef(nodeRef);
-            if (volume != null) {
-                return DocumentLocationGenerator.getVolumeLabel(volume);
-            }
+        Volume volume = getDocumentVolume();
+        if (volume != null) {
+            return DocumentLocationGenerator.getVolumeLabel(volume);
         }
         return null;
     }
@@ -298,6 +339,11 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     public String getCreatedDateStr() {
         final Date created = getCreated();
         return created != null ? dateFormat.format(created) : "";
+    }
+
+    public String getCreatedDateTimeStr() {
+        final Date created = getCreated();
+        return created != null ? dateTimeFormat.format(created) : "";
     }
 
     public String getSenderRegDateStr() {
@@ -395,7 +441,7 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     }
 
     public String getSendMode() {
-        return TextUtil.joinStringAndStringWithComma(getTransmittalMode(), (String) getSearchableProperties().get(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE));
+        return TextUtil.joinStringAndStringWithComma(getTransmittalMode(), TextUtil.joinNonBlankStringsWithComma(getSearchableSendModeFromGeneralProps()));
     }
 
     @SuppressWarnings("unchecked")
@@ -462,6 +508,30 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     @Override
     public Date getCreated() {
         return (Date) getNode().getProperties().get(ContentModel.PROP_CREATED);
+    }
+
+    public Boolean getMainDocument() {
+        return Boolean.TRUE.equals(getNode().getProperties().get(MAIN_DOCUMENT_PROP.toString()));
+    }
+
+    public void setMainDocument(Boolean mainDocument) {
+        getProperties().put(MAIN_DOCUMENT_PROP.toString(), mainDocument);
+    }
+
+    public Boolean getDocumentToSign() {
+        return Boolean.TRUE.equals(getNode().getProperties().get(DOCUMENT_TO_SIGN_PROP.toString()));
+    }
+
+    public void setDocumentToSign(Boolean documentToSign) {
+        getProperties().put(DOCUMENT_TO_SIGN_PROP.toString(), documentToSign);
+    }
+
+    public Volume getDocumentVolume() {
+        NodeRef nodeRef = (NodeRef) getNode().getProperties().get(DocumentCommonModel.Props.VOLUME);
+        if (nodeRef != null) {
+            return BeanHelper.getVolumeService().getVolumeByNodeRef(nodeRef);
+        }
+        return null;
     }
 
     // Other
@@ -576,4 +646,21 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
         return propsConvertedMap;
     }
 
+    public void setShowLink(boolean showLink) {
+        this.showLink = showLink;
+    }
+
+    public boolean isShowLink() {
+        return showLink;
+    }
+
+    @Override
+    public String getAction() {
+        return BeanHelper.getDocumentDialog().action();
+    }
+
+    @Override
+    public void open(ActionEvent event) {
+        BeanHelper.getDocumentDialog().open(event);
+    }
 }

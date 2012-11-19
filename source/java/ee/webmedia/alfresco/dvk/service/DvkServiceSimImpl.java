@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.dvk.service;
 
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_NUMBER;
 import static ee.webmedia.alfresco.utils.XmlUtil.findChildByQName;
+import static ee.webmedia.alfresco.utils.XmlUtil.getXmlGregorianCalendar;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -19,8 +20,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import javax.xml.bind.JAXBElement;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.repo.content.MimetypeMap;
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
@@ -40,6 +48,7 @@ import org.apache.xml.security.utils.Base64;
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlObject;
 import org.springframework.util.Assert;
+import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
@@ -47,6 +56,7 @@ import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
@@ -61,16 +71,27 @@ import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.dvk.model.DvkModel;
 import ee.webmedia.alfresco.dvk.model.DvkReceivedLetterDocument;
+import ee.webmedia.alfresco.dvk.model.DvkSendReviewTask;
+import ee.webmedia.alfresco.dvk.model.DvkSendReviewTaskImpl;
 import ee.webmedia.alfresco.dvk.model.DvkSendWorkflowDocuments;
 import ee.webmedia.alfresco.dvk.model.DvkSendWorkflowDocumentsImpl;
-import ee.webmedia.alfresco.dvk.service.ExternalReviewException.ExceptionType;
+import ee.webmedia.alfresco.dvk.service.ReviewTaskException.ExceptionType;
+import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.log.model.LogObject;
+import ee.webmedia.alfresco.monitoring.MonitoredService;
+import ee.webmedia.alfresco.monitoring.MonitoringUtil;
 import ee.webmedia.alfresco.notification.model.NotificationModel;
 import ee.webmedia.alfresco.notification.service.NotificationService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.utils.FilenameUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.service.VolumeService;
+import ee.webmedia.alfresco.workflow.generated.DeleteLinkedReviewTaskType;
+import ee.webmedia.alfresco.workflow.generated.DeltaKKRootType;
+import ee.webmedia.alfresco.workflow.generated.LinkedReviewTaskType;
+import ee.webmedia.alfresco.workflow.generated.ObjectFactory;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
@@ -78,11 +99,15 @@ import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.ExternalReviewWorkflowImporterService;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
+import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
+import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.MetainfoHelper;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ReceivedDocumentsWrapper.ReceivedDocument;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.AadressType;
 import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.DhlDokumentType;
 import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.EdastusDocument.Edastus;
 import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.MetaxmlDocument.Metaxml;
@@ -111,8 +136,9 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
     public int updateDocAndTaskSendStatuses() {
         // there are as many sendInfoRefs to the same dvkId as there were recipients whom doc were delivered using DVK
         final Map<NodeRef /* sendInfo */, Pair<String /* dvkId */, String /* recipientRegNr */>> docRefsAndIds = documentSearchService.searchOutboxDvkIds();
-        final Map<NodeRef /* sendInfo */, Pair<String /* dvkId */, String /* recipientRegNr */>> taskRefsAndIds //
+        final Map<NodeRef /* taskRef */, Pair<String /* dvkId */, String /* recipientRegNr */>> taskRefsAndIds //
         = documentSearchService.searchTaskBySendStatusQuery(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK);
+        taskRefsAndIds.putAll(documentSearchService.searchTaskBySendStatusQuery(WorkflowSpecificModel.Types.REVIEW_TASK));
         if (docRefsAndIds.size() == 0 && taskRefsAndIds.size() == 0) {
             return 0; // no need to ask statuses
         }
@@ -127,7 +153,13 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
 
         List<Item> sendStatuses = null;
         // get sendStatus for each dvkId
-        sendStatuses = dhlXTeeService.getSendStatuses(dvkIds);
+        try {
+            sendStatuses = dhlXTeeService.getSendStatuses(dvkIds);
+            MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_DVK);
+        } catch (RuntimeException e) {
+            MonitoringUtil.logError(MonitoredService.OUT_XTEE_DVK, e);
+            throw e;
+        }
         // fill map containing statuses by ids
         final HashMap<String /* dhlId */, Map<String, SendStatus>> statusesByIds = new HashMap<String, Map<String, SendStatus>>();
         for (Item item : sendStatuses) {
@@ -141,6 +173,27 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
 
         return updateNodeSendStatus(docRefsAndIds, statusesByIds, DocumentCommonModel.Props.SEND_INFO_SEND_STATUS)
                 + updateNodeSendStatus(taskRefsAndIds, statusesByIds, WorkflowSpecificModel.Props.SEND_STATUS);
+    }
+
+    @Override
+    public Pair<Integer, Integer> resendFailedSends() {
+        List<Task> tasksToResend = documentSearchService.searchReviewTaskToResendQuery();
+        int tasksFound = tasksToResend.size();
+        int tasksSent = 0;
+        RetryingTransactionHelper retryingTransactionHelper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
+        for (final Task task : tasksToResend) {
+            try {
+                tasksSent += retryingTransactionHelper.doInTransaction(new RetryingTransactionCallback<Integer>() {
+                    @Override
+                    public Integer execute() throws Throwable {
+                        return sendReviewTaskNotification(task) ? 1 : 0;
+                    }
+                }, false, true);
+            } catch (RuntimeException e) {
+                log.error("Failed to resend review task to dvk, task=" + task, e);
+            }
+        }
+        return new Pair<Integer, Integer>(tasksFound, tasksSent);
     }
 
     public int updateNodeSendStatus(final Map<NodeRef, Pair<String, String>> refsAndIds, final HashMap<String, Map<String, SendStatus>> statusesByIds, QName propToSet) {
@@ -267,7 +320,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
                 sendNotifications(notifications, statusErrorNotificationContents);
                 return importedDoc;
             } catch (XmlException e) {
-                throw new ExternalReviewException(ExceptionType.PARSING_EXCEPTION, "Failed to parse DVK input document, dhlDocument=" + dhlDokument + ",\n docNode=" + docNode);
+                throw new ReviewTaskException(ExceptionType.PARSING_EXCEPTION, "Failed to parse DVK input document, dhlDocument=" + dhlDokument + ",\n docNode=" + docNode);
             }
         }
         return null;
@@ -427,7 +480,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
                 continue;
             }
             if (dvkId <= taskRecievedDvkId) {
-                throw new ExternalReviewException(ExceptionType.VERSION_CONFLICT, task, taskRecievedDvkIdStr);
+                throw new ReviewTaskException(ExceptionType.VERSION_CONFLICT, task, taskRecievedDvkIdStr);
             }
             if (taskRecievedDvkIdStr != null) {
                 String originalStatus = originalDvkIdsAndStatuses.get(task.getProp(WorkflowSpecificModel.Props.ORIGINAL_DVK_ID));
@@ -441,7 +494,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
     }
 
     @Override
-    protected NodeRef importTaskData(DvkReceivedLetterDocument rd, DhlDokumentType dhlDokument, String dvkId) throws ExternalReviewException {
+    protected NodeRef importTaskData(DvkReceivedLetterDocument rd, DhlDokumentType dhlDokument, String dvkId) throws ReviewTaskException {
         org.w3c.dom.Node taskNode = getDhsNodeForParsing(dhlDokument, EXTERNAL_REVIEW_TASK_COMPLETED_QNAME);
         if (taskNode != null) {
             // get original dvk ids here to avoid altering current importing process
@@ -463,13 +516,35 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
                                 dvkId);
                         return originalTask.getNodeRef();
                     } else {
-                        throw new ExternalReviewException(ExceptionType.TASK_OVERWRITE_WRONG_STATUS, originalTask, dvkId, attemptedStatus);
+                        throw new ReviewTaskException(ExceptionType.TASK_OVERWRITE_WRONG_STATUS, originalTask, dvkId, attemptedStatus);
                     }
                 }
             }
             if (originalTask == null) {
-                throw new ExternalReviewException(ExceptionType.ORIGINAL_TASK_NOT_FOUND, null
+                throw new ReviewTaskException(ExceptionType.ORIGINAL_TASK_NOT_FOUND, null
                         , originalDvkIdsAndStatuses.size() > 0 ? originalDvkIdsAndStatuses.keySet().iterator().next() : null);
+            }
+        }
+        return null;
+    }
+
+    @Override
+    protected NodeRef importReviewTaskData(DvkReceivedLetterDocument rd, DhlDokumentType dhlDokument, String dvkId) throws ReviewTaskException {
+        final Metaxml metaxml = dhlDokument.getMetaxml();
+        InputStream taskInputStream = metaxml.newInputStream();
+        if (taskInputStream != null) {
+            JAXBElement<DeltaKKRootType> deltaKKRoot = null;
+            deltaKKRoot = WorkflowUtil.unmarshalDeltaKK(taskInputStream);
+            if (deltaKKRoot != null) {
+                LinkedReviewTaskType linkedTask = deltaKKRoot.getValue().getLinkedReviewTask();
+                if (linkedTask != null) {
+                    workflowService.importLinkedReviewTask(linkedTask, dvkId);
+                } else {
+                    DeleteLinkedReviewTaskType deletedTask = deltaKKRoot.getValue().getDeleteLinkedReviewTask();
+                    if (deletedTask != null) {
+                        workflowService.markLinkedReviewTaskDeleted(deletedTask);
+                    }
+                }
             }
         }
         return null;
@@ -559,8 +634,8 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
     protected void handleStorageFailure(ReceivedDocument receivedDocument, String dhlId, NodeRef dvkIncomingFolder
             , MetainfoHelper metaInfoHelper, Collection<String> previouslyFailedDvkIds, Exception e) {
         super.handleStorageFailure(receivedDocument, dhlId, dvkIncomingFolder, metaInfoHelper, previouslyFailedDvkIds, e);
-        if (e instanceof ExternalReviewException) {
-            handleExternalReviewException((ExternalReviewException) e);
+        if (e instanceof ReviewTaskException) {
+            handleExternalReviewException((ReviewTaskException) e);
         }
         if (previouslyFailedDvkIds.contains(dhlId)) {
             log.debug("tried to receive document with dvkId='" + dhlId + "' that we had already failed to receive before");
@@ -593,7 +668,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         }
     }
 
-    private void handleExternalReviewException(ExternalReviewException e) {
+    private void handleExternalReviewException(ReviewTaskException e) {
         if (e.isType(ExceptionType.PARSING_EXCEPTION)) {
             log.error(e.getMessage(), e);
         } else if (e.isType(ExceptionType.VERSION_CONFLICT)) {
@@ -626,26 +701,24 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         Volume dvkDocVolume = null;
         if (series == null) {
             return new Pair<Location, Boolean>(new Location(dvkDefaultIncomingFolder), Boolean.FALSE);
-        } else {
-            List<Volume> volumes = volumeService.getAllValidVolumesBySeries(series.getNode().getNodeRef());
-            for (Volume volume : volumes) {
-                if (StringUtils.equalsIgnoreCase(volume.getTitle(), senderName)) {
-                    dvkDocVolume = volume;
-                    break;
-                }
+        }
+        List<Volume> volumes = volumeService.getAllValidVolumesBySeries(series.getNode().getNodeRef());
+        for (Volume volume : volumes) {
+            if (StringUtils.equalsIgnoreCase(volume.getTitle(), senderName)) {
+                dvkDocVolume = volume;
+                break;
             }
-            if (dvkDocVolume == null) {
-                dvkDocVolume = volumeService.createVolume(series.getNode().getNodeRef());
-                // TODO: standard configuration for creating new dvkWorkflowDocumentFolder
-                dvkDocVolume.setValidFrom(new Date());
-                dvkDocVolume.setContainsCases(false);
-                dvkDocVolume.setTitle(senderName);
-                dvkDocVolume.setStatus(DocListUnitStatus.OPEN.getValueName());
-                dvkDocVolume.setVolumeMark(dvkWorkflowSeriesMark + "-" + senderName);
-                dvkDocVolume.setVolumeTypeEnum(VolumeType.ANNUAL_FILE);
-                volumeService.saveOrUpdate(dvkDocVolume, false);
-            }
-
+        }
+        if (dvkDocVolume == null) {
+            dvkDocVolume = volumeService.createVolume(series.getNode().getNodeRef());
+            // TODO: standard configuration for creating new dvkWorkflowDocumentFolder
+            dvkDocVolume.setValidFrom(new Date());
+            dvkDocVolume.setContainsCases(false);
+            dvkDocVolume.setTitle(senderName);
+            dvkDocVolume.setStatus(DocListUnitStatus.OPEN.getValueName());
+            dvkDocVolume.setVolumeMark(dvkWorkflowSeriesMark + "-" + senderName);
+            dvkDocVolume.setVolumeTypeEnum(VolumeType.ANNUAL_FILE);
+            volumeService.saveOrUpdate(dvkDocVolume, false);
         }
         return new Pair<Location, Boolean>(new Location(dvkDocVolume.getNode().getNodeRef()), Boolean.TRUE);
     }
@@ -677,17 +750,167 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         final Collection<String> recipientsRegNrs = new ArrayList<String>();
         recipientsRegNrs.add(parametersService.getStringParameter(Parameters.SAP_DVK_CODE));
         verifyEnoughData(contentsToSend, recipientsRegNrs, true);
-        final Set<String> sendDocuments = dhlXTeeService.sendDocuments(contentsToSend, getRecipients(recipientsRegNrs), getSenderAddress(),
-                new DhsSendInvoiceToSapCallback(), getSendDocumentToFolderRequestCallback(folder));
-        Assert.isTrue(1 == sendDocuments.size(), "Supprise! Size of sendDocuments is " + sendDocuments.size());
-        String dvkId = sendDocuments.iterator().next();
-        sendOutService.addSapSendInfo(document, dvkId);
-        return dvkId;
+        try {
+            final Set<String> sendDocuments = dhlXTeeService.sendDocuments(contentsToSend, getRecipients(recipientsRegNrs), getSenderAddress(),
+                    new DhsSendInvoiceToSapCallback(), getSendDocumentToFolderRequestCallback(folder));
+            Assert.isTrue(1 == sendDocuments.size(), "Supprise! Size of sendDocuments is " + sendDocuments.size());
+            String dvkId = sendDocuments.iterator().next();
+            sendOutService.addSapSendInfo(document, dvkId);
+            MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_DVK);
+            return dvkId;
+        } catch (RuntimeException e) {
+            MonitoringUtil.logError(MonitoredService.OUT_XTEE_DVK, e);
+            throw e;
+        }
     }
 
     @Override
     public String generateAndSendInvoiceFileToSap(Node node, List<Transaction> transactions) throws IOException {
         return sendInvoiceFileToSap(node, einvoiceService.generateTransactionXmlFile(node, transactions));
+    }
+
+    @Override
+    public boolean sendReviewTaskNotification(Task task) {
+        return sendReviewTaskNotification(task, createDeltaKKRootTypeNode(task), false);
+    }
+
+    @Override
+    public void sendReviewTaskDeletingNotification(Task task) {
+        sendReviewTaskNotification(task, createDeltaKKRootTypeDeletingNode(task), true);
+    }
+
+    private boolean sendReviewTaskNotification(Task task, Document nodeToSend, boolean isDeletingNotification) {
+        NodeRef taskRef = task.getNodeRef();
+        // these properties are used to determine if last sending was successful or not
+        // and to retry sending to DVK if needed.
+        WorkflowDbService workflowDbService = BeanHelper.getWorkflowDbService();
+        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        props.put(WorkflowSpecificModel.Props.SENT_DVK_ID, null);
+        props.put(WorkflowSpecificModel.Props.SEND_STATUS, null);
+        workflowDbService.updateTaskProperties(task.getNodeRef(), props);
+        DvkSendReviewTask sendReviewTask = new DvkSendReviewTaskImpl();
+        sendReviewTask.setSenderRegNr(task.getCreatorInstitutionCode());
+        sendReviewTask.setSenderOrgName(task.getCreatorInstitutionName());
+        sendReviewTask.setSenderName(task.getCreatorName());
+        sendReviewTask.setSenderEmail(task.getCreatorEmail());
+        sendReviewTask.setRecipientsRegNr(task.getInstitutionCode());
+        sendReviewTask.setInstitutionName(task.getInstitutionName());
+
+        sendReviewTask.setRecipientDocNode(nodeToSend);
+
+        try {
+            AadressType recipient;
+            if (!workflowService.isInternalTesting()) {
+                recipient = AadressType.Factory.newInstance();
+                recipient.setRegnr(sendReviewTask.getRecipientsRegNr());
+                recipient.setAsutuseNimi(sendReviewTask.getInstitutionName());
+            } else {
+                // For internal testing, always send task to current organization itself
+                recipient = getSenderAddress();
+            }
+            if (isDvkCapable(addressbookService.getDvkCapableOrgs(), recipient.getRegnr())) {
+
+                final Set<String> sendDocuments = dhlXTeeService.sendDocuments(new ArrayList<DhlXTeeService.ContentToSend>(),
+                        new AadressType[] { recipient }, getSenderAddress(), new DhsSendReviewNotificationCallback(sendReviewTask), getSendDocumentRequestCallback());
+                Assert.isTrue(1 == sendDocuments.size(), "Supprise! Size of sendDocuments is " + sendDocuments.size());
+                if (!isDeletingNotification) {
+                    String dvkId = sendDocuments.iterator().next();
+                    props = new HashMap<QName, Serializable>();
+                    props.put(WorkflowSpecificModel.Props.SENT_DVK_ID, dvkId);
+                    props.put(WorkflowSpecificModel.Props.SEND_STATUS, SendStatus.SENT.toString());
+                    workflowDbService.updateTaskProperties(taskRef, props);
+                }
+                if (isDeletingNotification) {
+                    BeanHelper.getLogService().addLogEntry(
+                            LogEntry.create(LogObject.TASK, BeanHelper.getUserService(), task.getNodeRef(), "applog_task_review_delete_sent_to_dvk", task.getOwnerName(),
+                                    task.getInstitutionName(), MessageUtil.getTypeName(task.getType())));
+                } else {
+                    BeanHelper.getLogService().addLogEntry(
+                            LogEntry.create(LogObject.TASK, BeanHelper.getUserService(), task.getNodeRef(), "applog_task_review_sent_to_dvk", task.getOwnerName(),
+                                    task.getInstitutionName(), MessageUtil.getTypeName(task.getType())));
+                }
+                MonitoringUtil.logSuccess(MonitoredService.OUT_XTEE_DVK);
+                return true;
+            }
+            if (isDeletingNotification) {
+                throw new ReviewTaskException(ExceptionType.REVIEW_DVK_CAPABILITY_ERROR);
+            }
+        } catch (RuntimeException e) {
+            if (!(e instanceof ReviewTaskException)) {
+                MonitoringUtil.logError(MonitoredService.OUT_XTEE_DVK, e);
+            }
+            throw e;
+        }
+        return false;
+    }
+
+    private Document createDeltaKKRootTypeDeletingNode(Task task) {
+        ObjectFactory objectFactory = new ObjectFactory();
+        DeltaKKRootType deltaKKRoot = objectFactory.createDeltaKKRootType();
+
+        DeleteLinkedReviewTaskType deletedLinkedReviewTask = objectFactory.createDeleteLinkedReviewTaskType();
+        deletedLinkedReviewTask.setOriginalNoderefId(task.getNodeRef().getId());
+
+        deltaKKRoot.setDeleteLinkedReviewTask(deletedLinkedReviewTask);
+
+        return deltaKKRootToDocNode(objectFactory.createDeltaKK(deltaKKRoot));
+    }
+
+    private Document createDeltaKKRootTypeNode(Task task) {
+        ObjectFactory objectFactory = new ObjectFactory();
+        DeltaKKRootType deltaKKRoot = objectFactory.createDeltaKKRootType();
+        LinkedReviewTaskType linkedReviewTaskType = objectFactory.createLinkedReviewTaskType();
+        linkedReviewTaskType.setCreatorName(task.getCreatorName());
+        linkedReviewTaskType.setCreatorId(task.getCreatorId());
+        linkedReviewTaskType.setStartedDateTime(getXmlGregorianCalendar(task.getStartedDateTime()));
+        linkedReviewTaskType.setOwnerId(task.getOwnerId());
+        linkedReviewTaskType.setOwnerName(task.getOwnerName());
+        linkedReviewTaskType.setDueDate(getXmlGregorianCalendar(task.getDueDate()));
+        linkedReviewTaskType.setStatus(task.getStatus());
+        CompoundWorkflow compoundWorkflow = task.getParent().getParent();
+        linkedReviewTaskType.setCompoundWorkflowTitle(compoundWorkflow.getTitle());
+        linkedReviewTaskType.setCompoundWorkflowComment(compoundWorkflow.getComment());
+        linkedReviewTaskType.setWorkflowResolution(task.getParent().getResolution());
+        linkedReviewTaskType.setCreatorInstitutionCode(task.getCreatorInstitutionCode());
+        linkedReviewTaskType.setCreatorInstitutionName(task.getCreatorInstitutionName());
+        linkedReviewTaskType.setOriginalNoderefId(task.getNodeRef().getId());
+        linkedReviewTaskType.setOriginalTaskObjectUrl(BeanHelper.getDocumentTemplateService().getCompoundWorkflowUrl(compoundWorkflow.getNodeRef()));
+        String taskOutcome = task.getOutcome();
+        if (StringUtils.isNotBlank(taskOutcome)) {
+            linkedReviewTaskType.setOutcome(taskOutcome);
+        }
+        String taskComment = task.getComment();
+        if (StringUtils.isNotBlank(taskComment)) {
+            linkedReviewTaskType.setComment(taskComment);
+        }
+        Date completedDate = task.getCompletedDateTime();
+        if (completedDate != null) {
+            linkedReviewTaskType.setCompletedDateTime(getXmlGregorianCalendar(completedDate));
+        }
+        Date stoppedDate = task.getStoppedDateTime();
+        if (stoppedDate != null) {
+            linkedReviewTaskType.setStoppedDateTime(getXmlGregorianCalendar(stoppedDate));
+        }
+
+        deltaKKRoot.setLinkedReviewTask(linkedReviewTaskType);
+
+        return deltaKKRootToDocNode(objectFactory.createDeltaKK(deltaKKRoot));
+    }
+
+    private Document deltaKKRootToDocNode(JAXBElement<DeltaKKRootType> deltaKKRoot) {
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        dbf.setNamespaceAware(true);
+        Document doc = null;
+        try {
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            doc = db.newDocument();
+            WorkflowUtil.marshalDeltaKK(deltaKKRoot, doc);
+
+        } catch (ParserConfigurationException e) {
+            log.debug("Failed to create new DOM node document", e);
+            throw new RuntimeException(e);
+        }
+        return doc;
     }
 
     @Override
@@ -814,7 +1037,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
                         for (Task task : workflow.getTasks()) {
                             if (task.isStatus(Status.IN_PROGRESS, Status.STOPPED) && task.getInstitutionCode() != null) {
                                 if (!recipients.contains(task.getInstitutionCode()) && !isDvkCapable(dvkCapableOrgs, task.getInstitutionCode())) {
-                                    throw new ExternalReviewException(ExceptionType.DVK_CAPABILITY_ERROR, dvkCapabilityErrorMessage);
+                                    throw new ReviewTaskException(ExceptionType.EXTERNAL_REVIEW_DVK_CAPABILITY_ERROR, dvkCapabilityErrorMessage);
                                 }
                                 recipients.add(task.getInstitutionCode());
                             }
@@ -826,7 +1049,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         if (additionalRecipients != null && additionalRecipients.get(documentNodeRef) != null) {
             for (String orgCode : additionalRecipients.get(documentNodeRef)) {
                 if (!recipients.contains(orgCode) && !isDvkCapable(dvkCapableOrgs, orgCode)) {
-                    throw new ExternalReviewException(ExceptionType.DVK_CAPABILITY_ERROR, dvkCapabilityErrorMessage);
+                    throw new ReviewTaskException(ExceptionType.EXTERNAL_REVIEW_DVK_CAPABILITY_ERROR, dvkCapabilityErrorMessage);
                 }
             }
             recipients.addAll(additionalRecipients.get(documentNodeRef));
@@ -846,6 +1069,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         return docDomNode;
     }
 
+    @Override
     public boolean isDvkCapable(List<Node> dvkCapableOrgs, String recipientOrgCode) {
         boolean isDvkCapable = false;
         for (Node organization : dvkCapableOrgs) {

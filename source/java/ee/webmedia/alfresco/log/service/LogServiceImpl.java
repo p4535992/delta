@@ -6,11 +6,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -79,65 +79,81 @@ public class LogServiceImpl implements LogService, InitializingBean {
 
     @Override
     public void addImportedLogEntry(LogEntry log, Date dateCreated) {
-        if (!checkDescriptionNotNull(log)) {
+        checkDescriptionNotNull(log);
+
+        if (!logEnabled(log)) {
             return;
         }
 
-        if (logEnabled(log)) {
+        // Fetch some log entry data:
+        Map<String, Object> result = jdbcTemplate.queryForMap("SELECT delta_log_date.idprefix, to_char(CURRENT_DATE,'YYYYMMDD') AS idprefix_now, " +
+                "nextval('delta_log_seq') AS idsuffix, current_timestamp AS now FROM delta_log_date LIMIT 1");
+        String idPrefix = (String) result.get("idprefix");
+        String idPrefixNow = (String) result.get("idprefix_now");
+        Long idSuffix = (Long) result.get("idsuffix");
+        Timestamp now = (Timestamp) result.get("now");
 
-            Map<String, Object> result = jdbcTemplate
-                    .queryForMap("SELECT delta_log_date.idprefix, to_char(CURRENT_DATE,'YYYYMMDD') AS idprefix_now, nextval('delta_log_seq') AS idsuffix, current_timestamp AS now FROM delta_log_date LIMIT 1");
-            String idPrefix = (String) result.get("idprefix");
-            String idPrefixNow = (String) result.get("idprefix_now");
-            Long idSuffix = (Long) result.get("idsuffix");
-            Timestamp now = (Timestamp) result.get("now");
-            if (!idPrefixNow.equals(idPrefix)) {
-                jdbcTemplate.update("LOCK TABLE delta_log_date");
-                Map<String, Object> result2 = jdbcTemplate.queryForMap("SELECT delta_log_date.idprefix FROM delta_log_date LIMIT 1");
-                String idPrefix2 = (String) result2.get("idprefix");
-                if (!idPrefixNow.equals(idPrefix2)) {
-                    jdbcTemplate.update("UPDATE delta_log_date SET idprefix = ?", idPrefixNow);
-                    jdbcTemplate.queryForMap("SELECT setval('delta_log_seq', 1, false)");
+        // Check if current date has changed - if so, log sequence needs to be reset to 1.
+        if (!idPrefixNow.equals(idPrefix)) {
+            jdbcTemplate.update("LOCK TABLE delta_log_date");
+            Map<String, Object> result2 = jdbcTemplate.queryForMap("SELECT delta_log_date.idprefix FROM delta_log_date LIMIT 1");
+            String idPrefix2 = (String) result2.get("idprefix");
+            if (!idPrefixNow.equals(idPrefix2)) {
+                jdbcTemplate.update("UPDATE delta_log_date SET idprefix = ?", idPrefixNow);
+                jdbcTemplate.queryForMap("SELECT setval('delta_log_seq', 1, false)");
 
-                    Map<String, Object> result3 = jdbcTemplate
-                            .queryForMap("SELECT delta_log_date.idprefix, to_char(CURRENT_DATE,'YYYYMMDD') AS idprefix_now, nextval('delta_log_seq') AS idsuffix, current_timestamp AS now FROM delta_log_date LIMIT 1");
-                    idPrefix = (String) result3.get("idprefix");
-                    idPrefixNow = (String) result3.get("idprefix_now");
-                    idSuffix = (Long) result3.get("idsuffix");
-                    now = (Timestamp) result3.get("now");
-                    Assert.isTrue(idPrefixNow.equals(idPrefix), "idPrefixNow=" + idPrefixNow + " idPrefix=" + idPrefix);
-                }
+                Map<String, Object> result3 = jdbcTemplate.queryForMap("SELECT delta_log_date.idprefix, to_char(CURRENT_DATE,'YYYYMMDD') AS idprefix_now, " +
+                        "nextval('delta_log_seq') AS idsuffix, current_timestamp AS now FROM delta_log_date LIMIT 1");
+                idPrefix = (String) result3.get("idprefix");
+                idPrefixNow = (String) result3.get("idprefix_now");
+                idSuffix = (Long) result3.get("idsuffix");
+                now = (Timestamp) result3.get("now");
+                Assert.isTrue(idPrefixNow.equals(idPrefix), "idPrefixNow=" + idPrefixNow + " idPrefix=" + idPrefix);
             }
-
-            addLogEntry(log, idPrefix, idSuffix, dateCreated == null ? now : new Timestamp(dateCreated.getTime()));
         }
+
+        // Defensive approach: check if the entry ID is not already used. Update sequence and ID, when ID is used.
+
+        int i = idSuffix.intValue();
+        String entryId = idPrefix + i;
+        boolean collisionDetected = false;
+
+        while (jdbcTemplate.queryForInt("SELECT COUNT(*) FROM delta_log WHERE log_entry_id = ?", entryId) != 0) {
+            entryId = idPrefix + i++;
+            collisionDetected = true;
+        }
+
+        if (collisionDetected) {
+            jdbcTemplate.queryForInt("SELECT setval('delta_log_seq', ?, false)", i);
+            LOG.info("Avoided log entry ID collision, updated suffix to: " + i);
+        }
+
+        addLogEntry(log, entryId, dateCreated == null ? now : new Timestamp(dateCreated.getTime()));
     }
 
     @Override
     public void addImportedLogEntry(LogEntry log, Date dateCreated, String idPrefix, long idSuffix) {
-        if (!checkDescriptionNotNull(log)) {
-            return;
-        }
+        checkDescriptionNotNull(log);
         Assert.isTrue(dateCreated != null && StringUtils.isNotBlank(idPrefix));
-        addLogEntry(log, idPrefix, idSuffix, new Timestamp(dateCreated.getTime()));
+        addLogEntry(log, idPrefix + idSuffix, new Timestamp(dateCreated.getTime()));
     }
 
-    private boolean checkDescriptionNotNull(LogEntry log) {
+    private void checkDescriptionNotNull(LogEntry log) {
         // This check provided just-in-case to catch empty event descriptions.
         // Exception should not be thrown as not logging is non-critical
         // compared to breaking serviced wanting to just log an action.
         if (log.getEventDescription() == null) {
-            LOG.error("No event description was provided for event caused by " + log.getObjectName() + " with level " + log.getLevel());
-            return false;
+            String err = "No event description was provided for event caused by " + log.getObjectName() + " with level " + log.getLevel();
+            LOG.error(err);
+            throw new RuntimeException(err);
         }
-        return true;
     }
 
-    private void addLogEntry(LogEntry log, String idPrefix, Long idSuffix, Timestamp now) {
+    private void addLogEntry(LogEntry log, String entryId, Timestamp now) {
         jdbcTemplate.update(
                 "INSERT INTO delta_log (log_entry_id,created_date_time,level,creator_id,creator_name,computer_ip,computer_name,object_id,object_name,description) "
                         + "VALUES (?,?,?,?,?,?,?,?,?,?)",
-                new Object[] { idPrefix + idSuffix.toString(), now, log.getLevel(), log.getCreatorId(), log.getCreatorName(), log.getComputerIp(), log.getComputerName(),
+                new Object[] { entryId, now, log.getLevel(), log.getCreatorId(), log.getCreatorName(), log.getComputerIp(), log.getComputerName(),
                         log.getObjectId(), log.getObjectName(), log.getEventDescription() });
     }
 
@@ -164,41 +180,71 @@ public class LogServiceImpl implements LogService, InitializingBean {
         Object[] values = {};
 
         if (filter != null) {
-            Map<String, Object> filterMap = new LinkedHashMap<String, Object>();
+            List<String> queryParts = new ArrayList<String>();
+            List<Object> parameters = new ArrayList<Object>();
             if (hasLength(filter.getLogEntryId())) {
-                filterMap.put("log_entry_id LIKE ?", filter.getLogEntryId() + "%");
+                queryParts.add("log_entry_id LIKE ?");
+                parameters.add(filter.getLogEntryId() + "%");
             }
             if (filter.getDateCreatedStart() != null) {
-                filterMap.put("date(created_date_time) >= ?", filter.getDateCreatedStart());
+                queryParts.add("date(created_date_time) >= ?");
+                parameters.add(filter.getDateCreatedStart());
             }
             if (filter.getDateCreatedEnd() != null) {
-                filterMap.put("date(created_date_time) <= ?", filter.getDateCreatedEnd());
+                queryParts.add("date(created_date_time) <= ?");
+                parameters.add(filter.getDateCreatedEnd());
             }
             if (hasLength(filter.getCreatorName())) {
-                filterMap.put(DbSearchUtil.generateStringWordsWildcardQuery("creator_name"), generalService.getTsquery(filter.getCreatorName()));
+                queryParts.add(DbSearchUtil.generateStringWordsWildcardQuery("creator_name"));
+                parameters.add(generalService.getTsquery(filter.getCreatorName()));
             }
             if (hasLength(filter.getComputerId())) {
                 // creating indexes for these fields is future development (can be done used trigram index); currently these fields are not indexed
                 String computerId = "%" + filter.getComputerId().toLowerCase() + "%";
-                filterMap.put("(lower(computer_ip) LIKE ? OR lower(computer_name) LIKE ?)", computerId);
-                filterMap.put(null, computerId);
+                queryParts.add("(lower(computer_ip) LIKE ? OR lower(computer_name) LIKE ?)");
+                parameters.add(computerId);
+                parameters.add(computerId);
             }
             if (hasLength(filter.getDescription())) {
-                filterMap.put(DbSearchUtil.generateStringWordsWildcardQuery("description"), generalService.getTsquery(filter.getDescription()));
+                queryParts.add(DbSearchUtil.generateStringWordsWildcardQuery("description"));
+                parameters.add(generalService.getTsquery(filter.getDescription()));
             }
             if (hasLength(filter.getObjectName())) {
                 // creating index for this field is future development (can be done used trigram index); currently the field is not indexed
-                filterMap.put("lower(object_name) LIKE ?", "%" + filter.getObjectName().toLowerCase() + "%");
+                queryParts.add("lower(object_name) LIKE ?");
+                parameters.add("%" + filter.getObjectName().toLowerCase() + "%");
             }
-            if (hasLength(filter.getObjectId())) {
-                String sep = filter.isExactObjectId() ? "" : "%";
-                filterMap.put("object_id LIKE ?", sep + filter.getObjectId() + sep);
+            List<String> objectIds = filter.getObjectId();
+            if (objectIds != null && !objectIds.isEmpty()) {
+                List<String> notEmptyObjectIds = new ArrayList<String>();
+                for (String objectId : objectIds) {
+                    if (hasLength(objectId)) {
+                        notEmptyObjectIds.add(objectId);
+                    }
+                }
+                if (!notEmptyObjectIds.isEmpty()) {
+                    StringBuilder objectCondition;
+                    boolean exactObjectId = filter.isExactObjectId();
+                    if (exactObjectId) {
+                        objectCondition = new StringBuilder("object_id IN (").append(org.apache.commons.lang.StringUtils.repeat("?, ", notEmptyObjectIds.size()));
+                        objectCondition.setLength(objectCondition.length() - 2);
+                    } else {
+                        objectCondition = new StringBuilder(org.apache.commons.lang.StringUtils.repeat("(object_id LIKE ? OR ", notEmptyObjectIds.size()));
+                        objectCondition.setLength(objectCondition.length() - 4);
+                    }
+                    objectCondition.append(')').toString();
+                    queryParts.add(objectCondition.toString());
+                    String sep = exactObjectId ? "" : "%";
+                    for (String objectId : notEmptyObjectIds) {
+                        parameters.add(sep + objectId + sep);
+                    }
+                }
             }
 
-            if (!filterMap.isEmpty()) {
+            if (!queryParts.isEmpty()) {
                 q.append(" WHERE ");
                 boolean firstCondition = true;
-                for (String condition : filterMap.keySet()) {
+                for (String condition : queryParts) {
                     if (condition != null) {
                         if (!firstCondition) {
                             q.append(" AND ");
@@ -209,7 +255,7 @@ public class LogServiceImpl implements LogService, InitializingBean {
                     }
                 }
             }
-            values = filterMap.values().toArray(new Object[filterMap.values().size()]);
+            values = parameters.toArray(new Object[parameters.size()]);
 
             Set<String> excludedDescriptions = filter.getExcludedDescriptions();
             if (excludedDescriptions != null) {

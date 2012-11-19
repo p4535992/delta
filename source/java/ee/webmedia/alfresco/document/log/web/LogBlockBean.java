@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.document.log.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -36,7 +37,7 @@ public class LogBlockBean implements DocumentDynamicBlock {
     private NodeRef parentRef;
     protected List<LogEntry> logs;
 
-    private QName parentNodeType;
+    protected QName parentNodeType;
 
     @Override
     public void resetOrInit(DialogDataProvider provider) {
@@ -74,7 +75,7 @@ public class LogBlockBean implements DocumentDynamicBlock {
         excludedDescriptions.add(MessageUtil.getMessage("document_log_status_opened_not_inEditMode"));
         excludedDescriptions.add(MessageUtil.getMessage("file_opened", "%"));
         logFilter.setExcludedDescriptions(excludedDescriptions);
-        logFilter.setObjectId(parentRef.toString());
+        logFilter.setObjectId(Collections.singletonList(parentRef.toString()));
         logFilter.setExactObjectId(true);
         return logFilter;
     }
@@ -84,7 +85,7 @@ public class LogBlockBean implements DocumentDynamicBlock {
         Set<String> excludedDescriptions = new HashSet<String>(1);
         excludedDescriptions.add(MessageUtil.getMessage("applog_space_open", "%", "%"));
         logFilter.setExcludedDescriptions(excludedDescriptions);
-        logFilter.setObjectId(parentRef.toString());
+        logFilter.setObjectId(Collections.singletonList(parentRef.toString()));
         logFilter.setExactObjectId(true);
         return logFilter;
     }
@@ -95,18 +96,28 @@ public class LogBlockBean implements DocumentDynamicBlock {
         parentNodeType = null;
     }
 
+    public NodeRef getParentRef() {
+        return parentRef;
+    }
+
     public boolean isRendered() {
         return logs != null && logs.size() > 0;
     }
 
-    // in version 3.8 this method is overriden method
-    public boolean isShowLogDetailsLink() {
-        return BeanHelper.getUserService().isSupervisor();
+    public String getListTitle() {
+        return MessageUtil.getMessage("document_log_title");
     }
 
-    // in version 3.8 this method is overriden method
-    public NodeRef getParentRef() {
-        return parentRef;
+    public String getCreatedDateColumnTitle() {
+        return MessageUtil.getMessage("document_log_date");
+    }
+
+    public String getEventColumnTitle() {
+        return MessageUtil.getMessage("document_log_event");
+    }
+
+    public boolean isShowLogDetailsLink() {
+        return BeanHelper.getUserService().isSupervisor();
     }
 
     // START: getters / setters

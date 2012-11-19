@@ -14,6 +14,7 @@ import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.apache.commons.lang.time.DateUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
@@ -35,11 +36,13 @@ public class MyTasksBean extends BaseDialogBean {
     public static final String BEAN_NAME = "MyTasksBean";
     public static final String LIST_ASSIGNMENT = "assignment";
     public static final String LIST_ORDER_ASSIGNMENT = "orderAssignment";
+    public static final String LIST_GROUP_ASSIGNMENT = "groupAssignment";
     public static final String LIST_INFORMATION = "information";
     public static final String LIST_OPINION = "opinion";
     public static final String LIST_REVIEW = "review";
     public static final String LIST_SIGNATURE = "signature";
     public static final String LIST_EXTERNAL_REVIEW = "externalReview";
+    public static final String LIST_LINKED_REVIEW = "linkedReview";
     public static final String LIST_CONFIRMATION = "confirmation";
 
     private String dialogTitle;
@@ -48,17 +51,21 @@ public class MyTasksBean extends BaseDialogBean {
     private String specificList;
     private List<TaskAndDocument> assignmentTasks;
     private List<TaskAndDocument> orderAssignmentTasks;
+    private List<TaskAndDocument> groupAssignmentTasks;
     private List<TaskAndDocument> informationTasks;
     private List<TaskAndDocument> opinionTasks;
     private List<TaskAndDocument> reviewTasks;
     private List<TaskAndDocument> signatureTasks;
     private List<TaskAndDocument> externalReviewTasks;
+    private List<Task> linkedReviewTasks;
     private List<TaskAndDocument> confirmationTasks;
+    private List<TaskAndDocument> additionalTasks;
     private long lastLoadMillis = 0;
 
     private transient ParametersService parametersService;
     private transient DocumentService documentService;
     private transient DocumentSearchService documentSearchService;
+    private String additionalListTitle;
 
     // START: dialog overrides
 
@@ -103,6 +110,10 @@ public class MyTasksBean extends BaseDialogBean {
         dialogTitle = MessageUtil.getMessage("assignmentWorkflow");
         listTitle = MessageUtil.getMessage("task_list_assignment_title");
         lessColumns = false;
+        specificList = LIST_GROUP_ASSIGNMENT;
+        loadTasks();
+        additionalTasks = groupAssignmentTasks;
+        additionalListTitle = MessageUtil.getMessage("task_list_group_assignment_title");
         specificList = LIST_ASSIGNMENT;
         loadTasks();
     }
@@ -159,6 +170,8 @@ public class MyTasksBean extends BaseDialogBean {
         lessColumns = true;
         specificList = LIST_EXTERNAL_REVIEW;
         loadTasks();
+        specificList = LIST_LINKED_REVIEW;
+        loadTasks();
     }
 
     public void setupConfirmationTasks(@SuppressWarnings("unused") ActionEvent event) {
@@ -178,6 +191,8 @@ public class MyTasksBean extends BaseDialogBean {
             result = assignmentTasks;
         } else if (LIST_ORDER_ASSIGNMENT.equals(specificList)) {
             result = orderAssignmentTasks;
+        } else if (LIST_GROUP_ASSIGNMENT.equals(specificList)) {
+            result = groupAssignmentTasks;
         } else if (LIST_INFORMATION.equals(specificList)) {
             result = informationTasks;
         } else if (LIST_OPINION.equals(specificList)) {
@@ -194,12 +209,24 @@ public class MyTasksBean extends BaseDialogBean {
         return result;
     }
 
+    public List<TaskAndDocument> getAdditionalTasks() {
+        return additionalTasks;
+    }
+
+    public List<Task> getLinkedReviewTasks() {
+        return linkedReviewTasks;
+    }
+
     public List<TaskAndDocument> getAssignmentTasks() {
         return filterTasksByDate(assignmentTasks);
     }
 
     public List<TaskAndDocument> getOrderAssignmentTasks() {
         return filterTasksByDate(orderAssignmentTasks);
+    }
+
+    public List<TaskAndDocument> getGroupAssignmentTasks() {
+        return filterTasksByDate(groupAssignmentTasks);
     }
 
     public List<TaskAndDocument> getConfirmationTasks() {
@@ -228,6 +255,10 @@ public class MyTasksBean extends BaseDialogBean {
 
     public boolean isAssignmentPagerVisible() {
         return getAssignmentTasks().size() > PAGE_SIZE;
+    }
+
+    public boolean isGroupAssignmentPagerVisible() {
+        return getGroupAssignmentTasks().size() > PAGE_SIZE;
     }
 
     public boolean isOrderAssignmentPagerVisible() {
@@ -279,6 +310,18 @@ public class MyTasksBean extends BaseDialogBean {
         return listTitle;
     }
 
+    public String getAdditionalListTitle() {
+        return additionalListTitle;
+    }
+
+    public boolean isCaseFileOrDocumentWorkflowEnabled() {
+        return BeanHelper.getVolumeService().isCaseVolumeEnabled() || isDocumentWorkflowEnabled();
+    }
+
+    public boolean isDocumentWorkflowEnabled() {
+        return BeanHelper.getWorkflowService().isDocumentWorkflowEnabled();
+    }
+
     // START: getters/setters
 
     protected ParametersService getParametersService() {
@@ -324,19 +367,29 @@ public class MyTasksBean extends BaseDialogBean {
     private void reset() {
         dialogTitle = null;
         listTitle = null;
+        additionalListTitle = null;
         lessColumns = true;
         specificList = null;
         assignmentTasks = null;
+        orderAssignmentTasks = null;
+        groupAssignmentTasks = null;
         informationTasks = null;
         opinionTasks = null;
         reviewTasks = null;
+        externalReviewTasks = null;
         signatureTasks = null;
+        externalReviewTasks = null;
+        linkedReviewTasks = null;
+        confirmationTasks = null;
+        additionalTasks = null;
         lastLoadMillis = 0;
     }
 
     private List<TaskAndDocument> filterTasksByDate(List<TaskAndDocument> tasks) {
         Date today = Calendar.getInstance().getTime();
-
+        if (tasks == null) {
+            return new ArrayList<TaskAndDocument>();
+        }
         List<TaskAndDocument> filteredTasks = new ArrayList<TaskAndDocument>(tasks.size());
         for (TaskAndDocument task : tasks) {
             final Date dueDate = task.getTask().getDueDate();
@@ -358,11 +411,20 @@ public class MyTasksBean extends BaseDialogBean {
             log.debug("loadTasks - assignmentTasks: " + (startC - startB) + "ms + " + (System.currentTimeMillis() - startC) + "ms");
         }
         if (specificList == null || LIST_ORDER_ASSIGNMENT.equals(specificList)) {
+            if (BeanHelper.getWorkflowService().isOrderAssignmentWorkflowEnabled()) {
+                long startB = System.currentTimeMillis();
+                List<Task> tmpTasks = getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK);
+                long startC = System.currentTimeMillis();
+                orderAssignmentTasks = getDocumentService().getTasksWithDocuments(tmpTasks);
+                log.debug("loadTasks - orderAssignmentTasks: " + (startC - startB) + "ms + " + (System.currentTimeMillis() - startC) + "ms");
+            }
+        }
+        if (specificList == null || LIST_GROUP_ASSIGNMENT.equals(specificList)) {
             long startB = System.currentTimeMillis();
-            List<Task> tmpTasks = getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK);
+            List<Task> tmpTasks = getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.GROUP_ASSIGNMENT_TASK);
             long startC = System.currentTimeMillis();
-            orderAssignmentTasks = getDocumentService().getTasksWithDocuments(tmpTasks);
-            log.debug("loadTasks - orderAssignmentTasks: " + (startC - startB) + "ms + " + (System.currentTimeMillis() - startC) + "ms");
+            groupAssignmentTasks = getDocumentService().getTasksWithDocuments(tmpTasks);
+            log.debug("loadTasks - groupAssignmentTasks: " + (startC - startB) + "ms + " + (System.currentTimeMillis() - startC) + "ms");
         }
         if (specificList == null || LIST_INFORMATION.equals(specificList)) {
             long startB = System.currentTimeMillis();
@@ -398,6 +460,12 @@ public class MyTasksBean extends BaseDialogBean {
             long startC = System.currentTimeMillis();
             externalReviewTasks = getDocumentService().getTasksWithDocuments(tmpTasks);
             log.debug("loadTasks - externalReviewTasks: " + (startC - startB) + "ms + " + (System.currentTimeMillis() - startC) + "ms");
+        }
+        if (specificList == null || LIST_LINKED_REVIEW.equals(specificList)) {
+            long startB = System.currentTimeMillis();
+            linkedReviewTasks = getDocumentSearchService().searchCurrentUsersTaskInProgressWithoutParents(WorkflowSpecificModel.Types.LINKED_REVIEW_TASK, false);
+            long startC = System.currentTimeMillis();
+            log.debug("loadTasks - linkedReviewTasks: " + (startC - startB) + "ms + " + (System.currentTimeMillis() - startC) + "ms");
         }
         if (specificList == null || LIST_CONFIRMATION.equals(specificList)) {
             long startB = System.currentTimeMillis();

@@ -13,6 +13,7 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.AssociationModel;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
+import ee.webmedia.alfresco.document.web.evaluator.DocumentNotInDraftsFunctionActionEvaluator;
 import ee.webmedia.alfresco.document.web.evaluator.RegisterDocumentEvaluator;
 import ee.webmedia.alfresco.document.web.evaluator.ViewStateActionEvaluator;
 
@@ -36,7 +37,7 @@ public abstract class BaseAddAssocEvaluator extends BaseActionEvaluator {
         if (docNode != null && !docNode.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)) {
             return false;
         }
-        if (docNode == null || !new ViewStateActionEvaluator().evaluate(docNode)) {
+        if (docNode == null || !new ViewStateActionEvaluator().evaluate(docNode) || !new DocumentNotInDraftsFunctionActionEvaluator().evaluate(docNode)) {
             return false;
         }
         DocumentType documentType = BeanHelper.getDocumentDynamicDialog().getDocumentType();

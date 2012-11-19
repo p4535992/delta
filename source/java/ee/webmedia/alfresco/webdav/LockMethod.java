@@ -251,7 +251,7 @@ public class LockMethod extends WebDAVMethod {
 
         // Lock the node
         lockService.lock(lockNode, LockType.WRITE_LOCK, getLockTimeout());
-        generatedFileDocumentLock(lockNode);
+        BeanHelper.getDocLockService().lockGeneratedFileDocument(lockNode);
 
         ((WebDAVCustomHelper) getDAVHelper()).getVersionsService().addVersionLockableAspect(lockNode);
         ((WebDAVCustomHelper) getDAVHelper()).getVersionsService().setVersionLockableAspect(lockNode, false);
@@ -288,18 +288,7 @@ public class LockMethod extends WebDAVMethod {
 
         // Update the expiry for the lock
         lockService.lock(lockNode, LockType.WRITE_LOCK, getLockTimeout());
-        generatedFileDocumentLock(lockNode);
-    }
-
-    private final void generatedFileDocumentLock(NodeRef lockNode) {
-        if (!BeanHelper.getFileService().isFileGenerated(lockNode)) {
-            return;
-        }
-
-        NodeRef docRef = BeanHelper.getGeneralService().getAncestorNodeRefWithType(lockNode, DocumentCommonModel.Types.DOCUMENT);
-        if (docRef != null) {
-            getLockService().lock(docRef, LockType.WRITE_LOCK, getLockTimeout());
-        }
+        BeanHelper.getDocLockService().lockGeneratedFileDocument(lockNode);
     }
 
     /**

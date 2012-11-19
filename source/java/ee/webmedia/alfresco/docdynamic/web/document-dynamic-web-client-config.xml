@@ -133,10 +133,43 @@
             </params>
          </action>
 
+         
+          <action id="document_show_link">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.DocumentSavedActionEvaluator</evaluator>
+            <label-id>document_show_url</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{DocumentDynamicDialog.showDocumentLink}</action-listener>
+         </action>
+
          <action-group id="subPropSheet_applicantAbroad_errandAbroad">
             <action idref="subPropSheet_applicantAbroad_errandAbroad_add" />
             <action idref="subPropSheet_applicantAbroad_errandAbroad_remove" />
-         </action-group>         
+         </action-group>
+         
+        <action id="subPropSheet_applicantTraining_add">
+            <label-id>subPropSheet_applicantTraining_add</label-id>
+            <tooltip-id>subPropSheet_applicantTraining_add_tooltip</tooltip-id>
+            <image>/images/icons/add_user.gif</image>
+            <action-listener>#{DocumentDynamicDialog.addChildNode}</action-listener>
+            <params>
+               <param name="childAssocTypeQNameHierarchy">docchild:applicantTraining</param>
+            </params>
+         </action>
+
+         <action id="subPropSheet_applicantTraining_remove">
+            <label-id>subPropSheet_applicantTraining_remove</label-id>
+            <tooltip-id>subPropSheet_applicantTraining_remove_tooltip</tooltip-id>
+            <image>/images/icons/remove_user.gif</image>
+            <action-listener>#{DocumentDynamicDialog.removeChildNode}</action-listener>
+            <params>
+               <param name="childAssocTypeQNameHierarchy">docchild:applicantTraining</param>
+            </params>
+         </action>
+
+         <action-group id="subPropSheet_applicantTraining">
+            <action idref="subPropSheet_applicantTraining_add" />
+            <action idref="subPropSheet_applicantTraining_remove" />
+         </action-group>  
 
          <action id="document_createFollowUpReport">
             <evaluator>ee.webmedia.alfresco.document.assocsdyn.web.AddFollowUpReportAssocEvaluator</evaluator>
@@ -151,6 +184,29 @@
             <image>/images/icons/versioned_properties.gif</image>
             <action-listener>#{DocumentDynamicDialog.createFollowUpErrandOrderAbroad}</action-listener>
          </action>
+         
+         <action id="document_send_for_information">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.DocumentSendForInformationEvaluator</evaluator>
+            <label-id>document_sendForInformation</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action>#{DocumentSendForInformationDialog.init}</action>
+            <action-listener>#{DocumentSendForInformationDialog.loadDocument}</action-listener>
+            <params><param name="documentNodeRef">#{DocumentDialogHelperBean.nodeRef}</param></params>
+         </action> 
+         
+         <action id="document_add_notification">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.DocumentAddNotificationEvaluator</evaluator>
+            <label-id>document_add_notification</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action>#{DocumentDynamicDialog.addNotification}</action>
+         </action>
+         
+         <action id="document_remove_notification">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.DocumentRemoveNotificationEvaluator</evaluator>
+            <label-id>document_remove_notification</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action>#{DocumentDynamicDialog.removeNotification}</action>
+         </action>                   
 
          <action-group id="document_dynamic_actions">
             <action idref="document_copy" />
@@ -170,6 +226,10 @@
             <action idref="document_createFollowUpReport" />
             <action idref="document_createFollowUpErrandOrderAbroad" />
             <action idref="document_changeByNewDocument" />
+            <action idref="document_show_link" />
+            <action idref="document_send_for_information" />
+            <action idref="document_add_notification" />
+            <action idref="document_remove_notification" />            
          </action-group>
 
       </actions>

@@ -5,28 +5,6 @@
 
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
-      
-      <%-- Document type --%>
-      <a:column id="col4" styleClass="#{r.cssStyleClass}" >
-         <f:facet name="header">
-            <a:sortLink id="col4-sort" label="#{msg.document_docType}" value="documentTypeName" styleClass="header" />
-         </f:facet>
-         <a:actionLink id="col4-text-1" value="#{r.documentTypeName}" action="#{DocumentDialog.action}" tooltip="#{r.docName}"
-            actionListener="#{DocumentDialog.open}" styleClass="no-underline" >
-            <f:param name="nodeRef" value="#{r.node.nodeRef}" />
-         </a:actionLink>
-      </a:column>
-      
-      <%-- Sender/Recipient --%>
-      <a:column id="col5" styleClass="#{r.cssStyleClass}" >
-         <f:facet name="header">
-            <a:sortLink id="col5-sort" label="#{msg.document_sender_recipient}" value="senderOrRecipients" styleClass="header" />
-         </f:facet>
-         <a:actionLink id="col5-text-1" value="#{r.senderOrRecipients}" action="#{DocumentDialog.action}" tooltip="#{r.docName}"
-            actionListener="#{DocumentDialog.open}" styleClass="condence20- tooltip no-underline" >
-            <f:param name="nodeRef" value="#{r.node.nodeRef}" />
-         </a:actionLink>
-      </a:column>
 
       <%-- Title --%>
       <a:column id="col6" styleClass="#{r.cssStyleClass}" >
@@ -44,8 +22,45 @@
          </a:actionLink>
       </a:column>
       
+      <%-- Document type --%>
+      <a:column id="col4" styleClass="#{r.cssStyleClass}" >
+         <f:facet name="header">
+            <a:sortLink id="col4-sort" label="#{msg.document_docType}" value="documentTypeName" styleClass="header" />
+         </f:facet>
+         <a:actionLink id="col4-text-1" value="#{r.documentTypeName}" action="#{DocumentDialog.action}" tooltip="#{r.docName}"
+            actionListener="#{DocumentDialog.open}" styleClass="no-underline" >
+            <f:param name="nodeRef" value="#{r.node.nodeRef}" />
+         </a:actionLink>
+      </a:column>
+      
+      <%-- Volume --%>
+      <a:column id="col3_2" primary="true" styleClass="#{r.cssStyleClass}" rendered="#{SearchBlockBean.documentVolumeColumnVisible}">
+         <f:facet name="header">
+            <a:sortLink id="col3_2-sort" label="#{msg.volume}" value="volume" styleClass="header" />
+         </f:facet>
+         <a:actionLink id="col3_2-link2cases" value="#{r.documentVolume.volumeMarkAndTitle}" action="dialog:caseDocListDialog" tooltip="#{r.documentVolume.volumeMarkAndTitle}"
+            showLink="false" actionListener="#{CaseDocumentListDialog.showAll}" rendered="#{r.documentVolume != null && !r.documentVolume.dynamic}" styleClass="tooltip condence20- no-underline" >
+            <f:param name="volumeNodeRef" value="#{r.documentVolume.node.nodeRef}" />
+         </a:actionLink>
+         <a:actionLink id="col3_2-caseFile" value="#{r.documentVolume.volumeMarkAndTitle}" tooltip="#{r.documentVolume.volumeMarkAndTitle}"
+            showLink="false" actionListener="#{CaseFileDialog.openFromDocumentList}" rendered="#{r.documentVolume != null && r.documentVolume.dynamic}" styleClass="tooltip condence20- no-underline" >
+            <f:param name="nodeRef" value="#{r.documentVolume.node.nodeRef}" />
+         </a:actionLink>
+      </a:column>
+      
+      <%-- Sender/Recipient --%>
+      <a:column id="col5" styleClass="#{r.cssStyleClass}" >
+         <f:facet name="header">
+            <a:sortLink id="col5-sort" label="#{msg.document_sender_recipient}" value="senderOrRecipients" styleClass="header" />
+         </f:facet>
+         <a:actionLink id="col5-text-1" value="#{r.sender}" action="#{DocumentDialog.action}" tooltip="#{r.docName}"
+            actionListener="#{DocumentDialog.open}" styleClass="condence20- tooltip no-underline" >
+            <f:param name="nodeRef" value="#{r.node.nodeRef}" />
+         </a:actionLink>
+      </a:column>
+      
       <%-- Workflow status --%>
-      <a:column id="col7" styleClass="#{r.cssStyleClass}" >
+      <a:column id="col7" styleClass="#{r.cssStyleClass}" rendered="#{WmWorkflowService.documentWorkflowEnabled}">
          <f:facet name="header">
             <a:sortLink id="col7-sort" label="#{msg.document_workflow_status}" value="workflowStatus" styleClass="header" />
          </f:facet>

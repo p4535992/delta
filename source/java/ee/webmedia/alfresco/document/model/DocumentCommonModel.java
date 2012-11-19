@@ -26,13 +26,16 @@ public interface DocumentCommonModel {
     QName MODEL = QName.createQName(DOCCOM_URI, "documentCommonModel");
 
     interface Repo {
-        String DRAFTS_PARENT = "/";
-        String DRAFTS_SPACE = DRAFTS_PARENT + DOCCOM_PREFIX + "drafts";
+        String PARENT = "/";
+        String DRAFTS_SPACE = PARENT + DOCCOM_PREFIX + "drafts";
+        String TEMP_FILES_SPACE = PARENT + DOCCOM_PREFIX + "tempFiles";
+        String WEB_SERVICE_SPACE = PARENT + DOCCOM_PREFIX + "webServiceReceived";
     }
 
     interface Types {
         QName DOCUMENT = QName.createQName(DOCCOM_URI, "document");
         QName DRAFTS = QName.createQName(DOCCOM_URI, "drafts");
+        QName TEMP_FILES = QName.createQName(DOCCOM_URI, "tempFiles");
         QName SEND_INFO = QName.createQName(DOCCOM_URI, "sendInfo");
         QName METADATA_CONTAINER = QName.createQName(DOCCOM_URI, "metadataContainer");
         QName FAVORITE_DIRECTORY = QName.createQName(DOCCOM_URI, "favoriteDirectory");
@@ -51,7 +54,10 @@ public interface DocumentCommonModel {
         QName FAVORITE_CONTAINER = QName.createQName(DOCCOM_URI, "favoriteContainer");
         QName FAVORITE_DIRECTORY_ASPECT = QName.createQName(DOCCOM_URI, "favoriteDirectoryAspect");// new
         QName FORUM_PARTICIPANTS = QName.createQName(DOCCOM_URI, "forumParticipants");
+        QName EMAIL_DATE_TIME = QName.createQName(DOCCOM_URI, "emailDateTime");
         QName DOCUMENT_REG_NUMBERS_CONTAINER = QName.createQName(DOCCOM_URI, "documentRegNumbersContainer");
+        /** Indicates that when deleting this document, it should not be archived */
+        QName DELETE_PERMANENT = QName.createQName(DOCCOM_URI, "deletePermanent");
     }
 
     interface Assocs {
@@ -63,6 +69,8 @@ public interface DocumentCommonModel {
         QName DOCUMENT_FOLLOW_UP = QName.createQName(DOCCOM_URI, "followUp");
         /** document(activeDoc) -> document(selectedAssociatedDoc) */
         QName DOCUMENT_2_DOCUMENT = QName.createQName(DOCCOM_URI, "document2Document");
+        /** document -> workflow */
+        QName WORKFLOW_DOCUMENT = QName.createQName(DOCCOM_URI, "workflowDocument");
         QName SEND_INFO = QName.createQName(DOCCOM_URI, "sendInfo");
         QName FAVORITE = QName.createQName(DOCCOM_URI, "favorite");
         QName FAVORITE_DIRECTORY = QName.createQName(DOCCOM_URI, "favoriteDirectory");
@@ -77,6 +85,7 @@ public interface DocumentCommonModel {
         QName VOLUME = QName.createQName(URI, "volume");
         QName CASE = QName.createQName(URI, "case");
 
+        QName DOCUMENT_IS_IMPORTED = QName.createQName(DOCCOM_URI, "documentIsImported");
         QName FILE_NAMES = QName.createQName(DOCCOM_URI, "fileNames");
         QName FILE_CONTENTS = QName.createQName(DOCCOM_URI, "fileContents");
         QName SEARCHABLE_SEND_MODE = QName.createQName(DOCCOM_URI, "searchableSendMode");
@@ -141,7 +150,13 @@ public interface DocumentCommonModel {
         QName SEND_INFO_SEND_STATUS = QName.createQName(DOCCOM_URI, "sendStatus");
         QName SEND_INFO_DVK_ID = QName.createQName(DOCCOM_URI, "dvkId");
 
+        /** Contains email Date header value for documents imported from Outlook */
+        QName EMAIL_DATE_TIME = QName.createQName(DOCCOM_URI, "emailDateTime");
+
         QName LEGAL_BASIS_NAME = QName.createQName(URI, "legalBasisName");
+
+        QName UPDATE_METADATA_IN_FILES = QName.createQName(DOCCOM_URI, "updateMetadataInFiles");
+
     }
 
     /**
@@ -155,6 +170,7 @@ public interface DocumentCommonModel {
         public static final String VIEW_DOCUMENT_META_DATA = "viewDocumentMetaData";
         public static final String EDIT_DOCUMENT = "editDocument";
         public static final String VIEW_DOCUMENT_FILES = "viewDocumentFiles";
+        public static final String CREATE_CASE_FILE = "createCaseFile";
         public static final String VIEW_CASE_FILE = "viewCaseFile";
         public static final String EDIT_CASE_FILE = "editCaseFile";
         /** when entry.key is added, then entry.values should be also added */

@@ -28,7 +28,6 @@ import ee.webmedia.alfresco.notification.service.NotificationService;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
-import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.BaseWorkflowObject;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
@@ -71,7 +70,7 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
         final List<WorkflowEvent> events = new ArrayList<WorkflowEvent>();
         events.addAll(queue.getEvents());
         final Task initiatingTask = queue.getParameter(WorkflowQueueParameter.ORDER_ASSIGNMENT_FINISH_TRIGGERING_TASK);
-
+        final List<NodeRef> groupAssignmentTasksFinishedAutomatically = queue.getParameter(WorkflowQueueParameter.TASKS_FINISHED_BY_GROUP_TASK);
         // Send notifications in background in separate thread.
         // TODO: Riina - implement correctly - save information about emails to send to repo to avoid loss of data, cl task 189285.
         // TODO: Alar - same for permissions.
@@ -79,13 +78,13 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
 
             @Override
             public Void doWork() throws Exception {
-                return WorkflowStatusEventListener.this.doWork(events, initiatingTask, sendNotifications);
+                return WorkflowStatusEventListener.this.doWork(events, initiatingTask, sendNotifications, groupAssignmentTasksFinishedAutomatically);
             }
 
         }, "workflowPermissionsAndNotifications", false);
     }
 
-    private Void doWork(final List<WorkflowEvent> events, final Task initiatingTask, final boolean sendNotifications) {
+    private Void doWork(final List<WorkflowEvent> events, final Task initiatingTask, final boolean sendNotifications, final List<NodeRef> groupAssignmentTasksFinishedAutomatically) {
         RetryingTransactionHelper txHelper = transactionService.getRetryingTransactionHelper();
         try {
             final Map<NodeRef, Map<String, Set<String>>> permissions = getPermissions(events);
@@ -106,7 +105,7 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
             txHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
                 @Override
                 public Void execute() throws Throwable {
-                    handleNotifications(events, initiatingTask);
+                    handleNotifications(events, initiatingTask, groupAssignmentTasksFinishedAutomatically);
                     return null;
                 }
             }, true, true);
@@ -120,11 +119,15 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
             BaseWorkflowObject object = event.getObject();
             if (object instanceof Task) {
                 Task task = (Task) object;
+                CompoundWorkflow compoundWorkflow = task.getParent().getParent();
+                if (!compoundWorkflow.isDocumentWorkflow()) {
+                    continue;
+                }
                 String taskOwnerId = task.getOwnerId();
                 if (StringUtils.isNotBlank(taskOwnerId) && event.getType().equals(WorkflowEventType.STATUS_CHANGED) && task.isStatus(Status.IN_PROGRESS)) {
                     Workflow workflow = task.getParent();
                     NodeRef docRef = workflow.getParent().getParent();
-                    Set<String> requiredPrivileges = PrivilegeUtil.getRequiredPrivsForInprogressTask(task, docRef, fileService);
+                    Set<String> requiredPrivileges = PrivilegeUtil.getRequiredPrivsForInprogressTask(task, docRef, fileService, false);
                     if (!requiredPrivileges.isEmpty()) {
                         Map<String, Set<String>> permissionsByDocRef = permissions.get(docRef);
                         if (permissionsByDocRef == null) {
@@ -167,47 +170,17 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
         return;
     }
 
-    private void handleNotifications(final List<WorkflowEvent> events, final Task initiatingTask) {
+    private void handleNotifications(final List<WorkflowEvent> events, final Task initiatingTask, List<NodeRef> groupAssignmentTasksFinishedAutomatically) {
         for (WorkflowEvent event : events) {
             BaseWorkflowObject object = event.getObject();
             if (object instanceof CompoundWorkflow) {
                 handleCompoundWorkflowNotifications(event);
-            }
-            if (object instanceof Workflow) {
+            } else if (object instanceof Workflow) {
                 handleWorkflowNotifications(event);
-            }
-            if (object instanceof Task) {
-                Task task = (Task) event.getObject();
-                if (task.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK) && task.isStatus(Status.FINISHED)) {
-                    Boolean sendEmail = task.getProp(WorkflowSpecificModel.Props.SEND_ORDER_ASSIGNMENT_COMPLETED_EMAIL);
-                    if (initiatingTask == null || initiatingTask.getNodeRef().equals(task.getNodeRef())
-                            || !initiatingTask.getParent().getNodeRef().equals(task.getParent().getNodeRef())
-                            || (sendEmail != null && !Boolean.TRUE.equals(sendEmail))) {
-                        continue;
-                    }
-                }
-                handleTaskNotifications(event);
+            } else if (object instanceof Task) {
+                handleTaskNotifications(event, groupAssignmentTasksFinishedAutomatically, initiatingTask);
             }
         }
-    }
-
-    public boolean getSendNotifications(WorkflowEvent event, WorkflowEventQueue queue) {
-        boolean sendNotifications = !Boolean.TRUE.equals(queue
-                .getParameter(WorkflowQueueParameter.TRIGGERED_BY_FINISHING_EXTERNAL_REVIEW_TASK_ON_CURRENT_SYSTEM));
-        if (sendNotifications && event.getObject() instanceof Task) {
-            Task task = (Task) event.getObject();
-            if (task.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK) && task.isStatus(Status.FINISHED)) {
-                Task initiatingTask = queue.getParameter(WorkflowQueueParameter.ORDER_ASSIGNMENT_FINISH_TRIGGERING_TASK);
-                Boolean sendEmail = task.getProp(WorkflowSpecificModel.Props.SEND_ORDER_ASSIGNMENT_COMPLETED_EMAIL);
-                if (initiatingTask == null || initiatingTask.getNodeRef().equals(task.getNodeRef())
-                        || !initiatingTask.getParent().getNodeRef().equals(task.getParent().getNodeRef())
-                        || (sendEmail != null && !Boolean.TRUE.equals(sendEmail))) {
-                    sendNotifications = false;
-                }
-            }
-        }
-
-        return sendNotifications;
     }
 
     private void refreshMenuTaskCount() {
@@ -219,12 +192,13 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
         }
     }
 
-    private void handleTaskNotifications(WorkflowEvent event) {
-
+    private void handleTaskNotifications(WorkflowEvent event, List<NodeRef> groupAssignmentTasksFinishedAutomatically, Task orderAssignmentFinishTriggeringTask) {
         Task task = (Task) event.getObject();
         if (event.getType().equals(WorkflowEventType.STATUS_CHANGED)) {
             if (!task.isStatus(Status.UNFINISHED)) {
-                notificationService.notifyTaskEvent(task);
+                boolean isGroupAssignmentTaskFinishedAutomatically = groupAssignmentTasksFinishedAutomatically != null
+                        && groupAssignmentTasksFinishedAutomatically.contains(task.getNodeRef());
+                notificationService.notifyTaskEvent(task, isGroupAssignmentTaskFinishedAutomatically, orderAssignmentFinishTriggeringTask);
             } else {
                 boolean cancelledManually = event.getExtras() != null && event.getExtras().contains(WorkflowQueueParameter.WORKFLOW_CANCELLED_MANUALLY);
                 notificationService.notifyTaskUnfinishedEvent(task, cancelledManually);
@@ -239,12 +213,18 @@ public class WorkflowStatusEventListener implements WorkflowMultiEventListener, 
             notificationService.notifyWorkflowEvent(workflow, event.getType());
         } else if (event.getType().equals(WorkflowEventType.WORKFLOW_STARTED_AUTOMATICALLY)) {
             notificationService.notifyWorkflowEvent(workflow, event.getType());
+        } else if (event.getType().equals(WorkflowEventType.WORKFLOW_STOPPED_AUTOMATICALLY)) {
+            notificationService.notifyCompoundWorkflowStoppedAutomatically(workflow);
         }
 
     }
 
     private void handleCompoundWorkflowNotifications(WorkflowEvent event) {
-
+        CompoundWorkflow compoundWorkflow = (CompoundWorkflow) event.getObject();
+        if (!WorkflowEventType.STATUS_CHANGED.equals(event.getType()) || compoundWorkflow.isDocumentWorkflow()) {
+            return;
+        }
+        notificationService.notifyCompoundWorkflowEvent(event);
     }
 
     // START: getters/setters

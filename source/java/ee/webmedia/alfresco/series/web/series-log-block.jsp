@@ -7,8 +7,17 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
+<h:panelGroup id="log-panel-facets" styleClass="nonfloating-element" >
+   <f:facet name="title">
+      <a:actionLink image="/images/icons/version_history.gif" id="log-details-link" showLink="false" tooltip="#{msg.compoundWorkflow_view_log_details}" value="" 
+         actionListener="#{ApplicationLogDialog.searchSeriesEntries}" action="dialog:applicationLogListDialog" rendered="#{LogBlockBean.showLogDetailsLink}" >
+         <f:param id="log-details-link-param" name="seriesRef" value="#{LogBlockBean.parentRef}" />
+      </a:actionLink>
+   </f:facet>
+</h:panelGroup>
+
 <a:panel id="series-block-block-panel" label="#{msg.series_log_title}" styleClass="panel-100 with-pager" progressive="true" rendered="#{LogBlockBean.rendered}"
-   expanded="false">
+   expanded="false" facetsId="dialog:dialog-body:log-panel-facets">
 
    <a:richList id="logList" viewMode="details" value="#{LogBlockBean.logs}" var="r" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
       width="100%" refreshOnBind="true" pageSize="#{BrowseBean.pageSizeContent}" initialSortColumn="createdDateTime">

@@ -161,10 +161,6 @@
       <managed-bean-class>ee.webmedia.alfresco.document.file.web.FileBlockBean</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
       <managed-property>
-         <property-name>fileService</property-name>
-         <value>#{FileService}</value>
-      </managed-property>
-      <managed-property>
          <property-name>navigationBean</property-name>
          <value>#{NavigationBean}</value>
       </managed-property>
@@ -273,10 +269,6 @@
       <managed-bean-name>DeleteAssocDialog</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.document.associations.web.DeleteAssocDialog</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
-      <managed-property>
-         <property-name>documentService</property-name>
-         <value>#{DocumentService}</value>
-      </managed-property>
    </managed-bean>
 
    <managed-bean>
@@ -363,5 +355,10 @@
       <converter-id>ee.webmedia.alfresco.document.type.web.DocumentTypeConverter</converter-id>
       <converter-class>ee.webmedia.alfresco.document.type.web.DocumentTypeConverter</converter-class>
    </converter>
+   
+   <converter>
+      <converter-id>ee.webmedia.alfresco.document.type.web.CaseFileTypeConverter</converter-id>
+      <converter-class>ee.webmedia.alfresco.document.type.web.CaseFileTypeConverter</converter-class>
+   </converter>   
 
 </faces-config>

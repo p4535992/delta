@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.alfresco.util.Pair;
 
+import ee.webmedia.alfresco.common.model.DynamicBase;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
@@ -14,8 +15,6 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
  */
 public interface SaveListener {
 
-    // XXX make document class more general, so this system could be used on other types of objects?
-
     String getBeanName();
 
     /**
@@ -25,13 +24,13 @@ public interface SaveListener {
      * @throws UnableToPerformException throw an exception if you wish to cancel saving; then all other error messages added using validationHelper, even by any other
      *             SaveListeners, are ignored.
      */
-    void validate(DocumentDynamic document, ValidationHelper validationHelper);
+    void validate(DynamicBase document, ValidationHelper validationHelper);
 
     /**
      * @param document
      * @throws UnableToPerformException throw an exception if you wish to cancel saving.
      */
-    void save(DocumentDynamic document);
+    void save(DynamicBase document);
 
     interface ValidationHelper {
 

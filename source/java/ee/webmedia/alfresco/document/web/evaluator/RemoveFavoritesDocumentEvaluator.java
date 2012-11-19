@@ -21,10 +21,7 @@ public class RemoveFavoritesDocumentEvaluator extends BaseActionEvaluator {
         if (!viewStateEval.evaluate(docNode)) {
             return false;
         }
-        if (BeanHelper.getDocumentService().isFavorite(docNode.getNodeRef()) != null) {
-            return true;
-        }
-        return false;
+        return BeanHelper.getDocumentFavoritesService().isFavorite(docNode.getNodeRef()) != null;
     }
 
 }

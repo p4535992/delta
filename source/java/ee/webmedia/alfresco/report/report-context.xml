@@ -54,7 +54,11 @@
       <property name="fileService" ref="FileService" />
       <property name="transactionService" ref="TransactionService" />
       <property name="sendOutService" ref="SendOutService" />
+      <property name="caseFileService" ref="CaseFileService" />
+      <property name="functionsService" ref="FunctionsService" />
+      <property name="seriesService" ref="SeriesService" />
       <property name="reportGenerationEnabled" value="${jobs.enabled}" />
+      <property name="usableByAdminDocManagerOnly" value="${conf.reports.usableByAdminDocManagerOnly}" />
    </bean>
 
    <bean id="ReportService" class="org.springframework.aop.framework.ProxyFactoryBean">

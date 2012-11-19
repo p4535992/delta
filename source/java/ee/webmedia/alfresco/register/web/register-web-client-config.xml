@@ -29,7 +29,7 @@
       <property-sheet>
          <show-property name="reg:id" read-only="true" display-label-id="id" />
          <show-property name="reg:name" display-label-id="register_name" styleClass="focus"/>
-         <show-property name="reg:counter" readOnlyIf="#{RegisterDetailsDialog.isCounterReadOnly}" display-label-id="register_counter" />
+         <show-property name="reg:counter" readOnlyIf="#{RegisterDetailsDialog.isCounterReadOnly}" forcedMandatory="true" display-label-id="register_counter" converter="ee.webmedia.alfresco.common.web.ConvertIntWithMsg"/>
          <show-property name="reg:comment" display-label-id="register_comment" styleClass="expand19-200" />
          <show-property name="reg:active" display-label-id="register_active" />
          <show-property name="reg:autoReset" display-label-id="register_autoReset" />

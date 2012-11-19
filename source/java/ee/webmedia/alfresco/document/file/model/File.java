@@ -35,6 +35,7 @@ public class File implements Serializable, IClonable<File> {
     private String modifier;
     private String encoding;
     private String mimeType;
+    private String comment;
     private long size;
     private Date created;
     private Date modified;
@@ -47,6 +48,7 @@ public class File implements Serializable, IClonable<File> {
     private boolean generated;
     private boolean active;
     private boolean isTransformableToPdf;
+    private boolean convertToPdfIfSigned; //
     private long nrOfChildren; // used to show childCount if the file represents folder
     private boolean isPdf;
     public static FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy HH:mm");
@@ -74,6 +76,7 @@ public class File implements Serializable, IClonable<File> {
         modifier = "";
         generated = fileProps.get(FileModel.Props.GENERATED_FROM_TEMPLATE) != null || fileProps.get(FileModel.Props.GENERATION_TYPE) != null;
         active = (fileProps.get(ACTIVE) == null) ? true : Boolean.parseBoolean(fileProps.get(ACTIVE).toString());
+        convertToPdfIfSigned = Boolean.TRUE.equals(fileProps.get(FileModel.Props.CONVERT_TO_PDF_IF_SIGNED));
     }
 
     public String getName() {
@@ -110,6 +113,14 @@ public class File implements Serializable, IClonable<File> {
 
     public String getModifier() {
         return modifier;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
+    public String getComment() {
+        return comment;
     }
 
     public void setModifier(String modifier) {
@@ -196,6 +207,14 @@ public class File implements Serializable, IClonable<File> {
 
     public void setDigiDocContainer(boolean digiDocContainer) {
         this.digiDocContainer = digiDocContainer;
+    }
+
+    public NodeRef getCompoundWorkflowRef() {
+        return (NodeRef) getNode().getProperties().get(FileModel.Props.COMPOUND_WORKFLOW);
+    }
+
+    public NodeRef getGeneratedFileRef() {
+        return (NodeRef) getNode().getProperties().get(FileModel.Props.GENERATED_FILE);
     }
 
     public boolean isVersionable() {
@@ -304,5 +323,18 @@ public class File implements Serializable, IClonable<File> {
         file.setModified((Date) modified.clone());
         file.setNode(new Node(nodeRef));
         return file;
+    }
+
+    public void setConvertToPdfIfSigned(boolean isConvertToPdfIfSigned) {
+        convertToPdfIfSigned = isConvertToPdfIfSigned;
+    }
+
+    public boolean isConvertToPdfIfSigned() {
+        return convertToPdfIfSigned;
+    }
+
+    public boolean getConvertToPdfIfSignedFromProps() {
+        Boolean convertToPdf = node != null ? Boolean.TRUE.equals(node.getProperties().get(FileModel.Props.CONVERT_TO_PDF_IF_SIGNED)) : false;
+        return convertToPdf != null ? convertToPdf : false;
     }
 }

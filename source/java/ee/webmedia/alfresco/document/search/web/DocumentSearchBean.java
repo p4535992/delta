@@ -24,10 +24,12 @@ public class DocumentSearchBean implements Serializable {
     private static final long serialVersionUID = 1L;
     public static final String BEAN_NAME = "DocumentSearchBean";
 
-    private List<SelectItem> documentTypes;
+    // this is used as value list for multiselect, so initial value null would generate error
+    private List<SelectItem> documentTypes = new ArrayList<SelectItem>();
 
     public void reset() {
-        documentTypes = null;
+        // this is used as value list for multiselect, so initial value null would generate error
+        documentTypes = new ArrayList<SelectItem>();
     }
 
     /**
@@ -43,7 +45,7 @@ public class DocumentSearchBean implements Serializable {
     // START: getters / setters
 
     public List<SelectItem> getDocumentTypes() {
-        if (documentTypes == null) {
+        if (documentTypes == null || documentTypes.isEmpty()) {
             getDocumentTypeListItems();
         }
         return documentTypes;

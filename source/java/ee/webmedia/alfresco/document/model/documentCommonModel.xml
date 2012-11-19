@@ -22,15 +22,25 @@
       <type name="doccom:document">
          <parent>cm:folder</parent>
          <archive>true</archive>
-         <!-- TODO FIXME Temporary properties for CL 188299 -->
          <properties>
+            <!-- TODO FIXME Should be safe to remove this now, but first check that CL 188299 works without it -->
             <property name="docdyn:regDateTime">
                <type>d:datetime</type>
             </property>
+            <!-- TODO FIXME Should be safe to remove this now, but first check that CL 188299 works without it -->
             <property name="docdyn:accessRestrictionBeginDate">
                <type>d:date</type>
-            </property><property name="docdyn:accessRestrictionEndDate">
+            </property>
+            <!-- TODO FIXME Should be safe to remove this now, but first check that CL 188299 works without it -->
+            <property name="docdyn:accessRestrictionEndDate">
                <type>d:date</type>
+            </property>
+            <property name="doccom:documentIsImported">
+               <type>d:boolean</type>
+            </property>
+            <property name="doccom:updateMetadataInFiles">
+               <type>d:boolean</type>
+               <default>true</default>
             </property>
          </properties>
          <associations>
@@ -67,6 +77,20 @@
                   <many>true</many>
                </target>
             </association>
+            <!-- This association should be more logically defined in workflowCommonModel, 
+               as it represent one independent workflow referring to multiple documents, not vice versa, 
+               but due to model import limitations it is defined here -->
+            <association name="doccom:workflowDocument"> 
+               <source>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </source>
+               <target>
+                  <class>wfc:compoundWorkflow</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </association>              
             <child-association name="doccom:sendInfo">
                <source>
                   <mandatory>true</mandatory>
@@ -112,7 +136,11 @@
          </mandatory-aspects>
       </type>
 
-      <type name="doccom:drafts">
+      <type name="doccom:tempFiles">
+         <parent>cm:folder</parent>
+      </type>
+
+      <type name="doccom:drafts"> <!-- To avoid circular dependency, cf:caseFileContainer aspect is added with AddCaseFileContainerAspectToDrafts updater -->
          <parent>sys:base</parent>
          <mandatory-aspects>
             <aspect>doccom:documentContainer</aspect>
@@ -214,6 +242,17 @@
                   <many>true</many>
                </target>
             </association>
+            <association name="wfc:favorite">
+               <source>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </source>
+               <target>
+                  <class>wfc:compoundWorkflow</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </association>            
          </associations>
       </aspect>
       
@@ -257,7 +296,7 @@
             </child-association>
          </associations>
       </aspect>
-
+      
       <!-- Duplicates some information on document for search purposes -->
       <aspect name="doccom:searchable">
          <properties>
@@ -542,6 +581,24 @@
          <properties>
             <property name="doccom:legalBasisName">
                <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+      
+      <aspect name="doccom:emailDateTime">
+         <properties>
+            <property name="doccom:emailDateTime">
+               <type>d:date</type>
+            </property>
+         </properties>
+      </aspect>
+      
+      <!-- Indicates that when deleting this document, it should not be archived -->
+      <aspect name="doccom:deletePermanent">
+         <properties>
+            <property name="doccom:deletePermanent">
+               <type>d:boolean</type>
+               <default>true</default>
             </property>
          </properties>
       </aspect>      

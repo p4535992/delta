@@ -1,21 +1,25 @@
 package ee.webmedia.alfresco.log.model;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
+
 import java.io.Serializable;
 import java.util.Date;
 
-import org.alfresco.i18n.I18NUtil;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.log.LogHelper;
+import ee.webmedia.alfresco.log.service.LogListItem;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Entity object for storing log table data.
  * 
  * @author Martti Tamm
  */
-public class LogEntry implements Serializable {
+public class LogEntry implements Serializable, LogListItem {
 
     private static final long serialVersionUID = 1L;
 
@@ -58,6 +62,7 @@ public class LogEntry implements Serializable {
         this.level = level;
     }
 
+    @Override
     public Date getCreatedDateTime() {
         return createdDateTime;
     }
@@ -66,6 +71,7 @@ public class LogEntry implements Serializable {
         this.createdDateTime = createdDateTime;
     }
 
+    @Override
     public String getCreatorName() {
         return creatorName;
     }
@@ -114,6 +120,7 @@ public class LogEntry implements Serializable {
         this.objectName = objectName;
     }
 
+    @Override
     public String getEventDescription() {
         return description;
     }
@@ -176,8 +183,13 @@ public class LogEntry implements Serializable {
      * @return A new log entry based on given data.
      */
     public static LogEntry create(LogObject object, String userId, String userName, NodeRef nodeRef, String msgCode, Object... params) {
-        String desc = I18NUtil.getMessage(msgCode, params);
+        String desc = MessageUtil.getMessage(msgCode, params);
         return createLoc(object, userId, userName, nodeRef, desc);
+    }
+
+    public static LogEntry createWithSystemUser(LogObject object, NodeRef nodeRef, String msgCode, Object... params) {
+        String desc = MessageUtil.getMessage(msgCode, params);
+        return createLoc(object, null, null, nodeRef, desc);
     }
 
     /**
@@ -197,8 +209,16 @@ public class LogEntry implements Serializable {
         result.level = object.getLevel();
         result.objectName = object.getObjectName();
         result.objectId = nodeRef != null ? nodeRef.toString() : null;
-        result.description = desc;
+        result.description = desc + result.getSubstitutionLog();
         LogHelper.update(result);
         return result;
+    }
+
+    private String getSubstitutionLog() {
+        String runAsUser = AuthenticationUtil.getRunAsUser();
+        if (runAsUser == null || runAsUser.equals(getUserService().getCurrentUserName())) {
+            return "";
+        }
+        return " " + MessageUtil.getMessage("applog_log_subtitution", getUserService().getUserFullName(runAsUser), runAsUser);
     }
 }

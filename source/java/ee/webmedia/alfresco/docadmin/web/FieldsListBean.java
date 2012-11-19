@@ -62,6 +62,9 @@ public class FieldsListBean implements DialogBlockBean<Void> {
 
     public List<? extends MetadataItem> getMetaFieldsList() {
         BaseObject metaContainerObject = (BaseObject) metadataContainer;
+        if (metaContainerObject == null) {
+            return Collections.emptyList();
+        }
         if (metaContainerObject.getPropBoolean(BaseService.CHILDREN_NOT_LOADED)) {
             // manually lazy loading children
             getBaseService().loadChildren(metaContainerObject, null);

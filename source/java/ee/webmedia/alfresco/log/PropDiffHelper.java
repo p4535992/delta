@@ -152,19 +152,21 @@ public class PropDiffHelper {
         return result;
     }
 
-    private String value(QName prop, Object value, String defaultStr) {
-        if (value instanceof Date && propDateTimes.contains(prop)) {
-            return DATE_TIME_FORMAT.format((Date) value);
-        }
-        if (value instanceof String && propEnums.containsKey(prop) && StringUtils.isNotBlank((String) value)) {
-            @SuppressWarnings("rawtypes")
-            Class c = propEnums.get(prop);
-            try {
-                @SuppressWarnings({ "unchecked", "rawtypes" })
-                Enum e = Enum.valueOf(c, (String) value);
-                return MessageUtil.getMessage(e);
-            } catch (IllegalArgumentException ex) {
-                return (String) value;
+    public String value(QName prop, Object value, String defaultStr) {
+        if (prop != null) {
+            if (value instanceof Date && propDateTimes.contains(prop)) {
+                return DATE_TIME_FORMAT.format((Date) value);
+            }
+            if (value instanceof String && propEnums.containsKey(prop) && StringUtils.isNotBlank((String) value)) {
+                @SuppressWarnings("rawtypes")
+                Class c = propEnums.get(prop);
+                try {
+                    @SuppressWarnings({ "unchecked", "rawtypes" })
+                    Enum e = Enum.valueOf(c, (String) value);
+                    return MessageUtil.getMessage(e);
+                } catch (IllegalArgumentException ex) {
+                    return (String) value;
+                }
             }
         }
         return value(value, defaultStr);

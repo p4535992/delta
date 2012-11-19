@@ -7,6 +7,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
+import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.volume.model.DeletedDocument;
 import ee.webmedia.alfresco.volume.model.Volume;
 
@@ -47,7 +48,7 @@ public interface VolumeService {
 
     Volume getVolumeByNodeRef(NodeRef volumeRef);
 
-    Node getVolumeNodeByRef(NodeRef volumeNodeRef);
+    WmNode getVolumeNodeByRef(NodeRef volumeNodeRef);
 
     /**
      * @param seriesNodeRef
@@ -62,13 +63,15 @@ public interface VolumeService {
      * 
      * @param volume
      */
-    void closeVolume(Volume volume);
+    void closeVolume(NodeRef volumeRef);
 
     boolean isClosed(Node volumeNode);
 
     boolean isCaseVolumeEnabled();
 
     void openVolume(Volume volume);
+
+    void delete(Volume volume);
 
     boolean isOpened(Node node);
 

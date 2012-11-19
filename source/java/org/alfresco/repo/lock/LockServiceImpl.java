@@ -35,6 +35,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.faces.context.FacesContext;
+import javax.servlet.ServletRequest;
+import javax.servlet.http.HttpSession;
+
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.copy.CopyBehaviourCallback;
 import org.alfresco.repo.copy.CopyDetails;
@@ -47,6 +51,7 @@ import org.alfresco.repo.policy.PolicyScope;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.tenant.TenantService;
 import org.alfresco.repo.version.VersionServicePolicies;
+import org.alfresco.repo.webdav.WebDAVMethod;
 import org.alfresco.service.cmr.lock.LockService;
 import org.alfresco.service.cmr.lock.LockStatus;
 import org.alfresco.service.cmr.lock.LockType;
@@ -65,6 +70,8 @@ import org.alfresco.service.cmr.security.OwnableService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 
+import ee.webmedia.alfresco.document.file.model.FileModel;
+
 /**
  * Simple Lock service implementation
  * 
@@ -78,6 +85,8 @@ public class LockServiceImpl implements LockService,
                                         VersionServicePolicies.BeforeCreateVersionPolicy,
                                         VersionServicePolicies.OnCreateVersionPolicy
 {
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(LockServiceImpl.class);
+
     /**
      * The node service
      */
@@ -112,7 +121,7 @@ public class LockServiceImpl implements LockService,
     /**
      * The search service
      */
-    private SearchService searchService;
+    protected SearchService searchService;
 
     /**
      * Set the node service
@@ -258,7 +267,8 @@ public class LockServiceImpl implements LockService,
             {
                 // Set the current user as the lock owner
                 this.nodeService.setProperty(nodeRef, ContentModel.PROP_LOCK_OWNER, userName);
-                this.nodeService.setProperty(nodeRef, ContentModel.PROP_LOCK_TYPE, lockType.toString());                
+                this.nodeService.setProperty(nodeRef, ContentModel.PROP_LOCK_TYPE, lockType.toString());
+                this.nodeService.setProperty(nodeRef, FileModel.Props.LOCKED_FILE_NODEREF, null); // Reset the potential generated file induced lock
                 setExpiryDate(nodeRef, timeToExpire);
             } 
             finally
@@ -337,6 +347,7 @@ public class LockServiceImpl implements LockService,
             // Clear the lock owner
             this.nodeService.setProperty(nodeRef, ContentModel.PROP_LOCK_OWNER, null);
             this.nodeService.setProperty(nodeRef, ContentModel.PROP_LOCK_TYPE, null);
+            this.nodeService.setProperty(nodeRef, FileModel.Props.LOCKED_FILE_NODEREF, null); // Reset the potential generated file induced lock
         }
         finally
         {
@@ -401,10 +412,11 @@ public class LockServiceImpl implements LockService,
         if (this.nodeService.hasAspect(nodeRef, ContentModel.ASPECT_LOCKABLE) == true)
         {
             // Get the current lock owner
-            String currentUserRef = (String) this.nodeService.getProperty(nodeRef, ContentModel.PROP_LOCK_OWNER);
+            String currentUserRef = getUserNameAndSession((String) this.nodeService.getProperty(nodeRef, ContentModel.PROP_LOCK_OWNER));
             String owner = ownableService.getOwner(nodeRef);
             if (currentUserRef != null)
             {
+                LOG.info("Getting lock status for " + userName + " on " + nodeRef + " with " + currentUserRef + ". Owner = " + owner);
                 Date expiryDate = (Date)this.nodeService.getProperty(nodeRef, ContentModel.PROP_EXPIRY_DATE);
                 if (expiryDate != null && expiryDate.before(new Date()) == true)
                 {
@@ -607,7 +619,34 @@ public class LockServiceImpl implements LockService,
      */
     protected String getUserName()
     {
-        return this.authenticationService.getCurrentUserName();
+        String currentUser = authenticationService.getCurrentUserName();
+        return getUserNameAndSession(currentUser);
+    }
+
+    protected String getUserNameAndSession(String userName)
+    {
+        if (userName == null) {
+            userName = authenticationService.getCurrentUserName();
+        } else if (userName.indexOf('_') > -1) {
+            return userName;
+        }
+
+        if (FacesContext.getCurrentInstance() == null) {
+            return userName;
+        }
+
+        String sessionIdentifier = "";
+
+        String ticket = (String) ((ServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest()).getAttribute(WebDAVMethod.PARAM_TICKET);
+        if (ticket != null) {
+            sessionIdentifier = ticket;
+        } else {
+            final HttpSession httpSession = (HttpSession) FacesContext.getCurrentInstance().getExternalContext().getSession(false);
+            sessionIdentifier = (httpSession == null ? "" : httpSession.getId());
+        }
+
+        String userNameWithSessionId = userName + "_" + sessionIdentifier;
+        return userNameWithSessionId;
     }
 
     /**
@@ -653,6 +692,7 @@ public class LockServiceImpl implements LockService,
     /**
      * @see org.alfresco.service.cmr.lock.LockService#getLocks(org.alfresco.service.cmr.lock.LockType)
      */
+    @Override
     public List<NodeRef> getLocks(StoreRef storeRef, LockType lockType)
     {
         return getLocks(

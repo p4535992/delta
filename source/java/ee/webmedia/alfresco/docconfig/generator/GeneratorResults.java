@@ -13,6 +13,8 @@ public interface GeneratorResults {
 
     void addItem(ItemConfigVO item);
 
+    void addItemAfterPregeneratedItem(ItemConfigVO item);
+
     void addStateHolder(String key, PropertySheetStateHolder stateHolder);
 
     boolean hasStateHolder(String key);

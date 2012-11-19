@@ -1,13 +1,10 @@
 package ee.webmedia.alfresco.document.web.evaluator;
 
-import javax.faces.context.FacesContext;
-
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
-import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 
 /**
  * @author Alar Kvell
@@ -24,11 +21,7 @@ public class AddFavoritesDocumentEvaluator extends BaseActionEvaluator {
         if (!viewStateEval.evaluate(docNode)) {
             return false;
         }
-
-        FacesContext context = FacesContext.getCurrentInstance();
-        DocumentService documentService = (DocumentService) FacesContextUtils.getRequiredWebApplicationContext(//
-                context).getBean(DocumentService.BEAN_NAME);
-        return documentService.isFavoriteAddable(docNode.getNodeRef());
+        return BeanHelper.getDocumentFavoritesService().isFavoriteAddable(docNode.getNodeRef());
     }
 
 }

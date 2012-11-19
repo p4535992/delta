@@ -9,6 +9,7 @@ import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigEle
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
+import ee.webmedia.alfresco.docadmin.service.DynamicType;
 import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
 
 /**
@@ -20,7 +21,7 @@ public class DocumentConfig implements Serializable {
     private final WMPropertySheetConfigElement propertySheetConfigElement;
     private final Map<String, PropertySheetStateHolder> stateHolders;
     private final List<String> saveListenerBeanNames;
-    private final DocumentType docType;
+    private final DynamicType dynamicType;
     private final DocumentTypeVersion docVersion;
 
     public DocumentConfig(WMPropertySheetConfigElement propertySheetConfigElement, Map<String, PropertySheetStateHolder> stateHolders
@@ -28,7 +29,7 @@ public class DocumentConfig implements Serializable {
         this.propertySheetConfigElement = propertySheetConfigElement;
         this.stateHolders = stateHolders;
         this.saveListenerBeanNames = saveListenerBeanNames;
-        docType = docVersion == null ? null : (DocumentType) docVersion.getParent();
+        dynamicType = docVersion == null ? null : (DynamicType) docVersion.getParent();
         this.docVersion = docVersion;
     }
 
@@ -45,15 +46,15 @@ public class DocumentConfig implements Serializable {
     }
 
     public String getDocumentTypeName() {
-        return docType != null ? docType.getName() : null;
+        return dynamicType != null ? dynamicType.getName() : null;
     }
 
     public boolean isDocumentTypeRegistrationEnabled() {
-        return docType != null ? docType.isRegistrationEnabled() : null;
+        return dynamicType != null && dynamicType instanceof DocumentType ? ((DocumentType) dynamicType).isRegistrationEnabled() : null;
     }
 
-    public DocumentType getDocType() {
-        return docType;
+    public DynamicType getDocType() {
+        return dynamicType;
     }
 
     public DocumentTypeVersion getDocVersion() {

@@ -1471,6 +1471,8 @@
         <property name="mappedNames">
             <list>
                 <value>synchronize</value>
+                <value>createOrUpdatePersonByUsername</value>
+                <value>createOrUpdatePersonByIdCode</value>
             </list>
         </property>
     </bean>

@@ -76,6 +76,7 @@ public class ChildNodeChangeInfo {
         Map<QName, ChildNodeChangeInfo> childrenMap = new HashMap<QName, ChildNodeChangeInfo>(5, 1);
         childrenMap.put(DocumentChildModel.Assocs.APPLICANT_ABROAD, ChildNodeChangeInfo.APPLICANT);
         childrenMap.put(DocumentChildModel.Assocs.APPLICANT_DOMESTIC, ChildNodeChangeInfo.APPLICANT);
+        childrenMap.put(DocumentChildModel.Assocs.APPLICANT_TRAINING, ChildNodeChangeInfo.APPLICANT);
         childrenMap.put(DocumentChildModel.Assocs.ERRAND_ABROAD, ChildNodeChangeInfo.ERRAND);
         childrenMap.put(DocumentChildModel.Assocs.ERRAND_DOMESTIC, ChildNodeChangeInfo.ERRAND);
         childrenMap.put(DocumentChildModel.Assocs.CONTRACT_PARTY, ChildNodeChangeInfo.PARTY);

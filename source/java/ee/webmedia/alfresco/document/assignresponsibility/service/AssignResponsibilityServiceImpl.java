@@ -21,20 +21,33 @@ public class AssignResponsibilityServiceImpl implements AssignResponsibilityServ
     private UserService userService;
 
     @Override
-    public void changeOwnerOfAllDocumentsAndTasks(String fromOwnerId, String toOwnerId, boolean isLeaving) {
+    public void changeOwnerOfAllDesignatedObjects(String fromOwnerId, String toOwnerId, boolean isLeaving) {
         if (log.isDebugEnabled()) {
             log.debug("Assigning responsibility of working documents and new tasks from " + fromOwnerId + " to " + toOwnerId);
         }
         long startTime = System.currentTimeMillis();
-        List<NodeRef> documents = documentSearchService.searchWorkingDocumentsByOwnerId(fromOwnerId, !isLeaving);
         String newOwnerId = (isLeaving) ? toOwnerId : fromOwnerId;
+
+        List<NodeRef> documents = documentSearchService.searchWorkingDocumentsByOwnerId(fromOwnerId, !isLeaving);
         for (NodeRef document : documents) {
             documentDynamicService.setOwner(document, newOwnerId, isLeaving);
         }
+
         List<NodeRef> tasks = documentSearchService.searchNewTasksByOwnerId(fromOwnerId, !isLeaving);
         for (NodeRef task : tasks) {
             workflowService.setTaskOwner(task, newOwnerId, isLeaving);
         }
+
+        List<NodeRef> compoundWorkflows = documentSearchService.searchCompoundWorkflowsOwnerId(fromOwnerId, !isLeaving);
+        for (NodeRef cwf : compoundWorkflows) {
+            workflowService.setCompoundWorkflowOwner(cwf, newOwnerId, isLeaving);
+        }
+
+        List<NodeRef> caseFiles = documentSearchService.searchOpenCaseFilesOwnerId(fromOwnerId, !isLeaving);
+        for (NodeRef caseFile : caseFiles) {
+            documentDynamicService.setOwner(caseFile, newOwnerId, isLeaving);
+        }
+
         if (log.isDebugEnabled()) {
             log.debug("Assigning responsibility of " + documents.size() + " working documents and " + tasks.size() + " new tasks from " + fromOwnerId + " to "
                     + toOwnerId + " took " + (System.currentTimeMillis() - startTime) + " ms");

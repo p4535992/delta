@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view 
+   xmlns:view="http://www.alfresco.org/view/repository/1.0" 
+   xmlns:volumesearch="http://alfresco.webmedia.ee/model/volume/search/1.0" 
+>
+   <volumesearch:volumeSearchFilters view:childName="volumesearch:volumeSearchFilters" />
+</view:view>

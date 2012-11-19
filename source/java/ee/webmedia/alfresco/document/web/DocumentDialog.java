@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.document.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAssociationsService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentFavoritesService;
 import static ee.webmedia.alfresco.document.einvoice.web.TransactionsTemplateDetailsDialog.MODAL_KEY_ENTRY_SAP_NUMBER;
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.ERRAND_APPLICATION_DOMESTIC;
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD;
@@ -54,6 +55,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.casefile.service.CaseFile;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.listener.RefreshEventListener;
@@ -103,8 +105,8 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     public static final String BEAN_NAME = "DocumentDialog";
     public static final String DIALOG_DOCUMENT = "dialog:document";
 
-    private static final String ERR_TEMPLATE_NOT_FOUND = "document_errorMsg_template_not_found";
-    private static final String ERR_TEMPLATE_PROCESSING_FAILED = "document_errorMsg_template_processsing_failed";
+    public static final String ERR_TEMPLATE_NOT_FOUND = "document_errorMsg_template_not_found";
+    public static final String ERR_TEMPLATE_PROCESSING_FAILED = "document_errorMsg_template_processsing_failed";
     /** FollowUps is with the same type */
     private static final List<QName> regularFollowUpTypes = Arrays.asList(ERRAND_APPLICATION_DOMESTIC, ERRAND_ORDER_ABROAD, ERRAND_ORDER_ABROAD_MV,
             LEAVING_LETTER,
@@ -449,15 +451,15 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     }
 
     public List<String> getFavoriteDirectoryNames(@SuppressWarnings("unused") FacesContext context, @SuppressWarnings("unused") UIInput selectComponent) {
-        return getDocumentService().getFavoriteDirectoryNames();
+        return getDocumentFavoritesService().getFavoriteDirectoryNames();
     }
 
     public void addFavorite(ActionEvent event) {
-        getDocumentService().addFavorite(getDocumentDialogHelperBean().getNodeRef(), ((AddToFavoritesEvent) event).getFavoriteDirectoryName(), true);
+        getDocumentFavoritesService().addFavorite(getDocumentDialogHelperBean().getNodeRef(), ((AddToFavoritesEvent) event).getFavoriteDirectoryName(), true);
     }
 
     public void removeFavorite(@SuppressWarnings("unused") ActionEvent event) {
-        getDocumentService().removeFavorite(getDocumentDialogHelperBean().getNodeRef());
+        getDocumentFavoritesService().removeFavorite(getDocumentDialogHelperBean().getNodeRef());
     }
 
     public void sendToSapManually(ActionEvent event) {
@@ -720,7 +722,6 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
                 buttons.add(new DialogButtonConfig("documentRegisterButton", null, "document_registerDoc", "#{DocumentDialog.saveAndRegister}", "false", null));
             }
         }
-
         return buttons;
     }
 
@@ -859,7 +860,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     }
 
     private void addTargetAssoc(NodeRef targetRef, QName targetType) {
-        final DocAssocInfo docAssocInfo = getDocumentAssociationsService().getDocAssocInfo(addAssoc(searchBlockBean.getNode(), targetRef, targetType, true), true);
+        final DocAssocInfo docAssocInfo = getDocumentAssociationsService().getDocListUnitAssocInfo(addAssoc(searchBlockBean.getSourceNode(), targetRef, targetType, true), true);
         searchBlockBean.setShow(false);
         assocsBlockBean.getDocAssocInfos().add(docAssocInfo);
         assocsBlockBean.init(node);
@@ -1125,6 +1126,11 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     @Override
     public DocumentDynamic getDocument() {
         return null;
+    }
+
+    @Override
+    public CaseFile getCaseFile() {
+        throw new RuntimeException("Not used!");
     }
 
     // END: getters / setters

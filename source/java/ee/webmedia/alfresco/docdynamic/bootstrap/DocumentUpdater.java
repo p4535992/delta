@@ -1,5 +1,8 @@
 package ee.webmedia.alfresco.docdynamic.bootstrap;
 
+import static ee.webmedia.alfresco.classificator.enums.DocumentStatus.FINISHED;
+import static ee.webmedia.alfresco.classificator.enums.DocumentStatus.WORKING;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -125,9 +128,11 @@ public class DocumentUpdater extends AbstractNodeUpdater {
             regNumbers.add(regNumber);
         }
 
-        String hasAllFinishedCompoundWorkflowsUpdaterLog = updateHasAllFinishedCompoundWorkflows(docRef, origProps, updatedProps);
+        String hasAllFinishedCompoundWorkflowsUpdaterLog = updateHasAllFinishedCompoundWorkflows(docRef, origProps, updatedProps, workflowService);
 
         String structUnitPropertiesToMultivaluedUpdaterLog = updateStructUnitPropertiesToMultivalued(origProps, updatedProps);
+
+        String updateMetadataInFilesUpdaterLog = updateMetadataInFiles(origProps, updatedProps);
 
         String fileContentsLog;
         if (fileEncodingUpdater.getDocumentsToUpdate().contains(docRef)) { // searchable aspect has been checked in fileEncodingUpdater
@@ -147,7 +152,17 @@ public class DocumentUpdater extends AbstractNodeUpdater {
         String removePermissionLog = updatePermission(docRef);
         String removePrivilegeMappingsLog = removePrivilegeMappings(docRef, origProps);
         return new String[] { hasAllFinishedCompoundWorkflowsUpdaterLog, structUnitPropertiesToMultivaluedUpdaterLog, removePermissionLog, removePrivilegeMappingsLog,
-                fileContentsLog };
+                fileContentsLog, updateMetadataInFilesUpdaterLog };
+    }
+
+    public String updateMetadataInFiles(Map<QName, Serializable> origProps, Map<QName, Serializable> updatedProps) {
+        String status = (String) origProps.get(DocumentCommonModel.Props.DOC_STATUS);
+        if (!WORKING.getValueName().equals(status) && !FINISHED.getValueName().equals(status)) {
+            return "updateMetadatainFilesSkipped";
+        }
+        Boolean updateMetadataInFiles = WORKING.getValueName().equals(status);
+        updatedProps.put(DocumentCommonModel.Props.UPDATE_METADATA_IN_FILES, updateMetadataInFiles);
+        return status + "->" + updateMetadataInFiles.toString();
     }
 
     private String removePrivilegeMappings(NodeRef docRef, Map<QName, Serializable> props) {
@@ -228,7 +243,10 @@ public class DocumentUpdater extends AbstractNodeUpdater {
         return hashMap;
     }
 
-    private String updateHasAllFinishedCompoundWorkflows(NodeRef docRef, Map<QName, Serializable> origProps, Map<QName, Serializable> updatedProps) {
+
+
+    public static String updateHasAllFinishedCompoundWorkflows(NodeRef docRef, Map<QName, Serializable> origProps, Map<QName, Serializable> updatedProps,
+            WorkflowService workflowService) {
         Serializable origValueReal = origProps.get(DocumentCommonModel.Props.SEARCHABLE_HAS_ALL_FINISHED_COMPOUND_WORKFLOWS);
         boolean origValue = Boolean.TRUE.equals(origValueReal);
         boolean newValue = workflowService.hasAllFinishedCompoundWorkflows(docRef);

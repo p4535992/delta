@@ -50,11 +50,15 @@ import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentChildModel;
+import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.ComparableTransformer;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
+import ee.webmedia.alfresco.workflow.model.RelatedUrl;
 import ee.webmedia.alfresco.workflow.model.WorkflowBlockItem;
+import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
+import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
 
 /**
@@ -69,6 +73,7 @@ public class PrintTableServlet extends HttpServlet {
     public static final String GROUP_NR_PARAM = "groupNr";
     private static final long serialVersionUID = 1L;
     public static final String TABLE_MODE = "tableMode";
+    private static FastDateFormat dateTimeFormatSec = FastDateFormat.getInstance("dd.MM.yyyy HH:mm:ss");
 
     public static final ComparatorChain ROW_COMPARATOR = new ComparatorChain();
     static {
@@ -101,7 +106,12 @@ public class PrintTableServlet extends HttpServlet {
     public enum TableMode {
         REVIEW_NOTES,
         DOCUMENT_FIELD_COMPARE,
-        WORKFLOW_GROUP_TASKS
+        WORKFLOW_GROUP_TASKS,
+        COMPOUND_WORKFLOW,
+        /** Used only internally for printing compound workflow object block */
+        COMPOUND_WORKFLOW_OBJECT_BLOCK,
+        /** Used only internally for printing compound workflow url block */
+        COMPOUND_WORKFLOW_URL_BLOCK
     }
 
     @Override
@@ -115,49 +125,187 @@ public class PrintTableServlet extends HttpServlet {
             resp.setCharacterEncoding("UTF-8");
             PrintWriter out = resp.getWriter();
             PageTag pageTag = new PageTag();
-            pageTag.setTitle(getPageTitle(mode));
-            pageTag.doStartTag(request, out, request.getSession());
-            renderTableStart(out, mode);
 
-            List<Row> rows = null;
-            if (TableMode.REVIEW_NOTES == mode) {
-                rows = getReviewNotesData();
-            } else if (TableMode.DOCUMENT_FIELD_COMPARE == mode) {
-                rows = getDocumentFieldsData(request);
-            } else if (TableMode.WORKFLOW_GROUP_TASKS == mode) {
-                rows = getWorkflowGroupData(request);
+            if (TableMode.COMPOUND_WORKFLOW == mode) {
+                printCompoundWorkflow(request, mode, out, pageTag);
+            } else {
+                pageTag.setTitle(getPageTitle(mode));
+                pageTag.doStartTag(request, out, request.getSession());
+                renderTableStart(out, mode, true);
+
+                List<Row> rows = null;
+                if (TableMode.REVIEW_NOTES == mode) {
+                    rows = getReviewNotesData();
+                } else if (TableMode.DOCUMENT_FIELD_COMPARE == mode) {
+                    rows = getDocumentFieldsData(request);
+                } else if (TableMode.WORKFLOW_GROUP_TASKS == mode) {
+                    rows = getWorkflowGroupData(request);
+                }
+
+                renderRows(out, rows);
+
+                renderTableEnd(out);
             }
-
-            renderRows(out, rows);
-
-            renderTableEnd(out);
             pageTag.doEndTag(out);
         } catch (JspException e) {
             throw new RuntimeException("Failed", e);
         }
     }
 
-    private String getPageTitle(TableMode mode) {
+    public void printCompoundWorkflow(HttpServletRequest request, TableMode mode, PrintWriter out, PageTag pageTag) throws JspException {
+        CompoundWorkflow compoundWorkflow = BeanHelper.getCompoundWorkflowDialog().getWorkflow();
+        if (compoundWorkflow != null) {
+            String title = compoundWorkflow.getTitle();
+            String procedureId = compoundWorkflow.getProp(WorkflowCommonModel.Props.PROCEDURE_ID);
+            boolean notBlankTitle = StringUtils.isNotBlank(title);
+            String pageTitle = getPageTitle(mode, title
+                    + (StringUtils.isNotBlank(procedureId) ? ((notBlankTitle ? "(" : "") + procedureId + (notBlankTitle ? ")" : "")) : ""));
+            pageTag.setTitle(pageTitle);
+            pageTag.doStartTag(request, out, request.getSession());
+
+            String outerDiv = "<div class='panel view-mode' style='padding: 10px; word-wrap: break-word;' id='metadata-panel'>";
+            out.println(outerDiv + "<h2 class='title-icon'>" + pageTitle + "</h2></div>");
+            out.println("<div style='margin-top: 6px; margin-bottom: 6px;'><hr></div>");
+            out.println(outerDiv + "<span><h3>" + dateTimeFormatSec.format(new Date())
+                    + "</h3><a href='#' class='print icon-link' onclick='window.print();return false();'></a></span></div>");
+            out.println(outerDiv + "<h3 class='printTableHeadings'>" + MessageUtil.getMessage("compoundWorkflow_table_info") + "</h3></div>");
+            out.println("<div class='panel view-mode' style='padding: 10px;' id='metadata-panel'>"
+                    + "<div class='panel-wrapper'><div class='panel-border' id='metadata-panel-panel-border'><div id='dialog:dialog-body:doc-metatada_container'>"
+                    + "<table width='100%' cellspacing='0' cellpadding='0'>");
+            startTableRow(out);
+            printTableLabelCell(out, MessageUtil.getMessage("compoundWorkflow_table_compoundWorkflow_started"));
+            printTableCell(out, formatDateOrNull(compoundWorkflow.getStartedDateTime()));
+            printTableLabelCell(out, MessageUtil.getMessage("compoundWorkflow_table_compoundWorkflow_finished"));
+            printTableCell(out, compoundWorkflow.getEndedDateStr());
+            finishTableRow(out);
+            startTableRow(out);
+            printTableLabelCell(out, MessageUtil.getMessage("compoundWorkflow_table_compoundWorkflow_owner"));
+            printTableCell(out, compoundWorkflow.getOwnerName());
+            printTableLabelCell(out, MessageUtil.getMessage("compoundWorkflow_table_compoundWorkflow_creator"));
+            printTableCell(out, compoundWorkflow.getCreatorName());
+            finishTableRow(out);
+            startTableRow(out);
+            printTableLabelCell(out, MessageUtil.getMessage("compoundWorkflow_table_compoundWorkflow_status"));
+            printTableCell(out, compoundWorkflow.getStatus());
+            printTableLabelCell(out, MessageUtil.getMessage("compoundWorkflow_table_compoundWorkflow_stopped"));
+            printTableCell(out, compoundWorkflow.getStoppedDateStr());
+            finishTableRow(out);
+            startTableRow(out);
+            printTableLabelCell(out, MessageUtil.getMessage("compoundWorkflow_table_compoundWorkflow_comment"));
+            printTableCell(out, compoundWorkflow.getComment());
+            printEmptyTableCell(out);
+            printEmptyTableCell(out);
+            finishTableRow(out);
+            renderTableEnd(out);
+
+            List<WorkflowBlockItem> groupedWorkflowBlockItems = BeanHelper.getWorkflowBlockBean().getWorkflowBlockItems();
+            List<WorkflowBlockItem> workflowBlockItems = new ArrayList<WorkflowBlockItem>();
+            @SuppressWarnings("unchecked")
+            Comparator<WorkflowBlockItem> byOwnerComparator = new TransformingComparator(new ComparableTransformer<WorkflowBlockItem>() {
+                @Override
+                public String tr(WorkflowBlockItem item) {
+                    return item.getTaskOwnerName();
+                }
+            }, AppConstants.DEFAULT_COLLATOR);
+            for (WorkflowBlockItem groupedWorkflowBlockItem : groupedWorkflowBlockItems) {
+                if (groupedWorkflowBlockItem.isGroupBlockItem()) {
+                    List<WorkflowBlockItem> ungroupedItems = groupedWorkflowBlockItem.getGroupItems();
+                    Collections.sort(ungroupedItems, byOwnerComparator);
+                    workflowBlockItems.addAll(ungroupedItems);
+                } else {
+                    workflowBlockItems.add(groupedWorkflowBlockItem);
+                }
+            }
+            List<Row> taskRows = new ArrayList<Row>();
+            for (WorkflowBlockItem item : workflowBlockItems) {
+                Date startedDateTime = item.getStartedDateTime();
+                Date dueDate = item.getDueDate();
+                taskRows.add(new Row(asList(startedDateTime != null ? Task.dateTimeFormat.format(startedDateTime) : "",
+                        (dueDate != null ? Task.dateFormat.format(dueDate) : "") + (StringUtils.isNotBlank(item.getDueDateHistory()) ? "<br/>" + item.getDueDateHistory() : ""),
+                        item.getTaskCreatorName(), item.getWorkflowType(), item.getTaskOwnerName(), item.getTaskResolution(), item.getTaskOutcome(), item.getTaskStatus())));
+            }
+            printTableHeading(out, outerDiv, "compoundWorkflow_table_tasks");
+            renderTableStart(out, TableMode.WORKFLOW_GROUP_TASKS, false);
+            renderRows(out, taskRows);
+            renderTableEnd(out);
+
+            List<Document> documents = BeanHelper.getCompoundWorkflowAssocListDialog().getDocuments();
+            List<Row> documentRows = new ArrayList<Row>();
+            for (Document document : documents) {
+                String regNumber = document.getRegNumber();
+                documentRows.add(new Row(Arrays.asList(document.getMainDocument() ? "jah" : "ei", document.getDocumentToSign() ? "jah" : "", regNumber == null ? "" : regNumber,
+                        document.getRegDateTimeStr(), document.getDocumentTypeName(), document.getSenderOrRecipient(), document.getDocName(),
+                        document.getDueDateStr(), document.getCreatedDateStr(), document.getOwnerName())));
+            }
+            printTableHeading(out, outerDiv, "compoundWorkflow_table_documents");
+            renderTableStart(out, TableMode.COMPOUND_WORKFLOW_OBJECT_BLOCK, false);
+            renderRows(out, documentRows);
+            renderTableEnd(out);
+
+            List<RelatedUrl> relatedUrls = BeanHelper.getRelatedUrlListBlock().getRelatedUrls();
+            List<Row> urlRows = new ArrayList<Row>();
+            for (RelatedUrl relatedUrl : relatedUrls) {
+                urlRows.add(new Row(Arrays.asList(relatedUrl.getUrl(), relatedUrl.getUrlComment(), relatedUrl.getUrlCreatorName(), relatedUrl.getCreatedStr())));
+            }
+            printTableHeading(out, outerDiv, "compoundWorkflow_table_urls");
+            renderTableStart(out, TableMode.COMPOUND_WORKFLOW_URL_BLOCK, false);
+            renderRows(out, urlRows);
+            renderTableEnd(out);
+
+        } else {
+            pageTag.doStartTag(request, out, request.getSession());
+        }
+    }
+
+    public void printTableHeading(PrintWriter out, String outerDiv, String headingKey) {
+        out.println(outerDiv + "<h3 class='printTableHeadings'>" + MessageUtil.getMessage(headingKey) + "</h3></div>");
+    }
+
+    public void startTableRow(PrintWriter out) {
+        out.println("<tr>");
+    }
+
+    public void finishTableRow(PrintWriter out) {
+        out.println("</tr>");
+    }
+
+    public void printEmptyTableCell(PrintWriter out) {
+        out.println("<td></td>");
+    }
+
+    public void printTableCell(PrintWriter out, String value) {
+        out.println("<td>" + value + "</td>");
+    }
+
+    public void printTableLabelCell(PrintWriter out, String value) {
+        out.println("<td class='printTableHeadings' width='90px'>" + value + "</td>");
+    }
+
+    private String formatDateOrNull(Date date) {
+        return date != null ? Task.dateTimeFormat.format(date) : "";
+    }
+
+    private String getPageTitle(TableMode mode, Object... parameters) {
         switch (mode) {
         case REVIEW_NOTES:
-            return MessageUtil.getMessage("workflow_task_review_notes");
+            return MessageUtil.getMessage("workflow_task_review_notes", parameters);
         case DOCUMENT_FIELD_COMPARE:
-            return MessageUtil.getMessage("document_assocsBlockBean_compare");
+            return MessageUtil.getMessage("document_assocsBlockBean_compare", parameters);
         case WORKFLOW_GROUP_TASKS:
-            return MessageUtil.getMessage("workflow_group_tasks");
+            return MessageUtil.getMessage("workflow_group_tasks", parameters);
+        case COMPOUND_WORKFLOW:
+            return MessageUtil.getMessage("compoundWorkflow_table_title", parameters);
         }
         return "";
     }
 
-    private void renderTableStart(PrintWriter out, TableMode mode) {
+    private void renderTableStart(PrintWriter out, TableMode mode, boolean renderTitle) {
         StringBuilder sb = new StringBuilder(
                 "<div class='panel view-mode' style='padding: 10px;' id='metadata-panel'>"
                         +
                         "<div class='panel-wrapper'>"
-                        +
-                        "<h3>"
-                        + getPageTitle(mode)
-                        + "&nbsp;&nbsp;</h3><div class='panel-border' id='metadata-panel-panel-border'><div id='dialog:dialog-body:doc-metatada_container'><table width='100%' cellspacing='0' cellpadding='0'><thead><tr>\n");
+                        + (renderTitle ? "<h3>" + getPageTitle(mode) + "&nbsp;&nbsp;</h3>" : "")
+                        + "<div class='panel-border' id='metadata-panel-panel-border'><div id='dialog:dialog-body:doc-metatada_container'><table width='100%' cellspacing='0' cellpadding='0'><thead><tr>\n");
 
         List<String> columnNames = getColumnNames(mode);
         for (int i = 0; i < columnNames.size(); i++) {
@@ -168,6 +316,17 @@ public class PrintTableServlet extends HttpServlet {
                     startTag = "\t<th style=\"width:60%\">";
                 } else {
                     startTag = "\t<th style=\"width:20%\">";
+                }
+            } else if (TableMode.COMPOUND_WORKFLOW_OBJECT_BLOCK == mode) {
+                if (i == 0 || i == 1) {
+                    startTag = "\t<th width=\"50px\">";
+                }
+            } else if (TableMode.COMPOUND_WORKFLOW_URL_BLOCK == mode) {
+                if (i == 0) {
+                    startTag = "\t<th style=\"width:40%;\">";
+                }
+                if (i == 1) {
+                    startTag = "\t<th style=\"width:40%;\">";
                 }
             }
             sb.append(startTag).append(MessageUtil.getMessage(columnName)).append("</th>\n");
@@ -185,6 +344,12 @@ public class PrintTableServlet extends HttpServlet {
         } else if (TableMode.WORKFLOW_GROUP_TASKS == mode) {
             return Arrays.asList("workflow_started", "task_property_due_date", "workflow_creator", "workflow", "task_property_owner", "task_property_resolution",
                     "task_property_comment_assignmentTask", "workflow_status");
+        } else if (TableMode.COMPOUND_WORKFLOW_OBJECT_BLOCK == mode) {
+            return Arrays.asList("compoundWorkflow_object_list_mainDoc", "compoundWorkflow_object_list_documentToSign", "document_regNumber", "document_regDateTime",
+                    "document_type", "document_allRecipientsSenders", "document_docName", "document_dueDate", "document_created", "document_owner");
+        } else if (TableMode.COMPOUND_WORKFLOW_URL_BLOCK == mode) {
+            return Arrays.asList("compoundWorkflow_relatedUrl_url", "compoundWorkflow_relatedUrl_urlComment", "compoundWorkflow_relatedUrl_urlCreatorName",
+                    "compoundWorkflow_relatedUrl_created");
         }
 
         return Collections.<String> emptyList();
@@ -196,7 +361,7 @@ public class PrintTableServlet extends HttpServlet {
         for (Row row : rows) {
             sb.append("<tr class='").append(zebra % 2 == 0 ? "recordSetRow" : "recordSetRowAlt").append(" ").append(row.styleClass).append("'>");
             for (String cell : row.getCells()) {
-                sb.append("<td>").append(cell).append("</td>");
+                sb.append("<td style='word-wrap: break-word;'>").append(cell).append("</td>");
             }
             sb.append("</tr>");
             zebra++;
@@ -206,7 +371,7 @@ public class PrintTableServlet extends HttpServlet {
     }
 
     private void renderTableEnd(PrintWriter out) {
-        out.println("</tbody></table>");
+        out.println("</tbody></table></div></div></div></div>");
     }
 
     private List<Row> getReviewNotesData() {
@@ -271,7 +436,7 @@ public class PrintTableServlet extends HttpServlet {
                 if (groupedWorkflowBlockItem.isGroupBlockItem()) {
                     workflowBlockItems.addAll(groupedWorkflowBlockItem.getGroupItems());
                 } else {
-                    Collections.singletonList(groupedWorkflowBlockItem);
+                    workflowBlockItems.add(groupedWorkflowBlockItem);
                 }
             }
             @SuppressWarnings("unchecked")
@@ -367,6 +532,8 @@ public class PrintTableServlet extends HttpServlet {
         getApplicationsData(docRef1, docRef2, propDefs, result, DocumentChildModel.Assocs.APPLICANT_DOMESTIC, DocumentChildModel.Assocs.ERRAND_DOMESTIC);
         // Abroad applications
         getApplicationsData(docRef1, docRef2, propDefs, result, DocumentChildModel.Assocs.APPLICANT_ABROAD, DocumentChildModel.Assocs.ERRAND_ABROAD);
+        // Training applications
+        getApplicationsData(docRef1, docRef2, propDefs, result, DocumentChildModel.Assocs.APPLICANT_TRAINING, null);
 
         // Contract parties
         List<ChildAssociationRef> doc1Parties = getChildAssocs(docRef1, DocumentChildModel.Assocs.CONTRACT_PARTY);
@@ -419,19 +586,21 @@ public class PrintTableServlet extends HttpServlet {
             row.groupNr = getGroupNrAndAdd(tempResult, result);
 
             // applications
-            List<ChildAssociationRef> application1 = getChildAssocs(subNodeRef1, grandChildNodeAssoc);
-            List<ChildAssociationRef> application2 = getChildAssocs(subNodeRef2, grandChildNodeAssoc);
-            int applicationCount = Math.max(application1.size(), application2.size());
-            for (int j = 0; j < applicationCount; j++) {
-                Row row2 = new Row(asList(application, "", ""));
-                row2.childNodeNr = i;
-                row2.grandChildNodeNr = j;
-                row2.styleClass = "bold";
-                result.put("application" + i + "-" + j, row2);
-                NodeRef subNodeRef21 = getChildRefOrNull(application1, j);
-                NodeRef subNodeRef22 = getChildRefOrNull(application2, j);
-                getAdjacentProperties(subNodeRef21, subNodeRef22, tempResult, propDefs, 2, i, j);
-                row2.groupNr = getGroupNrAndAdd(tempResult, result);
+            if (grandChildNodeAssoc != null) {
+                List<ChildAssociationRef> application1 = getChildAssocs(subNodeRef1, grandChildNodeAssoc);
+                List<ChildAssociationRef> application2 = getChildAssocs(subNodeRef2, grandChildNodeAssoc);
+                int applicationCount = Math.max(application1.size(), application2.size());
+                for (int j = 0; j < applicationCount; j++) {
+                    Row row2 = new Row(asList(application, "", ""));
+                    row2.childNodeNr = i;
+                    row2.grandChildNodeNr = j;
+                    row2.styleClass = "bold";
+                    result.put("application" + i + "-" + j, row2);
+                    NodeRef subNodeRef21 = getChildRefOrNull(application1, j);
+                    NodeRef subNodeRef22 = getChildRefOrNull(application2, j);
+                    getAdjacentProperties(subNodeRef21, subNodeRef22, tempResult, propDefs, 2, i, j);
+                    row2.groupNr = getGroupNrAndAdd(tempResult, result);
+                }
             }
         }
     }

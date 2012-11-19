@@ -8,6 +8,7 @@ import javax.faces.context.FacesContext;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflowDefinition;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
@@ -30,7 +31,7 @@ public class CompoundWorkflowDefinitionListDialog extends BaseDialogBean {
 
     @Override
     public void restored() {
-        workflows = getWorkflowService().getCompoundWorkflowDefinitions(true);
+        workflows = getWorkflowService().getActiveCompoundWorkflowDefinitions(true);
     }
 
     @Override
@@ -55,6 +56,14 @@ public class CompoundWorkflowDefinitionListDialog extends BaseDialogBean {
      */
     public List<CompoundWorkflowDefinition> getWorkflows() {
         return workflows;
+    }
+
+    public boolean isShowCaseFileColumn() {
+        return BeanHelper.getVolumeService().isCaseVolumeEnabled();
+    }
+
+    public boolean isShowDocumentColumn() {
+        return BeanHelper.getWorkflowService().isDocumentWorkflowEnabled();
     }
 
     protected WorkflowService getWorkflowService() {

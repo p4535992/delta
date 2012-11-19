@@ -50,7 +50,12 @@ public class UserContactGenerator extends BaseTypeFieldGenerator {
         boolean itemUnprocessed = !item.getCustomAttributes().containsKey(Search.SETTER_CALLBACK) && !generatorResults.hasStateHolder(stateHolderKey);
         if ((!handledById || handledById && !inSystematicGroup) && itemUnprocessed) {
             item.setSetterCallback(BaseSystematicFieldGenerator.getBindingName("setData", stateHolderKey));
+            // Setter that take nodes, need the result as NodeRef when not in Search dialog
+            if (!field.isForSearch()) {
+                item.setPreprocessCallback("#{UserContactGroupSearchBean.preprocessResultsToNodeRefs}");
+            }
             item.setSetterCallbackTakesNode(true);
+            item.setAjaxParentLevel(1);
             Map<QName, UserContactMappingCode> mapping = BeanHelper.getUserContactMappingService().getFieldIdsMappingOrNull(field);
             Assert.notNull(mapping, "Couldn't find mapping for " + field.getFieldId());
             generatorResults.addStateHolder(stateHolderKey, new UserContactRelatedGroupState(mapping));
@@ -61,7 +66,9 @@ public class UserContactGenerator extends BaseTypeFieldGenerator {
             item.setShowFilter(true);
             item.setFilters("#{UserContactGroupSearchBean.usersGroupsFilters}");
             item.setAddLabelId("add_user");
-            //$FALL-THROUGH$
+            item.setFiltersAllowGroupSelect(true);
+            item.setDialogTitleId("users_search_title");
+            break;
         case USER:
             item.setDialogTitleId("users_search_title");
             break;
@@ -79,6 +86,7 @@ public class UserContactGenerator extends BaseTypeFieldGenerator {
             item.setFilters("#{UserContactGroupSearchBean.usersGroupsContactsGroupsFilters}");
             item.setDialogTitleId("users_contacts_search_title");
             item.setAddLabelId("workflow_compound_add_user");
+            item.setFiltersAllowGroupSelect(true);
             break;
         case USER_CONTACT:
             item.setShowFilter(true);

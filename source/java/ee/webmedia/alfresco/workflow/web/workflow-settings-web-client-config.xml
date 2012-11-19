@@ -6,8 +6,12 @@
       <property-sheet>
          <show-property name="wfc:name" styleClass="focus"/>
          <show-property name="{temp}userFullName" display-label-id="compoundWorkflow_definition_user_name" component-generator="UnescapedOutputTextGenerator" rendered="#{CompoundWorkflowDefinitionDialog.showUserFullName}"/>
+         <show-property name="wfc:type" component-generator="EnumSelectorGenerator" enumClass="ee.webmedia.alfresco.workflow.model.CompoundWorkflowType" filter="ee.webmedia.alfresco.workflow.web.evaluator.CompoundWorkflowDefinitionTypeFilter" 
+            valueChangeListener="#{CompoundWorkflowDefinitionDialog.compoundWorkflowDefinitionTypeChanged}" ajaxDisabled="true" rendered="#{CompoundWorkflowDefinitionDialog.showCompoundWorkflowDefinitionType}"/>
          <show-property name="wfc:documentTypes" component-generator="SearchGenerator" pickerCallback="#{DocTypeListDialog.searchUsedDocTypes}"
-            allowDuplicates="false" converter="ee.webmedia.alfresco.document.type.web.DocumentTypeConverter" dialogTitleId="workflow_compound_type_popUpInfo" />
+            allowDuplicates="false" converter="ee.webmedia.alfresco.document.type.web.DocumentTypeConverter" dialogTitleId="workflow_compound_type_popUpInfo" rendered="#{CompoundWorkflowDefinitionDialog.showDocumentTypes}"/>
+         <show-property name="wfc:caseFileTypes" component-generator="SearchGenerator" pickerCallback="#{CaseFileTypeListDialog.searchUsedCaseFileTypes}"
+            allowDuplicates="false" converter="ee.webmedia.alfresco.document.type.web.CaseFileTypeConverter" dialogTitleId="workflow_compound_caseFileType_popUpInfo" rendered="#{CompoundWorkflowDefinitionDialog.showCaseFileTypes}"/>            
       </property-sheet>
    </config>
 
@@ -45,6 +49,7 @@
    
    <config evaluator="node-type" condition="wfs:signatureWorkflow">
       <property-sheet>
+         <show-property name="wfs:signingType" component-generator="EnumSelectorGenerator" enumClass="ee.webmedia.alfresco.workflow.model.SigningType" rendered="#{CompoundWorkflowDefinitionDialog.showSigningType}"/>      
          <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="signatureWorkflow_tasks" hideExtraInfo="true" />
       </property-sheet>
    </config>
@@ -91,9 +96,15 @@
       <property-sheet>
          <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="confirmationWorkflow_tasks" />
       </property-sheet>
-   </config>   
+   </config>
    
-   <config evaluator="node-type" condition="wfs:signatureWorkflow,wfs:opinionWorkflow,wfs:reviewWorkflow,wfs:informationWorkflow,wfs:assignmentWorkflow,wfs:orderAssignmentWorkflow,wfs:confirmationWorkflow,wfs:docRegistrationWorkflow">
+   <config evaluator="node-type" condition="wfs:groupAssignmentWorkflow">
+      <property-sheet>
+         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="groupAssignmentWorkflow_tasks" />
+      </property-sheet>
+   </config>      
+   
+   <config evaluator="node-type" condition="wfs:signatureWorkflow,wfs:opinionWorkflow,wfs:reviewWorkflow,wfs:informationWorkflow,wfs:assignmentWorkflow,wfs:orderAssignmentWorkflow,wfs:confirmationWorkflow,wfs:docRegistrationWorkflow,wfs:groupAssignmentWorkflow">
       <property-sheet>
          <show-property name="wfc:mandatory" component-generator="CheckboxGenerator"/>
       </property-sheet>

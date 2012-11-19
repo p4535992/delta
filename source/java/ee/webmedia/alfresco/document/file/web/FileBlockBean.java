@@ -1,21 +1,25 @@
 package ee.webmedia.alfresco.document.file.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getFileService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.isAdminOrDocmanagerWithViewDocPermission;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
-import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.model.FileExistsException;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
 import org.alfresco.service.cmr.repository.DuplicateChildNodeNameException;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.web.app.servlet.DownloadContentServlet;
 import org.alfresco.web.bean.NavigationBean;
@@ -23,7 +27,6 @@ import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.springframework.util.Assert;
-import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.listener.RefreshEventListener;
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -31,13 +34,13 @@ import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicBlock;
 import ee.webmedia.alfresco.document.file.model.File;
-import ee.webmedia.alfresco.document.file.service.FileService;
+import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
-import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.web.evaluator.IsOwnerEvaluator;
 import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
 import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
@@ -48,9 +51,8 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
     private static final long serialVersionUID = 1L;
 
     public static final String BEAN_NAME = "FileBlockBean";
+    public static final String PDF_OVERWRITE_CONFIRMED = "pdfOverwriteConfirmed";
 
-    private transient FileService fileService;
-    private transient DocumentService documentService;
     private NavigationBean navigationBean;
     private List<File> files;
     private int activeFilesCount;
@@ -66,10 +68,19 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
             restore(); // refresh the files list
             MessageUtil.addInfoMessage(active ? "file_toggle_active_success" : "file_toggle_deactive_success", getFileName(fileNodeRef));
         } catch (NodeLockedException e) {
-            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "file_inactive_toggleFailed");
+            BeanHelper.getDocumentLockHelperBean().handleLockedNode("file_inactive_toggleFailed", e);
         } catch (UnableToPerformException e) {
             MessageUtil.addStatusMessage(e);
             refresh(); // file might have been deleted
+        }
+    }
+
+    public void updateFilesProperties() {
+        NodeService nodeService = BeanHelper.getNodeService();
+        for (File file : files) {
+            if (file != null && file.getNodeRef() != null) {
+                nodeService.setProperty(file.getNodeRef(), FileModel.Props.CONVERT_TO_PDF_IF_SIGNED, file.isConvertToPdfIfSigned());
+            }
         }
     }
 
@@ -78,13 +89,22 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
     }
 
     public void transformToPdf(ActionEvent event) {
-        NodeRef nodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
+        NodeRef fileRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
         FileInfo pdfFileInfo = null;
+        NodeRef previouslyGeneratedPdf = getFileService().getPreviouslyGeneratedPdf(fileRef);
+        if (!ActionUtil.hasParam(event, PDF_OVERWRITE_CONFIRMED) && getFileService().isPdfUpToDate(fileRef, previouslyGeneratedPdf)) {
+            Map<String, String> params = new HashMap<String, String>(2);
+            params.put(PDF_OVERWRITE_CONFIRMED, Boolean.TRUE.toString());
+            params.put("nodeRef", fileRef.toString());
+            BeanHelper.getUserConfirmHelper().setup(new MessageDataImpl("file_transform_pdf_info_existing_uptodate"), null, "#{FileBlockBean.transformToPdf}",
+                    params, null, null, null);
+            return;
+        }
+
         try {
-            pdfFileInfo = getFileService().transformToPdf(nodeRef);
+            pdfFileInfo = getFileService().transformToPdf(docRef, fileRef, true);
         } catch (NodeLockedException e) {
-            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "file_transform_pdf_error_docLocked",
-                    BeanHelper.getUserService().getUserFullName((String) BeanHelper.getNodeService().getProperty(docRef, ContentModel.PROP_LOCK_OWNER)));
+            BeanHelper.getDocumentLockHelperBean().handleLockedNode("file_transform_pdf_error_docLocked", docRef);
             return;
         } catch (UnableToPerformException e) {
             MessageUtil.addStatusMessage(e);
@@ -93,7 +113,8 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
         }
         restore(); // refresh the files list
         if (pdfFileInfo != null) {
-            MessageUtil.addInfoMessage("file_generate_pdf_success", pdfFileInfo.getName());
+            MessageUtil.addInfoMessage(previouslyGeneratedPdf == null ? "file_generate_pdf_success" : "file_generate_pdf_version_success", pdfFileInfo.getName(), BeanHelper
+                    .getNodeService().getProperty(fileRef, FileModel.Props.DISPLAY_NAME));
         } else {
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "file_generate_pdf_failed");
         }
@@ -108,6 +129,10 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
             return;
         }
         pdfUrl = DownloadContentServlet.generateBrowserURL(nodeRef, getFileName(nodeRef));
+    }
+
+    public void hidePdfBlock(@SuppressWarnings("unused") ActionEvent event) {
+        pdfUrl = null;
     }
 
     public String getPdfUrl() {
@@ -233,29 +258,6 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
     }
 
     // START: getters / setters
-    public void setFileService(FileService fileService) {
-        this.fileService = fileService;
-    }
-
-    public FileService getFileService() {
-        if (fileService == null) {
-            fileService = (FileService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-                    .getBean(FileService.BEAN_NAME);
-        }
-        return fileService;
-    }
-
-    public void setDocumentService(DocumentService documentService) {
-        this.documentService = documentService;
-    }
-
-    public DocumentService getDocumentService() {
-        if (documentService == null) {
-            documentService = (DocumentService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-                    .getBean(DocumentService.BEAN_NAME);
-        }
-        return documentService;
-    }
 
     public void setNavigationBean(NavigationBean navigationBean) {
         this.navigationBean = navigationBean;

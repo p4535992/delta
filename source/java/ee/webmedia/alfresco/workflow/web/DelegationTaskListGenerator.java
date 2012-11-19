@@ -29,7 +29,6 @@ import org.alfresco.web.ui.common.tag.GenericPickerTag;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
-import org.alfresco.web.ui.repo.component.property.UIPropertySheet.ClientValidation;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter;
@@ -203,15 +202,6 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
                             , createTaskPropValueBinding(dTaskType, delegatableTaskIndex, counter, WorkflowSpecificModel.Props.DUE_DATE, application));
                     ComponentUtil.createAndSetConverter(context, DatePickerConverter.CONVERTER_ID, dueDateInput);
                     Map<String, Object> dueDateAttributes = ComponentUtil.putAttribute(dueDateInput, "styleClass", "margin-left-4 date");
-                    if (DelegatableTaskType.ASSIGNMENT_RESPONSIBLE.equals(dTaskType) || DelegatableTaskType.ORDER_ASSIGNMENT_RESPONSIBLE.equals(dTaskType)) { // add client side
-                                                                                                                                                              // validation
-                        List<String> params = new ArrayList<String>(2);
-                        params.add("document.getElementById('" + dueDateInput.getClientId(context) + "')");
-                        String invalidMsg = MessageUtil.getMessage(context, "validation_date_failed", MessageUtil.getMessage("task_property_due_date"));
-                        addStringConstraintParam(params, invalidMsg);
-                        propertySheet.addClientValidation(new ClientValidation("validateMandatory", params, true));
-                        dueDateAttributes.put("onchange", "processButtonState();");
-                    }
 
                     final HtmlPanelGroup columnActions = (HtmlPanelGroup) application.createComponent(HtmlPanelGroup.COMPONENT_TYPE);
                     columnActions.setId("column-actions-" + listId + "-" + counter);
@@ -320,6 +310,8 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
         picker.setShowFilter(false);
         picker.setMultiSelect(false);
         picker.setShowFilter(true);
+        picker.setShowSelectButton(true);
+        picker.setFilterByTaskOwnerStructUnit(true);
         picker.setWidth(400);
         setPickerBindings(picker, dTaskType, application);
         ComponentUtil.putAttribute(picker, ATTRIB_DELEGATE_TASK_TYPE, dTaskType);

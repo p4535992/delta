@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.cases.service;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -22,6 +23,9 @@ import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.log.service.LogService;
@@ -45,13 +49,13 @@ public class CaseServiceImpl implements CaseService {
     private GeneralService generalService;
     private UserService userService;
     private LogService logService;
+    private DocumentService _documentService; // can not be set on bean creation!!
 
     @Override
     public List<Case> getAllCasesByVolume(NodeRef volumeRef) {
-        List<ChildAssociationRef> caseAssocs = getCaseRefsByVolume(volumeRef);
+        List<NodeRef> caseAssocs = getCaseRefsByVolume(volumeRef);
         List<Case> caseOfVolume = new ArrayList<Case>(caseAssocs.size());
-        for (ChildAssociationRef caseARef : caseAssocs) {
-            NodeRef caseNodeRef = caseARef.getChildRef();
+        for (NodeRef caseNodeRef : caseAssocs) {
             caseOfVolume.add(getCaseByNoderef(caseNodeRef, volumeRef));
         }
         Collections.sort(caseOfVolume);
@@ -61,7 +65,7 @@ public class CaseServiceImpl implements CaseService {
     @Override
     public int getCasesCountByVolume(NodeRef volumeRef) {
         // TODO: getCaseRefsByVolume never returns null
-        List<ChildAssociationRef> caseAssocs = getCaseRefsByVolume(volumeRef);
+        List<NodeRef> caseAssocs = getCaseRefsByVolume(volumeRef);
         if (caseAssocs != null) {
             return caseAssocs.size();
         }
@@ -69,8 +73,12 @@ public class CaseServiceImpl implements CaseService {
     }
 
     @Override
-    public List<ChildAssociationRef> getCaseRefsByVolume(NodeRef volumeRef) {
-        return nodeService.getChildAssocs(volumeRef, RegexQNamePattern.MATCH_ALL, CaseModel.Associations.CASE);
+    public List<NodeRef> getCaseRefsByVolume(NodeRef volumeRef) {
+        List<NodeRef> caseRefs = new ArrayList<NodeRef>();
+        for (ChildAssociationRef childAssocRef : nodeService.getChildAssocs(volumeRef, RegexQNamePattern.MATCH_ALL, CaseModel.Associations.CASE)) {
+            caseRefs.add(childAssocRef.getChildRef());
+        }
+        return caseRefs;
     }
 
     @Override
@@ -108,6 +116,22 @@ public class CaseServiceImpl implements CaseService {
     }
 
     @Override
+    public void openCase(Case theCase) {
+        Map<String, Object> props = theCase.getNode().getProperties();
+        props.put(CaseModel.Props.STATUS.toString(), DocListUnitStatus.OPEN.getValueName());
+        saveOrUpdate(theCase);
+    }
+
+    @Override
+    public void delete(Case theCase) {
+        List<NodeRef> documents = getDocumentService().getAllDocumentRefsByParentRef(theCase.getNode().getNodeRef());
+        if (!documents.isEmpty()) {
+            throw new UnableToPerformException("case_delete_not_empty");
+        }
+        nodeService.deleteNode(theCase.getNode().getNodeRef());
+    }
+
+    @Override
     public void closeAllCasesByVolume(NodeRef volumeRef) {
         final List<Case> allCasesByVolume = getAllCasesByVolume(volumeRef);
         for (Case aCase : allCasesByVolume) {
@@ -130,7 +154,8 @@ public class CaseServiceImpl implements CaseService {
         final boolean isNew = nodeIsNull || node instanceof TransientNode;
         @SuppressWarnings("null")
         final String title = StringUtils.strip((String) (fromNodeProps ? node.getProperties().get(CaseModel.Props.TITLE) : theCase.getTitle()));
-        if (isCaseNameUsed(title, theCase.getVolumeNodeRef(), node != null ? node.getNodeRef() : null)) {
+        NodeRef newParentRef = theCase.getVolumeNodeRef();
+        if (isCaseNameUsed(title, newParentRef, node != null ? node.getNodeRef() : null)) {
             final UnableToPerformException ex = new UnableToPerformException(MessageSeverity.ERROR, "case_save_error_caseNameUsed");
             ex.setMessageValuesForHolders(title);
             throw ex;
@@ -144,9 +169,16 @@ public class CaseServiceImpl implements CaseService {
             props = qNameProperties;
         }
 
+        if (isNew || !newParentRef.equals(theCase.getNode().getProperties().get(DocumentCommonModel.Props.VOLUME))) {
+            props.put(DocumentCommonModel.Props.VOLUME, newParentRef);
+            NodeRef seriesRef = generalService.getPrimaryParent(newParentRef).getNodeRef();
+            props.put(DocumentCommonModel.Props.SERIES, seriesRef);
+            props.put(DocumentCommonModel.Props.FUNCTION, generalService.getPrimaryParent(seriesRef).getNodeRef());
+        }
         if (isNew) { // save
             props.put(CaseModel.Props.TITLE, title);
-            NodeRef caseRef = nodeService.createNode(theCase.getVolumeNodeRef(),
+            props.put(CaseModel.Props.CREATED, new Date());
+            NodeRef caseRef = nodeService.createNode(newParentRef,
                     CaseModel.Associations.CASE, CaseModel.Associations.CASE, CaseModel.Types.CASE, props).getChildRef();
             theCase.setNode(generalService.fetchNode(caseRef));
             logService.addLogEntry(LogEntry.create(LogObject.CASE, userService, caseRef, "applog_space_add", "", title));
@@ -249,6 +281,13 @@ public class CaseServiceImpl implements CaseService {
 
     public void setUserService(UserService userService) {
         this.userService = userService;
+    }
+
+    public DocumentService getDocumentService() {
+        if (_documentService == null) {
+            _documentService = BeanHelper.getDocumentService();
+        }
+        return _documentService;
     }
     // END: getters / setters
 

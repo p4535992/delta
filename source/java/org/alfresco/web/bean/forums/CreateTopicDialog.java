@@ -29,11 +29,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.faces.application.NavigationHandler;
 import javax.faces.context.FacesContext;
 
 import org.alfresco.model.ApplicationModel;
 import org.alfresco.model.ContentModel;
 import org.alfresco.model.ForumModel;
+import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.ContentService;
 import org.alfresco.service.cmr.repository.ContentWriter;
@@ -43,6 +45,8 @@ import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.app.context.UIContextService;
 import org.alfresco.web.app.servlet.FacesHelper;
+import org.alfresco.web.bean.NavigationBean;
+import org.alfresco.web.bean.dialog.DialogManager;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.bean.spaces.CreateSpaceDialog;
@@ -51,7 +55,9 @@ import org.alfresco.web.ui.common.component.UIListItem;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.WebUtil;
 
 /**
  * Bean implementation of the "Create Topic Dialog".
@@ -73,6 +79,13 @@ public class CreateTopicDialog extends CreateSpaceDialog
    @Override
    public void init(Map<String, String> parameters)
    {
+      try {
+          BeanHelper.getDocLockService().checkForLock(BeanHelper.getDocumentDialogHelperBean().getNodeRef());
+      } catch (NodeLockedException e) {
+          BeanHelper.getDocumentLockHelperBean().handleLockedNode("forum_error_docLocked");
+          WebUtil.navigateTo(AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME);
+          return;
+      }
       super.init(parameters);
       
       this.spaceType = ForumModel.TYPE_TOPIC.toString();

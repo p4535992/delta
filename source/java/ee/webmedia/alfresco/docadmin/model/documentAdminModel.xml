@@ -131,6 +131,7 @@
          <parent>docadmin:dynamicType</parent>
       </type>
 
+      <!-- docdyn:function, docdyn:series, docdyn:volume and docdyn:case properties are also added from DocumentDynamicModel -->
       <type name="docadmin:documentType"><!-- path name should be id -->
          <parent>docadmin:dynamicType</parent>
          <properties>

@@ -60,6 +60,9 @@
             <property name="fn:order">
                <type>d:int</type>
             </property>
+            <property name="fn:documentActivitiesAreLimited">
+               <type>d:boolean</type>
+            </property>
          </properties>
          <associations>
             <child-association name="ser:series">

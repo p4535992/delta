@@ -14,6 +14,7 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.cmr.repository.datatype.TypeConversionException;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.web.bean.repository.MapNode;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
@@ -138,6 +139,7 @@ public class RegisterServiceImpl implements RegisterService {
         Map<QName, Serializable> newProps = RepoUtil.toQNameProperties(prop);
         if (!nodeService.exists(register.getNodeRef())) {
             Integer regId = getMaxRegisterId() + 1;
+            prop.put(RegisterModel.Prop.ID.toString(), regId);
             newProps.put(RegisterModel.Prop.ID, regId);
             prop.put(RegisterModel.Prop.ID.toString(), regId); // Make ID available to caller
             createSequence(regId);
@@ -184,6 +186,17 @@ public class RegisterServiceImpl implements RegisterService {
         int registerId = (Integer) props.get(RegisterModel.Prop.ID);
         setRegisterCounterValue(registerId, DEFAULT_COUNTER_INITIAL_VALUE);
         props.put(RegisterModel.Prop.COUNTER.toString(), DEFAULT_COUNTER_INITIAL_VALUE);
+    }
+
+    @Override
+    public void resetAllAutoResetCounters() {
+        List<Register> registers = getRegisters();
+        for (Register register : registers) {
+            if (register.isAutoReset()) {
+                resetCounter(new MapNode(register.getNodeRef()));
+                log.debug("Register " + register.getName() + " counter reseted.");
+            }
+        }
     }
 
     private void createSequence(int registerId) {

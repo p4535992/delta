@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="plan:eventPlanModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/eventPlan/1.0" prefix="plan" />
+   </namespaces>
+
+   <types>
+      <type name="plan:eventPlans">
+         <parent>sys:base</parent>
+         <archive>false</archive>
+         <associations>
+            <child-association name="plan:eventPlans">
+               <source>
+                  <mandatory>false</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>plan:eventPlan</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+         <mandatory-aspects>
+            <aspect>sys:aspect_root</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="plan:eventPlan">
+         <parent>sys:base</parent>
+         <archive>false</archive>
+         <properties>
+            <property name="plan:name">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="plan:firstEvent">
+               <type>d:text</type>
+               <index enabled="true">
+                  <tokenised>false</tokenised>
+               </index>
+            </property>
+            <property name="plan:firstEventStart">
+               <type>d:text</type>
+               <index enabled="true">
+                  <tokenised>false</tokenised>
+               </index>
+            </property>
+            <property name="plan:firstEventPeriod">
+               <type>d:int</type>
+            </property>
+         </properties>
+         <mandatory-aspects>
+            <aspect>plan:eventPlanCommon</aspect>
+         </mandatory-aspects>
+      </type>
+   </types>
+
+   <aspects>
+      <aspect name="plan:eventPlanCommon">
+         <description>Common properties of eventPlan and volumeEventPlan.</description>
+         <parent>sys:base</parent>
+         <archive>false</archive>
+         <properties>
+            <property name="plan:isAppraised">
+               <type>d:boolean</type>
+               <default>false</default>
+            </property>
+            <property name="plan:hasArchivalValue">
+               <type>d:boolean</type>
+               <default>false</default>
+            </property>
+            <property name="plan:retainPermanent">
+               <type>d:boolean</type>
+               <default>false</default>
+            </property>
+            <property name="plan:retaintionStart">
+               <type>d:text</type>
+               <index enabled="true">
+                  <tokenised>false</tokenised>
+               </index>
+            </property>
+            <property name="plan:retaintionPeriod">
+               <type>d:int</type>
+            </property>
+            <property name="plan:retainUntilDate">
+               <type>d:date</type>
+            </property>
+            <property name="plan:archivingNote">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="plan:volumeEventPlan">
+         <parent>plan:eventPlanCommon</parent>
+         <archive>false</archive>
+         <properties>
+            <property name="plan:eventPlan">
+               <type>d:noderef</type>
+            </property>
+            <property name="plan:nextEvent">
+               <type>d:text</type>
+               <index enabled="true">
+                  <tokenised>false</tokenised>
+               </index>
+            </property>
+            <property name="plan:nextEventDate">
+               <type>d:date</type>
+            </property>
+            <property name="plan:markedForTransfer">
+               <type>d:boolean</type>
+            </property>
+            <property name="plan:exportedForUam">
+               <type>d:boolean</type>
+               <default>false</default>
+            </property>
+            <property name="plan:exportedForUamDateTime">
+               <type>d:datetime</type>
+            </property>
+            <property name="plan:transferConfirmed">
+               <type>d:boolean</type>
+               <default>false</default>
+            </property>
+            <property name="plan:transferedDateTime">
+               <type>d:datetime</type>
+            </property>
+            <property name="plan:markedForDestruction">
+               <type>d:boolean</type>
+               <default>false</default>
+            </property>
+            <property name="plan:disposalActCreated">
+               <type>d:boolean</type>
+               <default>false</default>
+            </property>
+            <property name="plan:disposalDateTime">
+               <type>d:datetime</type>
+            </property>
+         </properties>
+      </aspect>
+   </aspects>
+
+</model>

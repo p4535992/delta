@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
@@ -23,16 +24,20 @@ public interface WorkflowDbService {
 
     void createTaskEntry(Task task);
 
-    List<Task> getWorkflowTasks(NodeRef workflowRef, Collection<QName> taskDataTypeDefaultAspects, List<QName> taskDataTypeDefaultProps,
-            Map<QName, QName> taskPrefixedQNames, WorkflowType workflowType, Workflow workflow, boolean copy);
+    List<Task> getWorkflowTasks(NodeRef workflowRef, Collection<QName> taskDataTypeDefaultAspects, List<QName> taskDataTypeDefaultProps, Map<QName, QName> taskPrefixedQNames,
+            WorkflowType workflowType, Workflow workflow, boolean copy);
 
     void deleteTasksCascading(NodeRef nodeRef, QName nodeTypeQName);
 
     void createTaskEntry(Task task, NodeRef workflowfRef);
 
+    void createTaskEntry(Task task, NodeRef workflowfRef, boolean isIndependentTask);
+
     void updateTaskEntry(Task task, Map<QName, Serializable> changedProps);
 
     void updateTaskProperties(NodeRef taskRef, Map<QName, Serializable> props);
+
+    void updateTaskEntry(Task task, Map<QName, Serializable> changedProps, NodeRef parentRef);
 
     void createTaskDueDateExtensionAssocEntry(NodeRef initiatingTaskRef, NodeRef nodeRef);
 
@@ -74,10 +79,23 @@ public interface WorkflowDbService {
 
     int countTasks(String queryCondition, List<Object> arguments);
 
-    void updateTaskPropertiesAndStorRef(NodeRef taskRef, Map<QName, Serializable> props);
+    /**
+     * This method throws no exception if no row is updated. Should not be used under normal circumtances; only for updaters
+     */
+    int updateTaskPropertiesAndStorRef(NodeRef taskRef, Map<QName, Serializable> props);
 
     List<List<String>> deleteNotExistingTasks();
 
+    void updateWorkflowTaskProperties(NodeRef nodeRef, Map<QName, Serializable> newProps);
+
     Map<NodeRef, List<NodeRef>> getCompoundWorkflowsTaskFiles(List<CompoundWorkflow> compoundWorkflows);
+
+    int replaceTaskOutcomes(String oldOutcome, String newOutcome, String taskType);
+    
+    void deleteTask(NodeRef removedTaskNodeRef);
+
+    void deleteWorkflowTasks(NodeRef removedWorkflowNodeRef);
+
+    Set<NodeRef> getAllWorflowNodeRefs();    
 
 }

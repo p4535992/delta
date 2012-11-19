@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<alfresco-config>
+   <config>
+      <dialogs>
+         <dialog name="manageLocksDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/lock/web/manage-locks-dialog.jsp" managed-bean="ManageLocksDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="lock_manage_title" show-ok-button="false" />
+      </dialogs>
+   </config>
+
+</alfresco-config>

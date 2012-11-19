@@ -21,6 +21,7 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
+import ee.webmedia.alfresco.common.model.DynamicBase;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.docconfig.generator.SaveListener;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
@@ -294,14 +295,16 @@ public class PostipoissImporter implements SaveListener {
     // SaveListener that sets draft=true on document
 
     @Override
-    public void validate(DocumentDynamic document, ValidationHelper validationHelper) {
+    public void validate(DynamicBase dynamicObject, ValidationHelper validationHelper) {
         // do nothing
     }
 
     @Override
-    public void save(DocumentDynamic document) {
-        document.setDraft(true);
-        document.setDraftOrImapOrDvk(true);
+    public void save(DynamicBase document) {
+        if (document instanceof DocumentDynamic) {
+            ((DocumentDynamic) document).setDraft(true);
+            ((DocumentDynamic) document).setDraftOrImapOrDvk(true);
+        }
     }
 
     @Override

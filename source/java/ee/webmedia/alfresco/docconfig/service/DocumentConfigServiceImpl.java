@@ -1,12 +1,15 @@
 package ee.webmedia.alfresco.docconfig.service;
 
 import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.getDocTypeIdAndVersionNr;
+import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.getDynamicTypeClass;
+import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.getPropDefCacheKey;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -43,22 +46,29 @@ import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.base.BaseObject.ChildrenList;
+import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.classificator.constant.FieldChangeableIf;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.enums.TemplateReportOutputType;
+import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
+import ee.webmedia.alfresco.common.propertysheet.classificatorselector.EnumSelectorGenerator;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO.ConfigItemType;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
+import ee.webmedia.alfresco.docadmin.service.DynamicType;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docadmin.service.MetadataItem;
 import ee.webmedia.alfresco.docadmin.service.SeparatorLine;
+import ee.webmedia.alfresco.docadmin.web.DocAdminUtil;
+import ee.webmedia.alfresco.docconfig.generator.BaseSystematicFieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.FieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.FieldGroupGenerator;
 import ee.webmedia.alfresco.docconfig.generator.FieldGroupGeneratorResults;
@@ -67,6 +77,7 @@ import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.generator.SaveListener;
 import ee.webmedia.alfresco.docconfig.generator.fieldtype.DateGenerator;
 import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
+import ee.webmedia.alfresco.docconfig.generator.systematic.KeywordsGenerator;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
@@ -79,6 +90,10 @@ import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TreeNode;
 import ee.webmedia.alfresco.utils.UserUtil;
+import ee.webmedia.alfresco.volume.model.VolumeModel;
+import ee.webmedia.alfresco.volume.search.model.VolumeReportModel;
+import ee.webmedia.alfresco.volume.search.model.VolumeSearchModel;
+import ee.webmedia.alfresco.workflow.search.model.CompoundWorkflowSearchModel;
 import ee.webmedia.alfresco.workflow.search.model.TaskSearchModel;
 
 /**
@@ -101,6 +116,8 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
     private final Map<String /* systematicGroupName */, FieldGroupGenerator> fieldGroupGenerators = new HashMap<String, FieldGroupGenerator>();
     private final Map<String /* hiddenFieldId */, String /* fieldIdAndOriginalFieldId */> hiddenFieldDependencies = new HashMap<String, String>();
     public static final Map<QName, String> searchLabelIds;
+
+    private boolean regDateFilterInAssociationsSearch;
 
     static {
         searchLabelIds = new HashMap<QName, String>();
@@ -135,11 +152,29 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         searchLabelIds.put(TaskSearchModel.Props.STOPPED_DATE_TIME_BEGIN, "task_search_stoppedDateTime");
         searchLabelIds.put(TaskSearchModel.Props.DOC_TYPE, "document_docType");
 
+        searchLabelIds.put(CompoundWorkflowSearchModel.Props.TYPE, "cw_search_type");
+        searchLabelIds.put(CompoundWorkflowSearchModel.Props.TITLE, "cw_search_title");
+        searchLabelIds.put(CompoundWorkflowSearchModel.Props.OWNER_NAME, "cw_search_owner");
+        searchLabelIds.put(CompoundWorkflowSearchModel.Props.STRUCT_UNIT, "cw_search_struct_unit");
+        searchLabelIds.put(CompoundWorkflowSearchModel.Props.JOB_TITLE, "cw_search_job_title");
+        searchLabelIds.put(CompoundWorkflowSearchModel.Props.CREATED_DATE, "cw_search_create_date");
+        searchLabelIds.put(CompoundWorkflowSearchModel.Props.IGNITION_DATE, "cw_search_ignition_date");
+        searchLabelIds.put(CompoundWorkflowSearchModel.Props.STOPPED_DATE, "cw_search_stopped_date");
+        searchLabelIds.put(CompoundWorkflowSearchModel.Props.ENDING_DATE, "cw_search_ending_date");
+        searchLabelIds.put(CompoundWorkflowSearchModel.Props.STATUS, "cw_search_status");
+        searchLabelIds.put(CompoundWorkflowSearchModel.Props.COMMENT, "cw_search_comment");
+
+        searchLabelIds.put(VolumeSearchModel.Props.STORE, "volume_search_stores");
+        searchLabelIds.put(VolumeSearchModel.Props.INPUT, "volume_search_input");
+        searchLabelIds.put(VolumeSearchModel.Props.VOLUME_TYPE, "volume_search_volume_type");
+        searchLabelIds.put(VolumeSearchModel.Props.CASE_FILE_TYPE, "volume_search_case_volume_type");
+        searchLabelIds.put(VolumeReportModel.Props.REPORT_TEMPLATE, "volume_search_report_template");
+
     }
 
     // CUSTOM CACHING
     // XXX NB! some returned objects are unfortunately mutable, thus service callers must not modify them !!!
-    private final Map<Pair<String /* documentTypeId */, Integer /* documentTypeVersionNr */>, Map<String /* fieldId */, Pair<DynamicPropertyDefinition, Field>>> propertyDefinitionCache = new ConcurrentHashMap<Pair<String, Integer>, Map<String, Pair<DynamicPropertyDefinition, Field>>>();
+    private final Map<PropDefCacheKey, Map<String /* fieldId */, Pair<DynamicPropertyDefinition, Field>>> propertyDefinitionCache = new ConcurrentHashMap<PropDefCacheKey, Map<String, Pair<DynamicPropertyDefinition, Field>>>();
     private final Map<Pair<String /* documentTypeId */, Integer /* documentTypeVersionNr */>, TreeNode<QName>> childAssocTypeQNameTreeCache = new ConcurrentHashMap<Pair<String, Integer>, TreeNode<QName>>();
     private final Map<String /* fieldId */, DynamicPropertyDefinition> propertyDefinitionForSearchCache = new ConcurrentHashMap<String, DynamicPropertyDefinition>();
 
@@ -201,24 +236,81 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
 
     @Override
     public DocumentConfig getConfig(Node documentDynamicNode) {
-        Assert.isTrue(DocumentCommonModel.Types.DOCUMENT.equals(documentDynamicNode.getType()));
-        Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = getDocumentTypeAndVersion(documentDynamicNode);
-        return getConfig(documentTypeAndVersion.getSecond(), documentTypeAndVersion.getFirst().isShowUnvalued());
+        QName type = documentDynamicNode.getType();
+        if (DocumentCommonModel.Types.DOCUMENT.equals(type)) {
+            Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = getDocumentTypeAndVersion(documentDynamicNode);
+            return getConfig(documentTypeAndVersion.getSecond(), documentTypeAndVersion.getFirst().isShowUnvalued());
+        } else if (CaseFileModel.Types.CASE_FILE.equals(type)) {
+            PropDefCacheKey key = DocAdminUtil.getPropDefCacheKey(documentDynamicNode);
+            return getConfig(documentAdminService.getCaseFileTypeAndVersion(key.getDynamicTypeId(), key.getVersion()).getSecond(), Boolean.TRUE);
+        }
+
+        throw new RuntimeException("Config isn't supported for " + type);
     }
 
     @Override
     public DocumentConfig getDocLocationConfig() {
+        DocumentConfig config = getEmptyConfig(null, null);
+        addDocLocationConfigFields(config, false, null);
+        return config;
+    }
+
+    private void addDocLocationConfigFields(DocumentConfig config, boolean forceEditMode, String additionalStateHolderKey) {
         List<String> defList = new ArrayList<String>();
         defList.add(DocumentCommonModel.Props.FUNCTION.getLocalName());
         defList.add(DocumentCommonModel.Props.SERIES.getLocalName());
         defList.add(DocumentCommonModel.Props.VOLUME.getLocalName());
         defList.add(DocumentCommonModel.Props.CASE.getLocalName());
-        DocumentConfig config = getEmptyConfig(null, null);
         for (String localName : defList) {
             FieldDefinition fieldDefinition = documentAdminService.getFieldDefinition(localName);
             fieldDefinition.setChangeableIfEnum(FieldChangeableIf.ALWAYS_CHANGEABLE);
-            processField(config, fieldDefinition, false, false);
+            processField(config, fieldDefinition, false, forceEditMode, additionalStateHolderKey);
         }
+    }
+
+    @Override
+    public DocumentConfig getAssocObjectSearchConfig(String additionalStateHolderKey, String renderAssocObjectFieldValueBinding) {
+        DocumentConfig config = getEmptyConfig(null, null);
+
+        {
+            // docsearch:objectType
+            ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.OBJECT_TYPE.toPrefixString(namespaceService));
+            itemConfig.setDisplayLabelId("document_search_object_type");
+            itemConfig.setComponentGenerator("EnumSelectorGenerator");
+            itemConfig.setRenderCheckboxAfterLabel(false);
+            itemConfig.setEnumClass("ee.webmedia.alfresco.document.search.model.AssocSearchObjectType");
+            itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
+            itemConfig.getCustomAttributes().put(EnumSelectorGenerator.ATTR_DISABLE_DEFAULT, Boolean.TRUE.toString());
+            itemConfig.setRendered(renderAssocObjectFieldValueBinding);
+            config.getPropertySheetConfigElement().addItem(itemConfig);
+        }
+
+        addInputConfigItem(config, true);
+
+        {
+            // docsearch:objectTitle
+            ItemConfigVO itemConfig = new ItemConfigVO(DocumentSearchModel.Props.OBJECT_TITLE.toPrefixString(namespaceService));
+            itemConfig.setDisplayLabelId("document_search_object_title");
+            itemConfig.setStyleClass("searchAssocOnEnter focus");
+            itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
+            config.getPropertySheetConfigElement().addItem(itemConfig);
+        }
+
+        addDocLocationConfigFields(config, true, additionalStateHolderKey);
+
+        addDocumentCreatedConfigItem(config);
+
+        if (regDateFilterInAssociationsSearch) {
+            // docsearch:documentRegistered
+            ItemConfigVO itemConfig = new ItemConfigVO(DocumentCommonModel.Props.REG_DATE_TIME.toPrefixString(namespaceService));
+            itemConfig.setDisplayLabelId("document_regDateTime2");
+            itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
+            DateGenerator.setupDateFilterItemConfig(itemConfig, DocumentCommonModel.Props.REG_DATE_TIME);
+            config.getPropertySheetConfigElement().addItem(itemConfig);
+        }
+
+        addDocumentTypeConfigItem(false, config);
+
         return config;
     }
 
@@ -233,48 +325,22 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
          * <show-property name="docsearch:store" display-label-id="document_search_stores" component-generator="GeneralSelectorGenerator"
          * selectionItems="#{DocumentSearchDialog.getStores}" converter="ee.webmedia.alfresco.common.propertysheet.converter.StoreRefConverter" />
          */
+        WMPropertySheetConfigElement propertySheetConfigElement = config.getPropertySheetConfigElement();
         {
             // docsearch:store
             QName prop = DocumentSearchModel.Props.STORE;
-            ItemConfigVO itemConfig = new ItemConfigVO(prop.toPrefixString(namespaceService));
-            itemConfig.setDisplayLabelId(searchLabelIds.get(prop));
+            ItemConfigVO itemConfig = createItemConfigVO(prop);
             itemConfig.setComponentGenerator("GeneralSelectorGenerator");
             itemConfig.setSelectionItems("#{DialogManager.bean.getStores}");
             itemConfig.setConverter("ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter");
             itemConfig.setValueChangeListener("#{DialogManager.bean.storeValueChangeListener}");
             itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
-            config.getPropertySheetConfigElement().addItem(itemConfig);
+            propertySheetConfigElement.addItem(itemConfig);
         }
 
-        /**
-         * <show-property name="docsearch:input" display-label-id="document_search_input" component-generator="TextAreaGenerator" styleClass="expand19-200" />
-         */
-        {
-            // docsearch:input
-            QName prop = DocumentSearchModel.Props.INPUT;
-            ItemConfigVO itemConfig = new ItemConfigVO(prop.toPrefixString(namespaceService));
-            itemConfig.setDisplayLabelId(searchLabelIds.get(prop));
-            itemConfig.setComponentGenerator("TextAreaGenerator");
-            itemConfig.setStyleClass("expand19-200 focus");
-            itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
-            config.getPropertySheetConfigElement().addItem(itemConfig);
-        }
+        addInputConfigItem(config, false);
 
-        /**
-         * <show-property name="docsearch:documentType" display-label-id="document_docType" component-generator="GeneralSelectorGenerator"
-         * selectionItems="#{DocumentSearchBean.getDocumentTypes}" converter="ee.webmedia.alfresco.common.propertysheet.converter.QNameConverter" />
-         */
-        {
-            // docsearch:documentType
-            QName prop = DocumentSearchModel.Props.DOCUMENT_TYPE;
-            ItemConfigVO itemConfig = new ItemConfigVO(prop.toPrefixString(namespaceService));
-            itemConfig.setDisplayLabelId(searchLabelIds.get(prop));
-            itemConfig.setComponentGenerator("GeneralSelectorGenerator");
-            itemConfig.setSelectionItems("#{DocumentSearchBean.getDocumentTypes}");
-            itemConfig.setRenderCheckboxAfterLabel(withCheckboxes);
-            itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
-            config.getPropertySheetConfigElement().addItem(itemConfig);
-        }
+        addDocumentTypeConfigItem(withCheckboxes, config);
 
         /**
          * <show-property name="docsearch:sendMode" display-label-id="document_send_mode" component-generator="ClassificatorSelectorGenerator" classificatorName="sendModeSearch" />
@@ -282,28 +348,26 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         {
             // docsearch:sendMode
             QName prop = DocumentSearchModel.Props.SEND_MODE;
-            ItemConfigVO itemConfig = new ItemConfigVO(prop.toPrefixString(namespaceService));
-            itemConfig.setDisplayLabelId(searchLabelIds.get(prop));
+            ItemConfigVO itemConfig = createItemConfigVO(prop);
             itemConfig.setComponentGenerator("ClassificatorSelectorGenerator");
             itemConfig.setRenderCheckboxAfterLabel(withCheckboxes);
             itemConfig.setClassificatorName("transmittalMode"); // sendModeSearch classificator is deprecated
             itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
-            config.getPropertySheetConfigElement().addItem(itemConfig);
+            propertySheetConfigElement.addItem(itemConfig);
         }
 
-        List<FieldDefinition> fields = documentAdminService.getSearchableFieldDefinitions();
+        List<FieldDefinition> fields = documentAdminService.getSearchableDocumentFieldDefinitions();
         for (FieldDefinition fieldDefinition : fields) {
             processFieldForSearchView(fieldDefinition);
             processField(config, fieldDefinition, withCheckboxes, false);
             if (fieldDefinition.getFieldId().equals("regNumber")) {
                 QName prop = DocumentCommonModel.Props.SHORT_REG_NUMBER;
-                ItemConfigVO itemConfig = new ItemConfigVO(prop.toPrefixString(namespaceService));
-                itemConfig.setDisplayLabelId(searchLabelIds.get(prop));
+                ItemConfigVO itemConfig = createItemConfigVO(prop);
                 itemConfig.setComponentGenerator("TextAreaGenerator");
                 itemConfig.setStyleClass("expand19-200");
                 // itemConfig.setIgnoreIfMissing(false);
                 itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
-                config.getPropertySheetConfigElement().addItem(itemConfig);
+                propertySheetConfigElement.addItem(itemConfig);
             }
         }
 
@@ -317,8 +381,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
             {
                 // docsearch:fund
                 QName prop = DocumentSearchModel.Props.FUND;
-                ItemConfigVO itemConfig = new ItemConfigVO(prop.toPrefixString(namespaceService));
-                itemConfig.setDisplayLabelId(searchLabelIds.get(prop));
+                ItemConfigVO itemConfig = createItemConfigVO(prop);
                 itemConfig.setComponentGenerator("MultiValueEditorGenerator");
                 itemConfig.setShowHeaders(false);
                 itemConfig.setStyleClass("add-default");
@@ -327,7 +390,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
                 itemConfig.setIsAutomaticallyAddRows(true);
                 itemConfig.setPropsGeneration("docsearch:fund¤DimensionSelectorGenerator¤dimensionName=invoiceFunds¤styleClass=expand19-200 tooltip¤converter=");
                 itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
-                config.getPropertySheetConfigElement().addItem(itemConfig);
+                propertySheetConfigElement.addItem(itemConfig);
             }
 
             /**
@@ -338,8 +401,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
             {
                 // docsearch:fundsCenter
                 QName prop = DocumentSearchModel.Props.FUNDS_CENTER;
-                ItemConfigVO itemConfig = new ItemConfigVO(prop.toPrefixString(namespaceService));
-                itemConfig.setDisplayLabelId(searchLabelIds.get(prop));
+                ItemConfigVO itemConfig = createItemConfigVO(prop);
                 itemConfig.setComponentGenerator("MultiValueEditorGenerator");
                 itemConfig.setShowHeaders(false);
                 itemConfig.setStyleClass("add-default");
@@ -348,7 +410,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
                 itemConfig.setIsAutomaticallyAddRows(true);
                 itemConfig.setPropsGeneration("docsearch:fundsCenter¤DimensionSelectorGenerator¤dimensionName=invoiceFundsCenters¤styleClass=expand19-200 tooltip¤converter=");
                 itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
-                config.getPropertySheetConfigElement().addItem(itemConfig);
+                propertySheetConfigElement.addItem(itemConfig);
             }
 
             /**
@@ -359,8 +421,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
             {
                 // docsearch:eaCommitmentItem
                 QName prop = DocumentSearchModel.Props.EA_COMMITMENT_ITEM;
-                ItemConfigVO itemConfig = new ItemConfigVO(prop.toPrefixString(namespaceService));
-                itemConfig.setDisplayLabelId(searchLabelIds.get(prop));
+                ItemConfigVO itemConfig = createItemConfigVO(prop);
                 itemConfig.setComponentGenerator("MultiValueEditorGenerator");
                 itemConfig.setShowHeaders(false);
                 itemConfig.setStyleClass("add-default");
@@ -372,21 +433,155 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
                         .setPropsGeneration(
                         "docsearch:eaCommitmentItem¤DimensionSelectorGenerator¤filter=eaPrefixInclude¤dimensionName=invoiceCommitmentItem¤styleClass=expand19-200 tooltip¤converter=");
                 itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
-                config.getPropertySheetConfigElement().addItem(itemConfig);
+                propertySheetConfigElement.addItem(itemConfig);
             }
         }
 
+        addDocumentCreatedConfigItem(config);
+
+        return config;
+    }
+
+    private void addDocumentTypeConfigItem(boolean withCheckboxes, DocumentConfig config) {
+        /**
+         * <show-property name="docsearch:documentType" display-label-id="document_docType" component-generator="GeneralSelectorGenerator"
+         * selectionItems="#{DocumentSearchBean.getDocumentTypes}" converter="ee.webmedia.alfresco.common.propertysheet.converter.QNameConverter" />
+         */
+        {
+            // docsearch:documentType
+            QName prop = DocumentSearchModel.Props.DOCUMENT_TYPE;
+            ItemConfigVO itemConfig = createItemConfigVO(prop);
+            itemConfig.setComponentGenerator("GeneralSelectorGenerator");
+            itemConfig.setSelectionItems("#{DocumentSearchBean.getDocumentTypes}");
+            itemConfig.setRenderCheckboxAfterLabel(withCheckboxes);
+            itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
+            config.getPropertySheetConfigElement().addItem(itemConfig);
+        }
+    }
+
+    private void addDocumentCreatedConfigItem(DocumentConfig config) {
         {
             // docsearch:documentCreated
             QName prop = DocumentSearchModel.Props.DOCUMENT_CREATED;
-            ItemConfigVO itemConfig = new ItemConfigVO(prop.toPrefixString(namespaceService));
-            itemConfig.setDisplayLabelId(searchLabelIds.get(prop));
+            ItemConfigVO itemConfig = createItemConfigVO(prop);
             itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
             DateGenerator.setupDateFilterItemConfig(itemConfig, prop);
             config.getPropertySheetConfigElement().addItem(itemConfig);
         }
+    }
+
+    private void addInputConfigItem(DocumentConfig config, boolean isAssociationSearch) {
+        /**
+         * <show-property name="docsearch:input" display-label-id="document_search_input" component-generator="TextAreaGenerator" styleClass="expand19-200" />
+         */
+        {
+            // docsearch:input
+            QName prop = DocumentSearchModel.Props.INPUT;
+            ItemConfigVO itemConfig = createItemConfigVO(prop);
+            if (isAssociationSearch) {
+                itemConfig.setStyleClass("searchAssocOnEnter focus");
+            } else {
+                itemConfig.setComponentGenerator("TextAreaGenerator");
+                itemConfig.setStyleClass("expand19-200 focus");
+            }
+            itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
+            config.getPropertySheetConfigElement().addItem(itemConfig);
+        }
+    }
+
+    @Override
+    public DocumentConfig getEventPlanVolumeSearchFilterConfig() {
+        DocumentConfig config = getEmptyConfig(null, null);
+        WMPropertySheetConfigElement propertySheetConfigElement = config.getPropertySheetConfigElement();
+        {
+            ItemConfigVO itemConfig = new ItemConfigVO(VolumeModel.Props.TITLE.toPrefixString(namespaceService));
+            itemConfig.setDisplayLabelId("volume_title");
+            itemConfig.setComponentGenerator("TextAreaGenerator");
+            itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
+            propertySheetConfigElement.addItem(itemConfig);
+        }
+        {
+            ItemConfigVO itemConfig = new ItemConfigVO(VolumeModel.Props.STATUS.toPrefixString(namespaceService));
+            itemConfig.setDisplayLabelId("volume_status");
+            itemConfig.setComponentGenerator("ClassificatorSelectorGenerator");
+            itemConfig.setClassificatorName("docListUnitStatus");
+            itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
+            propertySheetConfigElement.addItem(itemConfig);
+        }
+        {
+            ItemConfigVO itemConfig = new ItemConfigVO(VolumeSearchModel.Props.STORE.toPrefixString(namespaceService));
+            itemConfig.setDisplayLabelId("volume_location");
+            itemConfig.setComponentGenerator("GeneralSelectorGenerator");
+            itemConfig.setSelectionItems("#{DialogManager.bean.getStores}");
+            itemConfig.setConverter("ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter");
+            itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
+            propertySheetConfigElement.addItem(itemConfig);
+        }
+        return config;
+    }
+
+    @Override
+    public DocumentConfig getVolumeSearchFilterConfig(boolean withCheckboxes) {
+        DocumentConfig config = getEmptyConfig(null, null);
+        WMPropertySheetConfigElement propertySheetConfigElement = config.getPropertySheetConfigElement();
+        {
+            ItemConfigVO itemConfig = createItemConfigVO(VolumeSearchModel.Props.STORE);
+            itemConfig.setComponentGenerator("GeneralSelectorGenerator");
+            itemConfig.setSelectionItems("#{DialogManager.bean.getStores}");
+            itemConfig.setConverter("ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter");
+            itemConfig.setValueChangeListener("#{DialogManager.bean.storeValueChangeListener}");
+            itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
+            propertySheetConfigElement.addItem(itemConfig);
+        }
+
+        {
+            ItemConfigVO itemConfig = createItemConfigVO(VolumeSearchModel.Props.INPUT);
+            itemConfig.setComponentGenerator("TextAreaGenerator");
+            itemConfig.setStyleClass("expand19-200 focus");
+            itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
+            propertySheetConfigElement.addItem(itemConfig);
+        }
+
+        {
+            ItemConfigVO itemConfig = createItemConfigVO(VolumeSearchModel.Props.VOLUME_TYPE);
+            itemConfig.setComponentGenerator("EnumSelectorGenerator");
+            itemConfig.getCustomAttributes().put(EnumSelectorGenerator.ATTR_ENUM_CLASS, VolumeType.class.getCanonicalName());
+            itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
+            propertySheetConfigElement.addItem(itemConfig);
+        }
+
+        {
+            ItemConfigVO itemConfig = createItemConfigVO(VolumeSearchModel.Props.CASE_FILE_TYPE);
+            itemConfig.setRenderCheckboxAfterLabel(withCheckboxes);
+            itemConfig.setComponentGenerator("GeneralSelectorGenerator");
+            itemConfig.setSelectionItems("#{DialogManager.bean.getCaseFileTypes}");
+            itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
+            propertySheetConfigElement.addItem(itemConfig);
+        }
+
+        List<FieldDefinition> fields = documentAdminService.getSearchableVolumeFieldDefinitions();
+        for (FieldDefinition fieldDefinition : fields) {
+            processFieldForSearchView(fieldDefinition);
+            processField(config, fieldDefinition, withCheckboxes, false);
+        }
+
+        if (!withCheckboxes) {
+            {
+                ItemConfigVO itemConfig = createItemConfigVO(VolumeReportModel.Props.REPORT_TEMPLATE);
+                itemConfig.setComponentGenerator("GeneralSelectorGenerator");
+                itemConfig.setSelectionItems("#{DialogManager.bean.getReportTemplates}");
+                itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
+                propertySheetConfigElement.addItem(itemConfig);
+            }
+        }
 
         return config;
+    }
+
+    private ItemConfigVO createItemConfigVO(QName prop) {
+        ItemConfigVO itemConfig = new ItemConfigVO(prop.toPrefixString(namespaceService));
+        itemConfig.setDisplayLabelId(searchLabelIds.get(prop));
+        return itemConfig;
     }
 
     @Override
@@ -396,8 +591,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         {
             // docreport:reportOutputType
             QName prop = DocumentReportModel.Props.REPORT_OUTPUT_TYPE;
-            ItemConfigVO itemConfig = new ItemConfigVO(prop.toPrefixString(namespaceService));
-            itemConfig.setDisplayLabelId(searchLabelIds.get(prop));
+            ItemConfigVO itemConfig = createItemConfigVO(prop);
             itemConfig.setComponentGenerator("EnumSelectorGenerator");
             itemConfig.getCustomAttributes().put("enumClass", TemplateReportOutputType.class.getCanonicalName());
             itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
@@ -407,8 +601,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         {
             // docreport:reportTemplate
             QName prop = DocumentReportModel.Props.REPORT_TEMPLATE;
-            ItemConfigVO itemConfig = new ItemConfigVO(prop.toPrefixString(namespaceService));
-            itemConfig.setDisplayLabelId(searchLabelIds.get(prop));
+            ItemConfigVO itemConfig = createItemConfigVO(prop);
             itemConfig.setComponentGenerator("GeneralSelectorGenerator");
             itemConfig.setSelectionItems("#{DocumentDynamicReportDialog.getReportTemplates}");
             itemConfig.setConfigItemType(ConfigItemType.PROPERTY);
@@ -466,6 +659,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
     private static class GeneratorResultsImpl implements GeneratorResults {
 
         private final ItemConfigVO pregeneratedItem;
+        private final List<ItemConfigVO> itemsAfterPregeneratedItem = new ArrayList<WMPropertySheetConfigElement.ItemConfigVO>();
         private boolean preGeneratedItemAdded = false;
         private final DocumentConfig config;
         private final boolean forceEditMode;
@@ -491,12 +685,17 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
 
         @Override
         public void addItem(ItemConfigVO item) {
+            WMPropertySheetConfigElement propSheet = processItem(item);
+            propSheet.addItem(item);
+        }
+
+        public WMPropertySheetConfigElement processItem(ItemConfigVO item) {
             WMPropertySheetConfigElement propSheet = config.getPropertySheetConfigElement();
             Assert.isTrue(!propSheet.getItems().containsKey(item.getName()), "PropertySheetItem with name already exists: " + item.getName());
             if (forceEditMode) {
                 item.setShowInViewMode(false);
             }
-            propSheet.addItem(item);
+            return propSheet;
         }
 
         @Override
@@ -505,6 +704,16 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
             Map<String, PropertySheetStateHolder> stateHolders = config.getStateHolders();
             Assert.isTrue(!stateHolders.containsKey(key), "Stateholder already exists for " + key);
             stateHolders.put(key, stateHolder);
+        }
+
+        @Override
+        public void addItemAfterPregeneratedItem(ItemConfigVO item) {
+            processItem(item);
+            String itemName = item.getName();
+            for (ItemConfigVO additionalItem : itemsAfterPregeneratedItem) {
+                Assert.isTrue(!additionalItem.getName().equals(itemName), "PropertySheetItem with name already exists: " + itemName);
+            }
+            itemsAfterPregeneratedItem.add(item);
         }
 
         @Override
@@ -621,6 +830,10 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
     }
 
     private boolean processField(DocumentConfig config, Field field, boolean renderCheckboxAfterLabel, boolean forceEditMode) {
+        return processField(config, field, renderCheckboxAfterLabel, forceEditMode, null);
+    }
+
+    private boolean processField(DocumentConfig config, Field field, boolean renderCheckboxAfterLabel, boolean forceEditMode, String additionalStateHolderKey) {
         ItemConfigVO item = processFieldBase(field, renderCheckboxAfterLabel);
 
         /*
@@ -663,6 +876,9 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         if (generatorByOriginalFieldId != null) {
             generatorResults = new GeneratorResultsImpl(item, config, forceEditMode);
             try {
+                if (generatorByOriginalFieldId instanceof BaseSystematicFieldGenerator) {
+                    ((BaseSystematicFieldGenerator) generatorByOriginalFieldId).setUseAdditionalStateHolders(additionalStateHolderKey);
+                }
                 generatorByOriginalFieldId.generateField(field, generatorResults);
             } catch (Exception e) {
                 throw new RuntimeException("Error running generator for field id, field=" + field.toString() + ": " + e.getMessage(), e);
@@ -680,6 +896,9 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
             item.setShowInViewMode(false);
         }
         propSheet.addItem(item);
+        for (ItemConfigVO additionalItem : generatorResults.itemsAfterPregeneratedItem) {
+            propSheet.addItem(additionalItem);
+        }
 
         addSaveListener(config, generatorByFieldType);
         addSaveListener(config, generatorByOriginalFieldId);
@@ -744,26 +963,28 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
 
     @Override
     public void setDefaultPropertyValues(Node node, QName[] childAssocTypeQNameHierarchy, boolean forceOverwrite, boolean reallySetDefaultValues, DocumentTypeVersion docVer) {
+        Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = getDocumentTypeAndVersion(node);
         if (docVer == null) {
-            Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = getDocumentTypeAndVersion(node);
             docVer = documentTypeAndVersion.getSecond();
         } else {
             Pair<String, Integer> docTypeIdAndVersionNr = getDocTypeIdAndVersionNr(node);
             Assert.isTrue(ObjectUtils.equals(docVer.getParent().getId(), docTypeIdAndVersionNr.getFirst()));
             Assert.isTrue(ObjectUtils.equals(docVer.getVersionNr(), docTypeIdAndVersionNr.getSecond()));
         }
-        Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions = getPropertyDefinitions(getDocTypeIdAndVersionNr(docVer));
-        setDefaultPropertyValues(node, childAssocTypeQNameHierarchy, forceOverwrite, reallySetDefaultValues, propertyDefinitions);
+        Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions = getPropertyDefinitions(getPropDefCacheKey(getDynamicTypeClass(node), docVer));
+        setDefaultPropertyValues(node, childAssocTypeQNameHierarchy, forceOverwrite, reallySetDefaultValues, propertyDefinitions, documentTypeAndVersion != null
+                ? documentTypeAndVersion.getFirst() : null);
     }
 
     @Override
     public void setDefaultPropertyValues(Node node, QName[] requiredHierarchy, boolean forceOverwrite, boolean reallySetDefaultValues, List<Field> fields) {
         Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions = createPropertyDefinitions(fields);
-        setDefaultPropertyValues(node, requiredHierarchy, forceOverwrite, reallySetDefaultValues, propertyDefinitions);
+        DocumentType documentType = getDocumentTypeAndVersion(node).getFirst();
+        setDefaultPropertyValues(node, requiredHierarchy, forceOverwrite, reallySetDefaultValues, propertyDefinitions, documentType);
     }
 
     private void setDefaultPropertyValues(Node node, QName[] requiredHierarchy, boolean forceOverwrite, boolean reallySetDefaultValues,
-            Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions) {
+            Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions, DocumentType documentType) {
         if (requiredHierarchy == null) {
             requiredHierarchy = new QName[] {};
         }
@@ -811,7 +1032,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
 
             List<Node> childNodes = collectChildNodes(node, hierarchy, i);
             for (Node childNode : childNodes) {
-                setDefaultPropertyValue(childNode, propDef, forceOverwrite, reallySetDefaultValues, field, propertyDefinitions);
+                setDefaultPropertyValue(childNode, propDef, forceOverwrite, reallySetDefaultValues, field, propertyDefinitions, documentType);
             }
         }
     }
@@ -830,15 +1051,49 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         return results;
     }
 
+    private List<String> getDefaultTableValue(QName fieldType) {
+        List<ClassificatorValue> classValues = BeanHelper.getClassificatorService().getAllClassificatorValues(fieldType.getLocalName());
+        Collections.sort(classValues, new Comparator<ClassificatorValue>() {
+            @Override
+            public int compare(ClassificatorValue o1, ClassificatorValue o2) {
+                return o1.getValueData().compareTo(o2.getValueData());
+            }
+        });
+        List<String> defaultTableValues = new ArrayList<String>();
+        for (ClassificatorValue classValue : classValues) {
+            String valueData = classValue.getValueData();
+            if (!StringUtils.isEmpty(valueData) && StringUtils.isNumeric(valueData)) {
+                defaultTableValues.add(classValue.getValueName());
+            }
+        }
+        return defaultTableValues;
+    }
+
     private void setDefaultPropertyValue(Node node, DynamicPropertyDefinition propDef, boolean forceOverwrite, boolean reallySetDefaultValues, Field field,
-            Map<String, Pair<DynamicPropertyDefinition, Field>> allFieldsAndPropDefs) {
+            Map<String, Pair<DynamicPropertyDefinition, Field>> allFieldsAndPropDefs, DocumentType documentType) {
         Serializable value = (Serializable) node.getProperties().get(field.getQName());
-        if (value != null && !forceOverwrite) {
+        if (!(value == null || (value instanceof String && StringUtils.isBlank((String) value))) && !forceOverwrite) {
             return;
         }
 
         Serializable defaultValue = null;
         if (reallySetDefaultValues) {
+            if (isPropField(DocumentDynamicModel.Props.EXPENSE_TYPE_CHOICE, field)) {
+                defaultValue = (Serializable) getDefaultTableValue(DocumentDynamicModel.Props.EXPENSE_TYPE_CHOICE);
+            }
+            if (documentType != null) {
+                if (isPropField(DocumentCommonModel.Props.FUNCTION, field)) {
+                    defaultValue = documentType.getFunction();
+                } else if (isPropField(DocumentCommonModel.Props.SERIES, field)) {
+                    defaultValue = documentType.getSeries();
+                } else if (isPropField(DocumentCommonModel.Props.VOLUME, field)) {
+                    defaultValue = documentType.getVolume();
+                } else if (isPropField(DocumentCommonModel.Props.CASE, field)) {
+                    defaultValue = documentType.getCase();
+                }
+            }
+        }
+        if (defaultValue == null && reallySetDefaultValues) {
             QName dataType = propDef.getDataTypeQName();
             if (StringUtils.isNotEmpty(field.getDefaultValue())) {
                 if (DataTypeDefinition.TEXT.equals(dataType) && field.getFieldTypeEnum() != FieldType.INFORMATION_TEXT) {
@@ -925,6 +1180,10 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         }
     }
 
+    private boolean isPropField(QName propQName, Field field) {
+        return propQName.getLocalName().equals(field.getOriginalFieldId());
+    }
+
     // Same rules as in ErrandGenerator#applicantOrgStructUnitChanged
     private void setSpecialDependentValues(Node node, Field field, Serializable value) {
         if (field != null
@@ -961,10 +1220,15 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
     }
 
     @Override
-    public void setUserContactProps(Map<QName, Serializable> props, String userName, String fieldId) {
-        Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs = getPropertyDefinitions(getDocTypeIdAndVersionNr(props));
+    public void setUserContactProps(Map<QName, Serializable> props, String userName, String fieldId, Class<? extends DynamicType> typeClass) {
+        Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs = getPropertyDefinitions(getPropDefCacheKey(typeClass, props));
         Pair<DynamicPropertyDefinition, Field> propDefAndField = propDefs.get(fieldId);
         setUserContactProps(props, userName, propDefAndField.getFirst(), propDefAndField.getSecond());
+    }
+
+    @Override
+    public void setUserContactProps(Map<QName, Serializable> props, String userName, String fieldId) {
+        setUserContactProps(props, userName, fieldId, DocumentType.class);
     }
 
     @Override
@@ -1001,6 +1265,12 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         if (!DocumentDynamicModel.URI.equals(property.getNamespaceURI())) {
             return null;
         }
+        // XXX a little hack for the docdyn:status property on volumes
+        // the volume type is not dynamic but the status property has to be
+        if (documentDynamicNode.getType().equals(VolumeModel.Types.VOLUME) && property.equals(VolumeModel.Props.STATUS)) {
+            FieldDefinition field = documentAdminService.getFieldDefinition(property.getLocalName());
+            return new DynamicPropertyDefinitionImpl(field, false, null);
+        }
         if (isFilterType(documentDynamicNode.getType())) {
             if (hiddenFieldDependencies.containsKey(property.getLocalName())) {
                 String originalFieldId = hiddenFieldDependencies.get(property.getLocalName());
@@ -1023,7 +1293,8 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
     }
 
     protected boolean isFilterType(QName type) {
-        return DocumentSearchModel.Types.FILTER.equals(type) || DocumentReportModel.Types.FILTER.equals(type);
+        return DocumentSearchModel.Types.FILTER.equals(type) || DocumentReportModel.Types.FILTER.equals(type) || VolumeSearchModel.Types.FILTER.equals(type)
+                || VolumeReportModel.Types.FILTER.equals(type) || DocumentSearchModel.Types.OBJECT_FILTER.equals(type);
     }
 
     private DynamicPropertyDefinition getPropDefForSearch(String fieldId, boolean processForSearch) {
@@ -1198,6 +1469,13 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         if (field.getFieldTypeEnum().equals(FieldType.COMBOBOX) && !comboboxFieldsNotMultiple.contains(field.getFieldId())) {
             return true;
         }
+
+        if (DocumentDynamicModel.Props.FIRST_KEYWORD_LEVEL.getLocalName().equals(field.getOriginalFieldId())
+                || DocumentDynamicModel.Props.SECOND_KEYWORD_LEVEL.getLocalName().equals(field.getOriginalFieldId())
+                || KeywordsGenerator.THESAURUS.getLocalName().equals(field.getFieldId())) {
+            return true;
+        }
+
         return null;
     }
 
@@ -1220,17 +1498,28 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
     public Map<String, Pair<DynamicPropertyDefinition, Field>> getPropertyDefinitions(Node node) {
         QName type = node.getType();
         // XXX Alar: checking hasAspect(OBJECT) would be the same
-        if (!DocumentCommonModel.Types.DOCUMENT.equals(type) && !dictionaryService.isSubClass(type, DocumentCommonModel.Types.METADATA_CONTAINER)) {
+        if (getDynamicTypeClass(node) == null && !dictionaryService.isSubClass(type, DocumentCommonModel.Types.METADATA_CONTAINER)) {
             return null;
         }
-        return getPropertyDefinitions(getDocTypeIdAndVersionNr(node));
+        PropDefCacheKey propDefCacheKey = getPropDefCacheKey(node);
+        return getPropertyDefinitions(propDefCacheKey);
     }
 
     @Override
-    public Map<String, Pair<DynamicPropertyDefinition, Field>> getPropertyDefinitions(Pair<String, Integer> docTypeIdAndVersionNr) {
-        Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions = propertyDefinitionCache.get(docTypeIdAndVersionNr);
+    public Map<String, Pair<DynamicPropertyDefinition, Field>> getPropertyDefinitions(PropDefCacheKey cacheKey) {
+        Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions = propertyDefinitionCache.get(cacheKey);
         if (propertyDefinitions == null) {
-            Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = getDocumentTypeAndVersion(docTypeIdAndVersionNr);
+            Pair<? extends DynamicType, DocumentTypeVersion> documentTypeAndVersion = null;
+            String dynamicTypeId = cacheKey.getDynamicTypeId();
+            Integer version = cacheKey.getVersion();
+            if (dynamicTypeId == null || version == null) {
+                return null;
+            }
+            if (cacheKey.isDocumentType()) {
+                documentTypeAndVersion = documentAdminService.getDocumentTypeAndVersion(dynamicTypeId, version);
+            } else if (cacheKey.isCaseFileType()) {
+                documentTypeAndVersion = documentAdminService.getCaseFileTypeAndVersion(dynamicTypeId, version);
+            }
             if (documentTypeAndVersion == null) {
                 return null;
             }
@@ -1239,7 +1528,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
             propertyDefinitions = createPropertyDefinitions(docVersion.getFieldsDeeply());
             if (LOG.isDebugEnabled()) {
                 StringBuilder s = new StringBuilder();
-                s.append("Created propertyDefinitions for cacheKey=").append(docTypeIdAndVersionNr).append(" - ");
+                s.append("Created propertyDefinitions for cacheKey=").append(cacheKey).append(" - ");
                 s.append("[").append(propertyDefinitions.size()).append("]");
                 for (Entry<String, Pair<DynamicPropertyDefinition, Field>> entry : propertyDefinitions.entrySet()) {
                     s.append("\n  ").append(entry.getKey()).append("=");
@@ -1249,7 +1538,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
                 }
                 LOG.debug(s.toString());
             }
-            propertyDefinitionCache.put(docTypeIdAndVersionNr, Collections.unmodifiableMap(propertyDefinitions));
+            propertyDefinitionCache.put(cacheKey, Collections.unmodifiableMap(propertyDefinitions));
         }
         return propertyDefinitions;
     }
@@ -1490,6 +1779,14 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         return _einvoiceService;
     }
 
-    // END: setters
+    @Override
+    public boolean isRegDateFilterInAssociationsSearch() {
+        return regDateFilterInAssociationsSearch;
+    }
 
+    public void setRegDateFilterInAssociationsSearch(boolean regDateFilterInAssociationsSearch) {
+        this.regDateFilterInAssociationsSearch = regDateFilterInAssociationsSearch;
+    }
+
+    // END: setters
 }

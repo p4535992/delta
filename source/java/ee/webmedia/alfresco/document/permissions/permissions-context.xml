@@ -24,6 +24,8 @@
             <value>viewDocumentMetaData</value>
             <value>editDocument</value>
             <value>viewDocumentFiles</value>
+            <value>editCaseFile</value>
+            <value>viewCaseFile</value>
          </list>
       </property>
    </bean>

@@ -35,8 +35,13 @@
    </bean>
    
    <!-- Used to update series volume types values. CL task: 177957 -->
-   <bean id="seriesUpdater" class="ee.webmedia.alfresco.series.bootstrap.SeriesUpdater" parent="abstractNodeUpdater">
+   <bean id="seriesUpdater2" class="ee.webmedia.alfresco.series.bootstrap.SeriesUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
+       <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
    </bean>
 
    <bean id="seriesService" class="ee.webmedia.alfresco.series.service.SeriesServiceImpl">
@@ -72,6 +77,16 @@
    <!-- Adds to docNumberPattern register prefix and suffix if they exist. -->
    <bean id="SeriesDocNumberPatternAddRegisterSufPrefUpdater" class="ee.webmedia.alfresco.document.bootstrap.SeriesDocNumberPatternAddRegisterSufPrefUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
+   </bean>
+
+   <bean id="seriesRetentionPropsRemoveUpdater" class="ee.webmedia.alfresco.series.bootstrap.SeriesRetentionPropsRemoveUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
    </bean>
 
    <!-- START: web beans: -->

@@ -18,7 +18,7 @@ public class EndDocumentEvaluator extends BaseActionEvaluator {
 
     @Override
     public boolean evaluate(Node node) {
-        if (!node.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE)) {
+        if (!node.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE) || !new DocumentNotInDraftsFunctionActionEvaluator().evaluate(node)) {
             return false;
         }
         String regNumber = (String) node.getProperties().get(DocumentCommonModel.Props.REG_NUMBER.toString());

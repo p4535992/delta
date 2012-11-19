@@ -5,6 +5,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
 import static ee.webmedia.alfresco.utils.MessageUtil.addInfoMessage;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 
@@ -31,6 +32,8 @@ import ee.webmedia.alfresco.utils.WebUtil;
  */
 public class ApplicationLogDialog extends AbstractSearchFilterBlockBean<LogService> {
 
+    private static final String COMPOUND_WORKFLOW_PARAM = "compoundWorkflowRef";
+    private static final String SERIES_PARAM = "seriesRef";
     private static final long serialVersionUID = 1L;
     private static final String NODEREF_PARAM = "nodeRef";
 
@@ -62,9 +65,15 @@ public class ApplicationLogDialog extends AbstractSearchFilterBlockBean<LogServi
         WebUtil.navigateTo("dialog:applicationLogListDialog");
     }
 
-    public void searchNodeRefEntries(ActionEvent event) {
+    public void searchWorkflowEntries(ActionEvent event) {
         LogFilter filter = new LogFilter();
-        filter.setObjectId(ActionUtil.getParam(event, NODEREF_PARAM));
+        filter.setObjectId(Collections.singletonList(ActionUtil.getParam(event, COMPOUND_WORKFLOW_PARAM)));
+        getAppLogListDialog().search(getLogService().getLogEntries(filter));
+    }
+
+    public void searchSeriesEntries(ActionEvent event) {
+        LogFilter filter = new LogFilter();
+        filter.setObjectId(Collections.singletonList(ActionUtil.getParam(event, SERIES_PARAM)));
         getAppLogListDialog().search(getLogService().getLogEntries(filter));
     }
 
@@ -97,7 +106,7 @@ public class ApplicationLogDialog extends AbstractSearchFilterBlockBean<LogServi
         result.setComputerId((String) props.get(LogSearchModel.Props.COMPUTER_ID));
         result.setDescription((String) props.get(LogSearchModel.Props.DESCRIPTION));
         result.setObjectName((String) props.get(LogSearchModel.Props.OBJECT_NAME));
-        result.setObjectId((String) props.get(LogSearchModel.Props.OBJECT_ID));
+        result.setObjectId(Collections.singletonList(((String) props.get(LogSearchModel.Props.OBJECT_ID))));
         return result;
     }
 

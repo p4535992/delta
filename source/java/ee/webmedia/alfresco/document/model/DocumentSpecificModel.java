@@ -399,6 +399,17 @@ public interface DocumentSpecificModel {
         QName CONTRACT_SMIT_END_DATE_DESC = QName.createQName(URI, "contractSmitEndDateDesc");
         QName CONTRACT_SIM_END_DATE_DESC = QName.createQName(URI, "contractSimEndDateDesc");
 
+        QName DRIVE_RECORD_KEEPING = QName.createQName(URI, "driveRecordKeeping");
+        QName DRIVE_COMPENSATION_RATE = QName.createQName(URI, "driveCompensationRate");
+        QName DRIVE_BEGIN_DATE = QName.createQName(URI, "driveBeginDate");
+        QName DRIVE_END_DATE = QName.createQName(URI, "driveEndDate");
+        QName DRIVE_ODO_BEGIN = QName.createQName(URI, "driveOdoBegin");
+        QName DRIVE_ODO_END = QName.createQName(URI, "driveOdoEnd");
+        QName DRIVE_KM = QName.createQName(URI, "driveKm");
+        QName DRIVE_COMPENSATION_CALCULATED = QName.createQName(URI, "driveCompensationCalculated");
+        QName DRIVE_TOTAL_KM = QName.createQName(URI, "driveTotalKm");
+        QName DRIVE_TOTAL_COMPENSATION = QName.createQName(URI, "driveTotalCompensation");
+        QName DRIVE_COMPENSATION = QName.createQName(URI, "driveCompensation");
     }
 
 }

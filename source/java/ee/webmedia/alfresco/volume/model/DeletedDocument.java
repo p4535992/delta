@@ -14,12 +14,14 @@ import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
  */
 @AlfrescoModelType(uri = VolumeModel.URI)
 public class DeletedDocument implements Serializable, Comparable<DeletedDocument> {
+
     private static final long serialVersionUID = 1L;
 
     private String actor;
     private Date deletedDateTime;
     private String documentData;
     private String comment;
+    private String deletionType;
 
     public DeletedDocument() {
         deletedDateTime = new Date();
@@ -59,6 +61,14 @@ public class DeletedDocument implements Serializable, Comparable<DeletedDocument
 
     public void setComment(String comment) {
         this.comment = comment;
+    }
+
+    public void setDeletionType(String deletionType) {
+        this.deletionType = deletionType;
+    }
+
+    public String getDeletionType() {
+        return deletionType;
     }
 
     @Override

@@ -73,12 +73,21 @@
                </item>
             </subitems>
          </dropdown>
-         <dropdown title-id="menu_my_responsibility" expanded="true">
+         <dropdown id="menu_my_responsibility" title-id="menu_my_responsibility" expanded="true">
             <submenu-id>my-responsibility-submenu</submenu-id>
+            <hidden>#{MenuBean.isMenuItemHidden}</hidden>
             <subitems>
                <item id="userWorkingDocuments" title-id="menu_working_documents">
                   <outcome>dialog:userWorkingDocumentsSearchResultsDialog</outcome>
                   <action-listener>#{UserWorkingDocumentsSearchResultsDialog.setup}</action-listener>
+                  <hidden>#{MenuBean.isMenuItemHidden}</hidden>
+               </item>
+               <item id="userCompoundWorkflows" title-id="menu_compound_workflows">
+                  <outcome>dialog:compoundWorkflowListDialog</outcome>
+                  <hidden>#{MenuBean.isMenuItemHidden}</hidden>
+               </item>
+               <item id="userCaseFiles" title-id="menu_case_files">
+                  <outcome>dialog:caseFileListDialog</outcome>
                   <hidden>#{MenuBean.isMenuItemHidden}</hidden>
                </item>
             </subitems>
@@ -106,6 +115,10 @@
                   <outcome>dialog:scannedDocsListDialog</outcome>
                   <action-listener>#{ScannedDocsListDialog.init}</action-listener>
                </item>
+               <item id="webServiceDocuments" title="#{MenuBean.webServiceDocumentsMenuItemTitle}" document-manager="true">
+                  <outcome>dialog:webServiceDocumentListDialog</outcome>
+                  <action-listener>#{WebServiceDocumentListDialog.setup}</action-listener>
+               </item>               
                <item id="sendFailureNotification" title-id="menu_send_failure_notifications" document-manager="true">
                   <outcome>dialog:sendFailureNotificationsListDialog</outcome>
                   <action-listener>#{SendFailureNotificationsListDialog.init}</action-listener>
@@ -130,10 +143,12 @@
          </dropdown>
          <item id="departmentDocuments" title-id="menu_department_documents">
             <href>#{MenuBean.workingDocumentsAddress}</href>
+            <hidden>#{MenuBean.isMenuItemHidden}</hidden>
             <target>_blank</target>
          </item>
-         <dropdown title-id="menu_my_documents" browse="true">
+         <dropdown id="myDocuments" title-id="menu_my_documents" browse="true">
             <xpath>/{http://alfresco.webmedia.ee/model/functions/1.0}documentList</xpath>
+            <hidden>#{MenuBean.isMenuItemHidden}</hidden>
             <submenu-id>my-documents</submenu-id>
             <outcome>dialog:myDocsFunctionsListDialog</outcome>
             <action-listener>#{MenuBean.updateTree}</action-listener>
@@ -145,6 +160,7 @@
    <!-- DOKUMENDIREGISTER -->
    <item id="documentRegister" title-id="menu_document_register">
       <outcome>dialog:todayRegisteredDocumentsSearchResultsDialog</outcome>
+      <hidden>#{MenuBean.isMenuItemHidden}</hidden>
       <action-listener>#{TodayRegisteredDocumentsSearchResultsDialog.setup}</action-listener>
       <subitems>
          <dropdown title-id="menu_document_list" browse="true">
@@ -157,8 +173,9 @@
    </item>
 
    <!-- KONTAKT -->
-   <item title-id="menu_contact">
+   <item id="contact" title-id="menu_contact">
       <outcome>dialog:addressbookList</outcome>
+      <hidden>#{MenuBean.isMenuItemHidden}</hidden>
       <subitems>
          <item id="contactList" title-id="menu_contact_management">
             <outcome>dialog:addressbookList</outcome>
@@ -170,8 +187,9 @@
    </item>
 
    <!-- MINA -->
-   <item title-id="menu_me">
+   <item id="me" title-id="menu_me">
       <outcome>dialog:userConsole</outcome>
+      <hidden>#{MenuBean.isMenuItemHidden}</hidden>
       <action-listener>#{UserDetailsDialog.setupCurrentUser}</action-listener>
       <subitems>
          <item id="myProfile" title-id="menu_my_profile">
@@ -198,8 +216,10 @@
       </subitems>
    </item>
 
-   <item title-id="menu_search">
+   <!-- OTSING -->
+   <item id="search" title-id="menu_search">
       <outcome>dialog:documentDynamicSearchDialog</outcome>
+      <hidden>#{MenuBean.isMenuItemHidden}</hidden>
       <subitems>
          <dropdown title-id="menu_searches" expanded="true">
             <submenu-id>searches-submenu</submenu-id>
@@ -209,6 +229,13 @@
                </item>
                <item id="taskSearch" title-id="menu_tasks">
                   <outcome>dialog:taskSearchDialog</outcome>
+               </item>
+               <item id="volSearch" title-id="menu_caseFile_search">
+                  <outcome>dialog:volumeDynamicSearchDialog</outcome>
+                  <hidden>#{MenuBean.isMenuItemHidden}</hidden>
+               </item>
+               <item id="compoundWorkflowSearch" title-id="menu_compoundworkflow_search">
+                  <outcome>dialog:compoundWorkflowSearchDialog</outcome>
                </item>
             </subitems>
          </dropdown>
@@ -221,16 +248,19 @@
                <item id="taskReports" title-id="menu_task_reports">
                   <outcome>dialog:taskReportDialog</outcome>
                </item>
+               <item id="volumeReports" title-id="menu_volume_reports">
+                  <outcome>dialog:volumeDynamicReportDialog</outcome>
+               </item>            
             </subitems>
          </dropdown>
-         <item title-id="menu_executed_reports">
+         <item id="executedReports" title-id="menu_executed_reports">
             <outcome>dialog:reportListDialog</outcome>
          </item>
       </subitems>
    </item>
 
    <!-- ADMINISTRATOR -->
-   <item id="administrator" title-id="menu_administrator" accountant="true" document-manager="true" supervisor="true">
+   <item id="administrator" title-id="menu_administrator" accountant="true" document-manager="true" supervisor="true" archivist="true">
       <outcome>dialog:userListDialog</outcome>
       <subitems>
          <item id="userManagement" title-id="menu_user_management" document-manager="true">
@@ -279,6 +309,15 @@
          <item id="manageDeletedItems" title-id="menu_manage_deleted_items" admin="true" supervisor="true">
             <outcome>dialog:manageDeletedItems</outcome>
          </item>
+         <item id="manageLocks" title-id="menu_manage_locks" admin="true">
+            <outcome>dialog:manageLocksDialog</outcome>
+         </item>
+         <item id="eventplan" title-id="menu_eventplan" admin="true" document-manager="true" archivist="true">
+            <outcome>dialog:eventPlanListDialog</outcome>
+         </item>
+         <item id="archivationActions" title-id="menu_archivation_actions" admin="true" archivist="true">
+             <outcome>dialog:archivationActions</outcome>
+         </item> 
          <item id="thesauri" title-id="menu_thesauri" admin="true">
             <outcome>dialog:thesaurusListDialog</outcome>
          </item>
@@ -301,14 +340,32 @@
    </item>
    <item id="restrictedDelta" title="#{MenuBean.restrictedDeltaName}">
       <href>#{MenuBean.restrictedDeltaUrl}</href>
+      <hidden>#{MenuBean.isMenuItemHidden}</hidden>
    </item>
    <item id="regularDelta" title="#{MenuBean.deltaName}">
       <href>#{MenuBean.deltaUrl}</href>
+      <hidden>#{MenuBean.isMenuItemHidden}</hidden>
    </item>
 
+   <!-- "Alusta uut dokumenti" and "Alusta uut..." have css set float: left, so in browser they appear in reverse order than defined here -->
    <!-- ALUSTA UUT DOKUMENTI -->
    <dropdown id="documentDynamicTypes" title-id="menu_start_new_document" skinnable="true" temporary="true">
       <submenu-id>new-document-dynamic-submenu</submenu-id>
+      <hidden>#{MenuBean.isMenuItemHidden}</hidden>
+   </dropdown>
+
+   <!-- ALUSTA UUT... (uus asjatoimik/terviktöövoog) -->
+   <dropdown id="newCaseFileOrWorkflow" title-id="menu_start_new_caseFile_workflow" skinnable="true" temporary="true">
+      <submenu-id>new-caseFile-workflow-submenu</submenu-id>
+      <hidden>#{MenuBean.isMenuItemHidden}</hidden>
+      <subitems>
+         <dropdown title-id="menu_caseFiles" expanded="false">
+            <submenu-id>caseFile-submenu</submenu-id>
+         </dropdown>
+         <dropdown title-id="menu_workflow" expanded="false">         
+            <submenu-id>workflow-submenu</submenu-id>
+         </dropdown>
+      </subitems>
    </dropdown>
 
 </menu>

@@ -51,6 +51,7 @@
       <property name="seriesService" ref="SeriesService" />
       <property name="logService" ref="LogService" />
       <property name="userService" ref="UserService" />
+      <property name="documentService" ref="DocumentService" />
    </bean>
 
    <bean id="FunctionsService" class="org.springframework.aop.framework.ProxyFactoryBean">

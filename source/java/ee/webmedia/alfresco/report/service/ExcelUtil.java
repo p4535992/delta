@@ -10,7 +10,7 @@ public class ExcelUtil {
 
     private final static int EXCEL_CELL_MAX_SIZE = 32767;
     private final static String EXCEL_CELL_MAX_SIZE_NOTIFICATION_SUFFIX = "\n\n\nNB! end of the input was removed, as it exceeded maximum length that excel cell can hold ("
-            + EXCEL_CELL_MAX_SIZE + " characters)";
+            + EXCEL_CELL_MAX_SIZE + " characters)"; // XXX why is this text necessary? just it's length is used
 
     public static void setCellValueTruncateIfNeeded(final Cell cell, String textToWrite, Log log) {
         if (textToWrite == null || textToWrite.length() == 0) {

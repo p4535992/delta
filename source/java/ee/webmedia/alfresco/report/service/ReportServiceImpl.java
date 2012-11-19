@@ -8,10 +8,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -31,6 +33,7 @@ import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.util.Pair;
+import org.alfresco.web.bean.repository.MapNode;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
@@ -43,27 +46,43 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.archivals.model.ArchivalsStoreVO;
+import ee.webmedia.alfresco.casefile.model.CaseFileModel;
+import ee.webmedia.alfresco.casefile.service.CaseFile;
+import ee.webmedia.alfresco.casefile.service.CaseFileService;
 import ee.webmedia.alfresco.classificator.enums.TemplateReportOutputType;
 import ee.webmedia.alfresco.classificator.enums.TemplateReportType;
+import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
+import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
+import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
+import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.report.model.ReportDataCollector;
 import ee.webmedia.alfresco.report.model.ReportModel;
 import ee.webmedia.alfresco.report.model.ReportStatus;
+import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
+import ee.webmedia.alfresco.utils.UserUtil;
+import ee.webmedia.alfresco.volume.model.VolumeModel;
+import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
+import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
+import ee.webmedia.alfresco.workflow.service.LinkedReviewTask;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
@@ -80,6 +99,8 @@ public class ReportServiceImpl implements ReportService {
     private DocumentSearchService documentSearchService;
     private DocumentTemplateService documentTemplateService;
     private FileFolderService fileFolderService;
+    private FunctionsService functionsService;
+    private SeriesService seriesService;
     private NodeService nodeService;
     private GeneralService generalService;
     private UserService userService;
@@ -87,6 +108,7 @@ public class ReportServiceImpl implements ReportService {
     private DocumentAdminService documentAdminService;
     private MimetypeService mimetypeService;
     private FileService fileService;
+    private CaseFileService caseFileService;
     private TransactionService transactionService;
     private SendOutService sendOutService;
     /**
@@ -95,6 +117,8 @@ public class ReportServiceImpl implements ReportService {
      */
     private boolean reportGenerationEnabled;
     private boolean reportGenerationPaused;
+
+    private boolean usableByAdminDocManagerOnly;
 
     @Override
     public NodeRef createReportResult(Node filter, TemplateReportType reportType, QName parentToChildAssoc) {
@@ -148,7 +172,12 @@ public class ReportServiceImpl implements ReportService {
         if (TemplateReportType.TASKS_REPORT == reportType) {
             List<NodeRef> taskRefs = documentSearchService.searchTasksForReport(filter);
             Map<QName, String> taskNames = getTaskNames();
-            return createReportFileInMemory(taskRefs, templateReader, reportDataCollector, new FillExcelTaskRowCallback(types, taskNames));
+            return createReportFileInMemory(taskRefs, templateReader, reportDataCollector,
+                    new FillExcelTaskRowCallback(types, documentTemplateService.getCompoundWorkflowServerUrlPrefix(), documentTemplateService.getDocumentServerUrlPrefix(),
+                            taskNames));
+        } else if (TemplateReportType.VOLUMES_REPORT == reportType) {
+            List<NodeRef> volRefs = documentSearchService.searchVolumesForReport(filter);
+            return createReportFileInMemory(volRefs, templateReader, reportDataCollector, new FillExcelVolumeRowCallback(types));
         } else if (TemplateReportType.DOCUMENTS_REPORT == reportType) {
             List<NodeRef> documentRefs = new ArrayList<NodeRef>();
             long lastStatusCheckTime = System.currentTimeMillis();
@@ -161,7 +190,8 @@ public class ReportServiceImpl implements ReportService {
                     }
                     lastStatusCheckTime = currentTime;
                 }
-                documentRefs.addAll(documentSearchService.searchDocumentsForReport(filter, storeRef));
+                documentRefs.addAll(documentSearchService.searchDocumentsForReport(filter, storeRef,
+                        (String) reportDataCollector.getReportResultProps().get(ReportModel.Props.USERNAME)));
             }
             TemplateReportOutputType outputType = TemplateReportOutputType.valueOf((String) reportDataCollector.getReportResultProps().get(ReportModel.Props.REPORT_OUTPUT_TYPE));
             FillExcelRowCallback fillDocumentRowCallback = null;
@@ -541,6 +571,8 @@ public class ReportServiceImpl implements ReportService {
         }
     }
 
+    // siia
+
     private abstract class FillExcelRowCallback {
 
         protected Map<String, String> types;
@@ -555,12 +587,18 @@ public class ReportServiceImpl implements ReportService {
 
     private class FillExcelTaskRowCallback extends FillExcelRowCallback {
         private final Map<QName, String> taskNames;
+        private final String compoundWorkflowServerUrlPrefix;
+        private final String documentServerUrlPrefix;
+        private final String caseFileServerUrlPrefix;
 
-        public FillExcelTaskRowCallback(Map<String, String> types, Map<QName, String> taskNames) {
+        public FillExcelTaskRowCallback(Map<String, String> types, String compoundWorkflowServerUrlPrefix, String documentServerUrlPrefix, Map<QName, String> taskNames) {
             Assert.notNull(types, "Types cannot be null.");
             Assert.notNull(taskNames, "Task names cannot be null.");
             this.types = types;
             this.taskNames = taskNames;
+            this.compoundWorkflowServerUrlPrefix = compoundWorkflowServerUrlPrefix;
+            this.documentServerUrlPrefix = documentServerUrlPrefix;
+            caseFileServerUrlPrefix = documentTemplateService.getCaseFileUrl(null);
         }
 
         @Override
@@ -574,6 +612,9 @@ public class ReportServiceImpl implements ReportService {
             if (msgKeys == null) {
                 return;
             }
+            if (!workflowService.isDocumentWorkflowEnabled()) {
+                msgKeys = msgKeys.subList(4, msgKeys.size());
+            }
             int cellNum = 0;
             for (String msgKey : msgKeys) {
                 setCellValueTruncateIfNeeded(row.createCell(cellNum++), MessageUtil.getMessage(msgKey), LOG);
@@ -583,18 +624,35 @@ public class ReportServiceImpl implements ReportService {
         @Override
         public void execute(RowProvider rowProvider, NodeRef taskRef) {
             Task task = workflowService.getTaskWithoutParentAndChildren(taskRef, null, false);
-            NodeRef documentRef = generalService.getAncestorNodeRefWithType(task.getParentNodeRef(), DocumentCommonModel.Types.DOCUMENT);
             Document document = null;
-            if (documentRef != null) {
-                document = new Document(documentRef);
+            CaseFile caseFile = null;
+            CompoundWorkflow compoundWorkflow = null;
+            NodeRef workflowNodeRef = task.getWorkflowNodeRef();
+            if (workflowNodeRef != null && !nodeService.exists(workflowNodeRef)) {
+                LOG.error("Not existing parent workflow nodeRef=" + workflowNodeRef + " for task=\n" + task);
+                workflowNodeRef = null;
+            }
+            if (workflowNodeRef != null) {
+                NodeRef documentRef = generalService.getAncestorNodeRefWithType(workflowNodeRef, DocumentCommonModel.Types.DOCUMENT);
+                NodeRef caseFileRef = generalService.getAncestorNodeRefWithType(workflowNodeRef, CaseFileModel.Types.CASE_FILE);
+                NodeRef compoundWorkflowRef = generalService.getAncestorNodeRefWithType(workflowNodeRef, WorkflowCommonModel.Types.COMPOUND_WORKFLOW);
+                compoundWorkflow = compoundWorkflowRef != null ? workflowService.getCompoundWorkflow(compoundWorkflowRef) : null;
+                if (documentRef != null) {
+                    document = new Document(documentRef);
+                }
+                if (caseFileRef != null) {
+                    caseFile = caseFileService.getCaseFile(caseFileRef);
+                }
             }
             Row row = rowProvider.getRow();
             int cellIndex = 0;
-            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document.getRegNumber(), LOG);
-            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), formatDateOrEmpty(DATE_FORMAT, document.getRegDateTime()), LOG);
-            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), formatDateOrEmpty(DATE_FORMAT, document.getCreated()), LOG);
-            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), types.get(document.objectTypeId()), LOG);
-            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document.getDocName(), LOG);
+            if (workflowService.isDocumentWorkflowEnabled()) {
+                setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document != null ? document.getRegNumber() : "", LOG);
+                setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document != null ? formatDateOrEmpty(DATE_FORMAT, document.getRegDateTime()) : "", LOG);
+                setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document != null ? formatDateOrEmpty(DATE_FORMAT, document.getCreated()) : "", LOG);
+                setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document != null ? types.get(document.objectTypeId()) : "", LOG);
+            }
+            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), getTitle(compoundWorkflow, document, caseFile), LOG);
             setCellValueTruncateIfNeeded(row.createCell(cellIndex++), task.getCreatorName(), LOG);
             setCellValueTruncateIfNeeded(row.createCell(cellIndex++), formatDateOrEmpty(DATE_FORMAT, task.getStartedDateTime()), LOG);
             setCellValueTruncateIfNeeded(row.createCell(cellIndex++), task.getOwnerName(), LOG);
@@ -613,10 +671,209 @@ public class ReportServiceImpl implements ReportService {
             setCellValueTruncateIfNeeded(row.createCell(cellIndex++), task.getResolution(), LOG);
             setCellValueTruncateIfNeeded(row.createCell(cellIndex++), isAfterDate(task.getCompletedDateTime(), task.getDueDate()) ? "jah" : "ei", LOG);
             setCellValueTruncateIfNeeded(row.createCell(cellIndex++), task.getStatus(), LOG);
-            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document.getFunctionLabel(), LOG);
-            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document.getSeriesLabel(), LOG);
-            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document.getVolumeLabel(), LOG);
-            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document.getCaseLabel(), LOG);
+            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document != null ? document.getFunctionLabel() : "", LOG);
+            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document != null ? document.getSeriesLabel() : "", LOG);
+            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document != null ? document.getVolumeLabel() : "", LOG);
+            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document != null ? document.getCaseLabel() : "", LOG);
+            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), getUrl(document, compoundWorkflow, caseFile, task), LOG);
+            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), compoundWorkflow != null ? compoundWorkflow.getWorkflowTypeString() : "", LOG);
+            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), compoundWorkflow != null ? compoundWorkflow.getTitle() : "", LOG);
+            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), compoundWorkflow != null ? compoundWorkflow.getOwnerName() : "", LOG);
+            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), compoundWorkflow != null ? compoundWorkflow.getOwnerStructUnit() : "", LOG);
+            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), compoundWorkflow != null ? compoundWorkflow.getOwnerJobTitle() : "", LOG);
+            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), compoundWorkflow != null ? compoundWorkflow.getCreatedDateStr() : "", LOG);
+            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), compoundWorkflow != null ? compoundWorkflow.getStartedDateStr() : "", LOG);
+            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), compoundWorkflow != null ? compoundWorkflow.getStoppedDateStr() : "", LOG);
+            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), compoundWorkflow != null ? compoundWorkflow.getEndedDateStr() : "", LOG);
+            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), compoundWorkflow != null ? compoundWorkflow.getComment() : "", LOG);
+            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), compoundWorkflow != null ? compoundWorkflow.getStatus() : "", LOG);
+            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), compoundWorkflow != null ? compoundWorkflow.getNumberOfDocumentsStr() : "", LOG);
+        }
+
+        private String getUrl(Document document, CompoundWorkflow compoundWorkflow, CaseFile caseFile, Task task) {
+            String url = "";
+            if ((task instanceof LinkedReviewTask) || compoundWorkflow == null) {
+                return task.getOriginalTaskObjectUrl();
+            }
+            if (compoundWorkflow.isIndependentWorkflow()) {
+                url = compoundWorkflowServerUrlPrefix + compoundWorkflow.getNodeRef().getId();
+            } else if (compoundWorkflow.isCaseFileWorkflow()) {
+                url = caseFile != null ? caseFileServerUrlPrefix + caseFile.getNodeRef().getId() : "";
+            } else {
+                url = document != null ? documentServerUrlPrefix + document.getNodeRef().getId() : "";
+            }
+            return url;
+        }
+
+        private String getTitle(CompoundWorkflow compoundWorkflow, Document document, CaseFile caseFile) {
+            String title = "";
+            if (compoundWorkflow == null) {
+                return "";
+            }
+            if (compoundWorkflow.isCaseFileWorkflow()) {
+                title = caseFile != null ? caseFile.getTitle() : "";
+            } else if (compoundWorkflow.isIndependentWorkflow()) {
+                title = compoundWorkflow.getTitle();
+            } else {
+                title = document != null ? document.getDocName() : "";
+            }
+            return title;
+        }
+    }
+
+    private class FillExcelVolumeRowCallback extends FillExcelRowCallback {
+
+        private final List<FieldDefinition> volFields;
+        private Map<VolumeType, String> volTypeNames = new HashMap<VolumeType, String>();
+        private final List<String> excludedFields = Arrays.asList(
+                DocumentCommonModel.Props.FUNCTION.getLocalName()
+                , DocumentCommonModel.Props.SERIES.getLocalName()
+                , VolumeModel.Props.VOLUME_TYPE.getLocalName()
+                , DocumentAdminModel.Props.OBJECT_TYPE_ID.getLocalName()
+                , VolumeModel.Props.VOLUME_MARK.getLocalName()
+                , DocumentDynamicModel.Props.TITLE.getLocalName()
+                , VolumeModel.Props.DESCRIPTION.getLocalName()
+                , VolumeModel.Props.VALID_FROM.getLocalName()
+                , VolumeModel.Props.VALID_TO.getLocalName()
+                , VolumeModel.Props.STATUS.getLocalName()
+                , DocumentCommonModel.Props.OWNER_NAME.getLocalName()
+                , DocumentCommonModel.Props.OWNER_ORG_STRUCT_UNIT.getLocalName()
+                , DocumentCommonModel.Props.OWNER_JOB_TITLE.getLocalName()
+                , DocumentDynamicModel.Props.OWNER_SERVICE_RANK.getLocalName()
+                , DocumentDynamicModel.Props.OWNER_WORK_ADDRESS.getLocalName()
+                , DocumentCommonModel.Props.OWNER_EMAIL.getLocalName()
+                , DocumentCommonModel.Props.OWNER_PHONE.getLocalName()
+                );
+
+        public FillExcelVolumeRowCallback(Map<String, String> types) {
+            Assert.notNull(types, "Types cannot be null.");
+            this.types = types;
+            volFields = documentAdminService.getVolumeFieldDefinitions();
+            removePreDefinedFields();
+        }
+
+        @Override
+        public int initAndCalculateRows(NodeRef nodeRef) {
+            return excludedFields.size() + volFields.size() + 1;
+        }
+
+        private String getVolType(VolumeType volType) {
+            if (volTypeNames == null) {
+                volTypeNames = new HashMap<VolumeType, String>();
+            }
+            String string = volTypeNames.get(volType);
+            if (StringUtils.isNotBlank(string)) {
+                return string;
+            }
+            string = MessageUtil.getMessage(volType);
+            volTypeNames.put(volType, string);
+            return string;
+
+        }
+
+        private void removePreDefinedFields() {
+            List<FieldDefinition> toBeRemoved = new ArrayList<FieldDefinition>();
+            for (FieldDefinition field : volFields) {
+                if (excludedFields.contains(field.getFieldId())) {
+                    toBeRemoved.add(field);
+                }
+            }
+            volFields.removeAll(toBeRemoved);
+        }
+
+        @Override
+        public void execute(RowProvider rowProvider, NodeRef nodeRef) {
+            int cellIndex = 0;
+            Node node = new MapNode(nodeRef);
+            Map<String, Object> props = node.getProperties();
+            Row row = rowProvider.getRow();
+
+            LinkedHashSet<ArchivalsStoreVO> stores = generalService.getArchivalsStoreVOs();
+            ArchivalsStoreVO store = null;
+            for (ArchivalsStoreVO archivalsStoreVO : stores) {
+                if (node.getNodeRef().getStoreRef().equals(archivalsStoreVO.getStoreRef())) {
+                    store = archivalsStoreVO;
+                    break;
+                }
+            }
+            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), (store == null ? MessageUtil.getMessage("functions_title") : store.getTitle()), LOG); // toimiku asukoht
+
+            NodeRef functionRef = (NodeRef) props.get(DocumentCommonModel.Props.FUNCTION);
+            setCellValueTruncateIfNeeded(row.createCell(cellIndex++),
+                    functionRef == null ? "" : DocumentLocationGenerator.getFunctionLabel(functionsService.getFunctionByNodeRef(functionRef)), LOG); // funktsioon
+            NodeRef seriesRef = (NodeRef) props.get(DocumentCommonModel.Props.SERIES);
+            setCellValueTruncateIfNeeded(row.createCell(cellIndex++),
+                    seriesRef == null ? "" : DocumentLocationGenerator.getSeriesLabel(seriesService.getSeriesByNodeRef(seriesRef)), LOG); // Sari
+            if (node.getType().equals(CaseFileModel.Types.CASE_FILE)) {
+                setCellValueTruncateIfNeeded(row.createCell(cellIndex++), getVolType(VolumeType.CASE_FILE), LOG);// toimiku tüüp
+            } else {
+                String volType = (String) props.get(VolumeModel.Props.VOLUME_TYPE);
+                setCellValueTruncateIfNeeded(row.createCell(cellIndex++), getVolType(VolumeType.valueOf(volType)), LOG);// toimiku tüüp
+            }
+            String typeId = (String) props.get(DocumentAdminModel.Props.OBJECT_TYPE_ID);
+
+            String type = types.get(typeId);
+            if (StringUtils.isBlank(type) && StringUtils.isNotBlank(typeId)) {
+                type = documentAdminService.getCaseFileTypeName(new MapNode(nodeRef));
+                types.put(typeId, type);
+            }
+            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), type, LOG);// asjatoimiku liik
+            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), (String) props.get(VolumeModel.Props.VOLUME_MARK), LOG); // tähis
+            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), (String) props.get(DocumentDynamicModel.Props.TITLE), LOG); // pealkiri
+            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), (String) props.get(VolumeModel.Props.DESCRIPTION), LOG); // kirjeldus
+            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), formatDateOrEmpty(DATE_FORMAT, (Date) props.get(VolumeModel.Props.VALID_FROM)), LOG); // kehtiv alates
+            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), formatDateOrEmpty(DATE_FORMAT, (Date) props.get(VolumeModel.Props.VALID_TO)), LOG); // kehtiv kuni
+            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), (String) props.get(VolumeModel.Props.STATUS), LOG); // staatus
+
+            // caseFile only
+            if (node.getType().equals(CaseFileModel.Types.CASE_FILE)) {
+                setCellValueTruncateIfNeeded(row.createCell(cellIndex++), (String) props.get(DocumentCommonModel.Props.OWNER_NAME), LOG); // vastutaja
+                @SuppressWarnings("unchecked")
+                List<String> ownerOrgStructUnit = (List<String>) props.get(DocumentCommonModel.Props.OWNER_ORG_STRUCT_UNIT);
+                setCellValueTruncateIfNeeded(row.createCell(cellIndex++), UserUtil.getDisplayUnit(ownerOrgStructUnit), LOG);
+                setCellValueTruncateIfNeeded(row.createCell(cellIndex++), (String) props.get(DocumentCommonModel.Props.OWNER_JOB_TITLE), LOG);
+                setCellValueTruncateIfNeeded(row.createCell(cellIndex++), (String) props.get(DocumentDynamicModel.Props.OWNER_SERVICE_RANK), LOG);
+                setCellValueTruncateIfNeeded(row.createCell(cellIndex++), (String) props.get(DocumentDynamicModel.Props.OWNER_WORK_ADDRESS), LOG);
+                setCellValueTruncateIfNeeded(row.createCell(cellIndex++), (String) props.get(DocumentCommonModel.Props.OWNER_EMAIL), LOG);
+                setCellValueTruncateIfNeeded(row.createCell(cellIndex++), (String) props.get(DocumentCommonModel.Props.OWNER_PHONE), LOG);
+            } else {
+                cellIndex = addEmptyCells(row, cellIndex, 7);
+            }
+
+            for (FieldDefinition field : volFields) {
+                Object prop = props.get(field.getQName());
+                String string = "";
+                if (prop instanceof String) {
+                    string = (String) prop;
+                } else if (prop instanceof Date) {
+                    string = formatDateOrEmpty(DATE_FORMAT, (Date) prop);
+                } else if (prop != null) {
+                    string = prop.toString();
+                }
+                setCellValueTruncateIfNeeded(row.createCell(cellIndex++), string, LOG);
+            }
+            if (node.getType().equals(CaseFileModel.Types.CASE_FILE)) {
+                setCellValueTruncateIfNeeded(row.createCell(cellIndex++), documentTemplateService.getCaseFileUrl(nodeRef), LOG);
+            } else {
+                setCellValueTruncateIfNeeded(row.createCell(cellIndex++), documentTemplateService.getVolumeUrl(nodeRef), LOG);
+            }
+
+        }
+
+        @Override
+        public void createHeadings(Row row) {
+            List<String> msgKeys = getReportHeaderMsgKeys(TemplateReportType.VOLUMES_REPORT);
+            if (msgKeys == null) {
+                return;
+            }
+            int cellNum = 0;
+            for (String msgKey : msgKeys) {
+                setCellValueTruncateIfNeeded(row.createCell(cellNum++), MessageUtil.getMessage(msgKey), LOG);
+            }
+            for (FieldDefinition field : volFields) {
+                setCellValueTruncateIfNeeded(row.createCell(cellNum++), field.getName(), LOG);
+            }
+            setCellValueTruncateIfNeeded(row.createCell(cellNum++), MessageUtil.getMessage("link_to"), LOG);
         }
 
     }
@@ -683,7 +940,7 @@ public class ReportServiceImpl implements ReportService {
          * 1) One row with document main data (always present)
          * 2) One row for each contract party child node, add data from 1) + contract party specific data
          * 3) One row for each send info child node, add data from 1) + send info specific data
-         * 4) One row for each errand applicant child node, add data from 1) + errand applicant specific data 
+         * 4) One row for each errand applicant child node, add data from 1) + errand applicant specific data
          *  */
         public void execute(RowProvider rowProvider, NodeRef documentRef) {
             Assert.notNull(document); // document has to be loaded
@@ -768,7 +1025,6 @@ public class ReportServiceImpl implements ReportService {
                         emptyCellsToAdd += fieldsToShowArray[notMandatoryCellIndex++] ? 1 : 0;
                     }
                     cellIndex = addEmptyCells(row, cellIndex, emptyCellsToAdd);
-                    notMandatoryCellIndex += emptyCellsToAdd;
                 }
 
                 if (fieldsToShowArray[notMandatoryCellIndex++]) {
@@ -800,19 +1056,19 @@ public class ReportServiceImpl implements ReportService {
             return costManagers != null && !document.getCostManagers().isEmpty();
         }
 
-        private int addEmptyCells(Row row, int startIndex, int numRows) {
-            for (int i = 0; i < numRows; i++) {
-                row.createCell(startIndex++);
-            }
-            return startIndex;
-        }
-
         @Override
         public void createHeadings(Row row) {
             int cellIndex = generateHeadings(row, 0, getReportHeaderMsgKeys(TemplateReportType.DOCUMENTS_REPORT), fieldsToShow);
             generateHeadings(row, cellIndex, ReportHelper.getDocumentReportHeaderAdditionalMsgKeys(), fieldsToShow);
         }
 
+    }
+
+    private static int addEmptyCells(Row row, int startIndex, int numRows) {
+        for (int i = 0; i < numRows; i++) {
+            row.createCell(startIndex++);
+        }
+        return startIndex;
     }
 
     private int generateHeadings(Row row, int cellNum, List<String> msgKeys, Map<String, Boolean> showFields) {
@@ -875,6 +1131,11 @@ public class ReportServiceImpl implements ReportService {
     }
 
     @Override
+    public boolean isUsableByAdminDocManagerOnly() {
+        return usableByAdminDocManagerOnly;
+    }
+
+    @Override
     public void setReportGenerationPaused(boolean reportGenerationPaused) {
         this.reportGenerationPaused = reportGenerationPaused;
     }
@@ -919,6 +1180,10 @@ public class ReportServiceImpl implements ReportService {
         this.fileService = fileService;
     }
 
+    public void setCaseFileService(CaseFileService caseFileService) {
+        this.caseFileService = caseFileService;
+    }
+
     public void setTransactionService(TransactionService transactionService) {
         this.transactionService = transactionService;
     }
@@ -931,4 +1196,15 @@ public class ReportServiceImpl implements ReportService {
         this.reportGenerationEnabled = reportGenerationEnabled;
     }
 
+    public void setFunctionsService(FunctionsService functionsService) {
+        this.functionsService = functionsService;
+    }
+
+    public void setSeriesService(SeriesService seriesService) {
+        this.seriesService = seriesService;
+    }
+
+    public void setUsableByAdminDocManagerOnly(boolean usableByAdminDocManagerOnly) {
+        this.usableByAdminDocManagerOnly = usableByAdminDocManagerOnly;
+    }
 }
