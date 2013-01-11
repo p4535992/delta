@@ -779,7 +779,6 @@
       <servlet-name>EHCacheJsonReporter</servlet-name>
       <url-pattern>/EHCacheJsonReporter</url-pattern>
    </servlet-mapping>
-   <servlet-mapping>
 
    <servlet-mapping>
       <servlet-name>uploadFile</servlet-name>
