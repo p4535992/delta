@@ -24,4 +24,6 @@ public interface VolumeOrCaseFile extends Comparable<VolumeOrCaseFile> {
 
     String getType();
 
+    Map<String, Object> getProperties();
+
 }

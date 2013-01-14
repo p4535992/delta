@@ -32,16 +32,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.ClassUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import ee.webmedia.alfresco.app.AppConstants;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 
 /**
  * Sort
@@ -122,23 +125,51 @@ public abstract class Sort
       {
          // create the Bean getter method invoker to retrieve the value for a colunm
          String methodName = getGetterMethodName(this.column);
-         Class returnType = null;;
+         Class returnType = null;
+         // getter method for first item, used to determine types
          Method getter = null;
+         // getter methods for different item classes
+         Map<Class, Method> getters = new HashMap<Class, Method>();
+         String propMethodName = null;
+         // property getter methods for different item classes
+         Map<Class, Method> propertiesGetters = new HashMap<Class, Method>();
+         // properties getter method for first item, used to determine types
+         Method propertiesGetter = null;
          // there will always be at least one item to sort if we get to this method
          Object bean = this.data.get(0);
-         try
+         Class<? extends Object> beanClass = bean.getClass();
+        try
          {
-            getter = bean.getClass().getMethod(methodName, (Class [])null);
+            getter = beanClass.getMethod(methodName, (Class [])null);
+            getters.put(beanClass, getter);
             returnType = getter.getReturnType();
          }
          catch (NoSuchMethodException nsmerr)
          {
+             String methodSep = ";";
+             if(column.contains(methodSep)){
+                 int methodEndIndex = column.indexOf(methodSep);
+                 String propertiesGetterMethod = column.substring(0, methodEndIndex);
+                 column = column.substring(methodEndIndex + 1);
+                 propMethodName = getGetterMethodName(propertiesGetterMethod);
+                 try {
+                     propertiesGetter = beanClass.getMethod(propMethodName, (Class [])null);
+                     propertiesGetters.put(beanClass, propertiesGetter);
+                 } catch (NoSuchMethodException error){
+                     // no action
+                 }
+             }              
             // no bean getter method found - try Map implementation
-            if (bean instanceof Node) {
+            if (propertiesGetter != null){
+                bean = propertiesGetter.invoke(bean); 
+            } else if (bean instanceof Node) {
                 bean = ((Node) bean).getProperties();
             }
             if (bean instanceof Map)
             {
+               if (column != null && column.contains(":")) {
+                   column = QName.createQName(column, BeanHelper.getNamespaceService()).toString();
+               }
                Object obj = ((Map)bean).get(this.column);
                if (obj != null)
                {
@@ -214,8 +245,11 @@ public abstract class Sort
          for (int iIndex=0; iIndex<iSize; iIndex++)
          {
             Object obj;
+            Object dataItem = data.get(iIndex);
+            Class<? extends Object> dataItemClass = dataItem.getClass();
             if (getter != null)
             {
+                Method itemGetter = getItemMethod(methodName, getters, dataItemClass);
                // if we have a bean getter method impl use that
                try
                {
@@ -224,12 +258,14 @@ public abstract class Sort
                catch (SecurityException se)
                {
                }
-               obj = getter.invoke(data.get(iIndex), (Object [])null);
+               obj = itemGetter.invoke(data.get(iIndex), (Object [])null);
             }
             else
             {
-               Object dataItem = data.get(iIndex);
-               if (dataItem instanceof Node) {
+               if (propertiesGetter != null){
+                   Method propGetter = getItemMethod(propMethodName, propertiesGetters, dataItemClass);
+                   dataItem = propGetter.invoke(dataItem); 
+               } else if (dataItem instanceof Node) {
                    Node node = (Node) dataItem;
                    dataItem = node.getProperties();
                }
@@ -296,6 +332,20 @@ public abstract class Sort
       
       return keys;
    }
+
+
+private Method getItemMethod(String propMethodName, Map<Class, Method> propertiesGetters, Class<? extends Object> dataItemClass) {
+    Method propGetter = propertiesGetters.get(dataItemClass);
+       if (propGetter == null) {
+           try {
+               propGetter = dataItemClass.getMethod(propMethodName, (Class[]) null);
+               propertiesGetters.put(dataItemClass, propGetter);
+           } catch (NoSuchMethodException error) {
+               throw new RuntimeException("No method " + propMethodName + " for class " + dataItemClass);
+           }
+       }
+    return propGetter;
+}
    
    /**
     * Given the array and two indices, swap the two items in the

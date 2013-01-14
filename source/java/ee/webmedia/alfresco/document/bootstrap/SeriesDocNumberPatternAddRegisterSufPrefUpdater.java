@@ -12,6 +12,7 @@ import java.util.Map;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
@@ -36,13 +37,13 @@ public class SeriesDocNumberPatternAddRegisterSufPrefUpdater extends AbstractNod
     protected List<ResultSet> getNodeLoadingResultSet() {
         String query = joinQueryPartsAnd(Arrays.asList(
                 generateTypeQuery(SeriesModel.Types.SERIES),
-                SearchUtil.generatePropertyWildcardQuery(SeriesModel.Props.DOC_NUMBER_PATTERN, RegisterNumberPatternParams.DN.name(), false, true, true)
+                SearchUtil.generatePropertyWildcardQuery(SeriesModel.Props.DOC_NUMBER_PATTERN, RegisterNumberPatternParams.DN.name(), true, true)
                 ));
-        List<ResultSet> result = new ArrayList<ResultSet>(2);
-        result.add(searchService.query(generalService.getStore(), SearchService.LANGUAGE_LUCENE, query));
-        result.add(searchService.query(generalService.getArchivalsStoreRef(), SearchService.LANGUAGE_LUCENE, query));
-
-        return result;
+        List<ResultSet> resultSets = new ArrayList<ResultSet>();
+        for (StoreRef storeRef : generalService.getAllStoreRefsWithTrashCan()) {
+            resultSets.add(searchService.query(storeRef, SearchService.LANGUAGE_LUCENE, query));
+        }
+        return resultSets;
     }
 
     @Override

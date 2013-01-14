@@ -113,6 +113,13 @@ public class ExpensesTableGenerator extends BaseSystematicFieldGenerator {
             return;
         }
         FieldGroup group = (FieldGroup) field.getParent();
+        String groupName = group.getName();
+        // ErrandGenerator also uses financingSource field and in that case additional processing is not needed
+        if ("financingSource".equals(field.getOriginalFieldId())
+                && (SystematicFieldGroupNames.ERRAND_DOMESTIC_APPLICANT.equals(groupName) || SystematicFieldGroupNames.ERRAND_ABROAD_APPLICANT.equals(groupName))) {
+            generatorResults.getAndAddPreGeneratedItem();
+            return;
+        }
         if (singleFields.contains(field.getOriginalFieldId())) {
             ItemConfigVO item = generatorResults.getAndAddPreGeneratedItem();
             item.setStyleClass("small " + field.getQName().getLocalName() + "Field");
@@ -183,7 +190,7 @@ public class ExpensesTableGenerator extends BaseSystematicFieldGenerator {
 
         ItemConfigVO item = generatorResults.getAndAddPreGeneratedItem();
         item.setName(RepoUtil.createTransientProp(field.getFieldId()).toString());
-        item.setDisplayLabel(group.getName());
+        item.setDisplayLabel(groupName);
         item.setComponentGenerator("MultiValueEditorGenerator");
         item.setStyleClass("");
         item.setAddLabelId("add");
@@ -239,7 +246,7 @@ public class ExpensesTableGenerator extends BaseSystematicFieldGenerator {
                     properties.put(driveTotalCompensationField.toString(),
                             totalSum.add(BigDecimal.valueOf(driveTotalKM))
                                     .multiply(BigDecimal.valueOf(driveCompRate))
-                                            .doubleValue());
+                                    .doubleValue());
                 }
             }
         }

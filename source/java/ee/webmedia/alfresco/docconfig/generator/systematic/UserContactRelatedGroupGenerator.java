@@ -22,6 +22,7 @@ import org.springframework.util.Assert;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO.ConfigItemType;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
@@ -179,6 +180,12 @@ public class UserContactRelatedGroupGenerator extends BaseSystematicFieldGenerat
         }
 
         FieldGroup group = (FieldGroup) field.getParent();
+
+        if (SystematicFieldGroupNames.USERS_TABLE.equals(group.getName())) {
+            BeanHelper.getUserContactTableGenerator().generateField(field, generatorResults);
+            return;
+        }
+
         Pair<Field, Integer> primaryFieldAndIndex = getPrimaryFieldAndIndex(group);
         int fieldIndex = -1;
         int i = 0;

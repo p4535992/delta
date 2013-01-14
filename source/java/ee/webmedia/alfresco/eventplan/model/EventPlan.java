@@ -44,6 +44,10 @@ public class EventPlan extends EventPlanCommon implements Comparable<EventPlan> 
 
     public String getFirstEventLabel() {
         String firstEvent = getFirstEvent();
+        return getNextEventLabel(firstEvent);
+    }
+
+    public static String getNextEventLabel(String firstEvent) {
         return StringUtils.isBlank(firstEvent) ? "" : MessageUtil.getMessage(FirstEvent.valueOf(firstEvent));
     }
 

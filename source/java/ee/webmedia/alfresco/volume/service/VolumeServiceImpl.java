@@ -267,8 +267,7 @@ public class VolumeServiceImpl implements VolumeService {
         Boolean containsCasesValue = (Boolean) volume.getNode().getProperties().get(VolumeModel.Props.CONTAINS_CASES);
         Boolean origContainsCasesValue = (Boolean) repoVolume.getNode().getProperties().get(VolumeModel.Props.CONTAINS_CASES);
         if (origContainsCasesValue != null && !origContainsCasesValue.equals(containsCasesValue)) {
-            return caseService.getCasesCountByVolume(volume.getNode().getNodeRef()) == 0
-                    && documentService.getDocumentsCountByVolumeOrCase(volume.getNode().getNodeRef()) == 0;
+            return caseService.getCasesCountByVolume(volume.getNode().getNodeRef()) == 0;
         }
         return true;
     }

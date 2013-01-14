@@ -279,6 +279,8 @@ public interface DocumentSearchService {
     // TODO not document specific
     boolean isMatch(String query);
 
+    boolean isMatchAllStoresWithTrashcan(String query);
+
     boolean isMatch(String query, boolean allStores, String queryName);
 
     /**
@@ -337,5 +339,9 @@ public interface DocumentSearchService {
     List<NodeRef> searchVolumesByEventPlan(NodeRef eventPlanRef, String inputTitle, List<String> inputStatus, List<NodeRef> location);
 
     List<ArchivalActivity> searchArchivalActivities(Node filter);
+
+    List<NodeRef> searchNodesByTypeAndProps(String input, QName type, Set<QName> props, int limit);
+
+    List<NodeRef> searchNodesByTypeAndProps(String input, QName type, Set<QName> props, int limit, String queryAndAddition);
 
 }

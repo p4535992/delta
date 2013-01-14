@@ -215,7 +215,9 @@ public class LogEntry implements Serializable, LogListItem {
     }
 
     private String getSubstitutionLog() {
-        String runAsUser = AuthenticationUtil.getRunAsUser();
+        String runAsSystemOverlay = AuthenticationUtil.getOriginalRunAsAuthenticationForSystemOverlay();
+        // If code is run as system user, lets get the real user behind the action
+        String runAsUser = runAsSystemOverlay != null ? runAsSystemOverlay : AuthenticationUtil.getRunAsUser();
         if (runAsUser == null || runAsUser.equals(getUserService().getCurrentUserName())) {
             return "";
         }

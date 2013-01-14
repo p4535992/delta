@@ -186,6 +186,10 @@ public class FileServiceImpl implements FileService {
         for (File file : getAllActiveFiles(nodeRef)) { // TODO not optimal
             if (file.getGeneratedFileRef() == null) {
                 nodeRefs.add(file.getNodeRef());
+            } else {
+                if (log.isDebugEnabled()) {
+                    log.debug("skipping signing file, name=" + file.getDisplayName() + ", nodeRef=" + file.getNodeRef() + ", generatedFileRef=" + file.getGeneratedFileRef());
+                }
             }
         }
         return nodeRefs;
@@ -206,13 +210,30 @@ public class FileServiceImpl implements FileService {
         List<NodeRef> deletedFiles = new ArrayList<NodeRef>();
         for (File file : allActiveFiles) {
             NodeRef fileRef = file.getNodeRef();
+            if (log.isDebugEnabled()) {
+                log.debug("start transforming file to pdf, nodeRef=" + fileRef);
+            }
             if (deletedFiles.contains(fileRef)) {
+                if (log.isDebugEnabled()) {
+                    log.debug("skipping deletable generated file");
+                }
                 continue;
             }
             NodeRef generatedFileRef = file.getGeneratedFileRef();
-            if (generatedFileRef != null && nodeService.exists(generatedFileRef)) {
-                nodeService.deleteNode(generatedFileRef);
-                deletedFiles.add(generatedFileRef);
+            if (generatedFileRef != null) {
+                if (nodeService.exists(generatedFileRef)) {
+                    nodeService.deleteNode(generatedFileRef);
+                    deletedFiles.add(generatedFileRef);
+                    if (log.isDebugEnabled()) {
+                        log.debug("deleted generated file, nodeRef=" + generatedFileRef);
+                    }
+                }
+                // note that file is not deleted completely, but moves to trashcan,
+                // so we cannot count on Alfresco functionality that sets nodeRef properties to null when node is deleted
+                nodeService.setProperty(file.getNodeRef(), FileModel.Props.GENERATED_FILE, null);
+                if (log.isDebugEnabled()) {
+                    log.debug("set generated fileRef=null");
+                }
             }
             FileInfo generatePdf = file.getConvertToPdfIfSignedFromProps() ? transformToPdf(document, fileRef, false) : null;
             if (generatePdf != null) {
@@ -220,9 +241,16 @@ public class FileServiceImpl implements FileService {
                 nodeService.setProperty(pdfNodeRef
                         , FileModel.Props.GENERATION_TYPE, GeneratedFileType.SIGNED_PDF.name());
                 nodeService.setProperty(file.getNodeRef(), FileModel.Props.GENERATED_FILE, pdfNodeRef);
+                if (log.isDebugEnabled()) {
+                    log.debug("added generated file reference, generatedNodeRef=" + pdfNodeRef + ", active=" + generatePdf.getProperties().get(FileModel.Props.ACTIVE)
+                            + ", properties=\n" + generatePdf.getProperties());
+                }
             }
-            if ((generatePdf != null || generatedFileRef != null) && inactivateOriginalFiles) {
-                toggleActive(file.getNodeRef());
+            if (generatePdf != null && inactivateOriginalFiles) {
+                toggleActive(fileRef);
+                if (log.isDebugEnabled()) {
+                    log.debug("set file inactive");
+                }
             }
         }
     }

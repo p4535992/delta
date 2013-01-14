@@ -36,7 +36,6 @@ import org.alfresco.util.Pair;
 import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.analysis.Token;
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.queryParser.QueryParser;
 import org.apache.lucene.search.BooleanQuery;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
@@ -111,12 +110,9 @@ public abstract class AbstractSearchServiceImpl {
             SearchUtil.extractDates(searchWord, searchWords);
 
             // Tokenize the search word (even if contained only full date - textual content also needs to be searched):
-            String searchWordStripped = SearchUtil.stripCustom(SearchUtil.replaceCustom(searchWord, ""));
-            for (Token token : getTokens(searchWordStripped)) {
+            for (Token token : getTokens(searchWord)) {
                 String termText = token.term();
                 if (termText.length() >= minTextLength && searchWords.size() < maxWords) {
-                    termText = QueryParser.escape(termText);
-
                     boolean exists = false;
                     for (String tmpWord : searchWords) {
                         exists |= tmpWord.equalsIgnoreCase(termText);
@@ -258,13 +254,15 @@ public abstract class AbstractSearchServiceImpl {
         }
         final Collection<StoreRef> stores = (storeRefs == null || storeRefs.size() == 0) ? Arrays.asList(generalService.getStore()) : storeRefs;
         List<ResultSet> results = new ArrayList<ResultSet>(stores.size());
+        int resultsTotalSize = 0;
         for (StoreRef storeRef : stores) {
             sp.getStores().clear();
             sp.addStore(storeRef);
-            results.add(doSearchQuery(sp, queryName));
-
+            ResultSet resultSet = doSearchQuery(sp, queryName);
+            results.add(resultSet);
+            resultsTotalSize += resultSet.length();
             // Optimization: don't search from other stores if limit is reached
-            if (limit > -1 && results.size() > limit) {
+            if (limit > -1 && resultsTotalSize > limit) {
                 break;
             }
         }

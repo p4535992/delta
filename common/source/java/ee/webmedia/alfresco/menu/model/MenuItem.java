@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.menu.model;
 
+import static org.apache.commons.lang.StringUtils.startsWith;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,7 +37,10 @@ import com.thoughtworks.xstream.annotations.XStreamOmitField;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
+import ee.webmedia.alfresco.menu.service.CountAddingMenuItemProcessor;
+import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.menu.ui.component.MenuItemWrapper;
+import ee.webmedia.alfresco.menu.ui.component.MenuRenderer;
 import ee.webmedia.alfresco.menu.ui.component.UIMenuComponent.ClearViewStackActionListener;
 import ee.webmedia.alfresco.orgstructure.amr.service.RSService;
 import ee.webmedia.alfresco.user.service.UserService;
@@ -152,7 +157,8 @@ public class MenuItem implements Serializable {
                 setTitle((String) vb.getValue(context));
             }
         }
-        link.setValue(getTitle());
+        link.setValue(getTitle(startsWith(id, MenuRenderer.SECONDARY_MENU_PREFIX) || startsWith(id, MenuBean.SHORTCUT_MENU_ITEM_PREFIX)));
+
         link.setTooltip(getTitle());
         String outcome2 = getOutcome();
         if (StringUtils.isNotBlank(href)) {
@@ -427,6 +433,23 @@ public class MenuItem implements Serializable {
     }
 
     public String getTitle() {
+        return title;
+    }
+
+    public String getTitle(boolean shorten) {
+        if (shorten) {
+            int suffixStart = title.lastIndexOf(CountAddingMenuItemProcessor.COUNT_SUFFIX_START);
+            if (suffixStart > 0 && suffixStart < 25) { // Don't shorten if there is number added and it would be split
+                return title;
+            }
+
+            String suffix = "";
+            if (suffixStart > -1) {
+                suffix = " " + title.substring(suffixStart, title.length());
+            }
+
+            return StringUtils.abbreviate(title, (25 - suffix.length())) + suffix;
+        }
         return title;
     }
 

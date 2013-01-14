@@ -243,7 +243,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         }
         props.put(DocumentSpecificModel.Props.PURCHASE_ORDER_SAP_NUMBER, purchaseOrderSapNumber);
         props.put(DocumentSpecificModel.Props.CONTRACT_NUMBER, invoiceInformation.getContractNumber());
-        props.put(DocumentSpecificModel.Props.INVOICE_XML, Boolean.TRUE);
+        props.put(DocumentCommonModel.Props.INVOICE_XML, Boolean.TRUE);
         props.put(DocumentCommonModel.Props.STORAGE_TYPE, StorageType.XML.getValueName());
 
         if (setOwnerFromInvoice) {
@@ -252,7 +252,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         if (transmittalMode != null) {
             props.put(DocumentSpecificModel.Props.TRANSMITTAL_MODE, transmittalMode.getValueName());
         }
-        nodeService.addAspect(docRef, DocumentSpecificModel.Aspects.INVOICE_XML, null);
+        nodeService.addAspect(docRef, DocumentCommonModel.Aspects.INVOICE_XML, null);
         nodeService.setProperties(docRef, props);
     }
 
@@ -427,7 +427,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         List<DimensionValue> result = new ArrayList<DimensionValue>();
         for (DimensionValue dimensionValue : dimensionValues) {
             if (StringUtils.isEmpty(searchString) || StringUtils.containsIgnoreCase(dimensionValue.getValueName(), searchString)
-                        || StringUtils.containsIgnoreCase(dimensionValue.getValue(), searchString)) {
+                    || StringUtils.containsIgnoreCase(dimensionValue.getValue(), searchString)) {
                 if (EInvoiceUtil.isDateInPeriod(entryDate, dimensionValue.getBeginDateTime(), dimensionValue.getEndDateTime())) {
                     result.add(dimensionValue);
                 }

@@ -48,6 +48,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.DateFormatUtils;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
@@ -79,10 +80,12 @@ import ee.webmedia.alfresco.sharepoint.entity.Task;
 import ee.webmedia.alfresco.sharepoint.entity.Workflow;
 import ee.webmedia.alfresco.sharepoint.entity.mapper.IntegerMapper;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.ProgressTracker;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
+import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
@@ -121,6 +124,7 @@ public class WorkflowImporter {
     private final String baseCompoundWorkflowUrl;
     private final NodeRef compoundWorkflowsParentRef;
     private final LogEntry logEntry = new LogEntry();
+    private ProgressTracker progressTracker;
 
     private final SimpleJdbcTemplate jdbcTemplate;
     private final NodeService nodeService = getNodeService();
@@ -222,6 +226,10 @@ public class WorkflowImporter {
                         closeStmt(ps);
                     }
 
+                    long totalSize = jdbcTemplate.queryForLong("SELECT COUNT(*) FROM imp_completed_procedures");
+                    long completedSize = jdbcTemplate.queryForLong("SELECT COUNT(*) FROM imp_completed_procedures WHERE node_ref IS NOT NULL");
+                    progressTracker = new ProgressTracker(totalSize, completedSize);
+
                     LOG.info("Initialization completed.");
 
                 } catch (Exception e) {
@@ -243,11 +251,15 @@ public class WorkflowImporter {
                 settings.getBatchSize());
 
         if (procIds.isEmpty()) {
+            String info = progressTracker.step(procIds.size());
+            if (info != null) {
+                LOG.info("Workflows import: " + info);
+            }
             return false;
         }
 
         try {
-            for (Integer procId : procIds) {
+            outer: for (Integer procId : procIds) {
                 status.incrCount();
 
                 List<CompoundWorkflow> compoundWorkflows = jdbcTemplate.query("SELECT * FROM imp_compound_workflow WHERE procedure_id=?", CompoundWorkflow.MAPPER, procId);
@@ -264,7 +276,7 @@ public class WorkflowImporter {
                     String searchCaseFileVolumeMark = StringUtils.stripToEmpty(caseFile.getVolumeMark());
                     List<String> query = new ArrayList<String>(2);
                     query.add(SearchUtil.generateTypeQuery(CaseFileModel.Types.CASE_FILE));
-                    query.add(SearchUtil.generatePropertyExactQuery(VolumeModel.Props.VOLUME_MARK, searchCaseFileVolumeMark, false));
+                    query.add(SearchUtil.generateStringExactQuery(searchCaseFileVolumeMark, VolumeModel.Props.VOLUME_MARK));
                     String q = SearchUtil.joinQueryPartsAnd(query, false);
 
                     org.alfresco.service.cmr.search.ResultSet result = searchService.query(generalService.getStore(), SearchService.LANGUAGE_LUCENE, q);
@@ -304,7 +316,7 @@ public class WorkflowImporter {
                             NodeRef series = null;
                             query = new ArrayList<String>(2);
                             query.add(SearchUtil.generateTypeQuery(SeriesModel.Types.SERIES));
-                            query.add(SearchUtil.generatePropertyExactQuery(SeriesModel.Props.SERIES_IDENTIFIER, searchSeriesIdentifier, false));
+                            query.add(SearchUtil.generateStringExactQuery(searchSeriesIdentifier, SeriesModel.Props.SERIES_IDENTIFIER));
                             q = SearchUtil.joinQueryPartsAnd(query, false);
                             result = searchService.query(seriesSearchStore, SearchService.LANGUAGE_LUCENE, q);
                             for (NodeRef nodeRef : result.getNodeRefs()) {
@@ -419,7 +431,15 @@ public class WorkflowImporter {
                     }
 
                     // Validate CWF-FW-TASK statuses
-                    WorkflowUtil.checkCompoundWorkflow(workflowService.getCompoundWorkflow(compoundFlowRef));
+                    try {
+                        WorkflowUtil.checkCompoundWorkflow(workflowService.getCompoundWorkflow(compoundFlowRef));
+                    } catch (WorkflowChangedException e) {
+                        LOG.warn("Failed to validate compoundWorkflow statuses for procedure_id " + procId, e);
+                        // Only one compoundWorkflow can be created from one procedure_id
+                        nodeService.deleteNode(compoundFlowRef);
+                        markCompletedProcedureFailed(procId, 47, "Terviktöövoo, töövoogude ja tööülesannete staatused ei ole omavahel kooskõlas");
+                        continue outer;
+                    }
 
                     boolean maindDocSet = false;
 
@@ -427,6 +447,11 @@ public class WorkflowImporter {
                         for (Association assoc : associations) {
                             if (assoc.isDocument() && assoc.getFromNode() != null) {
                                 final NodeRef fromNode = new NodeRef(assoc.getFromNode());
+                                if (!nodeService.exists(fromNode)) {
+                                    nodeService.deleteNode(compoundFlowRef);
+                                    markCompletedProcedureFailed(procId, 48, "Seotud dokument ei eksisteeri: " + fromNode);
+                                    continue outer;
+                                }
                                 nodeService.createAssociation(fromNode, compoundFlowRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT);
                                 nodeService.setProperty(fromNode, DocumentCommonModel.Props.SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS, true);
 
@@ -563,6 +588,11 @@ public class WorkflowImporter {
         } catch (Exception e) {
             status.incrFailed();
             throw (RuntimeException) e;
+        } finally {
+            String info = progressTracker.step(procIds.size());
+            if (info != null) {
+                LOG.info("Workflows import: " + info);
+            }
         }
 
         return true;
@@ -587,8 +617,19 @@ public class WorkflowImporter {
     }
 
     private void createRelatedUrl(NodeRef compoundFlowRef, Integer procedureId, String comment) {
+        String url = baseCompoundWorkflowUrl + procedureId;
+        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(compoundFlowRef, WorkflowCommonModel.Assocs.RELATED_URL, WorkflowCommonModel.Assocs.RELATED_URL);
+        for (ChildAssociationRef ref : childAssocs) {
+            Map<QName, Serializable> props = nodeService.getProperties(ref.getChildRef());
+            if (url.equals(props.get(WorkflowCommonModel.Props.URL))
+                    && comment.equals(props.get(WorkflowCommonModel.Props.URL_COMMENT))
+                    && "IMPORT".equals(props.get(WorkflowCommonModel.Props.URL_CREATOR_NAME))
+                    && "IMPORT".equals(props.get(WorkflowCommonModel.Props.URL_MODIFIER_NAME))) {
+                return;
+            }
+        }
         Map<QName, Serializable> props = new HashMap<QName, Serializable>();
-        props.put(WorkflowCommonModel.Props.URL, baseCompoundWorkflowUrl + procedureId);
+        props.put(WorkflowCommonModel.Props.URL, url);
         props.put(WorkflowCommonModel.Props.URL_COMMENT, comment);
         props.put(WorkflowCommonModel.Props.URL_CREATOR_NAME, "IMPORT");
         props.put(WorkflowCommonModel.Props.URL_MODIFIER_NAME, "IMPORT");
@@ -665,6 +706,10 @@ public class WorkflowImporter {
         } catch (IOException e) {
             // Should be ignored. Nothing to do with the exception as the log file will be overwritten.
             LOG.info("Unexpected exception when trying to read '" + CSV_NAME_COMPLETED_PROCS + "'.", e);
+        } finally {
+            if (csv != null) {
+                csv.close();
+            }
         }
 
         return procIds;
@@ -894,8 +939,21 @@ public class WorkflowImporter {
                         ps.setDate(3, ImportUtil.getSqlDate(csv, 3));
                         ps.setString(4, ImportUtil.getString(csv, 4));
                         ps.setString(5, ImportUtil.getString(csv, 5));
-                        ps.setInt(6, ImportUtil.getInteger(csv, 6));
-                        ps.setInt(7, ImportUtil.getInteger(csv, 7));
+
+                        Integer col6 = ImportUtil.getInteger(csv, 6);
+                        if (col6 == null) {
+                            ps.setNull(6, Types.INTEGER);
+                        } else {
+                            ps.setInt(6, col6);
+                        }
+
+                        Integer col7 = ImportUtil.getInteger(csv, 7);
+                        if (col7 == null) {
+                            ps.setNull(7, Types.INTEGER);
+                        } else {
+                            ps.setInt(7, col7);
+                        }
+
                         return true;
                     }
 
@@ -903,6 +961,12 @@ public class WorkflowImporter {
     }
 
     private void writeCompletedLog(Connection con) {
+        if (logFile.exists()) {
+            File renameFile = settings.getWorkFolderFile("completed_procedures-" + DateFormatUtils.format(new Date(), "yyyy-MM-dd-HH-mm-ss-SSSZ") + ".csv");
+            Assert.isTrue(!renameFile.exists(), "File exists: " + renameFile);
+            Assert.isTrue(logFile.renameTo(renameFile), "Renaming '" + logFile + "' to '" + renameFile + "' failed");
+            LOG.info("Renamed '" + logFile + "' to '" + renameFile + "' failed");
+        }
         writeTableToCsv(logFile, false, "SELECT * FROM imp_completed_procedures WHERE node_ref IS NOT NULL", con, new CsvBasedTableReader() {
 
             @Override
@@ -1002,6 +1066,8 @@ public class WorkflowImporter {
         CsvWriter csv = null;
         Statement stmt = null;
         ResultSet rs = null;
+
+        LOG.info("Writing content from a table to file '" + file + "', " + (isFailedFile ? "appending" : "overwriting") + "...");
 
         try {
 

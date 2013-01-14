@@ -75,7 +75,9 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
     private Set<NodeRef> nodes = new HashSet<NodeRef>();
     private Set<NodeRef> completedNodes = new HashSet<NodeRef>();
     private File nodesFile;
+    private File failedNodesFile;
     private File completedNodesFile;
+    private boolean errorExecutingUpdaterInBackground;
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -136,6 +138,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
                         updaterRunning.set(true);
                         stopFlag.set(false);
                         AuthenticationUtil.runAs(new RunAsWork<Void>() {
+
                             @Override
                             public Void doWork() throws Exception {
                                 while (true) {
@@ -144,6 +147,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
                                         return null;
                                     } catch (Exception e) {
                                         log.error("Background updater error", e);
+                                        errorExecutingUpdaterInBackground = true;
                                         if (!isRetryUpdaterInBackground() || stopFlag.get()) {
                                             return null;
                                         }
@@ -163,7 +167,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
     }
 
     protected boolean isRetryUpdaterInBackground() {
-        return true;
+        return false;
     }
 
     @Override
@@ -191,6 +195,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         try {
             log.info("Starting node updater");
             nodesFile = new File(inputFolder, getNodesCsvFileName());
+            failedNodesFile = new File(inputFolder, getFailedNodesCsvFileName());
             nodes = null;
             if (usePreviousInputState()) {
                 nodes = loadNodesFromFile(nodesFile, false);
@@ -211,6 +216,10 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
                 if (completedNodesFile.exists()) {
                     log.info("Completed nodes file exists, deleting: " + completedNodesFile.getAbsolutePath());
                     Assert.isTrue(completedNodesFile.delete());
+                }
+                if (failedNodesFile.exists()) {
+                    log.info("Failed nodes file exists, deleting: " + failedNodesFile.getAbsolutePath());
+                    Assert.isTrue(failedNodesFile.delete());
                 }
             }
             if (completedNodes != null) {
@@ -241,6 +250,10 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
 
     private String getNodesCsvFileName() {
         return getBaseFileName() + ".csv";
+    }
+
+    private String getFailedNodesCsvFileName() {
+        return getBaseFileName() + "Failed.csv";
     }
 
     private String getCompletedNodesCsvFileName() {
@@ -361,6 +374,29 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
                 String[] batchInfo = (String[]) ArrayUtils.add(info, 0, nodeRef.toString());
                 batchInfos.add(batchInfo);
             } catch (Exception e) {
+                try {
+                    boolean exists = failedNodesFile.exists();
+                    if (!exists) {
+                        OutputStream outputStream = new FileOutputStream(failedNodesFile);
+                        try {
+                            // the Unicode value for UTF-8 BOM, is needed so that Excel would recognise the file in correct encoding
+                            outputStream.write("\ufeff".getBytes("UTF-8"));
+                        } finally {
+                            outputStream.close();
+                        }
+                    }
+                    CsvWriter writer = new CsvWriter(new FileWriter(failedNodesFile, true), CSV_SEPARATOR);
+                    try {
+                        if (!exists) {
+                            writer.writeRecord(new String[] { "nodeRef", "error" });
+                        }
+                        writer.writeRecord(new String[] { nodeRef.toString(), e.toString() });
+                    } finally {
+                        writer.close();
+                    }
+                } catch (IOException e1) {
+                    log.error("Error writing file '" + failedNodesFile + "': " + e.getMessage(), e);
+                }
                 throw new Exception("Error updating node " + nodeRef + ": " + e.getMessage(), e);
             }
             int sleepTime2 = getSleepTime();
@@ -402,6 +438,10 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         return false;
     }
 
+    public boolean isContinueWithNextBatchAfterError() {
+        return false;
+    }
+
     private abstract class BatchProgress<E> {
         Collection<E> origin;
         List<E> batchList;
@@ -428,14 +468,30 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         abstract void executeBatch() throws Exception;
 
         void executeInTransaction() {
-            getTransactionHelper().doInTransaction(new RetryingTransactionCallback<Object>() {
-                @Override
-                public Object execute() throws Throwable {
-                    doAfterTransactionBegin();
-                    executeBatch();
-                    return null;
+            try {
+                getTransactionHelper().doInTransaction(new RetryingTransactionCallback<Object>() {
+                    @Override
+                    public Object execute() throws Throwable {
+                        doAfterTransactionBegin();
+                        executeBatch();
+                        return null;
+                    }
+                }, false, true);
+            } catch (RuntimeException e) {
+                if (isContinueWithNextBatchAfterError()) {
+                    log.error("Error updating node; continuing updating next batch.", e);
+                    int sleepTime2 = getSleepTime();
+                    if (sleepTime2 > 0) {
+                        try {
+                            Thread.sleep(sleepTime2);
+                        } catch (InterruptedException e2) {
+                            throw new RuntimeException(e2);
+                        }
+                    }
+                } else {
+                    throw e;
                 }
-            }, false, true);
+            }
         }
 
         private void step() {
@@ -564,8 +620,16 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         this.enabled = enabled;
     }
 
+    public boolean isEnabled() {
+        return enabled;
+    }
+
     public void setDisabled(boolean disabled) {
         enabled = !disabled;
+    }
+
+    public boolean isErrorExecutingUpdaterInBackground() {
+        return errorExecutingUpdaterInBackground;
     }
 
 }

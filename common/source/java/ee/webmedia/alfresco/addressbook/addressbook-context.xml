@@ -105,17 +105,19 @@
    </bean>     
    
    <bean id="taskCapablePropertyRemoverOnPeople" class="ee.webmedia.alfresco.addressbook.bootstrap.TaskCapablePropertyRemoverOnPeople" parent="abstractNodeUpdater" >
-      <property name="moduleId" value="common" />
+      <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
             <ref bean="taskCapablePropertyUpdater4"/>
+             <!-- This dependency is here to ensure seriesUpdater2 starts at the beginning of updater execution process; taskCapablePropertyRemoverOnPeople has no functional dependency on seriesUpdater2 -->
+            <ref bean="seriesUpdater2" />
          </list>
       </property>
    </bean>     
       
    <bean id="skypeAspectAdderForOrgPeople" class="ee.webmedia.alfresco.addressbook.bootstrap.AddSkypeAspectToOrgPeople" parent="abstractNodeUpdater" >
-      <property name="moduleId" value="common" />
+      <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>

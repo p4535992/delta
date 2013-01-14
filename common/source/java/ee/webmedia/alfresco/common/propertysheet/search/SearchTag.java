@@ -23,6 +23,7 @@ public class SearchTag extends UIComponentTag {
     private String setterCallback;
     private String dialogTitleId;
     private Boolean editable;
+    private Boolean textarea;
     private String readonly;
     private Boolean showFilter;
     private String filters;
@@ -74,6 +75,7 @@ public class SearchTag extends UIComponentTag {
             attributes.put(Search.DIALOG_TITLE_ID_KEY, dialogTitleId);
         }
         attributes.put("editable", editable != null ? editable : Boolean.FALSE);
+        attributes.put("textarea", textarea != null ? textarea : Boolean.FALSE);
 
         if (readonly != null) {
             if (isValueReference(readonly)) {
@@ -180,5 +182,13 @@ public class SearchTag extends UIComponentTag {
 
     public String getConverter() {
         return converter;
+    }
+
+    public Boolean getTextarea() {
+        return textarea;
+    }
+
+    public void setTextarea(Boolean textarea) {
+        this.textarea = textarea;
     }
 }

@@ -20,6 +20,7 @@ import javax.faces.event.FacesEvent;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.servlet.FacesHelper;
+import org.alfresco.web.bean.generator.TextAreaGenerator;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
@@ -70,6 +71,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
     /** should delete(clear value) link be rendered when component is singlevalued (by default not rendered) */
     public static final String ALLOW_CLEAR_SINGLE_VALUED = "allowClearSingleValued";
     public static final String FILTER_INDEX = "filterIndex";
+    public static final String TEXTAREA = "textarea";
     public static final String SEARCH_SUGGEST_DISABLED = "searchSuggestDisabled";
 
     @Override
@@ -155,12 +157,6 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
             picker.setDefaultFilterIndex(filterIndex);
         } else {
             picker.setDefaultFilterIndex(UserContactGroupSearchBean.USERS_FILTER);
-        }
-
-        // Disable AJAX if inside RichList
-        if (isChildOfUIRichList()) {
-            ComponentUtil.setAjaxDisabled(this);
-            ComponentUtil.setAjaxDisabled(picker);
         }
 
         children.add(picker);
@@ -321,8 +317,15 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
     protected void appendRowComponent(FacesContext context, int rowIndex) {
         List<UIComponent> children = ComponentUtil.getChildren(this).get(0).getChildren();
         String id = (String) getAttributes().get(ID_KEY);
-        UIOutput component = (UIOutput) context.getApplication().createComponent(
-                isEditable() ? ComponentConstants.JAVAX_FACES_INPUT : ComponentConstants.JAVAX_FACES_OUTPUT);
+        boolean createTextarea = isEditable() && isTextarea();
+        UIOutput component;
+        if (createTextarea) {
+            TextAreaGenerator textAreaGenerator = new TextAreaGenerator();
+            textAreaGenerator.setColumns(64);
+            component = (UIOutput) textAreaGenerator.generate(context, id);
+        } else {
+            component = (UIOutput) context.getApplication().createComponent(isEditable() ? ComponentConstants.JAVAX_FACES_INPUT : ComponentConstants.JAVAX_FACES_OUTPUT);
+        }
         FacesHelper.setupComponentId(context, component, "picker_" + id + "row_" + getNextCounterValue());
         ValueBinding vb = setValueBinding(context, component, rowIndex);
         String tooltipVB = ComponentUtil.getAttribute(this, ATTR_TOOLTIP_MB, String.class);
@@ -454,6 +457,10 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
 
     protected boolean isEditable() {
         return isAttributeTrue("editable");
+    }
+
+    protected boolean isTextarea() {
+        return isAttributeTrue(TEXTAREA);
     }
 
     private boolean isAttributeTrue(String attributeName) {

@@ -36,6 +36,7 @@ import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigEle
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
+import ee.webmedia.alfresco.docconfig.bootstrap.SystematicFieldGroupNames;
 import ee.webmedia.alfresco.docconfig.generator.BasePropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.generator.BaseSystematicFieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
@@ -91,14 +92,6 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
                 DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME.getLocalName());
         documentConfigService.registerMultiValuedOverrideInSystematicGroup(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME.getLocalName());
 
-        /*
-         * Map<String, UserContactMappingCode> usersMapping = new HashMap<String, UserContactMappingCode>();
-         * usersMapping.put(DocumentDynamicModel.Props.USER_NAMES.getLocalName(), UserContactMappingCode.NAME);
-         * usersMapping.put(DocumentDynamicModel.Props.USER_JOB_TITLE.getLocalName(), UserContactMappingCode.JOB_TITLE);
-         * usersMapping.put(DocumentDynamicModel.Props.USER_ORG_STRUCT_UNIT.getLocalName(), UserContactMappingCode.ORG_STRUCT_UNIT);
-         * mappings.add(usersMapping);
-         */
-
         Map<String, UserContactMappingCode> substituteMapping = new HashMap<String, UserContactMappingCode>();
         substituteMapping.put(DocumentSpecificModel.Props.SUBSTITUTE_NAME.getLocalName(), UserContactMappingCode.NAME);
         substituteMapping.put(DocumentSpecificModel.Props.SUBSTITUTE_JOB_TITLE.getLocalName(), UserContactMappingCode.JOB_TITLE);
@@ -136,6 +129,12 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
         fields.add(DocumentSpecificModel.Props.LEAVE_CANCELLED_DAYS.getLocalName());
         documentConfigService.registerMultiValuedOverrideInSystematicGroup(DocumentSpecificModel.Props.LEAVE_CANCEL_BEGIN_DATE.getLocalName());
 
+        List<String> userNamesLocalNames = RepoUtil.getLocalNames(DocumentDynamicModel.Props.USER_NAME, DocumentDynamicModel.Props.USER_JOB_TITLE,
+                DocumentDynamicModel.Props.USER_ORG_STRUCT_UNIT);
+        // userOrgStructUnit override is actually not needed as it is already multivalued, but it is stated here to mark
+        // that in this group it has "multi-multi" values, i.e. lists of lists
+        documentConfigService.registerMultiValuedOverrideBySystematicGroupName(SystematicFieldGroupNames.USERS_TABLE, new HashSet<String>(userNamesLocalNames));
+
         originalFieldIds = fields.toArray(new String[fields.size()]);
         super.afterPropertiesSet();
     }
@@ -167,14 +166,15 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
         List<FieldType> usersContactsFieldTypes = Arrays.asList(FieldType.USERS, FieldType.CONTACTS, FieldType.USERS_CONTACTS, FieldType.USER, FieldType.CONTACT,
                 FieldType.USER_CONTACT);
         for (Field child : group.getFields()) {
-            if (usersContactsFieldTypes.contains(child.getFieldTypeEnum())) {
+            FieldType fieldTypeEnum = child.getFieldTypeEnum();
+            if (usersContactsFieldTypes.contains(fieldTypeEnum)) {
                 Assert.isNull(foundField);
                 foundField = child;
             } else {
                 if (mapping != null && mapping.get(child.getQName()) != null) {
-                    Assert.isTrue(child.getFieldTypeEnum() == FieldType.TEXT_FIELD);
+                    Assert.isTrue(fieldTypeEnum == FieldType.TEXT_FIELD || fieldTypeEnum == FieldType.STRUCT_UNIT);
                 } else {
-                    Assert.isTrue(child.getFieldTypeEnum() != FieldType.LISTBOX);
+                    Assert.isTrue(fieldTypeEnum != FieldType.LISTBOX);
                 }
             }
         }
@@ -199,6 +199,7 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
         String leaveValueChanged = "¤valueChangeListener=" + getBindingName("leaveTypeOrDateValueChanged", stateHolderKey);
         List<String> props = new ArrayList<String>();
         List<QName> propNames = new ArrayList<QName>();
+        boolean isUserTableGroup = SystematicFieldGroupNames.USERS_TABLE.equals(group.getName());
         for (Field child : group.getFields()) {
             QName fieldId = child.getQName();
 
@@ -207,6 +208,8 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
             String componentGeneratorAndProps;
             if (child.getFieldTypeEnum() == FieldType.TEXT_FIELD || usersContactsFieldTypes.contains(child.getFieldTypeEnum())) {
                 componentGeneratorAndProps = "TextAreaGenerator¤styleClass=expand19-200";
+            } else if (child.getFieldTypeEnum() == FieldType.STRUCT_UNIT) {
+                componentGeneratorAndProps = "StructUnitSearchGenerator¤converter=ee.webmedia.alfresco.common.propertysheet.converter.ListToLongestStringConverter";
             } else if (child.getFieldTypeEnum() == FieldType.DATE) {
                 componentGeneratorAndProps = "DatePickerGenerator";
             } else if (child.getFieldTypeEnum() == FieldType.LONG) {
@@ -215,10 +218,16 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
             } else if (child.getFieldTypeEnum() == FieldType.COMBOBOX) {
                 componentGeneratorAndProps = "ClassificatorSelectorGenerator¤classificatorName=" + child.getClassificator();
             } else {
-                throw new RuntimeException("FieldType " + field.getFieldTypeEnum() + " is not supported inside a table");
+                throw new RuntimeException("FieldType " + child.getFieldTypeEnum() + " is not supported inside a table");
             }
-            if (child.getOriginalFieldId().equals(DocumentSpecificModel.Props.SUBSTITUTE_NAME.getLocalName())) {
+            if (child.getOriginalFieldId().equals(
+                    RepoUtil.getLocalNames(DocumentSpecificModel.Props.SUBSTITUTE_NAME, DocumentDynamicModel.Props.USER_NAME, DocumentDynamicModel.Props.USER_JOB_TITLE,
+                            DocumentDynamicModel.Props.USER_ORG_STRUCT_UNIT))
+                    || (isUserTableGroup && !DocumentDynamicModel.Props.USER_NAME.getLocalName().equals(child.getOriginalFieldId()))) {
                 componentGeneratorAndProps += "¤read-only=true";
+            }
+            if ((isUserTableGroup && DocumentDynamicModel.Props.USER_ORG_STRUCT_UNIT.getLocalName().equals(child.getOriginalFieldId()))) {
+                componentGeneratorAndProps += "¤editable=true¤textarea=true¤styleClass=expand19-200 long";
             }
             if (DocumentSpecificModel.Props.SUBSTITUTION_BEGIN_DATE.getLocalName().equals(child.getOriginalFieldId())
                     || DocumentSpecificModel.Props.SUBSTITUTION_END_DATE.getLocalName().equals(child.getOriginalFieldId())) {
@@ -264,6 +273,9 @@ public class UserContactTableGenerator extends BaseSystematicFieldGenerator {
         item.setComponentGenerator("MultiValueEditorGenerator");
         item.setStyleClass("");
         item.setDisplayLabel(group.getReadonlyFieldsName());
+        if (isUserTableGroup) {
+            item.setDisplayLabel(group.getFieldsByOriginalId().get(DocumentDynamicModel.Props.USER_NAME.getLocalName()).getName());
+        }
         if (field.getOriginalFieldId().equals(DocumentCommonModel.Props.RECIPIENT_NAME.getLocalName())) {
             item.setAddLabelId("document_add_recipient");
         } else if (field.getOriginalFieldId().equals(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME.getLocalName())) {

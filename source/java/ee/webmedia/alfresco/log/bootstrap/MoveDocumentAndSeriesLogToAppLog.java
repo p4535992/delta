@@ -6,12 +6,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
-import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
@@ -43,7 +41,7 @@ public class MoveDocumentAndSeriesLogToAppLog extends AbstractNodeUpdater {
     private String idPrefix;
     private final List<NodeRef> logNodesToDelete = new ArrayList<NodeRef>();
 
-    private static final QName DOCUMENT_LOG = QName.createQName(DocumentCommonModel.DOCCOM_URI, "documentLog");
+    public static final QName DOCUMENT_LOG = QName.createQName(DocumentCommonModel.DOCCOM_URI, "documentLog");
     private static final QName CREATED_DATETIME = QName.createQName(DocumentCommonModel.DOCCOM_URI, "createdDateTime");
     private static final QName CREATOR_NAME = QName.createQName(DocumentCommonModel.DOCCOM_URI, "creatorName");
     private static final QName EVENT_DESCRIPTION = QName.createQName(DocumentCommonModel.DOCCOM_URI, "eventDescription");
@@ -53,7 +51,7 @@ public class MoveDocumentAndSeriesLogToAppLog extends AbstractNodeUpdater {
         String query = SearchUtil.joinQueryPartsOr(SearchUtil.generateTypeQuery(DocumentCommonModel.Types.DOCUMENT),
                 SearchUtil.generateTypeQuery(SeriesModel.Types.SERIES));
         List<ResultSet> resultSets = new ArrayList<ResultSet>();
-        for (StoreRef storeRef : generalService.getAllWithArchivalsStoreRefs()) {
+        for (StoreRef storeRef : generalService.getAllStoreRefsWithTrashCan()) {
             resultSets.add(searchService.query(storeRef, SearchService.LANGUAGE_LUCENE, query));
         }
         return resultSets;
@@ -101,35 +99,9 @@ public class MoveDocumentAndSeriesLogToAppLog extends AbstractNodeUpdater {
         }
         idPrefixDate = DateUtils.addDays(idPrefixDate, -1);
         idPrefix = idDateFormat.format(idPrefixDate);
+        logTableSequence = BeanHelper.getLogService().getLogSequenceNextval();
 
         super.executeUpdater();
-
-        final Iterator<NodeRef> logNodeRefIterator = logNodesToDelete.iterator();
-        log.info("Starting to delete " + logNodesToDelete.size() + " log nodes.");
-        int nodesRemaining = logNodesToDelete.size();
-        while (logNodeRefIterator.hasNext()) {
-            int nodesDeleted = BeanHelper.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Integer>() {
-
-                @Override
-                public Integer execute() throws Throwable {
-                    int transactionCommitCounter = 0;
-                    while (logNodeRefIterator.hasNext() && transactionCommitCounter < 30) {
-                        NodeRef logRef = logNodeRefIterator.next();
-                        try {
-                            nodeService.deleteNode(logRef);
-                        } catch (IllegalArgumentException e) {
-                            // continue deleting succeeding nodeRefs in new transaction
-                            log.error("Failed to delete log, skipping and continuing. Skipped nodeRef=" + logRef);
-                            return ++transactionCommitCounter;
-                        }
-                        transactionCommitCounter++;
-                    }
-                    return transactionCommitCounter;
-                }
-            }, false, true);
-            nodesRemaining -= nodesDeleted;
-            log.info("Deleted or skipped " + nodesDeleted + " log nodes, " + nodesRemaining + " nodes remaining.");
-        }
     }
 
 }

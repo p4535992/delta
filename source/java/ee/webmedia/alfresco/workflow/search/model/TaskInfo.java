@@ -71,7 +71,7 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
 
     // LIST FIELD GETTERS:
 
-    public Object getDocType() {
+    public String getDocType() {
         if (document == null) {
             return null;
         }
@@ -80,39 +80,48 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
         return docTypeConverter.convertSelectedValueToString(docTypeId);
     }
 
-    public Object getRegNum() {
-        return document == null ? null : document.getProperties().get(DocumentCommonModel.Props.REG_NUMBER);
+    public String getRegNum() {
+        return document == null ? null : (String) document.getProperties().get(DocumentCommonModel.Props.REG_NUMBER);
     }
 
     public Date getRegDate() {
         return (document == null) ? null : (Date) document.getProperties().get(DocumentCommonModel.Props.REG_DATE_TIME);
     }
 
-    public Object getDocName() {
-        if (isLinkedReviewTask()) {
-            return task.getProperties().get(WorkflowSpecificModel.Props.COMPOUND_WORKFLOW_TITLE);
+    /**
+     * NB! This method is used for JSP sorting and returns values from different objects.
+     * @return document title or compound workflow title or empty string
+     */
+    public String getDocName() {
+        if (!isLinkedReviewTask() && getCompoundWorkflow().isDocumentWorkflow()) {
+            return (String) document.getProperties().get(DocumentCommonModel.Props.DOC_NAME);
+        } else if (isLinkedReviewTask()) {
+            return (String) task.getProperties().get(WorkflowSpecificModel.Props.COMPOUND_WORKFLOW_TITLE);
+        } else if (hasCompoundWorkflow() && (getCompoundWorkflow().isIndependentWorkflow() || getCompoundWorkflow().isCaseFileWorkflow())) {
+            return getCompoundWorkflowTitle();
         }
-        return document.getProperties().get(DocumentCommonModel.Props.DOC_NAME);
+
+        return ""; // If we reach here, then bean/JSP usage must be revised.
     }
 
-    public Object getCreatorName() {
-        return task.getProperties().get(WorkflowCommonModel.Props.CREATOR_NAME);
+    public String getCreatorName() {
+        return (String) task.getProperties().get(WorkflowCommonModel.Props.CREATOR_NAME);
     }
 
     public Date getStartedDate() {
         return (Date) task.getProperties().get(WorkflowCommonModel.Props.STARTED_DATE_TIME);
     }
 
-    public Object getOwnerName() {
-        return task.getProperties().get(WorkflowCommonModel.Props.OWNER_NAME);
+    public String getOwnerName() {
+        return (String) task.getProperties().get(WorkflowCommonModel.Props.OWNER_NAME);
     }
 
-    public Object getOwnerOrganizationName() {
+    public String getOwnerOrganizationName() {
         return UserUtil.getDisplayUnit((List<String>) task.getProperties().get(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME));
     }
 
-    public Object getOwnerJobTitle() {
-        return task.getProperties().get(WorkflowCommonModel.Props.OWNER_JOB_TITLE);
+    public String getOwnerJobTitle() {
+        return (String) task.getProperties().get(WorkflowCommonModel.Props.OWNER_JOB_TITLE);
     }
 
     public String getTaskTypeText() {
@@ -137,19 +146,19 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
     }
 
     public String getStartedDateStr() {
-        return (getStartedDate() != null) ? dateFormat.format(getStartedDate()) : "";
+        return getStartedDate() != null ? dateFormat.format(getStartedDate()) : "";
     }
 
     public String getDueDateStr() {
-        return (getDueDate() != null) ? dateFormat.format(getDueDate()) : "";
+        return getDueDate() != null ? dateFormat.format(getDueDate()) : "";
     }
 
     public String getCompletedDateStr() {
-        return (getCompletedDate() != null) ? dateFormat.format(getCompletedDate()) : "";
+        return getCompletedDate() != null ? dateFormat.format(getCompletedDate()) : "";
     }
 
     public String getStoppedDateStr() {
-        return (getStoppedDate() != null) ? dateFormat.format(getStoppedDate()) : "";
+        return getStoppedDate() != null ? dateFormat.format(getStoppedDate()) : "";
     }
 
     @Override
@@ -157,10 +166,10 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
         return document == null ? null : (Date) document.getProperties().get(ContentModel.PROP_CREATED);
     }
 
-    public Object getComment() {
+    public String getComment() {
         if (task.getType().equals(WorkflowSpecificModel.Types.REVIEW_TASK) || task.getType().equals(WorkflowSpecificModel.Types.OPINION_TASK)
                 || isLinkedReviewTask()) {
-            return task.getProperties().get(WorkflowCommonModel.Props.OUTCOME);
+            return (String) task.getProperties().get(WorkflowCommonModel.Props.OUTCOME);
         }
 
         String outcome = (String) task.getProperties().get(WorkflowCommonModel.Props.OUTCOME);
@@ -186,14 +195,14 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
         return (Date) task.getProperties().get(WorkflowCommonModel.Props.STOPPED_DATE_TIME);
     }
 
-    public Object getResolution() {
+    public String getResolution() {
         if (WorkflowSpecificModel.Types.ASSIGNMENT_TASK.equals(task.getType())) {
-            return task.getProperties().get(WorkflowSpecificModel.Props.RESOLUTION);
+            return (String) task.getProperties().get(WorkflowSpecificModel.Props.RESOLUTION);
         } else if (isLinkedReviewTask()) {
-            return task.getProperties().get(WorkflowSpecificModel.Props.WORKFLOW_RESOLUTION);
+            return (String) task.getProperties().get(WorkflowSpecificModel.Props.WORKFLOW_RESOLUTION);
         }
         
-        return workflow.getProperties().get(WorkflowSpecificModel.Props.RESOLUTION);
+        return (String) workflow.getProperties().get(WorkflowSpecificModel.Props.RESOLUTION);
     }
 
     public String getOverdue() {
@@ -205,18 +214,18 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
         return MessageUtil.getMessage("no");
     }
 
-    public Object getStatus() {
-        return task.getProperties().get(WorkflowCommonModel.Props.STATUS);
+    public String getStatus() {
+        return (String) task.getProperties().get(WorkflowCommonModel.Props.STATUS);
     }
 
     @Override
     public int compareTo(TaskInfo taskInfo) {
-        String ownerName = (String) getOwnerName();
+        String ownerName = getOwnerName();
         if (StringUtils.isNotBlank(ownerName)) {
-            if (StringUtils.isBlank((String) taskInfo.getOwnerName())) {
+            if (StringUtils.isBlank(taskInfo.getOwnerName())) {
                 return -1;
             }
-            return AppConstants.DEFAULT_COLLATOR.compare(ownerName, (String) taskInfo.getOwnerName());
+            return AppConstants.DEFAULT_COLLATOR.compare(ownerName, taskInfo.getOwnerName());
         }
         return 0;
     }

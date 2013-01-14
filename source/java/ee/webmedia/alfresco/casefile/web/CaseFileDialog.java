@@ -31,7 +31,6 @@ import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
-import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.config.PropertySheetConfigElement;
 import org.alfresco.web.ui.repo.component.UIActions;
@@ -71,7 +70,6 @@ import ee.webmedia.alfresco.document.web.DocumentListDialog;
 import ee.webmedia.alfresco.document.web.FavoritesModalComponent;
 import ee.webmedia.alfresco.document.web.FavoritesModalComponent.AddToFavoritesEvent;
 import ee.webmedia.alfresco.document.web.evaluator.IsOwnerEvaluator;
-import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.privilege.service.PrivilegeUtil;
 import ee.webmedia.alfresco.user.model.UserModel;
 import ee.webmedia.alfresco.utils.ActionUtil;
@@ -571,7 +569,7 @@ public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFile
                 documentToAdd.setFunction(result.getFunction());
                 final boolean isDraft = documentToAdd.isDraft();
                 DocumentDynamicDialog documentDynamicDialog = BeanHelper.getDocumentDynamicDialog();
-                documentToAdd = documentDynamicDialog.save(documentToAdd, currentSnapshot.docSaveListeners, false);
+                documentToAdd = documentDynamicDialog.save(documentToAdd, currentSnapshot.docSaveListeners, false, false);
                 if (currentSnapshot.registerDoc) {
                     WmNode node = documentToAdd.getNode();
                     documentDynamicDialog.register(isDraft, documentToAdd, node, node);
@@ -609,6 +607,7 @@ public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFile
         return getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<String>() {
             @Override
             public String execute() throws Throwable {
+                BeanHelper.getDocumentDynamicDialog().switchMode(true);
                 // Switch from edit mode back to view mode
                 switchMode(false);
                 return null;

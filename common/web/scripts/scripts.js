@@ -1017,9 +1017,18 @@ function updateMenuItemCount(menuItemId) {
                text = text.substr(0, i) + count;
             }
 
+            // Construct element title
+            var title = $jQ($jQ('.menuItemCount[menuitemid=' + menuItemId + '] a')[0]).attr('title');
+            var i = title.lastIndexOf(' (');
+            if (i == -1) {
+               title += count;
+            } else {
+               title = title.substr(0, i) + count;
+            }
+
             // Update on all elements with same menuitemid
             var menuItem = $jQ('.menuItemCount[menuitemid=' + menuItemId + '] a');
-            menuItem.text(text).attr('title', text);
+            menuItem.text(text).attr('title', title);
             if (count.length > 2) {
                menuItem.parent().removeClass("hiddenMenuItem");
             }
@@ -1914,7 +1923,7 @@ function initSelectTooltips(selects) {
 
 function setSelectTooltips(jqSelect){
    var selected = jqSelect.find("option:selected");
-   if(!jqSelect.hasClass('noOptionTitle')){
+   if(jqSelect.hasClass('noOptionTitle')){
       jqSelect.attr("title", selected.text());
    } else {
       jqSelect.attr("title", selected.attr("title"));
@@ -2004,10 +2013,18 @@ function handleHtmlLoaded(context, setFocus, selects) {
       var jqSelects = (selects==undefined) ? $jQ("select") : selects;
       jqSelects.each(function(){
          var jqSelect = $jQ(this);
-         if(!jqSelect.hasClass('noOptionTitle')) {
+         if(jqSelect.hasClass('noOptionTitle')) {
             jqSelect.children().each(function() {
                $jQ(this).attr('title', $jQ(this).text());
             });
+         } else {
+            jqSelect.children().each(function() {
+               var i = $jQ(this);
+               if (i.attr('title') == undefined) {
+                  i.attr('title', i.text());
+               }
+            });
+            jqSelect.attr("title", jqSelect.find("option:selected").attr("title"));
          }
       });
       if(ieVer==7){

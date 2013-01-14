@@ -13,6 +13,8 @@ import java.util.Map;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.model.FileExistsException;
 import org.alfresco.service.cmr.model.FileInfo;
@@ -50,6 +52,7 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
 public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener {
     private static final long serialVersionUID = 1L;
 
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(FileBlockBean.class);
     public static final String BEAN_NAME = "FileBlockBean";
     public static final String PDF_OVERWRITE_CONFIRMED = "pdfOverwriteConfirmed";
 
@@ -65,6 +68,9 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
         try {
             BaseDialogBean.validatePermission(docRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT);
             final boolean active = getFileService().toggleActive(fileNodeRef);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("changed file active status, nodeRef=" + fileNodeRef + ", new status=" + active);
+            }
             restore(); // refresh the files list
             MessageUtil.addInfoMessage(active ? "file_toggle_active_success" : "file_toggle_deactive_success", getFileName(fileNodeRef));
         } catch (NodeLockedException e) {
@@ -76,12 +82,24 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
     }
 
     public void updateFilesProperties() {
-        NodeService nodeService = BeanHelper.getNodeService();
-        for (File file : files) {
-            if (file != null && file.getNodeRef() != null) {
-                nodeService.setProperty(file.getNodeRef(), FileModel.Props.CONVERT_TO_PDF_IF_SIGNED, file.isConvertToPdfIfSigned());
+        // Perform this operation as administrator, because some files may be locked for editing.
+        AuthenticationUtil.runAs(new RunAsWork<Void>() {
+
+            @Override
+            public Void doWork() throws Exception {
+                NodeService nodeService = BeanHelper.getNodeService();
+                for (File file : files) {
+                    if (file != null && file.getNodeRef() != null) {
+                        nodeService.setProperty(file.getNodeRef(), FileModel.Props.CONVERT_TO_PDF_IF_SIGNED, file.isConvertToPdfIfSigned());
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("changed file" + ", nodeRef=" + file.getNodeRef() + ", convertToPdfIfSigned=" + file.isConvertToPdfIfSigned());
+                        }
+                    }
+                }
+                return null;
             }
-        }
+
+        }, AuthenticationUtil.getSystemUserName());
     }
 
     private String getFileName(NodeRef fileNodeRef) {
@@ -102,6 +120,9 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
         }
 
         try {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("starting to generated pdf from FileBlockBean call, fileRef=" + fileRef);
+            }
             pdfFileInfo = getFileService().transformToPdf(docRef, fileRef, true);
         } catch (NodeLockedException e) {
             BeanHelper.getDocumentLockHelperBean().handleLockedNode("file_transform_pdf_error_docLocked", docRef);
@@ -115,8 +136,14 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
         if (pdfFileInfo != null) {
             MessageUtil.addInfoMessage(previouslyGeneratedPdf == null ? "file_generate_pdf_success" : "file_generate_pdf_version_success", pdfFileInfo.getName(), BeanHelper
                     .getNodeService().getProperty(fileRef, FileModel.Props.DISPLAY_NAME));
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("generated pdf from FileBlockBean call, file" + ", fileRef=" + fileRef + ", pdfFileRef=" + pdfFileInfo.getNodeRef());
+            }
         } else {
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "file_generate_pdf_failed");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("generating pdf from FileBlockBean call failed, file" + ", fileRef=" + fileRef);
+            }
         }
     }
 
@@ -179,6 +206,9 @@ public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener
 
     public boolean moveAllFiles(NodeRef toRef) {
         try {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("starting to move all files from FileBlockBean call, docRef=" + docRef + ", toRef=" + toRef);
+            }
             getFileService().moveAllFiles(docRef, toRef);
             return true;
         } catch (UnableToPerformException e) {

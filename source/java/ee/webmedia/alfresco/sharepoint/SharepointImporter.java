@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.sharepoint;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
+
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.faces.event.ActionEvent;
@@ -14,6 +16,7 @@ import org.apache.commons.lang.builder.ToStringStyle;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.log.LogHelper;
 
 /**
  * Entry point for starting and stopping whole import. Manages input parameters and coordinates structure and document import.
@@ -126,6 +129,8 @@ public class SharepointImporter {
         @Override
         public void run() {
             try {
+                LogHelper.setUserInfo("127.0.0.1", "localhost");
+                getLogService().clearPastIdSuffixCache();
                 for (BaseImportWork workItem : work) {
                     AuthenticationUtil.runAs(workItem, AuthenticationUtil.getSystemUserName());
 
@@ -137,6 +142,7 @@ public class SharepointImporter {
             } catch (Exception e) {
                 LOG.error("Importer error", e);
             } finally {
+                getLogService().clearPastIdSuffixCache();
                 importerRunning.set(false);
                 stopFlag.set(false);
                 LOG.info("Importing in background completed!");
@@ -150,7 +156,7 @@ public class SharepointImporter {
         public Boolean doWork() {
             boolean someDataWasImported = false;
             try {
-                while (getTransactionHelper().doInTransaction(this)) {
+                while (executeWithoutTransaction()) {
                     someDataWasImported = true;
                     if (stopFlag.get()) {
                         LOG.info("Import was stopped; quitting the import work.");
@@ -161,9 +167,16 @@ public class SharepointImporter {
                 }
             } catch (Exception e) {
                 LOG.error("Importer error", e);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
             }
             return someDataWasImported;
         }
+
+        protected Boolean executeWithoutTransaction() {
+            return getTransactionHelper().doInTransaction(this);
+        }
+
     }
 
     /**
@@ -235,8 +248,14 @@ public class SharepointImporter {
         }
 
         @Override
-        public Boolean execute() {
+        protected Boolean executeWithoutTransaction() {
             return importer.doBatch();
+        }
+
+        @Override
+        public Boolean execute() {
+            // Do nothing
+            return false;
         }
     }
 

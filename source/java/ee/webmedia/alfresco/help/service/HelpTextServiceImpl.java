@@ -102,13 +102,6 @@ public class HelpTextServiceImpl implements HelpTextService {
         nodeService.setProperties(helpTextNode.getNodeRef(), RepoUtil.toQNameProperties(helpTextNode.getProperties()));
     }
 
-    @Override
-    public void deleteHelp(NodeRef helpTextRef) {
-        if (helpTextRef != null && nodeService.exists(helpTextRef)) {
-            nodeService.deleteNode(helpTextRef);
-        }
-    }
-
     private NodeRef getRootNode() {
         return generalService.getNodeRef(HelpTextModel.ROOT.toString());
     }

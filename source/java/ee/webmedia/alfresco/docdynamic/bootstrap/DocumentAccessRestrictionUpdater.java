@@ -31,7 +31,7 @@ public class DocumentAccessRestrictionUpdater extends AbstractNodeUpdater {
         String query = SearchUtil.joinQueryPartsAnd(
                 SearchUtil.generateTypeQuery(DocumentCommonModel.Types.DOCUMENT),
                 SearchUtil.generatePropertyExactQuery(DocumentCommonModel.Props.ACCESS_RESTRICTION,
-                        Arrays.asList(AccessRestriction.OPEN.getValueName(), AccessRestriction.INTERNAL.getValueName()), false));
+                        Arrays.asList(AccessRestriction.OPEN.getValueName(), AccessRestriction.INTERNAL.getValueName())));
         List<ResultSet> resultSets = new ArrayList<ResultSet>();
         for (StoreRef storeRef : generalService.getAllStoreRefsWithTrashCan()) {
             resultSets.add(searchService.query(storeRef, SearchService.LANGUAGE_LUCENE, query));

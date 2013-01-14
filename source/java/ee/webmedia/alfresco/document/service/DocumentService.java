@@ -15,6 +15,7 @@ import org.springframework.beans.factory.InitializingBean;
 
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
+import ee.webmedia.alfresco.document.register.model.RegNrHolder2;
 import ee.webmedia.alfresco.register.model.Register;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
@@ -392,8 +393,8 @@ public interface DocumentService {
 
     boolean isDraft(NodeRef document);
 
-    String parseRegNrPattern(Series series, NodeRef volumeNodeRef, Register docRegister, Register volRegister, String existingRegNumber, Date regDateTime, String pattern,
-            boolean disableVolCounterIncrement);
+    void setRegNrBasedOnPattern(final Series series, NodeRef volumeNodeRef, final Register docRegister, final Register volRegister, final RegNrHolder2 holder,
+            final Date regDateTime, final String pattern, final boolean disableVolCounterIncrement);
 
     int getAllDocumentsFromFolderCount(NodeRef folder);
 
@@ -418,5 +419,7 @@ public interface DocumentService {
     boolean isVolumeColumnEnabled();
 
     void deleteDocument(NodeRef nodeRef, String comment, DeletionType deletionType);
+
+    public boolean isFinishUnregisteredDocumentEnabled();
 
 }

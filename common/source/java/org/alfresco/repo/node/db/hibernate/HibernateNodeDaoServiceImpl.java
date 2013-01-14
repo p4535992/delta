@@ -1475,6 +1475,23 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             oldPropertyKeysIterator.remove();
         }
         
+        // There is no mechanism in Alfresco to determine nested level of lists.
+        // So for lists with one list member it is necessary to submit correctly nested value:
+        // by default Alfresco omits outer list as it has only two-level distinguishing - single-valued or multi-valued property.
+        if (value instanceof List) {
+            List list = (List) value;
+            if (list.size() == 1 && persistableProperties.size() == 1) {
+                Serializable member = (Serializable) list.get(0);
+                if (member instanceof List) {
+                    for (NodePropertyValue nodePropertyValue : persistableProperties.values()) {
+                        List valueList = new ArrayList();
+                        valueList.add(nodePropertyValue.getSerializableValue());
+                        nodePropertyValue.setSerializableValue((Serializable) valueList);
+                    }
+                }
+            }
+        }    
+        
         // Now add all the new properties.  The will overwrite and/or add values.
         nodeProperties.putAll(persistableProperties);
     }

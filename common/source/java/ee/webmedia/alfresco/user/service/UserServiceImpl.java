@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.user.service;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getOrganizationStructureService;
 
 import java.io.Serializable;
@@ -284,13 +285,14 @@ public class UserServiceImpl implements UserService {
         List<String> groupNames = null;
         List<String> queryAndAdditions = new ArrayList<String>();
         if (StringUtils.isNotBlank(group)) {
-            queryAndAdditions.add(SearchUtil.generatePropertyExactQuery(ContentModel.PROP_USERNAME, getUserNamesInGroup(group), true));
+            queryAndAdditions.add(SearchUtil.generatePropertyExactQuery(ContentModel.PROP_USERNAME, getUserNamesInGroup(group)));
         }
         if (StringUtils.isNotBlank(exactGroup)) {
             groupNames = BeanHelper.getDocumentSearchService().searchAuthorityGroupsByExactName(exactGroup);
-            queryAndAdditions.add(SearchUtil.generatePropertyExactQuery(ContentModel.PROP_USERNAME, getUserNamesInGroup(groupNames), true));
+            queryAndAdditions.add(SearchUtil.generatePropertyExactQuery(ContentModel.PROP_USERNAME, getUserNamesInGroup(groupNames)));
         }
-        List<NodeRef> nodeRefs = generalService.searchNodes(input, ContentModel.TYPE_PERSON, props, limit, SearchUtil.joinQueryPartsAnd(queryAndAdditions));
+        List<NodeRef> nodeRefs = getDocumentSearchService().searchNodesByTypeAndProps(input, ContentModel.TYPE_PERSON, props, limit,
+                SearchUtil.joinQueryPartsAnd(queryAndAdditions));
         if (nodeRefs == null) {
             if (returnAllUsers) {
                 // XXX use alfresco services instead
@@ -476,8 +478,11 @@ public class UserServiceImpl implements UserService {
             return orgPaths;
         }
         String orgId = (String) props.get(ContentModel.PROP_ORGID);
-        String orgName = getOrganizationStructureService().getOrganizationStructureName(orgId);
-        return new ArrayList<String>(Collections.singleton(orgName));
+        List<String> orgPath = getOrganizationStructureService().getOrganizationStructurePaths(orgId);
+        if (orgPath == null || orgPath.isEmpty()) {
+            orgPath = Collections.singletonList(getOrganizationStructureService().getOrganizationStructureName(orgId));
+        }
+        return orgPath;
     }
 
     @Override

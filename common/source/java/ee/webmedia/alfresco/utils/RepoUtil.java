@@ -411,7 +411,9 @@ public class RepoUtil {
     public static List<String> getNodeRefIds(List<NodeRef> nodeRefs) {
         List<String> nodeRefIds = new ArrayList<String>();
         for (NodeRef docRef : nodeRefs) {
-            nodeRefIds.add(docRef.getId());
+            if (docRef != null) {
+                nodeRefIds.add(docRef.getId());
+            }
         }
         return nodeRefIds;
     }
@@ -420,4 +422,24 @@ public class RepoUtil {
         return (node == null ? false : node.getNodeRef().getStoreRef().getProtocol().equals(StoreRef.PROTOCOL_WORKSPACE));
     }
 
+    public static Serializable flatten(Serializable value) {
+        if (!(value instanceof List) || ((List) value).isEmpty()) {
+            return value;
+        }
+        List<Serializable> list = (List) value;
+        if (list.get(0) instanceof List) {
+            List flattenedList = new ArrayList();
+            for (Serializable nestedList : list) {
+                Serializable flattenedValue = flatten(nestedList);
+                if (flattenedValue instanceof List) {
+                    flattenedList.addAll((Collection) flattenedValue);
+                } else {
+                    flattenedList.add(flattenedValue);
+                }
+            }
+            return (Serializable) flattenedList;
+        } else {
+            return value;
+        }
+    }
 }

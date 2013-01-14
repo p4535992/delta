@@ -110,20 +110,12 @@ public abstract class FieldAndGroupBase extends MetadataItem {
                 return false;
             }
             DocumentType docType = (DocumentType) dynamicType;
-            if (!docType.isSystematic()) {
-                return true;
-            }
+            return !docType.isSystematic() || isRemovableFromSystematicDocType();
         } else if (dynamicType instanceof CaseFileType) {
-            if (isMandatoryForVol()) {
-                return false;
-            }
+            return !isMandatoryForVol();
         } else {
             throw new RuntimeException("Unknown dynamic type " + dynamicType);
         }
-        if (isRemovableFromSystematicDocType()) {
-            return true;
-        }
-        return false;
     }
 
 }

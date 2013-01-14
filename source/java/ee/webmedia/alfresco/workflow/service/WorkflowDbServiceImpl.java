@@ -741,7 +741,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         }
         return tasksUpdated;
     }
-    
+
     @Override
     public Set<NodeRef> getAllWorflowNodeRefs() {
         String sqlQuery = "SELECT workflow_id, store_id FROM delta_task WHERE workflow_id IS NOT NULL AND store_id IS NOT NULL GROUP BY workflow_id, store_id";
@@ -756,7 +756,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
                 });
         explainQuery(sqlQuery);
         return new HashSet<NodeRef>(workflows);
-    }    
+    }
 
     private Serializable getConvertedValue(ResultSet rs, QName propName, String columnLabel, Object value) throws SQLException {
         if (WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME.equals(propName) && value != null) {
@@ -974,6 +974,9 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     }
 
     private void deleteCaseOrVolumeTasks(NodeRef nodeRef) {
+        // case file compound workflows
+        deleteDocumentTasks(nodeRef);
+        // case file documents' compound workflows
         List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(nodeRef, Collections.singleton(DocumentCommonModel.Types.DOCUMENT));
         for (ChildAssociationRef childAssoc : childAssocs) {
             deleteDocumentTasks(childAssoc.getChildRef());
@@ -1000,7 +1003,7 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             }
         }
     }
-    
+
     private boolean isWorkflow(QName type) {
         return dictionaryService.isSubClass(type, WorkflowCommonModel.Types.WORKFLOW);
     }

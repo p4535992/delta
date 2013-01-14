@@ -4,9 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.alfresco.repo.module.AbstractModuleComponent;
-import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.transaction.TransactionService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -23,7 +21,6 @@ public class UpdateDocumentListCountersBootstrap extends AbstractModuleComponent
 
     private GeneralService generalService;
     private FunctionsService functionsService;
-    private TransactionService transactionService;
     private DocumentListService documentListService;
 
     @Override
@@ -33,7 +30,6 @@ public class UpdateDocumentListCountersBootstrap extends AbstractModuleComponent
         for (ArchivalsStoreVO archivalsStoreVO : generalService.getArchivalsStoreVOs()) {
             roots.add(archivalsStoreVO.getNodeRef());
         }
-        RetryingTransactionHelper retryingTransactionHelper = transactionService.getRetryingTransactionHelper();
         for (final NodeRef nodeRef : roots) {
             LOG.info("Starting to update document list counters under " + nodeRef);
             documentListService.updateDocCounters(nodeRef);
@@ -47,10 +43,6 @@ public class UpdateDocumentListCountersBootstrap extends AbstractModuleComponent
 
     public void setFunctionsService(FunctionsService functionsService) {
         this.functionsService = functionsService;
-    }
-
-    public void setTransactionService(TransactionService transactionService) {
-        this.transactionService = transactionService;
     }
 
     public void setDocumentListService(DocumentListService documentListService) {

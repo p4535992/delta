@@ -40,7 +40,7 @@ public class DocumentRegNumbersUpdater extends AbstractNodeUpdater {
                 generateTypeQuery(VolumeModel.Types.VOLUME),
                 generateTypeQuery(CaseModel.Types.CASE));
         List<ResultSet> resultSets = new ArrayList<ResultSet>();
-        for (StoreRef storeRef : generalService.getAllWithArchivalsStoreRefs()) {
+        for (StoreRef storeRef : generalService.getAllStoreRefsWithTrashCan()) {
             resultSets.add(searchService.query(storeRef, SearchService.LANGUAGE_LUCENE, query));
         }
         return resultSets;

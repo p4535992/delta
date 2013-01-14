@@ -10,7 +10,7 @@
    <item title-id="menu_my_tasks_and_documents">
       <outcome>myalfresco</outcome>
       <subitems>
-         <dropdown title-id="menu_my_tasks" expanded="true">
+         <dropdown id="menu_my_tasks" title-id="menu_my_tasks" expanded="true">
             <submenu-id>my-tasks-submenu</submenu-id>
             <subitems>
                <item id="assignmentTasks" title-id="menu_for_assignment">

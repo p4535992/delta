@@ -9,7 +9,42 @@
 
 
 <hr/>
-
+<f:verbatim>
+<b><br/><br/><h:outputText styleClass="mainTitle" value="Skriptid"/></b><br/></f:verbatim>
+	<h:outputText value="Tööülesannete kustutamine repost. NB!!! Enne kasutamist veendu, et kõik updaterid, mis tööülesannete andmeid repost andmebaasi tabelitesse kirjutavad, on edukalt lõpuni jooksnud!!!! Vastasel korral ei saa tööülesannete andmeid enam taastada!!!"/>
+	<f:verbatim><br/></f:verbatim>
+	<h:outputText value="numberOfTasksInSingleTransaction: "/>
+    <h:inputText id="deleteAllTasksUpdaterBatchSize" value="#{deleteAllTasksFromRepo.batchSize}" size="4" />
+    <f:verbatim><br/></f:verbatim>    
+    <h:outputText value="Paus pärast iga tööülesande töötlemist (ms): "/>
+    <h:inputText id="deleteAllTasksUpdaterSleepTime" value="#{deleteAllTasksFromRepo.sleepTime}" size="4" />
+    <f:verbatim><br/></f:verbatim>
+    <h:commandButton id="startDeleteAllTasksFromRepoUpdater" value="Käivita tööülesannete kustutamise skript" type="submit"
+      actionListener="#{deleteAllTasksFromRepo.executeUpdaterInBackground}"
+      rendered="#{!deleteAllTasksFromRepo.updaterRunning}" />
+    <h:commandButton id="stopDeleteAllTasksFromRepoUpdater" value="Peata tööülesannete kustutamise skript" type="submit"
+      actionListener="#{deleteAllTasksFromRepo.stopUpdater}"
+      rendered="#{deleteAllTasksFromRepo.updaterRunning}"
+      disabled="#{deleteAllTasksFromRepo.updaterStopping}" />
+	<f:verbatim><br/></f:verbatim>
+	
+	<h:outputText value="Logikirjete kustutamine repost. NB!!! Enne kasutamist veendu, et kõik updaterid, mis logikirjete andmeid repost andmebaasi tabelitesse kirjutavad, on edukalt lõpuni jooksnud!!!! Vastasel korral ei saa logide andmeid enam taastada!!!"/>
+	<f:verbatim><br/></f:verbatim>
+	<h:outputText value="numberOfLogNodesInSingleTransaction: "/>
+    <h:inputText id="deleteAllLogNodesUpdaterBatchSize" value="#{deleteAllLogNodesFromRepo.batchSize}" size="4" />
+    <f:verbatim><br/></f:verbatim>    
+    <h:outputText value="Paus pärast iga logikirje töötlemist (ms): "/>
+    <h:inputText id="deleteAllLogNodesUpdaterSleepTime" value="#{deleteAllLogNodesFromRepo.sleepTime}" size="4" />
+    <f:verbatim><br/></f:verbatim>
+    <h:commandButton id="startDeleteAllLogNodesFromRepoUpdater" value="Käivita logikirjete kustutamise skript" type="submit"
+      actionListener="#{deleteAllLogNodesFromRepo.executeUpdaterInBackground}"
+      rendered="#{!deleteAllLogNodesFromRepo.updaterRunning}" />
+    <h:commandButton id="stopDeleteAllLogNodesFromRepoUpdater" value="Peata logikirjete kustutamise skript" type="submit"
+      actionListener="#{deleteAllLogNodesFromRepo.stopUpdater}"
+      rendered="#{deleteAllLogNodesFromRepo.updaterRunning}"
+      disabled="#{deleteAllLogNodesFromRepo.updaterStopping}" />
+	<f:verbatim><br/></f:verbatim>	
+	
 <%--   <br/>
    <u>Dokumendi õiguste uuendamise skript (enne 2.5 versiooni)</u>
    <br/>
@@ -92,6 +127,88 @@
 <h:commandButton id="updateAddTaskPrivilegesToDocumentUpdaterSleepTime" value="Uuenda" type="submit"
       actionListener="#{addTaskPrivilegesToDocumentUpdater.updateSleepTime}" />
 --%>
+
+<f:verbatim><hr/></f:verbatim>
+<h:outputText value="Versioonide lahtilukustamine"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Mitu objekti ühes transaktsioonis töödelda: "/>
+<h:inputText id="versionUnlockUpdaterBatchSize" value="#{versionUnlockUpdater.batchSize}" converter="javax.faces.Integer" size="4" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startVersionUnlockUpdater" value="Käivita" type="submit"
+   actionListener="#{versionUnlockUpdater.executeUpdaterInBackground}"
+   rendered="#{versionUnlockUpdater.updaterRunning == false}" />
+<h:commandButton id="stopVersionUnlockUpdater" value="Peata" type="submit"
+   actionListener="#{versionUnlockUpdater.stopUpdater}"
+   rendered="#{versionUnlockUpdater.updaterRunning == true}"
+   disabled="#{versionUnlockUpdater.updaterStopping == true}" />
+<f:verbatim><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
+<h:outputText value="Aasta- ja objektipõhistel toimikutel \"Sisaldab teemasid\" = jah väärtustamine, kui toimikus on vähemalt üks teema"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Mitu objekti ühes transaktsioonis töödelda: "/>
+<h:inputText id="volumeContainsCasesUpdaterBatchSize" value="#{volumeContainsCasesUpdater.batchSize}" converter="javax.faces.Integer" size="4" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startVolumeContainsCasesUpdater" value="Käivita" type="submit"
+   actionListener="#{volumeContainsCasesUpdater.executeUpdaterInBackground}"
+   rendered="#{volumeContainsCasesUpdater.updaterRunning == false}" />
+<h:commandButton id="stopVolumeContainsCasesUpdater" value="Peata" type="submit"
+   actionListener="#{volumeContainsCasesUpdater.stopUpdater}"
+   rendered="#{volumeContainsCasesUpdater.updaterRunning == true}"
+   disabled="#{volumeContainsCasesUpdater.updaterStopping == true}" />
+<f:verbatim><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
+<h:outputText value="Rahvusvahelise õigusabi dokumentidel publishToAdr = 'Ei lähe ADR-i' väärtustamine"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Mitu dokumenti ühes transaktsioonis töödelda: "/>
+<h:inputText id="documentPublishToAdrUpdaterBatchSize" value="#{documentPublishToAdrUpdater.batchSize}" converter="javax.faces.Integer" size="4" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startDocumentPublishToAdrUpdater" value="Käivita" type="submit"
+   actionListener="#{documentPublishToAdrUpdater.executeUpdaterInBackground}"
+   rendered="#{documentPublishToAdrUpdater.updaterRunning == false}" />
+<h:commandButton id="stopDocumentPublishToAdrUpdater" value="Peata" type="submit"
+   actionListener="#{documentPublishToAdrUpdater.stopUpdater}"
+   rendered="#{documentPublishToAdrUpdater.updaterRunning == true}"
+   disabled="#{documentPublishToAdrUpdater.updaterStopping == true}" />
+<f:verbatim><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
+<h:outputText value="owner* väljade väärtustamine vastavalt SP impordi reeglitele"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Faili d_kasut_adsi.csv tee: "/>
+<h:inputText id="ownerPropsUpdaterKasutAdsiPath" value="#{ownerPropsUpdater.kasutAdsiPath}" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="defaultOwnerId: "/>
+<h:inputText id="ownerPropsUpdaterDefaultOwnerId" value="#{ownerPropsUpdater.defaultOwnerId}" />
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Mitu objekti ühes transaktsioonis töödelda: "/>
+<h:inputText id="ownerPropsUpdaterBatchSize" value="#{ownerPropsUpdater.batchSize}" converter="javax.faces.Integer" size="4" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startOwnerPropsUpdater" value="Käivita" type="submit"
+   actionListener="#{ownerPropsUpdater.executeUpdaterInBackground}"
+   rendered="#{ownerPropsUpdater.updaterRunning == false}" />
+<h:commandButton id="stopOwnerPropsUpdater" value="Peata" type="submit"
+   actionListener="#{ownerPropsUpdater.stopUpdater}"
+   rendered="#{ownerPropsUpdater.updaterRunning == true}"
+   disabled="#{ownerPropsUpdater.updaterStopping == true}" />
+<f:verbatim><br/></f:verbatim>
+
+<f:verbatim><hr/></f:verbatim>
+<h:outputText value="ownerEmail 'test22@just.ee' -> vastavalt ownerId-le praeguse kasutaja e-maili aadressiga väärtustamine"/>
+<f:verbatim><br/></f:verbatim>
+<h:outputText value="Mitu objekti ühes transaktsioonis töödelda: "/>
+<h:inputText id="ownerEmailUpdaterBatchSize" value="#{ownerEmailUpdater.batchSize}" converter="javax.faces.Integer" size="4" />
+<f:verbatim><br/></f:verbatim>
+<h:commandButton id="startOwnerEmailUpdater" value="Käivita" type="submit"
+   actionListener="#{ownerEmailUpdater.executeUpdaterInBackground}"
+   rendered="#{ownerEmailUpdater.updaterRunning == false}" />
+<h:commandButton id="stopOwnerEmailUpdater" value="Peata" type="submit"
+   actionListener="#{ownerEmailUpdater.stopUpdater}"
+   rendered="#{ownerEmailUpdater.updaterRunning == true}"
+   disabled="#{ownerEmailUpdater.updaterStopping == true}" />
+<f:verbatim><br/></f:verbatim>
+
 <f:verbatim><hr/></f:verbatim>
 
 <h:outputText value="Restore data _from_ Delta specified by the following database and contentstore folder"/>
@@ -173,6 +290,9 @@
 <f:verbatim><hr/></f:verbatim>
 <f:verbatim><br/></f:verbatim>
 
+<h:outputText value="numberOfObjectsInSingleTransaction: "/>
+<h:inputText id="deleteAllDocumentsBatchSize" value="#{FunctionsListDialog.deleteBatchSize}" size="4" />
+<f:verbatim><br/></f:verbatim>    
 <h:commandButton id="deleteAllDocuments" value="deleteAllDocuments (delete permanently, skip trashcan)" type="submit"
    actionListener="#{FunctionsListDialog.deleteAllDocuments}" />
 <f:verbatim><br/></f:verbatim>
@@ -623,7 +743,11 @@
 
 <h:outputText value="lookBackMinutes: "/>
 <h:inputText value="#{customReindexComponent.lookBackMinutes}" size="6" converter="javax.faces.Integer" />
-<f:verbatim>&nbsp;</f:verbatim>
+<f:verbatim><br/><br/></f:verbatim>
+<h:outputText value="changeTxnIds (mitu eralda tühikuga; kui see on täidetud, siis lookBackMinutes ei arvestata): "/>
+<f:verbatim><br/><br/></f:verbatim>
+<h:inputText value="#{customReindexComponent.customChangeTxnIds}" />
+<f:verbatim><br/><br/></f:verbatim>
 <h:commandButton id="searchHolesAndIndex" value="searchHolesAndIndex" type="submit" actionListener="#{TestingForDeveloperBean.searchHolesAndIndex}" />
 
 <f:verbatim><hr/></f:verbatim>

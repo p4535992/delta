@@ -161,18 +161,6 @@
          </list>
       </property>
    </bean>
-
-   <bean id="documentArchivalLocationPropsUpdater" class="ee.webmedia.alfresco.archivals.bootstrap.DocumentArchivalLocationPropsUpdater" parent="abstractNodeUpdater">
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-       <property name="dependsOn">
-         <list>
-            <ref bean="archivalsStoresBootstrap" />
-            <ref bean="deleteSubtypedDocuments" />
-         </list>
-      </property>
-      <property name="documentService" ref="DocumentService" />
-   </bean>
    
    <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
       <property name="resourceBundles">

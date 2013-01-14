@@ -133,13 +133,10 @@ public class TestingForDeveloperBean implements Serializable {
     }
 
     private void deleteBootstrap(String moduleName, String bootstrapName) {
-        String systematicFieldGroupDefinitionsBootstrap1 = getBootstrapXPath(moduleName, bootstrapName);
-        StoreRef store = new StoreRef("system://system");
-        final NodeRef nodeRef = getNodeRef(systematicFieldGroupDefinitionsBootstrap1, store);
+        final NodeRef nodeRef = getGeneralService().deleteBootstrapNodeRef(moduleName, bootstrapName);
         if (nodeRef == null) {
             LOG.info("from module '" + moduleName + "' bootstrap '" + bootstrapName + "' does not exist");
         } else {
-            getNodeService().deleteNode(nodeRef);
             LOG.info("from module '" + moduleName + "' deleted bootstrap '" + bootstrapName + "' (noderef=" + nodeRef + ")");
         }
     }
@@ -158,10 +155,6 @@ public class TestingForDeveloperBean implements Serializable {
             getNodeService().deleteNode(childRef);
             LOG.info("deleted node " + childRef);
         }
-    }
-
-    private String getBootstrapXPath(String moduleName, String bootstrapName) {
-        return "/sys:system-registry/module:modules/module:" + moduleName + "/module:components/module:" + bootstrapName;
     }
 
     private List<String> storeRefs = null;

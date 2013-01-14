@@ -66,6 +66,7 @@ public class FavoritesModalComponent extends UICommand {
         Map<String, String> attributes = generator.getCustomAttributes();
         attributes.put(SuggesterGenerator.ComponentAttributeNames.SUGGESTER_VALUES, "#{DocumentDialog.getFavoriteDirectoryNames}");
         UIComponent suggest = generator.generate(context, getSuggesterId(context));
+        ComponentUtil.putAttribute(suggest, "styleClass", ComponentUtil.getAttribute(suggest, "styleClass") + " expand19-200");
         Utils.encodeRecursive(context, suggest);
         out.write("</td></tr>");
         out.write("<tr><td>");

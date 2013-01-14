@@ -190,6 +190,7 @@
       </aspect>
 
       
+      <!-- Deprecated - use doccom:notEditable -->
       <aspect name="docspec:notEditable">
          <properties>
             <property name="docspec:notEditable">
@@ -200,7 +201,7 @@
          </properties>
       </aspect>   
 
-      
+     <!-- Deprecated - use doccom:invoiceXml -->      
       <aspect name="docspec:invoiceXml">
          <properties>
             <property name="docspec:invoiceXml">

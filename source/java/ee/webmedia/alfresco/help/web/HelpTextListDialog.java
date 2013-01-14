@@ -43,10 +43,7 @@ public class HelpTextListDialog extends BaseDialogBean {
         getHelpTextEditDialog(type).init(textRef);
     }
 
-    public void delete(@SuppressWarnings("unused") ActionEvent event) {
-        NodeRef textRef = new NodeRef(ActionUtil.getParam(event, "textRef"));
-        getHelpTextService().deleteHelp(textRef);
-
+    public void deleteCallback() {
         ServletContext servletContext = (ServletContext) FacesContext.getCurrentInstance().getExternalContext().getContext();
         servletContext.setAttribute("helpText", getHelpTextService().getHelpTextKeys());
     }

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:docadmin="http://alfresco.webmedia.ee/model/document/admin/1.0">
+
+   <docadmin:fieldGroup view:childName="docadmin:users">
+      <view:properties>
+         <docadmin:name>Kasutajad tabelis</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>userName</view:value>
+               <view:value>userJobTitle</view:value>
+               <view:value>userOrgStructUnit</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+</view:view>

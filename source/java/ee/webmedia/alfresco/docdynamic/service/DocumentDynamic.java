@@ -17,7 +17,6 @@ import ee.webmedia.alfresco.common.model.DynamicBase;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
@@ -81,7 +80,7 @@ public class DocumentDynamic extends DynamicBase implements Cloneable, Comparabl
     }
 
     public boolean isNotEditable() {
-        return getNode().hasAspect(DocumentSpecificModel.Aspects.NOT_EDITABLE); // FIXME: move aspect to DocumentCommonModel
+        return getNode().hasAspect(DocumentCommonModel.Aspects.NOT_EDITABLE);
     }
 
     public void setIncomingInvoice(boolean incomingInvoice) {

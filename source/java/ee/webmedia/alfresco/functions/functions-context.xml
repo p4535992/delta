@@ -39,10 +39,18 @@
    <bean id="functionsBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">
       <property name="resourceBundles">
          <list>
-            <value>ee.webmedia.alfresco.functions.web.functions-webclient</value>
+            <value>ee/webmedia/alfresco/functions/web/functions-webclient</value>
          </list>
       </property>
    </bean>
+   
+   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+      <property name="resourceBundles">
+         <list>
+            <value>ee/webmedia/alfresco/functions/web/functions-webclient</value>
+         </list>
+      </property>
+   </bean>   
 
    <bean id="functionsService" class="ee.webmedia.alfresco.functions.service.FunctionsServiceImpl">
       <property name="generalService" ref="GeneralService" />

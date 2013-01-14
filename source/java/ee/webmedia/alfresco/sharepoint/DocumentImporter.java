@@ -4,10 +4,11 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicServi
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFileFolderService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getGeneralService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getMimetypeService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNamespaceService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPersonService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getTransactionService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getVersionsService;
 import static ee.webmedia.alfresco.sharepoint.ImportUtil.docsError;
@@ -32,24 +33,27 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
+import org.alfresco.repo.transaction.TransactionListenerAdapter;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentWriter;
-import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
-import org.apache.commons.lang.time.FastDateFormat;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
@@ -70,13 +74,15 @@ import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.eventplan.model.EventPlanModel;
-import ee.webmedia.alfresco.log.model.LogLevel;
+import ee.webmedia.alfresco.log.model.LogEntry;
 import ee.webmedia.alfresco.log.model.LogObject;
+import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.sharepoint.mapping.DocumentMetadata;
 import ee.webmedia.alfresco.sharepoint.mapping.ImportFile;
 import ee.webmedia.alfresco.sharepoint.mapping.MappedDocument;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
+import ee.webmedia.alfresco.utils.ProgressTracker;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.versions.model.VersionsModel;
@@ -92,12 +98,11 @@ public class DocumentImporter {
 
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentImporter.class);
 
-    private static final String[] SYSTEM_OWNERS = { "JUSTMIN\\admin.mihkel", "JUSTMIN\\kristjan12", "JUSTMIN\\sps.pumpaja" };
+    public static final String[] SYSTEM_OWNERS = { "JUSTMIN\\admin.mihkel", "JUSTMIN\\kristjan12", "JUSTMIN\\sps.pumpaja" };
     private static final String[] NON_DIGITAL_EXT = { "htm", "html" };
 
     private static final Pattern DOC_XML_WITH_VERSION_PATTERN = Pattern.compile(".*\\.v(\\d+).xml$");
     private static final Pattern REG_NUMBER_PATTERN = Pattern.compile(".*-\\d+$");
-    private static final FastDateFormat LOG_DATE_FORMAT = FastDateFormat.getInstance("yyyyMMdd");
 
     public static final String CSV_NAME_KASUT_ADSI = "d_kasut_adsi.csv";
     public static final String CSV_NAME_COMPLETED_DOCS = "completed_docs.csv";
@@ -105,11 +110,12 @@ public class DocumentImporter {
     private static final String CSV_NAME_FAILED_IMPORT = "failed_import.csv";
     private static final String DIR_FILES = "files";
     private static final String DIR_DOCS = "documents";
-    private static final String USER_INFO_DUPL = "[duplicate user info here]";
+    public static final String USER_INFO_DUPL = "[duplicate user info here]";
 
     // IMPORT SETTINGS
     private final ImportSettings settings;
     private final ImportStatus status;
+    private final ProgressTracker progressTracker;
 
     // IMPORT STATE DATA
     private final File logFile;
@@ -120,7 +126,8 @@ public class DocumentImporter {
     private final Map<String, Set<VolumeCase>> importedVolumesCases;
     private final Map<String, String> externalUsersById;
     private final Map<String, String> systemUsersByFullName;
-    private final Map<String, NodeRef> importedDocXmls;
+    private Map<String, NodeRef> importedDocXmls;
+    private Map<String, NodeRef> importedDocXmlsCommited;
     private final List<Map<Integer, File>> notImportedDocXmls;
     private final Map<NodeRef, Map<QName, NodeRef>> parentsCache = new HashMap<NodeRef, Map<QName, NodeRef>>(500);
 
@@ -131,10 +138,10 @@ public class DocumentImporter {
     private final FileFolderService fileFolderService = getFileFolderService();
     private final NodeService nodeService = getNodeService();
     private final UserService userService = getUserService();
-    private final MimetypeService mimeService = getMimetypeService();
     private final DocumentService documentService = getDocumentService();
     private final DocumentDynamicService documentDynamicService = getDocumentDynamicService();
     private final VersionsService versionsService = getVersionsService();
+    private final LogService logService = getLogService();
     private final SimpleJdbcTemplate jdbcTemplate;
 
     private final SharepointMapping mapper;
@@ -189,8 +196,11 @@ public class DocumentImporter {
         systemUsersByFullName = loadSystemUsers();
         externalUsersById = loadExternalUsers(settings.getDataFolderFile(CSV_NAME_KASUT_ADSI));
         importedDocXmls = loadCompletedDocuments(logFile, settings.isDocsWithVersions());
+        importedDocXmlsCommited = new HashMap<String, NodeRef>(importedDocXmls);
         importedVolumesCases = loadCompletedVolumesCases(volumeLogFile);
-        notImportedDocXmls = settings.isDocsWithVersions() ? getAllDocumentXmlVersionFiles() : getAllDocumentXmlSimpleFiles();
+        Pair<Integer, List<Map<Integer, File>>> result = settings.isDocsWithVersions() ? getAllDocumentXmlVersionFiles() : getAllDocumentXmlSimpleFiles();
+        notImportedDocXmls = result.getSecond();
+        progressTracker = new ProgressTracker(result.getFirst() + importedDocXmls.size(), importedDocXmls.size());
     }
 
     /**
@@ -199,18 +209,33 @@ public class DocumentImporter {
      * not throw an exception. The caller should not continue when <code>false</code> is returned.
      * 
      * @return A Boolean that is <code>true</code> when a batch was imported successfully, or <code>false</code> when an error occurred or new documents were found.
+     * @throws IOException
      */
     public boolean doBatch() {
-        CsvWriter logWriter = null;
-        CsvWriter failedWriter = null;
+        CsvWriter logWriter = initLogWriter(logFile);
+        CsvWriter failedWriter = initLogWriter(failedFile);
         List<DocumentImportResult> importedDocs = new ArrayList<DocumentImportResult>(settings.getBatchSize());
+        final List<Map<Integer, File>> nextDocumentXmlFiles = getNextDocumentXmlFiles();
 
         try {
 
-            logWriter = initLogWriter(logFile);
-            failedWriter = initLogWriter(failedFile);
+            importedDocs = getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<List<DocumentImportResult>>() {
+                @Override
+                public List<DocumentImportResult> execute() throws Throwable {
+                    AlfrescoTransactionSupport.bindListener(new TransactionListenerAdapter() {
+                        @Override
+                        public void afterCommit() {
+                            importedDocXmlsCommited = new HashMap<String, NodeRef>(importedDocXmls);
+                        }
 
-            importedDocs = settings.isDocsWithVersions() ? importVersions() : importSimple();
+                        @Override
+                        public void afterRollback() {
+                            importedDocXmls = new HashMap<String, NodeRef>(importedDocXmlsCommited);
+                        }
+                    });
+                    return settings.isDocsWithVersions() ? importVersions(nextDocumentXmlFiles) : importSimple(nextDocumentXmlFiles);
+                }
+            });
 
             // We need to log only when the entire batch of documents was imported successfully: the log file must not contain documents where import failed and the document must
             // be imported on next try. The log files must contain entries of only those document XML files not to be imported again.
@@ -231,16 +256,29 @@ public class DocumentImporter {
             if (failedWriter != null) {
                 failedWriter.close();
             }
+            logService.setThreadLocalOverride(null, null, null);
+            if (nextDocumentXmlFiles != null) {
+                int realBatchSize = 0;
+                for (Map<Integer, File> map : nextDocumentXmlFiles) {
+                    if (map != null) {
+                        realBatchSize += map.values().size();
+                    }
+                }
+                String info = progressTracker.step(realBatchSize);
+                if (info != null) {
+                    LOG.info(settings.getStructAndDocsOrigin() + " documents import: " + info);
+                }
+            }
         }
 
         return importedDocs == null || !importedDocs.isEmpty();
     }
 
-    private List<DocumentImportResult> importSimple() {
+    private List<DocumentImportResult> importSimple(List<Map<Integer, File>> nextDocumentXmlFiles) {
         List<DocumentImportResult> results = new ArrayList<DocumentImportResult>(settings.getBatchSize());
         DocumentImportResult result;
 
-        for (Map<Integer, File> map : getNextDocumentXmlFiles()) {
+        for (Map<Integer, File> map : nextDocumentXmlFiles) {
             for (File docXmlFile : map.values()) {
 
                 result = null;
@@ -279,10 +317,10 @@ public class DocumentImporter {
      * 
      * @return <code>null</code> when entire batch import failed, otherwise result objects for imported document (per version). The caller can write these results to a log file.
      */
-    private List<DocumentImportResult> importVersions() {
+    private List<DocumentImportResult> importVersions(List<Map<Integer, File>> nextDocumentXmlFiles) {
         List<DocumentImportResult> results = new ArrayList<DocumentImportResult>(settings.getBatchSize() * 5);
 
-        batchLoop: for (Map<Integer, File> docXmlFiles : getNextDocumentXmlFiles()) {
+        batchLoop: for (Map<Integer, File> docXmlFiles : nextDocumentXmlFiles) {
             List<DocumentImportResult> docResults = new ArrayList<DocumentImportResult>(docXmlFiles.size());
             DocumentMetadata meta = null;
 
@@ -349,32 +387,39 @@ public class DocumentImporter {
         return results;
     }
 
-    private CsvWriter initLogWriter(File log) throws IOException {
+    private CsvWriter initLogWriter(File log) {
         boolean fileNew = !log.exists();
-        CsvWriter logWriter = ImportUtil.createLogWriter(log, true);
+        CsvWriter logWriter = null;
+        try {
+            logWriter = ImportUtil.createLogWriter(log, true);
 
-        if (fileNew) {
-            logWriter.writeRecord(new String[] {
-                    "documentId",
-                    "nodeRef",
-                    "originalLocation",
-                    "tempName",
-                    "created",
-                    "regNumber",
-                    "regDateTime",
-                    "docName",
-                    "ownerId",
-                    "ownerName",
-                    "accessRestriction",
-                    "contentType",
-                    "receivedSent",
-                    "documentSubspecies",
-                    "objectTypeId",
-                    "faultDescription"
-            });
+            if (fileNew) {
+                logWriter.writeRecord(new String[] {
+                        "documentId",
+                        "nodeRef",
+                        "originalLocation",
+                        "tempName",
+                        "created",
+                        "regNumber",
+                        "regDateTime",
+                        "docName",
+                        "ownerId",
+                        "ownerName",
+                        "accessRestriction",
+                        "contentType",
+                        "receivedSent",
+                        "documentSubspecies",
+                        "objectTypeId",
+                        "faultDescription"
+                });
+            }
+            return logWriter;
+        } catch (IOException e) {
+            if (logWriter != null) {
+                logWriter.close();
+            }
+            throw new RuntimeException(e);
         }
-
-        return logWriter;
     }
 
     private static Map<String, Set<VolumeCase>> loadCompletedVolumesCases(File completed) {
@@ -412,7 +457,7 @@ public class DocumentImporter {
         return volumesCases;
     }
 
-    private static Map<String, String> loadExternalUsers(File usersFile) {
+    public static Map<String, String> loadExternalUsers(File usersFile) {
         LOG.info("Loading previous system users from file " + usersFile);
 
         Map<String, String> users = new HashMap<String, String>();
@@ -451,7 +496,7 @@ public class DocumentImporter {
         return users;
     }
 
-    private static Map<String, String> loadSystemUsers() {
+    public static Map<String, String> loadSystemUsers() {
         Map<String, String> usersByFullName = new HashMap<String, String>();
         NodeService nodeService = getNodeService();
 
@@ -500,7 +545,7 @@ public class DocumentImporter {
         return result;
     }
 
-    private List<Map<Integer, File>> getAllDocumentXmlSimpleFiles() {
+    private Pair<Integer, List<Map<Integer, File>>> getAllDocumentXmlSimpleFiles() {
         final boolean amphora = settings.isAmphoraOrigin();
         final List<Map<Integer, File>> xmlFiles = new ArrayList<Map<Integer, File>>();
         final AtomicBoolean lastKnownDirPassed = new AtomicBoolean(lastKnownDocDir == null);
@@ -543,10 +588,12 @@ public class DocumentImporter {
             }
         });
 
-        return xmlFiles;
+        return Pair.newInstance(xmlFiles.size(), xmlFiles);
     }
 
-    private List<Map<Integer, File>> getAllDocumentXmlVersionFiles() {
+    private final AtomicInteger xmlCount = new AtomicInteger();
+
+    private Pair<Integer, List<Map<Integer, File>>> getAllDocumentXmlVersionFiles() {
         final Map<String, Map<Integer, File>> xmlFiles = new HashMap<String, Map<Integer, File>>();
 
         LOG.info("Getting all unprocessed document XML (with versions) entries from " + settings.getDataFolder());
@@ -580,11 +627,12 @@ public class DocumentImporter {
 
                 String num = matcher.group(1);
                 map.put(Integer.valueOf(num), new File(dir, name));
+                xmlCount.incrementAndGet();
                 return true;
             }
         });
 
-        return new ArrayList<Map<Integer, File>>(xmlFiles.values());
+        return Pair.newInstance(xmlCount.get(), (List<Map<Integer, File>>) new ArrayList<Map<Integer, File>>(xmlFiles.values()));
     }
 
     private List<Map<Integer, File>> getNextDocumentXmlFiles() {
@@ -639,6 +687,8 @@ public class DocumentImporter {
                 throw new ImportValidationException("Could not resolve document type");
             }
 
+            logService.setThreadLocalOverride(currentMeta.getModified(), currentMeta.getModifier(), getUserName(currentMeta.getModifier()));
+
             Map<QName, Serializable> props = mappedDoc.getPropertyValues();
 
             // 5. Apply custom property checks (by the specification)
@@ -671,6 +721,7 @@ public class DocumentImporter {
                     for (DocumentHistory history : currentMeta.getHistory()) {
                         addDocumentLog(doc.getNodeRef(), history.getDatetime(), history.getCreator(), history.getEvent());
                     }
+                    logService.setThreadLocalOverride(currentMeta.getModified(), currentMeta.getModifier(), getUserName(currentMeta.getModifier()));
                 }
             } else {
                 doc = documentDynamicService.getDocument(documentRef);
@@ -730,6 +781,11 @@ public class DocumentImporter {
 
     private void postProcessRestrictions(Map<QName, Serializable> props, Date created, NodeRef volumeRef) {
         String accessRestriction = (String) props.get(DocumentCommonModel.Props.ACCESS_RESTRICTION);
+
+        if ("Avalik, piiranguga".equalsIgnoreCase(StringUtils.strip(accessRestriction))
+                || "Avalik, väljastatakse teabenõude korras".equalsIgnoreCase(StringUtils.strip(accessRestriction))) {
+            props.put(DocumentDynamicModel.Props.PUBLISH_TO_ADR, PublishToAdr.REQUEST_FOR_INFORMATION.getValueName());
+        }
 
         // a.
         if (accessRestriction != null && accessRestriction.indexOf('§') >= 0) {
@@ -826,7 +882,7 @@ public class DocumentImporter {
 
         props.put(DocumentDynamicModel.Props.PUBLISH_TO_ADR, publishToAdr);
 
-        postProcessOwner(props, null);
+        postProcessOwner(props, meta);
 
         String regNumber = (String) props.get(DocumentCommonModel.Props.REG_NUMBER);
         String shortRegNumber = (String) props.get(DocumentCommonModel.Props.SHORT_REG_NUMBER);
@@ -926,6 +982,8 @@ public class DocumentImporter {
             versionsService.addVersionLockableAspect(currentFileRef);
             versionsService.setVersionLockableAspect(currentFileRef, false);
             versionsService.updateVersion(currentFileRef, file.getTitle(), false);
+            // Unlock the node again, since previous method locked it
+            versionsService.setVersionLockableAspect(currentFileRef, false);
 
             String fileName = StringUtils.defaultIfEmpty(file.getTitle(), file.getFilename());
             String repoFileName = generalService.getUniqueFileName(documentRef, FilenameUtil.makeSafeFilename(fileName));
@@ -1017,41 +1075,27 @@ public class DocumentImporter {
             nodeService.setProperty(logRef, VersionsModel.Props.VersionModified.FIRSTNAME, StringUtils.substringBeforeLast(userName, " "));
             nodeService.setProperty(logRef, VersionsModel.Props.VersionModified.LASTNAME, StringUtils.substringAfterLast(userName, " "));
         }
-
-        List<Map<String, Object>> rows = jdbcTemplate.queryForList("SELECT log_entry_id FROM delta_log WHERE object_id=? AND substr(log_entry_id, 1, 8)=?", documentRef.toString(),
-                LOG_DATE_FORMAT.format(new Date()));
-
-        if (!rows.isEmpty()) {
-            String prefix = LOG_DATE_FORMAT.format(modified);
-            int suffix = getValidLogEntryId(prefix);
-
-            for (Map<String, Object> row : rows) {
-                jdbcTemplate.update("UPDATE delta_log SET log_entry_id=?, created_date_time=?, creator_id=?, creator_name=?, computer_ip='127.0.0.1', computer_name='localhost' " +
-                        "WHERE log_entry_id=?", prefix + suffix++, modified, modifier, userName, row.get("log_entry_id"));
-            }
-        }
     }
 
     private void addDocumentLastLog(DocumentImportResult result) {
         if (result.getDocumentRef() != null) {
-            int i = addDocumentLog(result.getDocumentRef(), new Date(), "IMPORT", "Dokumendi importimine");
-            jdbcTemplate.queryForInt("SELECT setval('delta_log_seq', ?)", i);
+            addDocumentLog(result.getDocumentRef(), null, "IMPORT", "Dokumendi importimine");
         }
     }
 
-    private int addDocumentLog(NodeRef documentRef, Date created, String creatorId, String event) {
-        String creator = getUserName(creatorId);
-        String prefix = LOG_DATE_FORMAT.format(created);
-        int suffix = getValidLogEntryId(prefix);
+    private void addDocumentLog(NodeRef documentRef, Date created, String creatorId, String event) {
+        logService.setThreadLocalOverride(created, creatorId, getUserName(creatorId));
 
-        jdbcTemplate.update("INSERT INTO delta_log (log_entry_id,created_date_time,level,creator_id,creator_name,computer_ip,computer_name,object_id,object_name,description) "
-                + "VALUES (?,?,?,?,?,?,?,?,?,?)", prefix + suffix, created, LogLevel.DOCUMENT.toString(), creatorId, creator, "127.0.0.1", "localhost",
-                documentRef.toString(), LogObject.DOCUMENT.getObjectName(), event);
-        return suffix + 1;
-    }
-
-    private int getValidLogEntryId(String prefix) {
-        return jdbcTemplate.queryForInt("SELECT COALESCE(MAX(CAST(substr(log_entry_id, 9) AS int8)), 0) + 1 FROM delta_log WHERE substr(log_entry_id, 1, 8) = ?", prefix);
+        LogEntry logEntry = new LogEntry();
+        logEntry.setComputerIp("127.0.0.1");
+        logEntry.setComputerName("localhost");
+        logEntry.setLevel(LogObject.DOCUMENT.getLevel());
+        logEntry.setObjectName(LogObject.DOCUMENT.getObjectName());
+        logEntry.setCreatorId(creatorId);
+        logEntry.setCreatorName(getUserName(creatorId));
+        logEntry.setEventDescription(event);
+        logEntry.setObjectId(documentRef.toString());
+        logService.addLogEntry(logEntry);
     }
 
     private String getUserName(String userId) {

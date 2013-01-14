@@ -66,7 +66,7 @@ public class DocumentPropertySets {
         ignoredPropertiesWhenMakingCopy.addAll(ownerProperties);
         ignoredPropertiesWhenMakingCopy.addAll(contractDetailsV1);
         ignoredPropertiesWhenMakingCopy.addAll(privilegeUserGroupMapping);
-        ignoredPropertiesWhenMakingCopy.add(DocumentSpecificModel.Props.NOT_EDITABLE.toString());
+        ignoredPropertiesWhenMakingCopy.add(DocumentCommonModel.Props.NOT_EDITABLE.toString());
         ignoredPropertiesWhenMakingCopy.add(DocumentSpecificModel.Props.ENTRY_DATE.toString());
         ignoredPropertiesWhenMakingCopy.add(DocumentSpecificModel.Props.ENTRY_SAP_NUMBER.toString());
     }

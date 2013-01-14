@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.workflow.bootstrap;
 
+import static ee.webmedia.alfresco.utils.FilenameUtil.getFilenameFromDisplayname;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
@@ -18,12 +20,14 @@ import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
-import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
@@ -40,6 +44,7 @@ public class TaskAssociatedDataTableInsertBootstrap extends AbstractNodeUpdater 
 
     private WorkflowDbService workflowDbService;
     private WorkflowService workflowService;
+    private FileService fileService;
 
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
@@ -98,11 +103,21 @@ public class TaskAssociatedDataTableInsertBootstrap extends AbstractNodeUpdater 
         } else {
             results.add("not dueDateExtension task");
         }
-        List<File> files = BeanHelper.getFileService().getAllFilesExcludingDigidocSubitems(nodeRef);
+        List<File> files = fileService.getAllFilesExcludingDigidocSubitems(nodeRef);
         NodeRef workflowRef = nodeService.getPrimaryParent(nodeRef).getParentRef();
+        List<String> existingFilenames = fileService.getDocumentFileDisplayNames(workflowRef);
         for (File file : files) {
-            nodeService.moveNode(file.getNodeRef(), workflowRef, ContentModel.ASSOC_CONTAINS,
-                    QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, QName.createValidLocalName(file.getName())));
+            String fileName = file.getName();
+            String extension = FilenameUtils.getExtension(fileName);
+            String displayName = fileName + (StringUtils.isNotBlank(extension) ? "." + extension : "");
+            String uniqueFileName = getFilenameFromDisplayname(workflowRef, existingFilenames, displayName, generalService).getFirst();
+            NodeRef fileRef = file.getNodeRef();
+            if (!StringUtils.equals(fileName, uniqueFileName)) {
+                nodeService.setProperty(fileRef, ContentModel.PROP_NAME, uniqueFileName);
+            }
+            nodeService.moveNode(fileRef, workflowRef, ContentModel.ASSOC_CONTAINS,
+                    QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, QName.createValidLocalName(uniqueFileName)));
+            existingFilenames.add(uniqueFileName);
         }
         if (files.isEmpty()) {
             results.add("no files present");
@@ -133,6 +148,10 @@ public class TaskAssociatedDataTableInsertBootstrap extends AbstractNodeUpdater 
 
     public void setWorkflowService(WorkflowService workflowService) {
         this.workflowService = workflowService;
+    }
+
+    public void setFileService(FileService fileService) {
+        this.fileService = fileService;
     }
 
 }

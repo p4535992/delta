@@ -157,4 +157,7 @@ public interface IDialogBean extends Serializable
    public Object getCustomAttribute(String key);
 
    public void addCustomAttribute(String key, Object value);
+   
+   public boolean canRestore();
+   
 }

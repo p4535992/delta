@@ -35,7 +35,7 @@ import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
-import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.dvk.service.ReviewTaskException;
@@ -254,8 +254,8 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
 
     private void addDocumentMissingProperties(NodeRef newDocumentRef) {
         Map<QName, Serializable> notEditableProps = new HashMap<QName, Serializable>();
-        notEditableProps.put(DocumentSpecificModel.Props.NOT_EDITABLE, Boolean.TRUE);
-        nodeService.addAspect(newDocumentRef, DocumentSpecificModel.Aspects.NOT_EDITABLE, notEditableProps);
+        notEditableProps.put(DocumentCommonModel.Props.NOT_EDITABLE, Boolean.TRUE);
+        nodeService.addAspect(newDocumentRef, DocumentCommonModel.Aspects.NOT_EDITABLE, notEditableProps);
         Map<QName, Serializable> propsToAdd = new HashMap<QName, Serializable>();
         propsToAdd.putAll(documentService.getDocumentParents(newDocumentRef));
         nodeService.addProperties(newDocumentRef, propsToAdd);

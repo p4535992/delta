@@ -5,7 +5,6 @@ import static ee.webmedia.alfresco.log.PropDiffHelper.value;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.checkCompoundWorkflow;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.checkTask;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.checkWorkflow;
-import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.getExcludedNodeRefsOnFinishWorkflows;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isActiveResponsible;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isGeneratedByDelegation;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isInactiveResponsible;
@@ -69,7 +68,6 @@ import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
-import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.log.PropDiffHelper;
 import ee.webmedia.alfresco.log.model.LogEntry;
@@ -107,7 +105,6 @@ import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel.Types;
-import ee.webmedia.alfresco.workflow.service.Task.Action;
 import ee.webmedia.alfresco.workflow.service.event.BaseWorkflowEvent;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEvent;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListener;
@@ -935,7 +932,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     private boolean saveCompoundWorkflow(WorkflowEventQueue queue, CompoundWorkflow compoundWorkflow, QName assocType) {
         return saveCompoundWorkflow(queue, compoundWorkflow, assocType, new HashSet<NodeRef>());
     }
-     
+
     private boolean saveCompoundWorkflow(WorkflowEventQueue queue, CompoundWorkflow compoundWorkflow, QName assocType, Set<NodeRef> savedCompoundWorkflows) {
         if (assocType == null) {
             assocType = WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW;
@@ -1576,7 +1573,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     public boolean isRecievedExternalReviewTask(Task task) {
         return task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)
                 && ((isInternalTesting() && !Boolean.TRUE.equals(nodeService.getProperty(task.getParent().getParent().getParent(),
-                        DocumentSpecificModel.Props.NOT_EDITABLE)))
+                        DocumentCommonModel.Props.NOT_EDITABLE)))
                 || (!isInternalTesting() && !isResponsibleCurrenInstitution(task)));
     }
 
@@ -1877,7 +1874,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             }
         }
     }
-    
+
     private CompoundWorkflow finishCompoundWorkflow(WorkflowEventQueue queue, CompoundWorkflow compoundWorkflow, String taskOutcomeLabelId) {
         // allow all statuses when finishing on registering reply document
         if (checkCompoundWorkflow(compoundWorkflow, Status.IN_PROGRESS, Status.FINISHED) == Status.FINISHED) {
@@ -2254,11 +2251,12 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     @Override
-    public void setTaskOwner(NodeRef task, String ownerId, boolean retainPreviousOwnerId) {
-        if (!dictionaryService.isSubClass(workflowDbService.getTaskType(task), WorkflowCommonModel.Types.TASK)) {
-            throw new RuntimeException("Node is not a task: " + task);
+    public void setTaskOwner(NodeRef taskRef, String ownerId, boolean retainPreviousOwnerId) {
+        if (!dictionaryService.isSubClass(workflowDbService.getTaskType(taskRef), WorkflowCommonModel.Types.TASK)) {
+            throw new RuntimeException("Node is not a task: " + taskRef);
         }
-        String existingOwnerId = (String) nodeService.getProperty(task, WorkflowCommonModel.Props.OWNER_ID);
+        Task task = workflowDbService.getTask(taskRef, taskPrefixedQNames, null, false);
+        String existingOwnerId = task.getOwnerId();
         if (ownerId.equals(existingOwnerId)) {
             if (log.isDebugEnabled()) {
                 log.debug("Task owner is already set to " + ownerId + ", not overwriting properties");
@@ -2272,8 +2270,8 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         Map<QName, Serializable> personProps = userService.getUserProperties(ownerId);
         Map<QName, Serializable> props = new HashMap<QName, Serializable>();
 
-        logService.addLogEntry(LogEntry.create(LogObject.TASK, userService, task, "applog_task_assigned",
-                UserUtil.getPersonFullName1(personProps), MessageUtil.getTypeName(nodeService.getType(task))));
+        logService.addLogEntry(LogEntry.create(LogObject.TASK, userService, taskRef, "applog_task_assigned",
+                UserUtil.getPersonFullName1(personProps), MessageUtil.getTypeName(getNodeRefType(taskRef))));
 
         props.put(WorkflowCommonModel.Props.OWNER_ID, personProps.get(ContentModel.PROP_USERNAME));
         props.put(WorkflowCommonModel.Props.OWNER_NAME, UserUtil.getPersonFullName1(personProps));
@@ -2283,16 +2281,15 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         props.put(WorkflowCommonModel.Props.OWNER_JOB_TITLE, personProps.get(ContentModel.PROP_JOBTITLE));
         String previousOwnerId = (retainPreviousOwnerId) ? existingOwnerId : null;
         props.put(WorkflowCommonModel.Props.PREVIOUS_OWNER_ID, previousOwnerId);
-        nodeService.addProperties(task, props);
-        workflowDbService.updateTaskProperties(task, props);
+        workflowDbService.updateTaskProperties(taskRef, props);
     }
 
     @Override
-    public void setCompoundWorkflowOwner(NodeRef task, String ownerId, boolean retainPreviousOwnerId) {
-        if (!dictionaryService.isSubClass(nodeService.getType(task), WorkflowCommonModel.Types.COMPOUND_WORKFLOW)) {
-            throw new RuntimeException("Node is not a compoundWorkflow: " + task);
+    public void setCompoundWorkflowOwner(NodeRef compoundWorkflowRef, String ownerId, boolean retainPreviousOwnerId) {
+        if (!dictionaryService.isSubClass(nodeService.getType(compoundWorkflowRef), WorkflowCommonModel.Types.COMPOUND_WORKFLOW)) {
+            throw new RuntimeException("Node is not a compoundWorkflow: " + compoundWorkflowRef);
         }
-        String existingOwnerId = (String) nodeService.getProperty(task, WorkflowCommonModel.Props.OWNER_ID);
+        String existingOwnerId = (String) nodeService.getProperty(compoundWorkflowRef, WorkflowCommonModel.Props.OWNER_ID);
         if (ownerId.equals(existingOwnerId)) {
             if (log.isDebugEnabled()) {
                 log.debug("CW owner is already set to " + ownerId + ", not overwriting properties");
@@ -2300,7 +2297,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             return;
         }
         if (log.isDebugEnabled()) {
-            log.debug("Setting CW owner from " + existingOwnerId + " to " + ownerId + " - " + task);
+            log.debug("Setting CW owner from " + existingOwnerId + " to " + ownerId + " - " + compoundWorkflowRef);
         }
 
         Map<QName, Serializable> personProps = userService.getUserProperties(ownerId);
@@ -2312,7 +2309,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         props.put(WorkflowCommonModel.Props.OWNER_JOB_TITLE, personProps.get(ContentModel.PROP_JOBTITLE));
         String previousOwnerId = (retainPreviousOwnerId) ? existingOwnerId : null;
         props.put(WorkflowCommonModel.Props.PREVIOUS_OWNER_ID, previousOwnerId);
-        nodeService.addProperties(task, props);
+        nodeService.addProperties(compoundWorkflowRef, props);
     }
 
     @Override
@@ -2962,9 +2959,9 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     private boolean stepAndCheck(WorkflowEventQueue queue, CompoundWorkflow compoundWorkflow, Status... requiredStatuses) {
-        return stepAndCheck(queue, compoundWorkflow, new HashSet<NodeRef>(), requiredStatuses);   
+        return stepAndCheck(queue, compoundWorkflow, new HashSet<NodeRef>(), requiredStatuses);
     }
-    
+
     private boolean stepAndCheck(WorkflowEventQueue queue, CompoundWorkflow compoundWorkflow, Set<NodeRef> checkedNodeRefs, Status... requiredStatuses) {
         fireCreatedEvents(queue, compoundWorkflow);
         int before;
@@ -3226,7 +3223,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                         || props.containsKey(WorkflowCommonModel.Props.OWNER_EMAIL) || props.containsKey(WorkflowCommonModel.Props.PARALLEL_TASKS)
                         || props.containsKey(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME) || props.containsKey(WorkflowCommonModel.Props.OWNER_JOB_TITLE)) {
                     if (!(object instanceof CompoundWorkflow && !(object instanceof CompoundWorkflowDefinition))) {
-                        requireStatus(object, Status.NEW);
+                        requireValue(object, (String) object.getOriginalProperties().get(WorkflowCommonModel.Props.STATUS), WorkflowCommonModel.Props.STATUS, Status.NEW.getName());
                     } else {
                         CompoundWorkflow compoundWorkflow = (CompoundWorkflow) object;
                         if (compoundWorkflow.isDocumentWorkflow()) {

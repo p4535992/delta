@@ -35,20 +35,59 @@
          </list>
       </property>
    </bean>
-
-   <bean id="updateDocumentListCountersBootstrap" class="ee.webmedia.alfresco.doclist.bootstrap.UpdateDocumentListCountersBootstrap" parent="module.baseComponent" >
+   
+   <bean id="updateDocumentListCountersBootstrap" class="ee.webmedia.alfresco.doclist.bootstrap.UpdateDocumentListCountersBootstrap" parent="module.baseComponent" >  
+       <property name="moduleId" value="simdhs" />  
+       <property name="executeOnceOnly" value="true" />   
+       <property name="dependsOn">   
+          <list>   
+             <ref bean="functionsRootBootstrap" />  
+             <ref bean="archivalsStoresBootstrap" />
+             <ref bean="volumeTypeAndNamespaceUpdater" />
+             <ref bean="seriesUpdaterGuard" />
+          </list>  
+       </property>    
+       <property name="generalService" ref="GeneralService" />  
+       <property name="functionsService" ref="FunctionsService" />    
+       <property name="documentListService" ref="DocumentListService" />    
+    </bean>
+    
+   <!-- documentRegNumbersUpdater2 is (re)located here to ensure it is loaded as late as possible not to suspend other updaters that don't have dependencies on seriesUpdaterGuard -->
+   <bean id="documentRegNumbersUpdater2" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentRegNumbersUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
-      <property name="dependsOn">
+       <property name="dependsOn">
          <list>
-            <ref bean="functionsRootBootstrap" />
-            <ref bean="archivalsStoresBootstrap" />
+            <ref bean="documentUpdater9" />
+            <ref bean="volumeTypeAndNamespaceUpdater" />
+            <ref bean="seriesUpdaterGuard" />
          </list>
       </property>
-      <property name="generalService" ref="GeneralService" />
-      <property name="functionsService" ref="FunctionsService" />
-      <property name="transactionService" ref="TransactionService" />
-      <property name="documentListService" ref="DocumentListService" />
+      <property name="documentUpdater" ref="documentUpdater9" />
+   </bean>    
+    
+    <bean id="seriesUpdaterGuard" class="ee.webmedia.alfresco.series.bootstrap.SeriesUpdaterGuard" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+<!--       Dependencies are set to ensure that all major updaters have been run before this updater -->
+      <property name="dependsOn">
+         <list>
+            <ref bean="seriesUpdater2" />
+            <ref bean="workflow25To313DynamicDocTypeUpdater" />
+            <ref bean="convertToDynamicDocumentsUpdater" />
+            <ref bean="generatedFileFieldUpdater" />
+            <ref bean="volumeCaseFileEventPlanUpdater" />
+            <ref bean="taskTableInsertBootstrap3" />
+            <ref bean="fileEncodingUpdater" />
+            <ref bean="taskTableInsertBootstrap3" />
+            <ref bean="taskAssociatedDataTableInsertBootstrap1" />
+            <ref bean="taskAssociatedDataTableInsertBootstrap2" />
+            <ref bean="trashcanBootstrap" />
+            <ref bean="moveDocumentAndSeriesLogToAppLog2" />
+            <ref bean="documentInvalidAccessRestrictionUpdater" />
+         </list>
+      </property>
+      <property name="enabled" value="${updater.version25To313.enabled}" />
+      <property name="seriesUpdater" ref="seriesUpdater2" />
    </bean>
 
 </beans>

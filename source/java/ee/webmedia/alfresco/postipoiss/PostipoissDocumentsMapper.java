@@ -99,7 +99,15 @@ public class PostipoissDocumentsMapper {
             props.add(pm);
         }
 
+        public PropMapping getPropMappingTo(String to) {
+            return getPropMappingTo(to, false);
+        }
+
         public PropMapping requirePropMappingTo(String to) {
+            return getPropMappingTo(to, true);
+        }
+
+        private PropMapping getPropMappingTo(String to, boolean throwExceptionIfNotExists) {
             PropMapping result = null;
             for (PropMapping propMapping : props) {
                 if (to.equals(propMapping.to)) {
@@ -109,7 +117,7 @@ public class PostipoissDocumentsMapper {
                     result = propMapping;
                 }
             }
-            if (result == null) {
+            if (throwExceptionIfNotExists && result == null) {
                 throw new RuntimeException("No <prop> elements with to='" + to + "' found under <mapping from='" + from + "' to='" + this.to + "'>");
             }
             return result;

@@ -11,12 +11,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+import javax.sql.DataSource;
+
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.repo.domain.Transaction;
 import org.alfresco.repo.node.index.AbstractReindexComponent;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.util.ISO8601DateFormat;
 import org.alfresco.util.Pair;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 
 import ee.webmedia.alfresco.utils.ProgressTracker;
 
@@ -32,7 +36,9 @@ public class CustomReindexComponent extends AbstractReindexComponent {
     boolean enabled = true;
     private int maxRecordSetSize;
     private int maxTransactionsPerLuceneCommit;
+    private SimpleJdbcTemplate jdbcTemplate;
     private long lookBackMinutes = 1440; // 24 hours
+    private String customChangeTxnIds = "";
 
     @Override
     protected boolean requireTransaction() {
@@ -41,21 +47,42 @@ public class CustomReindexComponent extends AbstractReindexComponent {
 
     @Override
     protected void reindexImpl() {
-        List<Transaction> txns = getTransactions();
+        List<Long> txns;
+        boolean force = false;
+        if (StringUtils.isNotBlank(customChangeTxnIds)) {
+            force = true;
+            txns = getTransactions(customChangeTxnIds);
+        } else {
+            txns = getTransactions();
+        }
         if (txns.isEmpty()) {
             return;
         }
 
-        searchHolesAndIndex(txns);
+        searchHolesAndIndex(txns, force);
     }
 
-    private List<Transaction> getTransactions() {
+    private List<Long> getTransactions(final String changeTxnIds) {
+        return transactionService.getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<List<Long>>() {
+            @Override
+            public List<Long> execute() throws Throwable {
+                final List<Long> allTxns = new ArrayList<Long>();
+                for (String changeTxnId : StringUtils.split(changeTxnIds, null)) {
+                    long txnId = jdbcTemplate.queryForLong("SELECT id FROM alf_transaction WHERE change_txn_id = ?", changeTxnId);
+                    allTxns.add(txnId);
+                }
+                return allTxns;
+            }
+        }, true);
+    }
+
+    private List<Long> getTransactions() {
         final long endTimeMs = System.currentTimeMillis();
         final AtomicLong startTimeMs = new AtomicLong(endTimeMs - (lookBackMinutes * 60000));
         LOG.info("Finding transactions from " + ISO8601DateFormat.format(new Date(startTimeMs.get())) + " to " + ISO8601DateFormat.format(new Date(endTimeMs)) + "...");
         final Pair<String, String> firstAndLastTxnInfo = new Pair<String, String>(null, null);
         final List<Long> excludeTxnIds = new ArrayList<Long>();
-        final List<Transaction> allTxns = new ArrayList<Transaction>();
+        final List<Long> allTxns = new ArrayList<Long>();
         boolean hasResults;
         do {
             hasResults = transactionService.getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Boolean>() {
@@ -78,7 +105,9 @@ public class CustomReindexComponent extends AbstractReindexComponent {
                         LOG.info("Last : " + getTransactionInfo(txns.get(txns.size() - 1)));
                     }
 
-                    allTxns.addAll(txns);
+                    for (Long txnId : allTxns) {
+                        allTxns.add(txnId);
+                    }
 
                     startTimeMs.set(txns.get(txns.size() - 1).getCommitTimeMs());
                     excludeTxnIds.clear();
@@ -89,8 +118,10 @@ public class CustomReindexComponent extends AbstractReindexComponent {
                         }
                         excludeTxnIds.add(txn.getId());
                     }
-                    firstAndLastTxnInfo.setFirst(getTransactionInfo(allTxns.get(0)));
-                    firstAndLastTxnInfo.setSecond(getTransactionInfo(allTxns.get(allTxns.size() - 1)));
+                    if (firstAndLastTxnInfo.getFirst() == null) {
+                        firstAndLastTxnInfo.setFirst(getTransactionInfo(txns.get(0)));
+                    }
+                    firstAndLastTxnInfo.setSecond(getTransactionInfo(txns.get(allTxns.size() - 1)));
                     return true;
                 }
             }, true);
@@ -109,7 +140,7 @@ public class CustomReindexComponent extends AbstractReindexComponent {
         return ISO8601DateFormat.format(new Date(txn.getCommitTimeMs())) + " " + txn.getId() + " " + txn.getVersion() + " " + txn.getServer();
     }
 
-    private void searchHolesAndIndex(List<Transaction> txns) {
+    private void searchHolesAndIndex(List<Long> txns, final boolean force) {
         LOG.info("Searching for holes and starting background indexing...");
         final AtomicReference<Transaction> sliceStartTxn = new AtomicReference<Transaction>(null);
         final AtomicReference<Transaction> lastTxn = new AtomicReference<Transaction>(null);
@@ -121,13 +152,13 @@ public class CustomReindexComponent extends AbstractReindexComponent {
         final AtomicInteger txnsToReindex = new AtomicInteger(0);
         final AtomicInteger holes = new AtomicInteger(0);
         final List<Long> txnIdBuffer = new ArrayList<Long>(maxTransactionsPerLuceneCommit);
-        final Iterator<Transaction> txnIterator = txns.iterator();
+        final Iterator<Long> txnIterator = txns.iterator();
         while (txnIterator.hasNext()) {
             transactionService.getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
                 @Override
                 public Void execute() throws Throwable {
-                    Transaction txn = txnIterator.next();
-                    boolean commited = isTxnPresentInIndex(txn) == InIndex.YES;
+                    Transaction txn = nodeDaoService.getTxnById(txnIterator.next());
+                    boolean commited = force ? false : isTxnPresentInIndex(txn) == InIndex.YES;
                     if (sliceStartTxn.get() == null || sliceCommited.get() == null) {
                         sliceStartTxn.set(txn);
                         sliceCommited.set(commited);
@@ -234,6 +265,18 @@ public class CustomReindexComponent extends AbstractReindexComponent {
 
     public long getLookBackMinutes() {
         return lookBackMinutes;
+    }
+
+    public void setCustomChangeTxnIds(String customChangeTxnIds) {
+        this.customChangeTxnIds = customChangeTxnIds;
+    }
+
+    public String getCustomChangeTxnIds() {
+        return customChangeTxnIds;
+    }
+
+    public void setDataSource(DataSource dataSource) {
+        jdbcTemplate = new SimpleJdbcTemplate(dataSource);
     }
 
 }

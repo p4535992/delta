@@ -20,6 +20,7 @@ import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGener
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.PropsConvertedMap;
+import ee.webmedia.alfresco.eventplan.model.EventPlan;
 import ee.webmedia.alfresco.eventplan.model.EventPlanVolume;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.series.model.Series;
@@ -96,6 +97,7 @@ public class Volume extends EventPlanVolume implements VolumeOrCaseFile {
         return validTo;
     }
 
+    @Override
     public void setValidTo(Date validTo) {
         this.validTo = validTo;
     }
@@ -239,6 +241,10 @@ public class Volume extends EventPlanVolume implements VolumeOrCaseFile {
         return null;
     }
 
+    public String getNextEventLabel() {
+        return EventPlan.getNextEventLabel(getNextEvent());
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public String getHierarchicalKeywords() {
@@ -284,6 +290,11 @@ public class Volume extends EventPlanVolume implements VolumeOrCaseFile {
     }
 
     @SuppressWarnings("unchecked")
+    @Override
+    public Map<String, Object> getProperties() {
+        return node != null ? node.getProperties() : null;
+    }
+
     @Override
     public int compareTo(VolumeOrCaseFile other) {
         final Comparator<String> stringComparator = new NullComparator(new Comparator<String>() {

@@ -62,6 +62,16 @@
       <property name="moduleId" value="simdhs" />
    </bean>
    
+   <bean id="template25To313DynamicDocTypeUpdater" class="ee.webmedia.alfresco.template.bootstrap.Template25To313DynamicDocTypeUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="enabled" value="${updater.version25To313.enabled}" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+   </bean>    
+   
    <!-- Import the OpenOfficeService from the third party subsystem -->
    <bean id="openOfficeService" class="org.alfresco.repo.management.subsystems.SubsystemProxyFactory">
       <property name="sourceApplicationContextFactory">

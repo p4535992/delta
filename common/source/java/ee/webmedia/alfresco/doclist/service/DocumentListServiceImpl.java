@@ -225,14 +225,14 @@ public class DocumentListServiceImpl implements DocumentListService {
                     if (volume.isContainsCases()) {
                         for (Case aCase : caseService.getAllCasesByVolume(volumeRef)) {
                             final NodeRef caseRef = aCase.getNode().getNodeRef();
-                            final List<NodeRef> allDocumentsByCase = documentService.getAllDocumentRefsByParentRef(caseRef);
+                            final List<NodeRef> allDocumentsByCase = documentService.getAllDocumentRefsByParentRefWithoutRestrictedAccess(caseRef);
                             final int documentsCountByCase = allDocumentsByCase.size();
                             nodeService.setProperty(caseRef, CaseModel.Props.CONTAINING_DOCS_COUNT, documentsCountByCase);
                             docCountInVolume += documentsCountByCase;
                         }
                     }
                     // Also include documents
-                    final List<NodeRef> allDocumentsByVolume = documentService.getAllDocumentRefsByParentRef(volumeRef);
+                    final List<NodeRef> allDocumentsByVolume = documentService.getAllDocumentRefsByParentRefWithoutRestrictedAccess(volumeRef);
                     final int documentsCountByVolume = allDocumentsByVolume.size();
                     docCountInVolume += documentsCountByVolume;
 
@@ -263,11 +263,11 @@ public class DocumentListServiceImpl implements DocumentListService {
                     Boolean containsCases = (Boolean) nodeService.getProperty(volumeRef, VolumeModel.Props.CONTAINS_CASES);
                     if (containsCases != null && containsCases) {
                         for (NodeRef caseRef : caseService.getCaseRefsByVolume(volumeRef)) {
-                            docRefs.addAll(documentService.getAllDocumentRefsByParentRef(caseRef));
+                            docRefs.addAll(documentService.getAllDocumentRefsByParentRefWithoutRestrictedAccess(caseRef));
                             caseRefs.add(caseRef);
                         }
                     }
-                    docRefs.addAll(documentService.getAllDocumentRefsByParentRef(volumeRef));
+                    docRefs.addAll(documentService.getAllDocumentRefsByParentRefWithoutRestrictedAccess(volumeRef));
                     volumeRefs.add(volumeRef);
                 }
                 seriesRefs.add(seriesRef);

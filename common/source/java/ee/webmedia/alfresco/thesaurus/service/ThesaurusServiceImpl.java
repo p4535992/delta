@@ -1,6 +1,6 @@
 package ee.webmedia.alfresco.thesaurus.service;
 
-import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyExactQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateStringExactQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsOr;
@@ -58,7 +58,7 @@ public class ThesaurusServiceImpl implements ThesaurusService {
                                 generateTypeQuery(DocumentAdminModel.Types.FIELD)
                                 , generateTypeQuery(DocumentAdminModel.Types.FIELD_DEFINITION)
                         )
-                        , generatePropertyExactQuery(DocumentAdminModel.Props.THESAURUS, thesaurusName, false))
+                        , generateStringExactQuery(thesaurusName, DocumentAdminModel.Props.THESAURUS))
                 );
         return used;
     }

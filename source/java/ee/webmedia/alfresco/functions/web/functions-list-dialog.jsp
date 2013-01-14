@@ -82,9 +82,6 @@
       prependOnclick($jQ(".docList_export"), function(){
          return confirm('<%=(Application.getBundle(FacesContext.getCurrentInstance())).getString("docList_export_confirmProceed")%>');
       });
-      $jQ(".docList_createNewYearBasedVolumes").click(function(){
-         alert('<%=(Application.getBundle(FacesContext.getCurrentInstance())).getString("docList_createNewYearBasedVolumes_confirmProceed")%>');
-      });
       prependOnclick($jQ(".docList_deleteAllDocuments"), function(){
          return confirm('<%=(Application.getBundle(FacesContext.getCurrentInstance())).getString("docList_deleteAllDocuments_confirmProceed")%>');
       });

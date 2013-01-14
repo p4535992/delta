@@ -3,7 +3,7 @@ package ee.webmedia.alfresco.document.bootstrap;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
 
 import java.io.Serializable;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -16,6 +16,7 @@ import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.NamespaceService;
@@ -46,8 +47,11 @@ public class FileMimetypeUpdater extends AbstractNodeUpdater {
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
         String query = generateTypeQuery(ContentModel.TYPE_CONTENT);
-        return Arrays.asList(searchService.query(generalService.getStore(), SearchService.LANGUAGE_LUCENE, query),
-                searchService.query(generalService.getArchivalsStoreRef(), SearchService.LANGUAGE_LUCENE, query));
+        List<ResultSet> resultSets = new ArrayList<ResultSet>();
+        for (StoreRef storeRef : generalService.getAllStoreRefsWithTrashCan()) {
+            resultSets.add(searchService.query(storeRef, SearchService.LANGUAGE_LUCENE, query));
+        }
+        return resultSets;
     }
 
     @Override

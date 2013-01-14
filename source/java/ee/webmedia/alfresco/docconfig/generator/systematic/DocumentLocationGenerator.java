@@ -593,7 +593,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 volumes.add(new SelectItem("", ""));
                 List<String> volTypes = currentSeries.getVolType();
                 boolean canAddNewCaseFile = volTypes != null && volTypes.contains(VolumeType.CASE_FILE.name());
-                if (canAddNewCaseFile) {
+                if (canAddNewCaseFile && !isSearchFilter) {
                     volumes.add(new SelectItem(newCaseFileRef, MessageUtil.getMessage("docdyn_start_new_caseFile")));
                 }
                 boolean volumeFound = false;
@@ -1081,9 +1081,9 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 && (parents.getCaseNode() == null ? caseRef == null
                         : (caseRef == null ? false
                                 : parents.getCaseNode().getNodeRef().equals(caseRef)
-                        )
-                )
-                );
+                                )
+                                )
+                        );
     }
 
     // START: setters

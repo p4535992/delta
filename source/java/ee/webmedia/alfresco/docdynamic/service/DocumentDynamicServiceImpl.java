@@ -41,7 +41,6 @@ import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.dictionary.TypeDefinition;
 import org.alfresco.service.cmr.model.FileFolderService;
-import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentReader;
@@ -87,6 +86,7 @@ import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicFieldGroupNames;
 import ee.webmedia.alfresco.docconfig.generator.SaveListener;
+import ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGenerator;
 import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
 import ee.webmedia.alfresco.docconfig.service.ContractPartyField;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfig;
@@ -200,7 +200,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
     @Override
     public Pair<DocumentDynamic, DocumentTypeVersion> createNewDocument(String documentTypeId, NodeRef parent) {
-        DocumentTypeVersion docVer = getLatestDocTypeVer(documentTypeId);
+        DocumentTypeVersion docVer = documentAdminService.getLatestDocTypeVer(documentTypeId);
         return createNewDocument(docVer, parent, true);
     }
 
@@ -262,7 +262,15 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     public void createChildNodesHierarchyAndSetDefaultPropertyValues(Node parentNode, QName[] hierarchy, DocumentTypeVersion docVer) {
         TreeNode<QName> root = documentConfigService.getChildAssocTypeQNameTree(parentNode);
         Assert.isNull(root.getData());
+        TreeNode<QName> current = getChildNodeQNameHierarchy(hierarchy, root);
+        List<Pair<QName, WmNode>> childNodes = createChildNodesHierarchy(parentNode, Collections.singletonList(current), null);
+        Assert.isTrue(childNodes.size() == 1);
 
+        documentConfigService.setDefaultPropertyValues(childNodes.get(0).getSecond(), hierarchy, false, false, docVer);
+    }
+
+    @Override
+    public TreeNode<QName> getChildNodeQNameHierarchy(QName[] hierarchy, TreeNode<QName> root) {
         int i = 0;
         TreeNode<QName> current = root;
         while (i < hierarchy.length) {
@@ -279,11 +287,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             i++;
         }
         Assert.notNull(current.getData());
-
-        List<Pair<QName, WmNode>> childNodes = createChildNodesHierarchy(parentNode, Collections.singletonList(current), null);
-        Assert.isTrue(childNodes.size() == 1);
-
-        documentConfigService.setDefaultPropertyValues(childNodes.get(0).getSecond(), hierarchy, false, false, docVer);
+        return current;
     }
 
     @Override
@@ -387,12 +391,6 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         return childNodes;
     }
 
-    private DocumentTypeVersion getLatestDocTypeVer(String documentTypeId) {
-        DocumentType documentType = documentAdminService.getDocumentType(documentTypeId, DocumentAdminService.DOC_TYPE_WITH_OUT_GRAND_CHILDREN_EXEPT_LATEST_DOCTYPE_VER);
-        DocumentTypeVersion docVer = documentType.getLatestDocumentTypeVersion();
-        return docVer;
-    }
-
     @Override
     public Pair<DocumentDynamic, DocumentTypeVersion> createNewDocumentInDrafts(String documentTypeId) {
         NodeRef drafts = documentService.getDrafts();
@@ -450,7 +448,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         WmNode docNode = document.getNode();
         WmNode oldNode = new WmNode(docNode.getNodeRef(), docNode.getType(), docNode.getAspects(), RepoUtil.toQNameProperties(docNode.getProperties(), true),
                 docNode.getAddedAssociations());
-        DocumentTypeVersion docVer = getLatestDocTypeVer(newTypeId);
+        DocumentTypeVersion docVer = documentAdminService.getLatestDocTypeVer(newTypeId);
         Map<QName, Serializable> typeProps = new HashMap<QName, Serializable>();
         setTypeProps(getDocTypeIdAndVersionNr(docVer), typeProps);
 
@@ -500,6 +498,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
         // set default values in memory - does not overwrite existing values
         documentConfigService.setDefaultPropertyValues(document.getNode(), null, false, true, docVer);
+        ((AccessRestrictionGenerator) beanFactory.getBean(AccessRestrictionGenerator.BEAN_NAME, SaveListener.class)).clearHiddenValues(document.getNode());
     }
 
     private void removeChildNodes(DocumentDynamic document, TreeNode<QName> childAssocTypeQNamesRoot) {

@@ -47,16 +47,6 @@
       </property>
    </bean>
 
-   <bean id="repairPropertyTypeMismatchUpdater4" class="ee.webmedia.alfresco.document.bootstrap.RepairPropertyTypeMismatchUpdater" parent="abstractNodeUpdater">
-      <property name="moduleId" value="simdhs" />
-      <property name="documentConfigService" ref="DocumentConfigService" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="documentUpdater9" />
-         </list>
-      </property>      
-   </bean>
-
    <bean id="systematicClearBootstrap" class="ee.webmedia.alfresco.docconfig.bootstrap.SystematicClearBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
@@ -87,10 +77,10 @@
       <property name="dependsOn">
          <list>
             <ref bean="senderEmailRemovableFromSystematicGroupFixBootstrap3" />
-            <!-- 
-            this updater was added after systematicFieldDefinitionsBootstrap7 but if systematicFieldDefinitionsBootstrap1 has not been started
-            then updater shouldn't need to do anything - expecting that bootstrap files are updated as well
-             -->
+
+<!--             this updater was added after systematicFieldDefinitionsBootstrap7 but if systematicFieldDefinitionsBootstrap1 has not been started -->
+<!--             then updater shouldn't need to do anything - expecting that bootstrap files are updated as well -->
+            
             <ref bean="fieldDefPropsUpdater2" />
          </list>
       </property>
@@ -372,10 +362,10 @@
       <property name="dependsOn">
          <list>
             <ref bean="systematicClearBootstrap" />
-            <!-- 
-            this updater was added after systematicFieldGroupDefinitions6 but if systematicFieldGroupDefinitions6.xml has not been started
-            then updater shouldn't need to do anything - expecting that bootstrap files are updated as well
-             -->
+             
+<!--             this updater was added after systematicFieldGroupDefinitions6 but if systematicFieldGroupDefinitions6.xml has not been started -->
+<!--             then updater shouldn't need to do anything - expecting that bootstrap files are updated as well -->
+            
             <ref bean="fieldGroupDefPropsUpdater2" />
          </list>
       </property>
@@ -588,7 +578,27 @@
             </props>
          </list>
       </property>
-   </bean>   
+   </bean>  
+   
+   <bean id="systematicFieldGroupDefinitionsBootstrap12" class="ee.webmedia.alfresco.common.bootstrap.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="systematicFieldGroupDefinitionsBootstrap11" />
+         </list>
+      </property>
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/docadmin:fieldGroupDefinitions</prop>
+               <prop key="location">ee/webmedia/alfresco/docconfig/bootstrap/systematicFieldGroupDefinitions12.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>  
 
    <bean id="systematicDocumentTypesBootstrap" class="ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentTypesBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
@@ -596,7 +606,7 @@
       <property name="importer" ref="spacesBootstrap" />
       <property name="dependsOn">
          <list>
-            <!-- NB! Must reference all field and group bootstraps here because they are used for additional import -->
+<!--             NB! Must reference all field and group bootstraps here because they are used for additional import -->
             <ref bean="systematicFieldDefinitionsBootstrap1" />
             <ref bean="systematicFieldDefinitionsBootstrap2" />
             <ref bean="systematicFieldDefinitionsBootstrap3" />
@@ -622,6 +632,7 @@
             <ref bean="systematicFieldGroupDefinitionsBootstrap9" />
             <ref bean="systematicFieldGroupDefinitionsBootstrap10" />
             <ref bean="systematicFieldGroupDefinitionsBootstrap11" />
+            <ref bean="systematicFieldGroupDefinitionsBootstrap12" />
          </list>
       </property>
       <property name="generalService" ref="GeneralService" />
@@ -741,6 +752,16 @@
             <ref bean="caseFileStatusFieldFixBootstrap" />
          </list>
       </property>
+   </bean>
+   
+   <bean id="documentRegNrFieldUpdater" class="ee.webmedia.alfresco.docconfig.bootstrap.DocumentRegNrFieldUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+   </bean>
+   
+   <bean id="documentSenderRegNrFieldGroupUpdater" class="ee.webmedia.alfresco.docconfig.bootstrap.DocumentSenderRegNrFieldGroupUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
    </bean>
 
    <!-- fieldtype generators -->

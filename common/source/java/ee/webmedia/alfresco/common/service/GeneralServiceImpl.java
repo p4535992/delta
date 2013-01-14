@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.common.service;
 
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomConstants.VALUE_INDEX_IN_MULTIVALUED_PROPERTY;
 
 import java.io.BufferedInputStream;
@@ -94,9 +93,8 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.AdjustableSemaphore;
 import ee.webmedia.alfresco.utils.CalendarUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
-import ee.webmedia.alfresco.utils.SearchUtil;
-import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.utils.TextUtil;
+import ee.webmedia.alfresco.volume.model.VolumeModel;
 
 /**
  * @author Ats Uiboupin
@@ -537,37 +535,6 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
             }
         }
         return ref;
-    }
-
-    @Override
-    public List<NodeRef> searchNodes(String input, QName type, Set<QName> props) {
-        return searchNodes(input, type, props, 100, null);
-    }
-
-    @Override
-    public List<NodeRef> searchNodes(String input, QName type, Set<QName> props, int limit) {
-        return searchNodes(input, type, props, 100, null);
-    }
-
-    @Override
-    public List<NodeRef> searchNodes(String input, QName type, Set<QName> props, int limit, String queryAndAddition) {
-        limit = limit < 0 ? 100 : limit;
-        if (input == null) {
-            return null;
-        }
-        String parsedInput = SearchUtil.replace(input, " ").trim();
-        boolean queryAndIsBlank = StringUtils.isBlank(queryAndAddition);
-        if (parsedInput.length() < 1 && queryAndIsBlank) {
-            return null;
-        }
-
-        String query = SearchUtil.generateQuery(parsedInput, type, props);
-        if (!queryAndIsBlank) {
-            query = SearchUtil.joinQueryPartsAnd(query, queryAndAddition);
-        }
-        log.debug("Query: " + query);
-
-        return getDocumentSearchService().searchNodes(query, limit, "searchNodesByTypeAndProps");
     }
 
     @Override
@@ -1034,6 +1001,21 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
             sb.append(TextUtil.joinNonBlankStrings(explanation, "\n"));
             traceLog.trace(sb.toString());
         }
+    }
+
+    @Override
+    public NodeRef deleteBootstrapNodeRef(String moduleName, String bootstrapName) {
+        String bootstrap = getBootstrapXPath(moduleName, bootstrapName);
+        StoreRef bootstrapStore = new StoreRef("system://system");
+        NodeRef bootstrapRef = getNodeRef(bootstrap, bootstrapStore);
+        if (bootstrapRef != null) {
+            nodeService.deleteNode(bootstrapRef);
+        }
+        return bootstrapRef;
+    }
+
+    private String getBootstrapXPath(String moduleName, String bootstrapName) {
+        return "/sys:system-registry/module:modules/module:" + moduleName + "/module:components/module:" + bootstrapName;
     }
 
     // START: getters / setters

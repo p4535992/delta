@@ -97,6 +97,11 @@ public class NodeServiceTest extends BaseAlfrescoSpringTest {
             listOfLists.add(value);
         }
         testValues.add(listOfLists);
+        List<List<String>> listOfListsWithSingleValue = new ArrayList<List<String>>();
+        List<String> listWithNotNullElement = new ArrayList<String>();
+        listWithNotNullElement.add("testValue");
+        listOfListsWithSingleValue.add(listWithNotNullElement);
+        testValues.add((Serializable) listOfListsWithSingleValue);
 
         return testValues;
     }

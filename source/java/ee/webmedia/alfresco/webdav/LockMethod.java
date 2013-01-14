@@ -28,6 +28,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.faces.context.FacesContext;
 import javax.servlet.http.HttpServletResponse;
 
 import org.alfresco.model.ContentModel;
@@ -46,7 +47,7 @@ import org.dom4j.io.XMLWriter;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.file.service.FileService;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.utils.UserUtil;
 
 /**
  * Implements the WebDAV LOCK method
@@ -161,7 +162,7 @@ public class LockMethod extends WebDAVMethod {
     protected void executeImpl() throws WebDAVServerException, Exception {
         String path = getPath();
         // Get the active user
-        String userName = getDAVHelper().getAuthenticationService().getCurrentUserName();
+        String userName = UserUtil.getUsernameAndSession(getDAVHelper().getAuthenticationService().getCurrentUserName(), FacesContext.getCurrentInstance());
 
         if (logger.isDebugEnabled()) {
             logger.debug("Locking node: \n" +

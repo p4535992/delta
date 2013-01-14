@@ -96,4 +96,16 @@
       </property>
    </bean>
 
+   <!-- CL 210910 -->
+   <bean id="versionUnlockUpdater" class="ee.webmedia.alfresco.versions.bootstrap.VersionUnlockUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="false" /><!-- Executed from node-browser -->
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+      <property name="versionsService" ref="VersionsService" />
+   </bean>
 </beans>

@@ -278,7 +278,7 @@ public class ImportUtil {
     }
 
     public static CsvReader createDataReader(File logFile) throws FileNotFoundException {
-        CsvReader reader = new CsvReader(new BufferedInputStream(new FileInputStream(logFile)), ';', CHARSET_ISO);
+        CsvReader reader = new CsvReader(new BufferedInputStream(new FileInputStream(logFile)), ';', CHARSET_UTF8);
         reader.setTrimWhitespace(true);
         reader.setSkipEmptyRecords(true);
         return reader;

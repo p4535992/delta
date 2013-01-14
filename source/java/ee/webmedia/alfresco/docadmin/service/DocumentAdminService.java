@@ -98,6 +98,8 @@ public interface DocumentAdminService {
 
     <D extends DynamicType> void importDynamicTypes(File xmlFile, Class<D> dynTypeClass);
 
+    <D extends DynamicType> void importDynamicTypes(File xmlFile, Class<D> dynTypeClass, boolean cleanupInBackground);
+
     <F extends Field> F saveOrUpdateField(F originalFieldDef);
 
     List<FieldDefinition> saveOrUpdateFieldDefinitions(Collection<FieldDefinition> fieldDefinitions);
@@ -254,5 +256,11 @@ public interface DocumentAdminService {
     List<CaseFileType> getAllCaseFileTypes(DynTypeLoadEffort effort);
 
     DocumentType getUsedDocumentType(String documentTypeId);
+
+    Map<String, String> getCaseFileTypeNames(Boolean used);
+
+    DocumentTypeVersion getLatestDocTypeVer(String documentTypeId);
+
+    Map<String, DocumentTypeVersion> getLatestDocTypeVersions();
 
 }

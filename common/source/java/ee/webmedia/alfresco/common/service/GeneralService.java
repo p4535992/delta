@@ -107,28 +107,6 @@ public interface GeneralService {
     ChildAssociationRef getLastChildAssocRef(String nodeRefXPath);
 
     /**
-     * Search for nodes by property values. Search results are limited by default limit.
-     * 
-     * @see #searchNodes(String, QName, Set, int)
-     */
-    List<NodeRef> searchNodes(String input, QName type, Set<QName> props);
-
-    /**
-     * Search for nodes by property values. All special characters are ignored in input string. If input string is too short, then search is not
-     * performed, and {@code null} is returned to distinguish this condition from empty result. Input string is tokenized by space and search query is
-     * constructed so that all tokens must be present in any node property (AND search).
-     * 
-     * @param input search string
-     * @param type node type, may be {@code null}
-     * @param props node properties that are searched
-     * @param limit limit the total number of search results returned after pruning by permissions
-     * @return search results or {@code null} if search was not performed
-     */
-    List<NodeRef> searchNodes(String input, QName type, Set<QName> props, int limit);
-
-    List<NodeRef> searchNodes(String input, QName type, Set<QName> props, int limit, String queryAndAddition);
-
-    /**
      * Sets nodeProps to given nodeRef excluding system and contentModel properties
      * 
      * @param nodeRef
@@ -336,5 +314,7 @@ public interface GeneralService {
     boolean hasAdditionalArchivalStores();
 
     void explainQuery(String sqlQuery, Log log, Object... args);
+
+    NodeRef deleteBootstrapNodeRef(String moduleName, String bootstrapName);
 
 }

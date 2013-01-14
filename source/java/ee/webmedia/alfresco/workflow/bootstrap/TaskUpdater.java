@@ -30,7 +30,7 @@ public class TaskUpdater extends AbstractNodeUpdater {
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
         String query = SearchUtil.generateTypeQuery(WorkflowCommonModel.Types.TASK);
         List<ResultSet> result = new ArrayList<ResultSet>(6);
-        for (StoreRef storeRef : generalService.getAllWithArchivalsStoreRefs()) {
+        for (StoreRef storeRef : generalService.getAllStoreRefsWithTrashCan()) {
             result.add(searchService.query(storeRef, SearchService.LANGUAGE_LUCENE, query));
         }
         return result;

@@ -229,6 +229,12 @@ public abstract class DocumentMetadata {
 
             if (fileElem != null) {
                 File file = new File(dirFiles, fileElem.attributeValue("guid_name"));
+                if (!file.exists()) {
+                    file = new File(dirFiles, fileElem.attributeValue("guid_name").toLowerCase());
+                    if (!file.exists()) {
+                        file = new File(dirFiles, fileElem.attributeValue("guid_name").toUpperCase());
+                    }
+                }
                 files.add(new ImportFile(fileElem.attributeValue("filename"), file, created, creator, modified, modifier));
             }
         }

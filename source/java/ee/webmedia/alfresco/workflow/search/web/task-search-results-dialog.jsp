@@ -134,7 +134,7 @@
       
       <a:column id="col10" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
-            <a:sortLink id="col10-header" label="#{msg.task_search_result_taskType}" value="taskType" styleClass="header" />
+            <a:sortLink id="col10-header" label="#{msg.task_search_result_taskType}" value="taskTypeText" styleClass="header" />
          </f:facet>
          <a:actionLink id="col10-txt" value="#{r.taskTypeText}" action="#{DocumentDialog.action}" tooltip="#{r.taskTypeText}" showLink="false" actionListener="#{DocumentDialog.open}" styleClass="no-underline" rendered="#{!r.linkedReviewTask && r.compoundWorkflow.documentWorkflow}" >
             <f:param name="nodeRef" value="#{r.document.nodeRef}" />

@@ -60,7 +60,7 @@
    </bean>
 
    <bean id="alterAltAuthorityTable" class="ee.webmedia.alfresco.privilege.bootstrap.AlterAltAuthorityTable" parent="module.baseComponent">
-      <property name="moduleId" value="common" />
+      <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
       <property name="dataSource" ref="dataSource" />
    </bean>   

@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.faces.event.ActionEvent;
@@ -39,7 +40,7 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
 
     private List<Pair<String, Object[]>> reviewTaskDvkInfoMessages;
 
-    protected CompoundWorkflow(WmNode node, NodeRef parent) {
+    public CompoundWorkflow(WmNode node, NodeRef parent) {
         super(node);
         Assert.notNull(parent);
         this.parent = parent;
@@ -101,7 +102,7 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
         removedWorkflows.add(workflows.remove(index));
     }
 
-    protected void addWorkflow(Workflow workflow) {
+    public void addWorkflow(Workflow workflow) {
         workflows.add(workflow);
     }
 
@@ -257,6 +258,17 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
         if (documentsToSign == null) {
             documentsToSign = new ArrayList<NodeRef>();
             setPropList(WorkflowCommonModel.Props.DOCUMENTS_TO_SIGN, documentsToSign);
+        } else {
+            // If compound workflow is imported, it may contain null value for documentsToSign property,
+            // in contrast to [] (empty list) value that is assigned when new compound workflow is saved in Delta.
+            // As general behavior, null values in multivalued properties are converted to [null] (list containing one null element)
+            // (see HibernateNodeServiceImpl.convertToPublicProperties, comment "There is custom change to Alfresco default implementation...").
+            // But here we assume that no null values are inserted (and should not be inserted) as actual values for the property, so we ignore null values
+            for (Iterator<NodeRef> it = documentsToSign.iterator(); it.hasNext();) {
+                if (it.next() == null) {
+                    it.remove();
+                }
+            }
         }
         return documentsToSign;
     }

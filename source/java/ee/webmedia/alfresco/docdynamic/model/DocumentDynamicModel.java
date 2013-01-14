@@ -35,8 +35,6 @@ public interface DocumentDynamicModel {
         QName SENDER_POSTAL_CITY = QName.createQName(URI, "senderPostalCity");
         QName SENDER_FAX = QName.createQName(URI, "senderFax");
 
-        QName USER_NAMES = QName.createQName(URI, "userNames");
-
         /** document name used for ADR */
         QName DOC_NAME_ADR = QName.createQName(URI, "docNameAdr");
         QName PUBLISH_TO_ADR = QName.createQName(URI, "publishToAdr");

@@ -6,7 +6,6 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
 import java.util.ResourceBundle;
 
 import javax.faces.application.FacesMessage;
@@ -26,6 +25,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 
@@ -41,7 +41,7 @@ public class MessageUtil {
 
     private static ResourceBundle getResourceBundle() {
         if (resourceBundle == null) {
-            resourceBundle = ResourceBundleWrapper.getResourceBundle(MESSAGE_BUNDLE, Locale.getDefault());
+            resourceBundle = ResourceBundleWrapper.getResourceBundle(MESSAGE_BUNDLE, AppConstants.getDefaultLocale());
         }
         return resourceBundle;
     }

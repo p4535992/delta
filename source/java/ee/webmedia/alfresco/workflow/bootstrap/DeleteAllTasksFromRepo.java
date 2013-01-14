@@ -37,4 +37,10 @@ public class DeleteAllTasksFromRepo extends AbstractNodeUpdater {
         nodeService.deleteNode(nodeRef);
         return new String[] {};
     }
+
+    @Override
+    public boolean isContinueWithNextBatchAfterError() {
+        return true;
+    }
+
 }

@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.menu.model;
 
+import static org.apache.commons.lang.StringUtils.startsWith;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -20,7 +22,9 @@ import com.thoughtworks.xstream.annotations.XStreamAsAttribute;
 import com.thoughtworks.xstream.annotations.XStreamOmitField;
 
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
+import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.menu.ui.component.MenuItemWrapper;
+import ee.webmedia.alfresco.menu.ui.component.MenuRenderer;
 import ee.webmedia.alfresco.menu.ui.component.UIMenuComponent;
 import ee.webmedia.alfresco.menu.ui.component.UIMenuComponent.ClearViewStackActionListener;
 import ee.webmedia.alfresco.orgstructure.amr.service.RSService;
@@ -93,7 +97,7 @@ public class DropdownMenuItem extends MenuItem {
         if (getTitle() == null) {
             setTitle(I18NUtil.getMessage(getTitleId()));
         }
-        link.setValue(getTitle());
+        link.setValue(getTitle(startsWith(id, MenuRenderer.SECONDARY_MENU_PREFIX) || startsWith(id, MenuBean.SHORTCUT_MENU_ITEM_PREFIX)));
 
         link.setTooltip(getTitle());
         link.setAction(new ConstantMethodBinding(getOutcome()));

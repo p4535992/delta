@@ -132,26 +132,6 @@
       </view:properties>
    </docadmin:fieldGroup>
 
-<!-- TODO DLSeadist Alar
-   <docadmin:fieldGroup view:childName="docadmin:users">
-      <view:properties>
-         <docadmin:name>Kasutajad tabelis</docadmin:name>
-         <docadmin:systematic>true</docadmin:systematic>
-         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
-         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
-         <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
-         <docadmin:fieldDefinitionIds>
-            <view:values>
-               <view:value>userNames</view:value>
-               <view:value>userJobTitle</view:value>
-               <view:value>userOrgStructUnit</view:value>
-               <view:value>budgetAccount</view:value>
-            </view:values>
-         </docadmin:fieldDefinitionIds>
-      </view:properties>
-   </docadmin:fieldGroup>
--->
-
    <docadmin:fieldGroup view:childName="docadmin:recipients">
       <view:properties>
          <docadmin:name>Adressaadid</docadmin:name>
@@ -238,7 +218,7 @@
          <docadmin:readonlyFieldsName>Saatja kirja reg nr ja kpv</docadmin:readonlyFieldsName>
          <docadmin:readonlyFieldsRule>{senderRegNumber} {senderRegDate}</docadmin:readonlyFieldsRule>
          <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
-         <docadmin:mandatoryForVol>true</docadmin:mandatoryForVol>
+         <docadmin:mandatoryForVol>false</docadmin:mandatoryForVol>
          <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
          <docadmin:fieldDefinitionIds>
             <view:values>

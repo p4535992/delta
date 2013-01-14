@@ -132,7 +132,6 @@
          <mandatory-aspects>
             <aspect>docadmin:object</aspect>
             <aspect>wfc:compoundWorkflowContainer</aspect>
-            <aspect>priv:userGroupMapping</aspect>
          </mandatory-aspects>
       </type>
 
@@ -412,6 +411,36 @@
             </property>
          </properties>
       </aspect>
+      
+      <aspect name="doccom:notEditable">
+         <properties>
+            <property name="doccom:notEditable">
+               <type>d:boolean</type>
+               <mandatory>true</mandatory>
+               <default>false</default>
+            </property>
+         </properties>
+      </aspect> 
+      
+      <aspect name="doccom:invoiceXml">
+         <properties>
+            <property name="doccom:invoiceXml">
+               <type>d:boolean</type>
+               <mandatory>true</mandatory>
+               <default>true</default>
+            </property>            
+         </properties>
+      </aspect>
+      
+      <!-- Indicates that when deleting this document, it should not be archived -->
+      <aspect name="doccom:deletePermanent">
+         <properties>
+            <property name="doccom:deletePermanent">
+               <type>d:boolean</type>
+               <default>true</default>
+            </property>
+         </properties>
+      </aspect>        
 
    <!-- ============================================================================================================= -->
    <!-- FIXME: remove the following definitions after all existing static documents are migrated to dynamic documents -->
@@ -592,16 +621,6 @@
             </property>
          </properties>
       </aspect>
-      
-      <!-- Indicates that when deleting this document, it should not be archived -->
-      <aspect name="doccom:deletePermanent">
-         <properties>
-            <property name="doccom:deletePermanent">
-               <type>d:boolean</type>
-               <default>true</default>
-            </property>
-         </properties>
-      </aspect>      
 
    </aspects>
 

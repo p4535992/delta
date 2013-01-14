@@ -237,6 +237,7 @@
       <property name="dependsOn">
          <list>
             <ref bean="taskTableBootstrap3" />
+            <ref bean="taskTableSearchIndexesBootstrap1" />
          </list>
       </property>
    </bean>   
@@ -287,7 +288,7 @@
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
-            <ref bean="deleteSubtypedDocuments" />
+            <ref bean="convertToDynamicDocumentsUpdater" />
          </list>
       </property>
       <property name="enabled" value="${parallelTasksPropertiesUpdater.enabled}" />
@@ -531,23 +532,12 @@
          </list>
       </property>
    </bean> 
-   
-   <bean id="addDocTypeToTaskNodeUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.AddDocTypeToTaskNodeUpdater" parent="abstractNodeUpdater" >
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="ParallelTasksPropertiesUpdater" /> <!-- kas on vaja veel m6nda dependsOn-i? nagu chnageAllOldDocTypesToNewThatHaveTheDocTypeProp -->
-         </list>
-      </property>
-   </bean>
 
    <bean id="dueDateExtensionTaskUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.DueDateExtensionTaskUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
-            <ref bean="addDocTypeToTaskNodeUpdater" />
             <ref bean="archivalsStoresBootstrap" />
          </list>
       </property>
@@ -568,28 +558,6 @@
       <property name="contentService" ref="ContentService" />
    </bean>
    
-   <bean id="ownerOrganizationNameToMultivaluedUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.OwnerOrganizationNameToMultivaluedUpdater" parent="abstractNodeUpdater" >
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="moveTaskFileToChildAssoc1" />
-         </list>
-      </property>
-   </bean>
-   
-   <bean id="addTypeToCompoundWorkflowUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.AddTypeToCompoundWorkflowUpdater" parent="module.baseComponent" >
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="workflowRootBootstrap" />
-            <ref bean="archivalsStoresBootstrap" />
-         </list>
-      </property>
-      <property name="documentSearchService" ref="DocumentSearchService" />
-   </bean>
-   
    <bean class="ee.webmedia.alfresco.workflow.web.CompoundWorkflowListMenuItemProcessor">
       <property name="menuService" ref="MenuService" />
       <property name="documentSearchService" ref="DocumentSearchService" />
@@ -601,6 +569,7 @@
       <property name="dependsOn">
          <list>
             <ref bean="archivalsStoresBootstrap" />
+            <ref bean="workflow25To313DynamicDocTypeUpdater" />
          </list>
       </property>
       <property name="userService" ref="UserService" />
@@ -612,8 +581,13 @@
       <property name="dependsOn">
          <list>
             <ref bean="archivalsStoresBootstrap" />
+            <ref bean="taskTableInsertBootstrap3" />
+            <ref bean="taskTableAddColumnBootstrap4" />
             <ref bean="taskTableAddColumnBootstrap6" />
+            <ref bean="taskTableAddColumnBootstrap7" />
+            <ref bean="taskTableAddColumnBootstrap8" />
             <ref bean="compoundWorkflowOwnerPropsUpdater4" />
+            <ref bean="convertToDynamicDocumentsUpdater" />
          </list>
       </property>
    </bean>
@@ -628,15 +602,20 @@
             <ref bean="archivalsStoresBootstrap" />
             <ref bean="taskTableBootstrap3" />
             <ref bean="taskTableAddColumnBootstrap4" />
-            <ref bean="ownerOrganizationNameToMultivaluedUpdater" />
+            <ref bean="taskTableAddColumnBootstrap6" />
+            <ref bean="taskTableAddColumnBootstrap7" />
+            <ref bean="taskTableAddColumnBootstrap8" />
             <ref bean="dueDateExtensionTaskUpdater" />
             <ref bean="moveTaskFileToChildAssoc1" />
             <ref bean="notStartedFinishedTaskUpdater" />
+            <ref bean="convertToDynamicDocumentsUpdater" />
          </list>
       </property>
       <property name="workflowService" ref="WmWorkflowService"/>
       <property name="workflowDbService" ref="WorkflowDbService"/>
       <property name="fileService" ref="FileService"/>
+      <property name="namespaceService" ref="NamespaceService"/>
+      <property name="dictionaryService" ref="DictionaryService"/>
    </bean>
    
    <bean id="taskOwnerStructUnitParameterUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.TaskOwnerStructUnitParameterUpdater" parent="module.baseComponent" >
@@ -660,11 +639,12 @@
             <ref bean="taskFileTableBootstrap" />
             <ref bean="taskTableAddColumnBootstrap7" />
             <ref bean="archivalsStoresBootstrap" />   
-            <ref bean="logAndDeleteNotExistingWorkflowTasks" />
+            <ref bean="logAndDeleteNotExistingWorkflowTasks2" />
          </list>
       </property>
       <property name="workflowDbService" ref="WorkflowDbService"/>
-      <property name="workflowService" ref="WmWorkflowService"/>       
+      <property name="workflowService" ref="WmWorkflowService"/>
+      <property name="fileService" ref="FileService"/>       
    </bean>
    
    <bean id="taskAssociatedDataTableInsertBootstrap2" class="ee.webmedia.alfresco.workflow.bootstrap.TaskAssociatedDataTableInsertBootstrap2" parent="abstractNodeUpdater" >
@@ -686,9 +666,11 @@
       <property name="workflowService" ref="WmWorkflowService"/>       
    </bean>
    
+   <!-- Executed from node-browser -->
    <bean id="deleteAllTasksFromRepo" class="ee.webmedia.alfresco.workflow.bootstrap.DeleteAllTasksFromRepo" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="false" />
       <property name="dependsOn">
          <list>
             <ref bean="taskAssociatedDataTableInsertBootstrap1" /> 
@@ -696,6 +678,7 @@
             <ref bean="archivalsStoresBootstrap" />   
          </list>
       </property>
+      <property name="batchSize" value="1" />
    </bean>
    
    <bean id="fixTaskStoreIdFromWorkflow" class="ee.webmedia.alfresco.workflow.bootstrap.FixTaskStoreIdFromWorkflow" parent="abstractNodeUpdater" >
@@ -722,7 +705,7 @@
       </property>
    </bean>  
 
-  <bean id="logAndDeleteNotExistingWorkflowTasks" class="ee.webmedia.alfresco.workflow.bootstrap.LogAndDeleteNotExistingWorkflowTasks" parent="abstractNodeUpdater" >
+  <bean id="logAndDeleteNotExistingWorkflowTasks2" class="ee.webmedia.alfresco.workflow.bootstrap.LogAndDeleteNotExistingWorkflowTasks" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />   
       <property name="enabled" value="true" /><!-- true only in 3.13; in other branches, deleteAllTasksFromRepo does the same thing -->
@@ -731,6 +714,7 @@
       <property name="dependsOn">
          <list>
             <ref bean="taskTableAddColumnBootstrap7" />
+            <ref bean="convertToDynamicDocumentsUpdater" />
          </list>
       </property>
    </bean>     
@@ -758,6 +742,22 @@
       <property name="resourceName" value="ee/webmedia/alfresco/workflow/bootstrap/delta_task_table_search_indexes.sql" />
       <property name="dependsOn">
          <list>
+            <ref bean="taskTableAddColumnBootstrap4" />
+            <ref bean="taskTableAddColumnBootstrap6" />
+            <ref bean="taskTableAddColumnBootstrap7" />
+         </list>
+      </property>
+   </bean>
+
+   <bean id="taskTableSearchIndexesBootstrap1" parent="executeStatementsBootstrap" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dataSource" ref="dataSource" />
+      <property name="resourceName" value="ee/webmedia/alfresco/workflow/bootstrap/delta_task_table_search_indexes1.sql" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="taskTableAddColumnBootstrap4" />
+            <ref bean="taskTableAddColumnBootstrap6" />
             <ref bean="taskTableAddColumnBootstrap7" />
          </list>
       </property>
@@ -770,23 +770,13 @@
       <property name="resourceName" value="ee/webmedia/alfresco/workflow/bootstrap/delta_task_table_search_indexes2.sql" />
       <property name="dependsOn">
          <list>
+            <ref bean="taskTableAddColumnBootstrap4" />
+            <ref bean="taskTableAddColumnBootstrap6" />
             <ref bean="taskTableAddColumnBootstrap7" />
+            <ref bean="taskTableAddColumnBootstrap8" />
          </list>
       </property>
    </bean>    
-
-   <bean id="taskTableSearchIndexesBootstrap1" parent="executeStatementsBootstrap" >
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dataSource" ref="dataSource" />
-      <property name="resourceName" value="ee/webmedia/alfresco/workflow/bootstrap/delta_task_table_search_indexes1.sql" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="taskTableAddColumnBootstrap7" />
-            <ref bean="taskTableAddColumnBootstrap6" />
-         </list>
-      </property>
-   </bean>  
 
    <bean id="addTaskPrivilegesToDocumentUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.AddTaskPrivilegesToDocumentUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
@@ -802,6 +792,18 @@
       <property name="workflowService" ref="WmWorkflowService"/>
       <property name="documentDynamicService" ref="DocumentDynamicService"/>
    </bean>
+   
+   <bean id="workflow25To313DynamicDocTypeUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.Workflow25To313DynamicDocTypeUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="enabled" value="${updater.version25To313.enabled}" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+      <property name="compoundWorkflowOwnerPropsUpdater" ref="compoundWorkflowOwnerPropsUpdater4" />
+      <property name="userService" ref="UserService" />
+   </bean>    
    
    <!-- START: web beans: -->
       

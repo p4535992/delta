@@ -31,7 +31,6 @@ import ee.webmedia.alfresco.document.log.web.LogBlockBean;
 import ee.webmedia.alfresco.document.search.web.AbstractSearchBlockBean;
 import ee.webmedia.alfresco.document.search.web.BlockBeanProviderProvider;
 import ee.webmedia.alfresco.document.search.web.SearchBlockBean;
-import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
@@ -98,6 +97,7 @@ public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProv
     }
 
     public void addNewVolume(ActionEvent event) {
+        clearPropSheet();
         newVolume = true;
         NodeRef seriesRef = new NodeRef(ActionUtil.getParam(event, PARAM_SERIES_NODEREF));
         // create new node for currentEntry
@@ -208,6 +208,7 @@ public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProv
         NodeRef archivedVolumeNodeRef = archiveVolume(currentEntry.getNode().getNodeRef());
         reload(archivedVolumeNodeRef);
         MessageUtil.addInfoMessage("volume_archive_success");
+        clearPropSheet();
     }
 
     public NodeRef archiveVolume(NodeRef volumeRef) {
@@ -270,27 +271,7 @@ public class VolumeDetailsDialog extends BaseDialogBean implements BlockBeanProv
     public Boolean volumeMarkFieldReadOnly() {
         Map<String, Object> properties = currentEntry.getNode().getProperties();
         String status = (String) properties.get(VolumeModel.Props.STATUS);
-        return DocListUnitStatus.CLOSED.equals(status) || DocListUnitStatus.DESTROYED.equals(status)
-                || VolumeType.SUBJECT_FILE.name().equals(properties.get(VolumeModel.Props.VOLUME_TYPE));
-    }
-
-    public void volumeTypeValueChanged(final ValueChangeEvent event) {
-        ComponentUtil.executeLater(PhaseId.INVOKE_APPLICATION, getPropertySheet(), new Closure() {
-            @Override
-            public void execute(Object input) {
-                if (event.getNewValue().equals(VolumeType.SUBJECT_FILE.name())) {
-                    String seriesMark = (String) BeanHelper.getNodeService().getProperty(getCurrentVolume().getSeriesNodeRef(), SeriesModel.Props.SERIES_IDENTIFIER);
-                    getCurrentNode().getProperties().put(VolumeModel.Props.VOLUME_MARK.toString(),
-                            seriesMark);
-                }
-                if (propertySheet != null) {
-                    propertySheet.getChildren().clear();
-                    propertySheet.getClientValidations().clear();
-                    propertySheet.setMode(null);
-                    propertySheet.setNode(null);
-                }
-            }
-        });
+        return DocListUnitStatus.CLOSED.equals(status) || DocListUnitStatus.DESTROYED.equals(status);
     }
 
     public void containsCasesValueChanged(final ValueChangeEvent event) {

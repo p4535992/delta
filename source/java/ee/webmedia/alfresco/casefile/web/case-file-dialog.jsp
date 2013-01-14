@@ -27,7 +27,7 @@
 
    <%-- Main List --%>
    <a:richList id="documentList" styleClass="duplicate-header" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      width="100%" value="#{CaseFileDialog.documents}" var="r" refreshOnBind="true" >
+      width="100%" value="#{CaseFileDialog.documents}" binding="#{CaseFileDialog.documentRichList}" var="r" refreshOnBind="true" >
       
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog-columns.jsp" >
          <jsp:param name="showOrgStructColumn" value="false" />

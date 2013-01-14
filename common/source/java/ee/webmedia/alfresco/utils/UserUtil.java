@@ -11,7 +11,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.faces.context.FacesContext;
+import javax.servlet.ServletRequest;
+import javax.servlet.http.HttpSession;
+
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.webdav.WebDAVMethod;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.security.AuthorityService;
@@ -221,6 +226,28 @@ public class UserUtil {
         return organizationPath;
     }
 
+    public static String getDisplayUnitText(Serializable prop) {
+        boolean isMultiValued = false;
+        if (!((List) prop).isEmpty()) {
+            for (Serializable listElement : ((List<Serializable>) prop)) {
+                if (listElement != null && listElement instanceof List) {
+                    isMultiValued = true;
+                    break;
+                }
+            }
+        }
+        if (!isMultiValued) {
+            @SuppressWarnings("unchecked")
+            List<String> orgStructs = (List<String>) prop;
+            return UserUtil.getDisplayUnit(orgStructs);
+        }
+        List<String> structUnitStr = new ArrayList<String>();
+        for (List<String> orgStructs : (List<List<String>>) prop) {
+            structUnitStr.add(UserUtil.getDisplayUnit(orgStructs));
+        }
+        return TextUtil.joinNonBlankStringsWithComma(structUnitStr);
+    }
+
     public static int getLongestValueIndex(List<String> organizationPaths) {
         if (organizationPaths == null) {
             return -1;
@@ -304,5 +331,28 @@ public class UserUtil {
         }
         return userProps;
     }
+
+   public static String getUsernameAndSession(String userName, FacesContext context) {
+       if (userName == null || userName.indexOf('_') > -1) {
+           return userName;
+       }
+
+       if (context == null) {
+           return userName;
+       }
+
+       String sessionIdentifier = "";
+
+       String ticket = (String) ((ServletRequest) context.getExternalContext().getRequest()).getAttribute(WebDAVMethod.PARAM_TICKET);
+       if (ticket != null) {
+           sessionIdentifier = ticket;
+       } else {
+           final HttpSession httpSession = (HttpSession) context.getExternalContext().getSession(false);
+           sessionIdentifier = (httpSession == null ? "" : httpSession.getId());
+       }
+
+       String userNameWithSessionId = userName + "_" + sessionIdentifier;
+       return userNameWithSessionId;
+   }
 
 }

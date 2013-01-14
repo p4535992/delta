@@ -15,6 +15,7 @@
                   <cl:byDefault>false</cl:byDefault>
                   <cl:readOnly>false</cl:readOnly>
                   <cl:active>true</cl:active>
+                  <cl:valueData>leaveAnnual</cl:valueData>                  
                </view:properties>
             </cl:classificatorValue>
 
@@ -26,6 +27,7 @@
                   <cl:byDefault>false</cl:byDefault>
                   <cl:readOnly>false</cl:readOnly>
                   <cl:active>true</cl:active>
+                  <cl:valueData>leaveWithoutPay</cl:valueData>                  
                </view:properties>
             </cl:classificatorValue>
 
@@ -37,6 +39,7 @@
                   <cl:byDefault>false</cl:byDefault>
                   <cl:readOnly>false</cl:readOnly>
                   <cl:active>true</cl:active>
+                  <cl:valueData>leaveChild</cl:valueData> 
                </view:properties>
             </cl:classificatorValue>
 

@@ -627,6 +627,7 @@ public class PrintTableServlet extends HttpServlet {
         return parentRef != null ? getNodeService().getChildAssocs(parentRef, assocQName, assocQName) : Collections.<ChildAssociationRef> emptyList();
     }
 
+    @SuppressWarnings("unchecked")
     private String getFieldTypeSpecificValue(Field field, Serializable prop) {
         if (prop == null) {
             return "";
@@ -640,9 +641,7 @@ public class PrintTableServlet extends HttpServlet {
         case CHECKBOX:
             return MessageUtil.getMessage(Boolean.TRUE.equals(prop) ? "yes" : "no");
         case STRUCT_UNIT:
-            @SuppressWarnings("unchecked")
-            List<String> orgStructs = (List<String>) prop;
-            return UserUtil.getDisplayUnit(orgStructs);
+            return UserUtil.getDisplayUnitText(prop);
         case DATE:
             if (prop instanceof List) {
                 @SuppressWarnings("unchecked")

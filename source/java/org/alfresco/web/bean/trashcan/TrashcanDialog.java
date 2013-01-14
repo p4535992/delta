@@ -24,6 +24,7 @@
  */
 package org.alfresco.web.bean.trashcan;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyExactQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyWildcardQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
@@ -662,14 +663,11 @@ public class TrashcanDialog extends BaseDialogBean implements IContextListener
        String searchText = filter.getSearchText();
        if (searchText != null && !StringUtils.isEmpty(searchText)) {
            queryParts.add(
-                   joinQueryPartsOr(
-                                  BeanHelper.getDocumentSearchService().generateDeletedSearchQuery(searchText, null),
-                                  generatePropertyWildcardQuery(ContentModel.PROP_NAME, searchText, true, false, true)
-                        )
-                   );
+                   getDocumentSearchService().generateDeletedSearchQuery(searchText, null)
+           );
        }
        if (FILTER_DOCU_TYPE.equals(property.getDocTypeFilter())) {
-           queryParts.add(generatePropertyExactQuery(DocumentAdminModel.Props.OBJECT_TYPE_ID, property.getDocTypeSearchText(), true));
+           queryParts.add(generateStringExactQuery(property.getDocTypeSearchText(), DocumentAdminModel.Props.OBJECT_TYPE_ID));
        }
        if (FILTER_DATE_ALL.equals(property.getDateFilter()) == false) {
            Date toDate = new Date();

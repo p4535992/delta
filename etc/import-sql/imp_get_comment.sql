@@ -1,3 +1,7 @@
+-- Function: imp_get_comment(integer, character varying, timestamp with time zone, character varying, boolean, boolean)
+
+-- DROP FUNCTION imp_get_comment(integer, character varying, timestamp with time zone, character varying, boolean, boolean);
+
 CREATE OR REPLACE FUNCTION imp_get_comment(in_id integer, in_menetluseliik character varying, in_tahtaegkp timestamp with time zone, in_prioriteet character varying, in_labibkantselei boolean, in_trykk boolean)
   RETURNS text AS
 $BODY$
@@ -41,12 +45,8 @@ v_vastus := v_vastus || 'Väljatrükid: '|| CASE WHEN in_trykk = TRUE THEN 'olemas
 v_vastus := v_vastus || 'Kommentaar: ' || CASE WHEN v_kommentaar IS NOT NULL THEN v_kommentaar ELSE 'väärtustamata' END || v_eraldaja;
 
 v_puudu_dok := (SELECT array_to_string(ARRAY(SELECT 'Terviktöövoos asus dokument ' || m.urldokument || ', mis on süsteemist kustutatud.'
-FROM (
-SELECT urldokument,
-(SELECT c.node_ref FROM imp_completed_docs c WHERE c.document_id LIKE m.urldokument || '%') as node_ref
-FROM imp_d_dok_men m
-WHERE m.menetlus_id = in_id AND m.liik = 'Seotud dokument') as m
-WHERE node_ref IS NULL), CHR(10)));
+FROM imp_d_dok_men2 m
+WHERE m.menetlus_id = in_id AND m.liik = 'Seotud dokument' AND node_ref IS NULL), CHR(10)));
 
 IF v_puudu_dok IS NOT NULL THEN 
 	v_vastus := v_vastus || CHR(10) || v_puudu_dok;

@@ -53,12 +53,11 @@
          </action>
 
          <action id="docList_createNewYearBasedVolumes">
-            <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminEvaluator</evaluator>
             <label-id>docList_createNewYearBasedVolumes</label-id>
             <tooltip-id>docList_createNewYearBasedVolumes_desc</tooltip-id>
             <image>/images/icons/versioned_properties.gif</image>
             <action-listener>#{FunctionsListDialog.createNewYearBasedVolumes}</action-listener>
-            <style-class>docList_createNewYearBasedVolumes</style-class>
          </action>
          
          <action id="docList_exportConsolidatedList">

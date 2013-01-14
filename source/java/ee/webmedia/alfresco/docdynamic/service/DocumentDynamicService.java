@@ -124,4 +124,6 @@ public interface DocumentDynamicService {
 
     DocumentDynamic createNewDocumentForArchivalActivity(NodeRef archivalActivityNodeRef, String documentTypeId);
 
+    TreeNode<QName> getChildNodeQNameHierarchy(QName[] hierarchy, TreeNode<QName> root);
+
 }

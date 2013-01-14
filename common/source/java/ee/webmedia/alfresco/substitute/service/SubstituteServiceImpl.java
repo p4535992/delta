@@ -201,13 +201,13 @@ public class SubstituteServiceImpl implements SubstituteService, BeanFactoryAwar
                         joinQueryPartsOr(Arrays.asList(
                                 generateDatePropertyRangeQuery(startDate, endDate, SubstituteModel.Props.SUBSTITUTION_START_DATE),
                                 generateDatePropertyRangeQuery(startDate, endDate, SubstituteModel.Props.SUBSTITUTION_END_DATE)
-                                ), true),
+                                )),
                         joinQueryPartsAnd(Arrays.asList(
                                 generateDatePropertyRangeQuery(null, startDate, SubstituteModel.Props.SUBSTITUTION_START_DATE),
                                 generateDatePropertyRangeQuery(endDate, null, SubstituteModel.Props.SUBSTITUTION_END_DATE)
-                                ), true)
+                                ))
 
-                        ), true)
+                        ))
                 ));
 
         List<NodeRef> nodeRefs = getDocumentSearchService().searchNodes(query, -1, "substitutionDutiesInPeriod");

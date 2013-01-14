@@ -124,6 +124,10 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
       // do nothing by default, subclasses can override if necessary
    }
    
+   public boolean canRestore() {
+       return true;
+   }
+   
    public String cancel()
    {
       // remove container variable

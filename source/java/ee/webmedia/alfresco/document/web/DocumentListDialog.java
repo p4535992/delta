@@ -303,6 +303,7 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
 
     private boolean isValidLocation(NodeRef functionRef, NodeRef seriesRef, NodeRef volumeRef) {
         if (functionRef == null || seriesRef == null || volumeRef == null) {
+            MessageUtil.addErrorMessage("document_validationMsg_mandatory_functionSeriesVolume");
             return false;
         }
         return true;
@@ -329,6 +330,7 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
     private void doInitialSearch() {
         NodeRef parentRef = null;
         locationNode = null;
+        selectedDocs = null;
         setListCheckboxes(new HashMap<NodeRef, Boolean>());
         getPropertySheetStateBean().reset(getConfig().getStateHolders(), this);
         if (parentCase != null) {
@@ -357,7 +359,7 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         }
 
         Collections.sort(documents); // always sort, because at first user gets only limited amount of documents;
-                                     // and if user presses show all, then he/she knows it will take time
+        // and if user presses show all, then he/she knows it will take time
         resetModals();
         clearRichList();
     }

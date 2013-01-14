@@ -291,7 +291,7 @@
    </bean>
 
    <bean id="createAccessControlEntryUniqueIndexBootstrap" class="ee.webmedia.alfresco.common.bootstrap.CreateAccessControlEntryUniqueIndexBootstrap" parent="module.baseComponent">
-      <property name="moduleId" value="common" />
+      <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
       <property name="dataSource" ref="dataSource" />
    </bean>
@@ -306,6 +306,7 @@
       <property name="enabled" value="${findHolesAndIndex.enabled}" />
       <property name="maxRecordSetSize" value="${index.tracking.maxRecordSetSize}" />
       <property name="maxTransactionsPerLuceneCommit" value="${index.tracking.maxTransactionsPerLuceneCommit}" />
+      <property name="dataSource" ref="dataSource" />
    </bean>
    
    <bean id="classpathResourceResolver" class="ee.webmedia.alfresco.common.ClasspathResourceResolver" />

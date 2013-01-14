@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.orgstructure.service;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPersonService;
 import static java.util.Arrays.asList;
 
@@ -268,7 +269,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         props.add(OrganizationStructureModel.Props.ORGANIZATION_PATH);
 
         // why doesn't lucene sorting work? as a workaround we sort in java
-        List<NodeRef> nodeRefs = generalService.searchNodes(input, OrganizationStructureModel.Types.ORGSTRUCT, props, limit);
+        List<NodeRef> nodeRefs = getDocumentSearchService().searchNodesByTypeAndProps(input, OrganizationStructureModel.Types.ORGSTRUCT, props, limit);
 
         if (nodeRefs == null) {
             return sortByName(getAllOrganizationStructures());

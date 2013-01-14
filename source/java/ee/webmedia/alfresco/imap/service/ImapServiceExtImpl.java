@@ -52,7 +52,6 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
-import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.service.cmr.repository.ContentService;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.MimetypeService;
@@ -720,12 +719,11 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
         tempWriter.setEncoding(encoding);
         tempWriter.putContent(inputStream);
 
-        ContentReader reader = tempWriter.getReader();
-
         String safeFileName = FilenameUtil.makeSafeFilename(filename);
-        FileInfo createdFile = fileService.transformToPdf(document, null, reader, safeFileName, filename, null);
+        FileInfo createdFile = fileService.transformToPdf(document, null, tempWriter.getReader(), safeFileName, filename, null);
         if (createdFile == null) {
-            InputStream contentInputStream = reader.getContentInputStream();
+            // Don't re-use previous reader (channel already opened)
+            InputStream contentInputStream = tempWriter.getReader().getContentInputStream();
             try {
                 createAttachment(document, null, mimeType, encoding, contentInputStream, filename);
             } finally {

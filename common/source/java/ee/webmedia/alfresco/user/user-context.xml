@@ -60,13 +60,6 @@
    <bean class="ee.webmedia.alfresco.user.web.MyFavoritesMenuItemProcessor">
       <property name="menuService" ref="MenuService" />
    </bean>
-   
-   <!-- Set all existing users' notification properties to TRUE (all users get all available e-mail notifications as default settings)
-       FIXME: from Riina - NB! This updater MUST NOT run when migrating from 2.5 to 3.*!!! -->
-   <bean id="notificationPreferencesUpdater" class="ee.webmedia.alfresco.user.bootstrap.NotificationPreferencesUpdater" parent="module.baseComponent" >
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-   </bean>
 
    <!-- Import the user registry from the authentication subsystem -->
    <bean id="userRegistry" class="org.alfresco.repo.management.subsystems.ChainingSubsystemProxyFactory">

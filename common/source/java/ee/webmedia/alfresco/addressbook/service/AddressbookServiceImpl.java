@@ -421,7 +421,7 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
 
         if (StringUtils.isNotBlank(institutionToRemove)) {
             // we do not want to see this organization in the search results
-            queryPartsAnd.add(SearchUtil.generatePropertyExactNotQuery(Props.ORGANIZATION_CODE, institutionToRemove, true));
+            queryPartsAnd.add(SearchUtil.generatePropertyExactNotQuery(Props.ORGANIZATION_CODE, institutionToRemove));
         }
 
         if (limit >= 0 && fields != contactGroupSearchFields) {

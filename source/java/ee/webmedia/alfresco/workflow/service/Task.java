@@ -74,7 +74,7 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
 
     private String cssStyleClass;
 
-    protected static <T extends Task> T create(Class<T> taskClass, WmNode taskNode, Workflow taskParent, int outcomes) {
+    public static <T extends Task> T create(Class<T> taskClass, WmNode taskNode, Workflow taskParent, int outcomes) {
         try {
             return taskClass.getDeclaredConstructor(WmNode.class, Workflow.class, Integer.class).newInstance(taskNode, taskParent, outcomes);
         } catch (Exception e) {

@@ -19,118 +19,116 @@ public interface DocumentSpecificModel {
 
     interface Assocs {
         /** Välislähetuse taotleja ja lähetuse bloki vaheline seos (dokument->taotleja => dokument->taotleja->lähetus) */
-        QName ERRAND_ABROAD = QName.createQName(URI, "errandsAbroad");
-        QName ERRAND_ABROAD_V2 = QName.createQName(URI, "errandsAbroadV2");
+        QName ERRAND_ABROAD = QName.createQName(DOCSPEC_URI, "errandsAbroad");
+        QName ERRAND_ABROAD_V2 = QName.createQName(DOCSPEC_URI, "errandsAbroadV2");
         /** Välislähetuse (MV) taotleja ja lähetuse bloki vaheline seos (dokument->taotleja => dokument->taotleja->lähetus) */
-        QName ERRAND_ABROAD_MV = QName.createQName(URI, "errandsAbroadMv");
+        QName ERRAND_ABROAD_MV = QName.createQName(DOCSPEC_URI, "errandsAbroadMv");
         /** Siselähetuse taotleja ja lähetuse bloki vaheline seos (dokument->taotleja => dokument->taotleja->lähetus) */
-        QName ERRAND_DOMESTIC = QName.createQName(URI, "errandsDomestic");
-        QName ERRAND_DOMESTIC_V2 = QName.createQName(URI, "errandsDomesticV2");
+        QName ERRAND_DOMESTIC = QName.createQName(DOCSPEC_URI, "errandsDomestic");
+        QName ERRAND_DOMESTIC_V2 = QName.createQName(DOCSPEC_URI, "errandsDomesticV2");
         /** Seos välisLähetuse dokumendi ja välisLähetuse taotleja vahel (dokument => dokument->taotleja) */
-        QName ERRAND_ORDER_APPLICANTS_ABROAD = QName.createQName(URI, "errandOrderApplicantsAbroad");
-        QName ERRAND_ORDER_APPLICANTS_ABROAD_V2 = QName.createQName(URI, "errandOrderApplicantsAbroadV2");
+        QName ERRAND_ORDER_APPLICANTS_ABROAD = QName.createQName(DOCSPEC_URI, "errandOrderApplicantsAbroad");
+        QName ERRAND_ORDER_APPLICANTS_ABROAD_V2 = QName.createQName(DOCSPEC_URI, "errandOrderApplicantsAbroadV2");
         /** Seos välisLähetuse (MV) dokumendi ja välisLähetuse taotleja vahel (dokument => dokument->taotleja) */
-        QName ERRAND_ORDER_ABROAD_MV_APPLICANTS = QName.createQName(URI, "errandOrderAbroadMvApplicants");
+        QName ERRAND_ORDER_ABROAD_MV_APPLICANTS = QName.createQName(DOCSPEC_URI, "errandOrderAbroadMvApplicants");
         /** Seos siseLähetuse dokumendi ja siseLähetuse taotleja vahel (dokument => dokument->taotleja) */
-        QName ERRAND_APPLICATION_DOMESTIC_APPLICANTS = QName.createQName(URI, "errandApplicationDomesticApplicants");
-        QName ERRAND_APPLICATION_DOMESTIC_APPLICANTS_V2 = QName.createQName(URI, "errandApplicationDomesticApplicantsV2");
+        QName ERRAND_APPLICATION_DOMESTIC_APPLICANTS = QName.createQName(DOCSPEC_URI, "errandApplicationDomesticApplicants");
+        QName ERRAND_APPLICATION_DOMESTIC_APPLICANTS_V2 = QName.createQName(DOCSPEC_URI, "errandApplicationDomesticApplicantsV2");
         /** Seos koolitustaotluse dokumendi ja taotleja vahel (dokument => dokument->taotleja) */
-        QName TRAINING_APPLICATION_APPLICANTS = QName.createQName(URI, "trainingApplicationApplicants");
-        QName TRAINING_APPLICATION_APPLICANTS_V2 = QName.createQName(URI, "trainingApplicationApplicantsV2");
+        QName TRAINING_APPLICATION_APPLICANTS = QName.createQName(DOCSPEC_URI, "trainingApplicationApplicants");
+        QName TRAINING_APPLICATION_APPLICANTS_V2 = QName.createQName(DOCSPEC_URI, "trainingApplicationApplicantsV2");
         /** Seos leping (MV) ja osapoole vahel(dokument => dokument->osapool) */
-        QName CONTRACT_MV_PARTIES = QName.createQName(URI, "contractMvParties");
+        QName CONTRACT_MV_PARTIES = QName.createQName(DOCSPEC_URI, "contractMvParties");
         /** Seos leping (SIM + SMIT) ja osapoole vahel(dokument => dokument->osapool) */
-        QName CONTRACT_PARTIES = QName.createQName(URI, "contractParties");
+        QName CONTRACT_PARTIES = QName.createQName(DOCSPEC_URI, "contractParties");
     }
 
     interface Types {
         /** VälisLähetuse blokk (dokument->taotleja->lähetus) */
-        QName ERRAND_ABROAD_TYPE = QName.createQName(URI, "errandsAbroadType");
-        QName ERRAND_ABROAD_TYPE_V2 = QName.createQName(URI, "errandsAbroadTypeV2");
+        QName ERRAND_ABROAD_TYPE = QName.createQName(DOCSPEC_URI, "errandsAbroadType");
+        QName ERRAND_ABROAD_TYPE_V2 = QName.createQName(DOCSPEC_URI, "errandsAbroadTypeV2");
         /** VälisLähetuse (MV) blokk (dokument->taotleja->lähetus) */
-        QName ERRAND_ABROAD_MV_TYPE = QName.createQName(URI, "errandsAbroadMvType");
+        QName ERRAND_ABROAD_MV_TYPE = QName.createQName(DOCSPEC_URI, "errandsAbroadMvType");
         /** Siselähetuse blokk (dokument->taotleja->lähetus) */
-        QName ERRANDS_DOMESTIC_TYPE = QName.createQName(URI, "errandsDomesticType");
-        QName ERRANDS_DOMESTIC_TYPE_V2 = QName.createQName(URI, "errandsDomesticTypeV2");
+        QName ERRANDS_DOMESTIC_TYPE = QName.createQName(DOCSPEC_URI, "errandsDomesticType");
+        QName ERRANDS_DOMESTIC_TYPE_V2 = QName.createQName(DOCSPEC_URI, "errandsDomesticTypeV2");
         /** VälisLähetuse taotleja(dokument->taotleja) */
-        QName ERRAND_ORDER_APPLICANT_ABROAD = QName.createQName(URI, "errandOrderApplicantAbroadType");
-        QName ERRAND_ORDER_APPLICANT_ABROAD_V2 = QName.createQName(URI, "errandOrderApplicantAbroadTypeV2");
+        QName ERRAND_ORDER_APPLICANT_ABROAD = QName.createQName(DOCSPEC_URI, "errandOrderApplicantAbroadType");
+        QName ERRAND_ORDER_APPLICANT_ABROAD_V2 = QName.createQName(DOCSPEC_URI, "errandOrderApplicantAbroadTypeV2");
         /** VälisLähetuse (MV) taotleja(dokument->taotleja) */
-        QName ERRAND_ORDER_ABROAD_MV_APPLICANT_MV = QName.createQName(URI, "errandOrderAbroadMvApplicantType");
+        QName ERRAND_ORDER_ABROAD_MV_APPLICANT_MV = QName.createQName(DOCSPEC_URI, "errandOrderAbroadMvApplicantType");
         /** SiseLähetuse taotleja(dokument->taotleja) */
-        QName ERRAND_APPLICATION_DOMESTIC_APPLICANT_TYPE = QName.createQName(URI, "errandApplicationDomesticApplicantType");
-        QName ERRAND_APPLICATION_DOMESTIC_APPLICANT_TYPE_V2 = QName.createQName(URI, "errandApplicationDomesticApplicantTypeV2");
+        QName ERRAND_APPLICATION_DOMESTIC_APPLICANT_TYPE = QName.createQName(DOCSPEC_URI, "errandApplicationDomesticApplicantType");
+        QName ERRAND_APPLICATION_DOMESTIC_APPLICANT_TYPE_V2 = QName.createQName(DOCSPEC_URI, "errandApplicationDomesticApplicantTypeV2");
         /** Koolitustaotluse taotleja(dokument->taotleja) */
-        QName TRAINING_APPLICATION_APPLICANT_TYPE = QName.createQName(URI, "trainingApplicationApplicantType");
-        QName TRAINING_APPLICATION_APPLICANT_TYPE_V2 = QName.createQName(URI, "trainingApplicationApplicantTypeV2");
+        QName TRAINING_APPLICATION_APPLICANT_TYPE = QName.createQName(DOCSPEC_URI, "trainingApplicationApplicantType");
+        QName TRAINING_APPLICATION_APPLICANT_TYPE_V2 = QName.createQName(DOCSPEC_URI, "trainingApplicationApplicantTypeV2");
         /** Leping (MV) osapool (dokument->osapool) */
-        QName CONTRACT_MV_PARTY_TYPE = QName.createQName(URI, "contractMvPartyType");
-        QName CONTRACT_PARTY_TYPE = QName.createQName(URI, "contractPartyType");
+        QName CONTRACT_MV_PARTY_TYPE = QName.createQName(DOCSPEC_URI, "contractMvPartyType");
+        QName CONTRACT_PARTY_TYPE = QName.createQName(DOCSPEC_URI, "contractPartyType");
     }
 
     interface Aspects {
-        QName SENDER = QName.createQName(URI, "sender");
-        QName SENDER_DETAILS = QName.createQName(URI, "senderDetails");
-        QName SENDER_DETAILS_MV = QName.createQName(URI, "senderDetailsMv");
-        QName WHOM = QName.createQName(URI, "whom");
-        QName WHOSE = QName.createQName(URI, "whose");
-        QName TEMPLATE = QName.createQName(URI, "template");
-        QName COMPLIENCE = QName.createQName(URI, "complience");
-        QName DELIVERER = QName.createQName(URI, "deliverer");
-        QName RECEIVER = QName.createQName(URI, "receiver");
-        QName SECOND_PARTY_REG = QName.createQName(URI, "secondPartyReg");
-        QName LICENCE_DETAILS = QName.createQName(URI, "licenceDetails");
-        QName TRANSMITTAL_MODE = QName.createQName(URI, "transmittalMode");
-        QName MANAGEMENTS_ORDER_DETAILS = QName.createQName(URI, "managementsOrderDetails");
-        QName SUBSTITUTE = QName.createQName(URI, "substitute");
-        QName VACATION_ORDER = QName.createQName(URI, "vacationOrder");
-        QName VACATION_ORDER_V2 = QName.createQName(URI, "vacationOrderV2");
-        QName VACATION_ORDER_COMMON = QName.createQName(URI, "vacationOrderCommon");
-        QName VACATION_ORDER_COMMON_V2 = QName.createQName(URI, "vacationOrderCommonV2");
-        QName VACATION_ORDER_SMIT = QName.createQName(URI, "vacationOrderSmit");
-        QName COST_MANAGER = QName.createQName(URI, "costManager");
+        QName SENDER = QName.createQName(DOCSPEC_URI, "sender");
+        QName SENDER_DETAILS = QName.createQName(DOCSPEC_URI, "senderDetails");
+        QName SENDER_DETAILS_MV = QName.createQName(DOCSPEC_URI, "senderDetailsMv");
+        QName WHOM = QName.createQName(DOCSPEC_URI, "whom");
+        QName WHOSE = QName.createQName(DOCSPEC_URI, "whose");
+        QName TEMPLATE = QName.createQName(DOCSPEC_URI, "template");
+        QName COMPLIENCE = QName.createQName(DOCSPEC_URI, "complience");
+        QName DELIVERER = QName.createQName(DOCSPEC_URI, "deliverer");
+        QName RECEIVER = QName.createQName(DOCSPEC_URI, "receiver");
+        QName SECOND_PARTY_REG = QName.createQName(DOCSPEC_URI, "secondPartyReg");
+        QName LICENCE_DETAILS = QName.createQName(DOCSPEC_URI, "licenceDetails");
+        QName TRANSMITTAL_MODE = QName.createQName(DOCSPEC_URI, "transmittalMode");
+        QName MANAGEMENTS_ORDER_DETAILS = QName.createQName(DOCSPEC_URI, "managementsOrderDetails");
+        QName SUBSTITUTE = QName.createQName(DOCSPEC_URI, "substitute");
+        QName VACATION_ORDER = QName.createQName(DOCSPEC_URI, "vacationOrder");
+        QName VACATION_ORDER_V2 = QName.createQName(DOCSPEC_URI, "vacationOrderV2");
+        QName VACATION_ORDER_COMMON = QName.createQName(DOCSPEC_URI, "vacationOrderCommon");
+        QName VACATION_ORDER_COMMON_V2 = QName.createQName(DOCSPEC_URI, "vacationOrderCommonV2");
+        QName VACATION_ORDER_SMIT = QName.createQName(DOCSPEC_URI, "vacationOrderSmit");
+        QName COST_MANAGER = QName.createQName(DOCSPEC_URI, "costManager");
         /** aspect for common fields of errand applicant (lähetuse taotleja (välislähetuse ja siselähetuse puhul taotleja ühised väljad)) */
-        QName ERRAND_APPLICANT = QName.createQName(URI, "errandApplicant");// TODO: pole veel kasutuses
-        QName ERRAND_ORDER_APPLICANT_ABROAD = QName.createQName(URI, "errandOrderApplicantAbroad");
-        QName ERRAND_ORDER_APPLICANT_ABROAD_V2 = QName.createQName(URI, "errandOrderApplicantAbroadV2");
+        QName ERRAND_APPLICANT = QName.createQName(DOCSPEC_URI, "errandApplicant");// TODO: pole veel kasutuses
+        QName ERRAND_ORDER_APPLICANT_ABROAD = QName.createQName(DOCSPEC_URI, "errandOrderApplicantAbroad");
+        QName ERRAND_ORDER_APPLICANT_ABROAD_V2 = QName.createQName(DOCSPEC_URI, "errandOrderApplicantAbroadV2");
         /** Välis- ja siseLähetuse dokumentide tüübi ühine aspekt */
-        QName ERRAND_DOC = QName.createQName(URI, "errandDoc");
-        QName ERRAND_DOC_COMMON = QName.createQName(URI, "errandDocCommon");
+        QName ERRAND_DOC = QName.createQName(DOCSPEC_URI, "errandDoc");
+        QName ERRAND_DOC_COMMON = QName.createQName(DOCSPEC_URI, "errandDocCommon");
         /** Välislähetuse dokumendi tüübi aspekt */
-        QName ERRAND_ORDER_ABROAD = QName.createQName(URI, "errandOrderAbroad");
-        QName ERRAND_ORDER_ABROAD_V2 = QName.createQName(URI, "errandOrderAbroadV2");
+        QName ERRAND_ORDER_ABROAD = QName.createQName(DOCSPEC_URI, "errandOrderAbroad");
+        QName ERRAND_ORDER_ABROAD_V2 = QName.createQName(DOCSPEC_URI, "errandOrderAbroadV2");
         /** Välislähetuse (MV) dokumendi tüübi aspekt */
-        QName ERRAND_ORDER_ABROAD_MV = QName.createQName(URI, "errandOrderAbroadMv");
+        QName ERRAND_ORDER_ABROAD_MV = QName.createQName(DOCSPEC_URI, "errandOrderAbroadMv");
         /** SiseLähetuse dokumendi tüübi aspekt */
-        QName ERRAND_APPLICATION_DOMESTIC = QName.createQName(URI, "errandApplicationDomestic");
-        QName ERRAND_APPLICATION_DOMESTIC_V2 = QName.createQName(URI, "errandApplicationDomesticV2");
+        QName ERRAND_APPLICATION_DOMESTIC = QName.createQName(DOCSPEC_URI, "errandApplicationDomestic");
+        QName ERRAND_APPLICATION_DOMESTIC_V2 = QName.createQName(DOCSPEC_URI, "errandApplicationDomesticV2");
         /** Koolituslähetuse dokumenndi tüübi aspekt */
-        QName TRAINING_APPLICATION = QName.createQName(URI, "trainingApplication");
-        QName TRAINING_APPLICATION_V2 = QName.createQName(URI, "trainingApplicationV2");
+        QName TRAINING_APPLICATION = QName.createQName(DOCSPEC_URI, "trainingApplication");
+        QName TRAINING_APPLICATION_V2 = QName.createQName(DOCSPEC_URI, "trainingApplicationV2");
         /** Välislähetus -> taotleja -> lähetus tüübi aspekt */
-        QName ERRAND_ORDER_ABROAD_BLOCK = QName.createQName(URI, "errandBlockAbroad");
-        QName CONTENT = QName.createQName(URI, "content");
-        QName CONTRACT_MV_DETAILS = QName.createQName(URI, "contractMvDetails");
-        QName CONTRACT_SIM_DETAILS = QName.createQName(URI, "contractSimDetails");
-        QName CONTRACT_COMMON_DETAILS = QName.createQName(URI, "contractCommonDetails");
-        QName MINUTES_MV = QName.createQName(URI, "minutesMv");
-        QName PERSONAL_VEHICLE_USAGE_COMPENSATION_MV = QName.createQName(URI, "personalVehicleUsageCompensationMv");
-        QName PROJECT_APPLICATION = QName.createQName(URI, "projectApplication");
-        QName OUTGOING_LETTER_MV = QName.createQName(URI, "outgoingLetterMv");
-        QName CONTRACT_DETAILS = QName.createQName(URI, "contractDetails");
-        QName CONTRACT_DETAILS_V1 = QName.createQName(URI, "contractDetailsV1");
-        QName CONTRACT_DETAILS_V2 = QName.createQName(URI, "contractDetailsV2");
-        QName CONTRACT_PARTY = QName.createQName(URI, "contractParty");
-        QName NOT_EDITABLE = QName.createQName(URI, "notEditable");
+        QName ERRAND_ORDER_ABROAD_BLOCK = QName.createQName(DOCSPEC_URI, "errandBlockAbroad");
+        QName CONTENT = QName.createQName(DOCSPEC_URI, "content");
+        QName CONTRACT_MV_DETAILS = QName.createQName(DOCSPEC_URI, "contractMvDetails");
+        QName CONTRACT_SIM_DETAILS = QName.createQName(DOCSPEC_URI, "contractSimDetails");
+        QName CONTRACT_COMMON_DETAILS = QName.createQName(DOCSPEC_URI, "contractCommonDetails");
+        QName MINUTES_MV = QName.createQName(DOCSPEC_URI, "minutesMv");
+        QName PERSONAL_VEHICLE_USAGE_COMPENSATION_MV = QName.createQName(DOCSPEC_URI, "personalVehicleUsageCompensationMv");
+        QName PROJECT_APPLICATION = QName.createQName(DOCSPEC_URI, "projectApplication");
+        QName OUTGOING_LETTER_MV = QName.createQName(DOCSPEC_URI, "outgoingLetterMv");
+        QName CONTRACT_DETAILS = QName.createQName(DOCSPEC_URI, "contractDetails");
+        QName CONTRACT_DETAILS_V1 = QName.createQName(DOCSPEC_URI, "contractDetailsV1");
+        QName CONTRACT_DETAILS_V2 = QName.createQName(DOCSPEC_URI, "contractDetailsV2");
+        QName CONTRACT_PARTY = QName.createQName(DOCSPEC_URI, "contractParty");
 
-        QName INVOICE_XML = QName.createQName(URI, "invoiceXml");
-        QName INVOICE = QName.createQName(URI, "invoice");
+        QName INVOICE = QName.createQName(DOCSPEC_URI, "invoice");
 
-        QName EXPENSES_V2 = QName.createQName(URI, "expensesV2");
-        QName DAILY_ALLOWANCE = QName.createQName(URI, "dailyAllowance");
-        QName DAILY_ALLOWANCE_V2 = QName.createQName(URI, "dailyAllowanceV2");
-        QName REPORT_DUE_DATE = QName.createQName(URI, "reportDueDate");
-        QName EVENT_NAME = QName.createQName(URI, "eventName");
+        QName EXPENSES_V2 = QName.createQName(DOCSPEC_URI, "expensesV2");
+        QName DAILY_ALLOWANCE = QName.createQName(DOCSPEC_URI, "dailyAllowance");
+        QName DAILY_ALLOWANCE_V2 = QName.createQName(DOCSPEC_URI, "dailyAllowanceV2");
+        QName REPORT_DUE_DATE = QName.createQName(DOCSPEC_URI, "reportDueDate");
+        QName EVENT_NAME = QName.createQName(DOCSPEC_URI, "eventName");
 
     }
 
@@ -375,9 +373,6 @@ public interface DocumentSpecificModel {
         QName CO_FINANCER_SUM = QName.createQName(URI, "coFinancerSum");
         QName REPLY_DATE = QName.createQName(URI, "replyDate");
         QName ANNEX = QName.createQName(URI, "annex");
-
-        QName NOT_EDITABLE = QName.createQName(URI, "notEditable");
-        QName INVOICE_XML = QName.createQName(URI, "invoiceXml");
 
         QName EXPECTED_EXPENSE_SUM = QName.createQName(URI, "expectedExpenseSum");
         QName EXPENSES_TOTAL_SUM = QName.createQName(URI, "expensesTotalSum");

@@ -100,6 +100,23 @@
    -->
    <bean id="volumeTypeAndNamespaceUpdater" class="ee.webmedia.alfresco.volume.bootstrap.VolumeTypeUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+   </bean>
+
+   <!-- CL 210874 -->
+   <bean id="volumeContainsCasesUpdater" class="ee.webmedia.alfresco.volume.bootstrap.VolumeContainsCasesUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="false" /><!-- Executed from node-browser -->
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
    </bean>
 
    <!-- START: web beans: -->

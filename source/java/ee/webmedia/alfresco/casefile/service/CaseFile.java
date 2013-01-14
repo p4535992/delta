@@ -186,6 +186,11 @@ public class CaseFile extends DynamicBase implements Cloneable, VolumeOrCaseFile
     }
 
     @Override
+    public Map<String, Object> getProperties() {
+        return node != null ? node.getProperties() : null;
+    }
+
+    @Override
     public int compareTo(VolumeOrCaseFile other) {
         if (StringUtils.equalsIgnoreCase(getVolumeMark(), other.getVolumeMark())) {
             String title = getTitle();

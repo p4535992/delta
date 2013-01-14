@@ -154,7 +154,8 @@ FOR v_rec IN
 			CASE WHEN m.kinnitatud = 'NULL' THEN NULL ELSE m.kinnitatud END AS comment,
 			m.loppkp,
 			m.loomisekp,
-			ylem_id 
+			m.ylem_id,
+			m.staatus 
 			FROM imp_d_isik_men m WHERE menetlus_id = v_rec.id
 			ORDER BY m.alguskp, m.loomisekp, m.id
 		LOOP
@@ -207,14 +208,6 @@ FOR v_rec IN
 		v_task_outcome := v_task_rec.outcome;
 		v_task_comment := v_task_rec.comment;
 
-		/*
-		IF v_workflow_order_no = 0  OR v_workflow_type <> v_task_rec.type THEN
-			v_workflow_vaja_lisada := 1;
-		ELSE
-			v_workflow_vaja_lisada := 0;
-		END IF;
-		*/
-
 		IF v_workflow_order_no = 0 OR v_workflow_type <> v_task_rec.type THEN
 			--v_workflow_started := v_task_rec.started_date_time;
 			v_workflow_type := v_task_rec.type;
@@ -244,23 +237,13 @@ FOR v_rec IN
 			v_task_started_date_time := COALESCE(v_task_started_date_time, v_rec.alguskp);
 		END IF;
 		--kui ülemtask on lõpetatud, siis lõpetatakse automaatlselt alamtask
-		IF v_task_rec.status = 'Kaastäitja' AND v_task_rec.loppkp IS NULL AND EXISTS (SELECT 1 FROM imp_task1 WHERE old_id = v_task_rec.ylem_id AND status IN ('lõpetatud', 'teostamata')) THEN
+		IF v_task_rec.staatus = 'Kaastäitja' AND v_task_rec.loppkp IS NULL AND EXISTS (SELECT 1 FROM imp_task1 WHERE old_id = v_task_rec.ylem_id AND status IN ('lõpetatud', 'teostamata')) THEN
 			v_task_status := 'teostamata';
 			v_task_completed_date_time = (SELECT completed_date_time FROM imp_task1 WHERE old_id = v_task_rec.ylem_id);
 			v_task_outcome := CASE WHEN v_task_rec.type = 'confirmation_task' THEN 'Kinnitamata' ELSE 'Tööülesanne täidetud' END;
 			v_task_comment := 'Tööülesanne on lõpetatud automaatselt peatäitja tööülesande täitmise hetkel';
 			v_task_started_date_time := COALESCE(v_task_started_date_time, v_rec.alguskp);
 		END IF;
-
-		--WORKFLOW.status
-		/*
-		IF v_workflow_status IS NULL THEN
-			v_workflow_status := v_task_status;
-		END IF;
-		IF v_task_status = 'teostamisel' THEN
-			v_workflow_status := v_task_status;
-		END IF;
-		*/
 		
 		--insert IMP_TASK1
 		INSERT INTO imp_task1(
@@ -278,9 +261,12 @@ FOR v_rec IN
 		IF EXISTS (SELECT 1 FROM imp_task1 WHERE procedure_id = v_rec.id AND type = 'assignment_task' AND status <> 'uus') THEN
 			UPDATE imp_task1
 			SET (status, started_date_time) = ('teostamisel', current_timestamp)
-			WHERE procedure_id = v_rec.id AND type = 'assignment_task' AND status = 'uus';
+			WHERE procedure_id = v_rec.id AND type = 'assignment_task' AND status = 'uus'
+			AND workflow_order IN (
+			SELECT workflow_order
+			FROM imp_task1 
+			WHERE procedure_id = v_rec.id AND type = 'assignment_task' AND status <> 'uus');
 		END IF;
-	
 
 		--OWNER mässamine: TASK
 		FOR v_temp_task_rec IN SELECT old_id, status, owner_name, type FROM imp_task1 WHERE procedure_id = v_rec.id
@@ -430,13 +416,12 @@ FOR v_rec IN
 
 		--siia WORKFLOW insert
 		--WORKFLOW
-		
 		INSERT INTO imp_workflow(
 			procedure_id, order_no, type, started_date_time, creator_name, 
 			status)
 		SELECT 
 			procedure_id, order_no, type, started_date_time, creator_name, 
-			COALESCE((SELECT t1.status FROM imp_task1 t1 WHERE t1.procedure_id = v_rec.id AND t1.workflow_order = t.order_no AND t1.status = 'teostamisel'),
+			COALESCE((SELECT t1.status FROM imp_task1 t1 WHERE t1.procedure_id = v_rec.id AND t1.workflow_order = t.order_no AND t1.status = 'teostamisel' LIMIT 1),
 			(SELECT t1.status FROM imp_task1 t1 WHERE t1.procedure_id = v_rec.id AND t1.workflow_order = t.order_no AND t1.status = 'uus' LIMIT 1), 'lõpetatud') AS status
 		FROM (
 		SELECT 
@@ -449,19 +434,25 @@ FOR v_rec IN
 		WHERE procedure_id = v_rec.id
 		GROUP BY workflow_order, type) t;
 
-		--lisa statuse UPDATE
+		--Kui imp_compound_workflow.status = teostamisel, sisaldab uus, lõpetatud, teostamata taske, kuid ei sisalda ühtegi teostamisel taski, 
+		--siis lõpetada compound_workflow ja selles olevad workflow-d ja taskid
 		
-		IF EXISTS (SELECT COUNT(*)
+		IF v_status = 'teostamisel' AND EXISTS (
+			SELECT 1
 			FROM (
-			SELECT COUNT(*), status
+				SELECT
+				SUM(uus) AS uus,
+				SUM(lopetatud) AS lopetatud,
+				SUM(teostamisel) AS teostamisel
 				FROM (
-				SELECT 
-				(CASE WHEN status = 'teostamata' THEN 'lõpetatud' ELSE status END) AS status 
-				FROM imp_workflow
-				WHERE procedure_id = v_rec.id AND status IN ('teostamata', 'lõpetatud', 'uus')) w
-				GROUP BY status) m
-				HAVING COUNT(*) = 2) 
-		AND NOT EXISTS (SELECT 1 FROM imp_workflow WHERE procedure_id = v_rec.id AND status = 'teostamisel') THEN
+					SELECT 
+					CASE WHEN status = 'uus' THEN 1 ELSE 0 END AS uus,
+					CASE WHEN status = 'lõpetatud' THEN 1 ELSE 0 END AS lopetatud,
+					CASE WHEN status = 'teostamisel' THEN 1 ELSE 0 END AS teostamisel
+					FROM (
+					SELECT workflow_order, (CASE WHEN status = 'teostamata' THEN 'lõpetatud' ELSE status END) AS status 
+					FROM imp_task1 WHERE procedure_id = v_rec.id) t) t) t
+				WHERE uus > 0 AND lopetatud > 0 AND teostamisel = 0) THEN
 
 		--imp_compound_workflow
 		v_status := 'lõpetatud';
@@ -469,7 +460,7 @@ FOR v_rec IN
 		v_comment := 'Menetlusrada ei käinud lõpuni';
 		
 		--imp_workflow
-		UPDATE imp_workflow SET status = 'lõpetatud'
+		UPDATE imp_workflow SET (status, started_date_time) = ('lõpetatud', COALESCE(started_date_time, v_rec.alguskp)) 
 		WHERE procedure_id = v_rec.id AND status = 'uus';
 
 		--imp_task1
@@ -484,25 +475,57 @@ FOR v_rec IN
 		END IF;
 		
 
-		--kontroll: et kas vähemalt 1 task on tesotamisel või siis kõik uus või siis kõik lõpetatud staatusega
-		IF EXISTS (
-			SELECT COUNT(*) 
+		--kontroll: et kas vähemalt 1 task on tesotamisel või siis kõik uus või siis kõik lõpetatud staatusega (ERROR_17)
+		--et ei oleks rohkem kui 1 teostamiesl, see kontroll ainult confirmationWorkflow tüüpi workflow-dele (ERROR_12)
+		BEGIN 
+		SELECT error INTO v_error_code
+		FROM (
+			SELECT 
+			CASE 
+			WHEN teostamisel > 1 AND type = 'confirmation_task' THEN 'ERROR_12' 
+			WHEN teostamisel = 0 AND uus > 0 AND lopetatud > 0 THEN 'ERROR_17'
+			ELSE NULL
+			END AS error
 			FROM (
-				SELECT COUNT(*) AS arv, type, status 
+				SELECT
+				workflow_order,
+				type,
+				SUM(uus) AS uus,
+				SUM(lopetatud) AS lopetatud,
+				SUM(teostamisel) AS teostamisel
 				FROM (
-					SELECT type, (CASE WHEN status = 'teostamata' THEN 'lõpetatud' ELSE status END) AS status 
-					FROM imp_task1 WHERE procedure_id = v_rec.id 
-				) c 
-			GROUP BY type, status
-			) c 
-			WHERE status <> 'teostamisel' GROUP BY type HAVING COUNT(*) > 1
-		) THEN
-			v_error_code := 'ERROR_17';
+					SELECT 
+					workflow_order,
+					type,
+					CASE WHEN status = 'uus' THEN 1 ELSE 0 END AS uus,
+					CASE WHEN status = 'lõpetatud' THEN 1 ELSE 0 END AS lopetatud,
+					CASE WHEN status = 'teostamisel' THEN 1 ELSE 0 END AS teostamisel
+					FROM (
+					SELECT type, workflow_order, (CASE WHEN status = 'teostamata' THEN 'lõpetatud' ELSE status END) AS status 
+					FROM imp_task1 WHERE procedure_id = v_rec.id) t) t
+			GROUP BY type, workflow_order) t) t
+		WHERE error IS NOT NULL;
+		EXCEPTION
+			WHEN no_data_found THEN NULL;
+		END;
+
+		IF v_error_code IS NOT NULL THEN
+			RAISE EXCEPTION '';
 		END IF;
-		
-		--et ei oleks rohkem kui 1 teostamiesl
-		IF EXISTS (SELECT COUNT(*) FROM imp_task1 WHERE procedure_id = v_rec.id AND status = 'teostamisel' HAVING COUNT(*) > 1) THEN
-			v_error_code := 'ERROR_12';
+
+		--ERROR_45
+		IF v_status = 'teostamisel' THEN
+			IF EXISTS (SELECT 1 FROM (
+							SELECT
+							lead(status) over (order by order_no asc) jrg_status,
+							lag(status) over (order by order_no asc) eel_status
+							FROM imp_workflow
+							WHERE procedure_id = v_rec.id AND status = 'teostamisel'
+							) t
+				WHERE t.jrg_status IN ('teostamisel', 'lõpetatud') OR t.eel_status IN ('teostamisel', 'uus')) THEN
+			v_error_code := 'ERROR_45';
+			RAISE EXCEPTION '';
+			END IF;
 		END IF;
 		
 
@@ -533,12 +556,17 @@ FOR v_rec IN
 		--ASSOCIATION
 		INSERT INTO imp_association(
 			procedure_id, from_node, type, creator, created_date_time, main_document)
-		SELECT DISTINCT procedure_id, from_node, type, creator, created_date_time, main_document
+		SELECT procedure_id, from_node, type, creator, created_date_time,
+			CASE WHEN row_no = 1 THEN TRUE ELSE FALSE END as main_document
+			FROM (
+			SELECT procedure_id, from_node, type, creator, created_date_time , row_number() over (order by d.loomisekp) as row_no
+			FROM (
+			SELECT DISTINCT procedure_id, from_node, type, creator, created_date_time, loomisekp
 		FROM (
 		SELECT 
 			v_rec.id AS procedure_id, --procedure_id
 			CASE 
-				WHEN d.liik = 'Seotud dokument' THEN (SELECT c.node_ref FROM imp_completed_docs c WHERE c.document_id LIKE d.urldokument || '%')
+				WHEN d.liik = 'Seotud dokument' THEN d.node_ref
 				WHEN d.liik = 'Seotud menetlus' THEN CAST(d.dokument_id AS character varying)
 				WHEN d.liik = 'Seotud url' THEN d.urldokument
 			END AS from_node, --from_node
@@ -551,25 +579,27 @@ FOR v_rec IN
 				WHEN d.liik = 'Seotud dokument' THEN NULL
 				ELSE d.loomisekp
 			END as created_date_time,
-			CASE WHEN row_no = 1 THEN TRUE ELSE FALSE END as main_document
+			loomisekp
+			
 		FROM (
-			SELECT
-			liik, urldokument, dokument_id, looja, loomisekp,
-			row_number() over (order by d.loomisekp) as row_no
-			FROM (
 				SELECT 
 				liik, 
 				urldokument, 
 				dokument_id, 
 				looja, 
 				loomisekp,
-				min(loomisekp) over (partition by menetlus_id, liik, urldokument) AS min_loomisekp,
-				menetlus_id
-				FROM imp_d_dok_men
+				CASE 
+					WHEN liik = 'Seotud menetlus' THEN min(loomisekp) over (partition by menetlus_id, liik, dokument_id) 
+					ELSE min(loomisekp) over (partition by menetlus_id, liik, urldokument) 
+				END AS min_loomisekp,
+				menetlus_id,
+				node_ref
+				FROM imp_d_dok_men2
 				WHERE menetlus_id = v_rec.id
 			) d
-			WHERE d.loomisekp = min_loomisekp) d) d
-		WHERE from_node IS NOT NULL;
+			WHERE d.loomisekp = min_loomisekp) d
+		WHERE from_node IS NOT NULL) d) d;
+		
 
 		--CASEFILE
 		IF v_rec.menetluseliik = 'asjamenetlus' THEN
@@ -688,11 +718,11 @@ FOR v_rec IN
 				END IF;
 				EXECUTE imp_insert_failed(v_rec.id, v_rec.alguskp, v_rec.loppkp, v_task_user, v_error_code);
 			END IF;
-	
+	/*
 		WHEN others THEN 
 			v_error_code := 'ERROR_0';
 			EXECUTE imp_insert_failed(v_rec.id, v_rec.alguskp, v_rec.loppkp, v_task_user, v_error_code, SQLERRM);
-		
+		*/
 	END;
 	END LOOP;
 	

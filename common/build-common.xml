@@ -357,7 +357,7 @@
 		<copy todir="${project.dir.test.classes}" preservelastmodified="true" overwrite="true" verbose="true">
 			<fileset dir="${conf.basedir}/${conf.name}/classes" excludes="**/*.java,**/*_en_US.properties" />
 		</copy>
-		<javac destdir="${project.dir.test.classes}" classpathref="classpath.test.compile" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
+		<javac destdir="${project.dir.test.classes}" classpathref="classpath.test.compile" source="1.6" target="1.6" debug="on" encoding="UTF-8">
 			<compilerarg value="-Xlint" />
 			<compilerarg value="-Xlint:-deprecation" />
 			<!-- XXX why do I have "bad path element" warnings, where do these path elements come from? -->

@@ -71,6 +71,7 @@ import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.document.file.model.FileModel;
+import ee.webmedia.alfresco.utils.UserUtil;
 
 /**
  * Simple Lock service implementation
@@ -627,26 +628,9 @@ public class LockServiceImpl implements LockService,
     {
         if (userName == null) {
             userName = authenticationService.getCurrentUserName();
-        } else if (userName.indexOf('_') > -1) {
-            return userName;
         }
 
-        if (FacesContext.getCurrentInstance() == null) {
-            return userName;
-        }
-
-        String sessionIdentifier = "";
-
-        String ticket = (String) ((ServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest()).getAttribute(WebDAVMethod.PARAM_TICKET);
-        if (ticket != null) {
-            sessionIdentifier = ticket;
-        } else {
-            final HttpSession httpSession = (HttpSession) FacesContext.getCurrentInstance().getExternalContext().getSession(false);
-            sessionIdentifier = (httpSession == null ? "" : httpSession.getId());
-        }
-
-        String userNameWithSessionId = userName + "_" + sessionIdentifier;
-        return userNameWithSessionId;
+        return UserUtil.getUsernameAndSession(userName, FacesContext.getCurrentInstance());
     }
 
     /**

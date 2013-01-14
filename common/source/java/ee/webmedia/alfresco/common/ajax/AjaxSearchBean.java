@@ -146,7 +146,8 @@ public class AjaxSearchBean extends AjaxBean {
         context.getApplication().createMethodBinding("#{" + actionListener + "}", new Class[] { String.class }).invoke(context, new Object[] { data });
     }
 
-    private SelectItem[] getSelectItems(FacesContext context, String callback, String contains, String filterValue, String hiddenValue, boolean filterByStructUnit, boolean includeFilterIndex) {
+    private SelectItem[] getSelectItems(FacesContext context, String callback, String contains, String filterValue, String hiddenValue, boolean filterByStructUnit,
+            boolean includeFilterIndex) {
         int filter = UserContactGroupSearchBean.USERS_FILTER; // Default to this
         if (StringUtils.isNotBlank(filterValue) && !"undefined".equals(filterValue) && StringUtils.isNumeric(filterValue)) {
             filter = Integer.parseInt(filterValue);

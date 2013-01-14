@@ -25,6 +25,11 @@ public class DynamicTypeUtil {
         props.put(Props.OBJECT_TYPE_VERSION_NR, docTypeIdAndVersionNr.getSecond());
     }
 
+    public static void setTypePropsStringMap(Pair<String, Integer> docTypeIdAndVersionNr, Map<String, Object> props) {
+        props.put(Props.OBJECT_TYPE_ID.toString(), docTypeIdAndVersionNr.getFirst());
+        props.put(Props.OBJECT_TYPE_VERSION_NR.toString(), docTypeIdAndVersionNr.getSecond());
+    }
+
     public static void setTypeProps(DocumentTypeVersion docTypeVersion, Map<QName, Serializable> props) {
         setTypeProps(getDocTypeIdAndVersionNr(docTypeVersion), props);
 

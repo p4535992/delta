@@ -1,7 +1,7 @@
 package ee.webmedia.alfresco.docadmin.service;
 
 import static ee.webmedia.alfresco.utils.SearchUtil.generateAspectQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyExactQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateStringExactQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
 
@@ -29,6 +29,7 @@ import java.util.Set;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.importer.ImportTimerProgress;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.dictionary.TypeDefinition;
@@ -213,6 +214,22 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
+    public DocumentTypeVersion getLatestDocTypeVer(String documentTypeId) {
+        DocumentType documentType = getDocumentType(documentTypeId, DocumentAdminService.DOC_TYPE_WITH_OUT_GRAND_CHILDREN_EXEPT_LATEST_DOCTYPE_VER);
+        DocumentTypeVersion docVer = documentType.getLatestDocumentTypeVersion();
+        return docVer;
+    }
+
+    @Override
+    public Map<String, DocumentTypeVersion> getLatestDocTypeVersions() {
+        Map<String, DocumentTypeVersion> documentTypes = new HashMap<String, DocumentTypeVersion>();
+        for (String documentTypeId : getDocumentTypeNames(null).keySet()) {
+            documentTypes.put(documentTypeId, getLatestDocTypeVer(documentTypeId));
+        }
+        return documentTypes;
+    }
+
+    @Override
     public DocumentType getDocumentType(String id, DynTypeLoadEffort effort) {
         NodeRef documentTypeRef = getDocumentTypeRef(id);
         return getDocumentType(documentTypeRef, effort);
@@ -350,17 +367,26 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
     @Override
     public Map<String/* docTypeId */, String/* docTypeName */> getDocumentTypeNames(Boolean used) {
-        Map<String, String> docTypesByDocTypeId = new HashMap<String, String>();
-        for (ChildAssociationRef childAssoc : nodeService.getChildAssocs(getDocumentTypesRoot())) {
+        return getDynamicTypeNames(used, getDocumentTypesRoot());
+    }
+
+    @Override
+    public Map<String/* docTypeId */, String/* docTypeName */> getCaseFileTypeNames(Boolean used) {
+        return getDynamicTypeNames(used, getCaseFileTypesRoot());
+    }
+
+    private Map<String, String> getDynamicTypeNames(Boolean used, NodeRef dynamicTypesRoot) {
+        Map<String, String> dynamicTypesByTypeId = new HashMap<String, String>();
+        for (ChildAssociationRef childAssoc : nodeService.getChildAssocs(dynamicTypesRoot)) {
             Map<QName, Serializable> props = nodeService.getProperties(childAssoc.getChildRef());
             Boolean documentTypeUsed = (Boolean) props.get(DocumentAdminModel.Props.USED);
             if (used == null || documentTypeUsed == used) {
                 String documentTypeId = (String) props.get(DocumentAdminModel.Props.ID);
                 String documentTypeName = (String) props.get(DocumentAdminModel.Props.NAME);
-                docTypesByDocTypeId.put(documentTypeId, documentTypeName);
+                dynamicTypesByTypeId.put(documentTypeId, documentTypeName);
             }
         }
-        return docTypesByDocTypeId;
+        return dynamicTypesByTypeId;
     }
 
     @Override
@@ -871,13 +897,13 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
     private boolean isDynamicTypeUsed(QName dynamicType, String dynamicTypeId) {
         // TODO DLSeadist maybe need to cache the result (very rare that document or case file type that was used becomes unused)
-        return documentSearchService.isMatch(
+        return documentSearchService.isMatchAllStoresWithTrashcan(
                 joinQueryPartsAnd(
                         joinQueryPartsAnd(
                                 generateTypeQuery(dynamicType)
                                 , generateAspectQuery(DocumentCommonModel.Aspects.SEARCHABLE)
                         )
-                        , generatePropertyExactQuery(Props.OBJECT_TYPE_ID, dynamicTypeId, false))
+                        , generateStringExactQuery(dynamicTypeId, Props.OBJECT_TYPE_ID))
                 );
     }
 
@@ -1175,7 +1201,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         // reverse associations to same type
         String query = joinQueryPartsAnd(
                 generateTypeQuery(DocumentAdminModel.Types.FOLLOWUP_ASSOCIATION, DocumentAdminModel.Types.REPLY_ASSOCIATION)
-                , generatePropertyExactQuery(DocumentAdminModel.Props.DOC_TYPE, docTypeId, false)
+                , generateStringExactQuery(docTypeId, DocumentAdminModel.Props.DOC_TYPE)
                 );
         List<NodeRef> associatedDocTypes = documentSearchService.searchNodes(query, -1, "searchAssocsToDocType:" + docTypeId);
 
@@ -1260,7 +1286,12 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
     @Override
     public <D extends DynamicType> void importDynamicTypes(File xmlFile, Class<D> dynTypeClass) {
-        new ImportHelper().importDynamicTypes(xmlFile, dynTypeClass);
+        importDynamicTypes(xmlFile, dynTypeClass, false);
+    }
+
+    @Override
+    public <D extends DynamicType> void importDynamicTypes(File xmlFile, Class<D> dynTypeClass, boolean cleanupInBackground) {
+        new ImportHelper().importDynamicTypes(xmlFile, dynTypeClass, cleanupInBackground);
     }
 
     /**
@@ -1285,13 +1316,13 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
      */
     private class ImportHelper {
 
-        <D extends DynamicType> void importDynamicTypes(File xmlFile, Class<D> dynTypeClass) {
+        <D extends DynamicType> void importDynamicTypes(File xmlFile, Class<D> dynTypeClass, boolean cleanupInBackground) {
             final String dynTypeMsg = dynTypeClass.getSimpleName() + "s";
             LOG.info("Starting to import " + dynTypeMsg);
-            QName assocQName = RepoUtil.createTransientProp("tmp");
+            QName assocQName = RepoUtil.createTransientProp("tmp_dynamic_import");
             NodeRef tmpFolderRef = generalService.getNodeRef("/" + assocQName);
             QName assocType = ContentModel.ASSOC_CHILDREN;
-            boolean tmpFolderExisted = tmpFolderRef != null;
+            final boolean tmpFolderExisted = tmpFolderRef != null;
             if (!tmpFolderExisted) {
                 NodeRef rootRef = generalService.getNodeRef("/");
                 tmpFolderRef = nodeService.createNode(rootRef, assocType, assocQName, ContentModel.TYPE_CONTAINER).getChildRef();
@@ -1317,12 +1348,19 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                 });
                 importableDocTypesRootRef = tmpDocumentTypesRef[0];
                 importDynamicTypes(importableDocTypesRootRef, dynTypeClass);
+                final NodeRef tmpFolderCleanupRef = tmpFolderRef;
+                final NodeRef importableDocTypesRootCleanupRef = importableDocTypesRootRef;
+                if (cleanupInBackground) {
+                    generalService.runOnBackground(new RunAsWork<Void>() {
 
-                if (!tmpFolderExisted) {
-                    nodeService.deleteNode(tmpFolderRef);
-                }
-                if (importableDocTypesRootRef != null && nodeService.exists(importableDocTypesRootRef)) {
-                    nodeService.deleteNode(importableDocTypesRootRef);
+                        @Override
+                        public Void doWork() throws Exception {
+                            cleanupTypeImportTempData(tmpFolderCleanupRef, tmpFolderExisted, importableDocTypesRootCleanupRef);
+                            return null;
+                        }
+                    }, "cleanupTypeImportTempData", true);
+                } else {
+                    cleanupTypeImportTempData(tmpFolderRef, tmpFolderExisted, importableDocTypesRootRef);
                 }
             } catch (FileNotFoundException e) {
                 throw new RuntimeException("Failed to read data for importing parameters from uploaded file: '" + xmlFile.getAbsolutePath() + "'", e);
@@ -1331,6 +1369,15 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
             } finally {
                 IOUtils.closeQuietly(fileReader);
                 LOG.info("Finished importing " + dynTypeMsg);
+            }
+        }
+
+        private void cleanupTypeImportTempData(NodeRef tmpFolderRef, boolean tmpFolderExisted, NodeRef importableDocTypesRootRef) {
+            if (!tmpFolderExisted) {
+                nodeService.deleteNode(tmpFolderRef);
+            }
+            if (importableDocTypesRootRef != null && nodeService.exists(importableDocTypesRootRef)) {
+                nodeService.deleteNode(importableDocTypesRootRef);
             }
         }
 
@@ -1586,15 +1633,19 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                     FieldGroup fieldGroup = (FieldGroup) metadataItem;
                     String fieldGroupName = fieldGroup.getName();
                     Set<NodeRef> savedNodeRefsInFieldGroup = neededNodeRefsByGroup.get(fieldGroupName);
-                    if (savedNodeRefsInFieldGroup == null) {
+                    if (!neededNodeRefsByGroup.get(null).contains(fieldGroup.getNodeRef())) {
                         if (existingFieldGroupsByName.containsKey(fieldGroupName)) {
                             it.remove(); // this fieldGroup was not present under docTypeVersion that is being imported
                         }
                     } else {
-                        for (Iterator<NodeRef> fieldsIt = savedNodeRefsInFieldGroup.iterator(); fieldsIt.hasNext();) {
-                            NodeRef nodeRef = fieldsIt.next();
-                            if (!savedNodeRefsInFieldGroup.contains(nodeRef)) {
-                                fieldsIt.remove(); // this field was not present under the same fieldGroup
+                        FieldGroup existingFieldGroup = existingFieldGroupsByName.get(fieldGroup.getName());
+                        if (existingFieldGroup != null) {
+                            existingFieldGroup.getFields().iterator();
+                            for (Iterator<Field> fieldsIt = existingFieldGroup.getFields().iterator(); fieldsIt.hasNext();) {
+                                NodeRef nodeRef = fieldsIt.next().getNodeRef();
+                                if (!savedNodeRefsInFieldGroup.contains(nodeRef)) {
+                                    fieldsIt.remove(); // this field was not present under the same fieldGroup
+                                }
                             }
                         }
                     }

@@ -2,12 +2,12 @@ package ee.webmedia.alfresco.document.bootstrap;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
@@ -28,8 +28,11 @@ public class ContractPartyAssocUpdater extends AbstractNodeUpdater {
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
         String query = SearchUtil.generateTypeQuery(DocumentCommonModel.Types.METADATA_CONTAINER);
-        return Arrays.asList(searchService.query(generalService.getStore(), SearchService.LANGUAGE_LUCENE, query),
-                searchService.query(generalService.getArchivalsStoreRef(), SearchService.LANGUAGE_LUCENE, query));
+        List<ResultSet> resultSets = new ArrayList<ResultSet>();
+        for (StoreRef storeRef : generalService.getAllStoreRefsWithTrashCan()) {
+            resultSets.add(searchService.query(storeRef, SearchService.LANGUAGE_LUCENE, query));
+        }
+        return resultSets;
     }
 
     @Override

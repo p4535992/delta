@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -40,6 +41,7 @@ import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.importer.excel.bootstrap.SmitExcelImporter;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 public class FunctionsListDialog extends BaseDialogBean {
@@ -54,6 +56,7 @@ public class FunctionsListDialog extends BaseDialogBean {
     private transient UserService userService;
     private transient GeneralService generalService;
     protected List<Function> functions;
+    private int deleteBatchSize = 30;
 
     @Override
     public void init(Map<String, String> params) {
@@ -142,19 +145,18 @@ public class FunctionsListDialog extends BaseDialogBean {
             independentWorkflows.add(childAssocRef.getChildRef());
         }
         log.info("There are " + independentWorkflows.size() + " independent compound workflow nodes to delete");
-        deleteNodeRefsBatch(independentWorkflows, 30);
+        deleteNodeRefsBatch(independentWorkflows, deleteBatchSize);
     }
 
     private void deleteAllDocumentsAndStructure(NodeRef functionsRoot, boolean deleteStructure) {
-        final int batchMaxSize = 30;
         log.info("Finding nodes to delete...");
         Pair<List<NodeRef>, List<NodeRef>> allDocumentAndStructureRefs = getDocumentListService().getAllDocumentAndStructureRefs(functionsRoot);
         List<NodeRef> docRefs = allDocumentAndStructureRefs.getFirst();
         List<NodeRef> structRefs = allDocumentAndStructureRefs.getSecond();
         log.info("There are " + docRefs.size() + " document nodes" + (deleteStructure ? " and " + structRefs.size() + " structure nodes" : "") + " to delete");
-        deleteNodeRefsBatch(docRefs, batchMaxSize);
+        deleteNodeRefsBatch(docRefs, deleteBatchSize);
         if (deleteStructure) {
-            deleteNodeRefsBatch(structRefs, batchMaxSize);
+            deleteNodeRefsBatch(structRefs, deleteBatchSize);
         }
     }
 
@@ -213,6 +215,13 @@ public class FunctionsListDialog extends BaseDialogBean {
     }
 
     public void createNewYearBasedVolumes(@SuppressWarnings("unused") ActionEvent event) {
+        if (!ActionUtil.hasParam(event, "eventConfirmed")) {
+            Map<String, String> params = new HashMap<String, String>(1);
+            params.put("eventConfirmed", "eventConfirmed");
+            BeanHelper.getUserConfirmHelper().setup("docList_createNewYearBasedVolumes_confirmProceed", null, "#{FunctionsListDialog.createNewYearBasedVolumes}", params);
+            return;
+        }
+
         final long createdVolumesCount = BeanHelper.getDocumentListService().createNewYearBasedVolumes();
         MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "docList_createNewYearBasedVolumes_success", createdVolumesCount);
     }
@@ -299,6 +308,14 @@ public class FunctionsListDialog extends BaseDialogBean {
             }
         }
         return seriesFunctions;
+    }
+
+    public int getDeleteBatchSize() {
+        return deleteBatchSize;
+    }
+
+    public void setDeleteBatchSize(int deleteBatchSize) {
+        this.deleteBatchSize = deleteBatchSize;
     }
 
     protected FunctionsService getFunctionsService() {

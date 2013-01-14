@@ -245,10 +245,9 @@ public class TextUtil {
         if (value instanceof List) {
             @SuppressWarnings("unchecked")
             List<Serializable> list = (List<Serializable>) value;
-            if (list.size() >= 2 && list.get(0) instanceof String && list.get(1) instanceof String && FieldType.STRUCT_UNIT == fieldTypeGetter.getValue()) {
-                @SuppressWarnings("unchecked")
-                List<String> orgStruct = (List<String>) value;
-                result = UserUtil.getDisplayUnit(orgStruct);
+            if (list.size() >= 2 && ((list.get(0) instanceof String && list.get(1) instanceof String) || (list.get(0) instanceof List && list.get(1) instanceof List))
+                    && FieldType.STRUCT_UNIT == fieldTypeGetter.getValue()) {
+                result = UserUtil.getDisplayUnitText(value);
             } else {
                 String[] resultValues = new String[((List<?>) value).size()];
                 int pos = 0;

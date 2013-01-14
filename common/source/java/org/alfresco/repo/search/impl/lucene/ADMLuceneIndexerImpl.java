@@ -108,6 +108,7 @@ import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.utils.ClosingTransactionListener;
+import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
@@ -911,7 +912,8 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
         }
         boolean wereAllAtomic = true;
         // convert value to String
-        for (Serializable serializableValue : DefaultTypeConverter.INSTANCE.getCollection(Serializable.class, value))
+        // Flatten nested lists before that
+        for (Serializable serializableValue : DefaultTypeConverter.INSTANCE.getCollection(Serializable.class, RepoUtil.flatten(value)))
         {
             String strValue = null;
             try

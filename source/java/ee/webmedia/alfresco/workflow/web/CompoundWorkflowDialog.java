@@ -187,6 +187,11 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         initBlocks(true, true);
     }
 
+    @Override
+    public boolean canRestore() {
+        return compoundWorkflow != null && (RepoUtil.isUnsaved(compoundWorkflow.getNodeRef()) || getNodeService().exists(compoundWorkflow.getNodeRef()));
+    }
+
     private void initBlocks() {
         initBlocks(false, true);
     }
@@ -204,7 +209,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             BeanHelper.getRelatedUrlListBlock().setup(compoundWorkflow);
         }
         DialogDataProvider dataProvider = BeanHelper.getDocumentDialogHelperBean().getDataProvider();
-        if (dataProvider instanceof CaseFileDialog && dataProvider.getCaseFile() != null) {
+        if (dataProvider instanceof CaseFileDialog && dataProvider.getCaseFile() != null && ((CaseFileDialog) dataProvider).canRestore()) {
             dataProvider.switchMode(false);
         }
     }
@@ -263,7 +268,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                 updatePanelGroup(confirmationMessages, hasWorkflowBlockCallback ? workflowBlockCallback : SAVE_VALIDATED_WORKFLOW, true, true, params, !hasWorkflowBlockCallback);
                 return null;
             }
-            return saveOrConfirmValidatedWorkflow(isIndependentCompoundWorkflow() ? null : outcome, hasWorkflowBlockCallback);
+            return saveOrConfirmValidatedWorkflow(!isDocumentWorkflow() ? null : outcome, hasWorkflowBlockCallback);
         }
         return null;
     }
@@ -280,7 +285,10 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         String confirmationOutcome = askConfirmIfHasSameTask(MessageUtil.getMessage("workflow_compound_save"), DialogAction.SAVING, false);
         if (confirmationOutcome == null) {
             confirmationOutcome = originalOutcome;
-            saveCompWorkflow();
+            boolean saveSucceeded = saveCompWorkflow();
+            if (!saveSucceeded) {
+                confirmationOutcome = null;
+            }
             updatePanelGroup(null, null, true, true, null, !finishingTask);
             initBlocks(false, !finishingTask);
             if (finishingTask) {
@@ -363,13 +371,8 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         } catch (NodeLockedException e) {
             log.debug("Compound workflow action failed: document locked!", e);
             BeanHelper.getDocumentLockHelperBean().handleLockedNode("workflow_compound_save_failed_docLocked", e.getNodeRef());
-        } catch (WorkflowChangedException e) {
+        } catch (Exception e) {
             handleException(e, null);
-        } catch (WorkflowActiveResponsibleTaskException e) {
-            log.debug("Compound workflow action failed: more than one active responsible task!", e);
-            MessageUtil.addErrorMessage("workflow_compound_save_failed_responsible");
-        } catch (RuntimeException e) {
-            throw e;
         }
         return false;
     }
@@ -562,6 +565,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
      * This method assumes that workflows has been validated
      */
     public void startValidatedWorkflow(@SuppressWarnings("unused") ActionEvent event) {
+        boolean succeeded = false;
         try {
             // clear panelGroup to avoid memory issues when working with large worflows
             resetPanelGroup(true);
@@ -569,19 +573,20 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             isUnsavedWorkFlow = false;
             setReviewTaskDvkInfoMessages();
             MessageUtil.addInfoMessage("workflow_compound_start_success");
+            succeeded = true;
         } catch (Exception e) {
             handleException(e, "workflow_compound_start_workflow_failed", START_VALIDATED_WORKFLOW);
         }
         updatePanelGroup(false);
         initBlocks();
         swithModeIfDocumentWorkflow();
-        if (!isIndependentCompoundWorkflow()) {
+        if (succeeded && isDocumentWorkflow()) {
             WebUtil.navigateTo(getDefaultFinishOutcome());
         }
     }
 
-    private boolean isIndependentCompoundWorkflow() {
-        return compoundWorkflow != null && compoundWorkflow.isIndependentWorkflow();
+    private boolean isDocumentWorkflow() {
+        return compoundWorkflow == null || compoundWorkflow.isDocumentWorkflow();
     }
 
     private List<String> getConfirmationMessages(boolean checkDocumentDueDate) {

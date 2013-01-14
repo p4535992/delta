@@ -76,6 +76,7 @@ import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
@@ -550,6 +551,49 @@ public class ReportServiceImpl implements ReportService {
         }
     }
 
+    private String formatBoolean(Boolean value) {
+        return value == null ? "" : (value ? "jah" : "ei");
+    }
+
+    private String formatList(List value) {
+        if (value == null || value.isEmpty()) {
+            return "";
+        }
+        boolean isString = false;
+        boolean isAllBlank = true;
+        boolean isCollection = false;
+        for (Object listElement : value) {
+            if (listElement != null && isAllBlank) {
+                isAllBlank = false;
+            }            
+            if (listElement instanceof String) {
+                isString = true;
+                break;
+            }
+            if (listElement instanceof List) {
+                isCollection = true;
+                break;
+            }
+        }
+        if (isString || isAllBlank) {
+            return TextUtil.joinNonBlankStringsWithComma(value);
+        } else if (isCollection) {
+            StringBuffer sb = new StringBuffer("(");
+            int i = 0;
+            for (Object listElement : value) {
+                List list = (List) listElement;
+                if (i++ > 0) {
+                    sb.append(", ");
+                }
+                sb.append(formatList(list));
+            }
+            sb.append(")");
+            return sb.toString();
+        } else {
+            return value.toString();
+        }
+    }
+
     private static class RowProvider {
         private final Sheet sheet;
         private int rowNum;
@@ -664,9 +708,13 @@ public class ReportServiceImpl implements ReportService {
             if (task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK, WorkflowSpecificModel.Types.REVIEW_TASK, WorkflowSpecificModel.Types.OPINION_TASK)) {
                 setCellValueTruncateIfNeeded(row.createCell(cellIndex++), task.getOutcome(), LOG);
             } else {
-                setCellValueTruncateIfNeeded(row.createCell(cellIndex++), task.getOutcome() + ": " + task.getComment(), LOG);
+                String outcome = task.getOutcome();
+                String comment = task.getComment();
+                boolean notBlankComment = StringUtils.isNotBlank(comment);
+                setCellValueTruncateIfNeeded(row.createCell(cellIndex++),
+                        ((StringUtils.isNotBlank(outcome) || notBlankComment) ? (outcome + (notBlankComment ? (": " + comment) : "")) : null), LOG);
             }
-            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), task.isResponsible() ? "jah" : "ei", LOG);
+            setCellValueTruncateIfNeeded(row.createCell(cellIndex++), formatBoolean(task.isResponsible()), LOG);
             setCellValueTruncateIfNeeded(row.createCell(cellIndex++), formatDateOrEmpty(DATE_FORMAT, task.getStoppedDateTime()), LOG);
             setCellValueTruncateIfNeeded(row.createCell(cellIndex++), task.getResolution(), LOG);
             setCellValueTruncateIfNeeded(row.createCell(cellIndex++), isAfterDate(task.getCompletedDateTime(), task.getDueDate()) ? "jah" : "ei", LOG);
@@ -847,6 +895,10 @@ public class ReportServiceImpl implements ReportService {
                     string = (String) prop;
                 } else if (prop instanceof Date) {
                     string = formatDateOrEmpty(DATE_FORMAT, (Date) prop);
+                } else if (prop instanceof Boolean) {
+                    string = formatBoolean((Boolean) prop);
+                } else if (prop instanceof List) {
+                    string = formatList((List) prop);
                 } else if (prop != null) {
                     string = prop.toString();
                 }

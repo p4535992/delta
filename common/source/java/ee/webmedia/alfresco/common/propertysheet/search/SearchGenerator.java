@@ -94,6 +94,7 @@ public class SearchGenerator extends BaseComponentGenerator {
         addValueFromCustomAttributes(Search.ATTR_TOOLTIP_MB, attributes);
         addValueFromCustomAttributes(Search.ALLOW_CLEAR_SINGLE_VALUED, attributes, Boolean.class, false);
         addValueFromCustomAttributes(Search.FILTER_INDEX, attributes, Integer.class);
+        addValueFromCustomAttributes(Search.TEXTAREA, attributes, Boolean.class);
         addValueFromCustomAttributes(MultiValueEditor.ADD_LABEL_ID, attributes);
         addValueFromCustomAttributes(Search.SEARCH_SUGGEST_DISABLED, attributes, Boolean.class, false);
         return attributes;

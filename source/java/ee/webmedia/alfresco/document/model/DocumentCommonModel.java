@@ -58,6 +58,8 @@ public interface DocumentCommonModel {
         QName DOCUMENT_REG_NUMBERS_CONTAINER = QName.createQName(DOCCOM_URI, "documentRegNumbersContainer");
         /** Indicates that when deleting this document, it should not be archived */
         QName DELETE_PERMANENT = QName.createQName(DOCCOM_URI, "deletePermanent");
+        QName NOT_EDITABLE = QName.createQName(DOCCOM_URI, "notEditable");
+        QName INVOICE_XML = QName.createQName(DOCCOM_URI, "invoiceXml");
     }
 
     interface Assocs {
@@ -156,6 +158,9 @@ public interface DocumentCommonModel {
         QName LEGAL_BASIS_NAME = QName.createQName(URI, "legalBasisName");
 
         QName UPDATE_METADATA_IN_FILES = QName.createQName(DOCCOM_URI, "updateMetadataInFiles");
+
+        QName NOT_EDITABLE = QName.createQName(DOCCOM_URI, "notEditable");
+        QName INVOICE_XML = QName.createQName(DOCCOM_URI, "invoiceXml");
 
     }
 

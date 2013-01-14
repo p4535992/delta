@@ -101,6 +101,9 @@ public class RegNumberGenerator extends BaseSystematicFieldGenerator {
         }
     }
 
+    // XXX if user manually changes regNumber of document, then we should update shortRegNumber and individualNumber also
+    // but how? this is very difficult. it was decided that these are left as is
+
     // ===============================================================================================================================
 
     public static class RegNumberState extends BasePropertySheetStateHolder {

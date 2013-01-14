@@ -19,6 +19,9 @@ import ee.webmedia.alfresco.menu.web.MenuItemCountBean;
  */
 public abstract class CountAddingMenuItemProcessor implements MenuService.MenuItemProcessor {
 
+    final public static char COUNT_SUFFIX_START = '(';
+    final public static char COUNT_SUFFIX_END = ')';
+
     @Override
     final public void doWithMenuItem(MenuItem menuItem) {
         FacesContext facesContext = FacesContext.getCurrentInstance();
@@ -49,12 +52,12 @@ public abstract class CountAddingMenuItemProcessor implements MenuService.MenuIt
 
         String title = menuItem.getTitle();
         int firstBrace = -1;
-        if (title.endsWith(")")) {
-            firstBrace = title.lastIndexOf('(');
+        if (title.endsWith(String.valueOf(COUNT_SUFFIX_END))) {
+            firstBrace = title.lastIndexOf(COUNT_SUFFIX_START);
         }
         String titleSuffix = "";
         if (countValue != 0) {
-            titleSuffix += " (" + countValue + ")";
+            titleSuffix += " " + COUNT_SUFFIX_START + countValue + COUNT_SUFFIX_END;
         }
         if (firstBrace > 0) {
             title = title.substring(0, firstBrace);

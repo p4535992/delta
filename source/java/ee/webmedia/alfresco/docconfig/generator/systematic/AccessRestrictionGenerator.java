@@ -34,13 +34,14 @@ import org.apache.commons.lang.time.DateUtils;
 import ee.webmedia.alfresco.adr.service.AdrService;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.PublishToAdr;
-import ee.webmedia.alfresco.common.model.DynamicBase;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
+import ee.webmedia.alfresco.common.model.DynamicBase;
 import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorAndTextGenerator;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.common.propertysheet.multivalueeditor.PropsBuilder;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
@@ -63,6 +64,8 @@ import ee.webmedia.alfresco.utils.TextUtil;
  * @author Alar Kvell
  */
 public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
+
+    public static final String BEAN_NAME = "accessRestrictionGenerator";
 
     private static final String VIEW_MODE_PROP_SUFFIX = "View";
     public static final String ACCESS_RESTRICTION_CHANGE_REASON_ERROR = "accessRestrictionChangeReasonError";
@@ -376,10 +379,12 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
         // If user changed the access restriction, verify that reason was also changed
         final String reason = (String) document.getProp(DocumentDynamicDialog.TEMP_ACCESS_RESTRICTION_CHANGE_REASON);
         if (StringUtils.isNotBlank(reason)) {
-            // Reset the reason in repository so DocumentPropertyChangeHolder can pick up the change when user enters the same value
-            nodeService.removeProperty(nodeRef, ACCESS_RESTRICTION_CHANGE_REASON);
-            document.setProp(ACCESS_RESTRICTION_CHANGE_REASON, reason);
-            document.getNode().getProperties().remove(DocumentDynamicDialog.TEMP_ACCESS_RESTRICTION_CHANGE_REASON);
+            if (!Boolean.TRUE.equals(document.getProp(DocumentDynamicDialog.TEMP_VALIDATE_WITHOUT_SAVE))) {
+                // Reset the reason in repository so DocumentPropertyChangeHolder can pick up the change when user enters the same value
+                nodeService.removeProperty(nodeRef, ACCESS_RESTRICTION_CHANGE_REASON);
+                document.setProp(ACCESS_RESTRICTION_CHANGE_REASON, reason);
+                document.getNode().getProperties().remove(DocumentDynamicDialog.TEMP_ACCESS_RESTRICTION_CHANGE_REASON);
+            }
             return;
         }
 
@@ -421,17 +426,29 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
 
         String oldAccessRestriction = (String) oldProps.get(ACCESS_RESTRICTION);
         if (oldAccessRestriction != null && !accessRestriction.equals(oldAccessRestriction)
-                    && (AccessRestriction.INTERNAL.equals(accessRestriction) || AccessRestriction.OPEN.equals(accessRestriction))) {
-            newProps.put(ACCESS_RESTRICTION_REASON.toString(), null);
-            newProps.put(ACCESS_RESTRICTION_BEGIN_DATE.toString(), null);
-            newProps.put(ACCESS_RESTRICTION_END_DATE.toString(), null);
-            newProps.put(ACCESS_RESTRICTION_END_DESC.toString(), null);
+                && (AccessRestriction.INTERNAL.equals(accessRestriction) || AccessRestriction.OPEN.equals(accessRestriction))) {
+            setHiddenFieldsNull(newProps);
         }
 
         if (!document.isDraftOrImapOrDvk()) {
             if (!getChangedAccessRestrictionFieldIds(document, oldProps).isEmpty()) {
                 document.setAccessRestrictionPropsChanged(true);
             }
+        }
+    }
+
+    private void setHiddenFieldsNull(Map<String, Object> newProps) {
+        newProps.put(ACCESS_RESTRICTION_REASON.toString(), null);
+        newProps.put(ACCESS_RESTRICTION_BEGIN_DATE.toString(), null);
+        newProps.put(ACCESS_RESTRICTION_END_DATE.toString(), null);
+        newProps.put(ACCESS_RESTRICTION_END_DESC.toString(), null);
+    }
+
+    public void clearHiddenValues(WmNode node) {
+        Map<String, Object> properties = node.getProperties();
+        String accessRestriction = (String) properties.get(ACCESS_RESTRICTION);
+        if (AccessRestriction.INTERNAL.equals(accessRestriction) || AccessRestriction.OPEN.equals(accessRestriction)) {
+            setHiddenFieldsNull(properties);
         }
     }
 

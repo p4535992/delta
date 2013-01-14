@@ -555,7 +555,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         // TODO: maybe check if all returned tasks belong to one document?
         for (Task task : dvkTasks) {
             NodeRef docRef = getTaskDocument(task);
-            if (Boolean.TRUE.equals(nodeService.getProperty(docRef, DocumentSpecificModel.Props.NOT_EDITABLE))) {
+            if (Boolean.TRUE.equals(nodeService.getProperty(docRef, DocumentCommonModel.Props.NOT_EDITABLE))) {
                 return docRef;
             }
         }
@@ -568,7 +568,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         Task task = null;
         for (Task tsk : dvkTasks) {
             NodeRef docRef = getTaskDocument(tsk);
-            if (task == null || !nodeService.hasAspect(docRef, DocumentSpecificModel.Aspects.NOT_EDITABLE)) {
+            if (task == null || !nodeService.hasAspect(docRef, DocumentCommonModel.Aspects.NOT_EDITABLE)) {
                 task = tsk;
             }
         }

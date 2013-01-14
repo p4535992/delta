@@ -10,6 +10,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
 import ee.webmedia.alfresco.document.file.service.FileService;
@@ -45,7 +46,8 @@ public class MoveTaskFileToChildAssoc extends AbstractNodeUpdater {
         if (reader == null) {
             return new String[] { "contentDataIsNull" };
         }
-        String fileName = "Arvamuse fail" + mimetypeService.getExtension(reader.getMimetype());
+        String extension = mimetypeService.getExtension(reader.getMimetype());
+        String fileName = "Arvamuse fail." + (StringUtils.isNotBlank(extension) ? extension : "bin");
         fileService.addFile(fileName, fileName, nodeRef, reader);
         nodeService.removeAspect(nodeRef, propName);
         return new String[] { "addedFileToTask", fileName, reader.getContentUrl(), reader.getEncoding(), "" + reader.getLocale(), reader.getMimetype(), "" + reader.getSize() };

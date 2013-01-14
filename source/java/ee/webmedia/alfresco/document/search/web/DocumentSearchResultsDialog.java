@@ -223,21 +223,35 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
             String fieldTitle = fieldDefinition.getName();
             String valueBinding;
             boolean isStructUnit = fieldDefinition.getFieldTypeEnum().equals(FieldType.STRUCT_UNIT);
+            String sortValue = null;
+            String primaryQNamePrefixString = primaryQName.toPrefixString(getNamespaceService());
             if (primaryQName.equals(DocumentCommonModel.Props.CASE)) {
                 valueBinding = "#{r.caseLabel}";
+                sortValue = "caseLabel";
             } else if (primaryQName.equals(DocumentCommonModel.Props.FUNCTION)) {
                 valueBinding = "#{r.functionLabel}";
+                sortValue = "functionLabel";
             } else if (primaryQName.equals(DocumentCommonModel.Props.SERIES)) {
                 valueBinding = "#{r.seriesLabel}";
+                sortValue = "seriesLabel";
             } else if (primaryQName.equals(DocumentCommonModel.Props.VOLUME)) {
                 valueBinding = "#{r.volumeLabel}";
+                sortValue = "volumeLabel";
             } else if (primaryQName.equals(DocumentDynamicModel.Props.FIRST_KEYWORD_LEVEL)) {
                 valueBinding = "#{r.hierarchicalKeywords}";
                 fieldTitle = MessageUtil.getMessage("thesaurus_keywords");
+                sortValue = "hierarchicalKeywords";
             } else if (isStructUnit) {
-                valueBinding = "#{r.unitStrucPropsConvertedMap['" + primaryQName.toPrefixString(getNamespaceService()) + "']}";
+                valueBinding = "#{r.unitStrucPropsConvertedMap['" + primaryQNamePrefixString + "']}";
+                sortValue = "unitStrucPropsConvertedMap;" + primaryQNamePrefixString;
             } else {
-                valueBinding = "#{r.convertedPropsMap['" + primaryQName.toPrefixString(getNamespaceService()) + "']}";
+                valueBinding = "#{r.convertedPropsMap['" + primaryQNamePrefixString + "']}";
+                String fieldType = fieldDefinition.getFieldType();
+                if (!FieldType.DATE.name().equals(fieldType) && !FieldType.DOUBLE.name().equals(fieldType) && !FieldType.LONG.name().equals(fieldType)) {
+                    sortValue = "convertedPropsMap;" + primaryQNamePrefixString;
+                } else {
+                    sortValue = "properties;" + primaryQNamePrefixString;
+                }
             }
             List<UIComponent> valueComponent = new ArrayList<UIComponent>();
             if (primaryQName.equals(DocumentCommonModel.Props.DOC_NAME)) {
@@ -247,13 +261,14 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
                         titleLinkParams));
             } else if (primaryQName.equals(DocumentCommonModel.Props.VOLUME)) {
                 final Map<String, String> volumeLinkParams = new HashMap<String, String>(1);
-                volumeLinkParams.put("volumeNodeRef", "#{r.properties['" + primaryQName.toPrefixString(getNamespaceService()) + "']}");
+                volumeLinkParams.put("volumeNodeRef", "#{r.properties['" + primaryQNamePrefixString + "']}");
                 valueComponent.add(createActionLink(context, valueBinding, null, null, "#{VolumeListDialog.showVolumeContents}", null, volumeLinkParams));
             } else {
                 valueComponent.add(createActionLink(context, valueBinding, "#{DocumentDialog.action}", null, "#{DocumentDialog.open}", null,
                         titleLinkParams, !isStructUnit));
             }
-            createAndAddColumn(context, richList, fieldTitle, primaryQName.getLocalName(), false, valueComponent.toArray(new UIComponent[valueComponent.size()]));
+            createAndAddColumn(context, richList, fieldTitle, sortValue, false,
+                    valueComponent.toArray(new UIComponent[valueComponent.size()]));
         }
         createAndAddColumn(context, richList, MessageUtil.getMessage("document_allFiles"), null, true, createFileColumnContent(context));
     }

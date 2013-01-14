@@ -32,7 +32,7 @@ public class DocumentCompWorkflowSearchPropsUpdater extends AbstractNodeUpdater 
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
         String query = SearchUtil.generateTypeQuery(DocumentCommonModel.Types.DOCUMENT);
         List<ResultSet> resultSets = new ArrayList<ResultSet>();
-        for (StoreRef storeRef : generalService.getAllWithArchivalsStoreRefs()) {
+        for (StoreRef storeRef : generalService.getAllStoreRefsWithTrashCan()) {
             resultSets.add(searchService.query(storeRef, SearchService.LANGUAGE_LUCENE, query));
         }
         return resultSets;

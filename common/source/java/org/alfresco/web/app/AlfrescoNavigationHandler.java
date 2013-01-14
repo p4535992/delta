@@ -69,6 +69,7 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
     public final static String CLOSE_MULTIPLE_START = "[";
     public final static String CLOSE_MULTIPLE_END = "]";
     public final static String EXTERNAL_CONTAINER_SESSION = "externalDialogContainer";
+    public static final String DIALOG_CANNOT_RESTORE = "dialogCannotRestore";
 
     protected String dialogContainer = null;
     protected String wizardContainer = null;
@@ -730,9 +731,13 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
                 }
 
                 // get the appropriate view id for the stack object
-                String newViewId = getViewIdFromStackObject(context, stackObject);
-
-                // go to the appropraite page
+                String newViewId = getLastRestorableViewId(context, viewStack, stackObject);
+                if (viewStack.empty() && DIALOG_CANNOT_RESTORE.equals(newViewId)) {
+                    // shouldn't happen under normal circumstances, but just in case
+                    navigate(context, fromAction, "myalfresco");
+                    return;
+                }
+                // go to the appropriate page
                 goToView(context, newViewId);
             } else {
                 // we also need to empty the dialog stack if we have been given
@@ -761,7 +766,7 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
                     fromAction = DO_NOT_SAVE_VIEW;
                 } else {
                     viewStack.pop();
-                    previousViewId = getViewIdFromStackObject(context, topOfStack);
+                    previousViewId = getLastRestorableViewId(context, viewStack, topOfStack);
                 }
                 if (explicitCancel) {
                     dialogManager.cancel();
@@ -780,8 +785,9 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
                 if (isDialogOrWizard) {
                     // set the view id to the page at the top of the stack so when
                     // the new dialog or wizard closes it goes back to the correct page
-                    context.getViewRoot().setViewId(previousViewId);
-
+                    if (!DIALOG_CANNOT_RESTORE.equals(previousViewId)) {
+                        context.getViewRoot().setViewId(previousViewId);
+                    }
                     if (logger.isDebugEnabled()) {
                         logger.debug("view stack: " + viewStack);
                         logger.debug("Opening '" + overriddenOutcome + "' after " + closingItem +
@@ -802,6 +808,19 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
 
             navigate(context, fromAction, "myalfresco");
         }
+    }
+
+    private String getLastRestorableViewId(FacesContext context, final Stack<? extends Object> viewStack, Object stackObject) {
+        String newViewId = getViewIdFromStackObject(context, stackObject);
+        while (DIALOG_CANNOT_RESTORE.equals(newViewId) && !viewStack.empty()) {
+            stackObject = viewStack.pop();
+            MenuBean mb = getMenuBean(context);
+            if (mb != null) {
+                mb.removeBreadcrumbItem();
+            }
+            newViewId = getViewIdFromStackObject(context, stackObject);
+        }
+        return newViewId;
     }
 
     /**
@@ -825,8 +844,15 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
             viewId = (String) topOfStack;
         } else if (topOfStack instanceof DialogState) {
             // restore the dialog state and get the dialog container viewId
-            Application.getDialogManager().restoreState((DialogState) topOfStack);
-            viewId = getDialogContainer(context);
+            DialogState dialogState = (DialogState) topOfStack;
+            IDialogBean bean = dialogState.getDialog();
+            if (bean.canRestore()) {
+                Application.getDialogManager().restoreState(dialogState);
+                viewId = getDialogContainer(context);
+            } else {
+                bean.cancel();
+                viewId = DIALOG_CANNOT_RESTORE;
+            }
         } else if (topOfStack instanceof WizardState) {
             // restore the wizard state and get the wizard container viewId
             Application.getWizardManager().restoreState((WizardState) topOfStack);

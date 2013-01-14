@@ -319,8 +319,11 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                 // Create new version for the file. Aspect must be added, so do this now (no point of checking if file already has it).
                 versionsService.addVersionLockableAspect(existingGeneratedFile);
                 versionsService.setVersionLockableAspect(existingGeneratedFile, false);
-                versionsService.updateVersion(fileRef, displayName, false);
+                versionsService.updateVersion(existingGeneratedFile, displayName, false);
                 versionsService.updateVersionModifiedAspect(existingGeneratedFile);
+                // Unlock the node here, since previous method locked it and there is no session (e.g. Word) that would unlock the file.
+                versionsService.setVersionLockableAspect(existingGeneratedFile, false);
+
                 break; // Assume there is only one file.
             }
         }
@@ -646,7 +649,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                 + MessageUtil.getMessage("archivals_volume_word_file_heading_valid_to") + sep
                 + MessageUtil.getMessage("archivals_volume_word_file_heading_owner_name") + "\r\n");
         if (volumeRefs != null) {
-            int volumeCount = 0;
+            int volumeCount = 1;
             for (NodeRef volumeRef : volumeRefs) {
                 Map<QName, Serializable> props = nodeService.getProperties(volumeRef);
                 Date validFrom = (Date) props.get(VolumeModel.Props.VALID_FROM);
@@ -770,9 +773,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                 formulas.put(fieldId, MessageUtil.getMessage(msgKey));
                 continue;
             } else if (FieldType.STRUCT_UNIT == fieldType) {
-                @SuppressWarnings("unchecked")
-                List<String> orgStruct = (List<String>) propValue;
-                formulas.put(fieldId, UserUtil.getDisplayUnit(orgStruct));
+                formulas.put(fieldId, UserUtil.getDisplayUnitText(propValue));
                 continue;
             }
 

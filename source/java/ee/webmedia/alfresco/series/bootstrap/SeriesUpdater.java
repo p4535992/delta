@@ -44,6 +44,8 @@ public class SeriesUpdater extends AbstractNodeUpdater {
 
     private boolean seriesUpdater1Executed = false;
 
+    private boolean executeInBackground;
+
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() {
         NodeRef previousComponentRef = generalService.getNodeRef("/sys:system-registry/module:modules/module:simdhs/module:components/module:seriesUpdater", new StoreRef(
@@ -59,7 +61,7 @@ public class SeriesUpdater extends AbstractNodeUpdater {
     }
 
     @Override
-    protected String[] updateNode(NodeRef seriesRef) {
+    protected String[] updateNode(NodeRef seriesRef) throws Exception {
         List<String> logInfo = new ArrayList<String>();
 
         if (!seriesUpdater1Executed) {
@@ -153,12 +155,21 @@ public class SeriesUpdater extends AbstractNodeUpdater {
         return new String[] { "nodeRef", DOCUMENT_FILE_READ + " removed from auths", "volumeType added/changed", "newVolumeTypeValue" };
     }
 
-    // FIXME CL 187126 - commented this, because otherwise DocumentUpdater freezes on setPermission when updating from 3.5.1.20 to 3.5.3.3
-    // - both SeriesUpdater and DocumentUpdater run on this upgrade
+    @Override
+    protected void executeInternal() throws Throwable {
+        if (!isEnabled()) {
+            log.info("Skipping node updater, because it is disabled" + (isExecuteOnceOnly() ? ". It will not be executed again, because executeOnceOnly=true" : ""));
+            return;
+        }
+        if (executeInBackground) {
+            super.executeUpdaterInBackground();
+        } else {
+            super.executeUpdater();
+        }
+    }
 
-    // @Override
-    // protected boolean isRequiresNewTransaction() {
-    // return false; // otherwise freezes on setPermission when updating from 2.5.x to 3.5.2
-    // }
+    public void setExecuteInBackground(boolean executeInBackground) {
+        this.executeInBackground = executeInBackground;
+    }
 
 }

@@ -37,8 +37,7 @@ public class CreateOrMoveRootDirBootstrap implements InitializingBean {
                     + "] and dir.root.local [" + dirRootLocal.getAbsolutePath() + "]");
 
             if (dirContentstore.exists() || dirContentstoreDeleted.exists() || dirAuditContentstore.exists() || dirIndexes.exists() || dirIndexesBackup.exists()
-                    || !oldDirContentstore.exists() || !oldDirContentstoreDeleted.exists() || !oldDirAuditContentstore.exists() || !oldDirIndexes.exists()
-                    || !oldDirIndexesBackup.exists()) {
+                    || !oldDirContentstore.exists() || !oldDirContentstoreDeleted.exists() || !oldDirAuditContentstore.exists() || !oldDirIndexes.exists()) {
                 throw new RuntimeException(
                         "Automatic moving cannot be performed, either one of old directories does not exist or one of new directories exists. Please move directories manually.");
             }
@@ -53,7 +52,9 @@ public class CreateOrMoveRootDirBootstrap implements InitializingBean {
             rename(oldDirContentstoreDeleted, dirContentstoreDeleted);
             rename(oldDirAuditContentstore, dirAuditContentstore);
             rename(oldDirIndexes, dirIndexes);
-            rename(oldDirIndexesBackup, dirIndexesBackup);
+            if (oldDirIndexesBackup.exists()) {
+                rename(oldDirIndexesBackup, dirIndexesBackup);
+            }
 
             if (!dirRootUpdater.exists()) {
                 if (!dirRootUpdater.mkdirs()) {

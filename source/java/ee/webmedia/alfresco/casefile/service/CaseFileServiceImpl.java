@@ -46,6 +46,7 @@ import ee.webmedia.alfresco.document.log.service.DocumentPropertiesChangeHolder;
 import ee.webmedia.alfresco.document.log.service.PropertyChange;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.register.model.RegNrHolder2;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.service.DocumentServiceImpl;
 import ee.webmedia.alfresco.log.model.LogEntry;
@@ -213,9 +214,10 @@ public class CaseFileServiceImpl implements CaseFileService, BeanFactoryAware {
                 throw new UnableToPerformException("caseFile_volume_register_missing");
             }
             Register volRegister = registerService.getRegister(series.getVolRegister());
-            String volRegNumber = documentService.parseRegNrPattern(series, caseFileNode.getNodeRef(), null, volRegister, null, new Date(), series.getVolNumberPattern(),
-                    sameRegister);
-            props.put(VolumeModel.Props.VOLUME_MARK.toString(), volRegNumber);
+            
+            RegNrHolder2 holder = new RegNrHolder2(null, null, null);
+            documentService.setRegNrBasedOnPattern(series, caseFileNode.getNodeRef(), null, volRegister, holder, new Date(), series.getVolNumberPattern(), sameRegister);
+            props.put(VolumeModel.Props.VOLUME_MARK.toString(), holder.getRegNumber());
             props.put(VolumeModel.Props.VOL_SHORT_REG_NUMBER.toString(), volRegister.getCounter());
         }
 

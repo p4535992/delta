@@ -193,9 +193,9 @@
 
       <a:column id="col18_1" rendered="#{DialogManager.bean.showTransferringDeletingNextEventColumn}">
          <f:facet name="header">
-            <a:sortLink id="col18_1-sort" label="#{DialogManager.bean.nextEventLabel}" value="nextEvent" styleClass="header" />
+            <a:sortLink id="col18_1-sort" label="#{DialogManager.bean.nextEventLabel}" value="nextEventLabel" styleClass="header" />
          </f:facet>
-         <h:outputText id="col18_1-text" value="#{r.nextEvent}" />
+         <h:outputText id="col18_1-text" value="#{r.nextEventLabel}" />
       </a:column>
       
       <a:column id="col18_2" rendered="#{DialogManager.bean.showTransferringNextEventDateColumn}">

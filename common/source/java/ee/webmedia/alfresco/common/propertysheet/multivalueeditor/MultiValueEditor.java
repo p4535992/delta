@@ -45,6 +45,7 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.common.ajax.AjaxUpdateable;
 import ee.webmedia.alfresco.common.propertysheet.component.HandlesShowUnvalued;
 import ee.webmedia.alfresco.common.propertysheet.converter.ListNonBlankStringsWithCommaConverter;
+import ee.webmedia.alfresco.common.propertysheet.converter.ListToLongestStringConverter;
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.ComponentPropVO;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
@@ -395,15 +396,19 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
             requestMap.put(VALUE_INDEX_IN_MULTIVALUED_PROPERTY, rowIndex);
             componentPropVO.getCustomAttributes().put(VALUE_INDEX_IN_MULTIVALUED_PROPERTY, rowIndex.toString());
             final UIComponent component = ComponentUtil.generateAndAddComponent(context, componentPropVO, propertySheet, rowContainerChildren);
-            if (StringUtils.isBlank(componentPropVO.getCustomAttributes().get(PropertySheetElementReader.ATTR_CONVERTER))
-                    && component instanceof ValueHolder) {
+            if (component instanceof ValueHolder) {
                 Converter converter = ((ValueHolder) component).getConverter();
-                // Retract only MultiValueConverter that was set in BaseComponentGenerator#setupConverter
                 if (converter instanceof ListNonBlankStringsWithCommaConverter) {
                     Converter singleValueConverter = ((ListNonBlankStringsWithCommaConverter) converter).getSingleValueConverter();
-                    ((ValueHolder) component).setConverter(singleValueConverter);
+                    if ((StringUtils.isBlank(componentPropVO.getCustomAttributes().get(PropertySheetElementReader.ATTR_CONVERTER)))) {
+                        // Retract only MultiValueConverter that was set in BaseComponentGenerator#setupConverter
+                        ((ValueHolder) component).setConverter(singleValueConverter);
+                        // Some other converters that are not in componentPropVO#converter, are totally OK (like DatePickerConverter)
+                    }
+                    if (singleValueConverter instanceof ListToLongestStringConverter) {
+                        ((ValueHolder) component).setConverter(singleValueConverter);
+                    }
                 }
-                // Some other converters that are not in componentPropVO#converter, are totally OK (like DatePickerConverter)
             }
             // save valueIndex also to component, as it can be used in MandatoryIfValidator,
             // to find other UIInputs based on given property name and valueIndex(if component is multiValued)

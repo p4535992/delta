@@ -1,7 +1,7 @@
 package ee.webmedia.alfresco.template.bootstrap;
 
-import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyExactQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateAspectQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateStringExactQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
 
 import java.util.ArrayList;
@@ -13,7 +13,6 @@ import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
-import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
@@ -29,8 +28,8 @@ public class DocumentTemplateEmailTypeIdUpdater extends AbstractNodeUpdater {
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() {
         String query = joinQueryPartsAnd(Arrays.asList(
-                generateTypeQuery(SeriesModel.Types.SERIES),
-                generatePropertyExactQuery(DocumentTemplateModel.Prop.DOCTYPE_ID, "E-maili mall", false)
+                generateAspectQuery(DocumentTemplateModel.Aspects.TEMPLATE_EMAIL),
+                generateStringExactQuery("E-maili mall", DocumentTemplateModel.Prop.COMMENT)
                 ));
         List<ResultSet> result = new ArrayList<ResultSet>(2);
         result.add(searchService.query(generalService.getStore(), SearchService.LANGUAGE_LUCENE, query));

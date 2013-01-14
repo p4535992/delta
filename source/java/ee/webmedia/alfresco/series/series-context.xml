@@ -40,8 +40,19 @@
        <property name="dependsOn">
          <list>
             <ref bean="archivalsStoresBootstrap" />
+            <ref bean="SeriesDocNumberPatternUpdater" />
+            <ref bean="seriesRetentionPropsRemoveUpdater" />
+            <ref bean="SeriesDocNumberPatternAddRegisterSufPrefUpdater" />
+            <ref bean="series25To313DynamicDocTypeUpdater" />
+            <ref bean="alterAltAuthorityTable" />
+            <ref bean="createAccessControlEntryUniqueIndexBootstrap" />
+            <ref bean="webServiceDocumentsPermissionsUpdateBootstrap" />
+            <ref bean="volumeTypeAndNamespaceUpdater" />
+            <ref bean="volumeCaseFileEventPlanUpdater" />
          </list>
       </property>
+      <property name="batchSize" value="1" />
+      <property name="executeInBackground" value="${updater.version25To313.enabled}" />
    </bean>
 
    <bean id="seriesService" class="ee.webmedia.alfresco.series.service.SeriesServiceImpl">
@@ -72,11 +83,24 @@
    <!-- Used to add document regNr pattern to old series (CL task 174930) -->
    <bean id="SeriesDocNumberPatternUpdater" class="ee.webmedia.alfresco.document.bootstrap.SeriesDocNumberPatternUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="registerRootBootstrap" />
+         </list>
+      </property>       
    </bean>
    
    <!-- Adds to docNumberPattern register prefix and suffix if they exist. -->
    <bean id="SeriesDocNumberPatternAddRegisterSufPrefUpdater" class="ee.webmedia.alfresco.document.bootstrap.SeriesDocNumberPatternAddRegisterSufPrefUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+            <ref bean="registerRootBootstrap" />
+            <ref bean="changeRegisterSequenceToTableRowUpdater" />
+            <ref bean="SeriesDocNumberPatternUpdater" />
+         </list>
+      </property>      
    </bean>
 
    <bean id="seriesRetentionPropsRemoveUpdater" class="ee.webmedia.alfresco.series.bootstrap.SeriesRetentionPropsRemoveUpdater" parent="abstractNodeUpdater" >
@@ -85,9 +109,22 @@
       <property name="dependsOn">
          <list>
             <ref bean="archivalsStoresBootstrap" />
+            <ref bean="SeriesDocNumberPatternUpdater" />
          </list>
       </property>
    </bean>
+   
+   <bean id="series25To313DynamicDocTypeUpdater" class="ee.webmedia.alfresco.series.bootstrap.Series25To313DynamicDocTypeUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="enabled" value="${updater.version25To313.enabled}" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+            <ref bean="systematicDocumentTypesBootstrap" />
+            <ref bean="import25To313DynamicDocumentTypes" />            
+         </list>
+      </property>
+   </bean>   
 
    <!-- START: web beans: -->
 

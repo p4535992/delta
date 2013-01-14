@@ -85,6 +85,7 @@
       <property name="receivedInvoicePath" value="/imap-ext:imap-root/imap-ext:receivedInvoices" />
       <property name="sentEmailPath" value="${imap.config.home.rootPath}/imap-ext:sent" />
       <property name="generateNewRegNumberInReregistration" value="${conf.document-regnumber.generate-new-in-reregistration.enabled}" />
+      <property name="finishUnregisteredDocumentEnabled" value="${conf.document.finish-unregistered-document.enabled}" />
       <property name="docLockService" ref="DocLockService" />
       <property name="searchService" ref="SearchService" />
       <property name="volumeColumnEnabled" value="${conf.documents-list.volume-column.enabled}" />
@@ -346,21 +347,57 @@
       <property name="workflowService" ref="WmWorkflowService" />
       <property name="nodeService" ref="NodeService" />
    </bean>
-
-   <!-- NB! In the future replace this with 2.5 -> 3.x migration script -->
-   <bean id="deleteSubtypedDocuments" class="ee.webmedia.alfresco.document.bootstrap.DeleteSubtypedDocuments" parent="abstractNodeUpdater">
+   
+   <bean id="import25To313DynamicDocumentTypes" class="ee.webmedia.alfresco.document.bootstrap.Import25To313DynamicDocumentTypes" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="${updater.version25To313.enabled}" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="systematicDocumentTypesBootstrap" />
+         </list>
+      </property>
+      <property name="documentTypeXmlFile" value="${updater.version25To313.documentTypes}" />   
+   </bean>   
+
+   <bean id="convertToDynamicDocumentsUpdater" class="ee.webmedia.alfresco.document.bootstrap.ConvertToDynamicDocumentsUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="enabled" value="${updater.version25To313.enabled}" />
       <property name="dependsOn">
          <list>
             <ref bean="functionsRootBootstrap" />
             <ref bean="archivalsStoresBootstrap" />
             <ref bean="volumeTypeAndNamespaceUpdater" />
+            <ref bean="systematicDocumentTypesBootstrap" />
+            <ref bean="import25To313DynamicDocumentTypes" />
+            <ref bean="series25To313DynamicDocTypeUpdater" />
+            <ref bean="workflow25To313DynamicDocTypeUpdater" />
+            <ref bean="template25To313DynamicDocTypeUpdater" />
+            <!-- documentUpdater9 functionality called from convertToDynamicDocumentsUpdater uses fileEncodingUpdater updater's results -->
+            <ref bean="fileEncodingUpdater" />
+            <ref bean="classificatorRootBootstrap6_2" />
          </list>
       </property>
       <property name="dictionaryService" ref="DictionaryService" />
+      <property name="namespaceService" ref="NamespaceService" />
+      <property name="documentService" ref="DocumentService" />
+      <property name="permissionService" ref="PermissionService" />
+      <property name="documentDynamicService" ref="DocumentDynamicService" />
+      <property name="documentConfigService" ref="DocumentConfigService" />
+      <property name="workflowService" ref="WmWorkflowService" />
       <property name="transactionService" ref="TransactionService" />
-      <property name="documentListService" ref="DocumentListService" />
+      <property name="workflow25To313DynamicDocTypeUpdater" ref="workflow25To313DynamicDocTypeUpdater" />
+      <property name="batchSize" value="3" />
+      <!-- Updaters that are not needed when this updater is executing (meaning we are migrating from 2.5 to 3.13) -->
+      <property name="documentUpdater" ref="documentUpdater9" />
+      <property name="documentChangedTypePropertiesUpdater" ref="documentChangedTypePropertiesUpdater2" />
+      <property name="logAndDeleteObjectsWithMissingType" ref="logAndDeleteObjectsWithMissingType" />
+      <property name="registrationNumberReinventedUpdater" ref="registrationNumberReinventedUpdater" />
+      <property name="contractPartyAssocUpdater" ref="contractPartyAssocUpdater" />
+      <property name="taskUpdater" ref="taskUpdater" />
+      <property name="logAndDeleteNotExistingWorkflowTasks" ref="logAndDeleteNotExistingWorkflowTasks2" />
+      <property name="documentCompWorkflowSearchPropsUpdater" ref="documentCompWorkflowSearchPropsUpdater" />
+      <property name="documentAccessRestrictionUpdater" ref="documentAccessRestrictionUpdater2" />
    </bean>
 
    <bean id="registrationNumberReinventedUpdater" class="ee.webmedia.alfresco.document.bootstrap.RegistrationNumberReinventedUpdater" parent="abstractNodeUpdater">
@@ -368,7 +405,7 @@
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
-            <ref bean="deleteSubtypedDocuments" />
+            <ref bean="convertToDynamicDocumentsUpdater" />
          </list>
       </property>
    </bean>
@@ -378,7 +415,7 @@
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
-            <ref bean="deleteSubtypedDocuments" />
+            <ref bean="convertToDynamicDocumentsUpdater" />
          </list>
       </property>
    </bean>
@@ -401,7 +438,7 @@
       <property name="enabled" value="false" /><!-- Executed only from node-browser -->
       <property name="dependsOn">
          <list>
-            <ref bean="deleteSubtypedDocuments" />
+            <ref bean="convertToDynamicDocumentsUpdater" />
          </list>
       </property>
       <property name="mimetypeService" ref="MimetypeService" />

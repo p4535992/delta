@@ -67,7 +67,7 @@ public class DocumentDialogHelperBean implements Serializable {
     }
 
     public boolean isNotEditable() {
-        return isDocument() && Boolean.TRUE.equals(getProps().get(DocumentSpecificModel.Props.NOT_EDITABLE));
+        return isDocument() && Boolean.TRUE.equals(getProps().get(DocumentCommonModel.Props.NOT_EDITABLE));
     }
 
     public boolean isInprogressCompoundWorkflows() {

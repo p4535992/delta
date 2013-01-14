@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+﻿﻿<?xml version="1.0" encoding="UTF-8"?>
 <alfresco-config>
    <config>
       <actions>
@@ -98,7 +98,7 @@
          <show-property name="docdyn:title" display-label-id="volume_title" readOnlyIf="docdyn:status=suletud||hävitatud" styleClass="expand19-200"
             component-generator="TextAreaGenerator" />
          <show-property name="docdyn:volumeType" display-label-id="volume_volumeType" component-generator="GeneralSelectorGenerator" selectionItems="#{VolumeDetailsDialog.findVolumeTypesAllowed}"
-            readOnlyIf="docdyn:status=suletud||hävitatud" valueChangeListener="#{VolumeDetailsDialog.volumeTypeValueChanged}" />
+            readOnlyIf="docdyn:status=suletud||hävitatud" />
          <show-property name="docdyn:containsCases" display-label-id="volume_containsCases" component-generator="CheckboxGenerator" readOnlyIf="#{VolumeDetailsDialog.disableContainsCases}"
             valueChangeListener="#{VolumeDetailsDialog.containsCasesValueChanged}" />
          <show-property name="docdyn:casesCreatableByUser" display-label-id="volume_casesCreatableByUser" component-generator="CheckboxGenerator"

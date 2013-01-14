@@ -160,6 +160,7 @@ public class UserDataRestoreService {
                 Substitute newSubstitute = Substitute.newInstance();
                 newSubstitute.setSubstituteId((String) props.get(SubstituteModel.Props.SUBSTITUTE_ID));
                 newSubstitute.setSubstituteName((String) props.get(SubstituteModel.Props.SUBSTITUTE_NAME));
+                newSubstitute.setReplacedPersonUserName((String) getNodeService().getProperty(myPersonRef, ContentModel.PROP_USERNAME));
                 newSubstitute.setSubstitutionStartDate((Date) props.get(SubstituteModel.Props.SUBSTITUTION_START_DATE));
                 newSubstitute.setSubstitutionEndDate((Date) props.get(SubstituteModel.Props.SUBSTITUTION_END_DATE));
                 getSubstituteService().addSubstitute(myPersonRef, newSubstitute);

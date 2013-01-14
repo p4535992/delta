@@ -771,7 +771,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     }
 
     public boolean isInvoiceXmlOrIsClosed() {
-        return Boolean.TRUE.equals(node.getProperties().get(DocumentSpecificModel.Props.INVOICE_XML)) || isClosedOrNotEditable();
+        return Boolean.TRUE.equals(node.getProperties().get(DocumentCommonModel.Props.INVOICE_XML)) || isClosedOrNotEditable();
     }
 
     public boolean isNotEditable() {

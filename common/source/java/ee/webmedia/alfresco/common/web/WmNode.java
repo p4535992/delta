@@ -19,6 +19,7 @@ import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.security.AccessStatus;
+import org.alfresco.service.namespace.NamespaceException;
 import org.alfresco.service.namespace.NamespacePrefixResolver;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
@@ -334,12 +335,22 @@ public class WmNode extends TransientNode {
         if (!map.isEmpty()) {
             for (Entry<QName, Serializable> entry : map.entrySet()) {
                 s.append("\n    ");
-                s.append(entry.getKey().toPrefixString(namespacePrefixResolver));
+                s.append(qnameToPrefixString(namespacePrefixResolver, entry.getKey()));
                 s.append("=");
                 toStringWithClass(s, entry.getValue(), namespacePrefixResolver);
             }
         }
         return s.toString();
+    }
+
+    private static String qnameToPrefixString(NamespacePrefixResolver namespacePrefixResolver, QName qname) {
+        String qnameStr;
+        try {
+            qnameStr = qname.toPrefixString(namespacePrefixResolver);
+        } catch (NamespaceException e) {
+            qnameStr = qname.toString();
+        }
+        return qnameStr;
     }
 
     public static String toStringWithClass(Object value) {
@@ -371,7 +382,7 @@ public class WmNode extends TransientNode {
         if (value instanceof QName) {
             TypeDefinition typeDef = BeanHelper.getDictionaryService().getType((QName) value);
             if (typeDef == null) {
-                value = ((QName) value).toPrefixString(namespacePrefixResolver);
+                value = qnameToPrefixString(namespacePrefixResolver, (QName) value);
             } else {
                 value = typeDef.getTitle();
             }

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -14,6 +15,7 @@ import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.service.transaction.TransactionService;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
 import ee.webmedia.alfresco.doclist.service.DocumentListService;
@@ -32,6 +34,7 @@ public class TrashcanBootstrap extends AbstractNodeUpdater {
     private NodeService nodeService;
     private DocumentListService documentListService;
     private UserService userService;
+    private TransactionService transactionService;
 
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
@@ -39,13 +42,13 @@ public class TrashcanBootstrap extends AbstractNodeUpdater {
     }
 
     @Override
-    protected String[] updateNode(NodeRef nodeRef) throws Exception {
+    protected String[] updateNode(final NodeRef nodeRef) throws Exception {
         boolean delete = true;
         ChildAssociationRef origChildRef = (ChildAssociationRef) nodeService.getProperties(nodeRef).get(ContentModel.PROP_ARCHIVED_ORIGINAL_PARENT_ASSOC);
         QName type = nodeService.getType(nodeRef);
         boolean nodeExists = nodeService.exists(origChildRef.getParentRef());
         if (nodeExists && DocumentCommonModel.Types.DOCUMENT.equals(type)
-                 && !DocumentCommonModel.Types.DRAFTS.equals(nodeService.getType(origChildRef.getParentRef()))) {
+                && !DocumentCommonModel.Types.DRAFTS.equals(nodeService.getType(origChildRef.getParentRef()))) {
             delete = false;
         }
         if (ContentModel.TYPE_CONTENT.equals(type)) {
@@ -53,8 +56,19 @@ public class TrashcanBootstrap extends AbstractNodeUpdater {
         }
         String log[];
         if (delete) {
-            nodeService.deleteNode(nodeRef);
-            log = new String[] { "Deleted" };
+            try {
+                log = transactionService.getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<String[]>() {
+
+                    @Override
+                    public String[] execute() throws Throwable {
+                        nodeService.deleteNode(nodeRef);
+                        return new String[] { "Deleted" };
+                    }
+
+                }, false, true);
+            } catch (IllegalArgumentException e) {
+                log = new String[] { "deleting_failed" };
+            }
         } else {
             Map<QName, Serializable> oldProperties = nodeService.getProperties(nodeRef);
             Map<QName, Serializable> newProperties = new HashMap<QName, Serializable>();
@@ -96,5 +110,9 @@ public class TrashcanBootstrap extends AbstractNodeUpdater {
 
     public void setDocumentService(DocumentService documentService) {
         this.documentService = documentService;
+    }
+
+    public void setTransactionService(TransactionService transactionService) {
+        this.transactionService = transactionService;
     }
 }

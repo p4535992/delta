@@ -46,7 +46,7 @@ public abstract class AppConstants {
         return beanFactory;
     }
 
-    private static Locale getDefaultLocale() {
+    public static Locale getDefaultLocale() {
         return new Locale("et", "EE", "");
     }
 

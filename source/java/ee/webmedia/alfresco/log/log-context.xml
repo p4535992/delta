@@ -92,9 +92,25 @@
          <list>
             <ref bean="archivalsStoresBootstrap" />
             <ref bean="logSequenceInitBootstrap" />
+            <ref bean="logTableAlterIndexesBootstrap" />
          </list>
       </property>
-   </bean>   
+   </bean>  
+   
+   <!-- Executed manually from nodeBrowser -->
+   <bean id="deleteAllLogNodesFromRepo" class="ee.webmedia.alfresco.log.bootstrap.DeleteAllLogNodesFromRepo" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="false" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="moveDocumentAndSeriesLogToAppLog2" /> 
+            <ref bean="logSequenceInitBootstrap" />
+            <ref bean="logTableAlterIndexesBootstrap" />   
+         </list>
+      </property>
+      <property name="batchSize" value="1" />
+   </bean>
 
    <!-- WEB/JSF -->
 

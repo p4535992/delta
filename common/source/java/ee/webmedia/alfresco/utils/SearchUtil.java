@@ -9,7 +9,6 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -49,106 +48,8 @@ public class SearchUtil {
      * @param date
      * @return "yyyy-MM-dd'T'00:00:00.000" if the property is not residual, else "yyyy-MM-dd"
      */
-    public static String formatLuceneDate(Date date) {
+    private static String formatLuceneDate(Date date) {
         return luceneDateFormat.format(date);
-    }
-
-    /**
-     * Replace characters that have special meaning in Lucene query.
-     * 
-     * @see QueryParser#escape(String)
-     */
-    // TODO use replaceCustom instead, it replaces fewer characters
-    public static String replace(String s, String replacement) {
-        StringBuffer sb = new StringBuffer();
-        for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
-            if (c == '\\' || c == '+' || c == '-' || c == '!' || c == '(' || c == ')' || c == ':' || c == '^' || c == '[' || c == ']' || c == '"' || c == '{'
-                    || c == '}' || c == '~' || c == '*' || c == '?' || c == '|' || c == '&') {
-                // replace special characters
-                sb.append(replacement);
-            } else {
-                sb.append(c);
-            }
-        }
-        return sb.toString();
-    }
-
-    /**
-     * Generate Lucene query for searching nodes by property values. Input string is tokenized by space and search query is constructed so that all tokens must
-     * be present in any node property (AND search).
-     * 
-     * @param input search string, all special characters must be stripped or escaped previously
-     * @param type node type, may be {@code null}
-     * @param props node properties that are searched
-     * @return Lucene search query
-     */
-    public static String generateQuery(String input, QName type, Set<QName> props) {
-        StringBuilder query = new StringBuilder(128);
-        if (type != null) {
-            query.append("+(TYPE:\"").append(QueryParser.escape(type.toString())).append("\")");
-        }
-        for (StringTokenizer t = new StringTokenizer(input, " "); t.hasMoreTokens();) {
-            String term = t.nextToken();
-            query.append(" +(");
-            for (QName prop : props) {
-                query.append(" @").append(QueryParser.escape(prop.toString())).append(":\"*");
-                query.append(term);
-                query.append("*\"");
-            }
-            query.append(")");
-        }
-        return query.toString();
-    }
-
-    /**
-     * Generate Lucene query for searching nodes by property values. Input string is tokenized by space and search query is constructed so that all tokens must
-     * be present in any node property (AND search).
-     * 
-     * @param input search string, all special characters must be stripped or escaped previously
-     * @param type node type, may be {@code null}
-     * @param prop node property that is searched
-     * @return Lucene search query
-     */
-    public static String generateQuery(String input, QName type, QName prop) {
-        Set<QName> props = new HashSet<QName>(1);
-        props.add(prop);
-        return generateQuery(input, type, props);
-    }
-
-    /**
-     * Replace a custom set of characters that have special meaning in Lucene query, others need to be replaced outside of this method.
-     * Compared to default set we don't replace +, -, &
-     * 
-     * @see QueryParser#escape(String) for default set
-     */
-    public static String replaceCustom(String s, String replacement) {
-        // \ ! ( ) : ^ [ ] " { } ~ * ? | , ´ ` ; + _ < > ½ § = % $ ¤ # £ ¹ ˇ ¬ … ' && ..
-        // Not done . - / @ &
-        StringBuffer sb = new StringBuffer();
-        boolean skip = false;
-        for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
-            if (c == '&' || c == '.') {
-                if (s.length() > i + 1 && s.charAt(i + 1) == c) {
-                    skip = true;
-                    continue;
-                }
-                if (skip) {
-                    skip = false;
-                    continue;
-                }
-            }
-            if (c == '\\' || c == '!' || c == '(' || c == ')' || c == ':' || c == '^' || c == '[' || c == ']' || c == '"' || c == '{' || c == '}' || c == '~'
-                    || c == '*' || c == '?' || c == '|' || c == ',' || c == '´' || c == '`' || c == ';' || c == '+' || c == '_' || c == '<'
-                    || c == '>' || c == '½' || c == '§' || c == '=' || c == '%' || c == '$' || c == '¤' || c == '#' || c == '£' || c == '¹' || c == 'ˇ'
-                    || c == '¬' || c == '…' || c == '\'') {
-                sb.append(replacement);
-            } else {
-                sb.append(c);
-            }
-        }
-        return sb.toString();
     }
 
     /**
@@ -157,7 +58,7 @@ public class SearchUtil {
      * For example *11-21/344* will find the correct results, *11-21* will also find the correct results
      * but *11-21/* will be replaced with *11-21 (missing the end wildcard) and will not find the correct results.
      */
-    public static String stripCustom(String s) {
+    private static String stripCustom(String s) {
         int firstChar = 0;
         int lastChar = s.length();
         for (int i = 0; i < s.length(); i++) {
@@ -186,26 +87,23 @@ public class SearchUtil {
      * @param escape - should values be escaped?
      * @return Lucene query string that accepts any given property value for given property
      */
-    public static String generatePropertyExactQuery(QName propName, Collection<String> acceptablePropertyValues, boolean escape) {
+    public static String generatePropertyExactQuery(QName propName, Collection<String> acceptablePropertyValues) {
         List<String> queryParts = new ArrayList<String>();
         for (String value : acceptablePropertyValues) {
-            queryParts.add(generatePropertyExactQuery(propName, value, escape));
+            queryParts.add(generatePropertyExactQuery(propName, value));
         }
         return joinQueryPartsOr(queryParts);
     }
 
-    public static String generatePropertyExactQuery(QName propName, String value, boolean escape) {
+    public static String generatePropertyExactQuery(QName propName, String value) {
         if (StringUtils.isBlank(value)) {
             return null;
         }
-        if (escape) {
-            value = QueryParser.escape(stripCustom(value));
-        }
-        return "@" + Repository.escapeQName(propName) + ":\"" + value + "\"";
+        return "@" + Repository.escapeQName(propName) + ":\"" + QueryParser.escape(stripCustom(value)) + "\"";
     }
 
-    public static String generatePropertyExactNotQuery(QName documentPropName, String value, boolean escape) {
-        return "NOT " + generatePropertyExactQuery(documentPropName, value, escape);
+    public static String generatePropertyExactNotQuery(QName documentPropName, String value) {
+        return "NOT " + generatePropertyExactQuery(documentPropName, value);
     }
 
     private static String generatePropertyNotEmptyQuery(QName documentPropName) {
@@ -236,36 +134,30 @@ public class SearchUtil {
      * @param value The document property value to search for.
      * @return The generated clause as string.
      */
-    public static String generateValueQuery(String value, boolean escape) {
-        if (escape) {
-            value = QueryParser.escape(stripCustom(value));
-        }
-        return "VALUES:" + value + "*";
+    public static String generateValuesWildcardQuery(String value) {
+        return "VALUES:\"" + QueryParser.escape(stripCustom(value)) + "*\"";
     }
 
-    public static String generatePropertyWildcardQuery(QName documentPropName, String value, boolean escape, boolean leftWildcard, boolean rightWildcard) {
+    public static String generatePropertyWildcardQuery(QName documentPropName, String value, boolean leftWildcard, boolean rightWildcard) {
         if (StringUtils.isBlank(value)) {
             return null;
         }
-        if (escape) {
-            value = QueryParser.escape(stripCustom(value));
-        }
-        return "@" + Repository.escapeQName(documentPropName) + ":\"" + (leftWildcard ? "*" : "") + value + (rightWildcard ? "*" : "") + "\"";
+        return "@" + Repository.escapeQName(documentPropName) + ":\"" + (leftWildcard ? "*" : "") + QueryParser.escape(stripCustom(value)) + (rightWildcard ? "*" : "") + "\"";
     }
 
     public static String generateParentQuery(NodeRef parentRef) {
-        return "PARENT:\"" + parentRef.toString() + "\"";
+        return "PARENT:\"" + QueryParser.escape(parentRef.toString()) + "\"";
     }
 
     public static String generatePrimaryParentQuery(NodeRef parentRef) {
-        return "PRIMARYPARENT:\"" + parentRef.toString() + "\"";
+        return "PRIMARYPARENT:\"" + QueryParser.escape(parentRef.toString()) + "\"";
     }
 
     public static String generatePropertyDateQuery(QName documentPropName, Date date) {
         if (date == null) {
             return null;
         }
-        return generatePropertyExactQuery(documentPropName, formatLuceneDate(date), false);
+        return generatePropertyExactQuery(documentPropName, formatLuceneDate(date));
     }
 
     // High-level generation
@@ -319,7 +211,7 @@ public class SearchUtil {
         for (String word : words) {
             List<String> propQueryParts = new ArrayList<String>(documentPropNames.length);
             for (QName documentPropName : documentPropNames) {
-                propQueryParts.add(generatePropertyWildcardQuery(documentPropName, word, false, leftWildcard, rightWildcard));
+                propQueryParts.add(generatePropertyWildcardQuery(documentPropName, word, leftWildcard, rightWildcard));
             }
             wordQueryParts.add(joinQueryPartsOr(propQueryParts, false));
         }
@@ -332,7 +224,7 @@ public class SearchUtil {
         }
         List<String> queryParts = new ArrayList<String>(documentPropNames.length);
         for (QName documentPropName : documentPropNames) {
-            queryParts.add(generatePropertyExactQuery(documentPropName, value.toString(), true));
+            queryParts.add(generatePropertyExactQuery(documentPropName, value.toString()));
         }
         return joinQueryPartsOr(queryParts, false);
     }
@@ -344,7 +236,7 @@ public class SearchUtil {
         List<String> queryParts = new ArrayList<String>(documentPropNames.length);
         for (NodeRef value : values) {
             for (QName documentPropName : documentPropNames) {
-                queryParts.add(generatePropertyExactQuery(documentPropName, value.toString(), false));
+                queryParts.add(generatePropertyExactQuery(documentPropName, value.toString()));
             }
         }
         return joinQueryPartsOr(queryParts, false);
@@ -359,7 +251,7 @@ public class SearchUtil {
         queryParts.add(positiveArgument);
         for (NodeRef value : values) {
             for (QName documentPropName : documentPropNames) {
-                queryParts.add("NOT " + generatePropertyExactQuery(documentPropName, value.toString(), false));
+                queryParts.add("NOT " + generateStringExactQuery(value.toString(), documentPropName));
             }
         }
         return joinQueryPartsAnd(queryParts, false);
@@ -371,7 +263,7 @@ public class SearchUtil {
         }
         List<String> queryParts = new ArrayList<String>(documentPropNames.length);
         for (QName documentPropName : documentPropNames) {
-            queryParts.add(generatePropertyExactQuery(documentPropName, value, true));
+            queryParts.add(generatePropertyExactQuery(documentPropName, value));
         }
         return joinQueryPartsOr(queryParts, false);
     }
@@ -403,7 +295,7 @@ public class SearchUtil {
         List<String> queryParts = new ArrayList<String>(documentPropNames.length * values.size());
         for (String value : values) {
             for (QName documentPropName : documentPropNames) {
-                queryParts.add(generatePropertyExactQuery(documentPropName, value, true));
+                queryParts.add(generatePropertyExactQuery(documentPropName, value));
             }
         }
         return joinQueryPartsOr(queryParts, false);
@@ -425,7 +317,7 @@ public class SearchUtil {
         }
         List<String> queryParts = new ArrayList<String>(documentPropNames.length);
         for (QName documentPropName : documentPropNames) {
-            String query = "@" + Repository.escapeQName(documentPropName) + ":[" + begin + " TO " + end + "]";
+            String query = "@" + Repository.escapeQName(documentPropName) + ":[" + QueryParser.escape(begin) + " TO " + QueryParser.escape(end) + "]";
             queryParts.add(query);
         }
         return joinQueryPartsOr(queryParts, false);
@@ -463,6 +355,7 @@ public class SearchUtil {
         return joinQueryParts(queryParts, "AND", true);
     }
 
+    /** NB! When using this method with parenthesis=false, ensure that subqueries have set required parenthesis themselves */
     public static String joinQueryPartsAnd(List<String> queryParts, boolean parenthesis) {
         return joinQueryParts(queryParts, "AND", parenthesis);
     }
@@ -475,6 +368,7 @@ public class SearchUtil {
         return joinQueryParts(queryParts, "OR", true);
     }
 
+    /** NB! When using this method with parenthesis=false, ensure that subqueries have set required parenthesis themselves */
     public static String joinQueryPartsOr(List<String> queryParts, boolean parenthesis) {
         return joinQueryParts(queryParts, "OR", parenthesis);
     }
@@ -545,7 +439,7 @@ public class SearchUtil {
 
         List<String> query = new ArrayList<String>(userGroups.size() + 2);
         query.add(generateNotMultiNodeRefQuery(generateTypeQuery(DocumentCommonModel.Types.DOCUMENT), restrictedSeriesRefs, DocumentCommonModel.Props.SERIES));
-        query.add(generatePropertyExactQuery(DocumentCommonModel.Props.OWNER_ID, userId, false));
+        query.add(generateStringExactQuery(userId, DocumentCommonModel.Props.OWNER_ID));
 
         for (String group : userGroups) {
             if (StringUtils.isNotBlank(group)) {

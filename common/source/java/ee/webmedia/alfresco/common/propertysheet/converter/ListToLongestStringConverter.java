@@ -22,7 +22,7 @@ public class ListToLongestStringConverter extends MultiValueConverter {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     public String getAsString(FacesContext context, UIComponent component, Object value) throws ConverterException {
-        String result = null;
+        String result = "";
         if (value instanceof List && !((List) value).isEmpty() && ((List) value).get(0) instanceof String) {
             result = UserUtil.getDisplayUnit((List<String>) value);
         } else if (value != null) {

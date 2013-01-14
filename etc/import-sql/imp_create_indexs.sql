@@ -1,7 +1,3 @@
--- Function: imp_create_indexs()
-
--- DROP FUNCTION imp_create_indexs();
-
 CREATE OR REPLACE FUNCTION imp_create_indexs()
   RETURNS void AS
 $BODY$
@@ -89,11 +85,25 @@ CREATE INDEX imp_task1_procedure_id
   USING btree
   (old_id );
 
-CREATE INDEX imp_workflow_procedure_id
-  ON imp_workflow
+CREATE TABLE imp_completed_docs2 AS
+SELECT CAST(substring(document_id, 1, position('.' in document_id) - 1) AS character varying(36)) as id, document_id, node_ref, originallocation 
+FROM imp_completed_docs;
+
+CREATE UNIQUE INDEX imp_completed_docs2_idx
+  ON imp_completed_docs2
   USING btree
-  (procedure_id);
-  
+  (id);
+
+CREATE TABLE imp_d_dok_men2 as
+SELECT menetlus_id, id, dokument_id, urldokument, liik, looja, loomisekp,
+(CASE WHEN m.liik = 'Seotud dokument' AND char_length(m.urldokument) = 36 THEN (SELECT c.node_ref FROM imp_completed_docs2 c WHERE c.id = m.urldokument) END) as node_ref
+FROM imp_d_dok_men m;
+
+CREATE INDEX imp_d_dok_men2_menetlus_id
+  ON imp_d_dok_men2
+  USING btree
+  (menetlus_id);
+ 
 END;
 $BODY$
   LANGUAGE plpgsql VOLATILE

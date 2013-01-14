@@ -70,6 +70,7 @@ public class CaseDetailsDialog extends BaseDialogBean {
         if (null == currentEntry) {
             throw new RuntimeException("Didn't find currentEntry");
         }
+        propertySheet = null;
     }
 
     public void addNewCase(ActionEvent event) {
@@ -77,6 +78,7 @@ public class CaseDetailsDialog extends BaseDialogBean {
         NodeRef caseRef = new NodeRef(ActionUtil.getParam(event, PARAM_VOLUME_NODEREF));
         // create new node for currentEntry
         currentEntry = getCaseService().createCase(caseRef);
+        propertySheet = null;
     }
 
     public Node getCurrentNode() {

@@ -88,7 +88,7 @@
       <property name="dependsOn">
          <list>
             <ref bean="archivalsStoresBootstrap" />
-            <ref bean="deleteSubtypedDocuments" />
+            <ref bean="convertToDynamicDocumentsUpdater" />
          </list>
       </property>
       <property name="mimetypeService" ref="MimetypeService" />
@@ -101,7 +101,7 @@
          <list>
             <ref bean="archivalsStoresBootstrap" />
             <ref bean="structUnitFieldTypeUpdater" />
-            <ref bean="deleteSubtypedDocuments" />
+            <ref bean="convertToDynamicDocumentsUpdater" />
             <ref bean="fileEncodingUpdater" />
          </list>
       </property>
@@ -118,20 +118,9 @@
        <property name="dependsOn">
          <list>
             <ref bean="archivalsStoresBootstrap" />
-            <ref bean="deleteSubtypedDocuments" />
+            <ref bean="convertToDynamicDocumentsUpdater" />
          </list>
       </property>       
-   </bean>
-
-   <bean id="documentRegNumbersUpdater2" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentRegNumbersUpdater" parent="abstractNodeUpdater" >
-      <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="true" />
-       <property name="dependsOn">
-         <list>
-            <ref bean="documentUpdater9" />
-         </list>
-      </property>
-      <property name="documentUpdater" ref="documentUpdater9" />
    </bean>
    
    <bean id="documentChangedTypePropertiesUpdater2" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentChangedTypePropertiesUpdater" parent="abstractNodeUpdater" >
@@ -140,6 +129,7 @@
        <property name="dependsOn">
          <list>
             <ref bean="archivalsStoresBootstrap" />
+            <ref bean="convertToDynamicDocumentsUpdater" />
          </list>
       </property>
    </bean>
@@ -163,6 +153,18 @@
          </list>
       </property>
    </bean>
+   
+   <bean id="logAndDeleteObjectsWithMissingType" class="ee.webmedia.alfresco.docdynamic.bootstrap.LogAndDeleteObjectsWithMissingType" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+<!--             <ref bean="convertToDynamicDocumentsUpdater" /> -->
+         </list>
+      </property>
+      <property name="delete" value="true" /> <!-- Should be set true only in 3.11 branch -->
+   </bean>   
 
    <!-- START: web beans: -->
 

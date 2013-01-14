@@ -36,7 +36,7 @@ public class CompoundWorkflowOwnerPropsUpdater extends AbstractNodeUpdater {
         String query = SearchUtil.generateAndNotQuery(SearchUtil.generateTypeQuery(WorkflowCommonModel.Types.COMPOUND_WORKFLOW),
                 SearchUtil.generateTypeQuery(WorkflowCommonModel.Types.COMPOUND_WORKFLOW_DEFINITION));
         List<ResultSet> result = new ArrayList<ResultSet>(6);
-        for (StoreRef storeRef : generalService.getAllWithArchivalsStoreRefs()) {
+        for (StoreRef storeRef : generalService.getAllStoreRefsWithTrashCan()) {
             result.add(searchService.query(storeRef, SearchService.LANGUAGE_LUCENE, query));
         }
         return result;

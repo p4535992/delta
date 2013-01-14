@@ -13,5 +13,6 @@
       <property name="documentListService" ref="DocumentListService" />
       <property name="userService" ref="UserService" />
       <property name="documentService" ref="DocumentService" />
+      <property name="transactionService" ref="TransactionService" />
    </bean>
 </beans>

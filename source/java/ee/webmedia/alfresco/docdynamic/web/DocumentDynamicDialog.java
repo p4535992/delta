@@ -128,6 +128,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     public static final String BEAN_NAME = "DocumentDynamicDialog";
     public static final QName TEMP_ACCESS_RESTRICTION_CHANGE_REASON = RepoUtil.createTransientProp(DocumentCommonModel.Props.ACCESS_RESTRICTION_CHANGE_REASON.getLocalName());
     public static final QName TEMP_ARCHIVAL_ACTIVITY_NODE_REF = RepoUtil.createTransientProp("archivalActivityNodeRef");
+    public static final QName TEMP_VALIDATE_WITHOUT_SAVE = RepoUtil.createTransientProp("validateWithoutSave");
     private static final String PARAM_NODEREF = "nodeRef";
     private String renderedModal;
     private boolean showConfirmationPopup;
@@ -210,7 +211,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         if ("caseFileDialog".equals(previousDialogName)) {
             CaseFile caseFile = BeanHelper.getCaseFileDialog().getCaseFile();
             WmNode node = caseFile != null ? caseFile.getNode() : null;
-            if (isValidLocation(node, caseFile.getSeries(), doc.getDocumentTypeId())) {
+            if (caseFile != null && isValidLocation(node, caseFile.getSeries(), doc.getDocumentTypeId())) {
                 volumeRef = caseFile.getNodeRef();
                 seriesRef = caseFile.getSeries();
                 functionRef = caseFile.getFunction();
@@ -218,7 +219,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         } else if ("caseDocListDialog".equals(previousDialogName)) {
             Volume volume = BeanHelper.getCaseDocumentListDialog().getParent();
             Node node = volume != null ? volume.getNode() : null;
-            if (isValidLocation(node, volume.getSeriesNodeRef(), doc.getDocumentTypeId())) {
+            if (volume != null && isValidLocation(node, volume.getSeriesNodeRef(), doc.getDocumentTypeId())) {
                 volumeRef = node.getNodeRef();
                 seriesRef = volume.getSeriesNodeRef();
                 functionRef = volume.getFunctionNodeRef();
@@ -501,7 +502,8 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         WmNode node = document.getNode();
 
         List<DialogButtonConfig> buttons = new ArrayList<DialogButtonConfig>(1);
-        if (snapshot.inEditMode && SystematicDocumentType.INCOMING_LETTER.isSameType(document.getDocumentTypeId()) && ((DocumentType) config.getDocType()).isRegistrationEnabled()
+        if (snapshot.inEditMode && SystematicDocumentType.INCOMING_LETTER.isSameType(document.getDocumentTypeId()) && ((DocumentType)
+                config.getDocType()).isRegistrationEnabled()
                 && RegisterDocumentEvaluator.isNotRegistered(node)) {
             if (getSearchBlock().isFoundSimilar()) {
                 buttons.add(new DialogButtonConfig("documentRegisterButton", null, "document_registerDoc_continue",
@@ -737,8 +739,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             LOG.warn(e.getMessage(), e);
             return cancel(false);
         }
-
-        if (!isInEditMode() || !getCurrentSnapshot().viewModeWasOpenedInThePast) {
+        if (!isInEditMode() || !getCurrentSnapshot().viewModeWasOpenedInThePast || !canRestore()) {
             getDocumentDynamicService().deleteDocumentIfDraft(getDocument().getNodeRef());
             return super.cancel(); // closeDialogSnapshot
         }
@@ -748,6 +749,11 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     }
 
     @Override
+    /** Transaction created by BaseDialogBean.finish method is not needed by us here, and it would be clearer to turn it off - 
+     * but we haven't turned it off and thus it is still created and therefore it is the super transaction.
+     * Actions in finishImpl method are performed in two separate child transactions for the following reason: 
+     * integrity checker runs at the end of the transaction and we want integrity checker to run before switchMode is run.
+     */
     protected String finishImpl(final FacesContext context, String outcome) throws Throwable {
         if (!isInEditMode()) {
             throw new RuntimeException("Document metadata block is not in edit mode");
@@ -779,12 +785,14 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         final boolean createNewCaseFile = isCreateNewCaseFile();
         try {
             if (!createNewCaseFile) {
-                savedDocument = save(getDocument(), getConfig().getSaveListenerBeanNames(), getCurrentSnapshot().confirmMoveAssociatedDocuments);
+                savedDocument = save(getDocument(), getConfig().getSaveListenerBeanNames(), getCurrentSnapshot().confirmMoveAssociatedDocuments, true);
             }
             // when new case file is created, actual saving (and registering, if required) is postponed to after saving case file
             else {
                 savedDocument = getDocument();
+                savedDocument.setProp(TEMP_VALIDATE_WITHOUT_SAVE, Boolean.TRUE);
                 getDocumentDynamicService().validateDocument(getConfig().getSaveListenerBeanNames(), savedDocument);
+                savedDocument.getNode().getProperties().remove(TEMP_VALIDATE_WITHOUT_SAVE);
             }
 
         } catch (UnableToPerformMultiReasonException e) {
@@ -829,18 +837,27 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         }, false, true);
     }
 
-    public DocumentDynamic save(final DocumentDynamic document, final List<String> saveListenerBeanNames, final boolean relocateAssocDocs) {
+    public DocumentDynamic save(final DocumentDynamic document, final List<String> saveListenerBeanNames, final boolean relocateAssocDocs, boolean newTransaction) {
         final DocumentDynamic savedDocument;
+        Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> result;
         // Do in new transaction, because we want to catch integrity checker exceptions now, not at the end of this method when mode is already switched
-        Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> result = getTransactionService().getRetryingTransactionHelper().doInTransaction(
-                new RetryingTransactionCallback<Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>>>() {
-                    @Override
-                    public Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> execute() throws Throwable {
-                        // May throw UnableToPerformException or UnableToPerformMultiReasonException
-                        ((FileBlockBean) getBlocks().get(FileBlockBean.class)).updateFilesProperties();
-                        return getDocumentDynamicService().updateDocumentGetDocAndNodeRefs(document, saveListenerBeanNames, relocateAssocDocs, true);
-                    }
-                }, false, true);
+        RetryingTransactionCallback<Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>>> callback = new RetryingTransactionCallback<Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>>>() {
+            @Override
+            public Pair<DocumentDynamic, List<Pair<NodeRef, NodeRef>>> execute() throws Throwable {
+                // May throw UnableToPerformException or UnableToPerformMultiReasonException
+                ((FileBlockBean) getBlocks().get(FileBlockBean.class)).updateFilesProperties();
+                return getDocumentDynamicService().updateDocumentGetDocAndNodeRefs(document, saveListenerBeanNames, relocateAssocDocs, true);
+            }
+        };
+        if (newTransaction) {
+            result = getTransactionService().getRetryingTransactionHelper().doInTransaction(callback, false, true);
+        } else {
+            try {
+                result = callback.execute();
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
         savedDocument = result.getFirst();
         for (Pair<NodeRef, NodeRef> pair : result.getSecond()) {
             if (pair.getFirst().equals(pair.getSecond())) {
@@ -1312,6 +1329,12 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         getDocumentDialogHelperBean().reset(provider);
         resetModals();
         super.resetOrInit(provider); // reset blocks
+    }
+
+    @Override
+    public boolean canRestore() {
+        WmNode node = getNode();
+        return node == null || getNodeService().exists(node.getNodeRef());
     }
 
     private void resetModals() {

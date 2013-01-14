@@ -77,7 +77,7 @@ public abstract class AbstractSearchFilterBlockBean<T extends FilterService> ext
         publicFilterRefs = new HashSet<String>(filters.size());
         for (FilterVO filter : filters) {
             final NodeRef nodeRef = filter.getFilterRef();
-            final SelectItem selectItem = new SelectItem(nodeRef, filter.getFilterName());
+            final SelectItem selectItem = new SelectItem(nodeRef, StringUtils.abbreviate(filter.getFilterName(), 75), filter.getFilterName());
             if (!filter.isPrivate()) {
                 publicFilterRefs.add(nodeRef.toString());
             }

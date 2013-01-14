@@ -58,7 +58,7 @@ public class DocumentUpdater extends AbstractNodeUpdater {
     // END: old permissions
 
     // START: old aspects
-    QName EMAIL_DATE_TIME = QName.createQName(DocumentCommonModel.DOCCOM_URI, "emailDateTime");
+    public static final QName EMAIL_DATE_TIME = QName.createQName(DocumentCommonModel.DOCCOM_URI, "emailDateTime");
     // END: old aspects
 
     private WorkflowService workflowService;
@@ -80,7 +80,7 @@ public class DocumentUpdater extends AbstractNodeUpdater {
         // Need to go through all documents
         String query = SearchUtil.generateTypeQuery(DocumentCommonModel.Types.DOCUMENT);
         List<ResultSet> resultSets = new ArrayList<ResultSet>();
-        for (StoreRef storeRef : generalService.getAllWithArchivalsStoreRefs()) {
+        for (StoreRef storeRef : generalService.getAllStoreRefsWithTrashCan()) {
             resultSets.add(searchService.query(storeRef, SearchService.LANGUAGE_LUCENE, query));
         }
         return resultSets;
@@ -117,16 +117,7 @@ public class DocumentUpdater extends AbstractNodeUpdater {
         Map<QName, Serializable> origProps = nodeService.getProperties(docRef);
         Map<QName, Serializable> updatedProps = new HashMap<QName, Serializable>();
 
-        String regNumber = (String) origProps.get(DocumentCommonModel.Props.REG_NUMBER);
-        if (StringUtils.isNotBlank(regNumber)) {
-            NodeRef parentRef = nodeService.getPrimaryParent(docRef).getParentRef();
-            List<String> regNumbers = documentRegNumbers.get(parentRef);
-            if (regNumbers == null) {
-                regNumbers = new ArrayList<String>();
-                documentRegNumbers.put(parentRef, regNumbers);
-            }
-            regNumbers.add(regNumber);
-        }
+        addParentRegNumber(docRef, (String) origProps.get(DocumentCommonModel.Props.REG_NUMBER));
 
         String hasAllFinishedCompoundWorkflowsUpdaterLog = updateHasAllFinishedCompoundWorkflows(docRef, origProps, updatedProps, workflowService);
 
@@ -139,7 +130,7 @@ public class DocumentUpdater extends AbstractNodeUpdater {
             updatedProps.put(ContentModel.PROP_MODIFIER, origProps.get(ContentModel.PROP_MODIFIER));
             // Update modified time on document, so ADR would detect up changes
             updatedProps.put(ContentModel.PROP_MODIFIED, new Date(AlfrescoTransactionSupport.getTransactionStartTime()));
-            updatedProps.put(DocumentCommonModel.Props.FILE_CONTENTS, documentService.getSearchableFileContents(docRef));
+            updateFileContentsProp(docRef, updatedProps);
             fileContentsLog = "searchableFileContentsUpdated";
         } else {
             updatedProps.put(ContentModel.PROP_MODIFIED, origProps.get(ContentModel.PROP_MODIFIED));
@@ -153,6 +144,22 @@ public class DocumentUpdater extends AbstractNodeUpdater {
         String removePrivilegeMappingsLog = removePrivilegeMappings(docRef, origProps);
         return new String[] { hasAllFinishedCompoundWorkflowsUpdaterLog, structUnitPropertiesToMultivaluedUpdaterLog, removePermissionLog, removePrivilegeMappingsLog,
                 fileContentsLog, updateMetadataInFilesUpdaterLog };
+    }
+
+    public void updateFileContentsProp(NodeRef docRef, Map<QName, Serializable> updatedProps) {
+        updatedProps.put(DocumentCommonModel.Props.FILE_CONTENTS, documentService.getSearchableFileContents(docRef));
+    }
+
+    public void addParentRegNumber(NodeRef docRef, String regNumber) {
+        if (StringUtils.isNotBlank(regNumber)) {
+            NodeRef parentRef = nodeService.getPrimaryParent(docRef).getParentRef();
+            List<String> regNumbers = documentRegNumbers.get(parentRef);
+            if (regNumbers == null) {
+                regNumbers = new ArrayList<String>();
+                documentRegNumbers.put(parentRef, regNumbers);
+            }
+            regNumbers.add(regNumber);
+        }
     }
 
     public String updateMetadataInFiles(Map<QName, Serializable> origProps, Map<QName, Serializable> updatedProps) {
@@ -205,7 +212,7 @@ public class DocumentUpdater extends AbstractNodeUpdater {
         return StringUtils.join(resultLog, ", ");
     }
 
-    private String updatePermission(NodeRef docRef) {
+    public String updatePermission(NodeRef docRef) {
         Set<AccessPermission> allSetPermissions = serviceRegistry.getPermissionService().getAllSetPermissions(docRef);
         Map<String, String> replacePermissions = new HashMap<String, String>();
         replacePermissions.put(DELETE_DOCUMENT_META_DATA, null);
@@ -243,8 +250,6 @@ public class DocumentUpdater extends AbstractNodeUpdater {
         return hashMap;
     }
 
-
-
     public static String updateHasAllFinishedCompoundWorkflows(NodeRef docRef, Map<QName, Serializable> origProps, Map<QName, Serializable> updatedProps,
             WorkflowService workflowService) {
         Serializable origValueReal = origProps.get(DocumentCommonModel.Props.SEARCHABLE_HAS_ALL_FINISHED_COMPOUND_WORKFLOWS);
@@ -267,6 +272,10 @@ public class DocumentUpdater extends AbstractNodeUpdater {
 
     public void setFileEncodingUpdater(FileEncodingUpdater fileEncodingUpdater) {
         this.fileEncodingUpdater = fileEncodingUpdater;
+    }
+
+    public FileEncodingUpdater getFileEncodingUpdater() {
+        return fileEncodingUpdater;
     }
 
 }

@@ -98,8 +98,8 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
-import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 import ee.webmedia.alfresco.workflow.service.Task;
+import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
 /**
@@ -669,8 +669,22 @@ public class PostipoissDocumentsImporter {
         }
     }
 
-    private void setOwnerProperties(Map<QName, Serializable> props, Mapping mapping) {
+    private void setOwnerProperties(Map<QName, Serializable> props, Element root, Mapping mapping) {
         String ownerId = StringUtils.stripToNull((String) props.get(OWNER_ID));
+
+        if (StringUtils.isBlank(ownerId)) {
+            PropMapping ownerIdMapping = mapping.getPropMappingTo(OWNER_ID.getLocalName());
+            if (ownerIdMapping != null && "koostajadId".equals(ownerIdMapping.from)) {
+                ownerId = root.elementText("kelleleId");
+                props.put(OWNER_ID, ownerId);
+                props.put(DocumentCommonModel.Props.OWNER_NAME, root.elementText("kellele"));
+            } else if (ownerIdMapping != null && "kelleleId".equals(ownerIdMapping.from)) {
+                ownerId = root.elementText("koostajadId");
+                props.put(OWNER_ID, ownerId);
+                props.put(DocumentCommonModel.Props.OWNER_NAME, root.elementText("koostajad"));
+            }
+        }
+
         if (StringUtils.isNotBlank(ownerId)) {
             // find user by ownerId
             // if found, then overwrite all owner fields
@@ -684,11 +698,26 @@ public class PostipoissDocumentsImporter {
                 usersNotFound.put(ownerId, count);
             }
         } else {
-            // find user by ownerId
-            // if found, then overwrite all owner fields
-            if (!setOwnerIfExists(props, defaultOwnerId, mapping)) {
-                // if not found, throw exception
-                throw new RuntimeException("User with default ownerId not found: " + defaultOwnerId);
+            String signerId = StringUtils.stripToNull((String) props.get(DocumentDynamicModel.Props.SIGNER_ID));
+            if (StringUtils.isNotBlank(signerId)) {
+                if (!setOwnerIfExists(props, signerId, mapping)) {
+                    Integer count = usersNotFound.get(ownerId);
+                    if (count == null) {
+                        count = 0;
+                    }
+                    count++;
+                    usersNotFound.put(ownerId, count);
+
+                    props.put(OWNER_ID, signerId);
+                    props.put(DocumentCommonModel.Props.OWNER_NAME, props.get(DocumentCommonModel.Props.SIGNER_NAME));
+                }
+            } else {
+                // find user by ownerId
+                // if found, then overwrite all owner fields
+                if (!setOwnerIfExists(props, defaultOwnerId, mapping)) {
+                    // if not found, throw exception
+                    throw new RuntimeException("User with default ownerId not found: " + defaultOwnerId);
+                }
             }
         }
 
@@ -1238,8 +1267,22 @@ public class PostipoissDocumentsImporter {
 
     protected void createDocumentsBatch(final List<Entry<Integer, File>> batchList) throws Exception {
         final Map<Integer, ImportedDocument> batchCompletedDocumentsMap = new TreeMap<Integer, ImportedDocument>();
-        // FOR ASSOCS
-        // this.batchCompletedDocumentsMap = batchCompletedDocumentsMap;
+        AlfrescoTransactionSupport.bindListener(new TransactionListenerAdapter() {
+            @Override
+            public void afterCommit() {
+                postponedAssocsCommited = new TreeMap<Integer, List<PostponedAssoc>>(postponedAssocs);
+                usersFoundCommited = new HashMap<String, Integer>(usersFound);
+                usersNotFoundCommited = new HashMap<String, Integer>(usersNotFound);
+            }
+
+            @Override
+            public void afterRollback() {
+                postponedAssocs = new TreeMap<Integer, List<PostponedAssoc>>(postponedAssocsCommited);
+                usersFound = new HashMap<String, Integer>(usersFoundCommited);
+                usersNotFound = new HashMap<String, Integer>(usersNotFoundCommited);
+                completedDocumentsMap.keySet().removeAll(batchCompletedDocumentsMap.keySet());
+            }
+        });
         for (Entry<Integer, File> entry : batchList) {
             Integer documentId = entry.getKey();
             if (log.isTraceEnabled()) {
@@ -1260,22 +1303,6 @@ public class PostipoissDocumentsImporter {
                 throw new RuntimeException("Error importing document " + file.getName() + ": " + e.getMessage(), e);
             }
         }
-        AlfrescoTransactionSupport.bindListener(new TransactionListenerAdapter() {
-            @Override
-            public void afterCommit() {
-                postponedAssocsCommited = new TreeMap<Integer, List<PostponedAssoc>>(postponedAssocs);
-                usersFoundCommited = new HashMap<String, Integer>(usersFound);
-                usersNotFoundCommited = new HashMap<String, Integer>(usersNotFound);
-            }
-
-            @Override
-            public void afterRollback() {
-                postponedAssocs = new TreeMap<Integer, List<PostponedAssoc>>(postponedAssocsCommited);
-                usersFound = new HashMap<String, Integer>(usersFoundCommited);
-                usersNotFound = new HashMap<String, Integer>(usersNotFoundCommited);
-                completedDocumentsMap.keySet().removeAll(batchCompletedDocumentsMap.keySet());
-            }
-        });
         bindCsvWriteAfterCommit(completedDocumentsFile, new CsvWriterClosure() {
 
             @Override
@@ -1567,7 +1594,8 @@ public class PostipoissDocumentsImporter {
 
         addHistoryItems(documentRef, root, propsMap, mapping);
 
-        propsMap.put(DocumentCommonModel.Props.DOCUMENT_IS_IMPORTED, Boolean.TRUE);
+        propsMap.put(DocumentCommonModel.Props.DOCUMENT_IS_IMPORTED,
+                Boolean.valueOf(DocumentStatus.FINISHED.getValueName().equals(propsMap.get(DocumentCommonModel.Props.DOC_STATUS))));
 
         doc.getNode().getProperties().putAll(RepoUtil.toStringProperties(propsMap));
         doc.getNode().getProperties().put(DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED.toString(), Boolean.TRUE);
@@ -1768,7 +1796,7 @@ public class PostipoissDocumentsImporter {
         // }
         // propsMap.put(DocumentCommonModel.Props.OWNER_NAME, ownerName);
         // }
-        setOwnerProperties(propsMap, mapping);
+        setOwnerProperties(propsMap, root, mapping);
         // log.info("ownerName=" + (String) propsMap.get(OWNER_NAME));
         // log.info("ownerId=" + (String) propsMap.get(OWNER_NAME));
 
@@ -2000,6 +2028,7 @@ public class PostipoissDocumentsImporter {
                 task.setTaskIndexInWorkflow(taskIndex++);
                 BeanHelper.getWorkflowDbService().createTaskEntry(task, wfRef);
                 docProps.put(DocumentCommonModel.Props.SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS, Boolean.TRUE);
+                docProps.put(DocumentCommonModel.Props.DOC_STATUS, DocumentStatus.WORKING.getValueName());
             }
         }
         if (!responsibleActiveSet && firstTaskRef != null) {

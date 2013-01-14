@@ -57,9 +57,6 @@
          <!-- Delete a Topic -->
          <action id="delete_topic_admin">
             <evaluator>ee.webmedia.alfresco.document.forum.web.evaluator.DeleteTopicOrForumEvaluator</evaluator>
-            <permissions>
-               <permission allow="true">DeleteNode</permission>
-            </permissions>
             <label-id>delete_topic</label-id>
             <image>/images/icons/delete_topic.gif</image>
             <action>dialog:deleteSpace</action>
@@ -72,20 +69,30 @@
          <!-- Create a Topic -->
          <action id="create_topic">
             <evaluator>ee.webmedia.alfresco.document.forum.web.evaluator.CreateTopicEvaluator</evaluator>
-            <permissions>
-               <permission allow="true">CreateChildren</permission>
-            </permissions>
             <label-id>create_topic</label-id>
             <image>/images/icons/create_topic.gif</image>
             <action>dialog:createTopic</action>
+         </action>
+         
+         <action id="create_post">
+            <label-id>post_to_topic</label-id>
+            <image>/images/icons/create_post.gif</image>
+            <action>dialog:createPost</action>
+         </action>
+         
+         <action id="post_reply">
+            <label-id>post_reply</label-id>
+            <image>/images/icons/post_reply.gif</image>
+            <action>dialog:createReply</action>
+            <action-listener>#{BrowseBean.setupContentAction}</action-listener>
+            <params>
+               <param name="id">#{actionContext.id}</param>
+            </params>
          </action>
 
          <!-- Delete a Forum space -->
          <action id="delete_forum_admin">
             <evaluator>ee.webmedia.alfresco.document.forum.web.evaluator.DeleteTopicOrForumEvaluator</evaluator>
-            <permissions>
-               <permission allow="true">DeleteNode</permission>
-            </permissions>
             <label-id>delete_forum</label-id>
             <image>/images/icons/delete_forum.gif</image>
             <action>dialog:deleteForum</action>

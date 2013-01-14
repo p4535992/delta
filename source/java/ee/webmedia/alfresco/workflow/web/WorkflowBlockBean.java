@@ -76,8 +76,9 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.joda.time.LocalDate;
 
-import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.app.AppConstants;
+import ee.webmedia.alfresco.casefile.model.CaseFileModel;
+import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIPropertySheet;
 import ee.webmedia.alfresco.common.propertysheet.customchildrencontainer.CustomChildrenCreator;
@@ -99,7 +100,6 @@ import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.web.FileBlockBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
-import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.web.evaluator.DocumentNotInDraftsFunctionActionEvaluator;
 import ee.webmedia.alfresco.log.model.LogEntry;
@@ -704,27 +704,17 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         long step0 = System.currentTimeMillis();
 
         List<File> activeFiles = new ArrayList<File>();
-        Map<NodeRef, List<File>> signingFiles = null;
-        if (compoundWorkflow == null) {
-            activeFiles = getFileService().getAllActiveFiles(containerRef);
-            signingFiles = new HashMap<NodeRef, List<File>>();
-            signingFiles.put(containerRef, activeFiles);
-        } else {
-            signingFiles = getWorkflowService().getCompoundWorkflowSigningFiles(compoundWorkflow);
-            for (Map.Entry<NodeRef, List<File>> entry : signingFiles.entrySet()) {
-                List<File> documentFiles = entry.getValue();
-                if (documentFiles != null) {
-                    activeFiles.addAll(documentFiles);
-                }
+        Map<NodeRef, List<File>> signingFiles = new HashMap<NodeRef, List<File>>();
+        collectSigningFiles(activeFiles, signingFiles);
+        if (!checkSigningFiles(activeFiles, false)) {
+            return;
+        }
+
+        if (log.isDebugEnabled()) {
+            log.debug("found " + activeFiles.size() + "active files for signing:\n");
+            for (File activeFile : activeFiles) {
+                log.debug("nodeRef=" + activeFile.getNodeRef() + "; displayName=" + activeFile.getDisplayName() + "\n");
             }
-        }
-        if (activeFiles == null || activeFiles.isEmpty()) {
-            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "task_files_required");
-            return;
-        }
-        if (hasZeroByteFile(activeFiles)) {
-            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "task_files_zero_byte_file");
-            return;
         }
 
         signatureTask = ((SignatureTask) task).clone();
@@ -788,6 +778,49 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             showModalOrSign();
         } else {
             showMobileIdModalOrSign();
+        }
+    }
+
+    public boolean checkSigningFiles(List<File> activeFiles, boolean checkReference) {
+        if (activeFiles == null || activeFiles.isEmpty()) {
+            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "task_files_required");
+            return false;
+        }
+        if (checkReference) {
+            boolean hasNotReferenceFile = false;
+            for (File file : activeFiles) {
+                if (file.getGeneratedFileRef() == null) {
+                    hasNotReferenceFile = true;
+                    break;
+                }
+            }
+            if (!hasNotReferenceFile) {
+                MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "task_files_required");
+                return false;
+            }
+        }
+        if (hasZeroByteFile(activeFiles)) {
+            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "task_files_zero_byte_file");
+            return false;
+        }
+        return true;
+    }
+
+    public void collectSigningFiles(List<File> activeFiles, Map<NodeRef, List<File>> signingFiles) {
+        if (compoundWorkflow == null) {
+            List<File> documentFiles = getFileService().getAllActiveFiles(containerRef);
+            if (documentFiles != null) {
+                activeFiles.addAll(documentFiles);
+            }
+            signingFiles.put(containerRef, activeFiles);
+        } else {
+            signingFiles.putAll(getWorkflowService().getCompoundWorkflowSigningFiles(compoundWorkflow));
+            for (Map.Entry<NodeRef, List<File>> entry : signingFiles.entrySet()) {
+                List<File> documentFiles = entry.getValue();
+                if (documentFiles != null) {
+                    activeFiles.addAll(documentFiles);
+                }
+            }
         }
     }
 
@@ -1051,6 +1084,13 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         String certId = requestParameterMap.get("certId");
         try {
             long step0 = System.currentTimeMillis();
+            List<File> activeFiles = new ArrayList<File>();
+            collectSigningFiles(activeFiles, new HashMap<NodeRef, List<File>>());
+            if (!checkSigningFiles(activeFiles, true)) {
+                closeModal();
+                resetSigningData();
+                return;
+            }
             SignatureDigest signatureDigest = getDocumentService().prepareDocumentDigest(signingQueue.get(0), certHex,
                     mainDocumentRef != null ? compoundWorkflow.getNodeRef() : null);
             long step1 = System.currentTimeMillis();
@@ -1061,6 +1101,10 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             }
         } catch (SignatureException e) {
             SignatureBlockBean.addSignatureError(e);
+            closeModal();
+            resetSigningData();
+        } catch (UnableToPerformException e) {
+            MessageUtil.addStatusMessage(e);
             closeModal();
             resetSigningData();
         }
@@ -1102,6 +1146,12 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
     private void signDocumentImpl(String signatureHex) {
         try {
             long step0 = System.currentTimeMillis();
+            List<File> activeFiles = new ArrayList<File>();
+            collectSigningFiles(activeFiles, new HashMap<NodeRef, List<File>>());
+            if (!checkSigningFiles(activeFiles, true)) {
+                signingQueue = null;
+                return;
+            }
             boolean finishTask = signingQueue.size() == 1;
             getDocumentService().finishDocumentSigning(signatureTask, signatureHex, signingQueue.get(0), mainDocumentRef == null, finishTask, originalStatuses);
             signingQueue.remove(0);
@@ -1167,6 +1217,12 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         }
         try {
             long step0 = System.currentTimeMillis();
+            List<File> activeFiles = new ArrayList<File>();
+            collectSigningFiles(activeFiles, new HashMap<NodeRef, List<File>>());
+            if (!checkSigningFiles(activeFiles, true)) {
+                resetSigningData();
+                return;
+            }
             SignatureChallenge signatureChallenge = getDocumentService().prepareDocumentChallenge(signingQueue.get(0), phoneNr,
                     mainDocumentRef != null ? compoundWorkflow.getNodeRef() : null);
             long step1 = System.currentTimeMillis();
@@ -1540,7 +1596,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         if (isDocumentWorkflow(parentType)) {
             boolean localRights = isDocumentManager || isOwner || getWorkflowService().isOwnerOfInProgressAssignmentTask(workflow.getParent());
             boolean externalReviewRights = !workflow.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW)
-                    || !Boolean.TRUE.equals(container.getProperties().get(DocumentSpecificModel.Props.NOT_EDITABLE))
+                    || !Boolean.TRUE.equals(container.getProperties().get(DocumentCommonModel.Props.NOT_EDITABLE))
                     || !hasCurrentInstitutionTask(workflow);
             return localRights && externalReviewRights;
         } else if (isCaseWorkflow(parentType)) {
