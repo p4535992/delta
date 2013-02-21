@@ -274,31 +274,34 @@ public class WorkflowImporter {
                     final CaseFile caseFile = caseFiles.get(0);
 
                     String searchCaseFileVolumeMark = StringUtils.stripToEmpty(caseFile.getVolumeMark());
-                    List<String> query = new ArrayList<String>(2);
-                    query.add(SearchUtil.generateTypeQuery(CaseFileModel.Types.CASE_FILE));
-                    query.add(SearchUtil.generateStringExactQuery(searchCaseFileVolumeMark, VolumeModel.Props.VOLUME_MARK));
-                    String q = SearchUtil.joinQueryPartsAnd(query, false);
+                    if (StringUtils.isNotBlank(searchCaseFileVolumeMark)) {
+                        List<String> query = new ArrayList<String>(2);
+                        query.add(SearchUtil.generateTypeQuery(CaseFileModel.Types.CASE_FILE));
+                        query.add(SearchUtil.generateAspectQuery(DocumentCommonModel.Aspects.SEARCHABLE));
+                        query.add(SearchUtil.generateStringExactQuery(searchCaseFileVolumeMark, VolumeModel.Props.VOLUME_MARK));
+                        String q = SearchUtil.joinQueryPartsAnd(query, false);
 
-                    org.alfresco.service.cmr.search.ResultSet result = searchService.query(generalService.getStore(), SearchService.LANGUAGE_LUCENE, q);
-                    for (NodeRef nodeRef : result.getNodeRefs()) {
-                        if (nodeService.exists(nodeRef)
-                                && searchCaseFileVolumeMark.equalsIgnoreCase(StringUtils.stripToEmpty((String) nodeService.getProperty(nodeRef, VolumeModel.Props.VOLUME_MARK)))) {
-                            parentRef = nodeRef;
-                            break;
-                        }
-                    }
-                    result.close();
-                    if (parentRef == null) {
-                        result = searchService.query(generalService.getArchivalsStoreRef(), SearchService.LANGUAGE_LUCENE, q);
+                        org.alfresco.service.cmr.search.ResultSet result = searchService.query(generalService.getStore(), SearchService.LANGUAGE_LUCENE, q);
                         for (NodeRef nodeRef : result.getNodeRefs()) {
                             if (nodeService.exists(nodeRef)
-                                    && searchCaseFileVolumeMark
-                                            .equalsIgnoreCase(StringUtils.stripToEmpty((String) nodeService.getProperty(nodeRef, VolumeModel.Props.VOLUME_MARK)))) {
+                                    && searchCaseFileVolumeMark.equalsIgnoreCase(StringUtils.stripToEmpty((String) nodeService.getProperty(nodeRef, VolumeModel.Props.VOLUME_MARK)))) {
                                 parentRef = nodeRef;
                                 break;
                             }
                         }
                         result.close();
+                        if (parentRef == null) {
+                            result = searchService.query(generalService.getArchivalsStoreRef(), SearchService.LANGUAGE_LUCENE, q);
+                            for (NodeRef nodeRef : result.getNodeRefs()) {
+                                if (nodeService.exists(nodeRef)
+                                        && searchCaseFileVolumeMark
+                                                .equalsIgnoreCase(StringUtils.stripToEmpty((String) nodeService.getProperty(nodeRef, VolumeModel.Props.VOLUME_MARK)))) {
+                                    parentRef = nodeRef;
+                                    break;
+                                }
+                            }
+                            result.close();
+                        }
                     }
 
                     ee.webmedia.alfresco.casefile.service.CaseFile cf;
@@ -314,11 +317,11 @@ public class WorkflowImporter {
 
                             String searchSeriesIdentifier = StringUtils.stripToEmpty(settings.getSeriesIdentifierForProcessToCaseFile());
                             NodeRef series = null;
-                            query = new ArrayList<String>(2);
+                            List<String> query = new ArrayList<String>(2);
                             query.add(SearchUtil.generateTypeQuery(SeriesModel.Types.SERIES));
                             query.add(SearchUtil.generateStringExactQuery(searchSeriesIdentifier, SeriesModel.Props.SERIES_IDENTIFIER));
-                            q = SearchUtil.joinQueryPartsAnd(query, false);
-                            result = searchService.query(seriesSearchStore, SearchService.LANGUAGE_LUCENE, q);
+                            String q = SearchUtil.joinQueryPartsAnd(query, false);
+                            org.alfresco.service.cmr.search.ResultSet result = searchService.query(seriesSearchStore, SearchService.LANGUAGE_LUCENE, q);
                             for (NodeRef nodeRef : result.getNodeRefs()) {
                                 if (nodeService.exists(nodeRef) && searchSeriesIdentifier.equalsIgnoreCase(
                                         StringUtils.stripToEmpty((String) nodeService.getProperty(nodeRef, SeriesModel.Props.SERIES_IDENTIFIER)))) {
@@ -334,6 +337,10 @@ public class WorkflowImporter {
                                 continue;
                             }
 
+
+                            if (isBlank(caseFile.getVolumeMark())) {
+                                caseFile.setVolumeMark(procId.toString());
+                            }
                             if (isBlank(caseFile.getTitle()) || isBlank(caseFile.getVolumeMark()) || isBlank(caseFile.getStatus()) || caseFile.getValidFrom() == null) {
                                 markCompletedProcedureFailed(procId, 46, "Asjatoimiku loomiseks vajalikud kohustuslikud andmed on puudulikud");
                                 continue;

@@ -18,4 +18,6 @@ public interface WorkflowModifications {
     void changeInitiatingTaskDueDate(Task task, WorkflowEventQueue queue);
 
     void unfinishTasksByFinishingLetterResponsibleTask(Task task, WorkflowEventQueue queue);
+
+    void rejectDueDateExtension(Task task);
 }

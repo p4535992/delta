@@ -49,6 +49,7 @@
             <ref bean="webServiceDocumentsPermissionsUpdateBootstrap" />
             <ref bean="volumeTypeAndNamespaceUpdater" />
             <ref bean="volumeCaseFileEventPlanUpdater" />
+            <ref bean="fixAclInheritanceUpdater2" />
          </list>
       </property>
       <property name="batchSize" value="1" />

@@ -2432,7 +2432,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                 NodeRef compoundWorkflowRef = nodeService.getPrimaryParent(workflow).getParentRef();
                 compoundWorkflow = compoundWorkflows.get(compoundWorkflowRef);
                 if (compoundWorkflow == null) {
-                    compoundWorkflow = workflowService.getCompoundWorkflow(compoundWorkflowRef);
+                    compoundWorkflow = workflowService.getCompoundWorkflow(compoundWorkflowRef, false, false);
                     compoundWorkflow.setNumberOfDocuments(workflowService.getCompoundWorkflowDocumentCount(compoundWorkflowRef));
                     compoundWorkflows.put(compoundWorkflowRef, compoundWorkflow);
                 }

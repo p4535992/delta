@@ -218,7 +218,12 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
             Pair<Field, List<Field>> relatedFields2 = collectAndRemoveFieldsInOriginalOrderToFakeGroup(notProcessedFields, field, fieldsByOriginalId);
             List<Field> relatedFields = relatedFields2 == null ? null : relatedFields2.getSecond();
             if (relatedFields != null) {
-                generateFields(generatorResults, items, primaryStateHolder, stateHolders, hierarchy, relatedFields.toArray(new Field[relatedFields.size()]));
+                boolean forceEditMode = false;
+                if (!relatedFields.isEmpty()) {
+                    forceEditMode = generateReadonlyGroupItem(relatedFields2.getFirst(), relatedFields, "applicantName", convertHierarchyToString(hierarchy), generatorResults,
+                            fieldsByOriginalId);
+                }
+                generateFields(generatorResults, items, primaryStateHolder, stateHolders, hierarchy, forceEditMode, relatedFields.toArray(new Field[relatedFields.size()]));
                 continue;
             }
             relatedFields = collectAndRemoveFieldsInOriginalOrder(notProcessedFields, field, dailyAllowanceTableFieldIds);
@@ -253,7 +258,7 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
             }
 
             // If field is not related to a group of fields, then process it separately
-            generateFields(generatorResults, items, primaryStateHolder, stateHolders, hierarchy, field);
+            generateFields(generatorResults, items, primaryStateHolder, stateHolders, hierarchy, false, field);
         }
 
         for (ItemConfigVO item : items.values()) {
@@ -398,15 +403,49 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
         return Pair.newInstance(primaryFakeField, fakeFields);
     }
 
+    private boolean generateReadonlyGroupItem(Field primaryField, List<Field> fields, String primaryFieldRequiredId, String subpropSheetId,
+            FieldGroupGeneratorResults generatorResults, Map<String, Field> fieldsByOriginalId) {
+        String primaryFakeFieldId = primaryField != null ? primaryField.getFieldId() : null;
+        if (!fieldsByOriginalId.get(primaryFieldRequiredId).getFieldId().equals(primaryFakeFieldId)) {
+            return false;
+        }
+        FieldGroup fieldGroup = (FieldGroup) primaryField.getParent();
+        StringBuffer readonlyFieldsRule = new StringBuffer("{" + primaryFakeFieldId + "}");
+
+        List<Field> readonlyViewFields = new ArrayList<Field>();
+        for (Field fakeField : fields) {
+            String originalFieldId = fakeField.getOriginalFieldId();
+            if (!"applicantName".equals(originalFieldId) && !"applicantId".equals(originalFieldId)) {
+                readonlyViewFields.add(fakeField);
+            }
+        }
+
+        if (!readonlyViewFields.isEmpty()) {
+            readonlyFieldsRule.append("/¤ (");
+            for (Field readonlyField : readonlyViewFields) {
+                readonlyFieldsRule.append("{" + readonlyField.getFieldId() + "}");
+            }
+            readonlyFieldsRule.append(")¤/");
+        }
+        fieldGroup.setReadonlyFieldsRule(readonlyFieldsRule.toString());
+        ItemConfigVO generateFieldGroupReadonlyItem = documentConfigService.generateFieldGroupReadonlyItem(fieldGroup);
+        generateFieldGroupReadonlyItem.setBelongsToSubPropertySheetId(subpropSheetId);
+        generatorResults.addItem(generateFieldGroupReadonlyItem);
+        return true;
+    }
+
     private void generateFields(FieldGroupGeneratorResults generatorResults, Map<String, ItemConfigVO> items, ErrandState primaryStateHolder,
             Map<String, PropertySheetStateHolder> stateHolders,
-            QName[] hierarchy, Field... fields) {
+            QName[] hierarchy, boolean forceEditMode, Field... fields) {
         Pair<Map<String, ItemConfigVO>, Map<String, PropertySheetStateHolder>> result = generatorResults.generateItems(fields);
         Map<String, ItemConfigVO> generatedItems = result.getFirst();
         Map<String, PropertySheetStateHolder> generatedStateHolders = result.getSecond();
         Assert.isTrue(!CollectionUtils.containsAny(items.keySet(), generatedItems.keySet()));
         Assert.isTrue(!CollectionUtils.containsAny(stateHolders.keySet(), generatedStateHolders.keySet()));
         for (ItemConfigVO item : generatedItems.values()) {
+            if (forceEditMode) {
+                item.setShowInViewMode(false);
+            }
             QName propName = QName.resolveToQName(namespaceService, item.getName());
             for (Field field : fields) {
                 if (field.getFieldId().equals(propName.getLocalName())) {

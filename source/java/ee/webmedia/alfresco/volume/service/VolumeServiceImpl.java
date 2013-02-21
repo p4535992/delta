@@ -69,6 +69,7 @@ public class VolumeServiceImpl implements VolumeService {
     private DocumentAdminService _documentAdminService;
     private EventPlanService eventPlanService;
     private boolean caseVolumeEnabled;
+    private String defaultVolumeSortingField;
 
     @Override
     public List<ChildAssociationRef> getAllVolumeRefsBySeries(NodeRef seriesNodeRef) {
@@ -80,11 +81,19 @@ public class VolumeServiceImpl implements VolumeService {
 
     @Override
     public List<Volume> getAllVolumesBySeries(NodeRef seriesNodeRef) {
+        return getAllVolumesBySeries(seriesNodeRef, null);
+    }
+
+    @Override
+    public List<Volume> getAllVolumesBySeries(NodeRef seriesNodeRef, DocListUnitStatus status) {
         List<ChildAssociationRef> volumeAssocs = getAllVolumeRefsBySeries(seriesNodeRef);
         List<Volume> volumeOfSeries = new ArrayList<Volume>(volumeAssocs.size());
-        for (ChildAssociationRef volume : volumeAssocs) {
-            NodeRef volumeNodeRef = volume.getChildRef();
-            volumeOfSeries.add(getVolumeByNoderef(volumeNodeRef, seriesNodeRef));
+        for (ChildAssociationRef volumeCaRef : volumeAssocs) {
+            NodeRef volumeNodeRef = volumeCaRef.getChildRef();
+            Volume volume = getVolumeByNoderef(volumeNodeRef, seriesNodeRef);
+            if (status == null || status.getValueName().equals(volume.getStatus())) {
+                volumeOfSeries.add(volume);
+            }
         }
         Collections.sort(volumeOfSeries);
         return volumeOfSeries;
@@ -431,6 +440,11 @@ public class VolumeServiceImpl implements VolumeService {
         return caseVolumeEnabled;
     }
 
+    @Override
+    public String getDefaultVolumeSortingField() {
+        return defaultVolumeSortingField;
+    }
+
     /**
      * @param volumeNodeRef
      * @param seriesNodeRef if null, then volume.seriesNodeRef is set using association of given volumeNodeRef
@@ -538,6 +552,11 @@ public class VolumeServiceImpl implements VolumeService {
         }
         return _documentAdminService;
     }
+
+    public void setDefaultVolumeSortingField(String defaultVolumeSortingField) {
+        this.defaultVolumeSortingField = defaultVolumeSortingField;
+    }
+
     // END: getters / setters
 
 }

@@ -6,5 +6,5 @@
 
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
-
+<h:panelGroup id="dialog-modal-wf-container" binding="#{WorkflowBlockBean.modalContainer}" />
 <h:panelGroup id="workflow-data-table-group" binding="#{WorkflowBlockBean.dataTableGroup}"/>

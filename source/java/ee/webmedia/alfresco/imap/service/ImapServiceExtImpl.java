@@ -52,6 +52,7 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
+import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.ContentService;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.MimetypeService;
@@ -76,7 +77,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 import org.springframework.util.FileCopyUtils;
 
-import com.icegreen.greenmail.imap.commands.AppendCommand;
 import com.icegreen.greenmail.store.FolderException;
 import com.icegreen.greenmail.store.MailFolder;
 import com.icegreen.greenmail.util.GreenMailUtil;
@@ -88,6 +88,7 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
+import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.file.web.Subfolder;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
@@ -127,6 +128,7 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
     public UserService userService;
 
     private String messageCopyFolder;
+    private boolean saveOriginalToRepo;
     private String incomingLetterSubfolderType;
     private String attachmentsSubfolderType;
     private String outgoingLettersSubfolderType;
@@ -139,8 +141,8 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        AppendCommand.setMessageCopyFolder(messageCopyFolder);
         GreenMailUtil.setMessageCopyFolder(messageCopyFolder);
+        GreenMailUtil.setSaveOriginalToRepo(saveOriginalToRepo);
     }
 
     @Override
@@ -231,6 +233,7 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
             documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_imported", I18NUtil.getMessage("document_log_creator_imap")) //
                     , I18NUtil.getMessage("document_log_creator_imap"));
 
+            saveOriginalEmlFile(mimeMessage, docRef);
             saveAttachments(docRef, mimeMessage, true);
 
             return (Long) nodeService.getProperty(docRef, ContentModel.PROP_NODE_DBID);
@@ -238,6 +241,24 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
             log.warn("Cannot save email, folderNodeRef=" + folderNodeRef, e);
             throw new FolderException("Cannot save email: " + e.getMessage());
         }
+    }
+
+    private void saveOriginalEmlFile(MimeMessage mimeMessage, NodeRef docRef) throws MessagingException {
+        String[] contentDataHeader = mimeMessage.getHeader(GreenMailUtil.SAVE_ORIGINAL_TO_REPO_CONTENT_DATA_HEADER_NAME);
+        if (contentDataHeader == null || contentDataHeader.length <= 0 || StringUtils.isBlank(contentDataHeader[0])) {
+            return;
+        }
+        ContentData contentData = ContentData.createContentProperty(contentDataHeader[0]);
+        String filename = I18NUtil.getMessage("imap.letter_body_filename") + "." + mimetypeService.getExtension(contentData.getMimetype());
+        NodeRef fileRef = fileFolderService.create(
+                docRef,
+                generalService.getUniqueFileName(docRef, filename),
+                ContentModel.TYPE_CONTENT).getNodeRef();
+        HashMap<QName, Serializable> props = new HashMap<QName, Serializable>();
+        props.put(ContentModel.PROP_CONTENT, contentData);
+        props.put(FileModel.Props.DISPLAY_NAME, fileService.getUniqueFileDisplayName(docRef, filename));
+        props.put(FileModel.Props.ACTIVE, Boolean.FALSE);
+        nodeService.addProperties(fileRef, props);
     }
 
     @Override
@@ -1110,6 +1131,10 @@ public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
 
     public void setMessageCopyFolder(String messageCopyFolder) {
         this.messageCopyFolder = messageCopyFolder;
+    }
+
+    public void setSaveOriginalToRepo(boolean saveOriginalToRepo) {
+        this.saveOriginalToRepo = saveOriginalToRepo;
     }
 
 }

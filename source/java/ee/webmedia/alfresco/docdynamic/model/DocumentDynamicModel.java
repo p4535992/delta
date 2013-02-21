@@ -111,6 +111,8 @@ public interface DocumentDynamicModel {
         QName CALCULATED_DURATION_DAYS = QName.createQName(URI, "calculatedDurationDays");
         QName FIRST_KEYWORD_LEVEL = QName.createQName(URI, "firstKeywordLevel");
         QName SECOND_KEYWORD_LEVEL = QName.createQName(URI, "secondKeywordLevel");
+        /** hidden field */
+        QName THESAURUS = QName.createQName(URI, "thesaurus");
 
         QName LEAVE_BEGIN_DATE = QName.createQName(URI, "leaveBeginDate");
         QName LEAVE_END_DATE = QName.createQName(URI, "leaveEndDate");

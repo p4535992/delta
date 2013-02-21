@@ -15,6 +15,7 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.lock.LockStatus;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
@@ -67,6 +68,8 @@ public class DocumentLockHelperBean implements Serializable {
      * @throws UnableToPerformException when node is already locked by another user
      */
     public boolean lockOrUnlockIfNeeded(boolean mustLock4Edit) throws NodeLockedException {
+        // XXX ALAR: It would be correct to lock all nodes in document/caseFile dialog stack which are opened in edit mode.
+        // But currently we only lock the top most node.
         final Node docNode = getDocumentDialogHelperBean().getNode();
         if (docNode == null) {
             return false;
@@ -183,15 +186,22 @@ public class DocumentLockHelperBean implements Serializable {
     }
 
     public void handleLockedNode(String messageId, NodeRef nodeRef, Object... valueHolders) {
+        Pair<String, Object[]> messageKeyAndValueHolders = getErrorMessageKeyAndValueHolders(messageId, nodeRef, valueHolders);
+        MessageUtil.addErrorMessage(messageKeyAndValueHolders.getFirst(), messageKeyAndValueHolders.getSecond());
+    }
+
+    public Pair<String, Object[]> getErrorMessageKeyAndValueHolders(String messageId, NodeRef nodeRef, Object... valueHolders) {
         NodeRef lockedFile = (NodeRef) getNodeService().getProperty(nodeRef, FileModel.Props.LOCKED_FILE_NODEREF);
         if (lockedFile != null && BeanHelper.getFileService().isFileGenerated(lockedFile) || ContentModel.TYPE_CONTENT.equals(getNodeService().getType(nodeRef))) {
             messageId += "_file";
             valueHolders = ArrayUtils.add(valueHolders, getNodeService().getProperty(lockedFile != null ? lockedFile : nodeRef, FileModel.Props.DISPLAY_NAME));
         }
 
-        MessageUtil.addErrorMessage(messageId, ArrayUtils.add(valueHolders,
+        valueHolders = ArrayUtils.add(valueHolders,
                 BeanHelper.getUserService().getUserFullName(
-                        StringUtils.substringBefore((String) BeanHelper.getNodeService().getProperty(nodeRef, ContentModel.PROP_LOCK_OWNER), "_"))));
+                        StringUtils.substringBefore((String) BeanHelper.getNodeService().getProperty(nodeRef, ContentModel.PROP_LOCK_OWNER), "_")));
+        Pair<String, Object[]> messageKeyAndValueHolders = Pair.newInstance(messageId, valueHolders);
+        return messageKeyAndValueHolders;
     }
 
     public boolean isLockReleased(NodeRef nodeRef) {

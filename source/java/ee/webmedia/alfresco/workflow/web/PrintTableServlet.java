@@ -221,7 +221,8 @@ public class PrintTableServlet extends HttpServlet {
                 Date startedDateTime = item.getStartedDateTime();
                 Date dueDate = item.getDueDate();
                 taskRows.add(new Row(asList(startedDateTime != null ? Task.dateTimeFormat.format(startedDateTime) : "",
-                        (dueDate != null ? Task.dateFormat.format(dueDate) : "") + (StringUtils.isNotBlank(item.getDueDateHistory()) ? "<br/>" + item.getDueDateHistory() : ""),
+                        (dueDate != null ? Task.dateFormat.format(dueDate) : "")
+                                + (StringUtils.isNotBlank(item.getDueDateHistoryAlert()) ? "<br/>" + item.getDueDateHistoryAlert() : ""),
                         item.getTaskCreatorName(), item.getWorkflowType(), item.getTaskOwnerName(), item.getTaskResolution(), item.getTaskOutcome(), item.getTaskStatus())));
             }
             printTableHeading(out, outerDiv, "compoundWorkflow_table_tasks");
@@ -451,7 +452,8 @@ public class PrintTableServlet extends HttpServlet {
                 Date startedDateTime = item.getStartedDateTime();
                 Date dueDate = item.getDueDate();
                 data.add(new Row(asList(startedDateTime != null ? Task.dateTimeFormat.format(startedDateTime) : "",
-                        (dueDate != null ? Task.dateFormat.format(dueDate) : "") + (StringUtils.isNotBlank(item.getDueDateHistory()) ? "<br/>" + item.getDueDateHistory() : ""),
+                        (dueDate != null ? Task.dateFormat.format(dueDate) : "")
+                                + (StringUtils.isNotBlank(item.getDueDateHistoryAlert()) ? "<br/>" + item.getDueDateHistoryAlert() : ""),
                         item.getTaskCreatorName(), item.getWorkflowType(), item.getTaskOwnerName(), item.getTaskResolution(), item.getTaskOutcome(), item.getTaskStatus())));
             }
         }

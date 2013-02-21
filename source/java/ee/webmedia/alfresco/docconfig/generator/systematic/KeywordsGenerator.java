@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.docconfig.generator.systematic;
 
+import static ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel.Props.THESAURUS;
 import static org.alfresco.web.ui.common.StringUtils.encode;
 
 import java.util.ArrayList;
@@ -50,7 +51,6 @@ import ee.webmedia.alfresco.utils.WebUtil;
  */
 public class KeywordsGenerator extends BaseSystematicFieldGenerator {
 
-    public static final QName THESAURUS = QName.createQName(DocumentDynamicModel.URI, "thesaurus");
     private String[] originalFieldIds;
 
     @Override
@@ -97,8 +97,8 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
             if (thesauriCount > 1) {
                 PropsBuilder generalSelectorGeneratorBuilder = new PropsBuilder(THESAURUS, generatorName);
                 generalSelectorGeneratorBuilder.addProp(GeneralSelectorGenerator.ATTR_SELECTION_ITEMS, getBindingName("getThesaurusSelectItems", stateHolderKey))
-                .addProp(GeneralSelectorGenerator.ATTR_VALUE_CHANGE_LISTENER, getBindingName("thesaurusChanged", stateHolderKey))
-                .addProp("display-label-id", "thesaurus");
+                        .addProp(GeneralSelectorGenerator.ATTR_VALUE_CHANGE_LISTENER, getBindingName("thesaurusChanged", stateHolderKey))
+                        .addProp("display-label-id", "thesaurus");
                 props.add(generalSelectorGeneratorBuilder.build());
                 propNames.add(THESAURUS);
             } else if (thesauriCount == 1) {
@@ -151,8 +151,8 @@ public class KeywordsGenerator extends BaseSystematicFieldGenerator {
     private QName addFirstLevel(String stateHolderKey, String generatorName, QName fieldId, List<String> props, List<QName> propNames, GeneratorResults generatorResults) {
         PropsBuilder generalSelectorGeneratorBuilder = new PropsBuilder(fieldId, generatorName);
         generalSelectorGeneratorBuilder
-        .addProp(GeneralSelectorGenerator.ATTR_SELECTION_ITEMS, getBindingName("getFirstKeywordLevelSelectItems", stateHolderKey))
-        .addProp(GeneralSelectorGenerator.ATTR_VALUE_CHANGE_LISTENER, getBindingName("firstKeywordLevelChanged", stateHolderKey));
+                .addProp(GeneralSelectorGenerator.ATTR_SELECTION_ITEMS, getBindingName("getFirstKeywordLevelSelectItems", stateHolderKey))
+                .addProp(GeneralSelectorGenerator.ATTR_VALUE_CHANGE_LISTENER, getBindingName("firstKeywordLevelChanged", stateHolderKey));
 
         props.add(generalSelectorGeneratorBuilder.build());
         propNames.add(fieldId);

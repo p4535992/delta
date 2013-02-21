@@ -3,6 +3,8 @@ package ee.webmedia.alfresco.workflow.service;
 import static ee.webmedia.alfresco.common.search.DbSearchUtil.TASK_TYPE_FIELD;
 import static ee.webmedia.alfresco.common.search.DbSearchUtil.getDbFieldNameFromPropQName;
 import static ee.webmedia.alfresco.utils.RepoUtil.isSaved;
+import static ee.webmedia.alfresco.workflow.service.Task.INITIATING_COMPOUND_WORKFLOW_REF;
+import static ee.webmedia.alfresco.workflow.service.Task.INITIATING_COMPOUND_WORKFLOW_TITLE;
 
 import java.io.Serializable;
 import java.sql.Array;
@@ -76,11 +78,19 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     private static final List<QName> NOT_SENT_TO_REPO_PROPS = Arrays.asList(QName.createQName(WorkflowCommonModel.URI, "creatorId"),
             QName.createQName(WorkflowCommonModel.URI, "creatorEmail"), MoveTaskFileToChildAssoc.TASK_FILE_PROP_QNAME);
 
+    private static final Map<String, QName> TRANSIENT_PROPS = new HashMap<String, QName>();
+
     private SimpleJdbcTemplate jdbcTemplate;
     private DataSource dataSource;
     private DictionaryService dictionaryService;
     private NodeService nodeService;
     private GeneralService generalService;
+
+    static {
+        TRANSIENT_PROPS.put("initiating_compound_workflow_id", INITIATING_COMPOUND_WORKFLOW_REF);
+        TRANSIENT_PROPS.put("initiating_compound_workflow_title", INITIATING_COMPOUND_WORKFLOW_TITLE);
+        TRANSIENT_PROPS.put("initiating_compound_workflow_store_id", null);
+    }
 
     @Override
     public void createTaskEntry(Task task) {
@@ -367,7 +377,13 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     @Override
     public List<Task> getWorkflowTasks(NodeRef originalParentRef, Collection<QName> taskDataTypeDefaultAspects, List<QName> taskDataTypeDefaultProps,
             Map<QName, QName> taskPrefixedQNames, WorkflowType workflowType, Workflow workflow, boolean copy) {
-        String sqlQuery = "SELECT * FROM delta_task where workflow_id=? ORDER BY index_in_workflow";
+        String sqlQuery = "SELECT delta_task.*, initiating_task.wfs_compound_workflow_id as initiating_compound_workflow_id, " +
+                " initiating_task.wfs_compound_workflow_title as initiating_compound_workflow_title, " +
+                " initiating_task.store_id as initiating_compound_workflow_store_id " +
+                " FROM delta_task " +
+                " left join delta_task_due_date_extension_assoc ext_assoc on ext_assoc.extension_task_id = delta_task.task_id " +
+                " left join delta_task initiating_task on ext_assoc.task_id = initiating_task.task_id " +
+                " where delta_task.workflow_id=? ORDER BY index_in_workflow";
         String parentId = originalParentRef.getId();
         List<Task> tasks = jdbcTemplate.query(sqlQuery,
                 new TaskRowMapper(originalParentRef, taskDataTypeDefaultAspects, taskDataTypeDefaultProps, taskPrefixedQNames, workflowType, workflow, copy, false),
@@ -513,23 +529,24 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     }
 
     @Override
-    public void createTaskDueDateHistoryEntries(NodeRef taskRef, final List<Pair<String, Date>> historyRecords) {
+    public void createTaskDueDateHistoryEntries(NodeRef taskRef, final List<DueDateHistoryRecord> historyRecords) {
         Assert.notNull(taskRef);
         if (historyRecords == null || historyRecords.isEmpty()) {
             LOG.info("No history record input provided, skipping insert");
             return;
         }
         final String taskRefId = taskRef.getId();
-        jdbcTemplate.getJdbcOperations().batchUpdate("INSERT INTO delta_task_due_date_history (task_id, previous_date, change_reason) VALUES (?, ?, ?)",
+        jdbcTemplate.getJdbcOperations().batchUpdate("INSERT INTO delta_task_due_date_history (task_id, previous_date, change_reason, extension_task_id) VALUES (?, ?, ?, ?)",
                 new BatchPreparedStatementSetter() {
 
                     @Override
                     public void setValues(PreparedStatement ps, int i) throws SQLException {
                         ps.setString(1, taskRefId);
-                        Pair<String, Date> values = historyRecords.get(i);
-                        Date previousDate = values.getSecond();
+                        DueDateHistoryRecord record = historyRecords.get(i);
+                        Date previousDate = record.getPreviousDate();
                         ps.setTimestamp(2, previousDate != null ? new Timestamp(previousDate.getTime()) : null);
-                        ps.setString(3, values.getFirst());
+                        ps.setString(3, record.getChangeReason());
+                        ps.setString(4, record.getExtensionTaskId());
                     }
 
                     @Override
@@ -540,12 +557,13 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     }
 
     @Override
-    public Collection<Pair<String, Date>> getDueDateHistoryRecords(NodeRef taskRef) {
-        String sqlQuery = "SELECT previous_date, change_reason FROM delta_task_due_date_history WHERE task_id=? ORDER BY task_due_date_history_id";
+    public Collection<DueDateHistoryRecord> getDueDateHistoryRecords(NodeRef taskRef) {
+        String sqlQuery = "SELECT history.previous_date, history.change_reason, history.task_id, history.extension_task_id, task.wfs_compound_workflow_id, task.store_id " +
+                " FROM delta_task_due_date_history history " +
+                " join delta_task task on task.task_id = history.extension_task_id " +
+                " WHERE history.task_id=? ORDER BY history.task_due_date_history_id";
         String taskRefId = taskRef.getId();
-        List<Pair<String, Date>> dueDateHistoryRecords = jdbcTemplate.query(
-                sqlQuery,
-                new TaskDueDateHistoryMapper(), taskRefId);
+        List<DueDateHistoryRecord> dueDateHistoryRecords = jdbcTemplate.query(sqlQuery, new TaskDueDateHistoryMapper(), taskRefId);
         explainQuery(sqlQuery, taskRefId);
         // null value shouldn't actually be in the list, but just in case...
         dueDateHistoryRecords.remove(null);
@@ -772,15 +790,20 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
         return (Serializable) value;
     }
 
-    private class TaskDueDateHistoryMapper implements ParameterizedRowMapper<Pair<String, Date>> {
+    private class TaskDueDateHistoryMapper implements ParameterizedRowMapper<DueDateHistoryRecord> {
 
         @Override
-        public Pair<String, Date> mapRow(ResultSet rs, int rowNum) throws SQLException {
+        public DueDateHistoryRecord mapRow(ResultSet rs, int rowNum) throws SQLException {
             Date previousDate = (Date) rs.getObject("previous_date");
             String changeReason = (String) rs.getObject("change_reason");
-            return new Pair<String, Date>(changeReason, previousDate);
+            String compoundWorkflowId = (String) rs.getObject("wfs_compound_workflow_id");
+            String taskId = (String) rs.getObject("task_id");
+            String extensionTaskId = (String) rs.getObject("extension_task_id");
+            String storeId = (String) rs.getObject("store_id");
+            StoreRef storeRef = StringUtils.isNotBlank(storeId) ? new StoreRef(storeId) : null;
+            NodeRef compoundWorkflowRef = storeRef != null && StringUtils.isNotBlank(compoundWorkflowId) ? new NodeRef(storeRef, compoundWorkflowId) : null;
+            return new DueDateHistoryRecord(taskId, changeReason, previousDate, extensionTaskId, compoundWorkflowRef);
         }
-
     }
 
     private class TaskParentNodeRefMapper implements ParameterizedRowMapper<NodeRef> {
@@ -801,6 +824,8 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
     }
 
     private class TaskRowMapper implements ParameterizedRowMapper<Task> {
+        private static final String INITIATING_COMPOUND_WORKFLOW_ID_KEY = "initiating_compound_workflow_id";
+        private static final String INITIATING_COMPOUND_WORKFLOW_STORE_ID_KEY = "initiating_compound_workflow_store_id";
         private final Collection<QName> taskDataTypeDefaultAspects;
         private final List<QName> taskDataTypeDefaultProps;
         private final List<QName> taskDataTypeSearchableProps;
@@ -837,7 +862,8 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             boolean originalHasDueDateHistory = rs.getBoolean(DUE_DATE_HISTORY_FIELD);
             task.setHasDueDateHistory(originalHasDueDateHistory);
             task.setOriginalHasDueDateHistory(originalHasDueDateHistory);
-            task.setTaskIndexInWorkflow(rs.getInt(INDEX_IN_WORKFLOW_FIELD));
+            // use rs.getObject instead of rs.getInt to get null values also
+            task.setTaskIndexInWorkflow((Integer) rs.getObject(INDEX_IN_WORKFLOW_FIELD));
             task.setWorkflowNodeRefId(rs.getString(WORKFLOW_ID_KEY));
             task.setStoreRef(rs.getString(STORE_ID_FIELD));
             if (limited && taskCountBeforeLimit < 0) {
@@ -854,6 +880,10 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
                 ResultSetMetaData metaData = rs.getMetaData();
                 for (int i = 1; i <= metaData.getColumnCount(); i++) {
                     String columnLabel = metaData.getColumnName(i);
+                    if (TRANSIENT_PROPS.containsKey(columnLabel)) {
+                        rsColumnQNames.put(columnLabel, TRANSIENT_PROPS.get(columnLabel));
+                        continue;
+                    }
                     QName propName = DbSearchUtil.getPropQNameFromDbFieldName(columnLabel);
                     if (propName != null) {
                         rsColumnQNames.put(columnLabel, propName);
@@ -903,7 +933,13 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
                 QName propName = entry.getValue();
                 String columnLabel = entry.getKey();
                 Object value = rs.getObject(columnLabel);
-                if (currentTaskProps.contains(propName)) {
+                if (INITIATING_COMPOUND_WORKFLOW_ID_KEY.equals(columnLabel) && rsColumnQNames.containsKey(INITIATING_COMPOUND_WORKFLOW_STORE_ID_KEY)) {
+                    String storeId = (String) rs.getObject(INITIATING_COMPOUND_WORKFLOW_STORE_ID_KEY);
+                    String compoundWorkflowId = (String) value;
+                    if (StringUtils.isNotBlank(compoundWorkflowId) && StringUtils.isNotBlank(storeId)) {
+                        taskProps.put(propName, new NodeRef(new StoreRef(storeId), compoundWorkflowId));
+                    }
+                } else if (currentTaskProps.contains(propName) || TRANSIENT_PROPS.containsKey(propName)) {
                     value = getConvertedValue(rs, propName, columnLabel, value);
                     taskProps.put(propName, (Serializable) value);
                 }
@@ -911,10 +947,6 @@ public class WorkflowDbServiceImpl implements WorkflowDbService {
             StoreRef storeRef = originalParentRef != null ? originalParentRef.getStoreRef() : new StoreRef(rs.getString(STORE_ID_FIELD));
             return new WmNode(copy ? null : new NodeRef(storeRef, rs.getString(TASK_ID_FIELD)), taskPrefixedQNames.get(taskType), currentTaskAspects,
                     taskProps);
-        }
-
-        private QName getWorkflowTypeByTask(QName taskType, WorkflowService workflowService) {
-            return workflowService.getWorkflowTypesByTask().get(taskType).getWorkflowType();
         }
 
         private int getTaskCountBeforeLimit() {

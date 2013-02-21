@@ -38,6 +38,8 @@ public interface VolumeService {
 
     List<Volume> getAllVolumesBySeries(NodeRef seriesNodeRef);
 
+    List<Volume> getAllVolumesBySeries(NodeRef seriesNodeRef, DocListUnitStatus status);
+
     List<Volume> getAllValidVolumesBySeries(NodeRef seriesNodeRef);
 
     List<Volume> getAllValidVolumesBySeries(NodeRef seriesNodeRef, DocListUnitStatus status);
@@ -68,6 +70,8 @@ public interface VolumeService {
     boolean isClosed(Node volumeNode);
 
     boolean isCaseVolumeEnabled();
+
+    String getDefaultVolumeSortingField();
 
     void openVolume(Volume volume);
 

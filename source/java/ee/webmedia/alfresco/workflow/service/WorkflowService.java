@@ -19,6 +19,8 @@ import ee.webmedia.alfresco.utils.MessageDataWrapper;
 import ee.webmedia.alfresco.utils.Predicate;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
+import ee.webmedia.alfresco.workflow.generated.DeleteLinkedReviewTaskType;
+import ee.webmedia.alfresco.workflow.generated.LinkedReviewTaskType;
 import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
 import ee.webmedia.alfresco.workflow.model.CompoundWorkflowWithObject;
 import ee.webmedia.alfresco.workflow.model.RelatedUrl;
@@ -26,8 +28,6 @@ import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListener;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListenerWithModifications;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowMultiEventListener;
-import ee.webmedia.alfresco.workflow.generated.LinkedReviewTaskType;
-import ee.webmedia.alfresco.workflow.generated.DeleteLinkedReviewTaskType;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
 /**
@@ -73,6 +73,8 @@ public interface WorkflowService {
     List<CompoundWorkflow> getCompoundWorkflows(NodeRef parent);
 
     CompoundWorkflow getCompoundWorkflow(NodeRef compoundWorkflow);
+
+    CompoundWorkflow getCompoundWorkflow(NodeRef nodeRef, boolean loadTasks, boolean loadWorkflows);
 
     CompoundWorkflow saveCompoundWorkflow(CompoundWorkflow compoundWorkflow);
 
@@ -207,7 +209,7 @@ public interface WorkflowService {
 
     CompoundWorkflow getNewCompoundWorkflow(Node compoundWorkflowDefinition, NodeRef parent);
 
-    void createDueDateExtension(CompoundWorkflow compoundWorkflow, NodeRef nodeRef);
+    void createDueDateExtension(String reason, Date newDate, Date dueDate, Task initiatingTask, NodeRef containerRef);
 
     void registerMultiEventListener(WorkflowMultiEventListener listener);
 
@@ -297,7 +299,7 @@ public interface WorkflowService {
 
     NodeRef importLinkedReviewTask(LinkedReviewTaskType taskToImport, String dvkId);
 
-    void markLinkedReviewTaskDeleted(DeleteLinkedReviewTaskType deletedTask);
+    NodeRef markLinkedReviewTaskDeleted(DeleteLinkedReviewTaskType deletedTask);
 
     void updateTaskSearchableProperties(NodeRef nodeRef);
 
@@ -324,5 +326,8 @@ public interface WorkflowService {
     void injectTasks(Workflow workflow, int index, List<Task> tasksToInsert);
 
     void retrieveTaskFiles(Task task, List<NodeRef> taskFiles);
+
+    /** Load compound workflow with only workflows of given types. For these workflows tasks are also loaded. */
+    CompoundWorkflow getCompoundWorkflowOfType(NodeRef nodeRef, List<QName> types);
 
 }

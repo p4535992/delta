@@ -387,7 +387,7 @@ public class RepoUtil {
         NodeRef sourceRef = nodeIsSource ? node.getNodeRef() : otherNodeRef;
         NodeRef targetRef = nodeIsSource ? otherNodeRef : node.getNodeRef();
         final AssociationRef assocRef = new AssociationRef(sourceRef, assocType, targetRef);
-        newAssoc.put(node.getNodeRefAsString(), assocRef);
+        newAssoc.put(targetRef.toString(), assocRef);
         addedAssociations.put(assocType.toString(), newAssoc);
         return assocRef;
     }

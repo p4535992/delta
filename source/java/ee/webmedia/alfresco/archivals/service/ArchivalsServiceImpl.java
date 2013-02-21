@@ -487,22 +487,29 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         List<ee.webmedia.alfresco.document.file.model.File> activeFiles = fileService.getAllActiveFiles(docRef);
         for (ee.webmedia.alfresco.document.file.model.File file : activeFiles) {
             DigestInputStream is = null;
+            InputStreamReader reader = null;
             try {
                 MessageDigest md5 = MessageDigest.getInstance("MD5");
-                is = new DigestInputStream(fileService.getFileContentInputStream(file.getNodeRef()), md5);
                 x.start("Fail")
                         .child("FailIdent", file.getNodeRef().getId())
                         .child("FailNimi", file.getDisplayName())
                         .child("FailSuurus", Long.toString(file.getSize()))
                         .start("FailBase64");
-                x.unescapedText("<![CDATA[");
-                InputStreamReader reader = new InputStreamReader(new org.apache.commons.codec.binary.Base64InputStream(is, true, 0, null), "UTF-8");
-                char[] buffer = new char[4096];
-                while (-1 != reader.read(buffer)) {
-                    x.unescapedText(new String(buffer));
+                if (file.getSize() > 0) {
+                    is = new DigestInputStream(fileService.getFileContentInputStream(file.getNodeRef()), md5);
+                    is.mark(1);
+                    if (is.read(new byte[1]) != -1) {
+                        is.reset();
+                        x.unescapedText("<![CDATA[");
+                        reader = new InputStreamReader(new org.apache.commons.codec.binary.Base64InputStream(is, true, 0, null), "UTF-8");
+                        char[] buffer = new char[4096];
+                        while (-1 != reader.read(buffer)) {
+                            x.unescapedText(new String(buffer));
+                        }
+                        x.unescapedText("]]>");
+                    }
                 }
-                x.unescapedText("]]>")
-                        .end() // FailBase64
+                x.end() // FailBase64
                         .child("FailViide")
                         .child("FailLoplik", "true")
                         .child("FailOriginaal", "true")
@@ -517,6 +524,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
                 LOG.error("Error occurred when exporting file " + file.getNodeRef(), e);
                 throw e;
             } finally {
+                IOUtils.closeQuietly(reader);
                 IOUtils.closeQuietly(is);
             }
         }
@@ -745,7 +753,6 @@ public class ArchivalsServiceImpl implements ArchivalsService {
 
     private void setNextEvent(final List<NodeRef> volumes, final Date newDate, final NodeRef activityRef, final FirstEvent nextEvent, String threadName, final String messageKey,
             final boolean logPreviousDate) {
-        final UserService userService = BeanHelper.getUserService();
         final FastDateFormat df = FastDateFormat.getInstance("dd.MM.yyyy");
         BeanHelper.getGeneralService().runOnBackground(new RunAsWork<Void>() {
             @Override
@@ -790,7 +797,6 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     }
 
     protected void setPropTrueAndFinish(final List<NodeRef> volumes, final NodeRef activityRef, final QName propQName, String threadName, final String logMessageKey) {
-        final UserService userService = BeanHelper.getUserService();
         BeanHelper.getGeneralService().runOnBackground(new RunAsWork<Void>() {
             @Override
             public Void doWork() throws Exception {
@@ -817,7 +823,6 @@ public class ArchivalsServiceImpl implements ArchivalsService {
 
     @Override
     public void confirmTransfer(final List<NodeRef> volumes, final Date confirmationDate, final NodeRef activityRef) {
-        final UserService userService = BeanHelper.getUserService();
         BeanHelper.getGeneralService().runOnBackground(new RunAsWork<Void>() {
             @Override
             public Void doWork() throws Exception {
@@ -896,7 +901,6 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     }
 
     private void disposeVolumes(List<NodeRef> volumesToDestroy, final Date disposalDate, final String docDeletingComment, final String logMessage) {
-        final UserService userService = BeanHelper.getUserService();
         RetryingTransactionHelper retryingTransactionHelper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
         for (final NodeRef volumeNodeRef : volumesToDestroy) {
             // remove all childs

@@ -105,8 +105,8 @@ public class CustomReindexComponent extends AbstractReindexComponent {
                         LOG.info("Last : " + getTransactionInfo(txns.get(txns.size() - 1)));
                     }
 
-                    for (Long txnId : allTxns) {
-                        allTxns.add(txnId);
+                    for (Transaction txn : txns) {
+                        allTxns.add(txn.getId());
                     }
 
                     startTimeMs.set(txns.get(txns.size() - 1).getCommitTimeMs());
@@ -121,7 +121,7 @@ public class CustomReindexComponent extends AbstractReindexComponent {
                     if (firstAndLastTxnInfo.getFirst() == null) {
                         firstAndLastTxnInfo.setFirst(getTransactionInfo(txns.get(0)));
                     }
-                    firstAndLastTxnInfo.setSecond(getTransactionInfo(txns.get(allTxns.size() - 1)));
+                    firstAndLastTxnInfo.setSecond(getTransactionInfo(txns.get(txns.size() - 1)));
                     return true;
                 }
             }, true);

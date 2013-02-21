@@ -6,6 +6,8 @@
  */
 package com.icegreen.greenmail.imap.commands;
 
+import org.alfresco.repo.content.MimetypeMap;
+import org.alfresco.service.cmr.repository.ContentWriter;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
@@ -20,6 +22,7 @@ import com.icegreen.greenmail.imap.ProtocolException;
 import com.icegreen.greenmail.store.FolderException;
 import com.icegreen.greenmail.store.MailFolder;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.monitoring.MonitoredService;
 import ee.webmedia.alfresco.monitoring.MonitoringUtil;
 
@@ -32,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.util.Date;
 
 /**
@@ -44,12 +48,6 @@ public class AppendCommand extends AuthenticatedStateCommand {
     private static final Log log = LogFactory.getLog(AppendCommand.class);
 
     private static final FastDateFormat dateFormat = FastDateFormat.getInstance("yyyy-MM-dd-HH-mm-ss-SSSZ");
-
-    private static String messageCopyFolder = null;
-
-    public static void setMessageCopyFolder(String value) {
-        messageCopyFolder = value;
-    }
 
     public static final String NAME = "APPEND";
     public static final String ARGS = "<mailbox> [<flag_list>] [<date_time>] literal";
@@ -160,6 +158,7 @@ public class AppendCommand extends AuthenticatedStateCommand {
 
             try {
                 MimeMessage message = GreenMailUtil.newMimeMessage(new ByteArrayInputStream(mail));
+                String messageCopyFolder = GreenMailUtil.getMessageCopyFolder();
                 if (StringUtils.isNotBlank(messageCopyFolder)) {
                     try {
                         String filename = "ImapMessage-AppendCommand-" + dateFormat.format(new Date());
@@ -176,6 +175,14 @@ public class AppendCommand extends AuthenticatedStateCommand {
                     }
                 } else {
                     log.info("Not writing message to file, imap.messageFolder is blank");
+                }
+                if (GreenMailUtil.isSaveOriginalToRepo()) {
+                    ContentWriter writer = BeanHelper.getContentService().getWriter(null, null, false);
+                    writer.setMimetype(MimetypeMap.MIMETYPE_RFC822);
+                    OutputStream os = writer.getContentOutputStream();
+                    IOUtils.write(mail, os);
+                    os.close();
+                    message.setHeader(GreenMailUtil.SAVE_ORIGINAL_TO_REPO_CONTENT_DATA_HEADER_NAME, writer.getContentData().toString());
                 }
                 return message;
             } catch (Exception e) {

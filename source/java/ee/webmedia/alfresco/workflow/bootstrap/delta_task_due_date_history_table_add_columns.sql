@@ -1,0 +1,1 @@
+ALTER TABLE delta_task_due_date_history ADD COLUMN extension_task_id text;

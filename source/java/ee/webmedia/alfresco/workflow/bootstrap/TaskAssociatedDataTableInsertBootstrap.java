@@ -19,7 +19,6 @@ import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
-import org.alfresco.util.Pair;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -31,6 +30,7 @@ import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
+import ee.webmedia.alfresco.workflow.service.DueDateHistoryRecord;
 import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
@@ -68,13 +68,15 @@ public class TaskAssociatedDataTableInsertBootstrap extends AbstractNodeUpdater 
         if (childAssocs.isEmpty()) {
             results.add("no task due date history present");
         } else {
-            List<Pair<String, Date>> historyRecords = new ArrayList<Pair<String, Date>>();
+            List<DueDateHistoryRecord> historyRecords = new ArrayList<DueDateHistoryRecord>();
             for (ChildAssociationRef childRef : childAssocs) {
                 NodeRef historyRef = childRef.getChildRef();
-                historyRecords.add(
-                        new Pair<String, Date>(
-                                (String) nodeService.getProperty(historyRef, WorkflowCommonModel.Props.CHANGE_REASON),
-                                (Date) nodeService.getProperty(historyRef, WorkflowCommonModel.Props.PREVIOUS_DUE_DATE)));
+                DueDateHistoryRecord historyRecord = new DueDateHistoryRecord(
+                        nodeRef.getId(),
+                        (String) nodeService.getProperty(historyRef, WorkflowCommonModel.Props.CHANGE_REASON),
+                        (Date) nodeService.getProperty(historyRef, WorkflowCommonModel.Props.PREVIOUS_DUE_DATE),
+                        historyRef.getId(), null);
+                historyRecords.add(historyRecord);
             }
             workflowDbService.createTaskDueDateHistoryEntries(nodeRef, historyRecords);
             results.add(historyRecords.toString());

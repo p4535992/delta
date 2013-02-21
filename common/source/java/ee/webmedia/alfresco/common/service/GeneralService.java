@@ -309,6 +309,8 @@ public interface GeneralService {
 
     String getTsquery(String input);
 
+    String getTsquery(String input, int minLexemLength);
+
     String getStoreTitle(StoreRef storeRef);
 
     boolean hasAdditionalArchivalStores();

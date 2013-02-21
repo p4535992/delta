@@ -30,6 +30,7 @@ import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
 import org.apache.commons.lang.StringUtils;
@@ -1007,7 +1008,7 @@ public class NotificationServiceImpl implements NotificationService {
     private boolean isOrderAssignmentNotificationNeeded(final Task initiatingTask, Task task) {
         Boolean sendEmail = task.getProp(WorkflowSpecificModel.Props.SEND_ORDER_ASSIGNMENT_COMPLETED_EMAIL);
         return !(initiatingTask == null || initiatingTask.getNodeRef().equals(task.getNodeRef())
-                || !initiatingTask.getParent().getNodeRef().equals(task.getParent().getNodeRef()) 
+                || !initiatingTask.getParent().getNodeRef().equals(task.getParent().getNodeRef())
                 || (sendEmail != null && !Boolean.TRUE.equals(sendEmail)));
     }
 
@@ -1304,7 +1305,7 @@ public class NotificationServiceImpl implements NotificationService {
             notification.addRecipient(task.getOwnerName(), task.getOwnerEmail());
 
             NodeRef workflowRef = task.getWorkflowNodeRef();
-            NodeRef compoundWorkflowRef = (nodeService.getPrimaryParent(workflowRef).getParentRef());            
+            NodeRef compoundWorkflowRef = (nodeService.getPrimaryParent(workflowRef).getParentRef());
             NodeRef docRef = (nodeService.getPrimaryParent(compoundWorkflowRef)).getParentRef();
             if (workflowService.getIndependentWorkflowsRoot().equals(docRef)) {
                 docRef = null;
@@ -1491,8 +1492,9 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public void processAccessRestrictionChangedNotification(DocumentDynamic document, List<SendInfo> sendInfos) {
+    public Pair<List<String>, List<SendInfo>> getExistingAndMissingEmails(List<SendInfo> sendInfos) {
         List<String> recipientEmails = new ArrayList<String>();
+        List<SendInfo> missingEmails = new ArrayList<SendInfo>();
         for (SendInfo sendInfo : sendInfos) {
             Map<String, Object> properties = sendInfo.getNode().getProperties();
             String recipientRegNr = (String) properties.get(DocumentCommonModel.Props.SEND_INFO_RECIPIENT_REG_NR);
@@ -1515,20 +1517,30 @@ public class NotificationServiceImpl implements NotificationService {
             }
             if (StringUtils.isNotBlank(recipientEmail)) {
                 recipientEmails.add(recipientEmail);
+            } else {
+                missingEmails.add(sendInfo);
             }
         }
-        if (!recipientEmails.isEmpty()) {
-            Notification notification = setupNotification(new Notification(), NotificationModel.NotificationType.ACCESS_RESTRICTION_REASON_CHANGED, -1,
-                    Parameters.DOC_SENDER_EMAIL, null);
-            notification.setToEmails(recipientEmails);
-            try {
-                LinkedHashMap<String, NodeRef> templateDataNodeRefs = new LinkedHashMap<String, NodeRef>();
-                NodeRef docRef = document.getNodeRef();
-                templateDataNodeRefs.put(null, docRef);
-                sendNotification(notification, docRef, templateDataNodeRefs);
-            } catch (EmailException e) {
-                log.error("Failed to send email notification " + notification, e);
-            }
+
+        return new Pair<List<String>, List<SendInfo>>(recipientEmails, missingEmails);
+    }
+
+    @Override
+    public void processAccessRestrictionChangedNotification(DocumentDynamic document, List<String> emails) {
+        if (emails == null || emails.isEmpty()) {
+            return;
+        }
+
+        Notification notification = setupNotification(new Notification(), NotificationModel.NotificationType.ACCESS_RESTRICTION_REASON_CHANGED, -1,
+                Parameters.DOC_SENDER_EMAIL, null);
+        notification.setToEmails(emails);
+        try {
+            LinkedHashMap<String, NodeRef> templateDataNodeRefs = new LinkedHashMap<String, NodeRef>();
+            NodeRef docRef = document.getNodeRef();
+            templateDataNodeRefs.put(null, docRef);
+            sendNotification(notification, docRef, templateDataNodeRefs);
+        } catch (EmailException e) {
+            log.error("Failed to send email notification " + notification, e);
         }
     }
 

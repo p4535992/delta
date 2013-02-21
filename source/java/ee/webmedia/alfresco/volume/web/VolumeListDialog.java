@@ -6,6 +6,8 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getVolumeService;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import javax.faces.context.FacesContext;
@@ -21,6 +23,9 @@ import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
+import ee.webmedia.alfresco.volume.model.VolumeModel;
+import ee.webmedia.alfresco.volume.model.VolumeOrCaseFile;
+import ee.webmedia.alfresco.volume.service.VolumeService;
 
 /**
  * Form backing bean for Volumes list
@@ -55,7 +60,22 @@ public class VolumeListDialog extends BaseDialogBean {
     }
 
     public List<Volume> getEntries() {
-        final List<Volume> volumes = getVolumeService().getAllVolumesBySeries(parent.getNode().getNodeRef());
+        VolumeService volumeService = getVolumeService();
+        final List<Volume> volumes = volumeService.getAllVolumesBySeries(parent.getNode().getNodeRef());
+
+        // Only check for validFrom value. Alternative is volumeMark or unknown value, which is already covered by VolumeService
+        String defaultVolumeSortingField = volumeService.getDefaultVolumeSortingField();
+        if (VolumeModel.Props.VALID_FROM.getLocalName().equals(defaultVolumeSortingField)) {
+            Collections.sort(volumes, new Comparator<VolumeOrCaseFile>() {
+
+                @Override
+                public int compare(VolumeOrCaseFile o1, VolumeOrCaseFile o2) {
+                    // This field is mandatory
+                    return o2.getValidFrom().compareTo(o1.getValidFrom());
+                }
+            });
+        }
+
         return volumes;
     }
 

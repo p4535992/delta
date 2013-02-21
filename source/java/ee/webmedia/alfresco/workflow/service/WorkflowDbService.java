@@ -2,7 +2,6 @@ package ee.webmedia.alfresco.workflow.service;
 
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,7 +40,7 @@ public interface WorkflowDbService {
 
     void createTaskDueDateExtensionAssocEntry(NodeRef initiatingTaskRef, NodeRef nodeRef);
 
-    void createTaskDueDateHistoryEntries(NodeRef taskRef, List<Pair<String, Date>> historyRecords);
+    void createTaskDueDateHistoryEntries(NodeRef taskRef, List<DueDateHistoryRecord> historyRecords);
 
     void createTaskFileEntries(NodeRef nodeRef, List<File> files);
 
@@ -59,7 +58,7 @@ public interface WorkflowDbService {
 
     void createTaskFileEntriesFromNodeRefs(NodeRef taskRef, List<NodeRef> fileNodeRefs);
 
-    Collection<Pair<String, Date>> getDueDateHistoryRecords(NodeRef taskRef);
+    Collection<DueDateHistoryRecord> getDueDateHistoryRecords(NodeRef taskRef);
 
     boolean taskExists(NodeRef nodeRef);
 

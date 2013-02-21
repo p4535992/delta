@@ -31,7 +31,7 @@
          <f:facet name="header">
             <a:sortLink id="col3-header" label="#{msg.workflow_file}" value="file" styleClass="header" />
          </f:facet>
-         <wm:customChildrenContainer childGenerator="#{WorkflowBlockBean.noteBlockRowFileGenerator}" parameterList="#{r.files}"/>
+         <wm:customChildrenContainer id="opinion-task-files" childGenerator="#{WorkflowBlockBean.noteBlockRowFileGenerator}" parameterList="#{r.files}"/>
       </a:column>      
 
       <a:column id="col4" style="width: 60%;">

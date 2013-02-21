@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.volume.model;
 
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -9,6 +10,8 @@ public interface VolumeOrCaseFile extends Comparable<VolumeOrCaseFile> {
     String getVolumeMark();
 
     String getTitle();
+
+    Date getValidFrom();
 
     boolean isDynamic();
 

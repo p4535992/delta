@@ -3,6 +3,9 @@ package ee.webmedia.alfresco.document.bootstrap;
 import static ee.webmedia.alfresco.document.model.DocumentSpecificModel.DOCSPEC_URI;
 import static ee.webmedia.alfresco.utils.DynamicTypeUtil.setTypeProps;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,7 +21,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.alfresco.model.ContentModel;
-import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -31,7 +33,10 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+
+import com.csvreader.CsvWriter;
 
 import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.cases.model.CaseModel;
@@ -121,6 +126,14 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
                     DocumentCommonModel.Props.SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS, DocumentCommonModel.Props.SEARCHABLE_HAS_ALL_FINISHED_COMPOUND_WORKFLOWS,
                     DocumentCommonModel.Props.SEARCHABLE_FUND, DocumentCommonModel.Props.SEARCHABLE_FUNDS_CENTER, DocumentCommonModel.Props.SEARCHABLE_EA_COMMITMENT_ITEM));
 
+    public static final Set<QName> ASPECTS_WITH_CHILD_ASSOCS = new HashSet<QName>(
+            Arrays.asList(DocumentSpecificModel.Aspects.CONTRACT_DETAILS_V2, DocumentSpecificModel.Aspects.CONTRACT_MV_DETAILS,
+                    DocumentSpecificModel.Aspects.TRAINING_APPLICATION, DocumentSpecificModel.Aspects.TRAINING_APPLICATION_V2,
+                    DocumentSpecificModel.Aspects.ERRAND_ORDER_APPLICANT_ABROAD, DocumentSpecificModel.Aspects.ERRAND_ORDER_APPLICANT_ABROAD_V2,
+                    QName.createQName(DOCSPEC_URI, "errandApplicationApplicantDomestic"), DocumentSpecificModel.Aspects.ERRAND_ORDER_ABROAD,
+                    DocumentSpecificModel.Aspects.ERRAND_ORDER_ABROAD_V2, DocumentSpecificModel.Aspects.ERRAND_ORDER_ABROAD_MV,
+                    DocumentSpecificModel.Aspects.ERRAND_APPLICATION_DOMESTIC, DocumentSpecificModel.Aspects.ERRAND_APPLICATION_DOMESTIC_V2));
+
     private static final Set<String> SINGLE_VALUE_TO_MULTIVALUED = new HashSet<String>(
             Arrays.asList(DocumentSpecificModel.Props.SUBSTITUTE_NAME.getLocalName(), DocumentSpecificModel.Props.SUBSTITUTION_BEGIN_DATE.getLocalName(),
                     DocumentSpecificModel.Props.SUBSTITUTION_END_DATE.getLocalName()));
@@ -163,6 +176,11 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
     private StoreRef activeStore;
     private Map<String, List<String>> orgStructNameToPath;
     private Collection<QName> contentModelProps;
+
+    private final Set<NodeRef> nodesToDelete = new HashSet<NodeRef>();
+    private final Set<NodeRef> nodesToRemoveAspects = new HashSet<NodeRef>();
+    private File nodesToDeleteFile;
+    private File nodesToRemoveAspectsFile;
 
     static {
         STATIC_TO_DYNAMIC_ASSOC_QNAMES.put(DocumentSpecificModel.Types.CONTRACT_PARTY_TYPE, DocumentChildModel.Assocs.CONTRACT_PARTY);
@@ -221,7 +239,14 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
         STATIC_TO_DYNAMIC_PROP_QNAME.put(createDocspecProp(DocumentSpecificModel.Props.LEAVE_CHANGE_DAYS), DocumentDynamicModel.Props.LEAVE_CHANGED_DAYS);
         STATIC_TO_DYNAMIC_PROP_QNAME.put(createDocspecProp(DocumentSpecificModel.Props.LEAVE_CANCEL_END_DATES), DocumentSpecificModel.Props.LEAVE_CANCEL_END_DATE);
         STATIC_TO_DYNAMIC_PROP_QNAME.put(createDocspecProp(DocumentSpecificModel.Props.COST_ELEMENT), DocumentDynamicModel.Props.COST_CENTER);
-
+        STATIC_TO_DYNAMIC_PROP_QNAME.put(createDocspecProp(DocumentSpecificModel.Props.SECOND_PARTY_NAME), DocumentSpecificModel.Props.PARTY_NAME);
+        STATIC_TO_DYNAMIC_PROP_QNAME.put(createDocspecProp(DocumentSpecificModel.Props.SECOND_PARTY_SIGNER), DocumentSpecificModel.Props.PARTY_SIGNER);
+        STATIC_TO_DYNAMIC_PROP_QNAME.put(createDocspecProp(DocumentSpecificModel.Props.SECOND_PARTY_EMAIL), DocumentSpecificModel.Props.PARTY_EMAIL);
+        STATIC_TO_DYNAMIC_PROP_QNAME.put(createDocspecProp(DocumentSpecificModel.Props.SECOND_PARTY_CONTACT_PERSON), DocumentSpecificModel.Props.PARTY_CONTACT_PERSON);
+        STATIC_TO_DYNAMIC_PROP_QNAME.put(createDocspecProp(DocumentSpecificModel.Props.THIRD_PARTY_NAME), DocumentSpecificModel.Props.PARTY_NAME);
+        STATIC_TO_DYNAMIC_PROP_QNAME.put(createDocspecProp(DocumentSpecificModel.Props.THIRD_PARTY_SIGNER), DocumentSpecificModel.Props.PARTY_SIGNER);
+        STATIC_TO_DYNAMIC_PROP_QNAME.put(createDocspecProp(DocumentSpecificModel.Props.THIRD_PARTY_EMAIL), DocumentSpecificModel.Props.PARTY_EMAIL);
+        STATIC_TO_DYNAMIC_PROP_QNAME.put(createDocspecProp(DocumentSpecificModel.Props.THIRD_PARTY_CONTACT_PERSON), DocumentSpecificModel.Props.PARTY_CONTACT_PERSON);
     }
 
     private static QName createDocspecProp(String localName) {
@@ -256,6 +281,30 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
             resultSets.add(searchService.query(storeRef, SearchService.LANGUAGE_LUCENE, query));
         }
         return resultSets;
+    }
+
+    @Override
+    protected void executeAfterCommit(final File completedFile, final CsvWriterClosure closure) {
+        super.executeAfterCommit(completedFile, closure);
+        writeNodeRefsToFile(nodesToDeleteFile, nodesToDelete);
+        writeNodeRefsToFile(nodesToRemoveAspectsFile, nodesToRemoveAspects);
+    }
+
+    public void writeNodeRefsToFile(File file, Set<NodeRef> nodeRefs) {
+        try {
+            // Mark nodes for deleting
+            CsvWriter writer = new CsvWriter(new FileWriter(file, true), CSV_SEPARATOR);
+            try {
+                for (NodeRef nodeToDelete : nodeRefs) {
+                    writer.writeRecord(new String[] { nodeToDelete.toString() });
+                }
+                nodeRefs.clear();
+            } finally {
+                writer.close();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Error writing file '" + file + "': " + e.getMessage(), e);
+        }
     }
 
     @Override
@@ -298,6 +347,7 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
         }
         ASPECTS_TO_REMOVE.addAll(dictionaryService.getAspects(DocumentSubtypeModel.MODEL_NAME));
         ASPECTS_TO_REMOVE.addAll(dictionaryService.getAspects(DocumentSpecificModel.MODEL));
+        ASPECTS_TO_REMOVE.removeAll(ASPECTS_WITH_CHILD_ASSOCS);
         activeStore = generalService.getStore();
         documentUpdater.setEnabled(false);
         documentChangedTypePropertiesUpdater.setEnabled(false);
@@ -320,6 +370,8 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
         orgStructNameToPath = new HashMap<String, List<String>>();
         fillOrgStructNameToPath(orgStructNameToPath, BeanHelper.getOrganizationStructureService());
         contentModelProps = dictionaryService.getProperties(QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "contentmodel"));
+        nodesToDeleteFile = loadNodesToDeleteFile();
+        nodesToRemoveAspectsFile = loadNodesToRemoveAspectsFile();
     }
 
     public static void fillOrgStructNameToPath(Map<String, List<String>> orgStructNameToPath, OrganizationStructureService organizationStructureService) {
@@ -339,7 +391,7 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
         }
         WmNode document = new WmNode(nodeRef, staticDocType);
         if (documentService.isDraft(nodeRef)) {
-            return logAndDelete(nodeRef, staticDocType, document, "delete_draft");
+            return logAndMarkForDelete(nodeRef, staticDocType, document, "mark_for_delete_draft");
         }
         String dynamicDocTypeId;
         if (STATIC_TO_DYNAMIC_DOC_TYPE.containsKey(staticDocType)) {
@@ -369,8 +421,10 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
         Map<String, Pair<DynamicPropertyDefinition, Field>> nodeTypeFields = dynamicDocumentNodesPropsAndFields.get(dynamicDocTypeId).get(DocumentCommonModel.Types.DOCUMENT);
         boolean isVacationOrderV1 = originalDocumentAspects.contains(DocumentSpecificModel.Aspects.VACATION_ORDER_COMMON);
         convertVacationOrderV1ToV2(documentProperties, isVacationOrderV1);
+        boolean whoseNameToComment = DocumentSubtypeModel.Types.VACATION_APPLICATION.equals(staticDocType) || DocumentSubtypeModel.Types.VACATION_ORDER.equals(staticDocType)
+                || DocumentSubtypeModel.Types.VACATION_ORDER_SMIT.equals(staticDocType);
         addConvertedProperties(documentProperties, newDocumentProperties, unknownDocspecProperties, propConversionErrors, nodeTypeFields,
-                originalDocumentAspects);
+                originalDocumentAspects, whoseNameToComment);
 
         if (StringUtils.isBlank((String) newDocumentProperties.get(DocumentCommonModel.Props.STORAGE_TYPE))) {
             newDocumentProperties.put(DocumentCommonModel.Props.STORAGE_TYPE, StorageType.DIGITAL.getValueName());
@@ -425,13 +479,14 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
         // no default values are set, this should be correct
         TreeNode<QName> childAssocTypeQNameTree = childAssocTypeQNames.get(dynamicDocTypeId);
         List<TreeNode<QName>> childAssocTypeQNameChildren = childAssocTypeQNameTree.getChildren();
-        documentDynamicService.createChildNodesHierarchy(document, childAssocTypeQNameChildren, null);
+        List<Pair<QName, WmNode>> requiredChildren = documentDynamicService.createChildNodesHierarchy(document, childAssocTypeQNameChildren, null);
 
         List<Pair<Pair<NodeRef, QName>, Node>> updatableChildNodes = new ArrayList<Pair<Pair<NodeRef, QName>, Node>>();
         boolean isErrandV1 = originalDocumentAspects.contains(DocumentSpecificModel.Aspects.ERRAND_ORDER_ABROAD)
                 || originalDocumentAspects.contains(DocumentSpecificModel.Aspects.ERRAND_APPLICATION_DOMESTIC);
         Map<QName, Serializable> errandPropsToAdd = getErrandV1ChildProps(documentProperties, isErrandV1);
-        if (originalDocumentAspects.contains(DocumentSpecificModel.Aspects.CONTRACT_DETAILS_V1)) {
+        if (originalDocumentAspects.contains(DocumentSpecificModel.Aspects.CONTRACT_DETAILS_V1)
+                || (DocumentSubtypeModel.Types.CONTRACT_SMIT.equals(staticDocType) && documentProperties.containsKey(DocumentSpecificModel.Props.SECOND_PARTY_CONTACT_PERSON))) {
             // contract v1 doesn't have convertable children, but we add contract parties from document data
             Pair<Map<QName, Serializable>, Map<QName, Serializable>> secondAndThirdPartyProps = convertContractV1ToV2(documentProperties);
             QName dynamicAssocQName = DocumentChildModel.Assocs.CONTRACT_PARTY;
@@ -447,6 +502,7 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
             fillDynamicChildNodeProps(originalDocumentAspects, unknownDocspecProperties, propConversionErrors, childNodeTypeFields, updatableChildNodes, existingChildProps,
                     dynamicChildNode, nodeRef, dynamicAssocQName);
         }
+        List<NodeRef> deletedChildRefs = new ArrayList<NodeRef>();
         for (QName staticChildTypeQName : CONVERTABLE_CHILD_QNAMES) {
             List<ChildAssociationRef> childrenToConvert = null;
             childrenToConvert = nodeService.getChildAssocs(nodeRef, Collections.singleton(staticChildTypeQName));
@@ -497,7 +553,8 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
                                 existingGrandChildProps, dynamicGrandChildNode, dynamicChildNode.getNodeRef(), dynamicGrandChildAssocQName);
                     }
                 }
-                logAndDelete(childRef, staticDocType, document, "delete_child_node");
+                deletedChildRefs.add(childRef);
+                logAndMarkForDelete(childRef, staticDocType, document, "mark_for_delete_child_node");
             }
         }
 
@@ -513,6 +570,9 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
             newDocumentProperties.put(DocumentCommonModel.Props.INVOICE_XML, documentProperties.get(INVOICE_XML));
         }
         documentAspects.removeAll(ASPECTS_TO_REMOVE);
+        if (CollectionUtils.containsAny(documentAspects, ASPECTS_WITH_CHILD_ASSOCS)) {
+            nodesToRemoveAspects.add(nodeRef);
+        }
         documentAspects.add(DocumentAdminModel.Aspects.OBJECT);
 
         // handle aspects after child nodes are retrieved from repo, because removing aspects may
@@ -548,9 +608,46 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
                 unsavedToSavedNodeRef.put(unsavedNodeRef, savedNodeRef);
             }
         }
+        checkAndSaveRequiredChildren(document, requiredChildren, unsavedToSavedNodeRef, deletedChildRefs);
         permissionService.setInheritParentPermissions(nodeRef, true);
         return new String[] { "updated_to_dynamic", staticDocType.toPrefixString(namespaceService), TextUtil.joinNonBlankStringsWithComma(unknownDocspecProperties),
                 TextUtil.joinNonBlankStringsWithComma(propConversionErrors) };
+    }
+
+    // If some required children have not been filled with original document's data and thus are not saved,
+    // save empty nodes as these nodes are required by model.
+    // Use deletedNodeRefs to avoid nodeService.exists queries for each processed node.
+    private void checkAndSaveRequiredChildren(Node document, List<Pair<QName, WmNode>> requiredChildren, Map<NodeRef, NodeRef> unsavedToSavedNodeRef, List<NodeRef> deletedNodeRefs) {
+        if (deletedNodeRefs.contains(document.getNodeRef())) {
+            return;
+        }
+        QName nodeType = document.getType();
+        if (!docSubTypes.contains(nodeType) && !STATIC_TO_DYNAMIC_ASSOC_QNAMES.containsValue(nodeType)) {
+            return;
+        }
+        for (Map.Entry<String, List<Node>> entry : document.getAllChildAssociationsByAssocType().entrySet()) {
+            for (Node childNode : entry.getValue()) {
+                for (Pair<QName, WmNode> requiredChild : requiredChildren) {
+                    WmNode requiredChildNode = requiredChild.getSecond();
+                    NodeRef requiredChildNodeRef = requiredChildNode.getNodeRef();
+                    if (RepoUtil.isUnsaved(requiredChildNode) && requiredChildNodeRef.equals(childNode.getNodeRef()) && !unsavedToSavedNodeRef.containsKey(requiredChildNodeRef)) {
+                        QName assocQName = requiredChild.getFirst();
+                        NodeRef parentNodeRef = document.getNodeRef();
+                        if (RepoUtil.isUnsaved(parentNodeRef)) {
+                            parentNodeRef = unsavedToSavedNodeRef.get(parentNodeRef);
+                        }
+                        NodeRef savedNodeRef = nodeService.createNode(parentNodeRef, assocQName, assocQName, assocQName,
+                                RepoUtil.toQNameProperties(requiredChildNode.getProperties())).getChildRef();
+                        unsavedToSavedNodeRef.put(requiredChildNodeRef, savedNodeRef);
+                        if (childNode instanceof WmNode) {
+                            ((WmNode) childNode).updateNodeRef(savedNodeRef);
+                        }
+                    }
+                }
+                checkAndSaveRequiredChildren(childNode, requiredChildren, unsavedToSavedNodeRef, deletedNodeRefs);
+            }
+        }
+
     }
 
     private void clearAccessRestrictionHiddenFields(Map<QName, Serializable> newDocumentProperties) {
@@ -628,20 +725,25 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
                 convertPropsToList(documentProperties, createDocspecProp(DocumentSpecificModel.Props.LEAVE_CANCEL_BEGIN_DATE),
                         createDocspecProp(DocumentSpecificModel.Props.LEAVE_CANCEL_END_DATE),
                         createDocspecProp(DocumentSpecificModel.Props.LEAVE_CANCEL_DAYS));
+                removeAllFromMap(documentProperties, createDocspecProp(DocumentSpecificModel.Props.LEAVE_CANCEL));
+            } else {
+                removeAllFromMap(documentProperties, createDocspecProp(DocumentSpecificModel.Props.LEAVE_CANCEL),
+                        createDocspecProp(DocumentSpecificModel.Props.LEAVE_CANCEL_BEGIN_DATE),
+                        createDocspecProp(DocumentSpecificModel.Props.LEAVE_CANCEL_END_DATE),
+                        createDocspecProp(DocumentSpecificModel.Props.LEAVE_CANCEL_DAYS));
             }
-            removeAllFromMap(documentProperties, createDocspecProp(DocumentSpecificModel.Props.LEAVE_CANCEL),
-                    createDocspecProp(DocumentSpecificModel.Props.LEAVE_CANCEL_BEGIN_DATE),
-                    createDocspecProp(DocumentSpecificModel.Props.LEAVE_CANCEL_END_DATE), createDocspecProp(DocumentSpecificModel.Props.LEAVE_CANCEL_DAYS));
             if (Boolean.TRUE.equals(documentProperties.get(createDocspecProp(DocumentSpecificModel.Props.LEAVE_CHANGE)))) {
                 convertPropsToList(documentProperties, createDocspecProp(DocumentSpecificModel.Props.LEAVE_INITIAL_BEGIN_DATE),
                         createDocspecProp(DocumentSpecificModel.Props.LEAVE_INITIAL_END_DATE),
                         createDocspecProp(DocumentSpecificModel.Props.LEAVE_NEW_BEGIN_DATE), createDocspecProp(DocumentSpecificModel.Props.LEAVE_NEW_END_DATE),
                         createDocspecProp(DocumentSpecificModel.Props.LEAVE_NEW_DAYS));
+                removeAllFromMap(documentProperties, createDocspecProp(DocumentSpecificModel.Props.LEAVE_CHANGE));
+            } else {
+                removeAllFromMap(documentProperties, createDocspecProp(DocumentSpecificModel.Props.LEAVE_CHANGE),
+                        createDocspecProp(DocumentSpecificModel.Props.LEAVE_INITIAL_END_DATE),
+                        createDocspecProp(DocumentSpecificModel.Props.LEAVE_NEW_BEGIN_DATE), createDocspecProp(DocumentSpecificModel.Props.LEAVE_NEW_END_DATE),
+                        createDocspecProp(DocumentSpecificModel.Props.LEAVE_NEW_DAYS));
             }
-            removeAllFromMap(documentProperties, createDocspecProp(DocumentSpecificModel.Props.LEAVE_CHANGE),
-                    createDocspecProp(DocumentSpecificModel.Props.LEAVE_INITIAL_BEGIN_DATE), createDocspecProp(DocumentSpecificModel.Props.LEAVE_INITIAL_END_DATE),
-                    createDocspecProp(DocumentSpecificModel.Props.LEAVE_NEW_BEGIN_DATE), createDocspecProp(DocumentSpecificModel.Props.LEAVE_NEW_END_DATE),
-                    createDocspecProp(DocumentSpecificModel.Props.LEAVE_NEW_DAYS));
         }
     }
 
@@ -668,7 +770,7 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
             Map<QName, Serializable> existingChildProps, Node dynamicChildNode, NodeRef parentRef, QName assocQName) {
         Map<QName, Serializable> newChildProps = RepoUtil.toQNameProperties(dynamicChildNode.getProperties(), true);
         addConvertedProperties(existingChildProps, newChildProps, unknownDocspecProperties, propConversionErrors,
-                nodeTypeFields, originalDocumentAspects);
+                nodeTypeFields, originalDocumentAspects, false);
         dynamicChildNode.getProperties().putAll(RepoUtil.toStringProperties(newChildProps));
         updatableChildNodes.add(new Pair<Pair<NodeRef, QName>, Node>(new Pair<NodeRef, QName>(parentRef, assocQName), dynamicChildNode));
     }
@@ -722,7 +824,7 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
 
     private void addConvertedProperties(Map<QName, Serializable> originalProperties, Map<QName, Serializable> newProperties,
             List<String> unknownDocspecProperties, List<String> propConversionErrors,
-            Map<String, Pair<DynamicPropertyDefinition, Field>> nodeTypeFields, Set<QName> staticDocumentAspects) {
+            Map<String, Pair<DynamicPropertyDefinition, Field>> nodeTypeFields, Set<QName> staticDocumentAspects, boolean whoseNameToComment) {
         Pair<Serializable, Serializable> dailyAllowance = null;
         Pair<Serializable, Serializable> expenses = null;
         boolean isTrainingApplicationV1 = staticDocumentAspects.contains(DocumentSpecificModel.Aspects.TRAINING_APPLICATION);
@@ -768,6 +870,9 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
                     }
                 } else if (isContractSim && DocumentSpecificModel.Props.PAYMENT_ANNOTATION.equals(propName) && StringUtils.isNotBlank((String) propValue)) {
                     collectedProps.put(DocumentCommonModel.Props.COMMENT, (String) propValue);
+                    continue;
+                } else if (whoseNameToComment && createDocspecProp("whoseName").equals(propName) && (propValue == null || (propValue instanceof String))) {
+                    collectedProps.put(DocumentCommonModel.Props.COMMENT, MessageUtil.getMessage("document_convert_whose_name", (String) propValue));
                     continue;
                 }
                 String dynamicPropLocalName;
@@ -881,23 +986,18 @@ public class ConvertToDynamicDocumentsUpdater extends AbstractNodeUpdater {
         return allChangeableChildRefs;
     }
 
-    public String[] logAndDelete(final NodeRef nodeRef, QName docType, WmNode document, String action) {
-        try {
-            transactionService.getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
-
-                @Override
-                public Void execute() throws Throwable {
-                    nodeService.addAspect(nodeRef, DocumentCommonModel.Aspects.DELETE_PERMANENT, null);
-                    nodeService.deleteNode(nodeRef);
-                    return null;
-                }
-
-            }, false, true);
-        } catch (IllegalArgumentException e) {
-            log.info("Deleting node failed, nodeRef=" + nodeRef);
-            return new String[] { "deleting_failed", docType.toPrefixString(namespaceService) };
-        }
+    public String[] logAndMarkForDelete(final NodeRef nodeRef, QName docType, WmNode document, String action) {
+        nodeService.addAspect(nodeRef, DocumentCommonModel.Aspects.DELETE_PERMANENT, null);
+        nodesToDelete.add(nodeRef);
         return new String[] { action, docType.toPrefixString(namespaceService) };
+    }
+
+    public File loadNodesToDeleteFile() {
+        return new File(inputFolder, getBaseFileName() + "MarkedForDelete.csv");
+    }
+
+    public File loadNodesToRemoveAspectsFile() {
+        return new File(inputFolder, getBaseFileName() + "MarkedForRemoveAspects.csv");
     }
 
     public Node getOrCreateDynamicChildNode(Node document, String docTypeId, TreeNode<QName> childAssocTypeQNameTree, QName dynamicAssocQName,

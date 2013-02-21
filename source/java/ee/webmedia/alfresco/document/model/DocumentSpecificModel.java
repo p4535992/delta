@@ -220,8 +220,6 @@ public interface DocumentSpecificModel {
         QName WHOM_NAME = QName.createQName(URI, "whomName");
         QName WHOM_JOB_TITLE = QName.createQName(URI, "whomJobTitle");
 
-        QName WHOSE_NAME = QName.createQName(URI, "whose");
-
         QName TEMPLATE_NAME = QName.createQName(URI, "templateName");
         QName RAPPORTEUR_NAME = QName.createQName(URI, "rapporteur");
 

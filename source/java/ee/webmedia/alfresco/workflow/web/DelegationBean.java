@@ -9,6 +9,7 @@ import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.markAsGenerated
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -96,19 +97,18 @@ public class DelegationBean implements Serializable {
         DelegatableTaskType delegateTaskType = DelegatableTaskType.valueOf(ActionUtil.getParam(event, DelegationTaskListGenerator.ATTRIB_DELEGATE_TASK_TYPE));
         Workflow workflowForNewTask = getWorkflowByAction(event);
         String defaultResolution = null;
+        Date dueDate = null;
         if (ActionUtil.hasParam(event, ATTRIB_DELEGATABLE_TASK_INDEX)) {
             int originalTaskIndex = ActionUtil.getParam(event, ATTRIB_DELEGATABLE_TASK_INDEX, Integer.class);
-            defaultResolution = delegatableTasks.get(originalTaskIndex).getResolutionOfTask();
+            Task delegateableTask = delegatableTasks.get(originalTaskIndex);
+            defaultResolution = delegateableTask.getResolutionOfTask();
+            dueDate = delegateableTask.getDueDate();
         }
-        addDelegationTask(delegateTaskType, workflowForNewTask, taskIndex, defaultResolution);
+        addDelegationTask(delegateTaskType.isResponsibleTask(), workflowForNewTask, taskIndex, defaultResolution, dueDate);
         updatePanelGroup("addDelegationTask");
     }
 
-    private void addDelegationTask(DelegatableTaskType delegateTaskType, Workflow workflow, Integer taskIndex, String defaultResolution) {
-        addDelegationTask(delegateTaskType.isResponsibleTask(), workflow, taskIndex, defaultResolution);
-    }
-
-    public void addDelegationTask(boolean hasResponsibleAspect, Workflow workflow, Integer taskIndex, String defaultResolution) {
+    private void addDelegationTask(boolean hasResponsibleAspect, Workflow workflow, Integer taskIndex, String defaultResolution, Date dueDate) {
         Task task = taskIndex != null ? workflow.addTask(taskIndex) : workflow.addTask();
         markAsGeneratedByDelegation(task);
         task.setParallel(true);
@@ -119,6 +119,7 @@ public class DelegationBean implements Serializable {
         if (workflow.hasTaskResolution()) {
             task.setResolution(defaultResolution);
         }
+        task.setDueDate(dueDate);
     }
 
     private void updatePanelGroup(String action) {
@@ -161,9 +162,9 @@ public class DelegationBean implements Serializable {
             String resolutionOfTask = assignmentTask.getResolutionOfTask();
             if (assignmentTask.isResponsible()) {
                 assignmentTask.getNode().getProperties().put(TMP_GENERATE_RESPONSIBLE_ASSIGNMENT_TASK_DELEGATION, Boolean.TRUE);
-                addDelegationTask(true, workflow, null, resolutionOfTask);
+                addDelegationTask(true, workflow, null, resolutionOfTask, assignmentTask.getDueDate());
             } else {
-                addDelegationTask(false, workflow, null, resolutionOfTask);
+                addDelegationTask(false, workflow, null, resolutionOfTask, assignmentTask.getDueDate());
             }
         }
         // create information and opinion workflows under the compoundWorkflow of the assignment task in case user adds corresponding task.
@@ -493,7 +494,7 @@ public class DelegationBean implements Serializable {
                 String resolution = task.getResolution();
                 for (String userName : children) {
                     if (j > 0) {
-                        addDelegationTask(delegateTaskType, workflow, ++taskIndex, resolution);
+                        addDelegationTask(delegateTaskType.isResponsibleTask(), workflow, ++taskIndex, resolution, null);
                     }
                     setPersonPropsToTask(workflow, taskIndex, userName);
                     j++;
@@ -559,7 +560,7 @@ public class DelegationBean implements Serializable {
             if (getNodeService().hasAspect(contacts.get(j), AddressbookModel.Aspects.ORGANIZATION_PROPERTIES)
                     && Boolean.TRUE.equals(contactProps.get(AddressbookModel.Props.TASK_CAPABLE))) {
                 if (taskCounter > 0) {
-                    addDelegationTask(delegateTaskType, block, ++taskIndex, resolution);
+                    addDelegationTask(delegateTaskType.isResponsibleTask(), block, ++taskIndex, resolution, null);
                 }
                 setContactPropsToTask(block, taskIndex, contacts.get(j));
                 taskCounter++;

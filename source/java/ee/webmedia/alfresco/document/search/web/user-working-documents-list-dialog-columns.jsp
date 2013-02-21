@@ -71,7 +71,7 @@
       </a:column>
 
       <%-- Files --%>
-      <a:column id="col10" primary="true" styleClass="doc-list-actions">
+      <a:column id="col10" styleClass="doc-list-actions">
          <f:facet name="header">
          
             <h:outputText id="col10-header" value="#{msg.document_allFiles}" styleClass="header" />

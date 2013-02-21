@@ -1,6 +1,6 @@
 package ee.webmedia.alfresco.mso.service;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -95,7 +95,7 @@ public class MsoService1Impl implements MsoService, InitializingBean {
                 return null;
             }
 
-            Map<String, String> formulas = new HashMap<String, String>();
+            Map<String, String> formulas = new LinkedHashMap<String, String>();
             long duration = -1;
             try {
 

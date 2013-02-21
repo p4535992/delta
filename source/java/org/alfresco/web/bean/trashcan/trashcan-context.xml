@@ -14,5 +14,6 @@
       <property name="userService" ref="UserService" />
       <property name="documentService" ref="DocumentService" />
       <property name="transactionService" ref="TransactionService" />
+      <property name="transactionHelperMinRetryWaits" value="6000" />
    </bean>
 </beans>

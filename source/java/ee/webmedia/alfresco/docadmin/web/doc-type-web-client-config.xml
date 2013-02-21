@@ -270,6 +270,7 @@
    <config evaluator="node-type" condition="docadmin:followupAssociation,docadmin:replyAssociation">
       <property-sheet>
          <show-property name="docadmin:docType" component-generator="GeneralSelectorGenerator" selectionItems="#{AssociationModelDetailsDialog.getDocTypes}" outputText="#{AssociationModelDetailsDialog.associationModel.isSaved}" valueChangeListener="#{AssociationModelDetailsDialog.docTypeChanged}" ajaxDisabled="true" />
+         <show-property name="docadmin:associateWithSourceDocumentWorkflow" ignore-if-missing="false" />
       </property-sheet>
    </config>
 

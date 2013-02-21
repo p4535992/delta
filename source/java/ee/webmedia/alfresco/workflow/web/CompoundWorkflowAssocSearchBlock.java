@@ -53,7 +53,7 @@ public class CompoundWorkflowAssocSearchBlock extends AbstractSearchBlockBean im
     protected void createAssoc(final NodeRef sourceRef, final NodeRef targetRef, final QName assocType) {
         boolean workflowUpdated = false;
         if (targetRef != null && RepoUtil.isSaved(targetRef)) {
-            workflowUpdated = BeanHelper.getDocumentAssociationsService().createWorkflowAssoc(sourceRef, targetRef, true);
+            workflowUpdated = BeanHelper.getDocumentAssociationsService().createWorkflowAssoc(sourceRef, targetRef, true, true);
         } else {
             addUnsavedAssoc(sourceRef);
             workflowUpdated = BeanHelper.getCompoundWorkflowAssocListDialog().getNewAssocs().size() == 1;

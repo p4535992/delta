@@ -19,6 +19,7 @@ import ee.webmedia.alfresco.document.service.DocumentServiceImpl.PropertyChanges
 import ee.webmedia.alfresco.utils.TreeNode;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
+import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 
 /**
  * @author Alar Kvell
@@ -86,6 +87,8 @@ public interface DocumentDynamicService {
     void setOwner(Map<QName, Serializable> props, String ownerId, boolean retainPreviousOwnerId, Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs);
 
     void setOwner(Map<QName, Serializable> props, String ownerId, boolean retainPreviousOwnerId);
+
+    void setOwnerFromActiveResponsibleTask(CompoundWorkflow compoundWorkflow, NodeRef documentRef, Map<String, Object> documentProps);
 
     boolean isOwner(NodeRef docRef, String ownerId);
 

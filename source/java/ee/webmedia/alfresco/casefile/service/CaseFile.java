@@ -81,6 +81,7 @@ public class CaseFile extends DynamicBase implements Cloneable, VolumeOrCaseFile
         return getProp(DocumentDynamicModel.Props.WORKFLOW_DUE_DATE);
     }
 
+    @Override
     public Date getValidFrom() {
         return getProp(DocumentDynamicModel.Props.VALID_FROM);
     }

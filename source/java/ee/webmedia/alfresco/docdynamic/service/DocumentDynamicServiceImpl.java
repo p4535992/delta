@@ -95,6 +95,7 @@ import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentChildModel;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog;
+import ee.webmedia.alfresco.document.assocsdyn.service.DocumentAssociationsService;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
@@ -120,8 +121,12 @@ import ee.webmedia.alfresco.utils.TreeNode;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
+import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
+import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
+import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
+import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 
 /**
  * @author Alar Kvell
@@ -186,6 +191,32 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
                 previousOwnerId = null;
             }
             props.put(PREVIOUS_OWNER_ID, previousOwnerId);
+        }
+    }
+
+    @Override
+    public void setOwnerFromActiveResponsibleTask(CompoundWorkflow compoundWorkflow, NodeRef documentRef, Map<String, Object> documentProps) {
+        if (!DocumentStatus.WORKING.equals((String) nodeService.getProperty(documentRef, DocumentCommonModel.Props.DOC_STATUS))) {
+            return;
+        }
+        String docNewOwnerUsername = null;
+        workflow_for: for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+            if (WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW.equals(workflow.getType())) {
+                for (Task task : workflow.getTasks()) {
+                    if (WorkflowUtil.isActiveResponsible(task)) {
+                        docNewOwnerUsername = task.getOwnerId();
+                        if (StringUtils.isNotBlank(docNewOwnerUsername)) {
+                            break workflow_for;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (StringUtils.isNotBlank(docNewOwnerUsername)) {
+            Map<QName, Serializable> properties = nodeService.getProperties(documentRef);
+            setOwner(properties, docNewOwnerUsername, false, DocumentType.class);
+            documentProps.putAll(RepoUtil.toStringProperties(properties));
         }
     }
 
@@ -649,7 +680,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
         // If document is updated for the first time, add SEARCHABLE aspect to document and it's children files.
         Map<String, Object> docProps = document.getNode().getProperties();
-        if (!docNode.hasAspect(DocumentCommonModel.Aspects.SEARCHABLE)) {
+        if (!docNode.hasAspect(DocumentCommonModel.Aspects.SEARCHABLE) && !document.isDraftOrImapOrDvk()) {
             docNode.getAspects().add(DocumentCommonModel.Aspects.SEARCHABLE);
             docProps.put(FILE_NAMES.toString(), documentService.getSearchableFileNames(docRef));
             docProps.put(FILE_CONTENTS.toString(), documentService.getSearchableFileContents(docRef));
@@ -717,11 +748,24 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
                 documentTemplateService.updateGeneratedFiles(docRef, false);
             }
         }
+        // new document-workflow associations are added separately because they need additional processing
+        addDocumentWorkflowAssocs(docNode);
         generalService.saveAddedAssocs(docNode);
         if (archivalActivityRef != null && isDraft) {
             BeanHelper.getArchivalsService().addArchivalActivityDocument(archivalActivityRef, docRef);
         }
         return document;
+    }
+
+    private void addDocumentWorkflowAssocs(WmNode docNode) {
+        Map<String, AssociationRef> addedWorkflowAssociations = docNode.getAddedAssociations().get(DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT.toString());
+        if (addedWorkflowAssociations != null) {
+            DocumentAssociationsService documentAssocService = BeanHelper.getDocumentAssociationsService();
+            for (AssociationRef assocRef : addedWorkflowAssociations.values()) {
+                documentAssocService.createWorkflowAssoc(assocRef.getSourceRef(), assocRef.getTargetRef(), false, false);
+            }
+            docNode.getAddedAssociations().remove(DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT.toString());
+        }
     }
 
     private void setPrivilegesFromCaseFileIfApplicable(NodeRef docRef) {
@@ -1175,25 +1219,35 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
                 if (group.isSystematic() && (SystematicFieldGroupNames.RECIPIENTS.equals(name) || SystematicFieldGroupNames.ADDITIONAL_RECIPIENTS.equals(name))) {
                     Serializable propValue = doc.getProp(field.getQName());
                     if (propDef.isMultiValued()) {
-                        @SuppressWarnings("unchecked")
-                        List<Serializable> values = (List<Serializable>) propValue;
-                        if (propIndex > -1 && propIndex < values.size()) {
-                            values.set(propIndex, (Serializable) DefaultTypeConverter.INSTANCE.convert(dataType, formulaValue));
+                        if (propValue != null) {
+                            @SuppressWarnings("unchecked")
+                            List<Serializable> values = (List<Serializable>) propValue;
+                            if (propIndex > -1 && propIndex < values.size()) {
+                                values.set(propIndex, (Serializable) DefaultTypeConverter.INSTANCE.convert(dataType, formulaValue));
+                            }
+                            propValue = (Serializable) values;
                         }
-                        propValue = (Serializable) values;
                     }
-                    doc.setProp(field.getQName(), propValue);
+                    doc.setPropIgnoringEmpty(field.getQName(), propValue);
                     continue;
                 }
+            }
+
+            if (Arrays.asList(FieldType.USERS, FieldType.CONTACTS, FieldType.USERS_CONTACTS).contains(field.getFieldTypeEnum())) {
+                continue;
             }
 
             Serializable value;
             // Handle dates separately
             if ("date".equals(dataType.getName().getLocalName())) {
-                try {
-                    value = new SimpleDateFormat("dd.MM.yyyy").parse(formulaValue);
-                } catch (ParseException e) {
-                    throw new RuntimeException("Unable to parse date value from field '" + formulaKey + "': " + e.getMessage(), e);
+                if (StringUtils.isBlank(formulaValue)) {
+                    value = null;
+                } else {
+                    try {
+                        value = new SimpleDateFormat("dd.MM.yyyy").parse(formulaValue);
+                    } catch (ParseException e) {
+                        throw new RuntimeException("Unable to parse date value from field '" + formulaKey + "': " + e.getMessage(), e);
+                    }
                 }
             } else {
                 value = (Serializable) DefaultTypeConverter.INSTANCE.convert(dataType, formulaValue);
@@ -1201,7 +1255,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             if (propDef.isMultiValued()) {
                 value = (Serializable) Collections.singletonList(value); // is this correct?
             }
-            doc.setProp(field.getQName(), value);
+            doc.setPropIgnoringEmpty(field.getQName(), value);
         }
 
         // Update sub-nodes
@@ -1209,7 +1263,16 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         if (!partyFields.isEmpty()) {
             List<ChildAssociationRef> contractPartyChildAssocs = nodeService.getChildAssocs(document, DocumentChildModel.Assocs.CONTRACT_PARTY, RegexQNamePattern.MATCH_ALL);
             for (ContractPartyField field : partyFields) {
-                nodeService.setProperty(contractPartyChildAssocs.get(field.getIndex()).getChildRef(), field.getField(), field.getValue());
+                if (field.getIndex() < contractPartyChildAssocs.size()) {
+                    NodeRef childNodeRef = contractPartyChildAssocs.get(field.getIndex()).getChildRef();
+                    Serializable propValue = field.getValue();
+                    Serializable origPropValue = nodeService.getProperty(childNodeRef, field.getField());
+                    if ((propValue == null || ((propValue instanceof String) && ((String) propValue).isEmpty()))
+                            && (origPropValue == null || ((origPropValue instanceof String) && ((String) origPropValue).isEmpty()))) {
+                        continue;
+                    }
+                    nodeService.setProperty(childNodeRef, field.getField(), propValue);
+                }
             }
         }
 

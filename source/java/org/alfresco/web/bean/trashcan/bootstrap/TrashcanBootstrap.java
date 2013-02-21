@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.alfresco.model.ContentModel;
-import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -37,6 +36,11 @@ public class TrashcanBootstrap extends AbstractNodeUpdater {
     private TransactionService transactionService;
 
     @Override
+    public boolean isContinueWithNextBatchAfterError() {
+        return true;
+    }
+
+    @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
         return Arrays.asList(searchService.query(StoreRef.STORE_REF_ARCHIVE_SPACESSTORE, SearchService.LANGUAGE_LUCENE, "ASPECT:\"" + ContentModel.ASPECT_ARCHIVED + "\""));
     }
@@ -56,19 +60,8 @@ public class TrashcanBootstrap extends AbstractNodeUpdater {
         }
         String log[];
         if (delete) {
-            try {
-                log = transactionService.getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<String[]>() {
-
-                    @Override
-                    public String[] execute() throws Throwable {
-                        nodeService.deleteNode(nodeRef);
-                        return new String[] { "Deleted" };
-                    }
-
-                }, false, true);
-            } catch (IllegalArgumentException e) {
-                log = new String[] { "deleting_failed" };
-            }
+            nodeService.deleteNode(nodeRef);
+            log = new String[] { "Deleted" };
         } else {
             Map<QName, Serializable> oldProperties = nodeService.getProperties(nodeRef);
             Map<QName, Serializable> newProperties = new HashMap<QName, Serializable>();

@@ -207,6 +207,10 @@ public class DbSearchUtil {
         return taskField + "=? ";
     }
 
+    public static String generateTaskFieldNotQuery(String taskField) {
+        return taskField + "!=? ";
+    }
+
     public static String generateTaskPropertyExactQuery(QName propName) {
         return getDbFieldNameFromPropQName(propName) + "=? ";
     }

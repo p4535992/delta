@@ -316,6 +316,12 @@
       <tag-class>ee.webmedia.alfresco.common.propertysheet.customchildrencontainer.CustomChildrenContainerTag</tag-class>
       <body-content>empty</body-content>
       <attribute>
+         <name>id</name>
+         <required>false</required>
+         <rtexprvalue>false</rtexprvalue>
+         <description>Element id</description>
+      </attribute>       
+      <attribute>
          <name>parameterList</name>
          <required>true</required>
          <rtexprvalue>true</rtexprvalue>

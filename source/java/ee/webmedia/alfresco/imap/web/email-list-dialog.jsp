@@ -74,7 +74,7 @@
          <f:facet name="header">
             <h:outputText id="col10-header" value="#{msg.document_allFiles}" styleClass="header" />
          </f:facet>
-         <wm:customChildrenContainer childGenerator="#{DialogManager.bean.documentRowFileGenerator}" parameterList="#{r.files}"/>
+         <wm:customChildrenContainer id="document-imap-list-files" childGenerator="#{DialogManager.bean.documentRowFileGenerator}" parameterList="#{r.files}"/>
       </a:column>
          
       <%-- Actions column --%>

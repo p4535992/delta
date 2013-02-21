@@ -5,7 +5,6 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getContentService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDictionaryService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentConfigService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentFavoritesService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNamespaceService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPolicyBehaviourFilter;
@@ -54,6 +53,7 @@ import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.util.Assert;
 import org.springframework.util.FileCopyUtils;
 
+import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docconfig.generator.fieldtype.DateGenerator;
@@ -493,7 +493,7 @@ public class UserDataRestoreService {
                 if (RepoUtil.TRANSIENT_PROPS_NAMESPACE.equals(propQName.getNamespaceURI())) {
                     continue;
                 }
-                if (propQName.getLocalName().endsWith("_AfterLabelBoolean")) {
+                if (propQName.getLocalName().endsWith(WMUIProperty.AFTER_LABEL_BOOLEAN)) {
                     dataType = getDictionaryService().getDataType(DataTypeDefinition.BOOLEAN);
                 } else if (propQName.getLocalName().endsWith(DateGenerator.PICKER_PREFIX)) {
                     dataType = getDictionaryService().getDataType(DataTypeDefinition.TEXT);

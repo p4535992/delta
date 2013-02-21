@@ -54,9 +54,15 @@ public class AssocsBlockBean implements DocumentDynamicBlock {
     public void restore() {
         if (document != null && RepoUtil.isSaved(document) && BeanHelper.getNodeService().exists(document.getNodeRef())) {
             docAssocInfos = BeanHelper.getDocumentAssociationsService().getAssocInfos(document);
-            Collections.sort(docAssocInfos);
+            sortDocAssocInfos();
         } else {
             docAssocInfos = new ArrayList<DocAssocInfo>();
+        }
+    }
+
+    public void sortDocAssocInfos() {
+        if (docAssocInfos != null) {
+            Collections.sort(docAssocInfos);
         }
     }
 

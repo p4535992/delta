@@ -95,7 +95,6 @@ import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentType;
 import ee.webmedia.alfresco.docconfig.generator.fieldtype.DateGenerator;
 import ee.webmedia.alfresco.docconfig.generator.fieldtype.DoubleGenerator;
 import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
-import ee.webmedia.alfresco.docconfig.generator.systematic.KeywordsGenerator;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
@@ -525,7 +524,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         List<String> queryParts = new ArrayList<String>();
         queryParts.add(generateStringNotEmptyQuery(DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME,
                 DocumentSpecificModel.Props.PARTY_NAME /* on document node, duplicates partyName property values from all contractParty child-nodes */
-                ));
+        ));
         queryParts.add(generateStringExactQuery(DocumentStatus.FINISHED.getValueName(), DocumentCommonModel.Props.DOC_STATUS));
         queryParts.add(generateStringNullQuery(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE));
         queryParts.add(joinQueryPartsOr(
@@ -701,27 +700,31 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     @Override
     public List<Task> searchReviewTaskToResendQuery() {
 
-        String query = SearchUtil.joinQueryPartsAnd(generateTypeQuery(WorkflowSpecificModel.Types.REVIEW_TASK),
-                generatePropertyNullQuery(WorkflowSpecificModel.Props.SEND_STATUS),
-                generatePropertyNullQuery(WorkflowSpecificModel.Props.SENT_DVK_ID),
-                generateAspectQuery(WorkflowSpecificModel.Aspects.SEARCHABLE));
-        query = SearchUtil.generateAndNotQuery(query, generateStringExactQuery(Status.NEW.getName(), WorkflowCommonModel.Props.STATUS));
+        List<String> queryParts = new ArrayList<String>();
+        List<Object> arguments = new ArrayList<Object>();
+        addTaskTypeFieldExactQueryPartsAndArguments(queryParts, arguments, WorkflowSpecificModel.Types.REVIEW_TASK);
+        queryParts.add(DbSearchUtil.generateTaskPropertyNullQuery(WorkflowSpecificModel.Props.SEND_STATUS));
+        queryParts.add(DbSearchUtil.generateTaskPropertyNullQuery(WorkflowSpecificModel.Props.SENT_DVK_ID));
+        queryParts.add(DbSearchUtil.generateNotQuery(DbSearchUtil.generateTaskPropertyExactQuery(WorkflowCommonModel.Props.STATUS)));
+        arguments.add(Status.NEW.getName());
 
-        final List<Task> tasks = searchGeneralImpl(query, -1, "reviewTaskToResend", new SearchCallback<Task>() {
-            @Override
-            public Task addResult(ResultSetRow row) {
-                final NodeRef sendInfoRef = row.getNodeRef();
-                Task task = workflowService.getTask(sendInfoRef, false);
-                String institutionCode = task.getInstitutionCode();
-                String creatorInstitutionCode = task.getCreatorInstitutionCode();
-                if ((StringUtils.isBlank(institutionCode) || StringUtils.isBlank(creatorInstitutionCode)) || EqualsHelper.nullSafeEquals(institutionCode, creatorInstitutionCode)) {
-                    return null;
-                }
-                return task;
+        String query = generateTaskSearchQuery(queryParts);
+        List<Task> tasks = BeanHelper.getWorkflowDbService().searchTasksAllStores(query, arguments, -1).getFirst();
+
+        for (Iterator<Task> i = tasks.iterator(); i.hasNext();) {
+            Task task = i.next();
+            String institutionCode = task.getInstitutionCode();
+            String creatorInstitutionCode = task.getCreatorInstitutionCode();
+            if ((StringUtils.isBlank(institutionCode) || StringUtils.isBlank(creatorInstitutionCode)) || EqualsHelper.nullSafeEquals(institutionCode, creatorInstitutionCode)) {
+                i.remove();
             }
-        }).getFirst();
-        tasks.remove(null);
-        return tasks;
+        }
+        List<Task> tasksWithParents = new ArrayList<Task>();
+        for (Task task : tasks) {
+            tasksWithParents.add(workflowService.getTask(task.getNodeRef(), true));
+        }
+
+        return tasksWithParents;
     }
 
     @Override
@@ -772,7 +775,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     public NodeRef getIndependentCompoundWorkflowByProcedureId(String procedureId) {
         String query = joinQueryPartsAnd(Arrays.asList(generateTypeQuery(WorkflowCommonModel.Types.COMPOUND_WORKFLOW),
                 generateStringExactQuery(procedureId, WorkflowCommonModel.Props.PROCEDURE_ID),
-                generateStringExactQuery(CompoundWorkflowType.INDEPENDENT_WORKFLOW.toString(), WorkflowCommonModel.Props.TYPE)));
+                generateStringExactQuery(CompoundWorkflowType.INDEPENDENT_WORKFLOW.name(), WorkflowCommonModel.Props.TYPE)));
         List<NodeRef> result = searchNodes(query, -1, "independentCompoundWorkflowByProcedureId");
         if (!result.isEmpty()) {
             return result.get(0);
@@ -1025,9 +1028,12 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         if (StringUtils.isBlank(noderefId)) {
             return null;
         }
-        String query = SearchUtil.joinQueryPartsAnd(Arrays.asList(generateTypeQuery(WorkflowSpecificModel.Types.LINKED_REVIEW_TASK),
-                generateStringExactQuery(noderefId, WorkflowSpecificModel.Props.ORIGINAL_NODEREF_ID)));
-        List<NodeRef> result = searchNodes(query, -1, "linkedReviewTaskByOriginalNoderefId");
+        List<String> queryParts = new ArrayList<String>();
+        List<Object> arguments = new ArrayList<Object>();
+        addTaskTypeFieldExactQueryPartsAndArguments(queryParts, arguments, WorkflowSpecificModel.Types.LINKED_REVIEW_TASK);
+        addTaskStringExactPartsAndArgs(queryParts, arguments, noderefId, WorkflowSpecificModel.Props.ORIGINAL_NODEREF_ID);
+        String query = generateTaskSearchQuery(queryParts);
+        List<NodeRef> result = BeanHelper.getWorkflowDbService().searchTaskNodeRefs(query, arguments);
         if (log.isDebugEnabled()) {
             log.debug("Linked review task search total time " + (System.currentTimeMillis() - startTime) + " ms");
         }
@@ -1035,7 +1041,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             return null;
         }
         if (result.size() > 1) {
-            log.error("There is more than one linkedReviewTask with originalNoderefId=" + noderefId + "; updating first task; all task nodeRefs=" + result);
+            log.error("There is more than one linkedReviewTask with originalNoderefId=" + noderefId + "; updating first task, all tasks nodeRefs=" + result);
         }
         return result.get(0);
     }
@@ -2037,7 +2043,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                 generateMultiStringExactQuery(keywordsL2, l2Fields.toArray(new QName[l2Fields.size()]))));
         props.remove(DocumentDynamicModel.Props.FIRST_KEYWORD_LEVEL);
         props.remove(DocumentDynamicModel.Props.SECOND_KEYWORD_LEVEL);
-        props.remove(KeywordsGenerator.THESAURUS);
+        props.remove(DocumentDynamicModel.Props.THESAURUS);
     }
 
     private void fillQueryFromProps(List<String> queryParts, Map<QName, Serializable> props) {
@@ -2088,7 +2094,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             }
             Object value = entry.getValue();
             if (value instanceof String) {
-                queryParts.add(generateStringWordsWildcardQuery((String) value, propQName));
+                queryParts.add(generateStringWordsWildcardQuery((String) value, 2, propQName));
             } else if (value instanceof List) {
                 // including docAdminService in context.xml creates a circular dependency because docAdminService includes DocSearchService
                 DocumentAdminService ser = BeanHelper.getDocumentAdminService();
@@ -2099,7 +2105,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                 if (StringUtils.isNotBlank(def.getClassificator())) {
                     queryParts.add(generateMultiStringExactQuery(list, propQName));
                 } else {
-                    queryParts.add(generateMultiStringWordsWildcardQuery(list, propQName));
+                    queryParts.add(generateMultiStringWordsWildcardQuery(list, 2, propQName));
                 }
             } else if (value instanceof Date) {
                 Date endDate = (Date) props.get(DateGenerator.getEndDateQName(propQName));
@@ -2266,11 +2272,11 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         Map<String, Object> props = filter.getProperties();
 
         queryParts.add(generateStringExactQuery((String) props.get(CompoundWorkflowSearchModel.Props.TYPE), WorkflowCommonModel.Props.TYPE));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(CompoundWorkflowSearchModel.Props.TITLE), true, true, WorkflowCommonModel.Props.TITLE));
-        queryParts.add(generateMultiStringWordsWildcardQuery((List<String>) props.get(CompoundWorkflowSearchModel.Props.OWNER_NAME), false, true,
+        queryParts.add(generateStringWordsWildcardQuery((String) props.get(CompoundWorkflowSearchModel.Props.TITLE), true, true, 2, WorkflowCommonModel.Props.TITLE));
+        queryParts.add(generateMultiStringWordsWildcardQuery((List<String>) props.get(CompoundWorkflowSearchModel.Props.OWNER_NAME), false, true, 2,
                 WorkflowCommonModel.Props.OWNER_NAME));
 
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(CompoundWorkflowSearchModel.Props.JOB_TITLE), true, true, WorkflowCommonModel.Props.OWNER_JOB_TITLE));
+        queryParts.add(generateStringWordsWildcardQuery((String) props.get(CompoundWorkflowSearchModel.Props.JOB_TITLE), true, true, 2, WorkflowCommonModel.Props.OWNER_JOB_TITLE));
         queryParts
                 .add(generatePropertyExactQuery(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME, (List<String>) props.get(CompoundWorkflowSearchModel.Props.STRUCT_UNIT)));
 
@@ -2287,7 +2293,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         if (StringUtils.isNotBlank(statusString)) {
             queryParts.add(generateStringExactQuery(Status.valueOf(statusString).getName(), WorkflowCommonModel.Props.STATUS));
         }
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(CompoundWorkflowSearchModel.Props.COMMENT), true, true, WorkflowCommonModel.Props.COMMENT));
+        queryParts.add(generateStringWordsWildcardQuery((String) props.get(CompoundWorkflowSearchModel.Props.COMMENT), true, true, 2, WorkflowCommonModel.Props.COMMENT));
         String searchFilter = WmNode.toHumanReadableStringIfPossible(RepoUtil.getNotEmptyProperties(RepoUtil.toQNameProperties(props)), namespaceService, null);
         log.info("Tasks search filter: " + searchFilter);
         // Searches are made by user. Reports are generated by DHS. We need to log only searches.
@@ -2437,7 +2443,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         if (StringUtils.isBlank(tsQueryInput) || taskProps == null || taskProps.length == 0) {
             return;
         }
-        String tsquery = generalService.getTsquery(tsQueryInput);
+        String tsquery = generalService.getTsquery(tsQueryInput, 2);
         if (StringUtils.isNotBlank(tsquery)) {
             queryParts.add(DbSearchUtil.generateTaskStringWordsWildcardQuery(taskProps));
             arguments.add(tsquery);

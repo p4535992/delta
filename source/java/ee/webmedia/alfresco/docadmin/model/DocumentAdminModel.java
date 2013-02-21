@@ -120,6 +120,7 @@ public interface DocumentAdminModel {
 
         // START: properties of type associationModel
         QName DOC_TYPE = QName.createQName(URI, "docType");
+        QName ASSOCIATE_WITH_SOURCE_DOCUMENT_WORKFLOW = QName.createQName(URI, "associateWithSourceDocumentWorkflow");
         // START: properties of type associationModel
         // START: properties of type associatedFields
         QName FROM_FIELD = QName.createQName(URI, "fromField");

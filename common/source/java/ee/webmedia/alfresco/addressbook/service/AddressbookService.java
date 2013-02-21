@@ -129,6 +129,16 @@ public interface AddressbookService {
     List<Node> search(String searchCriteria, int limit);
 
     /**
+     * searches the addressbook for private contacts, organizations and organization contacts
+     * 
+     * @param searchCriteria - the search string
+     * @param limit
+     * @param onlyActive returns inactive contacts when false
+     * @return list of node results
+     */
+    List<Node> search(String searchCriteria, int i, boolean onlyActive);
+
+    /**
      * Searches the addressbook for contact groups only
      * 
      * @param searchCriteria - the search string

@@ -9,7 +9,6 @@ import java.util.Date;
 import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.util.Pair;
 import org.apache.commons.collections.Transformer;
 import org.apache.commons.collections.comparators.ComparatorChain;
 import org.apache.commons.collections.comparators.NullComparator;
@@ -23,6 +22,7 @@ import org.springframework.web.util.HtmlUtils;
 
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
+import ee.webmedia.alfresco.workflow.service.DueDateHistoryRecord;
 import ee.webmedia.alfresco.workflow.service.Task;
 
 /**
@@ -188,21 +188,28 @@ public class WorkflowBlockItem implements Serializable {
         return !zebra && !separator;
     }
 
-    public String getDueDateHistory() {
+    public List<DueDateHistoryRecord> getDueDateHistoryRecords() {
+        if (isGroupBlockItem) {
+            return null;
+        }
+        return task.getDueDateHistoryRecords();
+    }
+
+    public String getDueDateHistoryAlert() {
         if (isGroupBlockItem) {
             return "";
         }
         StringBuilder sb = new StringBuilder("");
-        List<Pair<String, Date>> dueDateHistoryRecords = task.getDueDateHistoryRecords();
+        List<DueDateHistoryRecord> dueDateHistoryRecords = task.getDueDateHistoryRecords();
         if (!dueDateHistoryRecords.isEmpty()) {
             sb.append("<a href=\"\" onclick=\"alert('");
             DateFormat dateFormat = new SimpleDateFormat("dd.M.yyyy");
             int recordCounter = 0;
-            for (Pair<String, Date> historyRecord : dueDateHistoryRecords) {
+            for (DueDateHistoryRecord historyRecord : dueDateHistoryRecords) {
                 sb.append(StringEscapeUtils.escapeJavaScript(MessageUtil.getMessage("task_due_date_history_previous_date"))).append(" ");
-                sb.append(StringEscapeUtils.escapeJavaScript(dateFormat.format(historyRecord.getSecond())));
+                sb.append(StringEscapeUtils.escapeJavaScript(dateFormat.format(historyRecord.getPreviousDate())));
                 sb.append(StringEscapeUtils.escapeJavaScript(MessageUtil.getMessage("task_due_date_history_change_reason"))).append(" ");
-                sb.append(StringEscapeUtils.escapeJavaScript(historyRecord.getFirst()));
+                sb.append(StringEscapeUtils.escapeJavaScript(historyRecord.getChangeReason()));
                 recordCounter++;
                 if (recordCounter < dueDateHistoryRecords.size()) {
                     sb.append("\\n");

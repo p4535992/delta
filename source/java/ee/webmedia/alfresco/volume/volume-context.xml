@@ -38,6 +38,7 @@
       <property name="userService" ref="UserService" />
       <property name="eventPlanService" ref="EventPlanService" />
       <property name="caseVolumeEnabled" value="${conf.casefile.enabled}" />
+      <property name="defaultVolumeSortingField" value="${conf.volumesList.orderedBy}" />
    </bean>
 
    <bean id="VolumeService" class="org.springframework.aop.framework.ProxyFactoryBean">

@@ -61,12 +61,21 @@ public abstract class AbstractSearchServiceImpl {
      * Default is without left wildcard and with right wildcard.
      */
     public String generateStringWordsWildcardQuery(String value, QName... documentPropNames) {
-        return SearchUtil.generateStringWordsWildcardQuery(parseQuickSearchWords(value), false, true, documentPropNames);
+        return generateStringWordsWildcardQuery(value, false, true, documentPropNames);
     }
 
     public String generateStringWordsWildcardQuery(String value, boolean leftWildcard, boolean rightWildcard, QName... documentPropNames) {
         return SearchUtil.generateStringWordsWildcardQuery(parseQuickSearchWords(value), leftWildcard, rightWildcard, documentPropNames);
     }
+
+    public String generateStringWordsWildcardQuery(String value, int minTextLength, QName... documentPropNames) {
+        return generateStringWordsWildcardQuery(value, false, true, minTextLength, documentPropNames);
+    }
+
+    public String generateStringWordsWildcardQuery(String value, boolean leftWildcard, boolean rightWildcard, int minTextLength, QName... documentPropNames) {
+        return SearchUtil.generateStringWordsWildcardQuery(parseQuickSearchWords(value, minTextLength), leftWildcard, rightWildcard, documentPropNames);
+    }
+
 
     /**
      * Default is without left wildcard and with right wildcard.
@@ -75,14 +84,22 @@ public abstract class AbstractSearchServiceImpl {
         return generateMultiStringWordsWildcardQuery(values, false, true, documentPropNames);
     }
 
+    public String generateMultiStringWordsWildcardQuery(List<String> values, int minTextLength, QName... documentPropNames) {
+        return generateMultiStringWordsWildcardQuery(values, false, true, minTextLength, documentPropNames);
+    }
+
     public String generateMultiStringWordsWildcardQuery(List<String> values, boolean leftWildcard, boolean rightWildcard, QName... documentPropNames) {
+        return generateMultiStringWordsWildcardQuery(values, leftWildcard, rightWildcard, 3, documentPropNames);
+    }
+
+    public String generateMultiStringWordsWildcardQuery(List<String> values, boolean leftWildcard, boolean rightWildcard, int minTextLength, QName... documentPropNames) {
         if (values == null || values.isEmpty()) {
             return null;
         }
 
         List<String> queryParts = new ArrayList<String>(values.size());
         for (String value : values) {
-            queryParts.add(generateStringWordsWildcardQuery(value, leftWildcard, rightWildcard, documentPropNames));
+            queryParts.add(generateStringWordsWildcardQuery(value, leftWildcard, rightWildcard, minTextLength, documentPropNames));
         }
         return SearchUtil.joinQueryPartsOr(queryParts);
     }

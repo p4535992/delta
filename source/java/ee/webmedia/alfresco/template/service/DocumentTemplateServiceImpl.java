@@ -137,27 +137,26 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
     @Override
     public void updateGeneratedFiles(NodeRef docRef, boolean isRegistering) {
+        // NB! msoAvailable comes from application configuration, not from actual availability.
+        // So if mso is configured to be available, but actually is not, then file generation will throw error.
+        // If mso is configured as unavailable, mso file generation is skipped (up to admins to deal with these situations).
+        // As oo service is used for file indexing, it must always be available, so it is not checked for availability here
+        // and oo file generation may throw error if oo service is actually unavailable.
         boolean msoAvailable = msoService.isAvailable();
-        boolean ooAvailable = openOfficeService.isAvailable();
 
         // Shortcuts
-        if (!msoAvailable && !ooAvailable || !isRegistering && !Boolean.TRUE.equals(nodeService.getProperty(docRef, DocumentCommonModel.Props.UPDATE_METADATA_IN_FILES))) {
+        if (!isRegistering && !Boolean.TRUE.equals(nodeService.getProperty(docRef, DocumentCommonModel.Props.UPDATE_METADATA_IN_FILES))) {
             return;
         }
 
         List<FileInfo> files = fileFolderService.listFiles(docRef);
         log.debug("Found " + files.size() + " files under document " + docRef);
-        if (files.isEmpty()) {
-            return;
-        }
         for (FileInfo file : files) {
             // If generator service isn't available, then skip this file
             String generationType = (String) file.getProperties().get(FileModel.Props.GENERATION_TYPE);
-            if (GeneratedFileType.WORD_TEMPLATE.name().equals(generationType) && !msoAvailable || !GeneratedFileType.OPENOFFICE_TEMPLATE.name().equals(generationType)
-                    && !ooAvailable) {
-                return;
+            if (GeneratedFileType.WORD_TEMPLATE.name().equals(generationType) && !msoAvailable) {
+                continue;
             }
-
             if (StringUtils.isNotBlank((String) file.getProperties().get(FileModel.Props.GENERATED_FROM_TEMPLATE))
                     || Boolean.TRUE.equals(file.getProperties().get(FileModel.Props.UPDATE_METADATA_IN_FILES))) {
 
@@ -403,7 +402,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         }
         if (msoFile && msoService.isAvailable()) {
             if (finalize) {
-                formulas.put("FINALIZE", "1");
+                formulas.put("$FINALIZE", "1");
             }
             ContentReader documentReader = fileFolderService.getReader(sourceFile);
             ContentWriter documentWriter = fileFolderService.getWriter(destinationFile);
@@ -420,16 +419,11 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             }
         } else if (ooFile && openOfficeService.isAvailable()) {
             // generating document for volume list is not implemented for OpenOffice
-            replaceFormulasWithOpenOffice(document, sourceFile, destinationFile, sourceFileName, finalize);
+            replaceFormulasWithOpenOffice(document, sourceFile, destinationFile, sourceFileName, formulas, finalize);
         }
     }
 
-    private void replaceFormulasWithOpenOffice(NodeRef document, NodeRef sourceFile, NodeRef destinationFile, String sourceFileName, boolean finalize) {
-        Map<String, String> formulas = getDocumentFormulas(document);
-        if (log.isDebugEnabled()) {
-            log.debug("Produced formulas " + WmNode.toString(formulas.entrySet()));
-        }
-
+    private void replaceFormulasWithOpenOffice(NodeRef document, NodeRef sourceFile, NodeRef destinationFile, String sourceFileName, Map<String, String> formulas, boolean finalize) {
         int retry = 3;
         do {
             ContentReader reader = fileFolderService.getReader(sourceFile);
@@ -687,55 +681,57 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             FieldType fieldType = field.getFieldTypeEnum();
             String fieldId = field.getFieldId();
             Serializable propValue = props.get(field.getQName());
-            if (propValue == null) {
-                continue;
-            }
 
             BaseObject parent = field.getParent();
             if (parent instanceof FieldGroup) {
                 FieldGroup group = (FieldGroup) parent;
                 String name = group.getName();
 
-                if (!group.isSystematic() || isIgnoredFieldGroup(name)) {
-                    continue;
-                }
-
-                if (SystematicFieldGroupNames.RECIPIENTS.equals(name) || SystematicFieldGroupNames.ADDITIONAL_RECIPIENTS.equals(name)) {
-                    @SuppressWarnings("unchecked")
-                    List<String> values = (List<String>) propValue;
-
-                    for (int i = 1, j = 0; j < values.size(); i++, j++) {
-                        formulas.put(fieldId + "." + i, values.get(j));
+                if (group.isSystematic()) {
+                    if (isIgnoredFieldGroup(name)) {
+                        continue;
                     }
-                } else if (SystematicFieldGroupNames.THESAURI.equals(name)) {
-                    String fieldId1 = DocumentDynamicModel.Props.FIRST_KEYWORD_LEVEL.getLocalName();
-                    String fieldId2 = DocumentDynamicModel.Props.SECOND_KEYWORD_LEVEL.getLocalName();
-                    List<String> firstLevelKeywords = new ArrayList<String>();
-                    List<String> secondLevelKeywords = new ArrayList<String>();
-                    for (Entry<String, Field> entry : group.getFieldsByOriginalId().entrySet()) {
-                        if (fieldId1.equals(entry.getKey())) {
-                            fieldId1 = entry.getValue().getFieldId();
-                            firstLevelKeywords = (List<String>) props.get(entry.getValue().getQName());
-                        } else if (fieldId2.equals(entry.getKey())) {
-                            fieldId2 = entry.getValue().getFieldId();
-                            secondLevelKeywords = (List<String>) props.get(entry.getValue().getQName());
+
+                    if (SystematicFieldGroupNames.RECIPIENTS.equals(name) || SystematicFieldGroupNames.ADDITIONAL_RECIPIENTS.equals(name)) {
+                        if (propValue != null) {
+                            @SuppressWarnings("unchecked")
+                            List<String> values = (List<String>) propValue;
+
+                            for (int i = 1, j = 0; j < values.size(); i++, j++) {
+                                formulas.put(fieldId + "." + i, values.get(j));
+                            }
                         }
-                    }
-
-                    // Check, if we have already added the keywords or there are no keywords present
-                    if (formulas.containsKey(fieldId1) || firstLevelKeywords.isEmpty() || StringUtils.isEmpty(firstLevelKeywords.get(0))) {
                         continue;
-                    }
+                    } else if (SystematicFieldGroupNames.THESAURI.equals(name)) {
+                        String fieldId1 = DocumentDynamicModel.Props.FIRST_KEYWORD_LEVEL.getLocalName();
+                        String fieldId2 = DocumentDynamicModel.Props.SECOND_KEYWORD_LEVEL.getLocalName();
+                        List<String> firstLevelKeywords = new ArrayList<String>();
+                        List<String> secondLevelKeywords = new ArrayList<String>();
+                        for (Entry<String, Field> entry : group.getFieldsByOriginalId().entrySet()) {
+                            if (fieldId1.equals(entry.getKey())) {
+                                fieldId1 = entry.getValue().getFieldId();
+                                firstLevelKeywords = (List<String>) props.get(entry.getValue().getQName());
+                            } else if (fieldId2.equals(entry.getKey())) {
+                                fieldId2 = entry.getValue().getFieldId();
+                                secondLevelKeywords = (List<String>) props.get(entry.getValue().getQName());
+                            }
+                        }
 
-                    String keywords = TextUtil.joinStringLists(firstLevelKeywords, secondLevelKeywords);
-                    formulas.put(fieldId1, keywords);
-                    formulas.put(fieldId2, keywords);
-                    continue;
-                } else if (SystematicFieldGroupNames.SUBSTITUTE.equals(name)) {
-                    if (formulas.containsKey("$vacationOrderSubstitutionData")) {
+                        // Check, if we have already added the keywords or there are no keywords present
+                        if (formulas.containsKey(fieldId1) || firstLevelKeywords.isEmpty() || StringUtils.isEmpty(firstLevelKeywords.get(0))) {
+                            continue;
+                        }
+
+                        String keywords = TextUtil.joinStringLists(firstLevelKeywords, secondLevelKeywords);
+                        formulas.put(fieldId1, keywords);
+                        formulas.put(fieldId2, keywords);
                         continue;
+                    } else if (SystematicFieldGroupNames.SUBSTITUTE.equals(name)) {
+                        if (formulas.containsKey("$vacationOrderSubstitutionData")) {
+                            continue;
+                        }
+                        formulas.put("$vacationOrderSubstitutionData", getVacationOrderSubstitutionData(props));
                     }
-                    formulas.put("$vacationOrderSubstitutionData", getVacationOrderSubstitutionData(props));
                 }
             }
 
@@ -761,8 +757,8 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                         date = dateFormat.format(propValue);
                     }
                     formulas.put(fieldId, date);
+                    continue;
                 }
-                continue;
             } else if (FieldType.LISTBOX == fieldType && isList) {
                 @SuppressWarnings("unchecked")
                 List<Serializable> listPropValue = (List<Serializable>) propValue;
@@ -772,12 +768,14 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                 String msgKey = (Boolean) propValue ? "yes" : "no";
                 formulas.put(fieldId, MessageUtil.getMessage(msgKey));
                 continue;
-            } else if (FieldType.STRUCT_UNIT == fieldType) {
+            } else if (FieldType.STRUCT_UNIT == fieldType && isList) {
                 formulas.put(fieldId, UserUtil.getDisplayUnitText(propValue));
+                continue;
+            } else if (isList) {
                 continue;
             }
 
-            formulas.put(fieldId, propValue.toString());
+            formulas.put(fieldId, propValue == null ? "" : propValue.toString());
         }
 
         formulas.put("$docType", documentAdminService.getDocumentTypeName(documentNode));
@@ -805,8 +803,10 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         return SystematicFieldGroupNames.DOCUMENT_LOCATION.equals(fieldGroupName)
                 || SystematicFieldGroupNames.USERS_TABLE.equals(fieldGroupName)
                 || SystematicFieldGroupNames.LEAVE_REQUEST.equals(fieldGroupName)
+                || SystematicFieldGroupNames.LEAVE_CHANGE.equals(fieldGroupName)
                 || SystematicFieldGroupNames.LEAVE_CANCEL.equals(fieldGroupName)
                 || SystematicFieldGroupNames.TRAINING_APPLICANT.equals(fieldGroupName)
+                || SystematicFieldGroupNames.ERRAND_DOMESTIC_APPLICANT.equals(fieldGroupName)
                 || SystematicFieldGroupNames.ERRAND_ABROAD_APPLICANT.equals(fieldGroupName)
                 || SystematicFieldGroupNames.ERRAND_EXPENSES.equals(fieldGroupName)
                 || SystematicFieldGroupNames.ERRAND_EXPENSES_REPORT.equals(fieldGroupName)

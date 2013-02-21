@@ -22,8 +22,11 @@ public class DueDateExtensionWorkflowType extends BaseWorkflowType implements Wo
                 && event.getObject().isStatus(Status.FINISHED)) {
 
             Task task = (Task) event.getObject();
-            if (task.getOutcomeIndex() == DUE_DATE_EXTENSION_OUTCOME_ACCEPTED) {
+            int outcomeIndex = task.getOutcomeIndex();
+            if (outcomeIndex == DUE_DATE_EXTENSION_OUTCOME_ACCEPTED) {
                 workflowService.changeInitiatingTaskDueDate(task, queue);
+            } else if (outcomeIndex == DUE_DATE_EXTENSION_OUTCOME_NOT_ACCEPTED) {
+                workflowService.rejectDueDateExtension(task);
             }
         }
     }

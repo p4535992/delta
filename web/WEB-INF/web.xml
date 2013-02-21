@@ -685,6 +685,14 @@
       <filter-name>Header Filter</filter-name>
       <url-pattern>/navigate/logo</url-pattern>
    </filter-mapping>
+   <filter-mapping>
+      <filter-name>Header Filter</filter-name>
+      <url-pattern>/n/jumploader</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
+      <filter-name>Header Filter</filter-name>
+      <url-pattern>/navigate/jumploader</url-pattern>
+   </filter-mapping>
 
    <!-- ========== Listeners ========== -->
 

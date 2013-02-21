@@ -12,10 +12,12 @@ import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.classificator.constant.FieldType;
+import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.docadmin.service.DynamicType;
 import ee.webmedia.alfresco.docadmin.service.Field;
+import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.generator.FieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.FieldGroupGenerator;
 import ee.webmedia.alfresco.utils.TreeNode;
@@ -115,5 +117,7 @@ public interface DocumentConfigService {
     DocumentConfig getEventPlanVolumeSearchFilterConfig();
 
     boolean isRegDateFilterInAssociationsSearch();
+
+    ItemConfigVO generateFieldGroupReadonlyItem(FieldGroup fieldGroup);
 
 }

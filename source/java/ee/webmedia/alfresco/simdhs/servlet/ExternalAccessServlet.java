@@ -57,6 +57,17 @@ public class ExternalAccessServlet extends BaseServlet {
             return;
         }
 
+        if ("/jumploader".equals(uri)) {
+            Pair<byte[], String> applet = getApplicationService().getJumploaderApplet();
+            if (applet != null) {
+                res.setHeader("Content-Length", Integer.toString(applet.getFirst().length));
+                res.setContentType(applet.getSecond());
+                ServletOutputStream os = res.getOutputStream();
+                FileCopyUtils.copy(applet.getFirst(), os); // closes both streams
+            }
+            return;
+        }
+
         setNoCacheHeaders(res);
         Pair<String, String[]> outcomeAndArgs = getDocumentUriTokens(uri);
         req.setAttribute(ExternalAccessPhaseListener.OUTCOME_AND_ARGS_ATTR, outcomeAndArgs);

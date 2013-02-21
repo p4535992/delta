@@ -8,6 +8,7 @@ import java.util.Date;
 public class Application {
     private String version;
     private String server;
+    private Date startedDateTime;
     private Date dateTime;
     private String status = "OK";
 
@@ -25,6 +26,14 @@ public class Application {
 
     public String getServer() {
         return server;
+    }
+
+    public void setStartedDateTime(Date startedDateTime) {
+        this.startedDateTime = startedDateTime;
+    }
+
+    public Date getStartedDateTime() {
+        return startedDateTime;
     }
 
     public void setDateTime(Date dateTime) {

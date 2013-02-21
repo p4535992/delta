@@ -6,8 +6,10 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getCaseFileService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentLockHelperBean;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getNotificationService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPrivilegeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPropertySheetStateBean;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getSendOutService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 import static ee.webmedia.alfresco.docdynamic.web.ChangeReasonModalComponent.DELETE_DOCUMENT_REASON_MODAL_ID;
 import static ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog.validateExists;
@@ -30,9 +32,11 @@ import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransacti
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.util.Pair;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.config.PropertySheetConfigElement;
+import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.collections.CollectionUtils;
@@ -66,6 +70,7 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.web.AbstractSearchBlockBean;
 import ee.webmedia.alfresco.document.search.web.BlockBeanProviderProvider;
 import ee.webmedia.alfresco.document.search.web.SearchBlockBean;
+import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.document.web.DocumentListDialog;
 import ee.webmedia.alfresco.document.web.FavoritesModalComponent;
 import ee.webmedia.alfresco.document.web.FavoritesModalComponent.AddToFavoritesEvent;
@@ -88,7 +93,7 @@ import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
  * @author Kaarel Jõgeva
  */
 public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFileDialogSnapshot, DocumentDynamicBlock, DialogDataProvider> implements DialogDataProvider,
-        BlockBeanProviderProvider {
+BlockBeanProviderProvider {
     private static final long serialVersionUID = 1L;
     public static final String BEAN_NAME = "CaseFileDialog";
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(CaseFileDialog.class);
@@ -181,7 +186,7 @@ public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFile
             return;
         }
         createSnapshot(new CaseFileDialogSnapshot());
-        openOrSwitchModeCommon(caseFileRef, caseFile, inEditMode);
+        openOrSwitchModeCommon(caseFileRef, caseFile, inEditMode, null);
     }
 
     public void deleteCaseFile(ActionEvent event) {
@@ -257,7 +262,7 @@ public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFile
             return cancel(false);
         }
 
-        if (!isInEditMode() || !getCurrentSnapshot().viewModeWasOpenedInThePast) {
+        if (!isInEditMode() || !getCurrentSnapshot().viewModeWasOpenedInThePast  || !canRestore()) {
             getDocumentDynamicService().deleteDocumentIfDraft(getCaseFile().getNodeRef());
             return super.cancel(); // closeDialogSnapshot
         }
@@ -501,11 +506,16 @@ public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFile
         openOrSwitchModeCommon(getCaseFile().getNodeRef(), inEditMode);
     }
 
-    public void openOrSwitchModeCommon(NodeRef caseFileRef, boolean inEditMode) {
-        openOrSwitchModeCommon(caseFileRef, getCaseFileService().getCaseFile(caseFileRef), inEditMode);
+    private void switchMode(boolean inEditMode, NodeRef documentToCheck) {
+        NodeRef caseFileRef = getCaseFile().getNodeRef();
+        openOrSwitchModeCommon(caseFileRef, getCaseFileService().getCaseFile(caseFileRef), inEditMode, documentToCheck);
     }
 
-    private void openOrSwitchModeCommon(NodeRef caseFileRef, CaseFile caseFile, boolean inEditMode) {
+    public void openOrSwitchModeCommon(NodeRef caseFileRef, boolean inEditMode) {
+        openOrSwitchModeCommon(caseFileRef, getCaseFileService().getCaseFile(caseFileRef), inEditMode, null);
+    }
+
+    private void openOrSwitchModeCommon(NodeRef caseFileRef, CaseFile caseFile, boolean inEditMode, NodeRef documentToCheck) {
         CaseFileDialogSnapshot currentSnapshot = getCurrentSnapshot();
         try {
             currentSnapshot.caseFile = caseFile;
@@ -524,6 +534,7 @@ public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFile
                 getCurrentSnapshot().showDocsAndCasesAssocs = false;
             }
             resetOrInit(getDataProvider());
+            addLastSavedDocument(documentToCheck);
             if (LOG.isDebugEnabled()) {
                 LOG.debug("CaseFile before rendering: " + getCaseFile());
             }
@@ -539,77 +550,103 @@ public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFile
         }
     }
 
+    // if document is saved in CaseFileDialog.finishImpl, it may not be indexed yet,
+    // in that case retrieve the last saved doc by nodeRef from repo
+    private void addLastSavedDocument(NodeRef documentToCheck) {
+        if (documentToCheck != null) {
+            boolean documentFound = false;
+            for (Document document : documents) {
+                if (document.getNodeRef().equals(documentToCheck)) {
+                    documentFound = true;
+                    break;
+                }
+            }
+            if (!documentFound) {
+                documents.add(BeanHelper.getDocumentService().getDocumentByNodeRef(documentToCheck));
+            }
+        }
+    }
+
     @Override
     protected DialogDataProvider getDataProvider() {
         return getCurrentSnapshot() == null ? null : this;
     }
 
     @Override
+    /** Transaction created by BaseDialogBean.finish method is not needed by us here, and it would be clearer to turn it off -
+     * but we haven't turned it off and thus it is still created and therefore it is the super transaction.
+     * Actions in finishImpl method are performed in two separate child transactions for the following reason:
+     * integrity checker runs at the end of the transaction and we want integrity checker to run before switchMode is run.
+     */
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         if (!isInEditMode()) {
             throw new RuntimeException("CaseFile metadata block is not in edit mode");
         }
 
+        final CaseFileDialogSnapshot currentSnapshot = getCurrentSnapshot();
+        final DocumentDynamic documentToAdd = currentSnapshot.documentToAdd;
+        final boolean isAddDocument = documentToAdd != null;
+        NodeRef savedDocumentRef = null;
+
         try {
             // Do in new transaction, because we want to catch integrity checker exceptions now, not at the end of this method when mode is already switched
-            CaseFile result = getTransactionService().getRetryingTransactionHelper().doInTransaction(
-                    new RetryingTransactionCallback<CaseFile>() {
+            savedDocumentRef = getTransactionService().getRetryingTransactionHelper().doInTransaction(
+                    new RetryingTransactionCallback<NodeRef>() {
                         @Override
-                        public CaseFile execute() throws Throwable {
+                        public NodeRef execute() throws Throwable {
                             // May throw UnableToPerformException or UnableToPerformMultiReasonException
-                            return getCaseFileService().update(getCaseFile(), getConfig().getSaveListenerBeanNames());
+                            CaseFile result = getCaseFileService().update(getCaseFile(), getConfig().getSaveListenerBeanNames());
+                            currentSnapshot.caseFile = result;
+                            NodeRef savedDocumentRef = null;
+                            if (isAddDocument) {
+                                documentToAdd.setVolume(result.getNodeRef());
+                                documentToAdd.setSeries(result.getSeries());
+                                documentToAdd.setFunction(result.getFunction());
+                                final boolean isDraft = documentToAdd.isDraft();
+                                DocumentDynamicDialog documentDynamicDialog = BeanHelper.getDocumentDynamicDialog();
+                                savedDocumentRef = documentDynamicDialog.save(documentToAdd, currentSnapshot.docSaveListeners, false, false).getNodeRef();
+                                if (currentSnapshot.registerDoc) {
+                                    WmNode node = documentToAdd.getNode();
+                                    documentDynamicDialog.register(isDraft, documentToAdd, node, node);
+                                }
+                                if (currentSnapshot.sendDocNotifications) { // Confirmation about missing e-mails was asked after DocumentDynamicDialog finish button
+                                    Pair<List<String>, List<SendInfo>> existingAndMissingEmails = getNotificationService().getExistingAndMissingEmails(
+                                            getSendOutService().getDocumentSendInfos(savedDocumentRef));
+                                    documentDynamicDialog.notifyAccessRestrictionChanged(documentToAdd, existingAndMissingEmails.getFirst());
+                                }
+                                resetDocumentToAdd(currentSnapshot);
+                                documentDynamicDialog.switchMode(true);
+                            }
+                            List<NodeRef> massChangeLocationSelectedDocs = currentSnapshot.massChangeLocationSelectedDocs;
+                            if (massChangeLocationSelectedDocs != null) {
+                                Map<String, Object> locationProps = currentSnapshot.massChangeLocationNode.getProperties();
+                                locationProps.put(DocumentCommonModel.Props.FUNCTION.toString(), result.getFunction());
+                                locationProps.put(DocumentCommonModel.Props.SERIES.toString(), result.getSeries());
+                                locationProps.put(DocumentCommonModel.Props.VOLUME.toString(), result.getNodeRef());
+                                DocumentListDialog documentListDialog = BeanHelper.getDocumentListDialog();
+                                documentListDialog.setLocationNode(currentSnapshot.massChangeLocationNode);
+                                documentListDialog.setSelectedDocs(currentSnapshot.massChangeLocationSelectedDocs);
+                                BeanHelper.getDocumentListDialog().massChangeDocLocationSave();
+                                resetMassChangeSelectedDocs(currentSnapshot);
+                            }
+                            return savedDocumentRef;
                         }
                     }, false, true);
-            CaseFileDialogSnapshot currentSnapshot = getCurrentSnapshot();
-            currentSnapshot.caseFile = result;
-            DocumentDynamic documentToAdd = currentSnapshot.documentToAdd;
-            if (documentToAdd != null) {
-                documentToAdd.setVolume(result.getNodeRef());
-                documentToAdd.setSeries(result.getSeries());
-                documentToAdd.setFunction(result.getFunction());
-                final boolean isDraft = documentToAdd.isDraft();
-                DocumentDynamicDialog documentDynamicDialog = BeanHelper.getDocumentDynamicDialog();
-                documentToAdd = documentDynamicDialog.save(documentToAdd, currentSnapshot.docSaveListeners, false, false);
-                if (currentSnapshot.registerDoc) {
-                    WmNode node = documentToAdd.getNode();
-                    documentDynamicDialog.register(isDraft, documentToAdd, node, node);
-                }
-                if (currentSnapshot.sendDocNotifications) {
-                    documentDynamicDialog.notifyAccessRestrictionChanged(documentToAdd);
-                }
-                resetDocumentToAdd(currentSnapshot);
-                documentDynamicDialog.switchMode(true);
-            }
-            List<NodeRef> massChangeLocationSelectedDocs = currentSnapshot.massChangeLocationSelectedDocs;
-            if (massChangeLocationSelectedDocs != null) {
-                Map<String, Object> locationProps = currentSnapshot.massChangeLocationNode.getProperties();
-                locationProps.put(DocumentCommonModel.Props.FUNCTION.toString(), result.getFunction());
-                locationProps.put(DocumentCommonModel.Props.SERIES.toString(), result.getSeries());
-                locationProps.put(DocumentCommonModel.Props.VOLUME.toString(), result.getNodeRef());
-                DocumentListDialog documentListDialog = BeanHelper.getDocumentListDialog();
-                documentListDialog.setLocationNode(currentSnapshot.massChangeLocationNode);
-                documentListDialog.setSelectedDocs(currentSnapshot.massChangeLocationSelectedDocs);
-                getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<String>() {
-                    @Override
-                    public String execute() throws Throwable {
-                        BeanHelper.getDocumentListDialog().massChangeDocLocationSave();
-                        return null;
-                    }
-                }, false, true);
-                resetMassChangeSelectedDocs(currentSnapshot);
-            }
         } catch (UnableToPerformMultiReasonException e) {
             // This is handled in BaseDialogBean
             throw e;
         }
 
+        final NodeRef finalSavedDocumentRef = savedDocumentRef;
         // Do in new transaction, because otherwise saved data from the previous transaction from above is not visible
         return getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<String>() {
             @Override
             public String execute() throws Throwable {
-                BeanHelper.getDocumentDynamicDialog().switchMode(true);
+                if (isAddDocument) {
+                    BeanHelper.getDocumentDynamicDialog().switchMode(true);
+                }
                 // Switch from edit mode back to view mode
-                switchMode(false);
+                switchMode(false, finalSavedDocumentRef);
                 return null;
             }
         }, false, true);
@@ -649,6 +686,7 @@ public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFile
     // =========================================================================
 
     private transient UIPropertySheet propertySheet;
+    private transient UIRichList documentRichList;
 
     @Override
     public UIPropertySheet getPropertySheet() {
@@ -665,6 +703,14 @@ public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFile
         }
         // Additional checks are no longer needed, because ExternalAccessServlet behavior with JSF is now correct
         this.propertySheet = propertySheet;
+    }
+
+    public UIRichList getDocumentRichList() {
+        return documentRichList;
+    }
+
+    public void setDocumentRichList(UIRichList documentRichList) {
+        this.documentRichList = documentRichList;
     }
 
     private transient UIPanel modalContainer;
@@ -700,6 +746,9 @@ public class CaseFileDialog extends BaseSnapshotCapableWithBlocksDialog<CaseFile
             propertySheet.setNode(getNode());
             propertySheet.setMode(getMode());
             propertySheet.setConfig(getPropertySheetConfigElement());
+        }
+        if (documentRichList != null) {
+            documentRichList.setValue(null);
         }
         getPropertySheetStateBean().reset(getStateHolders(), provider);
         getDocumentDialogHelperBean().reset(provider);

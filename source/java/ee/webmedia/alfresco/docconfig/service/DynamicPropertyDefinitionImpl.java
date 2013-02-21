@@ -51,7 +51,7 @@ public class DynamicPropertyDefinitionImpl implements DynamicPropertyDefinition 
         name = Field.getQName(hiddenFieldId);
         originalFieldId = null;
         title = null;
-        fieldType = FieldType.TEXT_FIELD;
+        fieldType = hiddenFieldId.contains("_") ? originalPropertyDefinition.fieldType : FieldType.TEXT_FIELD;
         mandatory = originalPropertyDefinition.mandatory;
         multiValuedOverride = originalPropertyDefinition.multiValuedOverride;
         childAssocTypeQNameHierarchy = originalPropertyDefinition.childAssocTypeQNameHierarchy;

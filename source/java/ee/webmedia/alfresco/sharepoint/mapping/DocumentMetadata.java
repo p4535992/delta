@@ -33,6 +33,8 @@ public abstract class DocumentMetadata {
 
     protected String originalLocation;
 
+    protected String originalLocationName;
+
     protected String originalName;
 
     protected String tempName;
@@ -79,6 +81,10 @@ public abstract class DocumentMetadata {
 
     public String getOriginalLocation() {
         return originalLocation;
+    }
+
+    public String getOriginalLocationName() {
+        return originalLocationName;
     }
 
     public String getOriginalName() {
@@ -188,6 +194,7 @@ public abstract class DocumentMetadata {
             documentType = trimToNull(form.attributeValue("et"));
             subtype = tmpSubtype;
             originalLocation = trimToNull(form.element("Parent_id").attributeValue("value"));
+            originalLocationName = trimToNull(form.elementTextTrim("Parent_id"));
             makePublic = ("True".equals(isPublicTxt) || "False".equals(isPublicTxt)) ? "True".equals(isPublicTxt) : null;
             created = ImportUtil.getDateTime(form.elementTextTrim("Create_Time"));
             modified = ImportUtil.getDateTime(form.elementTextTrim("Edit_Time"));
@@ -255,8 +262,8 @@ public abstract class DocumentMetadata {
             }
 
             if (count != 1) {
-                throw new ImportValidationException("Could not find volume/case for document, searched based on Parent_id value " + originalLocation + " and Create_Time "
-                        + ImportUtil.formatDateTime(created), count == 0);
+                throw new ImportValidationException("Could not find volume/case for document, searched based on Parent_id value " + originalLocation + " and Create_Time",
+                        count == 0);
             }
 
             return volumeRef;

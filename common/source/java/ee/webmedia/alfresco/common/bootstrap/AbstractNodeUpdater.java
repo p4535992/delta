@@ -70,7 +70,8 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
 
     protected int batchSize = DEFAULT_BATCH_SIZE;
     private boolean enabled = true;
-    private File inputFolder;
+    protected File inputFolder;
+    private int transactionHelperMinRetryWaits = -1;
 
     private Set<NodeRef> nodes = new HashSet<NodeRef>();
     private Set<NodeRef> completedNodes = new HashSet<NodeRef>();
@@ -264,7 +265,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         return getBaseFileName() + "Rollback-" + dateTimeFormat.format(new Date()) + ".csv";
     }
 
-    private Set<NodeRef> loadNodesFromFile(File file, boolean readHeaders) throws Exception {
+    protected Set<NodeRef> loadNodesFromFile(File file, boolean readHeaders) throws Exception {
         if (!file.exists()) {
             log.info("Skipping loading nodes, file does not exist: " + file.getAbsolutePath());
             return null;
@@ -531,40 +532,17 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         // can be overridden, but it is not necessary to do so
     }
 
-    private static interface CsvWriterClosure {
+    protected static interface CsvWriterClosure {
         void execute(CsvWriter writer) throws IOException;
 
         String[] getHeaders();
     }
 
-    private static void bindCsvWriteAfterCommit(final File completedFile, final File rollbackFile, final CsvWriterClosure closure) {
+    private void bindCsvWriteAfterCommit(final File completedFile, final File rollbackFile, final CsvWriterClosure closure) {
         AlfrescoTransactionSupport.bindListener(new TransactionListenerAdapter() {
             @Override
             public void afterCommit() {
-                try {
-                    // Write created documents
-                    boolean exists = completedFile.exists();
-                    if (!exists) {
-                        OutputStream outputStream = new FileOutputStream(completedFile);
-                        try {
-                            // the Unicode value for UTF-8 BOM, is needed so that Excel would recognise the file in correct encoding
-                            outputStream.write("\ufeff".getBytes("UTF-8"));
-                        } finally {
-                            outputStream.close();
-                        }
-                    }
-                    CsvWriter writer = new CsvWriter(new FileWriter(completedFile, true), CSV_SEPARATOR);
-                    try {
-                        if (!exists) {
-                            writer.writeRecord(closure.getHeaders());
-                        }
-                        closure.execute(writer);
-                    } finally {
-                        writer.close();
-                    }
-                } catch (IOException e) {
-                    throw new RuntimeException("Error writing file '" + completedFile + "': " + e.getMessage(), e);
-                }
+                executeAfterCommit(completedFile, closure);
             }
 
             @Override
@@ -595,12 +573,42 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         });
     }
 
+    protected void executeAfterCommit(final File completedFile, final CsvWriterClosure closure) {
+        try {
+            // Write created documents
+            boolean exists = completedFile.exists();
+            if (!exists) {
+                OutputStream outputStream = new FileOutputStream(completedFile);
+                try {
+                    // the Unicode value for UTF-8 BOM, is needed so that Excel would recognise the file in correct encoding
+                    outputStream.write("\ufeff".getBytes("UTF-8"));
+                } finally {
+                    outputStream.close();
+                }
+            }
+            CsvWriter writer = new CsvWriter(new FileWriter(completedFile, true), CSV_SEPARATOR);
+            try {
+                if (!exists) {
+                    writer.writeRecord(closure.getHeaders());
+                }
+                closure.execute(writer);
+            } finally {
+                writer.close();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Error writing file '" + completedFile + "': " + e.getMessage(), e);
+        }
+    }
+
     // HELPER METHODS
     /** RetryingTransactionHelper that only tries to do things once. */
     private RetryingTransactionHelper getTransactionHelper() {
         RetryingTransactionHelper helper = new RetryingTransactionHelper();
         helper.setMaxRetries(3);
         helper.setTransactionService(serviceRegistry.getTransactionService());
+        if (transactionHelperMinRetryWaits > 0) {
+            helper.setMinRetryWaitMs(transactionHelperMinRetryWaits);
+        }
         return helper;
     }
 
@@ -630,6 +638,10 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
 
     public boolean isErrorExecutingUpdaterInBackground() {
         return errorExecutingUpdaterInBackground;
+    }
+
+    public void setTransactionHelperMinRetryWaits(int transactionHelperMinRetryWaits) {
+        this.transactionHelperMinRetryWaits = transactionHelperMinRetryWaits;
     }
 
 }

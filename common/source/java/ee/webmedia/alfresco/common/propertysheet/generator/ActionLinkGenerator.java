@@ -12,6 +12,8 @@ import org.alfresco.web.bean.generator.BaseComponentGenerator;
 import org.alfresco.web.ui.common.ConstantMethodBinding;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.repo.component.UIActions;
+import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
+import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.shared_impl.taglib.UIComponentTagUtils;
 
@@ -25,6 +27,16 @@ public class ActionLinkGenerator extends BaseComponentGenerator implements Handl
     public static final String ACTION_KEY = "action";
     public static final String ACTION_LISTENER_KEY = "actionListener";
     public static final String ACTION_LISTENER_PARAMS_KEY = "params";
+    private static final String PROP_SHEET_VARIABLE_REFERENCE = "__propSheetVar";
+
+    private UIPropertySheet propertySheet;
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public UIComponent generateAndAdd(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item) {
+        this.propertySheet = propertySheet;
+        return super.generateAndAdd(context, propertySheet, item);
+    }
 
     @Override
     public UIComponent generate(FacesContext context, String id) {
@@ -55,6 +67,9 @@ public class ActionLinkGenerator extends BaseComponentGenerator implements Handl
                 UIParameter paramComponent = (UIParameter) application.createComponent(UIParameter.COMPONENT_TYPE);
                 paramComponent.setName(paramNameAndValue[0]);
                 String value = paramNameAndValue[1];
+                if (value != null) {
+                    value = StringUtils.replace(value, PROP_SHEET_VARIABLE_REFERENCE, propertySheet.getVar());
+                }
                 if (UIComponentTagUtils.isValueReference(value)) {
                     paramComponent.setValueBinding("value", application.createValueBinding(value));
                 } else {

@@ -13,6 +13,8 @@ import org.alfresco.model.ContentModel;
 import org.alfresco.repo.importer.ImporterBootstrap;
 import org.alfresco.repo.module.AbstractModuleComponent;
 import org.alfresco.repo.module.ModuleComponent;
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
@@ -32,6 +34,11 @@ public class SystematicDocumentTypesBootstrap extends AbstractModuleComponent {
     private GeneralService generalService;
     private DocumentAdminService documentAdminService;
     private ImporterBootstrap importer;
+
+    @Override
+    public boolean isRequiresNewTransaction() {
+        return false;
+    }
 
     @Override
     protected void executeInternal() throws Throwable {
@@ -99,38 +106,66 @@ public class SystematicDocumentTypesBootstrap extends AbstractModuleComponent {
         LOG.info("Following systematic document types are not yet imported: " + systematicDocumentTypes.keySet());
 
         LOG.info("Importing systematicFieldDefinitions and systematicFieldDefinitions into temporary locations");
-        NodeRef rootRef = serviceRegistry.getNodeService().getRootNode(generalService.getStore());
-        NodeRef fieldGroupDefinitionsTmp = deleteAndCreateNode(rootRef, DocumentAdminModel.Assocs.FIELD_GROUP_DEFINITIONS_TMP, DocumentAdminModel.Types.FIELD_GROUP_DEFINITIONS);
-        NodeRef fieldDefinitionsTmp = deleteAndCreateNode(rootRef, DocumentAdminModel.Assocs.FIELD_DEFINITIONS_TMP, DocumentAdminModel.Types.FIELD_DEFINITIONS);
-
-        List<Properties> views = new ArrayList<Properties>();
-        for (ModuleComponent component : getDependsOn()) {
-            if (!(component instanceof ImporterModuleComponent)) {
-                continue;
+        RetryingTransactionHelper txHelper = serviceRegistry.getTransactionService().getRetryingTransactionHelper();
+        Pair<NodeRef, NodeRef> fieldGroupAndDefinitionsTmps = txHelper.doInTransaction(new RetryingTransactionCallback<Pair<NodeRef, NodeRef>>() {
+            @Override
+            public Pair<NodeRef, NodeRef> execute() throws Throwable {
+                NodeRef rootRef = serviceRegistry.getNodeService().getRootNode(generalService.getStore());
+                NodeRef fieldGroupDefinitionsTmp = deleteAndCreateNode(rootRef, DocumentAdminModel.Assocs.FIELD_GROUP_DEFINITIONS_TMP,
+                                DocumentAdminModel.Types.FIELD_GROUP_DEFINITIONS);
+                NodeRef fieldDefinitionsTmp = deleteAndCreateNode(rootRef, DocumentAdminModel.Assocs.FIELD_DEFINITIONS_TMP, DocumentAdminModel.Types.FIELD_DEFINITIONS);
+                return Pair.newInstance(fieldGroupDefinitionsTmp, fieldDefinitionsTmp);
             }
-            List<Properties> bootstrapViews = ((ImporterModuleComponent) component).getBootstrapViews();
-            for (Properties properties : bootstrapViews) {
-                String path = properties.getProperty("path");
-                if (DocumentAdminModel.Repo.FIELD_DEFINITIONS_SPACE.equals(path)) {
-                    path = DocumentAdminModel.Repo.FIELD_DEFINITIONS_TMP_SPACE;
-                } else if (DocumentAdminModel.Repo.FIELD_GROUP_DEFINITIONS_SPACE.equals(path)) {
-                    path = DocumentAdminModel.Repo.FIELD_GROUP_DEFINITIONS_TMP_SPACE;
-                } else if (!DocumentAdminModel.Repo.FIELD_DEFINITIONS_TMP_SPACE.equals(path) && !DocumentAdminModel.Repo.FIELD_GROUP_DEFINITIONS_TMP_SPACE.equals(path)) {
-                    continue;
+        });
+        final NodeRef fieldGroupDefinitionsTmp = fieldGroupAndDefinitionsTmps.getFirst();
+        final NodeRef fieldDefinitionsTmp = fieldGroupAndDefinitionsTmps.getSecond();
+
+        try {
+            txHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
+                @Override
+                public Void execute() throws Throwable {
+                    List<Properties> views = new ArrayList<Properties>();
+                    for (ModuleComponent component : getDependsOn()) {
+                        if (!(component instanceof ImporterModuleComponent)) {
+                            continue;
+                        }
+                        List<Properties> bootstrapViews = ((ImporterModuleComponent) component).getBootstrapViews();
+                        for (Properties properties : bootstrapViews) {
+                            String path = properties.getProperty("path");
+                            if (DocumentAdminModel.Repo.FIELD_DEFINITIONS_SPACE.equals(path)) {
+                                path = DocumentAdminModel.Repo.FIELD_DEFINITIONS_TMP_SPACE;
+                            } else if (DocumentAdminModel.Repo.FIELD_GROUP_DEFINITIONS_SPACE.equals(path)) {
+                                path = DocumentAdminModel.Repo.FIELD_GROUP_DEFINITIONS_TMP_SPACE;
+                            } else if (!DocumentAdminModel.Repo.FIELD_DEFINITIONS_TMP_SPACE.equals(path) && !DocumentAdminModel.Repo.FIELD_GROUP_DEFINITIONS_TMP_SPACE.equals(path)) {
+                                continue;
+                            }
+                            properties.setProperty("path", path);
+                        }
+                        views.addAll(bootstrapViews);
+                    }
+                    importer.setBootstrapViews(views);
+                    importer.setUseExistingStore(true);
+                    importer.bootstrap();
+                    return null;
                 }
-                properties.setProperty("path", path);
-            }
-            views.addAll(bootstrapViews);
+            });
+            LOG.info("Finished importing systematicFieldDefinitions and systematicFieldDefinitions into temporary locations");
+
+            documentAdminService.createSystematicDocumentTypes(systematicDocumentTypes, fieldGroupDefinitionsTmp, fieldDefinitionsTmp);
+
+        } finally {
+
+            LOG.info("Deleting temporary locations for systematicFieldDefinitions and systematicFieldDefinitions");
+            txHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
+                @Override
+                public Void execute() throws Throwable {
+                    serviceRegistry.getNodeService().deleteNode(fieldGroupDefinitionsTmp);
+                    serviceRegistry.getNodeService().deleteNode(fieldDefinitionsTmp);
+                    return null;
+                }
+            });
+            LOG.info("Finished deleting temporary locations for systematicFieldDefinitions and systematicFieldDefinitions");
         }
-        importer.setBootstrapViews(views);
-        importer.setUseExistingStore(true);
-        importer.bootstrap();
-
-        documentAdminService.createSystematicDocumentTypes(systematicDocumentTypes, fieldGroupDefinitionsTmp, fieldDefinitionsTmp);
-
-        LOG.info("Deleting temporary locations for systematicFieldDefinitions and systematicFieldDefinitions");
-        serviceRegistry.getNodeService().deleteNode(fieldGroupDefinitionsTmp);
-        serviceRegistry.getNodeService().deleteNode(fieldDefinitionsTmp);
     }
 
     private NodeRef deleteAndCreateNode(NodeRef parentRef, QName assocQName, QName typeQName) {

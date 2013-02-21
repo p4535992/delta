@@ -4,6 +4,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a"%>
 <%@ taglib uri="/WEB-INF/repo.tld" prefix="r"%>
+<%@ taglib uri="/WEB-INF/wm.tld" prefix="wm" %>
 
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
@@ -31,8 +32,7 @@
                <a:convertXMLDate pattern="#{msg.date_pattern}" />
             </h:outputText>
             <h:outputText id="col2-br" value="<br/>" escape="false"/>
-            <h:outputText id="col2-popup-link" value="#{r.dueDateHistory}" escape="false" />
-
+            <wm:customChildrenContainer id="task-list-due-date-history" childGenerator="#{WorkflowBlockBean.dueDateHistoryRecordsGenerator}" parameterList="#{r.dueDateHistoryRecords}"/>
       </a:column>
 
       <%-- taskCreatorName --%>

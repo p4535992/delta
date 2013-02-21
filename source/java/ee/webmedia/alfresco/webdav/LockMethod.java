@@ -43,6 +43,7 @@ import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.apache.commons.lang.StringUtils;
 import org.dom4j.io.XMLWriter;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -71,8 +72,19 @@ public class LockMethod extends WebDAVMethod {
      * 
      * @return boolean
      */
-    protected final boolean hasLockToken() {
-        return m_strLockToken != null ? true : false;
+    protected final boolean hasLockToken(NodeRef fileRef, String userName) {
+        boolean hasToken = false;
+        if (m_strLockToken != null) {
+            // If lock token is present, check if the lock still belongs to this user but is expired. 
+            // If so, mark the lock as nonexistent so it can be recreated, not refreshed. 
+            // This can happen, if Office doesn't send update request for lock update. 
+            LockStatus lockStatus = BeanHelper.getDocLockService().getLockStatus(fileRef);
+            String lockOwner = (String) BeanHelper.getNodeService().getProperty(fileRef, ContentModel.PROP_LOCK_OWNER);
+            if (!LockStatus.LOCK_EXPIRED.equals(lockStatus) || !StringUtils.equals(userName, lockOwner)) {
+                hasToken = true;
+            }
+        }
+        return hasToken;
     }
 
     /**
@@ -185,7 +197,7 @@ public class LockMethod extends WebDAVMethod {
         int responseStatus = HttpServletResponse.SC_OK;
         try {
             // Check if this is a new lock or a refresh
-            if (hasLockToken()) {
+            if (hasLockToken(fileRef, userName)) {
                 // Refresh an existing lock
                 refreshLock(fileRef, userName);
             } else {

@@ -13,7 +13,6 @@ import java.util.List;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
-import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.NodePropertyResolver;
 import org.apache.commons.lang.StringUtils;
@@ -45,16 +44,20 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         UNFINISH
     }
 
+    public static final QName INITIATING_COMPOUND_WORKFLOW_REF = RepoUtil.createTransientProp("initiatingCompoundWorkflowRef");
+    public static final QName INITIATING_COMPOUND_WORKFLOW_TITLE = RepoUtil.createTransientProp("initiatingCompoundWorkflowTitle");
+
     private static final QName PROP_RESOLUTION = RepoUtil.createTransientProp("resolution");
     private static final QName PROP_WORKFLOW_CATEGORY = RepoUtil.createTransientProp("category");
     private static final QName PROP_TEMP_FILES = RepoUtil.createTransientProp("files");
     private static final QName PROP_DUE_DATE_TIME_STR = RepoUtil.createTransientProp("dueDateTimeStr");
+    private static final QName PROP_COMPOUNDWORKFLOW_NODEREF = RepoUtil.createTransientProp("compountWorkflowNodeRef");
 
     private final Workflow parent;
     private final int outcomes;
     private int outcomeIndex = -1;
     private Action action = Action.NONE;
-    private List<Pair<String, Date>> dueDateHistoryRecords;
+    private List<DueDateHistoryRecord> dueDateHistoryRecords;
     private List<NodeRef> removedFiles;
     private boolean filesLoaded;
     /** If null, indicates that due date history data existence has not been checked and should not be updated in delta_task table */
@@ -96,7 +99,10 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
     }
 
     protected Task copy(Workflow copyParent) {
-        return copyImpl(new Task(getNode().clone(), copyParent, outcomes));
+        Task copy = copyImpl(new Task(getNode().clone(), copyParent, outcomes));
+        copy.setDueDateHistoryRecords(getDueDateHistoryRecords());
+        copy.hasDueDateHistory = !getDueDateHistoryRecords().isEmpty();
+        return copy;
     }
 
     protected Task copy() {
@@ -342,6 +348,10 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         return getProp(WorkflowSpecificModel.Props.PROPOSED_DUE_DATE);
     }
 
+    public String getProposedDueDateStr() {
+        return getProposedDueDate() != null ? dateFormat.format(getProposedDueDate()) : "";
+    }
+
     public void setProposedDueDate(Date proposedDueDate) {
         setProp(WorkflowSpecificModel.Props.PROPOSED_DUE_DATE, proposedDueDate);
     }
@@ -479,9 +489,13 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
             getNode().getAspects().add(WorkflowSpecificModel.Aspects.SEARCHABLE);
         }
         if (node.getAspects().contains(WorkflowSpecificModel.Aspects.SEARCHABLE) && parent != null && parent.getParent() != null) {
+            CompoundWorkflow compoundWorkflow = parent.getParent();
             node.getProperties().putAll(
-                    toStringProperties(getTaskSearchableProps(toQNameProperties(parent.getParent().getNode().getProperties()))));
+                    toStringProperties(getTaskSearchableProps(toQNameProperties(compoundWorkflow.getNode().getProperties()))));
+            setCompoundWorkflowId(compoundWorkflow.getNodeRef().getId());
+            setCompoundWorkflowTitle(compoundWorkflow.getTitle());
         }
+
     }
 
     protected void calculateOverdue() {
@@ -507,13 +521,13 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
         return parent.getIndexInCompoundWorkflow();
     }
 
-    public void setDueDateHistoryRecords(List<Pair<String, Date>> dueDateHistoryRecords) {
+    public void setDueDateHistoryRecords(List<DueDateHistoryRecord> dueDateHistoryRecords) {
         this.dueDateHistoryRecords = dueDateHistoryRecords;
     }
 
-    public List<Pair<String, Date>> getDueDateHistoryRecords() {
+    public List<DueDateHistoryRecord> getDueDateHistoryRecords() {
         if (dueDateHistoryRecords == null) {
-            dueDateHistoryRecords = new ArrayList<Pair<String, Date>>();
+            dueDateHistoryRecords = new ArrayList<DueDateHistoryRecord>();
         }
         return dueDateHistoryRecords;
     }
@@ -654,6 +668,26 @@ public class Task extends BaseWorkflowObject implements Comparable<Task>, CssSty
             return parent == null ? null : parent.getNodeRef();
         }
         return new NodeRef(new StoreRef(storeRef), workflowNodeRefId);
+    }
+
+    public void setCompoundWorkflowId(String compoundWorkflowId) {
+        setProp(WorkflowSpecificModel.Props.COMPOUND_WORKFLOW_ID, compoundWorkflowId);
+    }
+
+    public NodeRef getInitiatingCompoundWorkflowRef() {
+        return getProp(INITIATING_COMPOUND_WORKFLOW_REF);
+    }
+
+    public String getInitiatingCompoundWorkflowTitle() {
+        return getProp(INITIATING_COMPOUND_WORKFLOW_TITLE);
+    }
+
+    public void setInitiatingCompoundWorkflowTitle(String title) {
+        setProp(INITIATING_COMPOUND_WORKFLOW_TITLE, title);
+    }
+
+    public String getCompoundWorkflowId() {
+        return getProp(WorkflowSpecificModel.Props.COMPOUND_WORKFLOW_ID);
     }
 
 }

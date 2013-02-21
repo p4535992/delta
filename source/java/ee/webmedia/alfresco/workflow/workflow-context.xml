@@ -251,6 +251,32 @@
       </property>         
    </bean>
    
+   <bean id="taskTableAddColumnBootstrap9" parent="executeStatementsBootstrap" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dataSource" ref="dataSource" />
+      <property name="resourceName" value="ee/webmedia/alfresco/workflow/bootstrap/delta_task_table_add_columns4.sql" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="taskTableBootstrap3" />
+            <ref bean="taskTableSearchIndexesBootstrap1" />
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="taskDueDateHistoryTableAddColumnBootstrap" parent="executeStatementsBootstrap" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dataSource" ref="dataSource" />
+      <property name="resourceName" value="ee/webmedia/alfresco/workflow/bootstrap/delta_task_due_date_history_table_add_columns.sql" />
+      <property name="dependsOn">
+         <list>
+            <!--<ref bean="taskTableBootstrap3" />-->
+            <!--<ref bean="taskDueDateHistoryTableBootstrap"/>-->
+         </list>
+      </property>
+   </bean>
+   
    <bean id="taskFileTableBootstrap" class="ee.webmedia.alfresco.workflow.bootstrap.TaskFileTableBootstrap" parent="createTableBootstrap" >
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
@@ -332,6 +358,7 @@
       <property name="documentWorkflowEnabled" value="${conf.document-workflow.enabled}" />
       <property name="workflowTitleEnabled" value="${conf.workflow.title.enabled}" />
       <property name="reviewToOtherOrgEnabled" value="${conf.workflow.review-to-other-org.enabled}" />
+      <property name="finishDocumentsWhenWorkflowFinishes" value="${conf.independent-workflow.finishDocumentsWhenWorkflowFinishes}" />
    </bean>
 
    <bean id="WmWorkflowService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -590,6 +617,8 @@
             <ref bean="convertToDynamicDocumentsUpdater" />
          </list>
       </property>
+      <property name="workflowDbService" ref="WorkflowDbService"/>
+      <property name="workflowService" ref="WmWorkflowService"/>        
    </bean>
    
    <!-- All bootstraps that modify tasks should run before filling delta_task db table -->
@@ -605,10 +634,12 @@
             <ref bean="taskTableAddColumnBootstrap6" />
             <ref bean="taskTableAddColumnBootstrap7" />
             <ref bean="taskTableAddColumnBootstrap8" />
+            <ref bean="taskTableAddColumnBootstrap9" />
             <ref bean="dueDateExtensionTaskUpdater" />
             <ref bean="moveTaskFileToChildAssoc1" />
             <ref bean="notStartedFinishedTaskUpdater" />
             <ref bean="convertToDynamicDocumentsUpdater" />
+            <ref bean="deleteCompoundWorkflowsWithEmptyDateOrOwner" />
          </list>
       </property>
       <property name="workflowService" ref="WmWorkflowService"/>
@@ -616,6 +647,7 @@
       <property name="fileService" ref="FileService"/>
       <property name="namespaceService" ref="NamespaceService"/>
       <property name="dictionaryService" ref="DictionaryService"/>
+      <property name="transactionHelperMinRetryWaits" value="6000" />
    </bean>
    
    <bean id="taskOwnerStructUnitParameterUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.TaskOwnerStructUnitParameterUpdater" parent="module.baseComponent" >
@@ -636,15 +668,18 @@
             <ref bean="taskTableInsertBootstrap3" />
             <ref bean="taskDueDateExtensionAssocTableBootstrap1" />
             <ref bean="taskDueDateHistoryTableBootstrap" />
+            <!--<ref bean="taskDueDateHistoryTableAddColumnBootstrap"/>-->
             <ref bean="taskFileTableBootstrap" />
             <ref bean="taskTableAddColumnBootstrap7" />
             <ref bean="archivalsStoresBootstrap" />   
             <ref bean="logAndDeleteNotExistingWorkflowTasks2" />
+            <ref bean="deleteCompoundWorkflowsWithEmptyDateOrOwner" />
          </list>
       </property>
       <property name="workflowDbService" ref="WorkflowDbService"/>
       <property name="workflowService" ref="WmWorkflowService"/>
-      <property name="fileService" ref="FileService"/>       
+      <property name="fileService" ref="FileService"/>  
+      <property name="transactionHelperMinRetryWaits" value="6000" />     
    </bean>
    
    <bean id="taskAssociatedDataTableInsertBootstrap2" class="ee.webmedia.alfresco.workflow.bootstrap.TaskAssociatedDataTableInsertBootstrap2" parent="abstractNodeUpdater" >
@@ -657,13 +692,17 @@
             <ref bean="taskDueDateExtensionAssocTableBootstrap1" />
             <ref bean="taskAssociatedDataTableInsertBootstrap1" /> 
             <ref bean="taskDueDateHistoryTableBootstrap" />
+            <!--<ref bean="taskDueDateHistoryTableAddColumnBootstrap"/>-->
             <ref bean="taskFileTableBootstrap" />
             <ref bean="taskTableAddColumnBootstrap8" />
-            <ref bean="archivalsStoresBootstrap" />   
+            <ref bean="taskTableAddColumnBootstrap9" />
+            <ref bean="archivalsStoresBootstrap" />
+            <ref bean="deleteCompoundWorkflowsWithEmptyDateOrOwner" /> 
          </list>
       </property>
       <property name="workflowDbService" ref="WorkflowDbService"/>
-      <property name="workflowService" ref="WmWorkflowService"/>       
+      <property name="workflowService" ref="WmWorkflowService"/>  
+      <property name="transactionHelperMinRetryWaits" value="6000" />     
    </bean>
    
    <!-- Executed from node-browser -->
@@ -678,7 +717,7 @@
             <ref bean="archivalsStoresBootstrap" />   
          </list>
       </property>
-      <property name="batchSize" value="1" />
+      <property name="batchSize" value="30" />
    </bean>
    
    <bean id="fixTaskStoreIdFromWorkflow" class="ee.webmedia.alfresco.workflow.bootstrap.FixTaskStoreIdFromWorkflow" parent="abstractNodeUpdater" >
@@ -774,6 +813,7 @@
             <ref bean="taskTableAddColumnBootstrap6" />
             <ref bean="taskTableAddColumnBootstrap7" />
             <ref bean="taskTableAddColumnBootstrap8" />
+            <ref bean="taskTableAddColumnBootstrap9" />
          </list>
       </property>
    </bean>    
@@ -803,7 +843,21 @@
       </property>
       <property name="compoundWorkflowOwnerPropsUpdater" ref="compoundWorkflowOwnerPropsUpdater4" />
       <property name="userService" ref="UserService" />
+      <property name="transactionHelperMinRetryWaits" value="6000" />
    </bean>    
+   
+    <!-- Should run only in environments where it has been verified that is is acceptable to delete compound workflows with tasks that have empty dueDate or ownerName properties -->
+   <bean id="deleteCompoundWorkflowsWithEmptyDateOrOwner" class="ee.webmedia.alfresco.workflow.bootstrap.DeleteCompoundWorkflowsWithEmptyDateOrOwner" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="${updater.deleteCompoundWorkflowsWithEmptyDateOrOwner.enabled}" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+            <ref bean="taskTableBootstrap3" />
+         </list>
+      </property>
+   </bean>
    
    <!-- START: web beans: -->
       

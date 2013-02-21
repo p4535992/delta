@@ -152,5 +152,5 @@
           <f:facet name="csvExport">
               <a:param value="false"/>
           </f:facet>
-          <wm:customChildrenContainer childGenerator="#{DocumentListDialog.documentRowFileGenerator}" parameterList="#{r.files}"/>
+          <wm:customChildrenContainer id="document-list-files" childGenerator="#{DocumentListDialog.documentRowFileGenerator}" parameterList="#{r.files}"/>
       </a:column>

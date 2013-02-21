@@ -162,4 +162,6 @@ public interface FileService {
 
     InputStream getFileContentInputStream(NodeRef fileRef);
 
+    String getJumploaderPath();
+
 }

@@ -178,6 +178,7 @@
       <property name="logoutRedirectUrl" value="${cas.casServerUrl}logout" />
       <property name="serverUrl" value="${server.url}" />
       <property name="logoFile" value="${logo.file}" />
+      <property name="jumploaderFile" value="${jumploader.applet.file}" />
    </bean>
 
    <bean id="generalService" class="ee.webmedia.alfresco.common.service.GeneralServiceImpl" depends-on="spacesBootstrap">
@@ -302,14 +303,48 @@
       <property name="dataSource" ref="dataSource" />
    </bean>    
 
+   <bean id="invalidNodeFixerBootstrap" class="ee.webmedia.alfresco.common.bootstrap.InvalidNodeFixerBootstrap">
+      <property name="transactionService" ref="TransactionService" />
+      <property name="dataSource" ref="dataSource" />
+   </bean>
+
+   <bean id="indexIntegrityCheckerBootstrap" class="ee.webmedia.alfresco.common.bootstrap.IndexIntegrityCheckerBootstrap">
+      <property name="nodeService" ref="NodeService" />
+      <property name="namespaceService" ref="NamespaceService" />
+      <property name="transactionService" ref="TransactionService" />
+      <property name="dataSource" ref="dataSource" />
+      <property name="indexerAndSearcher" ref="admLuceneIndexerAndSearcherFactory" />
+      <property name="transactionIntegrityCheckerEnabled" value="${transactionIntegrityChecker.enabled}" />
+      <property name="maxTransactionsPerLuceneCommit" value="${index.tracking.maxTransactionsPerLuceneCommit}" />
+   </bean>   
+
    <bean id="customReindexComponent" class="ee.webmedia.alfresco.common.service.CustomReindexComponent" parent="indexRecoveryComponentBase">
       <property name="enabled" value="${findHolesAndIndex.enabled}" />
       <property name="maxRecordSetSize" value="${index.tracking.maxRecordSetSize}" />
       <property name="maxTransactionsPerLuceneCommit" value="${index.tracking.maxTransactionsPerLuceneCommit}" />
       <property name="dataSource" ref="dataSource" />
    </bean>
-   
+
    <bean id="classpathResourceResolver" class="ee.webmedia.alfresco.common.ClasspathResourceResolver" />
+
+   <bean id="nightlyDataFixJobDetail" class="org.springframework.scheduling.quartz.JobDetailBean">
+      <property name="jobClass">
+         <value>ee.webmedia.alfresco.common.job.NightlyDataFixJob</value>
+      </property>
+   </bean>
+
+   <bean id="nightlyDataFixTrigger" class="org.alfresco.util.CronTriggerBean">
+      <property name="jobDetail">
+         <ref bean="nightlyDataFixJobDetail" />
+      </property>
+      <property name="scheduler">
+         <ref bean="schedulerFactory" />
+      </property>
+      <property name="cronExpression">
+         <value>0 30 2 * * ?</value>
+      </property>
+      <property name="enabled" value="${jobs.enabled}" />
+   </bean>
 
    <!-- START: web beans: -->
 

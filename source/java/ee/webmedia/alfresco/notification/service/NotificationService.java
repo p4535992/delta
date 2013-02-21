@@ -7,6 +7,7 @@ import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
@@ -78,7 +79,7 @@ public interface NotificationService {
 
     void notifyExternalReviewError(String notificationContent);
 
-    public void processAccessRestrictionChangedNotification(DocumentDynamic document, List<SendInfo> sendInfos);
+    void processAccessRestrictionChangedNotification(DocumentDynamic document, List<String> emails);
 
     List<QName> getAllNotificationProps();
 
@@ -91,5 +92,7 @@ public interface NotificationService {
     void removeNotificationAssocForCurrentUser(NodeRef targetNodeRef, QName assocQName, QName aspectQName);
 
     public boolean isNotificationAssocExists(NodeRef userRef, NodeRef nodeRef, QName assocType);
+
+    Pair<List<String>, List<SendInfo>> getExistingAndMissingEmails(List<SendInfo> sendInfos);
 
 }

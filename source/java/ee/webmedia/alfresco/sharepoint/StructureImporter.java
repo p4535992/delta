@@ -54,6 +54,7 @@ import ee.webmedia.alfresco.archivals.service.ArchivalsService;
 import ee.webmedia.alfresco.casefile.service.CaseFile;
 import ee.webmedia.alfresco.casefile.service.CaseFileService;
 import ee.webmedia.alfresco.cases.model.CaseModel;
+import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.docadmin.service.CaseFileType;
@@ -94,7 +95,8 @@ public class StructureImporter {
     private static final String REGISTER_NAME = "Üldregister";
     private static final String[] VOLUME_TYPES = { "aastane toimik", "asjatoimik", "objektitoimik" };
     private static final String[] VOLUME_TYPE_CODES = { VolumeType.ANNUAL_FILE.name(), VolumeType.CASE_FILE.name(), VolumeType.SUBJECT_FILE.name() };
-    private static final String[] RESTRICTIONS = { "", "AK", "Avalik", "Majasisene" };
+    private static final String[] RESTRICTIONS = { "", AccessRestriction.AK.getValueName(), AccessRestriction.OPEN.getValueName(), AccessRestriction.INTERNAL.getValueName(),
+            AccessRestriction.LIMITED.getValueName() };
 
     static {
         // These arrays are used for binary search; they must be sorted to be useful.

@@ -24,6 +24,8 @@ public class MonitoringServlet extends BaseServlet {
 
     private static final long serialVersionUID = 1L;
 
+    private static Date startedDateTime = new Date();
+
     @Override
     protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.setCharacterEncoding("utf-8");
@@ -35,6 +37,7 @@ public class MonitoringServlet extends BaseServlet {
         Application application = new Application();
         application.setVersion(BeanHelper.getApplicationService().getProjectVersion());
         application.setServer(request.getServerName() + ":" + request.getServerPort());
+        application.setStartedDateTime(startedDateTime);
         application.setDateTime(new Date());
         status.setApplication(application);
 

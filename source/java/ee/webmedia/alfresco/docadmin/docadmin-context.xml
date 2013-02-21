@@ -16,8 +16,7 @@
    </bean>
 
    <bean id="documentAdminService" class="ee.webmedia.alfresco.docadmin.service.DocumentAdminServiceImpl">
-      <property name="dictionaryService" ref="DictionaryService" />
-      <property name="namespaceService" ref="NamespaceService" />
+      <property name="transactionService" ref="TransactionService" />
       <property name="nodeService" ref="NodeService" />
       <property name="generalService" ref="GeneralService" />
       <property name="baseService" ref="BaseService" />

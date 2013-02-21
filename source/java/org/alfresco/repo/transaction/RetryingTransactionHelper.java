@@ -24,10 +24,18 @@
  */
 package org.alfresco.repo.transaction;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeDaoService;
+
 import java.lang.reflect.Method;
 import java.sql.BatchUpdateException;
 import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.transaction.RollbackException;
 import javax.transaction.Status;
@@ -37,11 +45,19 @@ import net.sf.ehcache.distribution.RemoteCacheException;
 
 import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.error.ExceptionStackUtil;
+import org.alfresco.repo.domain.Transaction;
+import org.alfresco.repo.search.impl.lucene.LuceneResultSetRow;
 import org.alfresco.repo.security.permissions.AccessDeniedException;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport.TxnReadState;
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.StoreRef;
+import org.alfresco.service.cmr.search.ResultSet;
+import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.transaction.TransactionService;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.lucene.document.Fieldable;
 import org.hibernate.ObjectNotFoundException;
 import org.hibernate.StaleObjectStateException;
 import org.hibernate.StaleStateException;
@@ -54,14 +70,21 @@ import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DeadlockLoserDataAccessException;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.jdbc.JdbcUpdateAffectedIncorrectNumberOfRowsException;
 import org.springframework.jdbc.UncategorizedSQLException;
+import org.springframework.jdbc.core.simple.SimpleJdbcOperations;
+import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 
 import com.ibatis.common.jdbc.exception.NestedSQLException;
 
+import ee.webmedia.alfresco.common.bootstrap.IndexIntegrityCheckerBootstrap;
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
+import ee.webmedia.alfresco.common.service.CustomReindexComponent;
 import ee.webmedia.alfresco.common.transaction.TransactionHelperWrapperException;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.utils.CalendarUtil;
 
 /**
  * A helper that runs a unit of work inside a UserTransaction,
@@ -119,6 +142,7 @@ public class RetryingTransactionHelper
      * Reference to the TransactionService instance.
      */
     private TransactionService txnService;
+    private SimpleJdbcOperations jdbcTemplate;
 
 //    /** Performs post-failure exception neatening */
 //    private ExceptionTransformer exceptionTransformer;
@@ -131,6 +155,29 @@ public class RetryingTransactionHelper
     /** How much to increase the wait time with each retry. */
     private int retryWaitIncrementMs;
     
+    public static boolean transactionIntegrityCheckerEnabled = false;
+    public static boolean transactionIntegrityCheckerInMainThreadEnabled = false;
+    public static ThreadLocal<LinkedList<Set<NodeRef>>> nodesUpdated = new ThreadLocal<LinkedList<Set<NodeRef>>>() {
+        @Override
+        protected LinkedList<Set<NodeRef>> initialValue() {
+            return new LinkedList<Set<NodeRef>>();
+        }
+    };
+    private static ThreadLocal<AtomicLong> nodesUpdatedCheckTotalMillis = new ThreadLocal<AtomicLong>() {
+        @Override
+        protected AtomicLong initialValue() {
+            return new AtomicLong();
+        }
+    };
+    private static ThreadLocal<AtomicLong> lastNodesUpdatedCheck = new ThreadLocal<AtomicLong>() {
+        @Override
+        protected AtomicLong initialValue() {
+            return new AtomicLong(System.currentTimeMillis());
+        }
+    };
+    public static final NodeRef deleteNode = new NodeRef("DELETE://DELETE/DELETE");
+    public static final StoreRef version2StoreRef = new StoreRef(StoreRef.PROTOCOL_WORKSPACE, "version2Store");
+
     /**
      * Whether the the transactions may only be reads
      */
@@ -289,6 +336,7 @@ public class RetryingTransactionHelper
         {
             long iterationStartTime = System.nanoTime();
             UserTransaction txn = null;
+            boolean nodesUpdatedRemoveLast = false;
             try
             {
                 if (requiresNew)
@@ -321,6 +369,11 @@ public class RetryingTransactionHelper
                 }
                 if (txn != null)
                 {
+                    if (transactionIntegrityCheckerEnabled)
+                    {
+                        nodesUpdated.get().addLast(readOnly ? null : new HashSet<NodeRef>());
+                        nodesUpdatedRemoveLast = true;
+                    }
                     txn.begin();
                     // Wrap it to protect it
                     UserTransactionProtectionAdvise advise = new UserTransactionProtectionAdvise();
@@ -357,6 +410,36 @@ public class RetryingTransactionHelper
                         } finally {
                             StatisticsPhaseListener.addTimingNano(readOnly ? StatisticsPhaseListenerLogColumn.TX_COMMIT_RO : StatisticsPhaseListenerLogColumn.TX_COMMIT_RW, startTime);
                         }
+                        if (transactionIntegrityCheckerEnabled && !readOnly) {
+                            final Set<NodeRef> nodesUpdatedLocal = nodesUpdated.get().getLast();
+                            if (!nodesUpdatedLocal.isEmpty()) {
+                                nodesUpdatedLocal.remove(RetryingTransactionHelper.deleteNode);
+                                for (Iterator<NodeRef> i = nodesUpdatedLocal.iterator(); i.hasNext();) {
+                                    NodeRef nodeRef = i.next();
+                                    if (version2StoreRef.equals(nodeRef.getStoreRef())) {
+                                        i.remove();
+                                    }
+                                }
+                                
+                                if (!nodesUpdatedLocal.isEmpty()) {
+                                    long startNodesUpdatedCheckTime = System.nanoTime();
+                                    doInTransaction(new RetryingTransactionCallback<Void>() {
+                                        @Override
+                                        public Void execute() throws Throwable {
+                                            checkNodesUpdated(nodesUpdatedLocal);
+                                            return null;
+                                        }
+                                    }, true, true);
+                                    long stopNodesUpdatedCheckTime = System.nanoTime();
+                                    long total = nodesUpdatedCheckTotalMillis.get().addAndGet(CalendarUtil.duration(startNodesUpdatedCheckTime, stopNodesUpdatedCheckTime));
+                                    long time = System.currentTimeMillis();
+                                    if (time > (lastNodesUpdatedCheck.get().get() + 60000L)) {
+                                        lastNodesUpdatedCheck.get().set(time);
+                                        logger.info("TransactionIntegrityChecker: Total time used in this thread so far " + total + " ms");
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
                 if (logger.isDebugEnabled())
@@ -370,10 +453,18 @@ public class RetryingTransactionHelper
                                 "   Iteration: " + count);
                     }
                 }
+                if (nodesUpdatedRemoveLast)
+                {
+                    nodesUpdated.get().removeLast();
+                }
                 return result;
             }
             catch (Throwable e)
             {
+                if (nodesUpdatedRemoveLast)
+                {
+                    nodesUpdated.get().removeLast();
+                }
                 // Somebody else 'owns' the transaction, so just rethrow.
                 if (txn == null)
                 {
@@ -497,6 +588,77 @@ public class RetryingTransactionHelper
         // We've worn out our welcome and retried the maximum number of times.
         // So, fail.
         throw lastException;
+    }
+
+    private void checkNodesUpdated(Set<NodeRef> nodesUpdatedLocal) {
+        String previousChangeTxnId = null;
+        List<NodeRef> previousTxnChanges = null;
+   
+        for (NodeRef nodeRef : nodesUpdatedLocal) {
+            String changeTxnId = null;
+            ResultSet resultSet = BeanHelper.getSearchService().query(nodeRef.getStoreRef(), SearchService.LANGUAGE_LUCENE, "ID:\"" + nodeRef.toString() + "\"");
+            try {
+                for (int i = 0; i < resultSet.length(); i++) {
+                    List<Fieldable> fields = ((LuceneResultSetRow) resultSet.getRow(i)).getDocument().getFields();
+                    for (Fieldable field : fields) {
+                        if ("TX".equals(field.name())) {
+                            changeTxnId = field.stringValue();
+                        }
+                    }
+                }
+            } finally {
+                resultSet.close();
+            }
+            if (changeTxnId == null) {
+                logger.error("TransactionIntegrityChecker: No match found in lucene index for nodeRef = " + nodeRef);
+                continue;
+            }
+            List<NodeRef> txnChanges;
+            if (StringUtils.equals(changeTxnId, previousChangeTxnId)) {
+                txnChanges = previousTxnChanges;
+            } else {
+                if (jdbcTemplate == null) {
+                    jdbcTemplate = new SimpleJdbcTemplate(BeanHelper.getDataSource());
+                }
+                Long txnId = getTxnId(changeTxnId);
+                if (txnId == null) {
+                    logger.error("TransactionIntegrityChecker: No match found in alf_transaction for change_txn_id = " + changeTxnId + " ; nodeRef = " + nodeRef);
+                    continue;
+                }
+                txnChanges = getNodeDaoService().getTxnChanges(txnId);
+                previousTxnChanges = txnChanges;
+                previousChangeTxnId = changeTxnId;
+            }
+            if (!txnChanges.contains(nodeRef)) {
+                long realTxnId = jdbcTemplate.queryForLong("SELECT transaction_id FROM alf_node WHERE uuid = ?", nodeRef.getId());
+                StringBuilder s = new StringBuilder("TransactionIntegrityChecker: nodeRef = " + nodeRef + " in lucene index has");
+                logTxn(getTxnId(changeTxnId), s);
+                s.append("\nbut in database it has");
+                logTxn(realTxnId, s);
+                s.append("\nand this thread is executing " + nodesUpdated.get().size() + " nested read-write transactions.");
+                logger.error(s.toString());
+            }
+        }
+    }
+
+    private Long getTxnId(String changeTxnId) {
+        try {
+            return jdbcTemplate.queryForLong("SELECT id FROM alf_transaction WHERE change_txn_id = ?", changeTxnId);
+        } catch (IncorrectResultSizeDataAccessException e) {
+            return null;
+        }
+    }
+
+    private void logTxn(long txnId, StringBuilder s) {
+        Transaction dbTxn = getNodeDaoService().getTxnById(txnId);
+        s.append("\n").append(CustomReindexComponent.getTransactionInfo(dbTxn)).append(" ").append(dbTxn.getChangeTxnId());
+        List<NodeRef> txnChanges = getNodeDaoService().getTxnChanges(txnId);
+        int txnDeleteCount = getNodeDaoService().getTxnDeleteCount(txnId);
+        int txnUpdateCount = getNodeDaoService().getTxnUpdateCount(txnId);
+        s.append("\n  updateCount=").append(txnUpdateCount).append(" deleteCount=").append(txnDeleteCount).append("\n  changes[").append(txnChanges.size()).append("]");
+        for (NodeRef nodeRef : txnChanges) {
+            s.append("\n    ").append(nodeRef.toString());
+        }
     }
 
     /**

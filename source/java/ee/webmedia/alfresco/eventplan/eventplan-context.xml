@@ -85,6 +85,7 @@
             <ref bean="archivalsStoresBootstrap" />
          </list>
       </property>
+      <property name="transactionHelperMinRetryWaits" value="6000" />
    </bean>
 
    <!-- START: web beans: -->

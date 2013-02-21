@@ -6,7 +6,7 @@ import org.springframework.context.ApplicationContext;
 /**
  * Information about specific project and common project.
  * 
- * @author Alar Kvell (alar.kvell@webmedia.ee)
+ * @author Alar Kvell
  */
 public interface ApplicationService {
 
@@ -63,4 +63,13 @@ public interface ApplicationService {
      */
     Pair<byte[], String> getCustomLogo();
 
+    /**
+     * @return URL for signed jumploader applet if configured
+     */
+    String getJumploaderUrl();
+
+    /**
+     * @return jar of signed jumploader applet if configured, or {@code null} otherwise
+     */
+    Pair<byte[], String> getJumploaderApplet();
 }

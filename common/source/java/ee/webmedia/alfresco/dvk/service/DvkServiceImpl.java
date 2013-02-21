@@ -53,6 +53,7 @@ import ee.webmedia.alfresco.monitoring.MonitoringUtil;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
+import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
@@ -322,6 +323,11 @@ public abstract class DvkServiceImpl implements DvkService {
             }
             NodeRef reviewTaskNotificationNode = importReviewTaskData(rd, dhlDokument, dhlId);
             if (reviewTaskNotificationNode != null) {
+                if (RepoUtil.isUnsaved(reviewTaskNotificationNode)) {
+                    handleStorageFailure(receivedDocument, dhlId, dvkIncomingFolder, metaInfoHelper, previouslyFailedDvkIds, new RuntimeException(
+                            "Couldn't find corresponding linkedReviewTask in Delta!"));
+                    return null;
+                }
                 return Arrays.asList(reviewTaskNotificationNode);
             }
             fillLetterData(rd, dhlDokument);

@@ -44,7 +44,6 @@ import ee.webmedia.alfresco.casefile.model.CaseFileModel;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.classificator.constant.DocTypeAssocType;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
-import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -71,6 +70,7 @@ import ee.webmedia.alfresco.log.service.LogService;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.workflow.model.Status;
@@ -111,7 +111,7 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
     }
 
     @Override
-    public DocumentDynamic createAssociatedDocFromModel(NodeRef baseDocRef, NodeRef assocModelRef) {
+    public Pair<DocumentDynamic, AssociationModel> createAssociatedDocFromModel(NodeRef baseDocRef, NodeRef assocModelRef) {
         ChildAssociationRef primaryParent = nodeService.getPrimaryParent(assocModelRef);
         String newDocTypeId = primaryParent.getQName().getLocalName();
         QName replyOrFollowUp = primaryParent.getTypeQName();
@@ -174,15 +174,16 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
             }
             copyPropertyRecursively(0, baseHierarchy, newHierarchy, baseDocNode, newDocNode, baseDocTypeField, newDocTypeField, newDocPropDef, newDocAndVer.getSecond());
         }
-        createAssoc(newDocNode.getNodeRef(), baseDocNode.getNodeRef(), replyOrF.getAssocBetweenDocs());
-
+        NodeRef baseDocumentRef = baseDocNode.getNodeRef();
+        NodeRef newDocumentRef = newDocNode.getNodeRef();
+        createAssoc(newDocumentRef, baseDocumentRef, replyOrF.getAssocBetweenDocs());
         // On first rendering of document metadata block, initial access restriction properties would be set from series data -- disable this
         newDoc.setDisableUpdateInitialAccessRestrictionProps(true);
 
         if (LOG.isDebugEnabled()) {
             LOG.debug("Created " + replyOrF + " " + newDocTypeId + ": from " + baseDoc.getDocumentTypeId());
         }
-        return newDoc;
+        return Pair.newInstance(newDoc, assocModel);
     }
 
     private void copyPropertyRecursively(int i, QName[] baseHierarchy, QName[] newHierarchy, Node baseDocNode, Node newDocNode, Field baseDocTypeField, Field newDocTypeField,
@@ -328,11 +329,11 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
     }
 
     @Override
-    public boolean createWorkflowAssoc(NodeRef docRef, NodeRef workflowRef, boolean updateMainDoc) {
+    public boolean createWorkflowAssoc(NodeRef docRef, NodeRef workflowRef, boolean updateMainDoc, boolean setOwnerProps) {
         createAssoc(docRef, workflowRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT);
         logDocumentWorkflowAssocAction(docRef, workflowRef, "applog_compoundWorkflow_document_added", "applog_document_compoundWorkflow_added",
                 "document_log_compoundWorkflow_added");
-        setIndependentWorkflowDocPermissions(docRef, workflowRef);
+        setIndependentWorkflowDocPermissions(docRef, workflowRef, setOwnerProps);
         workflowService.updateDocumentCompWorkflowSearchProps(docRef);
         if (updateMainDoc && workflowService.getCompoundWorkflowDocumentCount(workflowRef) == 1) {
             workflowService.updateMainDocument(workflowRef, docRef);
@@ -341,10 +342,9 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
         return false;
     }
 
-    private void setIndependentWorkflowDocPermissions(NodeRef docRef, NodeRef workflowRef) {
+    private void setIndependentWorkflowDocPermissions(NodeRef docRef, NodeRef workflowRef, boolean setOwnerProps) {
         CompoundWorkflow compoundWorkflow = workflowService.getCompoundWorkflow(workflowRef);
         Set<String> defaultPrivileges = WorkflowUtil.getIndependentWorkflowDefaultDocPermissions();
-        String docNewOwnerUsername = null;
         Map<String, Set<String>> userPrivileges = new HashMap<String, Set<String>>();
         boolean isFirstConfirmationTask = true;
         for (Workflow workflow : compoundWorkflow.getWorkflows()) {
@@ -367,9 +367,6 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
                     userPriv.add(DocumentCommonModel.Privileges.EDIT_DOCUMENT);
                     isFirstConfirmationTask = false;
                 }
-                if (WorkflowUtil.isActiveResponsible(task)) {
-                    docNewOwnerUsername = ownerId;
-                }
             }
         }
         for (Map.Entry<String, Set<String>> entry : userPrivileges.entrySet()) {
@@ -378,9 +375,26 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
                 privilegeService.setPermissions(docRef, entry.getKey(), privilegesToAdd);
             }
         }
-        if (docNewOwnerUsername != null && DocumentStatus.WORKING.equals((String) nodeService.getProperty(docRef, DocumentCommonModel.Props.DOC_STATUS))) {
-            documentDynamicService.setOwner(docRef, docNewOwnerUsername, false);
+        if (setOwnerProps) {
+            Map<String, Object> documentProps = new HashMap<String, Object>();
+            documentDynamicService.setOwnerFromActiveResponsibleTask(compoundWorkflow, docRef, documentProps);
+            nodeService.addProperties(docRef, RepoUtil.toQNameProperties(documentProps));
         }
+    }
+
+    @Override
+    public boolean isAddCompoundWorkflowAssoc(NodeRef baseDocumentRef, String associatiedDocTypeId, QName documentAssocType) {
+        if (associatiedDocTypeId == null) {
+            return false;
+        }
+        String baseDocTypeId = documentDynamicService.getDocumentType(baseDocumentRef);
+        List<? extends AssociationModel> associationModels = getAssocs(baseDocTypeId, documentAssocType);
+        for (AssociationModel associationModel : associationModels) {
+            if (associatiedDocTypeId.equals(associationModel.getDocType())) {
+                return Boolean.TRUE.equals(associationModel.getAssociateWithSourceDocument());
+            }
+        }
+        return false;
     }
 
     @Override
@@ -480,6 +494,16 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
     }
 
     @Override
+    public List<NodeRef> getDocumentIndependentWorkflowAssocs(NodeRef docRef) {
+        List<AssociationRef> workflowAssocs = nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT);
+        List<NodeRef> workflowRefs = new ArrayList<NodeRef>();
+        for (AssociationRef assocRef : workflowAssocs) {
+            workflowRefs.add(assocRef.getTargetRef());
+        }
+        return workflowRefs;
+    }
+
+    @Override
     public boolean isBaseOrReplyOrFollowUpDocument(NodeRef docRef, Map<String, Map<String, AssociationRef>> addedAssociations) {
         if (addedAssociations != null) {
             Map<String, AssociationRef> addedAssocs = addedAssociations.get(DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP.toString());
@@ -524,14 +548,19 @@ public class DocumentAssociationsServiceImpl implements DocumentAssociationsServ
 
     @Override
     public DocAssocInfo getDocListUnitAssocInfo(AssociationRef assocRef, boolean isSourceAssoc) {
+        return getDocListUnitAssocInfo(assocRef, isSourceAssoc, true);
+    }
+
+    @Override
+    public DocAssocInfo getDocListUnitAssocInfo(AssociationRef assocRef, boolean isSourceAssoc, boolean skipNotSearchable) {
         DocAssocInfo assocInf = new DocAssocInfo();
         QName assocTypeQName = assocRef.getTypeQName();
         boolean isDocumentWorkflowAssociation = DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT.equals(assocTypeQName);
-        if (skipAssoc(isSourceAssoc, assocTypeQName, isDocumentWorkflowAssociation)) {
+        if (skipNotSearchable && skipAssoc(isSourceAssoc, assocTypeQName, isDocumentWorkflowAssociation)) {
             return null;
         }
         NodeRef objectRef = isSourceAssoc ? assocRef.getSourceRef() : assocRef.getTargetRef();
-        if (isNotSearchableDocument(objectRef)) {
+        if (skipNotSearchable && isNotSearchableDocument(objectRef)) {
             LOG.debug("not searchable: " + assocRef);
             return null;
         }

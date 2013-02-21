@@ -346,6 +346,11 @@
    <bean id="documentWorkflowStatusEventListener" class="ee.webmedia.alfresco.document.service.event.DocumentWorkflowStatusEventListener">
       <property name="workflowService" ref="WmWorkflowService" />
       <property name="nodeService" ref="NodeService" />
+      <property name="documentService" ref="DocumentService" />
+      <property name="logService" ref="LogService" />
+      <property name="userService" ref="UserService" />
+      <property name="transactionService" ref="TransactionService" />
+      <property name="docLockService" ref="DocLockService" />
    </bean>
    
    <bean id="import25To313DynamicDocumentTypes" class="ee.webmedia.alfresco.document.bootstrap.Import25To313DynamicDocumentTypes" parent="module.baseComponent">
@@ -353,7 +358,18 @@
       <property name="enabled" value="${updater.version25To313.enabled}" />
       <property name="dependsOn">
          <list>
+            <!-- All bootstraps that modify document types -->
             <ref bean="systematicDocumentTypesBootstrap" />
+            <ref bean="readonlyFieldsFixBootstrap2" />
+            <ref bean="caseFileStatusFieldFixBootstrap" />
+            <ref bean="contactSystematicGroupAddFieldsUpdater" />
+            <ref bean="documentRegNrFieldUpdater" />
+            <ref bean="documentSenderRegNrFieldGroupUpdater" />
+            <ref bean="leaveCancelEndDateNameFixBootstrap2" />
+            <ref bean="leaveTypeFieldTypeUpdater" />
+            <ref bean="letterFieldsRemovableFromSystematicDocTypeFixBootstrap2" />
+            <ref bean="senderEmailRemovableFromSystematicGroupFixBootstrap3" />
+            <ref bean="senderNameAndEmailGroupAddFieldsUpdater" />
          </list>
       </property>
       <property name="documentTypeXmlFile" value="${updater.version25To313.documentTypes}" />   
@@ -376,6 +392,7 @@
             <!-- documentUpdater9 functionality called from convertToDynamicDocumentsUpdater uses fileEncodingUpdater updater's results -->
             <ref bean="fileEncodingUpdater" />
             <ref bean="classificatorRootBootstrap6_2" />
+            <ref bean="fixAclInheritanceUpdater2" />
          </list>
       </property>
       <property name="dictionaryService" ref="DictionaryService" />
@@ -388,6 +405,7 @@
       <property name="transactionService" ref="TransactionService" />
       <property name="workflow25To313DynamicDocTypeUpdater" ref="workflow25To313DynamicDocTypeUpdater" />
       <property name="batchSize" value="3" />
+      <property name="transactionHelperMinRetryWaits" value="6000" />
       <!-- Updaters that are not needed when this updater is executing (meaning we are migrating from 2.5 to 3.13) -->
       <property name="documentUpdater" ref="documentUpdater9" />
       <property name="documentChangedTypePropertiesUpdater" ref="documentChangedTypePropertiesUpdater2" />
@@ -399,6 +417,35 @@
       <property name="documentCompWorkflowSearchPropsUpdater" ref="documentCompWorkflowSearchPropsUpdater" />
       <property name="documentAccessRestrictionUpdater" ref="documentAccessRestrictionUpdater2" />
    </bean>
+   
+   <bean id="deleteNodesAfterConvertToDynamicDocumentUpdater" class="ee.webmedia.alfresco.document.bootstrap.DeleteNodesAfterConvertToDynamicDocumentUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="enabled" value="${updater.version25To313.enabled}" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="convertToDynamicDocumentsUpdater" />
+         </list>
+      </property>
+      <property name="convertToDynamicDocumentsUpdater" ref="convertToDynamicDocumentsUpdater" />
+      <!-- batchSize should always be 1 for this updater, because otherwise deleting may fail -->
+      <property name="batchSize" value="1" />
+   </bean>
+   
+   <bean id="removeAspectsAfterConvertToDynamicDocumentUpdater" class="ee.webmedia.alfresco.document.bootstrap.RemoveAspectsAfterConvertToDynamicDocumentUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="enabled" value="${updater.version25To313.enabled}" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="convertToDynamicDocumentsUpdater" />
+            <ref bean="deleteNodesAfterConvertToDynamicDocumentUpdater" />
+         </list>
+      </property>
+      <property name="convertToDynamicDocumentsUpdater" ref="convertToDynamicDocumentsUpdater" />
+      <!-- batchSize should always be 1 for this updater, to minimize possible failures -->
+      <property name="batchSize" value="1" />
+   </bean>   
 
    <bean id="registrationNumberReinventedUpdater" class="ee.webmedia.alfresco.document.bootstrap.RegistrationNumberReinventedUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />

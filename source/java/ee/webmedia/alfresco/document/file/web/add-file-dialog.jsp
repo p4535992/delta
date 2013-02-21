@@ -1,3 +1,4 @@
+<%@page import="ee.webmedia.alfresco.common.web.BeanHelper"%>
 <%@ taglib uri="http://java.sun.com/jsf/html" prefix="h"%>
 <%@ taglib uri="http://java.sun.com/jsf/core" prefix="f"%>
 <%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a"%>
@@ -13,6 +14,8 @@
 <%@ page import="org.alfresco.web.app.servlet.FacesHelper"%>
 <%@ page import="org.alfresco.web.ui.common.PanelGenerator"%>
 <%@ page import="ee.webmedia.alfresco.document.file.web.AddFileDialog"%>
+<%@ page import="org.apache.commons.lang.StringUtils" %>
+<%@ page import="ee.webmedia.alfresco.common.web.BeanHelper"%>
 
 <%
     boolean fileUploaded = false;
@@ -48,7 +51,7 @@
    <a:panel styleClass="column panel-100" id="file-upload" label="#{msg.upload_content}">
    <f:verbatim>
    <div id="uploader-wrapper">
-	   <applet class="file-upload-applet" width="750" height="400" archive='<c:url value="/applet/jumploader_z.jar" />' code="jmaster.jumploader.app.JumpLoaderApplet.class" name="jumpLoaderApplet">
+	   <applet class="file-upload-applet" width="750" height="400" archive='<%=request.getContextPath() + BeanHelper.getApplicationService().getJumploaderUrl()%>' code="jmaster.jumploader.app.JumpLoaderApplet.class" name="jumpLoaderApplet">
 	    	<param value="false" name="uc_imageEditorEnabled" />
 			<param value="<c:url value='/uploadFileServlet' />" name="uc_uploadUrl" />
 			<param value="-1" name="uc_partitionLength" />

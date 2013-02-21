@@ -29,9 +29,9 @@ import java.util.Set;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.importer.ImportTimerProgress;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
-import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
-import org.alfresco.service.cmr.dictionary.DictionaryService;
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.dictionary.TypeDefinition;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -39,9 +39,9 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.cmr.view.ImporterService;
 import org.alfresco.service.cmr.view.Location;
-import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.QNamePattern;
+import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections.CollectionUtils;
@@ -91,8 +91,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
     public static final QName PROP_DONT_SAVED_DOC_TYPE_VER = RepoUtil.createTransientProp("dontSaveDocTypeVer");
 
-    private DictionaryService dictionaryService;
-    private NamespaceService namespaceService;
+    private TransactionService transactionService;
     private NodeService nodeService;
     private GeneralService generalService;
     private BaseService baseService;
@@ -1243,12 +1242,8 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         return fieldGroupDefinitionsRoot;
     }
 
-    public void setDictionaryService(DictionaryService dictionaryService) {
-        this.dictionaryService = dictionaryService;
-    }
-
-    public void setNamespaceService(NamespaceService namespaceService) {
-        this.namespaceService = namespaceService;
+    public void setTransactionService(TransactionService transactionService) {
+        this.transactionService = transactionService;
     }
 
     public void setNodeService(NodeService nodeService) {
@@ -1285,13 +1280,8 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
-    public <D extends DynamicType> void importDynamicTypes(File xmlFile, Class<D> dynTypeClass) {
-        importDynamicTypes(xmlFile, dynTypeClass, false);
-    }
-
-    @Override
-    public <D extends DynamicType> void importDynamicTypes(File xmlFile, Class<D> dynTypeClass, boolean cleanupInBackground) {
-        new ImportHelper().importDynamicTypes(xmlFile, dynTypeClass, cleanupInBackground);
+    public ImportHelper getImportHelper() {
+        return new ImportHelper();
     }
 
     /**
@@ -1314,11 +1304,51 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
      * 
      * @author Ats Uiboupin
      */
-    private class ImportHelper {
+    public class ImportHelper {
 
-        <D extends DynamicType> void importDynamicTypes(File xmlFile, Class<D> dynTypeClass, boolean cleanupInBackground) {
+        /**
+         * Import dynamic types. NB! This method creates transactions itself, so do NOT use surrounding transactions!
+         * 
+         * @param <D>
+         * @param xmlFile
+         * @param dynTypeClass
+         */
+        public <D extends DynamicType> void importDynamicTypes(final File xmlFile, final Class<D> dynTypeClass) {
+            Assert.isTrue(AlfrescoTransactionSupport.getTransactionId() == null, "Surrounding transaction must not be present!");
+
+            RetryingTransactionHelper txHelper = transactionService.getRetryingTransactionHelper();
+            final Pair<NodeRef, Pair<NodeRef, Boolean>> result = txHelper.doInTransaction(new RetryingTransactionCallback<Pair<NodeRef, Pair<NodeRef, Boolean>>>() {
+                @Override
+                public Pair<NodeRef, Pair<NodeRef, Boolean>> execute() throws Throwable {
+                    return importDynamicTypesToTemp(xmlFile, dynTypeClass);
+                }
+            });
+            final NodeRef importableDocTypesRootRef = result.getFirst();
+            final NodeRef tmpFolderRef = result.getSecond().getFirst();
+            final Boolean tmpFolderExisted = result.getSecond().getSecond();
+
+            try {
+                txHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
+                    @Override
+                    public Void execute() throws Throwable {
+                        importDynamicTypes(importableDocTypesRootRef, dynTypeClass);
+                        return null;
+                    }
+                });
+            } finally {
+                txHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
+                    @Override
+                    public Void execute() throws Throwable {
+                        cleanupTypeImportTempData(tmpFolderRef, tmpFolderExisted, importableDocTypesRootRef);
+                        return null;
+                    }
+                });
+            }
+        }
+
+        private <D> Pair<NodeRef, Pair<NodeRef, Boolean>> importDynamicTypesToTemp(final File xmlFile, final Class<D> dynTypeClass) {
             final String dynTypeMsg = dynTypeClass.getSimpleName() + "s";
-            LOG.info("Starting to import " + dynTypeMsg);
+            LOG.info("Importing " + dynTypeMsg + " from file '" + xmlFile.getAbsolutePath() + "' into temporary location");
             QName assocQName = RepoUtil.createTransientProp("tmp_dynamic_import");
             NodeRef tmpFolderRef = generalService.getNodeRef("/" + assocQName);
             QName assocType = ContentModel.ASSOC_CHILDREN;
@@ -1347,38 +1377,26 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                     }
                 });
                 importableDocTypesRootRef = tmpDocumentTypesRef[0];
-                importDynamicTypes(importableDocTypesRootRef, dynTypeClass);
-                final NodeRef tmpFolderCleanupRef = tmpFolderRef;
-                final NodeRef importableDocTypesRootCleanupRef = importableDocTypesRootRef;
-                if (cleanupInBackground) {
-                    generalService.runOnBackground(new RunAsWork<Void>() {
-
-                        @Override
-                        public Void doWork() throws Exception {
-                            cleanupTypeImportTempData(tmpFolderCleanupRef, tmpFolderExisted, importableDocTypesRootCleanupRef);
-                            return null;
-                        }
-                    }, "cleanupTypeImportTempData", true);
-                } else {
-                    cleanupTypeImportTempData(tmpFolderRef, tmpFolderExisted, importableDocTypesRootRef);
-                }
             } catch (FileNotFoundException e) {
                 throw new RuntimeException("Failed to read data for importing parameters from uploaded file: '" + xmlFile.getAbsolutePath() + "'", e);
             } catch (UnsupportedEncodingException e) {
                 throw new RuntimeException("Unsupported encoding of uploaded file: '" + xmlFile.getAbsolutePath() + "'", e);
             } finally {
                 IOUtils.closeQuietly(fileReader);
-                LOG.info("Finished importing " + dynTypeMsg);
+                LOG.info("Finished importing " + dynTypeMsg + " from file '" + xmlFile.getAbsolutePath() + "' into temporary location");
             }
+            return Pair.newInstance(importableDocTypesRootRef, Pair.newInstance(tmpFolderRef, tmpFolderExisted));
         }
 
         private void cleanupTypeImportTempData(NodeRef tmpFolderRef, boolean tmpFolderExisted, NodeRef importableDocTypesRootRef) {
+            LOG.info("Deleting temporary location");
             if (!tmpFolderExisted) {
                 nodeService.deleteNode(tmpFolderRef);
             }
             if (importableDocTypesRootRef != null && nodeService.exists(importableDocTypesRootRef)) {
                 nodeService.deleteNode(importableDocTypesRootRef);
             }
+            LOG.info("Finished deleting temporary location");
         }
 
         private <D extends DynamicType> void importDynamicTypes(NodeRef importableDocTypesRootRef, Class<D> dynTypeClass) {
@@ -1619,6 +1637,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                         saveableNodeRef = importableField.getNodeRef();
                     }
                 } else if (metadataItem instanceof SeparatorLine) {
+                    metadataItem.nextSaveToParent(newLatestDocTypeVer, MetadataItem.class);
                     saveableNodeRef = metadataItem.getNodeRef();
                 } else {
                     throw new RuntimeException("Unexpected object bellow importable docTypeVersion:\nobject=" + metadataItem);

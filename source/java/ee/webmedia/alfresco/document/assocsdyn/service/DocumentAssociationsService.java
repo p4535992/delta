@@ -6,6 +6,7 @@ import java.util.Map;
 import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.docadmin.service.AssociationModel;
@@ -30,7 +31,7 @@ public interface DocumentAssociationsService {
      * @param assocModelRef
      * @return new Document that is saved into drafts folder, properties that are copied from <code>baseDocRef</code> are not saved (just stored in memory)
      */
-    DocumentDynamic createAssociatedDocFromModel(NodeRef baseDocRef, NodeRef assocModelRef);
+    Pair<DocumentDynamic, AssociationModel> createAssociatedDocFromModel(NodeRef baseDocRef, NodeRef assocModelRef);
 
     void createAssoc(final NodeRef sourceNodeRef, final NodeRef targetNodeRef, QName assocQName);
 
@@ -47,15 +48,22 @@ public interface DocumentAssociationsService {
 
     DocAssocInfo getDocListUnitAssocInfo(AssociationRef assocRef, boolean isSourceAssoc);
 
+    DocAssocInfo getDocListUnitAssocInfo(AssociationRef assocRef, boolean isSourceAssoc, boolean skipNotSearchable);
+
     void updateModifiedDateTime(NodeRef sourceNodeRef, NodeRef targetNodeRef);
 
     /** Return true if document is source or target node in followUp or reply association */
     boolean isBaseOrReplyOrFollowUpDocument(NodeRef docRef, Map<String, Map<String, AssociationRef>> addedAssocs);
 
     /** Return true if workflow mainDocument property was updated */
-    boolean createWorkflowAssoc(NodeRef sourceRef, NodeRef targetRef, boolean updateMainDoc);
+    boolean createWorkflowAssoc(NodeRef sourceRef, NodeRef targetRef, boolean updateMainDoc, boolean setOwnerProps);
 
     void deleteWorkflowAssoc(NodeRef sourceNodeRef, NodeRef targetNodeRef);
 
     void logDocumentWorkflowAssocRemove(NodeRef docRef, NodeRef workflowRef);
+
+    List<NodeRef> getDocumentIndependentWorkflowAssocs(NodeRef docRef);
+
+    boolean isAddCompoundWorkflowAssoc(NodeRef baseDocumentRef, String associatiedDocTypeId, QName documentAssocType);
+
 }

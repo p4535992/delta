@@ -214,7 +214,7 @@ public class FunctionsListDialog extends BaseDialogBean {
         }
     }
 
-    public void createNewYearBasedVolumes(@SuppressWarnings("unused") ActionEvent event) {
+    public void createNewYearBasedVolumes(ActionEvent event) {
         if (!ActionUtil.hasParam(event, "eventConfirmed")) {
             Map<String, String> params = new HashMap<String, String>(1);
             params.put("eventConfirmed", "eventConfirmed");

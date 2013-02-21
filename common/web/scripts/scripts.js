@@ -101,9 +101,9 @@ function zIndexWorkaround(context)
 
       if(isIE(7)) {
          var zIndexNumber = 5000;
-         $jQ("div", containerContext).each(function() {
+         $jQ("div,ul", containerContext).each(function() {
             $jQ(this).css('zIndex', zIndexNumber);
-            $jQ(this).children('span').each(function() {
+            $jQ(this).children('span,li').each(function() {
                $jQ(this).css('zIndex', zIndexNumber);
                zIndexNumber -= 10;
             });
@@ -2312,10 +2312,12 @@ function performSigningPluginOperation(operation, hashHex, certId, path) {
 
 function getMobileIdSignature() {
    var uri = getContextPath() + "/ajax/invoke/WorkflowBlockBean.getMobileIdSignature";
+   var mobileIdChallengeId = $jQ('#mobileIdChallengeId').text();
    $jQ.ajax({
       type: 'POST',
       mode: 'queue',
       url: uri,
+      data: $jQ.param({'mobileIdChallengeId' : mobileIdChallengeId }),
       dataType: 'html',
       success: function( responseText, status, xhr ) {
          if (responseText == 'FINISH') {
@@ -2323,6 +2325,8 @@ function getMobileIdSignature() {
             $jQ('#' + escapeId4JQ('dialog:dialog-body:mobileIdChallengeModal_submit_btn')).click();
          } else if (responseText == 'REPEAT') {
             window.setTimeout(getMobileIdSignature, 2000);
+         } else if (responseText.indexOf('ERROR') == 0){
+            $jQ('#mobileIdChallengeMessage').html('<p>' + responseText.substring(5) + '</p>');            
          }
       }
    });

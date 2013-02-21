@@ -21,6 +21,7 @@ import static ee.webmedia.alfresco.workflow.web.TaskListGenerator.WF_INDEX;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -273,7 +274,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         }
         retrieveExpandedStatuses();
         workflowBlockExpandedStatuses.add(wfIndex, true);
-        updatePanelGroup(false);
+        updatePanelGroup(null, null, true, false, null, false);
     }
 
     private boolean isWorkflowBlockInitiallyExpanded() {
@@ -338,7 +339,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         getTaskGroups().remove(wfIndex);
         compoundWorkflow.removeWorkflow(wfIndex);
         workflowBlockExpandedStatuses.remove(wfIndex);
-        updatePanelGroup();
+        updatePanelGroupWithoutWorkflowBlockUpdate();
     }
 
     /**
@@ -369,7 +370,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
                 ((OrderAssignmentWorkflow) workflow).addResponsibleTask();
             }
         }
-        updatePanelGroup();
+        updatePanelGroupWithoutWorkflowBlockUpdate();
     }
 
     /**
@@ -395,7 +396,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         block.removeTask(taskIndex);
         updateTaskGroupsAfterTaskRemoval(wfIndex, taskIndex);
         if (updatePanelGroup) { // Regenerate component only if needed
-            updatePanelGroup();
+            updatePanelGroupWithoutWorkflowBlockUpdate();
         }
     }
 
@@ -600,9 +601,11 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         picker.getAttributes().remove(Search.OPEN_DIALOG_KEY);
         boolean addOrderAssignmentResponsibleTask = false;
         Workflow block = compoundWorkflow.getWorkflows().get(wfIndex);
+        Date originalTaskDueDate = null;
         if (taskIndex >= 0) {
             Task originalTask = block.getTasks().get(taskIndex);
             addOrderAssignmentResponsibleTask = originalTask.isType(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_TASK) && originalTask.isResponsible();
+            originalTaskDueDate = originalTask.getDueDate();
         }
         String[] results = picker.getSelectedResults();
         if (results == null) {
@@ -613,7 +616,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
 
         for (int i = 0; i < results.length; i++) {
             if (i > 0) {
-                taskIndex = addTask(taskIndex, addOrderAssignmentResponsibleTask, block);
+                taskIndex = addTask(taskIndex, addOrderAssignmentResponsibleTask, block, originalTaskDueDate);
             }
 
             // users
@@ -627,7 +630,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
                 int j = 0;
                 for (String userName : children) {
                     if (j++ > 0) {
-                        taskIndex = addTask(taskIndex, addOrderAssignmentResponsibleTask, block);
+                        taskIndex = addTask(taskIndex, addOrderAssignmentResponsibleTask, block, originalTaskDueDate);
                     }
                     setPersonPropsToTask(block, taskIndex, userName, groupName);
                 }
@@ -642,25 +645,30 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             }
             // contact groups
             else if (filterIndex == UserContactGroupSearchBean.CONTACT_GROUPS_FILTER) {
-                taskIndex = addContactGroupTasks(taskIndex, block, new NodeRef(results[i]), addOrderAssignmentResponsibleTask);
+                taskIndex = addContactGroupTasks(taskIndex, block, new NodeRef(results[i]), addOrderAssignmentResponsibleTask, originalTaskDueDate);
             } else {
                 throw new RuntimeException("Unknown filter index value: " + filterIndex);
             }
         }
 
-        updatePanelGroup();
+        updatePanelGroupWithoutWorkflowBlockUpdate();
     }
 
-    private int addTask(int taskIndex, boolean addOrderAssignmentResponsibleTask, Workflow block) {
+    private int addTask(int taskIndex, boolean addOrderAssignmentResponsibleTask, Workflow block, Date originalTaskDueDate) {
+        Task addedTask;
         if (addOrderAssignmentResponsibleTask) {
-            ((OrderAssignmentWorkflow) block).addResponsibleTask(++taskIndex);
+            addedTask = ((OrderAssignmentWorkflow) block).addResponsibleTask(++taskIndex);
         } else {
-            block.addTask(++taskIndex);
+            addedTask = block.addTask(++taskIndex);
+        }
+
+        if (addedTask != null && originalTaskDueDate != null) {
+            addedTask.setDueDate(originalTaskDueDate);
         }
         return taskIndex;
     }
 
-    public int addContactGroupTasks(int taskIndex, Workflow block, NodeRef contactGroup, boolean addOrderAssignmentResponsibleTask) {
+    private int addContactGroupTasks(int taskIndex, Workflow block, NodeRef contactGroup, boolean addOrderAssignmentResponsibleTask, Date originalTaskDueDate) {
         int taskCounter = 0;
         boolean isExternalReviewTask = block.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW);
         List<NodeRef> contacts = getAddressbookService().getContactGroupContents(contactGroup);
@@ -671,7 +679,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
                     && Boolean.TRUE.equals(contactProps.get(AddressbookModel.Props.TASK_CAPABLE))
                     && (!isExternalReviewTask || Boolean.TRUE.equals(contactProps.get(AddressbookModel.Props.DVK_CAPABLE)))) {
                 if (taskCounter > 0) {
-                    taskIndex = addTask(taskIndex, addOrderAssignmentResponsibleTask, block);
+                    taskIndex = addTask(taskIndex, addOrderAssignmentResponsibleTask, block, originalTaskDueDate);
                 }
                 if (isExternalReviewTask) {
                     setExternalReviewProps(block, taskIndex, contactProps, groupName);
@@ -853,6 +861,10 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
 
     protected void updatePanelGroup() {
         updatePanelGroup(null, null, true, true, null, true);
+    }
+
+    protected void updatePanelGroupWithoutWorkflowBlockUpdate() {
+        updatePanelGroup(null, null, true, true, null, false);
     }
 
     protected void updatePanelGroup(List<String> confirmationMessages, String validatedAction, boolean updateAllGroups, boolean retrieveExpandedStatuses,

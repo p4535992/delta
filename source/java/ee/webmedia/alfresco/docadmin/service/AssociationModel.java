@@ -61,6 +61,10 @@ public abstract class AssociationModel extends BaseObject {
         return getProp(DocumentAdminModel.Props.DOC_TYPE);
     }
 
+    public final Boolean getAssociateWithSourceDocument() {
+        return getProp(DocumentAdminModel.Props.ASSOCIATE_WITH_SOURCE_DOCUMENT_WORKFLOW);
+    }
+
     public final void setDocType(String docType) {
         setProp(DocumentAdminModel.Props.DOC_TYPE, docType);
     }

@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -398,6 +397,7 @@ public class DocumentImporter {
                         "documentId",
                         "nodeRef",
                         "originalLocation",
+                        "originalLocationName",
                         "tempName",
                         "created",
                         "regNumber",
@@ -548,7 +548,6 @@ public class DocumentImporter {
     private Pair<Integer, List<Map<Integer, File>>> getAllDocumentXmlSimpleFiles() {
         final boolean amphora = settings.isAmphoraOrigin();
         final List<Map<Integer, File>> xmlFiles = new ArrayList<Map<Integer, File>>();
-        final AtomicBoolean lastKnownDirPassed = new AtomicBoolean(lastKnownDocDir == null);
 
         LOG.info("Getting all unprocessed document XML entries (without versions) from " + settings.getDataFolder());
 
@@ -558,35 +557,7 @@ public class DocumentImporter {
         } else {
             target = new File(settings.getDataFolder());
         }
-
-        target.listFiles(new FilenameFilter() {
-
-            @Override
-            public boolean accept(File dir, String name) {
-                File f = new File(dir, name);
-                if (f.isDirectory()) {
-                    if (amphora) {
-                        if (name.equals(lastKnownDocDir)) {
-                            lastKnownDirPassed.set(true);
-                        }
-
-                        if (lastKnownDirPassed.get()) {
-                            if (target.equals(dir)) {
-                                lastKnownDocDir = name;
-                            }
-                            f.list(this);
-                        }
-                    }
-                    return false;
-                } else if (!f.isFile() || !FilenameUtils.isExtension(name, "xml") || name.equals(settings.getMappingsFileName())
-                        || importedDocXmls.containsKey(FilenameUtils.getBaseName(name))) {
-                    return false;
-                }
-
-                xmlFiles.add(Collections.singletonMap(0, f));
-                return true;
-            }
-        });
+        target.listFiles(new XmlFilesFilter(xmlFiles, amphora ? 2 : 0));
 
         return Pair.newInstance(xmlFiles.size(), xmlFiles);
     }
@@ -1115,6 +1086,33 @@ public class DocumentImporter {
         props.put(DocumentCommonModel.Props.COMMENT, currentComment);
     }
 
+    private class XmlFilesFilter implements FilenameFilter {
+        private final List<Map<Integer, File>> xmlFiles;
+        private final int subdirsAllowed;
+
+        private XmlFilesFilter(List<Map<Integer, File>> xmlFiles, int subdirsAllowed) {
+            this.xmlFiles = xmlFiles;
+            this.subdirsAllowed = subdirsAllowed;
+        }
+
+        @Override
+        public boolean accept(File dir, String name) {
+            File f = new File(dir, name);
+            if (f.isDirectory()) {
+                if (subdirsAllowed > 0) {
+                    f.list(new XmlFilesFilter(xmlFiles, subdirsAllowed - 1));
+                }
+                return false;
+            } else if (!f.isFile() || !FilenameUtils.isExtension(name, "xml") || name.equals(settings.getMappingsFileName())
+                    || importedDocXmls.containsKey(FilenameUtils.getBaseName(name))) {
+                return false;
+            }
+
+            xmlFiles.add(Collections.singletonMap(0, f));
+            return false;
+        }
+    }
+
     public static class VolumeCase {
 
         private final NodeRef nodeRef;
@@ -1136,7 +1134,7 @@ public class DocumentImporter {
         }
 
         public boolean isInVolumePeriod(Date date) {
-            return date != null && !validFrom.after(date) && (validTo == null || !validTo.before(date));
+            return date != null && !validFrom.after(date) && (validTo == null || !validTo.before(date) || DateUtils.isSameDay(validTo, date));
         }
 
         public boolean isLocation(String docFunction, String docSeries, String docVolume) {

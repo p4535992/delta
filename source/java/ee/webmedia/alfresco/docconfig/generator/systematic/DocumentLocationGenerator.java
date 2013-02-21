@@ -484,8 +484,8 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             }
             boolean originalShowCaseFileTypes = showCaseFileTypes;
             showCaseFileTypes = false;
-
-            boolean isSearchFilterOrDocTypeNull = isSearchFilter || (documentTypeId == null && (documentTypeIds == null || documentTypeIds.isEmpty()));
+            boolean docTypeNull = documentTypeId == null;
+            boolean isSearchFilterOrDocTypeNull = isSearchFilter || docTypeNull;
             { // Function
                 List<Function> allFunctions = getAllFunctions(document, isSearchFilter);
                 functions = new ArrayList<SelectItem>(allFunctions.size());
@@ -582,8 +582,10 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 }
 
                 List<Volume> allVolumes;
-                if (isSearchFilterOrDocTypeNull) {
-                    allVolumes = getVolumeService().getAllValidVolumesBySeries(seriesRef);
+                if (isSearchFilter) { // Search screens
+                    allVolumes = getVolumeService().getAllVolumesBySeries(seriesRef);
+                } else if (docTypeNull) { // Mass document relocating
+                    allVolumes = getVolumeService().getAllVolumesBySeries(seriesRef, DocListUnitStatus.OPEN);
                 } else if (getGeneralService().getStore().equals(seriesRef.getStoreRef())) {
                     allVolumes = getVolumeService().getAllValidVolumesBySeries(seriesRef, DocListUnitStatus.OPEN);
                 } else {

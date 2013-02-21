@@ -146,7 +146,7 @@
          <f:facet name="header">
             <h:outputText id="col10-header" value="#{msg.document_allFiles}" styleClass="header" />
          </f:facet>
-          <wm:customChildrenContainer childGenerator="#{DocumentListDialog.documentRowFileGenerator}" parameterList="#{r.files}"/>
+          <wm:customChildrenContainer id="compound-workflow-document-files" childGenerator="#{DocumentListDialog.documentRowFileGenerator}" parameterList="#{r.files}"/>
       </a:column>
       
       <a:column id="col-assoc-actions" actions="true" styleClass="actions-column2 #{r.cssStyleClass}">

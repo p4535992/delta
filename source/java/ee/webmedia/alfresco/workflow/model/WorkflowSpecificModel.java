@@ -153,6 +153,8 @@ public interface WorkflowSpecificModel {
 
         QName ORIGINAL_NODEREF_ID = QName.createQName(URI, "originalNoderefId");
         QName ORIGINAL_TASK_OBJECT_URL = QName.createQName(URI, "originalTaskObjectUrl");
+
+        QName COMPOUND_WORKFLOW_ID = QName.createQName(URI, "compoundWorkflowId");
     }
 
     enum SignatureTaskOutcome {

@@ -6,6 +6,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getNamespaceService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPrivilegeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ACCESS_RESTRICTION;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_ID;
 
@@ -95,6 +96,7 @@ import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper.PropMapping;
 import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper.PropertyValue;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.workflow.model.CompoundWorkflowType;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
@@ -866,7 +868,7 @@ public class PostipoissDocumentsImporter {
 
         if (AccessRestriction.AK.getValueName().equals(accessRestriction) || AccessRestriction.LIMITED.getValueName().equals(accessRestriction)) {
             if (StringUtils.isBlank((String) props.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON))) {
-                props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON, "AvTS § 35 lg 1 p 9");
+                props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON, "AvTS § 35 lg 1 p 12");
             }
             if (props.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE) == null) {
                 props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE, props.get(DocumentCommonModel.Props.REG_DATE_TIME));
@@ -1946,13 +1948,17 @@ public class PostipoissDocumentsImporter {
                     props.put(WorkflowCommonModel.Props.STARTED_DATE_TIME, dateTime);
                     props.put(WorkflowCommonModel.Props.STATUS, Status.IN_PROGRESS.getName());
                     props.put(WorkflowCommonModel.Props.STOPPED_DATE_TIME, null);
+                    props.put(WorkflowCommonModel.Props.TYPE, CompoundWorkflowType.INDEPENDENT_WORKFLOW.name());
+                    props.put(WorkflowCommonModel.Props.TITLE, docProps.get(DocumentCommonModel.Props.DOC_NAME));
                     NodeRef cwfRef = getNodeService().createNode(
-                            docRef,
+                            getWorkflowService().getIndependentWorkflowsRoot(),
                             WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW,
                             WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW,
                             WorkflowCommonModel.Types.COMPOUND_WORKFLOW,
                             props
                             ).getChildRef();
+                    getNodeService().createAssociation(docRef, cwfRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT);
+                    getWorkflowService().updateMainDocument(cwfRef, docRef);
 
                     props = new HashMap<QName, Serializable>();
                     props.put(WorkflowCommonModel.Props.CREATOR_NAME, kelleltEnimi + " " + kelleltPnimi);

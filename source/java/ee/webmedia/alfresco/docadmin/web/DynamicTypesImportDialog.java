@@ -36,11 +36,16 @@ public class DynamicTypesImportDialog<D extends DynamicType> extends AbstractImp
     }
 
     @Override
+    public boolean isRequiresNewTransaction() {
+        return false; // importHelper.importDynamicTypes handler transactions itself
+    }
+
+    @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         FileUploadBean fileUploadBean = getFileUploadBean();
         final File upFile = fileUploadBean.getFile();
         try {
-            getDocumentAdminService().importDynamicTypes(upFile, dynamicTypeClass);
+            getDocumentAdminService().getImportHelper().importDynamicTypes(upFile, dynamicTypeClass);
             MessageUtil.addInfoMessage(msgPrefix + "s_import_success");
             return outcome;
         } catch (RuntimeException e) {

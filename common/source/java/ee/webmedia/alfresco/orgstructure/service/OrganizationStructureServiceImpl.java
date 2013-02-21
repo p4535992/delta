@@ -133,11 +133,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
             // Update groups users
             OUTER: for (Map<QName, Serializable> props : users) {
                 String username = (String) props.get(ContentModel.PROP_USERNAME);
-                // Skip unmodified users
-                if (orgStructGroupMembers.contains(username)) {
-                    orgStructGroupMembers.remove(username);
-                    continue;
-                }
+                boolean isAlreadyGroupMember = orgStructGroupMembers.contains(username);
 
                 // Users who have organization path
                 @SuppressWarnings("unchecked")
@@ -145,7 +141,9 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
                 if (orgPath != null) {
                     for (String op : orgPath) {
                         if (StringUtils.equals(op, groupName)) {
-                            authorityService.addAuthority(groupAuthority, username);
+                            if (!isAlreadyGroupMember) {
+                                authorityService.addAuthority(groupAuthority, username);
+                            }
                             orgStructGroupMembers.remove(username);
                             continue OUTER;
                         }
@@ -162,7 +160,9 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
                     continue;
                 }
                 if (StringUtils.equals(groupName, orgStruct.getName())) {
-                    authorityService.addAuthority(groupAuthority, username);
+                    if (!isAlreadyGroupMember) {
+                        authorityService.addAuthority(groupAuthority, username);
+                    }
                     orgStructGroupMembers.remove(username);
                 }
 

@@ -2115,7 +2115,7 @@ public class TestDataService implements SaveListener {
                     continue;
                 }
                 associatedDocRefs.add(assocDocRef);
-                docAssocService.createWorkflowAssoc(assocDocRef, cwfRef, true);
+                docAssocService.createWorkflowAssoc(assocDocRef, cwfRef, true, true);
                 // assume that in signature workflow, most of documents are going to be signed
                 if (hasSignatureWorkflow && Math.random() < 0.9d) {
                     documentsToSign.add(assocDocRef);

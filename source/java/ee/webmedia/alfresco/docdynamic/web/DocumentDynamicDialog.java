@@ -16,6 +16,7 @@ import static ee.webmedia.alfresco.utils.RepoUtil.isSaved;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -59,6 +60,7 @@ import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.service.AssociationModel;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
@@ -72,6 +74,7 @@ import ee.webmedia.alfresco.docdynamic.web.ChangeReasonModalComponent.ChangeReas
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog.DocDialogSnapshot;
 import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
 import ee.webmedia.alfresco.document.associations.web.AssocsBlockBean;
+import ee.webmedia.alfresco.document.assocsdyn.service.DocumentAssociationsService;
 import ee.webmedia.alfresco.document.file.web.FileBlockBean;
 import ee.webmedia.alfresco.document.log.web.LogBlockBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
@@ -80,6 +83,7 @@ import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.search.web.AbstractSearchBlockBean;
 import ee.webmedia.alfresco.document.search.web.BlockBeanProviderProvider;
 import ee.webmedia.alfresco.document.search.web.SearchBlockBean;
+import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.document.sendout.web.SendOutBlockBean;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.service.EventsLoggingHelper;
@@ -106,6 +110,8 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
+import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
+import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 
 /**
@@ -271,7 +277,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
 
         open(docRef, true);
 
-        addTargetAssoc(baseDoc.getNodeRef(), DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP, false);
+        addTargetAssoc(baseDoc.getNodeRef(), DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP, false, true);
     }
 
     public void copyDocument(@SuppressWarnings("unused") ActionEvent event) {
@@ -310,8 +316,11 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             BeanHelper.getDocumentLockHelperBean().handleLockedNode("docdyn_createAssoc_error_docLocked");
             return;
         }
-        DocumentDynamic newDocument = BeanHelper.getDocumentAssociationsService().createAssociatedDocFromModel(baseDocRef, assocModelRef);
+        Pair<DocumentDynamic, AssociationModel> newDocumentAndAssociatonModel = BeanHelper.getDocumentAssociationsService().createAssociatedDocFromModel(baseDocRef, assocModelRef);
+        DocumentDynamic newDocument = newDocumentAndAssociatonModel.getFirst();
         open(newDocument.getNodeRef(), newDocument, true);
+        addWorkflowAssocs(baseDocRef, newDocumentAndAssociatonModel.getSecond().getAssociationType().getAssocBetweenDocs());
+        getAssocsBlockBean().sortDocAssocInfos();
     }
 
     public void createFollowUpReport(@SuppressWarnings("unused") ActionEvent event) {
@@ -372,17 +381,38 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     }
 
     private void addTargetAssocAndReopen(NodeRef targetRef, QName targetType) {
-        addTargetAssoc(targetRef, targetType, true);
+        addTargetAssoc(targetRef, targetType, true, true);
+        addWorkflowAssocs(targetRef, targetType);
         updateFollowUpOrReplyProperties(targetRef);
         openOrSwitchModeCommon(getDocument(), true);
         getSearchBlock().setShow(false);
         MessageUtil.addInfoMessage("document_assocAdd_success");
     }
 
-    private void addTargetAssoc(NodeRef targetRef, QName targetType, boolean isSourceAssoc) {
+    private void addWorkflowAssocs(NodeRef targetRef, QName targetType) {
+        String currentDocTypeId = getDocumentType() != null ? getDocumentType().getId() : null;
+        QName assocType = DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP.equals(targetType) ? DocumentAdminModel.Types.FOLLOWUP_ASSOCIATION
+                : DocumentAdminModel.Types.REPLY_ASSOCIATION;
+        DocumentAssociationsService documentAssociationsService = BeanHelper.getDocumentAssociationsService();
+        if (BeanHelper.getDocumentAssociationsService().isAddCompoundWorkflowAssoc(targetRef, currentDocTypeId, assocType)) {
+            WorkflowService workflowService = BeanHelper.getWorkflowService();
+            WmNode document = getNode();
+            for (NodeRef workflowRef : documentAssociationsService.getDocumentIndependentWorkflowAssocs(targetRef)) {
+                addTargetAssoc(workflowRef, DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT, true, false);
+                getDocumentDynamicService().setOwnerFromActiveResponsibleTask(
+                        workflowService.getCompoundWorkflowOfType(workflowRef, Collections.singletonList(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW)),
+                        document.getNodeRef(), document.getProperties());
+            }
+        }
+    }
+
+    private void addTargetAssoc(NodeRef targetRef, QName targetType, boolean isSourceAssoc, boolean skipNotSearchable) {
         AssocsBlockBean assocsBlockBean = getAssocsBlockBean();
         AssociationRef assocRef = RepoUtil.addAssoc(getNode(), targetRef, targetType, true);
-        final DocAssocInfo docAssocInfo = getDocumentAssociationsService().getDocListUnitAssocInfo(assocRef, isSourceAssoc);
+        // TODO: Riina: clarify this logic (would be better if retrieving associations could be done on common basis,
+        // but as compoundWorkflow associations are retrieved differently, this is workaround to retrieve workflow associations here)
+        boolean getAsSourceAssoc = DocumentCommonModel.Assocs.WORKFLOW_DOCUMENT.equals(targetType) ? !isSourceAssoc : isSourceAssoc;
+        final DocAssocInfo docAssocInfo = getDocumentAssociationsService().getDocListUnitAssocInfo(assocRef, getAsSourceAssoc, skipNotSearchable);
         assocsBlockBean.getDocAssocInfos().add(docAssocInfo);
     }
 
@@ -705,19 +735,36 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         switchMode(true);
     }
 
-    public void sendAccessRestrictionChangedEmails(@SuppressWarnings("unused") ActionEvent event) {
+    public void sendAccessRestrictionChangedEmails(ActionEvent event) {
+        String paramName = "missingEmailsConfirmed";
+        boolean ignoreMissingEmails = ActionUtil.hasParam(event, paramName);
+        DocumentDynamic document = getDocument();
+        Pair<List<String>, List<SendInfo>> existingAndMissingEmails = BeanHelper.getNotificationService().getExistingAndMissingEmails(BeanHelper.getSendOutService().getDocumentSendInfos(document.getNodeRef()));
+        List<SendInfo> missingEmails = existingAndMissingEmails.getSecond();
+        if (!ignoreMissingEmails && !missingEmails.isEmpty()) {
+            List<String> names = new ArrayList<String>(missingEmails.size());
+            for (SendInfo sendInfo : missingEmails) {
+                names.add(sendInfo.getRecipient());
+            }
+            Map<String, String> params = new HashMap<String, String>(1);
+            params.put(paramName, "true");
+            BeanHelper.getUserConfirmHelper().setup(new MessageDataImpl("docdyn_accessRestriction_missingEmailsConfirm", StringUtils.join(names, ", ")), null,
+                    "#{DocumentDynamicDialog.sendAccessRestrictionChangedEmails}", params, null, "#{DocumentDynamicDialog.dontSendAccessRestrictionChangedEmails}", null);
+            showConfirmationPopup = false; // we don't need this pop-up anymore
+            return;
+        }
+        
         if (isCreateNewCaseFile()) {
             getCurrentSnapshot().needSendNotificationAfterCreateCaseFile = true;
             navigateCreateNewCaseFile();
         } else {
-            DocumentDynamic document = getDocument();
-            notifyAccessRestrictionChanged(document);
+            notifyAccessRestrictionChanged(document, existingAndMissingEmails.getFirst());
             cancel();
         }
     }
 
-    public void notifyAccessRestrictionChanged(DocumentDynamic document) {
-        BeanHelper.getNotificationService().processAccessRestrictionChangedNotification(document, BeanHelper.getSendOutService().getDocumentSendInfos(document.getNodeRef()));
+    public void notifyAccessRestrictionChanged(DocumentDynamic document, List<String> emails) {
+        BeanHelper.getNotificationService().processAccessRestrictionChangedNotification(document, emails);
     }
 
     public void dontSendAccessRestrictionChangedEmails(@SuppressWarnings("unused") ActionEvent event) {
@@ -795,6 +842,10 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
                 savedDocument.getNode().getProperties().remove(TEMP_VALIDATE_WITHOUT_SAVE);
             }
 
+        } catch (NodeLockedException e) {
+            BeanHelper.getDocumentLockHelperBean().handleLockedNode("docdyn_createAssoc_error_docLocked", e.getNodeRef());
+            isFinished = false;
+            return null;
         } catch (UnableToPerformMultiReasonException e) {
             if (!handleAccessRestrictionChange(e)) {
                 isFinished = false;

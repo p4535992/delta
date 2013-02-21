@@ -443,12 +443,14 @@ public class MenuItem implements Serializable {
                 return title;
             }
 
-            String suffix = "";
-            if (suffixStart > -1) {
+            String suffix = ""; // Suffix must be a numeric value between parentheses
+            if (suffixStart > -1 && StringUtils.isNumeric(title.substring(suffixStart + 1, suffixStart + 2))) {
                 suffix = " " + title.substring(suffixStart, title.length());
             }
 
-            return StringUtils.abbreviate(title, (25 - suffix.length())) + suffix;
+            int maxWidth = Math.max(25 - suffix.length(), 25);
+
+            return (maxWidth < 4 ? title : StringUtils.abbreviate(title, maxWidth)) + suffix;
         }
         return title;
     }

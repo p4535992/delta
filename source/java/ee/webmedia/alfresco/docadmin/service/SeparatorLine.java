@@ -19,6 +19,10 @@ public class SeparatorLine extends MetadataItem {
         super(parent, node);
     }
 
+    protected void nextSaveToParent(DocumentTypeVersion newParentFieldGroup) {
+        nextSaveToParent(newParentFieldGroup, MetadataItem.class);
+    }
+
     @Override
     public String getAdditionalInfo() {
         return ""; // no additional info

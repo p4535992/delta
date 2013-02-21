@@ -43,9 +43,9 @@ import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
 import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator.DocumentLocationState;
-import ee.webmedia.alfresco.docconfig.generator.systematic.KeywordsGenerator;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfig;
 import ee.webmedia.alfresco.docconfig.service.DynamicPropertyDefinition;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchFilterService;
@@ -229,8 +229,8 @@ public class DocumentDynamicSearchDialog extends AbstractSearchFilterBlockBean<D
 
     public static FieldDefinition createThesaurusField() {
         FieldDefinition thesaurusDef = BeanHelper.getDocumentAdminService().createNewUnSavedFieldDefinition();
-        thesaurusDef.setFieldId(KeywordsGenerator.THESAURUS.getLocalName());
-        thesaurusDef.setOriginalFieldId(KeywordsGenerator.THESAURUS.getLocalName());
+        thesaurusDef.setFieldId(DocumentDynamicModel.Props.THESAURUS.getLocalName());
+        thesaurusDef.setOriginalFieldId(DocumentDynamicModel.Props.THESAURUS.getLocalName());
         thesaurusDef.setName(MessageUtil.getMessage("thesaurus"));
         thesaurusDef.setFieldTypeEnum(FieldType.TEXT_FIELD);
         return thesaurusDef;

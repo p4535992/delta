@@ -329,6 +329,9 @@ public class TaskListGenerator extends BaseComponentGenerator {
                     }
                 } else if (StringUtils.isNotBlank(ownerGroup) && taskGroup == null) {
                     taskGroup = new TaskGroup(ownerGroup, counter, responsible, fullAccess);
+                    if (task.getDueDate() != null) { // If we add a group under a task that has a due date set, we must also copy it to the group
+                        taskGroup.setDueDate(task.getDueDate());
+                    }
                     List<TaskGroup> groups = taskGroups.get(ownerGroup);
                     if (groups == null) {
                         groups = new ArrayList<TaskGroup>();
@@ -686,7 +689,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
         }
 
         group.setExpanded(!group.isExpanded());
-        compoundWorkflowDefinitionDialog.updatePanelGroup();
+        compoundWorkflowDefinitionDialog.updatePanelGroupWithoutWorkflowBlockUpdate();
     }
 
     public void deleteGroup(ActionEvent event) {
@@ -707,7 +710,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
 
         // And remove the group itself
         compoundWorkflowDefinitionDialog.getTaskGroups().get(wfIndex).get(group.getGroupName()).remove(group);
-        compoundWorkflowDefinitionDialog.updatePanelGroup();
+        compoundWorkflowDefinitionDialog.updatePanelGroupWithoutWorkflowBlockUpdate();
     }
 
     private boolean showAddDateLink(boolean showAddDateLink, boolean isAssignmentWorkflow, boolean responsible) {

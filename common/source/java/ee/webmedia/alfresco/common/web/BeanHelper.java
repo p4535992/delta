@@ -1,7 +1,9 @@
 package ee.webmedia.alfresco.common.web;
 
 import javax.faces.context.FacesContext;
+import javax.sql.DataSource;
 
+import org.alfresco.repo.node.db.NodeDaoService;
 import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.service.ServiceRegistry;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
@@ -122,6 +124,7 @@ import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.orgstructure.web.RsAccessStatusBean;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.parameters.web.ParametersImportDialog;
+import ee.webmedia.alfresco.privilege.service.AccessControlListExtDAO;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.privilege.web.ManageInheritablePrivilegesDialog;
 import ee.webmedia.alfresco.register.service.RegisterService;
@@ -182,6 +185,18 @@ public class BeanHelper implements NamespacePrefixResolverProvider {
     @Override
     public NamespacePrefixResolver getNamespacePrefixResolver() {
         return getNamespaceService();
+    }
+
+    public static DataSource getDataSource() {
+        return getSpringBean(DataSource.class, "dataSource");
+    }
+
+    public static NodeDaoService getNodeDaoService() {
+        return getSpringBean(NodeDaoService.class, "nodeDaoService");
+    }
+
+    public static AccessControlListExtDAO getAccessControlListDao() {
+        return getSpringBean(AccessControlListExtDAO.class, "accessControlListDAO");
     }
 
     // START: web beans

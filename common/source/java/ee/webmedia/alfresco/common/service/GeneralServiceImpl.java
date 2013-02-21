@@ -952,6 +952,11 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
 
     @Override
     public String getTsquery(String input) {
+        return getTsquery(input, 3);
+    }
+
+    @Override
+    public String getTsquery(String input, int minLexemLength) {
         if (input == null) {
             input = "";
         }
@@ -962,7 +967,7 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
         Matcher matcher = pattern.matcher(originalTsquery);
         while (matcher.find()) {
             String lexemValue = matcher.group().substring(1, matcher.group().length() - 1);
-            if (lexemValue.length() < 3) {
+            if (lexemValue.length() < minLexemLength) {
                 continue;
             }
             String lexem = "'" + lexemValue + "':*";

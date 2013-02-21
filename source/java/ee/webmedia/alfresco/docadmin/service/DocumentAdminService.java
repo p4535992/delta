@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.docadmin.service;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -14,6 +13,7 @@ import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.base.BaseService.Effort;
+import ee.webmedia.alfresco.docadmin.service.DocumentAdminServiceImpl.ImportHelper;
 import ee.webmedia.alfresco.utils.MessageData;
 
 /**
@@ -96,9 +96,10 @@ public interface DocumentAdminService {
 
     void deleteDynamicType(NodeRef dynTypeRef);
 
-    <D extends DynamicType> void importDynamicTypes(File xmlFile, Class<D> dynTypeClass);
-
-    <D extends DynamicType> void importDynamicTypes(File xmlFile, Class<D> dynTypeClass, boolean cleanupInBackground);
+    /**
+     * @return import helper, that handles transactions itself.
+     */
+    ImportHelper getImportHelper();
 
     <F extends Field> F saveOrUpdateField(F originalFieldDef);
 

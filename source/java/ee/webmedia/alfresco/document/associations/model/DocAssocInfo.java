@@ -5,6 +5,7 @@ import java.util.Date;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.document.assocsdyn.service.DocumentAssociationsServiceImpl;
@@ -159,7 +160,7 @@ public class DocAssocInfo implements Serializable, Comparable<DocAssocInfo> {
         }
         QName otherAssocTypeQName = otherDocAssocInfo.getAssocTypeQName();
         if (otherAssocTypeQName.equals(assocTypeQName)) {
-            return AppConstants.DEFAULT_COLLATOR.compare(getTitle(), otherDocAssocInfo.getTitle());
+            return AppConstants.DEFAULT_COLLATOR.compare(StringUtils.defaultString(getTitle()), StringUtils.defaultString(otherDocAssocInfo.getTitle()));
         } else if (assocType == AssocType.WORKFLOW) {
             return -1;
         } else if (otherDocAssocInfo.getAssocType() == AssocType.WORKFLOW) {

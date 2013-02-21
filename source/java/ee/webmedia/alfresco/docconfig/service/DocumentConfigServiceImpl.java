@@ -54,6 +54,7 @@ import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.common.propertysheet.classificatorselector.EnumSelectorGenerator;
+import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO.ConfigItemType;
@@ -77,7 +78,6 @@ import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.generator.SaveListener;
 import ee.webmedia.alfresco.docconfig.generator.fieldtype.DateGenerator;
 import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
-import ee.webmedia.alfresco.docconfig.generator.systematic.KeywordsGenerator;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
@@ -805,14 +805,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
     private void processFieldGroup(DocumentConfig config, FieldGroup fieldGroup) {
         boolean forceEditMode = false;
         if (StringUtils.isNotBlank(fieldGroup.getReadonlyFieldsName()) && StringUtils.isNotBlank(fieldGroup.getReadonlyFieldsRule())) {
-            ItemConfigVO item = new ItemConfigVO(RepoUtil.createTransientProp(fieldGroup.getFields().get(0).getFieldId() + "Group").toString());
-            item.setConfigItemType(ConfigItemType.PROPERTY);
-            item.setIgnoreIfMissing(false);
-            item.setDisplayLabel(fieldGroup.getReadonlyFieldsName());
-            item.setShowInEditMode(false);
-            item.setComponentGenerator("PatternOutputGenerator");
-            item.setPattern(fieldGroup.getReadonlyFieldsRule());
-            config.getPropertySheetConfigElement().addItem(item);
+            config.getPropertySheetConfigElement().addItem(generateFieldGroupReadonlyItem(fieldGroup));
             forceEditMode = true;
         }
         if (fieldGroup.isSystematic()) {
@@ -827,6 +820,18 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         for (Field field : fields) {
             processField(config, field, false, forceEditMode);
         }
+    }
+
+    @Override
+    public ItemConfigVO generateFieldGroupReadonlyItem(FieldGroup fieldGroup) {
+        ItemConfigVO item = new ItemConfigVO(RepoUtil.createTransientProp(fieldGroup.getFields().get(0).getFieldId() + "Group").toString());
+        item.setConfigItemType(ConfigItemType.PROPERTY);
+        item.setIgnoreIfMissing(false);
+        item.setDisplayLabel(fieldGroup.getReadonlyFieldsName());
+        item.setShowInEditMode(false);
+        item.setComponentGenerator("PatternOutputGenerator");
+        item.setPattern(fieldGroup.getReadonlyFieldsRule());
+        return item;
     }
 
     private boolean processField(DocumentConfig config, Field field, boolean renderCheckboxAfterLabel, boolean forceEditMode) {
@@ -1301,7 +1306,18 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         FieldDefinition field;
         if (fieldId.contains("_")) {
             field = documentAdminService.getFieldDefinition(fieldId.substring(0, fieldId.indexOf("_")));
-            field.setFieldId(fieldId);
+            if (field != null) {
+                field.setFieldId(fieldId);
+                if (fieldId.endsWith(WMUIProperty.AFTER_LABEL_BOOLEAN)) {
+                    field.setOriginalFieldId(fieldId);
+                    field.setFieldTypeEnum(FieldType.CHECKBOX);
+                    field.setMandatory(false);
+                } else if (fieldId.endsWith(DateGenerator.PICKER_PREFIX)) {
+                    field.setOriginalFieldId(fieldId);
+                    field.setFieldTypeEnum(FieldType.COMBOBOX);
+                    field.setMandatory(false);
+                }
+            }
         } else {
             field = documentAdminService.getFieldDefinition(fieldId);
         }
@@ -1442,8 +1458,14 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
 
         propertyDefinition = getPropDefForSearch(fieldId, false);
         if (propertyDefinition == null) {
-            if (hiddenFieldDependencies.containsKey(fieldId)) {
-                String originalFieldId = hiddenFieldDependencies.get(fieldId);
+            String fieldIdWithoutSuffix = fieldId;
+            String fieldIdSuffix = "";
+            if (fieldId.contains("_")) {
+                fieldIdWithoutSuffix = fieldId.substring(0, fieldId.indexOf("_"));
+                fieldIdSuffix = fieldId.substring(fieldId.indexOf("_"));
+            }
+            if (hiddenFieldDependencies.containsKey(fieldIdWithoutSuffix)) {
+                String originalFieldId = hiddenFieldDependencies.get(fieldIdWithoutSuffix) + fieldIdSuffix;
                 DynamicPropertyDefinition originalPropDef = getPropDefForSearch(originalFieldId, false);
                 if (originalPropDef == null) {
                     LOG.warn("PropertyDefinition docdyn:" + fieldId + " not found (hidden field, whose originalFieldId is " + originalFieldId + ")");
@@ -1466,13 +1488,14 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
     private static final List<String> comboboxFieldsNotMultiple = Arrays.asList("function", "series", "volume");
 
     private Boolean isFieldForcedMultipleInSearch(FieldDefinition field) {
-        if (field.getFieldTypeEnum().equals(FieldType.COMBOBOX) && !comboboxFieldsNotMultiple.contains(field.getFieldId())) {
+        if (field.getFieldTypeEnum().equals(FieldType.COMBOBOX) && !comboboxFieldsNotMultiple.contains(field.getOriginalFieldId())
+                && !field.getFieldId().endsWith(DateGenerator.PICKER_PREFIX)) {
             return true;
         }
 
         if (DocumentDynamicModel.Props.FIRST_KEYWORD_LEVEL.getLocalName().equals(field.getOriginalFieldId())
                 || DocumentDynamicModel.Props.SECOND_KEYWORD_LEVEL.getLocalName().equals(field.getOriginalFieldId())
-                || KeywordsGenerator.THESAURUS.getLocalName().equals(field.getFieldId())) {
+                || DocumentDynamicModel.Props.THESAURUS.getLocalName().equals(field.getOriginalFieldId())) {
             return true;
         }
 

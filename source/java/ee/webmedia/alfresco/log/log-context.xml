@@ -95,6 +95,7 @@
             <ref bean="logTableAlterIndexesBootstrap" />
          </list>
       </property>
+      <property name="transactionHelperMinRetryWaits" value="6000" />
    </bean>  
    
    <!-- Executed manually from nodeBrowser -->

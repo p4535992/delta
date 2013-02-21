@@ -1,8 +1,13 @@
 package ee.webmedia.alfresco.document.search.web;
 
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.web.BaseDocumentListDialog;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
@@ -24,16 +29,20 @@ public class UserWorkingDocumentsSearchResultsDialog extends BaseDocumentListDia
 
     @Override
     public void restored() {
-        documents = getDocumentSearchService().searchInProcessUserDocuments();
+        List<Document> docs = getDocumentSearchService().searchInProcessUserDocuments();
+        Collections.sort(docs, new Comparator<Document>() {
+
+            @Override
+            public int compare(Document o1, Document o2) {
+                // Created cannot be null for working documents
+                return o2.getCreated().compareTo(o1.getCreated());
+            }
+        });
+        documents = docs;
     }
 
     @Override
     public String getColumnsFile() {
         return "/WEB-INF/classes/ee/webmedia/alfresco/document/search/web/user-working-documents-list-dialog-columns.jsp";
-    }
-
-    @Override
-    public String getInitialSortColumn() {
-        return "documentTypeName";
     }
 }

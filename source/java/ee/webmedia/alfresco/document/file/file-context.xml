@@ -43,6 +43,7 @@
       <property name="versionsService" ref="VersionsService"/>
       <property name="scannedFilesPath" value="${scannedFiles.rootPath}${scannedFiles.folder.name}"/>
       <property name="openOfficeFiles" value="${conf.openoffice-client-extensions}" />
+      <property name="jumploaderPath" value="${jumploader.applet.file}" />
    </bean>
 
    <bean id="FileService" class="org.springframework.aop.framework.ProxyFactoryBean">

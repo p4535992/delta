@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.workflow.bootstrap;
 
+import static ee.webmedia.alfresco.workflow.bootstrap.TaskAssociatedDataTableInsertBootstrap.checkTaskExists;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +20,8 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
+import ee.webmedia.alfresco.workflow.service.WorkflowDbService;
+import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 /**
  * Updater to add and reorganize properties and aspects of tasks.
@@ -25,6 +29,9 @@ import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
  * @author Riina Tens
  */
 public class TaskUpdater extends AbstractNodeUpdater {
+
+    private WorkflowDbService workflowDbService;
+    private WorkflowService workflowService;
 
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
@@ -39,6 +46,10 @@ public class TaskUpdater extends AbstractNodeUpdater {
     @Override
     protected String[] updateNode(NodeRef nodeRef) throws Exception {
         List<String> result = new ArrayList<String>();
+        String[] taskExistsError = checkTaskExists(nodeRef, log, nodeService, workflowService, workflowDbService);
+        if (taskExistsError != null) {
+            return taskExistsError;
+        }
         boolean searchablePropsUpdated = false;
         QName taskType = nodeService.getType(nodeRef);
         boolean isExternalReviewTask = WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK.equals(taskType);
@@ -78,6 +89,14 @@ public class TaskUpdater extends AbstractNodeUpdater {
 
         }
         return new String[] { StringUtils.join(result, ","), Boolean.toString(searchablePropsUpdated) };
+    }
+
+    public void setWorkflowDbService(WorkflowDbService workflowDbService) {
+        this.workflowDbService = workflowDbService;
+    }
+
+    public void setWorkflowService(WorkflowService workflowService) {
+        this.workflowService = workflowService;
     }
 
 }

@@ -4,6 +4,7 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getCompoundWorkflowFavo
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowBlockBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 import static ee.webmedia.alfresco.parameters.model.Parameters.MAX_ATTACHED_FILE_SIZE;
 import static ee.webmedia.alfresco.privilege.service.PrivilegeUtil.isAdminOrDocmanagerWithPermission;
@@ -202,6 +203,9 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         }
         if (!fromRestore) {
             BeanHelper.getCompoundWorkflowAssocListDialog().setup(compoundWorkflow);
+            if (initWorkflowBlockBean) {
+                getWorkflowBlockBean().resetSigningData();
+            }
         }
         getSearch().initSearch(compoundWorkflow != null ? compoundWorkflow.getNodeRef() : null, "#{CompoundWorkflowDialog.showAssocSearchObjectType}");
         getLog().init(compoundWorkflow);
@@ -215,7 +219,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
     }
 
     public void initWorkflowBlockBean() {
-        BeanHelper.getWorkflowBlockBean().initIndependentWorkflow(compoundWorkflow, this);
+        getWorkflowBlockBean().initIndependentWorkflow(compoundWorkflow, this);
     }
 
     public boolean isShowAssocSearchObjectType() {
@@ -720,7 +724,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                     return;
                 }
                 if (askConfirmIfHasSameTask(MessageUtil.getMessage("workflow_compound_continuing"), DialogAction.CONTINUING, true) == null) {
-                    continueValidatedWorkflow(true);
+                    continueValidatedWorkflow();
                 }
 
             }
@@ -733,10 +737,10 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
      * This method assumes that compound workflow has been validated
      */
     public void continueValidatedWorkflow(@SuppressWarnings("unused") ActionEvent event) {
-        continueValidatedWorkflow(false);
+        continueValidatedWorkflow();
     }
 
-    private void continueValidatedWorkflow(boolean throwException) {
+    private void continueValidatedWorkflow() {
         try {
             // clear panelGroup to avoid memory issues when working with large worflows
             resetPanelGroup(true);
@@ -745,9 +749,6 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             MessageUtil.addInfoMessage("workflow_compound_continue_success");
         } catch (Exception e) {
             // let calling method handle error
-            if (throwException) {
-                throw new RuntimeException(e);
-            }
             handleException(e, "workflow_compound_continue_workflow_failed", CONTINUE_VALIDATED_WORKFLOW);
         }
         updatePanelGroup(false);
@@ -768,11 +769,13 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         log.debug("finishWorkflow");
         try {
             preprocessWorkflow();
-            // clear panelGroup to avoid memory issues when working with large worflows
-            resetPanelGroup(true);
-            compoundWorkflow = getWorkflowService().finishCompoundWorkflow(compoundWorkflow);
-            setReviewTaskDvkInfoMessages();
-            MessageUtil.addInfoMessage("workflow_compound_finish_success");
+            if (validate(FacesContext.getCurrentInstance(), false, true, true, false)) {
+                // clear panelGroup to avoid memory issues when working with large worflows
+                resetPanelGroup(true);
+                compoundWorkflow = getWorkflowService().finishCompoundWorkflow(compoundWorkflow);
+                setReviewTaskDvkInfoMessages();
+                MessageUtil.addInfoMessage("workflow_compound_finish_success");
+            }
         } catch (Exception e) {
             handleException(e, "workflow_compound_finish_workflow_failed");
         }
@@ -784,9 +787,11 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
         log.debug("finishWorkflow");
         try {
             preprocessWorkflow();
-            compoundWorkflow = getWorkflowService().reopenCompoundWorkflow(compoundWorkflow);
-            setReviewTaskDvkInfoMessages();
-            MessageUtil.addInfoMessage("workflow_compound_reopen_success");
+            if (validate(FacesContext.getCurrentInstance(), false, true, true, false)) {
+                compoundWorkflow = getWorkflowService().reopenCompoundWorkflow(compoundWorkflow);
+                setReviewTaskDvkInfoMessages();
+                MessageUtil.addInfoMessage("workflow_compound_reopen_success");
+            }
         } catch (Exception e) {
             handleException(e, "workflow_compound_reopen_workflow_failed");
         }
@@ -1778,7 +1783,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
             startValidatedWorkflow(null);
             break;
         case CONTINUING:
-            continueValidatedWorkflow(true);
+            continueValidatedWorkflow();
         }
     }
 

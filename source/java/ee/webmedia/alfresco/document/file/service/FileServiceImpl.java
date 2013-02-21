@@ -84,6 +84,7 @@ public class FileServiceImpl implements FileService {
     private VersionsService versionsService;
     private DocumentTemplateService _documentTemplateService;
     private Set<String> openOfficeFiles;
+    private String jumploaderPath;
 
     private String scannedFilesPath;
 
@@ -720,6 +721,15 @@ public class FileServiceImpl implements FileService {
             extSet.add(ext);
         }
         this.openOfficeFiles = extSet;
+    }
+
+    @Override
+    public String getJumploaderPath() {
+        return jumploaderPath;
+    }
+
+    public void setJumploaderPath(String jumploaderPath) {
+        this.jumploaderPath = jumploaderPath;
     }
 
     // END: getters / setters

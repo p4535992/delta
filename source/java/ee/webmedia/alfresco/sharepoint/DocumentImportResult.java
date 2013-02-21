@@ -86,9 +86,11 @@ public class DocumentImportResult {
     }
 
     private void logResult(CsvWriter csv) throws IOException {
+        // Columns 1, 2, 3 are read elsewhere, so these must stay in this order
         csv.write(FilenameUtils.getBaseName(docXmlFile.getName()));
         csv.write(documentRef == null ? "" : documentRef.toString());
         csv.write(meta == null ? "" : meta.getOriginalLocation());
+        csv.write(meta == null ? "" : meta.getOriginalLocationName());
         csv.write(meta == null || meta.getFiles().isEmpty() ? "" : meta.getFiles().get(0).getTitle());
         csv.write(meta == null ? "" : ImportUtil.formatDateTime(meta.getCreated()));
         csv.write(props == null ? "" : (String) props.get(DocumentCommonModel.Props.REG_NUMBER));

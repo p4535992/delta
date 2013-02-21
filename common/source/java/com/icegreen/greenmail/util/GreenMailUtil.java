@@ -32,6 +32,8 @@ import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 
+import org.alfresco.repo.content.MimetypeMap;
+import org.alfresco.service.cmr.repository.ContentWriter;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
@@ -40,6 +42,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.icegreen.greenmail.imap.commands.AppendCommand;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.monitoring.MonitoredService;
 import ee.webmedia.alfresco.monitoring.MonitoringUtil;
 
@@ -54,9 +57,23 @@ public class GreenMailUtil {
     private static final FastDateFormat dateFormat = FastDateFormat.getInstance("yyyy-MM-dd-HH-mm-ss-SSSZ");
 
     private static String messageCopyFolder = null;
+    private static boolean saveOriginalToRepo = false;
+    public static String SAVE_ORIGINAL_TO_REPO_CONTENT_DATA_HEADER_NAME = "X-Delta-ContentData";
 
     public static void setMessageCopyFolder(String value) {
         messageCopyFolder = value;
+    }
+
+    public static String getMessageCopyFolder() {
+        return messageCopyFolder;
+    }
+
+    public static boolean isSaveOriginalToRepo() {
+        return saveOriginalToRepo;
+    }
+    
+    public static void setSaveOriginalToRepo(boolean saveOriginalToRepo) {
+        GreenMailUtil.saveOriginalToRepo = saveOriginalToRepo;
     }
 
     /**
@@ -131,6 +148,18 @@ public class GreenMailUtil {
                 }
             } else {
                 log.info("Not writing message to file, imap.messageFolder is blank");
+            }
+            if (saveOriginalToRepo) {
+                ContentWriter writer = BeanHelper.getContentService().getWriter(null, null, false);
+                writer.setMimetype(MimetypeMap.MIMETYPE_RFC822);
+                OutputStream os = writer.getContentOutputStream();
+                try {
+                    IOUtils.write(bytes, os);
+                    os.close();
+                } catch (IOException e) {
+                    throw new RuntimeException("Error saving bytes to content store: " + writer.getContentData(), e);
+                }
+                message.setHeader(SAVE_ORIGINAL_TO_REPO_CONTENT_DATA_HEADER_NAME, writer.getContentData().toString());
             }
             MonitoringUtil.logSuccess(MonitoredService.IN_IMAP);
             return message;

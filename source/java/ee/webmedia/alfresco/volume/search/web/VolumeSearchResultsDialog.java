@@ -37,7 +37,7 @@ import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
-import ee.webmedia.alfresco.docconfig.generator.systematic.KeywordsGenerator;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.search.web.DocumentDynamicSearchDialog;
@@ -170,7 +170,7 @@ public class VolumeSearchResultsDialog extends BaseLimitedListDialog {
             } else if (primaryQName.equals(DocumentCommonModel.Props.SERIES)) {
                 valueBinding = "#{r.seriesLabel}";
                 sortValue = "seriesLabel";
-            } else if (primaryQName.equals(KeywordsGenerator.THESAURUS)) {
+            } else if (primaryQName.equals(DocumentDynamicModel.Props.THESAURUS)) {
                 valueBinding = "#{r.hierarchicalKeywords}";
                 fieldTitle = MessageUtil.getMessage("thesaurus_keywords");
                 sortValue = "hierarchicalKeywords";

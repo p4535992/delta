@@ -92,6 +92,7 @@
          </list>
       </property>
       <property name="mimetypeService" ref="MimetypeService" />
+      <property name="transactionHelperMinRetryWaits" value="6000" />
    </bean>
 
    <bean id="documentUpdater9" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentUpdater" parent="abstractNodeUpdater">
@@ -152,6 +153,18 @@
             <ref bean="archivalsStoresBootstrap" />
          </list>
       </property>
+      <property name="transactionHelperMinRetryWaits" value="6000" />
+   </bean>
+   
+   <bean id="emptyDocumentRegNrUpdater" class="ee.webmedia.alfresco.docdynamic.bootstrap.EmptyDocumentRegNrUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="false" /><!-- Executed from node-browser -->
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
    </bean>
    
    <bean id="logAndDeleteObjectsWithMissingType" class="ee.webmedia.alfresco.docdynamic.bootstrap.LogAndDeleteObjectsWithMissingType" parent="abstractNodeUpdater">
@@ -165,6 +178,19 @@
       </property>
       <property name="delete" value="true" /> <!-- Should be set true only in 3.11 branch -->
    </bean>   
+
+   <bean id="deleteDraftsBootstrap" class="ee.webmedia.alfresco.docdynamic.bootstrap.DeleteDraftsBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="documentDraftsSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="nodeService" ref="NodeService" />
+      <property name="documentService" ref="DocumentService" />
+      <property name="transactionService" ref="TransactionService" />
+   </bean>
 
    <!-- START: web beans: -->
 

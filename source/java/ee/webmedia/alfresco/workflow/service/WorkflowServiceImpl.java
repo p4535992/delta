@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.workflow.service;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFileService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getWorkflowService;
 import static ee.webmedia.alfresco.log.PropDiffHelper.value;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.checkCompoundWorkflow;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.checkTask;
@@ -202,6 +203,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     private boolean documentWorkflowEnabled;
     private boolean workflowTitleEnabled;
     private boolean reviewToOtherOrgEnabled;
+    private boolean finishDocumentsWhenWorkflowFinishes;
 
     @Override
     public void registerWorkflowType(WorkflowType workflowType) {
@@ -475,14 +477,17 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     private CompoundWorkflow getCompoundWorkflow(NodeRef nodeRef, boolean loadTasks) {
-        return loadCompoundWorkflow(nodeRef, loadTasks);
+        return getCompoundWorkflow(nodeRef, loadTasks, true);
     }
 
-    private CompoundWorkflow loadCompoundWorkflow(NodeRef nodeRef, boolean loadTasks) {
+    @Override
+    public CompoundWorkflow getCompoundWorkflow(NodeRef nodeRef, boolean loadTasks, boolean loadWorkflows) {
         WmNode node = getNode(nodeRef, WorkflowCommonModel.Types.COMPOUND_WORKFLOW, false, false);
         NodeRef parent = nodeService.getPrimaryParent(nodeRef).getParentRef();
         CompoundWorkflow compoundWorkflow = new CompoundWorkflow(node, parent);
-        getAndAddWorkflows(compoundWorkflow.getNodeRef(), compoundWorkflow, false, loadTasks);
+        if (loadWorkflows) {
+            getAndAddWorkflows(compoundWorkflow.getNodeRef(), compoundWorkflow, false, loadTasks);
+        }
         return compoundWorkflow;
     }
 
@@ -501,7 +506,8 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                         : new ArrayList<CompoundWorkflow>());
     }
 
-    private CompoundWorkflow getCompoundWorkflowOfType(NodeRef nodeRef, List<QName> types) {
+    @Override
+    public CompoundWorkflow getCompoundWorkflowOfType(NodeRef nodeRef, List<QName> types) {
         WmNode node = getNode(nodeRef, WorkflowCommonModel.Types.COMPOUND_WORKFLOW, false, false);
         NodeRef parent = nodeService.getPrimaryParent(nodeRef).getParentRef();
         CompoundWorkflow compoundWorkflow = new CompoundWorkflow(node, parent);
@@ -587,7 +593,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         workflow.addTasks(workflowDbService.getWorkflowTasks(parent, taskDataTypeDefaultAspects.get(workflowTaskType), taskDataTypeDefaultProps.get(workflowTaskType),
                 taskPrefixedQNames, workflowType, workflow, copy));
         for (Task task : workflow.getTasks()) {
-            loadDueDateHistory(task);
+            loadDueDateData(task);
         }
     }
 
@@ -632,16 +638,25 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     private Task getTask(NodeRef nodeRef, Workflow workflow, boolean copy) {
         Task task = getTaskWithoutParentAndChildren(nodeRef, workflow, copy);
-        loadDueDateHistory(task);
+        loadDueDateData(task);
         return task;
     }
 
-    private void loadDueDateHistory(Task task) {
+    private void loadDueDateData(Task task) {
+        if (task.isType(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK)) {
+            // due date extension task
+            NodeRef initiatingCompoundWorkflowRef = task.getInitiatingCompoundWorkflowRef();
+            if (initiatingCompoundWorkflowRef != null && StringUtils.isBlank(task.getInitiatingCompoundWorkflowTitle())) {
+                task.setInitiatingCompoundWorkflowTitle((String) nodeService.getProperty(initiatingCompoundWorkflowRef, WorkflowCommonModel.Props.TITLE));
+            }
+            return;
+        }
         if (Boolean.FALSE.equals(task.getHasDueDateHistory()) || !task.getNode().hasAspect(WorkflowSpecificModel.Aspects.TASK_DUE_DATE_EXTENSION_CONTAINER)) {
             task.setHasDueDateHistory(Boolean.FALSE);
             return;
         }
-        List<Pair<String, Date>> historyRecords = task.getDueDateHistoryRecords();
+        // due date initiating task (assignment or order assignment task)
+        List<DueDateHistoryRecord> historyRecords = task.getDueDateHistoryRecords();
         historyRecords.addAll(workflowDbService.getDueDateHistoryRecords(task.getNodeRef()));
         task.setHasDueDateHistory(!historyRecords.isEmpty());
     }
@@ -993,7 +1008,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             if (compoundWorkflow.getNewAssocs() != null) {
                 NodeRef compoundWorkflowRef = compoundWorkflow.getNodeRef();
                 for (NodeRef docRef : compoundWorkflow.getNewAssocs()) {
-                    getDocumentAssociationsService().createWorkflowAssoc(docRef, compoundWorkflowRef, false);
+                    getDocumentAssociationsService().createWorkflowAssoc(docRef, compoundWorkflowRef, false, true);
                 }
                 compoundWorkflow.getNewAssocs().clear();
             }
@@ -1237,7 +1252,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     @Override
-    public void markLinkedReviewTaskDeleted(DeleteLinkedReviewTaskType deletedTask) {
+    public NodeRef markLinkedReviewTaskDeleted(DeleteLinkedReviewTaskType deletedTask) {
         NodeRef existingTaskRef = BeanHelper.getDocumentSearchService().searchLinkedReviewTaskByOriginalNoderefId(deletedTask.getOriginalNoderefId());
         if (existingTaskRef != null) {
             Task task = getTask(existingTaskRef, false);
@@ -1247,6 +1262,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                     LogEntry.create(LogObject.TASK, BeanHelper.getUserService(), existingTaskRef, "applog_task_review_delete_received", task.getOwnerName(),
                             MessageUtil.getTypeName(task.getType())));
         }
+        return existingTaskRef;
     }
 
     @Override
@@ -1987,6 +2003,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                 }
                 workflow.setStoppedDateTime(null);
             }
+            queue.setParameter(WorkflowQueueParameter.WORKFLOW_CONTINUED, true);
             stepAndCheck(queue, compoundWorkflow, Status.IN_PROGRESS, Status.STOPPED, Status.FINISHED);
             boolean changed = saveCompoundWorkflow(queue, compoundWorkflow, null);
             if (log.isDebugEnabled()) {
@@ -1996,9 +2013,10 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
         // also check repo status
         NodeRef nodeRef = compoundWorkflow.getNodeRef();
+        List<Pair<String, Object[]>> reviewTaskDvkInfoMessages = compoundWorkflow.getReviewTaskDvkInfoMessages();
         // free memory, otherwise OutOfMemory error may occur when working with large compound workflows
         compoundWorkflow = null;
-        CompoundWorkflow freshCompoundWorkflow = getCompoundWorkflow(nodeRef);
+        CompoundWorkflow freshCompoundWorkflow = getCompoundWorkflow(nodeRef, reviewTaskDvkInfoMessages);
         checkCompoundWorkflow(freshCompoundWorkflow, Status.IN_PROGRESS, Status.STOPPED, Status.FINISHED);
         checkActiveResponsibleAssignmentTasks(freshCompoundWorkflow);
         handleEvents(queue);
@@ -2024,40 +2042,6 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             }
         }
         return hasOtherInProgressOrStoppedWorkflowWithMultipleWorkflows;
-    }
-
-    private CompoundWorkflow continueCompoundWorkflow(WorkflowEventQueue queue, NodeRef nodeRef) {
-        CompoundWorkflow compoundWorkflow = getCompoundWorkflow(nodeRef);
-        if (checkCompoundWorkflow(compoundWorkflow, Status.STOPPED, Status.FINISHED) == Status.FINISHED) {
-            if (log.isDebugEnabled()) {
-                log.debug("CompoundWorkflow is already finished, continuing is not performed, saved as is: " + compoundWorkflow);
-            }
-        } else {
-            queue.setParameter(WorkflowQueueParameter.WORKFLOW_CONTINUED, true);
-            setStatus(queue, compoundWorkflow, Status.IN_PROGRESS);
-            for (Workflow workflow : compoundWorkflow.getWorkflows()) {
-                if (isStatus(workflow, Status.STOPPED)) {
-                    setStatus(queue, workflow, Status.IN_PROGRESS);
-                }
-                workflow.setStoppedDateTime(null);
-            }
-            stepAndCheck(queue, compoundWorkflow, Status.IN_PROGRESS, Status.STOPPED, Status.FINISHED);
-            saveCompoundWorkflow(queue, compoundWorkflow, null);
-            if (log.isDebugEnabled()) {
-                log.debug("Continued " + compoundWorkflow);
-            }
-        }
-
-        // also check repo status
-        nodeRef = compoundWorkflow.getNodeRef();
-        List<Pair<String, Object[]>> reviewTaskDvkInfoMessages = compoundWorkflow.getReviewTaskDvkInfoMessages();
-        // free memory, otherwise OutOfMemory error may occur when working with large compound workflows
-        compoundWorkflow = null;
-        CompoundWorkflow freshCompoundWorkflow = getCompoundWorkflow(nodeRef, reviewTaskDvkInfoMessages);
-        checkCompoundWorkflow(freshCompoundWorkflow, Status.IN_PROGRESS, Status.STOPPED, Status.FINISHED);
-        checkActiveResponsibleAssignmentTasks(freshCompoundWorkflow);
-        handleEvents(queue);
-        return freshCompoundWorkflow;
     }
 
     private void continueTasks(WorkflowEventQueue queue, Workflow workflow) {
@@ -3367,31 +3351,100 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     @Override
-    public void createDueDateExtension(CompoundWorkflow compoundWorkflow, NodeRef initiatingTaskRef) {
-        Assert.isTrue(compoundWorkflow != null && !compoundWorkflow.getWorkflows().isEmpty() && !compoundWorkflow.getWorkflows().get(0).getTasks().isEmpty());
-        compoundWorkflow = startCompoundWorkflow(compoundWorkflow);
-        NodeRef dueDateExtensionTask = compoundWorkflow.getWorkflows().get(0).getTasks().get(0).getNodeRef();
-        workflowDbService.createTaskDueDateExtensionAssocEntry(initiatingTaskRef, dueDateExtensionTask);
+    public void createDueDateExtension(String reason, Date newDate, Date dueDate, Task initiatingTask, NodeRef containerRef) {
+        CompoundWorkflow extensionCompoundWorkflow = getNewCompoundWorkflow(getNewCompoundWorkflowDefinition().getNode(), containerRef);
+        extensionCompoundWorkflow.setTypeEnum(initiatingTask.getParent().getParent().getTypeEnum());
+        Workflow workflow = getWorkflowService().addNewWorkflow(extensionCompoundWorkflow, WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_WORKFLOW,
+                extensionCompoundWorkflow.getWorkflows().size(), true);
+        if (isWorkflowTitleEnabled()) {
+            extensionCompoundWorkflow.setTitle(MessageUtil.getMessage("compoundWorkflow_due_date_extension_title"));
+        }
+        Task extensionTask = workflow.addTask();
+        String creatorName = initiatingTask.getCreatorName();
+        extensionTask.setOwnerName(creatorName);
+        extensionTask.setOwnerId(initiatingTask.getCreatorId());
+        extensionTask.setOwnerEmail(initiatingTask.getCreatorEmail()); // updater
+        extensionTask.setCompoundWorkflowId(initiatingTask.getCompoundWorkflowId());
+        Map<QName, Serializable> creatorProps = userService.getUserProperties(initiatingTask.getCreatorId());
+        if (creatorProps != null) {
+            extensionTask.setOwnerJobTitle((String) creatorProps.get(ContentModel.PROP_JOBTITLE));
+            List<String> orgName = organizationStructureService.getOrganizationStructurePaths((String) creatorProps.get(ContentModel.PROP_ORGID));
+            extensionTask.setOwnerOrgStructUnitProp(orgName);
+        }
+        workflow.setProp(WorkflowSpecificModel.Props.RESOLUTION, reason);
+        extensionTask.setProposedDueDate(newDate);
+        dueDate.setHours(23);
+        dueDate.setMinutes(59);
+        extensionTask.setDueDate(dueDate);
+        extensionCompoundWorkflow = startCompoundWorkflow(extensionCompoundWorkflow);
+        NodeRef dueDateExtensionTask = extensionCompoundWorkflow.getWorkflows().get(0).getTasks().get(0).getNodeRef();
+        workflowDbService.createTaskDueDateExtensionAssocEntry(initiatingTask.getNodeRef(), dueDateExtensionTask);
+        logDueDateExtension(initiatingTask, extensionCompoundWorkflow, initiatingTask.getParent().getParent().getNodeRef(), "applog_compoundWorkflow_due_date_extension_request");
+
+        if (extensionCompoundWorkflow.isIndependentWorkflow()) {
+            CompoundWorkflow initiatingCompoundWorkflow = initiatingTask.getParent().getParent();
+            String dueDateStr = initiatingTask.getDueDate() != null ? Task.dateTimeFormat.format(initiatingTask.getDueDate()) : null;
+            String proposedDueDateStr = extensionTask.getProposedDueDateStr();
+            String taskTypeName = MessageUtil.getTypeName(initiatingTask.getType());
+            generateWorkflowRelatedUrl(extensionCompoundWorkflow, initiatingCompoundWorkflow, creatorName, "compoundWorkflow_related_task_comment", taskTypeName, dueDateStr,
+                    proposedDueDateStr);
+            generateWorkflowRelatedUrl(initiatingCompoundWorkflow, extensionCompoundWorkflow, creatorName, "compoundWorkflow_related_initiatortask_comment", taskTypeName,
+                    initiatingTask.getOwnerName(), dueDateStr, proposedDueDateStr);
+        }
+
+    }
+
+    private void generateWorkflowRelatedUrl(CompoundWorkflow compoundWorkflowFrom, CompoundWorkflow compoundWorkflowTo, String creatorName, String messageId,
+            Object... messageParams) {
+        RelatedUrl relatedUrl = new RelatedUrl(new WmNode(RepoUtil.createNewUnsavedNodeRef(), WorkflowCommonModel.Types.RELATED_URL));
+        relatedUrl.setCreated(new Date());
+        relatedUrl.setUrlCreatorName(creatorName);
+        relatedUrl.setUrl(BeanHelper.getDocumentTemplateService().getCompoundWorkflowUrl(compoundWorkflowTo.getNodeRef()));
+        relatedUrl.setUrlComment(MessageUtil.getMessage(messageId, messageParams));
+        getWorkflowService().saveRelatedUrl(relatedUrl, compoundWorkflowFrom.getNodeRef());
+    }
+
+    private void logDueDateExtension(Task initiatingTask, CompoundWorkflow extensionCompoundWorkflow, NodeRef initiatingCompoundWorkflowNodeRef, String logKey) {
+        String extensionUrl = BeanHelper.getDocumentTemplateService().getCompoundWorkflowUrl(extensionCompoundWorkflow.getNodeRef());
+        Date initiatingTaskDueDate = initiatingTask.getDueDate();
+        logService.addLogEntry(LogEntry.create(LogObject.TASK, userService, initiatingCompoundWorkflowNodeRef,
+                logKey, MessageUtil.getTypeName(initiatingTask.getType()), initiatingTask.getOwnerName(),
+                initiatingTaskDueDate != null ? Task.dateTimeFormat.format(initiatingTaskDueDate) : null, extensionUrl));
     }
 
     @Override
     public void changeInitiatingTaskDueDate(Task task, WorkflowEventQueue queue) {
-        List<Task> initiatingTasks = workflowDbService.getDueDateExtensionInitiatingTask(task.getNodeRef(), taskPrefixedQNames);
-        if (initiatingTasks.size() != 1) {
-            throw new RuntimeException("dueDateExtension task must have exactly one initiating task; current task has " + initiatingTasks.size() + " initiating tasks.");
-        }
-        Task initiatingTask = getTask(initiatingTasks.get(0).getNodeRef(), true);
+        Task initiatingTask = getInitiatingTask(task);
         addDueDateHistoryRecord(initiatingTask, task);
         initiatingTask.setDueDate(task.getConfirmedDueDate());
         initiatingTask.setHasDueDateHistory(true);
         saveTask(queue, initiatingTask);
+        NodeRef initiatingCompoundWorkflowNodeRef = generalService.getAncestorNodeRefWithType(initiatingTask.getWorkflowNodeRef(), WorkflowCommonModel.Types.COMPOUND_WORKFLOW);
+        logDueDateExtension(initiatingTask, task.getParent().getParent(), initiatingCompoundWorkflowNodeRef, "applog_compoundWorkflow_due_date_extension_accepted");
+    }
+
+    private Task getInitiatingTask(Task extensionTask) {
+        List<Task> initiatingTasks = workflowDbService.getDueDateExtensionInitiatingTask(extensionTask.getNodeRef(), taskPrefixedQNames);
+        if (initiatingTasks.size() != 1) {
+            throw new RuntimeException("dueDateExtension task must have exactly one initiating task; current task has " + initiatingTasks.size() + " initiating tasks.");
+        }
+        Task initiatingTask = getTask(initiatingTasks.get(0).getNodeRef(), true);
+        return initiatingTask;
+    }
+
+    @Override
+    public void rejectDueDateExtension(Task task) {
+        Task initiatingTask = getInitiatingTask(task);
+        NodeRef initiatingCompoundWorkflowNodeRef = generalService.getAncestorNodeRefWithType(initiatingTask.getWorkflowNodeRef(), WorkflowCommonModel.Types.COMPOUND_WORKFLOW);
+        logDueDateExtension(initiatingTask, task.getParent().getParent(), initiatingCompoundWorkflowNodeRef, "applog_compoundWorkflow_due_date_extension_rejected");
     }
 
     @SuppressWarnings("unchecked")
     private void addDueDateHistoryRecord(Task initiatingTask, Task task) {
         String comment = task.getComment();
         workflowDbService.createTaskDueDateHistoryEntries(initiatingTask.getNodeRef(),
-                Arrays.asList(new Pair<String, Date>(StringUtils.isNotBlank(comment) ? comment : task.getResolution(), initiatingTask.getDueDate())));
+                Arrays.asList(new DueDateHistoryRecord(initiatingTask.getNodeRef().getId(), StringUtils.isNotBlank(comment) ? comment : task.getResolution(), initiatingTask
+                        .getDueDate(), task.getNodeRef().getId(), null)));
     }
 
     @Override
@@ -3590,6 +3643,14 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             }
         }
         return taskDataTypeSearchableProps;
+    }
+
+    public boolean isFinishDocumentsWhenWorkflowFinishes() {
+        return finishDocumentsWhenWorkflowFinishes;
+    }
+
+    public void setFinishDocumentsWhenWorkflowFinishes(boolean finishDocumentsWhenWorkflowFinishes) {
+        this.finishDocumentsWhenWorkflowFinishes = finishDocumentsWhenWorkflowFinishes;
     }
 
     /**

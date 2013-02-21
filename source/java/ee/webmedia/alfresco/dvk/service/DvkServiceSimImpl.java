@@ -86,6 +86,7 @@ import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 import ee.webmedia.alfresco.workflow.generated.DeleteLinkedReviewTaskType;
@@ -538,12 +539,14 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
             if (deltaKKRoot != null) {
                 LinkedReviewTaskType linkedTask = deltaKKRoot.getValue().getLinkedReviewTask();
                 if (linkedTask != null) {
-                    workflowService.importLinkedReviewTask(linkedTask, dvkId);
-                } else {
-                    DeleteLinkedReviewTaskType deletedTask = deltaKKRoot.getValue().getDeleteLinkedReviewTask();
-                    if (deletedTask != null) {
-                        workflowService.markLinkedReviewTaskDeleted(deletedTask);
-                    }
+                    return workflowService.importLinkedReviewTask(linkedTask, dvkId);
+                }
+                DeleteLinkedReviewTaskType deletedTask = deltaKKRoot.getValue().getDeleteLinkedReviewTask();
+                if (deletedTask != null) {
+                    NodeRef existingTaskRef = workflowService.markLinkedReviewTaskDeleted(deletedTask);
+                    // don't return null because this initiates futher dvk import, but at this point it is sure that document was
+                    // meant to be imported as linkedReviewTask, even if no corresponding task is found
+                    return existingTaskRef != null ? existingTaskRef : RepoUtil.createNewUnsavedNodeRef();
                 }
             }
         }
@@ -867,10 +870,12 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         linkedReviewTaskType.setOwnerName(task.getOwnerName());
         linkedReviewTaskType.setDueDate(getXmlGregorianCalendar(task.getDueDate()));
         linkedReviewTaskType.setStatus(task.getStatus());
-        CompoundWorkflow compoundWorkflow = task.getParent().getParent();
+        Workflow workflow = task.getParent();
+        CompoundWorkflow compoundWorkflow = workflow != null && workflow.getParent() != null ? workflow.getParent() : workflowService.getCompoundWorkflow(generalService
+                .getPrimaryParent(task.getWorkflowNodeRef()).getNodeRef());
         linkedReviewTaskType.setCompoundWorkflowTitle(compoundWorkflow.getTitle());
         linkedReviewTaskType.setCompoundWorkflowComment(compoundWorkflow.getComment());
-        linkedReviewTaskType.setWorkflowResolution(task.getParent().getResolution());
+        linkedReviewTaskType.setWorkflowResolution(workflow.getResolution());
         linkedReviewTaskType.setCreatorInstitutionCode(task.getCreatorInstitutionCode());
         linkedReviewTaskType.setCreatorInstitutionName(task.getCreatorInstitutionName());
         linkedReviewTaskType.setOriginalNoderefId(task.getNodeRef().getId());
