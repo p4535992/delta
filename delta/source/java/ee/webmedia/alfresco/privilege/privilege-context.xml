@@ -62,6 +62,21 @@
       <property name="executeOnceOnly" value="true" />
       <property name="dataSource" ref="dataSource" />
    </bean>   
+   
+   <!-- Executed manually from nodeBrowser -->
+   <bean id="fixAclInheritanceUpdater2" class="ee.webmedia.alfresco.privilege.bootstrap.FixAclInheritanceUpdater" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="enabled" value="false" />
+      <property name="jdbcTemplate">
+         <bean class="org.springframework.jdbc.core.simple.SimpleJdbcTemplate">
+            <constructor-arg ref="dataSource" />
+         </bean>
+      </property>
+      <property name="aclDaoComponent" ref="aclDaoComponent" />
+      <property name="accessControlListDao" ref="accessControlListDAO" />
+   </bean>
+
    <!-- START: web beans: -->
 
    <bean id="ManageInheritablePrivilegesDialog" class="ee.webmedia.alfresco.privilege.web.ManageInheritablePrivilegesDialog" scope="session" />

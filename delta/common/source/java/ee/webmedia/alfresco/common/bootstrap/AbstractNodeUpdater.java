@@ -70,12 +70,15 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
 
     protected int batchSize = DEFAULT_BATCH_SIZE;
     private boolean enabled = true;
-    private File inputFolder;
+    protected File inputFolder;
+    private int transactionHelperMinRetryWaits = -1;
 
     private Set<NodeRef> nodes = new HashSet<NodeRef>();
     private Set<NodeRef> completedNodes = new HashSet<NodeRef>();
     private File nodesFile;
+    private File failedNodesFile;
     private File completedNodesFile;
+    private boolean errorExecutingUpdaterInBackground;
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -136,6 +139,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
                         updaterRunning.set(true);
                         stopFlag.set(false);
                         AuthenticationUtil.runAs(new RunAsWork<Void>() {
+
                             @Override
                             public Void doWork() throws Exception {
                                 while (true) {
@@ -144,7 +148,8 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
                                         return null;
                                     } catch (Exception e) {
                                         log.error("Background updater error", e);
-                                        if (stopFlag.get()) {
+                                        errorExecutingUpdaterInBackground = true;
+                                        if (!isRetryUpdaterInBackground() || stopFlag.get()) {
                                             return null;
                                         }
                                         Thread.sleep(5000);
@@ -160,6 +165,10 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         } else {
             log.warn("Updater is already running");
         }
+    }
+
+    protected boolean isRetryUpdaterInBackground() {
+        return false;
     }
 
     @Override
@@ -187,6 +196,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         try {
             log.info("Starting node updater");
             nodesFile = new File(inputFolder, getNodesCsvFileName());
+            failedNodesFile = new File(inputFolder, getFailedNodesCsvFileName());
             nodes = null;
             if (usePreviousInputState()) {
                 nodes = loadNodesFromFile(nodesFile, false);
@@ -207,6 +217,10 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
                 if (completedNodesFile.exists()) {
                     log.info("Completed nodes file exists, deleting: " + completedNodesFile.getAbsolutePath());
                     Assert.isTrue(completedNodesFile.delete());
+                }
+                if (failedNodesFile.exists()) {
+                    log.info("Failed nodes file exists, deleting: " + failedNodesFile.getAbsolutePath());
+                    Assert.isTrue(failedNodesFile.delete());
                 }
             }
             if (completedNodes != null) {
@@ -239,6 +253,10 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         return getBaseFileName() + ".csv";
     }
 
+    private String getFailedNodesCsvFileName() {
+        return getBaseFileName() + "Failed.csv";
+    }
+
     private String getCompletedNodesCsvFileName() {
         return getBaseFileName() + "Completed.csv";
     }
@@ -247,7 +265,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         return getBaseFileName() + "Rollback-" + dateTimeFormat.format(new Date()) + ".csv";
     }
 
-    private Set<NodeRef> loadNodesFromFile(File file, boolean readHeaders) throws Exception {
+    protected Set<NodeRef> loadNodesFromFile(File file, boolean readHeaders) throws Exception {
         if (!file.exists()) {
             log.info("Skipping loading nodes, file does not exist: " + file.getAbsolutePath());
             return null;
@@ -345,6 +363,29 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
                 String[] batchInfo = (String[]) ArrayUtils.add(info, 0, nodeRef.toString());
                 batchInfos.add(batchInfo);
             } catch (Exception e) {
+                try {
+                    boolean exists = failedNodesFile.exists();
+                    if (!exists) {
+                        OutputStream outputStream = new FileOutputStream(failedNodesFile);
+                        try {
+                            // the Unicode value for UTF-8 BOM, is needed so that Excel would recognise the file in correct encoding
+                            outputStream.write("\ufeff".getBytes("UTF-8"));
+                        } finally {
+                            outputStream.close();
+                        }
+                    }
+                    CsvWriter writer = new CsvWriter(new FileWriter(failedNodesFile, true), CSV_SEPARATOR);
+                    try {
+                        if (!exists) {
+                            writer.writeRecord(new String[] { "nodeRef", "error" });
+                        }
+                        writer.writeRecord(new String[] { nodeRef.toString(), e.toString() });
+                    } finally {
+                        writer.close();
+                    }
+                } catch (IOException e1) {
+                    log.error("Error writing file '" + failedNodesFile + "': " + e.getMessage(), e);
+                }
                 throw new Exception("Error updating node " + nodeRef + ": " + e.getMessage(), e);
             }
             int sleepTime2 = getSleepTime();
@@ -383,6 +424,10 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
 
     @Override
     public boolean isRequiresNewTransaction() {
+        return false;
+    }
+
+    public boolean isContinueWithNextBatchAfterError() {
         return false;
     }
 
@@ -459,40 +504,17 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         // can be overridden, but it is not necessary to do so
     }
 
-    private static interface CsvWriterClosure {
+    protected static interface CsvWriterClosure {
         void execute(CsvWriter writer) throws IOException;
 
         String[] getHeaders();
     }
 
-    private static void bindCsvWriteAfterCommit(final File completedFile, final File rollbackFile, final CsvWriterClosure closure) {
+    private void bindCsvWriteAfterCommit(final File completedFile, final File rollbackFile, final CsvWriterClosure closure) {
         AlfrescoTransactionSupport.bindListener(new TransactionListenerAdapter() {
             @Override
             public void afterCommit() {
-                try {
-                    // Write created documents
-                    boolean exists = completedFile.exists();
-                    if (!exists) {
-                        OutputStream outputStream = new FileOutputStream(completedFile);
-                        try {
-                            // the Unicode value for UTF-8 BOM, is needed so that Excel would recognise the file in correct encoding
-                            outputStream.write("\ufeff".getBytes("UTF-8"));
-                        } finally {
-                            outputStream.close();
-                        }
-                    }
-                    CsvWriter writer = new CsvWriter(new FileWriter(completedFile, true), CSV_SEPARATOR);
-                    try {
-                        if (!exists) {
-                            writer.writeRecord(closure.getHeaders());
-                        }
-                        closure.execute(writer);
-                    } finally {
-                        writer.close();
-                    }
-                } catch (IOException e) {
-                    throw new RuntimeException("Error writing file '" + completedFile + "': " + e.getMessage(), e);
-                }
+                executeAfterCommit(completedFile, closure);
             }
 
             @Override
@@ -523,12 +545,42 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         });
     }
 
+    protected void executeAfterCommit(final File completedFile, final CsvWriterClosure closure) {
+        try {
+            // Write created documents
+            boolean exists = completedFile.exists();
+            if (!exists) {
+                OutputStream outputStream = new FileOutputStream(completedFile);
+                try {
+                    // the Unicode value for UTF-8 BOM, is needed so that Excel would recognise the file in correct encoding
+                    outputStream.write("\ufeff".getBytes("UTF-8"));
+                } finally {
+                    outputStream.close();
+                }
+            }
+            CsvWriter writer = new CsvWriter(new FileWriter(completedFile, true), CSV_SEPARATOR);
+            try {
+                if (!exists) {
+                    writer.writeRecord(closure.getHeaders());
+                }
+                closure.execute(writer);
+            } finally {
+                writer.close();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Error writing file '" + completedFile + "': " + e.getMessage(), e);
+        }
+    }
+
     // HELPER METHODS
     /** RetryingTransactionHelper that only tries to do things once. */
     private RetryingTransactionHelper getTransactionHelper() {
         RetryingTransactionHelper helper = new RetryingTransactionHelper();
         helper.setMaxRetries(3);
         helper.setTransactionService(serviceRegistry.getTransactionService());
+        if (transactionHelperMinRetryWaits > 0) {
+            helper.setMinRetryWaitMs(transactionHelperMinRetryWaits);
+        }
         return helper;
     }
 
@@ -548,8 +600,20 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         this.enabled = enabled;
     }
 
+    public boolean isEnabled() {
+        return enabled;
+    }
+
     public void setDisabled(boolean disabled) {
         enabled = !disabled;
+    }
+
+    public boolean isErrorExecutingUpdaterInBackground() {
+        return errorExecutingUpdaterInBackground;
+    }
+
+    public void setTransactionHelperMinRetryWaits(int transactionHelperMinRetryWaits) {
+        this.transactionHelperMinRetryWaits = transactionHelperMinRetryWaits;
     }
 
 }
