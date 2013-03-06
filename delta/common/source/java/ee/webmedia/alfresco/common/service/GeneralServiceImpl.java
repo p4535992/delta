@@ -196,6 +196,7 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
 
     @Override
     public NodeRef getNodeRef(String nodeRefXPath, NodeRef root) {
+    	log.debug("nodeRefXPath: " + nodeRefXPath);
         Assert.notNull(root, "rootRef is a mandatory parameter");
         NodeRef nodeRef = root;
         String[] xPathParts;
@@ -214,11 +215,15 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
 
             QName qName = QName.resolveToQName(namespaceService, xPathPart);
 
+            log.debug("QName: " + qName.toString());
             nodeRef = getChildByAssocName(nodeRef, qName, nodeRefXPath);
             if (++partNr < xPathParts.length && nodeRef == null) {
+            	log.error("started to resolve xpath based on '" + nodeRefXPath
+                        + "'\nxPathParts='" + xPathParts + "'\npart that is incorrect='" + xPathPart + "'");
                 throw new IllegalArgumentException("started to resolve xpath based on '" + nodeRefXPath
                         + "'\nxPathParts='" + xPathParts + "'\npart that is incorrect='" + xPathPart + "'");
             }
+            log.debug("nodeRef found: " + nodeRef.toString() + "; ID: " + nodeRef.getId() +"; hashCode:" + nodeRef.hashCode() + "; getStoreRef():" + nodeRef.getStoreRef().toString());
         }
         return nodeRef;
     }
@@ -245,6 +250,7 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
             for (ChildAssociationRef childAssociationRef : childAssocs) {
                 msg.append("\n").append(childAssociationRef.getChildRef());
             }
+            log.error("ERROR: " + msg.toString());
             throw new RuntimeException(msg.toString());
         }
         parentRef = childAssocs.get(0).getChildRef();
