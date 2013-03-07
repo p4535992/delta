@@ -230,7 +230,30 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
                 throw new IllegalArgumentException("started to resolve xpath based on '" + nodeRefXPath
                         + "'\nxPathParts='" + xPathParts + "'\npart that is incorrect='" + xPathPart + "'");
             }
-            log.debug("nodeRef found: " + nodeRef.toString() + "; ID: " + nodeRef.getId() +"; hashCode:" + nodeRef.hashCode() + "; getStoreRef():" + nodeRef.getStoreRef().toString());
+            
+            String logText = "";
+            if(nodeRef != null){
+            	if(nodeRef.toString() != null){
+            		logText += "nodeRef found: " + nodeRef.toString() + "; ";
+            	} else {
+            		logText += "nodeRef.toString() returned NULL!; ";
+            	}
+            	if(nodeRef.getId() != null){
+            		logText += "ID: " + nodeRef.getId() +"; ";
+            	} else {
+            		logText += "ID is NULL; ";
+            	}
+            	
+            	logText += "hashCode:" + nodeRef.hashCode() + ";";
+            	if(nodeRef.getStoreRef() != null){
+            		logText += "getStoreRef():" + nodeRef.getStoreRef().toString()+";";
+            	} else {
+            		logText += "getStoreRef() is NULL; ";
+            	}
+            } else {
+            	logText = "nodeRef is NULL!";
+            }
+            log.trace(logText);
         }
         return nodeRef;
     }
