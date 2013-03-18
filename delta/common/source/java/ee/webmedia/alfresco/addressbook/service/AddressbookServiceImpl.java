@@ -313,7 +313,12 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
 
     @Override
     public List<Node> search(String searchCriteria, int limit) {
-        return executeSearch(searchCriteria, searchFields, false, false, allContactTypes, null, limit);
+        return search(searchCriteria, limit, true);
+    }
+
+    @Override
+    public List<Node> search(String searchCriteria, int limit, boolean onlyActive) {
+        return executeSearch(searchCriteria, searchFields, false, false, allContactTypes, null, limit, onlyActive);
     }
 
     @Override
@@ -391,6 +396,11 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
 
     private List<Node> executeSearch(String searchCriteria, Set<QName> fields, boolean taskCapableOnly, boolean dvkCapableOnly, Set<QName> types, String institutionToRemove,
             int limit) {
+        return executeSearch(searchCriteria, fields, taskCapableOnly, dvkCapableOnly, types, institutionToRemove, limit, true);
+    }
+
+    private List<Node> executeSearch(String searchCriteria, Set<QName> fields, boolean taskCapableOnly, boolean dvkCapableOnly, Set<QName> types, String institutionToRemove,
+            int limit, boolean onlyActive) {
         List<String> queryPartsAnd = new ArrayList<String>(4);
         if (StringUtils.isNotBlank(searchCriteria)) {
             queryPartsAnd.add(SearchUtil.generateStringWordsWildcardQuery(parseQuickSearchWords(searchCriteria, 1), true, true, fields.toArray(new QName[0])));
@@ -404,6 +414,9 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
         if (dvkCapableOnly && fields != contactGroupSearchFields) {
             queryPartsAnd.add(generatePropertyBooleanQuery(Props.DVK_CAPABLE, true));
         }
+        if (onlyActive) {
+            queryPartsAnd.add(generatePropertyBooleanQuery(Props.ACTIVESTATUS, true));
+        }
         if (fields == searchFields) {
             queryPartsAnd.add(generateTypeQuery(types));
         } else if (queryPartsAnd.isEmpty()) {
@@ -412,7 +425,7 @@ public class AddressbookServiceImpl extends AbstractSearchServiceImpl implements
 
         if (StringUtils.isNotBlank(institutionToRemove)) {
             // we do not want to see this organization in the search results
-            queryPartsAnd.add(SearchUtil.generatePropertyExactNotQuery(Props.ORGANIZATION_CODE, institutionToRemove, true));
+            queryPartsAnd.add(SearchUtil.generatePropertyExactNotQuery(Props.ORGANIZATION_CODE, institutionToRemove));
         }
 
         if (types.contains(Types.ORGANIZATION) && fields == contactGroupSearchFields) {

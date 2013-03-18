@@ -30,6 +30,7 @@ public class FilenameUtil {
     public static final String ERR_INVALID_FILE_NAME = "add_file_invalid_file_name";
 
     private static final int FILE_MAX_LENGTH = 50;
+    private static final int FILE_EXTENSION_MAX_LENGTH = FILE_MAX_LENGTH - 7;
     private static final String FILE_MAX_LENGTH_SUFFIX = "....";
     private static final String FILE_NON_ASCII_REPLACEMENT = "_";
     private static final String FILE_AMPERSAND_REPLACEMENT = " ja ";
@@ -116,7 +117,7 @@ public class FilenameUtil {
     public static String limitFileNameLength(String filename) {
         if (filename != null && filename.length() > FILE_MAX_LENGTH) {
             String baseName = FilenameUtils.removeExtension(filename);
-            String extension = FilenameUtils.getExtension(filename);
+            String extension = StringUtils.left(FilenameUtils.getExtension(filename), FILE_EXTENSION_MAX_LENGTH);
             baseName = baseName.substring(0, FILE_MAX_LENGTH - extension.length() - FILE_MAX_LENGTH_SUFFIX.length());
             filename = baseName + FILE_MAX_LENGTH_SUFFIX + extension;
         }

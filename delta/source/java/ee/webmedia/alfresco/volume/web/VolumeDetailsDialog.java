@@ -21,7 +21,6 @@ import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
@@ -32,7 +31,6 @@ import org.springframework.util.Assert;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
@@ -86,6 +84,7 @@ public class VolumeDetailsDialog extends BaseDialogBean {
     }
 
     public void addNewVolume(ActionEvent event) {
+        clearPropSheet();
         newVolume = true;
         NodeRef seriesRef = new NodeRef(ActionUtil.getParam(event, PARAM_SERIES_NODEREF));
         // create new node for currentEntry
@@ -146,10 +145,8 @@ public class VolumeDetailsDialog extends BaseDialogBean {
     public void archive(@SuppressWarnings("unused") ActionEvent event) {
         Assert.notNull(currentEntry, "No current volume");
         DateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
-        NodeRef archivedVolumeNodeRef = getArchivalsService().archiveVolume(currentEntry.getNode().getNodeRef(),
+        getArchivalsService().archiveVolume(currentEntry.getNode().getNodeRef(),
                 String.format(MessageUtil.getMessage("volume_archiving_note"), df.format(new Date())));
-        reload(archivedVolumeNodeRef);
-        ((MenuBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuBean.BEAN_NAME)).updateTree();
         MessageUtil.addInfoMessage("volume_archive_success");
     }
 

@@ -35,12 +35,13 @@ import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.ui.common.ReportedException;
 import org.alfresco.web.ui.common.Utils;
 
+import ee.webmedia.alfresco.utils.MessageUtil;
+
 public class TrashcanDeleteItemDialog extends TrashcanDialog
 {
     private static final long serialVersionUID = 519967126630923155L;
     
     private static final String RICHLIST_ID = "trashcan-list";
-    private static final String RICHLIST_MSG_ID = "trashcan" + ':' + RICHLIST_ID;
     private static final String MSG_YES = "delete_item_action";
     private static final String MSG_NO = "revert";
     private static final String MSG_DELETE_ITEM = "delete_item";
@@ -52,12 +53,13 @@ public class TrashcanDeleteItemDialog extends TrashcanDialog
         {
             try
             {
-                property.getNodeArchiveService().purgeArchivedNode(item.getNodeRef());
+                boolean deleteSucceeded = property.getNodeArchiveService().purgeArchivedNode(item.getNodeRef());
 
-                FacesContext fc = newContext;
-                String msg = MessageFormat.format(Application.getMessage(fc, "delete_item_success"), property.getObjectName());
-                FacesMessage facesMsg = new FacesMessage(FacesMessage.SEVERITY_INFO, msg, msg);
-                fc.addMessage(RICHLIST_MSG_ID, facesMsg);
+                if (deleteSucceeded) {
+                    MessageUtil.addInfoMessage("delete_item_success");
+                } else {
+                    MessageUtil.addErrorMessage("delete_item_failed");
+                }
             }
             catch (Throwable err)
             {

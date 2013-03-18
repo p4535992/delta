@@ -1,5 +1,8 @@
 package ee.webmedia.alfresco.user.web;
 
+import static ee.webmedia.alfresco.common.web.UserContactGroupSearchBean.FILTER_INDEX_SEPARATOR;
+import static ee.webmedia.alfresco.common.web.UserContactGroupSearchBean.USERS_FILTER;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -169,6 +172,9 @@ public class UserListDialog extends BaseDialogBean {
             }
             String label = UserUtil.getPersonFullNameWithUnitName(node.getProperties(), showSubstitutionInfo);
             String value = userName;
+            if (params.isIncludeFilterIndex()) {
+                value += (FILTER_INDEX_SEPARATOR + USERS_FILTER);
+            }
             results.add(new SelectItem(value, label));
         }
 

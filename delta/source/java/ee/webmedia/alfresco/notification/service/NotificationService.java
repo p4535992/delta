@@ -75,7 +75,7 @@ public interface NotificationService {
 
     void notifyExternalReviewError(String notificationContent);
 
-    public void processAccessRestrictionChangedNotification(DocumentDynamic document, List<SendInfo> sendInfos);
+    List<SendInfo> processAccessRestrictionChangedNotification(DocumentDynamic document, List<SendInfo> sendInfos, boolean ignoreMissingEmails);
 
     List<QName> getAllNotificationProps();
 

@@ -1243,6 +1243,7 @@ table.recipient th {
 #metadata-panel table.subPropSheet,
 #metadata-panel table:first-child {
 	width: 100%;
+	table-layout: fixed;
 }
 
 #metadata-panel-panel-border > div > table {

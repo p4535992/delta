@@ -101,9 +101,9 @@ function zIndexWorkaround(context)
 
       if(isIE(7)) {
          var zIndexNumber = 5000;
-         $jQ("div", containerContext).each(function() {
+         $jQ("div,ul", containerContext).each(function() {
             $jQ(this).css('zIndex', zIndexNumber);
-            $jQ(this).children('span').each(function() {
+            $jQ(this).children('span,li').each(function() {
                $jQ(this).css('zIndex', zIndexNumber);
                zIndexNumber -= 10;
             });
@@ -217,7 +217,11 @@ function prependFunction(jQHtmlElem, prependFn, eventAttributeName) {
       jQElem.attr(eventAttributeName, "return false;");
       var jQEventType = eventAttributeName.substring(2, eventAttributeName.length);
       jQElem.bind(jQEventType, function() {
-         return prependFn(jQElem) && originalClickHandler();
+         if(typeof(originalClickHandler) == "function"){
+            return prependFn(jQElem) && originalClickHandler();
+         } else {
+            return prependFn(jQElem) && eval("(function() {" + originalClickHandler + "})();");
+         }
       });
    });
 }
@@ -425,14 +429,18 @@ function isSameDate(date1, date2){
 }
 
 function addSearchSuggest(clientId, containerClientId, pickerCallback, submitUri) {
-   addSearchSuggest(clientId, containerClientId, pickerCallback, submitUri, null);
+   addSearchSuggest(clientId, containerClientId, pickerCallback, null, submitUri, null);
 }
 
-function addSearchSuggest(clientId, containerClientId, pickerCallback, submitUri, autoCompleteCallback) {
+function addSearchSuggest(clientId, containerClientId, pickerCallback, pickerCallbackParams, submitUri) {
+   addSearchSuggest(clientId, containerClientId, pickerCallback, pickerCallbackParams, submitUri, null);
+}
+
+function addSearchSuggest(clientId, containerClientId, pickerCallback, pickerCallbackParams, submitUri, autoCompleteCallback) {
    autocompleters.push(function addAutocompleter() {
       var jQInput = $jQ("#"+escapeId4JQ(clientId));
       var uri = getContextPath() + "/ajax/invoke/AjaxSearchBean.searchSuggest";
-      var suggest = jQInput.autocomplete(uri, {extraParams: {'pickerCallback' : pickerCallback}, matchContains: 1, minChars: 3, suggestAll: 1, delay: 50,
+      var suggest = jQInput.autocomplete(uri, {extraParams: {'pickerCallback' : pickerCallback, 'pickerCallbackParams' : pickerCallbackParams}, matchContains: 1, minChars: 3, suggestAll: 1, delay: 50,
       onItemSelect: function (li) {
          processButtonState();
       },
@@ -448,11 +456,14 @@ function addSearchSuggest(clientId, containerClientId, pickerCallback, submitUri
       suggest.bind("autoComplete", function handleAutocomplete(event, data) {
          handleEnterKeySkip = true;
          setScreenProtected(true, "FIXME: palun oodake, ühendus serveriga");
+         // Get other field values from updateable container and append AC data 
+         var postData = getContainerFields(containerClientId, clientId, []);
+         postData += "&" + $jQ.param({'data' : data.newVal});
          $jQ.ajax({
             type: 'POST',
             url: submitUri,
             mode: 'queue',
-            data: $jQ.param({'data' : data.newVal}),
+            data: postData,
             success: function autocompleteSuccess(responseText) {
                if (autoCompleteCallback) {
                   autoCompleteCallback.call(data.newVal);
@@ -637,6 +648,7 @@ var propSheetValidateFormId = '';
 var propSheetValidateFinishId = '';
 var propSheetValidateSecondaryFinishId = '';
 var propSheetValidateNextId = '';
+var propSheetValidateSecondaryNextId = '';
 var propSheetFinishBtnPressed = false;
 var propSheetNextBtnPressed = false;
 
@@ -649,6 +661,7 @@ function registerPropertySheetValidator(submitFn, formId, finishBtnId, nextBtnId
    propSheetValidateFinishId = finishBtnId;
    propSheetValidateSecondaryFinishId = finishBtnId + "-2";
    propSheetValidateNextId = nextBtnId;
+   propSheetValidateSecondaryNextId = nextBtnId + "-2";
 }
 
 function processButtonState() {
@@ -745,6 +758,12 @@ function propSheetValidateOnDocumentReady() {
             validateNextId.onclick = function() { propSheetNextBtnPressed = true; };
          }
       }
+      if (propSheetValidateSecondaryNextId.length > 0) {
+         var validateSecondaryNextId = document.getElementById(propSheetValidateFormId + ':' + propSheetValidateSecondaryNextId);
+         if (validateSecondaryNextId != null){
+            validateSecondaryNextId.onclick = function() { propSheetNextBtnPressed = true; };
+         }
+      }      
       processButtonState();
    }
 }
@@ -752,11 +771,16 @@ function propSheetValidateOnDocumentReady() {
 function propSheetValidateRegisterOnDocumentReady() {
    if (propSheetValidateSubmitFn.length > 0) {
       document.getElementById(propSheetValidateFormId).onsubmit = propSheetValidateSubmit;
-      var registerBtn = document.getElementById(propSheetValidateFormId + ':documentRegisterButton');
-      if(registerBtn){
-         registerBtn.onclick = function() { propSheetFinishBtnPressed = true; };
-      }
+      setButtonPropSheetFinish(propSheetValidateFormId + ':documentRegisterButton');
+      setButtonPropSheetFinish(propSheetValidateFormId + ':documentRegisterButton-2');
       processButtonState();
+   }
+}
+
+function setButtonPropSheetFinish(elementId){
+   var button = document.getElementById(elementId);
+   if(button){
+      button.onclick = function() { propSheetFinishBtnPressed = true; };
    }
 }
 
@@ -833,15 +857,7 @@ function ajaxSubmit(componentClientId, componentContainerId, submittableParams, 
 function ajaxSubmit(componentClientId, componentContainerId, submittableParams, uri, payload) {
    setScreenProtected(true, "FIXME: palun oodake, ühendus serveriga");
 
-   // Find all form fields that are inside this component
-   var componentChildFormElements = $jQ('#' + escapeId4JQ(componentContainerId)).find('input,select,textarea');
-
-   // Find additional hidden fields at the end of the page that HtmlFormRendererBase renders
-   var hiddenFormElements = $jQ('input[type=hidden]').filter(function() {
-      return componentClientId == this.name.substring(0, componentClientId.length) || $jQ.inArray(this.name, submittableParams) >= 0;
-   });
-
-   var postData = componentChildFormElements.add(hiddenFormElements).serialize();
+   var postData = getContainerFields(componentContainerId, componentClientId, submittableParams);
    if (payload != null) {
       postData += "&" + $jQ.param(payload);
    }
@@ -856,6 +872,18 @@ function ajaxSubmit(componentClientId, componentContainerId, submittableParams, 
       error: ajaxError,
       dataType: 'html'
    });
+}
+
+function getContainerFields(componentContainerId, componentClientId, submittableParams) {
+// Find all form fields that are inside this component
+   var componentChildFormElements = $jQ('#' + escapeId4JQ(componentContainerId)).find('input,select,textarea');
+
+   // Find additional hidden fields at the end of the page that HtmlFormRendererBase renders
+   var hiddenFormElements = $jQ('input[type=hidden]').filter(function() {
+      return componentClientId == this.name.substring(0, componentClientId.length) || $jQ.inArray(this.name, submittableParams) >= 0;
+   });
+
+   return componentChildFormElements.add(hiddenFormElements).serialize();
 }
 
 function ajaxSuccess(responseText, componentClientId, componentContainerId) {
@@ -1176,7 +1204,7 @@ function initWithScreenProtected() {
          return;
       }
       if(!filterValue){
-         filterValue = 0;
+         filterValue = 1; // UserContactGroupSearchBean.USERS_FILTER
       }
 
       var index = callback.indexOf("|");
@@ -1342,12 +1370,14 @@ function initWithScreenProtected() {
       var allowanceDays = parseInt(row.find(".dailyAllowanceDaysField").val());
       var allowanceRate = parseInt(row.find(".dailyAllowanceRateField").val());
       var sumField = row.find(".dailyAllowanceSumField");
-      if(!allowanceDays || !allowanceRate) {
-         return;
+      var sum = 0;
+      if (allowanceDays && allowanceRate) {
+         var sum = allowanceDays * (allowanceRate / 100) * sumField.attr("datafld");
       }
-      var sum = allowanceDays * (allowanceRate / 100) * sumField.attr("datafld");
       if (sum) {
          sumField.val(round(sum, 2));
+      } else {
+         sumField.val(0);
       }
 
       // Sum all rows in this block and set total daily allowance sum
@@ -1670,7 +1700,7 @@ function initSelectTooltips(selects) {
 
 function setSelectTooltips(jqSelect){
    var selected = jqSelect.find("option:selected");
-   if(!jqSelect.hasClass('noOptionTitle')){
+   if(jqSelect.hasClass('noOptionTitle')){
       jqSelect.attr("title", selected.text());
    } else {
       jqSelect.attr("title", selected.attr("title"));
@@ -1750,10 +1780,18 @@ function handleHtmlLoaded(context, setFocus, selects) {
       var jqSelects = (selects==undefined) ? $jQ("select") : selects;
       jqSelects.each(function(){
          var jqSelect = $jQ(this);
-         if(!jqSelect.hasClass('noOptionTitle')) {
+         if(jqSelect.hasClass('noOptionTitle')) {
             jqSelect.children().each(function() {
                $jQ(this).attr('title', $jQ(this).text());
             });
+         } else {
+            jqSelect.children().each(function() {
+               var i = $jQ(this);
+               if (i.attr('title') == undefined) {
+                  i.attr('title', i.text());
+               }
+            });
+            jqSelect.attr("title", jqSelect.find("option:selected").attr("title"));
          }
       });
       if(ieVer==7){
@@ -2040,10 +2078,12 @@ function performSigningPluginOperation(operation, hashHex, certId, path) {
 
 function getMobileIdSignature() {
    var uri = getContextPath() + "/ajax/invoke/WorkflowBlockBean.getMobileIdSignature";
+   var mobileIdChallengeId = $jQ('#mobileIdChallengeId').text();
    $jQ.ajax({
       type: 'POST',
       mode: 'queue',
       url: uri,
+      data: $jQ.param({'mobileIdChallengeId' : mobileIdChallengeId }),
       dataType: 'html',
       success: function( responseText, status, xhr ) {
          if (responseText == 'FINISH') {
@@ -2051,6 +2091,8 @@ function getMobileIdSignature() {
             $jQ('#' + escapeId4JQ('dialog:dialog-body:mobileIdChallengeModal_submit_btn')).click();
          } else if (responseText == 'REPEAT') {
             window.setTimeout(getMobileIdSignature, 2000);
+         } else if (responseText.indexOf('ERROR') == 0){
+            $jQ('#mobileIdChallengeMessage').html('<p>' + responseText.substring(5) + '</p>');            
          }
       }
    });

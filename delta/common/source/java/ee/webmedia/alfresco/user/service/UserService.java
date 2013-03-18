@@ -207,4 +207,6 @@ public interface UserService {
 
     NodeRef retrieveUserReportsFolderRef(String username);
 
+    Set<String> getAllUsersUsernames();
+
 }

@@ -355,12 +355,7 @@ hr {
 	height: 200px;
 }
 
-.subPropertySheetTR table {
-	width: auto !important;
-}
-
 .subPropertySheetTR div:first-child {
-	float: left;
 	overflow: visible;
 }
 

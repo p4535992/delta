@@ -73,8 +73,8 @@
       <wm:multiValueEditor 
          varName="DocumentSendOutDialog.model" 
          propsGeneration="
-          recipientName¤TextAreaGenerator¤styleClass=expand19-200 medium
-         ,recipientEmail¤TextAreaGenerator¤styleClass=expand19-200 medium
+          recipientName¤TextAreaGenerator¤styleClass=expand19-200
+         ,recipientEmail¤TextAreaGenerator¤styleClass=expand19-200
          ,recipientSendMode¤ClassificatorSelectorGenerator¤classificatorName=sendMode¤styleClass=width120 resetSendOutGroupSendMode
          "
          hiddenPropNames="recipientGroup"
@@ -86,7 +86,7 @@
          setterCallback="#{DocumentSendOutDialog.fetchContactData}"
          dialogTitleId="contacts_search_title"
          filters="#{UserContactGroupSearchBean.usersGroupsContactsGroupsFilters}"
-         filterIndex="2"
+         filterIndex="4"
           />
 
       <h:panelGroup>

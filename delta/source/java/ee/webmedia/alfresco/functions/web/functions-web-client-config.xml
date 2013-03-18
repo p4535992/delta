@@ -71,8 +71,8 @@
          
          <action-group id="browse_actions_functions">
             <action idref="function_add_new" />
-            <action idref="docList_export" />
-            <action idref="docList_import" />
+            <!-- <action idref="docList_export" /> -->
+            <!-- <action idref="docList_import" /> Import has not been updated to handle latest changes -->
             <action idref="docList_createNewYearBasedVolumes" />
             <action idref="docList_exportConsolidatedList" />
             <!-- counting this functionality seems to work OK. commenting out, because after import etc, it might be needed again 

@@ -241,10 +241,12 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
 
     private boolean isValidLocation(NodeRef functionRef, NodeRef seriesRef, NodeRef volumeRef, String caseLabel) {
         if (functionRef == null || seriesRef == null || volumeRef == null) {
+            MessageUtil.addErrorMessage("document_validationMsg_mandatory_functionSeriesVolume");
             return false;
         }
         Volume volume = BeanHelper.getVolumeService().getVolumeByNodeRef(volumeRef);
         if (volume.isContainsCases() && StringUtils.isBlank(caseLabel)) {
+            MessageUtil.addErrorMessage("document_validationMsg_mandatory_case");
             return false;
         }
         return true;
@@ -299,7 +301,7 @@ public class DocumentListDialog extends BaseDocumentListDialog implements Dialog
         }
 
         Collections.sort(documents); // always sort, because at first user gets only limited amount of documents;
-                                     // and if user presses show all, then he/she knows it will take time
+        // and if user presses show all, then he/she knows it will take time
         resetModals();
         clearRichList();
     }

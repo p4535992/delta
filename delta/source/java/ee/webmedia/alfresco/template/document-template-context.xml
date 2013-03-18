@@ -114,6 +114,7 @@
    <bean id="generatedFileFieldUpdater" class="ee.webmedia.alfresco.template.bootstrap.GeneratedFileFieldUpdater" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
+      <property name="transactionHelperMinRetryWaits" value="6000" />
    </bean>
    
 </beans>

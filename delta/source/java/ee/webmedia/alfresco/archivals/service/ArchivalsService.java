@@ -14,11 +14,13 @@ import ee.webmedia.alfresco.functions.model.Function;
 public interface ArchivalsService {
     String BEAN_NAME = "ArchivalsService";
 
-    NodeRef archiveVolume(NodeRef volumeNodeRef, String archivingNote);
+    void archiveVolume(NodeRef volumeNodeRef, String archivingNote);
 
     int destroyArchivedVolumes();
 
     void destroyArchivedVolumes(ActionEvent event);
 
     List<Function> getArchivedFunctions();
+
+    NodeRef getArchivalRoot();
 }

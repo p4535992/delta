@@ -180,7 +180,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
             boolean addCommentPopup = blockType.equals(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW) || blockType.equals(WorkflowSpecificModel.Types.OPINION_WORKFLOW)
                     || blockType.equals(WorkflowSpecificModel.Types.ORDER_ASSIGNMENT_WORKFLOW);
             if (addCommentPopup) {
-                commentPopup = createCommentPopup(application, listId);
+                commentPopup = createCommentPopup(application, wfIndex);
                 putAttribute(commentPopup, TaskListGenerator.ATTR_WORKFLOW_INDEX, wfIndex);
                 commentPopup.setActionListener(application.createMethodBinding("#{DialogManager.bean.finishWorkflowTask}", UIActions.ACTION_CLASS_ARGS));
                 resultChildren.add(commentPopup);
@@ -325,6 +325,9 @@ public class TaskListGenerator extends BaseComponentGenerator {
                     }
                 } else if (StringUtils.isNotBlank(ownerGroup) && taskGroup == null) {
                     taskGroup = new TaskGroup(ownerGroup, counter, responsible, fullAccess);
+                    if (task.getDueDate() != null) { // If we add a group under a task that has a due date set, we must also copy it to the group
+                        taskGroup.setDueDate(task.getDueDate());
+                    }
                     List<TaskGroup> groups = taskGroups.get(ownerGroup);
                     if (groups == null) {
                         groups = new ArrayList<TaskGroup>();
@@ -743,9 +746,9 @@ public class TaskListGenerator extends BaseComponentGenerator {
         taskGridChildren.add(dueDateDaysHeading);
     }
 
-    private ValidatingModalLayerComponent createCommentPopup(Application application, String listId) {
+    private ValidatingModalLayerComponent createCommentPopup(Application application, int wfIndex) {
         ValidatingModalLayerComponent commentPopup = (ValidatingModalLayerComponent) application.createComponent(ValidatingModalLayerComponent.class.getCanonicalName());
-        commentPopup.setId("task-comment-popup-" + listId);
+        commentPopup.setId("task-comment-popup-" + wfIndex);
         Map<String, Object> popupAttributes = getAttributes(commentPopup);
         popupAttributes.put(ModalLayerComponent.ATTR_HEADER_KEY, "task_finish_popup");
         popupAttributes.put(ValidatingModalLayerComponent.ATTR_AJAX_ENABLED, Boolean.TRUE);

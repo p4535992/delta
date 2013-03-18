@@ -395,7 +395,8 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     }
 
     public String getSendMode() {
-        return TextUtil.joinStringAndStringWithComma(getTransmittalMode(), (String) getSearchableProperties().get(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE));
+        List<String> searchableSendMode = getSearchableSendModeFromGeneralProps();
+        return TextUtil.joinStringAndStringWithComma(getTransmittalMode(), searchableSendMode != null ? TextUtil.joinNonBlankStringsWithComma(searchableSendMode) : "");
     }
 
     @SuppressWarnings("unchecked")

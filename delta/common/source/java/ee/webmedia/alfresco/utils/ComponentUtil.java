@@ -89,6 +89,7 @@ import ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEdit
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
@@ -846,7 +847,9 @@ public class ComponentUtil {
             throw new RuntimeException("Missing parent component with search capabilities! (Search or MultiValueEditor)");
         }
 
-        Integer addition = (Integer) searchComponent.getAttributes().get(Search.AJAX_PARENT_LEVEL_KEY);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> searchAttrs = searchComponent.getAttributes();
+        Integer addition = (Integer) searchAttrs.get(Search.AJAX_PARENT_LEVEL_KEY);
         if (addition != null) {
             ajaxParentLevel += addition;
         } else if (ajaxParentLevel == 0) {
@@ -857,6 +860,16 @@ public class ComponentUtil {
             throw new RuntimeException("Couldn't find parent ajax component to update for " + clientId + "!");
         }
 
+        // Add filter info
+        int filter = UserContactGroupSearchBean.USERS_FILTER;
+        String filters = (String) searchAttrs.get(Search.FILTERS_KEY);
+        if (filters != null) {
+            SelectItem[] filterSelects = (SelectItem[]) context.getApplication().createValueBinding(filters).getValue(context);
+            for (SelectItem selectItem : filterSelects) {
+                filter = filter | ((Integer) selectItem.getValue());
+            }
+        }
+
         String containerClientId = ancestorAjaxComponent.getClientId(context);
         String submitUri = context.getExternalContext().getRequestContextPath() + "/ajax/invoke/AjaxSearchBean.setterCallback?componentClientId="
                 + clientId + "&containerClientId=" + containerClientId + "&viewName=" + context.getViewRoot().getViewId();
@@ -864,10 +877,11 @@ public class ComponentUtil {
         String sep = "\", \"";
         StringBuffer sb = new StringBuffer("<script type=\"text/javascript\">");
         sb.append("addSearchSuggest(\"")
-                .append(clientId).append(sep)
-                .append(containerClientId).append(sep)
-                .append(pickerCallback).append(sep)
-                .append(submitUri).append("\");");
+        .append(clientId).append(sep)
+        .append(containerClientId).append(sep)
+        .append(pickerCallback).append(sep)
+        .append(filter).append(sep)
+        .append(submitUri).append("\");");
         sb.append("</script>");
         return sb.toString();
     }

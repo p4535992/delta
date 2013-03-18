@@ -9,7 +9,6 @@ import static ee.webmedia.alfresco.common.web.BeanHelper.getEInvoiceService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFileService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getLogService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getOrganizationStructureService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPrivilegeService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getSignatureService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
@@ -20,7 +19,6 @@ import static ee.webmedia.alfresco.utils.ComponentUtil.getChildren;
 import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -37,6 +35,7 @@ import javax.faces.component.UIParameter;
 import javax.faces.component.html.HtmlCommandButton;
 import javax.faces.component.html.HtmlCommandLink;
 import javax.faces.component.html.HtmlPanelGroup;
+import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 import javax.faces.event.ActionEvent;
@@ -519,26 +518,10 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         if (StringUtils.isBlank(reason) || newDate == null || dueDate == null || taskIndex == null || taskIndex < 0) {
             return;
         }
-        CompoundWorkflow compoundWorkflow = getWorkflowService().getNewCompoundWorkflow(getWorkflowService().getNewCompoundWorkflowDefinition().getNode(), docRef);
-        Workflow workflow = getWorkflowService().addNewWorkflow(compoundWorkflow, WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_WORKFLOW, compoundWorkflow.getWorkflows().size(),
-                true);
         Task initiatingTask = myTasks.get(taskIndex);
-        Task task = workflow.addTask();
-        task.setOwnerName(initiatingTask.getCreatorName());
-        task.setOwnerId(initiatingTask.getCreatorId());
-        task.setOwnerEmail(initiatingTask.getCreatorEmail()); // updater
-        Map<QName, Serializable> creatorProps = getUserService().getUserProperties(initiatingTask.getCreatorId());
-        if (creatorProps != null) {
-            task.setOwnerJobTitle((String) creatorProps.get(ContentModel.PROP_JOBTITLE));
-            List<String> orgName = getOrganizationStructureService().getOrganizationStructurePaths((String) creatorProps.get(ContentModel.PROP_ORGID));
-            task.setOwnerOrgStructUnitProp(orgName);
-        }
-        workflow.setProp(WorkflowSpecificModel.Props.RESOLUTION, reason);
-        task.setProposedDueDate(newDate);
-        dueDate.setHours(23);
-        dueDate.setMinutes(59);
-        task.setDueDate(dueDate);
-        getWorkflowService().createDueDateExtension(compoundWorkflow, initiatingTask.getNodeRef());
+
+        getWorkflowService().createDueDateExtension(reason, newDate, dueDate, initiatingTask, docRef);
+
         MessageUtil.addInfoMessage("task_sendDueDateExtensionRequest_success_defaultMsg");
         getDocumentDialogHelperBean().switchMode(false);
     }
@@ -758,7 +741,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             SignatureChallenge signatureChallenge = getDocumentService().prepareDocumentChallenge(docRef, phoneNr);
             long step1 = System.currentTimeMillis();
             getMobileIdChallengeModal().setRendered(true);
-            challengeId = "<div id=\"mobileIdChallengeMessage\" style=\"text-align: center;\"><p>Sõnumit saadetakse, palun oodake...</p><p>Kontrollkood:</p><p style=\"padding-top: 10px; font-size: 28px; vertical-align: middle;\">"
+            challengeId = "<div id=\"mobileIdChallengeMessage\" style=\"text-align: center;\"><p>Sõnumit saadetakse, palun oodake...</p><p>Kontrollkood:</p><p id=\"mobileIdChallengeId\" style=\"padding-top: 10px; font-size: 28px; vertical-align: middle;\">"
                     + StringEscapeUtils.escapeXml(signatureChallenge.getChallengeId()) + "</p></div><script type=\"text/javascript\">$jQ(document).ready(function(){ "
                     + "window.setTimeout(getMobileIdSignature, 2000); "
                     + "});</script>";
@@ -784,6 +767,10 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         ResponseWriter out = FacesContext.getCurrentInstance().getResponseWriter();
         signature = null;
         try {
+            if (!checkSignatureData()) {
+                out.write("ERROR" + MessageUtil.getMessage("task_finish_error_signature_data_changed"));
+                return;
+            }
             signature = getSignatureService().getMobileIdSignature(signatureTask.getSignatureChallenge());
             if (signature == null) {
                 out.write("REPEAT");
@@ -794,6 +781,19 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             out.write("FINISH");
             signatureError = e;
         }
+    }
+
+    private boolean checkSignatureData() {
+        if (signatureTask == null || signatureTask.getSignatureChallenge() == null) {
+            return false;
+        }
+        ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
+        @SuppressWarnings("cast")
+        String requestParamChallengeId = (String) externalContext.getRequestParameterMap().get("mobileIdChallengeId");
+        if (StringUtils.isBlank(requestParamChallengeId) || !requestParamChallengeId.equals(signatureTask.getSignatureChallenge().getChallengeId())) {
+            return false;
+        }
+        return true;
     }
 
     public void finishMobileIdSigning(@SuppressWarnings("unused") ActionEvent event) {
@@ -828,7 +828,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         List<SelectItem> selectItems = new ArrayList<SelectItem>(outcomes);
 
         for (int i = 0; i < outcomes; i++) {
-            String label = MessageUtil.getMessage("task_outcome_externalReviewTask" + i);
+            String label = MessageUtil.getMessage("task_outcome_externalReviewTask" + i + "_title");
             selectItems.add(new SelectItem(i, label));
         }
         return selectItems;
@@ -858,7 +858,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             mobileIdPhoneNrComponent.setActionListener(app.createMethodBinding("#{WorkflowBlockBean.startMobileIdSigning}", UIActions.ACTION_CLASS_ARGS));
             Map<String, Object> mobileIdPhoneNrAttributes = getAttributes(mobileIdPhoneNrComponent);
             mobileIdPhoneNrAttributes.put(ModalLayerComponent.ATTR_HEADER_KEY, "task_title_signatureTask");
-            mobileIdPhoneNrAttributes.put(ModalLayerComponent.ATTR_SUBMIT_BUTTON_MSG_KEY, "task_outcome_signatureTask2");
+            mobileIdPhoneNrAttributes.put(ModalLayerComponent.ATTR_SUBMIT_BUTTON_MSG_KEY, "task_outcome_signatureTask2_title");
             mobileIdPhoneNrAttributes.put(ModalLayerComponent.ATTR_AUTO_SHOW, Boolean.TRUE);
             mobileIdPhoneNrAttributes.put(ModalLayerComponent.ATTR_SET_RENDERED_FALSE_ON_CLOSE, Boolean.TRUE);
 
@@ -879,7 +879,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             mobileIdChallengeComponent.setActionListener(app.createMethodBinding("#{WorkflowBlockBean.finishMobileIdSigning}", UIActions.ACTION_CLASS_ARGS));
             Map<String, Object> mobileIdChallengeAttributes = getAttributes(mobileIdChallengeComponent);
             mobileIdChallengeAttributes.put(ModalLayerComponent.ATTR_HEADER_KEY, "task_title_signatureTask");
-            mobileIdChallengeAttributes.put(ModalLayerComponent.ATTR_SUBMIT_BUTTON_MSG_KEY, "task_outcome_signatureTask2");
+            mobileIdChallengeAttributes.put(ModalLayerComponent.ATTR_SUBMIT_BUTTON_MSG_KEY, "task_outcome_signatureTask2_title");
             mobileIdChallengeAttributes.put(ModalLayerComponent.ATTR_SUBMIT_BUTTON_HIDDEN, Boolean.TRUE);
             mobileIdChallengeAttributes.put(ModalLayerComponent.ATTR_AUTO_SHOW, Boolean.TRUE);
             mobileIdChallengeAttributes.put(ModalLayerComponent.ATTR_SET_RENDERED_FALSE_ON_CLOSE, Boolean.TRUE);
@@ -980,7 +980,8 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 outcomeButton.setId("outcome-id-" + index + "-" + outcomeIndex);
                 Map<String, Object> outcomeBtnAttributes = ComponentUtil.putAttribute(outcomeButton, "styleClass", "taskOutcome");
                 outcomeButton.setActionListener(app.createMethodBinding("#{WorkflowBlockBean.finishTask}", new Class[] { ActionEvent.class }));
-                outcomeButton.setValue(MessageUtil.getMessage(label + outcomeIndex));
+                String buttonSuffix = "_title";
+                outcomeButton.setValue(MessageUtil.getMessage(label + outcomeIndex + buttonSuffix));
                 outcomeBtnAttributes.put(ATTRIB_INDEX, index);
                 outcomeBtnAttributes.put(ATTRIB_OUTCOME_INDEX, outcomeIndex);
 
@@ -990,7 +991,7 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
                 if (WorkflowSpecificModel.Types.REVIEW_TASK.equals(taskType)
                         || WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK.equals(taskType)) {
                     // node.getProperties().put(WorkflowSpecificModel.Props.TEMP_OUTCOME.toString(), 0);
-                    outcomeButton.setValue(MessageUtil.getMessage(label));
+                    outcomeButton.setValue(MessageUtil.getMessage(label + buttonSuffix));
                     break;
                 }
             }

@@ -48,15 +48,22 @@ public class UserContactGenerator extends BaseTypeFieldGenerator {
                 || getUserContactTableGenerator().handlesOriginalFieldId(field.getOriginalFieldId()));
         boolean inSystematicGroup = (field.getParent() instanceof FieldGroup) && ((FieldGroup) field.getParent()).isSystematic();
         boolean itemUnprocessed = !item.getCustomAttributes().containsKey(Search.SETTER_CALLBACK) && !generatorResults.hasStateHolder(stateHolderKey);
+        FieldType fieldType = field.getFieldTypeEnum();
         if ((!handledById || handledById && !inSystematicGroup) && itemUnprocessed) {
             item.setSetterCallback(BaseSystematicFieldGenerator.getBindingName("setData", stateHolderKey));
+            boolean multivalued = fieldType == FieldType.USERS || fieldType == FieldType.CONTACTS || fieldType == FieldType.USERS_CONTACTS;
+            // Setter that take nodes, need the result as NodeRef when not in Search dialog
+            if (!field.isForSearch() && !multivalued) {
+                item.setPreprocessCallback("#{UserContactGroupSearchBean.preprocessResultsToNodeRefs}");
+            }
             item.setSetterCallbackTakesNode(true);
+            item.setAjaxParentLevel(1);
             Map<QName, UserContactMappingCode> mapping = BeanHelper.getUserContactMappingService().getFieldIdsMappingOrNull(field);
             Assert.notNull(mapping, "Couldn't find mapping for " + field.getFieldId());
             generatorResults.addStateHolder(stateHolderKey, new UserContactRelatedGroupState(mapping));
         }
         ComponentUtil.addRecipientGrouping(field, item, BeanHelper.getNamespaceService());
-        switch (field.getFieldTypeEnum()) {
+        switch (fieldType) {
         case USERS:
             item.setShowFilter(true);
             item.setFilters("#{UserContactGroupSearchBean.usersGroupsFilters}");

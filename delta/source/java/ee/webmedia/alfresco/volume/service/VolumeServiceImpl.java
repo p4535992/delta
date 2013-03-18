@@ -63,11 +63,19 @@ public class VolumeServiceImpl implements VolumeService {
 
     @Override
     public List<Volume> getAllVolumesBySeries(NodeRef seriesNodeRef) {
+        return getAllVolumesBySeries(seriesNodeRef, null);
+    }
+
+    @Override
+    public List<Volume> getAllVolumesBySeries(NodeRef seriesNodeRef, DocListUnitStatus status) {
         List<ChildAssociationRef> volumeAssocs = getAllVolumeRefsBySeries(seriesNodeRef);
         List<Volume> volumeOfSeries = new ArrayList<Volume>(volumeAssocs.size());
-        for (ChildAssociationRef volume : volumeAssocs) {
-            NodeRef volumeNodeRef = volume.getChildRef();
-            volumeOfSeries.add(getVolumeByNoderef(volumeNodeRef, seriesNodeRef));
+        for (ChildAssociationRef volumeCaRef : volumeAssocs) {
+            NodeRef volumeNodeRef = volumeCaRef.getChildRef();
+            Volume volume = getVolumeByNoderef(volumeNodeRef, seriesNodeRef);
+            if (status == null || status.getValueName().equals(volume.getStatus())) {
+                volumeOfSeries.add(volume);
+            }
         }
         Collections.sort(volumeOfSeries);
         return volumeOfSeries;
@@ -395,6 +403,19 @@ public class VolumeServiceImpl implements VolumeService {
             log.debug("Found volume: " + volume);
         }
         return volume;
+    }
+
+    @Override
+    public NodeRef getArchivedVolumeByOriginalNodeRef(NodeRef archivedSeriesRef, NodeRef volumeNodeRef) {
+        List<ChildAssociationRef> volumeChildAssocs = nodeService.getChildAssocs(archivedSeriesRef, Collections.singleton(VolumeModel.Types.VOLUME));
+        for (ChildAssociationRef volumeChildAssoc : volumeChildAssocs) {
+            NodeRef archivedVolumeRef = volumeChildAssoc.getChildRef();
+            NodeRef originalVolumeRef = (NodeRef) nodeService.getProperty(archivedVolumeRef, VolumeModel.Props.ORIGINAL_VOLUME);
+            if (originalVolumeRef != null && originalVolumeRef.equals(volumeNodeRef)) {
+                return archivedVolumeRef;
+            }
+        }
+        return null;
     }
 
     @Override

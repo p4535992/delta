@@ -149,6 +149,26 @@
       </property>
    </bean>   
    
+   <bean id="workflowParametersBootstrap3" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/workflow/bootstrap/workflow-parameters3.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>      
+   
    <bean id="taskTableBootstrap3" class="ee.webmedia.alfresco.workflow.bootstrap.TaskTableBootstrap" parent="createTableBootstrap" >
       <property name="executeOnceOnly" value="true" />
    </bean>
@@ -461,6 +481,7 @@
       <property name="workflowService" ref="WmWorkflowService"/>
       <property name="workflowDbService" ref="WorkflowDbService"/>
       <property name="fileService" ref="FileService"/>
+      <property name="transactionHelperMinRetryWaits" value="6000" />
    </bean>
    
    <bean id="taskAssociatedDataTableInsertBootstrap1" class="ee.webmedia.alfresco.workflow.bootstrap.TaskAssociatedDataTableInsertBootstrap" parent="abstractNodeUpdater" >
@@ -473,18 +494,27 @@
             <ref bean="taskDueDateHistoryTableBootstrap" />
             <ref bean="taskFileTableBootstrap" />
             <ref bean="taskTableAddColumnBootstrap7" />
-            <ref bean="archivalsStoresBootstrap" />   
+            <ref bean="archivalsStoresBootstrap" />  
+            <ref bean="logAndDeleteNotExistingWorkflowTasks" /> 
          </list>
       </property>
       <property name="workflowDbService" ref="WorkflowDbService"/>
-      <property name="workflowService" ref="WmWorkflowService"/>       
+      <property name="workflowService" ref="WmWorkflowService"/>  
+      <property name="transactionHelperMinRetryWaits" value="6000" />     
    </bean>
    
    <bean id="deleteAllTasksFromRepo" class="ee.webmedia.alfresco.workflow.bootstrap.DeleteAllTasksFromRepo" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
-      <property name="executeOnceOnly" value="false" />
-      <property name="enabled" value="false" /><!-- Executed only from node-browser -->
-   </bean>   
+      <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="false" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="taskAssociatedDataTableInsertBootstrap1" /> 
+            <ref bean="archivalsStoresBootstrap" />   
+         </list>
+      </property>
+      <property name="batchSize" value="30" />
+   </bean>
    
    <bean id="logAndDeleteNotExistingTasks" class="ee.webmedia.alfresco.workflow.bootstrap.LogAndDeleteNotExistingTasks" parent="module.baseComponent" >
       <property name="moduleId" value="simdhs" />
@@ -496,7 +526,20 @@
             <ref bean="archivalsStoresBootstrap" />   
          </list>
       </property>      
-   </bean>      
+   </bean>  
+   
+  <bean id="logAndDeleteNotExistingWorkflowTasks" class="ee.webmedia.alfresco.workflow.bootstrap.LogAndDeleteNotExistingWorkflowTasks" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />   
+      <property name="enabled" value="false" /><!-- true only in 3.13; in other branches, deleteAllTasksFromRepo does the same thing -->
+      <property name="workflowDbService" ref="WorkflowDbService"/>
+      <property name="workflowService" ref="WmWorkflowService"/>  
+      <property name="dependsOn">
+         <list>
+            <ref bean="taskTableAddColumnBootstrap7" />
+         </list>
+      </property>      
+   </bean> 
    
    <!-- Can be executed only after store_id field is filled by taskAssociatedDataTableInsertBootstrap or fixed by fixTaskStoreIdFromWorkflow 
       and not existing tasks have been removed by logAndDeleteNotExistingTasks -->

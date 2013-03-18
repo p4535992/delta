@@ -71,7 +71,9 @@
                                 //otherserver:40001/org.alfresco.cache.userToAuthorityCache| 
                                 //otherserver:40001/org.alfresco.cache.permissionsAccessCache| 
                                 //otherserver:40001/org.alfresco.cache.nodeOwnerCache| 
-                                //otherserver:40001/org.alfresco.cache.personCache| 
+                                //otherserver:40001/org.alfresco.cache.personCache|
+                                //otherserver:40001/org.alfresco.cache.personPropertiesCache|
+                                //otherserver:40001/org.alfresco.cache.orgStructPropertiesCache| 
                                 //otherserver:40001/org.alfresco.cache.ticketsCache| 
                                 //otherserver:40001/org.alfresco.cache.sysAdminCache|
                                 //otherserver:40001/org.alfresco.cache.aclCache| 
@@ -884,7 +886,7 @@
 
     <cache 
         name="org.alfresco.cache.personCache" 
-        maxElementsInMemory="1000"
+        maxElementsInMemory="10000"
         eternal="true"
         overflowToDisk="false">
 
@@ -896,6 +898,36 @@
                                 replicateUpdatesViaCopy = false,
                                 replicateAsynchronously = false"/>
     </cache>
+    
+    <cache 
+        name="org.alfresco.cache.personPropertiesCache" 
+        maxElementsInMemory="10000"
+        eternal="true"
+        overflowToDisk="false">
+
+            <cacheEventListenerFactory
+                    class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"
+                    properties="replicatePuts = false,
+                                replicateUpdates = true,
+                                replicateRemovals = true,
+                                replicateUpdatesViaCopy = false,
+                                replicateAsynchronously = false"/>
+    </cache>  
+    
+    <cache 
+        name="org.alfresco.cache.orgStructPropertiesCache" 
+        maxElementsInMemory="10000"
+        eternal="true"
+        overflowToDisk="false">
+
+            <cacheEventListenerFactory
+                    class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"
+                    properties="replicatePuts = false,
+                                replicateUpdates = true,
+                                replicateRemovals = true,
+                                replicateUpdatesViaCopy = false,
+                                replicateAsynchronously = false"/>
+    </cache> 
 
     <cache 
         name="org.alfresco.cache.ticketsCache" 

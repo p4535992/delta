@@ -85,6 +85,9 @@
                <type>d:int</type>
                <default>0</default>
             </property>
+            <property name="docdyn:originalVolume">
+               <type>d:noderef</type>
+            </property>            
          </properties>
          <associations><!-- Volumes can have either documents as direct children or cases as children with documents -->
             <child-association name="vol:deletedDocument">

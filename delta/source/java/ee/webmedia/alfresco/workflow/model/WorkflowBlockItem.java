@@ -108,7 +108,8 @@ public class WorkflowBlockItem implements Serializable {
         }
         if (task.isType(WorkflowSpecificModel.Types.DUE_DATE_EXTENSION_TASK)) {
             Date proposedDueDate = task.getProposedDueDate();
-            return MessageUtil.getMessage("task_due_date_extension_resolution", DATE_FORMAT.format(proposedDueDate), task.getResolution());
+            return MessageUtil.getMessage("task_due_date_extension_resolution",
+                    proposedDueDate != null ? DATE_FORMAT.format(proposedDueDate) : MessageUtil.getMessage("task_empty_value"), task.getResolution());
         }
         return task.getResolution();
     }

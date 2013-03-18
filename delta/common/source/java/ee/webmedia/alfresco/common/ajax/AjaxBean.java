@@ -5,10 +5,13 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.faces.application.Application;
 import javax.faces.application.StateManager;
 import javax.faces.application.ViewHandler;
+import javax.faces.component.NamingContainer;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIForm;
 import javax.faces.component.UIInput;
@@ -23,6 +26,7 @@ import org.alfresco.repo.webdav.WebDAVHelper;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.app.servlet.ajax.InvokeCommand.ResponseMimetype;
 import org.alfresco.web.ui.common.Utils;
+import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.apache.myfaces.shared_impl.renderkit.html.HtmlFormRendererBase;
 import org.apache.myfaces.shared_impl.util.RestoreStateUtils;
 import org.apache.myfaces.shared_impl.util.StateUtils;
@@ -43,6 +47,7 @@ public class AjaxBean implements Serializable {
 
     public static final String COMPONENT_CLIENT_ID_PARAM = "componentClientId";
     protected static final String VIEW_NAME_PARAM = "viewName";
+    private static final Pattern DATA_CONTAINER_ROW_PATTERN = Pattern.compile(NamingContainer.SEPARATOR_CHAR + "\\d+" + NamingContainer.SEPARATOR_CHAR);
 
     // ------------------------------------------------------------------------------
     // AJAX handler methods
@@ -106,6 +111,7 @@ public class AjaxBean implements Serializable {
         // Phase 1: Restore view
         UIViewRoot viewRoot = restoreViewRoot(context, viewName);
 
+        setupDataContainer(context, viewRoot, componentClientId);
         UIComponent component = ComponentUtil.findChildComponentById(context, viewRoot, componentClientId, true);
         Assert.notNull(component, String.format("Component with clientId=%s was not found", componentClientId));
         UIForm form = Utils.getParentForm(context, component);
@@ -195,6 +201,21 @@ public class AjaxBean implements Serializable {
         }
         String jsonHiddenInputNames = new JSONSerializer().serialize(formHiddenInputs);
         out.write("HIDDEN_INPUT_NAMES_JSON:" + jsonHiddenInputNames);
+    }
+
+    private void setupDataContainer(FacesContext context, UIViewRoot viewRoot, String componentClientId) {
+        Matcher matcher = DATA_CONTAINER_ROW_PATTERN.matcher(componentClientId);
+        if (!matcher.find()) {
+            return;
+        }
+
+        String dataContainerClientId = componentClientId.substring(0, matcher.start());
+        UIComponent dataContainer = ComponentUtil.findChildComponentById(context, viewRoot, dataContainerClientId, false);
+        if (dataContainer instanceof UIRichList) {
+            String indexString = componentClientId.substring(matcher.start() + 1, matcher.end() - 1);
+            int index = Integer.parseInt(indexString);
+            ((UIRichList) dataContainer).setRowIndex(index);
+        }
     }
 
     protected String getParam(FacesContext context, String paramKey) {

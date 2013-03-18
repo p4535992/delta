@@ -153,7 +153,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
     @Override
     public Pair<DocumentDynamic, DocumentTypeVersion> createNewDocument(String documentTypeId, NodeRef parent) {
-        DocumentTypeVersion docVer = getLatestDocTypeVer(documentTypeId);
+        DocumentTypeVersion docVer = documentAdminService.getLatestDocTypeVer(documentTypeId);
         return createNewDocument(docVer, parent, true);
     }
 
@@ -195,7 +195,15 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
     public void createChildNodesHierarchyAndSetDefaultPropertyValues(Node parentNode, QName[] hierarchy, DocumentTypeVersion docVer) {
         TreeNode<QName> root = documentConfigService.getChildAssocTypeQNameTree(parentNode);
         Assert.isNull(root.getData());
+        TreeNode<QName> current = getChildNodeQNameHierarchy(hierarchy, root);
+        List<Pair<QName, WmNode>> childNodes = createChildNodesHierarchy(parentNode, Collections.singletonList(current), null);
+        Assert.isTrue(childNodes.size() == 1);
 
+        documentConfigService.setDefaultPropertyValues(childNodes.get(0).getSecond(), hierarchy, false, false, docVer);
+    }
+
+    @Override
+    public TreeNode<QName> getChildNodeQNameHierarchy(QName[] hierarchy, TreeNode<QName> root) {
         int i = 0;
         TreeNode<QName> current = root;
         while (i < hierarchy.length) {
@@ -212,11 +220,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
             i++;
         }
         Assert.notNull(current.getData());
-
-        List<Pair<QName, WmNode>> childNodes = createChildNodesHierarchy(parentNode, Collections.singletonList(current), null);
-        Assert.isTrue(childNodes.size() == 1);
-
-        documentConfigService.setDefaultPropertyValues(childNodes.get(0).getSecond(), hierarchy, false, false, docVer);
+        return current;
     }
 
     private List<Pair<QName, WmNode>> createChildNodesHierarchy(Node parentNode, List<TreeNode<QName>> childAssocTypeQNames, Node firstChild) {
@@ -319,12 +323,6 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         return childNodes;
     }
 
-    private DocumentTypeVersion getLatestDocTypeVer(String documentTypeId) {
-        DocumentType documentType = documentAdminService.getDocumentType(documentTypeId, DocumentAdminService.DOC_TYPE_WITH_OUT_GRAND_CHILDREN_EXEPT_LATEST_DOCTYPE_VER);
-        DocumentTypeVersion docVer = documentType.getLatestDocumentTypeVersion();
-        return docVer;
-    }
-
     private void setTypeProps(Pair<String, Integer> docTypeIdAndVersionNr, Map<QName, Serializable> props) {
         props.put(Props.OBJECT_TYPE_ID, docTypeIdAndVersionNr.getFirst());
         props.put(Props.OBJECT_TYPE_VERSION_NR, docTypeIdAndVersionNr.getSecond());
@@ -383,7 +381,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
     @Override
     public void changeTypeInMemory(DocumentDynamic document, String newTypeId) {
-        DocumentTypeVersion docVer = getLatestDocTypeVer(newTypeId);
+        DocumentTypeVersion docVer = documentAdminService.getLatestDocTypeVer(newTypeId);
         Map<QName, Serializable> typeProps = new HashMap<QName, Serializable>();
         setTypeProps(getDocTypeIdAndVersionNr(docVer), typeProps);
 
@@ -554,6 +552,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         Map<String, Pair<DynamicPropertyDefinition, Field>> propDefs = documentConfigService.getPropertyDefinitions(document.getNode());
         if (saveListenerBeanNames != null) {
             ValidationHelperImpl validationHelper = new ValidationHelperImpl(propDefs);
+            validateDocumentForFormulaPattern(document, validationHelper);
             for (String saveListenerBeanName : saveListenerBeanNames) {
                 SaveListener saveListener = (SaveListener) beanFactory.getBean(saveListenerBeanName, SaveListener.class);
                 saveListener.validate(document, validationHelper);
@@ -573,7 +572,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
         // If document is updated for the first time, add SEARCHABLE aspect to document and it's children files.
         Map<String, Object> docProps = document.getNode().getProperties();
-        if (!docNode.hasAspect(DocumentCommonModel.Aspects.SEARCHABLE)) {
+        if (!docNode.hasAspect(DocumentCommonModel.Aspects.SEARCHABLE) && !document.isDraftOrImapOrDvk()) {
             docNode.getAspects().add(DocumentCommonModel.Aspects.SEARCHABLE);
             docProps.put(FILE_NAMES.toString(), documentService.getSearchableFileNames(docRef));
             docProps.put(FILE_CONTENTS.toString(), documentService.getSearchableFileContents(docRef));
@@ -619,6 +618,34 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         }
         generalService.saveAddedAssocs(docNode);
         return document;
+    }
+
+    private void validateDocumentForFormulaPattern(DocumentDynamic document, ValidationHelperImpl validationHelper) {
+        for (Pair<DynamicPropertyDefinition, Field> propDefPair : validationHelper.getPropDefs().values()) {
+            Field field = propDefPair.getSecond();
+            if (field == null) {
+                continue; // Hidden fields can be ignored
+            }
+            Serializable value = document.getProp(field.getQName());
+            if (validateValueForFormulaPattern(value, field, validationHelper)) {
+                // it was a string value
+            } else if (value instanceof Collection<?>) {
+                for (Object item : (Collection<?>) ((Collection<?>) value)) {
+                    validateValueForFormulaPattern(item, field, validationHelper);
+                }
+            }
+        }
+    }
+
+    private boolean validateValueForFormulaPattern(Object item, Field field, ValidationHelperImpl validationHelper) {
+        if (item instanceof String) {
+            String stringValue = (String) item;
+            if (StringUtils.startsWith(stringValue, "{") && StringUtils.endsWith(stringValue, "}")) {
+                validationHelper.addErrorMessage("docdyn_save_error_valueContainsFormulaPattern", field.getName());
+            }
+            return true;
+        }
+        return false;
     }
 
     private Set<NodeRef> getAssociatedDocRefs(DocumentDynamic document) {

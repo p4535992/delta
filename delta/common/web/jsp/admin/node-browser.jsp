@@ -367,9 +367,9 @@
       <hr/>
       
       <h:outputText styleClass="mainTitle" value="Lucene Index"/>
-      <br/>
-      <h:inputTextarea id="luceneIndexInfo" value="#{AdminNodeBrowseBean.luceneIndexInfo}" readonly="true" styleClass="expand19-200" />
-      
+      <br/><div style="height: 400px; overflow: scroll; border: 1px solid black;"><pre>
+      <h:outputText id="luceneIndexInfo" value="#{AdminNodeBrowseBean.luceneIndexInfo}" />
+      </pre></div>
       <br/>
       <h:panelGroup id="storePropsPanel" rendered="#{AdminNodeBrowseBean.inAVMStore}">
       

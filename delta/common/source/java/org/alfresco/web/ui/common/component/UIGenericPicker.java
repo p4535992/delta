@@ -46,6 +46,7 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.common.ajax.AjaxUpdateable;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -92,7 +93,7 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
     private Integer size = null;
 
     private SelectItem[] filters = null;
-    private int filterIndex = 0;
+    private int filterIndex = UserContactGroupSearchBean.USERS_FILTER;
     private int defaultFilterIndex = 0;
     private String contains = "";
     private String[] selectedResults = null;
@@ -309,8 +310,12 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
             if (items != null) {
                 for (int i = 0; i < items.length; i++) {
                     out.write("<option value=\"");
-                    out.write(items[i].getValue().toString());
-                    if (filterIndex != i) {
+                    // KAAREL: I checked and it seems that we are using integers as values everywhere.
+                    // When this is not the case this cast will fail fast.
+                    Integer value = (Integer) items[i].getValue();
+                    out.write(value.toString());
+                    // Since select values aren't 0-based integer lists anymore, the selected attribute must be assigned regarding the value.
+                    if (filterIndex != value) {
                         out.write("\">");
                     } else {
                         out.write("\" selected=\"true\">");

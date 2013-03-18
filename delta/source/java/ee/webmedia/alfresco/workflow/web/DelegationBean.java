@@ -34,6 +34,7 @@ import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.user.service.UserService;
@@ -289,8 +290,8 @@ public class DelegationBean implements Serializable {
     public void processResponsibleOwnerSearchResults(ActionEvent event) {
         UIGenericPicker picker = (UIGenericPicker) event.getComponent();
         int filterIndex = picker.getFilterIndex();
-        if (filterIndex == 1) {
-            filterIndex = 2;
+        if (filterIndex == UserContactGroupSearchBean.USER_GROUPS_FILTER) {
+            filterIndex = UserContactGroupSearchBean.CONTACTS_FILTER;
         }
         processOwnerSearchResults(event, filterIndex);
     }
@@ -381,11 +382,11 @@ public class DelegationBean implements Serializable {
         Workflow workflow = getWorkflowByAction(event);
         for (String result : results) {
             // users
-            if (filterIndex == 0) {
+            if (filterIndex == UserContactGroupSearchBean.USERS_FILTER) {
                 setPersonPropsToTask(workflow, taskIndex, result);
             }
             // user groups
-            else if (filterIndex == 1) {
+            else if (filterIndex == UserContactGroupSearchBean.USER_GROUPS_FILTER) {
                 Set<String> children = BeanHelper.getUserService().getUserNamesInGroup(result);
                 int j = 0;
                 Task task = workflow.getTasks().get(taskIndex);
@@ -400,11 +401,11 @@ public class DelegationBean implements Serializable {
                 }
             }
             // contacts
-            else if (filterIndex == 2) {
+            else if (filterIndex == UserContactGroupSearchBean.CONTACTS_FILTER) {
                 setContactPropsToTask(workflow, taskIndex, new NodeRef(result));
             }
             // contact groups
-            else if (filterIndex == 3) {
+            else if (filterIndex == UserContactGroupSearchBean.CONTACT_GROUPS_FILTER) {
                 List<NodeRef> contacts = BeanHelper.getAddressbookService().getContactGroupContents(new NodeRef(result));
                 taskIndex = addContactGroupTasks(taskIndex, workflow, contacts);
             } else {

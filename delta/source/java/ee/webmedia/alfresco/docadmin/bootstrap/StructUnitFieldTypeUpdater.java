@@ -33,7 +33,7 @@ public class StructUnitFieldTypeUpdater extends AbstractNodeUpdater {
                         SearchUtil.generateTypeQuery(DocumentAdminModel.Types.FIELD),
                         SearchUtil.generateTypeQuery(DocumentAdminModel.Types.FIELD_DEFINITION)
                 ),
-                SearchUtil.generatePropertyWildcardQuery(DocumentAdminModel.Props.ORIGINAL_FIELD_ID, ORG_STRUCT_UNIT, false, true, true)
+                SearchUtil.generatePropertyWildcardQuery(DocumentAdminModel.Props.ORIGINAL_FIELD_ID, ORG_STRUCT_UNIT, true, true)
                 );
         List<ResultSet> result = new ArrayList<ResultSet>(1);
         result.add(searchService.query(generalService.getStore(), SearchService.LANGUAGE_LUCENE, query));

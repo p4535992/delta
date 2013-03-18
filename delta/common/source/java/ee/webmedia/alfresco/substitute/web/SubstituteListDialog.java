@@ -21,6 +21,7 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
+import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections.comparators.NullComparator;
 import org.apache.commons.collections.comparators.TransformingComparator;
 import org.apache.commons.lang.StringUtils;
@@ -53,6 +54,7 @@ public class SubstituteListDialog extends BaseDialogBean {
     }, new NullComparator());
 
     private NodeRef userNodeRef;
+    private String username;
     private Map<String, Substitute> originalSubstitutes = new HashMap<String, Substitute>();
     private List<Substitute> substitutes;
     private Map<String, Substitute> addedSubstitutes;
@@ -61,12 +63,15 @@ public class SubstituteListDialog extends BaseDialogBean {
     @Override
     public void init(Map<String, String> params) {
         super.init(params);
-        userNodeRef = getUserService().getUser(AuthenticationUtil.getRunAsUser()).getNodeRef();
+        Node user = getUserService().getUser(AuthenticationUtil.getRunAsUser());
+        userNodeRef = user.getNodeRef();
+        username = (String) user.getProperties().get(ContentModel.PROP_USERNAME);
         refreshData();
     }
 
     public void setUserNodeRef(NodeRef userNodeRef) {
         this.userNodeRef = userNodeRef;
+        username = (String) BeanHelper.getNodeService().getProperty(userNodeRef, ContentModel.PROP_USERNAME);
     }
 
     @SuppressWarnings("unchecked")
@@ -259,6 +264,7 @@ public class SubstituteListDialog extends BaseDialogBean {
 
     public void addNewValue(ActionEvent event) {
         Substitute newSubstitute = Substitute.newInstance();
+        newSubstitute.setReplacedPersonUserName(username);
         substitutes.add(newSubstitute);
         addedSubstitutes.put(newSubstitute.getNodeRef().toString(), newSubstitute);
     }

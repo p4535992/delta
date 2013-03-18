@@ -7,6 +7,7 @@ public class PickerSearchParams implements Serializable {
     private int filterIndex;
     private String searchString;
     private int limit = -1;
+    private boolean includeFilterIndex;
 
     /**
      * @param filterIndex Index of the filter drop-down selection
@@ -17,6 +18,14 @@ public class PickerSearchParams implements Serializable {
         setFilterIndex(filterIndex);
         setSearchString(searchString);
         setLimit(limit);
+        setIncludeFilterIndex(false);
+    }
+
+    public PickerSearchParams(int filterIndex, String searchString, int limit, boolean includeFilterIndex) {
+        setFilterIndex(filterIndex);
+        setSearchString(searchString);
+        setLimit(limit);
+        setIncludeFilterIndex(includeFilterIndex);
     }
 
     public int getFilterIndex() {
@@ -24,7 +33,7 @@ public class PickerSearchParams implements Serializable {
     }
 
     public boolean isFilterIndex(int compareTo) {
-        return filterIndex == compareTo;
+        return (filterIndex & compareTo) == compareTo;
     }
 
     public String getSearchString() {
@@ -33,6 +42,10 @@ public class PickerSearchParams implements Serializable {
 
     public int getLimit() {
         return limit;
+    }
+
+    public boolean isIncludeFilterIndex() {
+        return includeFilterIndex;
     }
 
     public void setFilterIndex(int filterIndex) {
@@ -45,5 +58,9 @@ public class PickerSearchParams implements Serializable {
 
     public void setLimit(int limit) {
         this.limit = limit;
+    }
+
+    public void setIncludeFilterIndex(boolean includeFilterIndex) {
+        this.includeFilterIndex = includeFilterIndex;
     }
 }

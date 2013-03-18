@@ -95,6 +95,7 @@
       <property name="nodeService" ref="NodeService" />
       <property name="amrService" ref="AmrService" />
       <property name="authorityService" ref="AuthorityService" />
+      <property name="orgStructPropertiesCache" ref="orgStructPropertiesCache" />  
       <property name="organizationStructureUpdateEnabled" value="${organizationStructure.updateEnabled}" />
    </bean>
 

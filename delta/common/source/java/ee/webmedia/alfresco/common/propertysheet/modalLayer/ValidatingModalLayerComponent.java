@@ -81,8 +81,8 @@ public class ValidatingModalLayerComponent extends ModalLayerComponent {
             out.write("</td></tr>");
             if (addValidation && !isHidden && isValidatedControl(attributes)) {
                 out.write("<script type=\"text/javascript\">$jQ(document).ready(function(){");
-                out.write("$jQ('#' + escapeId4JQ(" + serializer.serialize(child.getClientId(context)) + ") ).keyup(function(){" + validationJs + "});");
-                out.write("$jQ('#' + escapeId4JQ(" + serializer.serialize(child.getClientId(context)) + ") ).change(function(){" + validationJs + "});");
+                out.write("$jQ('*').delegate('#' + escapeId4JQ(" + serializer.serialize(child.getClientId(context)) + "), 'keyup', function(){" + validationJs + "});");
+                out.write("$jQ('*').delegate('#' + escapeId4JQ(" + serializer.serialize(child.getClientId(context)) + "), 'change', function(){" + validationJs + "});");
                 out.write(validationJs.toString());
                 out.write("});</script>");
             }

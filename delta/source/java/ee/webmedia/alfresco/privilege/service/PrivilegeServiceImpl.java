@@ -328,9 +328,11 @@ public class PrivilegeServiceImpl implements PrivilegeService {
         private final boolean inheritParentPermissions;
         private final Map<String, Set<String>> groupsByUser = new HashMap<String, Set<String>>();
         private Map<String, AccessPermission> ancestorAccessPermissionsMap;
+        private final String adminGroup;
 
         ThoroughInheritanceChecker(NodeRef manageableRef, String adminGroup) {
             parentRef = nodeService.getPrimaryParent(manageableRef).getParentRef();
+            this.adminGroup = adminGroup;
             userNamesInAdminsGroup = getUserService().getUserNamesInGroup(adminGroup);
             inheritParentPermissions = BeanHelper.getPermissionService().getInheritParentPermissions(manageableRef);
             if (isTest == null) {
@@ -409,7 +411,8 @@ public class PrivilegeServiceImpl implements PrivilegeService {
                 return true;
             }
             // check being admin after inspecting AccessPermissions
-            if (origAccessPermission.getAuthorityType() == AuthorityType.ADMIN || userNamesInAdminsGroup.contains(authority) || defaultAdmins.contains(authority)) {
+            if (origAccessPermission.getAuthorityType() == AuthorityType.ADMIN || userNamesInAdminsGroup.contains(authority) || defaultAdmins.contains(authority)
+                    || authority.equals(adminGroup)) {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("NOT inherited isAdmin: " + authority + " " + permission);
                 }

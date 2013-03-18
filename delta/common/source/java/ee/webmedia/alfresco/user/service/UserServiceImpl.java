@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.user.service;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -130,9 +132,13 @@ public class UserServiceImpl implements UserService {
         }
         if (!nodeService.hasAspect(personRef, ReportModel.Aspects.REPORTS_QUEUE_CONTAINER)) {
             nodeService.addAspect(personRef, ReportModel.Aspects.REPORTS_QUEUE_CONTAINER, null);
-            nodeService.createNode(personRef, ReportModel.Assocs.REPORTS_QUEUE, ReportModel.Assocs.REPORTS_QUEUE, ReportModel.Types.REPORTS_QUEUE_ROOT);
         }
-        return getReportsFolder(personRef);
+        NodeRef reportsFolder = getReportsFolder(personRef);
+        if (reportsFolder == null) {
+            reportsFolder = nodeService.createNode(personRef, ReportModel.Assocs.REPORTS_QUEUE, ReportModel.Assocs.REPORTS_QUEUE, ReportModel.Types.REPORTS_QUEUE_ROOT)
+                    .getChildRef();
+        }
+        return reportsFolder;
     }
 
     private NodeRef getReportsFolder(NodeRef userRef) {
@@ -238,7 +244,7 @@ public class UserServiceImpl implements UserService {
 
     // XXX filtering by group is not optimal - it is done after searching/getting all users
     private List<Node> searchUsersByProps(String input, boolean returnAllUsers, String group, Set<QName> props, int limit) {
-        List<NodeRef> nodeRefs = generalService.searchNodes(input, ContentModel.TYPE_PERSON, props, limit);
+        List<NodeRef> nodeRefs = getDocumentSearchService().searchNodesByTypeAndProps(input, ContentModel.TYPE_PERSON, props, limit);
         if (nodeRefs == null) {
             if (returnAllUsers) {
                 // XXX use alfresco services instead
@@ -311,11 +317,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Map<QName, Serializable> getUserProperties(String userName) {
-        NodeRef personRef = getPerson(userName);
-        if (personRef == null) {
-            return null;
-        }
-        return nodeService.getProperties(personRef);
+        return personService.getPersonProperties(userName);
     }
 
     @Override
@@ -503,7 +505,7 @@ public class UserServiceImpl implements UserService {
         }
 
         // Update user node
-        nodeService.addProperties(user.getNodeRef(), props);
+        personService.setPersonProperties((String) props.get(ContentModel.PROP_USERNAME), props);
     }
 
     @Override
@@ -588,6 +590,20 @@ public class UserServiceImpl implements UserService {
             }
         }
         return personNodes;
+    }
+
+    @Override
+    public Set<String> getAllUsersUsernames() {
+        Set<String> usernames = null;
+        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(personService.getPeopleContainer());
+        usernames = new HashSet<String>(childRefs.size());
+        for (ChildAssociationRef ref : childRefs) {
+            NodeRef nodeRef = ref.getChildRef();
+            if (nodeService.getType(nodeRef).equals(ContentModel.TYPE_PERSON)) {
+                usernames.add((String) nodeService.getProperty(nodeRef, ContentModel.PROP_USERNAME));
+            }
+        }
+        return usernames;
     }
 
     // START: setters/getters

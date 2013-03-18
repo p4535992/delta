@@ -56,7 +56,7 @@ public class StructUnitSearch extends Search {
     }
 
     @Override
-    protected void multiValuedPickerFinish(String[] results, FacesContext context, int index) {
+    public void multiValuedPickerFinish(String[] results, FacesContext context, int index) {
         removeRow(context, 0);
 
         @SuppressWarnings("unchecked")

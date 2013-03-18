@@ -413,9 +413,21 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
     private List<String> getChangedAccessRestrictionFieldIds(DocumentDynamic document, Map<QName, Serializable> oldProps) {
         List<String> fields = new ArrayList<String>();
         for (QName propName : ACCESS_RESTRICTION_PROPS) {
-            if (!ObjectUtils.equals(document.getProp(propName), oldProps.get(propName))) {
-                fields.add(propName.getLocalName());
+            Serializable docProp = document.getProp(propName);
+            Serializable oldProp = oldProps.get(propName);
+
+            // Ignore differences between null values as empty strings
+            if (docProp instanceof String && StringUtils.isBlank((String) docProp)) {
+                docProp = null;
             }
+            if (oldProp instanceof String && StringUtils.isBlank((String) oldProp)) {
+                oldProp = null;
+            }
+
+            if (ObjectUtils.equals(docProp, oldProp)) {
+                continue;
+            }
+            fields.add(propName.getLocalName());
         }
         return fields;
     }

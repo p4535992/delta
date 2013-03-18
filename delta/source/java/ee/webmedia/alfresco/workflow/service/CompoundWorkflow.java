@@ -22,7 +22,7 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
     private List<CompoundWorkflow> otherCompoundWorkflows = new ArrayList<CompoundWorkflow>();
     private final List<Workflow> removedWorkflows = new ArrayList<Workflow>();
 
-    protected CompoundWorkflow(WmNode node, NodeRef parent) {
+    public CompoundWorkflow(WmNode node, NodeRef parent) {
         super(node);
         Assert.notNull(parent);
         this.parent = parent;
@@ -78,7 +78,7 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
         removedWorkflows.add(workflows.remove(index));
     }
 
-    protected void addWorkflow(Workflow workflow) {
+    public void addWorkflow(Workflow workflow) {
         workflows.add(workflow);
     }
 

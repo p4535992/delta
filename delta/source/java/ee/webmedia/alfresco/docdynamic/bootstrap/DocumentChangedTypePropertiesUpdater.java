@@ -31,6 +31,8 @@ import ee.webmedia.alfresco.utils.RepoUtil;
  */
 public class DocumentChangedTypePropertiesUpdater extends AbstractNodeUpdater {
 
+    public static final String BEAN_NAME = "documentChangedTypePropertiesUpdater";
+
     @Override
     protected boolean usePreviousState() {
         return false;
@@ -70,9 +72,13 @@ public class DocumentChangedTypePropertiesUpdater extends AbstractNodeUpdater {
             return new String[] { "Type is not document, but " + type + ", skipping node" };
         }
         if (generalService.getAncestorNodeRefWithType(nodeRef, SeriesModel.Types.SERIES) == null) {
-            return new String[] { "Document is not saved under series, parent= " + generalService.getPrimaryParent(nodeRef) + ", skipping node" };
+            return new String[] { getNotSeriesChildMsg(nodeRef) };
         }
         DocumentDynamic document = BeanHelper.getDocumentDynamicService().getDocument(nodeRef);
+        return updateNode(nodeRef, document);
+    }
+
+    protected String[] updateNode(NodeRef nodeRef, DocumentDynamic document) {
         Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions = BeanHelper.getDocumentConfigService().getPropertyDefinitions(document.getNode());
         Set<String> typeVersionFields = propertyDefinitions.keySet();
         List<QName> propsToNull = new ArrayList<QName>();
@@ -86,6 +92,10 @@ public class DocumentChangedTypePropertiesUpdater extends AbstractNodeUpdater {
             }
         }
         return new String[] { "Removed properties: " + StringUtils.join(propsToNull, ", ") };
+    }
+
+    protected String getNotSeriesChildMsg(NodeRef nodeRef) {
+        return "Document is not saved under series, parent= " + generalService.getPrimaryParent(nodeRef) + ", skipping node";
     }
 
     private boolean isChildNodeProperty(Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions, String localName) {

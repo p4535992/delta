@@ -203,7 +203,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
 
         return SearchUtil.joinQueryPartsAnd(generateAspectQuery(DocumentCommonModel.Aspects.FORUM_PARTICIPANTS)
                 , generateStringExactQuery(DocumentStatus.WORKING.getValueName(), DocumentCommonModel.Props.DOC_STATUS)
-                , SearchUtil.generatePropertyExactQuery(DocumentCommonModel.Props.FORUM_PARTICIPANTS, authorities, false));
+                , SearchUtil.generatePropertyExactQuery(DocumentCommonModel.Props.FORUM_PARTICIPANTS, authorities));
     }
 
     @Override
@@ -475,7 +475,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         List<String> queryParts = new ArrayList<String>();
         queryParts.add(generateStringNotEmptyQuery(DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME,
                 DocumentSpecificModel.Props.PARTY_NAME /* on document node, duplicates partyName property values from all contractParty child-nodes */
-                ));
+        ));
         queryParts.add(generateStringExactQuery(DocumentStatus.FINISHED.getValueName(), DocumentCommonModel.Props.DOC_STATUS));
         queryParts.add(generateStringNullQuery(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE));
         String query = generateDocumentSearchQuery(queryParts);
@@ -519,7 +519,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         Pair<List<String>, List<Object>> queryPartsAndArgs = getTaskQuery(taskType, AuthenticationUtil.getRunAsUser(), Status.IN_PROGRESS, false);
         addSubstitutionRestriction(queryPartsAndArgs);
         String query = generateTaskSearchQuery(queryPartsAndArgs.getFirst());
-        Pair<List<Task>, Boolean> results = BeanHelper.getWorkflowDbService().searchTasksMainStore(query, queryPartsAndArgs.getSecond(), -1);
+        Pair<List<Task>, Boolean> results = BeanHelper.getWorkflowDbService().searchTasksAllStores(query, queryPartsAndArgs.getSecond(), -1);
         if (log.isDebugEnabled()) {
             log.debug("Current user's and IN_PROGRESS tasks search total time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
         }
@@ -671,6 +671,11 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     @Override
+    public boolean isMatchAllStoresWithTrashcan(String query) {
+        return isMatch(query, true, "isMatch");
+    }
+
+    @Override
     public boolean isMatch(String query, boolean allStores, String queryName) {
         if (!allStores) {
             ResultSet resultSet = doSearchQuery(generateLuceneSearchParams(query, generalService.getStore(), 1), queryName);
@@ -682,7 +687,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                 }
             }
         }
-        List<ResultSet> results = doSearches(query, 1, queryName, getAllStoresWithArchivalStoreVOs());
+        List<ResultSet> results = doSearches(query, 1, queryName, generalService.getAllStoreRefsWithTrashCan());
         try {
             for (ResultSet result : results) {
                 if (result.length() > 0) {
@@ -983,7 +988,9 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         if (isBlank(queryParts)) {
             return null;
         }
-        return generateDocumentSearchQuery(queryParts);
+        return joinQueryPartsOr(
+                generateDocumentSearchQuery(queryParts),
+                generateStringWordsWildcardQuery(searchValue, ContentModel.PROP_NAME));
     }
 
     @Override
@@ -1343,7 +1350,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                     continue;
                 }
                 NodeRef volumeRef = (NodeRef) props.get(DocumentCommonModel.Props.VOLUME);
-                String query = joinQueryPartsAnd(generatePropertyWildcardQuery(CaseModel.Props.TITLE, caseLabel.trim(), true, false, true),
+                String query = joinQueryPartsAnd(generatePropertyWildcardQuery(CaseModel.Props.TITLE, caseLabel.trim(), false, true),
                         generateParentQuery(volumeRef));
                 ResultSet result = null;
                 try {
@@ -1381,7 +1388,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             }
             Object value = entry.getValue();
             if (value instanceof String) {
-                queryParts.add(generateStringWordsWildcardQuery((String) value, propQName));
+                queryParts.add(generateStringWordsWildcardQuery((String) value, 2, propQName));
             } else if (value instanceof List) {
                 // including docAdminService in context.xml creates a circular dependency because docAdminService includes DocSearchService
                 DocumentAdminService ser = BeanHelper.getDocumentAdminService();
@@ -1392,7 +1399,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                 if (StringUtils.isNotBlank(def.getClassificator())) {
                     queryParts.add(generateMultiStringExactQuery(list, propQName));
                 } else {
-                    queryParts.add(generateMultiStringWordsWildcardQuery(list, propQName));
+                    queryParts.add(generateMultiStringWordsWildcardQuery(list, 2, propQName));
                 }
             } else if (value instanceof Date) {
                 Date endDate = (Date) props.get(DateGenerator.getEndDateQName(propQName));
@@ -1437,8 +1444,8 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         for (String searchWord : searchWords) {
             if (StringUtils.isNotBlank(searchWord)) {
                 queryParts.add(joinQueryPartsOr(Arrays.asList(
-                        SearchUtil.generateValueQuery(searchWord, false),
-                        SearchUtil.generatePropertyWildcardQuery(DocumentCommonModel.Props.FILE_CONTENTS, searchWord, false, false, true))));
+                        SearchUtil.generateValuesWildcardQuery(searchWord),
+                        SearchUtil.generatePropertyWildcardQuery(DocumentCommonModel.Props.FILE_CONTENTS, searchWord, false, true))));
             }
         }
         return queryParts;
@@ -1574,7 +1581,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         if (StringUtils.isBlank(tsQueryInput) || taskProps == null || taskProps.length == 0) {
             return;
         }
-        String tsquery = generalService.getTsquery(tsQueryInput);
+        String tsquery = generalService.getTsquery(tsQueryInput, 2);
         if (StringUtils.isNotBlank(tsquery)) {
             queryParts.add(DbSearchUtil.generateTaskStringWordsWildcardQuery(taskProps));
             arguments.add(tsquery);
@@ -1666,6 +1673,16 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                 return ((QName) nodeService.getProperty(row.getNodeRef(), AdrModel.Props.DOCUMENT_TYPE)).getLocalName();
             }
         }).getFirst();
+    }
+
+    @Override
+    public List<NodeRef> searchNodesByTypeAndProps(String input, QName type, Set<QName> props, int limit) {
+        limit = limit < 0 ? 100 : limit;
+        String query = joinQueryPartsAnd(
+                type != null ? generateTypeQuery(type) : "",
+                generateStringWordsWildcardQuery(input, props.toArray(new QName[props.size()]))
+                );
+        return searchNodes(query, limit, "searchNodesByTypeAndProps");
     }
 
     @Override

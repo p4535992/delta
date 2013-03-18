@@ -8,15 +8,20 @@ import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.CopyService;
@@ -34,10 +39,11 @@ import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.adr.service.AdrService;
 import ee.webmedia.alfresco.archivals.model.ArchivalsModel;
-import ee.webmedia.alfresco.cases.model.Case;
+import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.functions.model.Function;
@@ -46,6 +52,8 @@ import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.series.service.SeriesService;
+import ee.webmedia.alfresco.utils.ProgressTracker;
+import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
@@ -54,6 +62,9 @@ import ee.webmedia.alfresco.volume.service.VolumeService;
  * @author Romet Aidla
  */
 public class ArchivalsServiceImpl implements ArchivalsService {
+
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(ArchivalsServiceImpl.class);
+
     private NodeService nodeService;
     private GeneralService generalService;
     private CopyService copyService;
@@ -69,72 +80,337 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     private StoreRef archivalsStore;
 
     @Override
-    public NodeRef archiveVolume(NodeRef volumeNodeRef, String archivingNote) {
+    public void archiveVolume(final NodeRef volumeNodeRef, final String archivingNote) {
+        generalService.runOnBackground(new RunAsWork<Void>() {
+
+            @Override
+            public Void doWork() throws Exception {
+                archiveVolumeImpl(volumeNodeRef, archivingNote);
+                return null;
+            }
+        }, "archiveVolume", false);
+    }
+
+    private NodeRef archiveVolumeImpl(final NodeRef volumeNodeRef, final String archivingNote) {
         Assert.notNull(volumeNodeRef, "Reference to volume node must be provided");
+
+        final RetryingTransactionHelper transactionHelper = BeanHelper.getTransactionService().getRetryingTransactionHelper();
+
         Volume volume = volumeService.getVolumeByNodeRef(volumeNodeRef);
-        Series series = seriesService.getSeriesByNodeRef(volume.getSeriesNodeRef());
+        final Series series = seriesService.getSeriesByNodeRef(volume.getSeriesNodeRef());
+        final NodeRef originalSeriesRef = series.getNode().getNodeRef();
+        final Map<NodeRef, NodeRef> originalToArchivedCaseNodeRef = new HashMap<NodeRef, NodeRef>();
 
-        // Make a copy of function and series and then move them if necessary.
-        // We can't copy them directly to different store (CopyService doesn't support this).
-        NodeRef copiedFunNodeRef = copyService.copy(series.getFunctionNodeRef(), getTempArchivalRoot(),
-                FunctionsModel.Associations.FUNCTION, FunctionsModel.Associations.FUNCTION);
-        String functionMark = (String) nodeService.getProperty(copiedFunNodeRef, FunctionsModel.Props.MARK);
-        NodeRef copiedSeriesNodeRef = copyService.copy(series.getNode().getNodeRef(), copiedFunNodeRef,
-                SeriesModel.Associations.SERIES, SeriesModel.Associations.SERIES);
-        String seriesIdentifier = (String) nodeService.getProperty(copiedSeriesNodeRef, SeriesModel.Props.SERIES_IDENTIFIER);
-
-        // find if function with given mark from archival store
-        NodeRef archivedFunRef = getArchivedFunctionByMark(functionMark);
-        NodeRef archivedSeriesRef = null;
-        if (archivedFunRef == null) { // function isn't archived before, let's do this now
-            archivedFunRef = nodeService.moveNode(copiedFunNodeRef, getArchivalRoot(),
-                    FunctionsModel.Associations.FUNCTION, FunctionsModel.Associations.FUNCTION).getChildRef();
-            // with previous call, also series will be moved, find the series node ref
-            archivedSeriesRef = getArchivedSeriesByIdentifies(archivedFunRef, seriesIdentifier);
-        } else { // function is archived, let's check whether we need to archive series
-            archivedSeriesRef = getArchivedSeriesByIdentifies(archivedFunRef, seriesIdentifier);
-            if (archivedSeriesRef == null) { // series isn't archived before, let's do this now
-                nodeService.setProperty(copiedSeriesNodeRef, SeriesModel.Props.CONTAINING_DOCS_COUNT, 0); // reset value if it' first time
-                archivedSeriesRef = nodeService.moveNode(copiedSeriesNodeRef, archivedFunRef,
-                        SeriesModel.Associations.SERIES, SeriesModel.Associations.SERIES).getChildRef();
+        // do in separate transaction, must be visible in following transactions
+        NodeRef[] archivedParentRefs = transactionHelper.doInTransaction(new RetryingTransactionCallback<NodeRef[]>() {
+            @Override
+            public NodeRef[] execute() throws Throwable {
+                return createAndRetrieveArchiveStructure(volumeNodeRef, originalSeriesRef, series.getFunctionNodeRef(), originalToArchivedCaseNodeRef);
             }
+        }, false, true);
 
-            // let's delete our temporary copy
-            nodeService.deleteNode(copiedFunNodeRef);
-        }
+        final NodeRef archivedFunctionRef = archivedParentRefs[0];
+        final NodeRef archivedSeriesRef = archivedParentRefs[1];
+        final NodeRef archivedVolumeRef = archivedParentRefs[2];
+        final NodeRef copiedFunctionRef = archivedParentRefs[3];
+        NodeRef copiedVolumeRef = archivedParentRefs[4];
+
         Assert.notNull(archivedSeriesRef, "Series was not archived");
+        Assert.notNull(archivedVolumeRef, "Volume was not archived");
 
-        seriesService.updateContainingDocsCountByVolume(series.getNode().getNodeRef(), volumeNodeRef, false);
-        // now move volume with all children
-        NodeRef archivedVolumeNodeRef = nodeService.moveNode(volumeNodeRef, archivedSeriesRef,
-                VolumeModel.Associations.VOLUME, VolumeModel.Associations.VOLUME).getChildRef();
-        nodeService.setProperty(archivedVolumeNodeRef, VolumeModel.Props.ARCHIVING_NOTE, archivingNote);
-        seriesService.updateContainingDocsCountByVolume(archivedSeriesRef, archivedVolumeNodeRef, true);
-        updateDocumentLocation(volume, archivedFunRef, archivedSeriesRef, archivedVolumeNodeRef);
-        return archivedVolumeNodeRef;
-    }
+        Set<ChildAssociationRef> notCaseNodeRefs = new HashSet<ChildAssociationRef>();
+        final Set<NodeRef> caseNodeRefs = new HashSet<NodeRef>();
+        Map<NodeRef, Set<ChildAssociationRef>> archiveNodeRefs = new HashMap<NodeRef, Set<ChildAssociationRef>>();
+        // TODO: seems that no separate transaction is needed, read-only operations are performed here?
+        collectNodeRefsToArchive(volumeNodeRef, notCaseNodeRefs, caseNodeRefs, archiveNodeRefs);
 
-    private void updateDocumentLocation(Volume originalVolume, NodeRef archivedFunRef, NodeRef archivedSeriesRef, NodeRef archivedVolumeRef) {
-        if (originalVolume.isContainsCases()) {
-            for (Case aCase : caseService.getAllCasesByVolume(archivedVolumeRef)) {
-                List<NodeRef> documents = documentService.getAllDocumentRefsByParentRef(aCase.getNode().getNodeRef());
-                updateDocumentLocationProps(archivedFunRef, archivedSeriesRef, archivedVolumeRef, aCase.getNode().getNodeRef(), documents);
+        int failedNodeCount = 0;
+        int failedDocumentsCount = 0;
+        int totalArchivedDocumentsCount = 0;
+        int archivedNodesCount = 0;
+
+        final Map<NodeRef, Integer> caseDocsUpdated = new HashMap<NodeRef, Integer>();
+        int childCount = 0;
+        for (Set<ChildAssociationRef> childNodes : archiveNodeRefs.values()) {
+            childCount += childNodes.size();
+        }
+        ProgressTracker progress = new ProgressTracker(childCount, 0);
+        int count = 0;
+        for (Map.Entry<NodeRef, Set<ChildAssociationRef>> entry : archiveNodeRefs.entrySet()) {
+
+            NodeRef originalParentRef = entry.getKey();
+            NodeRef archivedParentRef = null;
+            final boolean isInCase = !originalParentRef.equals(volumeNodeRef);
+            if (!isInCase) {
+                archivedParentRef = archivedVolumeRef;
+            } else {
+                archivedParentRef = getOrCreateArchiveCase(originalParentRef, archivedVolumeRef, copiedVolumeRef, originalToArchivedCaseNodeRef, transactionHelper);
             }
+            final NodeRef archivedParentRefFinal = archivedParentRef;
+            for (final ChildAssociationRef childAssocRef : entry.getValue()) {
+                final NodeRef childRef = childAssocRef.getChildRef();
+                if (!nodeService.exists(childRef) || !originalParentRef.equals(nodeService.getPrimaryParent(childRef).getParentRef())) {
+                    // node has been deleted or moved, skip it
+                    LOG.info("Node not found in volume any more, skipping nodeRef=" + childRef);
+                    continue;
+                }
+                boolean isDocument = DocumentCommonModel.Types.DOCUMENT.equals(nodeService.getType(childRef));
+                try {
+                    transactionHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
+
+                        @Override
+                        public Void execute() throws Throwable {
+                            NodeRef archivedNodeRef = nodeService.moveNode(childRef, archivedParentRefFinal, childAssocRef.getTypeQName(),
+                                    childAssocRef.getQName()).getChildRef();
+                            updateDocumentLocationProps(archivedFunctionRef, archivedSeriesRef, archivedVolumeRef, isInCase ? archivedParentRefFinal : null,
+                                    archivedNodeRef);
+                            return null;
+                        }
+                    }, false, true);
+                    if (isDocument) {
+                        if (isInCase) {
+                            Integer caseArchivedDocsCount = caseDocsUpdated.get(originalParentRef);
+                            if (caseArchivedDocsCount == null) {
+                                caseArchivedDocsCount = 0;
+                            }
+                            caseDocsUpdated.put(originalParentRef, ++caseArchivedDocsCount);
+                        }
+                        totalArchivedDocumentsCount++;
+                    }
+                    archivedNodesCount++;
+                } catch (Exception e) {
+                    failedNodeCount++;
+                    failedDocumentsCount += isDocument ? 1 : 0;
+                    LOG.error("Error archiving node in volume, volume original nodeRef=" + volumeNodeRef + ", archived volume nodeRef=" + archivedVolumeRef
+                            + (isInCase ? ", original case nodeRef=" + originalParentRef + ", archived case nodeRef=" + archivedParentRef : "")
+                            + ", child nodeRef=" + childAssocRef.getChildRef(), e);
+                    // continue, try to archive as much documents as possible
+                }
+                if (++count >= 10) {
+                    String info = progress.step(count);
+                    count = 0;
+                    if (info != null) {
+                        LOG.info("Archiving volume: " + info);
+                    }
+                }
+            }
+        }
+        String info = progress.step(count);
+        if (info != null) {
+            LOG.info("Archiving volume: " + info);
+        }
+        // update archivingNote property
+        transactionHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
+            @Override
+            public Void execute() {
+                nodeService.setProperty(archivedVolumeRef, VolumeModel.Props.ARCHIVING_NOTE, archivingNote);
+                return null;
+            }
+        }, false, true);
+
+        updateCounters(volumeNodeRef, archivedVolumeRef, originalSeriesRef, archivedSeriesRef, originalToArchivedCaseNodeRef, totalArchivedDocumentsCount, caseDocsUpdated,
+                transactionHelper);
+
+        LOG.info("Archived " + archivedNodesCount + " nodes from volume and contained cases,\n " +
+                "   nodeRefs=" + archiveNodeRefs.keySet() + "\n" +
+                "   of that " + totalArchivedDocumentsCount + " documents");
+
+        if (failedNodeCount == 0) {
+            deleteEmptyVolumeAndCases(volumeNodeRef, caseNodeRefs, transactionHelper);
         } else {
-            List<NodeRef> documents = documentService.getAllDocumentRefsByParentRef(archivedVolumeRef);
-            updateDocumentLocationProps(archivedFunRef, archivedSeriesRef, archivedVolumeRef, null, documents);
+            LOG.info("Not deleting original volume, nodeRef=" + volumeNodeRef + ", because " + failedNodeCount + " errors occurred while archiving the volume, of that "
+                    + failedDocumentsCount + " document archivation failures");
+        }
+
+        transactionHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
+
+            @Override
+            public Void execute() throws Throwable {
+                nodeService.deleteNode(copiedFunctionRef);
+                return null;
+            }
+        }, false, true);
+
+        return archivedVolumeRef;
+
+    }
+
+    private void deleteEmptyVolumeAndCases(final NodeRef volumeNodeRef, final Set<NodeRef> caseNodeRefs, final RetryingTransactionHelper transactionHelper) {
+        transactionHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
+
+            @Override
+            public Void execute() throws Throwable {
+                List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(volumeNodeRef);
+                boolean deleteVolume = true;
+                for (ChildAssociationRef childRef : childRefs) {
+                    NodeRef childNodeRef = childRef.getChildRef();
+                    if (caseNodeRefs.contains(childNodeRef)) {
+                        if (nodeService.getChildAssocs(childNodeRef).size() == 0) {
+                            // TODO: Riina - could be optimized, assuming that it is very likely that whole volume is going to be deleted,
+                            // but as this runs in background and case has no children, deleting shouldn't take much time either
+                            nodeService.deleteNode(childNodeRef);
+                            LOG.info("Deleted empty case, nodeRef=" + childNodeRef);
+                            continue;
+                        }
+                        deleteVolume = false;
+                        LOG.info("case nodeRef=" + childNodeRef + " has not archived children, not deleting case.");
+                        break;
+                    }
+                    deleteVolume = false;
+                    LOG.info("Volume nodeRef=" + volumeNodeRef + " has not archived children created after archivation start, not deleting volume.");
+                    break;
+                }
+                if (deleteVolume) {
+                    nodeService.deleteNode(volumeNodeRef);
+                    LOG.info("Deleted original volume nodeRef=" + volumeNodeRef);
+                }
+                return null;
+            }
+        }, false, true);
+    }
+
+    private NodeRef getOrCreateArchiveCase(final NodeRef originalCaseRef, final NodeRef archivedVolumeRef, final NodeRef copiedVolumeRef,
+            final Map<NodeRef, NodeRef> originalToArchivedCaseNodeRef, final RetryingTransactionHelper transactionHelper) {
+        NodeRef archivedCaseRef = originalToArchivedCaseNodeRef.get(originalCaseRef);
+        if (archivedCaseRef == null) {
+            final NodeRef originalCaseRefFinal = originalCaseRef;
+            // create archive case
+            archivedCaseRef = transactionHelper.doInTransaction(new RetryingTransactionCallback<NodeRef>() {
+                @Override
+                public NodeRef execute() {
+                    NodeRef copiedCaseRef = copyService.copy(originalCaseRef, copiedVolumeRef, CaseModel.Associations.CASE, CaseModel.Associations.CASE);
+                    NodeRef archCaseRef = nodeService.moveNode(copiedCaseRef, archivedVolumeRef, CaseModel.Associations.CASE, CaseModel.Associations.CASE).getChildRef();
+                    Map<QName, Serializable> caseProps = new HashMap<QName, Serializable>();
+                    caseProps.put(CaseModel.Props.CONTAINING_DOCS_COUNT, 0);
+                    caseProps.put(CaseModel.Props.ORIGINAL_CASE, originalCaseRefFinal);
+                    nodeService.addProperties(archCaseRef, caseProps);
+                    return archCaseRef;
+                }
+            }, false, true);
+            originalToArchivedCaseNodeRef.put(originalCaseRef, archivedCaseRef);
+        }
+        return archivedCaseRef;
+    }
+
+    private void updateCounters(final NodeRef originalVolumeRef, final NodeRef archivedVolumeRef, final NodeRef originalSeriesRef,
+            final NodeRef archivedSeriesRef, final Map<NodeRef, NodeRef> originalToArchivedCaseNodeRef, final int archivedDocumentsCount,
+            final Map<NodeRef, Integer> caseDocsUpdated, final RetryingTransactionHelper transactionHelper) {
+        updateCounter(archivedVolumeRef, VolumeModel.Props.CONTAINING_DOCS_COUNT, true, archivedDocumentsCount, transactionHelper, false);
+        updateCounter(originalVolumeRef, VolumeModel.Props.CONTAINING_DOCS_COUNT, false, archivedDocumentsCount, transactionHelper, true);
+        updateCounter(archivedSeriesRef, SeriesModel.Props.CONTAINING_DOCS_COUNT, true, archivedDocumentsCount, transactionHelper, false);
+        updateCounter(originalSeriesRef, SeriesModel.Props.CONTAINING_DOCS_COUNT, false, archivedDocumentsCount, transactionHelper, true);
+        for (Map.Entry<NodeRef, Integer> entry : caseDocsUpdated.entrySet()) {
+            NodeRef originalCaseRef = entry.getKey();
+            NodeRef archivedCaseRef = originalToArchivedCaseNodeRef.get(originalCaseRef);
+            int archivedDocCount = entry.getValue();
+            updateCounter(archivedCaseRef, CaseModel.Props.CONTAINING_DOCS_COUNT, true, archivedDocCount, transactionHelper, false);
+            updateCounter(originalCaseRef, CaseModel.Props.CONTAINING_DOCS_COUNT, false, archivedDocCount, transactionHelper, true);
+        }
+
+    }
+
+    private void updateCounter(final NodeRef nodeRefToUpdate, final QName docCountProp, final boolean added, final int docCount, final RetryingTransactionHelper transactionHelper,
+            final boolean checkExisting) {
+        try {
+            transactionHelper.doInTransaction(new RetryingTransactionCallback<Void>() {
+
+                @Override
+                public Void execute() throws Throwable {
+                    // node may be deleted while archiving, this is okey and shouldn't produce error
+                    if (!checkExisting || nodeService.exists(nodeRefToUpdate)) {
+                        generalService.updateParentContainingDocsCount(nodeRefToUpdate, docCountProp, added, docCount);
+                    }
+                    return null;
+                }
+            }, false, true);
+        } catch (Exception e) {
+            LOG.error("Error updating counters in archive volume process, nodeRef=" + nodeRefToUpdate, e);
+            // continue updating other counters
         }
     }
 
-    private void updateDocumentLocationProps(NodeRef archivedFunRef, NodeRef archivedSeriesRef, NodeRef archivedVolumeRef, NodeRef archivedCaseRef, List<NodeRef> docRefs) {
-        for (NodeRef docRef : docRefs) {
-            Map<QName, Serializable> props = new HashMap<QName, Serializable>();
-            props.put(DocumentCommonModel.Props.FUNCTION, archivedFunRef);
-            props.put(DocumentCommonModel.Props.SERIES, archivedSeriesRef);
-            props.put(DocumentCommonModel.Props.VOLUME, archivedVolumeRef);
-            props.put(DocumentCommonModel.Props.CASE, archivedCaseRef);
-            nodeService.addProperties(docRef, props);
+    private void collectNodeRefsToArchive(final NodeRef volumeNodeRef, Set<ChildAssociationRef> notCaseNodeRefs, Set<NodeRef> caseNodeRefs,
+            Map<NodeRef, Set<ChildAssociationRef>> archiveNodeRefs) {
+        List<ChildAssociationRef> volumeChildAssocs = nodeService.getChildAssocs(volumeNodeRef);
+        for (ChildAssociationRef childAssocRef : volumeChildAssocs) {
+            NodeRef childNodeRef = childAssocRef.getChildRef();
+            QName nodeType = nodeService.getType(childNodeRef);
+            if (CaseModel.Types.CASE.equals(nodeType)) {
+                caseNodeRefs.add(childNodeRef);
+            } else {
+                notCaseNodeRefs.add(childAssocRef);
+            }
         }
+        archiveNodeRefs.put(volumeNodeRef, notCaseNodeRefs);
+        for (NodeRef caseNodeRef : caseNodeRefs) {
+            archiveNodeRefs.put(caseNodeRef, new HashSet<ChildAssociationRef>(nodeService.getChildAssocs(caseNodeRef)));
+        }
+    }
+
+    private NodeRef[] createAndRetrieveArchiveStructure(final NodeRef volumeNodeRef, final NodeRef originalSeriesRef, final NodeRef originalFunctionRef,
+            final Map<NodeRef, NodeRef> originalToArchivedCaseNodeRef) {
+
+        NodeRef copiedFunctionRef = copyService.copy(originalFunctionRef, getTempArchivalRoot(), FunctionsModel.Associations.FUNCTION, FunctionsModel.Associations.FUNCTION);
+        NodeRef copiedSeriesRef = copyService.copy(originalSeriesRef, copiedFunctionRef, SeriesModel.Associations.SERIES, SeriesModel.Associations.SERIES);
+        NodeRef copiedVolumeRef = copyService.copy(volumeNodeRef, copiedSeriesRef, VolumeModel.Associations.VOLUME, VolumeModel.Associations.VOLUME);
+        nodeService.setProperty(copiedSeriesRef, SeriesModel.Props.CONTAINING_DOCS_COUNT, 0);
+        nodeService.setProperty(copiedVolumeRef, VolumeModel.Props.CONTAINING_DOCS_COUNT, 0);
+        boolean movedHierarchy = true;
+
+        NodeRef archivedFunctionRef = getArchivedFunctionByMark((String) nodeService.getProperty(originalFunctionRef, FunctionsModel.Props.MARK));
+        NodeRef archivedSeriesRef = null;
+        NodeRef archivedVolumeRef = null;
+        if (archivedFunctionRef == null) {
+            archivedFunctionRef = nodeService.moveNode(copiedFunctionRef, getArchivalRoot(), FunctionsModel.Associations.FUNCTION, FunctionsModel.Associations.FUNCTION)
+                    .getChildRef();
+            archivedSeriesRef = nodeService.getChildAssocs(archivedFunctionRef, Collections.singleton(SeriesModel.Types.SERIES)).get(0).getChildRef();
+            archivedVolumeRef = nodeService.getChildAssocs(archivedSeriesRef, Collections.singleton(VolumeModel.Types.VOLUME)).get(0).getChildRef();
+        } else {
+            String seriesIdentifier = (String) nodeService.getProperty(originalSeriesRef, SeriesModel.Props.SERIES_IDENTIFIER);
+            archivedSeriesRef = getArchivedSeriesByIdentifies(archivedFunctionRef, seriesIdentifier);
+            if (archivedSeriesRef == null) {
+                archivedSeriesRef = nodeService.moveNode(copiedSeriesRef, archivedFunctionRef, SeriesModel.Associations.SERIES, SeriesModel.Associations.SERIES).getChildRef();
+                archivedVolumeRef = nodeService.getChildAssocs(archivedSeriesRef, Collections.singleton(VolumeModel.Types.VOLUME)).get(0).getChildRef();
+            } else {
+                archivedVolumeRef = volumeService.getArchivedVolumeByOriginalNodeRef(archivedSeriesRef, volumeNodeRef);
+                if (archivedVolumeRef == null) {
+                    archivedVolumeRef = nodeService.moveNode(copiedVolumeRef, archivedSeriesRef, VolumeModel.Associations.VOLUME, VolumeModel.Associations.VOLUME).getChildRef();
+                } else {
+                    movedHierarchy = false;
+                    Map<QName, Serializable> originalVolumeProps = nodeService.getProperties(volumeNodeRef);
+                    nodeService.addProperties(archivedVolumeRef, RepoUtil.getPropertiesIgnoringSystem(originalVolumeProps, dictionaryService));
+                    List<ChildAssociationRef> caseChildAssocs = nodeService.getChildAssocs(archivedVolumeRef, Collections.singleton(CaseModel.Types.CASE));
+                    for (ChildAssociationRef caseChildAssoc : caseChildAssocs) {
+                        NodeRef archivedCaseRef = caseChildAssoc.getChildRef();
+                        NodeRef originalCaseRef = (NodeRef) nodeService.getProperty(archivedCaseRef, CaseModel.Props.ORIGINAL_CASE);
+                        if (originalCaseRef != null) {
+                            originalToArchivedCaseNodeRef.put(originalCaseRef, archivedCaseRef);
+                        }
+                    }
+                }
+            }
+        }
+        if (movedHierarchy) {
+            // if copied hierarchy was (partly) moved, delete remaining hierarchy and recreate new
+            // so it can be used to copy cases during archivation process
+            if (nodeService.exists(copiedFunctionRef)) {
+                nodeService.deleteNode(copiedFunctionRef);
+            }
+            copiedFunctionRef = copyService.copy(originalFunctionRef, getTempArchivalRoot(), FunctionsModel.Associations.FUNCTION, FunctionsModel.Associations.FUNCTION);
+            copiedSeriesRef = copyService.copy(originalSeriesRef, copiedFunctionRef, SeriesModel.Associations.SERIES, SeriesModel.Associations.SERIES);
+            copiedVolumeRef = copyService.copy(volumeNodeRef, copiedSeriesRef, VolumeModel.Associations.VOLUME, VolumeModel.Associations.VOLUME);
+        }
+        nodeService.setProperty(archivedVolumeRef, VolumeModel.Props.ORIGINAL_VOLUME, volumeNodeRef);
+        return new NodeRef[] { archivedFunctionRef, archivedSeriesRef, archivedVolumeRef, copiedFunctionRef, copiedVolumeRef };
+    }
+
+    private void updateDocumentLocationProps(NodeRef archivedFunRef, NodeRef archivedSeriesRef, NodeRef archivedVolumeRef, NodeRef archivedCaseRef, NodeRef docRef) {
+        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        props.put(DocumentCommonModel.Props.FUNCTION, archivedFunRef);
+        props.put(DocumentCommonModel.Props.SERIES, archivedSeriesRef);
+        props.put(DocumentCommonModel.Props.VOLUME, archivedVolumeRef);
+        props.put(DocumentCommonModel.Props.CASE, archivedCaseRef);
+        nodeService.addProperties(docRef, props);
     }
 
     @Override
@@ -238,7 +514,8 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         return null; // series is not archived before
     }
 
-    private NodeRef getArchivalRoot() {
+    @Override
+    public NodeRef getArchivalRoot() {
         return generalService.getPrimaryArchivalsNodeRef();
     }
 

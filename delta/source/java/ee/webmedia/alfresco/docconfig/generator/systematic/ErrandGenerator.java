@@ -702,7 +702,38 @@ public class ErrandGenerator extends BaseSystematicGroupGenerator implements Sav
 
     @Override
     public void validate(DocumentDynamic document, ValidationHelper validationHelper) {
-        // Do nothing
+        ErrandState errandStateHolder = BeanHelper.getPropertySheetStateBean().getStateHolder(ERRAND_STATE_HOLDER_KEY, ErrandState.class);
+        // errandStateHolder may be null if save action is not initiated from document dialog.
+        // At present, it is assumed that there is no need to check values when saving not from document dialog.
+        if (errandStateHolder != null) {
+            List<Node> applicants = document.getNode().getAllChildAssociations(DocumentChildModel.Assocs.APPLICANT_ABROAD);
+            if (applicants != null) {
+                for (Node applicant : applicants) {
+                    List<Node> errands = applicant.getAllChildAssociations(DocumentChildModel.Assocs.ERRAND_ABROAD);
+                    if (errands != null) {
+                        validateErrandDailyAllowance(validationHelper, errandStateHolder, errands);
+                    }
+                }
+            }
+        }
+    }
+
+    private void validateErrandDailyAllowance(ValidationHelper validationHelper, ErrandState errandStateHolder, List<Node> errands) {
+        outer: for (Node errand : errands) {
+            Map<String, Object> properties = errand.getProperties();
+            @SuppressWarnings("unchecked")
+            List<Long> dailyAllowanceDays = (List<Long>) properties.get(errandStateHolder.dailyAllowanceDaysProp.toString());
+            @SuppressWarnings("unchecked")
+            List<String> dailyAllowanceRates = (List<String>) properties.get(errandStateHolder.dailyAllowanceRateProp.toString());
+            if (dailyAllowanceDays != null) {
+                for (int i = 0; i < dailyAllowanceDays.size(); i++) {
+                    if (dailyAllowanceDays.get(i) != null && StringUtils.isNotBlank(dailyAllowanceRates.get(i))) {
+                        continue outer;
+                    }
+                }
+            }
+            validationHelper.addErrorMessage("document_validationMsg_mandatory_daily_allowance");
+        }
     }
 
     @Override

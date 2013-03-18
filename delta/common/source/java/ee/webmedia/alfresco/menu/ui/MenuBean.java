@@ -596,6 +596,9 @@ public class MenuBean implements Serializable {
     }
 
     private boolean generateAndAddShortcut(String menuItemId) {
+        if (StringUtils.isBlank(menuItemId)) {
+            return false;
+        }
         FacesContext context = FacesContext.getCurrentInstance();
         Pair<MenuItem, String[]> menuItemAndPath = getMenuItemAndPathFromMenuItemId(menuItemId);
         if (menuItemAndPath == null) {

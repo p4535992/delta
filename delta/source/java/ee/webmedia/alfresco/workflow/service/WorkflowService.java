@@ -88,9 +88,11 @@ public interface WorkflowService {
 
     CompoundWorkflow continueCompoundWorkflow(CompoundWorkflow compoundWorkflow);
 
-    CompoundWorkflow saveAndCopyCompoundWorkflow(CompoundWorkflow compoundWorkflow);
+    CompoundWorkflow copyAndResetCompoundWorkflow(NodeRef compoundWorkflowRef);
 
     int getActiveResponsibleTasks(NodeRef document, QName workflowType);
+
+    int getActiveResponsibleTasks(NodeRef document, QName workflowType, boolean allowFinished);
 
     /**
      * @param compoundWorkflow
@@ -159,7 +161,7 @@ public interface WorkflowService {
 
     boolean hasNoStoppedOrInprogressCompoundWorkflows(NodeRef parent);
 
-    void finishTasksOrCompoundWorkflowsOnRegisterDoc(NodeRef docRef, String comment);
+    void finishTasksByRegisteringReplyLetter(NodeRef docRef, String comment);
 
     boolean isSendableExternalWorkflowDoc(NodeRef docNodeRef);
 
@@ -193,7 +195,7 @@ public interface WorkflowService {
 
     CompoundWorkflow getNewCompoundWorkflow(Node compoundWorkflowDefinition, NodeRef parent);
 
-    void createDueDateExtension(CompoundWorkflow compoundWorkflow, NodeRef nodeRef);
+    void createDueDateExtension(String reason, Date newDate, Date dueDate, Task initiatingTask, NodeRef containerRef);
 
     void registerMultiEventListener(WorkflowMultiEventListener listener);
 
@@ -224,5 +226,9 @@ public interface WorkflowService {
     Task createTaskInMemory(NodeRef wfRef, WorkflowType workflowType, Map<QName, Serializable> props);
 
     void retrieveTaskFiles(Task task, List<NodeRef> taskFiles);
+
+    List<CompoundWorkflow> getOtherCompoundWorkflows(CompoundWorkflow compoundWorkflow);
+
+    List<NodeRef> getCompoundWorkflowAndTaskNodeRefs(NodeRef parentRef);
 
 }

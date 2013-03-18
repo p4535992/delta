@@ -63,6 +63,8 @@ public class DocumentLockHelperBean implements Serializable {
      * @throws UnableToPerformException when node is already locked by another user
      */
     public boolean lockOrUnlockIfNeeded(boolean mustLock4Edit) throws NodeLockedException {
+        // XXX ALAR: It would be correct to lock all nodes in document/caseFile dialog stack which are opened in edit mode.
+        // But currently we only lock the top most node.
         final Node docNode = getDocumentDialogHelperBean().getNode();
         if (docNode == null) {
             return false;

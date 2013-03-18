@@ -17,6 +17,7 @@ import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
 import org.alfresco.web.ui.common.component.PickerSearchParams;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
@@ -24,6 +25,7 @@ import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.addressbook.util.AddressbookUtil;
+import ee.webmedia.alfresco.common.web.UserContactGroupSearchBean;
 import ee.webmedia.alfresco.filter.web.AbstractSearchFilterBlockBean;
 import ee.webmedia.alfresco.user.web.UserListDialog;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -158,14 +160,16 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
      */
     public SelectItem[] executeOwnerSearch(PickerSearchParams params) {
         log.debug("executeOwnerSearch: " + params.getFilterIndex() + ", " + params.getSearchString());
-        if (params.isFilterIndex(0)) { // users
-            return userListDialog.searchUsers(params);
-        } else if (params.isFilterIndex(1)) { // contacts
-            List<Node> nodes = getAddressbookService().search(params.getSearchString(), params.getLimit());
-            return AddressbookUtil.transformAddressbookNodesToSelectItems(nodes);
-        } else {
-            throw new RuntimeException("Unknown filter index value: " + params.getFilterIndex());
+        SelectItem[] results = new SelectItem[0];
+        if (params.isFilterIndex(UserContactGroupSearchBean.USERS_FILTER)) {
+            results = (SelectItem[]) ArrayUtils.addAll(results, userListDialog.searchUsers(params));
         }
+        if (params.isFilterIndex(UserContactGroupSearchBean.CONTACTS_FILTER)) {
+            List<Node> nodes = getAddressbookService().search(params.getSearchString(), params.getLimit());
+            results = (SelectItem[]) ArrayUtils.addAll(results, AddressbookUtil.transformAddressbookNodesToSelectItems(nodes));
+        }
+
+        return results;
     }
 
     /**

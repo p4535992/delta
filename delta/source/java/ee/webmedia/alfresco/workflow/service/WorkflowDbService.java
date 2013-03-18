@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
@@ -79,5 +80,13 @@ public interface WorkflowDbService {
     List<List<String>> deleteNotExistingTasks();
 
     Map<NodeRef, List<NodeRef>> getCompoundWorkflowsTaskFiles(List<CompoundWorkflow> compoundWorkflows);
+
+    void deleteTask(NodeRef removedTaskNodeRef);
+
+    void deleteWorkflowTasks(NodeRef removedWorkflowNodeRef);
+
+    Set<NodeRef> getAllWorflowNodeRefs();
+
+    List<NodeRef> getWorkflowTaskNodeRefs(NodeRef workflowRef);
 
 }

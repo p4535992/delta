@@ -23,4 +23,6 @@ public interface DocumentLogService {
      */
     void addDocumentLog(NodeRef document, String event, String creator);
 
+    void addDeletedObjectLog(NodeRef objectRef, String msgKey);
+
 }

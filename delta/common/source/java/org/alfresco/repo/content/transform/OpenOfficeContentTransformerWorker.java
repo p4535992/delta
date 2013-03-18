@@ -159,7 +159,7 @@ public class OpenOfficeContentTransformerWorker extends ContentTransformerHelper
     {
         if (MimetypeMap.MIMETYPE_PDF.equalsIgnoreCase(targetMimetype)) {
             // Refuse to produce PDF files with OpenOffice; use MS Office instead
-            if (msoService.isAvailable()) {
+            if (msoService.isAvailable() && msoService.isTransformableToPdf(sourceMimetype)) {
                 return false;
             }
         }

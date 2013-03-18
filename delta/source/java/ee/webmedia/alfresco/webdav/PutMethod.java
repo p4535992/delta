@@ -212,7 +212,7 @@ public class PutMethod extends WebDAVMethod {
                 log.info("Client sent different mimetype '" + m_strContentType + "' when updating file with original mimetype '" + mimetype + "', ignoring");
             }
         }
-        
+
         // Write the new data to the content node
         writer.putContent(is);
 
@@ -235,7 +235,7 @@ public class PutMethod extends WebDAVMethod {
         logger.debug("saved file " + fileRef + ", " + (createdNewVersion ? "created" : "didn't crerate") + " new version");
     }
 
-    private void updateDocumentAndGeneratedFiles(FileInfo contentNodeInfo, NodeRef document) throws Exception, ParseException {
+    private void updateDocumentAndGeneratedFiles(FileInfo contentNodeInfo, NodeRef document) {
         String generationType = (String) getNodeService().getProperty(contentNodeInfo.getNodeRef(), FileModel.Props.GENERATION_TYPE);
         if (!GeneratedFileType.WORD_TEMPLATE.name().equals(generationType)) {
             return;
@@ -245,7 +245,12 @@ public class PutMethod extends WebDAVMethod {
             log.debug("MsoService is not available, skipping updating document");
             return;
         }
-        Map<String, String> formulas = getMsoService().modifiedFormulas(getContentService().getReader(contentNodeInfo.getNodeRef(), ContentModel.PROP_CONTENT));
+        Map<String, String> formulas;
+        try {
+            formulas = getMsoService().modifiedFormulas(getContentService().getReader(contentNodeInfo.getNodeRef(), ContentModel.PROP_CONTENT));
+        } catch (Exception e) {
+            throw new RuntimeException("Error getting formulas from MS Word file " + contentNodeInfo.getNodeRef() + " : " + e.getMessage(), e);
+        }
 
         if (formulas == null || formulas.isEmpty()) {
             return;
@@ -322,29 +327,43 @@ public class PutMethod extends WebDAVMethod {
                 if (group.isSystematic() && (SystematicFieldGroupNames.RECIPIENTS.equals(name) || SystematicFieldGroupNames.ADDITIONAL_RECIPIENTS.equals(name))) {
                     Serializable propValue = doc.getProp(field.getQName());
                     if (propDef.isMultiValued()) {
-                        @SuppressWarnings("unchecked")
-                        List<Serializable> values = (List<Serializable>) propValue;
-                        if (propIndex > -1 && propIndex < values.size()) {
-                            values.set(propIndex, (Serializable) DefaultTypeConverter.INSTANCE.convert(dataType, formulaValue));
+                        if (propValue != null) {
+                            @SuppressWarnings("unchecked")
+                            List<Serializable> values = (List<Serializable>) propValue;
+                            if (propIndex > -1 && propIndex < values.size()) {
+                                values.set(propIndex, (Serializable) DefaultTypeConverter.INSTANCE.convert(dataType, formulaValue));
+                            }
+                            propValue = (Serializable) values;
                         }
-                        propValue = (Serializable) values;
                     }
-                    doc.setProp(field.getQName(), propValue);
+                    doc.setPropIgnoringEmpty(field.getQName(), propValue);
                     continue;
                 }
+            }
+
+            if (Arrays.asList(FieldType.USERS, FieldType.CONTACTS, FieldType.USERS_CONTACTS).contains(field.getFieldTypeEnum())) {
+                continue;
             }
 
             Serializable value;
             // Handle dates separately
             if ("date".equals(dataType.getName().getLocalName())) {
-                value = new SimpleDateFormat("dd.MM.yyyy").parse(formulaValue);
+                if (StringUtils.isBlank(formulaValue)) {
+                    value = null;
+                } else {
+                    try {
+                        value = new SimpleDateFormat("dd.MM.yyyy").parse(formulaValue);
+                    } catch (ParseException e) {
+                        throw new RuntimeException("Unable to parse date value from field '" + formulaKey + "': " + e.getMessage(), e);
+                    }
+                }
             } else {
                 value = (Serializable) DefaultTypeConverter.INSTANCE.convert(dataType, formulaValue);
             }
             if (propDef.isMultiValued()) {
                 value = (Serializable) Collections.singletonList(value); // is this correct?
             }
-            doc.setProp(field.getQName(), value);
+            doc.setPropIgnoringEmpty(field.getQName(), value);
         }
 
         // Update sub-nodes
@@ -353,7 +372,16 @@ public class PutMethod extends WebDAVMethod {
             NodeService nodeService = getNodeService();
             List<ChildAssociationRef> contractPartyChildAssocs = nodeService.getChildAssocs(document, DocumentChildModel.Assocs.CONTRACT_PARTY, RegexQNamePattern.MATCH_ALL);
             for (ContractPartyField field : partyFields) {
-                nodeService.setProperty(contractPartyChildAssocs.get(field.getIndex()).getChildRef(), field.getField(), field.getValue());
+                if (field.getIndex() < contractPartyChildAssocs.size()) {
+                    NodeRef childNodeRef = contractPartyChildAssocs.get(field.getIndex()).getChildRef();
+                    Serializable propValue = field.getValue();
+                    Serializable origPropValue = nodeService.getProperty(childNodeRef, field.getField());
+                    if ((propValue == null || ((propValue instanceof String) && ((String) propValue).isEmpty()))
+                            && (origPropValue == null || ((origPropValue instanceof String) && ((String) origPropValue).isEmpty()))) {
+                        continue;
+                    }
+                    nodeService.setProperty(childNodeRef, field.getField(), propValue);
+                }
             }
         }
 

@@ -206,5 +206,7 @@ public interface PersonService
      */
     @NotAuditable
     public String getUserIdentifier(String caseSensitiveUserName);
+    
+    Map<QName, Serializable> getPersonProperties(String userName);
 
 }

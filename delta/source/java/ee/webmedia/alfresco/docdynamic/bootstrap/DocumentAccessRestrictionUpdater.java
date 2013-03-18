@@ -31,7 +31,7 @@ public class DocumentAccessRestrictionUpdater extends AbstractNodeUpdater {
         String query = SearchUtil.joinQueryPartsAnd(
                 SearchUtil.generateTypeQuery(DocumentCommonModel.Types.DOCUMENT),
                 SearchUtil.generatePropertyExactQuery(DocumentCommonModel.Props.ACCESS_RESTRICTION,
-                        Arrays.asList(AccessRestriction.OPEN.getValueName(), AccessRestriction.INTERNAL.getValueName()), false));
+                        Arrays.asList(AccessRestriction.OPEN.getValueName(), AccessRestriction.INTERNAL.getValueName())));
         List<ResultSet> resultSets = new ArrayList<ResultSet>();
         for (StoreRef storeRef : generalService.getAllStoreRefsWithTrashCan()) {
             resultSets.add(searchService.query(storeRef, SearchService.LANGUAGE_LUCENE, query));
@@ -42,6 +42,10 @@ public class DocumentAccessRestrictionUpdater extends AbstractNodeUpdater {
     @Override
     protected String[] updateNode(NodeRef nodeRef) throws Exception {
         String accessRestriction = (String) nodeService.getProperty(nodeRef, DocumentCommonModel.Props.ACCESS_RESTRICTION);
+        return updateNode(nodeRef, accessRestriction);
+    }
+
+    protected String[] updateNode(NodeRef nodeRef, String accessRestriction) {
         if (AccessRestriction.OPEN.equals(accessRestriction) || AccessRestriction.INTERNAL.equals(accessRestriction)) {
             Map<QName, Serializable> propsToAdd = new HashMap<QName, Serializable>();
             propsToAdd.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON, null);

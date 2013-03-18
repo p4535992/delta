@@ -264,6 +264,7 @@
 		</javac>
 		<javac destdir="${project.dir.exploded.classes}" classpathref="classpath" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
 			<compilerarg value="-Xlint" />
+			<compilerarg value="-Xlint:-deprecation" />
 			<!-- XXX why do I have "bad path element" warnings, where do these path elements come from? -->
 			<compilerarg value="-Xlint:-path" />
 			<src path="${common.dir.src}" />
@@ -362,6 +363,7 @@
 		</copy>
 		<javac destdir="${project.dir.test.classes}" classpathref="classpath.test.compile" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
 			<compilerarg value="-Xlint" />
+			<compilerarg value="-Xlint:-deprecation" />
 			<!-- XXX why do I have "bad path element" warnings, where do these path elements come from? -->
 			<compilerarg value="-Xlint:-path" />
 			<src path="${common.dir.src.test}" />

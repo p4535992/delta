@@ -11,6 +11,7 @@ import javax.faces.el.MethodBinding;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.MapNode;
@@ -19,6 +20,9 @@ import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.log.model.LogEntry;
+import ee.webmedia.alfresco.log.model.LogObject;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
@@ -53,9 +57,19 @@ public class DeleteDialog extends BaseDialogBean {
             resetAndAddSuccessMessage();
             return outcome;
         }
-        BeanHelper.getNodeService().deleteNode(objectRef);
+        NodeService nodeService = BeanHelper.getNodeService();
+        boolean isDocument = DocumentCommonModel.Types.DOCUMENT.equals(objectType);
+        LogEntry logEntry = null;
+        if (isDocument) {
+            logEntry = LogEntry.create(LogObject.DOCUMENT, BeanHelper.getUserService(), objectRef, "document_log_status_deleted",
+                    nodeService.getProperty(objectRef, DocumentCommonModel.Props.DOC_STATUS), BeanHelper.getDocumentListService().getDisplayPath(objectRef, false));
+        }
+        nodeService.deleteNode(objectRef);
         if (dialogsToClose != null) {
             outcome = getCloseOutcome(dialogsToClose);
+        }
+        if (isDocument) {
+            BeanHelper.getLogService().addLogEntry(logEntry);
         }
         resetAndAddSuccessMessage();
         return outcome;

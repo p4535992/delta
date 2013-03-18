@@ -61,28 +61,31 @@ public class PropertySheetGridRenderer extends HtmlGridRenderer {
             boolean inlineMode = false;
             String labelStyleClass = (String) component.getAttributes().get("labelStyleClass");
             labelStyleClass = (labelStyleClass != null) ? labelStyleClass : "";
-            for (Iterator it = getChildren(component).iterator(); it.hasNext();) {
-                UIComponent child = (UIComponent) it.next();
-                if (child.isRendered()) {
-                    if (columnIndex == 0 && !inlineMode) {
-                        // start of new/next row
-                        if (rowStarted) {
-                            // do we have to close the last row?
-                            writer.endElement(HTML.TR_ELEM);
-                            HtmlRendererUtils.writePrettyLineSeparator(context);
-                        }
-                        writer.startElement(HTML.TR_ELEM, component);
-                        if (rowClassIndex < rowClassesCount) {
-                            writer.writeAttribute(HTML.CLASS_ATTR, rowClassesArray[rowClassIndex], null);
-                        }
-                        rowStarted = true;
-                        rowClassIndex++;
-                        if (rowClassIndex == rowClassesCount) {
-                            rowClassIndex = 0;
-                        }
-                    }
+            for (Iterator<UIComponent> it = getChildren(component).iterator(); it.hasNext();) {
+                UIComponent child = it.next();
 
-                    writer.startElement(HTML.TD_ELEM, component);
+                if (columnIndex == 0 && !inlineMode) {
+                    // start of new/next row
+                    if (rowStarted) {
+                        // do we have to close the last row?
+                        writer.endElement(HTML.TR_ELEM);
+                        HtmlRendererUtils.writePrettyLineSeparator(context);
+                    }
+                    writer.startElement(HTML.TR_ELEM, component);
+                    if (rowClassIndex < rowClassesCount) {
+                        writer.writeAttribute(HTML.CLASS_ATTR, rowClassesArray[rowClassIndex], null);
+                    }
+                    rowStarted = true;
+                    rowClassIndex++;
+                    if (rowClassIndex == rowClassesCount) {
+                        rowClassIndex = 0;
+                    }
+                }
+
+                writer.startElement(HTML.TD_ELEM, component);
+
+
+                if (child.isRendered()) {
                     if (columnIndex < columnClassesCount) {
                         writer.writeAttribute(HTML.CLASS_ATTR, columnClassesArray[columnIndex] + " " + labelStyleClass, null);
                     } else if (child instanceof UISeparator) {
@@ -91,8 +94,6 @@ public class PropertySheetGridRenderer extends HtmlGridRenderer {
                     } else {
                         writer.writeAttribute(HTML.CLASS_ATTR, labelStyleClass, null);
                     }
-
-                    columnIndex = childAttributes(context, writer, child, columnIndex);
                     String styleClass = (String) child.getAttributes().get("styleClass");
                     if (org.apache.commons.lang.StringUtils.isNotBlank(styleClass)) {
                         styleClass += " inline";
@@ -101,34 +102,35 @@ public class PropertySheetGridRenderer extends HtmlGridRenderer {
                     }
                     child.getAttributes().put("styleClass", styleClass);
                     RendererUtils.renderChild(context, child);
+                }
+                columnIndex = childAttributes(context, writer, child, columnIndex);
 
-                    if ((child instanceof CustomAttributes || child instanceof Search) && component instanceof WMUIPropertySheet) {
-                        String display = ((CustomAttributes) child).getCustomAttributes().get(WMUIPropertySheet.DISPLAY);
-                        if (org.apache.commons.lang.StringUtils.isNotBlank(display) && display.equals(WMUIPropertySheet.INLINE)) {
-                            if (!inlineMode) {
-                                writer.startElement(HTML.TABLE_ELEM, component);
-                                writer.writeAttribute(HTML.CELLPADDING_ATTR, 0, null);
-                                writer.writeAttribute(HTML.CELLSPACING_ATTR, 0, null);
-                                writer.writeAttribute(HTML.BORDER_ATTR, 0, null);
-                                writer.writeAttribute(HTML.CLASS_ATTR, "inline", null);
-                                writer.startElement(HTML.TR_ELEM, component);
-                            }
-                            inlineMode = true;
-                        } else {
-                            if (inlineMode) {
-                                writer.endElement(HTML.TR_ELEM);
-                                writer.endElement(HTML.TABLE_ELEM);
-                                inlineMode = false;
-                            }
+                if ((child instanceof CustomAttributes || child instanceof Search) && component instanceof WMUIPropertySheet) {
+                    String display = ((CustomAttributes) child).getCustomAttributes().get(WMUIPropertySheet.DISPLAY);
+                    if (org.apache.commons.lang.StringUtils.isNotBlank(display) && display.equals(WMUIPropertySheet.INLINE)) {
+                        if (!inlineMode) {
+                            writer.startElement(HTML.TABLE_ELEM, component);
+                            writer.writeAttribute(HTML.CELLPADDING_ATTR, 0, null);
+                            writer.writeAttribute(HTML.CELLSPACING_ATTR, 0, null);
+                            writer.writeAttribute(HTML.BORDER_ATTR, 0, null);
+                            writer.writeAttribute(HTML.CLASS_ATTR, "inline", null);
+                            writer.startElement(HTML.TR_ELEM, component);
+                        }
+                        inlineMode = true;
+                    } else {
+                        if (inlineMode) {
+                            writer.endElement(HTML.TR_ELEM);
+                            writer.endElement(HTML.TABLE_ELEM);
+                            inlineMode = false;
                         }
                     }
+                }
 
-                    writer.endElement(HTML.TD_ELEM);
+                writer.endElement(HTML.TD_ELEM);
 
-                    columnIndex++;
-                    if (columnIndex >= columns) {
-                        columnIndex = 0;
-                    }
+                columnIndex++;
+                if (columnIndex >= columns) {
+                    columnIndex = 0;
                 }
             }
 

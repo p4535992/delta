@@ -36,6 +36,7 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.common.service.IClonable;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentPropertySets;
 
 /**
@@ -387,6 +388,16 @@ public class RepoUtil {
         List<T> list = (List<T>) document.getProperties().get(propName);
         T element = list != null && list.size() > index ? list.get(index) : null;
         return element;
+    }
+
+    public static String getArchivedObjectName(QName type, Map<QName, Serializable> properties) {
+        if (type == null) {
+            return null;
+        }
+        if (DocumentCommonModel.Types.DOCUMENT.equals(type)) {
+            return (String) properties.get(DocumentCommonModel.Props.DOC_NAME);
+        }
+        return (String) properties.get(ContentModel.PROP_NAME);
     }
 
 }

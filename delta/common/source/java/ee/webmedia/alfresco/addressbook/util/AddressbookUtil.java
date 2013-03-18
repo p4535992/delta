@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.addressbook.util;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getAddressbookService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getNodeService;
+import static ee.webmedia.alfresco.common.web.UserContactGroupSearchBean.FILTER_INDEX_SEPARATOR;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -90,6 +91,10 @@ public class AddressbookUtil {
      * @return
      */
     public static SelectItem[] transformAddressbookNodesToSelectItems(List<Node> nodes) {
+        return transformAddressbookNodesToSelectItems(nodes, null);
+    }
+
+    public static SelectItem[] transformAddressbookNodesToSelectItems(List<Node> nodes, Integer filter) {
         SelectItem[] results = new SelectItem[nodes.size()];
         int i = 0;
         for (Node node : nodes) {
@@ -119,6 +124,9 @@ public class AddressbookUtil {
                 label.append(")");
             }
             String description = createSelectItemDescription(node);
+            if (filter != null) {
+                value += (FILTER_INDEX_SEPARATOR + filter);
+            }
             if (StringUtils.isNotBlank(description)) {
                 results[i++] = new SelectItem(value, label.toString(), description);
             } else {

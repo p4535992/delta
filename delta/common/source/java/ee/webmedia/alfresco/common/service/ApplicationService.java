@@ -5,7 +5,7 @@ import org.springframework.context.ApplicationContext;
 /**
  * Information about specific project and common project.
  * 
- * @author Alar Kvell (alar.kvell@webmedia.ee)
+ * @author Alar Kvell
  */
 public interface ApplicationService {
 

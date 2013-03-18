@@ -1104,8 +1104,9 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public void processAccessRestrictionChangedNotification(DocumentDynamic document, List<SendInfo> sendInfos) {
+    public List<SendInfo> processAccessRestrictionChangedNotification(DocumentDynamic document, List<SendInfo> sendInfos, boolean ignoreMissingEmails) {
         List<String> recipientEmails = new ArrayList<String>();
+        List<SendInfo> missingEmails = new ArrayList<SendInfo>();
         for (SendInfo sendInfo : sendInfos) {
             Map<String, Object> properties = sendInfo.getNode().getProperties();
             String recipientRegNr = (String) properties.get(DocumentCommonModel.Props.SEND_INFO_RECIPIENT_REG_NR);
@@ -1128,8 +1129,15 @@ public class NotificationServiceImpl implements NotificationService {
             }
             if (StringUtils.isNotBlank(recipientEmail)) {
                 recipientEmails.add(recipientEmail);
+            } else {
+                missingEmails.add(sendInfo);
             }
         }
+
+        if (!ignoreMissingEmails && !missingEmails.isEmpty()) {
+            return missingEmails;
+        }
+
         if (!recipientEmails.isEmpty()) {
             Notification notification = setupNotification(new Notification(), NotificationModel.NotificationType.ACCESS_RESTRICTION_REASON_CHANGED, -1, Parameters.DOC_SENDER_EMAIL);
             notification.setToEmails(recipientEmails);
@@ -1142,6 +1150,8 @@ public class NotificationServiceImpl implements NotificationService {
                 log.error("Failed to send email notification " + notification, e);
             }
         }
+
+        return missingEmails;
     }
 
     @Override

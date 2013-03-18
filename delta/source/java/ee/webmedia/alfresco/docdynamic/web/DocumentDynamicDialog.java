@@ -73,6 +73,7 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.search.web.SearchBlockBean;
+import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.document.sendout.web.SendOutBlockBean;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.service.EventsLoggingHelper;
@@ -494,8 +495,8 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     private void openOrSwitchModeCommon(NodeRef docRef, boolean inEditMode) {
         DocumentDynamic document = inEditMode
                 ? getDocumentDynamicService().getDocumentWithInMemoryChangesForEditing(docRef)
-                : getDocumentDynamicService().getDocument(docRef);
-        openOrSwitchModeCommon(document, inEditMode);
+                        : getDocumentDynamicService().getDocument(docRef);
+                openOrSwitchModeCommon(document, inEditMode);
     }
 
     private void openOrSwitchModeCommon(DocumentDynamic document, boolean inEditMode) {
@@ -585,7 +586,15 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
 
     public void sendAccessRestrictionChangedEmails(@SuppressWarnings("unused") ActionEvent event) {
         DocumentDynamic document = getDocument();
-        BeanHelper.getNotificationService().processAccessRestrictionChangedNotification(document, BeanHelper.getSendOutService().getDocumentSendInfos(document.getNodeRef()));
+        List<SendInfo> missingEmails = BeanHelper.getNotificationService().processAccessRestrictionChangedNotification(document,
+                BeanHelper.getSendOutService().getDocumentSendInfos(document.getNodeRef()), true);
+        if (!missingEmails.isEmpty()) {
+            List<String> names = new ArrayList<String>(missingEmails.size());
+            for (SendInfo sendInfo : missingEmails) {
+                names.add(sendInfo.getRecipient());
+            }
+            MessageUtil.addInfoMessage("docdyn_accessRestriction_missingEmails", StringUtils.join(names, ", "));
+        }
         cancel();
     }
 
@@ -600,8 +609,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             LOG.warn(e.getMessage(), e);
             return cancel(false);
         }
-
-        if (!isInEditMode() || !getCurrentSnapshot().viewModeWasOpenedInThePast) {
+        if (!isInEditMode() || !getCurrentSnapshot().viewModeWasOpenedInThePast || !canRestore()) {
             getDocumentDynamicService().deleteDocumentIfDraft(getDocument().getNodeRef());
             return super.cancel(); // closeDialogSnapshot
         }
@@ -656,6 +664,10 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
                 }
             }
 
+        } catch (NodeLockedException e) {
+            BeanHelper.getDocumentLockHelperBean().handleLockedNode("docdyn_createAssoc_error_docLocked", e.getNodeRef());
+            isFinished = false;
+            return null;
         } catch (UnableToPerformMultiReasonException e) {
             if (!handleAccessRestrictionChange(e)) {
                 isFinished = false;
@@ -1089,6 +1101,12 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         getDocumentDialogHelperBean().reset(provider);
         resetModals();
         super.resetOrInit(provider); // reset blocks
+    }
+
+    @Override
+    public boolean canRestore() {
+        WmNode node = getNode();
+        return node == null || getNodeService().exists(node.getNodeRef());
     }
 
     private void resetModals() {

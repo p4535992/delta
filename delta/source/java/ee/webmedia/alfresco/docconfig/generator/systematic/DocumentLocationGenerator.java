@@ -60,6 +60,7 @@ import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
+import ee.webmedia.alfresco.document.search.model.DocumentReportModel;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.search.web.DocumentDynamicSearchDialog;
 import ee.webmedia.alfresco.document.service.DocumentService;
@@ -395,7 +396,8 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 boolean updateAccessRestrictionProperties, boolean useCaseLabel) {
             Node document = dialogDataProvider.getNode();
             UIPropertySheet ps = dialogDataProvider.getPropertySheet();
-            boolean isSearchFilter = DocumentSearchModel.Types.FILTER.equals(document.getType());
+            QName docType = document.getType();
+            boolean isSearchFilter = DocumentSearchModel.Types.FILTER.equals(docType) || DocumentReportModel.Types.FILTER.equals(docType);
 
             String documentTypeId = (String) document.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID);
             @SuppressWarnings("unchecked")
@@ -407,7 +409,9 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             } else {
                 idList = documentTypeIds;
             }
-            boolean isSearchFilterOrDocTypeNull = isSearchFilter || (documentTypeId == null && (documentTypeIds == null || documentTypeIds.isEmpty()));
+
+            boolean docTypeNull = documentTypeId == null;
+            boolean isSearchFilterOrDocTypeNull = isSearchFilter || docTypeNull;
             { // Function
                 List<Function> allFunctions = getAllFunctions(document, isSearchFilter);
                 functions = new ArrayList<SelectItem>(allFunctions.size());
@@ -503,9 +507,9 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 }
 
                 List<Volume> allVolumes;
-                if (isSearchFilterOrDocTypeNull) {
-                    allVolumes = getVolumeService().getAllValidVolumesBySeries(seriesRef);
-                } else if (getGeneralService().getStore().equals(seriesRef.getStoreRef())) {
+                if (isSearchFilter) { // Search screens
+                    allVolumes = getVolumeService().getAllVolumesBySeries(seriesRef);
+                } else if (docTypeNull || getGeneralService().getStore().equals(seriesRef.getStoreRef())) { // Mass and regular document relocating
                     allVolumes = getVolumeService().getAllValidVolumesBySeries(seriesRef, DocListUnitStatus.OPEN);
                 } else {
                     allVolumes = Collections.emptyList();
@@ -638,20 +642,26 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             document.getProperties().put(seriesProp.toString(), seriesRef);
             document.getProperties().put(volumeProp.toString(), volumeRef);
             document.getProperties().put(caseProp.toString(), caseRef);
-            if (!isSearchFilter) { // do not clear caseLabelEditable prop if this is a search filter node
-                document.getProperties().put(caseLabelEditableProp.toString(), caseLabel);
-            }
+            document.getProperties().put(caseLabelEditableProp.toString(), caseLabel);
         }
 
+        @SuppressWarnings("unchecked")
         private List<Function> getAllFunctions(Node document, boolean isSearchFilter) {
             if (!isSearchFilter) {
                 return getFunctionsService().getAllFunctions(DocListUnitStatus.OPEN);
             }
 
-            @SuppressWarnings("unchecked")
             List<NodeRef> selectedStores = (List<NodeRef>) document.getProperties().get(DocumentDynamicSearchDialog.SELECTED_STORES);
-            if (selectedStores == null) {
-                return getFunctionsService().getAllFunctions();
+            if (selectedStores == null) { // Check if the search filter is already saved
+                List<String> storeStrings = (List<String>) document.getProperties().get(DocumentSearchModel.Props.STORE);
+                if (storeStrings == null) {
+                    return getFunctionsService().getAllFunctions();
+                }
+
+                selectedStores = new ArrayList<NodeRef>(storeStrings.size());
+                for (String store : storeStrings) {
+                    selectedStores.add(new NodeRef(store));
+                }
             }
 
             List<Function> allFunctions = new ArrayList<Function>();
@@ -900,12 +910,12 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
     private boolean isClosedUnitCheckNeeded(DocumentDynamic document, DocumentParentNodesVO parents, NodeRef volumeRef, NodeRef caseRef) {
         return document.isDraftOrImapOrDvk()
                 || !(volumeRef.equals(parents.getVolumeNode().getNodeRef())
-                        && (parents.getCaseNode() == null ? caseRef == null
-                                : (caseRef == null ? false
-                                        : parents.getCaseNode().getNodeRef().equals(caseRef)
-                                )
-                                )
-                        );
+                && (parents.getCaseNode() == null ? caseRef == null
+                        : (caseRef == null ? false
+                                : parents.getCaseNode().getNodeRef().equals(caseRef)
+                        )
+                )
+                );
     }
 
     // START: setters

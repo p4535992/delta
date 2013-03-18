@@ -47,6 +47,8 @@ import org.alfresco.util.EqualsHelper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
+
 /**
  * Implementation of the node archive abstraction.
  * 
@@ -134,7 +136,9 @@ public class NodeArchiveServiceImpl implements NodeArchiveService
             {
                 public NodeRef execute() throws Exception
                 {
-                    return nodeService.restoreNode(archivedNodeRef, destinationNodeRef, assocTypeQName, assocQName);
+                    NodeRef restoredNodeRef = nodeService.restoreNode(archivedNodeRef, destinationNodeRef, assocTypeQName, assocQName);
+                    BeanHelper.getDocumentLogService().addDeletedObjectLog(restoredNodeRef, "applog_delete_restore");
+                    return restoredNodeRef;
                 }
             };
             NodeRef newNodeRef = txnHelper.doInTransaction(restoreCallback, false, true);
@@ -284,37 +288,46 @@ public class NodeArchiveServiceImpl implements NodeArchiveService
      * This is the primary purge methd that all purge methods fall back on.  It isolates the delete
      * work in a new transaction.
      */
-    public void purgeArchivedNode(final NodeRef archivedNodeRef)
+    public boolean purgeArchivedNode(final NodeRef archivedNodeRef)
     {
         RetryingTransactionHelper txnHelper = transactionService.getRetryingTransactionHelper();
-        RetryingTransactionCallback<Object> deleteCallback = new RetryingTransactionCallback<Object>()
+        RetryingTransactionCallback<Boolean> deleteCallback = new RetryingTransactionCallback<Boolean>()
         {
-            public Object execute() throws Exception
+            public Boolean execute() throws Exception
             {
                 try
                 {
+                    BeanHelper.getDocumentLogService().addDeletedObjectLog(archivedNodeRef, "applog_delete_done");
                     nodeService.deleteNode(archivedNodeRef);
+                    return true;
                 }
-                catch (InvalidNodeRefException e)
+                catch (InvalidNodeRefException nodeRefEx)
                 {
-                    // ignore
+                    // not error, node has already been deleted
+                    return true;
                 }
-                return null;
+                catch (Exception e)
+                {
+                    logger.error("Deleting node from trashcan failed: ", e);
+                    return false;
+                }
             }
         };
-        txnHelper.doInTransaction(deleteCallback, false, true);
+        return txnHelper.doInTransaction(deleteCallback, false, true);
     }
 
     /**
      * @see #purgeArchivedNode(NodeRef)
      */
-    public void purgeArchivedNodes(List<NodeRef> archivedNodes)
+    public int purgeArchivedNodes(List<NodeRef> archivedNodes)
     {
+        int succeeded = 0;
         for (NodeRef archivedNodeRef : archivedNodes)
         {
-            purgeArchivedNode(archivedNodeRef);
+            boolean success = purgeArchivedNode(archivedNodeRef);
+            succeeded += success ? 1 : 0;
         }
-        // done
+        return succeeded;
     }
 
     public void purgeAllArchivedNodes(StoreRef originalStoreRef)

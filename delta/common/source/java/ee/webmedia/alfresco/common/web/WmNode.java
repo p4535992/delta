@@ -12,10 +12,13 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
+import org.alfresco.service.cmr.dictionary.TypeDefinition;
 import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.security.AccessStatus;
+import org.alfresco.service.namespace.NamespaceException;
 import org.alfresco.service.namespace.NamespacePrefixResolver;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
@@ -315,12 +318,22 @@ public class WmNode extends TransientNode {
         if (!map.isEmpty()) {
             for (Entry<QName, Serializable> entry : map.entrySet()) {
                 s.append("\n    ");
-                s.append(entry.getKey().toPrefixString(namespacePrefixResolver));
+                s.append(qnameToPrefixString(namespacePrefixResolver, entry.getKey()));
                 s.append("=");
                 toStringWithClass(s, entry.getValue(), namespacePrefixResolver);
             }
         }
         return s.toString();
+    }
+
+    private static String qnameToPrefixString(NamespacePrefixResolver namespacePrefixResolver, QName qname) {
+        String qnameStr;
+        try {
+            qnameStr = qname.toPrefixString(namespacePrefixResolver);
+        } catch (NamespaceException e) {
+            qnameStr = qname.toString();
+        }
+        return qnameStr;
     }
 
     public static String toStringWithClass(Object value) {
@@ -349,10 +362,17 @@ public class WmNode extends TransientNode {
     private static void valueToString(StringBuilder s, Object value, NamespacePrefixResolver namespacePrefixResolver, boolean printClass, boolean translateSpecialClasses,
             String argumentSeparator) {
         if (value instanceof QName) {
-            value = ((QName) value).toPrefixString(namespacePrefixResolver);
+            TypeDefinition typeDef = BeanHelper.getDictionaryService().getType((QName) value);
+            if (typeDef == null) {
+                value = qnameToPrefixString(namespacePrefixResolver, (QName) value);
+            } else {
+                value = typeDef.getTitle();
+            }
         }
         if (translateSpecialClasses && value instanceof NodeRef) {
-            QName theType = BeanHelper.getNodeService().getType((NodeRef) value);
+            NodeService nodeService = BeanHelper.getNodeService();
+            // properties may refer to not existing (deleted or not saved) nodeRefs
+            QName theType = nodeService.exists((NodeRef) value) ? nodeService.getType((NodeRef) value) : null;
             if (theType != null) {
                 if (theType.equals(FunctionsModel.Types.FUNCTIONS_ROOT)) {
                     if (BeanHelper.getFunctionsService().getFunctionsRoot().equals(value)) {

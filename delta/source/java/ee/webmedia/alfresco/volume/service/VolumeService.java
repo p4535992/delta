@@ -37,6 +37,8 @@ public interface VolumeService {
 
     List<Volume> getAllVolumesBySeries(NodeRef seriesNodeRef);
 
+    List<Volume> getAllVolumesBySeries(NodeRef seriesNodeRef, DocListUnitStatus status);
+
     List<Volume> getAllValidVolumesBySeries(NodeRef seriesNodeRef);
 
     List<Volume> getAllValidVolumesBySeries(NodeRef seriesNodeRef, DocListUnitStatus status);
@@ -77,4 +79,6 @@ public interface VolumeService {
     List<DeletedDocument> getDeletedDocuments(NodeRef volumeNodeRef);
 
     DeletedDocument getDeletedDocument(NodeRef deletedDocumentNodeRef);
+
+    NodeRef getArchivedVolumeByOriginalNodeRef(NodeRef archivedSeriesRef, NodeRef volumeNodeRef);
 }

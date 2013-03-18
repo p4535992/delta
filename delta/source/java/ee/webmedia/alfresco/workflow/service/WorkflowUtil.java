@@ -5,9 +5,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.faces.component.UIComponent;
@@ -547,48 +549,69 @@ public class WorkflowUtil {
      * @param compoundWorkflow
      * @return
      */
-    public static Set<Pair<String, QName>> haveSameTask(CompoundWorkflow compoundWorkflow) {
+    public static Set<Pair<String, QName>> haveSameTask(CompoundWorkflow compoundWorkflow, List<CompoundWorkflow> otherCompoundWorkflows) {
         Set<Pair<String, QName>> ownerNameTypeSet = new HashSet<Pair<String, QName>>();
-        Set<Pair<String, QName>> thisTasks = new HashSet<Pair<String, QName>>();
+        Map<QName, Set<String>> thisTasks = new HashMap<QName, Set<String>>();
+        Set<NodeRef> firstTasks = new HashSet<NodeRef>();
+        // collect all task types by user from current compound workflow
         for (Workflow wf : compoundWorkflow.getWorkflows()) {
+            QName workflowType = wf.getType();
             for (Task task : wf.getTasks()) {
-                if (StringUtils.isBlank(task.getOwnerId())) {
+                String ownerId = task.getOwnerId();
+                if (StringUtils.isBlank(ownerId)) {
                     continue;
                 }
-                Pair<String, QName> taskOwnerNameAndType = new Pair<String, QName>(task.getOwnerId(), task.getType());
-                if (thisTasks.contains(taskOwnerNameAndType)) {
-                    if (!task.isStatus(Status.NEW, Status.UNFINISHED)) {
-                        ownerNameTypeSet.add(taskOwnerNameAndType);
-                    }
-                } else {
-                    thisTasks.add(taskOwnerNameAndType);
+                Set<String> users = thisTasks.get(workflowType);
+                if (users == null) {
+                    users = new HashSet<String>();
+                    thisTasks.put(workflowType, users);
                 }
+                if (!users.contains(ownerId)) {
+                    firstTasks.add(task.getNodeRef());
+                }
+                users.add(ownerId);
             }
         }
         if (thisTasks.isEmpty()) {
             return ownerNameTypeSet;
         }
-        for (CompoundWorkflow compWf : compoundWorkflow.getOtherCompoundWorkflows()) {
-            if (isStatus(compWf, Status.NEW)) {
-                continue;
+        for (Map.Entry<QName, Set<String>> entry : thisTasks.entrySet()) {
+            QName workflowQName = entry.getKey();
+            for (CompoundWorkflow compWf : otherCompoundWorkflows) {
+                haveSameTask(ownerNameTypeSet, firstTasks, entry, workflowQName, compWf, false);
             }
-            for (Workflow workflow : compWf.getWorkflows()) {
-                if (isStatus(workflow, Status.NEW)) {
-                    continue;
-                }
-                for (Task task : workflow.getTasks()) {
-                    if (task.isStatus(Status.NEW, Status.UNFINISHED) || StringUtils.isBlank(task.getOwnerId())) {
-                        continue;
-                    }
-                    Pair<String, QName> taskOwnerNameAndType = new Pair<String, QName>(task.getOwnerId(), task.getType());
-                    if (thisTasks.contains(taskOwnerNameAndType)) {
-                        ownerNameTypeSet.add(taskOwnerNameAndType);
-                    }
-                }
-            }
+            haveSameTask(ownerNameTypeSet, firstTasks, entry, workflowQName, compoundWorkflow, true);
         }
 
         return ownerNameTypeSet;
+    }
+
+    private static void haveSameTask(Set<Pair<String, QName>> ownerNameTypeSet, Set<NodeRef> firstTasks, Entry<QName, Set<String>> entry, QName workflowQName,
+            CompoundWorkflow compWf, boolean isCurrentWorkflow) {
+        if (isStatus(compWf, Status.NEW)) {
+            return;
+        }
+        for (Workflow workflow : compWf.getWorkflows()) {
+            QName currentWorkflowType = workflow.getType();
+            if (!currentWorkflowType.equals(workflowQName) || isStatus(workflow, Status.NEW)) {
+                continue;
+            }
+            for (Task task : workflow.getTasks()) {
+                String ownerId = task.getOwnerId();
+                if (task.isStatus(Status.NEW, Status.UNFINISHED) || StringUtils.isBlank(ownerId)) {
+                    continue;
+                }
+                QName taskType = task.getType();
+                if ((!isCurrentWorkflow || !firstTasks.contains(task.getNodeRef())) && entry.getValue().contains(ownerId)) {
+                    ownerNameTypeSet.add(new Pair<String, QName>(getTaskOwnerName(task), taskType));
+                }
+            }
+        }
+    }
+
+    private static String getTaskOwnerName(Task task) {
+        String ownerName = StringUtils.isNotBlank(task.getOwnerName()) ? task.getOwnerName() : task.getOwnerId();
+        return ownerName;
     }
 
     public static Task createTaskCopy(Task myTask) {

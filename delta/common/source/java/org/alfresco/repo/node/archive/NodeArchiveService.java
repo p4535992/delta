@@ -159,14 +159,14 @@ public interface NodeArchiveService
      * 
      * @param archivedNodeRef the archived node to delete.
      */
-    public void purgeArchivedNode(NodeRef archivedNodeRef);
+    public boolean purgeArchivedNode(NodeRef archivedNodeRef);
     
     /**
      * Permanently delete the archived nodes.
      * 
      * @param archivedNodes the archived nodes to delete.
      */
-    public void purgeArchivedNodes(List<NodeRef> archivedNodes);
+    public int purgeArchivedNodes(List<NodeRef> archivedNodes);
     
     /**
      * Permanently delete all archived nodes.

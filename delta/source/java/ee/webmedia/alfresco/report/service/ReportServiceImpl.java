@@ -606,7 +606,11 @@ public class ReportServiceImpl implements ReportService {
             if (task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK, WorkflowSpecificModel.Types.REVIEW_TASK, WorkflowSpecificModel.Types.OPINION_TASK)) {
                 setCellValueTruncateIfNeeded(row.createCell(cellIndex++), task.getOutcome(), LOG);
             } else {
-                setCellValueTruncateIfNeeded(row.createCell(cellIndex++), task.getOutcome() + ": " + task.getComment(), LOG);
+                String outcome = task.getOutcome();
+                String comment = task.getComment();
+                boolean notBlankComment = StringUtils.isNotBlank(comment);
+                setCellValueTruncateIfNeeded(row.createCell(cellIndex++),
+                        ((StringUtils.isNotBlank(outcome) || notBlankComment) ? (outcome + (notBlankComment ? (": " + comment) : "")) : null), LOG);
             }
             setCellValueTruncateIfNeeded(row.createCell(cellIndex++), task.isResponsible() ? "jah" : "ei", LOG);
             setCellValueTruncateIfNeeded(row.createCell(cellIndex++), formatDateOrEmpty(DATE_FORMAT, task.getStoppedDateTime()), LOG);
@@ -618,7 +622,6 @@ public class ReportServiceImpl implements ReportService {
             setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document.getVolumeLabel(), LOG);
             setCellValueTruncateIfNeeded(row.createCell(cellIndex++), document.getCaseLabel(), LOG);
         }
-
     }
 
     private class FillExcelDocumentOnlyRowCallback extends FillExcelRowCallback {
@@ -768,7 +771,6 @@ public class ReportServiceImpl implements ReportService {
                         emptyCellsToAdd += fieldsToShowArray[notMandatoryCellIndex++] ? 1 : 0;
                     }
                     cellIndex = addEmptyCells(row, cellIndex, emptyCellsToAdd);
-                    notMandatoryCellIndex += emptyCellsToAdd;
                 }
 
                 if (fieldsToShowArray[notMandatoryCellIndex++]) {

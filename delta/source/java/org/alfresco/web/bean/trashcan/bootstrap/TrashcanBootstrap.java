@@ -14,6 +14,7 @@ import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.service.transaction.TransactionService;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
 import ee.webmedia.alfresco.doclist.service.DocumentListService;
@@ -32,6 +33,12 @@ public class TrashcanBootstrap extends AbstractNodeUpdater {
     private NodeService nodeService;
     private DocumentListService documentListService;
     private UserService userService;
+    private TransactionService transactionService;
+
+    @Override
+    public boolean isContinueWithNextBatchAfterError() {
+        return true;
+    }
 
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
@@ -39,13 +46,13 @@ public class TrashcanBootstrap extends AbstractNodeUpdater {
     }
 
     @Override
-    protected String[] updateNode(NodeRef nodeRef) throws Exception {
+    protected String[] updateNode(final NodeRef nodeRef) throws Exception {
         boolean delete = true;
         ChildAssociationRef origChildRef = (ChildAssociationRef) nodeService.getProperties(nodeRef).get(ContentModel.PROP_ARCHIVED_ORIGINAL_PARENT_ASSOC);
         QName type = nodeService.getType(nodeRef);
         boolean nodeExists = nodeService.exists(origChildRef.getParentRef());
         if (nodeExists && DocumentCommonModel.Types.DOCUMENT.equals(type)
-                 && !DocumentCommonModel.Types.DRAFTS.equals(nodeService.getType(origChildRef.getParentRef()))) {
+                && !DocumentCommonModel.Types.DRAFTS.equals(nodeService.getType(origChildRef.getParentRef()))) {
             delete = false;
         }
         if (ContentModel.TYPE_CONTENT.equals(type)) {
@@ -96,5 +103,9 @@ public class TrashcanBootstrap extends AbstractNodeUpdater {
 
     public void setDocumentService(DocumentService documentService) {
         this.documentService = documentService;
+    }
+
+    public void setTransactionService(TransactionService transactionService) {
+        this.transactionService = transactionService;
     }
 }
