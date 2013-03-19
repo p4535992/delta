@@ -1,9 +1,0 @@
-Failid:
-
-kasutajad.csv - sisaldab kõiki 1000 kasutajat
-kasutajad1.csv, kasutajad2.csv, kasutajad3.csv, kasutajad4.csv - igaüks sisaldab 250 kasutajat
-Delta koormustest.jmx - JMeter skriptifail, mis loeb failidest kasutajate andmeid.
-
-Nelja koormaja arvuti jaoks on kasutajad jagatud 4 faili vahel (faili nimi peaks igas arvutis sama olema: kasutajad.csv).
-
-Skriptifailis saab serveri IP ja porti muuta "Test Plan" alt.
