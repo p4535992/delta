@@ -1,0 +1,54 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <!-- Spring-WS servlet creates a child application context, with main spring context as the parent. -->
+   <!-- Some beans have to be here for Spring-WS servlet to autodetect them, but we can reference other -->
+   <!-- beans from parent context (e.g. GeneralService, ...) -->
+
+   <bean class="ee.webmedia.alfresco.ikt.IktEndpoint">
+      <property name="generalService" ref="GeneralService" />
+   </bean>
+
+   <bean id="iktJaxbMarshaller" class="org.springframework.oxm.jaxb.Jaxb2Marshaller">
+      <property name="contextPath" value="ee.webmedia.alfresco.ikt.generated" />
+      <property name="schema" value="classpath:ee/webmedia/alfresco/ikt/generated/local-ikt.xsd" />
+      <property name="schemaResourceResolver" ref="classpathResourceResolver" />
+      <!--
+         If you don't need to serve attachments (swaRef), then disable this
+      -->
+      <property name="mtomEnabled" value="true" />
+   </bean>
+
+   <bean id="iktSoapMessageDispatcher" class="org.springframework.ws.soap.server.SoapMessageDispatcher">
+      <property name="endpointAdapters">
+         <list>
+            <bean class="org.springframework.ws.server.endpoint.adapter.MarshallingMethodEndpointAdapter">
+               <constructor-arg ref="iktJaxbMarshaller" />
+            </bean>
+         </list>
+      </property>
+   </bean>
+
+   <!-- TODO if either bean id or alias is not needed, remove one of these -->
+
+   <alias name="iktSoapMessageDispatcher" alias="/ikt" />
+
+   <bean name="iktWsdl" class="org.springframework.ws.wsdl.wsdl11.DefaultWsdl11Definition">
+      <property name="schema">
+         <bean class="org.springframework.xml.xsd.SimpleXsdSchema">
+            <property name="xsd" value="classpath:ee/webmedia/alfresco/ikt/generated/ikt.xsd" />
+         </bean>
+      </property>
+      <property name="portTypeName" value="ikt" />
+      <property name="locationUri" value="/service2/ikt" /><!-- TODO investigate if this can be simplified -->
+      <property name="targetNamespace" value="http://delta/ikt/definitions" />
+      <property name="requestSuffix" value="Paring" />
+      <property name="responseSuffix" value="Vastus" />
+   </bean>
+
+   <!-- TODO if either bean id or alias is not needed, remove one of these -->
+
+   <alias name="iktWsdl" alias="/ikt.wsdl" />
+
+</beans>

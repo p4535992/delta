@@ -1,0 +1,156 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <bean id="taskSearchModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap,workflowModelBootstrap">
+      <property name="models">
+         <list>
+            <value>ee/webmedia/alfresco/workflow/search/model/compoundWorkflowSearchModel.xml</value>
+            <value>ee/webmedia/alfresco/workflow/search/model/taskSearchModel.xml</value>
+            <value>ee/webmedia/alfresco/workflow/search/model/taskReportModel.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="compoundWorkflowSearchModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap,workflowModelBootstrap">
+      <property name="models">
+         <list>
+            <value>ee/webmedia/alfresco/workflow/search/model/compoundWorkflowSearchModel.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
+      <property name="configs">
+         <list>
+            <value>classpath:ee/webmedia/alfresco/workflow/search/web/task-search-web-client-config.xml</value>
+            <value>classpath:ee/webmedia/alfresco/workflow/search/web/compound-workflow-search-web-client-config.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
+      <property name="resourceBundles">
+         <list>
+            <value>ee/webmedia/alfresco/workflow/search/web/task-search-webclient</value>
+            <value>ee/webmedia/alfresco/workflow/search/web/compound-workflow-search-webclient</value>
+         </list>
+      </property>
+   </bean>
+   
+   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+      <property name="resourceBundles">
+         <list>
+            <value>ee/webmedia/alfresco/workflow/search/web/task-search-webclient</value>
+            <value>ee/webmedia/alfresco/workflow/search/web/compound-workflow-search-webclient</value>
+         </list>
+      </property>
+   </bean>   
+   
+   <bean id="abstractFilterService" class="ee.webmedia.alfresco.filter.service.AbstractFilterServiceImpl" abstract="true">
+      <property name="generalService" ref="GeneralService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="userService" ref="UserService" />
+      <property name="dictionaryService" ref="DictionaryService" />
+   </bean>
+
+   <bean id="taskSearchFilterService" class="ee.webmedia.alfresco.workflow.search.service.TaskSearchFilterServiceImpl" parent="abstractFilterService" />
+
+   <bean id="TaskSearchFilterService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.workflow.search.service.TaskSearchFilterService</value>
+         </list>
+      </property>
+      <property name="target" ref="taskSearchFilterService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="taskReportFilterService" class="ee.webmedia.alfresco.workflow.search.service.TaskReportFilterServiceImpl" parent="abstractFilterService" />
+
+   <bean id="TaskReportFilterService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.workflow.search.service.TaskReportFilterService</value>
+         </list>
+      </property>
+      <property name="target" ref="taskReportFilterService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="compoundWorkflowSearchFilterService" class="ee.webmedia.alfresco.workflow.search.service.CompoundWorkflowSearchFilterServiceImpl" parent="abstractFilterService" />
+
+   <bean id="CompoundWorkflowSearchFilterService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.workflow.search.service.CompoundWorkflowSearchFilterService</value>
+         </list>
+      </property>
+      <property name="target" ref="compoundWorkflowSearchFilterService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+
+   <bean id="taskSearchFiltersSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/</prop>
+               <prop key="location">ee/webmedia/alfresco/workflow/search/bootstrap/taskSearchFilters.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="taskReportSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/</prop>
+               <prop key="location">ee/webmedia/alfresco/workflow/search/bootstrap/taskReportFilters.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="compoundWorkflowSearchSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/</prop>
+               <prop key="location">ee/webmedia/alfresco/workflow/search/bootstrap/compoundWorkflowSearchFilters.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="TaskSearchResultsDialog" class="ee.webmedia.alfresco.workflow.search.web.TaskSearchResultsDialog" scope="session" />
+   <bean id="CompoundWorkflowSearchResultsDialog" class="ee.webmedia.alfresco.workflow.search.web.CompoundWorkflowSearchResultsDialog" scope="session" />
+   <bean id="TaskSearchDialog" class="ee.webmedia.alfresco.workflow.search.web.TaskSearchDialog" scope="session" />
+   <bean id="CompoundWorkflowSearchDialog" class="ee.webmedia.alfresco.workflow.search.web.CompoundWorkflowSearchDialog" scope="session" />
+   <bean id="TaskReportDialog" class="ee.webmedia.alfresco.workflow.search.web.TaskReportDialog" scope="session" />
+
+</beans>

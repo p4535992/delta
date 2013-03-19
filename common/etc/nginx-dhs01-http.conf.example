@@ -1,0 +1,51 @@
+#http {
+
+# DHS HTTP (redirect)
+server {
+    listen 80;
+    server_name dhs01.example.com;
+
+    # For opening files with OpenOffice.org / LibreOffice / Apache OpenOffice (if conf.openoffice-client-extensions in alfresco-global.properties is non-empty),
+    # it is needed for web server on http port (80) to redirect requests to https port (443) with URL with the same path and query string.
+    location / {
+        rewrite ^(.*) https://dhs01.example.com$1;
+    }
+}
+
+# DHS HTTP
+server {
+    listen 443;
+    server_name dhs01.example.com;
+
+    ssl on;
+    ssl_certificate /path/to/dhs01.example.com.crt;
+    ssl_certificate_key /path/to/dhs01.example.com.key;
+
+    location / {
+        proxy_pass http://dhs01-http;
+    }
+
+    # Deny access to all Delta web services by default; allow access only to specific systems to specific services
+    location /dhs/service {
+        deny all;
+    }
+
+    # DHS specific settings
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; # DHS needs this to get correct client IP address for audit log;
+                                                                 # also must set useClientIpFromXForwardedForHttpHeader=true in alfresco-global.properties
+    proxy_read_timeout 3600s; # Some actions in DHS may take a long time
+
+    # Not mandatory, just recommended somewhere...
+    ssl_prefer_server_ciphers on;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+}
+
+upstream dhs01-http {
+    # DHS needs sticky sessions! ip_hash should be enough, if clients don't change IP address between requests.
+    # If clients change IP addresses between requests, then use cookie based sticky sessions (http://code.google.com/p/nginx-sticky-module/)
+    ip_hash;
+    server dhs-n1.example.com:8080;
+}
+
+#}

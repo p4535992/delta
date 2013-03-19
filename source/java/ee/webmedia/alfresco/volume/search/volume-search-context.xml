@@ -1,0 +1,112 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <bean parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap,documentModelBootstrap">
+      <property name="models">
+         <list>
+            <value>ee/webmedia/alfresco/volume/search/model/volumeSearchModel.xml</value>
+            <value>ee/webmedia/alfresco/volume/search/model/volumeReportModel.xml</value>
+         </list>
+      </property>
+      <property name="labels">
+         <list>
+            <value>ee/webmedia/alfresco/volume/search/model/volume-search-model</value>
+         </list>
+      </property>      
+   </bean>
+
+   <bean class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
+      <property name="configs">
+         <list>
+            <value>classpath:ee/webmedia/alfresco/volume/search/web/volume-search-web-client-config.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
+      <property name="resourceBundles">
+         <list>
+            <value>ee/webmedia/alfresco/volume/search/web/volume-search-webclient</value>
+         </list>
+      </property>
+   </bean>
+   
+   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+      <property name="resourceBundles">
+         <list>
+            <value>ee/webmedia/alfresco/volume/search/web/volume-search-webclient</value>
+         </list>
+      </property>
+   </bean>   
+
+   <bean id="volumeSearchFilterService" class="ee.webmedia.alfresco.volume.search.service.VolumeSearchFilterServiceImpl" parent="abstractFilterService" />
+
+   <bean id="VolumeSearchFilterService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.volume.search.service.VolumeSearchFilterService</value>
+         </list>
+      </property>
+      <property name="target" ref="volumeSearchFilterService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+   <bean id="volumeReportFilterService" class="ee.webmedia.alfresco.volume.search.service.VolumeReportFilterServiceImpl" parent="abstractFilterService" />
+
+   <bean id="VolumeReportFilterService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.volume.search.service.VolumeReportFilterService</value>
+         </list>
+      </property>
+      <property name="target" ref="volumeReportFilterService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="volumeSearchFiltersSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/</prop>
+               <prop key="location">ee/webmedia/alfresco/volume/search/bootstrap/volumeSearchFilters.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="volumeReportFiltersSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/</prop>
+               <prop key="location">ee/webmedia/alfresco/volume/search/bootstrap/volumeReportFilters.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+   
+   <!-- START: web beans: -->
+
+   <bean id="VolumeDynamicSearchDialog" class="ee.webmedia.alfresco.volume.search.web.VolumeDynamicSearchDialog" scope="session" />
+   <bean id="VolumeDynamicReportDialog" class="ee.webmedia.alfresco.volume.search.web.VolumeDynamicReportDialog" scope="session" />
+   <bean id="VolumeSearchResultsDialog" class="ee.webmedia.alfresco.volume.search.web.VolumeSearchResultsDialog" scope="session" />
+
+   <!-- END: web beans: -->
+
+</beans>

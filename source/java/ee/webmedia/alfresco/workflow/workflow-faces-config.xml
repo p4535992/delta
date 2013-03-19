@@ -1,0 +1,135 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE faces-config PUBLIC "-//Sun Microsystems, Inc.//DTD JavaServer Faces Config 1.1//EN"
+                              "http://java.sun.com/dtd/web-facesconfig_1_1.dtd">
+<faces-config>
+   <!--
+      Loaded after Alfresco JSF configuration files. You can define here: * new managed JSF beans * overrides of previously defined Alfresco managed JSF beans *
+      new navigation rules * ... But NOT overrides of existing navigation rules (you must use META-INF/faces-config.xml for that) More information:
+      http://wiki.alfresco.com/wiki/Packaging_And_Deploying_Extensions#JSF_configuration_files
+   -->
+
+   <managed-bean>
+      <managed-bean-name>CompoundWorkflowDefinitionDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.workflow.web.CompoundWorkflowDefinitionDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>navigator</property-name>
+         <value>#{NavigationBean}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>ownerSearchBean</property-name>
+         <value>#{OwnerSearchBean}</value>
+      </managed-property>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>CompoundWorkflowDefinitionListDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.workflow.web.CompoundWorkflowDefinitionListDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>navigator</property-name>
+         <value>#{NavigationBean}</value>
+      </managed-property> 
+      <managed-property>
+         <property-name>browseBean</property-name>
+         <value>#{BrowseBean}</value>
+      </managed-property>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>CompoundWorkflowDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.workflow.web.CompoundWorkflowDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>navigator</property-name>
+         <value>#{NavigationBean}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>ownerSearchBean</property-name>
+         <value>#{OwnerSearchBean}</value>
+      </managed-property>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>WorkflowBlockBean</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.workflow.web.WorkflowBlockBean</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>fileBlockBean</property-name>
+         <value>#{FileBlockBean}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>delegationBean</property-name>
+         <value>#{DelegationBean}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>transactionsBlockBean</property-name>
+         <value>#{TransactionsBlockBean}</value>
+      </managed-property>      
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>DelegationBean</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.workflow.web.DelegationBean</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>MyTasksBean</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.workflow.web.MyTasksBean</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>documentService</property-name>
+         <value>#{DocumentService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>parametersService</property-name>
+         <value>#{ParametersService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>documentSearchService</property-name>
+         <value>#{DocumentSearchService}</value>
+      </managed-property>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>TaskListGenerator</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.workflow.web.TaskListGenerator</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+      <managed-property>
+         <property-name>dialogManager</property-name>
+         <value>#{DialogManager}</value>
+      </managed-property>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>DelegationHistoryGenerator</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.workflow.web.DelegationHistoryGenerator</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>DelegateButtonGenerator</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.workflow.web.DelegateButtonGenerator</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>DelegationTaskListGenerator</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.workflow.web.DelegationTaskListGenerator</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+      <managed-property>
+         <property-name>dialogManager</property-name>
+         <value>#{DialogManager}</value>
+      </managed-property>
+   </managed-bean>
+
+   <render-kit>
+      <renderer>
+         <component-family>javax.faces.Panel</component-family>
+         <renderer-type>ee.webmedia.alfresco.workflow.web.TaskListPickerRenderer</renderer-type>
+         <renderer-class>ee.webmedia.alfresco.workflow.web.TaskListPickerRenderer</renderer-class>
+      </renderer>
+   </render-kit>
+   
+</faces-config>

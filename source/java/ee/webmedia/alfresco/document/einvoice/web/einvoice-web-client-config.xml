@@ -1,0 +1,58 @@
+<alfresco-config>
+   <config>
+   
+     <actions>
+         
+         <action id="dimensions_set_inactive">
+            <label-id>dimensions_set_all_inactive</label-id>
+            <image>/images/icons/project-icon-emailarchive-16.gif</image>
+            <action-listener>#{DimensionDetailsDialog.setDimensionValuesInactive}</action-listener>
+         </action>
+         
+         <action id="dimensions_set_active">
+            <label-id>dimensions_set_all_active</label-id>
+            <image>/images/icons/project-icon-emailarchive-16.gif</image>
+            <action-listener>#{DimensionDetailsDialog.setDimensionValuesActive}</action-listener>
+         </action>         
+         
+         <action id="transaction_template_add">
+            <label-id>transaction_template_add</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action>dialog:transactionsTemplateDetailsDialog</action>
+            <action-listener>#{TransactionsTemplateDetailsDialog.addTemplate}</action-listener>
+         </action>
+   
+        <action-group id="dimension_actions">
+        </action-group>
+        
+         <action-group id="dimension_detail_actions">
+           <action idref="dimensions_set_active" />              
+           <action idref="dimensions_set_inactive" />
+         </action-group>   
+         
+        <action-group id="transaction_template_actions">
+           <action idref="transaction_template_add" />
+        </action-group>
+        
+      </actions>  
+
+      <dialogs>
+
+         <dialog name="dimensionListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/einvoice/web/dimension-list-dialog.jsp"
+            managed-bean="DimensionListDialog" icon="/images/icons/versioned_properties_large.gif" title-id="dimensions_title" show-ok-button="false" actions-config-id="dimension_actions" />
+
+         <dialog name="dimensionDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/einvoice/web/dimension-details-dialog.jsp"
+            managed-bean="DimensionDetailsDialog" icon="/images/icons/versioned_properties_large.gif" title-id="dimensions_title" show-ok-button="true" actions-config-id="dimension_detail_actions" />
+            
+         <dialog name="transactionDescParameterListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/einvoice/web/transactionDescParameter-list-dialog.jsp"
+            managed-bean="TransactionDescParameterListDialog" icon="/images/icons/versioned_properties_large.gif" title-id="transactionDescParameter_title" show-ok-button="true" />
+            
+         <dialog name="transactionTemplateListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/einvoice/web/transaction-template-list-dialog.jsp"
+            managed-bean="TransactionTemplateListDialog" icon="/images/icons/versioned_properties_large.gif" title-id="transaction_template_title" show-ok-button="false" actions-config-id="transaction_template_actions" />
+            
+         <dialog name="transactionsTemplateDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/einvoice/web/transaction-template-details-block.jsp"
+            managed-bean="TransactionsTemplateDetailsDialog" icon="/images/icons/versioned_properties_large.gif" title-id="transaction_template_details_title" show-ok-button="true" />                                      
+
+      </dialogs>
+   </config>
+</alfresco-config>

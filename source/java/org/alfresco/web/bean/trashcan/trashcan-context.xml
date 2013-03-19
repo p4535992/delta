@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+   <bean id="trashcanBootstrap" class="org.alfresco.web.bean.trashcan.bootstrap.TrashcanBootstrap" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+      <property name="executeOnceOnly" value="true" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="documentListService" ref="DocumentListService" />
+      <property name="userService" ref="UserService" />
+      <property name="documentService" ref="DocumentService" />
+      <property name="transactionService" ref="TransactionService" />
+      <property name="transactionHelperMinRetryWaits" value="6000" />
+   </bean>
+</beans>

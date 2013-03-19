@@ -1,0 +1,364 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE faces-config PUBLIC "-//Sun Microsystems, Inc.//DTD JavaServer Faces Config 1.1//EN"
+                              "http://java.sun.com/dtd/web-facesconfig_1_1.dtd">
+<faces-config>
+   <!--
+      Loaded after Alfresco JSF configuration files. You can define here: * new managed JSF beans * overrides of previously defined Alfresco managed JSF beans *
+      new navigation rules * ... But NOT overrides of existing navigation rules (you must use META-INF/faces-config.xml for that) More information:
+      http://wiki.alfresco.com/wiki/Packaging_And_Deploying_Extensions#JSF_configuration_files
+   -->
+
+   <managed-bean>
+      <managed-bean-name>DocumentListDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.web.DocumentListDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>UnsentDocumentListDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.web.UnsentDocumentListDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+   
+   <managed-bean>
+      <managed-bean-name>DocumentSearchResultsDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.search.web.DocumentSearchResultsDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>DocumentQuickSearchResultsDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.search.web.DocumentQuickSearchResultsDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>TodayRegisteredDocumentsSearchResultsDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.search.web.TodayRegisteredDocumentsSearchResultsDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>UserWorkingDocumentsSearchResultsDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.search.web.UserWorkingDocumentsSearchResultsDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>OutboxDocumentListDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.web.OutboxDocumentListDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>DvkDocumentListDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.web.DvkDocumentListDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>FavoritesDocumentListDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.web.FavoritesDocumentListDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>DiscussionDocumentListDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.web.DiscussionDocumentListDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>DocumentDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.web.DocumentDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>namespaceService</property-name>
+         <value>#{NamespaceService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>browseBean</property-name>
+         <value>#{BrowseBean}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>documentService</property-name>
+         <value>#{DocumentService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>metadataBlockBean</property-name>
+         <value>#{MetadataBlockBean}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>fileBlockBean</property-name>
+         <value>#{FileBlockBean}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>navigator</property-name>
+         <value>#{NavigationBean}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>sendOutBlockBean</property-name>
+         <value>#{SendOutBlockBean}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>searchBlockBean</property-name>
+         <value>#{SearchBlockBean}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>assocsBlockBean</property-name>
+         <value>#{AssocsBlockBean}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>workflowBlockBean</property-name>
+         <value>#{WorkflowBlockBean}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>logBlockBean</property-name>
+         <value>#{LogBlockBean}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>transactionsBlockBean</property-name>
+         <value>#{TransactionsBlockBean}</value>
+      </managed-property>      
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>MetadataBlockBean</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.metadata.web.MetadataBlockBean</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>documentService</property-name>
+         <value>#{DocumentService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>nodeService</property-name>
+         <value>#{NodeService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>organizationStructureService</property-name>
+         <value>#{OrganizationStructureService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>documentTypeService</property-name>
+         <value>#{DocumentTypeService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>documentTemplateService</property-name>
+         <value>#{DocumentTemplateService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>parametersService</property-name>
+         <value>#{ParametersService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>userListDialog</property-name>
+         <value>#{UserListDialog}</value>
+      </managed-property>      
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>FileBlockBean</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.file.web.FileBlockBean</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>navigationBean</property-name>
+         <value>#{NavigationBean}</value>
+      </managed-property>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>AddFileDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.file.web.AddFileDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>navigator</property-name>
+         <value>#{NavigationBean}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>userService</property-name>
+         <value>#{UserService}</value>
+      </managed-property>
+       <managed-property>
+         <property-name>fileService</property-name>
+         <value>#{FileService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>imapServiceExt</property-name>
+         <value>#{ImapServiceExt}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>documentDialog</property-name>
+         <value>#{DocumentDialog}</value>
+      </managed-property>      
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>DeleteFileDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.file.web.DeleteFileDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>nodeService</property-name>
+         <value>#{NodeService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>fileFolderService</property-name>
+         <value>#{FileFolderService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>searchService</property-name>
+         <value>#{SearchService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>navigator</property-name>
+         <value>#{NavigationBean}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>browseBean</property-name>
+         <value>#{BrowseBean}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>dictionaryService</property-name>
+         <value>#{DictionaryService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>namespaceService</property-name>
+         <value>#{NamespaceService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>multilingualContentService</property-name>
+         <value>#{MultilingualContentService}</value>
+      </managed-property>
+   </managed-bean>
+
+   <!-- FIXME DLSeadist vana bean'i def -->
+   <managed-bean>
+      <managed-bean-name>DocumentTypeDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.type.web.DocumentTypeDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>documentTypeService</property-name>
+         <value>#{DocumentTypeService}</value>
+      </managed-property>
+   </managed-bean>
+
+
+   <managed-bean>
+      <managed-bean-name>DocumentSendOutDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.sendout.web.DocumentSendOutDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>SendOutBlockBean</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.sendout.web.SendOutBlockBean</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+   <managed-bean>
+      <managed-bean-name>LogBlockBean</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.log.web.LogBlockBean</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+   
+   <managed-bean>
+      <managed-bean-name>TransactionsBlockBean</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.einvoice.web.TransactionsBlockBean</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>   
+
+   <managed-bean>
+      <managed-bean-name>DeleteAssocDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.associations.web.DeleteAssocDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>AssignResponsibilityBean</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.assignresponsibility.web.AssignResponsibilityBean</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+   
+   <managed-bean>
+      <managed-bean-name>DimensionDetailsDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.einvoice.web.DimensionDetailsDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>navigator</property-name>
+         <value>#{NavigationBean}</value>
+      </managed-property>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>DimensionListDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.einvoice.web.DimensionListDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>navigator</property-name>
+         <value>#{NavigationBean}</value>
+      </managed-property>
+   </managed-bean>
+   
+   <managed-bean>
+      <managed-bean-name>TransactionDescParameterListDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.einvoice.web.TransactionDescParameterListDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>navigator</property-name>
+         <value>#{NavigationBean}</value>
+      </managed-property>
+   </managed-bean>  
+   
+   <managed-bean>
+      <managed-bean-name>TransactionTemplateListDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.einvoice.web.TransactionTemplateListDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>navigator</property-name>
+         <value>#{NavigationBean}</value>
+      </managed-property>
+   </managed-bean>   
+   
+   <managed-bean>
+      <managed-bean-name>TransactionsTemplateDetailsDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.einvoice.web.TransactionsTemplateDetailsDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>navigator</property-name>
+         <value>#{NavigationBean}</value>
+      </managed-property>
+   </managed-bean>   
+
+   <!-- ==================== [ COMPONENT GENERATORS ] =================================== -->
+
+   <managed-bean>
+      <description>
+         Bean that generates a separator component using HTML hr element
+      </description>
+      <managed-bean-name>SeparatorGenerator</managed-bean-name>
+      <managed-bean-class>org.alfresco.web.bean.generator.SeparatorGenerator</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   
+   <managed-bean>
+      <description>
+         Bean that generates a notification separator from leavingLetterContent parameter.
+      </description>
+      <managed-bean-name>LeavingLetterContentGenerator</managed-bean-name>
+      <managed-bean-class>org.alfresco.web.bean.generator.HtmlSeparatorGenerator</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+      <managed-property>
+         <property-name>html</property-name>
+         <value>#{MetadataBlockBean.leavingLetterContent}</value>
+      </managed-property>
+   </managed-bean>
+
+   <converter>
+      <converter-id>ee.webmedia.alfresco.document.type.web.DocumentTypeConverter</converter-id>
+      <converter-class>ee.webmedia.alfresco.document.type.web.DocumentTypeConverter</converter-class>
+   </converter>
+   
+   <converter>
+      <converter-id>ee.webmedia.alfresco.document.type.web.CaseFileTypeConverter</converter-id>
+      <converter-class>ee.webmedia.alfresco.document.type.web.CaseFileTypeConverter</converter-class>
+   </converter>   
+
+</faces-config>

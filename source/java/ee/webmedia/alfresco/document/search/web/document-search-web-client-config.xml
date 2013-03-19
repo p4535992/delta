@@ -1,0 +1,38 @@
+<alfresco-config>
+
+   <config>
+       <actions>
+           <action id="document_search_export_csv">
+               <label-id>document_export_csv</label-id>
+               <image>/images/icons/versioned_properties.gif</image>
+               <action-listener>#{DocumentSearchResultsDialog.exportAsCsv}</action-listener>
+	             <target>no_wait_workaround</target>
+           </action>
+
+           <action-group id="document_search_actions">
+               <action idref="document_search_export_csv"/>
+           </action-group>
+       </actions>
+      <dialogs>
+         <dialog name="documentDynamicSearchDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/search/web/document-dynamic-search-dialog.jsp" managed-bean="DocumentDynamicSearchDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="document_search" />
+         
+         <dialog name="documentDynamicReportDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/search/web/document-dynamic-search-dialog.jsp" managed-bean="DocumentDynamicReportDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="document_report" />
+            
+         <dialog name="documentSearchResultsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/search/web/document-search-results-dialog.jsp" managed-bean="DocumentSearchResultsDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="document_search" actions-config-id="document_search_actions"/>
+
+         <dialog name="documentQuickSearchResultsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="DocumentQuickSearchResultsDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="document_quick_search" show-ok-button="false" />
+
+         <dialog name="todayRegisteredDocumentsSearchResultsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="TodayRegisteredDocumentsSearchResultsDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="document_registeredToday" show-ok-button="false" />
+
+         <dialog name="userWorkingDocumentsSearchResultsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="UserWorkingDocumentsSearchResultsDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="document_working_documents" show-ok-button="false" />
+      </dialogs>
+   </config>
+
+
+</alfresco-config>

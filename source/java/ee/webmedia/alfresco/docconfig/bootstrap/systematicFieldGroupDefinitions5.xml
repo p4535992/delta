@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:docadmin="http://alfresco.webmedia.ee/model/document/admin/1.0">
+
+   <docadmin:fieldGroup view:childName="docadmin:substitute">
+      <view:properties>
+         <docadmin:name>Asendaja määramine</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:readonlyFieldsName>Määrata asendajaks</docadmin:readonlyFieldsName>
+         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>substituteName</view:value>
+               <view:value>substituteJobTitle</view:value>
+               <view:value>substitutionBeginDate</view:value>
+               <view:value>substitutionEndDate</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+</view:view>

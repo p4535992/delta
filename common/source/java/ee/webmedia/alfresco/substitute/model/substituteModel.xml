@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<model name="sub:substituteModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+    <imports>
+        <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d"/>
+        <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys"/>
+    </imports>
+
+    <namespaces>
+        <namespace uri="http://alfresco.webmedia.ee/model/substitute/1.0" prefix="sub"/>
+    </namespaces>
+
+    <types>
+        <type name="sub:substitutes">
+            <parent>sys:base</parent>
+            <associations>
+                <child-association name="sub:substitute">
+                    <source>
+                        <mandatory>true</mandatory>
+                        <many>false</many>
+                    </source>
+                    <target>
+                        <class>sub:substitute</class>
+                        <mandatory>false</mandatory>
+                        <many>true</many>
+                    </target>
+                </child-association>
+            </associations>
+            <mandatory-aspects>
+                <aspect>sys:aspect_root</aspect>
+            </mandatory-aspects>
+        </type>
+
+        <type name="sub:substitute">
+            <parent>sys:base</parent>
+            <properties>
+                <property name="sub:substituteName">
+                    <type>d:text</type>
+                    <mandatory>true</mandatory>
+                </property>
+                <property name="sub:substituteId">
+                    <type>d:text</type>
+                    <mandatory>true</mandatory>
+                </property>
+                <property name="sub:substitutionStartDate">
+                    <type>d:datetime</type>
+                    <mandatory>true</mandatory>
+                </property>
+                <property name="sub:substitutionEndDate">
+                    <type>d:datetime</type>
+                    <mandatory>true</mandatory>
+                </property>
+            </properties>
+        </type>
+    </types>
+
+    <aspects>
+    <aspect name="sub:substitutable">
+         <associations>
+            <child-association name="sub:substitutes">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>sub:substitutes</class>
+                  <mandatory>false</mandatory>
+                  <many>false</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
+    </aspects>
+</model>

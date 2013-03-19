@@ -1,0 +1,145 @@
+<alfresco-config>
+   <config>
+      <actions>
+      
+         <action id="function_add_new">
+            <permissions>
+               <permission allow="true">CreateChildren</permission>
+            </permissions>
+            <label-id>function_add_new</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{FunctionsDetailsDialog.addNewFunction}</action-listener>
+            <action>dialog:functionsDetailsDialog</action>
+         </action>
+
+         <action id="docList_export">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
+            <label-id>docList_export</label-id>
+            <action-listener>#{FunctionsListDialog.export}</action-listener>
+            <style-class>docList_export</style-class>
+            <target>no_wait_workaround</target>
+         </action>
+
+         <action id="docList_import">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
+            <label-id>docList_import</label-id>
+            <image>/images/icons/add_item.gif</image>
+            <action>dialog:documentListImportDialog</action>
+         </action>
+
+         <action id="docList_import_smitExcel">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.SmitExcelImportEvaluator</evaluator>
+            <label-id>docList_import_smitExcel</label-id>
+            <image>/images/icons/add_item.gif</image>
+            <tooltip-id>docList_import_smitExcel_tooltip</tooltip-id>
+            <action-listener>#{FunctionsListDialog.importSmitDocList}</action-listener>
+         </action>
+
+         <action id="docList_deleteAllDocuments">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.SmitExcelImportEvaluator</evaluator>
+            <label-id>docList_deleteAllDocuments</label-id>
+            <tooltip-id>docList_deleteAllDocuments_tooltip</tooltip-id>
+            <image>/images/icons/delete.png</image>
+            <style-class>docList_deleteAllDocuments</style-class>
+            <action-listener>#{FunctionsListDialog.deleteAllDocuments}</action-listener>
+         </action>
+
+         <action id="docList_updateDocCounters">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
+            <label-id>docList_updateDocCounters</label-id>
+            <tooltip-id>docList_updateDocCounters_tooltip</tooltip-id>
+            <image>/images/icons/edit-properties.png</image>
+            <action-listener>#{FunctionsListDialog.updateDocCounters}</action-listener>
+         </action>
+
+         <action id="docList_createNewYearBasedVolumes">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminEvaluator</evaluator>
+            <label-id>docList_createNewYearBasedVolumes</label-id>
+            <tooltip-id>docList_createNewYearBasedVolumes_desc</tooltip-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{FunctionsListDialog.createNewYearBasedVolumes}</action-listener>
+         </action>
+         
+         <action id="docList_exportConsolidatedList">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
+            <label-id>docList_consolidatedList</label-id>
+            <action-listener>#{FunctionsListDialog.exportDocumentConsolidatedList}</action-listener>
+            <style-class>docList_exportConsolidatedList</style-class>
+            <target>no_wait_workaround</target>
+         </action>
+         
+         <action id="functions_reopen">
+            <evaluator>ee.webmedia.alfresco.functions.web.evaluator.FunctionIsClosedEvaluator</evaluator>
+            <label-id>function_reopen</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action>#{FunctionsDetailsDialog.reopen}</action>
+         </action>
+         
+         <action id="functions_close">
+            <evaluator>ee.webmedia.alfresco.functions.web.evaluator.FunctionIsOpenedEvaluator</evaluator>
+            <label-id>function_close</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action>#{FunctionsDetailsDialog.close}</action>
+         </action>
+         
+         <action id="functions_delete">
+            <evaluator>ee.webmedia.alfresco.functions.web.evaluator.FunctionIsClosedEvaluator</evaluator>
+            <label-id>function_delete</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action>#{FunctionsDetailsDialog.delete}</action>
+         </action>
+         
+         <action-group id="browse_actions_functions">
+            <action idref="function_add_new" />
+            <!-- <action idref="docList_export" /> -->
+            <!-- <action idref="docList_import" /> Import has not been updated to handle latest changes -->
+            <action idref="docList_createNewYearBasedVolumes" />
+            <action idref="docList_exportConsolidatedList" />
+            <action idref="docList_updateDocCounters" />
+            <!-- disabled to prevent accidental deleting(importing) after import has completed 
+            <action idref="docList_import_smitExcel" />
+            <action idref="docList_deleteAllDocuments" />
+             -->
+         </action-group>
+
+         <action-group id="details_actions_function">
+            <action idref="functions_reopen" />
+            <action idref="functions_close" />
+            <action idref="functions_delete" />
+         </action-group>
+
+      </actions>
+
+      <dialogs>
+
+         <dialog name="functionsListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/functions/web/functions-list-dialog.jsp" managed-bean="FunctionsListDialog"
+            icon="/images/icons/versioned_properties_large.gif" actions-config-id="browse_actions_functions" title-id="functions_title" show-ok-button="false" />
+
+            <dialog name="myDocsFunctionsListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/functions/web/my-functions-list-dialog.jsp" managed-bean="FunctionsListDialog"
+            icon="/images/icons/versioned_properties_large.gif" actions-config-id="browse_actions_functions" title-id="functions_my_documents_title" show-ok-button="false" />
+
+         <dialog name="functionsDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/functions/web/functions-details-dialog.jsp" managed-bean="FunctionsDetailsDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="functions_details_title" actions-config-id="details_actions_function" show-ok-button="true">
+         </dialog>
+
+         <dialog name="documentListImportDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/functions/web/docList-import-dialog.jsp" managed-bean="DocumentListImportDialog"
+            icon="/images/icons/add_content_large.gif" title-id="docList_import" description-id="import_docList_desc" />
+
+      </dialogs>
+   </config>
+
+   <config evaluator="node-type" condition="fn:function">
+      <property-sheet>
+         <show-property name="fn:type" display-label-id="function_type" classificatorName="functionType" component-generator="ClassificatorSelectorGenerator"
+            readOnlyIf="fn:status=suletud" />
+         <show-property name="fn:mark" display-label-id="function_mark" readOnlyIf="fn:status=suletud" />
+         <show-property name="fn:title" display-label-id="function_title" readOnlyIf="fn:status=suletud" styleClass="expand19-200" component-generator="TextAreaGenerator" />
+         <show-property name="fn:description" display-label-id="function_description" readOnlyIf="fn:status=suletud" styleClass="expand19-200"
+            component-generator="TextAreaGenerator" mandatory="false"/>
+         <show-property name="fn:status" display-label-id="function_status" read-only="true" classificatorName="docListUnitStatus"
+            component-generator="ClassificatorSelectorGenerator" />
+         <show-property name="fn:order" display-label-id="function_order" converter="javax.faces.Integer"/>
+         <show-property name="fn:documentActivitiesAreLimited" display-label-id="function_documentActivitiesAreLimited" readOnlyIf="fn:status=suletud" />
+      </property-sheet>
+   </config>
+</alfresco-config>

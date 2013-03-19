@@ -1,0 +1,27 @@
+Index: source/java/org/alfresco/web/ui/common/component/UIGenericPicker.java
+===================================================================
+--- source/java/org/alfresco/web/ui/common/component/UIGenericPicker.java	(revision 149926)
++++ source/java/org/alfresco/web/ui/common/component/UIGenericPicker.java	(working copy)
+@@ -385,6 +385,14 @@
+       out.write("</select>");
+       out.write("</td></tr>");
+       
++      // help text
++      if (getMultiSelect() == true)
++      {
++          out.write("<tr><td colspan=2>");
++          out.write(Utils.encode(bundle.getString("help_select_multiple_rows")));
++          out.write("</td></tr>");
++      }
++      
+       // bottom row - add button
+       if (getShowAddButton() == true)
+       {
+Index: source/java/ee/webmedia/alfresco/common/propertysheet/web/common-propertysheet_et_EE.properties
+===================================================================
+--- source/java/ee/webmedia/alfresco/common/propertysheet/web/common-propertysheet_et_EE.properties	(revision 149987)
++++ source/java/ee/webmedia/alfresco/common/propertysheet/web/common-propertysheet_et_EE.properties	(working copy)
+@@ -1,2 +1,3 @@
+ common_propertysheet_validator_mandatoryIf=V\u00E4lja "{0}" t\u00E4itmine on kohustuslik.
++help_select_multiple_rows=Mitme leitud objekti valimiseks hoia all Ctrl klahvi
+ validation_is_int_number="{0}" peab olema t\u00E4isarv.

@@ -1,0 +1,105 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <!-- Entry point to include other components -->
+   <!-- Be sure to also include necessary JSF configuration files in web/WEB-INF/web.xml -->
+   <import resource="classpath:ee/webmedia/alfresco/log/log-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/help/help-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/signature/signature-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/dvk/dvk-sim-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/addressbook/addressbook-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/menu/menu-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/classificator/classificator-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/parameters/parameters-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/eventplan/eventplan-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/search/search-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/orgstructure/organizationStructure-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/cases/case-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/volume/volume-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/casefile/case-file-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/series/series-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/document/document-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/functions/functions-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/user/user-simdhs-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/register/register-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/template/document-template-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/versions/versions-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/webdav/webdav-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/imap/imap-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/email/email-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/substitute/substitute-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/workflow/workflow-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/notification/notification-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/archivals/archivals-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/adr/adr-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/ocr/ocr-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/importer/importer-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/postipoiss/postipoiss-simdhs-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/sharepoint/sharepoint-simdhs-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/mso/mso-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/privilege/privilege-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/thesaurus/thesaurus-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/docdynamic/docdyn-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/docadmin/docadmin-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/docconfig/docconfig-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/base/base-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/relvastus/relvastus-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/ikt/ikt-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/adddocument/add-document-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/testdata/testdata-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/doclist/doclist-context.xml"/>
+   <import resource="classpath:ee/webmedia/alfresco/report/report-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/document/lock/lock-context.xml" />
+   <import resource="classpath:org/alfresco/web/bean/trashcan/trashcan-context.xml" />
+
+   <bean class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
+      <property name="configs">
+         <list>
+            <value>classpath:ee/webmedia/alfresco/simdhs/simdhs-web-client-config.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean name="casAuthenticationFilter" class="org.jasig.cas.client.authentication.AuthenticationFilter">
+      <property name="casServerLoginUrl" value="${cas.casServerUrl}" />
+      <property name="serverName" value="${server.url}" />
+   </bean>
+
+   <bean name="casTicketValidationFilter" class="org.jasig.cas.client.validation.Cas20ProxyReceivingTicketValidationFilter">
+      <property name="redirectAfterValidation" value="true" />
+      <property name="serverName" value="${server.url}" />
+      <property name="ticketValidator">
+         <bean class="org.jasig.cas.client.validation.Cas20ServiceTicketValidator">
+            <constructor-arg value="${cas.casServerUrl}" />
+         </bean>
+      </property>
+   </bean>
+
+   <bean name="userHomesHomeFolderPermissionsManager" class="org.alfresco.repo.security.person.PermissionsManagerImpl">
+      <property name="permissionService" ref="permissionServiceImpl" />
+      <property name="ownableService" ref="ownableService" />
+      <property name="clearExistingPermissions" value="true" />
+      <property name="inheritPermissions" value="true" />
+      <property name="ownerPermissions">
+         <set>
+            <value>All</value>
+         </set>
+      </property>
+      <property name="userPermissions">
+         <set>
+            <value>Collaborator</value>
+         </set>
+      </property>
+   </bean>
+
+   <!-- START: web beans: -->
+
+   <bean id="InformingDeleteNodeDialog" class="ee.webmedia.alfresco.common.web.InformingDeleteNodeDialog" scope="session" />
+   
+   <bean id="DeleteDialog" class="ee.webmedia.alfresco.common.web.DeleteDialog" scope="session" />
+   
+   <bean id="ConfirmDialog" class="ee.webmedia.alfresco.common.web.ConfirmDialog" scope="session" />
+
+   <!-- END: web beans: -->
+</beans>

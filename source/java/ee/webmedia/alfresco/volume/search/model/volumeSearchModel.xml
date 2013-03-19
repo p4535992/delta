@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="volumesearch:volumeSearchModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/volume/search/1.0" prefix="volumesearch" />
+   </namespaces>
+
+   <types>
+
+      <type name="volumesearch:volumeSearchFilters">
+         <parent>sys:base</parent>
+         <mandatory-aspects>
+            <aspect>volumesearch:volumeSearchFiltersContainer</aspect>
+            <aspect>sys:aspect_root</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="volumesearch:filter">
+         <parent>sys:base</parent>
+         <properties>
+            <!-- documentsList / achivedDocumentsList -->
+            <property name="volumesearch:store">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="volumesearch:name">
+               <type>d:text</type>
+            </property>
+            <!-- Üldsisend, mis otsib kõikidelt väljadelt -->
+            <property name="volumesearch:input">
+               <type>d:text</type>
+            </property>
+            <property name="volumesearch:volumeType">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="volumesearch:caseFileType">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+         </properties>
+      </type>
+      
+      <type name="volumesearch:archiveListFilter">
+         <parent>volumesearch:filter</parent>
+         <properties>
+            <property name="volumesearch:validTo">
+               <type>d:date</type>
+            </property>
+            <property name="volumesearch:validTo_EndDate">
+               <type>d:date</type>
+            </property>
+            <property name="volumesearch:eventPlan">
+               <type>d:text</type>
+            </property>
+            <property name="volumesearch:hasArchivalValue">
+               <type>d:boolean</type>
+            </property>
+            <property name="volumesearch:status">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property> 
+            <property name="volumesearch:nextEventDate">
+               <type>d:date</type>
+            </property>
+            <property name="volumesearch:nextEventDate_EndDate">
+               <type>d:date</type>
+            </property>
+            <property name="volumesearch:retainPermanent">
+               <type>d:boolean</type>
+            </property>            
+            <property name="volumesearch:retainUntilDate">
+               <type>d:date</type>
+            </property>
+            <property name="volumesearch:retainUntilDate_EndDate">
+               <type>d:date</type>
+            </property> 
+            <property name="volumesearch:markedForTransfer">
+               <type>d:boolean</type>
+            </property>
+            <property name="volumesearch:exportedForUam">
+               <type>d:boolean</type>
+            </property>
+            <property name="volumesearch:exportedForUamDateTime">
+               <type>d:date</type>
+            </property>
+            <property name="volumesearch:exportedForUamDateTime_EndDate">
+               <type>d:date</type>
+            </property>
+            <property name="volumesearch:nextEvent">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property> 
+            <property name="volumesearch:markedForDestruction">
+               <type>d:boolean</type>
+            </property>
+            <property name="volumesearch:disposalActCreated">
+               <type>d:boolean</type>
+            </property>
+            <property name="volumesearch:isAppraised">
+               <type>d:boolean</type>
+            </property>
+            <property name="volumesearch:transferConfirmed">
+               <type>d:boolean</type>
+            </property>  
+         </properties>
+      </type>      
+
+   </types>
+
+   <aspects>
+
+      <aspect name="volumesearch:volumeSearchFiltersContainer">
+         <associations>
+            <child-association name="volumesearch:filter">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>volumesearch:filter</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
+      
+      <!-- These aspects are currently used in volumesearch:archiveListFilter only diplay purposes only -->
+      <aspect name="volumesearch:plannedReview"></aspect>
+      
+      <aspect name="volumesearch:plannedTransfer"></aspect>
+      
+      <aspect name="volumesearch:plannedDestruction"></aspect>
+
+   </aspects>
+
+</model>

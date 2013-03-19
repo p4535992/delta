@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:sch="http://ametnik.smit/services" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+   xmlns:tns="http://ametnik.smit/services/definitions" targetNamespace="http://ametnik.smit/services/definitions">
+   <wsdl:types>
+      <xs:schema xmlns:s1="http://ametnik.smit/services" xmlns:xs="http://www.w3.org/2001/XMLSchema" attributeFormDefault="unqualified" elementFormDefault="qualified"
+         targetNamespace="http://ametnik.smit/services">
+         <xs:element name="RSLubaByIsikukoodRequest">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="isikukood" type="xs:string" />
+                  <xs:element name="asutusId" type="xs:integer" />
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="RSLubaByIsikukoodResponse">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="isikukood" type="xs:string" />
+                  <xs:element name="rsluba" type="xs:boolean" />
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="IsikukoodByAsutusIdAndHasRsLubaRequest">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element name="asutusId" type="xs:integer" />
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="IsikukoodByAsutusIdAndHasRsLubaResponse">
+            <xs:complexType>
+               <xs:sequence>
+                  <xs:element maxOccurs="unbounded" minOccurs="0" name="isikukood" type="xs:string" />
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+      </xs:schema>
+   </wsdl:types>
+   <wsdl:message name="RSLubaByIsikukoodRequest">
+      <wsdl:part element="sch:RSLubaByIsikukoodRequest" name="RSLubaByIsikukoodRequest">
+      </wsdl:part>
+   </wsdl:message>
+   <wsdl:message name="IsikukoodByAsutusIdAndHasRsLubaRequest">
+      <wsdl:part element="sch:IsikukoodByAsutusIdAndHasRsLubaRequest" name="IsikukoodByAsutusIdAndHasRsLubaRequest">
+      </wsdl:part>
+   </wsdl:message>
+   <wsdl:message name="RSLubaByIsikukoodResponse">
+      <wsdl:part element="sch:RSLubaByIsikukoodResponse" name="RSLubaByIsikukoodResponse">
+      </wsdl:part>
+   </wsdl:message>
+   <wsdl:message name="IsikukoodByAsutusIdAndHasRsLubaResponse">
+      <wsdl:part element="sch:IsikukoodByAsutusIdAndHasRsLubaResponse" name="IsikukoodByAsutusIdAndHasRsLubaResponse">
+      </wsdl:part>
+   </wsdl:message>
+   <wsdl:portType name="rsPort">
+      <wsdl:operation name="IsikukoodByAsutusIdAndHasRsLuba">
+         <wsdl:input message="tns:IsikukoodByAsutusIdAndHasRsLubaRequest" name="IsikukoodByAsutusIdAndHasRsLubaRequest">
+         </wsdl:input>
+         <wsdl:output message="tns:IsikukoodByAsutusIdAndHasRsLubaResponse" name="IsikukoodByAsutusIdAndHasRsLubaResponse">
+         </wsdl:output>
+      </wsdl:operation>
+      <wsdl:operation name="RSLubaByIsikukood">
+         <wsdl:input message="tns:RSLubaByIsikukoodRequest" name="RSLubaByIsikukoodRequest">
+         </wsdl:input>
+         <wsdl:output message="tns:RSLubaByIsikukoodResponse" name="RSLubaByIsikukoodResponse">
+         </wsdl:output>
+      </wsdl:operation>
+   </wsdl:portType>
+   <wsdl:binding name="rsPortSoap11" type="tns:rsPort">
+      <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http" />
+      <wsdl:operation name="IsikukoodByAsutusIdAndHasRsLuba">
+         <soap:operation soapAction="" />
+         <wsdl:input name="IsikukoodByAsutusIdAndHasRsLubaRequest">
+            <soap:body use="literal" />
+         </wsdl:input>
+         <wsdl:output name="IsikukoodByAsutusIdAndHasRsLubaResponse">
+            <soap:body use="literal" />
+         </wsdl:output>
+      </wsdl:operation>
+      <wsdl:operation name="RSLubaByIsikukood">
+         <soap:operation soapAction="" />
+         <wsdl:input name="RSLubaByIsikukoodRequest">
+            <soap:body use="literal" />
+         </wsdl:input>
+         <wsdl:output name="RSLubaByIsikukoodResponse">
+            <soap:body use="literal" />
+         </wsdl:output>
+      </wsdl:operation>
+   </wsdl:binding>
+   <wsdl:service name="rsService">
+      <wsdl:port binding="tns:rsPortSoap11" name="rsPortSoap11">
+         <soap:address location="http://gfna1-dto.dwl.smit:38082/amr-services/services/RsRequest" />
+      </wsdl:port>
+   </wsdl:service>
+</wsdl:definitions>

@@ -1,0 +1,32 @@
+Index: source/java/org/alfresco/repo/security/permissions/impl/PermissionServiceImpl.java
+===================================================================
+--- source/java/org/alfresco/repo/security/permissions/impl/PermissionServiceImpl.java	(revision 154617)
++++ source/java/org/alfresco/repo/security/permissions/impl/PermissionServiceImpl.java	(working copy)
+@@ -25,6 +25,7 @@
+ package org.alfresco.repo.security.permissions.impl;
+ 
+ import java.io.Serializable;
++import java.util.ArrayList;
+ import java.util.HashSet;
+ import java.util.LinkedHashSet;
+ import java.util.List;
+@@ -211,6 +212,19 @@
+     }
+ 
+     /**
++     * Set the dynamic authorities
++     * 
++     * @param dynamicAuthorities
++     */
++    public void addDynamicAuthority(DynamicAuthority dynamicAuthority)
++    {
++        if (dynamicAuthorities == null) {
++            dynamicAuthorities = new ArrayList<DynamicAuthority>();
++        }
++        dynamicAuthorities.add(dynamicAuthority);
++    }
++
++    /**
+      * Set the ACL DAO component.
+      * 
+      * @param aclDaoComponent

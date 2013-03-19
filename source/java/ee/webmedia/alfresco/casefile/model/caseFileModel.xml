@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="cf:caseFileModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+      <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
+      <import uri="http://alfresco.webmedia.ee/model/document/common/1.0" prefix="doccom" />
+      <import uri="http://alfresco.webmedia.ee/model/volume/1.0" prefix="vol" />
+      <import uri="http://alfresco.webmedia.ee/model/workflow/common/1.0" prefix="wfc" />
+      <import uri="http://alfresco.webmedia.ee/model/case/1.0" prefix="case" />
+      <import uri="http://alfresco.webmedia.ee/model/eventPlan/1.0" prefix="plan" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/casefile/1.0" prefix="cf" />
+   </namespaces>
+
+   <types>
+      <type name="cf:caseFile">
+         <parent>sys:base</parent>
+         <associations>
+            <association name="cf:caseFileDocument">
+               <source>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </source>
+               <target>
+                  <class>doccom:document</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </association>
+            <association name="cf:caseFileVolume">
+               <source>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </source>
+               <target>
+                  <class>vol:volume</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </association>
+            <association name="cf:caseFileCaseFile">
+               <source>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </source>
+               <target>
+                  <class>cf:caseFile</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </association>
+            <association name="cf:caseFileCase">
+               <source>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </source>
+               <target>
+                  <class>case:case</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </association> 
+         </associations> 
+         <mandatory-aspects>
+            <aspect>doccom:documentContainer</aspect>
+            <aspect>doccom:documentRegNumbersContainer</aspect>
+            <aspect>vol:volumeAssociations</aspect>
+            <aspect>wfc:compoundWorkflowContainer</aspect>
+            <aspect>plan:volumeEventPlan</aspect>
+         </mandatory-aspects>
+      </type>
+   </types>
+
+   <aspects>
+      <aspect name="cf:caseFileContainer">
+         <associations>
+            <child-association name="cf:caseFile">
+               <source>
+                  <mandatory>false</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>cf:caseFile</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
+
+      <aspect name="cf:favorite">
+         <associations>
+            <association name="cf:favorite">
+               <source>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </source>
+               <target>
+                  <class>cf:caseFile</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </association>
+         </associations>
+      </aspect>
+   </aspects>
+
+</model>

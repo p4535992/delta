@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view 
+   xmlns:view="http://www.alfresco.org/view/repository/1.0" 
+   xmlns:param="http://alfresco.webmedia.ee/model/parameters/1.0" 
+>
+   <param:stringParameter view:childName="param:externalReviewAutomaticFolder">
+      <view:properties>
+         <param:value>AÜTV</param:value>
+      </view:properties>
+   </param:stringParameter>
+   
+   </view:view>

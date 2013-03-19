@@ -1,0 +1,529 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:cl="http://alfresco.webmedia.ee/model/classificator/1.0">
+   <cl:classificators view:childName="${classificators.folder.name}">
+      <view:associations>
+         <cl:classificator>
+         
+            <cl:classificator view:childName="cl:contractType">
+               <cl:name>contractType</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+         
+            <cl:classificator view:childName="cl:managementsOrderWhose">
+               <cl:name>managementsOrderWhose</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+         
+            <cl:classificator view:childName="cl:leavingLetterReason">
+               <cl:name>leavingLetterReason</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+         
+            <cl:classificator view:childName="cl:vacationOrderWhose">
+               <cl:name>vacationOrderWhose</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+         
+            <cl:classificator view:childName="cl:licenceType">
+               <cl:name>licenceType</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+         
+            <cl:classificator view:childName="cl:decreeWhose">
+               <cl:name>decreeWhose</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+         
+            <cl:classificator view:childName="cl:ministersOrderWhose">
+               <cl:name>ministersOrderWhose</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+         
+            <cl:classificator view:childName="cl:personelleOrderSimWhose">
+               <cl:name>personelleOrderSimWhose</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+         
+            <cl:classificator view:childName="cl:chancellorsOrderWhose">
+               <cl:name>chancellorsOrderWhose</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+
+            <!-- START: välisLähetustega seonduvad klassifikaatorid -->
+            <cl:classificator view:childName="cl:errandOrderAbroadCostManager">
+               <cl:name>errandOrderAbroadCostManager</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+
+            <cl:classificator view:childName="cl:errandOrderExpenditureItem">
+               <cl:name>errandOrderExpenditureItem</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+
+            <cl:classificator view:childName="cl:errandAbroadDailyAllowanceCateringCount">
+               <cl:name>errandAbroadDailyAllowanceCateringCount</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+
+            <cl:classificator view:childName="cl:errandAbroadDailyAllowanceRate">
+               <cl:name>errandAbroadDailyAllowanceRate</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+
+            <cl:classificator view:childName="cl:errandAbroadDailyAllowanceFinancingSource">
+               <cl:name>errandAbroadDailyAllowanceFinancingSource</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+
+            <cl:classificator view:childName="cl:errandOrderAbroadExpenseType">
+               <cl:name>errandOrderAbroadExpenseType</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+
+            <cl:classificator view:childName="cl:errandAbroadExpenseFinancingSource">
+               <cl:name>errandAbroadExpenseFinancingSource</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+
+            <cl:classificator view:childName="cl:errandOrderAbroadAdvancePaymentDesc">
+               <cl:name>errandOrderAbroadAdvancePaymentDesc</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+            <!-- END: välisLähetustega seonduvad klassifikaatorid -->
+
+            <!-- START: siseLähetustega seonduvad klassifikaatorid -->
+            <cl:classificator view:childName="cl:counties">
+               <cl:name>counties</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+
+            <cl:classificator view:childName="cl:errandApplicationDomesticExpenseType">
+               <cl:name>errandApplicationDomesticExpenseType</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+
+            <cl:classificator view:childName="cl:errandDomesticExpenseFinancingSource">
+               <cl:name>errandDomesticExpenseFinancingSource</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+
+            <cl:classificator view:childName="cl:errandDomesticAdvancePaymentDesc">
+               <cl:name>errandDomesticAdvancePaymentDesc</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+            <!-- END: siseLähetustega seonduvad klassifikaatorid -->
+
+            <!-- START: Koolitustaotluse klassifikaatorid -->
+            <cl:classificator view:childName="cl:trainingAppDailyAllowanceCateringCount">
+               <cl:name>trainingAppDailyAllowanceCateringCount</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+
+            <cl:classificator view:childName="cl:trainingAppDailyAllowanceRate">
+               <cl:name>trainingAppDailyAllowanceRate</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+
+            <cl:classificator view:childName="cl:trainingAppDailyAllowanceFinancingSource">
+               <cl:name>trainingAppDailyAllowanceFinancingSource</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+
+            <cl:classificator view:childName="cl:trainingAppAbroadExpenseType">
+               <cl:name>trainingAppAbroadExpenseType</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+
+            <cl:classificator view:childName="cl:trainingAppExpenseFinancingSource">
+               <cl:name>trainingAppExpenseFinancingSource</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+
+            <cl:classificator view:childName="cl:trainingAppAdvancePaymentDesc">
+               <cl:name>trainingAppAdvancePaymentDesc</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+            <!-- END: Koolitustaotluse klassifikaatorid -->
+
+            <!-- START: Riigihanke läbiviimise taotluse klassifikaatorid -->
+            <cl:classificator view:childName="cl:procurementType">
+               <cl:name>procurementType</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+
+            <cl:classificator view:childName="cl:procurementBudgetClassification">
+               <cl:name>procurementBudgetClassification</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+            <!-- END: Riigihanke läbiviimise taotluse klassifikaatorid -->
+
+            <cl:classificator view:childName="cl:transmittalMode">
+               <cl:name>transmittalMode</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+               <view:associations>
+                  <cl:classificatorValue>
+
+                     <cl:classificatorValue view:childName="cl:classificatorValue">
+                        <view:properties>
+                           <cl:valueName>e-post</cl:valueName>
+                           <cl:order>1</cl:order>
+                           <cl:byDefault>false</cl:byDefault>
+                           <cl:readOnly>true</cl:readOnly>
+                           <cl:active>true</cl:active>
+                        </view:properties>
+                     </cl:classificatorValue>
+
+                     <cl:classificatorValue view:childName="cl:classificatorValue">
+                        <view:properties>
+                           <cl:valueName>DVK</cl:valueName>
+                           <cl:order>2</cl:order>
+                           <cl:byDefault>false</cl:byDefault>
+                           <cl:readOnly>true</cl:readOnly>
+                           <cl:active>true</cl:active>
+                        </view:properties>
+                     </cl:classificatorValue>
+
+                  </cl:classificatorValue>
+               </view:associations>
+            </cl:classificator>
+
+            <cl:classificator view:childName="cl:functionType">
+               <cl:name>functionType</cl:name>
+               <cl:addRemoveValues>false</cl:addRemoveValues>
+               <view:associations>
+                  <cl:classificatorValue>
+
+                     <cl:classificatorValue view:childName="cl:classificatorValue">
+                        <view:properties>
+                           <cl:valueName>funktsioon</cl:valueName>
+                           <cl:order>1</cl:order>
+                           <cl:byDefault>true</cl:byDefault>
+                           <cl:readOnly>true</cl:readOnly>
+                           <cl:active>true</cl:active>
+                        </view:properties>
+                     </cl:classificatorValue>
+
+                     <cl:classificatorValue view:childName="cl:classificatorValue">
+                        <view:properties>
+                           <cl:valueName>allfunktsioon</cl:valueName>
+                           <cl:order>2</cl:order>
+                           <cl:byDefault>false</cl:byDefault>
+                           <cl:readOnly>true</cl:readOnly>
+                           <cl:active>true</cl:active>
+                        </view:properties>
+                     </cl:classificatorValue>
+
+                  </cl:classificatorValue>
+               </view:associations>
+            </cl:classificator>
+
+            <cl:classificator view:childName="cl:docListUnitStatus">
+               <cl:name>docListUnitStatus</cl:name>
+               <cl:addRemoveValues>false</cl:addRemoveValues>
+               <view:associations>
+                  <cl:classificatorValue>
+
+                     <cl:classificatorValue view:childName="cl:classificatorValue">
+                        <view:properties>
+                           <cl:valueName>avatud</cl:valueName>
+                           <cl:order>1</cl:order>
+                           <cl:byDefault>true</cl:byDefault>
+                           <cl:readOnly>true</cl:readOnly>
+                           <cl:active>true</cl:active>
+                        </view:properties>
+                     </cl:classificatorValue>
+
+                     <cl:classificatorValue view:childName="cl:classificatorValue">
+                        <view:properties>
+                           <cl:valueName>suletud</cl:valueName>
+                           <cl:order>2</cl:order>
+                           <cl:byDefault>false</cl:byDefault>
+                           <cl:readOnly>true</cl:readOnly>
+                           <cl:active>true</cl:active>
+                        </view:properties>
+                     </cl:classificatorValue>
+
+                    <cl:classificatorValue view:childName="cl:classificatorValue">
+                        <view:properties>
+                           <cl:valueName>hävitatud</cl:valueName>
+                           <cl:order>3</cl:order>
+                           <cl:byDefault>false</cl:byDefault>
+                           <cl:readOnly>true</cl:readOnly>
+                           <cl:active>true</cl:active>
+                        </view:properties>
+                     </cl:classificatorValue>
+
+                  </cl:classificatorValue>
+               </view:associations>
+            </cl:classificator>
+
+            <cl:classificator view:childName="cl:boolean">
+               <cl:name>boolean</cl:name>
+               <cl:addRemoveValues>false</cl:addRemoveValues>
+               <view:associations>
+                  <cl:classificatorValue>
+
+                     <cl:classificatorValue view:childName="cl:classificatorValue">
+                        <view:properties>
+                           <cl:valueName>Jah</cl:valueName>
+                           <cl:order>1</cl:order>
+                           <cl:byDefault>false</cl:byDefault>
+                           <cl:readOnly>true</cl:readOnly>
+                           <cl:active>true</cl:active>
+                        </view:properties>
+                     </cl:classificatorValue>
+
+                     <cl:classificatorValue view:childName="cl:classificatorValue">
+                        <view:properties>
+                           <cl:valueName>Ei</cl:valueName>
+                           <cl:order>2</cl:order>
+                           <cl:byDefault>false</cl:byDefault>
+                           <cl:readOnly>true</cl:readOnly>
+                           <cl:active>true</cl:active>
+                        </view:properties>
+                     </cl:classificatorValue>
+
+                  </cl:classificatorValue>
+               </view:associations>
+            </cl:classificator>
+
+            <cl:classificator view:childName="cl:accessRestriction">
+               <cl:name>accessRestriction</cl:name>
+               <cl:addRemoveValues>false</cl:addRemoveValues>
+               <view:associations>
+                  <cl:classificatorValue>
+
+                     <cl:classificatorValue view:childName="cl:classificatorValue">
+                        <view:properties>
+                           <cl:valueName>Avalik</cl:valueName>
+                           <cl:order>1</cl:order>
+                           <cl:byDefault>false</cl:byDefault>
+                           <cl:readOnly>true</cl:readOnly>
+                           <cl:active>true</cl:active>
+                        </view:properties>
+                     </cl:classificatorValue>
+
+                     <cl:classificatorValue view:childName="cl:classificatorValue">
+                        <view:properties>
+                           <cl:valueName>AK</cl:valueName>
+                           <cl:order>2</cl:order>
+                           <cl:byDefault>false</cl:byDefault>
+                           <cl:readOnly>true</cl:readOnly>
+                           <cl:active>true</cl:active>
+                        </view:properties>
+                     </cl:classificatorValue>
+
+                     <cl:classificatorValue view:childName="cl:classificatorValue">
+                        <view:properties>
+                           <cl:valueName>Majasisene</cl:valueName>
+                           <cl:order>3</cl:order>
+                           <cl:byDefault>false</cl:byDefault>
+                           <cl:readOnly>true</cl:readOnly>
+                           <cl:active>true</cl:active>
+                        </view:properties>
+                     </cl:classificatorValue>
+
+                  </cl:classificatorValue>
+               </view:associations>
+            </cl:classificator>
+
+            <cl:classificator view:childName="cl:documentStatus">
+               <cl:name>documentStatus</cl:name>
+               <cl:addRemoveValues>false</cl:addRemoveValues>
+               <view:associations>
+                  <cl:classificatorValue>
+
+                     <cl:classificatorValue view:childName="cl:classificatorValue">
+                        <view:properties>
+                           <cl:valueName>töös</cl:valueName>
+                           <cl:order>1</cl:order>
+                           <cl:byDefault>true</cl:byDefault>
+                           <cl:readOnly>true</cl:readOnly>
+                           <cl:active>true</cl:active>
+                        </view:properties>
+                     </cl:classificatorValue>
+
+                     <cl:classificatorValue view:childName="cl:classificatorValue">
+                        <view:properties>
+                           <cl:valueName>peatatud</cl:valueName>
+                           <cl:order>2</cl:order>
+                           <cl:byDefault>false</cl:byDefault>
+                           <cl:readOnly>true</cl:readOnly>
+                           <cl:active>true</cl:active>
+                        </view:properties>
+                     </cl:classificatorValue>
+
+                     <cl:classificatorValue view:childName="cl:classificatorValue">
+                        <view:properties>
+                           <cl:valueName>lõpetatud</cl:valueName>
+                           <cl:order>3</cl:order>
+                           <cl:byDefault>false</cl:byDefault>
+                           <cl:readOnly>true</cl:readOnly>
+                           <cl:active>true</cl:active>
+                        </view:properties>
+                     </cl:classificatorValue>
+
+                  </cl:classificatorValue>
+               </view:associations>
+            </cl:classificator>
+
+            <cl:classificator view:childName="cl:seriesType">
+               <cl:name>seriesType</cl:name>
+               <cl:addRemoveValues>false</cl:addRemoveValues>
+               <view:associations>
+                  <cl:classificatorValue>
+
+                     <cl:classificatorValue view:childName="cl:classificatorValue">
+                        <view:properties>
+                           <cl:valueName>sari</cl:valueName>
+                           <cl:order>1</cl:order>
+                           <cl:byDefault>true</cl:byDefault>
+                           <cl:readOnly>true</cl:readOnly>
+                           <cl:active>true</cl:active>
+                        </view:properties>
+                     </cl:classificatorValue>
+
+                     <cl:classificatorValue view:childName="cl:classificatorValue">
+                        <view:properties>
+                           <cl:valueName>allsari</cl:valueName>
+                           <cl:order>2</cl:order>
+                           <cl:byDefault>false</cl:byDefault>
+                           <cl:readOnly>true</cl:readOnly>
+                           <cl:active>true</cl:active>
+                        </view:properties>
+                     </cl:classificatorValue>
+
+                  </cl:classificatorValue>
+               </view:associations>
+            </cl:classificator>
+                     
+            <cl:classificator view:childName="cl:accessRestrictionReason">
+               <cl:name>accessRestrictionReason</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+
+            <cl:classificator view:childName="cl:keywords">
+               <cl:name>keywords</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+
+            <cl:classificator view:childName="cl:storageType">
+               <cl:name>storageType</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+               <cl:deleteEnabled>false</cl:deleteEnabled>
+               <view:associations>
+                  <cl:classificatorValue>
+
+                     <cl:classificatorValue view:childName="cl:classificatorValue">
+                        <view:properties>
+                           <cl:valueName>Digitaalne</cl:valueName>
+                           <cl:order>1</cl:order>
+                           <cl:byDefault>true</cl:byDefault>
+                           <cl:readOnly>true</cl:readOnly>
+                           <cl:active>true</cl:active>
+                        </view:properties>
+                     </cl:classificatorValue>
+
+                     <cl:classificatorValue view:childName="cl:classificatorValue">
+                        <view:properties>
+                           <cl:valueName>Paber</cl:valueName>
+                           <cl:order>2</cl:order>
+                           <cl:byDefault>false</cl:byDefault>
+                           <cl:readOnly>true</cl:readOnly>
+                           <cl:active>true</cl:active>
+                        </view:properties>
+                     </cl:classificatorValue>
+
+                  </cl:classificatorValue>
+               </view:associations>
+            </cl:classificator>
+
+            <cl:classificator view:childName="cl:sendMode">
+               <cl:name>sendMode</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+               <view:associations>
+                  <cl:classificatorValue>
+
+                     <cl:classificatorValue view:childName="cl:classificatorValue">
+                        <view:properties>
+                           <cl:valueName>e-post/DVK</cl:valueName>
+                           <cl:order>1</cl:order>
+                           <cl:byDefault>false</cl:byDefault>
+                           <cl:readOnly>true</cl:readOnly>
+                           <cl:active>true</cl:active>
+                        </view:properties>
+                     </cl:classificatorValue>
+
+                     <cl:classificatorValue view:childName="cl:classificatorValue">
+                        <view:properties>
+                           <cl:valueName>e-post</cl:valueName>
+                           <cl:order>2</cl:order>
+                           <cl:byDefault>false</cl:byDefault>
+                           <cl:readOnly>true</cl:readOnly>
+                           <cl:active>true</cl:active>
+                        </view:properties>
+                     </cl:classificatorValue>
+                     
+                     <cl:classificatorValue view:childName="cl:classificatorValue">
+                        <view:properties>
+                           <cl:valueName>post</cl:valueName>
+                           <cl:order>3</cl:order>
+                           <cl:byDefault>false</cl:byDefault>
+                           <cl:readOnly>true</cl:readOnly>
+                           <cl:active>true</cl:active>
+                        </view:properties>
+                     </cl:classificatorValue>
+
+                     <cl:classificatorValue view:childName="cl:classificatorValue">
+                        <view:properties>
+                           <cl:valueName>tähitud post</cl:valueName>
+                           <cl:order>4</cl:order>
+                           <cl:byDefault>false</cl:byDefault>
+                           <cl:readOnly>true</cl:readOnly>
+                           <cl:active>true</cl:active>
+                        </view:properties>
+                     </cl:classificatorValue>
+
+                  </cl:classificatorValue>
+               </view:associations>
+            </cl:classificator>
+
+            <cl:classificator view:childName="cl:sendModeSearch">
+               <cl:name>sendModeSearch</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+               <view:associations>
+                  <cl:classificatorValue>
+
+                     <cl:classificatorValue view:childName="cl:classificatorValue">
+                        <view:properties>
+                           <cl:valueName>e-post</cl:valueName>
+                           <cl:order>1</cl:order>
+                           <cl:byDefault>false</cl:byDefault>
+                           <cl:readOnly>true</cl:readOnly>
+                           <cl:active>true</cl:active>
+                        </view:properties>
+                     </cl:classificatorValue>
+
+                     <cl:classificatorValue view:childName="cl:classificatorValue">
+                        <view:properties>
+                           <cl:valueName>DVK</cl:valueName>
+                           <cl:order>2</cl:order>
+                           <cl:byDefault>false</cl:byDefault>
+                           <cl:readOnly>true</cl:readOnly>
+                           <cl:active>true</cl:active>
+                        </view:properties>
+                     </cl:classificatorValue>
+
+                  </cl:classificatorValue>
+               </view:associations>
+            </cl:classificator>
+
+            <cl:classificator view:childName="cl:costManager">
+               <cl:name>costManager</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+
+         </cl:classificator>
+      </view:associations>
+   </cl:classificators>
+</view:view>

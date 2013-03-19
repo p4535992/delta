@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:docadmin="http://alfresco.webmedia.ee/model/document/admin/1.0" xmlns:docdyn="http://alfresco.webmedia.ee/model/document/dynamic/1.0">
+
+   <docadmin:fieldDefinition view:childName="docdyn:driveRecordKeeping">
+      <view:properties>
+         <docadmin:fieldId>driveRecordKeeping</docadmin:fieldId>
+         <docadmin:originalFieldId>driveRecordKeeping</docadmin:originalFieldId>
+         <docadmin:name>Kas sõitude kohta peetakse arvestust?</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>CHECKBOX</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:driveBeginDate">
+      <view:properties>
+         <docadmin:fieldId>driveBeginDate</docadmin:fieldId>
+         <docadmin:originalFieldId>driveBeginDate</docadmin:originalFieldId>
+         <docadmin:name>Sõidu alguse kpv</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:driveEndDate">
+      <view:properties>
+         <docadmin:fieldId>driveEndDate</docadmin:fieldId>
+         <docadmin:originalFieldId>driveEndDate</docadmin:originalFieldId>
+         <docadmin:name>Sõidu lõpu kpv</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:driveOdoBegin">
+      <view:properties>
+         <docadmin:fieldId>driveOdoBegin</docadmin:fieldId>
+         <docadmin:originalFieldId>driveOdoBegin</docadmin:originalFieldId>
+         <docadmin:name>Odomeetri algnäit (km)</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>LONG</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:driveOdoEnd">
+      <view:properties>
+         <docadmin:fieldId>driveOdoEnd</docadmin:fieldId>
+         <docadmin:originalFieldId>driveOdoEnd</docadmin:originalFieldId>
+         <docadmin:name>Odomeetri lõppnäit (km)</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>LONG</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:driveKm">
+      <view:properties>
+         <docadmin:fieldId>driveKm</docadmin:fieldId>
+         <docadmin:originalFieldId>driveKm</docadmin:originalFieldId>
+         <docadmin:name>Läbisõit (km)</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>LONG</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:driveCompensationCalculated">
+      <view:properties>
+         <docadmin:fieldId>driveCompensationCalculated</docadmin:fieldId>
+         <docadmin:originalFieldId>driveCompensationCalculated</docadmin:originalFieldId>
+         <docadmin:name>Hüvitise maksumus (läbisõit x 1 km hind)</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DOUBLE</docadmin:fieldType>
+         <docadmin:changeableIf>ALWAYS_NOT_CHANGEABLE</docadmin:changeableIf>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:driveCompensation">
+      <view:properties>
+         <docadmin:fieldId>driveCompensation</docadmin:fieldId>
+         <docadmin:originalFieldId>driveCompensation</docadmin:originalFieldId>
+         <docadmin:name>Hüvitise suurus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DOUBLE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+</view:view>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns="http://www.riik.ee/schemas/e-arve/HankijaNimekiri.xsd" targetNamespace="http://www.riik.ee/schemas/e-arve/HankijaNimekiri.xsd" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:annotation>
+		<xs:documentation>Andmemudel asutuse hankijate andmete edastamiseks süsteemist süsteemi (tavaliselt raamatupidamissüsteemist dokumendihaldussüsteemi) ============================ Kuupäev: 15.09.2010 Versioon: 1.1 Autor: Itella Information AS ja Riigi Infosüsteemide Arenduskeskus Litsents: EUPL</xs:documentation>
+	</xs:annotation>
+	<xs:element name="HankijaNimekiri">
+		<xs:annotation>
+			<xs:documentation>Juurelement</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="HankijaInfo" maxOccurs="unbounded">
+					<xs:annotation>
+						<xs:documentation>Konto info</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="HankijaInfo">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="HankijaNimi" type="NimeTekstType">
+					<xs:annotation>
+						<xs:documentation>Hankija nimetus, mida kuvatakse dokumendihaldussüsteemis kasutajale</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="HankijaNumber" type="LyhiTekstType">
+					<xs:annotation>
+						<xs:documentation>Hankija number raamatupidamissüsteemis</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="RegistriKood" type="LyhiTekstType">
+					<xs:annotation>
+						<xs:documentation>Hankija ametlik registrikood (Eesti ettevõtete puhul vormingus "1xxxxxxx")</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:simpleType name="LyhiTekstType">
+		<xs:annotation>
+			<xs:documentation>Lühikene tekst (kuni 20 tähemärki)</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:maxLength value="20" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="NimeTekstType">
+		<xs:annotation>
+			<xs:documentation>Nime tekst (kuni 70 tähemärki)</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:maxLength value="70"/>
+			<xs:pattern value="[&#x0020;-&#x00FF;&#x0160;&#x0161;&#x017D;&#x017E;]+"/>
+		</xs:restriction>
+	</xs:simpleType>
+</xs:schema>

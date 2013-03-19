@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:app="http://www.alfresco.org/model/application/1.0" xmlns:cm="http://www.alfresco.org/model/content/1.0"
+   xmlns:tkc="http://alfresco.webmedia.ee/tk/model/core/1.0" xmlns:doccom="http://alfresco.webmedia.ee/model/document/common/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/content/1.0 
+http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/contentModel.xml
+http://www.alfresco.org/model/application/1.0
+http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/applicationModel.xml
+">
+   <doccom:drafts view:childName="${dvk.received.folder.name}">
+   </doccom:drafts>
+
+   <cm:folder view:childName="${dvk.corrupt.folder.name}">
+   </cm:folder>
+</view:view>

@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:docadmin="http://alfresco.webmedia.ee/model/document/admin/1.0" xmlns:docdyn="http://alfresco.webmedia.ee/model/document/dynamic/1.0">
+   
+   <docadmin:fieldDefinition view:childName="docdyn:expenseTypeChoice"> 
+      <view:properties>
+         <docadmin:fieldId>expenseTypeChoice</docadmin:fieldId>
+         <docadmin:originalFieldId>expenseTypeChoice</docadmin:originalFieldId>
+         <docadmin:name>Kulu</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>COMBOBOX_EDITABLE</docadmin:fieldType>
+         <docadmin:classificator>expenseTypeChoice</docadmin:classificator>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+   
+   <docadmin:fieldDefinition view:childName="docdyn:financingSourceChoice">
+      <view:properties>
+         <docadmin:fieldId>financingSourceChoice</docadmin:fieldId>
+         <docadmin:originalFieldId>financingSourceChoice</docadmin:originalFieldId>
+         <docadmin:name>Finantseerimise allikas</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>COMBOBOX_EDITABLE</docadmin:fieldType>
+         <docadmin:classificator>financingSourceChoice</docadmin:classificator>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+   
+   <docadmin:fieldDefinition view:childName="docdyn:payingReasonAndExtent">
+      <view:properties>
+         <docadmin:fieldId>payingReasonAndExtent</docadmin:fieldId>
+         <docadmin:originalFieldId>payingReasonAndExtent</docadmin:originalFieldId>
+         <docadmin:name>Maksmise alus ja ulatus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>COMBOBOX_EDITABLE</docadmin:fieldType>
+         <docadmin:classificator>payingReasonAndExtent</docadmin:classificator>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+   
+   <docadmin:fieldDefinition view:childName="docdyn:errandExpectedExpense">
+      <view:properties>
+         <docadmin:fieldId>errandExpectedExpense</docadmin:fieldId>
+         <docadmin:originalFieldId>errandExpectedExpense</docadmin:originalFieldId>
+         <docadmin:name>Eeldatav kulu summa</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DOUBLE</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+   
+   <docadmin:fieldDefinition view:childName="docdyn:driveTotalKm">
+      <view:properties>
+         <docadmin:fieldId>driveTotalKm</docadmin:fieldId>
+         <docadmin:originalFieldId>driveTotalKm</docadmin:originalFieldId>
+         <docadmin:name>Läbisõit kokku</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>LONG</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+   
+   <docadmin:fieldDefinition view:childName="docdyn:driveCompensationRate">
+      <view:properties>
+         <docadmin:fieldId>driveCompensationRate</docadmin:fieldId>
+         <docadmin:originalFieldId>driveCompensationRate</docadmin:originalFieldId>
+         <docadmin:name>Hüvitise määr = 1 km hind</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DOUBLE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+   
+   <docadmin:fieldDefinition view:childName="docdyn:driveTotalCompensation">
+      <view:properties>
+         <docadmin:fieldId>driveTotalCompensation</docadmin:fieldId>
+         <docadmin:originalFieldId>driveTotalCompensation</docadmin:originalFieldId>
+         <docadmin:name>Hüvitise suurus kokku</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DOUBLE</docadmin:fieldType>
+         <docadmin:changeableIf>ALWAYS_NOT_CHANGEABLE</docadmin:changeableIf>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+   
+   <docadmin:fieldDefinition view:childName="docdyn:errandReportSum">
+      <view:properties>
+         <docadmin:fieldId>errandReportSum</docadmin:fieldId>
+         <docadmin:originalFieldId>errandReportSum</docadmin:originalFieldId>
+         <docadmin:name>Summa</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DOUBLE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+   
+   <docadmin:fieldDefinition view:childName="docdyn:errandReportTotalSum">
+      <view:properties>
+         <docadmin:fieldId>errandReportTotalSum</docadmin:fieldId>
+         <docadmin:originalFieldId>errandReportTotalSum</docadmin:originalFieldId>
+         <docadmin:name>SUMMA KOKKU</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DOUBLE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>ALWAYS_NOT_CHANGEABLE</docadmin:changeableIf>
+         <docadmin:changeableIfChangeable>false</docadmin:changeableIfChangeable>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+   
+   <docadmin:fieldDefinition view:childName="docdyn:errandSummaryProject">
+      <view:properties>
+         <docadmin:fieldId>errandSummaryProject</docadmin:fieldId>
+         <docadmin:originalFieldId>errandSummaryProject</docadmin:originalFieldId>
+         <docadmin:name>Projekt</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+   
+   <docadmin:fieldDefinition view:childName="docdyn:errandSummaryDepartment">
+      <view:properties>
+         <docadmin:fieldId>errandSummaryDepartment</docadmin:fieldId>
+         <docadmin:originalFieldId>errandSummaryDepartment</docadmin:originalFieldId>
+         <docadmin:name>Osakond</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+   
+   <docadmin:fieldDefinition view:childName="docdyn:errandSummaryExpenseItem">
+      <view:properties>
+         <docadmin:fieldId>errandSummaryExpenseItem</docadmin:fieldId>
+         <docadmin:originalFieldId>errandSummaryExpenseItem</docadmin:originalFieldId>
+         <docadmin:name>Artikkel</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+   
+   <docadmin:fieldDefinition view:childName="docdyn:errandSummaryAccount">
+      <view:properties>
+         <docadmin:fieldId>errandSummaryAccount</docadmin:fieldId>
+         <docadmin:originalFieldId>errandSummaryAccount</docadmin:originalFieldId>
+         <docadmin:name>Konto</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+   
+   <docadmin:fieldDefinition view:childName="docdyn:errandSummaryDebit">
+      <view:properties>
+         <docadmin:fieldId>errandSummaryDebit</docadmin:fieldId>
+         <docadmin:originalFieldId>errandSummaryDebit</docadmin:originalFieldId>
+         <docadmin:name>Deebet</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DOUBLE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+   
+   <docadmin:fieldDefinition view:childName="docdyn:errandSummaryDebitTotal">
+      <view:properties>
+         <docadmin:fieldId>errandSummaryDebitTotal</docadmin:fieldId>
+         <docadmin:originalFieldId>errandSummaryDebitTotal</docadmin:originalFieldId>
+         <docadmin:name>Deebet kokku</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DOUBLE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>ALWAYS_NOT_CHANGEABLE</docadmin:changeableIf>
+         <docadmin:changeableIfChangeable>false</docadmin:changeableIfChangeable>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+      
+   <docadmin:fieldDefinition view:childName="docdyn:errandSummaryCredit">
+      <view:properties>
+         <docadmin:fieldId>errandSummaryCredit</docadmin:fieldId>
+         <docadmin:originalFieldId>errandSummaryCredit</docadmin:originalFieldId>
+         <docadmin:name>Kreedit</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DOUBLE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+   
+   <docadmin:fieldDefinition view:childName="docdyn:errandSummaryCreditTotal">
+      <view:properties>
+         <docadmin:fieldId>errandSummaryCreditTotal</docadmin:fieldId>
+         <docadmin:originalFieldId>errandSummaryCreditTotal</docadmin:originalFieldId>
+         <docadmin:name>Kreedit kokku</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DOUBLE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>ALWAYS_NOT_CHANGEABLE</docadmin:changeableIf>
+         <docadmin:changeableIfChangeable>false</docadmin:changeableIfChangeable>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+   
+   <docadmin:fieldDefinition view:childName="docdyn:errandReportPaymentMethod">
+      <view:properties>
+         <docadmin:fieldId>errandReportPaymentMethod</docadmin:fieldId>
+         <docadmin:originalFieldId>errandReportPaymentMethod</docadmin:originalFieldId>
+         <docadmin:name>Maksmise viis</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+   
+</view:view>

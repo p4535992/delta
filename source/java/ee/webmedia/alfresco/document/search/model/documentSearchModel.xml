@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="docsearch:documentSearchModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/document/search/1.0" prefix="docsearch" />
+   </namespaces>
+
+   <types>
+
+      <type name="docsearch:documentSearchFilters">
+         <parent>sys:base</parent>
+         <mandatory-aspects>
+            <aspect>docsearch:documentSearchFiltersContainer</aspect>
+            <aspect>sys:aspect_root</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="docsearch:filter">
+         <parent>sys:base</parent>
+         <properties>
+            <!-- documentsList / achivedDocumentsList -->
+            <property name="docsearch:store">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="docsearch:name">
+               <type>d:text</type>
+            </property>
+            <!-- Üldsisend, mis otsib kõikidelt väljadelt -->
+            <property name="docsearch:input">
+               <type>d:text</type>
+            </property>
+            <!-- Dokumendi liik -->
+            <property name="docsearch:documentType">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="docsearch:sendMode">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="docsearch:fund">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="docsearch:fundsCenter">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="docsearch:eaCommitmentItem">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property> 
+            <property name="docsearch:documentCreated">
+               <type>d:date</type>
+            </property>
+            <property name="docsearch:documentCreated_EndDate">
+               <type>d:date</type>
+            </property>            
+         </properties>
+      </type>
+      
+      <type name="docsearch:objectFilter">
+         <parent>docsearch:filter</parent>
+         <properties>
+            <property name="docsearch:objectType">
+               <type>d:text</type>
+            </property>  
+            <property name="docsearch:objectTitle">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </type>
+
+   </types>
+
+   <aspects>
+
+      <aspect name="docsearch:documentSearchFiltersContainer">
+         <associations>
+            <child-association name="docsearch:filter">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docsearch:filter</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
+
+   </aspects>
+
+</model>

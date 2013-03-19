@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:plan="http://alfresco.webmedia.ee/model/eventPlan/1.0">
+
+   <plan:eventPlans view:childName="plan:eventPlans">
+   </plan:eventPlans>
+
+</view:view>

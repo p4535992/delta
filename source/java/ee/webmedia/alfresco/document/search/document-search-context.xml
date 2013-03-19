@@ -1,0 +1,213 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <bean parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap,documentModelBootstrap">
+      <property name="models">
+         <list>
+            <value>ee/webmedia/alfresco/document/search/model/documentSearchModel.xml</value>
+            <value>ee/webmedia/alfresco/document/search/model/documentReportModel.xml</value>
+         </list>
+      </property>
+      <property name="labels">
+         <list>
+            <value>ee/webmedia/alfresco/document/search/model/document-search-model</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
+      <property name="configs">
+         <list>
+            <value>classpath:ee/webmedia/alfresco/document/search/web/document-search-web-client-config.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
+      <property name="resourceBundles">
+         <list>
+            <value>ee/webmedia/alfresco/document/search/web/document-search-webclient</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="docSearchResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+      <property name="resourceBundles">
+         <list>
+            <value>ee.webmedia.alfresco.document.search.service.document-search-messages</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="docSearchResourceBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">
+      <property name="resourceBundles">
+         <list>
+            <value>ee.webmedia.alfresco.document.search.service.document-search-messages</value>
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="documentSearchParametersBootstrap2" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/document/search/bootstrap/document-search-parameters.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>   
+
+   <bean id="deleteQuickSearchParallelCountClassificatorsUpdater" class="ee.webmedia.alfresco.common.bootstrap.DeleteNodeByXPathBootstrap" parent="abstractDeleteNodeByXPathBootstrap">
+      <property name="moduleId" value="common" />
+      <property name="nodeXPath" value="/param:parameters/param:quickSearchParallelCount" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+   </bean>
+
+   <bean id="documentSearchService" class="ee.webmedia.alfresco.document.search.service.DocumentSearchServiceImpl">
+      <property name="documentService" ref="DocumentService" />
+      <property name="generalService" ref="GeneralService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="searchService" ref="SearchService" />
+      <property name="dictionaryService" ref="DictionaryService" />
+      <property name="seriesService" ref="SeriesService" />
+      <property name="workflowService" ref="WmWorkflowService" />
+      <property name="volumeService" ref="VolumeService" />
+      <property name="parametersService" ref="ParametersService" />
+      <property name="namespaceService" ref="NamespaceService" />
+      <property name="userService" ref="UserService" />
+      <property name="logService" ref="LogService" />
+      <property name="authorityService" ref="AuthorityService" />
+      <property name="luceneConfig" ref="admLuceneIndexerAndSearcherFactory" />
+      <property name="finishedIncomingLettersAreNotShown" value="${conf.myDocumentsMenu.finishedIncomingLettersAreNotShown}" />
+   </bean>
+
+   <bean id="DocumentSearchService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.document.search.service.DocumentSearchService</value>
+         </list>
+      </property>
+      <property name="target" ref="documentSearchService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+
+   <bean id="documentSearchFilterService" class="ee.webmedia.alfresco.document.search.service.DocumentSearchFilterServiceImpl" parent="abstractFilterService" />
+
+   <bean id="DocumentSearchFilterService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.document.search.service.DocumentSearchFilterService</value>
+         </list>
+      </property>
+      <property name="target" ref="documentSearchFilterService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="documentReportFilterService" class="ee.webmedia.alfresco.document.search.service.DocumentReportFilterServiceImpl" parent="abstractFilterService" />
+
+   <bean id="DocumentReportFilterService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.document.search.service.DocumentReportFilterService</value>
+         </list>
+      </property>
+      <property name="target" ref="documentReportFilterService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>    
+
+   <bean id="documentSearchFiltersSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/</prop>
+               <prop key="location">ee/webmedia/alfresco/document/search/bootstrap/documentSearchFilters.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="documentReportFilterSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/</prop>
+               <prop key="location">ee/webmedia/alfresco/document/search/bootstrap/documentReportFilters.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+      
+   <bean class="ee.webmedia.alfresco.document.search.web.UserWorkingDocumentsMenuItemProcessor">
+      <property name="menuService" ref="MenuService" />
+      <property name="documentSearchService" ref="DocumentSearchService" />
+   </bean>
+   
+   
+   <bean id="volumeAndCaseLocationPropUpdater3" class="ee.webmedia.alfresco.document.search.bootstrap.VolumeAndCaseLocationPropUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>      
+      <property name="documentSearchService" ref="DocumentSearchService" /> 
+   </bean> 
+   
+   <bean id="searchFilterOrgStructToMultivaluedUpdater" class="ee.webmedia.alfresco.document.search.bootstrap.SearchFilterOrgStructToMultivaluedUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="${updater.version25To313.enabled}" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+            <!-- Ensure that organization structure has been synchronized -->
+            <ref bean="workflow25To313DynamicDocTypeUpdater" />
+         </list>
+      </property>      
+   </bean> 
+
+   <!-- START: web beans: -->
+
+   <bean id="DocumentSearchBean" class="ee.webmedia.alfresco.document.search.web.DocumentSearchBean" scope="session" />
+   <bean id="DocumentDynamicSearchDialog" class="ee.webmedia.alfresco.document.search.web.DocumentDynamicSearchDialog" scope="session" />
+   <bean id="DocumentDynamicReportDialog" class="ee.webmedia.alfresco.document.search.web.DocumentDynamicReportDialog" scope="session" />
+
+   <!-- END: web beans: -->
+
+</beans>

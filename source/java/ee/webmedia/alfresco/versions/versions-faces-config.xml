@@ -1,0 +1,30 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE faces-config PUBLIC "-//Sun Microsystems, Inc.//DTD JavaServer Faces Config 1.1//EN"
+                              "http://java.sun.com/dtd/web-facesconfig_1_1.dtd">
+<faces-config>
+   <!-- 
+      Loaded after Alfresco JSF configuration files.
+      You can define here:
+      * new managed JSF beans
+      * overrides of previously defined Alfresco managed JSF beans
+      * new navigation rules
+      * ...
+      But NOT overrides of existing navigation rules (you must use META-INF/faces-config.xml for that)
+      More information: http://wiki.alfresco.com/wiki/Packaging_And_Deploying_Extensions#JSF_configuration_files
+    -->
+
+   <managed-bean>
+      <managed-bean-name>VersionsListDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.versions.web.VersionsListDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>generalService</property-name>
+         <value>#{GeneralService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>navigator</property-name>
+         <value>#{NavigationBean}</value>
+      </managed-property>
+   </managed-bean>
+
+</faces-config>

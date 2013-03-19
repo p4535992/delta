@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Created with Liquid XML Studio 1.0.8.0 (http://www.liquid-technologies.com) -->
+<xs:schema xmlns="http://www.riik.ee/schemas/e-arve/DimensioonideNimekiri.xsd" targetNamespace="http://www.riik.ee/schemas/e-arve/DimensioonideNimekiri.xsd" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:annotation>
+		<xs:documentation>Andmemudel asutuse raamatupidamise dimensioonide andmete edastamiseks süsteemist süsteemi  (tavaliselt raamatupidamissüsteemist dokumendihaldussüsteemi) ============================  	Kuupäev: 19.07.2010 	Versioon: 1.0 	Autor: Itella Information AS ja Riigi Infosüsteemide Arenduskeskus 	Litsents: EUPL</xs:documentation>
+	</xs:annotation>
+	<xs:element name="DimensioonideNimekiri">
+		<xs:annotation>
+			<xs:documentation>Juurelement</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element maxOccurs="unbounded" ref="Dimensioon" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Dimensioon">
+		<xs:annotation>
+			<xs:documentation>Dimensiooni iseloomustavad näitajad ja dimensiooni väärtused</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Id">
+					<xs:annotation>
+						<xs:documentation>Dimensiooni masinloetav identifikaator (antud väljade väärtused peaksid olema semantiliselt arusaadavad)</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element ref="Nimetus">
+					<xs:annotation>
+						<xs:documentation>Dimensiooni inimloetav nimetus, mida kuvatakse dokumendihaldussüsteemis kasutajale</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element maxOccurs="unbounded" ref="Vaartus" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Vaartus">
+		<xs:annotation>
+			<xs:documentation>Dimensiooni väärtust iseloomustavad näitajad</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Id">
+					<xs:annotation>
+						<xs:documentation>Dimensiooni väärtuse masinloetav identifikaator</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element ref="Nimetus">
+					<xs:annotation>
+						<xs:documentation>Dimensiooni väärtuse inimloetav nimetus, mida kuvatakse dokumendihaldussüsteemis kasutajale</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element minOccurs="0" name="KehtibAlates" type="KuupaevType">
+					<xs:annotation>
+						<xs:documentation>Dimensiooni väärtuse kehtivuse alguse kuupäev (nt projekt algab 01.01.2011, seega pole enne seda kuupäeva mõistlik seda enam konteerimisel kasutada)</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element minOccurs="0" name="KehtibKuni" type="KuupaevType">
+					<xs:annotation>
+						<xs:documentation>Dimensiooni väärtuse kehtivuse lõpu kuupäev (nt projekt lõppeb 01.01.2011, seega pole peale seda kuupäeva mõistlik seda enam konteerimisel kasutada)</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Id" type="LyhiTekstType" />
+	<xs:element name="Nimetus" type="NormaalTekstType" />
+	<xs:simpleType name="KuupaevType">
+		<xs:annotation>
+			<xs:documentation>Kuupäev</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:date" />
+	</xs:simpleType>
+	<xs:simpleType name="LyhiTekstType">
+		<xs:annotation>
+			<xs:documentation>Lühikene tekst (kuni 20 tähemärki)</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:maxLength value="20" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="NormaalTekstType">
+		<xs:annotation>
+			<xs:documentation>Tavaline tekst (kuni 100 tähemärki)</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:maxLength value="100" />
+		</xs:restriction>
+	</xs:simpleType>
+</xs:schema>

@@ -1,0 +1,47 @@
+Speki "Andmeväljad - Süsteemsed andmeväljad" teisendamine XML'iks
+-----------------------------------------------------------------
+
+Eclipsis Find/Replace dialoog, enamus juhtusel Regular expressions = true, mõnedel juhtudel Case sensitive = true
+
+
+((\n[0-9].*)+)(\n[0-9].*Andmeväljaga seotud.*)(\n[0-9].*)*\n
+$1\n
+
+((\n[0-9].*)+)(\n[0-9].*Andmevälja metaandmed on väärtustatud.*)((\n[0-9].*)+)\n
+$4\n
+
+eemaldada mõned üksikud read käsitsi
+
+(\n[0-9].*id – (.*))((\n[0-9].*)+)\n
+\n<docadmin:fieldDefinition view:childName="docdyn:$2">\n<view:properties><docadmin:fieldId>$2</docadmin:fieldId>\n<docadmin:originalFieldId>$2</docadmin:originalFieldId>$3\n</view:properties>\n</docadmin:fieldDefinition>\n
+
+^[0-9].* ([a-zA-Z].*) (–|-) (.*)\n
+<docadmin:$1>$3</docadmin:$1>\n
+
+^[^<]+$
+vaadata üle käsitsi need kohad
+
+control+shift+f
+
+<docadmin:fieldType>Tekstiväli</docadmin:fieldType>
+<docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+
+....
+
+<docadmin:fieldType>.*[a-z]+.*</docadmin:fieldType>
+case-sensitive, otsida kas leidub mõni
+
+ +<docadmin:systematicComment>\?\?\?</docadmin:systematicComment>\n
+
+
+<docadmin:changeableIf>muudetav töös dokumendil</docadmin:changeableIf>
+<docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+
+<docadmin:changeableIf>alati muudetav</docadmin:changeableIf>
+<docadmin:changeableIf>ALWAYS_CHANGEABLE</docadmin:changeableIf>
+
+<docadmin:changeableIf>alati mittemuudetav</docadmin:changeableIf>
+<docadmin:changeableIf>ALWAYS_NOT_CHANGEABLE</docadmin:changeableIf>
+
+<docadmin:changeableIf>.*[a-z]+.*</docadmin:changeableIf>
+otsida kas leidub mõni

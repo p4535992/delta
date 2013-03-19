@@ -1,0 +1,30 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <bean id="documentAssociationsService" class="ee.webmedia.alfresco.document.assocsdyn.service.DocumentAssociationsServiceImpl">
+      <property name="documentAdminService" ref="DocumentAdminService" />
+      <property name="documentDynamicService" ref="DocumentDynamicService" />
+      <property name="documentConfigService" ref="DocumentConfigService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="dictionaryService" ref="DictionaryService" />
+      <property name="baseService" ref="BaseService" />
+      <property name="workflowService" ref="WmWorkflowService" />
+      <property name="logService" ref="LogService" />
+      <property name="userService" ref="UserService" />
+      <property name="documentLogService" ref="DocumentLogService" />
+      <property name="privilegeService" ref="PrivilegeService" />
+      <property name="caseFileLogService" ref="CaseFileLogService" />
+   </bean>
+
+   <bean id="DocumentAssociationsService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.document.assocsdyn.service.DocumentAssociationsService</value>
+         </list>
+      </property>
+      <property name="target" ref="documentAssociationsService" />
+      <property name="interceptorNames" ref="commonInterceptorsList" />
+   </bean>
+
+</beans>

@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:docadmin="http://alfresco.webmedia.ee/model/document/admin/1.0">
+
+   <!-- TODO käsitsi muuta view:childName igal fieldGroup'il -->
+   <!-- fieldGroup childName is not used anywhere, it is specified only for convenience -->
+
+   <docadmin:fieldGroup view:childName="docadmin:supplier">
+      <view:properties>
+         <docadmin:name>Hankija</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:readonlyFieldsName>Hankija</docadmin:readonlyFieldsName>
+         <docadmin:readonlyFieldsRule>{sellerPartyName}, {sellerPartyRegNumber} SAPi kood: {sellerPartySapAccount}</docadmin:readonlyFieldsRule>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>sellerPartyName</view:value>
+               <view:value>sellerPartyRegNumber</view:value>
+               <view:value>sellerPartySapAccount</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:supplierContact">
+      <view:properties>
+         <docadmin:name>Hankija kontaktisik</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:readonlyFieldsName>Hankija kontaktisik</docadmin:readonlyFieldsName>
+         <docadmin:readonlyFieldsRule>{sellerPartyContactName}, {sellerPartyContactPhoneNumber}, {sellerPartyContactEmailAddress}</docadmin:readonlyFieldsRule>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>sellerPartyContactName</view:value>
+               <view:value>sellerPartyContactPhoneNumber</view:value>
+               <view:value>sellerPartyContactEmailAddress</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:invoiceDateAndNumber">
+      <view:properties>
+         <docadmin:name>Arve kuupäev ja number</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:readonlyFieldsName>Arve nr ja kpv</docadmin:readonlyFieldsName>
+         <docadmin:readonlyFieldsRule>{invoiceNumber}, {invoiceDate}</docadmin:readonlyFieldsRule>
+         <docadmin:showInTwoColumns>true</docadmin:showInTwoColumns>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>invoiceDate</view:value>
+               <view:value>invoiceNumber</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:invoiceDueDate">
+      <view:properties>
+         <docadmin:name>Maksetähtaeg</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:readonlyFieldsName>Maksetähtaeg</docadmin:readonlyFieldsName>
+         <docadmin:readonlyFieldsRule>{invoiceDueDate}, {paymentTerm}</docadmin:readonlyFieldsRule>
+         <docadmin:showInTwoColumns>true</docadmin:showInTwoColumns>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>invoiceDueDate</view:value>
+               <view:value>paymentTerm</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:totalSum">
+      <view:properties>
+         <docadmin:name>Arve koondsumma</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:readonlyFieldsName>Arve koondsumma</docadmin:readonlyFieldsName>
+         <docadmin:readonlyFieldsRule>{totalSum} {currency}, millest summa käibemaksuta: {invoiceSum} {currency} ja käibemaks {vat} {currency}</docadmin:readonlyFieldsRule>
+         <docadmin:showInTwoColumns>true</docadmin:showInTwoColumns>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>totalSum</view:value>
+               <view:value>currency</view:value>
+               <view:value>invoiceSum</view:value>
+               <view:value>vat</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:entryDateAndSapNumber">
+      <view:properties>
+         <docadmin:name>Kande kuupäev ja number SAPis</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:readonlyFieldsName>Kande kpv ja nr SAPis</docadmin:readonlyFieldsName>
+         <docadmin:readonlyFieldsRule>{entryDate}, {entrySapNumber}</docadmin:readonlyFieldsRule>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>entryDate</view:value>
+               <view:value>entrySapNumber</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+</view:view>

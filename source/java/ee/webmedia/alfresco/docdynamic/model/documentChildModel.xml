@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="docchild:documentChildModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+       <import uri="http://alfresco.webmedia.ee/model/document/common/1.0" prefix="doccom" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/document/child/1.0" prefix="docchild" />
+   </namespaces>
+
+   <!-- NB! child-association and it's target type must have exactly the same name --> 
+
+   <types>
+
+      <!-- Currently child-nodes are not directly doccom:metadataContainer type, but one of its subtypes;
+           this is because different child nodes are referenced by assocTypeQName
+      -->
+      <!-- XXX Actually, it would be a more general solution to reference differenct subnodes by assocQName
+           * then we could use the same fieldgroup multiple times on one documentType 
+           * we could get rid of different child-node types, child-assoc types and container aspects
+      -->
+
+      <type name="docchild:contractParty">
+         <parent>doccom:metadataContainer</parent>
+      </type>
+
+      <type name="docchild:applicantAbroad">
+         <parent>doccom:metadataContainer</parent>
+         <associations>
+            <child-association name="docchild:errandAbroad">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docchild:errandAbroad</class>
+                  <mandatory>true</mandatory><!-- At least one errandAbroad is required -->
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </type>
+      <type name="docchild:errandAbroad">
+         <parent>doccom:metadataContainer</parent>
+      </type>
+
+      <type name="docchild:applicantDomestic">
+         <parent>doccom:metadataContainer</parent>
+         <associations>
+            <child-association name="docchild:errandDomestic">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docchild:errandDomestic</class>
+                  <mandatory>true</mandatory><!-- At least one errandDomestic is required -->
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </type>
+      <type name="docchild:errandDomestic">
+         <parent>doccom:metadataContainer</parent>
+      </type>
+
+      <type name="docchild:applicantTraining">
+         <parent>doccom:metadataContainer</parent>
+      </type>
+
+   </types>
+   <aspects>
+
+      <aspect name="docchild:contractPartyContainer">
+         <associations>
+            <child-association name="docchild:contractParty">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docchild:contractParty</class>
+                  <mandatory>true</mandatory><!-- At least one contractParty is required -->
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
+
+      <aspect name="docchild:applicantAbroadContainer">
+         <associations>
+            <child-association name="docchild:applicantAbroad">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docchild:applicantAbroad</class>
+                  <mandatory>true</mandatory><!-- At least one applicantAbroad is required -->
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
+
+      <aspect name="docchild:applicantDomesticContainer">
+         <associations>
+            <child-association name="docchild:applicantDomestic">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docchild:applicantDomestic</class>
+                  <mandatory>true</mandatory><!-- At least one applicantDomestic is required -->
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
+
+      <aspect name="docchild:applicantTrainingContainer">
+         <associations>
+            <child-association name="docchild:applicantTraining">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docchild:applicantTraining</class>
+                  <mandatory>true</mandatory><!--  At least one applicantTraining is required -->
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
+
+   </aspects>
+
+</model>

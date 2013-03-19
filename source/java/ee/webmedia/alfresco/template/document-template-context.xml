@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+   
+   <bean id="documentTemplateModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap">
+      <property name="models">
+         <list>
+            <value>ee/webmedia/alfresco/template/model/documentTemplateModel.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="documentTemplateResourceBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">
+      <property name="resourceBundles">
+         <list>
+            <value>ee.webmedia.alfresco.template.web.document-template-webclient</value>
+         </list>
+      </property>
+   </bean>
+   
+   <!-- Same translation properties file to be used by I18NUtil by *Service classes -->
+   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+      <property name="resourceBundles">
+         <list>
+            <value>ee.webmedia.alfresco.template.web.document-template-webclient</value>
+         </list>
+      </property>
+   </bean>   
+   
+   <bean id="documentTemplateWebClientConfigBootstrap" class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init">
+      <property name="configs">
+         <list>
+            <value>classpath:ee/webmedia/alfresco/template/web/document-template-web-client-config.xml</value>
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="documentTemplatesRootBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/</prop>
+               <prop key="location">ee/webmedia/alfresco/template/bootstrap/documentTemplate.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="DocumentTemplateEmailTypeIdUpdater" class="ee.webmedia.alfresco.template.bootstrap.DocumentTemplateEmailTypeIdUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+   </bean>
+   
+   <bean id="DocumentTemplateTypeUpdater" class="ee.webmedia.alfresco.template.bootstrap.DocumentTemplateTypeUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+   </bean>
+   
+   <bean id="documentTemplateMimetypeUpdater" class="ee.webmedia.alfresco.template.bootstrap.DocumentTemplateMimetypeUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+   </bean>
+   
+   <bean id="template25To313DynamicDocTypeUpdater" class="ee.webmedia.alfresco.template.bootstrap.Template25To313DynamicDocTypeUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="enabled" value="${updater.version25To313.enabled}" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+      <property name="transactionHelperMinRetryWaits" value="6000" />
+   </bean>    
+   
+   <!-- Import the OpenOfficeService from the third party subsystem -->
+   <bean id="openOfficeService" class="org.alfresco.repo.management.subsystems.SubsystemProxyFactory">
+      <property name="sourceApplicationContextFactory">
+         <ref bean="thirdparty" />
+      </property>
+      <property name="sourceBeanName">
+         <value>openOfficeService</value>
+      </property>
+      <property name="interfaces">
+         <list>
+            <value>ee.webmedia.alfresco.common.service.OpenOfficeService</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="documentTemplateService" class="ee.webmedia.alfresco.template.service.DocumentTemplateServiceImpl">
+      <property name="generalService" ref="GeneralService" />
+      <property name="applicationService" ref="ApplicationService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="fileService" ref="FileService" />
+      <property name="mimetypeService" ref="MimetypeService" />
+      <property name="fileFolderService" ref="FileFolderService" />
+      <property name="documentLogService" ref="DocumentLogService" />
+      <property name="openOfficeService" ref="openOfficeService" />
+      <property name="dictionaryService" ref="DictionaryService" />
+      <property name="msoService" ref="msoService" />
+      <property name="userService" ref="UserService" />
+      <property name="documentConfigService" ref="DocumentConfigService" />
+      <property name="documentAdminService" ref="DocumentAdminService" />
+      <property name="versionsService" ref="VersionsService" />
+      <property name="workflowService" ref="WmWorkflowService" />
+   </bean>
+
+   <bean id="DocumentTemplateService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.template.service.DocumentTemplateService</value>
+         </list>
+      </property>
+      <property name="target" ref="documentTemplateService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="DocumentTemplateDetailsDialog" class="ee.webmedia.alfresco.template.web.DocumentTemplateDetailsDialog" scope="session"/>
+   
+   <!-- Task CL 163201: remove generated field and set generatedFromTemplate field -->
+   <bean id="generatedFileFieldUpdater" class="ee.webmedia.alfresco.template.bootstrap.GeneratedFileFieldUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="transactionHelperMinRetryWaits" value="6000" />
+   </bean>
+   
+</beans>

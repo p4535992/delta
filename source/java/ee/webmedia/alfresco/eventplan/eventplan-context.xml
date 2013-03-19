@@ -1,0 +1,103 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <bean id="eventPlanModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap">
+      <property name="models">
+         <list>
+            <value>ee/webmedia/alfresco/eventplan/model/eventPlanModel.xml</value>
+         </list>
+      </property>
+      <property name="labels">
+         <list>
+            <value>ee/webmedia/alfresco/eventplan/model/eventplan-model</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="eventPlanWebClientBootstrap" class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
+      <property name="configs">
+         <list>
+            <value>classpath:ee/webmedia/alfresco/eventplan/web/eventplan-web-client-config.xml</value>
+            <value>classpath:ee/webmedia/alfresco/eventplan/web/volumeeventplan-web-client-config.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+      <property name="resourceBundles">
+         <list>
+            <value>ee/webmedia/alfresco/eventplan/web/eventplan-webclient</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
+      <property name="resourceBundles">
+         <list>
+            <value>ee/webmedia/alfresco/eventplan/model/eventplan-model</value>
+            <value>ee/webmedia/alfresco/eventplan/web/eventplan-webclient</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="eventPlansBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/</prop>
+               <prop key="location">ee/webmedia/alfresco/eventplan/bootstrap/eventplans.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="eventPlanService" class="ee.webmedia.alfresco.eventplan.service.EventPlanServiceImpl">
+      <property name="nodeService" ref="NodeService" />
+      <property name="generalService" ref="GeneralService" />
+      <property name="userService" ref="UserService" />
+      <property name="logService" ref="LogService" />
+   </bean>
+
+   <bean id="EventPlanService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.eventplan.service.EventPlanService</value>
+         </list>
+      </property>
+      <property name="target" ref="eventPlanService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+
+   <bean id="volumeCaseFileEventPlanUpdater" class="ee.webmedia.alfresco.eventplan.service.VolumeCaseFileEventPlanUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+      <property name="transactionHelperMinRetryWaits" value="6000" />
+   </bean>
+
+   <!-- START: web beans: -->
+
+   <bean id="EventPlanDialog" class="ee.webmedia.alfresco.eventplan.web.EventPlanDialog" scope="session" />
+
+   <bean id="EventPlanListDialog" class="ee.webmedia.alfresco.eventplan.web.EventPlanListDialog" scope="session" />
+
+   <bean id="EventPlanLogBlockBean" class="ee.webmedia.alfresco.eventplan.web.EventPlanLogBlockBean" scope="session" />
+
+   <bean id="VolumeEventPlanDialog" class="ee.webmedia.alfresco.eventplan.web.VolumeEventPlanDialog" scope="session" />
+
+   <!-- END: web beans: -->
+
+</beans>

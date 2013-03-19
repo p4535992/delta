@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view 
+   xmlns:view="http://www.alfresco.org/view/repository/1.0" 
+   xmlns:param="http://alfresco.webmedia.ee/model/parameters/1.0" 
+>
+
+   <param:stringParameter view:childName="param:taskOwnerStructUnit">
+      <view:properties>
+         <param:value></param:value>
+         <param:description>Kui parameeter on väärtustatud, siis on võimalik tööülesande saajaks määrata ainult selliseid kasutajaid, kelle struktuuriüksuse raja algus kattub parameetri väärtusega.</param:description>
+      </view:properties>
+   </param:stringParameter>
+
+</view:view>

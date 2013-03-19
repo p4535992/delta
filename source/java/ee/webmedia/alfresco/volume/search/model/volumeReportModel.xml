@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="volsearch:volumeReportModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+      <import uri="http://alfresco.webmedia.ee/model/volume/search/1.0" prefix="volsearch" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/volume/report/1.0" prefix="volreport" />
+   </namespaces>
+   
+   <constraints>
+
+      <constraint name="volreport:reportOutputType" type="ee.webmedia.alfresco.common.constraint.EnumConstraint">
+         <parameter name="enumClass">
+            <value>ee.webmedia.alfresco.classificator.enums.TemplateReportOutputType</value>
+         </parameter>
+      </constraint>
+      
+   </constraints>   
+
+   <types>
+
+      <type name="volreport:volumeReportFilters">
+         <parent>sys:base</parent>
+         <mandatory-aspects>
+            <aspect>volreport:volumeReportFiltersContainer</aspect>
+            <aspect>sys:aspect_root</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="volreport:filter">
+         <parent>volsearch:filter</parent>
+         <properties>
+            <property name="volreport:reportOutputType">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+               <constraints>
+                  <constraint ref="volreport:reportOutputType" />
+               </constraints>                
+            </property>           
+            <property name="volreport:reportTemplate">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>            
+         </properties>
+      </type>
+
+   </types>
+   
+   <aspects>
+   
+      <aspect name="volreport:volumeReportFiltersContainer">
+         <associations>
+            <child-association name="volreport:filters">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>volreport:filter</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
+      
+      <aspect name="volreport:volumeReportFilterContainer">
+         <associations>
+            <child-association name="volreport:filter">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>volreport:filter</class>
+                  <mandatory>false</mandatory>
+                  <many>false</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
+          
+   </aspects>
+      
+</model>

@@ -1,0 +1,14 @@
+ACT Ticket 9148
+https://issues.alfresco.com/jira/browse/ALFCOM-3494
+
+--- repository-src-3.1/java/org/alfresco/repo/dictionary/M2ConstraintDefinition.java	2009-02-27 17:36:20.000000000 +0200
++++ repository-src-3.1-fixed/java/org/alfresco/repo/dictionary/M2ConstraintDefinition.java	2009-04-11 00:41:18.000000000 +0300
+@@ -162,6 +162,8 @@
+             constraintDef.resolveDependencies(query);
+             // just use the constraint provided by the referenced definition
+             this.constraint = constraintDef.getConstraint();
++            // use real constraint name instead of anonymous name
++            this.name = constraintDef.getName();
+         }
+         else
+         {

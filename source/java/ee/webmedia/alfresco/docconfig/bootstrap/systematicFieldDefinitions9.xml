@@ -1,0 +1,444 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:docadmin="http://alfresco.webmedia.ee/model/document/admin/1.0" xmlns:docdyn="http://alfresco.webmedia.ee/model/document/dynamic/1.0">
+
+   <docadmin:fieldDefinition view:childName="docdyn:applicantName">
+      <view:properties>
+         <docadmin:fieldId>applicantName</docadmin:fieldId>
+         <docadmin:originalFieldId>applicantName</docadmin:originalFieldId>
+         <docadmin:name>Taotleja</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>USER</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:defaultUserLoggedIn>true</docadmin:defaultUserLoggedIn>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:applicantJobTitle">
+      <view:properties>
+         <docadmin:fieldId>applicantJobTitle</docadmin:fieldId>
+         <docadmin:originalFieldId>applicantJobTitle</docadmin:originalFieldId>
+         <docadmin:name>Taotleja ametinimetus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:applicantOrgStructUnit">
+      <view:properties>
+         <docadmin:fieldId>applicantOrgStructUnit</docadmin:fieldId>
+         <docadmin:originalFieldId>applicantOrgStructUnit</docadmin:originalFieldId>
+         <docadmin:name>Taotleja struktuuriüksus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>STRUCT_UNIT</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:errandBeginDate">
+      <view:properties>
+         <docadmin:fieldId>errandBeginDate</docadmin:fieldId>
+         <docadmin:originalFieldId>errandBeginDate</docadmin:originalFieldId>
+         <docadmin:name>Lähetus alates</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:errandEndDate">
+      <view:properties>
+         <docadmin:fieldId>errandEndDate</docadmin:fieldId>
+         <docadmin:originalFieldId>errandEndDate</docadmin:originalFieldId>
+         <docadmin:name>Lähetus kuni</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:dailyAllowanceDays">
+      <view:properties>
+         <docadmin:fieldId>dailyAllowanceDays</docadmin:fieldId>
+         <docadmin:originalFieldId>dailyAllowanceDays</docadmin:originalFieldId>
+         <docadmin:name>Päevade arv</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>LONG</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:dailyAllowanceRate">
+      <view:properties>
+         <docadmin:fieldId>dailyAllowanceRate</docadmin:fieldId>
+         <docadmin:originalFieldId>dailyAllowanceRate</docadmin:originalFieldId>
+         <docadmin:name>Päevaraha määr (%)</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:dailyAllowanceSum">
+      <view:properties>
+         <docadmin:fieldId>dailyAllowanceSum</docadmin:fieldId>
+         <docadmin:originalFieldId>dailyAllowanceSum</docadmin:originalFieldId>
+         <docadmin:name>Päevaraha maksumus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DOUBLE</docadmin:fieldType>
+         <docadmin:changeableIf>ALWAYS_NOT_CHANGEABLE</docadmin:changeableIf>
+         <docadmin:changeableIfChangeable>false</docadmin:changeableIfChangeable>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:dailyAllowanceTotalSum">
+      <view:properties>
+         <docadmin:fieldId>dailyAllowanceTotalSum</docadmin:fieldId>
+         <docadmin:originalFieldId>dailyAllowanceTotalSum</docadmin:originalFieldId>
+         <docadmin:name>Päevaraha kokku</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DOUBLE</docadmin:fieldType>
+         <docadmin:changeableIf>ALWAYS_NOT_CHANGEABLE</docadmin:changeableIf>
+         <docadmin:changeableIfChangeable>false</docadmin:changeableIfChangeable>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:expenseType">
+      <view:properties>
+         <docadmin:fieldId>expenseType</docadmin:fieldId>
+         <docadmin:originalFieldId>expenseType</docadmin:originalFieldId>
+         <docadmin:name>Kulu</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:expectedExpenseSum">
+      <view:properties>
+         <docadmin:fieldId>expectedExpenseSum</docadmin:fieldId>
+         <docadmin:originalFieldId>expectedExpenseSum</docadmin:originalFieldId>
+         <docadmin:name>Eeldatav maksumus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DOUBLE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:expensesTotalSum">
+      <view:properties>
+         <docadmin:fieldId>expensesTotalSum</docadmin:fieldId>
+         <docadmin:originalFieldId>expensesTotalSum</docadmin:originalFieldId>
+         <docadmin:name>Lähetuskulud kokku</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DOUBLE</docadmin:fieldType>
+         <docadmin:changeableIf>ALWAYS_NOT_CHANGEABLE</docadmin:changeableIf>
+         <docadmin:changeableIfChangeable>false</docadmin:changeableIfChangeable>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:advancePaymentSum">
+      <view:properties>
+         <docadmin:fieldId>advancePaymentSum</docadmin:fieldId>
+         <docadmin:originalFieldId>advancePaymentSum</docadmin:originalFieldId>
+         <docadmin:name>Soovin avanssi summas</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DOUBLE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:advancePaymentDesc">
+      <view:properties>
+         <docadmin:fieldId>advancePaymentDesc</docadmin:fieldId>
+         <docadmin:originalFieldId>advancePaymentDesc</docadmin:originalFieldId>
+         <docadmin:name>Avansi soovi kirjeldus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>LISTBOX</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:errandComment">
+      <view:properties>
+         <docadmin:fieldId>errandComment</docadmin:fieldId>
+         <docadmin:originalFieldId>errandComment</docadmin:originalFieldId>
+         <docadmin:name>Lähetuse täiendav info</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:costManager">
+      <view:properties>
+         <docadmin:fieldId>costManager</docadmin:fieldId>
+         <docadmin:originalFieldId>costManager</docadmin:originalFieldId>
+         <docadmin:name>Eelarve juht</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:costCenter">
+      <view:properties>
+         <docadmin:fieldId>costCenter</docadmin:fieldId>
+         <docadmin:originalFieldId>costCenter</docadmin:originalFieldId>
+         <docadmin:name>Kulukoht</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:eventName">
+      <view:properties>
+         <docadmin:fieldId>eventName</docadmin:fieldId>
+         <docadmin:originalFieldId>eventName</docadmin:originalFieldId>
+         <docadmin:name>Sündmus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:eventOrganizer">
+      <view:properties>
+         <docadmin:fieldId>eventOrganizer</docadmin:fieldId>
+         <docadmin:originalFieldId>eventOrganizer</docadmin:originalFieldId>
+         <docadmin:name>Ürituse korraldaja</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:eventBeginDate">
+      <view:properties>
+         <docadmin:fieldId>eventBeginDate</docadmin:fieldId>
+         <docadmin:originalFieldId>eventBeginDate</docadmin:originalFieldId>
+         <docadmin:name>Ürituse toimumise aeg alates</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:eventEndDate">
+      <view:properties>
+         <docadmin:fieldId>eventEndDate</docadmin:fieldId>
+         <docadmin:originalFieldId>eventEndDate</docadmin:originalFieldId>
+         <docadmin:name>Ürituse toimumise aeg kuni</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:county">
+      <view:properties>
+         <docadmin:fieldId>county</docadmin:fieldId>
+         <docadmin:originalFieldId>county</docadmin:originalFieldId>
+         <docadmin:name>Maakond</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
+         <docadmin:classificator>counties</docadmin:classificator>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:city">
+      <view:properties>
+         <docadmin:fieldId>city</docadmin:fieldId>
+         <docadmin:originalFieldId>city</docadmin:originalFieldId>
+         <docadmin:name>Sihtkoht</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:travelPurpose">
+      <view:properties>
+         <docadmin:fieldId>travelPurpose</docadmin:fieldId>
+         <docadmin:originalFieldId>travelPurpose</docadmin:originalFieldId>
+         <docadmin:name>Lähetuse põhjendus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:country">
+      <view:properties>
+         <docadmin:fieldId>country</docadmin:fieldId>
+         <docadmin:originalFieldId>country</docadmin:originalFieldId>
+         <docadmin:name>Riik</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
+         <docadmin:classificator>countries</docadmin:classificator>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:reportDueDate">
+      <view:properties>
+         <docadmin:fieldId>reportDueDate</docadmin:fieldId>
+         <docadmin:originalFieldId>reportDueDate</docadmin:originalFieldId>
+         <docadmin:name>Aruande lisamise tähtaeg</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:applicantServiceRank">
+      <view:properties>
+         <docadmin:fieldId>applicantServiceRank</docadmin:fieldId>
+         <docadmin:originalFieldId>applicantServiceRank</docadmin:originalFieldId>
+         <docadmin:name>Taotleja teenistusaste</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:applicantWorkAddress">
+      <view:properties>
+         <docadmin:fieldId>applicantWorkAddress</docadmin:fieldId>
+         <docadmin:originalFieldId>applicantWorkAddress</docadmin:originalFieldId>
+         <docadmin:name>Taotleja töökoha aadress</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:applicantEmail">
+      <view:properties>
+         <docadmin:fieldId>applicantEmail</docadmin:fieldId>
+         <docadmin:originalFieldId>applicantEmail</docadmin:originalFieldId>
+         <docadmin:name>Taotleja e-post</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:applicantPhone">
+      <view:properties>
+         <docadmin:fieldId>applicantPhone</docadmin:fieldId>
+         <docadmin:originalFieldId>applicantPhone</docadmin:originalFieldId>
+         <docadmin:name>Taotleja telefon</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:applicantId">
+      <view:properties>
+         <docadmin:fieldId>applicantId</docadmin:fieldId>
+         <docadmin:originalFieldId>applicantId</docadmin:originalFieldId>
+         <docadmin:name>Taotleja isikukood</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:personalCarIsUsed">
+      <view:properties>
+         <docadmin:fieldId>personalCarIsUsed</docadmin:fieldId>
+         <docadmin:originalFieldId>personalCarIsUsed</docadmin:originalFieldId>
+         <docadmin:name>Soovin kasutada isiklikku autot</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>CHECKBOX</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:carMakeOwnerRegNr">
+      <view:properties>
+         <docadmin:fieldId>carMakeOwnerRegNr</docadmin:fieldId>
+         <docadmin:originalFieldId>carMakeOwnerRegNr</docadmin:originalFieldId>
+         <docadmin:name>Kasutan sõiduautot (mark, omanik, reg nr)</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:kmBackAndForth">
+      <view:properties>
+         <docadmin:fieldId>kmBackAndForth</docadmin:fieldId>
+         <docadmin:originalFieldId>kmBackAndForth</docadmin:originalFieldId>
+         <docadmin:name>Läbisõit km (edasi-tagasi)</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DOUBLE</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:errandSummaryProjectCode">
+      <view:properties>
+         <docadmin:fieldId>errandSummaryProjectCode</docadmin:fieldId>
+         <docadmin:originalFieldId>errandSummaryProjectCode</docadmin:originalFieldId>
+         <docadmin:name>Projekt (kood või nimetus)</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+</view:view>

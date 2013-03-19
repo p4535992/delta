@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:docadmin="http://alfresco.webmedia.ee/model/document/admin/1.0">
+
+   <docadmin:fieldGroup view:childName="docadmin:registrationData">
+      <view:properties>
+         <docadmin:name>Registreerimisandmed</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
+         <docadmin:readonlyFieldsName>Viit ja reg kpv</docadmin:readonlyFieldsName>
+         <docadmin:readonlyFieldsRule>{regNumber} {regDateTime}</docadmin:readonlyFieldsRule>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:removableFromSystematicDocType>false</docadmin:removableFromSystematicDocType>
+         <docadmin:order>5</docadmin:order>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>regNumber</view:value>
+               <view:value>regDateTime</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:documentLocation">
+      <view:properties>
+         <docadmin:name>Dokumendi asukoht</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
+         <docadmin:readonlyFieldsNameChangeable>false</docadmin:readonlyFieldsNameChangeable>
+         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:removableFromSystematicDocType>false</docadmin:removableFromSystematicDocType>
+         <docadmin:order>4</docadmin:order>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>function</view:value>
+               <view:value>series</view:value>
+               <view:value>volume</view:value>
+               <view:value>case</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:accessRestriction">
+      <view:properties>
+         <docadmin:name>Juurdepääsupiirang</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
+         <docadmin:removableFromSystematicDocType>false</docadmin:removableFromSystematicDocType>
+         <docadmin:order>1</docadmin:order>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>accessRestriction</view:value>
+               <view:value>accessRestrictionReason</view:value>
+               <view:value>accessRestrictionBeginDate</view:value>
+               <view:value>accessRestrictionEndDate</view:value>
+               <view:value>accessRestrictionEndDesc</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:documentOwner">
+      <view:properties>
+         <docadmin:name>Dokumendi/asjatoimiku vastutaja</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:removableFromSystematicDocType>false</docadmin:removableFromSystematicDocType>
+         <docadmin:order>2</docadmin:order>
+         <docadmin:mandatoryForVol>true</docadmin:mandatoryForVol>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>ownerName</view:value>
+               <view:value>ownerServiceRank</view:value>
+               <view:value>ownerJobTitle</view:value>
+               <view:value>ownerOrgStructUnit</view:value>
+               <view:value>ownerWorkAddress</view:value>
+               <view:value>ownerEmail</view:value>
+               <view:value>ownerPhone</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:user">
+      <view:properties>
+         <docadmin:name>Kasutaja</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>userName</view:value>
+               <view:value>userServiceRank</view:value>
+               <view:value>userJobTitle</view:value>
+               <view:value>userOrgStructUnit</view:value>
+               <view:value>userWorkAddress</view:value>
+               <view:value>userEmail</view:value>
+               <view:value>userPhone</view:value>
+               <view:value>userId</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:contact">
+      <view:properties>
+         <docadmin:name>Kontakt</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>contactName</view:value>
+               <view:value>contactAddress</view:value>
+               <view:value>contactEmail</view:value>
+               <view:value>contactPhone</view:value>
+               <view:value>contactFaxNumber</view:value>
+               <view:value>contactWebPage</view:value>
+               <view:value>contactRegNumber</view:value>
+               <view:value>contactStreetHouse</view:value>
+               <view:value>contactPostalCity</view:value>
+               <view:value>contactFirstAdditionalEmail</view:value>
+               <view:value>contactSecondAdditionalEmail</view:value>
+               <view:value>contactFirstAdditionalPhone</view:value>
+               <view:value>contactSecondAdditionalPhone</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:recipients">
+      <view:properties>
+         <docadmin:name>Adressaadid</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:readonlyFieldsName>Adressaadid</docadmin:readonlyFieldsName>
+         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>recipientName</view:value>
+               <view:value>recipientPersonName</view:value>
+               <view:value>recipientEmail</view:value>
+               <view:value>recipientStreetHouse</view:value>
+               <view:value>recipientPostalCity</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:additionalRecipients">
+      <view:properties>
+         <docadmin:name>Lisaadressaadid</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:readonlyFieldsName>Lisaadressaadid</docadmin:readonlyFieldsName>
+         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>additionalRecipientName</view:value>
+               <view:value>additionalRecipientPersonName</view:value>
+               <view:value>additionalRecipientEmail</view:value>
+               <view:value>additionalRecipientStreetHouse</view:value>
+               <view:value>additionalRecipientPostalCity</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:signer">
+      <view:properties>
+         <docadmin:name>Allkirjastaja</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>signerName</view:value>
+               <view:value>signerServiceRank</view:value>
+               <view:value>signerJobTitle</view:value>
+               <view:value>signerOrgStructUnit</view:value>
+               <view:value>signerWorkAddress</view:value>
+               <view:value>signerEmail</view:value>
+               <view:value>signerPhone</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:senderNameAndEmail">
+      <view:properties>
+         <docadmin:name>Saatja nimi ja e-post</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>senderName</view:value>
+               <view:value>senderInitialsToAdr</view:value>
+               <view:value>senderPersonName</view:value>
+               <view:value>senderEmail</view:value>
+               <view:value>senderStreetHouse</view:value>
+               <view:value>senderPostalCity</view:value>
+               <view:value>senderFax</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:senderRegNumberAndDate">
+      <view:properties>
+         <docadmin:name>Saatja reg nr ja kpv</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:readonlyFieldsName>Saatja kirja reg nr ja kpv</docadmin:readonlyFieldsName>
+         <docadmin:readonlyFieldsRule>{senderRegNumber} {senderRegDate}</docadmin:readonlyFieldsRule>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:mandatoryForVol>false</docadmin:mandatoryForVol>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>senderRegNumber</view:value>
+               <view:value>senderRegDate</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:complience">
+      <view:properties>
+         <docadmin:name>Dokumendi täitmine</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>complienceNotation</view:value>
+               <view:value>complienceDate</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+</view:view>

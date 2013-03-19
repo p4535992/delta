@@ -1,0 +1,207 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <bean id="documentDynamicModelBootstrap" parent="dictionaryModelBootstrap">
+      <property name="models">
+         <list>
+            <value>ee/webmedia/alfresco/docdynamic/model/documentDynamicModel.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="documentChildModelBootstrap" parent="dictionaryModelBootstrap" depends-on="documentModelBootstrap">
+      <property name="models">
+         <list>
+            <value>ee/webmedia/alfresco/docdynamic/model/documentChildModel.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="documentWebClientBootstrap">
+      <property name="configs">
+         <list>
+            <value>classpath:ee/webmedia/alfresco/docdynamic/web/document-dynamic-web-client-config.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
+      <property name="resourceBundles">
+         <list>
+            <value>ee/webmedia/alfresco/docdynamic/web/document-dynamic-webclient</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+      <property name="resourceBundles">
+         <list>
+            <value>ee/webmedia/alfresco/docdynamic/web/document-dynamic-webclient</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="documentDynamicService" class="ee.webmedia.alfresco.docdynamic.service.DocumentDynamicServiceImpl">
+      <property name="dictionaryService" ref="DictionaryService" />
+      <property name="namespaceService" ref="NamespaceService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="generalService" ref="GeneralService" />
+      <property name="documentService" ref="DocumentService" />
+      <property name="documentAdminService" ref="DocumentAdminService" />
+      <property name="documentConfigService" ref="DocumentConfigService" />
+      <property name="sendOutService" ref="SendOutService" />
+      <property name="documentLogService" ref="DocumentLogService" />
+      <property name="documentTemplateService" ref="DocumentTemplateService" />
+      <property name="fileService" ref="FileService" />
+      <property name="contentService" ref="ContentService" />
+      <property name="privilegeService" ref="PrivilegeService" />
+      <property name="caseFileLogService" ref="CaseFileLogService" />
+      <property name="workflowService" ref="WmWorkflowService" />
+      <property name="showMessageIfUnregistered" value="${conf.document-regnumber.showMessageIfUnregistered}" />
+   </bean>
+
+   <bean id="DocumentDynamicService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService</value>
+         </list>
+      </property>
+      <property name="target" ref="documentDynamicService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+
+   <bean class="ee.webmedia.alfresco.docdynamic.service.DocumentDynamicTypeMenuItemProcessor">
+      <property name="menuService" ref="MenuService" />
+      <property name="documentAdminService" ref="DocumentAdminService" />
+      <property name="permissionService" ref="PermissionService" />
+   </bean>
+
+   <!-- Fixes encoding on HTML files (CL task 196507) -->
+   <bean id="fileEncodingUpdater" class="ee.webmedia.alfresco.document.bootstrap.FileEncodingUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+            <ref bean="convertToDynamicDocumentsUpdater" />
+         </list>
+      </property>
+      <property name="mimetypeService" ref="MimetypeService" />
+      <property name="transactionHelperMinRetryWaits" value="6000" />
+   </bean>
+
+   <bean id="documentUpdater9" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+       <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+            <ref bean="structUnitFieldTypeUpdater" />
+            <ref bean="convertToDynamicDocumentsUpdater" />
+            <ref bean="fileEncodingUpdater" />
+         </list>
+      </property>
+      <property name="workflowService" ref="WmWorkflowService" />
+      <property name="documentService" ref="DocumentService" />
+      <property name="fileEncodingUpdater" ref="fileEncodingUpdater" />
+   </bean>
+   
+   <!-- NB! This updater's searchableHasAllFinishedCompoundWorkflows part is not needed 
+   when it is quaranteed that documentUpdater9 also runs (it performs the same functionality) -->
+   <bean id="documentCompWorkflowSearchPropsUpdater" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentCompWorkflowSearchPropsUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+       <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+            <ref bean="convertToDynamicDocumentsUpdater" />
+         </list>
+      </property>       
+   </bean>
+   
+   <bean id="documentChangedTypePropertiesUpdater2" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentChangedTypePropertiesUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+       <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+            <ref bean="convertToDynamicDocumentsUpdater" />
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="documentAccessRestrictionUpdater2" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentAccessRestrictionUpdater" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+       <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+   </bean>
+
+   <bean id="documentInvalidAccessRestrictionUpdater" class="ee.webmedia.alfresco.docdynamic.bootstrap.DocumentInvalidAccessRestrictionUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+      <property name="transactionHelperMinRetryWaits" value="6000" />
+   </bean>
+   
+   <bean id="emptyDocumentRegNrUpdater" class="ee.webmedia.alfresco.docdynamic.bootstrap.EmptyDocumentRegNrUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="enabled" value="false" /><!-- Executed from node-browser -->
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="logAndDeleteObjectsWithMissingType" class="ee.webmedia.alfresco.docdynamic.bootstrap.LogAndDeleteObjectsWithMissingType" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="archivalsStoresBootstrap" />
+<!--             <ref bean="convertToDynamicDocumentsUpdater" /> -->
+         </list>
+      </property>
+      <property name="delete" value="true" /> <!-- Should be set true only in 3.11 branch -->
+   </bean>   
+
+   <bean id="deleteDraftsBootstrap" class="ee.webmedia.alfresco.docdynamic.bootstrap.DeleteDraftsBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="documentDraftsSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="nodeService" ref="NodeService" />
+      <property name="documentService" ref="DocumentService" />
+      <property name="transactionService" ref="TransactionService" />
+   </bean>
+
+   <!-- START: web beans: -->
+
+   <bean id="DocumentDynamicDialog" class="ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog" scope="session" />
+
+   <bean id="DocumentDialogHelperBean" class="ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean" scope="session" />
+
+   <bean id="DocumentLockHelperBean" class="ee.webmedia.alfresco.docdynamic.web.DocumentLockHelperBean" scope="session" />
+
+   <bean id="DocumentTypePrivilegesHandler" class="ee.webmedia.alfresco.docdynamic.web.DocumentTypePrivilegesHandler" scope="session" />
+
+   <!-- END: web beans: -->
+
+</beans>

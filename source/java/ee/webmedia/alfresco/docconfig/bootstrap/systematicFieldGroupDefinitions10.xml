@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:docadmin="http://alfresco.webmedia.ee/model/document/admin/1.0">
+
+   <docadmin:fieldGroup view:childName="docadmin:driveCompensation">
+      <view:properties>
+         <docadmin:name>Sõiduauto kasutamise hüvitis</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:readonlyFieldsNameChangeable>false</docadmin:readonlyFieldsNameChangeable>
+         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
+         <docadmin:readonlyFieldsName>Sõidupäevik</docadmin:readonlyFieldsName>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
+         <docadmin:inapplicableForVol>true</docadmin:inapplicableForVol>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>driveRecordKeeping</view:value>
+               <view:value>driveCompensationRate</view:value>
+               <view:value>driveBeginDate</view:value>
+               <view:value>driveEndDate</view:value>
+               <view:value>driveOdoBegin</view:value>
+               <view:value>driveOdoEnd</view:value>
+               <view:value>driveKm</view:value>
+               <view:value>driveCompensationCalculated</view:value>
+               <view:value>driveTotalKm</view:value>
+               <view:value>driveTotalCompensation</view:value>
+               <view:value>driveCompensation</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+</view:view>

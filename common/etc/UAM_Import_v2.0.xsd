@@ -1,0 +1,1064 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--Created with Liquid XML Studio Developer Edition 9.0.11.3078 (http://www.liquid-technologies.com)-->
+<!-- Rahvusarhiivi Universaalse Arhiveerimismooduli (UAM) sisendi XML skeem. -->
+<xs:schema xmlns="http://www.ra.ee/schemas/EDHS/import_v0.1" xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.ra.ee/schemas/EDHS/import_v0.1" elementFormDefault="qualified" attributeFormDefault="unqualified" version="0.1 18.11.2009">
+	<xs:element name="UAM_import">
+		<xs:annotation>
+			<xs:documentation>UAM-i laaditav aines - arhiivikirjeldus ja dokumendid</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Arhiivikirjeldus" minOccurs="0">
+					<xs:annotation>
+						<xs:documentation>Kirjeldusüksuste ja funktsioonide metaandmed</xs:documentation>
+					</xs:annotation>
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="Kirjeldusyksus" type="KirjeldusyksusType" minOccurs="0" maxOccurs="unbounded">
+								<xs:annotation>
+									<xs:documentation>Liigitusüksuste (sari, säilik) kirjeldused</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+							<xs:element name="Funktsioon" type="FunktsioonImportType" minOccurs="0" maxOccurs="unbounded">
+								<xs:annotation>
+									<xs:documentation>Funktsioonide ja volituste kirjeldused</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Arhivaal" minOccurs="0" maxOccurs="unbounded">
+					<xs:annotation>
+						<xs:documentation>UAM-i laaditava arhivaali kapsli struktuur</xs:documentation>
+					</xs:annotation>
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="KyMeta" type="KyMetaType">
+								<xs:annotation>
+									<xs:documentation>Arhivaali metaandmed</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+							<xs:element name="Fail" type="FailImportType" minOccurs="0" maxOccurs="unbounded">
+								<xs:annotation>
+									<xs:documentation>Arhivaali osaks olev fail koos tehniliste metaandmetega</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:complexType name="KirjeldusyksusType">
+		<xs:annotation>
+			<xs:documentation>Kirjeldusüksuse andmete tüüp</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="KyTasand" type="KyTasandImportEnumerationType">
+				<xs:annotation>
+					<xs:documentation>Kirjeldusüksuse tasand (arhiiv, allarhiiv, sari, allsari, säilik, arhivaal) </xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyIdentiteediala" type="KyIdentiteedialaImportType">
+				<xs:annotation>
+					<xs:documentation>Kirjeldusüksust identifitseerivad metaandmed</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KySisuStruktAla" type="KySisuStruktAlaType">
+				<xs:annotation>
+					<xs:documentation>Kirjeldusüksuse sisu ja struktuuri metaandmed</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyJuurdepaasuala" type="JuurdepaasualaImportType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Kirjeldusüksuse kasutamise piirangut kirjeldavad metaandmed</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KySeonduvAines" type="SeotudOsaImportType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Päritolu kaudu või muul moel seotud kirjeldusüksus  kas samas või mujal arhiivis. Selgitatakse kirjeldusüksuste vaheliste seoste iseloomu.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyPublikatsioon" type="xs:string" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Määratletakse publikatsioonid, mille aluseks on olnud kirjeldusüksuse kasutamine, uurimine või analüüs.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyKirjeldusAndmed" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Kirjelduse koostamise või muutmise aeg ning koostaja(te) või muutja(te) nimi või nimed.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="Nimi" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Kirjelduse koostaja nimi</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="Aeg" type="LaiendatudKuupaevType" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Kirjeldusüksuse kirjelduse loomise kuupäev</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="Tegevus" type="KoostamineTegevusEnumerationType" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Kirjeldusega tehtud tegevus (loomine, täiendamine)</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="KyKasutatudAllikad" type="xs:string" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Määratletakse allikmaterjalid, mis on olnud aluseks käesoleva kirjelduse koostamisel.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyMarkused" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Kasutatakse vaid juhul, kui olulist informatsiooni ei ole võimalik kanda teistesse kirjelduselementidesse</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyTegevus" type="TegevusImportType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Tegevused kirjeldusüksusega</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="KyIdentiteedialaImportType">
+		<xs:annotation>
+			<xs:documentation>Kirjeldusüksuse identifitseerivate metaandmete tüüp</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="KyIdent" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Kirjeldusüksuse identifikaator (normatiivne viitekood pikal kujul), arhiivi viitekood</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyViit" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Tähis algsüsteemis (Alternatiivne viitekood). Mittevajalik arhiivi ja allarhiivi kirjelduses</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyIdEDHS" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Kirjeldusüksuse unikaalne ID EDHSis</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyVanemViit" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Kirjeldusüksuse otsese vanema viit EDHSis (alternatiivne viitekood)</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyVanemIdEDHS" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>KirjeldusĆ¼ksuse otsese vanema unikaalne ID EDHSis</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="FNS" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Fond-Nimistu-Säilik numeratsioon</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="EelmineFNS" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Varasem Fond-Nimistu-Säilik numeratsioon</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyPealkiri" type="xs:string">
+				<xs:annotation>
+					<xs:documentation>Kirjeldusüksuse pealkiri</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyPealkiriVoorkeeles" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Kirjeldusüksuse pealkiri võõrkeeles ja keel</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="Pealkiri" type="xs:string">
+							<xs:annotation>
+								<xs:documentation>Kirjeldusüksuse pealkiri võõrkeeles
+					</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="Keel" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Kirjeldusüksuse pealkirja keel
+					</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="KyAeg" type="AegType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Kirjeldusüksuse piirdaatumite algus- ja lõppaeg</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyMootarv" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Kirjeldusüksuse alluvate arv</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:simpleContent>
+						<xs:extension base="xs:nonNegativeInteger">
+							<xs:attribute name="yhik" type="MootarvYhikEnumerationType" use="optional" default="baiti">
+								<xs:annotation>
+									<xs:documentation>Kirjeldusüksuse alluvate arvu mõõtühik</xs:documentation>
+								</xs:annotation>
+							</xs:attribute>
+						</xs:extension>
+					</xs:simpleContent>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="KyKuuluvus" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Andmed eraõigusliku isiku poolt dokumentide arhiivi deponeerimise kohta (nt hoiustamislepingu alusel).</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="Omanik" type="xs:string">
+							<xs:annotation>
+								<xs:documentation>Omanik</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="Aeg" type="LaiendatudKuupaevType">
+							<xs:annotation>
+								<xs:documentation>Lepingust tulenev tähtaeg omandi üleminekuks riigile</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="KyMetaIdentiteedialaType">
+		<xs:annotation>
+			<xs:documentation>Arhivaali identifitseerivad metaandmed väljastatava ainese korral: viited, pealkiri</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="KyIdent" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Arhivaali identifikaator (normatiivne viitekood)</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyViit" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Tähis algsüsteemis</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyIdEDHS" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Arhivaali/dokumendi unikaalne ID EDHSis</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyVanemViit" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Arhivaali/dokumendi otsese vanema viit EDHSis (alternatiivne viitekood)</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyVanemIdEDHS" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Arhivaali/dokumendi otsese vanema unikaalne ID EDHSis</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyPealkiri" type="xs:string">
+				<xs:annotation>
+					<xs:documentation>Arhivaali pealkiri</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyPealkiriVoorkeeles" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Arhivaali pealkiri võõrkeeles ja keel</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="Pealkiri" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Arhivaali pealkiri võõrkeeles</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="Keel" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Arhivaali pealkirja keel</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="KyAeg" type="LaiendatudKuupaevType">
+				<xs:annotation>
+					<xs:documentation>Kirjeldusüksuse ainese loomise aeg kas ajavahemikuna (eelistatud) või üksikkuupäevana (arhivaali või säiliku tasandil)</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyMuutmiseAeg" type="xs:dateTime">
+				<xs:annotation>
+					<xs:documentation>Arhivaali muutmise kuupäev</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyKuuluvus" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Andmed eraõigusliku isiku poolt dokumentide arhiivi deponeerimise kohta (nt hoiustamislepingu alusel).</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="Omanik" type="xs:string">
+							<xs:annotation>
+								<xs:documentation>Omanik</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="Aeg" type="LaiendatudKuupaevType">
+							<xs:annotation>
+								<xs:documentation>Omandi ülemineku aeg</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="KySisuStruktAlaType">
+		<xs:annotation>
+			<xs:documentation>Kirjeldusüksuse sisu ja struktuuri metaandmete tüüp</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="KyKogus" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Kirjeldusüksuse mistahes täpseim võimalik suurus, maht, kogus (näiteks: säilikute arv, riiulimeetrid, lehtede arv, failide arv jne) araabia numbrites või lineaarse suurusena või ruumalana.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="Kogus" type="xs:decimal">
+							<xs:annotation>
+								<xs:documentation>Kogust kirjeldav number</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="Yhik" type="xs:string">
+							<xs:annotation>
+								<xs:documentation>Koguse ühik</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="KyMarksona" type="xs:string" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Märksõna ja / või viide kasutatavale märksõnastikule või klassifikaatorile</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KySeotudArhiivimoodustaja" type="xs:string" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Viide arhiivimoodustaja kirjeldusele</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyHoiustamiseAjalugu" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Vabatekstiline kirjeldus kirjeldusüksuse senise hoiustamise kohta</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KySisu" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Kirjeldusüksuse teema</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyHindamine" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Esitatakse antud kirjeldusüksuse suhtes langetatud arhiiviväärtuse andmise hindamisotsused. Võimalusel viidatakse hindamisotsuse numbrile ja kuupäevale.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="Otsus" type="xs:integer" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Hindamisotsuse number</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="Aeg" type="xs:dateTime" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Hindamisotsuse kuupäev</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="Pealkiri" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Hindamisotsuse pealkiri</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="Sisu" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Hindamisotsuse sisu</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="KyKorrastussysteem" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Kirjeldab, kuidas arhiivi on eri aegadel struktureeritud</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyTaienemine" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Kirjeldusüksuse võimalik täiendamine (sarja puhul)</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyOtsivahend" type="xs:string" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Esitatakse täiendavad otsivahendid peale arhiivinimistu (ka AIS) ja viited nende asukohtadele</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyMetaLiik" type="xs:anyType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Liigipõhiste metaandmete ruum</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="KyMetaSisuStruktAlaType">
+		<xs:annotation>
+			<xs:documentation>Arhivaali sisu kirjelduse tüüp: teema, liik</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="KyLiik" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Arhivaali liik</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyKogus" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Kirjeldusüksuse mistahes täpseim võimalik suurus, maht, kogus (näiteks: säilikute arv, riiulimeetrid, lehtede arv, failide arv jne) araabia numbrites või lineaarse suurusena või ruumalana.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="Kogus" type="xs:decimal"/>
+						<xs:element name="Yhik" type="xs:string"/>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="KyMarksona" type="xs:string" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Märksõna ja / või viide kasutatavale märksõnastikule või klassifikaatorile</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyHoiustamiseAjalugu" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Vabatekstiline kirjeldus kirjeldusüksuse senise hoiustamise kohta</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KySisu" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Kirjeldustasandile kohane kokkuvõte kirjeldusüksuse käsitlusala ulatusest (nt geograafiline ulatus, ajaraam, tekkekontekst ehk seos funktsioonide ja tegevusaladega) ja sisust (dokumenteerimise viis, teema)</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyHindamine" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Esitatakse antud kirjeldusüksuse suhtes langetatud arhiiviväärtuse andmise hindamisotsused. Võimalusel viidatakse hindamisotsuse numbrile ja kuupäevale.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="Otsus" type="xs:integer" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Hindamisotsuse number</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="Aeg" type="xs:dateTime">
+							<xs:annotation>
+								<xs:documentation>Hindamisotsuse kuupäev</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="Pealkiri" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Hindamisotsuse pealkiri</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="Sisu" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Hindamisotsuse sisu</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="KyOtsivahend" type="xs:string" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Täiendav otsivahend</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="JuurdepaasualaImportType">
+		<xs:annotation>
+			<xs:documentation>Kirjeldusüksuse kasutamise piirangute kirjelduste tüüp</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="KyKeel" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Ainese sisu esituse keel ja kirjaviis</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="Keel" type="xs:string"/>
+						<xs:element name="Kirjaviis" type="xs:string"/>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="JuurdepaasPiirang" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Kirjeldusüksusele omistatud kasutusõiguste piirang </xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="Piirang" type="PiirangEnumerationType" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Märge juurdepääsupiirangu olemasolu kohta</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="PiirangAeg" type="AegType" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Juurdepääsupiirangu alguse ja lõpu kuupäev</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="PiirangKestus" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Piirangu kestus kui on määratud tekstiliselt</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="PiirangAlus" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Õigusakt või muu põhjus, mille alusel piirang seatakse</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="PiirangKirjeldus" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Piirangu kirjeldus</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="IPR" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Intellektuaalomandi õigused kirjeldusüksuse sisu suhtes</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="IPROmanik" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Intellektuaalomandi omaniku nimi või viide omaniku kirjeldusele</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="IPRTahtaeg" type="xs:dateTime" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Intellektuaalomandi lõpptähtaeg</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="IPRAlus" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Viide õigusaktile, mille alusel piirang kehtib</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="IPRKirjeldus" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Märge dokumendi sisu taasesitamise keelamise kohta. Teave dokumendi koopiate tegemise võimalikkusse kohta. (Copyright notice)</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="FunktsioonImportType">
+		<xs:annotation>
+			<xs:documentation>Funktsiooni andmete tüüp. Kehtib arhiiviskeemi väljastamisel.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="FunktsioonNimi" type="xs:string">
+				<xs:annotation>
+					<xs:documentation>Funktsiooni nimi</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="FunktsioonViit" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Funktsiooni number/viit EDHSis (alternatiivne viitekood)</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="FunktsioonIdEDHS" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Funktsiooni unikaalne ID EDHSis</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="FunktsioonVanemViit" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>(All)Funktsiooni otsese vanema viit EDHSis (alternatiivne viitekood)</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="FunktsioonVanemIdEDHS" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>(All)Funktsiooni otsese vanema unikaalne ID EDHSis</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Kirjeldus" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Liigitusskeemis oleva funktsiooni kirjeldus või olemuse selgitus väljendatuna protsesside või tegevuste nimedena, mida funktsiooni täitmiseks teostatakse. Tegevusvaldkonna ülevaade jms</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Volitus" type="FunktsioonVolitusImportType" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Funktsiooni aluseks oleva volituse kirjeldus</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="FunktsioonTegevus" type="TegevusImportType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Tegevused funktsiooni kirjeldusega</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="FunktsioonVolitusImportType">
+		<xs:annotation>
+			<xs:documentation>Funktsiooni aluseks oleva volituse andmete tüüp</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="VolitusTyyp" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Volituse tüüp (näiteks seadus, määrus vms.)</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="VolitusNimi" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Volituse nimi (volitusnormi pealkiri)</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="VolitusKehtivusAeg" type="AegType" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="KyMetaType">
+		<xs:annotation>
+			<xs:documentation>Arhivaali metaandmete tüüp</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="KyIdentiteediala" type="KyMetaIdentiteedialaType">
+				<xs:annotation>
+					<xs:documentation>Arhivaali identifitseerivad metaandmed: viited, pealkiri</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KySisuStruktAla" type="KyMetaSisuStruktAlaType">
+				<xs:annotation>
+					<xs:documentation>Arhivaali sisu kirjeldus: teema, liik</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyJuurdepaasuala" type="JuurdepaasualaImportType">
+				<xs:annotation>
+					<xs:documentation>Arhivaali  kasutamise piirangute kirjeldused</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KySeonduvAines" type="SeotudOsaImportType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Päritolu kaudu või muul moel seotud kirjeldusüksus  kas samas või mujal arhiivis. Selgitatakse kirjeldusüksuste vaheliste seoste iseloomu.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyMetaLiik" type="xs:anyType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Arhivaali liigipõhiste metaandmete ruum</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyPublikatsioon" type="xs:string" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Määratletakse publikatsioonid, mille aluseks on olnud kirjeldusüksuse kasutamine, uurimine või analüüs.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyKirjeldusAndmed" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Kirjelduse koostamise või muutmise aeg ning koostaja(te) või muutja(te) nimi või nimed.</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="Nimi" type="xs:string" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Kirjelduse koostaja nimi</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="Aeg" type="LaiendatudKuupaevType" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Kirjelduse koostamise kuupäev</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="Tegevus" type="KoostamineTegevusEnumerationType" minOccurs="0">
+							<xs:annotation>
+								<xs:documentation>Valikuliselt: loomine, täiendamine</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="KyKasutatudAllikad" type="xs:string" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Määratletakse allikmaterjalid, mis on olnud aluseks käesoleva kirjelduse koostamisel.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyMarkused" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Kasutatakse vaid juhul, kui olulist informatsiooni ei ole võimalik kanda teistesse kirjelduselementidesse</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="KyTegevus" type="TegevusImportType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Arhivaaliga tehtud tegevuste metaandmed</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="FailImportType">
+		<xs:annotation>
+			<xs:documentation>Faili andmete tüüp</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="FailIdent" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Faili üheselt identifitseeriv identifikaator</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="FailNimi" type="xs:string">
+				<xs:annotation>
+					<xs:documentation>Faili nimi koos laiendiga</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="FailSuurus" type="xs:nonNegativeInteger">
+				<xs:annotation>
+					<xs:documentation>Faili suurus baitides</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="FailBase64" type="xs:base64Binary">
+				<xs:annotation>
+					<xs:documentation>Fail Base64 kodeeritud kujul</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="FailViide" type="xs:string">
+				<xs:annotation>
+					<xs:documentation>Viide failile, mis ei ole base64 kujul metaandmetes</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="FailLoplik" type="xs:boolean">
+				<xs:annotation>
+					<xs:documentation>Kas fail on lõplik või on teda edasi töödeldud?</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="FailOriginaal" type="xs:boolean">
+				<xs:annotation>
+					<xs:documentation>Kas fail on originaal või saadud töötlemise teel?</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="FailArhiivivormingus" type="xs:boolean">
+				<xs:annotation>
+					<xs:documentation>Kas fail on arhiivivormingus või mitte?</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="FailKasutuskoopia" type="xs:boolean">
+				<xs:annotation>
+					<xs:documentation>Kas tegemist on kasutuskoopiaga või mitte?</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="FailTehnTyyp" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Faili tüübist (pilt, heli, video, tekst) sõltuvad metaandmed</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:choice>
+						<xs:element name="FailPilt" type="FailPiltType"/>
+						<xs:element name="FailHeli" type="FailHeliType"/>
+						<xs:element name="FailVideo" type="FailVideoType"/>
+						<xs:element name="FailTekst" type="FailTekstType"/>
+					</xs:choice>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="FailTegevus" type="TegevusImportType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>Failiga tehtud tegevuste kirjeldused</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="FailVorming" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Faili vorming ja selle versioon</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:simpleContent>
+						<xs:extension base="xs:string">
+							<xs:attribute name="versioon" type="xs:string"/>
+						</xs:extension>
+					</xs:simpleContent>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="FailTarkvara" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Faili kasutamiseks soovitatav tarkvara ja selle versioon</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:simpleContent>
+						<xs:extension base="xs:string">
+							<xs:attribute name="versioon" type="xs:string"/>
+						</xs:extension>
+					</xs:simpleContent>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="Rasi">
+				<xs:annotation>
+					<xs:documentation>Faili räsi kirjeldavad metaandmed</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="RasiVaartus" type="xs:string">
+							<xs:annotation>
+								<xs:documentation>Räsi väärtus</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="RasiAlgoritm" type="xs:string">
+							<xs:annotation>
+								<xs:documentation>Räsi loomiseks kasutatud algoritm</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+						<xs:element name="RasiAeg" type="xs:dateTime">
+							<xs:annotation>
+								<xs:documentation>Räsi loomise aeg</xs:documentation>
+							</xs:annotation>
+						</xs:element>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="FailPiltType">
+		<xs:annotation>
+			<xs:documentation>Pildifaili eripäraste metaandmete tüüp</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="Punktitihedus" type="xs:string"/>
+			<xs:element name="MoodeHor" type="xs:nonNegativeInteger"/>
+			<xs:element name="MoodeVer" type="xs:nonNegativeInteger"/>
+			<xs:element name="Bitisygavus" type="xs:nonNegativeInteger"/>
+			<xs:element name="Varviruum" type="xs:string"/>
+			<xs:element name="Varvihaldus" type="xs:string" minOccurs="0"/>
+			<xs:element name="Kontrolltabel" type="xs:string" minOccurs="0"/>
+			<xs:element name="Orientatsioon" type="xs:string"/>
+			<xs:element name="KompresseerimineFormaat" type="xs:string"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="FailHeliType">
+		<xs:annotation>
+			<xs:documentation>Helifaili eripäraste metaandmete tüüp</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="Formaat" type="xs:string"/>
+			<xs:element name="Diskreetimisaste" type="xs:string"/>
+			<xs:element name="Resolutsioon" type="xs:string"/>
+			<xs:element name="KanaliteArv" type="xs:nonNegativeInteger"/>
+			<xs:element name="Kestus" type="xs:duration"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="FailVideoType">
+		<xs:annotation>
+			<xs:documentation>Videofaili eripäraste metaandmete tüüp</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="TVstandard" type="xs:string"/>
+			<xs:element name="KaaderMoodeHor" type="xs:nonNegativeInteger"/>
+			<xs:element name="KaaderMoodeVer" type="xs:nonNegativeInteger"/>
+			<xs:element name="KompresseerimineFormaat" type="xs:string"/>
+			<xs:element name="Andmesagedus" type="xs:string"/>
+			<xs:element name="Kaadrisagedus" type="xs:string"/>
+			<xs:element name="Kodeering" type="xs:string"/>
+			<xs:element name="KyljedSuhe" type="xs:string"/>
+			<xs:element name="Skaneerimisviis" type="xs:string"/>
+			<xs:element name="VideoHeli" type="FailHeliType"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="FailTekstType">
+		<xs:annotation>
+			<xs:documentation>Tekstifaili eripäraste metaandmete tüüp</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="Kodeering" type="xs:string"/>
+			<xs:element name="DTDSkeem" type="xs:string" minOccurs="0"/>
+			<xs:element name="TekstStrukt" type="xs:string" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="TegevusImportType">
+		<xs:annotation>
+			<xs:documentation>Tegevuse andmete tüüp</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="TegevusNimetus" type="xs:string">
+				<xs:annotation>
+					<xs:documentation>Tegevuse üheselt arusaadav nimetus</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="TeostajaNimi" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Tegevuse teostaja nimi</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="TeostajaRoll" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Teostaja roll tegevuse teostamisel</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="TegevusAeg" type="xs:dateTime" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Tegevuse teostamise kuupäev ja aeg</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="SeotudOsaImportType">
+		<xs:annotation>
+			<xs:documentation>Kirjeldusüksuse, funktsiooni või dokumendiga seotud teine kirjeldusüksus, dokument või funktsioon</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="SeotudOsaIdent" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Viide seotud objekti kirjeldusele</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="SeotudOsaSelgitus" type="xs:string" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Objektidevahelise seose tüüp vabas tekstis</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:simpleType name="PiirangEnumerationType">
+		<xs:annotation>
+			<xs:documentation>Juurdepääsupiirangu võimalikud väärtused.</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="AK">
+				<xs:annotation>
+					<xs:documentation>Asutusesiseseks kasutamiseks</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="DEI">
+				<xs:annotation>
+					<xs:documentation>Delikaatsed ja eraelulised isikuandmed (DEI),  </xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="UleandjaPiirang">
+				<xs:annotation>
+					<xs:documentation>Üleandja piirang</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="KyTasandImportEnumerationType">
+		<xs:annotation>
+			<xs:documentation>Kirjeldusüksuse tasandi võimalikud väärtused (sari, allsari, toimik). Kehtib ainult ainese importimisel.</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="sari"/>
+			<xs:enumeration value="allsari"/>
+			<xs:enumeration value="toimik"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="DokLisaTyypEnumerationType">
+		<xs:annotation>
+			<xs:documentation>Dokumendi lisa tüübi võimalikud väärtused (digitaalne, paberil).</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="digitaalne"/>
+			<xs:enumeration value="paber"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="SeoseTyypImportEnumerationType">
+		<xs:annotation>
+			<xs:documentation>Seose tüübi võimalikud väärtused. Loetelu kehtib ainese importimisel.</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="SeotudFunktsioon"/>
+			<xs:enumeration value="SeotudToimik"/>
+			<xs:enumeration value="SeotudSari"/>
+			<xs:enumeration value="SeotudDokument"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="LaiendatudKuupaevEnumerationType">
+		<xs:annotation>
+			<xs:documentation>Kuupäeva tüübi väärtused</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="kuupäev"/>
+			<xs:enumeration value="kuuaasta"/>
+			<xs:enumeration value="aasta"/>
+			<xs:enumeration value="kümnend"/>
+			<xs:enumeration value="Iveerand"/>
+			<xs:enumeration value="IIveerand"/>
+			<xs:enumeration value="IIIveerand"/>
+			<xs:enumeration value="IVveerand"/>
+			<xs:enumeration value="sajandiIpool"/>
+			<xs:enumeration value="sajandiIIpool"/>
+			<xs:enumeration value="sajand"/>
+			<xs:enumeration value="dateerimata"/>
+			<xs:enumeration value="sisestamata"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:complexType name="LaiendatudKuupaevType">
+		<xs:sequence>
+			<xs:element name="Tyyp" type="LaiendatudKuupaevEnumerationType">
+				<xs:annotation>
+					<xs:documentation>Näitab, millise kuupäeva tüübiga on tegemist</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Tapsus" type="xs:boolean">
+				<xs:annotation>
+					<xs:documentation>Näitab, kas aeg on täpne või hinnaguline</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Vaartus" type="xs:string">
+				<xs:annotation>
+					<xs:documentation>Aeg</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="AegType">
+		<xs:sequence>
+			<xs:element name="Algus" type="LaiendatudKuupaevType" minOccurs="0" maxOccurs="1">
+				<xs:annotation>
+					<xs:documentation>Algusdaatum</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Lopp" type="LaiendatudKuupaevType" minOccurs="0" maxOccurs="1">
+				<xs:annotation>
+					<xs:documentation>Lõppdaatum</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:simpleType name="MootarvYhikEnumerationType">
+		<xs:annotation>
+			<xs:documentation>Kirjeldusüksuse mõõtarvu ühiku võimalikud väärtused</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="baiti"/>
+			<xs:enumeration value="sarja"/>
+			<xs:enumeration value="toimikut"/>
+			<xs:enumeration value="allsarja"/>
+			<xs:enumeration value="alltoimikut"/>
+			<xs:enumeration value="dokumenti"/>
+			<xs:enumeration value="allarhiivi"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="KoostamineTegevusEnumerationType">
+		<xs:annotation>
+			<xs:documentation>Arhiivimoodustaja koostamise tegevuse valikud</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="loomine"/>
+			<xs:enumeration value="täiendamine"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="FunktsioonTasandEnumerationType">
+		<xs:annotation>
+			<xs:documentation>Funktsiooni tasandi võimalikud väärtused (funktsioon, allfunktsioon).</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="funktsioon"/>
+			<xs:enumeration value="allfunktsioon"/>
+		</xs:restriction>
+	</xs:simpleType>
+</xs:schema>
