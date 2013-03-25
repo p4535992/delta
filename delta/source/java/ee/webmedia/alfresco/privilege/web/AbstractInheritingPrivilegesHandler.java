@@ -6,6 +6,7 @@ import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.privilege.model.UserPrivileges;
+import ee.webmedia.alfresco.utils.CalendarUtil;
 
 /**
  * Base class for PrivilegesHandler that allow users to change inheriting permissions from parent nodes
@@ -14,6 +15,8 @@ import ee.webmedia.alfresco.privilege.model.UserPrivileges;
  */
 public abstract class AbstractInheritingPrivilegesHandler extends PrivilegesHandler {
     private static final long serialVersionUID = 1L;
+
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(AbstractInheritingPrivilegesHandler.class);
 
     protected AbstractInheritingPrivilegesHandler(QName nodeType, Collection<String> manageablePermissions) {
         super(nodeType, manageablePermissions);
@@ -27,7 +30,15 @@ public abstract class AbstractInheritingPrivilegesHandler extends PrivilegesHand
     @Override
     public void save() {
         if (checkboxValueBeforeSave != checkboxValue) {
+            long startTime = 0L;
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Setting inherit to " + checkboxValue + " on " + state.getManageableRef());
+                startTime = System.nanoTime();
+            }
             BeanHelper.getPermissionService().setInheritParentPermissions(state.getManageableRef(), checkboxValue);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Set inherit to " + checkboxValue + " on " + state.getManageableRef() + " - took " + CalendarUtil.duration(startTime) + " ms");
+            }
             if (!checkboxValue) {
                 for (UserPrivileges authPrivs : state.getPrivMappings().getPrivilegesByUsername().values()) {
                     authPrivs.makeInheritedPrivilegesAsStatic();

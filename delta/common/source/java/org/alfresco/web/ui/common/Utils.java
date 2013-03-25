@@ -75,6 +75,7 @@ import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.data.IDataContainer;
 import org.alfresco.web.ui.common.component.UIStatusMessage;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.myfaces.shared_impl.renderkit.html.HtmlFormRendererBase;
@@ -268,14 +269,12 @@ public final class Utils extends StringUtils
          for (String name : params.keySet())
          {
             buf.append("document.forms['");
-            buf.append(formClientId);
+            buf.append(StringEscapeUtils.escapeJavaScript(formClientId));
             buf.append("']['");
-            buf.append(name);
+            buf.append(StringEscapeUtils.escapeJavaScript(name));
             buf.append("'].value='");
             String val = params.get(name);
-            val = replace(val, "\\", "\\\\");   // encode escape character
-            val = replace(val, "'", "\\'");     // encode single quote as we wrap string with that
-            buf.append(val);
+            buf.append(StringEscapeUtils.escapeJavaScript(val));
             buf.append("';");
             
             // weak, but this seems to be the way Sun RI do it...

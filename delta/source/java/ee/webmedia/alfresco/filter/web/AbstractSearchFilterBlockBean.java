@@ -106,9 +106,11 @@ public abstract class AbstractSearchFilterBlockBean<T extends FilterService> ext
                 (NodeRef) properties.get(DocumentCommonModel.Props.VOLUME.toString()), null);
         if (caseByTitle != null) {
             properties.put(DocumentCommonModel.Props.CASE.toString(), caseByTitle.getNode().getNodeRef());
-            properties.put(DocumentCommonModel.Props.CASE.toString() + WMUIProperty.AFTER_LABEL_BOOLEAN,
-                    properties.get(RepoUtil.createTransientProp("caseLabelEditable" + WMUIProperty.AFTER_LABEL_BOOLEAN).toString()));
+        } else {
+            properties.put(DocumentCommonModel.Props.CASE.toString(), null);
         }
+        properties.put(DocumentCommonModel.Props.CASE.toString() + WMUIProperty.AFTER_LABEL_BOOLEAN,
+                properties.get(RepoUtil.createTransientProp("caseLabelEditable" + WMUIProperty.AFTER_LABEL_BOOLEAN).toString()));
 
         if (isNew) {
             filter = getFilterService().createFilter(filter, isPrivate);
@@ -120,6 +122,7 @@ public abstract class AbstractSearchFilterBlockBean<T extends FilterService> ext
                 return;
             }
         }
+        setFilterCaseProps();
         propertySheet.getChildren().clear();
         loadAllFilters();
         selectedFilter = filter.getNodeRef();
@@ -198,12 +201,6 @@ public abstract class AbstractSearchFilterBlockBean<T extends FilterService> ext
             filter = getNewFilter();
         } else {
             filter = getFilterService().getFilter(newValue);
-            if (filter.getProperties().containsKey(DocumentCommonModel.Props.CASE.toString())) {
-                // caseLabelEditable is set by DocumentLocationGenerator
-                filter.getProperties().put(RepoUtil.createTransientProp("caseLabelEditable" + WMUIProperty.AFTER_LABEL_BOOLEAN).toString(),
-                        Boolean.valueOf((String) filter.getProperties().get(DocumentCommonModel.Props.CASE.toString() + WMUIProperty.AFTER_LABEL_BOOLEAN)));
-                filter.getProperties().remove(DocumentCommonModel.Props.CASE.toString() + WMUIProperty.AFTER_LABEL_BOOLEAN);
-            }
         }
         originalFilterName = (String) filter.getProperties().get(getFilterNameProperty());
         // may be null if filter saving block is not displayed
@@ -212,6 +209,16 @@ public abstract class AbstractSearchFilterBlockBean<T extends FilterService> ext
         }
         propertySheet.getChildren().clear();
         setPublicFilter(newValue);
+    }
+
+    protected void setFilterCaseProps() {
+        Map<String, Object> filterProps = filter.getProperties();
+        if (filterProps.containsKey(DocumentCommonModel.Props.CASE.toString())) {
+            // caseLabelEditable is set by DocumentLocationGenerator
+            String caseAfterLabelBooleanProp = DocumentCommonModel.Props.CASE.toString() + WMUIProperty.AFTER_LABEL_BOOLEAN;
+            filterProps.put(RepoUtil.createTransientProp("caseLabelEditable" + WMUIProperty.AFTER_LABEL_BOOLEAN).toString(), filterProps.get(caseAfterLabelBooleanProp));
+            filterProps.remove(caseAfterLabelBooleanProp);
+        }
     }
 
     protected boolean isPrivateFilter() {

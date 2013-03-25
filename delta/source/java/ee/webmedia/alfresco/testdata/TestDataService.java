@@ -263,15 +263,15 @@ public class TestDataService implements SaveListener {
 
     private final FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
 
-    private int orgUnitsCount = 478;
-    private int usersCount = 5900;
-    private int contactsCount = 2000;
-    private int registersCount = 200;
-    private int functionsCount = 49;
-    private int seriesCount = 503;
-    private int volumesCount = 5000;
-    private int casesCount = 500;
-    private int documentsCount = 1714500;
+    private int orgUnitsCount = 466;
+    private int usersCount = 5905;
+    private int contactsCount = 2057;
+    private int registersCount = 203;
+    private int functionsCount = 40;
+    private int seriesCount = 370;
+    private int volumesCount = 1436;
+    private int casesCount = 2057;
+    private int documentsCount = 700000; // 1076040 would be max in SpacesStore in 2y2m
     private boolean filesEnabled = true;
     private int documentGeneratorThreads = 1;
 
@@ -1488,15 +1488,14 @@ public class TestDataService implements SaveListener {
         ArrayList<String> fileTitles = new ArrayList<String>();
         ContentWriter allWriter = null;
         int filesCount = 0;
-        if (isFilesEnabled()) {
-            int r = (int) (Math.random() * 12);
-            if (r > 10) {
-                filesCount = (int) ((Math.random() * 30) + 10);
-                if (filesCount > 35) {
-                    filesCount = (int) ((Math.random() * 30) + 36);
-                }
-            } else if (r > 1) {
-                filesCount = r - 1;
+        double r = Math.random(); // 0×0,5+1×0,4+4,5×0,0995+45×0,0005 = 0,87
+        if (isFilesEnabled() && r >= 0.5d) {
+            if (r < 0.9d) {
+                filesCount = 1;
+            } else if (r < 0.9995) {
+                filesCount = ((int) (Math.random() * 9)) + 2; // 2 - 10
+            } else {
+                filesCount = ((int) (Math.random() * 90)) + 11; // 11 - 100
             }
             Map<QName, Serializable> userProps = getUserData(getUserService().getCurrentUserName()).getSecond();
             allWriter = BeanHelper.getContentService().getWriter(docRef, FILE_CONTENTS, false);
@@ -1518,8 +1517,10 @@ public class TestDataService implements SaveListener {
         getDocumentDynamicService().updateDocument(doc, Arrays.asList("TestDataService"), false);
 
         // ASSOCS
-        Random assocsRandom = new Random();
-        int assocsCount = docs.isEmpty() ? 0 : Math.abs(getRandomGaussian2(assocsRandom, 16) - 8);
+        int assocsCount = 0;
+        if (!docs.isEmpty() && Math.random() <= 0.31d) {
+            assocsCount = 1;
+        }
         Set<NodeRef> assocOtherDocRefs = new HashSet<NodeRef>();
         for (int i = 0; i < assocsCount; i++) {
             QName assocQName = DocumentCommonModel.Assocs.DOCUMENT_2_DOCUMENT;
@@ -1544,7 +1545,14 @@ public class TestDataService implements SaveListener {
         // How many documents match recipientFinishedDocuments query (are finished && have recipientName/additionalRecipientName/partyName field, that is non-empty)
         // depends on documentTypes.xml that is used. In case of our sample documentTypes.xml, 34% of generated documents match
         // 34% of 1 700 000 is 578 000; 100 of 578 000 is 0.0002
-        if (Math.random() > 0.0002d) {
+        @SuppressWarnings("unchecked")
+        List<String> recipientName = (List<String>) doc.getProp(DocumentCommonModel.Props.RECIPIENT_NAME);
+        @SuppressWarnings("unchecked")
+        List<String> additionalRecipientName = (List<String>) doc.getProp(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME);
+        if (DocumentStatus.FINISHED.getValueName().equals(doc.getProp(DocumentCommonModel.Props.DOC_STATUS))
+                        && ((recipientName != null && !recipientName.isEmpty()) || (additionalRecipientName != null && !additionalRecipientName.isEmpty()))
+                        && Math.random() > 0.0002d) {
+
             Map<QName, Serializable> sendInfoProps = new HashMap<QName, Serializable>();
             sendInfoProps.put(DocumentCommonModel.Props.SEND_INFO_RESOLUTION, getRandom(docTitles));
             sendInfoProps.put(DocumentCommonModel.Props.SEND_INFO_RECIPIENT, getRandom(contacts));
@@ -1568,7 +1576,7 @@ public class TestDataService implements SaveListener {
 
     private int createWorkflows(NodeRef docRef, boolean inProgress, String docTypeId) {
         int allTaskCount = 0;
-        if (Math.random() < 0.05d) {
+        if (Math.random() < 0.25d) {
             return allTaskCount;
         }
         // 10% registreerimata, neist 95% omab töövoogu, seega kokku 9,5%, aga see on teostamisel
@@ -1614,7 +1622,12 @@ public class TestDataService implements SaveListener {
         // FUTURE: orderAssignmentWorkflow -- could be used, but don't remember exact rules right now (must have category...?)?
         Map<QName, WorkflowType> wfTypesByWf = getWorkflowService().getWorkflowTypes();
 
-        int wfCount = ((int) (Math.random() * 6)) + 1; // 1 - 6
+        int wfCount;
+        if (Math.random() < 0.9d) {
+            wfCount = 1;
+        } else {
+            wfCount = ((int) (Math.random() * 5)) + 2; // 2 - 6
+        }
         for (int i = 0; i < wfCount; i++) {
             QName wfType;
             if (i == 0 && Math.random() < 0.5d) {
@@ -1643,8 +1656,11 @@ public class TestDataService implements SaveListener {
             Date dueDate = cal.getTime();
             List<String> userNamesListCopy = new ArrayList<String>(userNamesList);
             int taskCount;
-            if (Math.random() < 0.8d) {
-                taskCount = ((int) (Math.random() * 10)) + 1; // 1 - 10
+            double r = Math.random();
+            if (r < 0.985d) {
+                taskCount = ((int) (Math.random() * 1.8d)) + 1; // 1 - 2
+            } else if (r < 0.995d) {
+                taskCount = ((int) (Math.random() * 8)) + 3; // 3 - 10
             } else {
                 taskCount = ((int) (Math.random() * 90)) + 11; // 11 - 100
             }

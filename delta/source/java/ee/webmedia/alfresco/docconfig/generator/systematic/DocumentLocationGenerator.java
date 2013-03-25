@@ -652,9 +652,9 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             }
 
             List<NodeRef> selectedStores = (List<NodeRef>) document.getProperties().get(DocumentDynamicSearchDialog.SELECTED_STORES);
-            if (selectedStores == null) { // Check if the search filter is already saved
+            if (selectedStores == null || selectedStores.isEmpty()) { // Check if the search filter is already saved
                 List<String> storeStrings = (List<String>) document.getProperties().get(DocumentSearchModel.Props.STORE);
-                if (storeStrings == null) {
+                if (storeStrings == null || storeStrings.isEmpty()) {
                     return getFunctionsService().getAllFunctions();
                 }
 

@@ -66,6 +66,7 @@ import org.alfresco.web.ui.repo.tag.LoadBundleTag;
 import org.apache.commons.collections.Closure;
 import org.apache.commons.collections.comparators.NullComparator;
 import org.apache.commons.collections.comparators.TransformingComparator;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.shared_impl.renderkit.html.HtmlFormRendererBase;
 import org.apache.myfaces.shared_impl.taglib.UIComponentTagUtils;
@@ -698,13 +699,11 @@ public class ComponentUtil {
         HtmlFormRendererBase.addHiddenCommandParameter(context, form, fieldId);
         StringBuilder buf = new StringBuilder(200);
         buf.append("document.forms['");
-        buf.append(formClientId);
+        buf.append(StringEscapeUtils.escapeJavaScript(formClientId));
         buf.append("']['");
-        buf.append(fieldId);
+        buf.append(StringEscapeUtils.escapeJavaScript(fieldId));
         buf.append("'].value='");
-        String val = StringUtils.replace(value, "\\", "\\\\"); // encode escape character
-        val = StringUtils.replace(val, "'", "\\'"); // encode single quote as we wrap string with that
-        buf.append(val);
+        buf.append(StringEscapeUtils.escapeJavaScript(value));
         buf.append("';");
         return buf.toString();
     }
@@ -877,11 +876,11 @@ public class ComponentUtil {
         String sep = "\", \"";
         StringBuffer sb = new StringBuffer("<script type=\"text/javascript\">");
         sb.append("addSearchSuggest(\"")
-        .append(clientId).append(sep)
-        .append(containerClientId).append(sep)
-        .append(pickerCallback).append(sep)
-        .append(filter).append(sep)
-        .append(submitUri).append("\");");
+                .append(clientId).append(sep)
+                .append(containerClientId).append(sep)
+                .append(pickerCallback).append(sep)
+                .append(filter).append(sep)
+                .append(submitUri).append("\");");
         sb.append("</script>");
         return sb.toString();
     }

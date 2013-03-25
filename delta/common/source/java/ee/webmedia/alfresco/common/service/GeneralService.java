@@ -305,4 +305,9 @@ public interface GeneralService {
 
     NodeRef deleteBootstrapNodeRef(String moduleName, String bootstrapName);
 
+    /**
+     * Set node modified time to current time. Use this on document, so changes would be detected on next ADR sync.
+     */
+    void setModifiedToNow(NodeRef nodeRef);
+
 }

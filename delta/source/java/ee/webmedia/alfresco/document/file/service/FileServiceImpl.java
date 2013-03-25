@@ -84,6 +84,8 @@ public class FileServiceImpl implements FileService {
         }
         active = !active;
         nodeService.setProperty(nodeRef, FileModel.Props.ACTIVE, active);
+        NodeRef documentRef = nodeService.getPrimaryParent(nodeRef).getParentRef();
+        generalService.setModifiedToNow(documentRef);
         return active;
     }
 
@@ -256,7 +258,7 @@ public class FileServiceImpl implements FileService {
         displayName = FilenameUtils.removeExtension(displayName);
         displayName += ".pdf";
         nodeService.setProperty(createdFile.getNodeRef(), FileModel.Props.DISPLAY_NAME, getUniqueFileDisplayName(parent, displayName));
-
+        generalService.setModifiedToNow(parent);
         return createdFile;
     }
 

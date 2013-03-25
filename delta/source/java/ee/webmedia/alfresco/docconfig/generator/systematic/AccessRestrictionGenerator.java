@@ -220,10 +220,17 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
                 final String serAccessRestrictionEndDesc = (String) seriesProps.get(SeriesModel.Props.ACCESS_RESTRICTION_END_DESC.toString());
                 // write them to the document
                 docProps.put(ACCESS_RESTRICTION.toString(), serAccessRestriction);
-                docProps.put(ACCESS_RESTRICTION_REASON.toString(), serAccessRestrictionReason);
-                docProps.put(ACCESS_RESTRICTION_BEGIN_DATE.toString(), serAccessRestrictionBeginDate);
-                docProps.put(ACCESS_RESTRICTION_END_DATE.toString(), serAccessRestrictionEndDate);
-                docProps.put(ACCESS_RESTRICTION_END_DESC.toString(), serAccessRestrictionEndDesc);
+                if (!(AccessRestriction.INTERNAL.equals(serAccessRestriction) || AccessRestriction.OPEN.equals(serAccessRestriction))) {
+                    docProps.put(ACCESS_RESTRICTION_REASON.toString(), serAccessRestrictionReason);
+                    docProps.put(ACCESS_RESTRICTION_BEGIN_DATE.toString(), serAccessRestrictionBeginDate);
+                    docProps.put(ACCESS_RESTRICTION_END_DATE.toString(), serAccessRestrictionEndDate);
+                    docProps.put(ACCESS_RESTRICTION_END_DESC.toString(), serAccessRestrictionEndDesc);
+                } else {
+                    setHiddenFieldsNull(docProps);
+                }
+                calculateAccessRestrictionEndDateOrDesc(serAccessRestrictionReason, docProps, accessRestrictionReasonClassificatorName, accessRestrictionBeginDateProp,
+                        accessRestrictionEndDateProp, accessRestrictionEndDescProp);
+                clearPropertySheet();
             }
         }
 
@@ -265,32 +272,12 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
             ComponentUtil.executeLater(PhaseId.INVOKE_APPLICATION, dialogDataProvider.getPropertySheet(), new Closure() {
                 @Override
                 public void execute(Object input) {
-                    String valueData = BeanHelper.getClassificatorService().getClassificatorValuesValueData(accessRestrictionReasonClassificatorName, accessRestrictionReason);
-                    Integer monthsToAdd = null;
-                    try {
-                        monthsToAdd = Integer.parseInt(valueData);
-                    } catch (NumberFormatException e) {
-                        // no need to add date
-                    }
                     final Map<String, Object> docProps = dialogDataProvider.getNode().getProperties();
-                    if (monthsToAdd != null) {
-                        Date restrictionBeginDate = (Date) docProps.get(accessRestrictionBeginDateProp.toString());
-                        if (restrictionBeginDate != null) {
-                            Date newRestrictionEndDate = DateUtils.addMonths(restrictionBeginDate, monthsToAdd);
-                            Date restrictionEndDate = (Date) docProps.get(accessRestrictionEndDateProp.toString());
-                            if (restrictionEndDate == null || restrictionEndDate.before(newRestrictionEndDate)) {
-                                docProps.put(accessRestrictionEndDateProp.toString(), newRestrictionEndDate);
-                            }
-                        }
-                    } else if (StringUtils.isNotBlank(valueData)) {
-                        String accessRestrictionEndDesc = (String) docProps.get(accessRestrictionEndDescProp.toString());
-                        String newAccessRestrictionEndDesc = StringUtils.isBlank(accessRestrictionEndDesc) ? valueData : accessRestrictionEndDesc + ", "
-                                    + valueData;
-                        docProps.put(accessRestrictionEndDescProp.toString(), newAccessRestrictionEndDesc);
-                    }
+                    calculateAccessRestrictionEndDateOrDesc(accessRestrictionReason, docProps, accessRestrictionReasonClassificatorName, accessRestrictionBeginDateProp,
+                            accessRestrictionEndDateProp, accessRestrictionEndDescProp);
                     String currentAccessRestrictionReason = (String) docProps.get(accessRestrictionReasonProp.toString());
                     String newAccessRestrictionReason = StringUtils.isBlank(currentAccessRestrictionReason) ? accessRestrictionReason : currentAccessRestrictionReason + ", "
-                                + accessRestrictionReason;
+                            + accessRestrictionReason;
                     docProps.put(accessRestrictionReasonProp.toString(), newAccessRestrictionReason);
                     clearPropertySheet();
                     addSelectorValueToContext(accessRestrictionReason);
@@ -317,6 +304,47 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
             String accessRestriction = (String) dialogDataProvider.getDocument().getProp(ACCESS_RESTRICTION);
             return !AccessRestriction.OPEN.equals(accessRestriction) && !AccessRestriction.INTERNAL.equals(accessRestriction);
         }
+    }
+
+    private static void calculateAccessRestrictionEndDateOrDesc(final String accessRestrictionReason, final Map<String, Object> docProps,
+            String accessRestrictionReasonClassificatorName, QName accessRestrictionBeginDateProp, QName accessRestrictionEndDateProp,
+            QName accessRestrictionEndDescProp) {
+        String valueData = BeanHelper.getClassificatorService().getClassificatorValuesValueData(accessRestrictionReasonClassificatorName, accessRestrictionReason);
+        Integer monthsToAdd = null;
+        try {
+            monthsToAdd = Integer.parseInt(valueData);
+        } catch (NumberFormatException e) {
+            // no need to add date
+        }
+        if (monthsToAdd != null) {
+            Date restrictionBeginDate = (Date) docProps.get(accessRestrictionBeginDateProp.toString());
+            if (restrictionBeginDate != null) {
+                Date newRestrictionEndDate = DateUtils.addMonths(restrictionBeginDate, monthsToAdd);
+                Date restrictionEndDate = (Date) docProps.get(accessRestrictionEndDateProp.toString());
+                if (restrictionEndDate == null || restrictionEndDate.before(newRestrictionEndDate)) {
+                    docProps.put(accessRestrictionEndDateProp.toString(), newRestrictionEndDate);
+                }
+            }
+        } else if (StringUtils.isNotBlank(valueData)) {
+            String accessRestrictionEndDesc = (String) docProps.get(accessRestrictionEndDescProp.toString());
+            String newAccessRestrictionEndDesc = StringUtils.isBlank(accessRestrictionEndDesc) ? valueData : accessRestrictionEndDesc + ", "
+                    + valueData;
+            docProps.put(accessRestrictionEndDescProp.toString(), newAccessRestrictionEndDesc);
+        }
+    }
+
+    public static void calculateAccessRestrictionValues(FieldGroup accessRestrictionGroup, Map<String, Object> props) {
+        Field accessRestrictionReasonField = accessRestrictionGroup.getFieldsByOriginalId().get(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON.getLocalName());
+        Field accessRestrictionBeginDateField = accessRestrictionGroup.getFieldsByOriginalId().get(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE.getLocalName());
+        Field accessRestrictionEndDateField = accessRestrictionGroup.getFieldsByOriginalId().get(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE.getLocalName());
+        Field accessRestrictionEndDescField = accessRestrictionGroup.getFieldsByOriginalId().get(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC.getLocalName());
+        if (accessRestrictionReasonField == null || accessRestrictionBeginDateField == null || accessRestrictionEndDateField == null || accessRestrictionEndDescField == null) {
+            return;
+        }
+        String accessRestrictionReasonClassificatorName = accessRestrictionReasonField.getClassificator();
+        String accessRestrictionReason = (String) props.get(accessRestrictionReasonField.getQName().toString());
+        calculateAccessRestrictionEndDateOrDesc(accessRestrictionReason, props, accessRestrictionReasonClassificatorName,
+                accessRestrictionBeginDateField.getQName(), accessRestrictionEndDateField.getQName(), accessRestrictionEndDescField.getQName());
     }
 
     // ===============================================================================================================================
@@ -394,13 +422,8 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
             }
         }
 
-        String oldAccessRestriction = (String) oldProps.get(ACCESS_RESTRICTION);
-        if (oldAccessRestriction != null && !accessRestriction.equals(oldAccessRestriction)
-                    && (AccessRestriction.INTERNAL.equals(accessRestriction) || AccessRestriction.OPEN.equals(accessRestriction))) {
-            newProps.put(ACCESS_RESTRICTION_REASON.toString(), null);
-            newProps.put(ACCESS_RESTRICTION_BEGIN_DATE.toString(), null);
-            newProps.put(ACCESS_RESTRICTION_END_DATE.toString(), null);
-            newProps.put(ACCESS_RESTRICTION_END_DESC.toString(), null);
+        if (AccessRestriction.INTERNAL.equals(accessRestriction) || AccessRestriction.OPEN.equals(accessRestriction)) {
+            setHiddenFieldsNull(newProps);
         }
 
         if (!document.isDraftOrImapOrDvk()) {
@@ -408,6 +431,13 @@ public class AccessRestrictionGenerator extends BaseSystematicFieldGenerator {
                 document.setAccessRestrictionPropsChanged(true);
             }
         }
+    }
+
+    public static void setHiddenFieldsNull(Map<String, Object> newProps) {
+        newProps.put(ACCESS_RESTRICTION_REASON.toString(), null);
+        newProps.put(ACCESS_RESTRICTION_BEGIN_DATE.toString(), null);
+        newProps.put(ACCESS_RESTRICTION_END_DATE.toString(), null);
+        newProps.put(ACCESS_RESTRICTION_END_DESC.toString(), null);
     }
 
     private List<String> getChangedAccessRestrictionFieldIds(DocumentDynamic document, Map<QName, Serializable> oldProps) {

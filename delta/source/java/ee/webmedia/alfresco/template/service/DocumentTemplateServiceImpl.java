@@ -306,6 +306,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
         // Set document content's MIME type and encoding from template
         replaceFormulas(documentNodeRef, nodeRef, existingGeneratedFile, templateFilename);
+        generalService.setModifiedToNow(documentNodeRef);
         return displayName;
     }
 

@@ -60,6 +60,7 @@ import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docadmin.service.MetadataItem;
 import ee.webmedia.alfresco.docadmin.service.SeparatorLine;
+import ee.webmedia.alfresco.docconfig.bootstrap.SystematicFieldGroupNames;
 import ee.webmedia.alfresco.docconfig.generator.FieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.FieldGroupGenerator;
 import ee.webmedia.alfresco.docconfig.generator.FieldGroupGeneratorResults;
@@ -67,6 +68,7 @@ import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
 import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.generator.SaveListener;
 import ee.webmedia.alfresco.docconfig.generator.fieldtype.DateGenerator;
+import ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGenerator;
 import ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean;
@@ -768,6 +770,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         if (requiredHierarchy == null) {
             requiredHierarchy = new QName[] {};
         }
+        FieldGroup accessRestrictionGroup = null;
         outer: for (Pair<DynamicPropertyDefinition, Field> fieldAndPropDef : propertyDefinitions.values()) {
             DynamicPropertyDefinition propDef = fieldAndPropDef.getFirst();
             Field field = fieldAndPropDef.getSecond();
@@ -807,6 +810,9 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
                             field = relatedFields.getFirst();
                         }
                     }
+                    if (SystematicFieldGroupNames.ACCESS_RESTRICTION.equals(group.getName())) {
+                        accessRestrictionGroup = group;
+                    }
                 }
             }
 
@@ -814,6 +820,11 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
             for (Node childNode : childNodes) {
                 setDefaultPropertyValue(childNode, propDef, forceOverwrite, reallySetDefaultValues, field, propertyDefinitions);
             }
+        }
+        if (accessRestrictionGroup != null && reallySetDefaultValues) {
+            // cannot calculate this in setSpecialDependentValues (called at the end of setDefaultPropertyValue),
+            // because multiple other default values must be set before the calculation
+            AccessRestrictionGenerator.calculateAccessRestrictionValues(accessRestrictionGroup, node.getProperties());
         }
     }
 
