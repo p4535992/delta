@@ -42,11 +42,23 @@ public class SeriesDetailsDialog extends BaseDialogBean {
         if (performPatternChecks(context)) {
             return null;
         }
+        if (!validate()) {
+            return null;
+        }
         BeanHelper.getSeriesService().saveOrUpdate(series);
         resetFields();
         BeanHelper.getMenuService().menuUpdated(); // We need to refresh the left-hand sub-menu
         MessageUtil.addInfoMessage("save_success");
         return outcome;
+    }
+
+    private boolean validate() {
+        Integer retentionPeriod = series.getRetentionPeriod();
+        if (retentionPeriod != null && (retentionPeriod < 0 || retentionPeriod > 999)) {
+            MessageUtil.addErrorMessage("series_retentionPeriod_error_invalid_value");
+            return false;
+        }
+        return true;
     }
 
     private boolean performPatternChecks(FacesContext context) {

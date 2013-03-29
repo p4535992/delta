@@ -102,11 +102,14 @@ public abstract class AbstractSearchFilterBlockBean<T extends FilterService> ext
         }
         Map<String, Object> properties = filter.getProperties();
         properties.put(getFilterNameProperty().toString(), newFilterName);
-        Case caseByTitle = BeanHelper.getCaseService().getCaseByTitle((String) properties.get(RepoUtil.createTransientProp("caseLabelEditable").toString()),
-                (NodeRef) properties.get(DocumentCommonModel.Props.VOLUME.toString()), null);
+        Case caseByTitle = null;
+        NodeRef volumeRef = (NodeRef) properties.get(DocumentCommonModel.Props.VOLUME.toString());
+        if (volumeRef != null) {
+            caseByTitle = BeanHelper.getCaseService().getCaseByTitle((String) properties.get(RepoUtil.createTransientProp("caseLabelEditable").toString()), volumeRef, null);
+        }
         if (caseByTitle != null) {
             properties.put(DocumentCommonModel.Props.CASE.toString(), caseByTitle.getNode().getNodeRef());
-        } else {
+        } else if (properties.containsKey(DocumentCommonModel.Props.CASE.toString())) {
             properties.put(DocumentCommonModel.Props.CASE.toString(), null);
         }
         properties.put(DocumentCommonModel.Props.CASE.toString() + WMUIProperty.AFTER_LABEL_BOOLEAN,

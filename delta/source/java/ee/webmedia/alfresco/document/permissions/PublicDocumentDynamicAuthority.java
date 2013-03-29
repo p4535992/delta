@@ -25,11 +25,15 @@ public class PublicDocumentDynamicAuthority extends BaseDynamicAuthority {
             return false;
         }
         String accessRestriction = (String) nodeService.getProperty(docRef, DocumentCommonModel.Props.ACCESS_RESTRICTION);
-        if (StringUtils.equals(accessRestriction, AccessRestriction.OPEN.getValueName())) {
+        if (isPublicAccessRestriction(accessRestriction)) {
             log.debug("Document " + docRef + " is public, granting authority " + getAuthority());
             return true;
         }
         return false;
+    }
+
+    public static boolean isPublicAccessRestriction(String accessRestriction) {
+        return StringUtils.equals(accessRestriction, AccessRestriction.OPEN.getValueName());
     }
 
     @Override

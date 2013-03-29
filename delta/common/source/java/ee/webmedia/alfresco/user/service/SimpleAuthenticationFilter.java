@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.security.authentication.AuthenticationException;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -54,7 +55,7 @@ public class SimpleAuthenticationFilter extends AuthenticationFilter {
             AuthenticationStatus status;
             try {
                 status = AuthenticationHelper.authenticate(context, httpReq, httpRes, false);
-            } catch (UserNotFoundException e) {
+            } catch (AuthenticationException e) {
                 if (log.isWarnEnabled()) {
                     log.warn("Authentication failed: ", e);
                 }

@@ -6,6 +6,7 @@ import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 /**
@@ -26,6 +27,7 @@ public class EndDocumentEvaluator extends BaseActionEvaluator {
             return false;
         }
         boolean isWorking = DocumentStatus.WORKING.getValueName().equals(node.getProperties().get(DocumentCommonModel.Props.DOC_STATUS.toString()));
-        return isWorking && ReopenDocumentEvaluator.hasUserRights(node);
+        return isWorking && new ViewStateActionEvaluator().evaluate(node)
+                && (ReopenDocumentEvaluator.hasUserRights(node) || BeanHelper.getWorkflowService().isOwnerOfInProgressActiveResponsibleAssignmentTask(node.getNodeRef()));
     }
 }

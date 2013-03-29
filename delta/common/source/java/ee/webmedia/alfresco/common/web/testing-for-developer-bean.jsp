@@ -145,27 +145,6 @@
       actionListener="#{FunctionsListDialog.updateDocCounters}" />
 <h:commandButton id="docList_updateArchivedDocCounters" value="Uuenda arhiveeritud dokumentide loendureid" type="submit" 
       actionListener="#{FunctionsListDialog.updateArchivedDocCounters}" />      
-<f:verbatim><hr/></f:verbatim>
-<h:outputText value="Dokumentidele õiguste lisamine lähtuvalt tööülesannetest"/>
-<f:verbatim><br/></f:verbatim>
-<h:outputText value="Kasutajate isikukoodid (tühikute või reavahetustega eraldatud): "/>
-<h:inputTextarea id="addTaskPrivilegesToDocumentUpdaterValidUsers" value="#{addTaskPrivilegesToDocumentUpdater.validUsers}" rows="5" cols="30" styleClass="expand19-200" />
-<f:verbatim><br/></f:verbatim>
-<h:outputText value="Mitu tööülesannet ühes transaktsioonis töödelda: "/>
-<h:inputText id="addTaskPrivilegesToDocumentUpdaterBatchSize" value="#{addTaskPrivilegesToDocumentUpdater.batchSize}" converter="javax.faces.Integer" size="4" />
-<f:verbatim><br/></f:verbatim>
-<h:commandButton id="startAddTaskPrivilegesToDocumentUpdater" value="Käivita õiguste lisamine" type="submit"
-   actionListener="#{addTaskPrivilegesToDocumentUpdater.executeUpdaterInBackground}"
-   rendered="#{addTaskPrivilegesToDocumentUpdater.updaterRunning == false}" />
-<h:commandButton id="stopAddTaskPrivilegesToDocumentUpdater" value="Peata õiguste lisamine" type="submit"
-   actionListener="#{addTaskPrivilegesToDocumentUpdater.stopUpdater}"
-   rendered="#{addTaskPrivilegesToDocumentUpdater.updaterRunning == true}"
-   disabled="#{addTaskPrivilegesToDocumentUpdater.updaterStopping == true}" />
-<f:verbatim><br/></f:verbatim>
-<h:outputText value="Paus pärast iga tööülesande töötlemist (ms): "/>
-<h:inputText id="addTaskPrivilegesToDocumentUpdaterSleepTime" value="#{addTaskPrivilegesToDocumentUpdater.sleepTime}" converter="javax.faces.Integer" size="4" />
-<h:commandButton id="updateAddTaskPrivilegesToDocumentUpdaterSleepTime" value="Uuenda" type="submit"
-      actionListener="#{addTaskPrivilegesToDocumentUpdater.updateSleepTime}" />
 
 <f:verbatim><hr/></f:verbatim>
 
@@ -236,6 +215,7 @@
 <h:commandButton id="updateOrganisationStructureBasedGroups" value="updateOrganisationStructureBasedGroups" type="submit"
    actionListener="#{OrganizationStructureService.updateOrganisationStructureBasedGroups}" rendered="#{ApplicationService.test}" />
    <f:verbatim><br/></f:verbatim>
+
 <h:outputText id="reportGenerationTitle" value="Aruannete genereerimine: " />
 <f:verbatim><br/></f:verbatim>
 <h:outputText id="reportGenerationStatus" value=" Selles klastri õlas aruannete genereerimine ei jookse." rendered="#{!ReportListDialog.reportGenerationEnabled}" />
@@ -243,6 +223,15 @@
    actionListener="#{ReportListDialog.pauseReportGeneration}" rendered="#{ReportListDialog.showPauseReportGeneration}" />
 <h:commandButton id="continueReportGeneration" value="Jätka aruannete genereerimist" type="submit"
    actionListener="#{ReportListDialog.continueReportGeneration}" rendered="#{ReportListDialog.showContinueReportGeneration}" />
+<f:verbatim><br/></f:verbatim>
+
+<h:outputText id="privilegeActionsTitle" value="Õiguste lisamine ja eemaldamine: " />
+<f:verbatim><br/></f:verbatim>
+<h:outputText id="privilegeActionsStatus" value=" Selles klastri õlas õiguste lisamine ja eemaldamine ei jookse." rendered="#{!ManageInheritablePrivilegesDialog.privilegeActionsEnabled}" />
+<h:commandButton id="pausePrivilegeActions" value="Peata õiguste lisamine ja eemaldamine" type="submit"
+   actionListener="#{ManageInheritablePrivilegesDialog.pausePrivilegeActions}" rendered="#{ManageInheritablePrivilegesDialog.showPausePrivilegeActions}" />
+<h:commandButton id="continuePrivilegeActions" value="Jätka õiguste lisamist ja eemaldamist" type="submit"
+   actionListener="#{ManageInheritablePrivilegesDialog.continuePrivilegeActions}" rendered="#{ManageInheritablePrivilegesDialog.showContinuePrivilegeActions}" />
 <f:verbatim><br/></f:verbatim>
 
 <f:verbatim><hr/></f:verbatim>

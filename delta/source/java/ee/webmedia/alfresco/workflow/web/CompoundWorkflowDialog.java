@@ -279,10 +279,34 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog imp
                 addCostManagerTasks(costManagerWorkflow);
             }
             updateFullAccess();
+            setSignatureTaskOwnerProps();
             isUnsavedWorkFlow = true;
         } catch (InvalidNodeRefException e) {
             log.warn("Failed to create a new compound workflow instance because someone has probably deleted the compound workflow definition.");
         }
+    }
+
+    private void setSignatureTaskOwnerProps() {
+        Map<String, Object> signatureTaskOwnerProps = loadSignatureTaskOwnerProps(compoundWorkflow.getParent());
+        if (signatureTaskOwnerProps == null) {
+            return;
+        }
+        for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+            if (workflow.isType(WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW) && !workflow.getTasks().isEmpty()) {
+                workflow.getTasks().get(0).getNode().getProperties().putAll(signatureTaskOwnerProps);
+            }
+        }
+    }
+
+    private Map<String, Object> loadSignatureTaskOwnerProps(NodeRef docRef) {
+        Map<String, Object> signatureTaskOwnerProps = null;
+        for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+            if (workflow.isType(WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW)) {
+                signatureTaskOwnerProps = TaskListGenerator.loadSignatureTaskOwnerProps(docRef);
+                break;
+            }
+        }
+        return signatureTaskOwnerProps;
     }
 
     private Workflow getCostManagerForkflow() {

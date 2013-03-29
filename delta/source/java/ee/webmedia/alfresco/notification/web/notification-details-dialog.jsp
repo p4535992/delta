@@ -14,7 +14,7 @@
 </f:verbatim>
 
 <a:panel id="notification-list-panel" label="#{msg.notification_important_notification}">
-   <r:propertySheetGrid value="#{NotificationDetailsDialog.notification}" externalConfig="true" labelStyleClass="propertiesLabel" />
+   <r:propertySheetGrid id="notificationPropSheet" value="#{NotificationDetailsDialog.notification}" externalConfig="true" labelStyleClass="propertiesLabel" />
 </a:panel>
 
 <f:verbatim>
@@ -36,6 +36,7 @@
          width : "600",
          height : "315",
          content_css : "../../../css/main.css,../../../css/styles.css",
+         auto_focus : "dialog:dialog-body:notificationPropSheet:prop_ntfx003a_message:ntfx003a_message",
          setup : function(editor) {
             editor.onKeyUp.add(function(editor) {
                if (editor.isDirty()) {
@@ -43,14 +44,7 @@
                   processButtonState();
                }
             });
-         }     
+         }
       });
-      var intervalId = setInterval(function(){
-	     var areaToPutFocusOn = $jQ('iframe').contents().find('html');
-         areaToPutFocusOn.focus();
-         areaToPutFocusOn.focus(function(){
-      	   clearInterval(intervalId)
-      	});
-      },2);
    </script>
 </f:verbatim>

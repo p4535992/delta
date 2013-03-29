@@ -418,7 +418,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 functions.add(new SelectItem("", ""));
                 boolean functionFound = false;
                 for (Function function : allFunctions) {
-                    List<Series> openSeries = getAllSeries(function.getNodeRef(), isSearchFilterOrDocTypeNull, idList);
+                    List<Series> openSeries = getAllSeries(function.getNodeRef(), isSearchFilter, idList);
                     if (openSeries.size() == 0) {
                         continue;
                     }
@@ -449,7 +449,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
                 seriesRef = null;
             } else {
                 List<Series> allSeries;
-                allSeries = getAllSeries(functionRef, isSearchFilterOrDocTypeNull, idList);
+                allSeries = getAllSeries(functionRef, isSearchFilter, idList);
                 series = new ArrayList<SelectItem>(allSeries.size());
                 series.add(new SelectItem("", ""));
                 boolean serieFound = false;
@@ -671,9 +671,9 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator {
             return allFunctions;
         }
 
-        private List<Series> getAllSeries(NodeRef functionRef, boolean isSearchFilterOrDocTypeNull, Set<String> idList) {
+        private List<Series> getAllSeries(NodeRef functionRef, boolean isSearchFilter, Set<String> idList) {
             List<Series> allSeries;
-            if (isSearchFilterOrDocTypeNull) {
+            if (isSearchFilter || idList == null) {
                 allSeries = getSeriesService().getAllSeriesByFunction(functionRef);
             } else if (getGeneralService().getStore().equals(functionRef.getStoreRef())) {
                 allSeries = getSeriesService().getAllSeriesByFunction(functionRef, DocListUnitStatus.OPEN, idList);

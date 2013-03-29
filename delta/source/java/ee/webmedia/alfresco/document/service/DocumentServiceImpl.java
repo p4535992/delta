@@ -1910,6 +1910,10 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
             boolean creatorDhs = false;
             if (getDocumentAdminService().getDocumentTypeProperty(documentTypeId, DocumentAdminModel.Props.FINISH_DOC_BY_REGISTRATION, Boolean.class)) {
                 props.put(DOC_STATUS.toString(), DocumentStatus.FINISHED.getValueName());
+                String docStatus = (String) nodeService.getProperty(docRef, DOC_STATUS);
+                if (!DocumentStatus.FINISHED.getValueName().equals(docStatus)) {
+                    addDocProceedingFinishedLog(docRef);
+                }
                 propertyChangesMonitorHelper.addIgnoredProps(props, DOC_STATUS);
             } else {
                 if (EventsLoggingHelper.isLoggingDisabled(docNode, TEMP_LOGGING_DISABLED_REGISTERED_BY_USER)) {
@@ -2048,9 +2052,13 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
         String docStatus = (String) nodeService.getProperty(originalDocRef, DOC_STATUS);
         if (!DocumentStatus.FINISHED.getValueName().equals(docStatus)) {
             setPropertyAsSystemUser(DOC_STATUS, DocumentStatus.FINISHED.getValueName(), originalDocRef);
-            documentLogService.addDocumentLog(originalDocRef, I18NUtil.getMessage("document_log_status_proceedingFinish") //
-                    , I18NUtil.getMessage("document_log_creator_dhs"));
+            addDocProceedingFinishedLog(originalDocRef);
         }
+    }
+
+    private void addDocProceedingFinishedLog(final NodeRef originalDocRef) {
+        documentLogService.addDocumentLog(originalDocRef, I18NUtil.getMessage("document_log_status_proceedingFinish") //
+                , I18NUtil.getMessage("document_log_creator_dhs"));
     }
 
     @Override
@@ -2233,6 +2241,13 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware, I
                 final QName key = entry.getKey();
                 Serializable newValue = entry.getValue();
                 Serializable oldValue = oldPropsClone.remove(key);
+                // Ignore differences between null values as empty strings
+                if (newValue instanceof String && StringUtils.isBlank((String) newValue)) {
+                    newValue = null;
+                }
+                if (oldValue instanceof String && StringUtils.isBlank((String) oldValue)) {
+                    oldValue = null;
+                }
                 if (!EqualsHelper.nullSafeEquals(oldValue, newValue) && !key.getNamespaceURI().equals(NamespaceService.CONTENT_MODEL_1_0_URI)
                         && !ignoredProps.contains(key) && !TEMP_PROPERTY_CHANGES_IGNORED_PROPS.equals(key)) {
                     if (extraIgnoredProps == null) {

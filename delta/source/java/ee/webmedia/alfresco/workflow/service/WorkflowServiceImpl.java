@@ -2134,6 +2134,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         if (Boolean.TRUE.equals(queue.getParameter(WorkflowQueueParameter.WORKFLOW_CANCELLED_MANUALLY))) {
             extras.add(WorkflowQueueParameter.WORKFLOW_CANCELLED_MANUALLY);
         }
+        extras.add(originalStatus);
 
         queueEvent(queue, WorkflowEventType.STATUS_CHANGED, object, extras.toArray());
         addExternalReviewWorkflowData(queue, object, originalStatus);
@@ -2503,8 +2504,14 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     @SuppressWarnings("unchecked")
     private void addDueDateHistoryRecord(Task initiatingTask, Task task) {
         String comment = task.getComment();
-        workflowDbService.createTaskDueDateHistoryEntries(initiatingTask.getNodeRef(),
-                Arrays.asList(new Pair<String, Date>(StringUtils.isNotBlank(comment) ? comment : task.getResolution(), initiatingTask.getDueDate())));
+        Date previousDueDate = initiatingTask.getDueDate();
+        String changeReason = StringUtils.isNotBlank(comment) ? comment : task.getResolution();
+        workflowDbService.createTaskDueDateHistoryEntries(initiatingTask.getNodeRef(), Arrays.asList(new Pair<String, Date>(changeReason, previousDueDate)));
+        NodeRef initatingTaskRef = initiatingTask.getNodeRef();
+        String previousDueDateStr = previousDueDate != null ? Task.dateFormat.format(previousDueDate) : null;
+        String confirmedDueDateStr = task.getConfirmedDueDate() != null ? Task.dateFormat.format(task.getConfirmedDueDate()) : null;
+        logService.addLogEntry(LogEntry.create(LogObject.TASK, userService, initatingTaskRef, "applog_task_deadline",
+                initiatingTask.getOwnerName(), MessageUtil.getTypeName(task.getType()), previousDueDateStr, confirmedDueDateStr, changeReason));
     }
 
     // ---

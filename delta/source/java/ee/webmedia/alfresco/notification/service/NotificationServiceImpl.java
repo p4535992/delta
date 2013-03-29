@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -814,12 +815,15 @@ public class NotificationServiceImpl implements NotificationService {
 
             if (!reviewTasks.isEmpty()) {
                 Notification notification = setupNotification(NotificationModel.NotificationType.REVIEW_DOCUMENT_SIGNED);
+                Set<String> usersToNotify = new HashSet<String>();
                 for (Task reviewTask : reviewTasks) {
                     // Add only distinct e-mails
-                    if (notification.getToEmails().contains(reviewTask.getOwnerEmail())) {
+                    String ownerId = reviewTask.getOwnerId();
+                    if (usersToNotify.contains(ownerId)) {
                         continue;
                     }
                     notification.addRecipient(reviewTask.getOwnerName(), reviewTask.getOwnerEmail());
+                    usersToNotify.add(ownerId);
                 }
                 notifications.add(notification);
             }

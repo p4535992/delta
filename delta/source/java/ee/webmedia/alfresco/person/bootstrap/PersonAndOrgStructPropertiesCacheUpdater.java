@@ -57,6 +57,9 @@ public class PersonAndOrgStructPropertiesCacheUpdater extends AbstractModuleComp
 
     private void updatePersonCache() {
         Set<String> usernames = userService.getAllUsersUsernames();
+        if (usernames.isEmpty()) {
+            return;
+        }
         int userCount = usernames.size();
         LOG.info("Updating person properties cache for " + userCount + " persons");
         int count = 0;
@@ -79,6 +82,9 @@ public class PersonAndOrgStructPropertiesCacheUpdater extends AbstractModuleComp
 
     private void updateOrgStructCache() {
         List<NodeRef> orgStructRefs = organizationStructureService.getAllOrganizationStructureRefs();
+        if (orgStructRefs.isEmpty()) {
+            return;
+        }
         int orgStructCount = orgStructRefs.size();
         LOG.info("Updating organization structure properties cache for " + orgStructCount + " organization structures");
         int count = 0;

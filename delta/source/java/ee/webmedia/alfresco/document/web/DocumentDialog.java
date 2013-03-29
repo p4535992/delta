@@ -713,7 +713,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
                         || metadataBlockBean.getDocumentType().getId().equals(DocumentSubtypeModel.Types.INCOMING_LETTER)
                         || metadataBlockBean.getDocumentType().getId().equals(DocumentSubtypeModel.Types.INCOMING_LETTER_MV))
                 && registrationEval.evaluateAdditionalButton(metadataBlockBean.getDocument())) {
-            if (searchBlockBean.isFoundSimilar()) {
+            if (searchBlockBean.isShowSimilarDocumentsBlock()) {
                 buttons.add(new DialogButtonConfig("documentRegisterButton", null, "document_registerDoc_continue",
                         "#{DocumentDialog.saveAndRegisterContinue}", "false", null));
             } else {
@@ -785,7 +785,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         if ((searchBlockBean.isExpanded() && !metadataBlockBean.isInEditMode())) {
             return true;
         }
-        return metadataBlockBean.isInEditMode() && searchBlockBean.isShow() && !searchBlockBean.isFoundSimilar()
+        return metadataBlockBean.isInEditMode() && searchBlockBean.isShow() && !searchBlockBean.isShowSimilarDocumentsBlock()
                 && ((isFromDVK() || isFromImap() || isIncomingInvoice()) && !isNotEditable());
     }
 
@@ -805,7 +805,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     }
 
     public boolean isShowFoundSimilar() {
-        return metadataBlockBean.isInEditMode() && searchBlockBean.isFoundSimilar();
+        return metadataBlockBean.isInEditMode() && searchBlockBean.isShowSimilarDocumentsBlock();
     }
 
     public boolean isShowTypeBlock() {

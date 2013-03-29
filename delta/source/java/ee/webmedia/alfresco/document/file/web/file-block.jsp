@@ -287,9 +287,9 @@
             <f:param name="id" value="#{r.id}" />
             <f:param name="ref" value="#{r.nodeRef}" />
          </a:actionLink>
-         <wm:docPermissionEvaluator id="col27-act5-eval-allow" value="#{r.node}" allow="WriteContent">
+         <wm:docPermissionEvaluator id="col27-act5-eval-allow" value="#{r.node}" allow="viewDocumentFiles">
             <a:actionLink id="col27-act5" value="#{r.name}" actionListener="#{FileBlockBean.viewPdf}" showLink="false"
-               image="/images/filetypes/file-small-gray.png" tooltip="#{msg.file_view_pdf}" rendered="#{r.pdf}">
+               image="/images/icons/file-small-gray.png" tooltip="#{msg.file_view_pdf}" rendered="#{r.pdf}">
                <f:param name="nodeRef" value="#{r.nodeRef}" />
             </a:actionLink>
          </wm:docPermissionEvaluator>         

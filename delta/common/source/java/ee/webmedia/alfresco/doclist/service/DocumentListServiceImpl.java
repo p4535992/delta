@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.doclist.service;
 
+import static ee.webmedia.alfresco.utils.MessageUtil.getMessage;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
@@ -68,6 +70,8 @@ public class DocumentListServiceImpl implements DocumentListService {
         try {
             // the Unicode value for UTF-8 BOM, is needed so that Excel would recognize the file in correct encoding
             outputStream.write("\ufeff".getBytes("UTF-8"));
+            csvWriter.writeRecord(new String[] { getMessage("doclist_type"), getMessage("doclist_mark"), getMessage("doclist_title"), getMessage("doclist_doc_count"),
+                    getMessage("doclist_retention_period"), getMessage("doclist_access_restriction"), getMessage("doclist_status") });
             printFunctions(csvWriter, functionsService.getFunctions(rootRef));
         } catch (IOException e) {
             final String msg = "Outputstream exception while exporting consolidated docList row to CSV-stream";
@@ -90,9 +94,9 @@ public class DocumentListServiceImpl implements DocumentListService {
         for (Series serie : series) {
             Integer retensionPeriod = serie.getRetentionPeriod();
             printLine(csvWriter, serie.getType(), serie.getSeriesIdentifier(), serie.getTitle(), serie.getContainingDocsCount(),
-                      (retensionPeriod == null ? "" : retensionPeriod.toString()),
-                      nodeService.getProperty(serie.getNode().getNodeRef(), SeriesModel.Props.ACCESS_RESTRICTION).toString(),
-                      serie.getStatus());
+                    (retensionPeriod == null ? "" : retensionPeriod.toString()),
+                    nodeService.getProperty(serie.getNode().getNodeRef(), SeriesModel.Props.ACCESS_RESTRICTION).toString(),
+                    serie.getStatus());
             printVolumes(csvWriter, serie.getNode().getNodeRef());
         }
     }
@@ -111,7 +115,7 @@ public class DocumentListServiceImpl implements DocumentListService {
         for (Volume volume : volumes) {
             Date dispositionDate = volume.getDispositionDate();
             printLine(csvWriter, label, volume.getVolumeMark(), volume.getTitle(),
-                      volume.getContainingDocsCount(), (dispositionDate == null ? "" : fastDateFormat.format(dispositionDate)), "", volume.getStatus());
+                    volume.getContainingDocsCount(), (dispositionDate == null ? "" : fastDateFormat.format(dispositionDate)), "", volume.getStatus());
             if (volume.isContainsCases()) {
                 printCases(csvWriter, volume.getNode().getNodeRef());
             } else {
@@ -186,10 +190,15 @@ public class DocumentListServiceImpl implements DocumentListService {
         for (Function function : functionsService.getAllFunctions()) {
             for (Series series : seriesService.getAllSeriesByFunction(function.getNodeRef())) {
                 for (Volume volume : volumeService.getAllOpenExpiredVolumesBySeries(series.getNode().getNodeRef())) {
-                    volumeService.closeVolume(volume);
-                    counter++;
-                    log.info("Closed volume: [" + function.getMark() + "]" + function.getTitle() + "/[" + series.getSeriesIdentifier() + "]"
-                            + series.getTitle() + "/[" + volume.getVolumeMark() + "]" + volume.getTitle() + ", validTo=" + volume.getValidTo());
+                    Pair<String, Object[]> error = volumeService.closeVolume(volume);
+                    String volumeInfo = "[" + function.getMark() + "]" + function.getTitle() + "/[" + series.getSeriesIdentifier() + "]"
+                            + series.getTitle() + "/[" + volume.getVolumeMark() + "]" + volume.getTitle() + ", validTo=" + volume.getValidTo();
+                    if (error == null) {
+                        counter++;
+                        log.info("Closed volume:" + volumeInfo);
+                    } else {
+                        log.error("Close volume failed:" + MessageUtil.getMessage(error.getFirst(), error.getSecond()) + "\nvolume info: " + volumeInfo);
+                    }
                 }
             }
         }

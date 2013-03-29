@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.user.service;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentSearchService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getUserService;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -70,7 +71,7 @@ public class UserServiceImpl implements UserService {
     private NamespaceService namespaceService;
     private LogService logService;
     private boolean groupsEditingAllowed;
-    private List<String> systematicGroups;
+    private Set<String> systematicGroups;
 
     @Override
     public NodeRef retrieveUsersPreferenceNodeRef(String userName) {
@@ -226,6 +227,34 @@ public class UserServiceImpl implements UserService {
     @Override
     public String getAdministratorsGroup() {
         return authorityService.getName(AuthorityType.GROUP, "ALFRESCO_ADMINISTRATORS");
+    }
+
+    @Override
+    public void addUserToGroup(String group, String username) {
+        addUserToGroup(group, getUser(username));
+    }
+
+    @Override
+    public void addUserToGroup(String group, Node user) {
+        authorityService.addAuthority(group, (String) user.getProperties().get(ContentModel.PROP_USERNAME));
+        logUserGroupAction(group, user, "applog_group_user_add");
+    }
+
+    private void logUserGroupAction(String group, Node user, String logMessageKey) {
+        String userFullInfo = UserUtil.getUserFullNameAndId(RepoUtil.toQNameProperties(user.getProperties()));
+        String groupName = authorityService.getAuthorityDisplayName(group);
+        logService.addLogEntry(LogEntry.create(LogObject.USER_GROUP, getUserService(), user.getNodeRef(), logMessageKey, groupName, userFullInfo));
+    }
+
+    @Override
+    public void removeUserFromGroup(String group, String username) {
+        removeUserFromGroup(group, getUser(username));
+    }
+
+    @Override
+    public void removeUserFromGroup(String group, Node user) {
+        authorityService.removeAuthority(group, (String) user.getProperties().get(ContentModel.PROP_USERNAME));
+        logUserGroupAction(group, user, "applog_group_user_rem");
     }
 
     @Override
@@ -454,16 +483,20 @@ public class UserServiceImpl implements UserService {
         return isGroupsEditingAllowed() && !getSystematicGroups().contains(group);
     }
 
-    private List<String> getSystematicGroups() {
+    @Override
+    public Set<String> getSystematicGroups() {
         if (systematicGroups == null) {
-            systematicGroups = Arrays.asList(getAdministratorsGroup(), getDocumentManagersGroup(), getAccountantsGroup()
-                    , getSupervisionGroup(), getAccountantsGroup(), getArchivistsGroup());
+            systematicGroups = new HashSet<String>(Arrays.asList(getAdministratorsGroup(), getDocumentManagersGroup(), getAccountantsGroup(), getSupervisionGroup(),
+                    getArchivistsGroup()));
         }
         return systematicGroups;
     }
 
     @Override
     public boolean markUserLeaving(String leavingUserId, String replacementUserId, boolean isLeaving) {
+        if (StringUtils.isBlank(leavingUserId) || StringUtils.isBlank(replacementUserId)) {
+            return false;
+        }
         if (!personService.personExists(leavingUserId) || !personService.personExists(replacementUserId)) {
             return false;
         }
@@ -477,16 +510,14 @@ public class UserServiceImpl implements UserService {
             properties.put(UserModel.Props.LEAVING_DATE_TIME, new Date());
             properties.put(UserModel.Props.LIABILITY_GIVEN_TO_PERSON_ID, replacementUserId);
             nodeService.addAspect(leavingUser.getNodeRef(), UserModel.Aspects.LEAVING, properties);
-
             logService.addLogEntry(LogEntry.create(LogObject.USER, this, leavingUser.getNodeRef(), "applog_user_rights_transfer",
                     getUserFullNameAndId(leavingUserId), getUserFullNameAndId(replacementUserId)));
         } else {
             nodeService.removeAspect(leavingUser.getNodeRef(), UserModel.Aspects.LEAVING);
-
             logService.addLogEntry(LogEntry.create(LogObject.USER, this, leavingUser.getNodeRef(), "applog_user_rights_return",
                     getUserFullNameAndId(leavingUserId)));
         }
-
+        personService.removeFromPersonPropertiesCache(leavingUserId);
         return true;
     }
 

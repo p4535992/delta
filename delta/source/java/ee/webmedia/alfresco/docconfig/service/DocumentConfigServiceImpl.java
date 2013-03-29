@@ -10,12 +10,13 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
+import org.alfresco.repo.cache.SimpleCache;
 import org.alfresco.repo.dictionary.IndexTokenisationMode;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
@@ -140,11 +141,10 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
 
     }
 
-    // CUSTOM CACHING
     // XXX NB! some returned objects are unfortunately mutable, thus service callers must not modify them !!!
-    private final Map<Pair<String /* documentTypeId */, Integer /* documentTypeVersionNr */>, Map<String /* fieldId */, Pair<DynamicPropertyDefinition, Field>>> propertyDefinitionCache = new ConcurrentHashMap<Pair<String, Integer>, Map<String, Pair<DynamicPropertyDefinition, Field>>>();
-    private final Map<Pair<String /* documentTypeId */, Integer /* documentTypeVersionNr */>, TreeNode<QName>> childAssocTypeQNameTreeCache = new ConcurrentHashMap<Pair<String, Integer>, TreeNode<QName>>();
-    private final Map<String /* fieldId */, DynamicPropertyDefinition> propertyDefinitionForSearchCache = new ConcurrentHashMap<String, DynamicPropertyDefinition>();
+    private SimpleCache<Pair<String /* documentTypeId */, Integer /* documentTypeVersionNr */>, Map<String /* fieldId */, Pair<DynamicPropertyDefinition, Field>>> propertyDefinitionCache;
+    private SimpleCache<Pair<String /* documentTypeId */, Integer /* documentTypeVersionNr */>, TreeNode<QName>> childAssocTypeQNameTreeCache;
+    private SimpleCache<String /* fieldId */, DynamicPropertyDefinition> propertyDefinitionForSearchCache;
 
     @Override
     public void registerFieldGeneratorByType(FieldGenerator fieldGenerator, FieldType... fieldTypes) {
@@ -1285,7 +1285,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
     }
 
     private Map<String, Pair<DynamicPropertyDefinition, Field>> createPropertyDefinitions(List<Field> fields) {
-        Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions = new HashMap<String, Pair<DynamicPropertyDefinition, Field>>();
+        Map<String, Pair<DynamicPropertyDefinition, Field>> propertyDefinitions = new LinkedHashMap<String, Pair<DynamicPropertyDefinition, Field>>();
         // TODO documentTypeVersion, fields and fieldGroups should be immutable; or they should be cloned in get method
         for (Field field : fields) {
             String fieldId = field.getFieldId();
@@ -1483,6 +1483,21 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
         return multiValuedOverride;
     }
 
+    @Override
+    public void removeFrompPopertyDefinitionForSearchCache(String fieldId) {
+        propertyDefinitionForSearchCache.remove(fieldId);
+    }
+
+    @Override
+    public void removeFromChildAssocTypeQNameTreeCache(Pair<String, Integer> typeAndVersion) {
+        childAssocTypeQNameTreeCache.remove(typeAndVersion);
+    }
+
+    @Override
+    public void removeFromPropertyDefinitionCache(Pair<String, Integer> typeAndVersion) {
+        propertyDefinitionCache.remove(typeAndVersion);
+    }
+
     // START: setters
     public void setDocumentAdminService(DocumentAdminService documentAdminService) {
         this.documentAdminService = documentAdminService;
@@ -1518,6 +1533,19 @@ public class DocumentConfigServiceImpl implements DocumentConfigService, BeanFac
             _einvoiceService = (EInvoiceService) beanFactory.getBean(EInvoiceService.BEAN_NAME);
         }
         return _einvoiceService;
+    }
+
+    public void setPropertyDefinitionCache(
+            SimpleCache<Pair<String /* documentTypeId */, Integer /* documentTypeVersionNr */>, Map<String /* fieldId */, Pair<DynamicPropertyDefinition, Field>>> propertyDefinitionCache) {
+        this.propertyDefinitionCache = propertyDefinitionCache;
+    }
+
+    public void setChildAssocTypeQNameTreeCache(SimpleCache<Pair<String /* documentTypeId */, Integer /* documentTypeVersionNr */>, TreeNode<QName>> childAssocTypeQNameTreeCache) {
+        this.childAssocTypeQNameTreeCache = childAssocTypeQNameTreeCache;
+    }
+
+    public void setPropertyDefinitionForSearchCache(SimpleCache<String /* fieldId */, DynamicPropertyDefinition> propertyDefinitionForSearchCache) {
+        this.propertyDefinitionForSearchCache = propertyDefinitionForSearchCache;
     }
 
     // END: setters

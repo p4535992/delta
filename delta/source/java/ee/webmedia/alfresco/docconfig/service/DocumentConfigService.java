@@ -105,4 +105,10 @@ public interface DocumentConfigService {
 
     DocumentConfig getReportConfig();
 
+    void removeFrompPopertyDefinitionForSearchCache(String fieldId);
+
+    void removeFromChildAssocTypeQNameTreeCache(Pair<String, Integer> typeAndVersion);
+
+    void removeFromPropertyDefinitionCache(Pair<String, Integer> typeAndVersion);
+
 }

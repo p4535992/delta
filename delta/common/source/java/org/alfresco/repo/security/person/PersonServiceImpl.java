@@ -69,6 +69,7 @@ import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.util.GUID;
 import org.alfresco.util.PropertyCheck;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -373,10 +374,12 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
 
 	@Override
     public Map<QName, Serializable> getPersonProperties(String userName) {
+        if (StringUtils.isBlank(userName)) {
+            return null;
+        }
         Map<QName, Serializable> properties = personPropertiesCache.get(userName);
         if (properties == null) {
-            // Don't use cache for getting person ref,
-            // because 
+            // Don't use cache for getting person ref, because 
             // 1) it seems that personCache is not updated when deleting person and thus
             // querying this cache may result in erroneous data or RuntimeException when calling 
             //  getPerson -> getPersonImpl -> getPersonOrNull -> makeHomeFolderIfRequired
@@ -577,6 +580,11 @@ public class PersonServiceImpl extends TransactionListenerAdapter implements Per
 
         personPropertiesCache.put(userName, update);
         nodeService.setProperties(personNode, update);
+    }
+    
+    @Override
+    public void removeFromPersonPropertiesCache(String username) {
+        personPropertiesCache.remove(username);
     }
 
     public boolean isMutable()

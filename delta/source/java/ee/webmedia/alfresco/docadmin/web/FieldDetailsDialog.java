@@ -162,6 +162,16 @@ public class FieldDetailsDialog extends BaseDialogBean {
         return valid;
     }
 
+    public String deleteField(ActionEvent event) {
+        getDocumentAdminService().deleteFieldDefinition(field);
+        return getCloseOutcome(2);
+    }
+
+    @Override
+    public Object getActionsContext() {
+        return field;
+    }
+
     private String getDynTypeName() {
         final DocumentTypeVersion dynTypeVer;
         if (fieldParent instanceof FieldGroup) {

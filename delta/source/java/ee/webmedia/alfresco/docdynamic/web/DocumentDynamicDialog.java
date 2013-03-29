@@ -267,9 +267,9 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
 
     public void addFollowUpHandlerSimilarDocuments(ActionEvent event) {
         NodeRef nodeRef = new NodeRef(ActionUtil.getParam(event, PARAM_NODEREF));
-        boolean isFoundSimilar = getSearchBlock().isFoundSimilar();
         addTargetAssocAndReopen(nodeRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP);
-        getSearchBlock().setFoundSimilar(isFoundSimilar);
+        getSearchBlock().setShowSimilarDocumentsBlock(false);
+        setShowSaveAndRegisterButton(true);
     }
 
     public void addReplyHandler(ActionEvent event) {
@@ -390,7 +390,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         List<DialogButtonConfig> buttons = new ArrayList<DialogButtonConfig>(1);
         if (snapshot.inEditMode && SystematicDocumentType.INCOMING_LETTER.isSameType(document.getDocumentTypeId()) && config.getDocType().isRegistrationEnabled()
                 && RegisterDocumentEvaluator.isNotRegistered(node)) {
-            if (getSearchBlock().isFoundSimilar()) {
+            if (getSearchBlock().isShowSimilarDocumentsBlock() || getShowSaveAndRegisterButton()) {
                 buttons.add(new DialogButtonConfig("documentRegisterButton", null, "document_registerDoc_continue",
                         "#{DocumentDynamicDialog.saveAndRegisterContinue}", "false", null));
             } else {
@@ -448,6 +448,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         private boolean showDocsAndCasesAssocs;
         private boolean saveAndRegister;
         private boolean saveAndRegisterContinue;
+        private boolean showSaveAndRegisterContinueButton;
         private boolean confirmMoveAssociatedDocuments;
         private boolean moveAssociatedDocumentsConfirmed;
         private DocumentConfig config;
@@ -495,8 +496,8 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
     private void openOrSwitchModeCommon(NodeRef docRef, boolean inEditMode) {
         DocumentDynamic document = inEditMode
                 ? getDocumentDynamicService().getDocumentWithInMemoryChangesForEditing(docRef)
-                        : getDocumentDynamicService().getDocument(docRef);
-                openOrSwitchModeCommon(document, inEditMode);
+                : getDocumentDynamicService().getDocument(docRef);
+        openOrSwitchModeCommon(document, inEditMode);
     }
 
     private void openOrSwitchModeCommon(DocumentDynamic document, boolean inEditMode) {
@@ -749,6 +750,9 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
 
     private void setSaveAndRegisterContinue(boolean saveAndRegisterContinue) {
         getCurrentSnapshot().saveAndRegisterContinue = saveAndRegisterContinue;
+        if (saveAndRegisterContinue) {
+            setShowSaveAndRegisterButton(true);
+        }
     }
 
     private boolean isSaveAndRegisterContinue() {
@@ -759,6 +763,14 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         return getCurrentSnapshot().saveAndRegister;
     }
 
+    private boolean setShowSaveAndRegisterButton(boolean showSaveAndRegisterContinueButton) {
+        return getCurrentSnapshot().showSaveAndRegisterContinueButton = showSaveAndRegisterContinueButton;
+    }
+
+    private boolean getShowSaveAndRegisterButton() {
+        return getCurrentSnapshot().showSaveAndRegisterContinueButton;
+    }
+
     private boolean checkSimilarDocuments() {
         SearchBlockBean searchBlock = getSearchBlock();
         // search for similar documents if it's an incoming letter
@@ -766,7 +778,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
             String senderRegNum = getDocument().getProp(DocumentSpecificModel.Props.SENDER_REG_NUMBER);
             searchBlock.findSimilarDocuments(senderRegNum);
         }
-        if (searchBlock.isFoundSimilar()) {
+        if (searchBlock.isShowSimilarDocumentsBlock()) {
             return true;
         }
         return false;
@@ -777,7 +789,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         setSaveAndRegister(false);
         setSaveAndRegisterContinue(true);
         super.finish();
-        getSearchBlock().setFoundSimilar(false);
+        getSearchBlock().setShowSimilarDocumentsBlock(false);
     }
 
     public void saveAndRegister() {
@@ -856,7 +868,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         if ((searchBlockBean.isExpanded() && !getCurrentSnapshot().inEditMode)) {
             return true;
         }
-        return getCurrentSnapshot().inEditMode && searchBlockBean.isShow() && !searchBlockBean.isFoundSimilar()
+        return getCurrentSnapshot().inEditMode && searchBlockBean.isShow() && !searchBlockBean.isShowSimilarDocumentsBlock()
                 && (getDocument().isImapOrDvk() && !getDocument().isNotEditable());
     }
 
@@ -866,7 +878,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
 
     public boolean isShowFoundSimilar() {
         SearchBlockBean searchBlockBean = (SearchBlockBean) getBlocks().get(SearchBlockBean.class);
-        return getCurrentSnapshot().inEditMode && searchBlockBean.isFoundSimilar();
+        return getCurrentSnapshot().inEditMode && searchBlockBean.isShowSimilarDocumentsBlock();
     }
 
     // =========================================================================
@@ -1100,6 +1112,7 @@ public class DocumentDynamicDialog extends BaseSnapshotCapableWithBlocksDialog<D
         getPropertySheetStateBean().reset(getStateHolders(), provider);
         getDocumentDialogHelperBean().reset(provider);
         resetModals();
+        setShowSaveAndRegisterButton(false);
         super.resetOrInit(provider); // reset blocks
     }
 

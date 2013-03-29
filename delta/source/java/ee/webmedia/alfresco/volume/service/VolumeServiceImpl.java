@@ -15,9 +15,11 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
 import org.apache.commons.lang.time.DateUtils;
+import org.apache.commons.lang.time.FastDateFormat;
 
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
@@ -337,10 +339,10 @@ public class VolumeServiceImpl implements VolumeService {
     }
 
     @Override
-    public void closeVolume(Volume volume) {
+    public Pair<String, Object[]> closeVolume(Volume volume) {
         final Node volumeNode = volume.getNode();
         if (isClosed(volumeNode)) {
-            return;
+            return null;
         }
         Map<String, Object> props = volumeNode.getProperties();
 
@@ -353,7 +355,15 @@ public class VolumeServiceImpl implements VolumeService {
         final Integer retentionPeriod = series.getRetentionPeriod();
         if (retentionPeriod != null) {
             final Calendar cal1 = Calendar.getInstance();
-            cal1.set(cal1.get(Calendar.YEAR) + 1 + retentionPeriod, 0, 1);// 1. January next year + retentionPeriod(in years)
+            int volumeRetentionYear = cal1.get(Calendar.YEAR);
+            if (volumeRetentionYear == Integer.MAX_VALUE || retentionPeriod == Integer.MAX_VALUE
+                    || volumeRetentionYear < 0 || retentionPeriod < 0
+                    || Integer.MAX_VALUE - volumeRetentionYear < retentionPeriod + 1
+                    || volumeRetentionYear + 1 + retentionPeriod > 9999) {
+                // we shall be ready, if Delta is still used after 7986 years...
+                return Pair.newInstance("volume_close_error_retention_period_too_large", new Object[] { retentionPeriod, FastDateFormat.getInstance("dd.MM.yyyy").format(cal1) });
+            }
+            cal1.set(volumeRetentionYear + 1 + retentionPeriod, 0, 1);// 1. January next year + retentionPeriod(in years)
             props.put(VolumeModel.Props.DISPOSITION_DATE.toString(), DateUtils.truncate(cal1, Calendar.DAY_OF_MONTH).getTime());
         }
         if (!(volumeNode instanceof TransientNode)) { // force closing all cases of given volume even if there are some cases that are still opened
@@ -361,6 +371,7 @@ public class VolumeServiceImpl implements VolumeService {
         }
         try {
             saveOrUpdate(volume);
+            return null;
         } catch (UnableToPerformException e) {
             throw e;
         }

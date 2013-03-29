@@ -1063,9 +1063,23 @@ public class ComponentUtil {
         if (propDef != null) {
             // try and get the repository assigned label
             displayLabel = propDef.getTitle();
+
+            // If title is null, it is most probably because property is on a non-dynamic node. Meaning the property
+            // definition couldn't be fetched using DocumentConfigService. Relying on naming conventions, we could try
+            // to fetch the translation from *.properties files.
+            String propLocalName = propDef.getName().getLocalName();
             if (displayLabel == null) {
-                // if the label is still null default to the local name of the property
-                displayLabel = propDef.getName().getLocalName();
+                String containerName = propDef.getContainerClass().getName().getLocalName();
+                String messageKey = containerName + "_" + propLocalName;
+                displayLabel = MessageUtil.getMessage(messageKey);
+                if (!MessageUtil.isMessageTranslated(messageKey, displayLabel)) {
+                    displayLabel = null; // Don't display missing message key (I18NUtil already returns null)
+                }
+            }
+
+            // If the label is still null default to the local name of the property
+            if (displayLabel == null) {
+                displayLabel = propLocalName;
             }
         }
         if (displayLabel == null) {

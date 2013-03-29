@@ -1170,7 +1170,20 @@ function initWithScreenProtected() {
          var index = responseText.indexOf("|");
          select.attr("size", responseText.substring(0, index));
          select.append(responseText.substring(index + 1, responseText.length));
-         tbody.find('.hidden').toggleClass('hidden');
+         var resultCount = select.children().length;
+         
+         if (select.attr("data-initialresults") == undefined) { // After the first fresh search, record the initial result count
+            select.attr("data-initialresults", resultCount);
+         }
+         
+         // Check if resultset is limited and show/hide message accordingly
+         if (resultCount == select.attr("data-rowlimit")) {
+            tbody.find('.modalResultsLimited').show();
+         } else {
+            tbody.find('.modalResultsLimited').hide();
+         }
+         
+         tbody.find('tr.hidden').toggleClass('hidden');
       };
 
       // Workaround for IE/WebKit, since it cannot hide option elements...
@@ -1191,10 +1204,10 @@ function initWithScreenProtected() {
          });
       };
 
-      doSearch(input, filterValue, event, successCallback, backSpaceCallback);
+      doSearch(input, filterValue, event, successCallback, backSpaceCallback, select);
    });
 
-   function doSearch(input, filterValue, event, successCallback, backSpaceCallback) {
+   function doSearch(input, filterValue, event, successCallback, backSpaceCallback, select) {
       var callback = input.attr('datasrc');
       if(!callback){
          alert("no search callback found");
@@ -1213,8 +1226,16 @@ function initWithScreenProtected() {
          callback = callback.substring(index + 1);
       }
 
+      // Determine if we are dealing with limited resultset
+      var limited = false;
+      if (value.length < 3) {
+         select.removeAttr("data-initialresults"); // Reset the initial result count
+      } else {
+         limited = select.attr("data-initialresults") == select.attr("data-rowlimit");
+      }
+
       var backspace = event.keyCode == 8;
-      if (value.length == 3 && !backspace) {
+      if (value.length == 3 && !backspace || limited) {
          $jQ.ajax({
             type: 'POST',
             url: getContextPath() + "/ajax/invoke/AjaxSearchBean.searchPickerResults",

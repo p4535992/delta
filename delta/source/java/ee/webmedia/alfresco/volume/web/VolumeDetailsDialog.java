@@ -21,6 +21,7 @@ import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
@@ -107,13 +108,17 @@ public class VolumeDetailsDialog extends BaseDialogBean {
         }
         if (!isClosed()) {
             try {
-                getVolumeService().closeVolume(currentEntry);
+                Pair<String, Object[]> error = getVolumeService().closeVolume(currentEntry);
                 reload(currentEntry.getNode().getNodeRef());
+                if (error != null) {
+                    MessageUtil.addErrorMessage(error.getFirst(), error.getSecond());
+                } else {
+                    MessageUtil.addInfoMessage("volume_close_success");
+                }
             } catch (UnableToPerformException e) {
                 MessageUtil.addStatusMessage(e);
                 return;
             }
-            MessageUtil.addInfoMessage("volume_close_success");
             clearPropSheet();
         }
     }

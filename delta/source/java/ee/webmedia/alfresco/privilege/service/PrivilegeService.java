@@ -1,11 +1,13 @@
 package ee.webmedia.alfresco.privilege.service;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.privilege.model.PrivMappings;
 import ee.webmedia.alfresco.privilege.model.UserPrivileges;
@@ -42,8 +44,9 @@ public interface PrivilegeService {
      * @param privilegesByGroup
      * @param ignoredGroups
      * @param listener - optional listener(must have been registered using this QName) to be called, that can cause side-effects, such as adding privileges to related nodes
+     * @return {@code true} if privileges were applied instantly; {@code false} if privileges are applied on background
      */
-    void savePrivileges(NodeRef manageableRef, Map<String, UserPrivileges> privilegesByUsername
+    boolean savePrivileges(NodeRef manageableRef, Map<String, UserPrivileges> privilegesByUsername
             , Map<String, UserPrivileges> privilegesByGroup, QName listenerCode);
 
     /**
@@ -54,9 +57,26 @@ public interface PrivilegeService {
      * @param privilegesToAdd
      * @return permissions with dependencies
      */
-    public Set<String> setPermissions(NodeRef manageableRef, String authority, String... privilegesToAdd);
+    public void setPermissions(NodeRef manageableRef, String authority, String... privilegesToAdd);
 
     /** @see #setPermissions(NodeRef, String, String...) */
-    Set<String> setPermissions(NodeRef manageableRef, String authority, Set<String> privilegesToAdd);
+    void setPermissions(NodeRef manageableRef, String authority, Set<String> privilegesToAdd);
+
+    boolean isPrivilegeActionsEnabled();
+
+    boolean isPrivilegeActionsPaused();
+
+    void setPrivilegeActionsPaused(boolean privilegeActionsPaused);
+
+    /**
+     * Calls Thread.sleep while privilegeActionsPaused=true.
+     */
+    void doPausePrivilegeActions();
+
+    List<Node> getAllInQueuePrivilegeActions();
+
+    List<Node> getAllInQueuePrivilegeActions(NodeRef manageableRef);
+
+    void doPrivilegeAction(Node privilegeAction);
 
 }

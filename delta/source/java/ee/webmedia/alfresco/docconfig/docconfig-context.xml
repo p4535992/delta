@@ -9,6 +9,9 @@
       <property name="userContactMappingService" ref="UserContactMappingService" />
       <property name="userService" ref="UserService" />
       <property name="classificatorService" ref="ClassificatorService" />
+      <property name="propertyDefinitionCache" ref="propertyDefinitionCache" />
+      <property name="childAssocTypeQNameTreeCache" ref="childAssocTypeQNameTreeCache" />
+      <property name="propertyDefinitionForSearchCache" ref="propertyDefinitionForSearchCache" />
    </bean>
 
    <bean id="DocumentConfigService" class="org.springframework.aop.framework.ProxyFactoryBean">

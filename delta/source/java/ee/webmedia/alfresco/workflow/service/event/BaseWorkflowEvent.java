@@ -7,6 +7,7 @@ import java.util.List;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.service.BaseWorkflowObject;
 
 /**
@@ -39,6 +40,19 @@ public class BaseWorkflowEvent implements WorkflowEvent {
     @Override
     public List<Object> getExtras() {
         return extras;
+    }
+
+    @Override
+    public Status getOriginalStatus() {
+        if (extras == null) {
+            return null;
+        }
+        for (Object extra : extras) {
+            if (extra instanceof Status) {
+                return (Status) extra;
+            }
+        }
+        return null;
     }
 
     @Override

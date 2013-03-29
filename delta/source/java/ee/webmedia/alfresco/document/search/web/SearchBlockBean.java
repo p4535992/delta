@@ -54,7 +54,7 @@ public class SearchBlockBean implements DocumentDynamicBlock {
     private List<String> selectedDocumentTypes;
     private List<Document> documents;
     private boolean show;
-    private boolean foundSimilar;
+    private boolean showSimilarDocumentsBlock;
     private boolean expanded;
 
     public void init(DocumentDynamic document) {
@@ -73,7 +73,7 @@ public class SearchBlockBean implements DocumentDynamicBlock {
         regDateTimeEnd = null;
         documents = null;
         show = true;
-        foundSimilar = false;
+        showSimilarDocumentsBlock = false;
         expanded = false;
         document = null;
         documentSearchBean.reset();
@@ -176,7 +176,7 @@ public class SearchBlockBean implements DocumentDynamicBlock {
 
             documents = bean.documents;
             show = bean.show;
-            foundSimilar = bean.foundSimilar;
+            foundSimilar = bean.showSimilarDocumentsBlock;
             expanded = bean.expanded;
         }
 
@@ -188,7 +188,7 @@ public class SearchBlockBean implements DocumentDynamicBlock {
             bean.selectedDocumentTypes = selectedDocumentTypes;
             bean.documents = documents;
             bean.show = show;
-            bean.foundSimilar = foundSimilar;
+            bean.showSimilarDocumentsBlock = foundSimilar;
             bean.expanded = expanded;
         }
     }
@@ -198,7 +198,7 @@ public class SearchBlockBean implements DocumentDynamicBlock {
     public void findSimilarDocuments(String senderRegNumber) {
         if (StringUtils.isNotBlank(senderRegNumber)) {
             documents = getDocumentSearchService().searchIncomingLetterRegisteredDocuments(senderRegNumber);
-            foundSimilar = documents.size() > 0;
+            showSimilarDocumentsBlock = documents.size() > 0;
         }
     }
 
@@ -224,12 +224,12 @@ public class SearchBlockBean implements DocumentDynamicBlock {
         this.show = show;
     }
 
-    public boolean isFoundSimilar() {
-        return foundSimilar;
+    public boolean isShowSimilarDocumentsBlock() {
+        return showSimilarDocumentsBlock;
     }
 
-    public void setFoundSimilar(boolean foundSimilar) {
-        this.foundSimilar = foundSimilar;
+    public void setShowSimilarDocumentsBlock(boolean foundSimilar) {
+        this.showSimilarDocumentsBlock = foundSimilar;
     }
 
     public int getCount() {

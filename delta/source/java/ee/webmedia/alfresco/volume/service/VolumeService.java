@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
@@ -63,8 +64,9 @@ public interface VolumeService {
      * Close given volume and all cases under given volume.
      * 
      * @param volume
+     * @return
      */
-    void closeVolume(Volume volume);
+    Pair<String, Object[]> closeVolume(Volume volume);
 
     boolean isClosed(Node volumeNode);
 

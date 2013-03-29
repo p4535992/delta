@@ -216,8 +216,14 @@ public class IndexIntegrityCheckerBootstrap {
                                 try {
                                     List<NodeRef> luceneNodeRefs2 = resultSet2.getNodeRefs();
                                     if (luceneNodeRefs2.size() != 1 || dbNodeRef.equals(luceneNodeRefs2.get(0))) {
+                                        String nodeType;
+                                        if (nodeService.exists(dbNodeRef)) {
+                                            nodeType = nodeService.getType(dbNodeRef).toPrefixString(namespaceService);
+                                        } else {
+                                            nodeType = "unknown, node does not exist";
+                                        }
                                         LOG.warn("NodeRef " + dbNodeRef + " supposed to be in TX:" + changeTxnId + " but wasn't, returned from lucene: " + luceneNodeRefs2
-                                                + ", node type " + nodeService.getType(dbNodeRef).toPrefixString(namespaceService));
+                                                + ", node type " + nodeType);
                                     } else {
                                         nodesInTxBadPresent++;
                                     }
@@ -301,7 +307,17 @@ public class IndexIntegrityCheckerBootstrap {
                         int count = 0;
                         for (Iterator<NodeRef> i = nodesToUpdate.iterator(); i.hasNext() && count < (maxTransactionsPerLuceneCommit * 3);) {
                             NodeRef nodeRef = i.next();
-                            indexer.updateNode(nodeRef);
+                            if (nodeService.exists(nodeRef)) {
+                                indexer.updateNode(nodeRef);
+                            } else {
+                                // only the child node ref is relevant
+                                ChildAssociationRef assocRef = new ChildAssociationRef(
+                                        ContentModel.ASSOC_CHILDREN,
+                                        null,
+                                        null,
+                                        nodeRef);
+                                indexer.deleteNode(assocRef);
+                            }
                             i.remove();
                             count++;
                         }

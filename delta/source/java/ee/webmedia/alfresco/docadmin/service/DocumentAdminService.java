@@ -121,7 +121,7 @@ public interface DocumentAdminService {
 
     Field getField(NodeRef fieldDefRef);
 
-    void deleteFieldDefinition(NodeRef fieldDefRef);
+    void deleteFieldDefinition(Field field);
 
     void addSystematicMetadataItems(DocumentTypeVersion docVer);
 

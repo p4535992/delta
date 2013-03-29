@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.workflow.web;
 
 import static ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerWithDueDateGenerator.createDueDateDaysSelector;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getOrganizationStructureService;
 import static ee.webmedia.alfresco.utils.ComponentUtil.addAttributes;
 import static ee.webmedia.alfresco.utils.ComponentUtil.addChildren;
 import static ee.webmedia.alfresco.utils.ComponentUtil.addOnchangeClickLink;
@@ -16,6 +17,7 @@ import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.getDialogId;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isTaskRowEditable;
 import static org.alfresco.web.app.servlet.FacesHelper.makeLegalId;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -39,6 +41,7 @@ import javax.faces.el.MethodBinding;
 import javax.faces.el.ValueBinding;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -241,20 +244,11 @@ public class TaskListGenerator extends BaseComponentGenerator {
             // due to performance issues
             boolean isSignatureWorkflow = blockType.equals(WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW);
             boolean isConfirmationWorkflow = blockType.equals(WorkflowSpecificModel.Types.CONFIRMATION_WORKFLOW);
-            String signerName = null;
-            String signerId = null;
-            String signerEmail = null;
+            Map<String, Object> signatureTaskOwnerProps = null;
+            boolean assignSigner = false;
             if (isSignatureWorkflow) {
-                NodeRef docRef = workflow.getParent().getParent();
-                if (docRef != null) {
-                    NodeService nodeService = BeanHelper.getNodeService();
-                    signerName = (String) nodeService.getProperty(docRef, DocumentCommonModel.Props.SIGNER_NAME);
-                    signerId = (String) nodeService.getProperty(docRef, DocumentDynamicModel.Props.SIGNER_ID);
-                    signerEmail = (String) nodeService.getProperty(docRef, DocumentDynamicModel.Props.SIGNER_EMAIL);
-                    if (StringUtils.isBlank(signerEmail)) {
-                        signerEmail = BeanHelper.getUserService().getUserEmail(signerId);
-                    }
-                }
+                signatureTaskOwnerProps = loadSignatureTaskOwnerProps(workflow.getParent().getParent());
+                assignSigner = signatureTaskOwnerProps != null;
             }
 
             Map<String, Object> dueDateTimeAttr = new HashMap<String, Object>();
@@ -355,10 +349,8 @@ public class TaskListGenerator extends BaseComponentGenerator {
                     nameValueBinding = createPropValueBinding(wfIndex, counter, WorkflowSpecificModel.Props.INSTITUTION_NAME);
                 } else {
                     nameValueBinding = createPropValueBinding(wfIndex, counter, WorkflowCommonModel.Props.OWNER_NAME);
-                    if (isSignatureWorkflow && counter == 0 && task.getOwnerId() == null && StringUtils.isNotBlank(signerId)) {
-                        task.setOwnerName(signerName);
-                        task.setOwnerId(signerId);
-                        task.setOwnerEmail(signerEmail);
+                    if (isSignatureWorkflow && counter == 0 && task.getOwnerId() == null && assignSigner) {
+                        task.getNode().getProperties().putAll(signatureTaskOwnerProps);
                     }
                 }
                 nameInput.setValueBinding("value", application.createValueBinding(nameValueBinding));
@@ -556,6 +548,35 @@ public class TaskListGenerator extends BaseComponentGenerator {
         }
         ComponentUtil.setAjaxEnabledOnActionLinksRecursive(result, 1);
         return result;
+    }
+
+    public static Map<String, Object> loadSignatureTaskOwnerProps(NodeRef docRef) {
+        if (docRef == null) {
+            return null;
+        }
+        NodeService nodeService = BeanHelper.getNodeService();
+        Map<QName, Serializable> docProps = nodeService.getProperties(docRef);
+        String signerId = (String) docProps.get(DocumentDynamicModel.Props.SIGNER_ID);
+        String signerName = (String) docProps.get(DocumentCommonModel.Props.SIGNER_NAME);
+        boolean assignSigner = StringUtils.isNotBlank(signerId) && StringUtils.isNotBlank(signerName);
+        if (assignSigner) {
+            Map<String, Object> signatureTaskOwnerProps = new HashMap<String, Object>();
+            signatureTaskOwnerProps.put(WorkflowCommonModel.Props.OWNER_ID.toString(), signerId);
+            signatureTaskOwnerProps.put(WorkflowCommonModel.Props.OWNER_NAME.toString(), signerName);
+            String signerEmail = (String) docProps.get(DocumentDynamicModel.Props.SIGNER_EMAIL);
+            Map<QName, Serializable> userProps = BeanHelper.getUserService().getUserProperties(signerId);
+            if (userProps != null) {
+                if (StringUtils.isBlank(signerEmail)) {
+                    signerEmail = (String) userProps.get(ContentModel.PROP_EMAIL);
+                }
+                signatureTaskOwnerProps.put(WorkflowCommonModel.Props.OWNER_EMAIL.toString(), signerEmail);
+                signatureTaskOwnerProps.put(WorkflowCommonModel.Props.OWNER_JOB_TITLE.toString(), userProps.get(ContentModel.PROP_JOBTITLE));
+                signatureTaskOwnerProps.put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME.toString(), getOrganizationStructureService()
+                        .getOrganizationStructurePaths((String) userProps.get(ContentModel.PROP_ORGID)));
+                return signatureTaskOwnerProps;
+            }
+        }
+        return null;
     }
 
     private Pair<Integer, TaskGroup> getAdjacentTaskGroup(List<TaskGroup> taskGroupsByGroupName, Integer counter) {

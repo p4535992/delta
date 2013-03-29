@@ -209,4 +209,6 @@ public interface PersonService
     
     Map<QName, Serializable> getPersonProperties(String userName);
 
+    void removeFromPersonPropertiesCache(String username);
+
 }

@@ -66,6 +66,7 @@ import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 import ee.webmedia.alfresco.docadmin.web.BaseObjectOrderModifier;
 import ee.webmedia.alfresco.docadmin.web.DocAdminUtil;
+import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.menu.service.MenuService;
@@ -479,6 +480,13 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
             }
             saveOrUpdateFieldDefinitions(fieldsToSave.values());
         }
+        DocumentConfigService documentConfigService = BeanHelper.getDocumentConfigService();
+        String typeId = dynType.getId();
+        for (DocumentTypeVersion docTypeVersion : dynType.getDocumentTypeVersions()) {
+            Pair<String, Integer> typeAndVersion = Pair.newInstance(typeId, docTypeVersion.getVersionNr());
+            documentConfigService.removeFromChildAssocTypeQNameTreeCache(typeAndVersion);
+            documentConfigService.removeFromPropertyDefinitionCache(typeAndVersion);
+        }
         nodeService.deleteNode(docTypeRef);
         if (dynType.isUsed()) {
             menuService.menuUpdated();
@@ -759,8 +767,9 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
-    public void deleteFieldDefinition(NodeRef fieldDefRef) {
-        nodeService.deleteNode(fieldDefRef);
+    public void deleteFieldDefinition(Field field) {
+        nodeService.deleteNode(field.getNodeRef());
+        BeanHelper.getDocumentConfigService().removeFrompPopertyDefinitionForSearchCache(field.getFieldId());
     }
 
     @Override

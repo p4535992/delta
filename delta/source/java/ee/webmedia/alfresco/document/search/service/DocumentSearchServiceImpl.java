@@ -999,7 +999,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         boolean noRegDates = regDateTimeBegin == null && regDateTimeEnd == null;
         boolean noDocTypes = documentTypes == null || documentTypes.isEmpty();
         boolean includeCaseTitles = trySearchCases && noRegDates && noDocTypes;
-        if (includeCaseTitles && StringUtils.isBlank(searchString)) {
+        if (noRegDates && noDocTypes && StringUtils.isBlank(searchString)) {
             throw new UnableToPerformException("docSearch_error_noInput");
         }
         if (regDateTimeBegin != null && regDateTimeEnd != null && regDateTimeEnd.before(regDateTimeBegin)) {
@@ -1174,6 +1174,14 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         queryParts.add(generateMultiStringExactQuery(Arrays.asList(relatedFundsCenter), ContentModel.PROP_RELATED_FUNDS_CENTER));
         String query = SearchUtil.joinQueryPartsAnd(queryParts);
         return searchNodes(query, -1, /* queryName */"usersByRelatedFundsCenter");
+    }
+
+    @Override
+    public boolean isFieldByOriginalIdExists(String fieldId) {
+        String query = SearchUtil.joinQueryPartsAnd(SearchUtil.generatePropertyExactQuery(DocumentAdminModel.Props.FIELD_ID, fieldId),
+                SearchUtil.generateTypeQuery(DocumentAdminModel.Types.FIELD));
+        query = SearchUtil.generateAndNotQuery(query, SearchUtil.generateTypeQuery(DocumentAdminModel.Types.FIELD_DEFINITION));
+        return isMatch(query);
     }
 
     private Pair<List<String>, List<Object>> getTaskQuery(QName taskType, String ownerId, Status status, boolean isPreviousOwnerId) {

@@ -226,11 +226,19 @@ public class WmNode extends TransientNode {
             s.append("null");
             return;
         }
-        s.append("[").append(collection.size()).append("]");
+        boolean showCollectionsize = printClass;
+        if (showCollectionsize) {
+            s.append("[").append(collection.size()).append("]");
+            showCollectionsize = false;
+        }
         if (!collection.isEmpty()) {
             NamespaceService namespaceService = BeanHelper.getNamespaceService();
             for (Object o : collection) {
-                s.append(argumentSeparator);
+                if (!showCollectionsize) {
+                    showCollectionsize = true;
+                } else {
+                    s.append(argumentSeparator);
+                }
                 if (printClass) {
                     toStringWithClass(s, o, namespaceService);
                 } else {

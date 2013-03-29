@@ -285,4 +285,6 @@ public interface DocumentSearchService {
 
     List<NodeRef> searchNodesByTypeAndProps(String input, QName type, Set<QName> props, int limit);
 
+    boolean isFieldByOriginalIdExists(String fieldId);
+
 }
