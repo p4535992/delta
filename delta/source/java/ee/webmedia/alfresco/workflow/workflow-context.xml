@@ -434,6 +434,7 @@
          <list>
             <ref bean="addDocTypeToTaskNodeUpdater" />
             <ref bean="archivalsStoresBootstrap" />
+            <ref bean="taskTableInsertMissingTasksBootstrap" />
          </list>
       </property>
       <property name="workflowDbService" ref="WorkflowDbService"/>
@@ -484,12 +485,36 @@
       <property name="transactionHelperMinRetryWaits" value="6000" />
    </bean>
    
+   <!-- This updater is present only in 3.6.30 branch to fix bugs while upgrading 3.6.21 to 3.6.30 branch -->
+   <bean id="taskTableInsertMissingTasksBootstrap" class="ee.webmedia.alfresco.workflow.bootstrap.TaskTableInsertMissingTasksBootstrap" parent="abstractNodeUpdater" >
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="workflowRootBootstrap" />
+            <ref bean="archivalsStoresBootstrap" />
+            <ref bean="taskTableBootstrap3" />
+            <ref bean="ownerOrganizationNameToMultivaluedUpdater" />
+            <ref bean="dueDateExtensionTaskUpdater" />
+            <ref bean="moveTaskFileToChildAssoc1" />
+            <ref bean="notStartedFinishedTaskUpdater" />
+            <ref bean="taskTableInsertBootstrap3" />
+            <ref bean="deleteOldTrashcanItems" />
+         </list>
+      </property>
+      <property name="workflowService" ref="WmWorkflowService"/>
+      <property name="workflowDbService" ref="WorkflowDbService"/>
+      <property name="namespaceService" ref="NamespaceService"/>
+      <property name="dictionaryService" ref="DictionaryService"/>
+   </bean>
+   
    <bean id="taskAssociatedDataTableInsertBootstrap1" class="ee.webmedia.alfresco.workflow.bootstrap.TaskAssociatedDataTableInsertBootstrap" parent="abstractNodeUpdater" >
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
             <ref bean="taskTableInsertBootstrap3" />
+            <ref bean="taskTableInsertMissingTasksBootstrap" />
             <ref bean="taskDueDateExtensionAssocTableBootstrap1" />
             <ref bean="taskDueDateHistoryTableBootstrap" />
             <ref bean="taskFileTableBootstrap" />

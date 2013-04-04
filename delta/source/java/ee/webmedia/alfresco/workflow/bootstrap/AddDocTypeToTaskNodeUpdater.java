@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 
@@ -25,8 +26,9 @@ public class AddDocTypeToTaskNodeUpdater extends AbstractNodeUpdater {
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
         String query = SearchUtil.generateTypeQuery(WorkflowCommonModel.Types.TASK);
         List<ResultSet> result = new ArrayList<ResultSet>(2);
-        result.add(searchService.query(generalService.getStore(), SearchService.LANGUAGE_LUCENE, query));
-        result.add(searchService.query(generalService.getArchivalsStoreRef(), SearchService.LANGUAGE_LUCENE, query));
+        for (StoreRef storeRef : generalService.getAllStoreRefsWithTrashCan()) {
+            result.add(searchService.query(storeRef, SearchService.LANGUAGE_LUCENE, query));
+        }
         return result;
     }
 
